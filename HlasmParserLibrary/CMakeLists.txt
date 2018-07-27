@@ -56,4 +56,4 @@ ADD_CUSTOM_COMMAND (TARGET HlasmParserLibrary POST_BUILD      # Adds a post-buil
         "${ANTLR4CPP_LIBS}"      # <--this is in-file
         "${PROJECT_BINARY_DIR}/../bin/" )  
 
-add_dependencies(HlasmParserLibrary antlr4cpp)
+add_dependencies(HlasmParserLibrary antlr4jar )
