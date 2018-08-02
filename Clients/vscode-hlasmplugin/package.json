@@ -1,0 +1,68 @@
+{
+  "name": "vscode-hlasmplugin",
+  "displayName": "vscode-hlasmplugin",
+  "description": "HLASM Language Server",
+  "version": "0.0.1",
+  "publisher": "CA",
+  "homepage": "https://ca.com/",
+  "engines": {
+    "vscode": "^1.25.1"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "HLASM",
+    "LSP"
+  ],
+  "activationEvents": [
+    "workspaceContains:*.hlasm",
+    "workspaceContains:*.txt",
+    "*"
+  ],
+  "main": "./out/src/extension",
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^4.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.0.3",
+    "vscode": "^1.1.18",
+    "mocha": "^2.3.3",
+    "@types/node": "^6.0.40",
+    "@types/mocha": "^2.2.32"
+  },
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "hlasmplugin configuration",
+      "properties": {
+        "hlasmplugin.path": {
+          "type": "string",
+          "default": "HlasmLanguageServer",
+          "description": "The path to the HlasmLanguageServer executable, e.g.: /usr/bin/HlasmLanguageServer"
+        },
+        "hlasmplugin.arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments for hlasmplugin server"
+        },
+        "hlasmplugin.syncFileEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
+        }
+      }
+    }
+  }
+}

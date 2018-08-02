@@ -132,10 +132,14 @@ LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 	include( ExternalAntlr4Cpp )
 	include_directories( ${ANTLR4CPP_INCLUDE_DIRS} )
 	link_directories( ${ANTLR4CPP_LIBS} )
+	
+#LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+	include( ExternalJsonRpcpp )
+	include_directories( ${JSONRPCPP_INCLUDE_DIRS} )
+	link_directories( ${JSONRPCPP_LIBS} )
 
 # Global link directories
 link_directories(${GLOBAL_OUTPUT_PATH} ${ANTLR4CPP_LIBS})
-
 
 # Libraries (+ their includes)
 add_subdirectory(HlasmParserLibrary)
@@ -144,7 +148,8 @@ include_directories(HlasmParserLibrary/include)
 
 # Applications
 add_subdirectory(HlasmLanguageServer)
-
+add_subdirectory(HlasmDummy)
+add_subdirectory(Clients)
 
 # Installation
 

@@ -35,3 +35,14 @@
 HlasmParserLibrary/src/generated/
 .vs/
 build/
+
+#just a playground, ignore changes
+HlasmDummy/src/
+
+#vscode ignore
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+

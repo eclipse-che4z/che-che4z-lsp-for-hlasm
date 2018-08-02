@@ -4,7 +4,10 @@
 #include "antlr4-runtime.h"
 #include "generated/HlasmLexer.h"
 
-void HlasmParserLibrary::HlasmParserLibrary::parse(std::string && src)
+namespace HlasmPlugin{
+namespace HlasmParserLibrary {
+
+void HlasmParserLibrary::parse(std::string && src)
 {
 	antlr4::ANTLRInputStream input(src);
 	HlasmGenerated::HlasmLexer lexer(&input);
@@ -16,5 +19,8 @@ void HlasmParserLibrary::HlasmParserLibrary::parse(std::string && src)
 	for (auto && token : tokens.getTokens())
 		std::cout << token->toString() << std::endl;
 
-	std::cin.get();	
+	std::cin.get();
 }
+
+} //namespace HlasmParserLibrary
+} //namespace HlasmPlugin

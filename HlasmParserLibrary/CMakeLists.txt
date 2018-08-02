@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.5)
-
+INCLUDE(GenerateExportHeader)
 project(HlasmParserLibrary)
 
 SET (CMAKE_CXX_STANDARD 14)
@@ -34,7 +34,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND
    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -visitor -o ${PROJECT_SOURCE_DIR}/src/generated/ -package HlasmGenerated ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4
    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-   DEPENDS ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4
+   DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4
    )
 
 #Generate the shared library from the library sources
@@ -43,12 +43,15 @@ add_library(HlasmParserLibrary SHARED
 	${GENERATED_SRC}
 )
 
+generate_export_header(HlasmParserLibrary
+			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/HlasmParserLibrary_export.h)
 
 target_link_libraries(HlasmParserLibrary  antlr4-runtime)
 
 target_include_directories(HlasmParserLibrary
     PUBLIC 
         ${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/src/generated/
 )
 
 ADD_CUSTOM_COMMAND (TARGET HlasmParserLibrary POST_BUILD      # Adds a post-build event to MyTest
