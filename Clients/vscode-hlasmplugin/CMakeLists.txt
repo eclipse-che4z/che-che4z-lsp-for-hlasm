@@ -12,7 +12,7 @@ add_custom_target(npmInstall
 add_custom_target(vsix
 		ALL
 		COMMAND
-			vsce package -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
+			npm run-script package -- -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
