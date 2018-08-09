@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.10)
 INCLUDE(GenerateExportHeader)
+include(GoogleTest)
 project(HlasmParserLibrary)
 
 SET (CMAKE_CXX_STANDARD 14)
@@ -38,7 +39,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    )
 
 #Generate the shared library from the library sources
-add_library(HlasmParserLibrary SHARED 
+add_library(HlasmParserLibrary SHARED
     ${PROJECT_SOURCE_DIR}/src/HlasmParserLibrary.cpp
 	${GENERATED_SRC}
 )
@@ -60,3 +61,13 @@ ADD_CUSTOM_COMMAND (TARGET HlasmParserLibrary POST_BUILD      # Adds a post-buil
         "${PROJECT_BINARY_DIR}/../bin/" )  
 
 add_dependencies(HlasmParserLibrary antlr4jar )
+
+
+
+if(BUILD_TESTING)
+	add_executable(libraryTest test/test.cpp)
+	target_link_libraries(libraryTest gmock_main)
+	
+	target_link_libraries(libraryTest HlasmParserLibrary)
+	gtest_discover_tests(libraryTest)
+endif()

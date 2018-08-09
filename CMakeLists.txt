@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.10)
 
 PROJECT(HlasmServer)
 
@@ -126,17 +126,48 @@ else ()
     message(FATAL_ERROR "Your C++ compiler does not support C++11.")
 endif ()
 
-
+include(CTest)
 
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 	include( ExternalAntlr4Cpp )
 	include_directories( ${ANTLR4CPP_INCLUDE_DIRS} )
 	link_directories( ${ANTLR4CPP_LIBS} )
 	
-#LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
-	include( ExternalJsonRpcpp )
-	include_directories( ${JSONRPCPP_INCLUDE_DIRS} )
-	link_directories( ${JSONRPCPP_LIBS} )
+include( ExternalJsonRpcpp )
+include_directories( ${JSONRPCPP_INCLUDE_DIRS} )
+link_directories( ${JSONRPCPP_LIBS} )
+
+#Testing setup
+if(BUILD_TESTING)
+	# Download and unpack googletest at configure time
+	configure_file(cmake/ExternalGoogleTest.cmake googletest-download/CMakeLists.txt)
+	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	  RESULT_VARIABLE result
+	  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+	if(result)
+	  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+	endif()
+	execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	  RESULT_VARIABLE result
+	  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+	if(result)
+	  message(FATAL_ERROR "Build step for googletest failed: ${result}")
+	endif()
+
+	# Prevent overriding the parent project's compiler/linker
+	# settings on Windows
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+	# Add googletest directly to our build. This defines
+	# the gtest and gtest_main targets.
+	add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+					 ${CMAKE_BINARY_DIR}/googletest-build
+					 EXCLUDE_FROM_ALL)
+
+	
+	target_include_directories(gmock_main SYSTEM BEFORE INTERFACE
+    "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
+endif()
 
 # Global link directories
 link_directories(${GLOBAL_OUTPUT_PATH} ${ANTLR4CPP_LIBS})
@@ -150,6 +181,9 @@ include_directories(HlasmParserLibrary/include)
 add_subdirectory(HlasmLanguageServer)
 add_subdirectory(HlasmDummy)
 add_subdirectory(Clients)
+add_subdirectory(HlasmPrivateTest)
+
+
 
 # Installation
 
