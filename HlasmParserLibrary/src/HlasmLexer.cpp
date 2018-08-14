@@ -386,6 +386,7 @@ void HlasmLexer::lexSpace() {
 void HlasmLexer::lexWord() {
 	bool ord = isalpha(c);
 
+	current_word.clear();
 	while (!isspace(c) && !EOF() && !identifierDivider() && charPositionInLine < END)
 	{
 		current_word.push_back(toupper(c));
