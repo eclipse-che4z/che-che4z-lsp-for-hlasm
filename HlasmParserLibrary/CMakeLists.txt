@@ -3,7 +3,7 @@ INCLUDE(GenerateExportHeader)
 include(GoogleTest)
 project(HlasmParserLibrary)
 
-SET (CMAKE_CXX_STANDARD 14)
+SET (CMAKE_CXX_STANDARD 17)
 
 
 # set ANTLR jar location
@@ -12,7 +12,6 @@ set(ANTLR_JAR_LOCATION
 
 # generated grammar source files
 set(GENERATED_SRC
-   ${PROJECT_SOURCE_DIR}/src/generated/HlasmLexer.cpp
    ${PROJECT_SOURCE_DIR}/src/generated/HlasmParser.cpp
    ${PROJECT_SOURCE_DIR}/src/generated/HlasmParserBaseListener.cpp
    ${PROJECT_SOURCE_DIR}/src/generated/HlasmParserBaseVisitor.cpp
@@ -33,14 +32,15 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
    ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/src/generated/
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -visitor -o ${PROJECT_SOURCE_DIR}/src/generated/ -package HlasmGenerated ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4
-   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-   DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/grammar/ -listener -visitor -o ${PROJECT_SOURCE_DIR}/src/generated/ -package HlasmGenerated HlasmParser.g4
+   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/grammar/"
+   DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/HlasmParser.g4 ${PROJECT_SOURCE_DIR}/src/grammar/HlasmLexer.tokens
    )
 
 #Generate the shared library from the library sources
 add_library(HlasmParserLibrary SHARED
     ${PROJECT_SOURCE_DIR}/src/HlasmParserLibrary.cpp
+    ${PROJECT_SOURCE_DIR}/src/HlasmLexer.cpp
 	${GENERATED_SRC}
 )
 
@@ -60,14 +60,17 @@ ADD_CUSTOM_COMMAND (TARGET HlasmParserLibrary POST_BUILD      # Adds a post-buil
         "${ANTLR4CPP_LIBS}"      # <--this is in-file
         "${PROJECT_BINARY_DIR}/../bin/" )  
 
-add_dependencies(HlasmParserLibrary antlr4jar )
+add_dependencies(HlasmParserLibrary antlr4jar GenerateParser)
 
 
 
 if(BUILD_TESTING)
-	add_executable(libraryTest test/test.cpp)
+	add_executable(libraryTest test/test.cpp
+	${GENERATED_SRC})
 	target_link_libraries(libraryTest gmock_main)
-	
+	target_link_libraries(libraryTest antlr4-runtime)
 	target_link_libraries(libraryTest HlasmParserLibrary)
+	add_dependencies(libraryTest antlr4jar)
+	add_dependencies(libraryTest HlasmParserLibrary)
 	gtest_discover_tests(libraryTest)
 endif()

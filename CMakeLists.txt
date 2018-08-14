@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.10)
 
 PROJECT(HlasmServer)
 
-SET (CMAKE_CXX_STANDARD 14)
+SET (CMAKE_CXX_STANDARD 17)
 
 
 # Global settings
@@ -26,7 +26,7 @@ endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
 # Global compiler flags
 # -std=c++14  =>  Used by HumbleLogging
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS -std=c++14)
+  set(CMAKE_CXX_FLAGS -std=c++17)
 else()
   add_definitions(-DWIN32) # TMP
 endif()
@@ -77,14 +77,14 @@ endif()
 
 # Initialize CXXFLAGS.
 if("${CMAKE_VERSION}" VERSION_GREATER 3.1.0)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 else()
-  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} -std=c++14")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14")
-  set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} -std=c++14")
-  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} -std=c++14")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -std=c++14")
+  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} -std=c++17")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17")
+  set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} -std=c++17")
+  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -std=c++17")
 endif()
 
 set(CMAKE_CXX_FLAGS                  "${CMAKE_CXX_FLAGS} ${MY_CXX_WARNING_FLAGS}")

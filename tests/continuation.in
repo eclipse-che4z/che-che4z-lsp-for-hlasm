@@ -1,0 +1,6 @@
+NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
+                                            statement format
+NAME2 OP2      OPERAND1,                    This is the alter-         X
+               OPERAND2                     native statement format
+NAME3 OP3      OPERAND1,                    This is a combination      X
+               OPERAND2,OPERAND3            of both

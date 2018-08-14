@@ -1,0 +1,3 @@
+&VAR SETC (LOWER '&twenty.&six')
+or
+&AB SETA A2B('10')

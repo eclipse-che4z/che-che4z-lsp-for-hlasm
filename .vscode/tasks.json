@@ -1,0 +1,46 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gen",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        // Ask msbuild to generate full paths for file names.
+        "../"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}/build"
+      },
+      "group": "build",
+      "presentation": {
+        // Reveal the output only if unrecognized errors occur.
+        "reveal": "always"
+      }
+    },
+    {
+      "dependsOn": [
+        "gen"
+      ],
+      "label": "build",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        // Ask msbuild to generate full paths for file names.
+        "-DCMAKE_BUILD_TYPE=Release ",
+        "--build",
+        "."
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}/build"
+      },
+      "group": "build",
+      "presentation": {
+        // Reveal the output only if unrecognized errors occur.
+        "reveal": "always"
+      }
+    }
+  ]
+}

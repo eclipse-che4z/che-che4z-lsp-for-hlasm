@@ -68,5 +68,4 @@ TEST_F(ServerTest, initialize)
 	EXPECT_EQ(responseID.type, ID::value_t::integer);
 	EXPECT_EQ(responseID.int_id, ID(5).int_id);
 	EXPECT_NE(responseJson.find("capabilities"), responseJson.end());
-
 }

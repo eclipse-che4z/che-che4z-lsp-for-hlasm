@@ -32,9 +32,10 @@
 *.app
 
 
-HlasmParserLibrary/src/generated/
+HlasmParserLibrary/src/generated/*
 .vs/
 build/
+.antlr/
 
 #just a playground, ignore changes
 HlasmDummy/src/
@@ -45,4 +46,3 @@ HlasmDummy/src/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
