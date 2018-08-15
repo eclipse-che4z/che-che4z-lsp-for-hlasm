@@ -32,13 +32,13 @@
 *.app
 
 
-HlasmParserLibrary/src/generated/*
+parser/src/generated/*
 .vs/
 build/
 .antlr/
 
 #just a playground, ignore changes
-HlasmDummy/src/
+dummy/src/
 
 #vscode ignore
 .vscode/*

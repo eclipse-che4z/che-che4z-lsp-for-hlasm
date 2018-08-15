@@ -173,15 +173,15 @@ endif()
 link_directories(${GLOBAL_OUTPUT_PATH} ${ANTLR4CPP_LIBS})
 
 # Libraries (+ their includes)
-add_subdirectory(HlasmParserLibrary)
-include_directories(HlasmParserLibrary/include)
+add_subdirectory(parser)
+include_directories(parser/include)
 
 
 # Applications
-add_subdirectory(HlasmLanguageServer)
-add_subdirectory(HlasmDummy)
-add_subdirectory(Clients)
-add_subdirectory(HlasmPrivateTest)
+add_subdirectory(language_server)
+add_subdirectory(dummy)
+add_subdirectory(clients)
+add_subdirectory(private_test)
 
 
 
@@ -205,5 +205,5 @@ install(FILES ${libraries} DESTINATION "bin")
 
 
 # SDK Installation
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/HlasmParserLibrary/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/HlasmParserLibrary/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/parser/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/parser/include/" DESTINATION "include" FILES_MATCHING PATTERN "*.hpp")
