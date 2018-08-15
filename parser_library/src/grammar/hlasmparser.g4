@@ -12,12 +12,12 @@ options {
 
 @members {
 	hlasm_plugin::parser_library::HlasmLexer * lexer;
-	bool hasOperands = false;
+	bool has_operands = false;
 	void identify(const std::string& token)
 	{
-		hasOperands = std::all_of(token.cbegin(), token.cend(), [](char c){ return isupper(c)||isdigit(c); } );
+		has_operands = std::all_of(token.cbegin(), token.cend(), [](char c){ return isupper(c)||isdigit(c); } );
 	}
-	bool checkCont()
+	bool check_cont()
 	{
 		return !lexer->continuationBeforeToken(_input->index());
 	}
@@ -116,8 +116,8 @@ setSymbol : AMPERSAND LPAR (identifier|setSymbol)+ RPAR
 instruction : (varSymbol|~(SPACE|EOLLN))+ { identify(getRuleContext()->getStart()->getText()); }
 				;
 
-instrEnd : { hasOperands }? endWithOperands
-			| { !hasOperands }? remark+
+instrEnd : { has_operands }? endWithOperands
+			| { !has_operands }? remark+
 			;
 
 endWithOperands : operands
@@ -133,7 +133,7 @@ operands : operand? (COMMA operand?)+
 			;
 
 remark
-  :  ( { checkCont() }? ~(EOLLN) )+
+  :  ( { check_cont() }? ~(EOLLN) )+
   ;
 
 operand : expr

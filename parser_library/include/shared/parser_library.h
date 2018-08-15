@@ -11,18 +11,18 @@
 namespace hlasm_plugin {
 	namespace parser_library {
 
-		class UsefulTree
+		class useful_tree
 		{
 		public:
-			UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::hlasmparser & parser);
-			void outTree(std::ostream &stream);
+			useful_tree(antlr4::ParserRuleContext * _tree, generated::hlasmparser & parser);
+			void out_tree(std::ostream &stream);
 		private:
-			antlr4::ParserRuleContext * tree;
-			antlr4::dfa::Vocabulary &vocab;
-			std::vector<std::string> rules;
-			antlr4::TokenStream *tokens;
+			antlr4::ParserRuleContext * tree_;
+			antlr4::dfa::Vocabulary &vocab_;
+			std::vector<std::string> rules_;
+			antlr4::TokenStream *tokens_;
 
-			void outTreeRec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream);
+			void out_tree_rec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream);
 		};
 
 		class parser_library
@@ -32,7 +32,7 @@ namespace hlasm_plugin {
 			void PARSER_LIBRARY_EXPORT parse(const std::string &);
 		};
 	} //namespace parser_library
-} //namespace HlasmPlugin
+} //namespace hlasm_plugin
 
 
 #endif

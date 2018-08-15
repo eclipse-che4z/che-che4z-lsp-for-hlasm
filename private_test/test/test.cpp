@@ -4,7 +4,7 @@
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-TEST(PrivateTest, case1)
+TEST(private_test, case1)
 {
 	EXPECT_EQ(1, 1);
 }

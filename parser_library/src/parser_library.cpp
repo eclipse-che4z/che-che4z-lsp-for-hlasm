@@ -12,7 +12,7 @@ namespace hlasm_plugin {
 			HlasmLexer lexer(&input);
 			antlr4::CommonTokenStream tokens(&lexer);
 			tokens.fill();
-			HlasmGenerated::hlasmparser parser(&tokens);
+			generated::hlasmparser parser(&tokens);
 			auto vocab = parser.getVocabulary();
 			for (auto && token : tokens.getTokens())
 			{
@@ -24,41 +24,41 @@ namespace hlasm_plugin {
 
 			parser.lexer = &lexer;
 			auto tree = parser.program();
-			UsefulTree mytree(tree, parser);
-			mytree.outTree(std::cout);
+			useful_tree mytree(tree, parser);
+			mytree.out_tree(std::cout);
 		}
 
 
-		UsefulTree::UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::hlasmparser & parser)
-			: vocab(parser.getVocabulary()), tree(_tree), rules(parser.getRuleNames()), tokens(parser.getTokenStream())
+		useful_tree::useful_tree(antlr4::ParserRuleContext * _tree, generated::hlasmparser & parser)
+			: vocab_(parser.getVocabulary()), tree_(_tree), rules_(parser.getRuleNames()), tokens_(parser.getTokenStream())
 		{};
 
-		void UsefulTree::outTree(std::ostream &stream)
+		void useful_tree::out_tree(std::ostream &stream)
 		{
-			outTreeRec(tree, "", stream);
+			out_tree_rec(tree_, "", stream);
 		}
 
-		void UsefulTree::outTreeRec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream)
+		void useful_tree::out_tree_rec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream)
 		{
 			if (tree->children.empty())
 			{
 				if (tree->getText() == "")
-					stream << indent << rules[tree->getRuleIndex()] << ": " << "\"" << tree->getText() << "\"" << std::endl;
+					stream << indent << rules_[tree->getRuleIndex()] << ": " << "\"" << tree->getText() << "\"" << std::endl;
 				else
 				{
-					auto type = tokens->get(tree->getSourceInterval().a)->getType();
-					stream << indent << vocab.getSymbolicName(type);
+					auto type = tokens_->get(tree->getSourceInterval().a)->getType();
+					stream << indent << vocab_.getSymbolicName(type);
 					if (type != HlasmLexer::EOLLN && type != HlasmLexer::SPACE) stream << ": " << "\"" << tree->getText() << "\"";
 					stream << std::endl;
 				}
 			}
 			else
 			{
-				stream << indent << rules[tree->getRuleIndex()] << ": " << "\"" << tree->getText() << "\"" << std::endl;
+				stream << indent << rules_[tree->getRuleIndex()] << ": " << "\"" << tree->getText() << "\"" << std::endl;
 				indent.insert(0, "\t");
 				for (auto child : tree->children)
 				{
-					outTreeRec((antlr4::ParserRuleContext *)child, indent, stream);
+					out_tree_rec((antlr4::ParserRuleContext *)child, indent, stream);
 				}
 			}
 		}
