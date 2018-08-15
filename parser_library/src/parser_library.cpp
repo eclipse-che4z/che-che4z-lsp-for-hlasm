@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../include/shared/HlasmParserLibrary.h"
+#include "../include/shared/parser_library.h"
 
 
 namespace HlasmPlugin {
@@ -12,7 +12,7 @@ namespace HlasmPlugin {
 			HlasmLexer lexer(&input);
 			antlr4::CommonTokenStream tokens(&lexer);
 			tokens.fill();
-			HlasmGenerated::HlasmParser parser(&tokens);
+			HlasmGenerated::hlasmparser parser(&tokens);
 			auto vocab = parser.getVocabulary();
 			for (auto && token : tokens.getTokens())
 			{
@@ -29,7 +29,7 @@ namespace HlasmPlugin {
 		}
 
 
-		UsefulTree::UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::HlasmParser & parser)
+		UsefulTree::UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::hlasmparser & parser)
 			: vocab(parser.getVocabulary()), tree(_tree), rules(parser.getRuleNames()), tokens(parser.getTokenStream())
 		{};
 

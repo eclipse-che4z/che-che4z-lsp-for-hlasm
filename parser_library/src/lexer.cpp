@@ -1,4 +1,4 @@
-#include "../include/shared/HlasmLexer.h"
+#include "../include/shared/lexer.h"
 #include  <utility>
 #include <cctype>
 #include <iostream>

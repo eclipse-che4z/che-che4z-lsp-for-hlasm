@@ -1,21 +1,20 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMLEX_H
 #define HLASMPLUGIN_PARSER_HLASMLEX_H
 
-#include "HlasmParserLibrary_export.h"
+#include "../generated/parser_library_export.h"
 #include "antlr4-runtime.h"
 #include <memory>
 #include <queue>
 #include <set>
 #include <map>
 #include <string_view>
-#include "HlasmParserLibrary_export.h"
 
 namespace HlasmPlugin {
 	namespace HlasmParserLibrary {
 
 		using token_ptr = std::unique_ptr<antlr4::Token>;
 		using char_t = char32_t;
-		class HLASMPARSERLIBRARY_EXPORT HlasmLexer : public antlr4::TokenSource
+		class PARSER_LIBRARY_EXPORT HlasmLexer : public antlr4::TokenSource
 		{
 		public:
 			HlasmLexer(antlr4::CharStream*);
@@ -44,7 +43,7 @@ namespace HlasmPlugin {
 			bool continuationBeforeToken(size_t);
 
 			enum Tokens {
-				#include "../src/grammar/HlasmLexer.tokens"
+				#include "../src/grammar/lex.tokens"
 			};
 
 			enum Channels {

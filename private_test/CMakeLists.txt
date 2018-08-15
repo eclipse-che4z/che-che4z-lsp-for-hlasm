@@ -12,7 +12,7 @@ if(BUILD_TESTING)
 	target_link_libraries(privateTest gmock_main)
 	target_link_libraries(privateTest jsonrpcpp)
 	target_link_libraries(privateTest antlr4-runtime)
-	target_link_libraries(privateTest HlasmParserLibrary)
+	target_link_libraries(privateTest parser_library)
 	gtest_discover_tests(privateTest)
 
 

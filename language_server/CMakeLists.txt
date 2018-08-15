@@ -19,7 +19,7 @@ add_executable(HlasmLanguageServer
 add_dependencies(HlasmLanguageServer jsonrpcppext)
 
 target_link_libraries(HlasmLanguageServer jsonrpcpp)
-target_link_libraries(HlasmLanguageServer HlasmParserLibrary)
+target_link_libraries(HlasmLanguageServer parser_library)
 
 
 

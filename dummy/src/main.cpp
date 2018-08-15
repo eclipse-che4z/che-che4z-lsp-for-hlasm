@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <sstream>
 
-#include <shared/HlasmParserLibrary.h>
+#include <shared/parser_library.h>
 //#define CONSOLE
 
 int main(int argc, char *argv[]) {

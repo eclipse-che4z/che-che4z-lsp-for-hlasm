@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "HlasmParserLibrary_export.h"
-#include "HlasmLexer.h"
+#include "../generated/parser_library_export.h"
+#include "lexer.h"
 #include "antlr4-runtime.h"
-#include "../generated/HlasmParser.h"
+#include "../generated/hlasmparser.h"
 
 namespace HlasmPlugin {
 	namespace HlasmParserLibrary {
@@ -14,7 +14,7 @@ namespace HlasmPlugin {
 		class UsefulTree
 		{
 		public:
-			UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::HlasmParser & parser);
+			UsefulTree(antlr4::ParserRuleContext * _tree, HlasmGenerated::hlasmparser & parser);
 			void outTree(std::ostream &stream);
 		private:
 			antlr4::ParserRuleContext * tree;
@@ -29,7 +29,7 @@ namespace HlasmPlugin {
 		{
 		public:
 			HlasmParserLibrary() {};
-			void HLASMPARSERLIBRARY_EXPORT parse(const std::string &);
+			void PARSER_LIBRARY_EXPORT parse(const std::string &);
 		};
 	} //namespace HlasmParserLibrary
 } //namespace HlasmPlugin

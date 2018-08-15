@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "../include/shared/HlasmParserLibrary.h"
+#include "../include/shared/parser_library.h"
 
 using namespace HlasmPlugin;
 using namespace HlasmParserLibrary;

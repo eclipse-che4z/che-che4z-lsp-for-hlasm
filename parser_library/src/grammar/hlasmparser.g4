@@ -1,13 +1,13 @@
-parser grammar HlasmParser;
+parser grammar hlasmparser;
 
 @header{
 	#include <string>
 	#include <iostream>
-	#include "../../include/shared/HlasmLexer.h"
+	#include "../../include/shared/lexer.h"
 }
 
 options {
-    tokenVocab = HlasmLexer;
+    tokenVocab = lex;
 }
 
 @members {
