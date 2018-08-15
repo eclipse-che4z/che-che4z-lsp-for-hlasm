@@ -32,7 +32,7 @@
 *.app
 
 
-parser/src/generated/*
+parser_library/src/generated/*
 .vs/
 build/
 .antlr/
