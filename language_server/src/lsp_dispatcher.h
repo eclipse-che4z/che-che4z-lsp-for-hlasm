@@ -5,29 +5,29 @@
 
 #include "server.h"
 
-namespace HlasmPlugin {
-namespace HlasmLanguageServer {
+namespace hlasm_plugin {
+namespace language_server {
 
-class LSPDispatcher
+class lsp_dispatcher
 {
 public:
-	LSPDispatcher(std::ostream & out, Server & server);
+	lsp_dispatcher(std::ostream & out, server & server);
 
-	int runLanguageServerLoop(std::istream * in);
-	static bool readMessage(std::istream * in, std::string & out);
-	static bool readLine(std::istream * in, std::string &out);
+	int run_server_loop(std::istream * in);
+	static bool read_message(std::istream * in, std::string & out);
+	static bool read_line(std::istream * in, std::string &out);
 
-	void writeMessage(const std::string & in);
+	void write_message(const std::string & in);
 
-	void reply(ID  id, Json & result);
-	void replyError(ID id, Error & result);
+	void reply(id  id, Json & result);
+	void reply_error(id id, error & result);
 	void notify(const std::string & method, Json & result);
 private:
-	Server & server;
-	std::ostream & out;
+	server & server_;
+	std::ostream & out_;
 };
 
-}//namespace HlasmLanguageServer
-}//namespace HlasmPlugin
+}//namespace language_server
+}//namespace hlasm_plugin
 
 #endif

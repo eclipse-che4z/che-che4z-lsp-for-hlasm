@@ -5,20 +5,20 @@
 #include <fstream>
 #include <string>
 
-namespace HlasmPlugin {
-namespace HlasmLanguageServer {
+namespace hlasm_plugin {
+namespace language_server {
 
-#define LOG_ERROR(x)    HlasmPlugin::HlasmLanguageServer::Logger::getInstance().log(x)
-#define LOG_WARNING(x)	HlasmPlugin::HlasmLanguageServer::Logger::getInstance().log(x)
-#define LOG_INFO(x)     HlasmPlugin::HlasmLanguageServer::Logger::getInstance().log(x)
+#define LOG_ERROR(x)    hlasm_plugin::language_server::logger::get_instance().log(x)
+#define LOG_WARNING(x)	hlasm_plugin::language_server::logger::get_instance().log(x)
+#define LOG_INFO(x)     hlasm_plugin::language_server::logger::get_instance().log(x)
 
-class Logger
+class logger
 {
 public:
 
-	static Logger & getInstance()
+	static logger & get_instance()
 	{
-		static Logger instance;
+		static logger instance;
 		return instance;
 	}
 
@@ -26,16 +26,16 @@ public:
 	void log(const char * data);
 
 protected:
-	std::string getCurrentTime();
+	std::string current_time();
 	
 private:
-	Logger();
-	~Logger();
-	std::ofstream m_file;
+	logger();
+	~logger();
+	std::ofstream file_;
 	
 };
 
-} //namespace HlasmLanguageServer
-} //namespace HlasmPlugin
+} //namespace language_server
+} //namespace hlasm_plugin
 #endif 
 

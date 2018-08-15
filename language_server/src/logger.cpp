@@ -6,33 +6,33 @@
 #include "logger.h"
 
 using namespace std;
-using namespace HlasmPlugin::HlasmLanguageServer;
+using namespace hlasm_plugin::language_server;
 
 const string logFileName = "hlasmplugin.log";
 
-Logger::Logger()
+logger::logger()
 {
-   m_file.open(logFileName.c_str(), ios::out);
+   file_.open(logFileName.c_str(), ios::out);
    
 }
 
-Logger::~Logger()
+logger::~logger()
 {
-   m_file.close();
+   file_.close();
 }
 
 
-void Logger::log(const std::string & data)
+void logger::log(const std::string & data)
 {
-   m_file << getCurrentTime() << "  " << data << endl;
+   file_ << current_time() << "  " << data << endl;
 }
 
-void Logger::log(const char * data)
+void logger::log(const char * data)
 {
-	m_file << getCurrentTime() << "  " << data << endl;
+	file_ << current_time() << "  " << data << endl;
 }
 
-string Logger::getCurrentTime()
+string logger::current_time()
 {
    string currTime;
    //Current date/time based on current time

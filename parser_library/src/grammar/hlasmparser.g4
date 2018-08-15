@@ -11,7 +11,7 @@ options {
 }
 
 @members {
-	HlasmPlugin::HlasmParserLibrary::HlasmLexer * lexer;
+	hlasm_plugin::parser_library::HlasmLexer * lexer;
 	bool hasOperands = false;
 	void identify(const std::string& token)
 	{

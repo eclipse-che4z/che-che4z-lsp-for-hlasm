@@ -25,15 +25,15 @@
 
 int main() {
 	using namespace std;
-	using namespace HlasmPlugin::HlasmLanguageServer;
+	using namespace hlasm_plugin::language_server;
 	
 	SET_BINARY_MODE(stdin, "rb");
 
-	Server server;
-	LSPDispatcher dispatcher{ cout, server};
+	server server;
+	lsp_dispatcher dispatcher{ cout, server};
 	
 	
-	int ret = dispatcher.runLanguageServerLoop(&cin);
+	int ret = dispatcher.run_server_loop(&cin);
 
 	return ret;
 }

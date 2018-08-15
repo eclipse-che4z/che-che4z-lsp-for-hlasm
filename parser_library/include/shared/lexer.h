@@ -9,8 +9,8 @@
 #include <map>
 #include <string_view>
 
-namespace HlasmPlugin {
-	namespace HlasmParserLibrary {
+namespace hlasm_plugin {
+	namespace parser_library {
 
 		using token_ptr = std::unique_ptr<antlr4::Token>;
 		using char_t = char32_t;

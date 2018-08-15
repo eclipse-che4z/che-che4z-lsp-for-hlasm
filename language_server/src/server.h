@@ -5,75 +5,75 @@
 
 #include "jsonrp.hpp"
 #include "json.hpp"
-namespace HlasmPlugin {
-namespace HlasmLanguageServer {
+namespace hlasm_plugin {
+namespace language_server {
 
-enum MessageType {
-	MTError = 1,
-	MTWarning = 2,
-	MTInfo = 3,
-	MTLog = 4
+enum class message_type {
+	MT_ERROR = 1,
+	MT_WARNING = 2,
+	MT_INFO = 3,
+	MT_LOG = 4
 };
 
-using ID = jsonrpcpp::Id;
-using Error = jsonrpcpp::Error;
+using id = jsonrpcpp::Id;
+using error = jsonrpcpp::Error;
 //                     void reply(ID id, Json result, Json error)
 // mby take string instead of json? the json is deserialized in the next step anyway
-using ResponseCallback = std::function<void(ID, Json&)>;
-using ResponseErrorCallback = std::function<void(ID, Error&)>;
-using NotifyCallback = std::function<void(const std::string &, Json&)>;
+using response_callback = std::function<void(id, Json&)>;
+using response_error_callback = std::function<void(id, error&)>;
+using notify_callback = std::function<void(const std::string &, Json&)>;
 
-using Parameter = jsonrpcpp::Parameter;
+using parameter = jsonrpcpp::Parameter;
 
-class Server
+class server
 {
-	using Method = std::function<void(ID, Parameter&)>;
-	using Notification = std::function<void(Parameter&)>;
+	using method = std::function<void(id, parameter&)>;
+	using notification = std::function<void(parameter&)>;
 
 public:
-	Server();
+	server();
 
-	void callMethod(jsonrpcpp::request_ptr request);
-	void callNotification(jsonrpcpp::notification_ptr notification);
+	void call_method(jsonrpcpp::request_ptr request);
+	void call_notification(jsonrpcpp::notification_ptr notification);
 
-	void registerCallbacks(ResponseCallback replyCb, NotifyCallback notifyCb, ResponseErrorCallback replyErrorCb);
+	void register_callbacks(response_callback replyCb, notify_callback notifyCb, response_error_callback replyErrorCb);
 
-	bool getShutdownRequestReceived();
-	bool getExitNotificationReceived();
+	bool is_shutdown_request_received();
+	bool is_exit_notification_received();
 
 private:
-	ResponseCallback reply;
-	NotifyCallback notify;
-	ResponseErrorCallback replyError;
+	response_callback reply_;
+	notify_callback notify_;
+	response_error_callback replyError_;
 
-	bool shutdownRequestReceived = false;
-	bool exitNotificationReceived = false;
+	bool shutdown_request_received_ = false;
+	bool exit_notification_received_ = false;
 
-	std::map<std::string, Method> Methods;
-	std::map<std::string, Notification> Notifications;
+	std::map<std::string, method> methods_;
+	std::map<std::string, notification> notifications_;
 
-	Parameter clientInitializeParams;
+	parameter client_initialize_params_;
 
 	
 
-	void registerMethods();
-	void registerNotifications();
+	void register_methods();
+	void register_notifications();
 
 	//requests
-	void onInitialize(ID id, Parameter & param);
-	void onShutdown(ID id, Parameter & param);
+	void on_initialize(id id, parameter & param);
+	void on_shutdown(id id, parameter & param);
 
 	
 
 	//notifications
-	void onExit(Parameter & param);
+	void on_exit(parameter & param);
 
 	//client notifications
-	void showMessage(const std::string & message, MessageType type);
+	void show_message(const std::string & message, message_type type);
 };
 
-}//namespace HlasmLanguageServer
-}//namespace HlasmPlugin
+}//namespace language_server
+}//namespace hlasm_plugin
 
 
 #endif

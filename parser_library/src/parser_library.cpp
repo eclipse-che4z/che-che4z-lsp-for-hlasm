@@ -3,10 +3,10 @@
 #include "../include/shared/parser_library.h"
 
 
-namespace HlasmPlugin {
-	namespace HlasmParserLibrary {
+namespace hlasm_plugin {
+	namespace parser_library {
 
-		void HlasmParserLibrary::parse(const std::string & src)
+		void parser_library::parse(const std::string & src)
 		{
 			antlr4::ANTLRInputStream input(src);
 			HlasmLexer lexer(&input);

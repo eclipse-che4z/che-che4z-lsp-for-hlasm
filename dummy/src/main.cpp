@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
 	while (std::getline(std::cin, input))
 	{
-		auto p = new HlasmPlugin::HlasmParserLibrary::HlasmParserLibrary();
+		auto p = new hlasm_plugin::parser_library::parser_library();
 		p->parse(std::move(input));
 	}
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	std::string content( (std::istreambuf_iterator<char>(ifs) ),
 	(std::istreambuf_iterator<char>()    ) );
 
-	auto p = new HlasmPlugin::HlasmParserLibrary::HlasmParserLibrary();
+	auto p = new hlasm_plugin::parser_library::parser_library();
 	p->parse(std::move(content));
 	std::cin.get();
 #endif

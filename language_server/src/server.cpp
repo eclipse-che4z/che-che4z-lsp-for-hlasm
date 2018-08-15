@@ -5,8 +5,8 @@
 #include "server.h"
 #include "logger.h"
 
-namespace HlasmPlugin {
-namespace HlasmLanguageServer {
+namespace hlasm_plugin {
+namespace language_server {
 
 
 enum TextDocumentSyncKind {
@@ -17,28 +17,28 @@ enum TextDocumentSyncKind {
 
 
 
-Server::Server()
+server::server()
 {
-	registerMethods();
-	registerNotifications();
+	register_methods();
+	register_notifications();
 }
 
 
 
-void Server::registerMethods()
+void server::register_methods()
 {
-	Methods.insert(std::make_pair("initialize", std::bind(&Server::onInitialize, this, std::placeholders::_1, std::placeholders::_2)));
-	Methods.insert(std::make_pair("shutdown", std::bind(&Server::onShutdown, this, std::placeholders::_1, std::placeholders::_2)));
+	methods_.insert(std::make_pair("initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2)));
+	methods_.insert(std::make_pair("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
-void Server::registerNotifications()
+void server::register_notifications()
 {
-	Notifications.insert(std::make_pair("exit", std::bind(&Server::onExit, this, std::placeholders::_1)));
+	notifications_.insert(std::make_pair("exit", std::bind(&server::on_exit, this, std::placeholders::_1)));
 }
 
-void Server::onInitialize(ID id, Parameter & param)
+void server::on_initialize(id id, parameter & param)
 {
-	clientInitializeParams = param;
+	client_initialize_params_ = param;
 
 	Json json =
 		Json{
@@ -68,44 +68,44 @@ void Server::onInitialize(ID id, Parameter & param)
 				}
 			} };
 
-	reply(id, json);
+	reply_(id, json);
 
 	//TODO initialization of parser library
 
-	showMessage("The capabilities of hlapv server were sent!", MessageType::MTInfo);
+	show_message("The capabilities of hlapv server were sent!", message_type::MT_INFO);
 }
 
-void Server::onShutdown(ID id, Parameter &)
+void server::on_shutdown(id id, parameter &)
 {
-	shutdownRequestReceived = true;
+	shutdown_request_received_ = true;
 
 	//perform shutdown
 	Json rep = Json{};
-	reply(id, rep);
+	reply_(id, rep);
 }
 
-void Server::onExit(Parameter &)
+void server::on_exit(parameter &)
 {
-	exitNotificationReceived = true;
+	exit_notification_received_ = true;
 }
 
-void Server::showMessage(const std::string & message, MessageType type)
+void server::show_message(const std::string & message, message_type type)
 {
 	Json m{
 		{ "type", (int)type },
 		{ "message", message}
 	};
-	notify("window/showMessage", m);
+	notify_("window/showMessage", m);
 }
 
 
-void Server::callMethod(jsonrpcpp::request_ptr request)
+void server::call_method(jsonrpcpp::request_ptr request)
 {
-	if (shutdownRequestReceived)
+	if (shutdown_request_received_)
 		LOG_WARNING("Request " + request->method + " was received after shutdown request.");
 
-	auto found = Methods.find(request->method);
-	if (found != Methods.end())
+	auto found = methods_.find(request->method);
+	if (found != methods_.end())
 	{
 		(*found).second(request->id, request->params);
 	}
@@ -118,10 +118,10 @@ void Server::callMethod(jsonrpcpp::request_ptr request)
 	}
 }
 
-void Server::callNotification(jsonrpcpp::notification_ptr request)
+void server::call_notification(jsonrpcpp::notification_ptr request)
 {
-	auto found = Notifications.find(request->method);
-	if (found != Notifications.end())
+	auto found = notifications_.find(request->method);
+	if (found != notifications_.end())
 	{
 		(*found).second(request->params);
 	}
@@ -135,22 +135,22 @@ void Server::callNotification(jsonrpcpp::notification_ptr request)
 }
 
 
-void Server::registerCallbacks(ResponseCallback replyCb, NotifyCallback notifyCb, ResponseErrorCallback replyErrorCb)
+void server::register_callbacks(response_callback replyCb, notify_callback notifyCb, response_error_callback replyErrorCb)
 {
-	reply = replyCb;
-	notify = notifyCb;
-	replyError = replyErrorCb;
+	reply_ = replyCb;
+	notify_ = notifyCb;
+	replyError_ = replyErrorCb;
 }
 
-bool Server::getExitNotificationReceived()
+bool server::is_exit_notification_received()
 {
-	return exitNotificationReceived;
+	return exit_notification_received_;
 }
 
-bool Server::getShutdownRequestReceived()
+bool server::is_shutdown_request_received()
 {
-	return shutdownRequestReceived;
+	return shutdown_request_received_;
 }
 
-} //namespace HlasmLanguageServer
-} //namespace HlasmPlugin
+} //namespace language_server
+} //namespace hlasm_plugin

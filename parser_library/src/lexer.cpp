@@ -8,8 +8,8 @@
 using namespace antlr4;
 using namespace std;
 
-using namespace HlasmPlugin;
-using namespace HlasmParserLibrary;
+using namespace hlasm_plugin;
+using namespace parser_library;
 
 std::map<std::basic_string_view<char_t>, HlasmLexer::Tokens> words = {
 		{ U"OR", HlasmLexer::OR},

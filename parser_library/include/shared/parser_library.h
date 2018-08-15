@@ -8,8 +8,8 @@
 #include "antlr4-runtime.h"
 #include "../generated/hlasmparser.h"
 
-namespace HlasmPlugin {
-	namespace HlasmParserLibrary {
+namespace hlasm_plugin {
+	namespace parser_library {
 
 		class UsefulTree
 		{
@@ -25,13 +25,13 @@ namespace HlasmPlugin {
 			void outTreeRec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream);
 		};
 
-		class HlasmParserLibrary
+		class parser_library
 		{
 		public:
-			HlasmParserLibrary() {};
+			parser_library() {};
 			void PARSER_LIBRARY_EXPORT parse(const std::string &);
 		};
-	} //namespace HlasmParserLibrary
+	} //namespace parser_library
 } //namespace HlasmPlugin
 
 
