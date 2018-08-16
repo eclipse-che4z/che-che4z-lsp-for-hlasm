@@ -9,7 +9,7 @@ namespace hlasm_plugin {
 		void parser_library::parse(const std::string & src)
 		{
 			antlr4::ANTLRInputStream input(src);
-			HlasmLexer lexer(&input);
+			lexer lexer(&input);
 			antlr4::CommonTokenStream tokens(&lexer);
 			tokens.fill();
 			generated::hlasmparser parser(&tokens);
@@ -48,7 +48,7 @@ namespace hlasm_plugin {
 				{
 					auto type = tokens_->get(tree->getSourceInterval().a)->getType();
 					stream << indent << vocab_.getSymbolicName(type);
-					if (type != HlasmLexer::EOLLN && type != HlasmLexer::SPACE) stream << ": " << "\"" << tree->getText() << "\"";
+					if (type != lexer::EOLLN && type != lexer::SPACE) stream << ": " << "\"" << tree->getText() << "\"";
 					stream << std::endl;
 				}
 			}

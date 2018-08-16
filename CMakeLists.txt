@@ -129,18 +129,18 @@ endif ()
 include(CTest)
 
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
-	include( ExternalAntlr4Cpp )
+	include( external_antlr4cpp )
 	include_directories( ${ANTLR4CPP_INCLUDE_DIRS} )
 	link_directories( ${ANTLR4CPP_LIBS} )
 	
-include( ExternalJsonRpcpp )
+include( external_jsonrpcpp )
 include_directories( ${JSONRPCPP_INCLUDE_DIRS} )
 link_directories( ${JSONRPCPP_LIBS} )
 
 #Testing setup
 if(BUILD_TESTING)
 	# Download and unpack googletest at configure time
-	configure_file(cmake/ExternalGoogleTest.cmake googletest-download/CMakeLists.txt)
+	configure_file(cmake/external_gtest.cmake googletest-download/CMakeLists.txt)
 	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
 	  RESULT_VARIABLE result
 	  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )

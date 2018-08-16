@@ -11,270 +11,281 @@ using namespace std;
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-std::map<std::basic_string_view<char_t>, HlasmLexer::Tokens> words = {
-		{ U"OR", HlasmLexer::OR},
-		{ U"AND", HlasmLexer::AND},
-		{ U"EQ", HlasmLexer::EQ},
-		{ U"LE", HlasmLexer::LE},
-		{ U"LT", HlasmLexer::LTx},
-		{ U"GT", HlasmLexer::GTx},
-		{ U"GE", HlasmLexer::GE}
+std::map<std::basic_string_view<char_t>, lexer::Tokens> words = {
+		{ U"OR", lexer::OR},
+		{ U"AND", lexer::AND},
+		{ U"EQ", lexer::EQ},
+		{ U"LE", lexer::LE},
+		{ U"LT", lexer::LTx},
+		{ U"GT", lexer::GTx},
+		{ U"GE", lexer::GE}
 };
 
-HlasmLexer::HlasmLexer(CharStream* input)
-	: input(input)
+lexer::lexer(CharStream* input)
+	: input_(input)
 {
-	current_word.reserve(80);
-	c = input->LA(1);
+	current_word_.reserve(80);
+	c_ = input->LA(1);
 }
 
-size_t HlasmLexer::getLine() const
+size_t lexer::getLine() const
 {
-	return line;
+	return line_;
 }
 
-size_t HlasmLexer::getCharPositionInLine()
+size_t lexer::getCharPositionInLine()
 {
-	return charPositionInLine;
+	return char_position_in_line_;
 }
 
-antlr4::CharStream* HlasmLexer::getInputStream()
+antlr4::CharStream* lexer::getInputStream()
 {
-	return input;
+	return input_;
 }
 
-std::string HlasmLexer::getSourceName()
+std::string lexer::getSourceName()
 {
-	return input->getSourceName();
+	return input_->getSourceName();
 }
 
 Ref<antlr4::TokenFactory<antlr4::CommonToken>>
-HlasmLexer::getTokenFactory()
+lexer::getTokenFactory()
 {
-	return factory;
+	return factory_;
 }
 
-bool HlasmLexer::doubleByteEnabled() const {
-	return DOUBLE_BYTE_ENABLED;
+bool lexer::doubleByteEnabled() const
+{
+	return double_byte_enabled_;
 }
 
-void HlasmLexer::setDoubleByteEnabled(bool dbe) {
-	DOUBLE_BYTE_ENABLED = dbe;
+void lexer::setDoubleByteEnabled(bool dbe)
+{
+	double_byte_enabled_ = dbe;
 }
 
 /*
  * check if token is after continuation
  * token is unmarked after the call
  */
-bool HlasmLexer::continuationBeforeToken(size_t token_id) {
-	if (tokens_after_continueation.find(token_id) != tokens_after_continueation.end()) {
-		tokens_after_continueation.erase(token_id);
+bool lexer::continuationBeforeToken(size_t token_id)
+{
+	if (tokens_after_continuation_.find(token_id) != tokens_after_continuation_.end())
+	{
+		tokens_after_continuation_.erase(token_id);
 		return true;
 	}
 	return false;
 }
 
-void HlasmLexer::createToken(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL)
+void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL)
 {
 	/* do not generate empty tokens (except EOF and EOLLN */
-	if (startCharIndex == input->index() && ttype != Token::EOF && ttype != EOLLN)
+	if (start_char_index_ == input_->index() && ttype != Token::EOF && ttype != EOLLN)
 		return;
 
-	auto source = make_pair(this, input);
+	auto source = make_pair(this, input_);
 	auto text = "";
 
 	/* mark first token after continuation */
-	if (channel == Channels::DEFAULT_CHANNEL && last_continuation != -1) {
-		last_continuation = static_cast<size_t>(-1);
-		tokens_after_continueation.emplace(last_token_id);
+	if (channel == Channels::DEFAULT_CHANNEL && last_continuation_ != -1)
+	{
+		last_continuation_ = static_cast<size_t>(-1);
+		tokens_after_continuation_.emplace(last_token_id_);
 	}
 
 	/* record last continuation */
 	if (ttype == CONTINUATION)
-		last_continuation = last_token_id;
+		last_continuation_ = last_token_id_;
 
-	last_token_id++;
+	last_token_id_++;
 
-	token_queue.push(factory->create(source, ttype, text, channel,
-		startCharIndex, input->index() - 1,
-		startLine, startCharPositionInLine));
+	token_queue_.push(factory_->create(source, ttype, text, channel,
+		start_char_index_, input_->index() - 1,
+		start_line_, start_char_position_in_line_));
 }
 
-void HlasmLexer::consume() {
-	if (c == '\n') {
-		line++;
-		charPositionInLine = static_cast<size_t>(-1);
+void lexer::consume()
+{
+	if (c_ == '\n')
+	{
+		line_++;
+		char_position_in_line_ = static_cast<size_t>(-1);
 	}
 
-	if (c != CharStream::EOF)
-		input->consume();
+	if (c_ != CharStream::EOF)
+		input_->consume();
 
-	c = (char_t)input->LA(1);
-	if (c == '\t')
-		charPositionInLine += TAB_SIZE;
+	c_ = (char_t)input_->LA(1);
+	if (c_ == '\t')
+		char_position_in_line_ += tab_size_;
 	else
-		charPositionInLine++;
+		char_position_in_line_++;
 }
 
-bool HlasmLexer::EOF() const
+bool lexer::eof() const
 {
-	return c == CharStream::EOF;
+	return c_ == CharStream::EOF;
 }
 
 /* set start token info */
-void HlasmLexer::startToken()
+void lexer::start_token()
 {
-	startCharIndex = input->index();
-	startLine = line;
-	startCharPositionInLine = charPositionInLine;
+	start_char_index_ = input_->index();
+	start_line_ = line_;
+	start_char_position_in_line_ = char_position_in_line_;
 }
 
-token_ptr HlasmLexer::nextToken()
+token_ptr lexer::nextToken()
 {
 	while (true) {
-		startToken();
+		start_token();
 
-		if (!token_queue.empty())
+		if (!token_queue_.empty())
 		{
-			auto t = move(token_queue.front());
-			token_queue.pop();
+			auto t = move(token_queue_.front());
+			token_queue_.pop();
 			return t;
 		}
 
-		if (EOF()) {
-			createToken(EOLLN);
-			createToken(Token::EOF);
+		if (eof())
+		{
+			create_token(EOLLN);
+			create_token(Token::EOF);
 			continue;
 		}
 
-		else if (DOUBLE_BYTE_ENABLED)
-			checkContinuation();
+		else if (double_byte_enabled_)
+			check_continuation();
 
-		else if (charPositionInLine == END && !isspace(c) && CONTINUATION_ENABLED)
-			lexContinuation();
+		else if (char_position_in_line_ == end_ && !isspace(c_) && continuation_enabled_)
+			lex_continuation();
 
-		else if (charPositionInLine >= END)
-			lexEnd(true);
+		else if (char_position_in_line_ >= end_)
+			lex_end(true);
 
-		else if (charPositionInLine < BEGIN)
-			lexBegin();
+		else if (char_position_in_line_ < begin_)
+			lex_begin();
 
 		else {
-			lexTokens();
+			lex_tokens();
 		}
 	}
 }
 
-void HlasmLexer::lexTokens() {
+void lexer::lex_tokens()
+{
 
-	switch (c)
+	switch (c_)
 	{
 	case '*':
-		if (charPositionInLine == BEGIN) {
-			if (isProcess()) {
-				lexProcess();
+		if (char_position_in_line_ == begin_)
+		{
+			if (is_process()) {
+				lex_process();
 				break;
 			}
-			lexComment();
+			lex_comment();
 			break;
 		}
-		else {
+		else
+		{
 			consume();
-			createToken(ASTERISK);
+			create_token(ASTERISK);
 		}
 		break;
 
 	case '.':
 		/* macro comment */
-		if (charPositionInLine == BEGIN && input->LA(2) == '*') {
-			lexComment();
+		if (char_position_in_line_ == begin_ && input_->LA(2) == '*') {
+			lex_comment();
 			break;
 		}
 		else {
 			consume();
-			createToken(DOT);
+			create_token(DOT);
 		}
 		break;
 
 	case ' ':
-		lexSpace();
+		lex_space();
 		break;
 
 	case '-':
 		consume();
-		createToken(MINUS);
+		create_token(MINUS);
 		break;
 
 	case '+':
 		consume();
-		createToken(PLUS);
+		create_token(PLUS);
 		break;
 
 	case '=':
 		consume();
-		createToken(EQUALS);
+		create_token(EQUALS);
 		break;
 
 	case '<':
 		consume();
-		createToken(LT);
+		create_token(LT);
 		break;
 
 	case '>':
 		consume();
-		createToken(GT);
+		create_token(GT);
 		break;
 
 	case ',':
 		consume();
-		createToken(COMMA);
+		create_token(COMMA);
 		break;
 
 	case '(':
 		consume();
-		createToken(LPAR);
+		create_token(LPAR);
 		break;
 
 	case ')':
 		consume();
-		createToken(RPAR);
+		create_token(RPAR);
 		break;
 
 	case '\'':
-		apostrophes++;
+		apostrophes_++;
 		consume();
-		createToken(APOSTROPHE);
+		create_token(APOSTROPHE);
 		break;
 
 	case '/':
 		consume();
-		createToken(SLASH);
+		create_token(SLASH);
 		break;
 
 	case '&':
 		consume();
-		createToken(AMPERSAND);
+		create_token(AMPERSAND);
 		break;
 
 	case '\n':
 		consume();
-		createToken(EOLLN);
+		create_token(EOLLN);
 		break;
 
 	case '|':
 		consume();
-		createToken(VERTICAL);
+		create_token(VERTICAL);
 		break;
 
 	default:
-		lexWord();
+		lex_word();
 		break;
 	}
 }
 
-bool HlasmLexer::identifierDivider() const
+bool lexer::identifier_divider() const
 {
-	switch (c)
+	switch (c_)
 	{
 	case '*':
 	case '.':
@@ -296,184 +307,198 @@ bool HlasmLexer::identifierDivider() const
 	}
 }
 
-void HlasmLexer::lexBegin() {
-	startToken();
-	while (charPositionInLine < BEGIN)
+void lexer::lex_begin()
+{
+	start_token();
+	while (char_position_in_line_ < begin_)
 		consume();
-	createToken(IGNORED, HIDDEN_CHANNEL);
+	create_token(IGNORED, HIDDEN_CHANNEL);
 }
 
-void HlasmLexer::lexEnd(bool eolln) {
-	startToken();
-	while (c != '\n' && !EOF())
+void lexer::lex_end(bool eolln)
+{
+	start_token();
+	while (c_ != '\n' && !eof())
 		consume();
-	if (!EOF()) {
+	if (!eof()) {
 		consume();
 		if (eolln)
-			createToken(EOLLN);
+			create_token(EOLLN);
 	}
-	if (DOUBLE_BYTE_ENABLED)
-		checkContinuation();
-	createToken(IGNORED, HIDDEN_CHANNEL);
+	if (double_byte_enabled_)
+		check_continuation();
+	create_token(IGNORED, HIDDEN_CHANNEL);
 }
 
-void HlasmLexer::lexComment() {
-	while (true) {
+void lexer::lex_comment()
+{
+	while (true)
+	{
 
-		startToken();
-		while (charPositionInLine < END && !EOF() && c != '\n')
+		start_token();
+		while (char_position_in_line_ < end_ && !eof() && c_ != '\n')
 			consume();
-		createToken(COMMENT, HIDDEN_CHANNEL);
+		create_token(COMMENT, HIDDEN_CHANNEL);
 
-		if (!isspace(c) && !EOF() && CONTINUATION_ENABLED)
-			lexContinuation();
+		if (!isspace(c_) && !eof() && continuation_enabled_)
+			lex_continuation();
 		else {
-			consumeNewLine();
+			consume_new_line();
 			break;
 		}
 	}
 }
 
-void HlasmLexer::consumeNewLine() {
-	if (c == '\r')
+void lexer::consume_new_line()
+{
+	if (c_ == '\r')
 		consume();
-	if (c == '\n')
+	if (c_ == '\n')
 		consume();
 }
 
 /* lex continuation and ignores */
-void HlasmLexer::lexContinuation() {
-	startToken();
+void lexer::lex_continuation()
+{
+	start_token();
 
 	/* lex continuation */
-	while (charPositionInLine <= END_DEFAULT)
+	while (char_position_in_line_ <= end_default_)
 		consume();
 
 	/* reset END */
-	END = END_DEFAULT;
+	end_ = end_default_;
 
-	createToken(CONTINUATION, HIDDEN_CHANNEL);
+	create_token(CONTINUATION, HIDDEN_CHANNEL);
 
-	lexEnd(false);
-	lexBegin();
+	lex_end(false);
+	lex_begin();
 
 	/* lex continuation */
-	startToken();
-	while (charPositionInLine < CONTINUE)
+	start_token();
+	while (char_position_in_line_ < continue_)
 		consume();
-	createToken(CONTINUATION, HIDDEN_CHANNEL);
+	create_token(CONTINUATION, HIDDEN_CHANNEL);
 }
 
 /* if DOUBLE_BYTE_ENABLED check start of continuation for current line */
-void HlasmLexer::checkContinuation() {
-	auto cc = input->LA(END_DEFAULT + 1);
-	END = END_DEFAULT;
+void lexer::check_continuation()
+{
+	auto cc = input_->LA(end_default_ + 1);
+	end_ = end_default_;
 	if (cc != CharStream::EOF && !isspace(cc)) {
 		do {
-			if (input->LA(END) != cc)
+			if (input_->LA(end_) != cc)
 				break;
-			END--;
-		} while (END > BEGIN);
+			end_--;
+		} while (end_ > begin_);
 	}
 }
 
-void HlasmLexer::lexSpace() {
-	while (c == ' ' && charPositionInLine < END)
+void lexer::lex_space()
+{
+	while (c_ == ' ' && char_position_in_line_ < end_)
 		consume();
-	createToken(SPACE, DEFAULT_CHANNEL);
+	create_token(SPACE, DEFAULT_CHANNEL);
 }
 
-void HlasmLexer::lexWord() {
-	bool ord = isalpha(c);
+void lexer::lex_word()
+{
+	bool ord = isalpha(c_);
 
-	current_word.clear();
-	while (!isspace(c) && !EOF() && !identifierDivider() && charPositionInLine < END)
+	current_word_.clear();
+	while (!isspace(c_) && !eof() && !identifier_divider() && char_position_in_line_ < end_)
 	{
-		current_word.push_back(toupper(c));
-		ord &= isalnum(c) || isalpha(c);
+		current_word_.push_back(toupper(c_));
+		ord &= isalnum(c_) || isalpha(c_);
 		consume();
 	}
 
-	if (current_word.length() < 4) {
-		auto f = words.find(current_word);
+	if (current_word_.length() < 4) {
+		auto f = words.find(current_word_);
 		if (f != words.end()) {
-			return createToken(f->second);
+			return create_token(f->second);
 		}
 	}
 
-	if (ord && current_word.length() <= 63)
-		createToken(ORDSYMBOL);
+	if (ord && current_word_.length() <= 63)
+		create_token(ORDSYMBOL);
 	else
-		createToken(IDENTIFIER);
+		create_token(IDENTIFIER);
 }
 
-bool HlasmLexer::setBegin(size_t begin) {
-	if (begin >= 1 && begin <= 40) {
-		BEGIN = begin;
-		return true;
-	}
-	return false;
-}
-
-bool HlasmLexer::setEnd(size_t end) {
-	if (end == 80)
-		CONTINUATION_ENABLED = false;
-	if (end >= 41 && end <= 80) {
-		END_DEFAULT = end;
-		END = END_DEFAULT;
-		return true;
-	}
-	return false;
-}
-
-bool HlasmLexer::setContinue(size_t cont) {
-	if (cont >= 2 && cont <= 40 && BEGIN < cont) {
-		CONTINUE = cont;
-		return true;
-	}
-	return false;
-}
-
-void HlasmLexer::setContinuationEnabled(bool enabled)
+bool lexer::set_begin(size_t begin)
 {
-	CONTINUATION_ENABLED = enabled;
+	if (begin >= 1 && begin <= 40) {
+		begin_ = begin;
+		return true;
+	}
+	return false;
 }
 
-bool HlasmLexer::isProcess() const
+bool lexer::set_end(size_t end)
+{
+	if (end == 80)
+		continuation_enabled_ = false;
+	if (end >= 41 && end <= 80) {
+		end_default_ = end;
+		end_ = end_default_;
+		return true;
+	}
+	return false;
+}
+
+bool lexer::set_continue(size_t cont)
+{
+	if (cont >= 2 && cont <= 40 && begin_ < cont) {
+		continue_ = cont;
+		return true;
+	}
+	return false;
+}
+
+void lexer::set_continuation_enabled(bool enabled)
+{
+	continuation_enabled_ = enabled;
+}
+
+bool lexer::is_process() const
 {
 	if (
-		((ICTL && line <= 11) || (!ICTL && line <= 10))
-		&& toupper(input->LA(2)) == 'P'
-		&& toupper(input->LA(3)) == 'R'
-		&& toupper(input->LA(4)) == 'O'
-		&& toupper(input->LA(5)) == 'C'
-		&& toupper(input->LA(6)) == 'E'
-		&& toupper(input->LA(7)) == 'S'
-		&& toupper(input->LA(8)) == 'S')
+		((ictl_ && line_ <= 11) || (!ictl_ && line_ <= 10))
+		&& toupper(input_->LA(2)) == 'P'
+		&& toupper(input_->LA(3)) == 'R'
+		&& toupper(input_->LA(4)) == 'O'
+		&& toupper(input_->LA(5)) == 'C'
+		&& toupper(input_->LA(6)) == 'E'
+		&& toupper(input_->LA(7)) == 'S'
+		&& toupper(input_->LA(8)) == 'S')
 		return true;
 	return false;
 }
 
-void HlasmLexer::setICTL() {
-	ICTL = true;
+void lexer::set_ictl()
+{
+	ictl_ = true;
 }
 
-void HlasmLexer::lexProcess() {
+void lexer::lex_process()
+{
 	/* lex *PROCESS */
-	startToken();
+	start_token();
 	for (size_t i = 0; i < 8; i++)
 		consume();
-	createToken(PROCESS);
+	create_token(PROCESS);
 
-	startToken();
-	lexSpace();
+	start_token();
+	lex_space();
 
-	apostrophes = 0;
-	END++; /* including END column */
-	while (!EOF() && charPositionInLine < END && c != '\n' && (apostrophes % 2 == 1 || (apostrophes % 2 == 0 && c != ' '))) {
-		startToken();
-		lexTokens();
+	apostrophes_ = 0;
+	end_++; /* including END column */
+	while (!eof() && char_position_in_line_ < end_ && c_ != '\n' && (apostrophes_ % 2 == 1 || (apostrophes_ % 2 == 0 && c_ != ' '))) {
+		start_token();
+		lex_tokens();
 	}
-	END--;
-	lexEnd(true);
+	end_--;
+	lex_end(true);
 }

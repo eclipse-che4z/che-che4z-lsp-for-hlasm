@@ -11,7 +11,7 @@ options {
 }
 
 @members {
-	hlasm_plugin::parser_library::HlasmLexer * lexer;
+	hlasm_plugin::parser_library::lexer * lexer;
 	bool has_operands = false;
 	void identify(const std::string& token)
 	{
@@ -34,13 +34,13 @@ options {
 program : ictl? process_instruction* programBlock EOF 
 			;
 
-ictl: SPACE ORDSYMBOL { $ORDSYMBOL.text == "ICTL" }? SPACE ictl_begin EOLLN{ lexer->setICTL(); };
+ictl: SPACE ORDSYMBOL { $ORDSYMBOL.text == "ICTL" }? SPACE ictl_begin EOLLN{ lexer->set_ictl(); };
 
 ictl_begin: IDENTIFIER ictl_end? 
 				{ 
 					size_t idx = 0;
 					auto val = std::stoi($IDENTIFIER.text, &idx);
-					if(idx > 0 || !lexer->setBegin(val))
+					if(idx > 0 || !lexer->set_begin(val))
 						throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER); 
 				}
 			;
@@ -49,18 +49,18 @@ ictl_end: COMMA IDENTIFIER ictl_continue
 				{ 
 					size_t idx = 0;
 					auto val = std::stoi($IDENTIFIER.text, &idx);
-					if(idx > 0 || !lexer->setEnd(val))
+					if(idx > 0 || !lexer->set_end(val))
 						throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER); 
 				}
 			;
 
-ictl_continue:  { lexer->setContinuationEnabled(false); }
+ictl_continue:  { lexer->set_continuation_enabled(false); }
 
                 | COMMA IDENTIFIER 
 					{ 
 						size_t idx = 0;
 						auto val = std::stoi($IDENTIFIER.text, &idx);
-						if(idx > 0 || !lexer->setContinue(val))
+						if(idx > 0 || !lexer->set_continue(val))
 							throw RecognitionException("invalid ICTL parameter value", this, _input, _ctx, $IDENTIFIER); 
 					}
 				;

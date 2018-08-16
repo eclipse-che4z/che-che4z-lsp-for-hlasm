@@ -14,14 +14,14 @@ namespace hlasm_plugin {
 
 		using token_ptr = std::unique_ptr<antlr4::Token>;
 		using char_t = char32_t;
-		class PARSER_LIBRARY_EXPORT HlasmLexer : public antlr4::TokenSource
+		class PARSER_LIBRARY_EXPORT lexer : public antlr4::TokenSource
 		{
 		public:
-			HlasmLexer(antlr4::CharStream*);
+			lexer(antlr4::CharStream*);
 
-			HlasmLexer(const HlasmLexer &) = delete;
-			HlasmLexer& operator=(const HlasmLexer&) = delete;
-			HlasmLexer(HlasmLexer &&) = delete;
+			lexer(const lexer &) = delete;
+			lexer& operator=(const lexer&) = delete;
+			lexer(lexer &&) = delete;
 
 			token_ptr nextToken() override;
 
@@ -51,64 +51,66 @@ namespace hlasm_plugin {
 				HIDDEN_CHANNEL = 1
 			};
 
-			bool setBegin(size_t);
-			bool setEnd(size_t);
-			bool setContinue(size_t);
-			void setContinuationEnabled(bool);
-			void setICTL();
+			bool set_begin(size_t);
+			bool set_end(size_t);
+			bool set_continue(size_t);
+			void set_continuation_enabled(bool);
+			void set_ictl();
 
 		protected:
-			void createToken(size_t, size_t);
+			void create_token(size_t, size_t);
 			void consume();
 
 		private:
-			std::set<size_t> tokens_after_continueation;
-			size_t last_token_id = 0;
-			size_t last_continuation = static_cast<size_t>(-1);
-			std::queue<token_ptr> token_queue;
+			std::set<size_t> tokens_after_continuation_;
+			size_t last_token_id_ = 0;
+			size_t last_continuation_ = static_cast<size_t>(-1);
+			std::queue<token_ptr> token_queue_;
 
-			bool DOUBLE_BYTE_ENABLED = false;
-			bool CONTINUATION_ENABLED = true;
-			bool ICTL = false;
-			size_t BEGIN = 0;
-			size_t END_DEFAULT = 71;
-			size_t END = 71;
-			size_t CONTINUE = 15;
+			bool double_byte_enabled_ = false;
+			bool continuation_enabled_ = true;
+			bool ictl_ = false;
+			size_t begin_ = 0;
+			size_t end_default_ = 71;
+			size_t end_ = 71;
+			size_t continue_ = 15;
 
-			size_t TAB_SIZE = 1;
+			size_t tab_size_ = 1;
 
-			std::basic_string<char_t> current_word;
+			std::basic_string<char_t> current_word_;
 
-			const Ref<antlr4::TokenFactory<antlr4::CommonToken>> factory
+			const Ref<antlr4::TokenFactory<antlr4::CommonToken>> factory_
 				= antlr4::CommonTokenFactory::DEFAULT;
-			antlr4::CharStream* input;
+			antlr4::CharStream* input_;
 
-			size_t c;
+			size_t c_;
 
-			size_t line = 1;
-			size_t charPositionInLine = 0;
+			size_t line_ = 1;
+			size_t char_position_in_line_ = 0;
 
-			size_t startCharIndex = 0;
-			size_t startLine = 0;
-			size_t startCharPositionInLine = 0;
+			size_t start_char_index_ = 0;
+			size_t start_line_ = 0;
+			size_t start_char_position_in_line_ = 0;
 
-			bool EOF() const;
-			bool identifierDivider() const;
+			size_t apostrophes_ = 0;
 
-			void startToken();
-			void lexBegin();
-			void lexEnd(bool);
-			void lexComment();
-			void lexContinuation();
-			void lexSpace();
-			void lexWord();
-			void checkContinuation();
-			void lexTokens();
-			void consumeNewLine();
-			void lexProcess();
+			bool eof() const;
+			bool identifier_divider() const;
 
-			size_t apostrophes = 0;
-			bool isProcess() const;
+			void start_token();
+			void lex_begin();
+			void lex_end(bool);
+			void lex_comment();
+			void lex_continuation();
+			void lex_space();
+			void lex_word();
+			void check_continuation();
+			void lex_tokens();
+			void consume_new_line();
+			void lex_process();
+
+			
+			bool is_process() const;
 		};
 	}
 }
