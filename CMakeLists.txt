@@ -165,8 +165,8 @@ if(BUILD_TESTING)
 					 EXCLUDE_FROM_ALL)
 
 	
-	target_include_directories(gmock_main SYSTEM BEFORE INTERFACE
-    "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
+	#target_include_directories(gmock_main SYSTEM BEFORE INTERFACE
+    #"${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
 endif()
 
 # Global link directories

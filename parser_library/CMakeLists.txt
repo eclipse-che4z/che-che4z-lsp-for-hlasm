@@ -37,10 +37,18 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4 ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
    )
 
+set(LIB_NOT_SHARED_SRC    
+    ${PROJECT_SOURCE_DIR}/src/context/common_types.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/hlasm_context.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/variable.cpp)
+
 #Generate the shared library from the library sources
 add_library(parser_library SHARED
     ${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp
+	${LIB_NOT_SHARED_SRC}
 	${GENERATED_SRC}
 )
 
@@ -66,6 +74,7 @@ add_dependencies(parser_library antlr4jar GenerateParser)
 
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp
+    ${LIB_NOT_SHARED_SRC}
 	${GENERATED_SRC})
 	target_link_libraries(library_test gmock_main)
 	target_link_libraries(library_test antlr4-runtime)
