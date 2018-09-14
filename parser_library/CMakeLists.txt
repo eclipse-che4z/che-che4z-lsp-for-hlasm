@@ -42,14 +42,20 @@ set(LIB_NOT_SHARED_SRC
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/variable.cpp)
+    ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
+    ${PROJECT_SOURCE_DIR}/src/workspace.cpp
+    ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
+    ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
+    ${PROJECT_SOURCE_DIR}/src/library.cpp
+    )
 
 #Generate the shared library from the library sources
 add_library(parser_library SHARED
     ${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp
+    ${PROJECT_SOURCE_DIR}/src/workspace_manager.cpp
 	${LIB_NOT_SHARED_SRC}
-	${GENERATED_SRC}
+    ${GENERATED_SRC}
 )
 
 generate_export_header(parser_library
@@ -69,6 +75,7 @@ ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build ev
         "${PROJECT_BINARY_DIR}/../bin/" )  
 
 add_dependencies(parser_library antlr4jar GenerateParser)
+add_dependencies(parser_library jsonrpcppext)
 
 
 

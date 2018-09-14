@@ -137,6 +137,10 @@ include( external_jsonrpcpp )
 include_directories( ${JSONRPCPP_INCLUDE_DIRS} )
 link_directories( ${JSONRPCPP_LIBS} )
 
+include(external_uri)
+include_directories( ${URI_INCLUDE_DIRS} )
+link_directories( ${URI_LIBS} )
+
 #Testing setup
 if(BUILD_TESTING)
 	# Download and unpack googletest at configure time
@@ -164,9 +168,6 @@ if(BUILD_TESTING)
 					 ${CMAKE_BINARY_DIR}/googletest-build
 					 EXCLUDE_FROM_ALL)
 
-	
-	#target_include_directories(gmock_main SYSTEM BEFORE INTERFACE
-    #"${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
 endif()
 
 # Global link directories

@@ -21,7 +21,7 @@ struct macro_arg
 	macro_arg(macro_data_ptr data, id_index name) :data(std::move(data)), id(name) {}
 };
 
-class macro_invocation;
+struct macro_invocation;
 using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 
 //class representing macro definition

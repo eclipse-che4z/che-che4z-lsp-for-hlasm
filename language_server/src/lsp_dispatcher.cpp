@@ -26,6 +26,7 @@ lsp_dispatcher::lsp_dispatcher(std::ostream & out, server & server) : out_(out),
 
 void lsp_dispatcher::write_message(const std::string & in)
 {//copy of in is probably needed
+	LOG_INFO(in);
 	out_ << "Content-Length: " << in.size() << LSPENDLINE << LSPENDLINE;
 	out_ << in;
 }
@@ -80,7 +81,7 @@ bool lsp_dispatcher::read_message(std::istream * in, std::string & out)
 	// delimited  by \r\n, and terminated by an empty line (\r\n).
 	unsigned int content_length = 0;
 	std::string line;
-	int content_len = std::string("Content-Length: ").size();
+	size_t content_len = std::string("Content-Length: ").size();
 
 	while (true) {
 		if (in->eof() || in->fail() || !read_line(in, line))

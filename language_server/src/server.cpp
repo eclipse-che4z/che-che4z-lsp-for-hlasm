@@ -5,20 +5,16 @@
 #include "server.h"
 #include "logger.h"
 
+#include "feature_workspace_folders.h"
+#include "feature_text_synchronization.h"
+
 namespace hlasm_plugin {
 namespace language_server {
 
-
-enum TextDocumentSyncKind {
-	None = 0,
-	Full = 1,
-	Incremental = 2
-};
-
-
-
 server::server()
 {
+	features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_));
+	features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_));
 	register_methods();
 	register_notifications();
 }
@@ -29,53 +25,74 @@ void server::register_methods()
 {
 	methods_.insert(std::make_pair("initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2)));
 	methods_.insert(std::make_pair("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2)));
+
+	for (auto & f : features_)
+	{
+		f->register_methods(methods_);
+	}
 }
 
 void server::register_notifications()
 {
 	notifications_.insert(std::make_pair("exit", std::bind(&server::on_exit, this, std::placeholders::_1)));
+
+	for (auto & f : features_)
+	{
+		f->register_notifications(notifications_);
+	}
 }
 
-void server::on_initialize(id id, parameter & param)
+void server::on_initialize(id id, const parameter & param)
 {
 	client_initialize_params_ = param;
 
-	Json json =
-		Json{
-			{  "capabilities",
-			Json{
-					{ "textDocumentSync", (int)TextDocumentSyncKind::Incremental },
-					{ "documentFormattingProvider", false },
-					{ "documentRangeFormattingProvider", false },
-					{ "codeActionProvider", false },
-					{ "completionProvider",
-						Json{
-								{ "resolveProvider", false },
-								{ "triggerCharacters",{ ".", ">", ":", "&" } }, //TODO
-							}
-					},
-					{ "signatureHelpProvider",
-						Json{
-								{ "triggerCharacters",{ "(", "," } },
-							}
-					},
-					{ "definitionProvider", false },
-					{ "documentHighlightProvider", false },
-					{ "hoverProvider", false },
-					{ "renameProvider", false },
-					{ "documentSymbolProvider", false },
-					{ "workspaceSymbolProvider", false },
+	for (auto & f : features_)
+	{
+		f->initialize_feature(param);
+	}
+
+	//send server capabilities back
+	json capabilities = json
+	{
+		{
+			"capabilities", Json
+			{
+				{ "documentFormattingProvider", false },
+				{ "documentRangeFormattingProvider", false },
+				{ "codeActionProvider", false },
+				{ "completionProvider",
+					Json{
+							{ "resolveProvider", false },
+							{ "triggerCharacters",{ ".", ">", ":", "&" } }, //TODO
+						}
+				},
+				{ "signatureHelpProvider",
+					Json{
+							{ "triggerCharacters",{ "(", "," } },
+						}
+				},
+				{ "definitionProvider", false },
+				{ "documentHighlightProvider", false },
+				{ "hoverProvider", false },
+				{ "renameProvider", false },
+				{ "documentSymbolProvider", false },
+				{ "workspaceSymbolProvider", false },
+				
 				}
 			} };
 
-	reply_(id, json);
+	for (auto & f : features_)
+	{
+		json feature_cap = f->register_capabilities();
+		capabilities["capabilities"].insert(feature_cap.begin(), feature_cap.end());
+	}
 
-	//TODO initialization of parser library
+	reply_(id, capabilities);
 
-	show_message("The capabilities of hlapv server were sent!", message_type::MT_INFO);
+	show_message("The capabilities of hlasm language server were sent!", message_type::MT_INFO);
 }
 
-void server::on_shutdown(id id, parameter &)
+void server::on_shutdown(id id, const parameter &)
 {
 	shutdown_request_received_ = true;
 
@@ -84,7 +101,7 @@ void server::on_shutdown(id id, parameter &)
 	reply_(id, rep);
 }
 
-void server::on_exit(parameter &)
+void server::on_exit(const parameter &)
 {
 	exit_notification_received_ = true;
 }
@@ -107,14 +124,20 @@ void server::call_method(jsonrpcpp::request_ptr request)
 	auto found = methods_.find(request->method);
 	if (found != methods_.end())
 	{
-		(*found).second(request->id, request->params);
+		try
+		{
+			(*found).second(request->id, request->params.to_json());
+		}
+		catch (nlohmann::basic_json<>::exception e)
+		{
+			LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
+		}
 	}
 	else
 	{
 		std::ostringstream ss;
 		ss << "Method " << request->method << " is not available on this server.";
 		LOG_WARNING(ss.str());
-
 	}
 }
 
@@ -123,7 +146,13 @@ void server::call_notification(jsonrpcpp::notification_ptr request)
 	auto found = notifications_.find(request->method);
 	if (found != notifications_.end())
 	{
-		(*found).second(request->params);
+		try {
+			found->second(request->params.to_json());
+		}
+		catch (nlohmann::basic_json<>::exception e)
+		{
+			LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
+		}
 	}
 	else
 	{
