@@ -1,9 +1,10 @@
 #include "gmock/gmock.h"
 #include "../include/shared/parser_library.h"
 #include "context_test.h"
+#include "parser_test.h"
+#include "lexer_test.h"
 
 #include "workspace_test.h"
-
 
 
 int main(int argc, char **argv)

@@ -11,20 +11,6 @@
 namespace hlasm_plugin {
 	namespace parser_library {
 
-		class useful_tree
-		{
-		public:
-			useful_tree(antlr4::ParserRuleContext * _tree, generated::hlasmparser & parser);
-			void out_tree(std::ostream &stream);
-		private:
-			antlr4::ParserRuleContext * tree_;
-			antlr4::dfa::Vocabulary &vocab_;
-			std::vector<std::string> rules_;
-			antlr4::TokenStream *tokens_;
-
-			void out_tree_rec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream);
-		};
-
 		class parser_library
 		{
 		public:

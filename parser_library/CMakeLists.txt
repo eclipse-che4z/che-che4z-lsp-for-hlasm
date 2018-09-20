@@ -37,24 +37,34 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4 ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
    )
 
-set(LIB_NOT_SHARED_SRC    
+set(LIB_NOT_EXPORTED_SRC    
     ${PROJECT_SOURCE_DIR}/src/context/common_types.cpp
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
     ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
+	${PROJECT_SOURCE_DIR}/src/parser_tools.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/keyword_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/arithmetic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/logic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/character_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ebcdic_encoding.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/expression.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/library.cpp
-    )
+)
 
 #Generate the shared library from the library sources
 add_library(parser_library SHARED
     ${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp
+    ${PROJECT_SOURCE_DIR}/src/token.cpp
+    ${PROJECT_SOURCE_DIR}/src/token_factory.cpp
+    ${PROJECT_SOURCE_DIR}/src/input_source.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace_manager.cpp
-	${LIB_NOT_SHARED_SRC}
+	${LIB_NOT_EXPORTED_SRC}
     ${GENERATED_SRC}
 )
 
@@ -81,12 +91,19 @@ add_dependencies(parser_library jsonrpcppext)
 
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp
-    ${LIB_NOT_SHARED_SRC}
+    ${LIB_NOT_EXPORTED_SRC}
 	${GENERATED_SRC})
+	add_custom_target(library_tests_copy
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
+
 	target_link_libraries(library_test gmock_main)
 	target_link_libraries(library_test antlr4-runtime)
 	target_link_libraries(library_test parser_library)
+	add_dependencies(library_test library_tests_copy)
 	add_dependencies(library_test antlr4jar)
 	add_dependencies(library_test parser_library)
-	gtest_discover_tests(library_test)
+    gtest_discover_tests(library_test
+        TIMEOUT 10000
+        DISCOVERY_TIMEOUT 10000)
 endif()

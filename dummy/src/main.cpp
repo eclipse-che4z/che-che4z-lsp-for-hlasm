@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
 	(std::istreambuf_iterator<char>()    ) );
 
 	auto p = new hlasm_plugin::parser_library::parser_library();
-	p->parse(std::move(content));
-	std::cin.get();
+	p->parse(content);
+	//std::cin.get();
 #endif
 	return 0;
 }

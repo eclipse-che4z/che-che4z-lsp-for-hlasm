@@ -1,0 +1,5 @@
+        AINSERT 'test string1',FRONT
+        AINSERT 'test string2',BACK
+&SYMBOL AREAD
+This does not go to symbol
+     INSTR 1,2,3

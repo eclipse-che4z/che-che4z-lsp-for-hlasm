@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         uriConverters: {
             code2Protocol: (value: vscode.Uri) => value.toString(),
             protocol2Code: (value: string) =>
-                vscode.Uri.file(realpathSync(vscode.Uri.parse(value).fsPath))
+                vscode.Uri.file(vscode.Uri.parse(value).fsPath)
         }
     };
 

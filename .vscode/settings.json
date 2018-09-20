@@ -72,6 +72,11 @@
     "clocale": "cpp",
     "forward_list": "cpp",
     "numeric": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "cctype": "cpp",
+    "queue": "cpp",
+    "string_view": "cpp",
+    "filesystem": "cpp",
+    "regex": "cpp"
   }
 }

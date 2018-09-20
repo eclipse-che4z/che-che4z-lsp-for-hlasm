@@ -11,6 +11,7 @@ hlasm_plugin::parser_library::context::hlasm_context::hlasm_context()
 {
 	ids.add(object_traits<C_t>::default_v());
 	scope_stack_.push(code_scope());
+	//TODO add default mnemonics
 }
 
 const code_scope::set_sym_storage & hlasm_plugin::parser_library::context::hlasm_context::globals() const

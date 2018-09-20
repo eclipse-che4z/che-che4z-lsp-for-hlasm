@@ -2,15 +2,18 @@
 #define HLASMPLUGIN_PARSER_HLASMLEX_H
 
 #include "../generated/parser_library_export.h"
+#include "../shared/token_factory.h"
+#include "../shared/token.h"
 #include "antlr4-runtime.h"
 #include <memory>
 #include <queue>
 #include <set>
-#include <map>
 #include <string_view>
+#include "input_source.h"
 
 namespace hlasm_plugin {
 	namespace parser_library {
+		class input_source;
 
 		using token_ptr = std::unique_ptr<antlr4::Token>;
 		using char_t = char32_t;
@@ -21,7 +24,10 @@ namespace hlasm_plugin {
 
 			lexer(const lexer &) = delete;
 			lexer& operator=(const lexer&) = delete;
+			lexer& operator=(lexer&&) = delete;
 			lexer(lexer &&) = delete;
+
+			virtual ~lexer() = default;
 
 			token_ptr nextToken() override;
 
@@ -34,13 +40,16 @@ namespace hlasm_plugin {
 			std::string getSourceName() override;
 
 			Ref<antlr4::TokenFactory<antlr4::CommonToken>>
-				getTokenFactory() override;
+				getTokenFactory() override
+			{
+				return {};
+			};
 
-			bool doubleByteEnabled() const;
+			bool double_byte_enabled() const;
 
-			void setDoubleByteEnabled(bool);
+			void set_double_byte_enabled(bool);
 
-			bool continuationBeforeToken(size_t);
+			bool continuation_before_token(size_t);
 
 			enum Tokens {
 				#include "../src/grammar/lex.tokens"
@@ -57,18 +66,39 @@ namespace hlasm_plugin {
 			void set_continuation_enabled(bool);
 			void set_ictl();
 
+			void ainsert_front(const std::string &);
+			void ainsert_back(const std::string &);
+			std::string aread();
+			std::unique_ptr<input_source>& get_ainsert_stream();
+
+			bool is_ord_char() const;
+			bool get_unlimited_line() const;
+			void set_unlimited_line(bool);
 		protected:
 			void create_token(size_t, size_t);
 			void consume();
 
 		private:
+			bool eof_generated = false;
+			void ainsert(const std::string &, bool);
+			/* UTF8 <-> UTF32 */
+			#ifdef __GNUG__
+				std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cvt_;
+			#elif _MSC_VER
+				std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> cvt_;
+			#endif
+			std::unique_ptr<input_source> ainsert_stream_;
+			std::deque<UTF32String> ainsert_buffer_;
+
 			std::set<size_t> tokens_after_continuation_;
 			size_t last_token_id_ = 0;
 			size_t last_continuation_ = static_cast<size_t>(-1);
+
 			std::queue<token_ptr> token_queue_;
 
 			bool double_byte_enabled_ = false;
 			bool continuation_enabled_ = true;
+			bool unlimited_line_ = false;
 			bool ictl_ = false;
 			size_t begin_ = 0;
 			size_t end_default_ = 71;
@@ -76,21 +106,26 @@ namespace hlasm_plugin {
 			size_t continue_ = 15;
 
 			size_t tab_size_ = 1;
-
-			std::basic_string<char_t> current_word_;
-
-			const Ref<antlr4::TokenFactory<antlr4::CommonToken>> factory_
-				= antlr4::CommonTokenFactory::DEFAULT;
+			
+			std::unique_ptr<token_factory> factory_;
 			antlr4::CharStream* input_;
 
-			size_t c_;
+			struct input_state
+			{
+				antlr4::CharStream* input;
+				char_t c = 0;
+				size_t line = 0;
+				size_t char_position = 0;
+				size_t char_position_in_line = 0;
+				size_t char_position_in_line_utf16 = 0;
+			};
 
-			size_t line_ = 1;
-			size_t char_position_in_line_ = 0;
+			input_state file_input_state_;
+			input_state buffer_input_state_;
+			input_state* input_state_ = &file_input_state_;
+			bool from_buffer() const;
 
-			size_t start_char_index_ = 0;
-			size_t start_line_ = 0;
-			size_t start_char_position_in_line_ = 0;
+			input_state token_start_state_;
 
 			size_t apostrophes_ = 0;
 
@@ -98,18 +133,22 @@ namespace hlasm_plugin {
 			bool identifier_divider() const;
 
 			void start_token();
+			void switch_input_streams();
 			void lex_begin();
 			void lex_end(bool);
 			void lex_comment();
 			void lex_continuation();
 			void lex_space();
+			bool before_end() const;
 			void lex_word();
 			void check_continuation();
 			void lex_tokens();
 			void consume_new_line();
 			void lex_process();
+			static bool char_start_utf8(unsigned c);
+			static size_t length_utf16(const std::string & str);
 
-			
+
 			bool is_process() const;
 		};
 	}

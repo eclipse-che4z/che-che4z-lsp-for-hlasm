@@ -18,7 +18,7 @@ const C_t & macro_param_data_dummy::get_value() const
 	return object_traits<C_t>::default_v();
 }
 
-const macro_param_data_component * macro_param_data_dummy::get_ith(size_t idx) const
+const macro_param_data_component * macro_param_data_dummy::get_ith(size_t) const
 {
 	return this;
 }
