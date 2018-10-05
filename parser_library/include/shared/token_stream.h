@@ -1,0 +1,39 @@
+#ifndef HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
+#define HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
+#include "lexer.h"
+
+
+namespace hlasm_plugin {
+namespace parser_library {
+
+class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
+{
+	bool enabled_;
+public:
+	token_stream(antlr4::TokenSource* token_source);
+
+	void enable_continuation();
+
+	void disable_continuation();
+
+	antlr4::Token* LT(ssize_t k) override;
+
+	std::string getText(const antlr4::misc::Interval &interval) override;
+
+protected:
+	virtual ssize_t adjustSeekIndex(size_t i) override;
+
+	virtual antlr4::Token* LB(size_t k) override;
+
+
+	bool is_on_channel(antlr4::Token* token);
+
+	size_t next_token_on_channel(size_t i);
+
+	antlr4::Token* previous_token_on_channel(size_t i);
+
+};
+
+}
+}
+#endif

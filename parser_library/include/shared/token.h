@@ -3,6 +3,7 @@
 
 #include "../generated/parser_library_export.h"
 #include "antlr4-runtime.h"
+#include "input_source.h"
 #include <string>
 
 namespace hlasm_plugin {

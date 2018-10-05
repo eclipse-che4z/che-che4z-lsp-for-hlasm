@@ -45,6 +45,7 @@ public:
 	{
 		return &*lit_.insert(std::move(to_upper(value))).first;
 	}
+
 private:
 	std::unordered_set<std::string> lit_;
 };

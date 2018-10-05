@@ -10,11 +10,12 @@
 #include <sstream>
 
 #include <shared/parser_library.h>
-//#define CONSOLE
 
-int main(int argc, char *argv[]) {
-	using namespace std;
+int main(int argc, char *argv[])
+{
+
 #ifdef CONSOLE
+
 	std::string input;
 
 	while (std::getline(std::cin, input))
@@ -24,20 +25,26 @@ int main(int argc, char *argv[]) {
 	}
 
 #else
-	std::string inp = "input.txt";
-	//std::string inp = "C:/Users/hruma02/Desktop/HlasmPlugin/tests/empty_continuations.in";
-	//std::string inp = "C:/Users/hruma02/Desktop/HlasmPlugin/tests/continuation.in";
-	//std::string inp = "C:/Users/hruma02/Desktop/HlasmPlugin/tests/model_statement.in";
-	//std::string inp = "C:/Users/hruma02/Desktop/HlasmPlugin/tests/operand.in";
+
+	//std::string tcase = "simple";
+	//std::string tcase = "operand";
+	//std::string tcase = "continuation";
+	//std::string tcase = "model_statement";
+	//std::string tcase = "correctness";
+	//std::string tcase = "aread";
+	//std::string tcase = "comment";
+	//std::string tcase = "test";
+	std::string tcase = "er";
+	std::string inp = "test/library/input/" + tcase + ".in";
 	if (argc > 1)
 		inp = std::string(argv[1]);
 	std::ifstream ifs(inp);
-	std::string content( (std::istreambuf_iterator<char>(ifs) ),
-	(std::istreambuf_iterator<char>()    ) );
+	std::string content(std::istreambuf_iterator<char>(ifs), (std::istreambuf_iterator<char>()));
 
 	auto p = new hlasm_plugin::parser_library::parser_library();
-	p->parse(content);
-	//std::cin.get();
+	p->parse(std::move(content));
+
 #endif
+
 	return 0;
 }

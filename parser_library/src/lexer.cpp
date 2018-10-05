@@ -1,3 +1,4 @@
+#include "..\include\shared\lexer.h"
 #include "../include/shared/lexer.h"
 #include  <utility>
 #include <cctype>
@@ -12,7 +13,7 @@ using namespace std;
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-lexer::lexer(CharStream* input)
+lexer::lexer(input_source* input)
 	: input_(input)
 {
 	factory_ = std::make_unique<token_factory>();
@@ -22,6 +23,51 @@ lexer::lexer(CharStream* input)
 	buffer_input_state_.input = ainsert_stream_.get();
 
 	input_state_->c = static_cast<char_t>(input_->LA(1));
+}
+
+void lexer::rewind_input(size_t start, size_t line)
+{
+	if (eof_generated_)
+	{
+		eof_generated_ = false;
+		token_queue_.pop();
+	}
+	auto inp = file_input_state_.input;
+	inp->rewind_input(start);
+
+	/* rewind input to line start */
+	ssize_t i = 0;
+	for (;
+		start - i != 0
+		&& static_cast<char_t>(inp->LA(-i)) != '\n'
+		&& static_cast<char_t>(inp->LA(-i)) != '\r';
+		++i);
+
+	start = start - i;
+	inp->rewind_input(start);
+
+	file_input_state_.char_position = start;
+	file_input_state_.line = line;
+	file_input_state_.char_position_in_line = 0;
+	file_input_state_.char_position_in_line_utf16 = 0;
+
+	if (static_cast<char_t>(inp->LA(1)) == '\n' || static_cast<char_t>(inp->LA(1)) == '\r')
+	{
+		inp->rewind_input(start + 1);
+		++file_input_state_.char_position;
+	}
+
+	file_input_state_.c = static_cast<char_t>(inp->LA(1));
+}
+
+bool lexer::is_last_line() const
+{
+	for (size_t i = 1; input_->LA(i) != antlr4::CharStream::EOF && i < 100; i++)
+	{
+		if (input_->LA(i) == '\n' || input_->LA(i) == '\r')
+			return false;
+	}
+	return ainsert_buffer_.empty();
 }
 
 void lexer::set_unlimited_line(bool ul)
@@ -82,8 +128,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 {
 	if (ttype == Token::EOF)
 	{
-		assert(!eof_generated);
-		eof_generated = true;
+		assert(!eof_generated_);
+		eof_generated_ = true;
 	}
 	/* do not generate empty tokens (except EOF and EOLLN */
 	if (token_start_state_.char_position == token_start_state_.input->index()
@@ -206,9 +252,9 @@ token_ptr lexer::nextToken()
 		else if (double_byte_enabled_)
 			check_continuation();
 
-		else if (!unlimited_line_ 
-			&& input_state_->char_position_in_line == end_ 
-			&& !isspace(input_state_->c) 
+		else if (!unlimited_line_
+			&& input_state_->char_position_in_line == end_
+			&& !isspace(input_state_->c)
 			&& continuation_enabled_
 			&& (!from_buffer() || !ainsert_buffer_.empty()))
 			lex_continuation();
@@ -434,9 +480,9 @@ void lexer::lex_continuation()
 
 	/* lex continuation */
 	start_token();
-	while (input_state_->char_position_in_line < continue_ && ! eof())
+	while (input_state_->char_position_in_line < continue_ && !eof())
 		consume();
-	create_token(CONTINUATION, HIDDEN_CHANNEL);
+	create_token(IGNORED, HIDDEN_CHANNEL);
 }
 
 /* if DOUBLE_BYTE_ENABLED check start of continuation for current line */

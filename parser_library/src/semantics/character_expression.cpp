@@ -1,5 +1,5 @@
 #include "character_expression.h"
-#include "ebcdic_encoding.h"
+#include "../ebcdic_encoding.h"
 #include <algorithm>
 #include <bitset>
 #include <locale>
@@ -8,7 +8,7 @@
 
 using namespace hlasm_plugin;
 using namespace parser_library;
-using namespace context;
+using namespace semantics;
 
 
 char_ptr character_expression::substring(int32_t dupl, expr_ref s, expr_ref e) const
@@ -44,7 +44,7 @@ char_ptr character_expression::substring(int32_t dupl, expr_ref s, expr_ref e) c
 	return std::make_unique<character_expression>(std::move(value));
 }
 
-std::string hlasm_plugin::parser_library::context::character_expression::get_str_val() const { return value_; }
+std::string hlasm_plugin::parser_library::semantics::character_expression::get_str_val() const { return value_; }
 
 char_ptr character_expression::append(const char_ptr& arg) const
 {
@@ -52,22 +52,22 @@ char_ptr character_expression::append(const char_ptr& arg) const
 	return make_char(value_ + arg->value_);
 }
 
-const std::string & hlasm_plugin::parser_library::context::character_expression::get_value() const
+const std::string & hlasm_plugin::parser_library::semantics::character_expression::get_value() const
 {
 	return value_;
 }
 
-hlasm_plugin::parser_library::context::character_expression::character_expression(std::string val)
+hlasm_plugin::parser_library::semantics::character_expression::character_expression(std::string val)
 	: value_(std::move(val))
 {
 }
 
-void hlasm_plugin::parser_library::context::character_expression::append(std::string v)
+void hlasm_plugin::parser_library::semantics::character_expression::append(std::string v)
 {
 	value_.append(v);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::binary_operation(str_ref operation, expr_ref arg2) const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::binary_operation(str_ref operation, expr_ref arg2) const
 {
 	std::string o = operation;
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
@@ -137,7 +137,7 @@ bool character_expression::isalpha_hlasm(char c)
 	return (isalpha(c) || c == '$' || c == '_' || c == '#' || c == '@');
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::unary_operation(str_ref operation) const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::unary_operation(str_ref operation) const
 {
 	std::string o = operation;
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
@@ -277,14 +277,15 @@ expr_ptr character_expression::dclen() const {
 	int32_t v = 0;
 	for (auto i = this->value_.cbegin(); i != this->value_.cend(); ++i)
 	{
-		if (*i == '\'' && i + 1 != this->value_.end() && *(i + 1) == '\'')
+		//escaping double apostrophe '' and double ampersand &&
+		if ((*i == '\'' && i + 1 != this->value_.end() && *(i + 1) == '\'')|| (*i == '&' && i + 1 != this->value_.end() && *(i + 1) == '&'))
 			++i;
 		++v;
 	}
 	return make_arith(v);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::isbin() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::isbin() const
 {
 	copy_return_on_error(this, logic_expression);
 	if (value_.empty())
@@ -296,7 +297,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::isbin() co
 		&& std::all_of(value_.cbegin(), value_.cend(), [](char c) {return c == '0' || c == '1'; }));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::isdec() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::isdec() const
 {
 	copy_return_on_error(this, logic_expression);
 	size_t t = 0;
@@ -314,7 +315,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::isdec() co
 	return make_logic(t == value_.length() && value_.length() <= 10 && isdigit(value_[0]));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::ishex() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::ishex() const
 {
 	copy_return_on_error(this, logic_expression);
 	size_t t = 0;
@@ -329,7 +330,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::ishex() co
 			[](char c) {return isdigit(c) || (toupper(c) >= 'A' && toupper(c) <= 'F'); }));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::issym() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::issym() const
 {
 	copy_return_on_error(this, logic_expression);
 	if (value_.empty())
@@ -343,7 +344,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::issym() co
 	);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::b2c() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::b2c() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -369,7 +370,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::b2c() cons
 	return make_char(std::move(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::b2d() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::b2d() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -384,7 +385,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::b2d() cons
 		return make_char("+" + rv);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::b2x() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::b2x() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -411,7 +412,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::b2x() cons
 	return make_char(std::move(v));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::c2b() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::c2b() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -430,7 +431,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::c2b() cons
 	return make_char(std::move(rv));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::c2d() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::c2d() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -445,7 +446,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::c2d() cons
 		return make_char("+" + rv);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::c2x() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::c2x() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -462,7 +463,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::c2x() cons
 	return make_char(std::move(rv));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::d2b() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::d2b() const
 {
 	copy_return_on_error(this, character_expression);
 	size_t t = 0;
@@ -482,7 +483,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::d2b() cons
 	return make_char(std::bitset<32>(val).to_string());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::d2c() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::d2c() const
 {
 	copy_return_on_error(this, character_expression);
 	size_t t = 0;
@@ -503,7 +504,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::d2c() cons
 	}
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::d2x() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::d2x() const
 {
 	copy_return_on_error(this, character_expression);
 	size_t t = 0;
@@ -525,21 +526,22 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::d2x() cons
 	}
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::dcval() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::dcval() const
 {
 	copy_return_on_error(this, character_expression);
 	std::string v;
 	v.reserve(value_.length());
 	for (auto i = value_.cbegin(); i != value_.end(); ++i)
 	{
-		if (*i == '\'' && i + 1 != value_.end() && *(i + 1) == '\'')
+		//escaping double apostrophe '' and double ampersand &&
+		if ((*i == '\'' && i + 1 != this->value_.end() && *(i + 1) == '\'') || (*i == '&' && i + 1 != this->value_.end() && *(i + 1) == '&'))
 			++i;
 		v.push_back(*i);
 	}
 	return make_char(v);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::dequote() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::dequote() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -556,7 +558,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::dequote() 
 		return make_char("");
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::double_quote() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::double_quote() const
 {
 	copy_return_on_error(this, character_expression);
 	std::string v;
@@ -569,7 +571,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::double_quo
 	return make_char(std::move(v));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::x2b() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::x2b() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -590,7 +592,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::x2b() cons
 	);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::x2c() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::x2c() const
 {
 	copy_return_on_error(this, character_expression);
 	size_t t = 0;
@@ -623,7 +625,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::x2c() cons
 	return make_char(std::move(rv));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::character_expression::x2d() const
+expr_ptr hlasm_plugin::parser_library::semantics::character_expression::x2d() const
 {
 	copy_return_on_error(this, character_expression);
 	if (value_.empty())
@@ -642,7 +644,7 @@ expr_ptr hlasm_plugin::parser_library::context::character_expression::x2d() cons
 	return make_char((val >= 0 ? "+" : "") + std::to_string(val));
 }
 
-std::string hlasm_plugin::parser_library::context::character_expression::num_to_ebcdic(int32_t val)
+std::string hlasm_plugin::parser_library::semantics::character_expression::num_to_ebcdic(int32_t val)
 {
 	std::string c;
 	c.append(ebcdic_encoding::to_ascii((val >> 24) & 255));
@@ -652,14 +654,14 @@ std::string hlasm_plugin::parser_library::context::character_expression::num_to_
 	return c;
 }
 
-char hlasm_plugin::parser_library::context::character_expression::num_to_hex_char(int32_t val)
+char hlasm_plugin::parser_library::semantics::character_expression::num_to_hex_char(int32_t val)
 {
 	if (val < 0 || val >= 16)
 		throw std::runtime_error("value must be less than 16");
 	return "0123456789ABCDEF"[val];
 }
 
-char hlasm_plugin::parser_library::context::character_expression::hex_to_num(char c, size_t* t)
+char hlasm_plugin::parser_library::semantics::character_expression::hex_to_num(char c, size_t* t)
 {
 	c = static_cast<char>(toupper(c));
 	*t = 1;
@@ -671,7 +673,7 @@ char hlasm_plugin::parser_library::context::character_expression::hex_to_num(cha
 	return 0;
 }
 
-std::string hlasm_plugin::parser_library::context::character_expression::num_to_hex(int32_t val)
+std::string hlasm_plugin::parser_library::semantics::character_expression::num_to_hex(int32_t val)
 {
 	std::string v;
 	for (size_t i = 0; i < 8; i++)

@@ -8,7 +8,7 @@ namespace hlasm_plugin
 {
 	namespace parser_library
 	{
-		namespace context
+		namespace semantics
 		{
 			class expression;
 			class character_expression;
@@ -59,7 +59,7 @@ namespace hlasm_plugin
 
 				std::string value_ = "";
 			};
-		} // namespace context
+		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin
 

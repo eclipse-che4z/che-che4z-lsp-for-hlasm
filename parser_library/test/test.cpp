@@ -1,8 +1,12 @@
 #include "gmock/gmock.h"
-#include "../include/shared/parser_library.h"
+#include "lookahead_test.h"
+#include "parser_range_test.h"
+#include "parser_substitutions_test.h"
+#include "ca_instr_test.h"
 #include "context_test.h"
-#include "parser_test.h"
 #include "lexer_test.h"
+#include "parser_test.h"
+#include "utf_conv_test.h"
 
 #include "workspace_test.h"
 

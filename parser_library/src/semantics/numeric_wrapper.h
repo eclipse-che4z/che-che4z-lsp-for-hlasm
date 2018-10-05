@@ -8,7 +8,7 @@ namespace hlasm_plugin
 {
 	namespace parser_library
 	{
-		namespace context
+		namespace semantics
 		{
 			template<typename T>
 			class arithmetic_logic_expr_wrapper {
@@ -50,7 +50,7 @@ namespace hlasm_plugin
 			static arithmetic_logic_expr_wrapper<U&&> al_wrap(U&& u) {
 				return arithmetic_logic_expr_wrapper<U&&>::wrap(std::forward<U>(u));
 			}
-		} // namespace context
+		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin
 

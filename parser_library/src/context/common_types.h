@@ -2,14 +2,13 @@
 #define CONTEXT_COMMON_TYPES_H
 
 #include <string>
-#include <cctype>
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
 //type for SETA symbol
-using A_t = int;
+using A_t = int32_t;
 //type for SETB symbol
 using B_t = bool;
 //type for SETC symbol
@@ -31,6 +30,13 @@ enum class variable_kind
 enum class macro_param_type
 {
 	POS_PAR_KIND, KEY_PAR_KIND, UNDEF_PAR_KIND
+};
+
+//struct representing location of symbols
+struct location
+{
+	size_t line;
+	size_t offset;
 };
 
 template <typename T>

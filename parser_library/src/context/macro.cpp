@@ -13,9 +13,12 @@ macro_definition::macro_definition(id_index name, id_index label_param_name, vec
 	: id(name),label_param_name_(label_param_name), derivation_tree(derivation_tree)
 {
 	if (label_param_name_)
-		named_params_.emplace(label_param_name, std::make_shared<positional_param>(label_param_name, std::numeric_limits<size_t>::max()));
-
-	size_t idx = 0;
+	{
+		auto tmp(std::make_shared<positional_param>(label_param_name, 0));
+		named_params_.emplace(label_param_name, tmp);
+		positional_params_.push_back(std::move(tmp));
+	}
+	size_t idx = 1;
 
 	for (auto it = params.begin(); it != params.end(); ++it)
 	{
@@ -53,9 +56,10 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 
 	std::vector<macro_data_shared_ptr> syslist;
 
-
-	if (label_param_name_)
-		named_cpy.find(label_param_name_)->second->data = std::move(label_param_data);
+	if (label_param_data)
+		syslist.push_back(std::move(label_param_data));
+	else
+		syslist.push_back(macro_param_data_component::dummy);
 
 	for (auto&& param : actual_params)
 	{

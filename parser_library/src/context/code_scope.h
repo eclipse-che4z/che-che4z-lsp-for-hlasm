@@ -3,7 +3,6 @@
 
 
 #include "macro.h"
-#include <unordered_set>
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -14,7 +13,7 @@ namespace context {
 struct code_scope
 {
 	using set_sym_storage = std::unordered_map<id_index, set_sym_ptr>;
-	using label_storage = std::unordered_set<id_index>;
+	using label_storage = std::unordered_map<id_index, sequence_symbol>;
 
 	//local variables of scope
 	set_sym_storage variables;
@@ -22,11 +21,13 @@ struct code_scope
 	label_storage sequence_symbols;
 	//gets macro to which this scope belong (nullptr if in open code)
 	macro_invo_ptr this_macro;
+	//the ACTR branch counter
+	A_t branch_counter;
 
 	bool is_in_macro() const { return !!this_macro; }
 
-	code_scope(macro_invo_ptr macro_invo) : this_macro(std::move(macro_invo)) {}
-	code_scope() {}
+	code_scope(macro_invo_ptr macro_invo) : this_macro(std::move(macro_invo)), branch_counter(4096) {}
+	code_scope() : branch_counter(4096) {}
 };
 
 }

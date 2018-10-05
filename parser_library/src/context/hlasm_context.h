@@ -7,9 +7,10 @@
 #include <stack>
 #include "code_scope.h"
 
-namespace hlasm_plugin{
-namespace parser_library{
-namespace context{
+namespace hlasm_plugin {
+namespace parser_library {
+namespace context {
+
 
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
@@ -31,11 +32,15 @@ class hlasm_context
 
 	inline code_scope* curr_scope();
 
+
 public:
 	hlasm_context();
 
 	//storage for identifiers
 	id_storage ids;
+
+	//represents value of empty identifier
+	const id_index empty_id;
 
 	//return map of global set vars
 	const code_scope::set_sym_storage& globals() const;
@@ -44,20 +49,27 @@ public:
 	//returns empty shared_ptr if there is none
 	var_sym_ptr get_var_sym(id_index name);
 
-	//TODO get sequence symbol
-	//...
+	void add_sequence_symbol(sequence_symbol seq_sym);
+
+	sequence_symbol get_sequence_symbol(id_index name);
+
+	void set_branch_counter(A_t value);
+
+	A_t get_branch_counter();
+
+	void decrement_branch_counter();
 
 	//adds opsyn mnemotechnic
-	void add_mnemonic(id_index target, id_index op_code);
+	void add_mnemonic(id_index mnemo, id_index op_code);
 
 	//removes opsyn mnenotechnic
-	void remove_mnemonic(id_index target);
+	void remove_mnemonic(id_index mnemo);
 
-	//gets mnemotechnic possibly changed by opsyn
-	//returns false class if there is no mnemotechnic
+	//gets target of possible mnemotechnic changed by opsyn
+	//returns nullptr if there is no mnemotechnic
 	//returns index to default string ("") if opcode was deleted by opsyn
 	//returns anything else if opcode was changed by opsyn
-	id_index get_mnemonic(id_index op_code) const;
+	id_index get_mnemonic_opcode(id_index mnemo) const;
 
 	//creates specified global set symbol
 	template <typename T>
@@ -116,4 +128,4 @@ public:
 }
 }
 }
-#endif 
+#endif

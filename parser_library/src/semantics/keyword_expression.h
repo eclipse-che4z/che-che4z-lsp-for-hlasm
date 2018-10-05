@@ -9,7 +9,7 @@ namespace hlasm_plugin
 {
 	namespace parser_library
 	{
-		namespace context
+		namespace semantics
 		{
 			class keyword_expression : public expression
 			{
@@ -73,7 +73,7 @@ namespace hlasm_plugin
 				std::string s_val_;
 				keyword_type value_;
 			};
-		} // namespace context
+		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin
 

@@ -12,11 +12,14 @@ namespace hlasm_plugin {
 			input_source(const std::string & input);
 
 			void append(const UTF32String &str);
+			void rewind_input(size_t index);
 
 			input_source(const input_source &) = delete;
 			input_source& operator=(const input_source&) = delete;
 			input_source& operator=(input_source&&) = delete;
 			input_source(input_source &&) = delete;
+
+			virtual std::string getText(const antlr4::misc::Interval &interval) override;
 
 			virtual ~input_source() = default;
 		};

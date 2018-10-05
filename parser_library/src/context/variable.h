@@ -92,34 +92,45 @@ public:
 	//returns type of set symbol
 	set_type_enum type() const override { return object_traits<T>::type_enum; }
 
-	//gets value from set symbol
-	//if is scalar, idx should be 0, otherwise default is returned
+	//gets value from non scalar set symbol
 	//if data at idx is not set or it does not exists, default is returned
-	const T& get_value(size_t idx = 0) const
+	const T& get_value(size_t idx) const
 	{
+		if (is_scalar)
+			return object_traits<T>::default_v();
+
 		auto tmp = data.find(idx);
 		if (tmp == data.end())
 			return object_traits<T>::default_v();
 		return tmp->second;
 	}
 
-	//copy variant of set-method
-	//if is scalar, idx should be 0, otherwise no action is done
-	//if is not scalar, any index can be accessed
-	void set_value(const T& value, size_t idx = 0)
+	//gets value from scalar set symbol
+	const T& get_value() const
 	{
-		if (is_scalar&&idx != 0) return;
+		if (!is_scalar)
+			return object_traits<T>::default_v();
 
-		data.insert_or_assign(idx, value);
+		auto tmp = data.find(0);
+		if (tmp == data.end())
+			return object_traits<T>::default_v();
+		return tmp->second;
 	}
-	//move variant of set-method
-	//if is scalar, idx should be 0, otherwise no action is done
-	//if is not scalar, any index can be accessed
-	void set_value(T&& value, size_t idx = 0)
-	{
-		if (is_scalar&&idx != 0) return;
 
-		data.insert_or_assign(idx, std::move(value));
+	//sets value to scalar set symbol
+	void set_value(T value)
+	{
+		data.insert_or_assign(0, std::move(value));
+	}
+
+	//sets value to non scalar set symbol
+	//any index can be accessed
+	void set_value(T value, size_t idx)
+	{
+		if (is_scalar) 
+			data.insert_or_assign(0, std::move(value));
+		else
+			data.insert_or_assign(idx, std::move(value));
 	}
 };
 
@@ -198,6 +209,28 @@ public:
 	virtual const C_t& get_value() const override;
 
 	positional_param(id_index name, size_t position);
+};
+
+
+
+
+
+//*********************sequence symbol*********************//
+
+
+
+
+
+//structure representing sequence symbol
+struct sequence_symbol
+{
+	static const sequence_symbol EMPTY;
+
+	id_index name;
+	location location;
+
+	operator bool() const;
+
 };
 
 }

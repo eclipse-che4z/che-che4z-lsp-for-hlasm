@@ -5,7 +5,7 @@
 
 namespace hlasm_plugin {
 	namespace parser_library {
-		namespace context {
+		namespace semantics {
 			class logic_expression;
 			class arithmetic_expression;
 			using arith_ptr = std::unique_ptr<arithmetic_expression>;

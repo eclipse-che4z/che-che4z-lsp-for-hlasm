@@ -80,15 +80,15 @@ TEST(context, OPSYN)
 	auto mv = ctx.ids.add("MV");
 
 	ctx.add_mnemonic(lr, st);
-	EXPECT_EQ(ctx.get_mnemonic(lr), st);
+	EXPECT_EQ(ctx.get_mnemonic_opcode(lr), st);
 
 	ctx.add_mnemonic(mv, lr);
-	EXPECT_EQ(ctx.get_mnemonic(mv), st);
+	EXPECT_EQ(ctx.get_mnemonic_opcode(mv), st);
 
 	ctx.remove_mnemonic(lr);
-	EXPECT_EQ(ctx.get_mnemonic(lr), ctx.ids.find(""));
+	EXPECT_EQ(ctx.get_mnemonic_opcode(lr), ctx.ids.find(""));
 
-	EXPECT_FALSE(!!ctx.get_mnemonic(mvc));
+	EXPECT_FALSE(ctx.get_mnemonic_opcode(mvc));
 }
 
 TEST(context_set_vars, set_scalar)
@@ -290,10 +290,11 @@ TEST(context_macro, call_and_leave_macro)
 	ASSERT_TRUE(ctx.this_macro()==m2);
 
 	//testing syslist
-	EXPECT_EQ(m2->SYSLIST(0),"ada");
-	EXPECT_EQ(m2->SYSLIST(1), "FAKEKEY=as");
-	EXPECT_EQ(m2->SYSLIST(2), "mko");
-	EXPECT_EQ(m2->SYSLIST(3), "");
+	EXPECT_EQ(m2->SYSLIST(0), "");
+	EXPECT_EQ(m2->SYSLIST(1),"ada");
+	EXPECT_EQ(m2->SYSLIST(2), "FAKEKEY=as");
+	EXPECT_EQ(m2->SYSLIST(3), "mko");
+	EXPECT_EQ(m2->SYSLIST(4), "");
 
 	//testing named params
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
@@ -383,7 +384,7 @@ TEST(context_macro, repeat_call_same_macro)
 
 	ASSERT_TRUE(m2 != m3);
 
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
 		EXPECT_EQ(m3->SYSLIST(i), "");
 	}
@@ -393,11 +394,11 @@ TEST(context_macro, repeat_call_same_macro)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(m3->SYSLIST({1,2}), "");
-	EXPECT_EQ(m3->SYSLIST({ 2 }), "(first,second,third)");
-	EXPECT_EQ(m3->SYSLIST({ 2,1 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 2,1,0,0 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 2,1,0,0,1 }), "");
+	EXPECT_EQ(m3->SYSLIST({2,2}), "");
+	EXPECT_EQ(m3->SYSLIST({ 3 }), "(first,second,third)");
+	EXPECT_EQ(m3->SYSLIST({ 3,1 }), "second");
+	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0 }), "second");
+	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0,1 }), "");
 }
 
 TEST(context_macro, recurr_call)
@@ -493,17 +494,19 @@ TEST(context_macro, recurr_call)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(m3->SYSLIST({ 1,2 }), "");
-	EXPECT_EQ(m3->SYSLIST({ 2 }), "(first,second,third)");
-	EXPECT_EQ(m3->SYSLIST({ 2,1 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 2,1,0,0 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 2,1,0,0,1 }), "");
+	EXPECT_EQ(m3->SYSLIST(0), "");
+	EXPECT_EQ(m3->SYSLIST({ 2,2 }), "");
+	EXPECT_EQ(m3->SYSLIST({ 3 }), "(first,second,third)");
+	EXPECT_EQ(m3->SYSLIST({ 3,1 }), "second");
+	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0 }), "second");
+	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0,1 }), "");
 
 	//testing outer macro
-	EXPECT_EQ(m2->SYSLIST(0), "ada");
-	EXPECT_EQ(m2->SYSLIST(1), "FAKEKEY=as");
-	EXPECT_EQ(m2->SYSLIST(2), "mko");
-	EXPECT_EQ(m2->SYSLIST(3), "");
+	EXPECT_EQ(m2->SYSLIST(0), "lbl");
+	EXPECT_EQ(m2->SYSLIST(1), "ada");
+	EXPECT_EQ(m2->SYSLIST(2), "FAKEKEY=as");
+	EXPECT_EQ(m2->SYSLIST(3), "mko");
+	EXPECT_EQ(m2->SYSLIST(4), "");
 
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
 	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "mko");

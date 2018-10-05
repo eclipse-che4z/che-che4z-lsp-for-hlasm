@@ -43,17 +43,24 @@ set(LIB_NOT_EXPORTED_SRC
     ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
     ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_tools.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/keyword_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/arithmetic_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/logic_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/character_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/ebcdic_encoding.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/ebcdic_encoding.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/keyword_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/arithmetic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/logic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/character_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/concatenation.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_objects.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_analyzer.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/library.cpp
+    ${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 )
 
 #Generate the shared library from the library sources
@@ -62,6 +69,7 @@ add_library(parser_library SHARED
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp
     ${PROJECT_SOURCE_DIR}/src/token.cpp
     ${PROJECT_SOURCE_DIR}/src/token_factory.cpp
+    ${PROJECT_SOURCE_DIR}/src/token_stream.cpp
     ${PROJECT_SOURCE_DIR}/src/input_source.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace_manager.cpp
 	${LIB_NOT_EXPORTED_SRC}

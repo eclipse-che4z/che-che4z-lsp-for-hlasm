@@ -10,36 +10,36 @@
 #include "keyword_expression.h"
 
 using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+using namespace hlasm_plugin::parser_library::semantics;
 
-void hlasm_plugin::parser_library::context::expression::copy_diag(expr_ref o)
+void hlasm_plugin::parser_library::semantics::expression::copy_diag(expr_ref o)
 {
 	diag = std::make_unique< diagnostic_op>(*o->diag);
 }
 
-void hlasm_plugin::parser_library::context::expression::copy_diag(const expression * o)
+void hlasm_plugin::parser_library::semantics::expression::copy_diag(const expression * o)
 {
 	diag = std::make_unique< diagnostic_op>(*o->diag);
 }
 
-void hlasm_plugin::parser_library::context::expression::copy_diag(const expression & o)
+void hlasm_plugin::parser_library::semantics::expression::copy_diag(const expression & o)
 {
 	diag = std::make_unique< diagnostic_op>(*o.diag);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::binary_operation(str_ref, expr_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::binary_operation(str_ref, expr_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::unary_operation(str_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::unary_operation(str_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::resolve_ord_symbol(str_ref symbol)
+expr_ptr hlasm_plugin::parser_library::semantics::expression::resolve_ord_symbol(str_ref symbol)
 {
 	if (keyword_expression::is_keyword(symbol))
 		return std::make_unique<keyword_expression>(symbol);
@@ -127,55 +127,55 @@ expr_ptr expression::evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operat
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator+(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator+(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator-(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator-(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator*(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator*(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator/(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator/(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator|(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator|(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator&(expression_ref) const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator&(expression_ref) const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator+() const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator+() const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::expression::operator-() const
+expr_ptr hlasm_plugin::parser_library::semantics::expression::operator-() const
 {
 	return default_expr_with_error<arithmetic_expression>
 		(error_messages::e001());
 }
 
-int32_t hlasm_plugin::parser_library::context::expression::get_numeric_value() const
+int32_t hlasm_plugin::parser_library::semantics::expression::get_numeric_value() const
 {
 	auto t = retype<arithmetic_expression>();
 	if (t == NULL)

@@ -6,7 +6,7 @@
 
 namespace hlasm_plugin {
 	namespace parser_library {
-		namespace context {
+		namespace semantics {
 			class arithmetic_expression;
 			class expression;
 			class logic_expression : public expression

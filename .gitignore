@@ -40,6 +40,11 @@ build/
 #just a playground, ignore changes
 dummy/src/
 
+#testing purposes
+parser_library/test/res/input/er.in
+parser_library/test/res/input/correctness.in
+parser_library/test/res/output/tokens/correctness.output
+
 #vscode ignore
 .vscode/*
 !.vscode/settings.json

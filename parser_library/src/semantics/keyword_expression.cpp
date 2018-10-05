@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "../error_messages.h"
 
-using namespace hlasm_plugin::parser_library::context;
+using namespace hlasm_plugin::parser_library::semantics;
 
 std::map<std::string, keyword_expression::keyword_type, keyword_expression::upper_equal> keyword_expression::keywords_ = {
 #define X(k) {#k, keyword_expression::keyword_type::k},
@@ -24,7 +24,7 @@ keyword_expression::keyword_expression(str_ref k)
 	s_val_ = std::move(kw);
 }
 
-bool hlasm_plugin::parser_library::context::keyword_expression::is_unary() const
+bool hlasm_plugin::parser_library::semantics::keyword_expression::is_unary() const
 {
 	return value_ == keyword_type::NOT || value_ == keyword_type::BYTE || value_ == keyword_type::LOWER || value_ == keyword_type::SIGNED || value_ == keyword_type::UPPER || value_ == keyword_type::DOUBLE;
 }
@@ -52,17 +52,17 @@ uint8_t keyword_expression::priority() const
 	}
 }
 
-bool hlasm_plugin::parser_library::context::keyword_expression::is_keyword() const { return true; }
+bool hlasm_plugin::parser_library::semantics::keyword_expression::is_keyword() const { return true; }
 
-std::string hlasm_plugin::parser_library::context::keyword_expression::get_str_val() const { return s_val_; }
+std::string hlasm_plugin::parser_library::semantics::keyword_expression::get_str_val() const { return s_val_; }
 
-expr_ptr hlasm_plugin::parser_library::context::keyword_expression::to_expression() const
+expr_ptr hlasm_plugin::parser_library::semantics::keyword_expression::to_expression() const
 {
 	/* TODO: resolve expr */
 	return default_expr_with_error<arithmetic_expression>(error_messages::not_implemented());
 }
 
-bool hlasm_plugin::parser_library::context::keyword_expression::is_keyword(str_ref k)
+bool hlasm_plugin::parser_library::semantics::keyword_expression::is_keyword(str_ref k)
 {
 	return keywords_.find(k) != keywords_.cend();
 }

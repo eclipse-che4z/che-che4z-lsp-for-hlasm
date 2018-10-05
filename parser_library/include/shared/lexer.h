@@ -20,7 +20,7 @@ namespace hlasm_plugin {
 		class PARSER_LIBRARY_EXPORT lexer : public antlr4::TokenSource
 		{
 		public:
-			lexer(antlr4::CharStream*);
+			lexer(input_source*);
 
 			lexer(const lexer &) = delete;
 			lexer& operator=(const lexer&) = delete;
@@ -74,12 +74,14 @@ namespace hlasm_plugin {
 			bool is_ord_char() const;
 			bool get_unlimited_line() const;
 			void set_unlimited_line(bool);
+			void rewind_input(size_t, size_t);
+			bool is_last_line() const;
 		protected:
 			void create_token(size_t, size_t);
 			void consume();
 
 		private:
-			bool eof_generated = false;
+			bool eof_generated_ = false;
 			void ainsert(const std::string &, bool);
 			/* UTF8 <-> UTF32 */
 			#ifdef __GNUG__
@@ -112,7 +114,7 @@ namespace hlasm_plugin {
 
 			struct input_state
 			{
-				antlr4::CharStream* input;
+				input_source* input;
 				char_t c = 0;
 				size_t line = 0;
 				size_t char_position = 0;

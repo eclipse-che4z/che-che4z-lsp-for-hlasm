@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include <cctype>
 
 using namespace hlasm_plugin::parser_library::context;
 

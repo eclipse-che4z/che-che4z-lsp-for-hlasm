@@ -24,3 +24,7 @@ Name9 OP9                                                              X
                ,                                                       X
                OPERAND3
       OP10
+      OP11     OPERAND1                                    
+      OP12     OPERAND1,
+      OP13     OPERAND1,                                               X
+               ,

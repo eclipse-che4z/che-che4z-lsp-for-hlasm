@@ -1,5 +1,5 @@
 #include "arithmetic_expression.h"
-#include "ebcdic_encoding.h"
+#include "../ebcdic_encoding.h"
 #include <algorithm>
 #include "expression.h"
 #include <bitset>
@@ -9,7 +9,7 @@
 
 using namespace hlasm_plugin;
 using namespace parser_library;
-using namespace context;
+using namespace semantics;
 
 const int32_t numeric_part_mask = (1 << 31) ^ static_cast<int32_t>(-1);
 
@@ -55,7 +55,7 @@ expr_ptr arithmetic_expression::from_string(const std::string &s, int base)
 	return make_arith(val);
 }
 
-std::string hlasm_plugin::parser_library::context::arithmetic_expression::get_str_val() const
+std::string hlasm_plugin::parser_library::semantics::arithmetic_expression::get_str_val() const
 {
 	return std::to_string(value_);
 }
@@ -80,7 +80,7 @@ expr_ptr arithmetic_expression::from_string(const std::string &option, const std
 	return default_expr_with_error<arithmetic_expression>(error_messages::ea03());
 }
 
-hlasm_plugin::parser_library::context::expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::c2arith(const std::string & value)
+hlasm_plugin::parser_library::semantics::expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::c2arith(const std::string & value)
 {
 	/*
 		first escaping is enforced in grammar (for ampersands and apostrophes)
@@ -117,7 +117,7 @@ enum class G2C_STATES
 	INVALID
 };
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::g2arith(const std::string & value, bool dbcs)
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::g2arith(const std::string & value, bool dbcs)
 {
 	if (!dbcs)
 		return default_expr_with_error<arithmetic_expression>
@@ -287,7 +287,7 @@ expr_ptr arithmetic_expression::binary_operation(str_ref operation, expr_ref arg
 	return default_expr_with_error<arithmetic_expression>(error_messages::ea08());
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator+(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator+(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -304,7 +304,7 @@ expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator+
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator-(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator-(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -321,7 +321,7 @@ expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator-
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator*(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator*(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -338,7 +338,7 @@ expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator*
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator/(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator/(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -353,14 +353,14 @@ expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator/
 	return make_arith(value_ / value);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator+() const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator+() const
 {
 	copy_return_on_error(this, arithmetic_expression);
 
 	return make_arith(value_);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator-() const
+expr_ptr hlasm_plugin::parser_library::semantics::arithmetic_expression::operator-() const
 {
 	copy_return_on_error(this, arithmetic_expression);
 
@@ -371,7 +371,7 @@ expr_ptr hlasm_plugin::parser_library::context::arithmetic_expression::operator-
 	return make_arith(-value_);
 }
 
-int32_t hlasm_plugin::parser_library::context::arithmetic_expression::get_numeric_value() const
+int32_t hlasm_plugin::parser_library::semantics::arithmetic_expression::get_numeric_value() const
 {
 	return value_;
 }

@@ -10,7 +10,7 @@ namespace hlasm_plugin
 {
 	namespace parser_library
 	{
-		namespace context
+		namespace semantics
 		{
 			class expression;
 			using expr_ptr = std::unique_ptr<expression>;
@@ -41,6 +41,15 @@ namespace hlasm_plugin
 				virtual expr_ptr operator&(expression_ref) const;
 				virtual expr_ptr operator+() const;
 				virtual expr_ptr operator-() const;
+
+				template<typename T>
+				T get_value();
+				template<>
+				int get_value() { return get_numeric_value(); }
+				template<>
+				bool get_value() { return get_numeric_value(); }
+				template<>
+				std::string get_value() { return get_str_val(); }
 
 				virtual int32_t get_numeric_value() const;
 				
@@ -101,7 +110,7 @@ namespace hlasm_plugin
 				static expr_ptr evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority, size_t& operator_count);
 				static expr_ptr evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operator_count);
 			};
-		} // namespace context
+		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin
 

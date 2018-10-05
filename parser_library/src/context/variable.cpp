@@ -112,3 +112,7 @@ const C_t & hlasm_plugin::parser_library::context::positional_param::get_value()
 }
 
 hlasm_plugin::parser_library::context::positional_param::positional_param(id_index name, size_t position) : macro_param_base(name), position(position) {}
+
+const hlasm_plugin::parser_library::context::sequence_symbol hlasm_plugin::parser_library::context::sequence_symbol::EMPTY = { nullptr,{0,0} };
+
+hlasm_plugin::parser_library::context::sequence_symbol::operator bool() const { return name; }

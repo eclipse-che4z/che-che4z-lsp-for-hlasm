@@ -1,4 +1,4 @@
-#include "../include/shared/token.h"
+#include "shared/token.h"
 #include <Interval.h>
 #include <CharStream.h>
 

@@ -5,7 +5,7 @@
 
 using namespace hlasm_plugin;
 using namespace parser_library;
-using namespace context;
+using namespace semantics;
 
 #define make_arith(val) std::make_unique<arithmetic_expression>(val)
 #define make_logic(val) std::make_unique<logic_expression>(val)
@@ -20,7 +20,7 @@ logic_expression::logic_expression(int32_t v)
 {
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::to_arith() const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::to_arith() const
 {
 	return make_arith(static_cast<int32_t>(value_));
 }
@@ -58,22 +58,22 @@ expr_ptr logic_expression::binary_operation(str_ref o, expr_ref arg2) const
 		(error_messages::el02());
 }
 
-int32_t hlasm_plugin::parser_library::context::logic_expression::get_numeric_value() const
+int32_t hlasm_plugin::parser_library::semantics::logic_expression::get_numeric_value() const
 {
 	return static_cast<int32_t>(value_);
 }
 
-std::string hlasm_plugin::parser_library::context::logic_expression::get_str_val() const
+std::string hlasm_plugin::parser_library::semantics::logic_expression::get_str_val() const
 {
 	return std::to_string(get_numeric_value());
 }
 
-bool hlasm_plugin::parser_library::context::logic_expression::get_value() const
+bool hlasm_plugin::parser_library::semantics::logic_expression::get_value() const
 {
 	return value_;
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator+(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator+(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -90,7 +90,7 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator+(expr
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator-(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator-(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -107,7 +107,7 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator-(expr
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator*(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator*(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -124,7 +124,7 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator*(expr
 	return make_arith(static_cast<int32_t>(res));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator/(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator/(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -139,7 +139,7 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator/(expr
 	return make_arith(get_numeric_value() / value);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator|(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator|(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -151,7 +151,7 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator|(expr
 	return make_logic(value_ || value);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator&(expression_ref e) const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator&(expression_ref e) const
 {
 	copy_return_on_error_binary(e, arithmetic_expression);
 
@@ -163,14 +163,14 @@ expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator&(expr
 	return make_logic(value_ && value);
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator+() const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator+() const
 {
 	copy_return_on_error(this, arithmetic_expression);
 
 	return make_arith(static_cast<int32_t>(value_));
 }
 
-expr_ptr hlasm_plugin::parser_library::context::logic_expression::operator-() const
+expr_ptr hlasm_plugin::parser_library::semantics::logic_expression::operator-() const
 {
 	copy_return_on_error(this, arithmetic_expression);
 

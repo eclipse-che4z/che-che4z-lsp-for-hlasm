@@ -5,6 +5,7 @@
 #include <sstream>
 #include "gmock/gmock.h"
 #include "../include/shared/lexer.h"
+#include "../include/shared/input_source.h"
 #include "../src/generated/hlasmparser.h"
 #include "antlr4-runtime.h"
 #include <iostream>
@@ -18,12 +19,11 @@ class lexer_test : public testing::Test
 {
 };
 
-
 TEST_F(lexer_test, aread)
 {
 	std::string tcase = "aread";
 
-	antlr4::ANTLRInputStream input(get_content("test/library/input/" + tcase + ".in"));
+	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
 	hlasm_plugin::parser_library::lexer l(&input);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -51,7 +51,7 @@ TEST_F(lexer_test, rntest)
 {
 	std::string tcase = "rntest";
 
-	antlr4::ANTLRInputStream input("TEST TEST \r\n TEST1 TEST2");
+	hlasm_plugin::parser_library::input_source input("TEST TEST \r\n TEST1 TEST2");
 	hlasm_plugin::parser_library::lexer l(&input);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -70,7 +70,7 @@ TEST_F(lexer_test, unlimited_line)
 {
 	std::string tcase = "unlimited_line";
 
-	antlr4::ANTLRInputStream input(get_content("test/library/input/" + tcase + ".in"));
+	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
 	hlasm_plugin::parser_library::lexer l(&input);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -86,5 +86,59 @@ TEST_F(lexer_test, unlimited_line)
 	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
 }
 
+TEST_F(lexer_test, rewind_input)
+{
+	std::string tcase = "rewind_input";
+
+	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
+	hlasm_plugin::parser_library::lexer l(&input);
+	antlr4::CommonTokenStream tokens(&l);
+	parser parser(&tokens);
+
+	std::stringstream token_stream;
+	hlasm_plugin::parser_library::token_ptr token;
+	do
+	{
+		token = l.nextToken();
+		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
+		if (token->getText() == "REWIND1")
+		{
+			l.rewind_input(0, 0);
+			break;
+		}
+	} while (token->getType() != antlr4::Token::EOF);
+
+	do
+	{
+		token = l.nextToken();
+		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
+		if (token->getText() == "REWIND2")
+		{
+			l.rewind_input(4, 0);
+			break;
+		}
+	} while (token->getType() != antlr4::Token::EOF);
+
+	do
+	{
+		token = l.nextToken();
+		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
+		if (token->getText() == "REWIND3")
+		{
+			l.rewind_input(17, 1);
+			break;
+		}
+	} while (token->getType() != antlr4::Token::EOF);
+
+	do
+	{
+		token = l.nextToken();
+		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
+	} while (token->getType() != antlr4::Token::EOF);
+
+	auto token_string = token_stream.str();
+
+	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
+}
 
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
