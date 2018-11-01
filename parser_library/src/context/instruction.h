@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <string>
+#include <vector>
 #include "id_storage.h"
 
 namespace hlasm_plugin {

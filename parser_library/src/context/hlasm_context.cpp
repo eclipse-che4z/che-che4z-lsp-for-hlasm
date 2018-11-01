@@ -3,7 +3,7 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-inline code_scope * hlasm_plugin::parser_library::context::hlasm_context::curr_scope()
+code_scope * hlasm_plugin::parser_library::context::hlasm_context::curr_scope()
 {
 	return &scope_stack_.top();
 }

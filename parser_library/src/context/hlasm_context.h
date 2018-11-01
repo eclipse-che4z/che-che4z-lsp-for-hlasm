@@ -30,7 +30,7 @@ class hlasm_context
 	//map of OPSYN mnemotechnics
 	literal_map opcode_mnemo_;
 
-	inline code_scope* curr_scope();
+	code_scope* curr_scope();
 
 
 public:

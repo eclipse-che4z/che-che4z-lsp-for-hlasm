@@ -55,56 +55,56 @@ public:
 
 	template<typename T>
 	T to();
-
-	template<>
-	context::A_t to() 
-	{
-		switch (type)
-		{
-		case context::set_type_enum::A_TYPE:
-			return a_value;
-		case context::set_type_enum::B_TYPE:
-			return b_value;
-		case context::set_type_enum::C_TYPE:
-			return b_value; //TODO
-		default:
-			return a_value;
-		}
-	}
-
-	template<>
-	context::B_t to()
-	{
-		switch (type)
-		{
-		case context::set_type_enum::A_TYPE:
-			return a_value;
-		case context::set_type_enum::B_TYPE:
-			return b_value;
-		case context::set_type_enum::C_TYPE:
-			return b_value; //TODO
-		default:
-			return b_value;
-		}
-	}
-
-	template<>
-	context::C_t to()
-	{
-		switch (type)
-		{
-		case context::set_type_enum::A_TYPE:
-			return std::to_string(std::abs(a_value));
-		case context::set_type_enum::B_TYPE:
-			if (b_value) return "1";
-			else return "0";
-		case context::set_type_enum::C_TYPE:
-			return c_value;
-		default:
-			return c_value;
-		}
-	}
 };
+
+template<>
+inline context::A_t set_type::to()
+{
+	switch (type)
+	{
+	case context::set_type_enum::A_TYPE:
+		return a_value;
+	case context::set_type_enum::B_TYPE:
+		return b_value;
+	case context::set_type_enum::C_TYPE:
+		return b_value; //TODO
+	default:
+		return a_value;
+	}
+}
+
+template<>
+inline context::B_t set_type::to()
+{
+	switch (type)
+	{
+	case context::set_type_enum::A_TYPE:
+		return a_value;
+	case context::set_type_enum::B_TYPE:
+		return b_value;
+	case context::set_type_enum::C_TYPE:
+		return b_value; //TODO
+	default:
+		return b_value;
+	}
+}
+
+template<>
+inline context::C_t set_type::to()
+{
+	switch (type)
+	{
+	case context::set_type_enum::A_TYPE:
+		return std::to_string(std::abs(a_value));
+	case context::set_type_enum::B_TYPE:
+		if (b_value) return "1";
+		else return "0";
+	case context::set_type_enum::C_TYPE:
+		return c_value;
+	default:
+		return c_value;
+	}
+}
 
 //struct guarding other symbol in propagation over parsing tree
 template <typename T>
@@ -124,7 +124,7 @@ struct symbol_guard
 struct seq_sym
 {
 	std::string name;
-	context::location location;
+	context::location loc;
 };
 
 }

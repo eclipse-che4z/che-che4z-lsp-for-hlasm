@@ -44,12 +44,6 @@ namespace hlasm_plugin
 
 				template<typename T>
 				T get_value();
-				template<>
-				int get_value() { return get_numeric_value(); }
-				template<>
-				bool get_value() { return get_numeric_value(); }
-				template<>
-				std::string get_value() { return get_str_val(); }
 
 				virtual int32_t get_numeric_value() const;
 				
@@ -76,15 +70,15 @@ namespace hlasm_plugin
 				void copy_diag(const expression& o);
 
 				template <typename T>
-				static std::unique_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
+				static typename std::unique_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
 				{
 					auto ex = std::make_unique<T>();
 					ex->diag = std::move(diag);
 					return ex;
-				};
+				}
 
 				template<typename T>
-				static std::unique_ptr<T> test_and_copy_error(const expression* e)
+				static typename std::unique_ptr<T> test_and_copy_error(const expression* e)
 				{
 					if (e->has_error())
 					{
@@ -96,7 +90,7 @@ namespace hlasm_plugin
 				}
 
 				template<typename T>
-				static std::unique_ptr<T> test_and_copy_error(const expression& e)
+				static typename std::unique_ptr<T> test_and_copy_error(const expression& e)
 				{
 					if (e.has_error())
 					{
@@ -110,6 +104,13 @@ namespace hlasm_plugin
 				static expr_ptr evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority, size_t& operator_count);
 				static expr_ptr evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operator_count);
 			};
+
+			template<>
+			inline int expression::get_value() { return get_numeric_value(); }
+			template<>
+			inline bool expression::get_value() { return get_numeric_value(); }
+			template<>
+			inline std::string expression::get_value() { return get_str_val(); }
 		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin

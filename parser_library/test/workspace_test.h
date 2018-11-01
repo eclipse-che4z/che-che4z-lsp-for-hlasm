@@ -5,6 +5,9 @@
 #include "../src/file_manager.h"
 #include "../src/file_impl.h"
 
+#include <iterator>
+#include <algorithm>
+
 using namespace hlasm_plugin::parser_library;
 
 class file_proc_grps : public file_impl
@@ -141,8 +144,8 @@ TEST(workspace, load_config)
 #else
 	std::string expected[4]{ "C:/Users/Desktop/ASLib/", "test_proc_grps_uri/lib/", "test_proc_grps_uri/libs/lib2/", "test_proc_grps_uri/" };
 #endif // _WIN32
-
-	for (int i = 0; i < 4; ++i)
+	EXPECT_EQ(std::size(expected), pg.libs.size());
+	for (size_t i = 0; i < std::min(std::size(expected), pg.libs.size()); ++i)
 	{
 		library_local * libl = dynamic_cast<library_local *>(pg.libs[i].get());
 		ASSERT_NE(libl, nullptr);
@@ -150,13 +153,14 @@ TEST(workspace, load_config)
 	}
 
 	auto & pg2 = ws.get_proc_grp("P2");
-	EXPECT_EQ("P2", pg2.name); 
+	EXPECT_EQ("P2", pg2.name);
 #ifdef _WIN32
 	std::string expected2[3]{ "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\" };
 #else
 	std::string expected2[3]{ "C:/Users/Desktop/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
 #endif // _WIN32
-	for (int i = 0; i < 3; ++i)
+	EXPECT_EQ(std::size(expected2), pg2.libs.size());
+	for (size_t i = 0; i < std::min(std::size(expected2), pg2.libs.size()); ++i)
 	{
 		library_local * libl = dynamic_cast<library_local *>(pg2.libs[i].get());
 		ASSERT_NE(libl, nullptr);
@@ -166,7 +170,8 @@ TEST(workspace, load_config)
 
 	//test of pgm_conf and workspace::get_proc_grp_by_program
 	auto & pg3 = ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1");
-	for (int i = 0; i < 4; ++i)
+	EXPECT_EQ(pg3.libs.size(), std::size(expected));
+	for (size_t i = 0; i < std::min(std::size(expected), pg3.libs.size()); ++i)
 	{
 		library_local * libl = dynamic_cast<library_local *>(pg3.libs[i].get());
 		ASSERT_NE(libl, nullptr);
@@ -175,7 +180,8 @@ TEST(workspace, load_config)
 
 	//test of 
 	auto & pg4 = ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything");
-	for (int i = 0; i < 3; ++i)
+	EXPECT_EQ(pg4.libs.size(), std::size(expected2));
+	for (size_t i = 0; i < std::min(std::size(expected2), pg4.libs.size()); ++i)
 	{
 		library_local * libl = dynamic_cast<library_local *>(pg4.libs[i].get());
 		ASSERT_NE(libl, nullptr);

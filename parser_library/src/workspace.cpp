@@ -36,7 +36,7 @@ const processor_group & workspace::get_proc_grp_by_program(const std::string & f
 	{
 		std::filesystem::path fname_path(filename);
 		
-		if(program_id_match(fname_path.lexically_relative(uri_).lexically_normal().string(), pgm.program_id))
+		if(program_id_match(fname_path.lexically_relative(uri_).lexically_normal().string(), pgm.prog_id))
 			return proc_grps_.at(pgm.pgroup);
 	}
 	return implicit_proc_grp;

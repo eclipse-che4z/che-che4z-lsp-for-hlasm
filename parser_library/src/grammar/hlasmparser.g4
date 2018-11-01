@@ -746,7 +746,7 @@ data_attribute returns [expr_ptr e]
 	;
 
 seq_symbol returns [seq_sym ss]
-	: DOT id									{$ss.name = std::move($id.name);$ss.location.line = $DOT->getLine(); $ss.location.offset = $DOT->getStartIndex();};
+	: DOT id									{$ss.name = std::move($id.name);$ss.loc.line = $DOT->getLine(); $ss.loc.offset = $DOT->getStartIndex();};
 
 
 

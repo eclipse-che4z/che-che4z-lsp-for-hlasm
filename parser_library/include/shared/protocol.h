@@ -1,6 +1,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 
+#include <cstring>
+
 #include "../src/generated/parser_library_export.h"
 
 namespace hlasm_plugin::parser_library {
@@ -36,18 +38,18 @@ struct PARSER_LIBRARY_EXPORT document_change
 {
 	document_change(const char * new_text, size_t text_length) : 
 		whole(true), text(new_text), text_length(text_length) {}
-	document_change(range range, const char * new_text, size_t text_length) : 
-		whole(false), range(range), text(new_text), text_length(text_length) {}
+	document_change(range change_range, const char * new_text, size_t text_length) :
+		whole(false), change_range(change_range), text(new_text), text_length(text_length) {}
 
 	bool operator==(const document_change & ch) const
 	{
 
-		return whole == ch.whole && range == ch.range &&
-			text_length == ch.text_length && memcmp(text, ch.text, text_length) == 0;
+		return whole == ch.whole && change_range == ch.change_range &&
+			text_length == ch.text_length && std::memcmp(text, ch.text, text_length) == 0;
 	}
 
 	const bool whole;
-	const range range;
+	const range change_range;
 	const char * const text;
 	const size_t text_length;
 };

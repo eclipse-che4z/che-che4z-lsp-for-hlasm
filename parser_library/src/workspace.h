@@ -22,8 +22,8 @@ using program_id = std::string;
 //information that a program uses certain processor group
 struct program
 {
-	program(program_id program, proc_grp_id pgroup) : program_id(program), pgroup(pgroup) {}
-	program_id program_id;
+	program(program_id prog_id, proc_grp_id pgroup) : prog_id(prog_id), pgroup(pgroup) {}
+	program_id prog_id;
 	proc_grp_id pgroup;
 };
 

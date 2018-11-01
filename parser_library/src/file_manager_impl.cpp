@@ -33,7 +33,7 @@ namespace parser_library {
 			if (changes[i].whole)
 				file->second.did_change(std::move(text_s));
 			else
-				file->second.did_change(changes[i].range, std::move(text_s));
+				file->second.did_change(changes[i].change_range, std::move(text_s));
 		}
 			
 		

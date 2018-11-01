@@ -145,7 +145,7 @@ void ordinary_processor::check_and_prepare_AGO(bool& recoverable, A_t& branch, s
 	if (op->kind == ca_operand_kind::BRANCH_SIMPLE || op->kind == ca_operand_kind::BRANCH_EXPR)
 	{
 		auto id = analyzer_.get_id(std::move(op->seqence_symbol.name));
-		targets.push_back({ id,op->seqence_symbol.location });
+		targets.push_back({ id,op->seqence_symbol.loc });
 		branch = 1;
 	}
 
@@ -165,7 +165,7 @@ void ordinary_processor::check_and_prepare_AGO(bool& recoverable, A_t& branch, s
 			if (tmp->kind == ca_operand_kind::BRANCH_SIMPLE)
 			{
 				auto id = analyzer_.get_id(std::move(tmp->seqence_symbol.name));
-				targets.push_back({ id,tmp->seqence_symbol.location });
+				targets.push_back({ id,tmp->seqence_symbol.loc });
 			}
 			else
 			{
@@ -222,7 +222,7 @@ void ordinary_processor::check_and_prepare_AIF(bool& recoverable, B_t& condition
 			{
 				condition = tmp->expression ? tmp->expression->get_numeric_value() : object_traits<B_t>::default_v();
 				auto id = analyzer_.get_id(std::move(tmp->seqence_symbol.name));
-				target = { id,tmp->seqence_symbol.location };
+				target = { id,tmp->seqence_symbol.loc };
 			}
 		}
 		else
@@ -253,7 +253,7 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_AIF()
 inline void hlasm_plugin::parser_library::semantics::ordinary_processor::process_seq_sym_()
 {
 	auto id = analyzer_.get_id(std::move(analyzer_.current_label().name));
-	sequence_symbol ss = { id,analyzer_.current_label().sequence_symbol.location };
+	sequence_symbol ss = { id,analyzer_.current_label().sequence_symbol.loc };
 	analyzer_.ctx_->add_sequence_symbol(ss);
 }
 
@@ -309,13 +309,13 @@ void hlasm_plugin::parser_library::semantics::lookahead_processor::process_label
 	if (analyzer_.current_label().type == label_type::SEQ && analyzer_.ctx_->ids.add(std::move(analyzer_.current_label().sequence_symbol.name)) == analyzer_.lookahead_.target.name)
 	{
 		analyzer_.lookahead_ = look_ahead();
-		analyzer_.jump_in_statements(analyzer_.current_label().sequence_symbol.location);
+		analyzer_.jump_in_statements(analyzer_.current_label().sequence_symbol.loc);
 		return;
 	}
 
 	if (analyzer_.lexer_->is_last_line())
 	{
-		analyzer_.jump_in_statements(analyzer_.lookahead_.target.location);
+		analyzer_.jump_in_statements(analyzer_.lookahead_.target.loc);
 		analyzer_.lookahead_ = look_ahead();
 		analyzer_.lookahead_failed_ = true;
 		//ERR lookahead failed

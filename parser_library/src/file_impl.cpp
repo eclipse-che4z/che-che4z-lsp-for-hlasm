@@ -4,6 +4,7 @@
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <exception>
 
 #include "file_impl.h"
 
@@ -181,10 +182,10 @@ bool file_impl::is_bad() const
 }
 
 //returns the location in text_ that corresponds to utf-16 based location
-size_t file_impl::index_from_location(location location)
+size_t file_impl::index_from_location(location loc)
 {
-	size_t end = (size_t)location.column;
-	size_t i = lines_ind_[(size_t)location.line];
+	size_t end = (size_t)loc.column;
+	size_t i = lines_ind_[(size_t)loc.line];
 	size_t utf16_counter = 0;
 
 	while(utf16_counter < end)
@@ -209,7 +210,7 @@ size_t file_impl::index_from_location(location location)
 				utf16_width = 1;
 			}
 			else
-				throw std::exception("The text of the file is not in utf-8.");//WRONG UTF-8 input
+				throw std::runtime_error("The text of the file is not in utf-8.");//WRONG UTF-8 input
 
 			i += width;
 			utf16_counter += utf16_width;

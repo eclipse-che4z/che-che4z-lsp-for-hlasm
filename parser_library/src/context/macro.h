@@ -17,8 +17,8 @@ struct macro_arg
 	id_index id;
 	macro_data_ptr data;
 
-	macro_arg(macro_data_ptr data) :data(std::move(data)), id(nullptr) {}
-	macro_arg(macro_data_ptr data, id_index name) :data(std::move(data)), id(name) {}
+	macro_arg(macro_data_ptr data) : id(nullptr), data(std::move(data)) {}
+	macro_arg(macro_data_ptr data, id_index name) : id(name), data(std::move(data)) {}
 };
 
 struct macro_invocation;

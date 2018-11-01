@@ -38,7 +38,7 @@ private:
 
 	void load_text();
 
-	size_t index_from_location(location location);
+	size_t index_from_location(location loc);
 };
 
 }

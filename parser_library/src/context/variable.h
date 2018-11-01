@@ -227,7 +227,7 @@ struct sequence_symbol
 	static const sequence_symbol EMPTY;
 
 	id_index name;
-	location location;
+	location loc;
 
 	operator bool() const;
 

@@ -15,7 +15,7 @@ hlasm_plugin::parser_library::context::hlasm_context& hlasm_plugin::parser_libra
 	return *ctx_;
 }
 
-hlasm_plugin::parser_library::lexer * hlasm_plugin::parser_library::semantics::semantic_analyzer::lexer()
+hlasm_plugin::parser_library::lexer * hlasm_plugin::parser_library::semantics::semantic_analyzer::get_lexer()
 {
 	return lexer_;
 }
@@ -321,7 +321,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::jump(sequence_s
 			return;
 		}
 
-		jump_in_statements(label.location);
+		jump_in_statements(label.loc);
 	}
 }
 
@@ -387,12 +387,16 @@ std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_strin
 		{
 		case concat_type::STR:
 			ret.append(to_string(sublist->list[i]->access_str()));
+			break;
 		case concat_type::DOT:
 			ret.append(to_string(sublist->list[i]->access_dot()));
+			break;
 		case concat_type::VAR:
 			ret.append(to_string(sublist->list[i]->access_var()));
+			break;
 		case concat_type::SUB:
 			ret.append(to_string(sublist->list[i]->access_sub()));
+			break;
 		}
 		if (i != sublist->list.size() - 1) ret.append(",");
 	}
@@ -425,7 +429,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::init_instr()
 	}
 }
 
-void hlasm_plugin::parser_library::semantics::semantic_analyzer::jump_in_statements(context::location location)
+void hlasm_plugin::parser_library::semantics::semantic_analyzer::jump_in_statements(context::location loc)
 {
-	lexer_->rewind_input(location.offset, location.line);
+	lexer_->rewind_input(loc.offset, loc.line);
 }

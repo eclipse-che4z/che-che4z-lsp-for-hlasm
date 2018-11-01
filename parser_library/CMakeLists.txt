@@ -80,6 +80,9 @@ generate_export_header(parser_library
 			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/parser_library_export.h)
 
 target_link_libraries(parser_library antlr4-runtime)
+if(CMAKE_COMPILER_IS_GNUCXX)
+	target_link_libraries(parser_library stdc++fs)
+endif()
 
 target_include_directories(parser_library
     PUBLIC 
@@ -108,6 +111,9 @@ if(BUILD_TESTING)
 	target_link_libraries(library_test gmock_main)
 	target_link_libraries(library_test antlr4-runtime)
 	target_link_libraries(library_test parser_library)
+	if(CMAKE_COMPILER_IS_GNUCXX)
+		target_link_libraries(library_test stdc++fs)
+	endif()
 	add_dependencies(library_test library_tests_copy)
 	add_dependencies(library_test antlr4jar)
 	add_dependencies(library_test parser_library)

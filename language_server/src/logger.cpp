@@ -1,7 +1,8 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <ctime>
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <time.h>
 
 #include "logger.h"
 
@@ -39,9 +40,13 @@ string logger::current_time()
    time_t now = time(0); 
    // Convert current time to string
 
+#if __STDC_LIB_EXT1__ || _MSVC_LANG
    char cstr[50];
    ctime_s(cstr, sizeof cstr, &now);
    currTime.assign(cstr);
+#else
+   currTime.assign(ctime(&now));
+#endif
 
    // Last charactor of currentTime is "\n", so remove it
    string currentTime = currTime.substr(0, currTime.size()-1);

@@ -62,7 +62,7 @@ class semantic_analyzer
 	lexer* lexer_;
 public:
 	context::hlasm_context& context();
-	lexer* lexer();
+	lexer* get_lexer();
 
 	void initialize(std::shared_ptr<context::hlasm_context> ctx_init, hlasm_plugin::parser_library::lexer* lexer_init);
 	void initialize(const semantic_analyzer& analyzer);
@@ -147,7 +147,7 @@ private:
 	std::string to_string(sublist* sublist);
 	void init_instr();
 
-	void jump_in_statements(context::location location);
+	void jump_in_statements(context::location loc);
 
 	friend ordinary_processor;
 	friend lookahead_processor;

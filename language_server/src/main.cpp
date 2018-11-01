@@ -18,7 +18,7 @@
 # define SET_BINARY_MODE(handle, args) _setmode(_fileno(handle), O_BINARY)
 #else
 //TODO UNIX support for binary files
-# define SET_BINARY_MODE(handle, args) freopen(NULL, args, stdin);
+# define SET_BINARY_MODE(handle, args)
 #endif
 
 

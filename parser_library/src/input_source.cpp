@@ -1,4 +1,5 @@
 #include "shared/input_source.h"
+#include <exception>
 
 using namespace hlasm_plugin;
 using namespace parser_library;
@@ -73,7 +74,7 @@ std::string hlasm_plugin::parser_library::input_source::getText(const antlr4::mi
 				n.append(utf8, 4);
 			}
 			else
-				throw std::exception("not valid unicode character");
+				throw std::runtime_error("not valid unicode character");
 
 		}
 		return n;

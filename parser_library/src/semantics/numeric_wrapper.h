@@ -29,17 +29,17 @@ namespace hlasm_plugin
 					return !is_valid();
 				}
 				bool is_valid() const {
-					if (ref.retype<arithmetic_expression>())
+					if (ref.template retype<arithmetic_expression>())
 						return true;
-					if (ref.retype<logic_expression>())
+					if (ref.template retype<logic_expression>())
 						return true;
 					return false;
 				}
 				int32_t value() const {
-					if (auto p = ref.retype<arithmetic_expression>()) {
+					if (auto p = ref.template retype<arithmetic_expression>()) {
 						return p->get_value();
 					}
-					if (auto p = ref.retype<logic_expression>()) {
+					if (auto p = ref.template retype<logic_expression>()) {
 						return p->get_value();
 					}
 					throw std::bad_cast();
