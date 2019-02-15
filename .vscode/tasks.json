@@ -9,12 +9,12 @@
       "command": "cmake",
       "args": [
         // Ask msbuild to generate full paths for file names.
+        "-DCMAKE_BUILD_TYPE=Debug",
         "../"
       ],
       "options": {
         "cwd": "${workspaceRoot}/build"
       },
-      "group": "build",
       "presentation": {
         // Reveal the output only if unrecognized errors occur.
         "reveal": "always"
@@ -29,14 +29,16 @@
       "command": "cmake",
       "args": [
         // Ask msbuild to generate full paths for file names.
-        "-DCMAKE_BUILD_TYPE=Release ",
         "--build",
         "."
       ],
       "options": {
         "cwd": "${workspaceRoot}/build"
       },
-      "group": "build",
+      "group": { 
+        "kind": "build",
+        "isDefault": true,
+      },
       "presentation": {
         // Reveal the output only if unrecognized errors occur.
         "reveal": "always"

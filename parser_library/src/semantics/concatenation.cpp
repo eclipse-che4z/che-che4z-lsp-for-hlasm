@@ -2,7 +2,7 @@
 
 using namespace hlasm_plugin::parser_library::semantics;
 
-char_str * hlasm_plugin::parser_library::semantics::concatenation_point::access_str() { return dynamic_cast<char_str*>(this); }
+const char_str * hlasm_plugin::parser_library::semantics::concatenation_point::access_str() const { return dynamic_cast<const char_str*>(this); }
 
 var_sym * hlasm_plugin::parser_library::semantics::concatenation_point::access_var() { return dynamic_cast<var_sym*>(this); }
 
@@ -14,7 +14,7 @@ hlasm_plugin::parser_library::semantics::char_str::char_str(std::string value) :
 
 concat_type hlasm_plugin::parser_library::semantics::char_str::get_type() const { return concat_type::STR; }
 
-hlasm_plugin::parser_library::semantics::var_sym::var_sym(std::string name, std::vector<expr_ptr> subscript, symbol_range range)
+hlasm_plugin::parser_library::semantics::var_sym::var_sym(std::string name, std::vector<antlr4::ParserRuleContext*> subscript, symbol_range range)
 	: name(std::move(name)), subscript(std::move(subscript)), range(range) {}
 
 hlasm_plugin::parser_library::semantics::var_sym::var_sym() {}

@@ -7,9 +7,6 @@ using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace semantics;
 
-#define make_arith(val) std::make_unique<arithmetic_expression>(val)
-#define make_logic(val) std::make_unique<logic_expression>(val)
-
 logic_expression::logic_expression(bool v)
 	: value_(v)
 {

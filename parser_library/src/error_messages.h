@@ -1,7 +1,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_ERROR_MESSAGES_H
 #define HLASMPLUGIN_PARSERLIBRARY_ERROR_MESSAGES_H
 
-#include "diagnosable.h"
+#include "diagnostic.h"
 
 namespace hlasm_plugin {
 	namespace parser_library {
@@ -32,7 +32,13 @@ namespace hlasm_plugin {
 			static inline diag_ptr e003()
 			{
 				return std::make_unique<diagnostic_op>
-					(diagnostic_severity::error, "E005", "invalid self-defining termm");
+					(diagnostic_severity::error, "E003", "invalid self-defining term");
+			}
+
+			static inline diag_ptr e004()
+			{
+				return std::make_unique<diagnostic_op>
+					(diagnostic_severity::error, "E004", "use of undefined ordinary symbol identifier");
 			}
 
 			static inline diag_ptr ec01()

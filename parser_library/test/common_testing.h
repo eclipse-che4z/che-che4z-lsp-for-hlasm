@@ -3,9 +3,9 @@
 #include <utility>
 #include "antlr4-runtime.h"
 #include "../include/shared/lexer.h"
-#include "../generated/hlasmparser.h"
-#include "../include/shared/token_stream.h"
-#include "../include/shared/input_source.h"
+#include "../src/generated/hlasmparser.h"
+#include "shared/token_stream.h"
+#include "shared/input_source.h"
 
 
 using namespace hlasm_plugin::parser_library::context;
@@ -27,8 +27,8 @@ std::string get_content(std::string source)
 struct parser_holder
 {
 	std::unique_ptr<hlasm_plugin::parser_library::input_source> input;
-	std::unique_ptr<hlasm_plugin::parser_library::token_stream> tokens;
 	std::unique_ptr<hlasm_plugin::parser_library::lexer> lexer;
+	std::unique_ptr<hlasm_plugin::parser_library::token_stream> tokens;
 	std::shared_ptr<hlasm_plugin::parser_library::context::hlasm_context> ctx;
 	std::unique_ptr<hlasm_plugin::parser_library::generated::hlasmparser> parser;
 

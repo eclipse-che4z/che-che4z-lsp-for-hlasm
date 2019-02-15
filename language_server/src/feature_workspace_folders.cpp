@@ -31,6 +31,11 @@ json feature_workspace_folders::register_capabilities()
 	} } };
 }
 
+void feature_workspace_folders::register_callbacks(response_callback response, response_error_callback error, notify_callback notify)
+{
+	callbacks_registered_ = true;
+}
+
 void feature_workspace_folders::initialize_feature(const json & initialize_params)
 {
 	bool ws_folders_support = false;

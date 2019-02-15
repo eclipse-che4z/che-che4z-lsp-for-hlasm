@@ -4,7 +4,6 @@
 #include "antlr4-runtime.h"
 #include "../context/common_types.h"
 
-
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
@@ -28,6 +27,8 @@ struct symbol_range
 	static symbol_range union_range(const symbol_range& lhs, const symbol_range& rhs);
 
 	static symbol_range get_range(antlr4::Token * start, antlr4::Token * stop);
+
+	static symbol_range get_range(antlr4::Token * token);
 
 	static symbol_range get_range(antlr4::ParserRuleContext * rule_ctx);
 

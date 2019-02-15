@@ -12,7 +12,7 @@ namespace hlasm_plugin
 		{
 			class expression;
 			class character_expression;
-			using char_ptr = std::unique_ptr<character_expression>;
+			using char_ptr = std::shared_ptr<character_expression>;
 			class character_expression : public expression
 			{
 			public:
@@ -22,12 +22,51 @@ namespace hlasm_plugin
 
 				void append(std::string);
 				char_ptr append(const char_ptr& arg) const;
+				char_ptr append(const character_expression* arg) const;
 
 				expr_ptr binary_operation(str_ref operation_name, expr_ref arg2) const;
 				expr_ptr unary_operation(str_ref operation_name) const;
 
 				const std::string &get_value() const;
-				char_ptr substring(int32_t, expr_ref, expr_ref) const;
+
+				template<typename T>
+				char_ptr substring(int32_t dupl, const T& s, const T& e) const
+				{
+					if (dupl < 0)
+						return default_expr_with_error<character_expression>
+						(error_messages::ec01());
+
+					int32_t start = 0;
+					int32_t len = static_cast<int32_t>(value_.length());
+
+					if (s != nullptr)
+						start = s->get_numeric_value() - 1;
+
+
+					if (e != nullptr)
+						len = e->get_numeric_value();
+
+					if (start < 0 || len < 0)
+						return default_expr_with_error<character_expression>
+						(error_messages::ec02());
+
+					if ((size_t)start > value_.size())
+						return default_expr_with_error<character_expression>
+						(error_messages::ec02());
+
+					auto value = value_.substr(start, len);
+
+					if (dupl > 1)
+					{
+						value.reserve(dupl * value.length());
+						auto val = value;
+						for (int32_t i = 1; i < dupl; ++i)
+							value.append(val);
+					}
+
+					return std::make_shared<character_expression>(std::move(value));
+				}
+
 				std::string get_str_val() const override;
 
 				static std::string num_to_hex(int32_t val);

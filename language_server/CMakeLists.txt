@@ -10,6 +10,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/feature.cpp
 	${PROJECT_SOURCE_DIR}/src/feature_workspace_folders.cpp
 	${PROJECT_SOURCE_DIR}/src/feature_text_synchronization.cpp
+	${PROJECT_SOURCE_DIR}/src/feature_language_features.cpp
 	)
 
 # compile sources to the executable

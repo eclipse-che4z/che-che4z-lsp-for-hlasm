@@ -5,15 +5,15 @@
 #include <istream>
 #include <filesystem>
 
-#include "../src/generated/parser_library_export.h"
 #include "shared/protocol.h"
+#include "diagnosable.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 
 using file_uri = std::string;
 
-class file
+class file : public virtual diagnosable
 {
 public:
 	virtual const file_uri & get_file_name() = 0;
@@ -27,9 +27,6 @@ public:
 	virtual void did_change(range range, std::string new_text) = 0;
 	virtual void did_close() = 0;
 };
-
-
-
 
 
 }

@@ -2,6 +2,7 @@
 #include "arithmetic_expression.h"
 #include <algorithm>
 #include "../error_messages.h"
+#include <stdexcept>
 
 using namespace hlasm_plugin::parser_library::semantics;
 
@@ -58,7 +59,6 @@ std::string hlasm_plugin::parser_library::semantics::keyword_expression::get_str
 
 expr_ptr hlasm_plugin::parser_library::semantics::keyword_expression::to_expression() const
 {
-	/* TODO: resolve expr */
 	return default_expr_with_error<arithmetic_expression>(error_messages::not_implemented());
 }
 

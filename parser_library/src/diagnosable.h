@@ -4,30 +4,24 @@
 #include <string>
 #include <vector>
 
-#include "../include/shared/protocol.h"
+#include "shared/protocol.h"
+#include "diagnostic.h"
 
 namespace hlasm_plugin::parser_library {
 
-	enum class diagnostic_severity
-	{
-		error = 1,
-		warning = 2,
-		info = 3,
-		hint = 4,
-		unspecified = 5
-	};
 
-	struct diagnostic_op
-	{
-		diagnostic_severity severity;
-		std::string code;
-		std::string message;
-		diagnostic_op() {}
-		diagnostic_op(const diagnostic_op&d) :
-			severity(d.severity), code((d.code)), message((d.message)) {}
-		diagnostic_op(diagnostic_severity severity, std::string code, std::string message) :
-			severity(severity), code(std::move(code)), message(std::move(message)) {}
-	};
+using diagnostic_container = std::vector<diagnostic_s>;
+
+class diagnosable
+{
+public:
+	virtual void collect_diags() const = 0;
+	virtual diagnostic_container & diags() const = 0;
+	virtual void add_diagnostic(diagnostic_s diagnostic) const = 0;
+	virtual bool is_once_only() const = 0;
+};
+
+
 
 }
 #endif

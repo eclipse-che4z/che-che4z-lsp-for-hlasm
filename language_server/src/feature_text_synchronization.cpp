@@ -5,7 +5,10 @@
 #include "shared/protocol.h"
 namespace hlasm_plugin::language_server {
 
-feature_text_synchronization::feature_text_synchronization(parser_library::workspace_manager & ws_mngr) :feature(ws_mngr) {}
+feature_text_synchronization::feature_text_synchronization(parser_library::workspace_manager & ws_mngr) : feature(ws_mngr)
+{
+	ws_mngr.register_highlighting_consumer(this);
+}
 
 void feature_text_synchronization::register_methods(std::map<std::string, method> &)
 {
@@ -42,6 +45,12 @@ json feature_text_synchronization::register_capabilities()
 			}
 			}
 	} } };
+}
+
+void feature_text_synchronization::register_callbacks(response_callback response, response_error_callback error, notify_callback notify)
+{
+	notify_ = notify;
+	callbacks_registered_ = true;
 }
 
 void feature_text_synchronization::initialize_feature(const json &)
@@ -96,4 +105,86 @@ void feature_text_synchronization::on_did_close(const parameter & params)
 	ws_mngr_.did_close_file(uri_to_path(uri).c_str());
 }
 
+void feature_text_synchronization::consume_highlighting_info(parser_library::all_semantic_info info)
+{
+	auto f = info.files();
+	for (size_t i = 0; i < info.files_count(); i++)
+	{
+		auto fi = info.file_info(f[i]);
+
+		std::string scope;
+		json tokens_array = json::array();
+		for (size_t j = 0; j < fi.token_count(); j++)
+		{
+			switch (fi.token(j).scope)
+			{
+			case parser_library::semantics::scopes::label:
+				scope = "label";
+				break;
+			case parser_library::semantics::scopes::instruction:
+				scope = "instruction";
+				break;
+			case parser_library::semantics::scopes::remark:
+				scope = "remark";
+				break;
+			case parser_library::semantics::scopes::comment:
+				scope = "comment";
+				break;
+			case parser_library::semantics::scopes::ignored:
+				scope = "ignored";
+				break;
+			case parser_library::semantics::scopes::continuation:
+				scope = "continuation";
+				break;
+			case parser_library::semantics::scopes::operator_symbol:
+				scope = "operator";
+				break;
+			case parser_library::semantics::scopes::seq_symbol:
+				scope = "seqSymbol";
+				break;
+			case parser_library::semantics::scopes::var_symbol:
+				scope = "varSymbol";
+				break;
+			case parser_library::semantics::scopes::string:
+				scope = "string";
+				break;
+			case parser_library::semantics::scopes::number:
+				scope = "number";
+				break;
+			case parser_library::semantics::scopes::operand:
+				scope = "operand";
+				break;
+			}
+			tokens_array.push_back(json{
+				{ "lineStart",fi.token(j).token_range.start.line },
+				{ "columnStart",fi.token(j).token_range.start.column },
+				{ "lineEnd",fi.token(j).token_range.end.line },
+				{ "columnEnd",fi.token(j).token_range.end.column },
+				{ "scope", scope }
+				});
+		}
+
+		json continuations_array = json::array();
+		continuations_array.push_back(json{fi.continuation_column(), fi.continue_column()});
+		for (size_t j = 0; j < fi.continuation_count(); j++)
+		{
+			continuations_array.push_back(json{
+				fi.continuation(j).line, fi.continuation(j).column
+			});
+		}
+
+		json args = json { 
+		{ "textDocument",
+			json { 
+				{ "uri", feature::path_to_uri(fi.document_uri()) },
+				{ "version",fi.document_version() }
+		} },
+		{ "tokens", tokens_array },
+		{ "continuationPositions", continuations_array}
+		};
+
+		if (callbacks_registered_)
+			notify_("textDocument/semanticHighlighting", args);
+	}
+}
 }

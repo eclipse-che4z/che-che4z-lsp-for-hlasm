@@ -32,21 +32,21 @@ public:
 			std::bind(&server_test::response_error, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
-	void response(id id, json & json)
+	void response(id id, const json & json)
 	{
 		called_response = true;
 		response_json = json;
 		response_id = id;
 	}
 
-	void response_error(id id, error & json)
+	void response_error(id id, const error & json)
 	{
 		called_response_error = true;
 		response_error_json = json;
 		response_error_id = id;
 	}
 
-	void notify(const std::string& method, json & json)
+	void notify(const std::string& method, const json & json)
 	{
 		called_notify = true;
 		notify_json = json;

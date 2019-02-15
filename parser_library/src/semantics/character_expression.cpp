@@ -10,45 +10,17 @@ using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace semantics;
 
-
-char_ptr character_expression::substring(int32_t dupl, expr_ref s, expr_ref e) const
-{
-	if (dupl < 0)
-		return default_expr_with_error<character_expression>
-		(error_messages::ec01());
-
-	int32_t start = 0;
-	int32_t len = static_cast<int32_t>(value_.length());
-
-	if (s != nullptr)
-		start = s->get_numeric_value() - 1;
-
-
-	if (e != nullptr)
-		len = e->get_numeric_value();
-
-	if (start < 0 || len < 0)
-		return default_expr_with_error<character_expression>
-		(error_messages::ec02());
-
-	auto value = value_.substr(start, len);
-
-	if (dupl > 1)
-	{
-		value.reserve(dupl * value.length());
-		auto val = value;
-		for (int32_t i = 1; i < dupl; ++i)
-			value.append(val);
-	}
-
-	return std::make_unique<character_expression>(std::move(value));
-}
-
 std::string hlasm_plugin::parser_library::semantics::character_expression::get_str_val() const { return value_; }
 
 char_ptr character_expression::append(const char_ptr& arg) const
 {
 	copy_return_on_error_binary(arg.get(), character_expression);
+	return make_char(value_ + arg->value_);
+}
+
+char_ptr hlasm_plugin::parser_library::semantics::character_expression::append(const character_expression * arg) const
+{
+	copy_return_on_error_binary(arg, character_expression);
 	return make_char(value_ + arg->value_);
 }
 

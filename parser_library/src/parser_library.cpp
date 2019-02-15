@@ -4,7 +4,7 @@
 #include "../include/shared/token_stream.h"
 #include "parser_tools.h"
 #include "context/hlasm_context.h"
-
+#include "generated/hlasmparser.h"
 namespace hlasm_plugin {
 namespace parser_library {
 

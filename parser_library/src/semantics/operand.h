@@ -4,6 +4,8 @@
 #include <functional>
 #include "semantic_objects.h"
 #include "concatenation.h"
+#include "../checking/instr_operand.h"
+#include "antlr4-common.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -17,6 +19,8 @@ enum class operand_type
 struct model_operand;
 struct ca_operand;
 struct substituable_operand;
+struct machine_operand;
+struct assembler_operand;
 
 struct operand;
 using operand_ptr = std::unique_ptr<operand>;
@@ -35,6 +39,8 @@ struct operand
 	model_operand* access_model_op();
 	ca_operand* access_ca_op();
 	substituable_operand* access_subs_op();
+	machine_operand* access_mach_op();
+	assembler_operand* access_asm_op();
 
 	virtual operand_type type() const;
 	virtual ~operand() = default;
@@ -64,14 +70,30 @@ struct substituable_operand : public operand
 
 struct machine_operand : public substituable_operand
 {
-	machine_operand(std::function<std::string()> get_text);
+	machine_operand(std::function<std::string()> get_text, std::unique_ptr<checking::one_operand> op_value);
 	operand_type type() const override;
+
+	std::unique_ptr<checking::one_operand> op_value;
 };
 
 struct assembler_operand : public substituable_operand
 {
-	assembler_operand(std::function<std::string()> get_text);
+	assembler_operand(std::function<std::string()> get_text, std::unique_ptr<checking::one_operand> op_value);
 	operand_type type() const override;
+
+	std::unique_ptr<checking::one_operand> op_value;
+};
+
+struct data_def_operand : public substituable_operand
+{
+	data_def_operand(std::function<std::string()> get_text);
+	operand_type type() const override;
+	int32_t duplication_factor = 1;
+	char data_type;
+	char extension = 0;
+	int32_t program_type;
+	std::string modifier;
+	std::string nominal_value;
 };
 
 enum class ca_operand_kind
@@ -81,7 +103,7 @@ enum class ca_operand_kind
 
 struct ca_operand : public operand
 {
-	expr_ptr expression;
+	antlr4::ParserRuleContext* expression;
 	seq_sym seqence_symbol;
 	var_sym vs;
 
@@ -91,9 +113,9 @@ struct ca_operand : public operand
 
 	ca_operand(var_sym vs);
 
-	ca_operand(seq_sym seqence_symbol, expr_ptr expression);
+	ca_operand(seq_sym seqence_symbol, antlr4::ParserRuleContext* expression);
 
-	ca_operand(expr_ptr expression);
+	ca_operand(antlr4::ParserRuleContext* expression);
 
 	operand_type type() const override;
 };

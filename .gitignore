@@ -34,8 +34,10 @@
 
 parser_library/src/generated/*
 .vs/
-build/
+/build/
+/debug/
 .antlr/
+parser_library/src/grammar/.antlr/
 
 #just a playground, ignore changes
 dummy/src/

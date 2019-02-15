@@ -1,12 +1,12 @@
 #include "semantic_analyzer.h"
-#include "semantic_analyzer.h"
-#include "semantic_analyzer.h"
-#include "semantic_analyzer.h"
-#include "semantic_analyzer.h"
 #include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
 #include "../generated/hlasmparser.h"
+#include "../diagnosable_impl.h"
+#include "../error_strategy.h"
+#include "expression_visitor.h"
 
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
@@ -20,7 +20,7 @@ hlasm_plugin::parser_library::lexer * hlasm_plugin::parser_library::semantics::s
 	return lexer_;
 }
 
-void hlasm_plugin::parser_library::semantics::semantic_analyzer::initialize(std::shared_ptr<context::hlasm_context> ctx_init, hlasm_plugin::parser_library::lexer* lexer_init)
+void hlasm_plugin::parser_library::semantics::semantic_analyzer::initialize(std::string fname, std::shared_ptr<context::hlasm_context> ctx_init, hlasm_plugin::parser_library::lexer* lexer_init)
 {
 	this->ctx_ = std::move(ctx_init);
 	this->lexer_ = lexer_init;
@@ -47,7 +47,7 @@ const instruction_semantic_info& hlasm_plugin::parser_library::semantics::semant
 	return curr_statement_.instr_info;
 }
 
-const operand_remark_semantic_info& hlasm_plugin::parser_library::semantics::semantic_analyzer::current_operands_and_remarks()
+operand_remark_semantic_info& hlasm_plugin::parser_library::semantics::semantic_analyzer::current_operands_and_remarks()
 {
 	return curr_statement_.op_rem_info;
 }
@@ -67,6 +67,11 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_label_field
 {
 	curr_statement_.label_info.type = label_type::SEQ;
 	curr_statement_.label_info.sequence_symbol = std::move(sequence_symbol);
+}
+
+range semantic_analyzer::convert_range(const symbol_range & range)
+{
+	return { {range.begin_ln, range.begin_col}, { range.end_ln, range.end_col } };
 }
 
 void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_label_field(std::string label, antlr4::ParserRuleContext * parser_ctx)
@@ -114,6 +119,11 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_label_field
 	}
 }
 
+hlasm_plugin::parser_library::range symbol_range_to_range(symbol_range sr)
+{
+	return { {sr.begin_ln, sr.begin_col}, {sr.end_ln, sr.end_col} };
+}
+
 void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_instruction_field(std::string instr)
 {
 	//if contains space
@@ -124,7 +134,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_instruction
 
 	if (target == ctx_->empty_id)
 	{
-		//ERROR no op code
+		add_diagnostic(diagnostic_s::error_E022("", "operation code", symbol_range_to_range(curr_statement_.range))); //error - no operation code
 		curr_statement_.instr_info.has_no_ops = true;
 		curr_statement_.instr_info.id = target;
 	}
@@ -158,7 +168,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_instruction
 
 	if (str.find(' ') != std::string::npos)
 	{
-		//error
+		add_diagnostic(diagnostic_s::error_E012("", "space char is not allowed in instruction", symbol_range_to_range(curr_statement_.range))); //error - instr contains space
 	}
 
 	set_instruction_field(std::move(str));
@@ -193,6 +203,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_operand_rem
 		token_stream tokens(&lex);
 		generated::hlasmparser parser(&tokens);
 		parser.initialize(*this);
+		parser.setErrorHandler(std::make_shared<error_strategy>());
 		parser.removeErrorListeners();
 		auto res = parser.operands_model();
 		curr_statement_.op_rem_info.substituted_operands = std::move(res->line.operands);
@@ -205,6 +216,11 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_operand_rem
 }
 
 void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_statement_field(symbol_range range)
+{
+	curr_statement_.range = range;
+}
+
+void hlasm_plugin::parser_library::semantics::semantic_analyzer::set_statement_range(symbol_range range)
 {
 	curr_statement_.range = range;
 }
@@ -230,12 +246,12 @@ bool hlasm_plugin::parser_library::semantics::semantic_analyzer::in_lookahead()
 	return lookahead_.active;
 }
 
-set_type semantic_analyzer::get_var_sym_value(id_index id, const std::vector<expr_ptr>& subscript, symbol_range range)
+set_type semantic_analyzer::get_var_sym_value(id_index id, const std::vector<expr_ptr>& subscript, symbol_range range) const
 {
 	auto var = ctx_->get_var_sym(id);
 	if (!var)
 	{
-		//ERROR no var like that
+		add_diagnostic(diagnostic_s::error_E010("", "variable", symbol_range_to_range(range))); //error - unknown name of variable
 		return set_type();
 	}
 
@@ -243,19 +259,19 @@ set_type semantic_analyzer::get_var_sym_value(id_index id, const std::vector<exp
 	{
 		if (subscript.size() > 1)
 		{
-			//error too much operands
+			add_diagnostic(diagnostic_s::error_E020("", "variable symbol subscript", symbol_range_to_range(range))); //error - too many operands
 			return set_type();
 		}
 
 		if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.size() == 0))
 		{
-			//error inconsistent subscript
+			add_diagnostic(diagnostic_s::error_E013("", "subscript error", symbol_range_to_range(range))); //error - inconsistent format of subcript
 			return set_type();
 		}
 
 		if (!set_sym->is_scalar && (!subscript[0] || subscript[0]->get_numeric_value() < 1))
 		{
-			//error subscript lesser than 1
+			add_diagnostic(diagnostic_s::error_E012("", "subscript value has to be 1 or more", symbol_range_to_range(range))); //error - subscript is less than 1
 			return set_type();
 		}
 
@@ -288,7 +304,7 @@ set_type semantic_analyzer::get_var_sym_value(id_index id, const std::vector<exp
 		{
 			if (!e || e->get_numeric_value() < 1)
 			{
-				//error subscript
+				add_diagnostic(diagnostic_s::error_E012("", "subscript value has to be 1 or more", symbol_range_to_range(range))); //error - subscript is less than 1
 				return set_type();
 			}
 			tmp.push_back((size_t)(e->get_numeric_value() - 1));
@@ -325,7 +341,8 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::jump(sequence_s
 	}
 }
 
-std::string semantic_analyzer::concatenate(std::vector<concat_point_ptr>&& conc_list)
+//std::string semantic_analyzer::concatenate(std::vector<concat_point_ptr>&& conc_list)
+std::string semantic_analyzer::concatenate(const std::vector<concat_point_ptr>& conc_list) const
 {
 	std::string result;
 	bool last_was_var = false;
@@ -360,23 +377,32 @@ std::string semantic_analyzer::concatenate(std::vector<concat_point_ptr>&& conc_
 	return result;
 }
 
-std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(char_str* str)
+std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(const char_str* str) const
 {
-	return std::move(str->value);
+	return str->value;
 }
 
-std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(var_sym* vs)
+std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(const var_sym* vs) const
 {
+	if (vs->name.empty()) //ERROR HANDLING
+		return "";
+
 	auto id = ctx_->ids.add(std::move(vs->name));
-	return get_var_sym_value(id, vs->subscript, vs->range).to<C_t>();
+
+	std::vector<expr_ptr> subs;
+
+	for (auto s : vs->subscript)
+		subs.push_back(evaluate_expression_tree(s));
+
+	return get_var_sym_value(id, subs, vs->range).to<C_t>();
 }
 
-std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(dot*)
+std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(const dot*) const
 {
 	return ".";
 }
 
-std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(sublist* sublist)
+std::string hlasm_plugin::parser_library::semantics::semantic_analyzer::to_string(const sublist* sublist) const
 {
 	std::string ret("(");
 	for (size_t i = 0; i < sublist->list.size(); ++i)
@@ -412,7 +438,7 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::init_instr()
 	for (size_t i = 0; i < instruction::machine_instructions.size(); ++i)
 	{
 		auto id = ctx_->ids.add(instruction::machine_instructions[i].name);
-		instructions_.insert({ id, { instruction_type::MACH,instruction::machine_instructions[i].operands_count == 0,i } });
+		instructions_.insert({ id, { instruction_type::MACH,instruction::machine_instructions[i].operands.size() == 0,i } });
 	}
 	for (size_t i = 0; i < instruction::assembler_instructions.size(); ++i)
 	{
@@ -432,4 +458,23 @@ void hlasm_plugin::parser_library::semantics::semantic_analyzer::init_instr()
 void hlasm_plugin::parser_library::semantics::semantic_analyzer::jump_in_statements(context::location loc)
 {
 	lexer_->rewind_input(loc.offset, loc.line);
+}
+void semantic_analyzer::collect_diags() const
+{
+	collect_diags_from_child(*ctx_);
+	collect_diags_from_child(*ord_processor_);
+}
+
+expr_ptr hlasm_plugin::parser_library::semantics::semantic_analyzer::evaluate_expression_tree(antlr4::ParserRuleContext * expr_context) const
+{
+	expression_visitor expression_evaluator;
+	expression_evaluator.set_semantic_analyzer(const_cast<semantic_analyzer *>(this));
+	auto e = expression_evaluator.visit(expr_context).as<expr_ptr>();
+
+	if (e->diag)
+	{
+		symbol_range r = symbol_range::get_range(expr_context);
+		add_diagnostic(diagnostic_s{ "", {{r.begin_ln, r.begin_col},{r.end_ln, r.end_col}}, e->diag->severity, std::move(e->diag->code), "HLASM Plugin", std::move(e->diag->message), {} });
+	}
+	return e;
 }

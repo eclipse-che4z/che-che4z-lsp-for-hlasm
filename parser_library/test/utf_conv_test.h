@@ -1,6 +1,6 @@
 #pragma once
 #include "common_testing.h"
-#include "../ebcdic_encoding.h"
+#include "../src/ebcdic_encoding.h"
 
 TEST(input_source, utf8conv)
 {

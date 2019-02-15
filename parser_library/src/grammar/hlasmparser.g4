@@ -9,6 +9,7 @@ parser grammar hlasmparser;
 		using namespace hlasm_plugin::parser_library;
 		using namespace hlasm_plugin::parser_library::semantics;
 		using namespace hlasm_plugin::parser_library::context;
+		using namespace hlasm_plugin::parser_library::checking;
 	}
 
 	/* disables unreferenced parameter (_localctx) warning */
@@ -34,26 +35,19 @@ options {
 {
 	#define last_text() _input->LT(-1)->getText()
 	#define text(token) token->getText()
-
-	using expr_ptr = std::unique_ptr<hlasm_plugin::parser_library::semantics::expression>;
-	using expression = hlasm_plugin::parser_library::semantics::expression;
-	using arith_expr = hlasm_plugin::parser_library::semantics::arithmetic_expression;
-	using char_expr = hlasm_plugin::parser_library::semantics::character_expression;
-	using keyword_expr = hlasm_plugin::parser_library::semantics::keyword_expression;
-
-	
 }
 
-program : /* ictl? process_instruction* */ program_block  EOF;
-/************************************************************************************************************************************************************************
-ictl: { _input->LT(2)->getText() == "ICTL" }? SPACE ORDSYMBOL SPACE ictl_begin EOLLN{ lexer->set_ictl(); };
+program :  ictl? process_instruction*  program_block  EOF;
+
+ictl: { _input->LT(2)->getText() == "ICTL" }? SPACE ORDSYMBOL SPACE ictl_begin EOLLN{ analyzer.get_lexer()->set_ictl(); };
 
 ictl_begin: IDENTIFIER ictl_end? 
 				{ 
 					size_t idx = 0;
 					auto val = std::stoi($IDENTIFIER.text, &idx);
-					if(idx > 0 || !lexer->set_begin(val))
+					if(idx > 0 || !analyzer.get_lexer()->set_begin(val))
 						throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER); 
+					semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($IDENTIFIER),scopes::operand));
 				}
 			;
 
@@ -61,19 +55,23 @@ ictl_end: COMMA IDENTIFIER ictl_continue
 				{ 
 					size_t idx = 0;
 					auto val = std::stoi($IDENTIFIER.text, &idx);
-					if(idx > 0 || !lexer->set_end(val))
+					if(idx > 0 || !analyzer.get_lexer()->set_end(val))
 						throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER); 
+					semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+					semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($IDENTIFIER),scopes::operand));
 				}
 			;
 
-ictl_continue:  { lexer->set_continuation_enabled(false); }
+ictl_continue:  { analyzer.get_lexer()->set_continuation_enabled(false); }
 
                 | COMMA IDENTIFIER 
 					{ 
 						size_t idx = 0;
 						auto val = std::stoi($IDENTIFIER.text, &idx);
-						if(idx > 0 || !lexer->set_continue(val))
+						if(idx > 0 || !analyzer.get_lexer()->set_continue(val))
 							throw RecognitionException("invalid ICTL parameter value", this, _input, _ctx, $IDENTIFIER); 
+						semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+						semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($IDENTIFIER),scopes::operand));
 					}
 				;
 
@@ -83,20 +81,15 @@ process_instruction: PROCESS SPACE (assembler_options
 
 assembler_options: assembler_option (COMMA assembler_option)*;
 
-assembler_option: identifier (LPAR (list | codepage | machine | identifier)? RPAR)?;
+assembler_option: id (LPAR (list | codepage | machine | id)? RPAR)?;
 
 list: list_item (COMMA list_item)*;
 
-list_item: identifier (LPAR (identifier | string)+? RPAR)?;
+list_item: id (LPAR (id | string)+? RPAR)?;
 
-machine: identifier (MINUS identifier)? (COMMA identifier)?;
+machine: id (MINUS id)? (COMMA id)?;
 
-codepage: identifier VERTICAL identifier string;
-
-identifier: VERTICAL; //just something
-
-****************************************************************************************************************************************************/
-
+codepage: id VERTICAL id string;
 
 
 
@@ -108,12 +101,47 @@ identifier: VERTICAL; //just something
 program_block: (instruction_statement EOLLN)*;
 
 instruction_statement
-	: { analyzer.in_lookahead()}? lookahead_instruction_statement										{analyzer.process_statement();}
-	| {!analyzer.in_lookahead()}? ordinary_instruction_statement										{analyzer.process_statement();}
-	| SPACE*																							{analyzer.process_statement();};
+	: { analyzer.in_lookahead()}? lookahead_instruction_statement										
+	{
+		analyzer.set_statement_range(symbol_range::get_range($lookahead_instruction_statement.ctx));
+		analyzer.process_statement();
+	}
+	| {!analyzer.in_lookahead()}? ordinary_instruction_statement										
+	{
+		analyzer.set_statement_range(symbol_range::get_range($ordinary_instruction_statement.ctx));
+		analyzer.process_statement();
+	}
+	| SPACE*														{analyzer.process_statement();};
 
 
-ordinary_instruction_statement: label SPACE instruction operands_and_remarks;
+ordinary_instruction_statement: label SPACE instruction operands_and_remarks
+{
+	semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($instruction.ctx),scopes::instruction));
+	for (auto && operand : analyzer.current_operands_and_remarks().operands)
+	{
+		if(operand)
+			semantic_info.hl_info.lines.push_back(token_info(operand->range.begin_ln, operand->range.begin_col, operand->range.end_ln, operand->range.end_col, scopes::operand));
+	}
+	for (auto remark : analyzer.current_operands_and_remarks().remarks)
+	{
+		semantic_info.hl_info.lines.push_back(token_info(remark.begin_ln, remark.begin_col, remark.end_ln, remark.end_col, scopes::remark));
+	}
+	
+	if (analyzer.current_instruction().id != nullptr)
+	{
+		if (current_macro_def.just_defined)
+		{
+			current_macro_def.name = *analyzer.current_instruction().id;
+			check_definition_candidates();
+		}
+		else if (*analyzer.current_instruction().id == "MACRO")
+			current_macro_def.just_defined = true;
+		else if(*analyzer.current_instruction().id == "MEND")
+			current_macro_def.name = "";
+		else
+			check_definition_candidates();
+	}
+};
 
 
 //lookahead rules*************************************************************************************************************************************
@@ -155,14 +183,26 @@ word: (~(SPACE|EOLLN))+;
 //label rules************************************************************
 
 label
-	: l_char_string											{analyzer.set_label_field(std::move($l_char_string.value),$l_char_string.ctx);}		
-	| l_char_string_sp l_char_string_o						
+	: l_char_string															{
+																				analyzer.set_label_field(std::move($l_char_string.value),$l_char_string.ctx); 
+																				if (analyzer.current_label().type == label_type::SEQ)
+																				{
+																					semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_char_string.ctx),scopes::seq_symbol));
+																					auto current_seq_occurence = create_occurence(symbol_range::get_range($l_char_string.ctx), analyzer.current_label().sequence_symbol.name);
+																					semantic_info.seq_symbols.push_back(current_seq_occurence,is_seq_definition(current_seq_occurence));
+																				}
+																				else
+																				{
+																					semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_char_string.ctx),scopes::label));
+																				}
+																			}		
+	| l_char_string_sp l_char_string_o										{ semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_char_string_sp.ctx),scopes::label)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_char_string_o.ctx),scopes::label)); }
 	{
 		$l_char_string_sp.value.append(std::move($l_char_string_o.value));
 		analyzer.set_label_field(std::move($l_char_string_sp.value));
-	}																				
-	| l_model												{analyzer.set_label_field(std::move($l_model.conc_list));}	//model stmt rule with no space
-    | l_model_sp											{analyzer.set_label_field(std::move($l_model_sp.conc_list));}	//model stmt rule with possible space
+	}	
+	| l_model												{analyzer.set_label_field(std::move($l_model.conc_list)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_model.ctx),scopes::label));}	//model stmt rule with no space
+    | l_model_sp											{analyzer.set_label_field(std::move($l_model_sp.conc_list)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($l_model_sp.ctx),scopes::label));}	//model stmt rule with possible space
 	|														{analyzer.set_label_field();};
 
 //label rules************************************************************
@@ -553,8 +593,8 @@ op_list_comma_o returns [std::vector<operand_ptr> operands]
 	| ;
 
 op_list_comma returns [std::vector<operand_ptr> operands]
-	: operand COMMA												{$operands.push_back(std::move($operand.op));}
-	| tmp=op_list_comma operand COMMA							{$tmp.operands.push_back(std::move($operand.op)); $operands = std::move($tmp.operands);};
+	: operand COMMA												{$operands.push_back(std::move($operand.op)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol)); }
+	| tmp=op_list_comma operand COMMA							{$tmp.operands.push_back(std::move($operand.op)); $operands = std::move($tmp.operands); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol)); };
 
 operand returns [operand_ptr op]
 	: operand_not_empty					{$op = std::move($operand_not_empty.op);}
@@ -568,15 +608,18 @@ operand_not_empty returns [operand_ptr op]
 	}
 	| {analyzer.current_instruction().type == instruction_type::MACH}? mach_op																	
 	{
-		$op = std::make_unique<machine_operand>([=](){return $mach_op.ctx->getText();}); $op->range = symbol_range::get_range($mach_op.ctx);
+		$op = std::make_unique<machine_operand>([=](){return $mach_op.ctx->getText();}, std::move($mach_op.ad_op));
+		$op->range = symbol_range::get_range($mach_op.ctx);
 	}
 	| {analyzer.current_instruction().type == instruction_type::ASM}? asm_op																	
 	{
-		$op = std::make_unique<empty_operand>(); $op->range = symbol_range::get_range($asm_op.ctx);
+		$op = std::make_unique<assembler_operand>([=](){return $asm_op.ctx->getText();}, std::move($asm_op.op));
+		$op->range = symbol_range::get_range($asm_op.ctx);
 	}
 	| {analyzer.current_instruction().type == instruction_type::DAT}? data_def																	
 	{
-		$op = std::make_unique<empty_operand>(); $op->range = symbol_range::get_range($data_def.ctx);
+		$op = std::make_unique<empty_operand>();
+		$op->range = symbol_range::get_range($data_def.ctx);
 	}
 	| {analyzer.current_instruction().type == instruction_type::CA}? ca_op																		
 	{
@@ -588,101 +631,270 @@ operand_not_empty returns [operand_ptr op]
 	}
 	| {analyzer.current_instruction().type == instruction_type::MACH || analyzer.current_instruction().type == instruction_type::ASM}? mach_expr		
 	{
-		$op = std::make_unique<machine_operand>([=](){return $mach_expr.ctx->getText();}); $op->range = symbol_range::get_range($mach_expr.ctx);
+		
+		if(analyzer.current_instruction().type == instruction_type::ASM)
+			if($mach_expr.id_g.valid)
+				$op = std::make_unique<assembler_operand>([=](){return $mach_expr.ctx->getText();}, std::make_unique<one_operand>($mach_expr.id_g.value));
+			else
+				$op = std::make_unique<assembler_operand>([=](){return $mach_expr.ctx->getText();}, std::make_unique<one_operand>(std::to_string($mach_expr.value)));
+		else
+				$op = std::make_unique<machine_operand>([=](){return $mach_expr.ctx->getText();}, std::make_unique<one_operand>(std::to_string($mach_expr.value)));
+		$op->range = symbol_range::get_range($mach_expr.ctx);
 	};
 
 
-mach_op: mach_expr_p LPAR mach_expr RPAR 
-	| mach_expr_p LPAR mach_expr COMMA mach_expr RPAR		
-	| mach_expr_p LPAR COMMA mach_expr RPAR;
+mach_op returns [std::unique_ptr<address_operand> ad_op]
+	: disp=mach_expr_p LPAR base=mach_expr RPAR
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
 
-asm_op: string
-	| id LPAR id_comma_c RPAR;
+		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value, $base.value, -1);
+	}
+	| disp=mach_expr_p LPAR index=mach_expr COMMA base=mach_expr RPAR
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+
+		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value, $base.value, $index.value);
+	}
+	| disp=mach_expr_p LPAR COMMA base=mach_expr RPAR
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+
+		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value, $base.value, 0);
+	}
+	;
+
+
+asm_op returns [std::unique_ptr<one_operand> op]
+	: string												{$op = std::make_unique<one_operand>(std::move($string.value));}							
+	| id LPAR asm_op_comma_c RPAR							
+	{
+	
+		$op = std::make_unique<complex_operand>(std::move($id.name),std::move($asm_op_comma_c.asm_ops));
+		
+
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+
+	};
 
 ca_op returns [operand_ptr op]
-	: LPAR expr RPAR seq_symbol								{$op = std::make_unique<ca_operand>(std::move($seq_symbol.ss),std::move($expr.e));}
+	: LPAR expr RPAR seq_symbol
+	{
+		$op = std::make_unique<ca_operand>(std::move($seq_symbol.ss),$expr.ctx);
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+	}
 	| seq_symbol											{$op = std::make_unique<ca_operand>(std::move($seq_symbol.ss));}
 	| expr_p
 	{
 		if($expr_p.vs_g) 
 		{
-			auto tmp = std::make_unique<ca_operand>(std::move($expr_p.vs_g.value)); tmp->expression =  std::move($expr_p.e);
+			auto tmp = std::make_unique<ca_operand>(std::move($expr_p.vs_g.value)); tmp->expression = $expr_p.ctx;
 			$op = std::move(tmp);
 		}
-		else $op = std::make_unique<ca_operand>(std::move($expr_p.e));
+		else $op = std::make_unique<ca_operand>($expr_p.ctx);
 	};
 
 mac_op:  mac_entry;
 
 
-mach_expr: mach_expr_p
-	| EQUALS data_def;
+mach_expr returns [symbol_guard<std::string> id_g, int32_t value]
+	: mach_expr_p
+	{
+		$id_g = std::move($mach_expr_p.id_g);
+		$value = $mach_expr_p.value;
+	}
+	| EQUALS data_def
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($EQUALS),scopes::operator_symbol));
+		$id_g.valid = false;
+	}
+	;
 
 
 
-mach_expr_p: mach_expr_s
+mach_expr_p returns [symbol_guard<std::string> id_g, int32_t value]
+	: mach_expr_s
+	{
+		$id_g = std::move($mach_expr_s.id_g);
+		$value = $mach_expr_s.value;
+	}
 	| PLUS mach_expr_s
-	| MINUS mach_expr_s;
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($PLUS),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = $mach_expr_s.value;
+	}
+	| MINUS mach_expr_s
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($MINUS),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = - $mach_expr_s.value;
+	}
+	;
 
-mach_expr_s: mach_expr_s PLUS mach_term_c
-	| mach_expr_s MINUS mach_term_c
-	| mach_term_c;
+mach_expr_s returns [symbol_guard<std::string> id_g, int32_t value]
+	: l=mach_expr_s PLUS r=mach_term_c
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($PLUS),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = $l.value + $r.value;
+	}
+	| l=mach_expr_s MINUS r=mach_term_c
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($MINUS),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = $l.value - $r.value;
+	}
+	| mach_term_c
+	{
+		$id_g = std::move($mach_term_c.id_g);
+		$value = $mach_term_c.value;
+	}
+	;
 
-mach_term_c: mach_term
-	| mach_term_c SLASH mach_term
-	| mach_term_c ASTERISK mach_term;
+mach_term_c returns [symbol_guard<std::string> id_g, int32_t value]
+	: mach_term
+	{
+		$id_g = std::move($mach_term.id_g);
+		$value = $mach_term.value;
+	}
+	| l=mach_term_c SLASH r=mach_term 
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($SLASH),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = $l.value / $r.value;
+	}
+	| l=mach_term_c ASTERISK r=mach_term
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ASTERISK),scopes::operator_symbol));
+		$id_g.valid = false;
+		$value = $l.value * $r.value;
+	}
+	;
 
-mach_term: LPAR mach_expr RPAR
-	| ASTERISK
-	| {!is_self_def()}? data_attribute
+mach_term returns [symbol_guard<std::string> id_g, int32_t value]
+	: LPAR mach_expr RPAR
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		$id_g = std::move($mach_expr.id_g);
+		$value = $mach_expr.value;
+	}
+	| ASTERISK			 { $value = 0; }
+	| {!is_self_def()}? data_attribute { $value = analyzer.evaluate_expression_tree($data_attribute.ctx)->get_numeric_value(); }
 	| id
-	| { is_self_def()}? ORDSYMBOL string;
-
-
-
-expr returns [expr_ptr e]
-	: SPACE expr_p_space_c								{ $e = expression::evaluate(std::move($expr_p_space_c.exprs)); }
-	| expr_p_space_c									{ $e = expression::evaluate(std::move($expr_p_space_c.exprs)); };
-
-expr_p returns [expr_ptr e, symbol_guard<var_sym> vs_g]
-	: expr_s											{ $e = std::move($expr_s.e); $vs_g = std::move($expr_s.vs_g);}
-	| PLUS expr_p										{ $e = +*$expr_p.e; $vs_g.valid = false;}
-	| MINUS expr_p										{ $e = -*$expr_p.e; $vs_g.valid = false;};
-
-expr_s returns [expr_ptr e, symbol_guard<var_sym> vs_g]
-	: tmp=expr_s PLUS term_c							{ $e = *$tmp.e + *$term_c.e; $vs_g.valid = false;}
-	| tmp=expr_s MINUS term_c							{ $e = *$tmp.e - *$term_c.e; $vs_g.valid = false;}
-	| term_c											{ $e = std::move($term_c.e); $vs_g = std::move($term_c.vs_g);};
-
-term_c returns [expr_ptr e, symbol_guard<var_sym> vs_g]
-	: term												{ $e = std::move($term.e); $vs_g = std::move($term.vs_g);}
-	| tmp=term_c SLASH term								{ $e = *$tmp.e / *$term.e; $vs_g.valid = false;}
-	| tmp=term_c ASTERISK term							{ $e = *$tmp.e * *$term.e; $vs_g.valid = false;};
-
-term returns [expr_ptr e, symbol_guard<var_sym> vs_g]
-	: LPAR expr RPAR									{ $e = std::move($expr.e); }
-	| var_symbol										{$vs_g.value = std::move($var_symbol.vs); $vs_g.valid =true;}
-	| ca_string											{ $e = std::move($ca_string.e); }
-	| {!is_self_def()}? data_attribute					{ $e = std::move($data_attribute.e); }
-	| { is_self_def()}? ORDSYMBOL string				{ $e = expression::self_defining_term($ORDSYMBOL->getText(), $string.value, false);  /*TODO:DBCS*/}
-	| id subscript										
-	{ 
-		if(!$subscript.exprs_g) $e = expression::resolve_ord_symbol($id.name); /*TODO:DBCS*/ 
-		else 
+	{
+		size_t conv = 0;
+		try
 		{
-			if($subscript.exprs_g.value.size()==1) $e = $subscript.exprs_g.value[0]->unary_operation($id.name); 
-			else if($subscript.exprs_g.value.size()==2) $e = $subscript.exprs_g.value[0]->binary_operation($id.name, $subscript.exprs_g.value[1]);
+			$value = std::stoi($id.name, &conv);
 		}
-		$vs_g.value = var_sym(std::move($id.name),std::move($subscript.exprs_g.value),symbol_range::get_range($id.ctx->getStart(),$subscript.ctx->getStop())); $vs_g.valid = true;
+		catch(std::invalid_argument)
+		{}
+		catch(std::out_of_range)
+		{}
+		
+		$id_g = symbol_guard<std::string>(std::move($id.name));
+	}
+	| { is_self_def()}? o=ORDSYMBOL string
+	{
+		auto ae = arithmetic_expression::from_string($o.text, $string.value, false); //could generate diagnostic + DBCS
+		$value = ae->get_numeric_value();
 	};
 
-expr_p_comma_c returns [std::vector<expr_ptr> exprs]
-	: expr_p											{ $exprs.push_back(std::move($expr_p.e)); }
-	| exs=expr_p_comma_c COMMA expr_p					{ $exs.exprs.push_back(std::move($expr_p.e)); $exprs = std::move($exs.exprs); };
+expr // returns [expr_ptr e]
+	: SPACE expr_p_space_c
+	| expr_p_space_c									
+	;
+
+expr_p returns [symbol_guard<var_sym> vs_g]
+	: expr_s
+	{
+		$vs_g = std::move($expr_s.vs_g);
+	}
+	| PLUS expr_p
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($PLUS),scopes::operator_symbol));
+	}
+	| MINUS expr_p
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($MINUS),scopes::operator_symbol));
+	};
+
+expr_s returns [symbol_guard<var_sym> vs_g]
+	: tmp=expr_s PLUS term_c							
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($PLUS),scopes::operator_symbol));
+	}
+	| tmp=expr_s MINUS term_c							
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($MINUS),scopes::operator_symbol));
+	}
+	| t=term_c											{$vs_g = std::move($term_c.vs_g);};
+
+term_c returns [symbol_guard<var_sym> vs_g]
+	: t=term												
+	{
+		$vs_g = std::move($term.vs_g);
+	}
+	| tmp=term_c SLASH term								
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($SLASH),scopes::operator_symbol));
+	}
+	| tmp=term_c ASTERISK term							
+	{
+		$vs_g.valid = false;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ASTERISK),scopes::operator_symbol));
+	};
+
+term returns [symbol_guard<var_sym> vs_g]
+	: LPAR expr RPAR									
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+	}
+	| var_symbol
+	{
+		$vs_g.value = $var_symbol.vs;
+		$vs_g.valid = true;
+	}
+	| ca_string											{ semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ca_string.ctx),scopes::string));}
+	| {!is_self_def()}? data_attribute
+	| { is_self_def()}? ORDSYMBOL string
+	| id subscript										
+	{ 
+		$vs_g.value = var_sym($id.name,std::move($subscript.exprs_g.value),symbol_range::get_range($id.ctx->getStart(),$subscript.ctx->getStop())); 
+		$vs_g.valid = true;
+	};
+
+expr_p_comma_c returns [std::vector<ParserRuleContext*> ext]
+	: expr_p
+	{ 
+		$ext.push_back($expr_p.ctx); 
+	}
+	| exs=expr_p_comma_c COMMA expr_p
+	{ 
+		$exs.ext.push_back($expr_p.ctx); 
+		$ext = $exs.ext;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+	}
+	;
 	
-expr_p_space_c returns [std::deque<expr_ptr> exprs]
-	: expr_p											{ $exprs.push_back(std::move($expr_p.e)); }
-	| exs=expr_p_space_c SPACE expr_p					{ $exs.exprs.push_back(std::move($expr_p.e)); $exprs = std::move($exs.exprs); }
+expr_p_space_c
+	: expr_p
+	| exs=expr_p_space_c SPACE expr_p
 	;
 
 
@@ -697,24 +909,29 @@ id_ch_c returns [std::string value]
 
 id returns [std::string name, std::string using_qualifier]
 	: id_no_dot									{$name = std::move($id_no_dot.value);}
-	| id_no_dot DOT id_no_dot					{$name = std::move($id_no_dot.value); $using_qualifier = std::move($id_no_dot.value);};
+	| id_no_dot DOT id_no_dot					{$name = std::move($id_no_dot.value); $using_qualifier = std::move($id_no_dot.value); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($DOT),scopes::operator_symbol));};
 
 id_no_dot returns [std::string value]
 	: id_ch_c									{$value = std::move($id_ch_c.value);};
 
 
 opt_dot returns [std::string value]
-	: DOT id_ch_c								{$value = std::move($id_ch_c.value);}
+	: DOT id_ch_c								{$value = std::move($id_ch_c.value); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($DOT),scopes::operator_symbol));}
 	| ;
 
 id_comma_c: id
-	|  id COMMA id_comma_c;
+	|  id COMMA id_comma_c {semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));}
+	;
+
+asm_op_comma_c returns [std::vector<std::unique_ptr<one_operand>> asm_ops]
+	: asm_op															{$asm_ops.push_back(std::move($asm_op.op));}
+	|  tmp=asm_op_comma_c COMMA asm_op									{$tmp.asm_ops.push_back(std::move($asm_op.op)); $asm_ops = std::move($tmp.asm_ops);};	
 
 
 op_ch returns [std::string value]
 	: common_ch								{$value = std::move($common_ch.value);}
-	| LPAR									{$value = "(";}
-	| RPAR									{$value = ")";};
+	| LPAR									{$value = "("; semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));}
+	| RPAR									{$value = ")"; semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));};
 
 op_ch_c returns [std::string value]
 	:
@@ -722,8 +939,8 @@ op_ch_c returns [std::string value]
 
 op_ch_v returns [concat_point_ptr point]
 	: common_ch_v							{$point = std::move($common_ch_v.point);}
-	| LPAR									{$point = std::make_unique<char_str>("(");}
-	| RPAR									{$point = std::make_unique<char_str>(")");};
+	| LPAR									{$point = std::make_unique<char_str>("("); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));}
+	| RPAR									{$point = std::make_unique<char_str>(")"); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));};
 
 op_ch_v_c returns [std::vector<concat_point_ptr> conc_list]
 	:
@@ -734,24 +951,39 @@ op_string_v returns [std::vector<concat_point_ptr> conc_list]
 	{
 		$conc_list.push_back(std::make_unique<char_str>(std::move($op_ch_c.value)));
 		$conc_list.push_back(std::make_unique<var_sym>(std::move($var_symbol.vs)));
-		$conc_list.insert($conc_list.end(), std::make_move_iterator($op_ch_v_c.conc_list.begin()), std::make_move_iterator($op_ch_v_c.conc_list.end()));
+		$conc_list.insert($conc_list.end(), 
+			std::make_move_iterator($op_ch_v_c.conc_list.begin()), 
+			std::make_move_iterator($op_ch_v_c.conc_list.end())
+		);
 	};
 
 
-data_attribute returns [expr_ptr e]
-	: ORDSYMBOL APOSTROPHE EQUALS data_def				{ $e = std::make_unique<arith_expr>(0); /* TODO */ }
-	| ORDSYMBOL APOSTROPHE string						{ $e = std::make_unique<arith_expr>(0); /* TODO */ }
-	| ORDSYMBOL APOSTROPHE var_symbol					{ $e = std::make_unique<arith_expr>(0); /* TODO */ }
-	| ORDSYMBOL APOSTROPHE id							{ $e = std::make_unique<arith_expr>(0); /* TODO */ }
+data_attribute // returns [expr_ptr e]
+	: ORDSYMBOL APOSTROPHE EQUALS data_def				{semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($EQUALS),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($APOSTROPHE),scopes::operator_symbol));}
+	| ORDSYMBOL APOSTROPHE string						{semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($APOSTROPHE),scopes::operator_symbol));}
+	| ORDSYMBOL APOSTROPHE var_symbol					{semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($APOSTROPHE),scopes::operator_symbol));}
+	| ORDSYMBOL APOSTROPHE id							{semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($APOSTROPHE),scopes::operator_symbol));}
 	;
 
 seq_symbol returns [seq_sym ss]
-	: DOT id									{$ss.name = std::move($id.name);$ss.loc.line = $DOT->getLine(); $ss.loc.offset = $DOT->getStartIndex();};
+	: DOT id									
+	{	
+		auto current_seq_occurence = create_occurence(symbol_range::get_range($DOT,$id.ctx->getStop()), $id.name);
+		semantic_info.seq_symbols.push_back(current_seq_occurence,is_seq_definition(current_seq_occurence));
+		$ss.name = std::move($id.name);$ss.loc.line = $DOT->getLine(); $ss.loc.offset = $DOT->getStartIndex(); 
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($DOT,$id.ctx->getStop()),scopes::seq_symbol)); 
+	};
 
 
 
-subscript returns [symbol_guard<std::vector<expr_ptr>> exprs_g]
-	: LPAR expr_p_comma_c RPAR								{$exprs_g.valid=true; $exprs_g.value = std::move($expr_p_comma_c.exprs);}
+subscript returns [symbol_guard<std::vector<ParserRuleContext*>> exprs_g]
+	: LPAR expr_p_comma_c RPAR
+	{
+		$exprs_g.valid=true; 
+		$exprs_g.value = $expr_p_comma_c.ext;
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+	}
 	|														{$exprs_g.valid=false;};
 
 
@@ -760,18 +992,21 @@ created_set_body returns [concat_point_ptr point]
 	: ORDSYMBOL												{$point = std::make_unique<char_str>(std::move($ORDSYMBOL->getText()));}
 	| IDENTIFIER											{$point = std::make_unique<char_str>(std::move($IDENTIFIER->getText()));}
 	| var_symbol_p											{$point = std::make_unique<var_sym>(std::move($var_symbol_p.vs));}
-	| DOT													{$point = std::make_unique<dot>();};
+	| DOT													{$point = std::make_unique<dot>(); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($DOT),scopes::operator_symbol));};
 
 created_set_body_c returns [std::vector<concat_point_ptr> concat_list]
 	: cl=created_set_body													{$concat_list.push_back(std::move($cl.point));}
 	| clc=created_set_body_c cl=created_set_body							{$clc.concat_list.push_back(std::move($cl.point)); $concat_list =std::move($clc.concat_list);};
 
 created_set_symbol returns [var_sym vs]
-	: AMPERSAND LPAR clc=created_set_body_c RPAR subscript				
+	: AMPERSAND LPAR clc=created_set_body_c RPAR subscript 	
 	{
 		$vs.name = analyzer.concatenate(std::move($clc.concat_list));
 		$vs.subscript = std::move($subscript.exprs_g.value);
 		$vs.range = symbol_range::get_range($AMPERSAND,$subscript.ctx->getStop());
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($AMPERSAND),scopes::operator_symbol));
 	};			
 
 var_symbol_p returns [var_sym vs]
@@ -783,32 +1018,38 @@ var_symbol_p returns [var_sym vs]
 	};
 
 var_symbol returns [var_sym vs]
-	: var_symbol_p 													{$vs = std::move($var_symbol_p.vs); }
-	| created_set_symbol 											{$vs = std::move($created_set_symbol.vs); };
+	: var_symbol_p 													{
+																		$vs = std::move($var_symbol_p.vs); 
+																		auto var_symbol_occurence = create_occurence(symbol_range::get_range($var_symbol_p.ctx), $vs.name,true);
+																		semantic_info.var_symbols.push_back(var_symbol_occurence,false);
+																		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($var_symbol_p.ctx),scopes::var_symbol));
+																	}
+	| created_set_symbol 											{$vs = std::move($created_set_symbol.vs);};
 
 
 
 
-dupl_factor: LPAR mach_expr RPAR			//absolute
+dupl_factor: LPAR mach_expr RPAR {semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));}			//absolute
 	|;
 
 modifer: id_no_dot
 	   | ;
 
-prog_type_and_modifier: LPAR  ORDSYMBOL string RPAR modifer		// self def term - dec/char/hex/bin ORDSYMBOL + modifier
-		| LPAR id_no_dot RPAR modifer;									// symbol + modifier
+prog_type_and_modifier: LPAR  ORDSYMBOL string RPAR modifer	{semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));}	// self def term - dec/char/hex/bin ORDSYMBOL + modifier
+		| LPAR id_no_dot RPAR modifer {semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));};									// symbol + modifier
 
 nominal_value: string 
-	| LPAR mach_expr_comma_c RPAR;
+	| LPAR mach_expr_comma_c RPAR {semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));};
 
 nominal_value_o: nominal_value
 	|;
 
 mach_expr_comma_c: mach_expr
-	| mach_expr_comma_c COMMA mach_expr;
+	| mach_expr_comma_c COMMA mach_expr {semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));};
 
 
-data_def: dupl_factor id_no_dot prog_type_and_modifier nominal_value
+data_def: 
+	dupl_factor id_no_dot prog_type_and_modifier nominal_value
 	| dupl_factor id_no_dot nominal_value_o;
 
 
@@ -823,11 +1064,12 @@ mac_str_b returns [std::vector<concat_point_ptr> conc_list]
 	| tmp=mac_str_b mac_str_ch						{$tmp.conc_list.push_back(std::move($mac_str_ch.point)); $conc_list = std::move($tmp.conc_list);};
 
 mac_str returns [std::vector<concat_point_ptr> conc_list]
-	: APOSTROPHE mac_str_b APOSTROPHE				
+	: ap1=APOSTROPHE mac_str_b ap2=APOSTROPHE				
 	{
 		$conc_list.push_back(std::make_unique<char_str>("'"));
 		$conc_list.insert($conc_list.end(), std::make_move_iterator($mac_str_b.conc_list.begin()), std::make_move_iterator($mac_str_b.conc_list.end()));
 		$conc_list.push_back(std::make_unique<char_str>("'"));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ap1,$ap2),scopes::string));
 	};
 
 mac_ch returns [std::vector<concat_point_ptr> conc_list]
@@ -857,10 +1099,11 @@ mac_sublist_b returns [std::vector<concat_point_ptr> conc_list]
 	{
 		$conc_list = std::move($tmp.conc_list);
 		$conc_list.insert($conc_list.end(), std::make_move_iterator($mac_ch_c.conc_list.begin()), std::make_move_iterator($mac_ch_c.conc_list.end()));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
 	};
 
 mac_sublist returns [concat_point_ptr point]
-	: LPAR mac_sublist_b RPAR						{$point = std::make_unique<sublist>(std::move($mac_sublist_b.conc_list));};
+	: LPAR mac_sublist_b RPAR						{$point = std::make_unique<sublist>(std::move($mac_sublist_b.conc_list)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol)); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));};
 
 
 //not adn not and
@@ -884,30 +1127,52 @@ string_ch_v_c returns [std::vector<concat_point_ptr> conc_list]
 
 
 string returns [std::string value]
-	: APOSTROPHE string_ch_c APOSTROPHE					{$value = std::move($string_ch_c.value);};
+	: ap1=APOSTROPHE string_ch_c ap2=APOSTROPHE					{ $value.append("'"); $value.append(std::move($string_ch_c.value)); $value.append("'"); semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ap1,$ap2),scopes::string)); };
 
 
-ca_dupl_factor returns [int32_t df]
-	: LPAR expr_p RPAR																{ $df = $expr_p.e->get_numeric_value(); }			
-	|																				{ $df=1; };
+ca_dupl_factor // returns [int32_t df]
+	: LPAR expr_p RPAR															
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+	}
+	|;
 
-substring returns [expr_ptr start, expr_ptr end]
-	: LPAR e1=expr_p COMMA e2=expr_p RPAR											{ $start = std::move($e1.e); $end = std::move($e2.e); }
+substring // returns [expr_ptr start, expr_ptr end]
+	: LPAR e1=expr_p COMMA e2=expr_p RPAR
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+	}
 	| LPAR expr_p COMMA ASTERISK RPAR
-	| LPAR expr_p RPAR																{ $start = std::move($expr_p.e); }			
+	{
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($COMMA),scopes::operator_symbol));
+	}
+	| LPAR expr_p RPAR
+	{
+		
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($LPAR),scopes::operator_symbol));
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($RPAR),scopes::operator_symbol));
+	}
 	| ;
 
-ca_string_b returns [std::unique_ptr<char_expr> e]
-	: ca_dupl_factor APOSTROPHE string_ch_v_c APOSTROPHE substring
+ca_string_b // returns [std::unique_ptr<char_expr> e]
+	: ca_dupl_factor ap1=APOSTROPHE string_ch_v_c ap2=APOSTROPHE substring
 	{ 
-		auto tmp = analyzer.concatenate(std::move($string_ch_v_c.conc_list));
-		auto ex = std::make_unique<char_expr>(std::move(tmp));
-		$e = ex->substring($ca_dupl_factor.df, $substring.start, $substring.end);
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ap1),scopes::operator_symbol)); 
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($ap2),scopes::operator_symbol));
 	};
 
-ca_string returns [std::unique_ptr<char_expr> e]
-	: ca_string_b												{$e = std::move($ca_string_b.e);}
-	| tmp=ca_string DOT ca_string_b								{$e = $tmp.e->append(std::move($ca_string_b.e));};
+ca_string // returns [std::unique_ptr<char_expr> e]
+	: ca_string_b											//	{$e = std::move($ca_string_b.e);}
+	| tmp=ca_string DOT ca_string_b
+	{
+		
+		semantic_info.hl_info.lines.push_back(token_info(symbol_range::get_range($DOT),scopes::operator_symbol));
+	};
 
 
 
@@ -916,17 +1181,10 @@ ca_string returns [std::unique_ptr<char_expr> e]
 
 
 
-expr_statement returns [std::string test_str]
+expr_statement
 	: expr
-	{ 
-		$test_str.append($expr.e->get_str_val());
-	}
 	| tmp=expr_statement EOLLN expr
-	{ 
-		$tmp.test_str.append("\n");
-		$tmp.test_str.append($expr.e->get_str_val());
-		$test_str = std::move($tmp.test_str);
-	};
+	;
 
-expr_test returns [std::string test_str]
-	:  expr_statement EOLLN EOF					{$test_str = std::move($expr_statement.test_str);};
+expr_test
+	:  expr_statement EOLLN EOF	;

@@ -1,11 +1,13 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
-#include "id_storage.h"
-#include "macro.h"
 #include <memory>
 #include <stack>
+
 #include "code_scope.h"
+#include "id_storage.h"
+#include "macro.h"
+#include "../diagnosable_impl.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -15,8 +17,9 @@ namespace context {
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
 //contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed code 
-class hlasm_context
+class hlasm_context : public diagnosable_impl
 {
+
 	using macro_storage = std::unordered_map<id_index, macro_definition>;
 	using literal_map = std::unordered_map<id_index, id_index>;
 
@@ -32,8 +35,8 @@ class hlasm_context
 
 	code_scope* curr_scope();
 
-
 public:
+
 	hlasm_context();
 
 	//storage for identifiers
@@ -59,14 +62,14 @@ public:
 
 	void decrement_branch_counter();
 
-	//adds opsyn mnemotechnic
+	//adds opsyn mnemonic
 	void add_mnemonic(id_index mnemo, id_index op_code);
 
-	//removes opsyn mnenotechnic
+	//removes opsyn mnemonic
 	void remove_mnemonic(id_index mnemo);
 
-	//gets target of possible mnemotechnic changed by opsyn
-	//returns nullptr if there is no mnemotechnic
+	//gets target of possible mnemonic changed by opsyn
+	//returns nullptr if there is no mnemonic
 	//returns index to default string ("") if opcode was deleted by opsyn
 	//returns anything else if opcode was changed by opsyn
 	id_index get_mnemonic_opcode(id_index mnemo) const;
@@ -77,7 +80,10 @@ public:
 	{
 		//TODO error handling
 		//if there is symbolic param with same name
+		// add_diagnostic(diagnostic_s::error_E031("", "symbolic parameter", {})); //error - symbolic parameter with the same name
 		//if there is set symbol with same name
+		// add_diagnostic(diagnostic_s::error_E031("", "set symbol", {})); //error - set symbol with the same name
+
 
 		auto tmp = curr_scope()->variables.find(id);
 		if (tmp != curr_scope()->variables.end())
@@ -124,6 +130,8 @@ public:
 	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
 
 	void leave_macro();
+
+	void collect_diags() const override; 
 };
 }
 }

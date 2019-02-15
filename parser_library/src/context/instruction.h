@@ -1,6 +1,10 @@
-#pragma once
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_H
+#define HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_H
+
 #include <array>
 #include <string>
+#include <map>
+
 #include <vector>
 #include "id_storage.h"
 
@@ -24,10 +28,20 @@ enum class mach_format {
 	VRR_c, VRR_d, VRR_e, VRR_f, VRS_a, VRS_b, VRS_c, VRV, VRX
 };
 
-struct machine_instruction {
+enum class operand_format {
+	SIZE_4b, SIZE_8b, SIZE_12b, SIZE_16b, SIZE_24b, SIZE_32b,
+	DXB_4b, DXB_8b, DB
+};
+
+struct machine_instruction
+{
+	//machine_instruction(std::string name, std::vector<operand_format> operands, mach_format format) : name(name), format(format), operands(operands), has_optional_operand(false) {}
+	//machine_instruction(std::string name, std::vector<operand_format> operands, mach_format format, bool has_optional_operand) : name(name), format(format), operands(operands), has_optional_operand(has_optional_operand) {}
 	std::string name;
-	size_t operands_count;
 	mach_format format;
+	std::vector<operand_format> operands;
+	size_t size_for_alloc;
+	bool has_optional_operand;
 };
 
 /*
@@ -43,18 +57,28 @@ struct assembler_instruction {
 	assembler_instruction(std::string name, int min_operands, int max_operands) : name(std::move(name)), min_operands(min_operands), max_operands(max_operands) {}
 };
 
+struct extended_mnemonic_codes
+{
+	std::string extended_branch;
+	int operand;
+	std::string machine_instr;
+};
+
 //static class holding string names of instructions with theirs additional info
 class instruction
 {
 public:
 	static const std::vector<std::string> ca_instructions;
-
+	
 	static const std::vector<assembler_instruction> assembler_instructions;
 
 	static const std::vector<machine_instruction> machine_instructions;
+	
+	static const std::vector<extended_mnemonic_codes> mnemonic_codes;
 };
 
+}
+}
+}
 
-}
-}
-}
+#endif

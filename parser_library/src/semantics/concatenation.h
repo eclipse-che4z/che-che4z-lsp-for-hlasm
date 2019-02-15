@@ -26,7 +26,7 @@ using concat_point_ptr = std::unique_ptr<concatenation_point>;
 //these points of concatenation when formed into array represent character string in a way that is easily concatenated when variable symbols are substituted
 struct concatenation_point
 {
-	char_str* access_str();
+	const char_str* access_str() const;
 	var_sym* access_var();
 	dot* access_dot();
 	sublist* access_sub();
@@ -49,7 +49,7 @@ struct char_str : public concatenation_point
 //concatenation point representing variable symbol
 struct var_sym :public concatenation_point
 {
-	var_sym(std::string name, std::vector<expr_ptr> subscript, symbol_range range);
+	var_sym(std::string name, std::vector<antlr4::ParserRuleContext*> subscript, symbol_range range);
 
 	var_sym();
 
@@ -57,7 +57,7 @@ struct var_sym :public concatenation_point
 
 	symbol_range range;
 
-	std::vector<expr_ptr> subscript;
+	std::vector<antlr4::ParserRuleContext*> subscript;
 
 	concat_type get_type() const override;
 };

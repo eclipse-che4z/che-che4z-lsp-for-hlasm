@@ -2,6 +2,9 @@
 #define HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
 
 #include "common_testing.h"
+#include "../src/semantics/expression_visitor.h"
+
+#include "../src/parser_tools.h"
 
 class library_test : public testing::Test
 {
@@ -20,8 +23,17 @@ TEST_F(library_test, expression_test)
 	std::string tcase = "expression_test";
 
 	SetUp(tcase);
-	auto t = holder->parser->expr_test()->test_str;
-	ASSERT_EQ(t, get_content("test/library/output/" + tcase + ".output"));
+	auto tree = holder->parser->expr_test();
+	//ASSERT_EQ(t, get_content("test/library/output/" + tcase + ".output"));
+	auto v = std::make_unique<expression_visitor>();
+	auto id = holder->parser->analyzer.get_id("TEST_VAR");
+	holder->parser->analyzer.context().create_local_variable<int>(id, true);
+	holder->parser->analyzer.set_var_sym_value<int>(id, {}, 11, {});
+
+	v->set_semantic_analyzer(&holder->parser->analyzer);
+	auto res = v->visit(tree).as<std::string>();
+	res.erase(std::remove(res.begin(), res.end(), '\r'), res.end());
+	ASSERT_EQ(res, get_content("test/library/output/" + tcase + ".output"));
 
 	//no errors found while parsing
 	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);

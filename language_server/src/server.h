@@ -3,13 +3,16 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_set>
 
 #include "jsonrp.hpp"
 #include "json.hpp"
 
 #include "shared/workspace_manager.h"
-
+#include "common_types.h"
 #include "feature.h"
+
+
 namespace hlasm_plugin {
 namespace language_server {
 
@@ -20,20 +23,8 @@ enum class message_type {
 	MT_LOG = 4
 };
 
-using id = jsonrpcpp::Id;
-using parameter = nlohmann::json;
-using error = jsonrpcpp::Error;
-//                     void reply(ID id, Json result, Json error)
-// mby take string instead of json? the json is deserialized in the next step anyway
-using response_callback = std::function<void(id, Json&)>;
-using response_error_callback = std::function<void(id, error&)>;
-using notify_callback = std::function<void(const std::string &, Json&)>;
-
-
-
-class server
+class server : public parser_library::diagnostics_consumer
 {
-
 
 public:
 	server();
@@ -71,6 +62,7 @@ private:
 	void on_initialize(id id, const parameter & param);
 	void on_shutdown(id id, const parameter & param);
 
+	std::unordered_set<std::string> last_diagnostics_files;
 	
 
 	//notifications
@@ -78,6 +70,9 @@ private:
 
 	//client notifications
 	void show_message(const std::string & message, message_type type);
+
+	virtual void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
+	
 };
 
 }//namespace language_server

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <assert.h>
 #include "keyword_expression.h"
+#include "expression_visitor.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -49,8 +50,9 @@ expr_ptr hlasm_plugin::parser_library::semantics::expression::resolve_ord_symbol
 		[](char c) { return isdigit(c); }))
 		return arithmetic_expression::from_string(symbol, 10);
 
-	return default_expr_with_error<arithmetic_expression>
-		(error_messages::not_implemented());
+
+
+	return default_expr_with_error<arithmetic_expression>(error_messages::not_implemented());
 }
 
 #define front_keyword(exprs) dynamic_cast<keyword_expression *>(exprs.front().get())

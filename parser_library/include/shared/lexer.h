@@ -1,15 +1,18 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMLEX_H
 #define HLASMPLUGIN_PARSER_HLASMLEX_H
 
-#include "../generated/parser_library_export.h"
-#include "../shared/token_factory.h"
-#include "../shared/token.h"
+#include "parser_library_export.h"
+#include "shared/token_factory.h"
+#include "shared/token.h"
 #include "antlr4-runtime.h"
 #include <memory>
 #include <queue>
 #include <set>
 #include <string_view>
 #include "input_source.h"
+#include "../src/semantics/semantic_info.h"
+#include "parser_library_export.h"
+
 
 namespace hlasm_plugin {
 	namespace parser_library {
@@ -29,6 +32,8 @@ namespace hlasm_plugin {
 
 			virtual ~lexer() = default;
 
+			semantics::semantic_info semantic_info;
+
 			token_ptr nextToken() override;
 
 			size_t getLine() const override;
@@ -42,14 +47,19 @@ namespace hlasm_plugin {
 			Ref<antlr4::TokenFactory<antlr4::CommonToken>>
 				getTokenFactory() override
 			{
-				return {};
+				return dummy_factory;
 			};
+
+			token_factory * get_token_factory()
+			{
+				return factory_.get();
+			}
 
 			bool double_byte_enabled() const;
 
 			void set_double_byte_enabled(bool);
 
-			bool continuation_before_token(size_t);
+			bool continuation_before_token(size_t token_index);
 
 			enum Tokens {
 				#include "../src/grammar/lex.tokens"
@@ -60,9 +70,9 @@ namespace hlasm_plugin {
 				HIDDEN_CHANNEL = 1
 			};
 
-			bool set_begin(size_t);
-			bool set_end(size_t);
-			bool set_continue(size_t);
+			bool set_begin(size_t begin);
+			bool set_end(size_t end);
+			bool set_continue(size_t cont);
 			void set_continuation_enabled(bool);
 			void set_ictl();
 
@@ -74,15 +84,17 @@ namespace hlasm_plugin {
 			bool is_ord_char() const;
 			bool get_unlimited_line() const;
 			void set_unlimited_line(bool);
-			void rewind_input(size_t, size_t);
+			void rewind_input(size_t start, size_t line);
 			bool is_last_line() const;
+			bool eof_generated() const;
 		protected:
-			void create_token(size_t, size_t);
+			void create_token(size_t ttype, size_t channel);
 			void consume();
 
 		private:
 			bool eof_generated_ = false;
-			void ainsert(const std::string &, bool);
+			bool last_char_utf16_long_ = false;
+			void ainsert(const std::string & inp, bool front);
 			/* UTF8 <-> UTF32 */
 			#ifdef __GNUG__
 				std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cvt_;
@@ -97,6 +109,7 @@ namespace hlasm_plugin {
 			size_t last_continuation_ = static_cast<size_t>(-1);
 
 			std::queue<token_ptr> token_queue_;
+			Ref<antlr4::CommonTokenFactory> dummy_factory;
 
 			bool double_byte_enabled_ = false;
 			bool continuation_enabled_ = true;

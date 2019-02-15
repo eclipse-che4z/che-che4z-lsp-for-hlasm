@@ -2,7 +2,12 @@
 #include <Interval.h>
 #include <CharStream.h>
 
-hlasm_plugin::parser_library::token::token(antlr4::TokenSource * source, antlr4::CharStream * input, size_t type, size_t channel, size_t start, size_t stop, size_t line, size_t char_position_in_line, size_t token_index, size_t char_position_in_line_16)
+size_t hlasm_plugin::parser_library::token::get_end_of_token_in_line_utf16() const
+{
+	return end_of_token_in_line_utf16_;
+}
+
+hlasm_plugin::parser_library::token::token(antlr4::TokenSource * source, antlr4::CharStream * input, size_t type, size_t channel, size_t start, size_t stop, size_t line, size_t char_position_in_line, size_t token_index, size_t char_position_in_line_16, size_t end_of_token_in_line_utf16)
 	:source_(source),
 	input_(input),
 	type_(type),
@@ -12,7 +17,8 @@ hlasm_plugin::parser_library::token::token(antlr4::TokenSource * source, antlr4:
 	line_(line),
 	char_position_in_line_(char_position_in_line),
 	token_index_(token_index),
-	char_position_in_line_16_(char_position_in_line_16)
+	char_position_in_line_16_(char_position_in_line_16),
+	end_of_token_in_line_utf16_(end_of_token_in_line_utf16)
 {
 }
 
@@ -41,7 +47,7 @@ size_t hlasm_plugin::parser_library::token::getLine() const
 
 size_t hlasm_plugin::parser_library::token::getCharPositionInLine() const
 {
-	return char_position_in_line_;
+	return get_char_position_in_line_16();
 }
 
 size_t hlasm_plugin::parser_library::token::getChannel() const

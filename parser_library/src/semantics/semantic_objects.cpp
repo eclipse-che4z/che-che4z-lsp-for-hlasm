@@ -1,4 +1,6 @@
 #include "semantic_objects.h"
+#include "operand.h"
+#include "semantic_highlighting_info.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
@@ -43,6 +45,11 @@ symbol_range hlasm_plugin::parser_library::semantics::symbol_range::get_range(an
 	}
 
 	return ret;
+}
+
+symbol_range hlasm_plugin::parser_library::semantics::symbol_range::get_range(antlr4::Token * token)
+{
+	return get_range(token, token);
 }
 
 symbol_range hlasm_plugin::parser_library::semantics::symbol_range::get_range(antlr4::ParserRuleContext * rule_ctx)

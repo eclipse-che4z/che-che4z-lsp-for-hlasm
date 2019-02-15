@@ -22,6 +22,8 @@ lexer::lexer(input_source* input)
 	buffer_input_state_.input = ainsert_stream_.get();
 
 	input_state_->c = static_cast<char_t>(input_->LA(1));
+
+	dummy_factory = make_shared<antlr4::CommonTokenFactory>();
 }
 
 void lexer::rewind_input(size_t start, size_t line)
@@ -66,7 +68,13 @@ bool lexer::is_last_line() const
 		if (input_->LA(i) == '\n' || input_->LA(i) == '\r')
 			return false;
 	}
-	return ainsert_buffer_.empty();
+	return eof_generated_;
+	//return ainsert_buffer_.empty();
+}
+
+bool hlasm_plugin::parser_library::lexer::eof_generated() const
+{
+	return eof_generated_;
 }
 
 void lexer::set_unlimited_line(bool ul)
@@ -113,11 +121,11 @@ void lexer::set_double_byte_enabled(bool dbe)
  * check if token is after continuation
  * token is unmarked after the call
  */
-bool lexer::continuation_before_token(size_t token_id)
+bool lexer::continuation_before_token(size_t token_index)
 {
-	if (tokens_after_continuation_.find(token_id) != tokens_after_continuation_.end())
+	if (tokens_after_continuation_.find(token_index) != tokens_after_continuation_.end())
 	{
-		tokens_after_continuation_.erase(token_id);
+		tokens_after_continuation_.erase(token_index);
 		return true;
 	}
 	return false;
@@ -159,7 +167,24 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 		token_start_state_.line,
 		token_start_state_.char_position_in_line,
 		last_token_id_ - 1,
-		token_start_state_.char_position_in_line_utf16));
+		token_start_state_.char_position_in_line_utf16,
+		input_state_->char_position_in_line_utf16));
+
+	auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 2 : input_state_->char_position_in_line_utf16 - 1;
+	switch (ttype)
+	{
+		case CONTINUATION:
+			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line,semantics::scopes::continuation));
+			semantic_info.continuation_positions.push_back(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16));
+			break;
+		case IGNORED:
+			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line, semantics::scopes::ignored));
+			break;
+		case COMMENT:
+			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line, semantics::scopes::comment));
+			break;
+	}
+		
 }
 
 void lexer::consume()
@@ -180,14 +205,31 @@ void lexer::consume()
 		if (input_state_->c == '\t')
 		{
 			input_state_->c = ' ';
+			//warning
 			input_state_->char_position_in_line += tab_size_;
 			input_state_->char_position_in_line_utf16 += tab_size_;
 		}
 		else
 		{
 			input_state_->char_position_in_line++;
-			input_state_->char_position_in_line_utf16 += input_state_->c > 0xFFFF ? 2 : 1;
+			if (input_state_->c == static_cast<char32_t>(-1))
+			{
+				last_char_utf16_long_ = false;
+				input_state_->char_position_in_line_utf16 += 1;
+			}
+			else
+				if (input_state_->c > 0xFFFF)
+				{
+					last_char_utf16_long_ = true;
+					input_state_->char_position_in_line_utf16 += 2;
+				}
+				else
+				{
+					last_char_utf16_long_ = false;
+					input_state_->char_position_in_line_utf16++;
+				}	
 		}
+
 	}
 }
 
@@ -420,7 +462,7 @@ void lexer::lex_begin()
 void lexer::lex_end(bool eolln)
 {
 	start_token();
-	while (input_state_->c != '\n' && !eof() && input_state_->c != static_cast<size_t>(-1))
+	while (input_state_->c != '\n' && !eof() && input_state_->c != -1)
 		consume();
 	if (!eof())
 	{

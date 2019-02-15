@@ -1,10 +1,13 @@
 #include "common_types.h"
 #include <cctype>
 
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context
+{
 
-std::string & hlasm_plugin::parser_library::context::to_upper(std::string & s)
+std::string & to_upper(std::string & s)
 {
 	for (auto & c : s) c = static_cast<char>(std::toupper(c));
 	return s;
+}
+
 }

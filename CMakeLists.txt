@@ -139,7 +139,7 @@ add_subdirectory(dummy)
 add_subdirectory(clients)
 add_subdirectory(private_test)
 
-
+add_dependencies(vsix language_server parser_library)
 
 # Installation
 

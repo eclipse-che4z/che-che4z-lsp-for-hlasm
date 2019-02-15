@@ -20,8 +20,8 @@ lsp_dispatcher::lsp_dispatcher(std::ostream & out, server & server) : out_(out),
 {
 	server.register_callbacks(
 		std::bind(&lsp_dispatcher::reply, this, std::placeholders::_1, std::placeholders::_2),
-		[&](const std::string & id, Json& notif) {this->notify(id, notif); },
-		[&](id id, error& error) {this->reply_error(id, error); });
+		[&](const std::string & id, const Json& notif) {this->notify(id, notif); },
+		[&](id id, const error& error) {this->reply_error(id, error); });
 }
 
 void lsp_dispatcher::write_message(const std::string & in)
@@ -31,7 +31,7 @@ void lsp_dispatcher::write_message(const std::string & in)
 	out_ << in;
 }
 
-void lsp_dispatcher::reply(id id, Json & result)
+void lsp_dispatcher::reply(id id, const  Json & result)
 {
 	if (!result.is_null())
 	{
@@ -40,20 +40,20 @@ void lsp_dispatcher::reply(id id, Json & result)
 	}
 }
 
-void lsp_dispatcher::reply_error(id id, error & error)
+void lsp_dispatcher::reply_error(id id, const error & error)
 {
 	jsonrpcpp::Response response{ id, error };
 	write_message(response.to_json().dump());
 }
 
-void lsp_dispatcher::notify(const std::string & method, Json & params)
+void lsp_dispatcher::notify(const std::string & method, const Json & params)
 {
 	jsonrpcpp::Parameter p(params);
 	jsonrpcpp::Notification message(method, p);
 	write_message(message.to_json().dump());
 }
 
-bool lsp_dispatcher::read_line(std::istream * in, std::string &out)
+bool lsp_dispatcher::read_line(std::istream & in, std::string &out)
 {
 
 	static int bufSize = 64;
@@ -63,8 +63,10 @@ bool lsp_dispatcher::read_line(std::istream * in, std::string &out)
 	for (;;)
 	{
 		out.resize(size + bufSize);
-		in->getline(&out[0], bufSize);
+		in.getline(&out[0], bufSize);
 
+		if (!in.good())
+			return false;
 		size_t r = std::strlen(&out[size]);
 		if (r > 0 && out[size + r - 1] == '\r') {
 			out.resize(size + r - 1);
@@ -75,7 +77,7 @@ bool lsp_dispatcher::read_line(std::istream * in, std::string &out)
 }
 
 
-bool lsp_dispatcher::read_message(std::istream * in, std::string & out)
+bool lsp_dispatcher::read_message(std::istream & in, std::string & out)
 {
 	// A Language Server Protocol message starts with a set of HTTP headers,
 	// delimited  by \r\n, and terminated by an empty line (\r\n).
@@ -84,7 +86,7 @@ bool lsp_dispatcher::read_message(std::istream * in, std::string & out)
 	size_t content_len = std::string("Content-Length: ").size();
 
 	while (true) {
-		if (in->eof() || in->fail() || !read_line(in, line))
+		if (!in.good() || !read_line(in, line))
 			return false;
 		// We allow comments in headers. Technically this isn't part
 		// of the LSP specification, but makes writing tests easier.
@@ -134,8 +136,8 @@ bool lsp_dispatcher::read_message(std::istream * in, std::string & out)
 	out.resize(content_length);
 	for (std::streamsize pos = 0; pos < content_length; pos += read) {
 
-		in->read(&out[0], content_length - pos);
-		read = in->gcount();
+		in.read(&out[0], content_length - pos);
+		read = in.gcount();
 		if (read == 0)
 		{
 			std::ostringstream ss;
@@ -148,12 +150,18 @@ bool lsp_dispatcher::read_message(std::istream * in, std::string & out)
 	return true;
 }
 
-int lsp_dispatcher::run_server_loop(std::istream * in)
+int lsp_dispatcher::run_server_loop(std::istream & in)
 {
 	jsonrpcpp::Parser parser;
 	for (;;)
 	{
-		if (in->fail())
+		if (in.eof())
+		{
+			LOG_INFO("End of File");
+			return 0;
+		}
+
+		if (in.fail() || in.bad())
 		{
 			LOG_ERROR("IO error");
 			return 1;

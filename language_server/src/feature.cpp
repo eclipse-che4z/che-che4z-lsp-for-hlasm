@@ -38,16 +38,42 @@ std::string feature::uri_to_path(const std::string & uri)
 	return p.lexically_normal().string();
 }
 
+std::string feature::path_to_uri(std::string uri)
+{
+	std::replace(uri.begin(), uri.end(), '\\', '/');
+	std::string s = network::detail::encode_path(uri);
+#ifdef _WIN32
+	if(s.size() >= 2 && s[0] == '/' && s[1] == '/')
+		s.insert(0, "file:");
+	else
+		s.insert(0, "file:///");
+#else
+	s.insert(0, "file://");
+#endif // _WIN32
+
+	return s;
+}
+
 parser_library::range feature::parse_range(const json & range_json)
 {
 	return { parse_location(range_json["start"]),
 		parse_location(range_json["end"]) };
 }
 
-parser_library::location feature::parse_location(const json & location_json)
+parser_library::position feature::parse_location(const json & location_json)
 {
 	return { location_json["line"].get<nlohmann::json::number_unsigned_t>(),
 		location_json["character"].get<nlohmann::json::number_unsigned_t>() };
+}
+
+json feature::range_to_json(parser_library::range range)
+{
+	return json{ {"start", location_to_json(range.start)}, {"end", location_to_json(range.end)} };
+}
+
+json feature::location_to_json(parser_library::position location)
+{
+	return json{ {"line", location.line}, {"character", location.column} };
 }
 
 }

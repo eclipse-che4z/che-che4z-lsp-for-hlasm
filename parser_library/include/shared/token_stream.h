@@ -1,5 +1,10 @@
 #ifndef HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
 #define HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
+
+#include <utility>
+#include <memory>
+
+#include "antlr4-runtime.h"
 #include "lexer.h"
 
 

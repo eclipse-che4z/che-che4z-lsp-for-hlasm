@@ -3,6 +3,7 @@
 
 #include <string>
 #include "antlr4-runtime.h"
+#include "semantics/semantic_highlighting_info.h"
 
 namespace hlasm_plugin 
 {
@@ -15,6 +16,7 @@ namespace hlasm_plugin
 		//checks whether the given tree is of expected type
 		bool is_tree_type(antlr4::tree::ParseTree * tree, size_t type);
 
+		//parser_library::context::semantic_highlighting_info semantic_highlighting(antlr4::ParserRuleContext * tree, std::map<std::string,size_t> rules);
 		//indented representation of parsed tree
 		class useful_tree
 		{

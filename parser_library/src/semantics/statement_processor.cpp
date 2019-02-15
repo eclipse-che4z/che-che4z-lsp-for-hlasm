@@ -1,6 +1,9 @@
 #include "semantic_analyzer.h"
-#include "semantic_analyzer.h"
+#include "../context/instruction.h"
+#include "../checking/instruction_checker.h"
+#include "expression_visitor.h"
 
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
 
@@ -32,6 +35,98 @@ ordinary_processor::ordinary_processor(semantic_analyzer& analyzer) : analyzer_(
 		std::bind(&ordinary_processor::process_AGO, this));
 	process_table_.emplace(analyzer_.ctx_->ids.add("AIF"),
 		std::bind(&ordinary_processor::process_AIF, this));
+
+	for (size_t i = 0; i < instruction::machine_instructions.size(); i++)
+	{
+		process_table_.emplace(analyzer_.ctx_->ids.add(instruction::machine_instructions[i].name),
+			std::bind(&ordinary_processor::check_machine_instr, this));
+	}
+	for (size_t i = 0; i < instruction::assembler_instructions.size(); i++)
+	{
+		process_table_.emplace(analyzer_.ctx_->ids.add(instruction::assembler_instructions[i].name),
+			std::bind(&ordinary_processor::check_assembler_instr, this));
+	}
+	
+}
+
+checking::one_operand ordinary_processor::empty_one_operand("");
+
+
+
+void ordinary_processor::check_assembler_instr()
+{
+	std::vector<operand_ptr> * operands;
+	if (analyzer_.current_operands_and_remarks().substituted)
+		operands = &analyzer_.current_operands_and_remarks().substituted_operands;
+	else
+		operands = &analyzer_.current_operands_and_remarks().operands;
+
+ 	std::vector<checking::one_operand*> operand_vector = {};
+	for (size_t i = 0; i < operands->size(); i++)
+	{
+		auto & operand = (*operands)[i];
+		if (!operand || operand->type() == operand_type::EMPTY || operand->type() == operand_type::UNDEF || operand->access_model_op())
+		{
+			operand_vector.push_back(&empty_one_operand);
+			continue;
+		}
+		auto asm_op = operand->access_asm_op();
+		assert(asm_op);
+		operand_vector.push_back(asm_op->op_value.get());
+	}
+
+	assembler_checker.check(*analyzer_.current_instruction().id, operand_vector);
+
+	auto diags = assembler_checker.get_diagnostics();
+	auto range = analyzer_.curr_statement_.range;
+	for (auto diag : diags)
+	{
+		if (!diagnostic_op::is_error(*diag))
+			continue;
+		add_diagnostic(diagnostic_s{ "",{{range.begin_ln, range.begin_col},{range.end_ln, range.end_col}},
+			diag->severity, std::move(diag->code),
+			"HLASM Plugin", std::move(diag->message), {} });
+	}
+
+	assembler_checker.clear_diagnostics();
+}
+
+void ordinary_processor::check_machine_instr()
+{
+	std::vector<operand_ptr> * operands;
+	if (analyzer_.current_operands_and_remarks().substituted)
+		operands = &analyzer_.current_operands_and_remarks().substituted_operands;
+	else
+		operands = &analyzer_.current_operands_and_remarks().operands;
+
+	std::vector<checking::one_operand*> operand_vector = {};
+	for (size_t i = 0; i < operands->size(); i++)
+	{
+		auto & operand = (*operands)[i];
+		if (!operand || operand->type() == operand_type::EMPTY || operand->type() == operand_type::UNDEF || operand->access_model_op())
+		{
+			operand_vector.push_back(&empty_one_operand);
+			continue;
+		}
+		auto mach_op = operand->access_mach_op();
+		assert(mach_op);
+		operand_vector.push_back(mach_op->op_value.get());
+	}
+
+	mach_checker.mach_instr_check(*analyzer_.current_instruction().id, operand_vector);
+
+	const auto & diags = mach_checker.get_diagnostics();
+	auto range = analyzer_.curr_statement_.range;
+	for (auto diag : diags)
+	{
+		if (diagnostic_op::is_error(diag))
+		{
+			add_diagnostic(diagnostic_s{ "",{{range.begin_ln, range.begin_col},{range.end_ln, range.end_col}},
+				diag.severity, std::move(diag.code),
+				"HLASM Plugin", std::move(diag.message), {} });
+		}
+	}
+	mach_checker.clear_diagnostic();
 }
 
 void hlasm_plugin::parser_library::semantics::ordinary_processor::process_current_statement()
@@ -43,6 +138,8 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_curren
 		;//throw std::exception("not supported operation code");
 
 }
+
+void ordinary_processor::collect_diags() const {}
 
 void hlasm_plugin::parser_library::semantics::ordinary_processor::check_and_prepare_GBL_LCL(bool & recoverable, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info)
 {
@@ -57,7 +154,11 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::check_and_prep
 
 	for (auto& op : ops)
 	{
+		if (!op || op->type() == operand_type::EMPTY)
+			continue;
+
 		auto tmp = op->access_ca_op();
+
 		assert(tmp);
 
 		if (tmp->kind == ca_operand_kind::VAR)
@@ -88,6 +189,7 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_ANOP()
 	process_label_field_seq_or_empty_();
 }
 
+
 void hlasm_plugin::parser_library::semantics::ordinary_processor::check_and_prepare_ACTR(bool& recoverable, A_t& ctr)
 {
 	recoverable = true;
@@ -106,8 +208,10 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::check_and_prep
 	auto op = ops[0]->access_ca_op();
 	assert(op);
 
+	auto e = analyzer_.evaluate_expression_tree(op->expression);
+
 	if (op->kind == ca_operand_kind::EXPR || op->kind == ca_operand_kind::VAR)
-		ctr = op->expression ? op->expression->get_numeric_value() : object_traits<A_t>::default_v();
+		ctr = e ? e->get_numeric_value() : object_traits<A_t>::default_v();
 	else
 	{
 		recoverable = false;
@@ -138,6 +242,14 @@ void ordinary_processor::check_and_prepare_AGO(bool& recoverable, A_t& branch, s
 		recoverable = false;
 		return;
 	}
+	for (auto && op : ops)
+	{
+		if (!op)
+		{
+			recoverable = false;
+			return;
+		}
+	}
 
 	auto op = ops[0]->access_ca_op();
 	assert(op);
@@ -155,7 +267,11 @@ void ordinary_processor::check_and_prepare_AGO(bool& recoverable, A_t& branch, s
 	}
 	else if (op->kind == ca_operand_kind::BRANCH_EXPR)
 	{
-		branch = op->expression ? op->expression->get_numeric_value() : object_traits<A_t>::default_v();
+		auto ev = std::make_shared<expression_visitor>();
+		ev->set_semantic_analyzer(&analyzer_);
+		auto e = analyzer_.evaluate_expression_tree(op->expression);
+
+		branch = e ? e->get_numeric_value() : object_traits<A_t>::default_v();
 
 		for (size_t i = 1; i < ops.size(); ++i)
 		{
@@ -220,7 +336,9 @@ void ordinary_processor::check_and_prepare_AIF(bool& recoverable, B_t& condition
 		{
 			if (!condition)
 			{
-				condition = tmp->expression ? tmp->expression->get_numeric_value() : object_traits<B_t>::default_v();
+				auto e = analyzer_.evaluate_expression_tree(tmp->expression);
+
+				condition = e ? e->get_numeric_value() : object_traits<B_t>::default_v();
 				auto id = analyzer_.get_id(std::move(tmp->seqence_symbol.name));
 				target = { id,tmp->seqence_symbol.loc };
 			}
@@ -252,7 +370,7 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_AIF()
 
 inline void hlasm_plugin::parser_library::semantics::ordinary_processor::process_seq_sym_()
 {
-	auto id = analyzer_.get_id(std::move(analyzer_.current_label().name));
+	auto id = analyzer_.get_id(std::move(analyzer_.current_label().sequence_symbol.name));
 	sequence_symbol ss = { id,analyzer_.current_label().sequence_symbol.loc };
 	analyzer_.ctx_->add_sequence_symbol(ss);
 }

@@ -6,6 +6,7 @@
 #include "character_expression.h"
 #include "../error_messages.h"
 #include "numeric_wrapper.h"
+#include <stdexcept>
 
 using namespace hlasm_plugin;
 using namespace parser_library;
@@ -31,12 +32,14 @@ expr_ptr arithmetic_expression::from_string(const std::string &s, int base)
 	int32_t val = 0;
 	size_t tt = 0;
 	try {
+		bool may_have_sign = base == 10;
 		constexpr auto max = static_cast<unsigned long>(INT32_MAX);
 		constexpr auto min = static_cast<unsigned long>(INT32_MIN);
-
+		constexpr auto umax = static_cast<unsigned long>(UINT32_MAX);
+		
 		auto ulval = std::stoul(s, &tt, base);
 
-		if (ulval > max && ulval < min)
+		if ((may_have_sign && ulval > max && ulval < min) || !may_have_sign && ulval > umax)
 			throw std::out_of_range("");
 		val = static_cast<int32_t>(ulval);
 	}

@@ -1,8 +1,10 @@
 #include "macro_param_data.h"
 #include <stdexcept>
 
-using namespace hlasm_plugin::parser_library::context;
 using namespace std;
+
+namespace hlasm_plugin::parser_library::context
+{
 
 macro_param_data_component::~macro_param_data_component() {}
 
@@ -62,4 +64,6 @@ macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_pt
 {
 	if (data_.empty())
 		throw std::invalid_argument("data vector can not be empty");
+}
+
 }

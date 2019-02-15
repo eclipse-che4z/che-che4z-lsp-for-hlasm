@@ -7,13 +7,27 @@
 #include <string>
 #include <fstream>
 
-#include "../src/generated/parser_library_export.h"
+#include "parser_library_export.h"
 #include "protocol.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 class workspace;
 using ws_id = workspace *;
+
+class PARSER_LIBRARY_EXPORT highlighting_consumer
+{
+public:
+	virtual void consume_highlighting_info(all_semantic_info info) = 0;
+	virtual ~highlighting_consumer() {};
+};
+
+class PARSER_LIBRARY_EXPORT diagnostics_consumer
+{
+public:
+	virtual void consume_diagnostics(diagnostic_list diagnostics) = 0;
+	virtual ~diagnostics_consumer() {};
+};
 
 class PARSER_LIBRARY_EXPORT workspace_manager
 {
@@ -39,6 +53,12 @@ public:
 	virtual void did_open_file(const char * document_uri, version_t version, const char * text, size_t text_size);
 	virtual void did_change_file(const char * document_uri, version_t version, const document_change * changes, size_t ch_size);
 	virtual void did_close_file(const char * document_uri);
+
+	virtual position_uri definition(const char * document_uri, const position & pos);
+	virtual position_uris references(const char * document_uri, const position & pos);
+
+	virtual void register_highlighting_consumer(highlighting_consumer * consumer);
+	virtual void register_diagnostics_consumer(diagnostics_consumer * consumer);
 
 private:
 	impl * impl_;

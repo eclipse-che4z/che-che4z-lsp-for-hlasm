@@ -1,12 +1,12 @@
 
 #include <functional>
 #include <map>
-
 #include "server.h"
 #include "logger.h"
 
 #include "feature_workspace_folders.h"
 #include "feature_text_synchronization.h"
+#include "feature_language_features.h"
 
 namespace hlasm_plugin {
 namespace language_server {
@@ -15,11 +15,12 @@ server::server()
 {
 	features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_));
 	features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_));
+	features_.push_back(std::make_unique<feature_language_features>(ws_mngr_));
 	register_methods();
 	register_notifications();
+
+	ws_mngr_.register_diagnostics_consumer(this);
 }
-
-
 
 void server::register_methods()
 {
@@ -46,11 +47,6 @@ void server::on_initialize(id id, const parameter & param)
 {
 	client_initialize_params_ = param;
 
-	for (auto & f : features_)
-	{
-		f->initialize_feature(param);
-	}
-
 	//send server capabilities back
 	json capabilities = json
 	{
@@ -71,15 +67,14 @@ void server::on_initialize(id id, const parameter & param)
 							{ "triggerCharacters",{ "(", "," } },
 						}
 				},
-				{ "definitionProvider", false },
 				{ "documentHighlightProvider", false },
 				{ "hoverProvider", false },
 				{ "renameProvider", false },
 				{ "documentSymbolProvider", false },
-				{ "workspaceSymbolProvider", false },
-				
-				}
-			} };
+				{ "workspaceSymbolProvider", false }
+			}
+		}
+	};
 
 	for (auto & f : features_)
 	{
@@ -89,7 +84,15 @@ void server::on_initialize(id id, const parameter & param)
 
 	reply_(id, capabilities);
 
-	show_message("The capabilities of hlasm language server were sent!", message_type::MT_INFO);
+
+	for (auto & f : features_)
+	{
+		f->initialize_feature(param);
+	}
+
+	
+
+	//show_message("The capabilities of hlasm language server were sent!", message_type::MT_INFO);
 }
 
 void server::on_shutdown(id id, const parameter &)
@@ -114,6 +117,77 @@ void server::show_message(const std::string & message, message_type type)
 	};
 	notify_("window/showMessage", m);
 }
+
+json diagnostic_related_info_to_json(parser_library::diagnostic & diag)
+{
+	json related;
+	for (size_t i = 0; i < diag.related_info_size(); ++i)
+	{
+		related.push_back(json {
+								{"location", feature::location_to_json(diag.related_info(i).location()) },
+								{"message", diag.related_info(i).message()}
+							});
+	}
+	return related;
+}
+
+void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
+{
+	std::map<std::string, std::vector<parser_library::diagnostic>> diags;
+	
+	for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
+	{
+		auto d = diagnostics.diagnostics(i);
+		diags[d.file_name()].push_back(d);
+	}
+
+	std::unordered_set<std::string> new_files;
+
+	for (auto & file_diags : diags)
+	{
+		json diags_array = json::array();
+		for (auto d : file_diags.second)
+		{
+			json one_json
+			{
+				{"range", feature::range_to_json(d.get_range())},
+				{"code", d.code()},
+				{"source", d.source()},
+				{"message", d.message()},
+				{"relatedInformation", diagnostic_related_info_to_json(d)}
+			};
+			if (d.severity() != parser_library::diagnostic_severity::unspecified)
+			{
+				one_json["severity"] = (int)d.severity();
+				//one_json.insert(one_json.end(), { "severity", (int)d.severity() });
+			}
+			diags_array.push_back(std::move(one_json));
+		}
+
+		json publish_diags_params
+		{
+			{"uri", feature::path_to_uri(file_diags.first)},
+			{"diagnostics", diags_array}
+		};
+		new_files.insert(file_diags.first);
+		last_diagnostics_files.erase(file_diags.first);
+
+		notify_("textDocument/publishDiagnostics", publish_diags_params);
+	}
+
+	for (auto & it : last_diagnostics_files)
+	{
+		json publish_diags_params
+		{
+			{"uri", feature::path_to_uri(it)},
+			{"diagnostics", json::array()}
+		};
+		notify_("textDocument/publishDiagnostics", publish_diags_params);
+	}
+
+	last_diagnostics_files = std::move(new_files);
+}
+
 
 
 void server::call_method(jsonrpcpp::request_ptr request)
@@ -159,16 +233,20 @@ void server::call_notification(jsonrpcpp::notification_ptr request)
 		std::ostringstream ss;
 		ss << "Notification " << request->method << " is not available on this server.";
 		LOG_WARNING(ss.str());
-
 	}
 }
 
 
-void server::register_callbacks(response_callback replyCb, notify_callback notifyCb, response_error_callback replyErrorCb)
+void server::register_callbacks(response_callback reply, notify_callback notify, response_error_callback reply_error)
 {
-	reply_ = replyCb;
-	notify_ = notifyCb;
-	replyError_ = replyErrorCb;
+	reply_ = reply;
+	notify_ = notify;
+	replyError_ = reply_error;
+
+	for (auto & f : features_)
+	{
+		f->register_callbacks(reply, reply_error, notify);
+	}
 }
 
 bool server::is_exit_notification_received()

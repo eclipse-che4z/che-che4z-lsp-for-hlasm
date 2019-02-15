@@ -12,7 +12,9 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
-file_impl::file_impl(file_uri uri) : file_name_(std::move(uri))
+file_impl::file_impl(file_uri uri) : file_name_(std::move(uri)), text_() {}
+
+void file_impl::collect_diags() const
 {
 }
 
@@ -47,9 +49,10 @@ void file_impl::load_text()
 	else
 	{
 		text_ = "";
-		up_to_date_ = true;
+		up_to_date_ = false;
 		bad_ = true;
-		//TODO: publish diagnostic warning that we are unable to read from the file
+		add_diagnostic(diagnostic_s{file_name_, {}, diagnostic_severity::error,
+			"W0001", "HLASM plugin", "Could not open file" + file_name_, {} });
 	}
 }
 
@@ -131,7 +134,7 @@ void file_impl::did_change(range range, std::string new_text)
 		size_t diff = new_lines_count - old_lines_count;
 		lines_ind_.insert(lines_ind_.end(), diff, 0);
 
-		for (size_t i = lines_ind_.size() - 1; i > range_end_line; --i)
+		for (size_t i = lines_ind_.size() - 1; i > range_end_line + diff; --i)
 		{
 			lines_ind_[i] = lines_ind_[i - diff] + char_diff;
 		}
@@ -171,6 +174,11 @@ void file_impl::did_change(std::string new_text)
 void file_impl::did_close()
 {}
 
+const std::string & file_impl::get_text_ref()
+{
+	return text_;
+}
+
 version_t file_impl::get_version()
 {
 	return version_;
@@ -181,8 +189,9 @@ bool file_impl::is_bad() const
 	return bad_;
 }
 
+
 //returns the location in text_ that corresponds to utf-16 based location
-size_t file_impl::index_from_location(location loc)
+size_t file_impl::index_from_location(position loc)
 {
 	size_t end = (size_t)loc.column;
 	size_t i = lines_ind_[(size_t)loc.line];

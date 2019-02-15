@@ -1,6 +1,0 @@
-      AIF      ((&VAR EQ ((1)+1))).HERE
-.HERE WTO      MF=(E,(1))                              HERE COMES REMARx
-               K
-      ORG      DYNAMIC+(((*-DYNAMIC+4095)/4096)*4096)
-      L     13,4(,13)
-      SYSSTATE ASCENV=P,AMODE64=NO,ARCHLVL=2,OSREL=ZOSV2R1

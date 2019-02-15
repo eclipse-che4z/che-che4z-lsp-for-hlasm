@@ -6,6 +6,7 @@
 #include "common_types.h"
 #include "antlr4-runtime.h"
 #include <unordered_map>
+#include "../diagnosable_impl.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -28,7 +29,7 @@ using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 //contains info about keyword, positional parameters of HLASM mascro as well as derivation tree of the actual code
 //has methods call to represent macro instruction call
 //serves as prototype for creating macro_invocation objects
-class macro_definition
+class macro_definition : public diagnosable_impl
 {
 	using macro_param_ptr = std::shared_ptr<macro_param_base>;
 
@@ -52,6 +53,9 @@ public:
 
 	//satifying unordered_map needs 
 	bool operator=(const macro_definition& m);
+
+	void collect_diags() const override;
+
 };
 
 //represent macro isntruction call 

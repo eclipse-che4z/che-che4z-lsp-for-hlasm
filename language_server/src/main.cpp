@@ -33,7 +33,7 @@ int main() {
 	lsp_dispatcher dispatcher{ cout, server};
 	
 	
-	int ret = dispatcher.run_server_loop(&cin);
+	int ret = dispatcher.run_server_loop(cin);
 
 	return ret;
 }

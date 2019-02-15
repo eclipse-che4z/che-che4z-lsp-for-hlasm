@@ -1,70 +1,156 @@
 {
-  "name": "vscode-hlasmplugin",
-  "displayName": "vscode-hlasmplugin",
-  "description": "HLASM Language Server",
-  "version": "0.0.1",
-  "publisher": "CA",
-  "homepage": "https://ca.com/",
-  "engines": {
-    "vscode": "^1.25.1"
-  },
-  "categories": [
-    "Programming Languages",
-    "Linters",
-    "Snippets"
-  ],
-  "keywords": [
-    "HLASM",
-    "LSP"
-  ],
-  "activationEvents": [
-    "workspaceContains:*.hlasm",
-    "workspaceContains:*.txt",
-    "*"
-  ],
-  "main": "./out/src/extension",
-  "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -watch -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "node ./node_modules/vscode/bin/test",
-    "package": "vsce package"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^4.4.0"
-  },
-  "devDependencies": {
-    "typescript": "^2.0.3",
-    "vscode": "^1.1.18",
-    "mocha": "^2.3.3",
-    "@types/node": "^6.0.40",
-    "@types/mocha": "^2.2.32",
-    "vsce": "^1.44.0"
-  },
-  "contributes": {
-    "configuration": {
-      "type": "object",
-      "title": "hlasmplugin configuration",
-      "properties": {
-        "hlasmplugin.path": {
-          "type": "string",
-          "default": "HlasmLanguageServer",
-          "description": "The path to the HlasmLanguageServer executable, e.g.: /usr/bin/HlasmLanguageServer"
-        },
-        "hlasmplugin.arguments": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "description": "Arguments for hlasmplugin server"
-        },
-        "hlasmplugin.syncFileEvents": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
-        }
-      }
-    }
-  }
+	"name": "vscode-hlasmplugin",
+	"repository": {},
+	"displayName": "vscode-hlasmplugin",
+	"description": "HLASM Language Server",
+	"version": "0.0.1",
+	"publisher": "CA",
+	"homepage": "https://ca.com/",
+	"categories": [
+		"Programming Languages",
+		"Linters",
+		"Snippets"
+	],
+	"keywords": [
+		"HLASM",
+		"LSP"
+	],
+	"activationEvents": [
+		"workspaceContains:*.hlasm",
+		"workspaceContains:*.txt",
+		"*"
+	],
+	"main": "./lib/extension.js",
+	"typings": "./lib/extension",
+	"engines": {
+		"vscode": "^1.30.1"
+	},
+	"devDependencies": {
+		"vsce": "^1.52.0",
+		"shelljs": "^0.8.2",
+		"shx": "^0.3.2",
+		"typescript": "^3.1.5",
+		"vscode": "^1.1.26"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^5.2.1",
+		"path": "^0.12.7",
+		"@types/mocha": "^5.2.5",
+		"@types/node": "^10.12.1",
+		"mocha": "^5.2.0"
+	},
+	"scripts": {
+		"postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
+		"prepare": "npm run update-vscode",
+		"update-vscode": "node ./node_modules/vscode/bin/install",
+		"compile": "tsc -p ./tsconfig.json",
+		"clean": "node ./build/bin/clean.js",
+		"package": "vsce package"
+	},
+	"contributes": {
+		"keybindings": [
+			{
+				"command": "insertContinuation",
+				"key": "shift+enter"
+			},
+			{
+				"command": "removeContinuation",
+				"key": "shift+backspace"
+			},
+			{
+				"key": "backspace",
+				"command": "deleteLeftCont",
+				"when": "editorTextFocus && !editorReadonly"
+			},
+			{
+				"key": "delete",
+				"command": "deleteRightCont",
+				"when": "editorTextFocus && !editorReadonly"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "hlasmplugin configuration",
+			"properties": {
+				"hlasmplugin.highlightColors": {
+					"type": "array",
+					"default": [
+						{
+							"id": "ignored",
+							"description": "Color for ignored characters",
+							"hex": "#b0a6c9"
+						},
+						{
+							"id": "comment",
+							"description": "Color for comments",
+							"hex": "#4c9b3f"
+						},
+						{
+							"id": "continuation",
+							"description": "Color for continuation characters",
+							"hex": "#5fffff"
+						},
+						{
+							"id": "label",
+							"description": "Color for labels",
+							"hex": "#ffff00"
+						},
+						{
+							"id": "instruction",
+							"description": "Color for instructions",
+							"hex": "#ff0000"
+						},
+						{
+							"id": "operand",
+							"description": "Color for operands",
+							"hex": "#797979"
+						},
+						{
+							"id": "remark",
+							"description": "Color for remarks",
+							"hex": "#06aed8"
+						},
+						{
+							"id": "string",
+							"description": "Color for strings",
+							"hex": "#ff6600"
+						},
+						{
+							"id": "number",
+							"description": "Color for numbers",
+							"hex": "#2a397a"
+						},
+						{
+							"id": "seqSymbol",
+							"description": "Color for sequence symbols",
+							"hex": "#8b7d6b"
+						},
+						{
+							"id": "varSymbol",
+							"description": "Color for variable symbols",
+							"hex": "#ee4f7c"
+						},
+						{
+							"id": "operator",
+							"description": "Color for operators",
+							"hex": "#f5e5c2"
+						}
+					]
+				},
+				"hlasmplugin.arguments": {
+					"type": "array",
+					"default": [],
+					"items": {
+						"type": "string"
+					},
+					"description": "Arguments for hlasmplugin server"
+				},
+				"hlasmplugin.syncFileEvents": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
+				}
+			}
+		}
+	}
 }

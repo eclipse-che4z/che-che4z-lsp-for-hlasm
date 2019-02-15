@@ -56,28 +56,38 @@ set(LIB_NOT_EXPORTED_SRC
     ${PROJECT_SOURCE_DIR}/src/semantics/semantic_analyzer.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/expression_visitor.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/library.cpp
-    ${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
-)
+	${PROJECT_SOURCE_DIR}/src/processor_file_impl.cpp
+	${PROJECT_SOURCE_DIR}/src/parser_error_listener.cpp
+	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
+	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/assembler_instruction.cpp
 
-#Generate the shared library from the library sources
-add_library(parser_library SHARED
-    ${PROJECT_SOURCE_DIR}/src/parser_library.cpp
+	${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp
+    ${PROJECT_SOURCE_DIR}/src/workspace_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/token.cpp
     ${PROJECT_SOURCE_DIR}/src/token_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/token_stream.cpp
     ${PROJECT_SOURCE_DIR}/src/input_source.cpp
-    ${PROJECT_SOURCE_DIR}/src/workspace_manager.cpp
-	${LIB_NOT_EXPORTED_SRC}
+    ${PROJECT_SOURCE_DIR}/src/protocol.cpp
+)
+
+#Generate the shared library from the library sources
+add_library(parser_library SHARED
+    ${LIB_NOT_EXPORTED_SRC}
     ${GENERATED_SRC}
 )
 
 generate_export_header(parser_library
-			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/parser_library_export.h)
+			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/export/parser_library_export.h)
 
 target_link_libraries(parser_library antlr4-runtime)
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -88,6 +98,7 @@ target_include_directories(parser_library
     PUBLIC 
         ${PROJECT_SOURCE_DIR}/include
 		${PROJECT_SOURCE_DIR}/src/generated/
+		${PROJECT_SOURCE_DIR}/src/generated/export
 )
 
 ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build event to MyTest
@@ -103,21 +114,33 @@ add_dependencies(parser_library jsonrpcppext)
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp
     ${LIB_NOT_EXPORTED_SRC}
-	${GENERATED_SRC})
+	${GENERATED_SRC}
+	)
+
+	target_include_directories(library_test
+    PUBLIC 
+        "${PROJECT_SOURCE_DIR}/include"
+	PUBLIC 
+        "${PROJECT_SOURCE_DIR}/test/export"
+	)
+
+	ADD_CUSTOM_COMMAND (TARGET library_test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory  
+        "${ANTLR4CPP_LIBS}"      
+        "${PROJECT_BINARY_DIR}/../bin/" )  
+
 	add_custom_target(library_tests_copy
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                        ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
 
-	target_link_libraries(library_test gmock_main)
+	target_link_libraries(library_test gmock)
 	target_link_libraries(library_test antlr4-runtime)
-	target_link_libraries(library_test parser_library)
 	if(CMAKE_COMPILER_IS_GNUCXX)
 		target_link_libraries(library_test stdc++fs)
-	endif()
+    endif()
+    
 	add_dependencies(library_test library_tests_copy)
 	add_dependencies(library_test antlr4jar)
-	add_dependencies(library_test parser_library)
-    gtest_discover_tests(library_test
-        TIMEOUT 10000
-        DISCOVERY_TIMEOUT 10000)
+	add_dependencies(library_test jsonrpcppext)
+    gtest_discover_tests(library_test)
 endif()

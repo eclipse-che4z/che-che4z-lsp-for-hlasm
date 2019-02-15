@@ -1,7 +1,7 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMHTF_H
 #define HLASMPLUGIN_PARSER_HLASMHTF_H
 
-#include "../generated/parser_library_export.h"
+#include "parser_library_export.h"
 #include "antlr4-runtime.h"
 #include <memory>
 #include "token.h"
@@ -26,7 +26,8 @@ namespace hlasm_plugin {
 			                              size_t channel,
 			                              size_t start, size_t stop, size_t line, size_t char_position_in_line,
 			                              size_t index,
-			                              size_t char_position_in_line_16);
+			                              size_t char_position_in_line_16,
+										  size_t end_of_token_in_line_utf16);
 		};
 
 	}

@@ -28,7 +28,7 @@ public:
 	const_iterator end() const { return lit_.end(); }		
 	bool empty() const { return lit_.empty(); }
 
-	const_pointer find(const std::string& val)
+	const_pointer find(const std::string& val) const
 	{
 		std::string up(val);
 		to_upper(up);

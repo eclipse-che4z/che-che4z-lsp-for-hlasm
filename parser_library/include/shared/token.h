@@ -1,7 +1,7 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMTOKEN_H
 #define HLASMPLUGIN_PARSER_HLASMTOKEN_H
 
-#include "../generated/parser_library_export.h"
+#include "parser_library_export.h"
 #include "antlr4-runtime.h"
 #include "input_source.h"
 #include <string>
@@ -11,9 +11,10 @@ namespace hlasm_plugin {
 
 		class PARSER_LIBRARY_EXPORT token : public antlr4::Token {
 		public:
-			token(antlr4::TokenSource *, antlr4::CharStream *, size_t,
-				size_t, size_t, size_t, size_t, size_t, size_t, size_t);
-
+			token(antlr4::TokenSource * source, antlr4::CharStream * input, size_t type,
+				size_t channel, size_t start, size_t stop, size_t line,
+				size_t char_position_in_line, size_t token_index,
+				size_t char_position_in_line_16, size_t end_of_token_in_line_utf16);
 			std::string getText() const override;
 
 			size_t getType() const override;
@@ -38,6 +39,8 @@ namespace hlasm_plugin {
 
 			size_t get_char_position_in_line_16() const;
 
+			size_t get_end_of_token_in_line_utf16() const;
+
 		private:
 			antlr4::TokenSource * source_{};
 			antlr4::CharStream * input_{};
@@ -49,6 +52,7 @@ namespace hlasm_plugin {
 			size_t char_position_in_line_;
 			size_t token_index_;
 			size_t char_position_in_line_16_;
+			size_t end_of_token_in_line_utf16_;
 		};
 	}
 }

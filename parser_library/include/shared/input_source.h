@@ -1,7 +1,7 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMINPUTSOURCE_H
 #define HLASMPLUGIN_PARSER_HLASMINPUTSOURCE_H
 
-#include "../generated/parser_library_export.h"
+#include "parser_library_export.h"
 #include "antlr4-runtime.h"
 
 namespace hlasm_plugin {

@@ -1,3 +1,4 @@
+(&TEST_VAR*&TEST_VAR)
 123
 1+2
 3*12
@@ -159,3 +160,5 @@ X2D('FFFFFFF1')
 ('abc' eq 'abcd')
 ('abc' EQ 'abc')
 ('abc' EQ 'abcd')
+&TEST_VAR
+&TEST_VAR+&TEST_VAR
