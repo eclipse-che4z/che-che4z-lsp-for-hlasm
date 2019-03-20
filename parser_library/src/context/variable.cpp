@@ -25,9 +25,9 @@ variable_symbol::variable_symbol(id_index name) :id(name) {}
 
 variable_symbol::~variable_symbol() {}
 
-set_type_enum set_symbol_base::type() const
+SET_t_enum set_symbol_base::type() const
 {
-	return set_type_enum::UNDEF_TYPE;
+	return SET_t_enum::UNDEF_TYPE;
 }
 
 variable_kind set_symbol_base::var_kind() const
@@ -45,7 +45,7 @@ variable_kind macro_param_base::var_kind() const
 
 macro_param_type macro_param_base::param_type() const
 {
-	return macro_param_type::UNDEF_PAR_KIND;
+	return macro_param_type::UNDEF_PAR_TYPE;
 }
 
 keyword_param * macro_param_base::access_keyword_param()
@@ -62,7 +62,7 @@ macro_param_base::macro_param_base(id_index name) :variable_symbol(name) {}
 
 macro_param_type keyword_param::param_type() const
 {
-	return macro_param_type::KEY_PAR_KIND;
+	return macro_param_type::KEY_PAR_TYPE;
 }
 
 const C_t & keyword_param::get_value(const std::vector<size_t>& offset) const
@@ -90,7 +90,7 @@ keyword_param::keyword_param(id_index name, macro_data_ptr default_value) : macr
 
 macro_param_type positional_param::param_type() const
 {
-	return macro_param_type::POS_PAR_KIND;
+	return macro_param_type::POS_PAR_TYPE;
 }
 
 const C_t & positional_param::get_value(const std::vector<size_t>& offset) const

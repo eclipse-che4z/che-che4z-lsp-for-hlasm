@@ -10,7 +10,7 @@ namespace checking
 
 xattr::xattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool xattr::check(const std::vector<one_operand*> & to_check)
+bool xattr::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -89,7 +89,7 @@ bool xattr::check(const std::vector<one_operand*> & to_check)
 
 using_instr::using_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, -1) {};
 
-bool using_instr::check(const std::vector<one_operand*> & to_check)
+bool using_instr::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -153,7 +153,7 @@ bool using_instr::check(const std::vector<one_operand*> & to_check)
 
 title::title(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool title::check(const std::vector<one_operand*> & to_check)
+bool title::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -173,7 +173,7 @@ bool title::check(const std::vector<one_operand*> & to_check)
 
 rmode::rmode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool rmode::check(const std::vector<one_operand*> & to_check)
+bool rmode::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -191,7 +191,7 @@ bool rmode::check(const std::vector<one_operand*> & to_check)
 
 punch::punch(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool punch::check(const std::vector<one_operand*> & to_check)
+bool punch::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check)) //check number of operands
 		return false;
@@ -224,7 +224,7 @@ bool punch::check(const std::vector<one_operand*> & to_check)
 
 print::print(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool print::check(const std::vector<one_operand*> & to_check)
+bool print::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -248,7 +248,7 @@ bool print::check(const std::vector<one_operand*> & to_check)
 
 stack_instr::stack_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 4) {};
 
-bool stack_instr::check(const std::vector<one_operand*> & to_check)
+bool stack_instr::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -283,7 +283,7 @@ bool stack_instr::check(const std::vector<one_operand*> & to_check)
 
 org::org(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 3) {};
 
-bool org::check(const std::vector<one_operand*> & to_check)
+bool org::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -316,7 +316,7 @@ bool org::check(const std::vector<one_operand*> & to_check)
 
 opsyn::opsyn(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool opsyn::check(const std::vector<one_operand*> & to_check)
+bool opsyn::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -335,7 +335,7 @@ bool opsyn::check(const std::vector<one_operand*> & to_check)
 
 mnote::mnote(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 2) {};
 
-bool mnote::check(const std::vector<one_operand*> & to_check)
+bool mnote::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -367,7 +367,7 @@ bool mnote::check(const std::vector<one_operand*> & to_check)
 
 iseq::iseq(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool iseq::check(const std::vector<one_operand*> & to_check)
+bool iseq::check(const std::vector<const one_operand*> & to_check)
 {
 	if (to_check.size() == 0)
 		return true;
@@ -410,7 +410,7 @@ bool iseq::check(const std::vector<one_operand*> & to_check)
 
 ictl::ictl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 3) {};
 
-bool ictl::check(const std::vector<one_operand*> & to_check)
+bool ictl::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -453,7 +453,7 @@ bool ictl::check(const std::vector<one_operand*> & to_check)
 
 external::external(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool external::check(const std::vector<one_operand*> & to_check)
+bool external::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -504,7 +504,7 @@ bool external::check(const std::vector<one_operand*> & to_check)
 
 exitctl::exitctl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 5) {};
 
-bool exitctl::check(const std::vector<one_operand*> & to_check)
+bool exitctl::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -537,7 +537,7 @@ bool exitctl::check(const std::vector<one_operand*> & to_check)
 
 equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
-bool equ::check(const std::vector<one_operand*> & to_check)
+bool equ::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -566,7 +566,7 @@ bool equ::check(const std::vector<one_operand*> & to_check)
 
 entry::entry(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool entry::check(const std::vector<one_operand*> & to_check)
+bool entry::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -588,7 +588,7 @@ bool entry::check(const std::vector<one_operand*> & to_check)
 
 end::end(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool end::check(const std::vector<one_operand*> & to_check)
+bool end::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -631,7 +631,7 @@ bool end::check(const std::vector<one_operand*> & to_check)
 
 drop::drop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};
 
-bool drop::check(const std::vector<one_operand*> & to_check)
+bool drop::check(const std::vector<const one_operand*> & to_check)
 {
 	for (const auto& operand : to_check)
 	{
@@ -651,7 +651,7 @@ bool drop::check(const std::vector<one_operand*> & to_check)
 
 data::data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool data::check(const std::vector<one_operand*> & to_check)
+bool data::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -668,7 +668,7 @@ bool data::check(const std::vector<one_operand*> & to_check)
 
 copy::copy(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool copy::check(const std::vector<one_operand*> & to_check)
+bool copy::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -687,7 +687,7 @@ bool copy::check(const std::vector<one_operand*> & to_check)
 
 cnop::cnop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool cnop::check(const std::vector<one_operand*> & to_check)
+bool cnop::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -716,7 +716,7 @@ bool cnop::check(const std::vector<one_operand*> & to_check)
 
 ccw::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 4, 4) {};
 
-bool ccw::check(const std::vector<one_operand*> & to_check)
+bool ccw::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -736,7 +736,7 @@ bool ccw::check(const std::vector<one_operand*> & to_check)
 
 expression_instruction::expression_instruction(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool expression_instruction::check(const std::vector<one_operand*> & to_check)
+bool expression_instruction::check(const std::vector<const one_operand*> & to_check)
 {
 	if (to_check.size() == 0)
 		return true;
@@ -752,7 +752,7 @@ bool expression_instruction::check(const std::vector<one_operand*> & to_check)
 
 cattr::cattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool cattr::check(const std::vector<one_operand*> & to_check)
+bool cattr::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -836,7 +836,7 @@ bool cattr::check(const std::vector<one_operand*> & to_check)
 
 amode::amode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool amode::check(const std::vector<one_operand*> & to_check)
+bool amode::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -856,7 +856,7 @@ bool amode::check(const std::vector<one_operand*> & to_check)
 
 alias::alias(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool alias::check(const std::vector<one_operand*> & to_check)
+bool alias::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -914,7 +914,7 @@ bool alias::check(const std::vector<one_operand*> & to_check)
 
 ainsert::ainsert(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool ainsert::check(const std::vector<one_operand*> & to_check)
+bool ainsert::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -940,7 +940,7 @@ bool ainsert::check(const std::vector<one_operand*> & to_check)
 
 adata::adata(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 5, 5) {};
 
-bool adata::check(const std::vector<one_operand*> & to_check)
+bool adata::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -975,14 +975,14 @@ bool adata::check(const std::vector<one_operand*> & to_check)
 
 no_operands::no_operands(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 0) {};
 
-bool no_operands::check(const std::vector<one_operand*> & to_check)
+bool no_operands::check(const std::vector<const one_operand*> & to_check)
 {
 	return check_vector_size(to_check);
 }
 
 process::process(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool process::check(const std::vector<one_operand*> & to_check)
+bool process::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;
@@ -1001,7 +1001,7 @@ bool process::check(const std::vector<one_operand*> & to_check)
 
 acontrol::acontrol(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool acontrol::check(const std::vector<one_operand*> & to_check)
+bool acontrol::check(const std::vector<const one_operand*> & to_check)
 {
 	if (!check_vector_size(to_check))
 		return false;

@@ -3,6 +3,7 @@
 #include <cmath>
 #include "antlr4-runtime.h"
 #include "../context/common_types.h"
+#include "../common_structures.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -36,71 +37,75 @@ struct symbol_range
 };
 
 //struct agregating SET types for easier usage
-struct set_type
+struct SET_t
 {
 private:
 	const context::A_t& a_value;
 	const context::B_t& b_value;
 	const context::C_t& c_value;
 public:
-	set_type(const context::A_t& value);
-	set_type(const context::B_t& value);
-	set_type(const context::C_t& value);
-	set_type();
+	SET_t(const context::A_t& value);
+	SET_t(const context::B_t& value);
+	SET_t(const context::C_t& value);
+	SET_t();
 
-	const context::set_type_enum type;
+	const context::SET_t_enum type;
 
 	const context::A_t& access_a();
 	const context::B_t& access_b();
 	const context::C_t& access_c();
+
+	context::A_t C2A(const context::C_t& value) const;
 
 	template<typename T>
 	T to();
 };
 
 template<>
-inline context::A_t set_type::to()
+inline context::A_t SET_t::to()
 {
 	switch (type)
 	{
-	case context::set_type_enum::A_TYPE:
+	case context::SET_t_enum::A_TYPE:
 		return a_value;
-	case context::set_type_enum::B_TYPE:
+	case context::SET_t_enum::B_TYPE:
 		return b_value;
-	case context::set_type_enum::C_TYPE:
-		return b_value; //TODO
+	case context::SET_t_enum::C_TYPE:
+		return C2A(c_value); //TODO
 	default:
 		return a_value;
 	}
 }
 
 template<>
-inline context::B_t set_type::to()
+inline context::B_t SET_t::to()
 {
 	switch (type)
 	{
-	case context::set_type_enum::A_TYPE:
+	case context::SET_t_enum::A_TYPE:
 		return a_value;
-	case context::set_type_enum::B_TYPE:
+	case context::SET_t_enum::B_TYPE:
 		return b_value;
-	case context::set_type_enum::C_TYPE:
+	case context::SET_t_enum::C_TYPE:
+
 		return b_value; //TODO
+
 	default:
 		return b_value;
 	}
 }
 
 template<>
-inline context::C_t set_type::to()
+inline context::C_t SET_t::to()
 {
 	switch (type)
 	{
-	case context::set_type_enum::A_TYPE:
+	case context::SET_t_enum::A_TYPE:
 		return std::to_string(std::abs(a_value));
-	case context::set_type_enum::B_TYPE:
+	case context::SET_t_enum::B_TYPE:
 		if (b_value) return "1";
 		else return "0";
-	case context::set_type_enum::C_TYPE:
+	case context::SET_t_enum::C_TYPE:
 		return c_value;
 	default:
 		return c_value;
@@ -125,7 +130,10 @@ struct symbol_guard
 struct seq_sym
 {
 	std::string name;
-	context::location loc;
+
+	parser_library::location location;
+
+	symbol_range range;
 };
 
 }

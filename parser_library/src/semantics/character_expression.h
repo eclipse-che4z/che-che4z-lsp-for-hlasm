@@ -18,6 +18,8 @@ namespace hlasm_plugin
 			public:
 				character_expression() = default;
 				character_expression(character_expression &&) = default;
+				character_expression& operator=(character_expression &&) = default;
+				character_expression(const character_expression &);
 				character_expression(std::string);
 
 				void append(std::string);
@@ -27,7 +29,7 @@ namespace hlasm_plugin
 				expr_ptr binary_operation(str_ref operation_name, expr_ref arg2) const;
 				expr_ptr unary_operation(str_ref operation_name) const;
 
-				const std::string &get_value() const;
+				SET_t get_set_value() const override;
 
 				template<typename T>
 				char_ptr substring(int32_t dupl, const T& s, const T& e) const
@@ -74,6 +76,7 @@ namespace hlasm_plugin
 				static std::string num_to_ebcdic(int32_t val);
 				static bool isalpha_hlasm(char c);
 				static char hex_to_num(char c, size_t*);
+
 			private:
 				expr_ptr dclen() const;
 				expr_ptr isbin() const;

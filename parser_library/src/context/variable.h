@@ -5,6 +5,7 @@
 #include "macro_param_data.h"
 #include <memory>
 #include "id_storage.h"
+#include "../common_structures.h"
 #include <unordered_map>
 
 namespace hlasm_plugin {
@@ -60,7 +61,7 @@ public:
 	const bool is_scalar;
 
 	//returns type of set symbol
-	virtual set_type_enum type() const;
+	virtual SET_t_enum type() const;
 
 	//returns kind of set symbol
 	virtual variable_kind var_kind() const override;
@@ -80,7 +81,7 @@ protected:
 template<typename T>
 class set_symbol : public set_symbol_base
 {
-	static_assert(object_traits<T>::type_enum != set_type_enum::UNDEF_TYPE, "Not a SET variable type.");
+	static_assert(object_traits<T>::type_enum != SET_t_enum::UNDEF_TYPE, "Not a SET variable type.");
 
 	//data holding this set_symbol 
 	//can be scalar or only array of scallars - no other nesting allowed
@@ -90,7 +91,7 @@ public:
 	set_symbol(id_index name, bool is_scalar) : set_symbol_base(name, is_scalar) {}
 
 	//returns type of set symbol
-	set_type_enum type() const override { return object_traits<T>::type_enum; }
+	SET_t_enum type() const override { return object_traits<T>::type_enum; }
 
 	//gets value from non scalar set symbol
 	//if data at idx is not set or it does not exists, default is returned
@@ -227,7 +228,7 @@ struct sequence_symbol
 	static const sequence_symbol EMPTY;
 
 	id_index name;
-	location loc;
+	hlasm_plugin::parser_library::location location;
 
 	operator bool() const;
 

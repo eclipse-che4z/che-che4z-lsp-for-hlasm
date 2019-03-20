@@ -67,20 +67,33 @@ symbol_range hlasm_plugin::parser_library::semantics::symbol_range::get_empty_ra
 	return ret;
 }
 
-hlasm_plugin::parser_library::semantics::set_type::set_type(const context::A_t & value)
-	:a_value(value), b_value(object_traits<B_t>::default_v()), c_value(object_traits<C_t>::default_v()), type(set_type_enum::A_TYPE) {}
+hlasm_plugin::parser_library::semantics::SET_t::SET_t(const context::A_t & value)
+	:a_value(value), b_value(object_traits<B_t>::default_v()), c_value(object_traits<C_t>::default_v()), type(SET_t_enum::A_TYPE) {}
 
-hlasm_plugin::parser_library::semantics::set_type::set_type(const context::B_t & value)
-	: a_value(object_traits<A_t>::default_v()), b_value(value), c_value(object_traits<C_t>::default_v()), type(set_type_enum::B_TYPE) {}
+hlasm_plugin::parser_library::semantics::SET_t::SET_t(const context::B_t & value)
+	: a_value(object_traits<A_t>::default_v()), b_value(value), c_value(object_traits<C_t>::default_v()), type(SET_t_enum::B_TYPE) {}
 
-hlasm_plugin::parser_library::semantics::set_type::set_type(const context::C_t & value)
-	: a_value(object_traits<A_t>::default_v()), b_value(object_traits<B_t>::default_v()), c_value(value), type(set_type_enum::C_TYPE) {}
+hlasm_plugin::parser_library::semantics::SET_t::SET_t(const context::C_t & value)
+	: a_value(object_traits<A_t>::default_v()), b_value(object_traits<B_t>::default_v()), c_value(value), type(SET_t_enum::C_TYPE) {}
 
-hlasm_plugin::parser_library::semantics::set_type::set_type()
-	: a_value(object_traits<A_t>::default_v()), b_value(object_traits<B_t>::default_v()), c_value(object_traits<C_t>::default_v()), type(set_type_enum::UNDEF_TYPE) {}
+hlasm_plugin::parser_library::semantics::SET_t::SET_t()
+	: a_value(object_traits<A_t>::default_v()), b_value(object_traits<B_t>::default_v()), c_value(object_traits<C_t>::default_v()), type(SET_t_enum::UNDEF_TYPE) {}
 
-const A_t & hlasm_plugin::parser_library::semantics::set_type::access_a() { return a_value; }
+const A_t & hlasm_plugin::parser_library::semantics::SET_t::access_a() { return a_value; }
 
-const B_t & hlasm_plugin::parser_library::semantics::set_type::access_b() { return b_value; }
+const B_t & hlasm_plugin::parser_library::semantics::SET_t::access_b() { return b_value; }
 
-const C_t & hlasm_plugin::parser_library::semantics::set_type::access_c() { return c_value; }
+const C_t & hlasm_plugin::parser_library::semantics::SET_t::access_c() { return c_value; }
+
+A_t hlasm_plugin::parser_library::semantics::SET_t::C2A(const context::C_t & value) const
+{
+	//TODO selfdefterm
+	if (value.empty())
+		return context::object_traits<A_t>::default_v();
+	try
+	{
+		return std::stoi(value);
+	}
+	catch (...) {}
+	return 0;
+}

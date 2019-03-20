@@ -3,9 +3,7 @@
 
 #include "processor.h"
 #include "file_impl.h"
-#include "parser_error_listener.h"
-#include "shared/token_stream.h"
-#include "error_strategy.h"
+#include "analyzer.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -20,7 +18,7 @@ public:
 	//starts parser with new (empty) context
 	program_context * parse(parse_lib_provider &);
 	//starts parser with in the context of parameter
-	program_context * parse(parse_lib_provider &, std::shared_ptr<context::hlasm_context>);
+	program_context * parse(parse_lib_provider &, context::ctx_ptr);
 
 	semantics::semantic_info & semantic_info();
 
@@ -28,12 +26,7 @@ public:
 
 	virtual ~processor_file_impl() = default;
 private:
-	parser_error_listener listener_;
-
-	std::unique_ptr<input_source> input_;
-	std::unique_ptr <lexer> lexer_;
-	std::unique_ptr <token_stream> tokens_;
-	std::unique_ptr <generated::hlasmparser> parser_;
+	std::unique_ptr<analyzer> analyzer_;
 
 	semantics::semantic_info sm_info_;
 	bool parse_info_updated_ = false;

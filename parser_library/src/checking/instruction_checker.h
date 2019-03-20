@@ -15,7 +15,7 @@ namespace checking
 	{
 	public:
 		assembler_instruction_checker();
-		bool check(const std::string& instruction_name, const std::vector<hlasm_plugin::parser_library::checking::one_operand*>& operand_vector) const;
+		bool check(const std::string& instruction_name, const std::vector<const hlasm_plugin::parser_library::checking::one_operand*>& operand_vector) const;
 
 		std::vector<diagnostic_op *> get_diagnostics();
 		void clear_diagnostics();
@@ -32,7 +32,7 @@ namespace checking
 		const std::vector<diagnostic_op> & get_diagnostics();
 		void clear_diagnostic();
 
-		bool mach_instr_check(const std::string & instruction_name, const std::vector<one_operand*>& operand_vector);
+		bool mach_instr_check(const std::string & instruction_name, const std::vector<const one_operand*>& operand_vector);
 	private:
 		std::vector<diagnostic_op> diagnostic;
 		int find_instruction_index(const std::string & instruction_name);

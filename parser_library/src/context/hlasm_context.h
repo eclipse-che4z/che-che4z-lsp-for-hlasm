@@ -17,10 +17,9 @@ namespace context {
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
 //contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed code 
-class hlasm_context : public diagnosable_impl
+class hlasm_context
 {
-
-	using macro_storage = std::unordered_map<id_index, macro_definition>;
+	using macro_storage = std::unordered_map<id_index, std::unique_ptr<macro_definition>>;
 	using literal_map = std::unordered_map<id_index, id_index>;
 
 	//storage of global variables
@@ -30,7 +29,7 @@ class hlasm_context : public diagnosable_impl
 
 	//storage of defined macros
 	macro_storage macros_;
-	//map of OPSYN mnemotechnics
+	//map of OPSYN mnemonics
 	literal_map opcode_mnemo_;
 
 	code_scope* curr_scope();
@@ -120,19 +119,22 @@ public:
 		return val;
 	}
 
+	const macro_storage& macros();
+
 	bool is_in_macro() const;
 
 	//returns macro we are currently in or empty shared_ptr if in open code
 	macro_invo_ptr this_macro();
 
-	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, antlr4::ParserRuleContext* derivation_tree);
+	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, location location);
 
 	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
 
 	void leave_macro();
-
-	void collect_diags() const override; 
 };
+
+using ctx_ptr = std::shared_ptr<hlasm_context>;
+
 }
 }
 }

@@ -15,7 +15,7 @@ using B_t = bool;
 using C_t = std::string;
 
 //enum of SET symbols
-enum class set_type_enum
+enum class SET_t_enum
 {
 	A_TYPE, B_TYPE, C_TYPE, UNDEF_TYPE
 };
@@ -29,25 +29,18 @@ enum class variable_kind
 //enum of macro symbolic parameters
 enum class macro_param_type
 {
-	POS_PAR_KIND, KEY_PAR_KIND, UNDEF_PAR_KIND
-};
-
-//struct representing location of symbols
-struct location
-{
-	size_t line;
-	size_t offset;
+	POS_PAR_TYPE, KEY_PAR_TYPE, UNDEF_PAR_TYPE
 };
 
 template <typename T>
 struct object_traits
 {
-	static constexpr set_type_enum type_enum = set_type_enum::UNDEF_TYPE;
+	static constexpr SET_t_enum type_enum = SET_t_enum::UNDEF_TYPE;
 };
 
 template <> struct object_traits<A_t>
 {
-	static constexpr set_type_enum type_enum = set_type_enum::A_TYPE;
+	static constexpr SET_t_enum type_enum = SET_t_enum::A_TYPE;
 	static const A_t& default_v()
 	{
 		static A_t def = 0;
@@ -57,7 +50,7 @@ template <> struct object_traits<A_t>
 
 template <> struct object_traits<B_t>
 {
-	static constexpr set_type_enum type_enum = set_type_enum::B_TYPE;
+	static constexpr SET_t_enum type_enum = SET_t_enum::B_TYPE;
 	static const B_t& default_v()
 	{
 		static B_t def = false;
@@ -67,7 +60,7 @@ template <> struct object_traits<B_t>
 
 template <> struct object_traits<C_t>
 {
-	static constexpr set_type_enum type_enum = set_type_enum::C_TYPE;
+	static constexpr SET_t_enum type_enum = SET_t_enum::C_TYPE;
 	static const C_t& default_v()
 	{
 		static C_t def("");

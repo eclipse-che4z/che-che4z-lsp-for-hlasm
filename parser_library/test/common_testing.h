@@ -6,8 +6,10 @@
 #include "../src/generated/hlasmparser.h"
 #include "shared/token_stream.h"
 #include "shared/input_source.h"
+#include "../src/analyzer.h"
 
 
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
 
@@ -23,51 +25,32 @@ std::string get_content(std::string source)
 	return content;
 }
 
-
-struct parser_holder
+std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::generated::hlasmparser& h_parser)
 {
-	std::unique_ptr<hlasm_plugin::parser_library::input_source> input;
-	std::unique_ptr<hlasm_plugin::parser_library::lexer> lexer;
-	std::unique_ptr<hlasm_plugin::parser_library::token_stream> tokens;
-	std::shared_ptr<hlasm_plugin::parser_library::context::hlasm_context> ctx;
-	std::unique_ptr<hlasm_plugin::parser_library::generated::hlasmparser> parser;
-
-	parser_holder(std::string text)
-	{
-		input = std::make_unique<hlasm_plugin::parser_library::input_source>(std::move(text));
-		lexer = std::make_unique<hlasm_plugin::parser_library::lexer>(input.get());
-		tokens = std::make_unique<hlasm_plugin::parser_library::token_stream>(lexer.get());
-		parser = std::make_unique<hlasm_plugin::parser_library::generated::hlasmparser>(tokens.get());
-		ctx = std::make_shared<hlasm_plugin::parser_library::context::hlasm_context>();
-
-		parser->initialize(ctx, lexer.get());
+	h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
+	// we don't want error messages or recovery during first try
+	h_parser.removeErrorListeners();
+	h_parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+	try {
+		auto tree = h_parser.program();
+		// if we get here, there was no syntax error and SLL(*) was enough;
+		// there is no need to try full LL(*)
+		return { true,tree };
 	}
+	catch (antlr4::RuntimeException ex) {
+		std::cout << "SLL FAILURE" << std::endl;
 
-	std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll()
-	{
-		parser->getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
-		// we don't want error messages or recovery during first try
-		parser->removeErrorListeners();
-		parser->setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-		try {
-			auto tree = parser->program();
-			// if we get here, there was no syntax error and SLL(*) was enough;
-			// there is no need to try full LL(*)
-			return { true,tree };
-		}
-		catch (antlr4::RuntimeException ex) {
-			std::cout << "SLL FAILURE" << std::endl;
-			std::cout << tokens->get(tokens->index())->getLine() << std::endl;
-			// The BailErrorStrategy wraps the RecognitionExceptions in
-			// RuntimeExceptions so we have to make sure we're detecting
-			// a true RecognitionException not some other kind
-			tokens->reset(); // rewind input stream
-			// back to standard listeners/handlers
-			parser->addErrorListener(&antlr4::ConsoleErrorListener::INSTANCE);
-			parser->setErrorHandler(std::make_shared<antlr4::DefaultErrorStrategy>());
-			parser->getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL); // try full LL(*)
-			auto tree = parser->program();
-			return { false,tree };
-		}
+		auto tokens = h_parser.getTokenStream();
+		std::cout << tokens->get(tokens->index())->getLine() << std::endl;
+		// The BailErrorStrategy wraps the RecognitionExceptions in
+		// RuntimeExceptions so we have to make sure we're detecting
+		// a true RecognitionException not some other kind
+		dynamic_cast<antlr4::BufferedTokenStream*>( tokens)->reset(); // rewind input stream
+		// back to standard listeners/handlers
+		h_parser.addErrorListener(&antlr4::ConsoleErrorListener::INSTANCE);
+		h_parser.setErrorHandler(std::make_shared<antlr4::DefaultErrorStrategy>());
+		h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL); // try full LL(*)
+		auto tree = h_parser.program();
+		return { false,tree };
 	}
-};
+}

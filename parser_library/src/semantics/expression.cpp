@@ -177,6 +177,11 @@ expr_ptr hlasm_plugin::parser_library::semantics::expression::operator-() const
 		(error_messages::e001());
 }
 
+SET_t hlasm_plugin::parser_library::semantics::expression::get_set_value() const
+{
+	return SET_t();
+}
+
 int32_t hlasm_plugin::parser_library::semantics::expression::get_numeric_value() const
 {
 	auto t = retype<arithmetic_expression>();

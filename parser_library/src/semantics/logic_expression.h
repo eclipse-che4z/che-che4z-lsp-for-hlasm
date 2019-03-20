@@ -15,6 +15,9 @@ namespace hlasm_plugin {
 				virtual ~logic_expression() = default;
 				logic_expression() = default;
 				logic_expression(bool);
+				logic_expression(const logic_expression& expr);
+				logic_expression(logic_expression&&) = default;
+				logic_expression& operator=(logic_expression&&) = default;
 				logic_expression(int32_t);
 
 				expr_ptr to_arith() const;
@@ -26,6 +29,7 @@ namespace hlasm_plugin {
 				
 				std::string get_str_val() const override;
 				bool get_value() const;
+				SET_t get_set_value() const override;
 
 				virtual expr_ptr operator+(expression_ref) const override;
 				virtual expr_ptr operator-(expression_ref) const override;

@@ -15,6 +15,9 @@ namespace hlasm_plugin
 			{
 			public:
 				keyword_expression(str_ref);
+				keyword_expression(const keyword_expression& expr);
+				keyword_expression(keyword_expression&&) = default;
+				keyword_expression& operator=(keyword_expression&&) = default;
 				expr_ptr to_expression() const;
 				static bool is_keyword(str_ref kw);
 

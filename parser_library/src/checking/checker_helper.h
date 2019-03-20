@@ -112,17 +112,17 @@ namespace checking
 		return !(to_test.size() == 1 || to_test.front() != '\'' || to_test.back() != '\'' || to_test.size() > 255);
 	}
 
-	static bool is_operand_complex( one_operand* to_check_operand)
+	static bool is_operand_complex(const  one_operand* to_check_operand)
 	{
-		return !!dynamic_cast<complex_operand*> (to_check_operand);
+		return !!dynamic_cast<const complex_operand*> (to_check_operand);
 	}
 
-	static bool is_operand_address( one_operand* to_check_operand)
+	static bool is_operand_address(const one_operand* to_check_operand)
 	{
-		return dynamic_cast<address_operand*> (to_check_operand) != NULL;
+		return dynamic_cast<const address_operand*> (to_check_operand) != NULL;
 	}
 
-	static bool is_operand_simple( one_operand* to_check_operand)
+	static bool is_operand_simple(const one_operand* to_check_operand)
 	{
 		return (!is_operand_address(to_check_operand) && !is_operand_complex(to_check_operand));
 	}

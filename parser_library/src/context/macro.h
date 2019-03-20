@@ -6,6 +6,7 @@
 #include "common_types.h"
 #include "antlr4-runtime.h"
 #include <unordered_map>
+#include "../semantics/statement_fields.h"
 #include "../diagnosable_impl.h"
 
 namespace hlasm_plugin {
@@ -29,7 +30,7 @@ using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 //contains info about keyword, positional parameters of HLASM mascro as well as derivation tree of the actual code
 //has methods call to represent macro instruction call
 //serves as prototype for creating macro_invocation objects
-class macro_definition : public diagnosable_impl
+class macro_definition
 {
 	using macro_param_ptr = std::shared_ptr<macro_param_base>;
 
@@ -43,18 +44,18 @@ public:
 	//params of macro
 	const std::unordered_map<id_index, macro_param_ptr>& named_params() const;
 	//tree representing macro definition
-	const antlr4::ParserRuleContext* derivation_tree;
+	const semantics::statement_block definition;
+	//location of the macro definition in code
+	const hlasm_plugin::parser_library::location location;
 
 	//initializes macro with its name and params - positional or keyword
-	macro_definition(id_index name, id_index label_param_name, std::vector<macro_arg> params, antlr4::ParserRuleContext* derivation_tree);
+	macro_definition(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, hlasm_plugin::parser_library::location location);
 
 	//returns object with parameters' data set to actual parameters in macro call
 	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params) const;
 
 	//satifying unordered_map needs 
 	bool operator=(const macro_definition& m);
-
-	void collect_diags() const override;
 
 };
 
@@ -70,9 +71,11 @@ public:
 	//params of macro
 	const std::unordered_map<id_index, macro_param_ptr> named_params;
 	//tree representing macro definition
-	const antlr4::ParserRuleContext* derivation_tree;
+	const semantics::statement_block* definition;
+	//location of the macro definition in code
+	const hlasm_plugin::parser_library::location location;
 
-	macro_invocation(id_index name, const antlr4::ParserRuleContext* derivation_tree, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist);
+	macro_invocation(id_index name, const semantics::statement_block* definition, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist, hlasm_plugin::parser_library::location location);
 
 	//gets syslist value
 	const C_t& SYSLIST(size_t idx) const;

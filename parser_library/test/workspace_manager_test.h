@@ -75,7 +75,7 @@ TEST(workspace_manager, did_change_file)
 
 	ws_mngr.did_change_file("test\\library\\test_wks\\new_file", 2, changes.data(), 1);
 
-	EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
+	EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)1);
 
 	std::vector<document_change> changes1;
 	std::string new_text1 = "";

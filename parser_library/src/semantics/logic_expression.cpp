@@ -1,4 +1,6 @@
 #include "logic_expression.h"
+#include "logic_expression.h"
+#include "logic_expression.h"
 #include "../error_messages.h"
 #include "numeric_wrapper.h"
 #include <algorithm>
@@ -10,6 +12,12 @@ using namespace semantics;
 logic_expression::logic_expression(bool v)
 	: value_(v)
 {
+}
+
+hlasm_plugin::parser_library::semantics::logic_expression::logic_expression(const logic_expression & expr):value_(expr.value_)
+{
+	if (expr.diag)
+		diag = std::make_unique<diagnostic_op>(*expr.diag);
 }
 
 logic_expression::logic_expression(int32_t v)
@@ -63,6 +71,11 @@ int32_t hlasm_plugin::parser_library::semantics::logic_expression::get_numeric_v
 std::string hlasm_plugin::parser_library::semantics::logic_expression::get_str_val() const
 {
 	return std::to_string(get_numeric_value());
+}
+
+SET_t hlasm_plugin::parser_library::semantics::logic_expression::get_set_value() const
+{
+	return value_;
 }
 
 bool hlasm_plugin::parser_library::semantics::logic_expression::get_value() const

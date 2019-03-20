@@ -1,4 +1,6 @@
 #include "character_expression.h"
+#include "character_expression.h"
+#include "character_expression.h"
 #include "../ebcdic_encoding.h"
 #include <algorithm>
 #include <bitset>
@@ -24,9 +26,15 @@ char_ptr hlasm_plugin::parser_library::semantics::character_expression::append(c
 	return make_char(value_ + arg->value_);
 }
 
-const std::string & hlasm_plugin::parser_library::semantics::character_expression::get_value() const
+SET_t hlasm_plugin::parser_library::semantics::character_expression::get_set_value() const
 {
 	return value_;
+}
+
+hlasm_plugin::parser_library::semantics::character_expression::character_expression(const character_expression & expr) : value_(expr.value_)
+{
+	if (expr.diag)
+		diag = std::make_unique<diagnostic_op>(*expr.diag);
 }
 
 hlasm_plugin::parser_library::semantics::character_expression::character_expression(std::string val)
@@ -644,6 +652,7 @@ char hlasm_plugin::parser_library::semantics::character_expression::hex_to_num(c
 	*t = 0;
 	return 0;
 }
+
 
 std::string hlasm_plugin::parser_library::semantics::character_expression::num_to_hex(int32_t val)
 {

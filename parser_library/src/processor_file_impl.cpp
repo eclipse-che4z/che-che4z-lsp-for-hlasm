@@ -2,10 +2,7 @@
 #include <memory>
 
 #include "processor_file_impl.h"
-#include "parser_error_listener.h"
-#include "generated/hlasmparser.h"
 #include "file.h"
-#include "error_strategy.h"
 namespace hlasm_plugin::parser_library {
 
 processor_file_impl::processor_file_impl(std::string file_name) :
@@ -40,31 +37,20 @@ program_context * processor_file_impl::parse(parse_lib_provider & find_provider)
 }
 
 
-program_context * processor_file_impl::parse(parse_lib_provider &, std::shared_ptr<context::hlasm_context> ctx)
+program_context * processor_file_impl::parse(parse_lib_provider &, context::ctx_ptr ctx)
 {
 	diags().clear();
-	antlr4::CommonTokenFactory factory;
-	input_ = std::make_unique<input_source>(get_text());
-	lexer_ = std::make_unique<lexer>(input_.get());
-	tokens_ = std::make_unique<token_stream>(lexer_.get());
-	parser_ = std::make_unique<generated::hlasmparser>(tokens_.get());
-
 	
 
-	parser_->setErrorHandler(std::make_shared<error_strategy>());
-	parser_->initialize(ctx, lexer_.get());
 
-	parser_->file_name = get_file_name();
+	analyzer_ = std::make_unique<analyzer>(get_text(), ctx);
 
-	parser_->removeErrorListeners();
-	parser_->addErrorListener(&listener_);
-
+	//analyzer_->analyze();
+	auto ret = analyzer_->parser().program();
 	
-
-	auto tree = parser_->program();
 	
-	collect_diags_from_child(listener_);
-	collect_diags_from_child(*parser_);
+	collect_diags_from_child(*analyzer_);
+	
 	for (auto & it : diags())
 	{
 		it.file_name = get_file_name();
@@ -75,13 +61,14 @@ program_context * processor_file_impl::parse(parse_lib_provider &, std::shared_p
 	sm_info_.clear();
 	sm_info_.continue_column = 15;
 	sm_info_.continuation_column = 71;
-	sm_info_.merge(lexer_->semantic_info);
-	sm_info_.merge(parser_->semantic_info);
+	sm_info_.merge(dynamic_cast<lexer*>( analyzer_->parser().getTokenStream()->getTokenSource())->semantic_info);
+	sm_info_.merge(analyzer_->parser().semantic_info);
 
 	sm_info_.hl_info.document.version = get_version();
 	//collect semantic info
 	parse_info_updated_ = true;
-	return tree;
+	
+	return ret;
 }
 
 bool processor_file_impl::parse_info_updated()

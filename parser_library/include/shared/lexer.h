@@ -12,6 +12,7 @@
 #include "input_source.h"
 #include "../src/semantics/semantic_info.h"
 #include "parser_library_export.h"
+#include "../src/common_structures.h"
 
 
 namespace hlasm_plugin {
@@ -84,9 +85,10 @@ namespace hlasm_plugin {
 			bool is_ord_char() const;
 			bool get_unlimited_line() const;
 			void set_unlimited_line(bool);
-			void rewind_input(size_t start, size_t line);
+			void rewind_input(location loc);
 			bool is_last_line() const;
 			bool eof_generated() const;
+			location last_lln_begin_location() const;
 		protected:
 			void create_token(size_t ttype, size_t channel);
 			void consume();
@@ -107,6 +109,9 @@ namespace hlasm_plugin {
 			std::set<size_t> tokens_after_continuation_;
 			size_t last_token_id_ = 0;
 			size_t last_continuation_ = static_cast<size_t>(-1);
+
+			location last_lln_begin_loc_ = { 0,0 };
+			location last_lln_end_loc_ = { static_cast<size_t>(-1),static_cast<size_t>(-1) };
 
 			std::queue<token_ptr> token_queue_;
 			Ref<antlr4::CommonTokenFactory> dummy_factory;

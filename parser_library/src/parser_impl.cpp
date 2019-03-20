@@ -1,7 +1,12 @@
 #include "parser_impl.h"
+#include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
+#include "generated/hlasmparser.h"
+#include "semantics/processing_manager.h"
 
 using namespace hlasm_plugin::parser_library;
+
+hlasm_plugin::parser_library::parser_impl::parser_impl(antlr4::TokenStream * input) : Parser(input) {}
 
 semantics::symbol_occurence parser_impl::create_occurence(semantics::symbol_range range, std::string name, bool make_it_candidate)
 {
@@ -13,8 +18,8 @@ bool parser_impl::is_var_definition(const semantics::symbol_occurence & occ)
 	std::string var_sym_def_instr_label[] = { "SETA", "SETB", "SETC" };
 	std::string var_sym_def_instr_op[] = { "LCLA", "LCLB", "LCLC", "GBLA","GBLB","GBLC" };
 
-	return ((std::find(std::begin(var_sym_def_instr_label), std::end(var_sym_def_instr_label), *analyzer.current_instruction().id) != std::end(var_sym_def_instr_label) && analyzer.current_label().variable_symbol.name == occ.name)
-		|| (std::find(std::begin(var_sym_def_instr_op), std::end(var_sym_def_instr_op), *analyzer.current_instruction().id) != std::end(var_sym_def_instr_op) && std::find_if(analyzer.current_operands_and_remarks().operands.begin(), analyzer.current_operands_and_remarks().operands.end(), [&occ](auto && operand) { return operand->range == occ.range;  }) != analyzer.current_operands_and_remarks().operands.end())
+	return ((std::find(std::begin(var_sym_def_instr_label), std::end(var_sym_def_instr_label), collector.current_instruction().ordinary_name) != std::end(var_sym_def_instr_label) && collector.current_label().variable_symbol.name == occ.name)
+		|| (std::find(std::begin(var_sym_def_instr_op), std::end(var_sym_def_instr_op), collector.current_instruction().ordinary_name) != std::end(var_sym_def_instr_op) && std::find_if(collector.current_operands_and_remarks().operands.begin(), collector.current_operands_and_remarks().operands.end(), [&occ](auto && operand) { return operand->range == occ.range;  }) != collector.current_operands_and_remarks().operands.end())
 		|| current_macro_def.just_defined);
 }
 
@@ -43,6 +48,45 @@ void parser_impl::check_definition_candidates()
 	current_macro_def.just_defined = false;
 }
 
+bool hlasm_plugin::parser_library::parser_impl::is_last_line()
+{
+	return dynamic_cast<lexer*>(_input->getTokenSource())->is_last_line();
+}
+
+void hlasm_plugin::parser_library::parser_impl::rewind_input(hlasm_plugin::parser_library::location location)
+{
+	dynamic_cast<lexer*>(_input->getTokenSource())->rewind_input(location);
+}
+
+semantics::operand_remark_semantic_info hlasm_plugin::parser_library::parser_impl::reparse_operand_remark_field(std::string field)
+{
+	//todo set correct ranges, propagate errors
+	semantics::operand_remark_semantic_info ret;
+
+	input_source input(std::move(field));
+	hlasm_plugin::parser_library::lexer lex(&input);
+	lex.set_unlimited_line(true);
+	token_stream tokens(&lex);
+	generated::hlasmparser operand_parser(&tokens);
+	operand_parser.format = format;
+	operand_parser.removeErrorListeners();
+	auto res = operand_parser.operands_model();
+	ret.operands = std::move(res->line.operands);
+	ret.remarks = std::move(res->line.remarks);
+
+	return ret;
+}
+
+hlasm_plugin::parser_library::location hlasm_plugin::parser_library::parser_impl::statement_start() const
+{
+	return dynamic_cast<lexer*>(_input->getTokenSource())->last_lln_begin_location();
+}
+
+void hlasm_plugin::parser_library::parser_impl::initialize(semantics::processing_manager* proc_mngr)
+{
+	mngr = proc_mngr;
+}
+
 void parser_impl::enable_continuation()
 {
 	dynamic_cast<token_stream*>(_input)->enable_continuation();
@@ -60,25 +104,28 @@ bool parser_impl::is_self_def()
 	return tmp == "B" || tmp == "X" || tmp == "C" || tmp == "G";
 }
 
-
-void parser_impl::initialize(std::shared_ptr<context::hlasm_context> ctx, lexer* lexer)
+void hlasm_plugin::parser_library::parser_impl::process_instruction()
 {
-	analyzer.initialize(file_name, std::move(ctx), lexer);
+	if (!collector.current_instruction().ordinary_name.empty())
+	{
+		if (current_macro_def.just_defined)
+		{
+			current_macro_def.name = collector.current_instruction().ordinary_name;
+			check_definition_candidates();
+		}
+		else if (collector.current_instruction().ordinary_name == "MACRO")
+			current_macro_def.just_defined = true;
+		else if (collector.current_instruction().ordinary_name == "MEND")
+			current_macro_def.name = "";
+		else
+			check_definition_candidates();
+	}
+
+	mngr->process_instruction(collector.extract_instruction_field());
 }
 
-void parser_impl::initialize(const semantics::semantic_analyzer& analyzer_init)
+void hlasm_plugin::parser_library::parser_impl::process_statement()
 {
-	this->analyzer.initialize(analyzer_init);
-}
-
-
-void parser_impl::add_diag(diagnostic_op diag)
-{
-	//range from diag
-	add_diagnostic(diagnostic_s(file_name, {}, diag.severity, diag.code, "HLASM plugin", std::move(diag.message), {}));
-}
-
-void parser_impl::collect_diags() const
-{
-	collect_diags_from_child(analyzer);
+	mngr->process_statement(collector.extract_statement());
+	collector.prepare_for_next_statement();
 }

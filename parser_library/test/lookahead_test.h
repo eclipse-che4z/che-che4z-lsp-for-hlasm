@@ -3,7 +3,7 @@
 
 TEST(lookahead, forward_jump_success)
 {
-	parser_holder h(
+	analyzer a(
 		R"( 
    AGO .A  
 &new seta 1 
@@ -11,16 +11,16 @@ TEST(lookahead, forward_jump_success)
 )"
 	);
 
-	h.parser->program();
+	a.analyze();
 	
-	auto id = h.ctx->ids.add("new");
-	auto var = h.ctx->get_var_sym(id);
+	auto id = a.context()->ids.add("new");
+	auto var = a.context()->get_var_sym(id);
 	EXPECT_FALSE(var);
 }
 
 TEST(lookahead, forward_jump_success_valid_input)
 {
-	parser_holder h(
+	analyzer a(
 		R"( 
    AGO .A  
 &new seta 1 
@@ -31,17 +31,17 @@ tr9023-22
 )"
 );
 
-	h.parser->program();
+	a.analyze();
 
-	auto id = h.ctx->ids.add("new");
-	auto var = h.ctx->get_var_sym(id);
+	auto id = a.context()->ids.add("new");
+	auto var = a.context()->get_var_sym(id);
 	EXPECT_FALSE(var);
-	EXPECT_EQ(h.parser->getNumberOfSyntaxErrors(),(size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(),(size_t)0);
 }
 
 TEST(lookahead, forward_jump_fail)
 {
-	parser_holder h(
+	analyzer a(
 		R"( 
    AGO .A  
 &new seta 1 
@@ -49,9 +49,9 @@ TEST(lookahead, forward_jump_fail)
 )"
 );
 
-	h.parser->program();
+	a.analyze();
 
-	auto id = h.ctx->ids.add("new");
-	auto var = h.ctx->get_var_sym(id);
+	auto id = a.context()->ids.add("new");
+	auto var = a.context()->get_var_sym(id);
 	EXPECT_TRUE(var);
 }

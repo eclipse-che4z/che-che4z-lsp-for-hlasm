@@ -69,7 +69,9 @@ class instruction
 {
 public:
 	static const std::vector<std::string> ca_instructions;
-	
+
+	static const std::vector<std::string> macro_processing_instructions;
+
 	static const std::vector<assembler_instruction> assembler_instructions;
 
 	static const std::vector<machine_instruction> machine_instructions;

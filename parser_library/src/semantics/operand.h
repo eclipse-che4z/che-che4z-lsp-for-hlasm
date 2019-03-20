@@ -1,7 +1,6 @@
 #ifndef SEMANTICS_OPERAND_H
 #define SEMANTICS_OPERAND_H
 #include <vector>
-#include <functional>
 #include "semantic_objects.h"
 #include "concatenation.h"
 #include "../checking/instr_operand.h"
@@ -19,6 +18,7 @@ enum class operand_type
 struct model_operand;
 struct ca_operand;
 struct substituable_operand;
+struct macro_operand;
 struct machine_operand;
 struct assembler_operand;
 
@@ -36,58 +36,73 @@ struct operand
 {
 	symbol_range range;
 
+	operand(operand_type type);
+
 	model_operand* access_model_op();
 	ca_operand* access_ca_op();
 	substituable_operand* access_subs_op();
+	macro_operand* access_mac_op();
 	machine_operand* access_mach_op();
 	assembler_operand* access_asm_op();
 
-	virtual operand_type type() const;
+	const operand_type type;
+
+	virtual operand_ptr clone() const = 0;
+
 	virtual ~operand() = default;
 };
 
 struct empty_operand : public operand
 {
-	operand_type type() const override;
+	empty_operand();
+
+	operand_ptr clone() const override;
 };
 
 //operand that contains variable symbol thus is 'model operand'
 struct model_operand : public operand
 {
-	model_operand(std::vector<concat_point_ptr> conc_list);
+	model_operand(concat_chain chain);
 
-	std::vector<concat_point_ptr> conc_list;
+	concat_chain chain;
 
-	operand_type type() const override;
+	operand_ptr clone() const override;
 };
 
 //this operand can contibute in evaluation of model operands, creating substituted operand and remark field
 struct substituable_operand : public operand
 {
-	substituable_operand(std::function<std::string()> get_text);
-	std::function<std::string()> get_text;
+	substituable_operand(operand_type type);
+
+	virtual std::string to_string() const = 0;
+
+	operand_ptr clone() const =0;
 };
 
 struct machine_operand : public substituable_operand
 {
-	machine_operand(std::function<std::string()> get_text, std::unique_ptr<checking::one_operand> op_value);
-	operand_type type() const override;
+	machine_operand(std::unique_ptr<checking::one_operand> op_value);
+
+	std::string to_string() const override;
+	operand_ptr clone() const override;
 
 	std::unique_ptr<checking::one_operand> op_value;
 };
 
 struct assembler_operand : public substituable_operand
 {
-	assembler_operand(std::function<std::string()> get_text, std::unique_ptr<checking::one_operand> op_value);
-	operand_type type() const override;
+	assembler_operand( std::unique_ptr<checking::one_operand> op_value);
+
+	std::string to_string() const override;
+	operand_ptr clone() const override;
 
 	std::unique_ptr<checking::one_operand> op_value;
 };
 
 struct data_def_operand : public substituable_operand
 {
-	data_def_operand(std::function<std::string()> get_text);
-	operand_type type() const override;
+	data_def_operand();
+
 	int32_t duplication_factor = 1;
 	char data_type;
 	char extension = 0;
@@ -104,7 +119,7 @@ enum class ca_operand_kind
 struct ca_operand : public operand
 {
 	antlr4::ParserRuleContext* expression;
-	seq_sym seqence_symbol;
+	seq_sym sequence_symbol;
 	var_sym vs;
 
 	const ca_operand_kind kind;
@@ -117,7 +132,18 @@ struct ca_operand : public operand
 
 	ca_operand(antlr4::ParserRuleContext* expression);
 
-	operand_type type() const override;
+	ca_operand(const ca_operand& ca_op);
+
+	operand_ptr clone() const override;
+};
+
+struct macro_operand : public operand
+{
+	concat_chain chain;
+
+	macro_operand(concat_chain chain);
+
+	operand_ptr clone() const override;
 };
 
 }

@@ -3,6 +3,7 @@
 
 #include "../generated/hlasmparser.h"
 #include "../generated/hlasmparserBaseVisitor.h"
+#include "context_manager.h"
 
 namespace hlasm_plugin::parser_library::context {
 	class expression_visitor : public hlasm_plugin::parser_library::generated::hlasmparserBaseVisitor
@@ -23,9 +24,9 @@ namespace hlasm_plugin::parser_library::context {
 		virtual antlrcpp::Any visitCa_string_b(hlasm_plugin::parser_library::generated::hlasmparser::Ca_string_bContext * ctx) override;
 		virtual antlrcpp::Any visitCa_dupl_factor(hlasm_plugin::parser_library::generated::hlasmparser::Ca_dupl_factorContext * ctx) override;
 		virtual antlrcpp::Any visitData_attribute(hlasm_plugin::parser_library::generated::hlasmparser::Data_attributeContext * ctx) override;
-		void set_semantic_analyzer(semantics::semantic_analyzer* analyzer);
+		expression_visitor(const semantics::context_manager& ctx_mngr);
 	private:
-		semantics::semantic_analyzer* analyzer_;
+		const semantics::context_manager& ctx_mngr_;
 		hlasm_plugin::parser_library::semantics::expr_ptr visitE(antlr4::ParserRuleContext* ctx);
 	};
 }

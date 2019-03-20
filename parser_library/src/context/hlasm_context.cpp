@@ -40,10 +40,6 @@ void hlasm_context::add_sequence_symbol(sequence_symbol seq_sym)
 {
 	if (curr_scope()->sequence_symbols.find(seq_sym.name) == curr_scope()->sequence_symbols.end())
 		curr_scope()->sequence_symbols.insert({ seq_sym.name,seq_sym });
-	else
-	{
-		add_diagnostic(diagnostic_s::error_E011("", "Sequence symbol", {})); // error - sequence symbol already defined
-	}
 }
 
 
@@ -78,6 +74,12 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 		opcode_mnemo_.insert_or_assign(mnemo, tmp->second);
 	else
 	{
+		if (macros_.find(op_code) != macros_.end())
+		{
+			opcode_mnemo_.insert_or_assign(mnemo, op_code);
+			return;
+		}
+
 		auto ca_instr = std::find(instruction::ca_instructions.begin(), instruction::ca_instructions.end(), *op_code);
 		if (ca_instr != instruction::ca_instructions.end())
 		{
@@ -99,12 +101,7 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 			return;
 		}
 
-		if (macros_.find(op_code) != macros_.end())
-		{
-			opcode_mnemo_.insert_or_assign(mnemo, op_code);
-			return;
-		}
-		add_diagnostic(diagnostic_s::error_E010("", "operation code", {})); //error - unknown operation code
+		throw std::invalid_argument("undefined operation code");
 	}
 }
 
@@ -122,9 +119,14 @@ id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
 		return nullptr;
 }
 
-const macro_definition& hlasm_context::add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, antlr4::ParserRuleContext * derivation_tree)
+const macro_definition& hlasm_plugin::parser_library::context::hlasm_context::add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, location location)
 {
-	return macros_.insert_or_assign(name, macro_definition(name, label_param_name, std::move(params), derivation_tree)).first->second;
+	return *macros_.insert_or_assign(name, std::make_unique< macro_definition>(name, label_param_name, std::move(params), std::move(definition), location)).first->second.get();
+}
+
+const hlasm_plugin::parser_library::context::hlasm_context::macro_storage& hlasm_plugin::parser_library::context::hlasm_context::macros()
+{
+	return macros_;
 }
 
 bool hlasm_context::is_in_macro() const
@@ -137,7 +139,7 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
 	auto tmp = macros_.find(name);
 	if (tmp != macros_.end())
 	{
-		auto invo((tmp->second.call(std::move(label_param_data), std::move(params))));
+		auto invo((tmp->second->call(std::move(label_param_data), std::move(params))));
 		scope_stack_.push(code_scope(invo));
 		return invo;
 	}
@@ -159,13 +161,4 @@ macro_invo_ptr hlasm_context::this_macro()
 		return curr_scope()->this_macro;
 	return macro_invo_ptr();
 }
-
-void hlasm_context::collect_diags() const
-{
-	for (auto& i : macros_)
-	{
-		collect_diags_from_child(i.second);
-	}
-}
-
 }

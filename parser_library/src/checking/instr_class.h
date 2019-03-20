@@ -27,7 +27,7 @@ public:
 	diagnostic_op diagnostic;
 	size_t min_operands;
 	size_t max_operands; // maximum number of operands, if not specified, value is -1
-	virtual bool check(const std::vector<one_operand*> & to_check) { (void)to_check; return true; };
+	virtual bool check(const std::vector<const one_operand*> & to_check) { (void)to_check; return true; };
 	assembler_instruction(std::vector<label_types> allowed_types, std::string name_of_instruction, int min_operands, int max_operands) :
 		allowed_types(allowed_types), name_of_instruction(name_of_instruction), diagnostic(diagnostic_op::error_NOERR()),
 		min_operands(min_operands), max_operands(max_operands) {};
@@ -41,7 +41,7 @@ protected:
 		return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
 	}
 
-	bool check_vector_size(const std::vector<one_operand*> & to_check)
+	bool check_vector_size(const std::vector<const one_operand*> & to_check)
 	{
 		if (to_check.size() >= min_operands && (to_check.size() <= max_operands || max_operands == -1))
 			return true;
@@ -56,7 +56,7 @@ protected:
 	}
 
 	// functions for checking complex operands
-	bool check_compat_operands(const std::vector<one_operand*> & input)
+	bool check_compat_operands(const std::vector<const one_operand*> & input)
 	{
 		//vector of keywords that can be used in compat option
 		const static std::vector<std::string> keywords = { "NOCASE", "NOLITTYPE", "NOMACROCASE", "NOSYSLIST", "NOTRANSDT", "NOLIT", "NOMC", "NOSYSL", "NOTRS", "CASE", "LITTYPE", "MACROCASE", "SYSLIST", "TRANSDT", "LIT", "MC", "SYSL", "TRS" };
@@ -71,7 +71,7 @@ protected:
 		return true;
 	}
 
-	bool check_flag_operand(one_operand* input)
+	bool check_flag_operand(const one_operand* input)
 	{
 		if (is_operand_complex(input))
 		{
@@ -85,13 +85,13 @@ protected:
 			(is_number(input->operand_identifier) && std::stoi(input->operand_identifier) >= 0 && std::stoi(input->operand_identifier) <= 255);
 	}
 
-	bool check_process_flag_parameters(const std::vector<one_operand*>& input)
+	bool check_process_flag_parameters(const std::vector<const one_operand*>& input)
 	{
 		const static std::vector<std::string> other_pair_options = { "NOPUSH", "NORECORD", "NOPU", "NORC", "PUSH", "RECORD", "PU", "RC" };
 		return std::all_of(input.begin(), input.end(), [this](const auto& operand) { return check_flag_operand(operand) || is_param_in_vector(operand->operand_identifier, other_pair_options); });
 	}
 
-	bool check_optable_operands(const std::vector<one_operand*>& input)
+	bool check_optable_operands(const std::vector<const one_operand*>& input)
 	{
 		const static std::array<std::string,13> optable_array = { "DOS", "ESA", "XA", "370", "YOP", "ZOP", "ZS3", "ZS4", "ZS5", "ZS6", "ZS7", "ZS8" }; //declare array of options for first parameter
 		if (std::find(optable_array.cbegin(), optable_array.cend(), input[0]->operand_identifier) != optable_array.end()) //check first parameter
@@ -108,7 +108,7 @@ protected:
 		return false;
 	}
 
-	bool check_typecheck_operands(const std::vector<one_operand*>& input)
+	bool check_typecheck_operands(const std::vector<const one_operand*>& input)
 	{
 		const static std::vector<std::string> typecheck_operands = { "MAGNITUDE", "REGISTER", "MAG", "REG","NOMAGNITUDE", "NOREGISTER", "NOMAG", "NOREG" };
 		for (const auto& operand : input)
@@ -149,7 +149,7 @@ protected:
 		}
 	}
 
-	bool check_fail_parameters(const std::vector<one_operand*>& input)
+	bool check_fail_parameters(const std::vector<const one_operand*>& input)
 	{
 		for (const auto& operand : input)
 		{
@@ -186,7 +186,7 @@ protected:
 		return is_param_in_vector(input_str, machine_operand_options);
 	}
 
-	bool check_pcontrol_parameters(const std::vector<one_operand*>& input)
+	bool check_pcontrol_parameters(const std::vector<const one_operand*>& input)
 	{
 		const static std::vector<std::string> pcontrol_pair_options = { "DATA", "GEN", "MCALL", "MSOURCE", "UHEAD", "MC", "MS", "UHD", "NODATA", "NOGEN", "NOMCALL", "NOMSOURCE", "NOUHEAD", "NOMC", "NOMS", "NOUHD" };
 		for (const auto& operand : input)
@@ -200,7 +200,7 @@ protected:
 		return true;
 	}
 
-	static bool check_using_parameters(const std::vector<one_operand*>& input)
+	static bool check_using_parameters(const std::vector<const one_operand*>& input)
 	{
 		for (const auto& operand : input)
 		{
@@ -232,7 +232,7 @@ protected:
 		return false;
 	}
 
-	bool check_xref_parameters(const std::vector<one_operand*>& input)
+	bool check_xref_parameters(const std::vector<const one_operand*>& input)
 	{
 		if (input.size() == 1 && (input[0]->operand_identifier == "FULL" || input[0]->operand_identifier == "SHORT" || input[0]->operand_identifier == "UNREFS"))
 			return true;
@@ -243,13 +243,13 @@ protected:
 		return false;
 	}
 
-	static bool check_suprwarn_parameters(const std::vector<one_operand*>& input)
+	static bool check_suprwarn_parameters(const std::vector<const one_operand*>& input)
 	{
 		return std::all_of(input.cbegin(), input.cend(), [](const auto& operand) 
 			{ return operand->operand_identifier.size() <= 4 && operand->operand_identifier.size() != 0 && is_positive_number(operand->operand_identifier); });
 	}
 
-	bool check_all_operands_simple(const std::vector<one_operand*>& input)
+	bool check_all_operands_simple(const std::vector<const one_operand*>& input)
 	{
 		for (const auto& operand : input)
 		{
@@ -262,7 +262,7 @@ protected:
 		return true;
 	}
 
-	bool check_assembler_process_operand(one_operand* input)
+	bool check_assembler_process_operand(const one_operand* input)
 	{
 		if (is_operand_simple(input)) //operand is simple
 		{

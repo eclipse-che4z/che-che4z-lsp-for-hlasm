@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <deque>
+#include "semantic_objects.h"
 #include "../diagnosable.h"
 #include "../error_messages.h"
 
@@ -42,10 +43,9 @@ namespace hlasm_plugin
 				virtual expr_ptr operator+() const;
 				virtual expr_ptr operator-() const;
 
-				template<typename T>
-				T get_value();
-
 				virtual int32_t get_numeric_value() const;
+
+				virtual SET_t get_set_value() const;
 				
 				virtual bool is_keyword() const { return false; }
 				virtual std::string get_str_val() const = 0;
@@ -62,9 +62,12 @@ namespace hlasm_plugin
 					return dynamic_cast<const T *>(this);
 				};
 
+
+				expression(expression&&) = default;
+				expression& operator=(expression&&) = default;
+
 			protected:
 				expression() = default;
-				expression(expression&&) = default;
 				void copy_diag(expr_ref o);
 				void copy_diag(const expression* o);
 				void copy_diag(const expression& o);
@@ -104,13 +107,6 @@ namespace hlasm_plugin
 				static expr_ptr evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority, size_t& operator_count);
 				static expr_ptr evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operator_count);
 			};
-
-			template<>
-			inline int expression::get_value() { return get_numeric_value(); }
-			template<>
-			inline bool expression::get_value() { return get_numeric_value(); }
-			template<>
-			inline std::string expression::get_value() { return get_str_val(); }
 		} // namespace semantics
 	} // namespace parser_library
 } // namespace hlasm_plugin

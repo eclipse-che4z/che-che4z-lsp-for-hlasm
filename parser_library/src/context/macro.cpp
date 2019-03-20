@@ -1,19 +1,19 @@
 #include "macro.h"
-#include "../diagnosable_impl.h"
 
+using namespace hlasm_plugin::parser_library::context;
+using namespace hlasm_plugin::parser_library::semantics;
 using namespace antlr4;
 using namespace std;
 
-namespace hlasm_plugin::parser_library::context
-{
+
 
 const std::unordered_map<id_index, macro_param_ptr>& macro_definition::named_params() const
 {
 	return named_params_;
 }
 
-macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, ParserRuleContext * derivation_tree)
-	: id(name), label_param_name_(label_param_name), derivation_tree(derivation_tree)
+macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, hlasm_plugin::parser_library::location location)
+	: id(name), label_param_name_(label_param_name), definition(std::move(definition)), location(location)
 {
 	if (label_param_name_)
 	{
@@ -27,7 +27,6 @@ macro_definition::macro_definition(id_index name, id_index label_param_name, vec
 	{
 		if (it->data)
 		{
-			add_diagnostic(diagnostic_s::error_E011("", "Symbolic parameter", {})); //error - multiplied symbolic parameter
 			if (!it->id)
 				throw std::invalid_argument("keyword parameter without name used");
 
@@ -51,7 +50,7 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 	std::unordered_map<id_index, macro_param_ptr> named_cpy;
 	for (auto&& field : named_params_)
 	{
-		if (field.second->param_type() == macro_param_type::POS_PAR_KIND)
+		if (field.second->param_type() == macro_param_type::POS_PAR_TYPE)
 			named_cpy.emplace(field.first, std::make_shared<positional_param>(*field.second->access_positional_param()));
 		else
 			named_cpy.emplace(field.first, std::make_shared<keyword_param>(*field.second->access_keyword_param()));
@@ -69,21 +68,11 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 		if (param.id)
 		{
 			auto tmp = named_cpy.find(param.id);
-			if (tmp == named_cpy.end() || tmp->second->param_type() == macro_param_type::POS_PAR_KIND)
-			{
-				add_diagnostic(diagnostic_s::error_E010("", "keyword parameter", {})); //error - unknown name of keyword parameter
 
-				//TODO when NOMACROCASE, case sensitivity of not found keyword is retained
-				syslist.push_back(std::make_shared<macro_param_data_single>(*param.id + "=" + param.data->get_value()));
-			}
-			else
-			{
-				if (tmp->second->data)
-				{
-					add_diagnostic(diagnostic_s::error_E011("", "Keyword", {})); // error - keyword already defined
-				}
-				tmp->second->data = std::move(param.data);
-			}
+			if(tmp == named_cpy.end() || tmp->second->param_type() == macro_param_type::POS_PAR_TYPE)
+				throw std::invalid_argument("use of undefined keyword parameter");
+
+			tmp->second->data = std::move(param.data);
 		}
 		else
 		{
@@ -97,13 +86,13 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 			named_cpy.find(pos_par->id)->second->data = syslist[pos_par->position];
 	}
 
-	return std::make_shared<macro_invocation>(this->id, this->derivation_tree, std::move(named_cpy), std::move(syslist));
+	return std::make_shared<macro_invocation>(this->id, &this->definition, std::move(named_cpy), std::move(syslist),location);
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
-macro_invocation::macro_invocation(id_index name, const antlr4::ParserRuleContext * derivation_tree, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist)
-	:id(name), derivation_tree(derivation_tree), named_params(std::move(named_params)), syslist_(std::move(syslist))
+macro_invocation::macro_invocation(id_index name, const statement_block * definition, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist, hlasm_plugin::parser_library::location location)
+	:id(name), definition(definition),named_params(std::move(named_params)),syslist_(std::move(syslist)), location(location)
 {
 }
 
@@ -135,10 +124,4 @@ const C_t & hlasm_plugin::parser_library::context::macro_invocation::SYSLIST(con
 		param = param->get_ith(*it);
 
 	return param->get_value();
-}
-
-void macro_definition::collect_diags() const
-{
-};
-
 }

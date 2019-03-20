@@ -1,4 +1,6 @@
 #include "arithmetic_expression.h"
+#include "arithmetic_expression.h"
+#include "arithmetic_expression.h"
 #include "../ebcdic_encoding.h"
 #include <algorithm>
 #include "expression.h"
@@ -17,6 +19,17 @@ const int32_t numeric_part_mask = (1 << 31) ^ static_cast<int32_t>(-1);
 arithmetic_expression::arithmetic_expression(int32_t val)
 	: value_(val)
 {
+}
+
+hlasm_plugin::parser_library::semantics::arithmetic_expression::arithmetic_expression(const arithmetic_expression & expr):value_(expr.value_)
+{
+	if (expr.diag)
+		diag = std::make_unique<diagnostic_op>(*expr.diag);
+}
+
+SET_t arithmetic_expression::get_set_value() const
+{
+	return value_;
 }
 
 int32_t arithmetic_expression::get_value() const

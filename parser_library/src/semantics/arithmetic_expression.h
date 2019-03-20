@@ -15,6 +15,9 @@ namespace hlasm_plugin {
 				virtual ~arithmetic_expression() = default;
 				arithmetic_expression() = default;
 				arithmetic_expression(int32_t);
+				arithmetic_expression(const arithmetic_expression& expr);
+				arithmetic_expression(arithmetic_expression&&) = default;
+				arithmetic_expression& operator=(arithmetic_expression&&) = default;
 				static expr_ptr from_string(const std::string&, const std::string&, bool);
 
 				static expr_ptr c2arith(const std::string & value);
@@ -32,8 +35,10 @@ namespace hlasm_plugin {
 				virtual expr_ptr unary_operation(str_ref operation_name) const override;
 				expr_ptr binary_operation(str_ref o, expr_ref arg2) const;
 				static expr_ptr from_string(const std::string&, int base);
+				SET_t get_set_value() const override;
 				int32_t get_value() const;
 				virtual std::string get_str_val() const override;
+
 			private:
 				int32_t value_ = 0;
 			};

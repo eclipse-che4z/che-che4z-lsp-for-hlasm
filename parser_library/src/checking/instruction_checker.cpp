@@ -13,7 +13,7 @@ namespace checking
 		initialize_assembler_map();
 	}
 
-	bool assembler_instruction_checker::check(const std::string & instruction_name, const std::vector<one_operand*>& operand_vector) const
+	bool assembler_instruction_checker::check(const std::string & instruction_name, const std::vector<const one_operand*>& operand_vector) const
 	{
 		try 
 		{
@@ -393,7 +393,7 @@ namespace checking
 		return true;
 	}
 
-	bool machine_instruction_checker::mach_instr_check(const std::string & instruction_name, const std::vector<one_operand*>& input)
+	bool machine_instruction_checker::mach_instr_check(const std::string & instruction_name, const std::vector<const one_operand*>& input)
 	{
 		int i = 0;
 		if ((i = find_instruction_index(instruction_name)) == -1)

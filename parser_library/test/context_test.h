@@ -233,7 +233,7 @@ TEST(context_macro, add_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	auto m= ctx.add_macro(idx, lbl, move(args), nullptr);
+	auto& m = ctx.add_macro(idx, lbl, move(args), {}, {});
 
 	EXPECT_EQ(m.named_params().size(), (size_t)4);
 	EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -250,7 +250,6 @@ TEST(context_macro, call_and_leave_macro)
 	//creating names of params
 	auto idx = ctx.ids.add("mac");
 	auto key = ctx.ids.add("key");
-	auto fake_key = ctx.ids.add("fakekey");
 	auto op1 = ctx.ids.add("op1");
 	auto op3 = ctx.ids.add("op3");
 
@@ -266,23 +265,20 @@ TEST(context_macro, call_and_leave_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|		MAC		&KEY=,&OP1,,&OP3
-	auto m = ctx.add_macro(idx, nullptr, move(args), nullptr);
+	auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {});
 
 	//creating param data
 	macro_data_ptr p2(make_unique < macro_param_data_single>("ada"));
 	macro_data_ptr p3(make_unique < macro_param_data_single>("mko"));
 	macro_data_ptr p4(make_unique < macro_param_data_single>(""));
-	macro_data_ptr p5(make_unique < macro_param_data_single>("as"));
 
 	//creating vector of param data for entering macro
 	vector<macro_arg> params;
 	params.push_back({ move(p2) });
-	//adding keyword param that is not defined in prototype (FAKEKEY!=KEY)
-	params.push_back({ move(p5), fake_key });
 	params.push_back({ move(p3) });
 	params.push_back({ move(p4) });
 
-	//call->|		MAC		ada,FAKEKEY=as,mko,
+	//call->|		MAC		ada,mko,
 	auto m2 = ctx.enter_macro(idx,nullptr, move(params));
 
 	ASSERT_TRUE(m.id == m2->id);
@@ -292,13 +288,12 @@ TEST(context_macro, call_and_leave_macro)
 	//testing syslist
 	EXPECT_EQ(m2->SYSLIST(0), "");
 	EXPECT_EQ(m2->SYSLIST(1),"ada");
-	EXPECT_EQ(m2->SYSLIST(2), "FAKEKEY=as");
-	EXPECT_EQ(m2->SYSLIST(3), "mko");
-	EXPECT_EQ(m2->SYSLIST(4), "");
+	EXPECT_EQ(m2->SYSLIST(2), "mko");
+	EXPECT_EQ(m2->SYSLIST(3), "");
 
 	//testing named params
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
-	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "mko");
+	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "");
 	EXPECT_EQ(m2->named_params.find(key)->second->get_value(), "");
 
 	ctx.leave_macro();
@@ -314,7 +309,6 @@ TEST(context_macro, repeat_call_same_macro)
 	//creating names of params
 	auto idx = ctx.ids.add("mac");
 	auto key = ctx.ids.add("key");
-	auto fake_key = ctx.ids.add("fakekey");
 	auto op1 = ctx.ids.add("op1");
 	auto op3 = ctx.ids.add("op3");
 	auto lbl = ctx.ids.add("lbl");
@@ -331,25 +325,22 @@ TEST(context_macro, repeat_call_same_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	auto m = ctx.add_macro(idx, lbl, move(args), nullptr);
+	ctx.add_macro(idx, lbl, move(args), {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));
 	macro_data_ptr p2(make_unique < macro_param_data_single>("ada"));
 	macro_data_ptr p3(make_unique < macro_param_data_single>("mko"));
 	macro_data_ptr p4(make_unique < macro_param_data_single>(""));
-	macro_data_ptr p5(make_unique < macro_param_data_single>("as"));
 
 	//creating vector of param data for entering macro
 	vector<macro_arg> params;
 	params.push_back({ move(p2) });
-	//adding keyword param that is not defined in prototype (FAKEKEY!=KEY)
-	params.push_back({ move(p5), fake_key });
 	params.push_back({ move(p3) });
 	params.push_back({ move(p4) });
 
 	//calling macro
-	//call->|lbl		MAC		ada,FAKEKEY=as,mko,
+	//call->|lbl		MAC		ada,mko,
 	auto m2 = ctx.enter_macro(idx, move(lb), move(params));
 
 	EXPECT_EQ(m2->named_params.find(lbl)->second->data->get_value(), "lbl");
@@ -409,7 +400,6 @@ TEST(context_macro, recurr_call)
 	//creating names of params
 	auto idx = ctx.ids.add("mac");
 	auto key = ctx.ids.add("key");
-	auto fake_key = ctx.ids.add("fakekey");
 	auto op1 = ctx.ids.add("op1");
 	auto op3 = ctx.ids.add("op3");
 	auto lbl = ctx.ids.add("lbl");
@@ -426,7 +416,7 @@ TEST(context_macro, recurr_call)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	auto m = ctx.add_macro(idx, lbl, move(args), nullptr);
+	ctx.add_macro(idx, lbl, move(args), {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));
@@ -438,13 +428,11 @@ TEST(context_macro, recurr_call)
 	//creating vector of param data for entering macro
 	vector<macro_arg> params;
 	params.push_back({ move(p2) });
-	//adding keyword param that is not defined in prototype (FAKEKEY!=KEY)
-	params.push_back({ move(p5), fake_key });
 	params.push_back({ move(p3) });
 	params.push_back({ move(p4) });
 
 	//calling macro
-	//call->|lbl		MAC		ada,FAKEKEY=as,mko,
+	//call->|lbl		MAC		ada,mko,
 	auto m2 = ctx.enter_macro(idx, move(lb), move(params));
 
 	//*****created first macro call
@@ -504,12 +492,11 @@ TEST(context_macro, recurr_call)
 	//testing outer macro
 	EXPECT_EQ(m2->SYSLIST(0), "lbl");
 	EXPECT_EQ(m2->SYSLIST(1), "ada");
-	EXPECT_EQ(m2->SYSLIST(2), "FAKEKEY=as");
-	EXPECT_EQ(m2->SYSLIST(3), "mko");
-	EXPECT_EQ(m2->SYSLIST(4), "");
+	EXPECT_EQ(m2->SYSLIST(2), "mko");
+	EXPECT_EQ(m2->SYSLIST(3), "");
 
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
-	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "mko");
+	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "");
 	EXPECT_EQ(m2->named_params.find(key)->second->get_value(), "");
 
 

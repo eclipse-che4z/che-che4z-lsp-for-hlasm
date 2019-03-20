@@ -1194,9 +1194,9 @@ protected:
 	{ } };*/
 };
 
-std::vector<one_operand *> unique_to_raw(const std::vector <std::unique_ptr<one_operand> > & to_convert)
+std::vector<const one_operand *> unique_to_raw(const std::vector <std::unique_ptr<one_operand> > & to_convert)
 {
-	std::vector<one_operand *> converted;
+	std::vector<const one_operand *> converted;
 	converted.resize(to_convert.size());
 	for (size_t i = 0; i < to_convert.size(); ++i)
 	{

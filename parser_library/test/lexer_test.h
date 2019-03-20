@@ -103,7 +103,7 @@ TEST_F(lexer_test, rewind_input)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 		if (token->getText() == "REWIND1")
 		{
-			l.rewind_input(0, 0);
+			l.rewind_input({ 0, 0 });
 			break;
 		}
 	} while (token->getType() != antlr4::Token::EOF);
@@ -114,7 +114,7 @@ TEST_F(lexer_test, rewind_input)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 		if (token->getText() == "REWIND2")
 		{
-			l.rewind_input(4, 0);
+			l.rewind_input({ 0, 4 });
 			break;
 		}
 	} while (token->getType() != antlr4::Token::EOF);
@@ -125,7 +125,7 @@ TEST_F(lexer_test, rewind_input)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 		if (token->getText() == "REWIND3")
 		{
-			l.rewind_input(17, 1);
+			l.rewind_input({ 1, 17 });
 			break;
 		}
 	} while (token->getType() != antlr4::Token::EOF);

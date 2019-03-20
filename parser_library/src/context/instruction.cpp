@@ -18,6 +18,15 @@ const std::vector<std::string> instruction::ca_instructions = {
 	"GBLC"
 };
 
+const std::vector<std::string> instruction::macro_processing_instructions = {
+	"MACRO",
+	"MEND",
+	"MEXIT",
+	"AREAD",
+	"AEJECT",
+	"ASPACE"
+};
+
 const std::vector<assembler_instruction> instruction::assembler_instructions = { {
 	{ "*PROCESS",1,-1 },
 	{ "ACONTROL",1,-1 },

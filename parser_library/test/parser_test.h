@@ -11,11 +11,11 @@ class library_test : public testing::Test
 public:
 	virtual void SetUp(std::string param)
 	{
-		holder = std::make_unique<parser_holder>(get_content("test/library/input/" + param + ".in"));
+		holder = std::make_unique<analyzer>(get_content("test/library/input/" + param + ".in"));
 	}
 	virtual void TearDown() {}
 protected:
-	std::unique_ptr<parser_holder> holder;
+	std::unique_ptr<analyzer> holder;
 };
 
 TEST_F(library_test, expression_test)
@@ -23,20 +23,20 @@ TEST_F(library_test, expression_test)
 	std::string tcase = "expression_test";
 
 	SetUp(tcase);
-	auto tree = holder->parser->expr_test();
+	auto tree = holder->parser().expr_test();
+	context_manager m(holder->context());
 	//ASSERT_EQ(t, get_content("test/library/output/" + tcase + ".output"));
-	auto v = std::make_unique<expression_visitor>();
-	auto id = holder->parser->analyzer.get_id("TEST_VAR");
-	holder->parser->analyzer.context().create_local_variable<int>(id, true);
-	holder->parser->analyzer.set_var_sym_value<int>(id, {}, 11, {});
+	auto v = std::make_unique<expression_visitor>(m);
+	auto id = m.get_id("TEST_VAR");
+	holder->context()->create_local_variable<int>(id, true);
+	m.set_var_sym_value<int>(semantics::var_sym("TEST_VAR", {}, {}), { 11 });
 
-	v->set_semantic_analyzer(&holder->parser->analyzer);
 	auto res = v->visit(tree).as<std::string>();
 	res.erase(std::remove(res.begin(), res.end(), '\r'), res.end());
 	ASSERT_EQ(res, get_content("test/library/output/" + tcase + ".output"));
 
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 
 //3 instruction statements and 3 EOLLN
@@ -48,9 +48,9 @@ TEST_F(library_test, simple)
 
 	//compare tokens with output file
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 
 //5 instruction statements that have 1,1,1,2 and 4 operands respectively
@@ -62,9 +62,9 @@ TEST_F(library_test, operand)
 
 	//compare tokens with output file
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 
 }
 
@@ -75,11 +75,11 @@ TEST_F(library_test, continuation)
 
 	SetUp(tcase);
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
-//#define CORRECTNESS_TEST
+#define CORRECTNESS_TEST
 #ifdef CORRECTNESS_TEST
 //simply parse correctly
 TEST_F(library_test, correctness)
@@ -91,9 +91,9 @@ TEST_F(library_test, correctness)
 	//compare tokens with output file
 	//ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 #endif
 
@@ -105,9 +105,9 @@ TEST_F(library_test, model_statement)
 	SetUp(tcase);
 
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 
 //simply parse correctly
@@ -119,8 +119,8 @@ TEST_F(library_test, comment)
 
 	//compare tokens with output file
 
-	holder->parser->program();
+	holder->analyze();
 	//no errors found while parsing
-	ASSERT_EQ(holder->parser->getNumberOfSyntaxErrors(), size_t_zero);
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H

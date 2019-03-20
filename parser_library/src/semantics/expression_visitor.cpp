@@ -75,23 +75,14 @@ antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitTe
 
 	if (ctx->var_symbolContext != nullptr)
 	{
-		var_sym& s = ctx->var_symbolContext->vs;
-
-		auto id = analyzer_->get_id(s.name);
-
-		std::vector<expr_ptr> subs;
-
-		for (auto sub : s.subscript)
-			subs.push_back(visit(sub).as<expr_ptr>());
-
-		auto var = analyzer_->get_var_sym_value(id, std::move(subs), s.range);
+		auto var = ctx_mngr_.get_var_sym_value(ctx->var_symbolContext->vs);
 		switch (var.type)
 		{
-		case context::set_type_enum::A_TYPE:
+		case context::SET_t_enum::A_TYPE:
 			return (expr_ptr)make_arith(var.access_a());
-		case context::set_type_enum::B_TYPE:
+		case context::SET_t_enum::B_TYPE:
 			return (expr_ptr)make_logic(var.access_b());
-		case context::set_type_enum::C_TYPE:
+		case context::SET_t_enum::C_TYPE:
 			return (expr_ptr)make_char(var.access_c());
 		default:
 			return (expr_ptr)make_arith(0);
@@ -170,7 +161,11 @@ antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitCa
 
 antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitCa_string_b(hlasm_plugin::parser_library::generated::hlasmparser::Ca_string_bContext * ctx)
 {
-	auto tmp = analyzer_->concatenate(ctx->string_ch_v_c()->conc_list);
+	concat_chain new_chain;
+
+	new_chain.insert(new_chain.end(), make_clone_iterator(ctx->string_ch_v_c()->chain.begin()), make_clone_iterator(ctx->string_ch_v_c()->chain.end()));
+
+	auto tmp = ctx_mngr_.concatenate(std::move(new_chain));
 	auto ex = make_char(tmp);
 	expr_ptr s, e;
 	if(ctx->substring()->e1 != nullptr)
@@ -188,10 +183,7 @@ antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitCa
 		return 1;
 }
 
-void hlasm_plugin::parser_library::context::expression_visitor::set_semantic_analyzer(semantics::semantic_analyzer * analyzer)
-{
-	analyzer_ = analyzer;
-}
+hlasm_plugin::parser_library::context::expression_visitor::expression_visitor(const semantics::context_manager& ctx_mngr) : ctx_mngr_(ctx_mngr) {}
 
 antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitExpr_p_space_c(hlasm_plugin::parser_library::generated::hlasmparser::Expr_p_space_cContext * ctx)
 {

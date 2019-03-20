@@ -8,8 +8,6 @@ TEST(parser_get_op_rem, one_op)
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-	EXPECT_FALSE(op_rem.substituted);
-
 	ASSERT_EQ(op_rem.operands.size(), (size_t)1);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
 
@@ -23,7 +21,6 @@ TEST(parser_get_op_rem, one_op_one_rem)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)1);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
@@ -39,7 +36,6 @@ TEST(parser_get_op_rem, more_ops_one_rem)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)3);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
@@ -57,7 +53,6 @@ TEST(parser_get_op_rem, no_op)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)0);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
@@ -72,7 +67,6 @@ TEST(parser_get_op_rem, alt_format_allowed)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)2);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)2);
@@ -90,7 +84,6 @@ TEST(parser_get_op_rem, alt_format_not_allowed)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)2);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
@@ -107,7 +100,6 @@ TEST(parser_get_op_rem, cont_no_op)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)2);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)2);
@@ -125,7 +117,6 @@ TEST(parser_get_op_rem, empty_op)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)3);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
@@ -142,7 +133,6 @@ TEST(parser_get_op_rem, all_empty_op)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)3);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
@@ -159,7 +149,6 @@ TEST(parser_get_op_rem, cont_empty_op)
 	h.parser->ordinary_instruction_statement();
 
 	auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
-	EXPECT_FALSE(op_rem.substituted);
 
 	ASSERT_EQ(op_rem.operands.size(), (size_t)5);
 	ASSERT_EQ(op_rem.remarks.size(), (size_t)1);

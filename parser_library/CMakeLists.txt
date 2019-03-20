@@ -53,8 +53,9 @@ set(LIB_NOT_EXPORTED_SRC
     ${PROJECT_SOURCE_DIR}/src/semantics/expression.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/concatenation.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/semantic_objects.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_analyzer.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/ordinary_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/lookahead_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/macro_def_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/expression_visitor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
@@ -67,8 +68,15 @@ set(LIB_NOT_EXPORTED_SRC
 	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/assembler_instruction.cpp
+	
+	${PROJECT_SOURCE_DIR}/src/analyzer.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/collector.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/context_manager.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/processing_manager.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
 
 	${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp

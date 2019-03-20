@@ -41,12 +41,12 @@ const C_t & macro_param_data_composite::get_value() const
 	if (value_.empty())
 	{
 		value_.append("(");
-		for (size_t i = 0; i < data_.size() - 1; ++i)
+		for (size_t i = 0; i < data_.size(); ++i)
 		{
 			value_.append(data_[i]->get_value());
-			value_.append(",");
+			if(i != data_.size() - 1)
+				value_.append(",");
 		}
-		value_.append(data_[data_.size() - 1]->get_value());
 		value_.append(")");
 	}
 	return value_;
@@ -60,10 +60,6 @@ const macro_param_data_component * macro_param_data_composite::get_ith(size_t id
 }
 
 
-macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_ptr> value) : data_(move(value)) 
-{
-	if (data_.empty())
-		throw std::invalid_argument("data vector can not be empty");
-}
+macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_ptr> value) : data_(move(value)) {}
 
 }

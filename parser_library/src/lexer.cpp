@@ -26,7 +26,7 @@ lexer::lexer(input_source* input)
 	dummy_factory = make_shared<antlr4::CommonTokenFactory>();
 }
 
-void lexer::rewind_input(size_t start, size_t line)
+void lexer::rewind_input(location loc)
 {
 	if (eof_generated_)
 	{
@@ -34,27 +34,27 @@ void lexer::rewind_input(size_t start, size_t line)
 		token_queue_.pop();
 	}
 	auto inp = file_input_state_.input;
-	inp->rewind_input(start);
+	inp->rewind_input(loc.offset);
 
 	/* rewind input to line start */
 	ssize_t i = 0;
 	for (;
-		start - i != 0
+		loc.offset - i != 0
 		&& static_cast<char_t>(inp->LA(-i)) != '\n'
 		&& static_cast<char_t>(inp->LA(-i)) != '\r';
 		++i);
 
-	start = start - i;
-	inp->rewind_input(start);
+	loc.offset = loc.offset - i;
+	inp->rewind_input(loc.offset);
 
-	file_input_state_.char_position = start;
-	file_input_state_.line = line;
+	file_input_state_.char_position = loc.offset;
+	file_input_state_.line = loc.line;
 	file_input_state_.char_position_in_line = 0;
 	file_input_state_.char_position_in_line_utf16 = 0;
 
 	if (static_cast<char_t>(inp->LA(1)) == '\n' || static_cast<char_t>(inp->LA(1)) == '\r')
 	{
-		inp->rewind_input(start + 1);
+		inp->rewind_input(loc.offset + 1);
 		++file_input_state_.char_position;
 	}
 
@@ -70,6 +70,11 @@ bool lexer::is_last_line() const
 	}
 	return eof_generated_;
 	//return ainsert_buffer_.empty();
+}
+
+location lexer::last_lln_begin_location() const
+{
+	return  last_lln_begin_loc_;
 }
 
 bool hlasm_plugin::parser_library::lexer::eof_generated() const
@@ -154,6 +159,16 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 	/* record last continuation */
 	if (ttype == CONTINUATION)
 		last_continuation_ = last_token_id_;
+
+	//record begin of logical line
+	if (ttype == EOLLN)
+	{
+		if (!(last_lln_end_loc_.line == static_cast<size_t>(-1) && last_lln_end_loc_.offset == static_cast<size_t>(-1)))
+		{
+			last_lln_begin_loc_ = last_lln_end_loc_;
+		}
+		last_lln_end_loc_ = { input_state_->line,input_state_->char_position };
+	}
 
 	last_token_id_++;
 
