@@ -5,6 +5,8 @@
 
 #include "../context/instruction.h"
 #include "../context/hlasm_context.h"
+#include "../parse_lib_provider.h"
+#include "../diagnosable_ctx.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -32,16 +34,19 @@ struct op_code_info
 };
 
 //class wrapping context providing ranges, checks and diagnostics to hlasm_context
-class context_manager : public diagnosable_impl
+class context_manager : public diagnosable_ctx
 {
 	context::ctx_ptr ctx_;
+
+	parse_lib_provider & lib_provider_;
 public:
 	context::hlasm_context& ctx();
 
 	//map of agregated instructions in instruction.h, holds only important info for semantic analysis and index to source arrays
 	std::unordered_map<context::id_index, instruction_map_info> instructions;
-
+	
 	context_manager(context::ctx_ptr ctx);
+	context_manager(context::ctx_ptr ctx, parse_lib_provider & lib_provider);
 
 	SET_t get_var_sym_value(var_sym symbol) const;
 

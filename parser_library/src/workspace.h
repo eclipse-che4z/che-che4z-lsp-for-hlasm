@@ -36,7 +36,8 @@ struct program
 class workspace : public diagnosable_impl, public parse_lib_provider
 {
 public:
-	
+	//just a dummy workspace with no libraries
+	workspace(file_manager & file_manager);
 	workspace(ws_uri uri, file_manager & file_manager);
 	workspace(ws_uri uri, std::string name, file_manager & file_manager);
 	
@@ -56,26 +57,44 @@ public:
 
 	void did_change_file(const std::string document_uri, const document_change * changes, size_t ch_size);
 
-	virtual program_context * parse_library(const std::string & caller, const std::string & library, std::shared_ptr<context::hlasm_context> ctx) override;
+	virtual parse_result parse_library(const std::string & library, std::shared_ptr<context::hlasm_context> ctx) override;
+
+	const ws_uri & uri();
 
 	void open();
 	void close();
+
+
 private:
+	constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
+	constexpr static char FILENAME_PGM_CONF[] = "pgm_conf.json";
+
+
+	void parse_file(const std::string & file_uri);
 
 	std::string name_;
 	ws_uri uri_;
 	file_manager & file_manager_;
 	std::unordered_map<std::string, file *> files_;
+
 	std::unordered_map<proc_grp_id, processor_group> proc_grps_;
 	std::vector<program> pgm_conf_;
 
 	processor_group implicit_proc_grp;
+
+	std::filesystem::path ws_path_;
+	std::filesystem::path proc_grps_path_;
+	std::filesystem::path pgm_conf_path_;
 
 	bool is_hlasm_ws_ = false;
 	bool opened_ = false;
 
 	bool load_config();
 	
+	//files, that depend on others (e.g. open code files that use macros)
+	std::set<processor_file *> dependants_;
+
+	diagnostic_container config_diags_;
 };
 
 }

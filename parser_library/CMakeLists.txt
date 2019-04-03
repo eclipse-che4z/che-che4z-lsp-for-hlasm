@@ -77,6 +77,7 @@ set(LIB_NOT_EXPORTED_SRC
 	${PROJECT_SOURCE_DIR}/src/semantics/context_manager.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/processing_manager.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
+	${PROJECT_SOURCE_DIR}/src/parse_lib_provider.cpp
 
 	${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp

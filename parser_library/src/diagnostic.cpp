@@ -187,4 +187,28 @@ diagnostic_s diagnostic_s::error_EQU2(const std::string& filename, hlasm_plugin:
 	return diagnostic_s(filename, range, diagnostic_severity::error, "EQU2", "HLASM Plugin", "Label redefinition", {});
 }
 
+diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
+{
+	return diagnostic_s(ws_uri, {}, diagnostic_severity::error,
+		"W0002", "HLASM plugin",
+		"The configuration file proc_grps for workspace " + ws_name + " is malformed.", {});
+}
+
+diagnostic_s diagnostic_s::error_W003(const std::string& file_name, const std::string& ws_name)
+{
+	return diagnostic_s(file_name, {}, diagnostic_severity::error,
+		"W0003", "HLASM plugin",
+		"The configuration file pgm_conf for workspace " + ws_name + " is malformed.", {});
+}
+
+diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::string& ws_name)
+{
+	return diagnostic_s(file_name, {}, diagnostic_severity::warning,
+		"W0004", "HLASM plugin",
+		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
+
+}
+
+
+
 }

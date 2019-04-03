@@ -197,6 +197,22 @@ void hlasm_plugin::parser_library::semantics::macro_def_processor::process_proto
 void hlasm_plugin::parser_library::semantics::macro_def_processor::store_statement()
 {
 	curr_statement_.instr_info = curr_instruction_;
+
+	if (curr_statement_.label_info.type == label_type::SEQ)
+		curr_statement_.label_info.sequence_symbol.location.line = macro_def_.size();
+
+	if (curr_op_code_.type == instruction_type::CA)
+	{
+		for (auto& op : curr_statement_.op_rem_info.operands)
+		{
+			if (!op || op->type == operand_type::EMPTY) continue;
+
+			auto ca_op = op->access_ca_op();
+			if (ca_op->kind == ca_operand_kind::BRANCH_EXPR || ca_op->kind == ca_operand_kind::BRANCH_SIMPLE)
+				ca_op->sequence_symbol.location.line = macro_def_.size();
+		}
+	}
+
 	macro_def_.push_back(std::move(curr_statement_));
 }
 
@@ -217,6 +233,6 @@ void hlasm_plugin::parser_library::semantics::macro_def_processor::process_MEND(
 	if (macro_nest_-- > 0)
 		return;
 
-	ctx_mngr().ctx().add_macro(prototype_.name, prototype_.label, std::move(prototype_.symbolic_params), std::move(macro_def_), { start_info_->macro_range.begin_ln,definition_begin_ln_ });
+	ctx_mngr().ctx().add_macro(prototype_.name, prototype_.label, std::move(prototype_.symbolic_params), std::move(macro_def_), file_name(), { start_info_->macro_range.begin_ln,definition_begin_ln_ });
 	finish();
 }

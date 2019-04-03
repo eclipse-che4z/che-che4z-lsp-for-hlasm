@@ -553,11 +553,12 @@ operands_model returns [op_rem line]													//rule for variable substitutio
 	: op_rem_body				{$line = std::move($op_rem_body.line);};
 
 operands_and_remarks
-	: { format.defered_operands}? SPACE defered_op_rem COMMA? (SPACE remark)?                 		//TODO make special grammar for defered, for now mac_entry
+	: { format.defered_operands}? SPACE defered_op_rem COMMA* (SPACE remark)?                 		//TODO make special grammar for defered, for now mac_entry
 	{
 		auto r = symbol_range::get_range($defered_op_rem.ctx);
 		collector.set_operand_remark_field(std::move($defered_op_rem.chain),r);
 	} 
+	| { format.defered_operands}? SPACE COMMA* (SPACE remark)?                 		//TODO make special grammar for defered, for now mac_entry
 	| {!format.defered_operands}? operands_and_remarks_nd
 	|																	{collector.set_operand_remark_field(symbol_range::get_empty_range(_localctx->getStart()));};
 

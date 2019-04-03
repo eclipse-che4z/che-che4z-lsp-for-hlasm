@@ -97,6 +97,7 @@ private:
 
 	void process_MACRO();
 	void process_MEND();
+	void process_MEXIT();
 
 	void process_empty();
 

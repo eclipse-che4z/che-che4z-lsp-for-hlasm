@@ -469,7 +469,7 @@ bool lexer::identifier_divider() const
 void lexer::lex_begin()
 {
 	start_token();
-	while (input_state_->char_position_in_line < begin_ && !eof())
+	while (input_state_->char_position_in_line < begin_ && !eof() && input_state_->c != '\n')
 		consume();
 	create_token(IGNORED, HIDDEN_CHANNEL);
 }
@@ -536,7 +536,7 @@ void lexer::lex_continuation()
 
 	/* lex continuation */
 	start_token();
-	while (input_state_->char_position_in_line < continue_ && !eof())
+	while (input_state_->char_position_in_line < continue_ && !eof() && input_state_->c != '\n')
 		consume();
 	create_token(IGNORED, HIDDEN_CHANNEL);
 }

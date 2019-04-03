@@ -6,12 +6,14 @@
 #include "parser_error_listener.h"
 #include "shared/token_stream.h"
 #include "semantics/processing_manager.h"
+#include "processor.h"
+#include "diagnosable_ctx.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 
 //this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context 
-class analyzer : public diagnosable_impl
+class analyzer : public diagnosable_ctx
 {
 	context::ctx_ptr ctx_;
 
@@ -24,11 +26,9 @@ class analyzer : public diagnosable_impl
 
 	semantics::processing_manager mngr_;
 
-	const std::string file_name;
-
 public:
 	analyzer(const std::string& text);
-	analyzer(const std::string& text, context::ctx_ptr ctx);
+	analyzer(const std::string& text, context::ctx_ptr ctx, parse_lib_provider & lib_provider, std::string file_name);
 
 	context::ctx_ptr context();
 	generated::hlasmparser& parser();

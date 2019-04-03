@@ -2,12 +2,12 @@
 #define CONTEXT_HLASM_CONTEXT_H
 
 #include <memory>
-#include <stack>
+#include <deque>
+#include <set>
 
 #include "code_scope.h"
 #include "id_storage.h"
 #include "macro.h"
-#include "../diagnosable_impl.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -21,11 +21,12 @@ class hlasm_context
 {
 	using macro_storage = std::unordered_map<id_index, std::unique_ptr<macro_definition>>;
 	using literal_map = std::unordered_map<id_index, id_index>;
+	using called_macros_storage = std::set<const macro_definition *>;
 
 	//storage of global variables
 	code_scope::set_sym_storage globals_;
 	//stack of nested scopes
-	std::stack<code_scope> scope_stack_;
+	std::deque<code_scope> scope_stack_;
 
 	//storage of defined macros
 	macro_storage macros_;
@@ -34,10 +35,13 @@ class hlasm_context
 
 	code_scope* curr_scope();
 
+	std::string top_level_file_name_;
+
+	called_macros_storage called_macros_;
 public:
 
 	hlasm_context();
-
+	hlasm_context(std::string file_name);
 	//storage for identifiers
 	id_storage ids;
 
@@ -126,11 +130,22 @@ public:
 	//returns macro we are currently in or empty shared_ptr if in open code
 	macro_invo_ptr this_macro();
 
-	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, location location);
+	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, std::string file_name, location location);
 
 	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
 
 	void leave_macro();
+	
+	const std::string & get_top_level_file_name() const;
+
+	const std::deque<code_scope> & get_scope_stack() const;
+
+	void set_current_statement_range(semantics::symbol_range);
+
+	semantics::symbol_range get_current_statement_range();
+
+	const called_macros_storage & get_called_macros();
+
 };
 
 using ctx_ptr = std::shared_ptr<hlasm_context>;

@@ -92,9 +92,7 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_statem
 	}
 	else if (ctx_mngr().ctx().macros().find(curr_op_code_.op_code) != ctx_mngr().ctx().macros().end())
 	{
-		enter_macro(
-			ctx_mngr().enter_macro(curr_op_code_.op_code, std::move(curr_statement_.label_info), std::move(curr_statement_.op_rem_info))
-		);
+		ctx_mngr().enter_macro(curr_op_code_.op_code, std::move(curr_statement_.label_info), std::move(curr_statement_.op_rem_info));
 	}
 }
 
@@ -408,6 +406,14 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_MEND()
 		;//err MEND not expected outside of macro definition
 }
 
+void hlasm_plugin::parser_library::semantics::ordinary_processor::process_MEXIT()
+{
+	//TO DO
+	if (!ctx_mngr().ctx().is_in_macro())
+		;//err MEXIT not expected outside of macro definition
+}
+
+
 void hlasm_plugin::parser_library::semantics::ordinary_processor::process_empty()
 {
 	if (curr_statement_.label_info.type != label_type::EMPTY)
@@ -447,6 +453,8 @@ process_table_t hlasm_plugin::parser_library::semantics::ordinary_processor::ini
 		std::bind(&ordinary_processor::process_MACRO, this));
 	table.emplace(ctx.ids.add("MEND"),
 		std::bind(&ordinary_processor::process_MEND, this));
+	table.emplace(ctx.ids.add("MEXIT"),
+		std::bind(&ordinary_processor::process_MEXIT, this));
 	table.emplace(nullptr,
 		std::bind(&ordinary_processor::process_empty, this));
 

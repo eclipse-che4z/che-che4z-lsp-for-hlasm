@@ -336,7 +336,7 @@ namespace checking
 
 	int machine_instruction_checker::find_instruction_index(const std::string & instruction_name)
 	{
-		int i = 0;
+		size_t i = 0;
 		while (i < context::instruction::machine_instructions.size() && instruction_name != context::instruction::machine_instructions[i].name)
 			i++;
 		if (i == context::instruction::machine_instructions.size())

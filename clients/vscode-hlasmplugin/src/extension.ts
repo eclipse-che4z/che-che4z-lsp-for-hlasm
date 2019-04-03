@@ -33,11 +33,12 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const serverOptions: vscodelc.ServerOptions = server;
 
-    const filePattern: string = '**/*.{' +
-        ['txt', 'hlasm'].join() + '}';
+    const filePattern: string = '**/*'
+    const configPattern: string = '**/{' + ['proc_grps.json', 'pgm_conf.json'].join() + '}';
+    
     const clientOptions: vscodelc.LanguageClientOptions = {
         // 
-        documentSelector: [{ scheme: 'file', pattern: filePattern }],
+        documentSelector: [{ language:'hlasm'}, {pattern:configPattern}],
         synchronize: !syncFileEvents ? undefined : {
             fileEvents: vscode.workspace.createFileSystemWatcher(filePattern)
         },

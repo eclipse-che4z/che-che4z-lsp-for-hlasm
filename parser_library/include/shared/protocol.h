@@ -59,6 +59,17 @@ struct PARSER_LIBRARY_EXPORT range
 	position end;
 };
 
+struct range_uri_s;
+
+struct PARSER_LIBRARY_EXPORT range_uri
+{
+	range_uri(range_uri_s & range);
+	range get_range();
+	const char * uri();
+private:
+	range_uri_s & impl_;
+};
+
 struct PARSER_LIBRARY_EXPORT document_change
 {
 	document_change(const char * new_text, size_t text_length) : 
@@ -101,7 +112,7 @@ struct PARSER_LIBRARY_EXPORT diagnostic_related_info
 {
 	diagnostic_related_info(diagnostic_related_info_s &);
 
-	position location() const;
+	range_uri location() const;
 	const char * message() const;
 private:
 	diagnostic_related_info_s & impl_;

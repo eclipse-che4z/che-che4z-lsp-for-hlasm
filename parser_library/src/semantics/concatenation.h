@@ -79,8 +79,6 @@ struct char_str : public concatenation_point
 //concatenation point representing variable symbol
 struct var_sym :public concatenation_point
 {
-	bool created;
-
 	var_sym(std::string name, std::vector<antlr4::ParserRuleContext*> subscript, symbol_range range);
 
 	var_sym(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, symbol_range range);
@@ -94,6 +92,8 @@ struct var_sym :public concatenation_point
 	var_sym& operator=(var_sym&&) = default;
 
 	var_sym();
+
+	bool created;
 
 	std::string name;
 

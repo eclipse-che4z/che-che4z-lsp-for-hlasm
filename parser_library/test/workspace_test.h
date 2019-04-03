@@ -11,6 +11,59 @@
 
 using namespace hlasm_plugin::parser_library;
 
+class workspace_test : public::diagnosable_impl, public testing::Test
+{
+	void collect_diags() const override {}
+
+};
+
+TEST_F(workspace_test, parse_lib_provider)
+{
+	file_manager_impl file_mngr;
+
+#if _WIN32
+	workspace ws("test\\library\\test_wks", file_mngr);
+#else
+	workspace ws("test/library/test_wks", file_mngr);
+#endif
+	ws.open();
+
+	collect_diags_from_child(ws);
+	collect_diags_from_child(file_mngr);
+	EXPECT_EQ(diags().size(), (size_t)0);
+
+	file_mngr.add_processor_file("test\\library\\test_wks\\correct");
+
+#if _WIN32
+	ws.did_open_file("test\\library\\test_wks\\correct");
+#else
+	ws.did_open_file("test/library/test_wks/correct");
+#endif
+
+	collect_diags_from_child(file_mngr);
+	EXPECT_EQ(diags().size(), (size_t)0);
+
+	diags().clear();
+
+	#if _WIN32
+		ws.parse_library("MACRO1", std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
+	#else
+		ws.parse_library("MACRO1", std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
+	#endif
+
+	//test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
+
+	collect_diags_from_child(ws);
+	EXPECT_EQ(diags().size(), (size_t) 0);
+
+
+#if _WIN32
+	ws.parse_library("not_existing", std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
+#else
+	ws.parse_library("not_existing", std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
+#endif
+
+}
 
 class file_proc_grps : public file_impl
 {
@@ -169,49 +222,6 @@ public:
 
 TEST(workspace, load_config_synthetic)
 {
-	//initialization of proc_grps.json file for linux and windows
-	std::ofstream proc_grps("test/library/test_wks/proc_grps.json", std::ofstream::out);
-	#if _WIN32
-	proc_grps << R"(
-		{
-			"pgroups": [
-				{
-					"name": "P1",
-					"libs": [
-						"libs\\lib1\\"
-					]
-				},
-				{
-					"name": "P2",
-					"libs": [
-						"libs\\lib2"
-					]
-				}
-			]
-		}
-	)";
-	#else
-	proc_grps << R"(
-		{
-			"pgroups": [
-				{
-					"name": "P1",
-					"libs": [
-						"libs/lib1/"
-					]
-				},
-				{
-					"name": "P2",
-					"libs": [
-						"libs/lib2"
-					]
-				}
-			]
-		}
-	)";
-	#endif
-	proc_grps.close();
-
 	file_manager_proc_grps_test file_manager;
 	workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager);
 
@@ -277,54 +287,8 @@ TEST(workspace, load_config_synthetic)
 	}
 }
 
-class workspace_test : public::diagnosable_impl, public testing::Test
-{
-	void collect_diags() const override {}
 
-};
 
-TEST_F(workspace_test, parse_lib_provider)
-{
-	file_manager_impl file_mngr;
-	#if _WIN32
-		workspace ws("test\\library\\test_wks", file_mngr);
-	#else
-		workspace ws("test/library/test_wks", file_mngr);
-	#endif
 
-	ws.open();
-	
-	collect_diags_from_child(ws);
-	EXPECT_EQ(diags().size(), (size_t) 0);
-
-	#if _WIN32
-		ws.did_open_file("test\\library\\test_wks\\correct");
-	#else
-		ws.did_open_file("test/library/test_wks/correct");
-	#endif
-
-	collect_diags_from_child(ws);
-	EXPECT_EQ(diags().size(), (size_t) 0);
-
-	#if _WIN32
-		auto p = ws.parse_library("test\\library\\test_wks\\correct", "macro1", std::make_shared<context::hlasm_context>());
-	#else
-		auto p = ws.parse_library("test/library/test_wks/correct", "macro1", std::make_shared<context::hlasm_context>());
-	#endif
-
-	//test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
-
-	collect_diags_from_child(ws);
-	EXPECT_EQ(diags().size(), (size_t) 0);
-	EXPECT_NE(p, nullptr);
-
-	#if _WIN32
-		p = ws.parse_library("test\\library\\test_wks\\correct", "not_existing", std::make_shared<context::hlasm_context>());
-	#else
-		p = ws.parse_library("test/library/test_wks/correct", "not_existing", std::make_shared<context::hlasm_context>());
-	#endif
-
-	EXPECT_EQ(p, nullptr);
-}
 
 #endif

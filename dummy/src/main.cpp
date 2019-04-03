@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	//std::string tcase = "aread";
 	//std::string tcase = "comment";
 	//std::string tcase = "test";
-	std::string tcase = "er";
+	std::string tcase = "test";
 	std::string inp = "test/library/input/" + tcase + ".in";
 	if (argc > 1)
 		inp = std::string(argv[1]);

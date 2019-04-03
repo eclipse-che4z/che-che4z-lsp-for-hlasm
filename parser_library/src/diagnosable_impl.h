@@ -7,6 +7,12 @@ namespace hlasm_plugin::parser_library {
 
 class diagnosable_impl : public virtual diagnosable
 {
+public:
+	virtual diagnostic_container & diags() const override
+	{
+		return container;
+	}
+
 protected:
 
 	virtual void collect_diags_from_child(const diagnosable & child) const
@@ -27,11 +33,6 @@ protected:
 	virtual void add_diagnostic(diagnostic_s diagnostic) const override
 	{
 		container.push_back(std::move(diagnostic));
-	}
-
-	virtual diagnostic_container & diags() const override
-	{
-		return container;
 	}
 
 	virtual bool is_once_only() const override

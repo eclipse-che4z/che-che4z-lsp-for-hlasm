@@ -16,7 +16,7 @@
 namespace hlasm_plugin {
 namespace language_server {
 
-lsp_dispatcher::lsp_dispatcher(std::ostream & out, server & server) : out_(out), server_(server)
+lsp_dispatcher::lsp_dispatcher(std::ostream & out, server & server) : server_(server), out_(out)
 {
 	server.register_callbacks(
 		std::bind(&lsp_dispatcher::reply, this, std::placeholders::_1, std::placeholders::_2),

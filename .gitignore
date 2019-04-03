@@ -43,12 +43,12 @@ parser_library/src/grammar/.antlr/
 dummy/src/
 
 #testing purposes
-parser_library/test/res/input/er.in
+parser_library/test/res/input/test.in
 parser_library/test/res/input/correctness.in
 parser_library/test/res/output/tokens/correctness.output
 
 #vscode ignore
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

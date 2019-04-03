@@ -7,13 +7,18 @@ namespace hlasm_plugin::parser_library::context
 
 code_scope * hlasm_context::curr_scope()
 {
-	return &scope_stack_.top();
+	return &scope_stack_.back();
 }
 
 
-hlasm_context::hlasm_context() : empty_id(ids.add(object_traits<C_t>::default_v()))
+hlasm_context::hlasm_context() : hlasm_context("")
 {
-	scope_stack_.push(code_scope());
+	
+}
+
+hlasm_context::hlasm_context(std::string file_name) : top_level_file_name_(std::move(file_name)), empty_id(ids.add(object_traits<C_t>::default_v()))
+{
+	scope_stack_.push_back(code_scope());
 }
 
 const code_scope::set_sym_storage & hlasm_context::globals() const
@@ -119,9 +124,9 @@ id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
 		return nullptr;
 }
 
-const macro_definition& hlasm_plugin::parser_library::context::hlasm_context::add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, location location)
+const macro_definition& hlasm_context::add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, std::string file_name, location location)
 {
-	return *macros_.insert_or_assign(name, std::make_unique< macro_definition>(name, label_param_name, std::move(params), std::move(definition), location)).first->second.get();
+	return *macros_.insert_or_assign(name, std::make_unique< macro_definition>(name, label_param_name, std::move(params), std::move(definition), std::move(file_name), location)).first->second.get();
 }
 
 const hlasm_plugin::parser_library::context::hlasm_context::macro_storage& hlasm_plugin::parser_library::context::hlasm_context::macros()
@@ -131,20 +136,22 @@ const hlasm_plugin::parser_library::context::hlasm_context::macro_storage& hlasm
 
 bool hlasm_context::is_in_macro() const
 {
-	return scope_stack_.top().is_in_macro();
+	return scope_stack_.back().is_in_macro();
 }
 
-macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg>  params)
+macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
 {
 	auto tmp = macros_.find(name);
 	if (tmp != macros_.end())
 	{
 		auto invo((tmp->second->call(std::move(label_param_data), std::move(params))));
-		scope_stack_.push(code_scope(invo));
+		scope_stack_.push_back(code_scope(invo));
+		called_macros_.insert(tmp->second.get());
 		return invo;
 	}
 	else
 	{
+		assert(false);
 		return macro_invo_ptr();
 		//TODO look for libraries
 	}
@@ -152,7 +159,7 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
 
 void hlasm_context::leave_macro()
 {
-	scope_stack_.pop();
+	scope_stack_.pop_back();
 }
 
 macro_invo_ptr hlasm_context::this_macro()
@@ -161,4 +168,34 @@ macro_invo_ptr hlasm_context::this_macro()
 		return curr_scope()->this_macro;
 	return macro_invo_ptr();
 }
+
+const std::string & hlasm_context::get_top_level_file_name() const
+{
+	return top_level_file_name_;
 }
+
+const std::deque<code_scope> & hlasm_context::get_scope_stack() const
+{
+	return scope_stack_;
+}
+
+void hlasm_context::set_current_statement_range(semantics::symbol_range range)
+{
+	scope_stack_.back().current_stmt_range = range;
+}
+
+semantics::symbol_range hlasm_context::get_current_statement_range()
+{
+	return scope_stack_.back().current_stmt_range;
+}
+
+const hlasm_context::called_macros_storage & hlasm_context::get_called_macros()
+{
+	return called_macros_;
+}
+
+
+
+}
+
+

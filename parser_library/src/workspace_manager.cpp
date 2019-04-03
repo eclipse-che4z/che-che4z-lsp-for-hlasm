@@ -12,7 +12,7 @@ namespace parser_library {
 class workspace_manager::impl : public diagnosable_impl
 {
 public:
-	impl() : implicit_workspace_({ "", file_manager_ }) {}
+	impl() : implicit_workspace_({ file_manager_ }) {}
 	impl(const impl &) = delete;
 	impl & operator= (const impl &) = delete;
 
@@ -149,7 +149,7 @@ private:
 		workspace * max_ws = nullptr;
 		for (auto & ws : workspaces_)
 		{
-			size_t match = prefix_match(document_uri, ws.first);
+			size_t match = prefix_match(document_uri, ws.second.uri());
 			if (match > max && match >= ws.first.size())
 			{
 				max = match;

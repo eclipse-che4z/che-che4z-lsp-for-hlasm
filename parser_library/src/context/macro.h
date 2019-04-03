@@ -37,6 +37,7 @@ class macro_definition
 	std::vector<std::shared_ptr<positional_param>> positional_params_;
 	std::unordered_map<id_index, macro_param_ptr> named_params_;
 	const id_index label_param_name_;
+	
 public:
 
 	//identifier of macro
@@ -47,9 +48,10 @@ public:
 	const semantics::statement_block definition;
 	//location of the macro definition in code
 	const hlasm_plugin::parser_library::location location;
-
+	//file, in which the macro was defined
+	const std::string file_name;
 	//initializes macro with its name and params - positional or keyword
-	macro_definition(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, hlasm_plugin::parser_library::location location);
+	macro_definition(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, std::string file_name, hlasm_plugin::parser_library::location location);
 
 	//returns object with parameters' data set to actual parameters in macro call
 	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params) const;
@@ -59,7 +61,7 @@ public:
 
 };
 
-//represent macro isntruction call 
+//represent macro instruction call 
 //contains parameters with set values provided with the call 
 struct macro_invocation
 {
@@ -74,6 +76,8 @@ public:
 	const semantics::statement_block* definition;
 	//location of the macro definition in code
 	const hlasm_plugin::parser_library::location location;
+	//index to definition vector
+	size_t current_statement;
 
 	macro_invocation(id_index name, const semantics::statement_block* definition, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist, hlasm_plugin::parser_library::location location);
 

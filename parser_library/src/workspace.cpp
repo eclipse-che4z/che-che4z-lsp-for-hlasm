@@ -11,17 +11,20 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
-constexpr char FILENAME_PROC_GRPS[] = "proc_grps.json";
-constexpr char FILENAME_PGM_CONF[] = "pgm_conf.json";
+workspace::workspace(ws_uri uri, std::string name, file_manager & file_manager)
+	: name_(name), uri_(uri), file_manager_(file_manager), implicit_proc_grp("pg_implicit"), ws_path_(uri)
+{
+	proc_grps_path_ = ws_path_ / FILENAME_PROC_GRPS;
+	pgm_conf_path_ = ws_path_ / FILENAME_PGM_CONF;
+}
 
-
-hlasm_plugin::parser_library::workspace::workspace(ws_uri uri, std::string name, file_manager & file_manager)
-	: name_(name), uri_(uri), file_manager_(file_manager), implicit_proc_grp("pg_implicit")
+workspace::workspace(ws_uri uri, file_manager & file_manager) : workspace(uri, uri, file_manager)
 {
 }
 
-hlasm_plugin::parser_library::workspace::workspace(ws_uri uri, file_manager & file_manager) : workspace(uri, uri, file_manager)
+workspace::workspace(file_manager & file_manager) : workspace("", file_manager)
 {
+	opened_ = true;
 }
 
 void workspace::collect_diags() const
@@ -30,6 +33,9 @@ void workspace::collect_diags() const
 	{
 		collect_diags_from_child(pg.second);
 	}
+
+	for (auto & diag : config_diags_)
+		add_diagnostic(diag);
 }
 
 void workspace::add_proc_grp(processor_group pg)
@@ -57,42 +63,63 @@ const processor_group & workspace::get_proc_grp_by_program(const std::string & f
 	return implicit_proc_grp;
 }
 
+const ws_uri & workspace::uri()
+{
+	return uri_;
+}
 
+void workspace::parse_file(const std::string & file_uri)
+{
+	std::filesystem::path file_path(file_uri);
+	//add support for hlasm to vscode (auto detection??) and do the decision based on languageid
+	if (file_path == proc_grps_path_ || file_path == pgm_conf_path_)
+	{
+		if(load_config())
+			for (auto f : dependants_)
+				f->parse(*this);
+		
+		return;
+	}
+	//what about removing files??? what if depentands_ points to not existing file?
+	std::vector<processor_file *> files_to_parse;
+
+	for (auto f : dependants_)
+	{
+		for (auto & name : f->dependencies())
+		{
+			if (name == file_uri)
+				files_to_parse.push_back(f);
+		}
+	}
+
+	if (files_to_parse.empty())
+	{
+		auto f = file_manager_.find_processor_file(file_uri);
+		if (f)
+			files_to_parse.push_back(f);
+	}
+
+	for (auto f : files_to_parse)
+	{
+		f->parse(*this);
+		if (!f->dependencies().empty())
+			dependants_.insert(f);
+	}
+}
 
 void workspace::did_open_file(const std::string & file_uri)
 {
-	//add support for hlasm to vscode (auto detection??) and do the decision based on languageid
-	if (file_uri == uri_ + "proc_grps.json" || file_uri == uri_ + "pgm_conf.json")
-	{
-		load_config();
-		return;
-	}
-	
-	auto f = file_manager_.find_processor_file(file_uri);
-	if (f == nullptr)
-		return;
-	f->parse(*this);
+	parse_file(file_uri);
 }
 
-void workspace::did_change_file(const std::string file_uri, const document_change * changes, size_t ch_size)
+void workspace::did_change_file(const std::string file_uri, const document_change *, size_t)
 {
-	if (file_uri == uri_ + "proc_grps.json" || file_uri == uri_ + "pgm_conf.json")
-	{
-		load_config();
-		return;
-	}
-
-	auto f = file_manager_.find_processor_file(file_uri);
-	if (f == nullptr)
-		return;
-	f->parse(*this);
+	parse_file(file_uri);
 }
 
 void hlasm_plugin::parser_library::workspace::open()
 {
-	if (opened_)
-		return;
-	opened_ = load_config();
+	load_config();
 }
 
 void hlasm_plugin::parser_library::workspace::close()
@@ -109,6 +136,10 @@ const processor_group & workspace::get_proc_grp(const proc_grp_id & proc_grp) co
 //open config files and parse them
 bool hlasm_plugin::parser_library::workspace::load_config()
 {
+	config_diags_.clear();
+
+	opened_ = true;
+
 	std::filesystem::path ws_path(uri_);
 	using json = nlohmann::json;
 
@@ -119,12 +150,12 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	try
 	{
 		proc_grps_json = nlohmann::json::parse(proc_grps_file->get_text());
+		proc_grps_.clear();
 	}
 	catch(nlohmann::json::exception e)
 	{
-		add_diagnostic(diagnostic_s(uri_, {}, diagnostic_severity::error, 
-			"W0002", "HLASM plugin",
-			"The configuration file proc_grps for workspace " + name_ + " is malformed.", {}));
+		//could not load proc_grps
+		config_diags_.push_back(diagnostic_s::error_W002(proc_grps_file->get_file_name(), name_));
 		return false;
 	}
 
@@ -165,12 +196,11 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	try
 	{
 		pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
+		pgm_conf_.clear();
 	}
 	catch (nlohmann::json::exception e)
 	{
-		add_diagnostic(diagnostic_s(pgm_conf_file->get_file_name(), {}, diagnostic_severity::error,
-			"W0003", "HLASM plugin",
-			"The configuration file pgmp_conf for workspace " + name_ + " is malformed.", {}));
+		config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
 		return false;
 	}
 	json pgms = pgm_conf_json["pgms"];
@@ -186,17 +216,15 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		}
 		else
 		{ 
-			add_diagnostic(diagnostic_s(pgm_conf_file->get_file_name(), {}, diagnostic_severity::warning,
-				"W0004", "HLASM plugin",
-				"The configuration file pgm_conf for workspace " + name_ + " refers to a processor group, that is not defined in proc_grps", {}));
+			config_diags_.push_back(diagnostic_s::error_W004(pgm_conf_file->get_file_name(), name_));
 		}
 	}
 	return true;
 }
 
-program_context * workspace::parse_library(const std::string & caller, const std::string & library, std::shared_ptr<context::hlasm_context> ctx)
+parse_result workspace::parse_library(const std::string & library, std::shared_ptr<context::hlasm_context> ctx)
 {
-	auto & proc_grp = get_proc_grp_by_program(caller);
+	auto & proc_grp = get_proc_grp_by_program(ctx->get_top_level_file_name());
 	for (auto && lib : proc_grp.libraries())
 	{
 		processor * found = lib->find_file(library);
@@ -204,7 +232,7 @@ program_context * workspace::parse_library(const std::string & caller, const std
 			return found->parse(*this, ctx);
 	}
 	
-	return nullptr;
+	return false;
 }
 
 

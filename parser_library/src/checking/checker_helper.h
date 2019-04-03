@@ -151,7 +151,7 @@ namespace checking
 		else
 			leap_year = false;
 
-		return (day <= days_in_month[month-1] || (month == 2 && leap_year && day == 29));
+		return ((size_t)day <= days_in_month[month-1] || (month == 2 && leap_year && day == 29));
 	};
 
 	static int get_size_of_operand(context::operand_format format)

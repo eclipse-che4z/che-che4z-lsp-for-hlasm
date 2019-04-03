@@ -66,6 +66,33 @@ TEST_F(lexer_test, rntest)
 	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
 }
 
+TEST_F(lexer_test, new_line_in_ignored)
+{
+	std::string tcase = "new_line_in_ignored";
+	//test case, when a newline is in the first 15 ignored characters after continuation
+	hlasm_plugin::parser_library::input_source input(
+		R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
+        
+label lr 1,1)");
+	hlasm_plugin::parser_library::lexer l(&input);
+	antlr4::CommonTokenStream tokens(&l);
+	parser parser(&tokens);
+
+	tokens.fill();
+
+	std::stringstream token_stream;
+	size_t eolln_count = 0;
+	for (auto token : tokens.getTokens())
+	{
+		if (parser.getVocabulary().getSymbolicName(token->getType()) == "EOLLN")
+			++eolln_count;
+	}
+		
+	EXPECT_EQ(eolln_count, (size_t)2);
+
+	
+}
+
 TEST_F(lexer_test, unlimited_line)
 {
 	std::string tcase = "unlimited_line";

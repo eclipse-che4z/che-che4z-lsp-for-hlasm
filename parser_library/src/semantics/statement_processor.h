@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "../diagnosable_impl.h"
+#include "../diagnosable_ctx.h"
 #include "statement_fields.h"
 #include "../context/hlasm_context.h"
 
@@ -29,7 +29,7 @@ using process_table_t = std::unordered_map<context::id_index, std::function<void
 
 //base class for statement processors
 //holds all methods that are important for derived processors to minimize friend relations in processing manager
-class statement_processor : public diagnosable_impl
+class statement_processor : public diagnosable_ctx
 {
 public:
 	virtual void set_start_info(start_info_ptr info) = 0;
@@ -47,16 +47,18 @@ protected:
 
 	virtual void finish();
 
-	void enter_macro(context::macro_invo_ptr macro);
-
 	context_manager& ctx_mngr();
 	parser_impl& parser();
 
 	void start_lookahead(start_info_ptr start_info);
 	void start_macro_definition(start_info_ptr start_info);
 
+	const std::string & file_name();
 private:
 	processing_manager& mngr_;
+
+	context::macro_invo_ptr current_macro();
+
 };
 
 }

@@ -1,0 +1,18 @@
+
+		{
+			"pgroups": [
+				{
+					"name": "P1",
+					"libs": [
+						"libs/lib1/"
+					]
+				},
+				{
+					"name": "P2",
+					"libs": [
+						"libs/lib2"
+					]
+				}
+			]
+		}
+	

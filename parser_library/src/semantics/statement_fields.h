@@ -19,7 +19,7 @@ struct label_semantic_info
 {
 	label_semantic_info() : type(label_type::EMPTY) {}
 
-	label_semantic_info(const label_semantic_info& label): type(label.type),name(label.name), sequence_symbol(label.sequence_symbol), range(label.range), variable_symbol(label.variable_symbol)
+	label_semantic_info(const label_semantic_info& label): type(label.type),name(label.name), sequence_symbol(label.sequence_symbol), variable_symbol(label.variable_symbol), range(label.range)
 	{
 		concatenation.insert(concatenation.end(), make_clone_iterator(label.concatenation.begin()), make_clone_iterator(label.concatenation.end()));
 	}
@@ -79,7 +79,7 @@ struct operand_remark_semantic_info
 {
 	operand_remark_semantic_info() :is_defered(false) {}
 
-	operand_remark_semantic_info(const operand_remark_semantic_info& op_rem):is_defered(op_rem.is_defered), range(op_rem.range), remarks(op_rem.remarks)
+	operand_remark_semantic_info(const operand_remark_semantic_info& op_rem) : remarks(op_rem.remarks), is_defered(op_rem.is_defered), range(op_rem.range)
 	{
 		operands.insert(operands.end(), make_clone_iterator(op_rem.operands.begin()), make_clone_iterator(op_rem.operands.end()));
 

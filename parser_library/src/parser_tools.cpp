@@ -35,7 +35,7 @@ namespace hlasm_plugin
 		}
 
 		useful_tree::useful_tree(antlr4::ParserRuleContext * tree, const antlr4::dfa::Vocabulary& vocab, const std::vector<std::string>& rules)
-			: vocab_(vocab), tree_(tree), rules_(rules)
+			:  tree_(tree), vocab_(vocab), rules_(rules)
 		{};
 
 		void useful_tree::out_tree(std::ostream &stream)

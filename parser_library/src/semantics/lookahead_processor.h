@@ -15,7 +15,7 @@ struct lookahead_info : public processor_start_info
 	//describes whether we are looking for sequence symbol or ordinary symbol
 	enum la_type { SEQ, ORD };
 
-	lookahead_info(context::id_index target, parser_library::location location, la_type type, symbol_range target_range) : target(target), location(location), type(type),target_range(target_range) {}
+	lookahead_info(context::id_index target, parser_library::location location, la_type type, symbol_range target_range) : target(target), location(location), target_range(target_range), type(type) {}
 
 	context::id_index target;
 	parser_library::location location;

@@ -124,7 +124,11 @@ json diagnostic_related_info_to_json(parser_library::diagnostic & diag)
 	for (size_t i = 0; i < diag.related_info_size(); ++i)
 	{
 		related.push_back(json {
-								{"location", feature::location_to_json(diag.related_info(i).location()) },
+								{"location", json {
+									{"uri", feature::path_to_uri(diag.related_info(i).location().uri())},
+									{"range", feature::range_to_json(diag.related_info(i).location().get_range()) }
+									}
+								},
 								{"message", diag.related_info(i).message()}
 							});
 	}
@@ -175,6 +179,9 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 		notify_("textDocument/publishDiagnostics", publish_diags_params);
 	}
 
+	//according to LSP, the client keeps the diagnostics until they are replaced
+	//with empty array. If the library did not provide us with diagnostics
+	//for files from last call, we need to remove them.
 	for (auto & it : last_diagnostics_files)
 	{
 		json publish_diags_params

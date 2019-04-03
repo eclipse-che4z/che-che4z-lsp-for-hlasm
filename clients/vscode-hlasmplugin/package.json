@@ -17,8 +17,7 @@
 	],
 	"activationEvents": [
 		"workspaceContains:*.hlasm",
-		"workspaceContains:*.txt",
-		"*"
+		"onLanguage:hlasm"
 	],
 	"main": "./lib/extension.js",
 	"typings": "./lib/extension",
@@ -48,6 +47,19 @@
 		"package": "vsce package"
 	},
 	"contributes": {
+		"languages": [
+			{
+				"id": "hlasm",
+				"extensions": [
+					".hlasm"
+				],
+				"aliases": [
+					"HLASM"
+				],
+				"filenames": [],
+				"firstLine": " *MACRO *"
+			}
+		],
 		"keybindings": [
 			{
 				"command": "insertContinuation",

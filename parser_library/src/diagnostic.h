@@ -101,13 +101,21 @@ struct diagnostic_op
 		
 };
 
+struct range_uri_s
+{
+	range_uri_s() {};
+	range_uri_s(std::string uri, range range) : uri(std::move(uri)), rang(range) {}
+
+	std::string uri;
+	range rang;
+};
 
 class diagnostic_related_info_s
 {
 public:
 	diagnostic_related_info_s() {}
-	diagnostic_related_info_s(position location, std::string message) : location(location), message(std::move(message)) {}
-	position location;
+	diagnostic_related_info_s(range_uri_s location, std::string message) : location(std::move(location)), message(std::move(message)) {}
+	range_uri_s location;
 	std::string message;
 };
 
@@ -116,7 +124,7 @@ class diagnostic_s
 public:
 	diagnostic_s() {}
 	diagnostic_s(std::string file_name, range range, std::string code, std::string message) :
-		file_name(std::move(file_name)), diag_range(range), code(code), severity(diagnostic_severity::unspecified), message(std::move(message)) {}
+		file_name(std::move(file_name)), diag_range(range), severity(diagnostic_severity::unspecified), code(code), message(std::move(message)) {}
 	diagnostic_s(std::string file_name, range range, diagnostic_severity severity, std::string code, std::string source, std::string message, std::vector<diagnostic_related_info_s> related) :
 		file_name(std::move(file_name)), diag_range(range), severity(severity), code(std::move(code)), source(std::move(source)), message(std::move(message)), related(std::move(related)) {}
 
@@ -151,6 +159,12 @@ public:
 	static diagnostic_s error_EQU1(const std::string& filename, hlasm_plugin::parser_library::range range);
 
 	static diagnostic_s error_EQU2(const std::string& filename, hlasm_plugin::parser_library::range range);
+
+	static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
+
+	static diagnostic_s error_W003(const std::string& file_name, const std::string& ws_name);
+
+	static diagnostic_s error_W004(const std::string& file_name, const std::string& ws_name);
 
 /*
 E01x - wrong format

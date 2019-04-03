@@ -11,8 +11,8 @@ namespace hlasm_plugin {
 		struct symbol_occurence
 		{
 			symbol_occurence() {};
-			symbol_occurence(const symbol_range & range, const std::string & name, const std::string & uri, const std::string & scope) : range(range), name(name), uri(uri), scope(scope) {};
-			symbol_occurence(const symbol_range & range, const std::string & name, const std::string & uri, const std::string & scope, bool candidate) : range(range), name(name), uri(uri), scope(scope), candidate(candidate) {};
+			symbol_occurence(const symbol_range & range, const std::string & name, const std::string & uri, const std::string & scope) : uri(uri), range(range), name(name),  scope(scope) {};
+			symbol_occurence(const symbol_range & range, const std::string & name, const std::string & uri, const std::string & scope, bool candidate) : uri(uri), range(range), name(name), scope(scope), candidate(candidate) {};
 			bool operator==(const symbol_occurence & s) const
 			{
 				return uri == s.uri && range == s.range && name == s.name && scope == s.scope;

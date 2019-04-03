@@ -27,7 +27,7 @@ keyword_expression::keyword_expression(str_ref k)
 	s_val_ = std::move(kw);
 }
 
-hlasm_plugin::parser_library::semantics::keyword_expression::keyword_expression(const keyword_expression & expr) : value_(expr.value_),s_val_(expr.s_val_)
+hlasm_plugin::parser_library::semantics::keyword_expression::keyword_expression(const keyword_expression & expr) : s_val_(expr.s_val_), value_(expr.value_)
 {
 	if (expr.diag)
 		diag = std::make_unique<diagnostic_op>(*expr.diag);

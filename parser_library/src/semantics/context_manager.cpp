@@ -1,20 +1,26 @@
 #include "context_manager.h"
 #include "expression_visitor.h"
 
-using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library::semantics;
+namespace hlasm_plugin::parser_library::semantics
+{
 
-hlasm_plugin::parser_library::semantics::context_manager::context_manager(context::ctx_ptr ctx) :ctx_(std::move(ctx)) 
+using namespace context;
+
+context_manager::context_manager(context::ctx_ptr ctx, parse_lib_provider & lib_provider) : diagnosable_ctx(ctx), ctx_(std::move(ctx)), lib_provider_(lib_provider)
 {
 	init_instr();
 }
 
-hlasm_plugin::parser_library::context::hlasm_context & hlasm_plugin::parser_library::semantics::context_manager::ctx()
+context_manager::context_manager(context::ctx_ptr ctx) : context_manager::context_manager(ctx, empty_parse_lib_provider::instance)
+{
+}
+
+hlasm_context & context_manager::ctx()
 {
 	return *ctx_;
 }
 
-SET_t hlasm_plugin::parser_library::semantics::context_manager::get_var_sym_value(var_sym symbol) const
+SET_t context_manager::get_var_sym_value(var_sym symbol) const
 {
 	//todo created
 	auto id = symbol.created ? get_id(concatenate(std::move(symbol.created_name))) : get_id(std::move(symbol.name));
@@ -110,13 +116,13 @@ SET_t hlasm_plugin::parser_library::semantics::context_manager::get_var_sym_valu
 	return SET_t();
 }
 
-hlasm_plugin::parser_library::context::id_index hlasm_plugin::parser_library::semantics::context_manager::get_id(std::string name) const
+id_index context_manager::get_id(std::string name) const
 {
 	//ERR check if valid id
 	return ctx_->ids.add(std::move(name));
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::to_string(concat_chain chain)
+std::string context_manager::to_string(concat_chain chain)
 {
 	std::string ret;
 	for (auto& point : chain)
@@ -140,7 +146,7 @@ std::string hlasm_plugin::parser_library::semantics::context_manager::to_string(
 	return ret;
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concatenate(concat_chain chain) const
+std::string context_manager::concatenate(concat_chain chain) const
 {
 	std::string result;
 	bool last_was_var = false;
@@ -179,7 +185,7 @@ std::string hlasm_plugin::parser_library::semantics::context_manager::concatenat
 	return result;
 }
 
-expr_ptr hlasm_plugin::parser_library::semantics::context_manager::evaluate_expression_tree(antlr4::ParserRuleContext * expr_context) const
+expr_ptr context_manager::evaluate_expression_tree(antlr4::ParserRuleContext * expr_context) const
 {
 	expression_visitor expression_evaluator(*this);
 
@@ -195,13 +201,13 @@ expr_ptr hlasm_plugin::parser_library::semantics::context_manager::evaluate_expr
 
 hlasm_plugin::parser_library::context::macro_invo_ptr hlasm_plugin::parser_library::semantics::context_manager::enter_macro(context::id_index opcode, label_semantic_info label, operand_remark_semantic_info operands)
 {
-	auto args = process_macro_args(opcode,std::move(label),std::move(operands));
+	auto args = process_macro_args(opcode, std::move(label), std::move(operands));
 	auto name_param(std::move(args.back()));
 	args.pop_back();
 	return ctx().enter_macro(opcode, std::move(name_param.data), std::move(args));
 }
 
-std::vector<macro_arg> hlasm_plugin::parser_library::semantics::context_manager::process_macro_args(context::id_index opcode, label_semantic_info label, operand_remark_semantic_info operands)
+std::vector<macro_arg> context_manager::process_macro_args(context::id_index opcode, label_semantic_info label, operand_remark_semantic_info operands)
 {
 	macro_data_ptr label_value;
 
@@ -289,27 +295,27 @@ std::vector<macro_arg> hlasm_plugin::parser_library::semantics::context_manager:
 }
 
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concat(char_str* str) const
+std::string context_manager::concat(char_str * str) const
 {
 	return std::move(str->value);
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concat(var_sym* vs) const
+std::string context_manager::concat(var_sym* vs) const
 {
 	return get_var_sym_value(std::move(*vs)).to<C_t>();
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concat(dot*) const
+std::string context_manager::concat(dot*) const
 {
 	return ".";
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concat(equals *) const
+std::string context_manager::concat(equals *) const
 {
 	return "=";
 }
 
-std::string hlasm_plugin::parser_library::semantics::context_manager::concat(sublist* sublist) const
+std::string context_manager::concat(sublist* sublist) const
 {
 	std::string ret("(");
 	for (size_t i = 0; i < sublist->list.size(); ++i)
@@ -337,7 +343,7 @@ std::string hlasm_plugin::parser_library::semantics::context_manager::concat(sub
 	return ret;
 }
 
-void hlasm_plugin::parser_library::semantics::context_manager::init_instr()
+void context_manager::init_instr()
 {
 	if (instructions.size() != 0)
 		return;
@@ -367,7 +373,7 @@ void hlasm_plugin::parser_library::semantics::context_manager::init_instr()
 	}
 }
 
-macro_data_ptr hlasm_plugin::parser_library::semantics::context_manager::create_macro_data(concat_chain chain)
+macro_data_ptr context_manager::create_macro_data(concat_chain chain)
 {
 	if (chain.size() == 0 || chain.size() > 1 || (chain.size() == 1 && chain[0]->get_type() != concat_type::SUB))
 		return std::make_unique<macro_param_data_single>(concatenate(std::move(chain)));
@@ -385,7 +391,7 @@ macro_data_ptr hlasm_plugin::parser_library::semantics::context_manager::create_
 	return std::make_unique<macro_param_data_composite>(std::move(sublist));
 }
 
-op_code_info hlasm_plugin::parser_library::semantics::context_manager::get_opcode_info(std::string name)
+op_code_info context_manager::get_opcode_info(std::string name)
 {
 	//if contains space
 	/*
@@ -450,6 +456,16 @@ op_code_info hlasm_plugin::parser_library::semantics::context_manager::get_opcod
 	{
 		return { id,instruction_type::MAC,false };
 	}
+	else
+	{
+		//TODO - library find is called every time an instrucion is parsed - may be very time consuming
+		// introduce some list of all available macros.
+		lib_provider_.parse_library(*id, ctx_);
+		if (ctx_->macros().find(id) != ctx_->macros().end())
+		{
+			return { id,instruction_type::MAC,false };
+		}
+	}
 
 	auto info = instructions.find(id);
 
@@ -461,26 +477,26 @@ op_code_info hlasm_plugin::parser_library::semantics::context_manager::get_opcod
 	return op_code_info();
 }
 
-op_code_info hlasm_plugin::parser_library::semantics::context_manager::get_opcode_info(concat_chain model_name)
+op_code_info context_manager::get_opcode_info(concat_chain model_name)
 {
 	return get_opcode_info(concatenate(std::move(model_name)));
 }
 
-op_code_info hlasm_plugin::parser_library::semantics::context_manager::get_opcode_info(instruction_semantic_info info)
+op_code_info context_manager::get_opcode_info(instruction_semantic_info info)
 {
 	return info.type == instr_semantic_type::CONC ? get_opcode_info(std::move(info.model_name)) : get_opcode_info(std::move(info.ordinary_name));
 }
 
-hlasm_plugin::parser_library::range hlasm_plugin::parser_library::semantics::context_manager::convert_range(symbol_range sr)
+hlasm_plugin::parser_library::range context_manager::convert_range(symbol_range sr)
 {
 	return { {sr.begin_ln, sr.begin_col}, {sr.end_ln, sr.end_col} };
 }
 
-void hlasm_plugin::parser_library::semantics::context_manager::collect_diags() const
+void context_manager::collect_diags() const
 {
 }
 
-void hlasm_plugin::parser_library::semantics::context_manager::set_var_sym_value_base(var_sym symbol, context::set_symbol_base* set_sym,std::vector<expr_ptr>& subscript, context::SET_t_enum type)
+void context_manager::set_var_sym_value_base(var_sym symbol, context::set_symbol_base* set_sym,std::vector<expr_ptr>& subscript, context::SET_t_enum type)
 {
 	for (auto tree : symbol.subscript)
 		subscript.push_back(evaluate_expression_tree(tree));
@@ -512,4 +528,6 @@ void hlasm_plugin::parser_library::semantics::context_manager::set_var_sym_value
 	{
 		add_diagnostic(diagnostic_s::error_E030("", "symbolic parameter", convert_range(range))); //error - can't write to symbolic param
 	}
+}
+
 }

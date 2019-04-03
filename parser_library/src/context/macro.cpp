@@ -12,8 +12,8 @@ const std::unordered_map<id_index, macro_param_ptr>& macro_definition::named_par
 	return named_params_;
 }
 
-macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, hlasm_plugin::parser_library::location location)
-	: id(name), label_param_name_(label_param_name), definition(std::move(definition)), location(location)
+macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, std::string file_name, hlasm_plugin::parser_library::location location)
+	: label_param_name_(label_param_name), id(name), definition(std::move(definition)), location(location), file_name(std::move(file_name))
 {
 	if (label_param_name_)
 	{
@@ -92,7 +92,7 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
 macro_invocation::macro_invocation(id_index name, const statement_block * definition, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist, hlasm_plugin::parser_library::location location)
-	:id(name), definition(definition),named_params(std::move(named_params)),syslist_(std::move(syslist)), location(location)
+	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)), definition(definition),  location(location), current_statement(0)
 {
 }
 

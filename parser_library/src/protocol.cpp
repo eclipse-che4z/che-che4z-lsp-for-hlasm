@@ -25,7 +25,20 @@ diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s & inf
 
 }
 
-position diagnostic_related_info::location() const
+range_uri::range_uri(range_uri_s & range):impl_(range) {}
+
+range range_uri::get_range()
+{
+	return impl_.rang;
+}
+
+const char * range_uri::uri()
+{
+	return impl_.uri.c_str();
+}
+
+
+range_uri diagnostic_related_info::location() const
 {
 	return impl_.location;
 }

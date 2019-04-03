@@ -31,30 +31,34 @@ semantics::semantic_info & processor_file_impl::semantic_info()
 	return sm_info_;
 }
 
-program_context * processor_file_impl::parse(parse_lib_provider & find_provider)
+parse_result processor_file_impl::parse(parse_lib_provider & find_provider)
 {
-	return parse(find_provider, std::make_shared<hlasm_plugin::parser_library::context::hlasm_context>());
+	auto ctx = std::make_shared<hlasm_plugin::parser_library::context::hlasm_context>(get_file_name());
+
+	auto res = parse(find_provider, ctx);
+
+	for (auto m : ctx->get_called_macros())
+		if(m->file_name != get_file_name())
+			dependencies_.insert(std::move(m->file_name));
+	
+
+	return res;
 }
 
 
-program_context * processor_file_impl::parse(parse_lib_provider &, context::ctx_ptr ctx)
+parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::ctx_ptr ctx)
 {
 	diags().clear();
 	
 
 
-	analyzer_ = std::make_unique<analyzer>(get_text(), ctx);
+	analyzer_ = std::make_unique<analyzer>(get_text(), ctx, lib_provider, get_file_name());
 
-	//analyzer_->analyze();
-	auto ret = analyzer_->parser().program();
-	
+	analyzer_->analyze();
 	
 	collect_diags_from_child(*analyzer_);
 	
-	for (auto & it : diags())
-	{
-		it.file_name = get_file_name();
-	}
+	
 
 	sm_info_.clear();
 	//TODO add ICTL support
@@ -68,7 +72,7 @@ program_context * processor_file_impl::parse(parse_lib_provider &, context::ctx_
 	//collect semantic info
 	parse_info_updated_ = true;
 	
-	return ret;
+	return true;
 }
 
 bool processor_file_impl::parse_info_updated()
@@ -76,6 +80,11 @@ bool processor_file_impl::parse_info_updated()
 	bool ret = parse_info_updated_;
 	parse_info_updated_ = false;
 	return ret;
+}
+
+const std::set<std::string> & processor_file_impl::dependencies()
+{
+	return dependencies_;
 }
 
 }
