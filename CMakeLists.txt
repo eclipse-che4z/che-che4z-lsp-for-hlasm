@@ -34,6 +34,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: -DWITH_LIBCXX=On" On)
+option(BUILD_JNI_INTERFACE "Build java class that can be used to parse a file. To enable with: -DBUILD_JNI_INTERFACE=On" Off)
 
 if(CMAKE_VERSION VERSION_EQUAL "3.0.0" OR
    CMAKE_VERSION VERSION_GREATER "3.0.0")

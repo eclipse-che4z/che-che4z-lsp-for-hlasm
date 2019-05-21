@@ -5,7 +5,7 @@ namespace hlasm_plugin::parser_library
 {
 
 analyzer::analyzer(const std::string& text) : analyzer(text, std::make_shared<context::hlasm_context>(), empty_parse_lib_provider::instance, "") {}
-
+analyzer::analyzer(const std::string& text, std::string file_name) : analyzer(text, std::make_shared<context::hlasm_context>(file_name), empty_parse_lib_provider::instance, file_name) {}
 analyzer::analyzer(const std::string& text, context::ctx_ptr ctx, parse_lib_provider & lib_provider, std::string file_name)
 	: diagnosable_ctx(ctx),
 	ctx_(ctx), listener_(file_name), input_(text), lexer_(&input_), tokens_(&lexer_), parser_(&tokens_), mngr_(std::move(file_name), std::move(ctx), lib_provider)

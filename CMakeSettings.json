@@ -46,6 +46,17 @@
       "ctestCommandArgs": ""
     },
     {
+      "name": "JNI-x64-Release",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DBUILD_JNI_INTERFACE=On",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
       "name": "Linux-Debug",
       "generator": "Unix Makefiles",
       "remoteMachineName": "${defaultRemoteMachineName}",

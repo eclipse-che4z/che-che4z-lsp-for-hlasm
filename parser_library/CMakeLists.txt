@@ -19,13 +19,9 @@ set(GENERATED_SRC
    ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserVisitor.cpp
  )
 
-foreach( src_file ${GENERATED_SRC} )
-      set_source_files_properties(
-          ${src_file}
-          PROPERTIES
-          GENERATED TRUE
-          )
-endforeach( src_file ${GENERATED_SRC} )
+include(tag_generated_files.cmake)
+
+
 
 add_custom_target(GenerateParser DEPENDS ${GENERATED_SRC})
 add_custom_command(OUTPUT ${GENERATED_SRC}
@@ -118,7 +114,9 @@ ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build ev
 add_dependencies(parser_library antlr4jar GenerateParser)
 add_dependencies(parser_library jsonrpcppext)
 
-
+if(BUILD_JNI_INTERFACE)
+	add_subdirectory(jni)
+endif()
 
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp

@@ -53,3 +53,5 @@ parser_library/test/res/output/tokens/correctness.output
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+parser_library/jni/generated/

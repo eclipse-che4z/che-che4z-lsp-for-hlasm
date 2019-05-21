@@ -28,6 +28,7 @@ class analyzer : public diagnosable_ctx
 
 public:
 	analyzer(const std::string& text);
+	analyzer(const std::string& text, std::string file_name);
 	analyzer(const std::string& text, context::ctx_ptr ctx, parse_lib_provider & lib_provider, std::string file_name);
 
 	context::ctx_ptr context();

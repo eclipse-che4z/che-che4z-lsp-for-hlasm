@@ -1,0 +1,3 @@
+[submodule "parser_library/jni/HlasmPlugin-JNI"]
+	path = parser_library/jni/HlasmPlugin-JNI
+	url = ../../mb890989/HlasmPlugin-JNI
