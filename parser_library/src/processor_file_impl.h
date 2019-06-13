@@ -14,23 +14,21 @@ public:
 	processor_file_impl(file_impl &&);
 	void collect_diags() const override;
 	bool is_once_only() const override;
-
 	//starts parser with new (empty) context
 	parse_result parse(parse_lib_provider &);
 	//starts parser with in the context of parameter
 	parse_result parse(parse_lib_provider &, context::ctx_ptr);
-
-	semantics::semantic_info & semantic_info();
 
 	bool parse_info_updated() override;
 
 	const std::set<std::string> & dependencies() override;
 
 	virtual ~processor_file_impl() = default;
+	virtual const file_highlighting_info get_hl_info();
+	virtual const semantics::lsp_info_processor get_lsp_info();
 private:
 	std::unique_ptr<analyzer> analyzer_;
 
-	semantics::semantic_info sm_info_;
 	bool parse_info_updated_ = false;
 
 	std::set<std::string> dependencies_;

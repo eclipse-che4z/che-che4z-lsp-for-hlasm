@@ -36,6 +36,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
 set(LIB_NOT_EXPORTED_SRC    
     ${PROJECT_SOURCE_DIR}/src/context/common_types.cpp
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_context.cpp
+	${PROJECT_SOURCE_DIR}/src/context/lsp_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
     ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
@@ -54,7 +55,7 @@ set(LIB_NOT_EXPORTED_SRC
     ${PROJECT_SOURCE_DIR}/src/semantics/macro_def_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/expression_visitor.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
+    ${PROJECT_SOURCE_DIR}/src/semantics/lsp_info_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
@@ -63,11 +64,9 @@ set(LIB_NOT_EXPORTED_SRC
 	${PROJECT_SOURCE_DIR}/src/parser_error_listener.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
-	${PROJECT_SOURCE_DIR}/src/semantics/semantic_info.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
-	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/assembler_instruction.cpp
-	
+	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
 	${PROJECT_SOURCE_DIR}/src/analyzer.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/collector.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/context_manager.cpp

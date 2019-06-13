@@ -16,7 +16,7 @@ hlasm_context::hlasm_context() : hlasm_context("")
 	
 }
 
-hlasm_context::hlasm_context(std::string file_name) : top_level_file_name_(std::move(file_name)), empty_id(ids.add(object_traits<C_t>::default_v()))
+hlasm_context::hlasm_context(std::string file_name) : top_level_file_name_(std::move(file_name)), empty_id(ids.add(object_traits<C_t>::default_v())), lsp_ctx(std::make_shared<lsp_context>())
 {
 	scope_stack_.push_back(code_scope());
 }

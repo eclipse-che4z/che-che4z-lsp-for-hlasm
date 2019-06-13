@@ -8,46 +8,6 @@ using namespace hlasm_plugin::parser_library;
 
 hlasm_plugin::parser_library::parser_impl::parser_impl(antlr4::TokenStream * input) : Parser(input) {}
 
-semantics::symbol_occurence parser_impl::create_occurence(semantics::symbol_range range, std::string name, bool make_it_candidate)
-{
-	return { range, name, file_name, current_macro_def.name, make_it_candidate };
-}
-
-bool parser_impl::is_var_definition(const semantics::symbol_occurence & occ)
-{
-	std::string var_sym_def_instr_label[] = { "SETA", "SETB", "SETC" };
-	std::string var_sym_def_instr_op[] = { "LCLA", "LCLB", "LCLC", "GBLA","GBLB","GBLC" };
-
-	return ((std::find(std::begin(var_sym_def_instr_label), std::end(var_sym_def_instr_label), collector.current_instruction().ordinary_name) != std::end(var_sym_def_instr_label) && collector.current_label().variable_symbol.name == occ.name)
-		|| (std::find(std::begin(var_sym_def_instr_op), std::end(var_sym_def_instr_op), collector.current_instruction().ordinary_name) != std::end(var_sym_def_instr_op) && std::find_if(collector.current_operands_and_remarks().operands.begin(), collector.current_operands_and_remarks().operands.end(), [&occ](auto && operand) { return operand->range == occ.range;  }) != collector.current_operands_and_remarks().operands.end())
-		|| current_macro_def.just_defined);
-}
-
-bool parser_impl::is_seq_definition(const semantics::symbol_occurence & occ)
-{
-	return occ.range.begin_col == 0;
-}
-
-void parser_impl::check_definition_candidates()
-{
-	semantics::symbol_occurence * current;
-	for (size_t i = 0; i <  semantic_info.var_symbols.occurences.size(); ++i)
-	{
-		current = &semantic_info.var_symbols.occurences[i];
-		if (current->candidate && is_var_definition(*current))
-		{
-			current->scope = current_macro_def.name;
-			current->candidate = false;
-			semantic_info.var_symbols.definitions.push_back(*current);
-			semantic_info.var_symbols.occurences.erase(semantic_info.var_symbols.occurences.begin() + i);
-			--i;
-		}
-		else
-			current->candidate = false;
-	}
-	current_macro_def.just_defined = false;
-}
-
 bool hlasm_plugin::parser_library::parser_impl::is_last_line()
 {
 	return dynamic_cast<lexer*>(_input->getTokenSource())->is_last_line();
@@ -64,7 +24,7 @@ semantics::operand_remark_semantic_info hlasm_plugin::parser_library::parser_imp
 	semantics::operand_remark_semantic_info ret;
 
 	input_source input(std::move(field));
-	hlasm_plugin::parser_library::lexer lex(&input);
+	hlasm_plugin::parser_library::lexer lex(&input,lsp_proc);
 	lex.set_unlimited_line(true);
 	token_stream tokens(&lex);
 	generated::hlasmparser operand_parser(&tokens);
@@ -82,9 +42,10 @@ hlasm_plugin::parser_library::location hlasm_plugin::parser_library::parser_impl
 	return dynamic_cast<lexer*>(_input->getTokenSource())->last_lln_begin_location();
 }
 
-void hlasm_plugin::parser_library::parser_impl::initialize(semantics::processing_manager* proc_mngr)
+void hlasm_plugin::parser_library::parser_impl::initialize(semantics::processing_manager* proc_mngr,semantics::lsp_info_processor* lsp_prc)
 {
 	mngr = proc_mngr;
+	lsp_proc = lsp_prc;
 }
 
 void parser_impl::enable_continuation()
@@ -106,26 +67,13 @@ bool parser_impl::is_self_def()
 
 void hlasm_plugin::parser_library::parser_impl::process_instruction()
 {
-	if (!collector.current_instruction().ordinary_name.empty())
-	{
-		if (current_macro_def.just_defined)
-		{
-			current_macro_def.name = collector.current_instruction().ordinary_name;
-			check_definition_candidates();
-		}
-		else if (collector.current_instruction().ordinary_name == "MACRO")
-			current_macro_def.just_defined = true;
-		else if (collector.current_instruction().ordinary_name == "MEND")
-			current_macro_def.name = "";
-		else
-			check_definition_candidates();
-	}
-
 	mngr->process_instruction(collector.extract_instruction_field());
 }
 
 void hlasm_plugin::parser_library::parser_impl::process_statement()
 {
 	mngr->process_statement(collector.extract_statement());
+	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
+	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
 	collector.prepare_for_next_statement();
 }

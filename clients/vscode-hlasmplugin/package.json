@@ -22,14 +22,14 @@
 	"main": "./lib/extension.js",
 	"typings": "./lib/extension",
 	"engines": {
-		"vscode": "^1.30.1"
+		"vscode": "^1.32.3"
 	},
 	"devDependencies": {
 		"vsce": "^1.52.0",
 		"shelljs": "^0.8.2",
 		"shx": "^0.3.2",
 		"typescript": "^3.1.5",
-		"vscode": "^1.1.26"
+		"vscode": "^1.1.33"
 	},
 	"dependencies": {
 		"vscode-languageclient": "^5.2.1",
@@ -60,42 +60,52 @@
 				"firstLine": " *MACRO *"
 			}
 		],
+		"configurationDefaults": {
+			"[hlasm]": {
+				"editor.rulers": [
+					72
+				],
+				"editor.wordBasedSuggestions": false
+			}
+		},
 		"keybindings": [
 			{
 				"command": "insertContinuation",
-				"key": "shift+enter"
+				"key": "shift+alt+enter",
+				"when": "editorLangId == hlasm"
 			},
 			{
 				"command": "removeContinuation",
-				"key": "shift+backspace"
+				"key": "shift+alt+backspace",
+				"when": "editorLangId == hlasm"
 			},
 			{
 				"key": "backspace",
 				"command": "deleteLeftCont",
-				"when": "editorTextFocus && !editorReadonly"
+				"when": "editorTextFocus && !editorReadonly && editorLangId == hlasm"
 			},
 			{
 				"key": "delete",
 				"command": "deleteRightCont",
-				"when": "editorTextFocus && !editorReadonly"
+				"when": "editorTextFocus && !editorReadonly && editorLangId == hlasm"
 			}
 		],
 		"configuration": {
 			"type": "object",
 			"title": "hlasmplugin configuration",
 			"properties": {
-				"hlasmplugin.highlightColors": {
+				"semanticHighlightingColors": {
 					"type": "array",
 					"default": [
-						{
-							"id": "ignored",
-							"description": "Color for ignored characters",
-							"hex": "#b0a6c9"
-						},
 						{
 							"id": "comment",
 							"description": "Color for comments",
 							"hex": "#4c9b3f"
+						},
+						{
+							"id": "ignored",
+							"description": "Color for ignored characters",
+							"hex": "#b0a6c9"
 						},
 						{
 							"id": "continuation",
@@ -103,24 +113,14 @@
 							"hex": "#5fffff"
 						},
 						{
-							"id": "label",
-							"description": "Color for labels",
-							"hex": "#ffff00"
-						},
-						{
-							"id": "instruction",
-							"description": "Color for instructions",
-							"hex": "#ff0000"
-						},
-						{
-							"id": "operand",
-							"description": "Color for operands",
-							"hex": "#797979"
-						},
-						{
 							"id": "remark",
 							"description": "Color for remarks",
 							"hex": "#06aed8"
+						},
+						{
+							"id": "varSymbol",
+							"description": "Color for variable symbols",
+							"hex": "#ee4f7c"
 						},
 						{
 							"id": "string",
@@ -138,14 +138,24 @@
 							"hex": "#8b7d6b"
 						},
 						{
-							"id": "varSymbol",
-							"description": "Color for variable symbols",
-							"hex": "#ee4f7c"
+							"id": "label",
+							"description": "Color for labels",
+							"hex": "#ffff00"
 						},
 						{
 							"id": "operator",
 							"description": "Color for operators",
 							"hex": "#f5e5c2"
+						},
+						{
+							"id": "instruction",
+							"description": "Color for instructions",
+							"hex": "#ff0000"
+						},
+						{
+							"id": "operand",
+							"description": "Color for operands",
+							"hex": "#797979"
 						}
 					]
 				},

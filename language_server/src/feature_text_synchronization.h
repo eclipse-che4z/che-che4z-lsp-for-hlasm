@@ -34,7 +34,7 @@ private:
 	void on_did_close(const parameter & params);
 
 	// Inherited via semantic_consumer
-	virtual void consume_highlighting_info(parser_library::all_semantic_info info) override;
+	virtual void consume_highlighting_info(parser_library::all_highlighting_info info) override;
 
 	notify_callback notify_;
 };

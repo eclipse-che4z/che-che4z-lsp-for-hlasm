@@ -77,6 +77,10 @@ public:
 	static const std::vector<machine_instruction> machine_instructions;
 	
 	static const std::vector<extended_mnemonic_codes> mnemonic_codes;
+
+	static const std::map<operand_format, std::string> op_format_to_string;
+
+	static const std::map<mach_format, std::string> mach_format_to_string;
 };
 
 }

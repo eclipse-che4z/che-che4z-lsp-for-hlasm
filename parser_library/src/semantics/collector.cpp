@@ -3,7 +3,7 @@
 
 using namespace hlasm_plugin::parser_library::semantics;
 
-hlasm_plugin::parser_library::semantics::collector::collector() : instruction_extracted_(false), statement_extracted_(false)
+hlasm_plugin::parser_library::semantics::collector::collector() : instruction_extracted_(false), statement_extracted_(false), lsp_symbols_extracted_(false), hl_symbols_extracted_(false)
 {
 }
 
@@ -132,6 +132,16 @@ void hlasm_plugin::parser_library::semantics::collector::set_statement_range(sym
 	stmt_.range = range;
 }
 
+void hlasm_plugin::parser_library::semantics::collector::add_lsp_symbol(lsp_symbol symbol)
+{
+	lsp_symbols_.push_back(std::move(symbol));
+}
+
+void hlasm_plugin::parser_library::semantics::collector::add_hl_symbol(token_info symbol)
+{
+	hl_symbols_.push_back(std::move(symbol));
+}
+
 instruction_semantic_info&& hlasm_plugin::parser_library::semantics::collector::extract_instruction_field()
 {
 	if (instruction_extracted_)
@@ -150,9 +160,31 @@ statement&& hlasm_plugin::parser_library::semantics::collector::extract_statemen
 	return std::move(stmt_);
 }
 
+std::vector<lsp_symbol>&& hlasm_plugin::parser_library::semantics::collector::extract_lsp_symbols()
+{
+	if (lsp_symbols_extracted_)
+		throw std::runtime_error("bad operation");
+
+	lsp_symbols_extracted_ = true;
+	return std::move(lsp_symbols_);
+}
+
+std::vector<hlasm_plugin::parser_library::token_info>&& hlasm_plugin::parser_library::semantics::collector::extract_hl_symbols()
+{
+	if (hl_symbols_extracted_)
+		throw std::runtime_error("bad operation");
+
+	hl_symbols_extracted_ = true;
+	return std::move(hl_symbols_);
+}
+
 void hlasm_plugin::parser_library::semantics::collector::prepare_for_next_statement()
 {
 	instruction_extracted_ = false;
 	statement_extracted_ = false;
+	lsp_symbols_extracted_ = false;
+	hl_symbols_extracted_ = false;
 	stmt_ = statement();
+	lsp_symbols_.clear();
+	hl_symbols_.clear();
 }

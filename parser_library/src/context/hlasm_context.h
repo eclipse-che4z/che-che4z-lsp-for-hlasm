@@ -5,6 +5,7 @@
 #include <deque>
 #include <set>
 
+#include "lsp_context.h"
 #include "code_scope.h"
 #include "id_storage.h"
 #include "macro.h"
@@ -38,6 +39,7 @@ class hlasm_context
 	std::string top_level_file_name_;
 
 	called_macros_storage called_macros_;
+
 public:
 
 	hlasm_context();
@@ -146,6 +148,7 @@ public:
 
 	const called_macros_storage & get_called_macros();
 
+	lsp_ctx_ptr lsp_ctx;
 };
 
 using ctx_ptr = std::shared_ptr<hlasm_context>;

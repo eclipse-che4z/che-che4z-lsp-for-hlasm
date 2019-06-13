@@ -9,35 +9,55 @@ import {
 	TextDocumentRegistrationOptions, ClientCapabilities, ServerCapabilities, DocumentSelector, NotificationHandler,
 } from 'vscode-languageserver-protocol';
 
-import {SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingInformation} from './protocol.semanticHighlighting'
+import {SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingInformation, SemanticHighlightingClientCapabilities} from './protocol.semanticHighlighting'
 
 import * as UUID from '../node_modules/vscode-languageclient/lib/utils/uuid';
-import { TextDocumentFeature, BaseLanguageClient } from 'vscode-languageclient';
+import { TextDocumentFeature, BaseLanguageClient, LanguageClient } from 'vscode-languageclient';
+
+export declare type ExtendedClientCapabilities = ClientCapabilities & SemanticHighlightingClientCapabilities;
+
+export class ExtendedLanguageClient extends LanguageClient
+{
+	semanticHighlighting: SemanticHighlightingFeature;
+	protected registerBuiltinFeatures() : void
+	{
+		var semanticHighlighting = new SemanticHighlightingFeature(this);
+		super.registerBuiltinFeatures();
+		this.registerFeature(semanticHighlighting);
+		this.semanticHighlighting = semanticHighlighting;
+	}
+
+	public applyDecorations(){
+		this.semanticHighlighting.applyDecorations();
+	}
+}
+
+export { SemanticHighlightingParams }
+
+export * from 'vscode-languageclient'
+
+type scope = string;
+type uri = string;
 
 export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	protected readonly toDispose: Disposable[];
-	protected readonly decorations: Map<string, any>;
 	protected readonly handlers: NotificationHandler<SemanticHighlightingParams>[];
-	protected decorationTypes: decorationType[];
-	protected definedEditors: editorDecorations[];
-	protected continuedLines: continuedLine[]; 
-	protected continueColumnPosition: Map<string,number>;
+	// map of possible decoration types: scope of symbol -> color of scope
+	protected decorationTypes: Map<scope,decorationType>;
+	// map: document -> its decorations (map: scope of symbol -> ranges of scope)
+	protected definedEditors: Map<uri,Map<scope,Range[]>>;
 	constructor(client: BaseLanguageClient) {
 		super(client, SemanticHighlightingNotification.type);
 		this.toDispose = [];
-		this.decorations = new Map();
 		this.handlers = [];
-		this.decorationTypes = [];
-		this.definedEditors = [];
-		this.continuedLines = []
-		this.continueColumnPosition = new Map();
-		this.toDispose.push({ dispose: () => this.decorations.clear() });
+		this.decorationTypes = new Map();
+		this.definedEditors = new Map();
+		this.toDispose.push({ dispose: () => this.definedEditors.clear() });
 		this.toDispose.push(workspace.onDidCloseTextDocument(e => {
 			const uri = e.uri.toString();
-			if (this.decorations.has(uri)) {
-				// TODO: do the proper disposal of the decorations.
-				this.decorations.delete(uri);
+			if (this.definedEditors.has(uri)) {
+				this.definedEditors.delete(uri);
 			}
 		}));
 	}
@@ -47,8 +67,13 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		super.dispose();
 	}
 
-	fillClientCapabilities(capabilities: ClientCapabilities): void {
-
+	fillClientCapabilities(capabilities: ExtendedClientCapabilities): void {
+		if (!!capabilities.textDocument) {
+			capabilities.textDocument = {};
+		}
+		capabilities.textDocument!.semanticHighlightingCapabilities = {
+			semanticHighlighting: true
+		};
 	}
 
 
@@ -57,20 +82,14 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 			return;
 		}
 		this.updateColors();
+
 		const id = UUID.generateUuid();
 		this.register(this.messages, {
 			id,
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
 	}
-	getColor(name: string)
-    {
-		var found = workspace.getConfiguration().hlasmplugin.highlightColors.find((color: any) => color.id == name);
-		if (found)
-			return found.hex;
-		else
-			return "#ffffff";
-    }
+	
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
 		if (options.documentSelector === null) {
 			return new Disposable(() => { });
@@ -97,115 +116,61 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 	}
 
 	public applyDecorations(params?: SemanticHighlightingParams): void {
-		if (params)
-		{
-			var tempMap = new Map();
-			this.continueColumnPosition.set(params.textDocument.uri, params.continuationPositions[0][1]);
-			tempMap.set(-1, params.continuationPositions[0][0]);
-			params.continuationPositions.shift();
-			params.continuationPositions.forEach((position: number[]) => {
-				tempMap.set(position[0],position[1]);
-			});
-			var continuationIndex = this.continuedLines.findIndex((continuedLine) => params.textDocument.uri == continuedLine.documentUri);
-			if (continuationIndex != -1)
-				this.continuedLines[continuationIndex].continuationPositions = tempMap;
-			else
-				this.continuedLines.push(new continuedLine(params.textDocument.uri, tempMap));
-		}
-		window.visibleTextEditors.forEach(editor =>
-		{
-			var editorIndex = this.definedEditors.findIndex(definedEditor => definedEditor.documentUri == editor.document.uri.toString());
-			if (params && params.textDocument.uri == editor.document.uri.toString())
-			{
-				if (editorIndex != -1)
-				{
-					this.definedEditors[editorIndex].decorationRanges.clear();
+		// update colors from config
+		this.updateColors();
+		// for each visible editor
+		window.visibleTextEditors.forEach(editor => {
+			// find the decorations of current editor
+			var decors = this.definedEditors.get(editor.document.uri.toString());
+			// check whether current editor matches editor from params
+			if (params && params.textDocument.uri == editor.document.uri.toString()) {
+				// editor found, clear its decorations
+				if (decors == undefined) {
+					this.definedEditors.set(params.textDocument.uri, new Map<scope,Range[]>());
+					decors = this.definedEditors.get(params.textDocument.uri);
 				}
-				else
-				{
-					this.definedEditors.push(new editorDecorations(params.textDocument.uri));
-					editorIndex = this.definedEditors.length - 1;
-				}
-				this.decorationTypes.forEach(type => {
-					this.definedEditors[editorIndex].decorationRanges.set(type.scope, []);
-				});
+				// clear ranges
+				Array.from(this.decorationTypes.keys()).forEach(scope => {
+					decors.set(scope,[]);
+				})
+				// add range for each token to its corresponding scope
 				params.tokens.forEach(token => {
-					var lexOffset = (token.scope == "continuation" || token.scope == "ignored" || token.scope == "comment") ? 1 : 0;
-					this.definedEditors[editorIndex].decorationRanges.get(token.scope)!.push(new Range(new Position(token.lineStart, token.columnStart), new Position(token.lineEnd, token.columnEnd + lexOffset)));
+					decors.get(token.scope)!.push(new Range(new Position(token.lineStart, token.columnStart), new Position(token.lineEnd, token.columnEnd)));
 				});
 			}
 			
-			if (editorIndex != -1)
-			{
-				this.definedEditors[editorIndex].decorationRanges.forEach((value: Range[], key: string) =>
-				{
-					editor.setDecorations(this.decorationTypes.find(type => type.scope == key)!.type, value);
+			// draw decorations of visible editor (whether it is in params or not)
+			if (decors !== undefined) {
+				// for each of its saved decorations, draw them
+				decors.forEach((ranges: Range[], scope: string) => {
+					editor.setDecorations(this.decorationTypes.get(scope).type,ranges);
 				});
 			}
 		});
 	}
 
-    public updateColors()
-    {
-        this.decorationTypes = [
-			new decorationType("comment", window.createTextEditorDecorationType({ color: this.getColor("comment") })),
-			new decorationType("ignored", window.createTextEditorDecorationType({ color: this.getColor("ignored") })),
-			new decorationType("continuation", window.createTextEditorDecorationType({ color: this.getColor("continuation") })),
-			new decorationType("remark", window.createTextEditorDecorationType({ color: this.getColor("remark") })),
-			new decorationType("varSymbol", window.createTextEditorDecorationType({ color: this.getColor("varSymbol") })),
-			new decorationType("string", window.createTextEditorDecorationType({ color: this.getColor("string") })),
-			new decorationType("number", window.createTextEditorDecorationType({ color: this.getColor("number") })),
-			new decorationType("seqSymbol", window.createTextEditorDecorationType({ color: this.getColor("seqSymbol") })),
-			new decorationType("label", window.createTextEditorDecorationType({ color: this.getColor("label") })),
-			new decorationType("operator", window.createTextEditorDecorationType({ color: this.getColor("operator") })),
-			new decorationType("instruction", window.createTextEditorDecorationType({ color: this.getColor("instruction") })),
-			new decorationType("operand", window.createTextEditorDecorationType({ color: this.getColor("operand") }))
-		];
-    }
-
-	protected decorationType(options: DecorationRenderOptions = {}) {
-		return window.createTextEditorDecorationType(options);
-	}
-
-	protected map2Decoration(lines: SemanticHighlightingInformation[]): [TextEditorDecorationType, Range[]] {
-		console.log('TODO: Map the lines (and the tokens) to the desired decoration type.', lines);
-		return [this.decorationType(), []];
-	}
-	public getContinuation(line: number, uri: string) {
-		var foundLine = this.continuedLines.find((continuedLine) => continuedLine.documentUri == uri);
-		return (foundLine && foundLine.continuationPositions.get(line)) ? foundLine.continuationPositions.get(line) : -1;
-	}
-	public getContinueColumn(uri: string)
-	{
-		return this.continueColumnPosition.get(uri);
-	}
-}
-
-class editorDecorations
-{
-	public documentUri: string;
-	public decorationRanges: Map<string, Range[]>
-    constructor(documentUri: string)
-    {
-        this.documentUri = documentUri;
-        this.decorationRanges = new Map();
+    public updateColors() {
+		// get colors from config
+		var colors = workspace.getConfiguration().semanticHighlightingColors;
+		if (colors != null) {
+			// wipe all the decorations (clean)
+			this.decorationTypes.forEach(type => {
+				type.type.dispose();
+			});
+			// for each color, create its decoration
+			for (let color of colors) {
+				this.decorationTypes.set(color.id,new decorationType(color.hex));
+			}
+		}
     }
 }
+
 class decorationType {
-	public scope: string;
 	public type: TextEditorDecorationType;
-    constructor(scope: string, type:TextEditorDecorationType)
+	public hex: string;
+    constructor(hex:string)
     {
-        this.scope = scope;
-        this.type = type;
-	}
-}
-class continuedLine {
-	public documentUri: string;
-	public continuationPositions: Map<number,number>;
-    constructor(documentUri: string, continuationPositions: Map<number,number>)
-    {
-		this.documentUri = documentUri;
-		this.continuationPositions = continuationPositions;
+		this.type = window.createTextEditorDecorationType({color:hex});
+		this.hex = hex;
 	}
 }

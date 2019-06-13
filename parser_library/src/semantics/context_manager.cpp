@@ -452,6 +452,13 @@ op_code_info context_manager::get_opcode_info(std::string name)
 
 	auto id = get_id(std::move(name));
 
+	auto info = instructions.find(id);
+
+	if (info != instructions.end())
+	{
+		return { id, info->second.type,info->second.no_ops };
+	}
+
 	if (ctx().macros().find(id) != ctx().macros().end())
 	{
 		return { id,instruction_type::MAC,false };
@@ -465,13 +472,6 @@ op_code_info context_manager::get_opcode_info(std::string name)
 		{
 			return { id,instruction_type::MAC,false };
 		}
-	}
-
-	auto info = instructions.find(id);
-
-	if (info != instructions.end())
-	{
-		return { id, info->second.type,info->second.no_ops };
 	}
 
 	return op_code_info();

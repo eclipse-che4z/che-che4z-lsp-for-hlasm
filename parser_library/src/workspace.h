@@ -9,7 +9,6 @@
 
 #include "file_manager.h"
 #include "library.h"
-#include "semantics/semantic_info.h"
 #include "diagnosable_impl.h"
 #include "processor_group.h"
 #include "processor.h"
@@ -20,7 +19,7 @@ namespace parser_library {
 using ws_uri = std::string;
 using proc_grp_id = std::string;
 using program_id = std::string;
-using ws_highlight_info = std::unordered_map< std::string, semantics::semantic_info >;
+using ws_highlight_info = std::unordered_map< std::string, semantics::highlighting_info >;
 
 //represents pair program => processor group - saves
 //information that a program uses certain processor group
@@ -57,7 +56,7 @@ public:
 
 	void did_change_file(const std::string document_uri, const document_change * changes, size_t ch_size);
 
-	virtual parse_result parse_library(const std::string & library, std::shared_ptr<context::hlasm_context> ctx) override;
+	virtual parse_result parse_library(const std::string & library, context::ctx_ptr ctx) override;
 
 	const ws_uri & uri();
 

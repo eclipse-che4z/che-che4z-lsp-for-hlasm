@@ -105,7 +105,7 @@ void feature_text_synchronization::on_did_close(const parameter & params)
 	ws_mngr_.did_close_file(uri_to_path(uri).c_str());
 }
 
-void feature_text_synchronization::consume_highlighting_info(parser_library::all_semantic_info info)
+void feature_text_synchronization::consume_highlighting_info(parser_library::all_highlighting_info info)
 {
 	auto f = info.files();
 	for (size_t i = 0; i < info.files_count(); i++)
@@ -118,40 +118,40 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 		{
 			switch (fi.token(j).scope)
 			{
-			case parser_library::semantics::scopes::label:
+			case parser_library::semantics::hl_scopes::label:
 				scope = "label";
 				break;
-			case parser_library::semantics::scopes::instruction:
+			case parser_library::semantics::hl_scopes::instruction:
 				scope = "instruction";
 				break;
-			case parser_library::semantics::scopes::remark:
+			case parser_library::semantics::hl_scopes::remark:
 				scope = "remark";
 				break;
-			case parser_library::semantics::scopes::comment:
+			case parser_library::semantics::hl_scopes::comment:
 				scope = "comment";
 				break;
-			case parser_library::semantics::scopes::ignored:
+			case parser_library::semantics::hl_scopes::ignored:
 				scope = "ignored";
 				break;
-			case parser_library::semantics::scopes::continuation:
+			case parser_library::semantics::hl_scopes::continuation:
 				scope = "continuation";
 				break;
-			case parser_library::semantics::scopes::operator_symbol:
+			case parser_library::semantics::hl_scopes::operator_symbol:
 				scope = "operator";
 				break;
-			case parser_library::semantics::scopes::seq_symbol:
+			case parser_library::semantics::hl_scopes::seq_symbol:
 				scope = "seqSymbol";
 				break;
-			case parser_library::semantics::scopes::var_symbol:
+			case parser_library::semantics::hl_scopes::var_symbol:
 				scope = "varSymbol";
 				break;
-			case parser_library::semantics::scopes::string:
+			case parser_library::semantics::hl_scopes::string:
 				scope = "string";
 				break;
-			case parser_library::semantics::scopes::number:
+			case parser_library::semantics::hl_scopes::number:
 				scope = "number";
 				break;
-			case parser_library::semantics::scopes::operand:
+			case parser_library::semantics::hl_scopes::operand:
 				scope = "operand";
 				break;
 			}
@@ -165,11 +165,11 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 		}
 
 		json continuations_array = json::array();
-		continuations_array.push_back(json{fi.continuation_column(), fi.continue_column()});
 		for (size_t j = 0; j < fi.continuation_count(); j++)
 		{
 			continuations_array.push_back(json{
-				fi.continuation(j).line, fi.continuation(j).column
+				{"line",fi.continuation(j).line},
+				{"continuationPosition",fi.continuation(j).column}
 			});
 		}
 
@@ -180,7 +180,17 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 				{ "version",fi.document_version() }
 		} },
 		{ "tokens", tokens_array },
-		{ "continuationPositions", continuations_array}
+		{"continuation",
+			json{
+				json{"global",
+					{
+						{"continueColumn",fi.continue_column()},
+						{"continuationColumn",fi.continuation_column()}
+					}
+				},
+				json{"continuationPositions",continuations_array}
+			}
+		}
 		};
 
 		if (callbacks_registered_)

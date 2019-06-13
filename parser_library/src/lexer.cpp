@@ -12,8 +12,8 @@ using namespace std;
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-lexer::lexer(input_source* input)
-	: input_(input)
+lexer::lexer(input_source* input,semantics::lsp_info_processor * lsp_proc)
+	: input_(input), lsp_proc_(lsp_proc)
 {
 	factory_ = std::make_unique<token_factory>();
 	ainsert_stream_ = make_unique<input_source>("");
@@ -185,18 +185,17 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 		token_start_state_.char_position_in_line_utf16,
 		input_state_->char_position_in_line_utf16));
 
-	auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 2 : input_state_->char_position_in_line_utf16 - 1;
+	auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 1 : input_state_->char_position_in_line_utf16;
 	switch (ttype)
 	{
 		case CONTINUATION:
-			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line,semantics::scopes::continuation));
-			semantic_info.continuation_positions.push_back(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16));
+			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::continuation));
 			break;
 		case IGNORED:
-			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line, semantics::scopes::ignored));
+			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::ignored));
 			break;
 		case COMMENT:
-			semantic_info.hl_info.lines.push_back(token_info(token_start_state_.line, token_start_state_.char_position_in_line_utf16, token_start_state_.line, stop_position_in_line, semantics::scopes::comment));
+			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::comment));
 			break;
 	}
 		

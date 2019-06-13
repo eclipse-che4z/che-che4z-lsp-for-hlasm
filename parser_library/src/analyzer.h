@@ -20,12 +20,11 @@ class analyzer : public diagnosable_ctx
 	parser_error_listener listener_;
 
 	input_source input_;
+	semantics::lsp_info_processor lsp_proc_;
 	lexer lexer_;
 	token_stream tokens_;
 	generated::hlasmparser parser_;
-
 	semantics::processing_manager mngr_;
-
 public:
 	analyzer(const std::string& text);
 	analyzer(const std::string& text, std::string file_name);
@@ -33,6 +32,7 @@ public:
 
 	context::ctx_ptr context();
 	generated::hlasmparser& parser();
+	semantics::lsp_info_processor& lsp_processor();
 
 	void analyze();
 

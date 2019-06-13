@@ -10,7 +10,7 @@
 #include <set>
 #include <string_view>
 #include "input_source.h"
-#include "../src/semantics/semantic_info.h"
+#include "../src/semantics/lsp_info_processor.h"
 #include "parser_library_export.h"
 #include "../src/common_structures.h"
 
@@ -24,7 +24,7 @@ namespace hlasm_plugin {
 		class PARSER_LIBRARY_EXPORT lexer : public antlr4::TokenSource
 		{
 		public:
-			lexer(input_source*);
+			lexer(input_source*,semantics::lsp_info_processor * lsp_proc);
 
 			lexer(const lexer &) = delete;
 			lexer& operator=(const lexer&) = delete;
@@ -32,8 +32,6 @@ namespace hlasm_plugin {
 			lexer(lexer &&) = delete;
 
 			virtual ~lexer() = default;
-
-			semantics::semantic_info semantic_info;
 
 			token_ptr nextToken() override;
 
@@ -129,6 +127,7 @@ namespace hlasm_plugin {
 			
 			std::unique_ptr<token_factory> factory_;
 			antlr4::CharStream* input_;
+			semantics::lsp_info_processor* lsp_proc_;
 
 			struct input_state
 			{

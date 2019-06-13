@@ -8,8 +8,48 @@
 
 namespace hlasm_plugin::parser_library {
 
+struct PARSER_LIBRARY_EXPORT string_array 
+{
+	string_array(const char** arr, size_t size);
+
+	const char** arr;
+	size_t size;
+};
+
 using version_t = uint64_t;
 using position_t = uint64_t;
+
+namespace context {
+	struct completion_item_s;
+}
+
+namespace semantics {
+	struct position_uri_s;
+	struct completion_list_s;
+}
+struct PARSER_LIBRARY_EXPORT completion_item
+{
+	completion_item(context::completion_item_s& info);
+
+	const char * label();
+	size_t kind();
+	const char * detail();
+	const char* documentation();
+	bool deprecated();
+	const char* insert_text();
+private:
+	context::completion_item_s& impl_;
+};
+
+struct PARSER_LIBRARY_EXPORT completion_list
+{
+	completion_list(semantics::completion_list_s& info);
+	bool is_incomplete();
+	completion_item item(size_t index);
+	size_t count();
+private:
+	semantics::completion_list_s & impl_;
+};
 
 struct PARSER_LIBRARY_EXPORT position
 {
@@ -22,9 +62,7 @@ struct PARSER_LIBRARY_EXPORT position
 	position_t line;
 	position_t column;
 };
-namespace semantics {
-	class position_uri_s;
-}
+
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
@@ -151,23 +189,22 @@ private:
 };
 
 namespace semantics {
-	struct semantic_highlighting_info;
-	class semantic_info;
+	struct highlighting_info;
 	struct symbol_range;
-	enum class PARSER_LIBRARY_EXPORT scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand };
+	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand };
 }
 
 struct PARSER_LIBRARY_EXPORT token_info
 {
-	token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::scopes scope) : token_range({ {line_start, column_start}, {line_end, column_end} }), scope(scope) {}
-	token_info(const semantics::symbol_range & range, semantics::scopes scope);
+	token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope);
+	token_info(const semantics::symbol_range & range, semantics::hl_scopes scope);
 	range token_range;
-	semantics::scopes scope;
+	semantics::hl_scopes scope;
 };
 
-struct PARSER_LIBRARY_EXPORT file_semantic_info
+struct PARSER_LIBRARY_EXPORT file_highlighting_info
 {
-	file_semantic_info(semantics::semantic_info & info);
+	file_highlighting_info(semantics::highlighting_info & info);
 
 	const char * document_uri();
 	version_t document_version();
@@ -179,19 +216,19 @@ struct PARSER_LIBRARY_EXPORT file_semantic_info
 	size_t continue_column();
 
 private:
-	semantics::semantic_info & impl;
+	semantics::highlighting_info & info;
 };
 
 class processor_file;
 using file_id = processor_file * ;
 
-struct PARSER_LIBRARY_EXPORT all_semantic_info
+struct PARSER_LIBRARY_EXPORT all_highlighting_info
 {
-	all_semantic_info(file_id * files, size_t files_count);
+	all_highlighting_info(file_id * files, size_t files_count);
 
 	file_id * files();
 	size_t files_count();
-	file_semantic_info file_info(file_id);
+	file_highlighting_info file_info(file_id);
 private:
 	file_id * files_;
 	size_t files_count_;

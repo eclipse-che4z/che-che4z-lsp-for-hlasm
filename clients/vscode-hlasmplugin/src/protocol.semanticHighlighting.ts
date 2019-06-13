@@ -11,9 +11,6 @@ import { VersionedTextDocumentIdentifier } from 'vscode-languageserver-types';
  * Parameters for the semantic highlighting (server-side) push notification.
  */
 export interface SemanticHighlightingParams {
-
-	// First array represents continue column position and general continuation position, the rest are pairs of lines-continuation positions (DBCS case)
-	continuationPositions: number[][];
 	/**
 	 * The text document that has to be decorated with the semantic highlighting information.
 	 */

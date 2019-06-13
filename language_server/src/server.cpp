@@ -56,19 +56,12 @@ void server::on_initialize(id id, const parameter & param)
 				{ "documentFormattingProvider", false },
 				{ "documentRangeFormattingProvider", false },
 				{ "codeActionProvider", false },
-				{ "completionProvider",
-					Json{
-							{ "resolveProvider", false },
-							{ "triggerCharacters",{ ".", ">", ":", "&" } }, //TODO
-						}
-				},
 				{ "signatureHelpProvider",
 					Json{
 							{ "triggerCharacters",{ "(", "," } },
 						}
 				},
 				{ "documentHighlightProvider", false },
-				{ "hoverProvider", false },
 				{ "renameProvider", false },
 				{ "documentSymbolProvider", false },
 				{ "workspaceSymbolProvider", false }

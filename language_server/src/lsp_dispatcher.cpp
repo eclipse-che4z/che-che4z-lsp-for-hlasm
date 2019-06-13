@@ -33,11 +33,8 @@ void lsp_dispatcher::write_message(const std::string & in)
 
 void lsp_dispatcher::reply(id id, const  Json & result)
 {
-	if (!result.is_null())
-	{
-		jsonrpcpp::Response response{ id, result };
-		write_message(response.to_json().dump());
-	}
+	jsonrpcpp::Response response{ id, result };
+	write_message(response.to_json().dump());
 }
 
 void lsp_dispatcher::reply_error(id id, const error & error)

@@ -30,7 +30,6 @@ class processing_manager : public diagnosable_ctx
 
 	statement_processor* current_processor_;
 
-
 	std::string file_name_;
 public:
 	processing_manager(context::ctx_ptr ctx);

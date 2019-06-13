@@ -6,13 +6,12 @@
 namespace hlasm_plugin::parser_library {
 
 processor_file_impl::processor_file_impl(std::string file_name) :
-	file_impl(std::move(file_name)),
-	sm_info_(get_file_name())
+	file_impl(std::move(file_name))
 {
 }
 
 processor_file_impl::processor_file_impl(file_impl && f_impl) :
-	file_impl(std::move(f_impl)), sm_info_(get_file_name())
+	file_impl(std::move(f_impl))
 {
 }
 
@@ -24,11 +23,6 @@ void processor_file_impl::collect_diags() const
 bool processor_file_impl::is_once_only() const
 {
 	return false;
-}
-
-semantics::semantic_info & processor_file_impl::semantic_info()
-{
-	return sm_info_;
 }
 
 parse_result processor_file_impl::parse(parse_lib_provider & find_provider)
@@ -49,8 +43,6 @@ parse_result processor_file_impl::parse(parse_lib_provider & find_provider)
 parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::ctx_ptr ctx)
 {
 	diags().clear();
-	
-
 
 	analyzer_ = std::make_unique<analyzer>(get_text(), ctx, lib_provider, get_file_name());
 
@@ -58,17 +50,10 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, conte
 	
 	collect_diags_from_child(*analyzer_);
 	
-	
+	//TO DO ICTL
+	analyzer_->lsp_processor().get_hl_info().cont_info.continue_column = 15;
+	analyzer_->lsp_processor().get_hl_info().cont_info.continuation_column = 71;
 
-	sm_info_.clear();
-	//TODO add ICTL support
-	sm_info_.clear();
-	sm_info_.continue_column = 15;
-	sm_info_.continuation_column = 71;
-	sm_info_.merge(dynamic_cast<lexer*>( analyzer_->parser().getTokenStream()->getTokenSource())->semantic_info);
-	sm_info_.merge(analyzer_->parser().semantic_info);
-
-	sm_info_.hl_info.document.version = get_version();
 	//collect semantic info
 	parse_info_updated_ = true;
 	
@@ -85,6 +70,16 @@ bool processor_file_impl::parse_info_updated()
 const std::set<std::string> & processor_file_impl::dependencies()
 {
 	return dependencies_;
+}
+
+const file_highlighting_info processor_file_impl::get_hl_info()
+{
+	return analyzer_->lsp_processor().get_hl_info();
+}
+
+const semantics::lsp_info_processor processor_file_impl::get_lsp_info()
+{
+	return analyzer_->lsp_processor();
 }
 
 }

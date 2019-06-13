@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import * as path from 'path'
-import { SemanticHighlightingFeature } from './semanticHighlighting'
+import { ASMSemanticHighlightingFeature } from './ASMsemanticHighlighting'
 /**
  * Method to get workspace configuration option
  * @param option name of the option (e.g. for hlasmplugin.path should be path)
@@ -12,7 +12,7 @@ function getConfig<T>(option: string, defaultValue?: any): T {
     return config.get<T>(option, defaultValue);
 }
 
-var highlight: SemanticHighlightingFeature;
+var highlight: ASMSemanticHighlightingFeature;
 
 function findSpace(textLine: vscode.TextLine, currentPosition: number, continuationPosition: number)
 {
@@ -20,6 +20,7 @@ function findSpace(textLine: vscode.TextLine, currentPosition: number, continuat
     var spacePosition = text.lastIndexOf(" ");
     return (spacePosition == -1) ? null : new vscode.Range(new vscode.Position(textLine.lineNumber, spacePosition+currentPosition), new vscode.Position(textLine.lineNumber, spacePosition+currentPosition+1));
 }
+
 /**
  *  this method is called when your extension is activate
  *  your extension is activated the very first time the command is executed
@@ -50,15 +51,17 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
-    highlight = new SemanticHighlightingFeature(hlasmpluginClient);
+    highlight = new ASMSemanticHighlightingFeature(hlasmpluginClient);
     hlasmpluginClient.registerFeature(highlight);
     console.log('Hlasmplugin Language Server is now active!');
 
     const disposable = hlasmpluginClient.start();
-
+    
     var editor: vscode.TextEditor;
     var currentPosition: vscode.Position;
     var continuationOffset: number;
+    var isInstruction = new RegExp("^(\\S)*\\s+\\S*$");
+    var isTrigger = new RegExp("^[a-zA-Z\*]+$");
 
     function initialize(globalContinuationOffset: boolean = false)
     {
@@ -74,6 +77,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand("type", (args: {text: string}) => {
         initialize();
+        var currentLine = editor.document.getText(new vscode.Range(new vscode.Position(currentPosition.line,0), currentPosition));
+        var notContinued = currentPosition.line == 0 || highlight.getContinuation(currentPosition.line - 1,editor.document.uri.toString()) == -1;
+        if (((isTrigger.test(args.text) && isInstruction.test(currentLine) && notContinued && currentLine != "" && currentLine[0] != "*") || args.text == "." || args.text == "&") && editor.document.languageId == "hlasm") {
+            vscode.commands.executeCommand('editor.action.triggerSuggest');
+        }
         if (currentPosition.line != editor.selection.anchor.line || currentPosition.character != editor.selection.anchor.character)
         {
             editor.edit(function (edit: vscode.TextEditorEdit) {
@@ -161,6 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
                 new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
         });
     });
+
     vscode.commands.registerCommand("insertContinuation", () => {
         initialize(true);
         var continueColumn = highlight.getContinueColumn(editor.document.uri.toString());
@@ -200,8 +209,3 @@ export function activate(context: vscode.ExtensionContext) {
 vscode.window.onDidChangeVisibleTextEditors(() => {
     highlight.applyDecorations();
 });
-
-vscode.workspace.onDidChangeConfiguration( (change: vscode.ConfigurationChangeEvent) => {
-    if (change.affectsConfiguration("hlasmplugin.highlightColors"))
-      {highlight.updateColors();}
-})

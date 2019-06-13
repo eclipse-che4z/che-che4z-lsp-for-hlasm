@@ -52,7 +52,11 @@ processor_file * file_manager_impl::add_processor_file(const file_uri & uri)
 
 file * file_manager_impl::find(const std::string & key)
 {
-	return files_.find(key)->second.get();
+	auto ret = files_.find(key);
+	if (ret == files_.end())
+		return nullptr;
+
+	return ret->second.get();
 }
 
 processor_file * file_manager_impl::find_processor_file(const std::string & key)

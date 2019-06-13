@@ -23,8 +23,9 @@ TEST_F(lexer_test, aread)
 {
 	std::string tcase = "aread";
 
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
 	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
-	hlasm_plugin::parser_library::lexer l(&input);
+	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -51,8 +52,9 @@ TEST_F(lexer_test, rntest)
 {
 	std::string tcase = "rntest";
 
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
 	hlasm_plugin::parser_library::input_source input("TEST TEST \r\n TEST1 TEST2");
-	hlasm_plugin::parser_library::lexer l(&input);
+	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -69,12 +71,13 @@ TEST_F(lexer_test, rntest)
 TEST_F(lexer_test, new_line_in_ignored)
 {
 	std::string tcase = "new_line_in_ignored";
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
 	//test case, when a newline is in the first 15 ignored characters after continuation
 	hlasm_plugin::parser_library::input_source input(
 		R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
         
 label lr 1,1)");
-	hlasm_plugin::parser_library::lexer l(&input);
+	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -97,8 +100,9 @@ TEST_F(lexer_test, unlimited_line)
 {
 	std::string tcase = "unlimited_line";
 
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
 	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
-	hlasm_plugin::parser_library::lexer l(&input);
+	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 	l.set_unlimited_line(true);
@@ -118,7 +122,8 @@ TEST_F(lexer_test, rewind_input)
 	std::string tcase = "rewind_input";
 
 	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
-	hlasm_plugin::parser_library::lexer l(&input);
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
+	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 

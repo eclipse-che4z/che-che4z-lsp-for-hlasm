@@ -1,6 +1,5 @@
 #include "semantic_objects.h"
 #include "operand.h"
-#include "semantic_highlighting_info.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;

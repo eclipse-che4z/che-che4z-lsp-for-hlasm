@@ -25,6 +25,8 @@ namespace hlasm_plugin {
 		private:
 			void definition(id id, const parameter & params);
 			void references(id id, const parameter & params);
+			void hover(id id, const parameter & params);
+			void completion(id id, const parameter& params);
 
 			response_callback response_;
 		};

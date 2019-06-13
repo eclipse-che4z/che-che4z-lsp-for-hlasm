@@ -3,7 +3,7 @@
 
 #include "statement_fields.h"
 #include "semantic_objects.h"
-
+#include "lsp_info_processor.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -34,15 +34,23 @@ public:
 
 	void set_statement_range(symbol_range range);
 
+	void add_lsp_symbol(lsp_symbol symbol);
+	void add_hl_symbol(token_info symbol);
+
 	instruction_semantic_info&& extract_instruction_field();
 	statement&& extract_statement();
+	std::vector<lsp_symbol>&& extract_lsp_symbols();
+	std::vector<token_info>&& extract_hl_symbols();
 	void prepare_for_next_statement();
 
 private:
 	statement stmt_;
-
+	std::vector<lsp_symbol> lsp_symbols_;
+	std::vector<token_info> hl_symbols_;
 	bool instruction_extracted_;
 	bool statement_extracted_;
+	bool lsp_symbols_extracted_;
+	bool hl_symbols_extracted_;
 };
 
 }

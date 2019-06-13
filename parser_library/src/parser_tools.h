@@ -3,7 +3,6 @@
 
 #include <string>
 #include "antlr4-runtime.h"
-#include "semantics/semantic_highlighting_info.h"
 
 namespace hlasm_plugin 
 {

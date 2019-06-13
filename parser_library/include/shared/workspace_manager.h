@@ -18,7 +18,7 @@ using ws_id = workspace *;
 class PARSER_LIBRARY_EXPORT highlighting_consumer
 {
 public:
-	virtual void consume_highlighting_info(all_semantic_info info) = 0;
+	virtual void consume_highlighting_info(all_highlighting_info info) = 0;
 	virtual ~highlighting_consumer() {};
 };
 
@@ -54,9 +54,11 @@ public:
 	virtual void did_change_file(const char * document_uri, version_t version, const document_change * changes, size_t ch_size);
 	virtual void did_close_file(const char * document_uri);
 
-	virtual position_uri definition(const char * document_uri, const position & pos);
-	virtual position_uris references(const char * document_uri, const position & pos);
-
+	position_uri definition(const char * document_uri, const position pos);
+	position_uris references(const char * document_uri, const position pos);
+	const string_array hover(const char * document_uri, const position pos);
+	completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
+	
 	virtual void register_highlighting_consumer(highlighting_consumer * consumer);
 	virtual void register_diagnostics_consumer(diagnostics_consumer * consumer);
 

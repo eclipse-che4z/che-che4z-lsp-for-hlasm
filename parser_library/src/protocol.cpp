@@ -1,11 +1,54 @@
 #include "shared/protocol.h"
 #include "diagnosable.h"
-#include "semantics/semantic_highlighting_info.h"
-#include "semantics/semantic_info.h"
+#include "semantics/highlighting_info.h"
+#include "semantics/lsp_info_processor.h"
 #include "processor.h"
 
 namespace hlasm_plugin::parser_library
 {
+string_array::string_array(const char** arr, size_t size) : arr(arr), size(size) {};
+
+completion_item::completion_item(context::completion_item_s& info) : impl_(info) {}
+
+const char* completion_item::label()
+{
+	return impl_.label.c_str();
+}
+size_t completion_item::kind()
+{
+	return impl_.kind;
+}
+const char* completion_item::detail()
+{
+	return impl_.detail.c_str();
+}
+const char* completion_item::documentation()
+{
+	return impl_.documentation.c_str();
+}
+bool completion_item::deprecated()
+{
+	return impl_.deprecated;
+}
+const char* completion_item::insert_text()
+{
+	return impl_.insert_text.c_str();
+}
+
+completion_list::completion_list(semantics::completion_list_s& info) : impl_(info) {}
+
+bool completion_list::is_incomplete()
+{
+	return impl_.is_incomplete;
+}
+completion_item completion_list::item(size_t index)
+{
+	return impl_.items[index];
+}
+size_t completion_list::count()
+{
+	return impl_.items.size();
+}
 
 position_uri::position_uri(semantics::position_uri_s & info) : impl_(info)
 {}
@@ -96,66 +139,66 @@ size_t diagnostic::related_info_size()
 
 
 //*********************** file_higlighting_info *****************
-file_semantic_info::file_semantic_info(semantics::semantic_info & info) :impl(info) {}
+file_highlighting_info::file_highlighting_info(semantics::highlighting_info & info) :info(info) {}
 
-const char * file_semantic_info::document_uri()
+const char * file_highlighting_info::document_uri()
 {
-	return impl.hl_info.document.uri.c_str();
+	return info.document.uri.c_str();
 }
 
-version_t file_semantic_info::document_version()
+version_t file_highlighting_info::document_version()
 {
-	return impl.hl_info.document.version;
+	return info.document.version;
 }
 
-token_info file_semantic_info::token(size_t index)
+token_info file_highlighting_info::token(size_t index)
 {
-	return impl.hl_info.lines[index];
+	return info.lines[index];
 }
 
-size_t file_semantic_info::token_count()
+size_t file_highlighting_info::token_count()
 {
-	return impl.hl_info.lines.size();
+	return info.lines.size();
 }
 
-position file_semantic_info::continuation(size_t index)
+position file_highlighting_info::continuation(size_t index)
 {
-	return impl.continuation_positions[index];
+	return info.cont_info.continuation_positions[index];
 }
 
-size_t file_semantic_info::continuation_count()
+size_t file_highlighting_info::continuation_count()
 {
-	return impl.continuation_positions.size();
+	return info.cont_info.continuation_positions.size();
 }
 
-size_t file_semantic_info::continuation_column()
+size_t file_highlighting_info::continuation_column()
 {
-	return impl.continuation_column;
+	return info.cont_info.continuation_column;
 }
 
-size_t file_semantic_info::continue_column()
+size_t file_highlighting_info::continue_column()
 {
-	return impl.continue_column;
+	return info.cont_info.continue_column;
 }
 
 //********************** highlighting_info ***********************
 
-all_semantic_info::all_semantic_info(file_id * files, size_t files_count) :
+all_highlighting_info::all_highlighting_info(file_id * files, size_t files_count) :
 	files_(files), files_count_(files_count) {}
 
-file_id * all_semantic_info::files()
+file_id * all_highlighting_info::files()
 {
 	return files_;
 }
 
-size_t all_semantic_info::files_count()
+size_t all_highlighting_info::files_count()
 {
 	return files_count_;
 }
 
-file_semantic_info all_semantic_info::file_info(file_id file_id)
+file_highlighting_info all_highlighting_info::file_info(file_id file_id)
 {
-	return file_id->semantic_info();
+	return file_id->get_hl_info();
 }
 
 //********************* diagnostics_container *******************
@@ -193,6 +236,7 @@ size_t position_uris::size()
 	return size_;
 }
 
-token_info::token_info(const semantics::symbol_range & range, semantics::scopes scope) : token_range({ {range.begin_ln, range.begin_col}, {range.end_ln, range.end_col} }), scope(scope) {}
+token_info::token_info(const semantics::symbol_range & range, semantics::hl_scopes scope) : token_range({ {range.begin_ln, range.begin_col}, {range.end_ln, range.end_col} }), scope(scope) {};
+token_info::token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope) : token_range({ {line_start, column_start}, {line_end, column_end} }), scope(scope) {};
 
 }

@@ -84,17 +84,52 @@ public:
 	}
 	
 	semantics::position_uri_s found_position;
-	virtual position_uri definition(std::string document_uri, const position & pos)
+	position_uri definition(std::string document_uri, const position pos)
 	{
-		found_position = file_manager_.find_processor_file(document_uri)->semantic_info().find(pos);
+		auto file = file_manager_.find(document_uri);
+		if (dynamic_cast<processor_file*>(file) != nullptr)
+			found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
+		else
+			found_position = { document_uri,pos };
 		return found_position;
 	}
 
 	std::vector<semantics::position_uri_s> found_refs;
-	virtual position_uris references(std::string document_uri, const position & pos)
+	position_uris references(std::string document_uri, const position pos)
 	{
-		found_refs = file_manager_.find_processor_file(document_uri)->semantic_info().find_all(pos);
+		auto file = file_manager_.find(document_uri);
+		if (dynamic_cast<processor_file*>(file) != nullptr)
+			found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
+		else
+			found_refs.clear();
 		return { found_refs.data(), found_refs.size() };
+	}
+
+	std::vector<std::string> output;
+	std::vector<const char*> coutput;
+	const string_array hover(const char * document_uri, const position pos)
+	{
+		auto file = file_manager_.find(document_uri);
+		if (dynamic_cast<processor_file*>(file) != nullptr)
+			output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
+		else
+			output.clear();
+		coutput.clear();
+		for (const auto & str : output)
+			coutput.push_back(str.c_str());
+		
+		return { coutput.data(), coutput.size() };
+	}
+
+	semantics::completion_list_s completion_result;
+	completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+	{
+		auto file = file_manager_.find(document_uri);
+		if (dynamic_cast<processor_file*>(file) != nullptr)
+			completion_result = file_manager_.find_processor_file(document_uri)->get_lsp_info().completion(pos, trigger_char, trigger_kind);
+		else
+			completion_result = semantics::completion_list_s();
+		return completion_result;
 	}
 
 private:
@@ -110,7 +145,7 @@ private:
 	void notify_highlighting_consumers()
 	{
 		auto file_list = file_manager_.list_updated_files();
-		all_semantic_info hl_info(file_list.data(), file_list.size());
+		all_highlighting_info hl_info(file_list.data(), file_list.size());
 		for (auto consumer : hl_consumers_)
 		{
 			consumer->consume_highlighting_info(hl_info);
@@ -235,14 +270,24 @@ void workspace_manager::register_diagnostics_consumer(diagnostics_consumer * con
 }
 
 
-position_uri workspace_manager::definition(const char * document_uri, const position & pos)
+position_uri workspace_manager::definition(const char * document_uri, const position pos)
 {
 	return impl_->definition(document_uri, pos);
 };
 
-position_uris workspace_manager::references(const char * document_uri, const position & pos)
+position_uris workspace_manager::references(const char * document_uri, const position pos)
 {
 	return impl_->references(document_uri, pos);
+}
+
+const string_array workspace_manager::hover(const char * document_uri, const position pos)
+{
+	return impl_->hover(document_uri, pos);
+}
+
+completion_list workspace_manager::completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+{
+	return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
 }

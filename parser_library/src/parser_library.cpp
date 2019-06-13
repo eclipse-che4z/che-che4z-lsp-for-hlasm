@@ -34,6 +34,7 @@ void parser_library::parse(const std::string & src)
 	a.parser().getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL_EXACT_AMBIG_DETECTION);
 
 	auto tree = a.parser().program();
+	/*
 	for (auto && token : dynamic_cast<antlr4::BufferedTokenStream*>(a.parser().getTokenStream())->getTokens())
 	{
 		auto type = token->getType();
@@ -44,7 +45,7 @@ void parser_library::parse(const std::string & src)
 	std::cout << l << std::endl;
 
 	hlasm_plugin::parser_tools::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
-	mytree.out_tree(std::cout);
+	//mytree.out_tree(std::cout);*/
 	
 }
 }
