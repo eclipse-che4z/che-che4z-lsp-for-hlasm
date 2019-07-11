@@ -16,6 +16,9 @@ import { TextDocumentFeature, BaseLanguageClient, LanguageClient } from 'vscode-
 
 export declare type ExtendedClientCapabilities = ClientCapabilities & SemanticHighlightingClientCapabilities;
 
+/**
+ * Client extended by Semantic Highlighting feature
+ */
 export class ExtendedLanguageClient extends LanguageClient
 {
 	semanticHighlighting: SemanticHighlightingFeature;
@@ -44,7 +47,7 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 	protected readonly toDispose: Disposable[];
 	protected readonly handlers: NotificationHandler<SemanticHighlightingParams>[];
 	// map of possible decoration types: scope of symbol -> color of scope
-	protected decorationTypes: Map<scope,decorationType>;
+	protected decorationTypes: Map<scope,DecorationType>;
 	// map: document -> its decorations (map: scope of symbol -> ranges of scope)
 	protected definedEditors: Map<uri,Map<scope,Range[]>>;
 	constructor(client: BaseLanguageClient) {
@@ -159,13 +162,13 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 			});
 			// for each color, create its decoration
 			for (let color of colors) {
-				this.decorationTypes.set(color.id,new decorationType(color.hex));
+				this.decorationTypes.set(color.id,new DecorationType(color.hex));
 			}
 		}
     }
 }
 
-class decorationType {
+class DecorationType {
 	public type: TextEditorDecorationType;
 	public hex: string;
     constructor(hex:string)

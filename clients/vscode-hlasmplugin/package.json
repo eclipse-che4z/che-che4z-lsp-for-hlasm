@@ -16,8 +16,7 @@
 		"LSP"
 	],
 	"activationEvents": [
-		"workspaceContains:*.hlasm",
-		"onLanguage:hlasm"
+		"*"
 	],
 	"main": "./lib/extension.js",
 	"typings": "./lib/extension",
@@ -68,26 +67,28 @@
 				"editor.wordBasedSuggestions": false
 			}
 		},
+		"commands": [
+			{
+				"command": "insertContinuation",
+				"category": "HLASM",
+				"title": "Insert Continuation"
+			},
+			{
+				"command": "removeContinuation",
+				"category": "HLASM",
+				"title": "Remove Continuation"
+			}
+		],
 		"keybindings": [
 			{
 				"command": "insertContinuation",
 				"key": "shift+alt+enter",
-				"when": "editorLangId == hlasm"
+				"when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
 			},
 			{
 				"command": "removeContinuation",
 				"key": "shift+alt+backspace",
-				"when": "editorLangId == hlasm"
-			},
-			{
-				"key": "backspace",
-				"command": "deleteLeftCont",
-				"when": "editorTextFocus && !editorReadonly && editorLangId == hlasm"
-			},
-			{
-				"key": "delete",
-				"command": "deleteRightCont",
-				"when": "editorTextFocus && !editorReadonly && editorLangId == hlasm"
+				"when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
 			}
 		],
 		"configuration": {
