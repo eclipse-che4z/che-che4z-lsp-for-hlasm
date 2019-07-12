@@ -17,13 +17,12 @@ struct instruction_map_info
 {
 	context::instruction_type type;
 	bool no_ops;
-	size_t source;
 };
 
 //stuct representing decoded instruction
 struct op_code_info
 {
-	op_code_info() : op_code(nullptr), unknown(true) {}
+	op_code_info() : op_code(nullptr), type(), has_no_ops(false), unknown(true) {}
 
 	op_code_info(context::id_index op_code, context::instruction_type type, bool has_no_ops) :op_code(op_code), type(type), has_no_ops(has_no_ops), unknown(false) {}
 

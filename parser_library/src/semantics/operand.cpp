@@ -48,7 +48,7 @@ operand_ptr model_operand::clone() const
 	return std::make_unique<model_operand>(std::move(new_chain));
 }
 
-machine_operand::machine_operand(std::unique_ptr<checking::one_operand> op_value) : substituable_operand(operand_type::MACH), op_value(std::move(op_value)) {}
+machine_operand::machine_operand(std::unique_ptr<checking::machine_operand_value> op_value) : substituable_operand(operand_type::MACH), op_value(std::move(op_value)) {}
 
 std::string machine_operand::to_string() const
 {
@@ -60,7 +60,7 @@ operand_ptr machine_operand::clone() const
 	return std::make_unique<machine_operand>(op_value->clone());
 }
 
-assembler_operand::assembler_operand(std::unique_ptr<checking::one_operand> op_value)
+hlasm_plugin::parser_library::semantics::assembler_operand::assembler_operand(std::unique_ptr<checking::asm_operand> op_value)
 	: substituable_operand(operand_type::ASM),op_value(std::move(op_value)) {}
 
 std::string assembler_operand::to_string() const
@@ -70,7 +70,7 @@ std::string assembler_operand::to_string() const
 
 operand_ptr assembler_operand::clone() const
 {
-	return std::make_unique<machine_operand>(op_value->clone());
+	return std::make_unique<assembler_operand>(op_value->clone());
 }
 
 ca_operand::ca_operand(seq_sym seqence_symbol)
@@ -96,6 +96,21 @@ operand_ptr empty_operand::clone() const
 {
 	return std::make_unique<empty_operand>();
 }
+
+/*
+hlasm_plugin::parser_library::checking::empty_asm_operand::empty_asm_operand()
+{
+}
+
+std::unique_ptr<hlasm_plugin::parser_library::checking::asm_operand> hlasm_plugin::parser_library::checking::empty_asm_operand::clone() const
+{
+	return std::unique_ptr<asm_operand>();
+}
+
+std::string hlasm_plugin::parser_library::checking::empty_asm_operand::to_string() const
+{
+	return std::string();
+}*/
 
 macro_operand::macro_operand(concat_chain chain) : operand(operand_type::MAC),chain(std::move(chain)) {}
 

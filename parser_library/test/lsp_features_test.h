@@ -3,10 +3,10 @@
 
 #include "../src/parse_lib_provider.h"
 #include "../src/analyzer.h"
+#include "../src/context/instruction.h"
 
 constexpr char* MACRO_FILE = "macro_file.hlasm";
 constexpr char* SOURCE_FILE = "source_file.hlasm";
-constexpr size_t INSTRUCTION_COUNT = 1314;
 
 using namespace hlasm_plugin::parser_library;
 
@@ -31,7 +31,14 @@ R"(   MACRO
 class lsp_features_test : public testing::Test
 {
 public:
-	lsp_features_test() : ctx(std::make_shared<context::hlasm_context>(SOURCE_FILE)), a(contents,ctx,lib_provider, SOURCE_FILE) {};
+	lsp_features_test() : ctx(std::make_shared<context::hlasm_context>(SOURCE_FILE)), a(contents,ctx,lib_provider, SOURCE_FILE), 
+		instruction_count(context::instruction::machine_instructions.size() +
+			context::instruction::assembler_instructions.size() +
+			context::instruction::ca_instructions.size() +
+			context::instruction::mnemonic_codes.size() +
+			context::instruction::macro_processing_instructions.size())
+	{};
+
 	virtual void SetUp()
 	{
 		a.analyze();
@@ -62,6 +69,7 @@ R"(   MAC  1
 	context::ctx_ptr ctx;
 	mock_parse_lib_provider lib_provider;
 	analyzer a;
+	const size_t instruction_count;
 };
 
 TEST_F(lsp_features_test, go_to)
@@ -134,7 +142,7 @@ TEST_F(lsp_features_test, hover)
 TEST_F(lsp_features_test, completion)
 {
 	// all instructions + 2 newly defined macros
-	EXPECT_EQ(INSTRUCTION_COUNT + 2, a.lsp_processor().completion(position(16, 1), '\0', 1).items.size());
+	EXPECT_EQ(instruction_count + 2, a.lsp_processor().completion(position(16, 1), '\0', 1).items.size());
 	// current scope detection missing !
 	// seq symbols
 	EXPECT_EQ((size_t)1, a.lsp_processor().completion(position(6, 0), '.', 2).items.size());

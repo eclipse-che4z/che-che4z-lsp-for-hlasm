@@ -348,28 +348,33 @@ void context_manager::init_instr()
 	if (instructions.size() != 0)
 		return;
 
-	for (size_t i = 0; i < instruction::machine_instructions.size(); ++i)
+	for (const auto& mach_instr : instruction::machine_instructions)
 	{
-		auto id = ctx().ids.add(instruction::machine_instructions[i].name);
-		instructions.insert({ id, { instruction_type::MACH,instruction::machine_instructions[i].operands.size() == 0,i } });
+		auto id = ctx_->ids.add(mach_instr.first);
+		instructions.insert({ id, { instruction_type::MACH, mach_instr.second->operands.size() == 0} });
 	}
-	for (size_t i = 0; i < instruction::assembler_instructions.size(); ++i)
+	for (const auto& asm_instr : instruction::assembler_instructions)
 	{
-		auto id = ctx().ids.add(instruction::assembler_instructions[i].name);
+		auto id = ctx_->ids.add(asm_instr.first);
 		if (*id == "DC" || *id == "DS")
-			instructions.insert({ id, { instruction_type::DAT,instruction::assembler_instructions[i].max_operands == 0,i } });
+			instructions.insert({ id, { instruction_type::DAT, asm_instr.second.second == 0} });
 		else
-			instructions.insert({ id, { instruction_type::ASM,instruction::assembler_instructions[i].max_operands == 0,i } });
+			instructions.insert({ id, { instruction_type::ASM, asm_instr.second.second == 0} });
 	}
 	for (size_t i = 0; i < instruction::ca_instructions.size(); ++i)
 	{
-		auto id = ctx().ids.add(instruction::ca_instructions[i]);
-		instructions.insert({ id, { instruction_type::CA,instruction::ca_instructions[i] == "ANOP",i } });
+		auto id = ctx_->ids.add(instruction::ca_instructions[i]);
+		instructions.insert({ id, { instruction_type::CA,instruction::ca_instructions[i] == "ANOP"} });
 	}
 	for (size_t i = 0; i < instruction::macro_processing_instructions.size(); ++i)
 	{
 		auto id = ctx().ids.add(instruction::macro_processing_instructions[i]);
-		instructions.insert({ id, { instruction_type::CA,instruction::ca_instructions[i] != "AREAD" && instruction::ca_instructions[i] != "ASPACE",i } });
+		instructions.insert({ id,  {instruction_type::CA,instruction::ca_instructions[i] != "AREAD" && instruction::ca_instructions[i] != "ASPACE" } });
+	}
+	for (const auto mnemo : instruction::mnemonic_codes)
+	{
+		auto id = ctx().ids.add(mnemo.first);
+		instructions.insert({ id,  {instruction_type::MACH,false} });
 	}
 }
 

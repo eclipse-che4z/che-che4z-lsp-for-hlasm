@@ -3,101 +3,64 @@
 
 #include "../src/checking/instruction_checker.h"
 
+using namespace hlasm_plugin::parser_library::checking;
+
 class machine_instr_test : public testing::Test
 {
 public:
 	virtual void SetUp(std::string param) {}
 	virtual void TearDown() {}
-	machine_instr_test() {}
+	machine_instr_test() {
+	
+		test_balr_true.push_back(&op_val_14);
+		test_balr_true.push_back(&op_val_15);
+	
+		test_lr_true.push_back(&op_val_0);
+		test_lr_true.push_back(&op_val_2);
+	
+		test_br_true.push_back(&op_val_11);
+
+		test_mvcl_true.push_back(&op_val_4);
+		test_mvcl_true.push_back(&op_val_0);
+	
+		test_xr_true.push_back(&op_val_15);
+		test_xr_true.push_back(&op_val_15);
+	}
 
 protected:
-	hlasm_plugin::parser_library::checking::one_operand n_15 = { "15" };
-	hlasm_plugin::parser_library::checking::one_operand n_4 = { "4" };
-	hlasm_plugin::parser_library::checking::one_operand n_0 = { "0" };
-	hlasm_plugin::parser_library::checking::one_operand n_1022 = { "1022" };
-	hlasm_plugin::parser_library::checking::one_operand n_63 = { "63" };
-	hlasm_plugin::parser_library::checking::one_operand n_7 = { "7" };
-	hlasm_plugin::parser_library::checking::one_operand n_10 = { "10" };
-	hlasm_plugin::parser_library::checking::one_operand n_1 = { "1" };
-	hlasm_plugin::parser_library::checking::one_operand n_45 = { "45" };
-	hlasm_plugin::parser_library::checking::one_operand n_60 = { "60" };
-	hlasm_plugin::parser_library::checking::one_operand n_2 = { "2" };
-	hlasm_plugin::parser_library::checking::one_operand n_min1 = { "-1" };
-	hlasm_plugin::parser_library::checking::one_operand n_1024 = { "1024" };
-	hlasm_plugin::parser_library::checking::one_operand n_143 = { "143" };
 
-	hlasm_plugin::parser_library::checking::address_operand dxb4_one{ hlasm_plugin::parser_library::checking::address_state::UNRES, 143, 15, 7 };
-	hlasm_plugin::parser_library::checking::address_operand dxb4_two = { hlasm_plugin::parser_library::checking::address_state::RES_VALID, 143, 15, 7 };
-	hlasm_plugin::parser_library::checking::address_operand db_one = { hlasm_plugin::parser_library::checking::address_state::UNRES, 8, 0, -1 };
-	hlasm_plugin::parser_library::checking::address_operand dxb8_one = { hlasm_plugin::parser_library::checking::address_state::UNRES, 143, 63, 15 };
-	hlasm_plugin::parser_library::checking::address_operand dxb4_three = { hlasm_plugin::parser_library::checking::address_state::UNRES, 0, 0, 0 };
-	hlasm_plugin::parser_library::checking::address_operand db_two = { hlasm_plugin::parser_library::checking::address_state::UNRES, 100, 4, -1 };
-	hlasm_plugin::parser_library::checking::address_operand dxb4_four = { hlasm_plugin::parser_library::checking::address_state::UNRES, 143, 15, 8 };
-	hlasm_plugin::parser_library::checking::address_operand db_three = { hlasm_plugin::parser_library::checking::address_state::UNRES, 100, 4, 1 };
-	hlasm_plugin::parser_library::checking::address_operand dxb4_five = { hlasm_plugin::parser_library::checking::address_state::UNRES, 100, 4, 40 };
-	hlasm_plugin::parser_library::checking::address_operand dxb4_six = { hlasm_plugin::parser_library::checking::address_state::RES_INVALID, 143, 15, 7 };
+	simple_operand_value op_val_0 = simple_operand_value(0);
+	simple_operand_value op_val_2 = simple_operand_value(2);
+	simple_operand_value op_val_4 = simple_operand_value(4);
+	simple_operand_value op_val_11 = simple_operand_value(11);
+	simple_operand_value op_val_12 = simple_operand_value(12);
+	simple_operand_value op_val_13 = simple_operand_value(13);
+	simple_operand_value op_val_14 = simple_operand_value(14);
+	simple_operand_value op_val_15 = simple_operand_value(15);
 
-
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_simple_one { std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_15, &n_4, &n_0 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_simple_two{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_4, &n_1022 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_simple_three{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_15, &n_15, &n_63, &n_0, &n_7 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_simple_four{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_10, &n_1, &n_45, &n_60 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_addr_one{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb4_one, &dxb4_two } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_addr_two{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb8_one, &db_one } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_mixed_one{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb4_three, &db_two, &n_2 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_simple_one{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_15, &n_4, &n_min1 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_simple_two{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &n_1024, &n_4, &n_15 } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_addr_one{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb4_two, &dxb4_six} };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_addr_two{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb8_one, &dxb4_four } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_addr_three{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &db_three, &db_three } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_false_addr_four{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{ &dxb4_five } };
-	std::vector<const hlasm_plugin::parser_library::checking::one_operand*> test_true_no_operands{ std::vector<const hlasm_plugin::parser_library::checking::one_operand*>
-	{} };
-
-	checking::machine_instruction_checker checker;
+	std::vector<machine_operand_value*> test_no_operand_true = std::vector<machine_operand_value*>();
+	std::vector<machine_operand_value*> test_balr_true = std::vector<machine_operand_value*>();
+	std::vector<machine_operand_value*> test_lr_true = std::vector<machine_operand_value*>();
+	std::vector<machine_operand_value*> test_br_true = std::vector<machine_operand_value*>();
+	std::vector<machine_operand_value*> test_mvcl_true = std::vector<machine_operand_value*>();
+	std::vector<machine_operand_value*> test_xr_true = std::vector<machine_operand_value*>();
 };
 
 TEST_F(machine_instr_test, checker_test)
 {
-	EXPECT_TRUE(checker.mach_instr_check("CSCH", test_true_no_operands));
-	EXPECT_TRUE(checker.mach_instr_check("ADTR", test_true_simple_one));
-	EXPECT_TRUE(checker.mach_instr_check("VLEIB", test_true_simple_one));
-	EXPECT_TRUE(checker.mach_instr_check("SSKE", test_true_simple_one));
-	EXPECT_TRUE(checker.mach_instr_check("CLRL", test_true_simple_two));
-	EXPECT_TRUE(checker.mach_instr_check("ROSBG", test_true_simple_three));
-	EXPECT_TRUE(checker.mach_instr_check("ROSBG", test_true_simple_four));
-	EXPECT_TRUE(checker.mach_instr_check("UNPK", test_true_addr_one));
-	EXPECT_TRUE(checker.mach_instr_check("TR", test_true_addr_two));
-	EXPECT_TRUE(checker.mach_instr_check("SRP", test_true_mixed_one));
+	std::string balr_name = "BALR";
+	std::string lr_name = "LR";
+	std::string mvcl_name = "MVCL";
+	std::string xr_name = "XR";
 
-	EXPECT_FALSE(checker.mach_instr_check("SQER", test_true_no_operands));
-	EXPECT_TRUE(checker.mach_instr_check("SRXT", test_true_simple_one));
-	EXPECT_FALSE(checker.mach_instr_check("VMAE", test_true_simple_one));
-	EXPECT_FALSE(checker.mach_instr_check("TAR", test_true_simple_two));
-	EXPECT_FALSE(checker.mach_instr_check("VFM", test_true_simple_three));
-	EXPECT_FALSE(checker.mach_instr_check("TROO", test_true_simple_four));
-	EXPECT_FALSE(checker.mach_instr_check("VL", test_true_addr_one));
-	EXPECT_FALSE(checker.mach_instr_check("ZAP", test_true_addr_two));
-	EXPECT_FALSE(checker.mach_instr_check("TBDR", test_false_simple_one));
-	EXPECT_FALSE(checker.mach_instr_check("TRTT", test_false_simple_two));
-	EXPECT_FALSE(checker.mach_instr_check("ZAP", test_false_addr_one));
-	EXPECT_FALSE(checker.mach_instr_check("XC", test_false_addr_two));
-	EXPECT_FALSE(checker.mach_instr_check("XC", test_false_addr_three));
-	EXPECT_FALSE(checker.mach_instr_check("TP", test_false_addr_four));
-	EXPECT_TRUE(checker.mach_instr_check("TRACE", test_true_simple_one));
+	auto balr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(balr_name))->get()->check(balr_name, test_balr_true);
+	EXPECT_TRUE(balr_true);
+	auto lr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(lr_name))->get()->check(lr_name, test_lr_true);
+	EXPECT_TRUE(lr_true);
+	auto mvcl_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mvcl_name))->get()->check(mvcl_name, test_mvcl_true);
+	EXPECT_TRUE(mvcl_true);
+	auto xr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(xr_name))->get()->check(xr_name, test_xr_true);
+	EXPECT_TRUE(xr_true);
 }
 
 #endif

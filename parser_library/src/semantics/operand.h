@@ -81,22 +81,22 @@ struct substituable_operand : public operand
 
 struct machine_operand : public substituable_operand
 {
-	machine_operand(std::unique_ptr<checking::one_operand> op_value);
+	machine_operand(std::unique_ptr<checking::machine_operand_value> op_value);
 
 	std::string to_string() const override;
 	operand_ptr clone() const override;
 
-	std::unique_ptr<checking::one_operand> op_value;
+	std::unique_ptr<checking::machine_operand_value> op_value;
 };
 
 struct assembler_operand : public substituable_operand
 {
-	assembler_operand( std::unique_ptr<checking::one_operand> op_value);
+	assembler_operand( std::unique_ptr<checking::asm_operand> op_value);
 
 	std::string to_string() const override;
 	operand_ptr clone() const override;
 
-	std::unique_ptr<checking::one_operand> op_value;
+	std::unique_ptr<checking::asm_operand> op_value;
 };
 
 struct data_def_operand : public substituable_operand

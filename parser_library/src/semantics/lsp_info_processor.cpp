@@ -16,42 +16,145 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 		for (const auto& machine_instr : instruction::machine_instructions)
 		{
 			std::stringstream ss(" ");
-			bool first = true;
-			for (const auto& op : machine_instr.operands)
+			for (size_t i = 0; i < machine_instr.second->operands.size(); i++)
 			{
-				if (!first)
-					ss << ",";
+				const auto& op = machine_instr.second->operands[i];
+				if (machine_instr.second->no_optional == 1 && machine_instr.second->operands.size() - i == 1)
+				{
+					ss << "[";
+					if (i != 0)
+						ss << ",";
+					ss << op.to_string() << "]";
+				}
+				else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 2)
+				{
+					ss << "[";
+					if (i != 0)
+						ss << ",";
+					ss << op.to_string() << "[,";
+				}
+				else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 1)
+				{
+					ss << op.to_string() << "]]";
+				}
 				else
-					first = false;
-				ss << instruction::op_format_to_string.at(op);
+				{
+					if (i != 0)
+						ss << ",";
+					ss << op.to_string();
+				}
+		
 			}
-			ss << " [" << instruction::mach_format_to_string.at(machine_instr.format) << "]";
-			ctx_->all_instructions.push_back({ machine_instr.name,1,ss.str(),"Machine",false,machine_instr.name + "   " + ss.str() } );
+			ss << " [" << instruction::mach_format_to_string.at(machine_instr.second->format) << "]";
+			ctx_->all_instructions.push_back({ machine_instr.first,1,ss.str(),"Machine",false, machine_instr.first + "   " + ss.str() } );
 		}
 
 		for (const auto& asm_instr : instruction::assembler_instructions)
 		{
+			auto [min_op, max_op] = asm_instr.second;
 			std::stringstream ss(" ");
 			bool first = true;
-			for (int i = 0; i < asm_instr.max_operands; ++i)
+			for (int i = 0; i < max_op; ++i)
 			{
 				if (!first)
 					ss << ",";
 				else
 					first = false;
-				if (i >= asm_instr.min_operands)
+				if (i >= min_op)
 					ss << "?";
 				ss << "OP" << i + 1;
 			}
 			deferred_instruction_.value = ss.str();
-			ctx_->all_instructions.push_back({ asm_instr.name,1,ss.str(),"Assembler",false,asm_instr.name + "   " + ss.str() });
+			ctx_->all_instructions.push_back({ asm_instr.first,1,ss.str(),"Assembler",false,asm_instr.first + "   " + ss.str() });
 		}
 
 		for (const auto& mnemonic_instr : instruction::mnemonic_codes)
 		{
 			std::stringstream ss(" ");
-			ss << "Mnemonic code for " << mnemonic_instr.machine_instr << " with operand " << mnemonic_instr.operand;
-			ctx_->all_instructions.push_back({ mnemonic_instr.extended_branch,1,"",ss.str(),false,mnemonic_instr.extended_branch });
+			std::stringstream subs_ops_mnems (" ");
+			std::stringstream subs_ops_nomnems(" ");
+
+			// get mnemonic operands
+			size_t iter_over_mnem = 0;
+
+			auto instr_name = mnemonic_instr.second.instruction;
+			auto mach_operands = instruction::machine_instructions[instr_name]->operands;
+			auto no_optional = instruction::machine_instructions[instr_name]->no_optional;
+			bool first = true;
+
+			auto replaces = mnemonic_instr.second.replaced;
+
+			for (size_t i = 0; i < mach_operands.size(); i++)
+			{
+				if (replaces.size() > iter_over_mnem)
+				{
+					auto [position, value] = replaces[iter_over_mnem];
+					// can still replace mnemonics
+					if (position == i)
+					{
+						// mnemonics can be substituted when no_optional is 1, but not 2 -> 2 not implemented
+						if (no_optional == 1 && mach_operands.size() - i == 1)
+						{
+							subs_ops_mnems << "[";
+							if (i != 0)
+								subs_ops_mnems << ",";
+							subs_ops_mnems << std::to_string(value) + "]";
+							continue;
+						}
+						// replace current for mnemonic
+						if (i != 0)
+							subs_ops_mnems << ",";
+						subs_ops_mnems << std::to_string(value);
+						iter_over_mnem++;
+						continue;
+					}
+				}
+				// do not replace by a mnemonic
+				std::string curr_op_with_mnem = "";
+				std::string curr_op_without_mnem = "";
+				if (no_optional == 0)
+				{
+					if (i != 0)
+						curr_op_with_mnem += ",";
+					if (!first)
+						curr_op_without_mnem += ",";
+					curr_op_with_mnem += mach_operands[i].to_string();
+					curr_op_without_mnem += mach_operands[i].to_string();
+				}
+				else if (no_optional == 1 && mach_operands.size() - i == 1)
+				{
+					curr_op_with_mnem += "[";
+					curr_op_without_mnem += "[";
+					if (i != 0)
+						curr_op_with_mnem += ",";
+					if (!first)
+						curr_op_without_mnem += ",";
+					curr_op_with_mnem += mach_operands[i].to_string() + "]";
+					curr_op_without_mnem += mach_operands[i].to_string() + "]";
+				}
+				else if (no_optional == 2 && mach_operands.size() - i == 1)
+				{
+					curr_op_with_mnem += mach_operands[i].to_string() + "]]";
+					curr_op_without_mnem += mach_operands[i].to_string() + "]]";
+				}
+				else if (no_optional == 2 && mach_operands.size() - i == 2)
+				{
+					curr_op_with_mnem += "[";
+					curr_op_without_mnem += "[";
+					if (i != 0)
+						curr_op_with_mnem += ",";
+					if (!first)
+						curr_op_without_mnem += ",";
+					curr_op_with_mnem += mach_operands[i].to_string() + "[,";
+					curr_op_without_mnem += mach_operands[i].to_string() + "[,";
+				}
+				subs_ops_mnems << curr_op_with_mnem;
+				subs_ops_nomnems << curr_op_without_mnem;
+				first = false;
+			}
+			subs_ops_mnems << " [" << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format) << "]";
+			ss << "Mnemonic code for " << instr_name << " with operands " << subs_ops_mnems.str();
+			ctx_->all_instructions.push_back({ mnemonic_instr.first,1,"",ss.str(),false, mnemonic_instr.first + "   " + subs_ops_nomnems.str() });
 		}
 
 		for (const auto& ca_instr : instruction::ca_instructions)
@@ -114,8 +217,6 @@ bool lsp_info_processor::find_references_(const position & pos, const definition
 	}
 	return false;
 }
-
-
 
 completion_list_s lsp_info_processor::completion(const position& pos, const char trigger_char, int trigger_kind) const
 {

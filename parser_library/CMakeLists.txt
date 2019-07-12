@@ -67,6 +67,7 @@ set(LIB_NOT_EXPORTED_SRC
 	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/assembler_instruction.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/instr_class.cpp
 	${PROJECT_SOURCE_DIR}/src/analyzer.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/collector.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/context_manager.cpp
@@ -148,5 +149,5 @@ if(BUILD_TESTING)
 	add_dependencies(library_test library_tests_copy)
 	add_dependencies(library_test antlr4jar)
 	add_dependencies(library_test jsonrpcppext)
-    gtest_discover_tests(library_test)
+  #  gtest_discover_tests(library_test)
 endif()

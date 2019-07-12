@@ -121,7 +121,7 @@ TEST_F(regress_test, behaviour_error)
 	ASSERT_EQ(notfs[1].first, "textDocument/publishDiagnostics");
 	auto diagnostics = notfs[1].second["diagnostics"];
 	ASSERT_EQ(diagnostics.size(), (size_t)1);
-	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(),"M021");
+	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(),"M120");
 
 	notfs.clear();
 
@@ -135,7 +135,7 @@ TEST_F(regress_test, behaviour_error)
 
 	notfs.clear();
 
-	notf = std::make_shared<Notification>("textDocument/didChange", parameter(R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":5},"end":{"line":0,"character":19}},"rangeLength":1,"text":""}]})#"_json));
+	notf = std::make_shared<Notification>("textDocument/didChange", parameter(R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":5},"end":{"line":0,"character":19}},"rangeLength":14,"text":""}]})#"_json));
 	s.call_notification(notf);
 
 	ASSERT_EQ(notfs.size(), (size_t)2);
@@ -143,7 +143,7 @@ TEST_F(regress_test, behaviour_error)
 	ASSERT_EQ(notfs[1].first, "textDocument/publishDiagnostics");
 	diagnostics = notfs[1].second["diagnostics"];
 	ASSERT_EQ(diagnostics.size(), (size_t)1);
-	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0001");
+	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0003");
 
 	notfs.clear();
 }

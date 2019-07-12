@@ -174,6 +174,7 @@ look_label
 	: ~(SPACE|EOLLN) ~(SPACE|EOLLN) ~(SPACE|EOLLN)+
 	| DOT ~(ORDSYMBOL|SPACE|EOLLN)
 	| ~(DOT|EOLLN|SPACE) ~(SPACE|EOLLN)
+	| ~(DOT|EOLLN|SPACE) ~(SPACE|EOLLN)
 	| ~(SPACE|EOLLN);
 
 look_label_o
@@ -660,11 +661,13 @@ operand_not_empty returns [operand_ptr op]
 	}
 	| {format.operand_type == instruction_type::MACH}? mach_op																	
 	{
+		if($mach_op.ad_op) $mach_op.ad_op->range = symbol_range::get_range($mach_op.ctx);
 		$op = std::make_unique<machine_operand>(std::move($mach_op.ad_op));
 		$op->range = symbol_range::get_range($mach_op.ctx);
 	}
 	| {format.operand_type == instruction_type::ASM}? asm_op																	
 	{
+		$asm_op.op->range = symbol_range::get_range($asm_op.ctx);
 		$op = std::make_unique<assembler_operand>(std::move($asm_op.op));
 		$op->range = symbol_range::get_range($asm_op.ctx);
 	}
@@ -690,28 +693,37 @@ operand_not_empty returns [operand_ptr op]
 			else
 				$op = std::make_unique<assembler_operand>(std::make_unique<one_operand>(std::to_string($mach_expr.value)));
 		else
-				$op = std::make_unique<machine_operand>(std::make_unique<one_operand>(std::to_string($mach_expr.value)));
+		{
+			auto simple_op = std::make_unique<simple_operand_value>($mach_expr.value);
+			simple_op->range = symbol_range::get_range($mach_expr.ctx);
+			$op = std::make_unique<machine_operand>(std::move(simple_op));
+		}
 		$op->range = symbol_range::get_range($mach_expr.ctx);
 	};
+	
 
 
-mach_op returns [std::unique_ptr<address_operand> ad_op]
+mach_op returns [std::unique_ptr<machine_operand_value> ad_op]
 	: disp=mach_expr_p lpar base=mach_expr rpar
 	{
-		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value, $base.value, -1);
+		$ad_op = std::make_unique<address_operand_value>(address_state::UNRES, $disp.value, $base.value, operand_state::OMITTED) ;
 	}
 	| disp=mach_expr_p lpar index=mach_expr comma base=mach_expr rpar
 	{
-		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value,$index.value, $base.value );
+		$ad_op = std::make_unique<address_operand_value>(address_state::UNRES, $disp.value, $index.value, $base.value );
 	}
 	| disp=mach_expr_p lpar comma base=mach_expr rpar
 	{
-		$ad_op = std::make_unique<address_operand>(address_state::UNRES, $disp.value, 0, $base.value);
+		$ad_op = std::make_unique<address_operand_value>(address_state::UNRES, $disp.value, 0, $base.value);
 	}
-	;
+	| disp=mach_expr_p lpar index=mach_expr comma rpar
+	{
+		//parse error $ad_op = std::make_unique<address_operand_value>(address_state::UNRES, $disp.value,$index.value, operand_state::EMPTY);
+		$ad_op = std::make_unique<empty_operand_value>();
+	};
 
 
-asm_op returns [std::unique_ptr<one_operand> op]
+asm_op returns [std::unique_ptr<asm_operand> op]
 	: string												{$op = std::make_unique<one_operand>(std::move($string.value));}	
 	| id													{$op = std::make_unique<one_operand>(std::move($id.name));}
 	| id lpar asm_op_comma_c rpar							
@@ -946,7 +958,7 @@ id_comma_c: id
 	|  id comma id_comma_c
 	;
 
-asm_op_comma_c returns [std::vector<std::unique_ptr<one_operand>> asm_ops]
+asm_op_comma_c returns [std::vector<std::unique_ptr<asm_operand>> asm_ops]
 	: asm_op															{$asm_ops.push_back(std::move($asm_op.op));}
 	|  tmp=asm_op_comma_c COMMA asm_op									{$tmp.asm_ops.push_back(std::move($asm_op.op)); $asm_ops = std::move($tmp.asm_ops);};	
 

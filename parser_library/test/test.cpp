@@ -22,6 +22,7 @@
 #include "utf_conv_test.h"
 #include "diagnosable_ctx_test.h"
 
+#include "diagnostics_check.h"
 
 int main(int argc, char **argv)
 {

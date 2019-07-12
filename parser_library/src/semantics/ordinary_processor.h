@@ -98,6 +98,9 @@ private:
 	void process_MACRO();
 	void process_MEND();
 	void process_MEXIT();
+	void process_ASPACE();
+	void process_AREAD();
+	void process_AEJECT();
 
 	void process_empty();
 
@@ -110,7 +113,7 @@ private:
 
 	void check_assembler_instr();
 	void check_machine_instr();
-	checking::machine_instruction_checker mach_checker;
+	void check_mnemonic_code_instr();
 	checking::assembler_instruction_checker assembler_checker;
 };
 

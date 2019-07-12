@@ -156,6 +156,12 @@ statement&& hlasm_plugin::parser_library::semantics::collector::extract_statemen
 	if (statement_extracted_)
 		throw std::runtime_error("bad operation");
 
+	for (size_t i = 0; i < stmt_.op_rem_info.operands.size(); i++)
+	{
+		if (!stmt_.op_rem_info.operands[i])
+			stmt_.op_rem_info.operands[i] = std::make_unique<empty_operand>();
+	}
+
 	statement_extracted_ = true;
 	return std::move(stmt_);
 }

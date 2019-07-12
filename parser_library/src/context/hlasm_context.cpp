@@ -92,15 +92,13 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 			return;
 		}
 
-		auto asm_instr = std::find_if(instruction::assembler_instructions.begin(), instruction::assembler_instructions.end(), [=](auto& instr) { return instr.name == *op_code; });
-		if (asm_instr != instruction::assembler_instructions.end())
+		if (instruction::assembler_instructions.count(*op_code) > 0)
 		{
 			opcode_mnemo_.insert_or_assign(mnemo, op_code);
 			return;
 		}
 
-		auto mach_instr = std::find_if(instruction::machine_instructions.begin(), instruction::machine_instructions.end(), [=](auto& instr) { return instr.name == *op_code; });
-		if (mach_instr != instruction::machine_instructions.end())
+		if (instruction::machine_instructions.count(*op_code) > 0)
 		{
 			opcode_mnemo_.insert_or_assign(mnemo, op_code);
 			return;

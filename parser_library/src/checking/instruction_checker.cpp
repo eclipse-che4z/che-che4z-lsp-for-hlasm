@@ -13,7 +13,7 @@ namespace checking
 		initialize_assembler_map();
 	}
 
-	bool assembler_instruction_checker::check(const std::string & instruction_name, const std::vector<const one_operand*>& operand_vector) const
+	bool assembler_instruction_checker::check(const std::string & instruction_name, const std::vector<const asm_operand*>& operand_vector) const
 	{
 		try 
 		{
@@ -30,7 +30,8 @@ namespace checking
 		std::vector<diagnostic_op *> diags;
 		for (auto& [key, instr] : assembler_instruction_map)
 		{
-			diags.push_back(&instr->diagnostic);
+			for(auto & d : instr->diagnostics)
+				diags.push_back(&d);
 		}
 		return diags;
 	}
@@ -39,7 +40,7 @@ namespace checking
 	{
 		for (auto &[key, instr] : assembler_instruction_map)
 		{
-			instr->diagnostic = diagnostic_op::error_NOERR();
+			instr->diagnostics.clear();
 		}
 	}
 
@@ -148,7 +149,7 @@ namespace checking
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
 			(
 				"DC",
-				std::make_unique<hlasm_plugin::parser_library::checking::data>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
+				std::make_unique<hlasm_plugin::parser_library::checking::dc>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
 					hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL, hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL, hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL}, "DC")
 				));
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
@@ -160,7 +161,7 @@ namespace checking
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
 			(
 				"DS",
-				std::make_unique<hlasm_plugin::parser_library::checking::data>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
+				std::make_unique<hlasm_plugin::parser_library::checking::ds_dxd>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
 					hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL, hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL, hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL}, "DS")
 				));
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
@@ -172,7 +173,7 @@ namespace checking
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
 			(
 				"DXD",
-				std::make_unique<hlasm_plugin::parser_library::checking::data>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
+				std::make_unique<hlasm_plugin::parser_library::checking::ds_dxd>(std::vector<hlasm_plugin::parser_library::checking::label_types>{hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
 					hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL, hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL, hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL}, "DXD")
 				));
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
@@ -330,152 +331,6 @@ namespace checking
 				std::make_unique<hlasm_plugin::parser_library::checking::xattr>(std::vector<hlasm_plugin::parser_library::checking::label_types>{ hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
 					hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL, hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL}, "XATTR")
 				));
-	}
-
-	machine_instruction_checker::machine_instruction_checker() {}
-
-	int machine_instruction_checker::find_instruction_index(const std::string & instruction_name)
-	{
-		size_t i = 0;
-		while (i < context::instruction::machine_instructions.size() && instruction_name != context::instruction::machine_instructions[i].name)
-			i++;
-		if (i == context::instruction::machine_instructions.size())
-		{
-			// machine instruction does not exist
-			diagnostic.push_back(diagnostic_op::error_M031(instruction_name));
-			return -1;
-		}
-		return i;
-	}
-
-	bool machine_instruction_checker::resolve_operand(const context::machine_instruction & current_instruction, const address_operand* curr_operand, size_t it)
-	{
-		if (!is_size_corresponding_int(12, curr_operand->displacement))
-		{
-			// displacement always needs to be 12 bit
-			diagnostic.push_back(diagnostic_op::error_M020(current_instruction.name)); // wrong size of address operand parameters
-			return false;
-		}
-		if (current_instruction.operands[it] == context::operand_format::DB)
-		{
-			// check instructions with DB format, need to be parsed in a displacement(base, -1) format
-			// first_param is therefore base and second is -1, base needs to be 4bit
-			if (!is_size_corresponding_int(4, curr_operand->first_par))
-			{
-				diagnostic.push_back(diagnostic_op::error_M020(current_instruction.name)); // wrong size of address operand parameters
-				return false;
-			}
-			else if (curr_operand->second_par != -1)
-			{
-				diagnostic.push_back(diagnostic_op::error_M010(current_instruction.name)); // wrong format
-				return false;
-			}
-		}
-		else if (current_instruction.operands[it] == context::operand_format::DXB_4b || current_instruction.operands[it] == context::operand_format::DXB_8b)
-		{
-			// check instruction with DXB format, 
-			// need to be parsed in displacement(index,-1), displacement(index,base) or displacement(0,base) format
-			if (curr_operand->second_par != -1 && !is_size_corresponding_int(4, curr_operand->second_par))
-			{
-				//check the base, if if fails, wrong format
-				diagnostic.push_back(diagnostic_op::error_M010(current_instruction.name)); // wrong format
-				return false;
-			}
-			if ((current_instruction.operands[it] == context::operand_format::DXB_4b && !is_size_corresponding_int(4, curr_operand->first_par))
-				|| (current_instruction.operands[it] == context::operand_format::DXB_8b && !is_size_corresponding_int(8, curr_operand->first_par))
-				)
-			{
-				//therefore index has a wrong format
-				diagnostic.push_back(diagnostic_op::error_M020(current_instruction.name)); // wrong size of address operand parameters
-				return false;
-			}
-		}
-		return true;
-	}
-
-	bool machine_instruction_checker::mach_instr_check(const std::string & instruction_name, const std::vector<const one_operand*>& input)
-	{
-		int i = 0;
-		if ((i = find_instruction_index(instruction_name)) == -1)
-			return false;
-
-		// otherwise instruction is found at the ith position
-		context::machine_instruction current_instruction = context::instruction::machine_instructions[i];
-		size_t operands_size = current_instruction.operands.size();
-
-		if (!(input.size() == operands_size || (input.size() + 1 == operands_size && current_instruction.has_optional_operand)))
-		{
-			// wrong size of vector
-			diagnostic.push_back(diagnostic_op::error_M030(instruction_name));
-			return false;
-		}
-
-		for (size_t j = 0; j < input.size(); j++) // iterate through all required parameters
-		{
-			if (is_operand_address(input[j])) // resolve the address here
-			{
-				address_operand* curr_operand = (address_operand*)input[j];
-				if (curr_operand->operand_identifier == "" && is_displacement_operand(context::instruction::machine_instructions[i].operands[j]))
-				{
-					if (curr_operand->state == address_state::RES_VALID)
-						continue;
-					else if (curr_operand->state == address_state::RES_INVALID)
-					{
-						// invalid address
-						diagnostic.push_back(diagnostic_op::error_M040(instruction_name));
-						return false;
-					}
-					else if (curr_operand->state == address_state::UNRES && !resolve_operand(current_instruction, curr_operand, j))
-					{
-						return false;
-					}
-				}
-				else
-				{
-					diagnostic.push_back(diagnostic_op::error_M011(instruction_name)); // wrong format of machine instruction operand
-					return false;
-				}
-			}
-			else if (is_operand_simple(input[j]))
-			{
-				int size_of_operand = get_size_of_operand(current_instruction.operands[j]);
-				if (size_of_operand == -1)
-				{
-					if ((current_instruction.operands[j] == context::operand_format::DB || current_instruction.operands[j] == context::operand_format::DXB_4b)
-						&& is_positive_number(input[j]->operand_identifier))
-					{
-						diagnostic.push_back(diagnostic_op::warning_M041(instruction_name)); // wrong format of machine instruction operand
-						continue;
-					}
-					else
-					{
-						diagnostic.push_back(diagnostic_op::error_M011(instruction_name)); // wrong format of machine instruction operand
-						return false;
-					}
-				}
-				if (!is_size_corresponding_str(size_of_operand, input[j]->operand_identifier))
-				{
-					diagnostic.push_back(diagnostic_op::error_M021(instruction_name)); // wrong size of machine instruction operand
-					return false;
-				}
-			}
-			else
-			{
-				diagnostic.push_back(diagnostic_op::error_M011(instruction_name)); // wrong format of machine instruction operand
-				return false;
-			}
-		}
-		return true;
-	}
-
-	const std::vector<diagnostic_op> & machine_instruction_checker::get_diagnostics()
-	{
-		return diagnostic;
-	}
-
-	void machine_instruction_checker::clear_diagnostic()
-	{
-		diagnostic.clear();
 	}
 
 }

@@ -1,5 +1,6 @@
 
 #include "assembler_instruction.h"
+#include <regex>
 
 namespace hlasm_plugin
 {
@@ -10,140 +11,183 @@ namespace checking
 
 xattr::xattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool xattr::check(const std::vector<const one_operand*> & to_check)
+bool xattr::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	for (const auto& operand : to_check)
 	{
-		if (is_operand_simple(operand)) //instruction can have only complex operands
+		// instruction can have only complex operands
+		auto current_operand = get_complex_operand(operand);
+		if (current_operand == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I011_complex_expected();
+			add_diagnostic(diagnostic_op::error_A001_complex_op_expected(name_of_instruction));
 			return false;
 		}
-
-		complex_operand* current_operand = (complex_operand*) operand;
-		if (std::any_of(current_operand->operand_parameters.begin(), current_operand->operand_parameters.end(), [](auto inner) { return is_operand_complex(inner); }))
+		const static std::vector<std::string> possible_identifiers = { "ATTRIBUTES", "ATTR", "LINK", "LINKAGE", "SCOPE", "PSECT", "REFERENCE", "REF"};
+		if (!is_param_in_vector(current_operand->operand_identifier, possible_identifiers))
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A100_XATTR_identifier());
 			return false;
 		}
-
+		// check for complexity of parameters, all parameters must be simple
+		for (const auto & param : current_operand->operand_parameters)
+		{
+			if (!is_operand_simple(param.get()))
+			{
+				add_diagnostic(diagnostic_op::error_A002_simple_par_expected(name_of_instruction, current_operand->operand_identifier));
+				return false;
+			}
+		}
 		if (current_operand->operand_identifier == "ATTRIBUTES" || current_operand->operand_identifier == "ATTR"
 			|| current_operand->operand_identifier == "LINKAGE" || current_operand->operand_identifier == "LINK"
 			|| current_operand->operand_identifier == "SCOPE" || current_operand->operand_identifier == "PSECT")
 		{
 			if (current_operand->operand_parameters.size() != 1)
 			{
-				diagnostic = diagnostic_op::error_I031_exact(name_of_instruction, false, 1);
+				add_diagnostic(diagnostic_op::error_A016_exact(current_operand->operand_identifier, current_operand->operand_identifier, 1));
 				return false;
 			}
+			// get the simple operand
+			auto param = get_simple_operand(current_operand->operand_parameters[0].get());
 			if (current_operand->operand_identifier == "SCOPE")
 			{
 				const static std::vector<std::string> scope_operands = { "SECTION", "MODULE", "LIBRARY", "IMPORT", "EXPORT", "S", "M", "L", "X" };
-				if (!is_param_in_vector(current_operand->operand_parameters[0]->operand_identifier, scope_operands))
+				if (!is_param_in_vector(param->operand_identifier, scope_operands))
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+					add_diagnostic(diagnostic_op::error_A200_SCOPE_param(name_of_instruction));
 					return false;
 				}
 			}
 			else if (current_operand->operand_identifier == "LINKAGE" || current_operand->operand_identifier == "LINK")
 			{
-				if (current_operand->operand_parameters[0]->operand_identifier != "OS" && current_operand->operand_parameters[0]->operand_identifier != "XPLINK")
+				if (param->operand_identifier != "OS" && param->operand_identifier != "XPLINK")
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+					add_diagnostic(diagnostic_op::error_A201_LINKAGE_param(name_of_instruction));
 					return false;
 				}
 			}
 		}
 		else if (current_operand->operand_identifier == "REFERENCE" || current_operand->operand_identifier == "REF")
 		{
-			if ((current_operand->operand_parameters.size() == 0) || (current_operand->operand_parameters.size() > 2))
+			if ((current_operand->operand_parameters.empty()) || (current_operand->operand_parameters.size() > 2))
 			{
-				diagnostic = diagnostic_op::error_I033_either(name_of_instruction, false, 1, 2);
+				add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, current_operand->operand_identifier, 1, 2));
 				return false;
 			}
 			bool code_data_option = false;
 			bool direct_option = false;
-			for (const auto& parameter: current_operand->operand_parameters)
+			for (const auto& parameter : current_operand->operand_parameters)
 			{
-				if ((parameter->operand_identifier == "DIRECT" || parameter->operand_identifier == "INDIRECT") && !direct_option)
-					direct_option = true;
-				else if ((parameter->operand_identifier == "DATA" || parameter->operand_identifier == "CODE") && !code_data_option)
-					code_data_option = true;
+				// check whether it is simple
+				auto param = get_simple_operand(parameter.get());
+				if (param->operand_identifier == "DIRECT" || param->operand_identifier == "INDIRECT")
+				{
+					if (!direct_option)
+						direct_option = true;
+					else
+					{
+						add_diagnostic(diagnostic_op::error_A202_REF_direct(name_of_instruction));
+						return false;
+					}
+				}
+				else if (param->operand_identifier == "DATA" || param->operand_identifier == "CODE")
+				{
+					if (!code_data_option)
+						code_data_option = true;
+					else
+					{
+						add_diagnostic(diagnostic_op::error_A203_REF_data(name_of_instruction));
+						return false;
+					}
+				}
 				else
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+					add_diagnostic(diagnostic_op::error_A238_REF_format(name_of_instruction));
 					return false;
 				}
 			}
 		}
 		else
-		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-			return false;
-		}
+			assert(false);
 	}
 	return true;
 };
 
 using_instr::using_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, -1) {};
 
-bool using_instr::check(const std::vector<const one_operand*> & to_check)
+bool using_instr::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	//check first operand
-	if (is_operand_complex(to_check[0])) //first operand must be therefore in the form of (base, end)
+	// TO DO, waiting for the evaluation of relocatable expressions, symbols can be used
+	if (auto first_operand = get_complex_operand(to_check[0]); first_operand) //first operand must be therefore in the form of (base, end)
 	{
-		complex_operand* first_operand = (complex_operand*)to_check[0];
-		if (first_operand->operand_identifier != "" || first_operand->operand_parameters.size() != 2 || !is_positive_value(first_operand->operand_parameters[0]->operand_identifier)
-			|| !is_positive_value(first_operand->operand_parameters[1]->operand_identifier)
-			|| std::stoi(first_operand->operand_parameters[1]->operand_identifier) <= std::stoi(first_operand->operand_parameters[0]->operand_identifier))
+		if (first_operand->operand_identifier != "" || is_operand_complex(first_operand->operand_parameters[0].get()) || is_operand_complex(first_operand->operand_parameters[1].get())
+			|| first_operand->operand_parameters.size() != 2)
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A104_USING_first_format());
 			return false;
 		}
-		if (is_operand_complex(first_operand->operand_parameters[0]) || is_operand_complex(first_operand->operand_parameters[1]))
+		if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A101_USING_base_val());
+			return false;
+		}
+		if (!is_positive_value(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier))
+		{
+			add_diagnostic(diagnostic_op::error_A102_USING_end_val());
+			return false;
+		}
+		if (std::stoi(get_simple_operand(first_operand->operand_parameters[1].get())->operand_identifier)
+			<= std::stoi(get_simple_operand(first_operand->operand_parameters[0].get())->operand_identifier))
+		{
+			add_diagnostic(diagnostic_op::error_A103_USING_end_exceed());
 			return false;
 		}
 	}
-	else //first operand specifies only base
+	else if (auto simple_op = get_simple_operand(to_check[0]); simple_op)//first operand specifies only base
 	{
-		if (!is_positive_value(to_check[0]->operand_identifier))
+		if (!is_positive_value(simple_op->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A101_USING_base_val());
 			return false;
 		}
 	}
+	else
+		assert(false);
 	//check other operands
 	if (to_check.size() == 2) //therefore there can be either address or one base register
 	{
-		if (is_operand_complex(to_check[1]))
+		auto simple_op = get_simple_operand(to_check[1]);
+		if (simple_op == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_base_register(to_check[1]->operand_identifier) || !is_positive_value(to_check[1]->operand_identifier))
+		// can also be address, maybe TO DO
+		return true;
+		/*
+		if (!is_base_register(simple_op->operand_identifier) || !is_positive_value(simple_op->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_I020_format(name_of_instruction, true));
 			return false;
-		}
+		}*/
 	}
 	else //all other parameters are base registers
 	{
 		for (size_t i = 1; i < to_check.size(); i++)
 		{
-			if (is_operand_complex(to_check[i]))
+			auto simple_op = get_simple_operand(to_check[i]);
+			if (simple_op == nullptr)
 			{
-				diagnostic = diagnostic_op::error_I010_simple_expected();
+				add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 				return false;
 			}
-			if (!is_base_register(to_check[i]->operand_identifier))
+			if (!is_base_register(simple_op->operand_identifier))
 			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+				add_diagnostic(diagnostic_op::error_A105_USING_base_register_val());
 				return false;
 			}
 		}
@@ -153,19 +197,26 @@ bool using_instr::check(const std::vector<const one_operand*> & to_check)
 
 title::title(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool title::check(const std::vector<const one_operand*> & to_check)
+bool title::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	// first operand must be simple
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (const auto& op_id = to_check[0]->operand_identifier; op_id.size() > 102 || op_id.size() < 3
-		|| op_id.front() != '\'' || op_id.back() != '\'')
+	const auto& op_id = first->operand_identifier;
+	if (op_id.size() > TITLE_max_length || op_id.size() < 3)
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A106_TITLE_string_chars());
+		return false;
+	}
+	if (op_id.front() != '\'' || op_id.back() != '\'')
+	{
+		add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(name_of_instruction));
 		return false;
 	}
 	return true;
@@ -173,41 +224,44 @@ bool title::check(const std::vector<const one_operand*> & to_check)
 
 rmode::rmode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool rmode::check(const std::vector<const one_operand*> & to_check)
+bool rmode::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	const static std::vector<std::string> amode_options = { "24", "31", "64", "ANY" };
-	if (is_param_in_vector(to_check[0]->operand_identifier, amode_options))
-		return true;
-	diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-	return false;
+	if (!is_param_in_vector(first->operand_identifier, rmode_options))
+	{
+		add_diagnostic(diagnostic_op::error_A107_RMODE_op_format());
+		return false;
+	}
+	return true;
 }
 
 punch::punch(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool punch::check(const std::vector<const one_operand*> & to_check)
+bool punch::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check)) //check number of operands
+	if (!operands_size_corresponding(to_check)) //check number of operands
 		return false;
-	if (is_operand_complex(to_check[0])) //check complexity of operand
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (to_check[0]->operand_identifier[0] != '\'' || to_check[0]->operand_identifier[to_check[0]->operand_identifier.size() - 1] != '\'')
+	if (first->operand_identifier.size() < 2 || first->operand_identifier.front() != '\'' || first->operand_identifier.back() != '\'')
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(name_of_instruction));
 		return false;
 	}
 	int size_of_string = 0;
 	size_t i = 0;
-	for (const auto& op_id = to_check[0]->operand_identifier; i < op_id.size() - 1; ++size_of_string)
+	for (const auto& op_id = first->operand_identifier; i < op_id.size() - 1; ++size_of_string)
 	{
 		if (op_id[i] == '&' &&  op_id[i + 1] == '&')
 			i += 2;
@@ -216,30 +270,31 @@ bool punch::check(const std::vector<const one_operand*> & to_check)
 		else
 			i++;
 	}
-	if (size_of_string <= 80)
+	if (size_of_string <= string_max_length)
 		return true;
-	diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+	add_diagnostic(diagnostic_op::error_A108_PUNCH_string_chars());
 	return false;
 }
 
 print::print(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool print::check(const std::vector<const one_operand*> & to_check)
+bool print::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	const static std::vector<std::string> print_pair_operands = { "GEN", "DATA", "MCALL", "MSOURCE", "UHEAD", "NOGEN", "NODATA", "NOMCALL", "NOMSOURCE", "NOUHEAD" };
-	const static std::vector<std::string> print_other_operands = { "ON", "OFF", "NOPRINT", "" };
+	const static std::vector<std::string> print_other_operands = { "ON", "OFF", "NOPRINT" };
 	for (const auto & operand : to_check)
 	{
-		if (is_operand_complex(operand))
+		auto simple = get_simple_operand(operand);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_param_in_vector(operand->operand_identifier, print_pair_operands) && !is_param_in_vector(operand->operand_identifier, print_other_operands))
+		if (!is_param_in_vector(simple->operand_identifier, print_pair_operands) && !is_param_in_vector(simple->operand_identifier, print_other_operands))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A109_PRINT_op_format());
 			return false;
 		}
 	}
@@ -248,83 +303,137 @@ bool print::check(const std::vector<const one_operand*> & to_check)
 
 stack_instr::stack_instr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 4) {};
 
-bool stack_instr::check(const std::vector<const one_operand*> & to_check)
+bool stack_instr::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	bool acontrol_operand = false;
 	bool print_operand = false;
 	bool using_operand = false;
-	size_t i = 0;
-	for (const auto& operand : to_check)
+	for (size_t i = 0; i < to_check.size(); i++)
 	{
-		if (is_operand_complex(operand))
+		auto simple = get_simple_operand(to_check[i]);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (operand->operand_identifier == "ACONTROL" && !acontrol_operand)
-			acontrol_operand = true;
-		else if (operand->operand_identifier == "PRINT" && !print_operand)
-			print_operand = true;
-		else if (operand->operand_identifier == "USING" && !using_operand)
-			using_operand = true;
-		else if (operand->operand_identifier == "NOPRINT" && i == to_check.size() - 1)
-			return true;
+		if (simple->operand_identifier == "ACONTROL")
+		{
+			if (!acontrol_operand)
+				acontrol_operand = true;
+			else
+			{
+				add_diagnostic(diagnostic_op::error_A112_STACK_option_specified(name_of_instruction, simple->operand_identifier));
+				return false;
+			}
+		}
+		else if (simple->operand_identifier == "PRINT")
+		{
+			if (!print_operand)
+				print_operand = true;
+			else
+			{
+				add_diagnostic(diagnostic_op::error_A112_STACK_option_specified(name_of_instruction, simple->operand_identifier));
+				return false;
+			}
+		}
+		else if (simple->operand_identifier == "USING")
+		{
+			if (!using_operand)
+				using_operand = true;
+			else
+			{
+				add_diagnostic(diagnostic_op::error_A112_STACK_option_specified(name_of_instruction, simple->operand_identifier));
+				return false;
+			}
+		}
+		else if (simple->operand_identifier == "NOPRINT")
+		{
+			// must be specified at end
+			if (i != to_check.size() - 1)
+			{
+				add_diagnostic(diagnostic_op::error_A113_STACK_NOPRINT_end(name_of_instruction));
+				return false;
+			}
+			// cannot be the only option specified
+			if (to_check.size() == 1)
+			{
+				add_diagnostic(diagnostic_op::error_A114_STACK_NOPRINT_solo(name_of_instruction));
+				return false;
+			}
+		}
 		else
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			// whether are at the last operand
+			if (i == to_check.size() - 1)
+				add_diagnostic(diagnostic_op::error_A110_STACK_last_op_format_val(name_of_instruction));
+			else
+				add_diagnostic(diagnostic_op::error_A111_STACK_other_op_format_val(name_of_instruction));
 			return false;
 		}
-		i++;
 	}
 	return true;
 }
 
 org::org(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 3) {};
 
-bool org::check(const std::vector<const one_operand*> & to_check)
+bool org::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	for (const auto& operand : to_check)
+	if (to_check.empty())
+		return true;
+
+	const one_operand* second = nullptr;
+	const one_operand* third = nullptr;
+	for (size_t i = 0; i < to_check.size(); i++)
 	{
-		if (is_operand_complex(operand)) //check complexity of operands
+		auto simple_op = get_simple_operand(to_check[i]);
+		if (simple_op == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_positive_number(operand->operand_identifier) && (operand->operand_identifier != "")) //check whether operands are numbers
+		if (!is_number(simple_op->operand_identifier) && (simple_op->operand_identifier != "")) //check whether operands are numbers
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A115_ORG_op_format());
+			return false;
+		}
+		switch (i)
+		{
+		case 1:
+			second = simple_op;
+			break;
+		case 2:
+			third = simple_op;
+			break;
+		}
+	}
+	if (to_check.size() >= 2 && second->operand_identifier != "")
+	{
+		// check the boundary operand value in case it is specified
+		auto second_val = std::stoi(second->operand_identifier);
+		if (!is_power_of_two(second_val) || second_val > ORG_max_boundary_val || second_val < ORG_min_boundary_val)
+		{
+			add_diagnostic(diagnostic_op::error_A116_ORG_boundary_operand());
 			return false;
 		}
 	}
-	if (to_check.size() == 0)
-		return true;
-	else if ((to_check.size() >= 1 && to_check[0]->operand_identifier == "")
-			|| (to_check.size() >= 2 && to_check[1]->operand_identifier != "" && is_number(to_check[1]->operand_identifier) &&
-				(!is_power_of_two(std::stoi(to_check[1]->operand_identifier)) || std::stoi(to_check[1]->operand_identifier) > 4096 || std::stoi(to_check[1]->operand_identifier) < 2))
-			|| (to_check.size() == 3 && to_check[2]->operand_identifier == ""))
-	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-		return false;
-	}
-	else
-		return true;
+	return true;
 }
 
 opsyn::opsyn(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool opsyn::check(const std::vector<const one_operand*> & to_check)
+bool opsyn::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	if (to_check.size() == 1)
 	{
 		if (is_operand_complex(to_check[0]))
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
 		//TO DO - check operation code parameter
@@ -335,200 +444,239 @@ bool opsyn::check(const std::vector<const one_operand*> & to_check)
 
 mnote::mnote(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 2) {};
 
-bool mnote::check(const std::vector<const one_operand*> & to_check)
+bool mnote::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	for (const auto& operand : to_check)
 	{
-		if (is_operand_complex(operand))
+		if (!is_operand_simple(operand))
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
 	}
-	if (to_check.back()->operand_identifier[0] == '\'' && to_check.back()->operand_identifier.size() <= 1020
-		&& to_check.back()->operand_identifier.back() == '\'')
+	// last is a message
+	auto last = get_simple_operand(to_check.back());
+	// first does not have to be specified
+	one_operand* first = nullptr;
+	if (to_check.size() == 2)
+		first = (one_operand*)to_check[0];
+
+	// check message
+	if (last->operand_identifier.size() < 2 || last->operand_identifier[0] != '\'' ||
+		last->operand_identifier.back() != '\'')
 	{
-		if (to_check.size() == 1)
-			return true;
-		else if (to_check.size() == 2 && (to_check[0]->operand_identifier.size() + to_check[1]->operand_identifier.size() <= 1024)
-			&& (to_check[0]->operand_identifier == "*" || to_check[0]->operand_identifier == "" || is_byte_value(to_check[0]->operand_identifier)))
-			return true;
-		else
-		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-			return false;
-		}
+		add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(name_of_instruction));
+		return false;
 	}
-	diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-	return false;
+	if (last->operand_identifier.size() > MNOTE_max_message_length)
+	{
+		add_diagnostic(diagnostic_op::error_A117_MNOTE_message_size());
+		return false;
+	}
+	// move onto the first operand
+	if (to_check.size() == 1)
+		return true;
+	else if (first->operand_identifier.size() + last->operand_identifier.size() > MNOTE_max_operands_length)
+	{
+		add_diagnostic(diagnostic_op::error_A118_MNOTE_operands_size());
+		return false;
+	}
+	else if (first->operand_identifier == "*" || first->operand_identifier == "" || is_byte_value(first->operand_identifier))
+		return true;
+	else
+	{
+		add_diagnostic(diagnostic_op::error_A119_MNOTE_first_op_format());
+		return false;
+	}
 }
 
 iseq::iseq(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool iseq::check(const std::vector<const one_operand*> & to_check)
+bool iseq::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (to_check.size() == 0)
+	if (to_check.empty())
 		return true;
 	else if (to_check.size() == 2)
 	{
-		if (is_operand_complex(to_check[0]) || is_operand_complex(to_check[1]))
+		auto first = get_simple_operand(to_check[0]);
+		auto second = get_simple_operand(to_check[1]);
+		if (first == nullptr || second == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_number(to_check[0]->operand_identifier) || !is_number(to_check[1]->operand_identifier))
+		if (!is_number(first->operand_identifier) || !is_number(second->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A120_ISEQ_op_format());
 			return false;
 		}
 		try
 		{
-			int left = std::stoi(to_check[0]->operand_identifier);
-			int right = std::stoi(to_check[1]->operand_identifier);
-			if (left >= 1 && left <= 80 && right >= 1 && right <= 80 && right >= left)
+			int left = std::stoi(first->operand_identifier);
+			int right = std::stoi(second->operand_identifier);
+			if (left >= ISEQ_min_op_val && left <= ISEQ_max_op_val && right >= ISEQ_min_op_val && right <= ISEQ_max_op_val && right >= left)
 				return true;
-			else
+			else if (right < left)
 			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+				add_diagnostic(diagnostic_op::error_A121_ISEQ_right_GT_left());
 				return false;
 			}
 		}
-		catch (...)
-		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-			return false;
-		}
+		catch (...) {};
+		add_diagnostic(diagnostic_op::error_A120_ISEQ_op_format());
+		return false;
 	}
 	else
 	{
-		diagnostic = diagnostic_op::error_I033_either(name_of_instruction, true, 0, 2);
+		add_diagnostic(diagnostic_op::error_A013_either(name_of_instruction, 0, 2));
 		return false;
 	}
 }
 
 ictl::ictl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 3) {};
 
-bool ictl::check(const std::vector<const one_operand*> & to_check)
+bool ictl::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	int begin = 1;
 	int end = 72;
 	int continuation = 16;
 	for (const auto & operand : to_check)
 	{
-		if (is_operand_complex(operand))
+		auto simple = get_simple_operand(operand);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_positive_number(operand->operand_identifier))
+		if (!is_positive_number(simple->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A122_ICTL_op_format());
 			return false;
 		}
 	}
 	try {
 		if (to_check.size() > 0)
-			begin = std::stoi(to_check[0]->operand_identifier);
+			begin = std::stoi(get_simple_operand(to_check[0])->operand_identifier);
 		if (to_check.size() > 1)
-			end = std::stoi(to_check[1]->operand_identifier);
+			end = std::stoi(get_simple_operand(to_check[1])->operand_identifier);
 		if (to_check.size() > 2)
-			continuation = std::stoi(to_check[2]->operand_identifier);
+			continuation = std::stoi(get_simple_operand(to_check[2])->operand_identifier);
 	}
 	catch (...)
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A122_ICTL_op_format());
 		return false;
 	}
+	// check ICTL parameters
 	if (to_check.size() == 2 || end == 80)
 		continuation = -1;
-	if (check_ictl_parameters(begin, end, continuation))
+	if (begin < ICTL_begin_min_val || begin > ICTL_begin_max_val)
+	{
+		add_diagnostic(diagnostic_op::error_A123_ICTL_begin_format());
+		return false;
+	}
+	if (end < ICTL_end_min_val || end > ICTL_end_max_val)
+	{
+		add_diagnostic(diagnostic_op::error_A124_ICTL_end_format());
+		return false;
+	}
+	if (end < begin + ICTL_begin_end_diff)
+	{
+		add_diagnostic(diagnostic_op::error_A125_ICTL_begin_end_diff());
+		return false;
+	}
+	if (continuation == -1)
 		return true;
-	diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-	return false;
+	if (continuation < ICTL_continuation_min_val || continuation > ICTL_continuation_max_val)
+	{
+		add_diagnostic(diagnostic_op::error_A126_ICTL_continuation_format());
+		return false;
+	}
+	if (end <= continuation)
+	{
+		add_diagnostic(diagnostic_op::error_A128_ICTL_end_continuation_diff());
+		return false;
+	}
+	if (continuation <= begin)
+	{
+		add_diagnostic(diagnostic_op::error_A127_ICTL_begin_continuation_diff());
+		return false;
+	}
+	return true;
 }
 
 external::external(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool external::check(const std::vector<const one_operand*> & to_check)
+bool external::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	else if (to_check.size() == 1 && is_operand_complex(to_check[0])) //check complexity of operands
+	for (const auto & operand : to_check)
 	{
-		complex_operand* part_operand = (complex_operand*)to_check[0];
-		if (part_operand->operand_identifier == "PART")
+		if (auto complex_op = get_complex_operand(operand); complex_op)
 		{
-			for (const auto& parameter: part_operand->operand_parameters)
+			// check PART operand
+			if (complex_op->operand_identifier != "PART")
 			{
-				if (is_operand_complex(parameter))
-				{
-					diagnostic = diagnostic_op::error_I010_simple_expected();
-					return false;
-				}
-				if (parameter->operand_identifier == "")
-				{
-					diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-					return false;
-				}
-			}
-			return true;
-		}
-		else
-		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-			return false;
-		}
-	}
-	else //every item is an external symbol
-	{
-		for (const auto & operand : to_check)
-		{
-			if (is_operand_complex(operand))
-			{
-				diagnostic = diagnostic_op::error_I010_simple_expected();
+				add_diagnostic(diagnostic_op::error_A129_EXTRN_format());
 				return false;
 			}
-			if (operand->operand_identifier == "")
+			for (const auto& parameter : complex_op->operand_parameters)
 			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+				if (!is_operand_simple(parameter.get()) || get_simple_operand(parameter.get())->operand_identifier == "")
+				{
+					add_diagnostic(diagnostic_op::error_A129_EXTRN_format());
+					return false;
+				}
+			}
+		}
+		else if (auto simple_op = get_simple_operand(operand); simple_op)
+		{
+			// check simple external symbol
+			if (simple_op->operand_identifier == "")
+			{
+				add_diagnostic(diagnostic_op::error_A129_EXTRN_format());
 				return false;
 			}
 		}
-		return true;
+		else assert(false);
 	}
+	return true;
 }
 
 exitctl::exitctl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 5) {};
 
-bool exitctl::check(const std::vector<const one_operand*> & to_check)
+bool exitctl::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	const static std::vector<std::string> exit_type = { "SOURCE", "LIBRARY", "LISTING", "PUNCH", "ADATA", "TERM", "OBJECT" };
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (!is_param_in_vector(to_check[0]->operand_identifier, exit_type))
+	if (!is_param_in_vector(first->operand_identifier, exit_type))
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A130_EXITCTL_exit_type_format());
 		return false;
 	}
 	for (size_t i = 1; i < to_check.size(); i++)
 	{
-		if (is_operand_complex(to_check[i]))
+		auto operand = get_simple_operand(to_check[i]);
+		if (operand == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!is_number(to_check[i]->operand_identifier))
+		if (!is_number(operand->operand_identifier) && operand->operand_identifier != "")
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A131_EXITCTL_control_value_format());
 			return false;
 		}
 	}
@@ -537,49 +685,95 @@ bool exitctl::check(const std::vector<const one_operand*> & to_check)
 
 equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
-bool equ::check(const std::vector<const one_operand*> & to_check)
+bool equ::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	for (const auto& operand : to_check) //check complexity of all operands
 	{
-		if (is_operand_complex(operand))
+		if (!is_operand_simple(operand))
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
 	}
-	if (!is_number(to_check[0]->operand_identifier)
-		|| (to_check.size() > 1 && (to_check[1]->operand_identifier.size() > 0)
-			&& (!is_positive_number(to_check[1]->operand_identifier) || !is_number(to_check[1]->operand_identifier))) //checking length attribute value 
-		||
-		(to_check.size() > 2 && (to_check[2]->operand_identifier.size() > 0)
-			&& (!is_positive_number(to_check[2]->operand_identifier) || !is_byte_value(to_check[2]->operand_identifier))) //checking type attribute value
-		||
-		(to_check.size() > 4 && !check_assembler_type_value(to_check[4]->operand_identifier))) //checking assembler type value
+	// check first obligatory value
+	if (!is_number(get_simple_operand(to_check[0])->operand_identifier))
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A132_EQU_value_format());
 		return false;
+	}
+	// check second operand - length attribute value
+	if (to_check.size() > 1)
+	{
+		auto length_att = get_simple_operand(to_check[1])->operand_identifier;
+		if (!length_att.empty())
+		{
+			try
+			{
+				auto length_att_val = std::stoi(length_att);
+				if (length_att_val > EQU_max_length_att_val || length_att_val < 0)
+				{
+					add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format());
+					return false;
+				}
+			}
+			catch (...)
+			{
+				add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format());
+				return false;
+			}
+		}
+	}
+	// check third operand - type attribute value
+	if (to_check.size() > 2)
+	{
+		auto type_att = get_simple_operand(to_check[2])->operand_identifier;
+		if (!type_att.empty())
+		{
+			if (!is_positive_number(type_att) || !is_byte_value(type_att))
+			{
+				add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format());
+				return false;
+			}
+		}
+	}
+	// check fifth operand - assembler type value
+	if (to_check.size() > 4)
+	{
+		auto asm_type_val = get_simple_operand(to_check[4])->operand_identifier;
+		const static std::vector<std::string> assembler_type_operands = { "AR", "CR", "CR32", "CR64", "FPR", "GR", "VR", "GR32", "GR64", "" };
+		if (!is_param_in_vector(asm_type_val, assembler_type_operands))
+		{
+			add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format());
+			return false;
+		}
 	}
 	return true;
 }
 
 entry::entry(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool entry::check(const std::vector<const one_operand*> & to_check)
+bool entry::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
+	if (to_check.size() > ENTRY_max_operands)
+	{
+		add_diagnostic(diagnostic_op::error_A014_lower_than(name_of_instruction, ENTRY_max_operands));
+		return false;
+	}
 	for (const auto& operand : to_check)
 	{
-		if (is_operand_complex(operand))
+		auto simple = get_simple_operand(operand);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (operand->operand_identifier == "")
+		if (simple->operand_identifier == "")
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A136_ENTRY_op_format());
 			return false;
 		}
 	}
@@ -588,42 +782,64 @@ bool entry::check(const std::vector<const one_operand*> & to_check)
 
 end::end(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
 
-bool end::check(const std::vector<const one_operand*> & to_check)
+bool end::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (to_check.size() > 0) //there is at least one parameter
+	// check the first expression operand
+	if (!to_check.empty())
 	{
-		if (is_operand_complex(to_check[0])) //check complexity of first operand
+		if (!is_operand_simple(to_check[0])) //first operand must be simple
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (to_check.size() > 1) // therefore there is a second operand
+	}
+	// check the second language operand
+	if (to_check.size() == 2)
+	{
+		// second operand must be complex 
+		auto language_operand = get_complex_operand(to_check[1]);
+		if (language_operand == nullptr)
 		{
-			if (is_operand_simple(to_check[1])) //check complexity of second operand
+			add_diagnostic(diagnostic_op::error_A001_complex_op_expected(name_of_instruction));
+			return false;
+		}
+		if (language_operand->operand_parameters.size() != 3)
+		{
+			add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, "language", 3));
+			return false;
+		}
+		if (language_operand->operand_identifier != "")
+		{
+			add_diagnostic(diagnostic_op::error_A137_END_lang_format());
+			return false;
+		}
+		for (const auto& param : language_operand->operand_parameters)
+		{
+			// all parameters must be simple
+			if (!is_operand_simple(param.get()))
 			{
-				diagnostic = diagnostic_op::error_I011_complex_expected();
+				add_diagnostic(diagnostic_op::error_A002_simple_par_expected(name_of_instruction, "language"));
 				return false;
 			}
-			complex_operand* language_operand = (complex_operand*)to_check[1];
-			for (const auto& param : language_operand->operand_parameters)
-			{
-				if (is_operand_complex(param)) //check complexity of second operand
-				{
-					diagnostic = diagnostic_op::error_I010_simple_expected();
-					return false;
-				}
-			}
-			if (language_operand->operand_identifier != "" || language_operand->operand_parameters.size() != 3
-				|| language_operand->operand_parameters[0]->operand_identifier.size() < 1 || language_operand->operand_parameters[0]->operand_identifier.size() > 10
-				|| language_operand->operand_parameters[1]->operand_identifier.size() != 4 || language_operand->operand_parameters[2]->operand_identifier.size() != 5
-				|| !is_positive_number(language_operand->operand_parameters[2]->operand_identifier)) //operand identifier needs to be empty
-			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-				return false;
-			}
-
+		}
+		if (get_simple_operand(language_operand->operand_parameters[0].get())->operand_identifier.empty()
+			|| get_simple_operand(language_operand->operand_parameters[0].get())->operand_identifier.size() > END_lang_first_par_size)
+		{
+			add_diagnostic(diagnostic_op::error_A138_END_lang_first());
+			return false;
+		}
+		if (get_simple_operand(language_operand->operand_parameters[1].get())->operand_identifier.size() != END_lang_second_par_size)
+		{
+			add_diagnostic(diagnostic_op::error_A139_END_lang_second());
+			return false;
+		}
+		if (get_simple_operand(language_operand->operand_parameters[2].get())->operand_identifier.size() != END_lang_third_par_size
+			|| !is_positive_number(get_simple_operand(language_operand->operand_parameters[2].get())->operand_identifier))
+		{
+			add_diagnostic(diagnostic_op::error_A140_END_lang_third());
+			return false;
 		}
 	}
 	return true;
@@ -631,35 +847,19 @@ bool end::check(const std::vector<const one_operand*> & to_check)
 
 drop::drop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};
 
-bool drop::check(const std::vector<const one_operand*> & to_check)
+bool drop::check(const std::vector<const asm_operand*> & to_check)
 {
 	for (const auto& operand : to_check)
 	{
-		if (is_operand_complex(operand))
+		auto simple = get_simple_operand(operand);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (operand->operand_identifier.empty() || (!is_ord_symbol(operand->operand_identifier) && !is_var_symbol(operand->operand_identifier) && !is_base_register(operand->operand_identifier)))
+		if (simple->operand_identifier.empty() || (!is_ord_symbol(simple->operand_identifier) && !is_var_symbol(simple->operand_identifier) && !is_base_register(simple->operand_identifier)))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-			return false;
-		}
-	}
-	return true;
-}
-
-data::data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
-
-bool data::check(const std::vector<const one_operand*> & to_check)
-{
-	if (!check_vector_size(to_check))
-		return false;
-	for (const auto& operand : to_check)
-	{
-		if (is_operand_complex(operand))
-		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A141_DROP_op_format());
 			return false;
 		}
 	}
@@ -668,18 +868,19 @@ bool data::check(const std::vector<const one_operand*> & to_check)
 
 copy::copy(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool copy::check(const std::vector<const one_operand*> & to_check)
+bool copy::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (to_check[0]->operand_identifier == "")
+	if (first->operand_identifier == "")
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A142_COPY_op_format());
 		return false;
 	}
 	return true;
@@ -687,28 +888,40 @@ bool copy::check(const std::vector<const one_operand*> & to_check)
 
 cnop::cnop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool cnop::check(const std::vector<const one_operand*> & to_check)
+bool cnop::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]) || is_operand_complex(to_check[1])) //check complexity of operands
+	auto first = get_simple_operand(to_check[0]);
+	auto second = get_simple_operand(to_check[1]);
+	if (first == nullptr || second == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
 	try
 	{
-		int byte = std::stoi(to_check[0]->operand_identifier);
-		int boundary = std::stoi(to_check[1]->operand_identifier);
-		if (byte % 2 == 1 || byte > boundary - 2 || boundary > 4096 || !is_power_of_two(boundary))
+		int byte = std::stoi(first->operand_identifier);
+		int boundary = std::stoi(second->operand_identifier);
+		if (byte < 0 || byte % 2 == 1)
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A144_CNOP_byte_size());
+			return false;
+		}
+		if (boundary < CNOP_min_boundary_val || boundary > CNOP_max_boundary_val || !is_power_of_two(boundary))
+		{
+			add_diagnostic(diagnostic_op::error_A145_CNOP_boundary_size());
+			return false;
+		}
+		if (byte > boundary - CNOP_byte_boundary_diff)
+		{
+			add_diagnostic(diagnostic_op::error_A146_CNOP_byte_GT_boundary());
 			return false;
 		}
 	}
 	catch (...)
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A143_CNOP_op_format_value());
 		return false;
 	}
 	return true;
@@ -716,17 +929,23 @@ bool cnop::check(const std::vector<const one_operand*> & to_check)
 
 ccw::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 4, 4) {};
 
-bool ccw::check(const std::vector<const one_operand*> & to_check)
+bool ccw::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	else
 	{
 		for (const auto& operand : to_check)
 		{
-			if (is_operand_complex(operand))
+			auto simple = get_simple_operand(operand);
+			if (simple == nullptr)
 			{
-				diagnostic = diagnostic_op::error_I010_simple_expected();
+				add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
+				return false;
+			}
+			if (simple->operand_identifier == "")
+			{
+				add_diagnostic(diagnostic_op::error_A147_CCW_op_format(name_of_instruction));
 				return false;
 			}
 		}
@@ -734,17 +953,25 @@ bool ccw::check(const std::vector<const one_operand*> & to_check)
 	return true;
 }
 
+// instructions like SPACE, CEJECT, START
+
 expression_instruction::expression_instruction(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 1) {};
 
-bool expression_instruction::check(const std::vector<const one_operand*> & to_check)
+bool expression_instruction::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (to_check.size() == 0)
+	if (to_check.empty())
 		return true;
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
+		return false;
+	}
+	if (!is_positive_number(first->operand_identifier))
+	{
+		add_diagnostic(diagnostic_op::error_A148_EXPR_op_format(name_of_instruction));
 		return false;
 	}
 	return true;
@@ -752,103 +979,121 @@ bool expression_instruction::check(const std::vector<const one_operand*> & to_ch
 
 cattr::cattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool cattr::check(const std::vector<const one_operand*> & to_check)
+bool cattr::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	const static std::vector<std::string> simple_operands = { "DEFLOAD", "EXECUTABLE", "MOVABLE", "NOLOAD", "NOTEXECUTABLE", "NOTREUS", "READONLY", "REFR", "REMOVABLE", "RENT", "REUS" };
 	for (const auto& operand : to_check)
-	{
-		if (is_operand_simple(operand)) //operand is simple
+	{	
+
+		if (auto simple_op = get_simple_operand(operand); simple_op)
 		{
-			if (is_param_in_vector(operand->operand_identifier, simple_operands))
+			// operand is simple
+			if (is_param_in_vector(simple_op->operand_identifier, simple_operands))
 				continue;
 			else
 			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+				add_diagnostic(diagnostic_op::error_A149_CATTR_identifier_format());
 				return false;
 			}
 		}
-		else //operand is complex
+		else if (auto complex_op = get_complex_operand(operand); complex_op)
 		{
-			complex_operand* current_operand = (complex_operand*)operand;
-			if (current_operand->operand_parameters.size() != 1) //has to have only one operand
+			// operand is complex
+			const static std::vector<std::string> complex_operands = { "RMODE", "ALIGN", "FILL", "PART", "PRIORITY" };
+			if (!is_param_in_vector(complex_op->operand_identifier, complex_operands))
 			{
-				diagnostic = diagnostic_op::error_I031_exact(name_of_instruction, false, 1);
+				add_diagnostic(diagnostic_op::error_A149_CATTR_identifier_format());
 				return false;
 			}
-			if (is_operand_complex(current_operand->operand_parameters[0]))
+			else
 			{
-				diagnostic = diagnostic_op::error_I010_simple_expected();
-				return false;
-			}
-			if (current_operand->operand_identifier == "RMODE")
-			{
-				const static std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
-				if (!is_param_in_vector(current_operand->operand_parameters[0]->operand_identifier, rmode_options))
+				if (complex_op->operand_parameters.size() != 1) //has to have exactly one operand
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+					add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, complex_op->operand_identifier, 1));
 					return false;
 				}
-			}
-			else if (current_operand->operand_identifier == "ALIGN") //upon sending, an empty operand has to come in a vector (not an empty vector)
-			{
-				const static std::vector<std::string> align_options = { "0", "1", "2", "3", "4", "12", "" };
-				if (!is_param_in_vector(current_operand->operand_parameters[0]->operand_identifier, align_options))
+				auto parameter = get_simple_operand(complex_op->operand_parameters[0].get());
+				if (parameter == nullptr)
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+					add_diagnostic(diagnostic_op::error_A002_simple_par_expected(name_of_instruction, complex_op->operand_identifier));
 					return false;
 				}
-			}
-			else if (current_operand->operand_identifier == "FILL")
-			{
-				if (!is_number(current_operand->operand_parameters[0]->operand_identifier) || !is_byte_value(current_operand->operand_parameters[0]->operand_identifier))
+				if (complex_op->operand_identifier == "RMODE")
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
-					return false;
+					if (!is_param_in_vector(parameter->operand_identifier, rmode_options))
+					{
+						add_diagnostic(diagnostic_op::error_A204_RMODE_param_format(name_of_instruction));
+						return false;
+					}
 				}
-			}
-			else if (current_operand->operand_identifier == "PART")
-			{
-				if (current_operand->operand_parameters[0]->operand_identifier.empty() || current_operand->operand_parameters[0]->operand_identifier.length() > 63)
+				else if (complex_op->operand_identifier == "ALIGN") //upon sending, an empty operand has to come in a vector (not an empty vector)
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
-					return false;
+					const static std::vector<std::string> align_options = { "0", "1", "2", "3", "4", "12", "" };
+					if (!is_param_in_vector(parameter->operand_identifier, align_options))
+					{
+						add_diagnostic(diagnostic_op::error_A205_ALIGN_param_format(name_of_instruction));
+						return false;
+					}
 				}
-			}
-			else if (current_operand->operand_identifier == "PRIORITY")
-			{
-				if (!is_number(current_operand->operand_parameters[0]->operand_identifier) || !isdigit(current_operand->operand_parameters[0]->operand_identifier.at(0)))
+				else if (complex_op->operand_identifier == "FILL")
 				{
-					diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
-					return false;
+					if (!is_byte_value(parameter->operand_identifier))
+					{
+						add_diagnostic(diagnostic_op::error_A206_FILL_param_format(name_of_instruction));
+						return false;
+					}
 				}
-			}
-			else //operand name does not exist
-			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-				return false;
+				else if (complex_op->operand_identifier == "PART")
+				{
+					if (parameter->operand_identifier.empty() || parameter->operand_identifier.length() > 63)
+					{
+						add_diagnostic(diagnostic_op::error_A207_PART_param_format(name_of_instruction));
+						return false;
+					}
+				}
+				else if (complex_op->operand_identifier == "PRIORITY")
+				{
+					if (!is_positive_number(parameter->operand_identifier))
+					{
+						add_diagnostic(diagnostic_op::error_A208_PRIORITY_param_format(name_of_instruction));
+						return false;
+					}
+					try
+					{
+						std::stoi(parameter->operand_identifier);
+					}
+					catch (...)
+					{
+						add_diagnostic(diagnostic_op::error_A208_PRIORITY_param_format(name_of_instruction));
+						return false;
+					}
+				}
 			}
 		}
+		else
+			assert(false);
 	}
 	return true;
 }
 
 amode::amode(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool amode::check(const std::vector<const one_operand*> & to_check)
+bool amode::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
 	const static std::vector<std::string> amode_options = { "24", "31", "64", "ANY", "ANY31", "ANY64" };
-	if (!is_param_in_vector(to_check[0]->operand_identifier, amode_options))
+	if (!is_param_in_vector(first->operand_identifier, amode_options))
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A150_AMODE_op_format());
 		return false;
 	}
 	return true;
@@ -856,35 +1101,54 @@ bool amode::check(const std::vector<const one_operand*> & to_check)
 
 alias::alias(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool alias::check(const std::vector<const one_operand*> & to_check)
+bool alias::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]))
+	auto first = get_simple_operand(to_check[0]);
+	if (first == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
-		return false;
-	}
-	if (to_check[0]->operand_identifier.size() < 3)
-	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (to_check[0]->operand_identifier[1] == '\'' && to_check[0]->operand_identifier[to_check[0]->operand_identifier.size() - 1] == '\'')
+	if (first->operand_identifier.size() < 3)
 	{
-		if (to_check[0]->operand_identifier[0] == 'C')
+		add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format());
+		return false;
+	}
+	if (first->operand_identifier[1] == '\'' && first->operand_identifier[first->operand_identifier.size() - 1] == '\'')
+	{
+		if (first->operand_identifier[0] == 'C')
 		{
+			// TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should not be
+			std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
+			std::string substr = first->operand_identifier.substr(2, first->operand_identifier.size() - 3);
+			if (!std::regex_match(substr, regex))
+			{
+				add_diagnostic(diagnostic_op::error_A152_ALIAS_C_format());
+				return false;
+			}
 			return true;
 		}
-		else if (to_check[0]->operand_identifier[0] == 'X' && to_check[0]->operand_identifier.size() % 2 == 1)
+		else if (first->operand_identifier[0] == 'X')
 		{
-			int max_value = 0xFE;
-			int min_value = 0x42;
-			for (size_t i = 2; i < to_check[0]->operand_identifier.size() - 1; i+=2)
+			if (first->operand_identifier.size() % 2 == 1)
+			{
+				add_diagnostic(diagnostic_op::error_A154_ALIAS_X_format_no_of_chars());
+				return false;
+			}
+			int max_value = ALIAS_max_val;
+			int min_value = ALIAS_min_val;
+			for (size_t i = 2; i < first->operand_identifier.size() - 1; i+=2)
 			{
 				std::string tocomp = "";
-				tocomp.push_back(to_check[0]->operand_identifier[i]);
-				tocomp.push_back(to_check[0]->operand_identifier[i + 1]);
+				tocomp.push_back(first->operand_identifier[i]);
+				tocomp.push_back(first->operand_identifier[i + 1]);
+				if (tocomp == "0x" || tocomp == "0X")
+				{
+					add_diagnostic(diagnostic_op::error_A153_ALIAS_X_format());
+					return false;
+				}
 				int comparing = 0;
 				try
 				{
@@ -892,12 +1156,12 @@ bool alias::check(const std::vector<const one_operand*> & to_check)
 				}
 				catch (...)
 				{
-					diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+					add_diagnostic(diagnostic_op::error_A153_ALIAS_X_format());
 					return false;
 				}
 				if (comparing < min_value || comparing > max_value)
 				{
-					diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+					add_diagnostic(diagnostic_op::error_A155_ALIAS_X_format_range());
 					return false;
 				}
 			}
@@ -908,31 +1172,39 @@ bool alias::check(const std::vector<const one_operand*> & to_check)
 			return false;
 		}
 	}
-	diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+	add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format());
 	return false;
 }
 
 ainsert::ainsert(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 2, 2) {};
 
-bool ainsert::check(const std::vector<const one_operand*> & to_check)
+bool ainsert::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (is_operand_complex(to_check[0]) || is_operand_complex(to_check[1])) //check complexity
+	auto first = get_simple_operand(to_check[0]);
+	auto second = get_simple_operand(to_check[1]);
+	// both operands must be simple
+	if (first == nullptr || second == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
-		return false;
-	}
-	if (to_check[0]->operand_identifier.size() == 1
-		|| to_check[0]->operand_identifier[0] != '\'' || to_check[0]->operand_identifier[to_check[0]->operand_identifier.size() - 1] != '\''
-		) //check first parameter
-	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (to_check[1]->operand_identifier != "BACK" && to_check[1]->operand_identifier != "FRONT") //check second parameter
+	// check first operand
+	if (first->operand_identifier.size() < 2 || first->operand_identifier.size() > string_max_length)
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A157_AINSERT_first_op_size());
+		return false;
+	}
+	if (first->operand_identifier.front() != '\'' || first->operand_identifier.back() != '\'') 
+	{
+		add_diagnostic(diagnostic_op::error_A301_op_apostrophes_missing(name_of_instruction));
+		return false;
+	}
+	// check second operand
+	if (second->operand_identifier != "BACK" && second->operand_identifier != "FRONT") //check second parameter
+	{
+		add_diagnostic(diagnostic_op::error_A156_AINSERT_second_op_format());
 		return false;
 	}
 	return true;
@@ -940,34 +1212,54 @@ bool ainsert::check(const std::vector<const one_operand*> & to_check)
 
 adata::adata(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 5, 5) {};
 
-bool adata::check(const std::vector<const one_operand*> & to_check)
+bool adata::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	//first four operands must be values or empty
 	for (size_t i = 0; i < to_check.size() - 1; ++i)
 	{
-		//operand can't be complex (can't be casted to complex)
-		if (is_operand_complex(to_check[i]))
+		//operand must be simple
+		auto simple = get_simple_operand(to_check[i]);
+		if (simple == nullptr)
 		{
-			diagnostic = diagnostic_op::error_I010_simple_expected();
+			add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 			return false;
 		}
-		if (!(to_check[i]->operand_identifier == "" || is_number(to_check[i]->operand_identifier)))
+		if (simple->operand_identifier == "")
+			continue;
+		if (!is_number(simple->operand_identifier))
 		{
-			diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+			add_diagnostic(diagnostic_op::error_A158_ADATA_val_format());
+			return false;
+		}
+		try
+		{
+			std::stoi(simple->operand_identifier);
+		}
+		catch (...)
+		{
+			add_diagnostic(diagnostic_op::error_A158_ADATA_val_format());
 			return false;
 		}
 	}
 	//last operand must be character_string
-	if (is_operand_complex(to_check.back()))
+	auto last_op = get_simple_operand(to_check.back());
+	if (last_op == nullptr)
 	{
-		diagnostic = diagnostic_op::error_I010_simple_expected();
+		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
 		return false;
 	}
-	if (!(to_check.back()->operand_identifier == "" || is_character_string(to_check.back()->operand_identifier)))
+	if (last_op->operand_identifier.size() == 1
+		||
+		(last_op->operand_identifier.size() > 1 && (last_op->operand_identifier.front() != '\'' || last_op->operand_identifier.back() != '\'')))
 	{
-		diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+		add_diagnostic(diagnostic_op::error_A301_op_apostrophes_missing(name_of_instruction));
+		return false;
+	}
+	if (!is_character_string(last_op->operand_identifier))
+	{
+		add_diagnostic(diagnostic_op::error_A160_ADATA_char_string_format());
 		return false;
 	}
 	return true;
@@ -975,22 +1267,22 @@ bool adata::check(const std::vector<const one_operand*> & to_check)
 
 no_operands::no_operands(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 0, 0) {};
 
-bool no_operands::check(const std::vector<const one_operand*> & to_check)
+bool no_operands::check(const std::vector<const asm_operand*> & to_check)
 {
-	return check_vector_size(to_check);
+	return operands_size_corresponding(to_check);
 }
 
 process::process(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool process::check(const std::vector<const one_operand*> & to_check)
+bool process::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
-	if (to_check.size() == 1 && is_operand_complex(to_check[0]) && to_check[0]->operand_identifier == "OVERRIDE") //everything parsed is parameter of operand
+	if (to_check.size() == 1 && is_operand_complex(to_check[0]) && get_complex_operand(to_check[0])->operand_identifier == "OVERRIDE") //everything parsed is parameter of operand
 	{
-		complex_operand* process_operands = (complex_operand*)to_check[0];
+		auto process_operands = get_complex_operand(to_check[0]);
 		return std::all_of(process_operands->operand_parameters.cbegin(), process_operands->operand_parameters.cend(),
-			[this](const auto& parameter) { return check_assembler_process_operand(parameter); });
+			[this](const auto& parameter) { return check_assembler_process_operand(parameter.get()); });
 	}
 	else //everything is an operand
 	{
@@ -1001,74 +1293,101 @@ bool process::check(const std::vector<const one_operand*> & to_check)
 
 acontrol::acontrol(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
-bool acontrol::check(const std::vector<const one_operand*> & to_check)
+bool acontrol::check(const std::vector<const asm_operand*> & to_check)
 {
-	if (!check_vector_size(to_check))
+	if (!operands_size_corresponding(to_check))
 		return false;
 	for (const auto& operand : to_check)
 	{
-		if (is_operand_simple(operand)) //checking simple operands
+		auto simple_op = get_simple_operand(operand);
+		auto complex_op = get_complex_operand(operand);
+		if (simple_op != nullptr) //checking simple operands
 		{
-			const static std::vector<std::string> pair_option_vector = { "AFPR", "LIBMAC", "RA2", "LMAC", "NOAFPR", "NOLIBMAC", "NORA2", "NOLMAC" }; //possible simple operands to check, need to also check for NOCOMPAT and NOTYPECHECK
-			if (is_param_in_vector(operand->operand_identifier, pair_option_vector) || (operand->operand_identifier == "NOCOMPAT"
-				|| operand->operand_identifier == "NOTYPECHECK" || operand->operand_identifier == "NOCPAT" || operand->operand_identifier == "NOTC"))
+			//possible simple operands to check, need to also check for NOCOMPAT and NOTYPECHECK
+			const static std::vector<std::string> pair_option_vector = { "AFPR", "LIBMAC", "RA2", "LMAC", "NOAFPR", "NOLIBMAC", "NORA2", "NOLMAC" };
+			if (is_param_in_vector(simple_op->operand_identifier, pair_option_vector) || (simple_op->operand_identifier == "NOCOMPAT"
+				|| simple_op->operand_identifier == "NOTYPECHECK" || simple_op->operand_identifier == "NOCPAT" || simple_op->operand_identifier == "NOTC"))
 				continue;
 			else
 			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
+				add_diagnostic(diagnostic_op::error_A161_ACONTROL_op_format());
 				return false;
 			}
 		}
-		else //checking complex operands
+		else if (complex_op != nullptr) //checking complex operands
 		{
-			//if operand is not simple, complex operands need to be parsed
-			complex_operand* current_operand = (complex_operand*)operand;
-			if (current_operand->operand_parameters.cbegin() == current_operand->operand_parameters.cend())
+			const static std::vector<std::string> complex_op_id = { "CPAT", "COMPAT", "FLAG", "TC", "TYPECHECK", "OPTABLE" };
+			if (!is_param_in_vector(complex_op->operand_identifier, complex_op_id))
 			{
-				diagnostic = diagnostic_op::error_I030_minimum(name_of_instruction, false, 1);
+				add_diagnostic(diagnostic_op::error_A161_ACONTROL_op_format());
 				return false;
 			}
-			if (current_operand->operand_identifier == "COMPAT" || current_operand->operand_identifier == "CPAT")
+			if (complex_op->operand_parameters.cbegin() == complex_op->operand_parameters.cend())
 			{
-				if (!check_compat_operands(current_operand->operand_parameters))
+				add_diagnostic(diagnostic_op::error_A015_minimum(name_of_instruction, complex_op->operand_identifier, 1));
+				return false;
+			}
+			if (complex_op->operand_identifier == "COMPAT" || complex_op->operand_identifier == "CPAT")
+			{
+				if (!check_compat_operands(complex_op->operand_parameters, name_of_instruction, complex_op->operand_identifier))
 					return false;
 			}
-			else if (current_operand->operand_identifier == "FLAG")
+			else if (complex_op->operand_identifier == "FLAG")
 			{
-				for (size_t j = 0; j < current_operand->operand_parameters.size(); j++)
+				for (size_t j = 0; j < complex_op->operand_parameters.size(); j++)
 				{
-					if (!check_flag_operand(current_operand->operand_parameters[j]))
+					auto flag_param = get_simple_operand(complex_op->operand_parameters[j].get());
+					if (flag_param == nullptr)
 					{
-						diagnostic = diagnostic_op::error_I020_format(current_operand->operand_identifier, false);
+						add_diagnostic(diagnostic_op::error_A002_simple_par_expected(name_of_instruction, "FLAG"));
 						return false;
 					}
+					if (!check_flag_operand(flag_param, name_of_instruction))
+						return false;
 				}
 			}
-			else if (current_operand->operand_identifier == "OPTABLE")
+			else if (complex_op->operand_identifier == "OPTABLE")
 			{
-				if (current_operand->operand_parameters.size() > 2 || current_operand->operand_parameters.size() == 0)
+				if (complex_op->operand_parameters.size() > 2 || complex_op->operand_parameters.empty())
 				{
-					diagnostic = diagnostic_op::error_I033_either(name_of_instruction, false, 1, 2);
+					add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, complex_op->operand_identifier, 1, 2));
 					return false;
 				}
-				if (!check_optable_operands(current_operand->operand_parameters))
+				if (!check_optable_operands(complex_op->operand_parameters, name_of_instruction))
 					return false;
 			}
-			else if (current_operand->operand_identifier == "TYPECHECK" || current_operand->operand_identifier == "TC")
+			else if (complex_op->operand_identifier == "TYPECHECK" || complex_op->operand_identifier == "TC")
 			{
-				if (!check_typecheck_operands(current_operand->operand_parameters))
+				if (!check_typecheck_operands(complex_op->operand_parameters, name_of_instruction, complex_op->operand_identifier))
 					return false;
 			}
 			else
-			{
-				diagnostic = diagnostic_op::error_I020_format(name_of_instruction, true);
-				return false;
-			}
+				assert(false);
 		}
+		else
+			assert(false);
 	}
 	return true;
 }
 
+
+dc::dc(const std::vector<label_types>& allowed_types, const std::string & name_of_instruction): assembler_instruction(allowed_types, name_of_instruction, 1, -1) {}
+bool dc::check(const std::vector<const asm_operand*>& to_check)
+{
+	if (!operands_size_corresponding(to_check))
+		return false;
+	return true;
+}
+;
+
+ds_dxd::ds_dxd(const std::vector<label_types>& allowed_types, const std::string & name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
+
+bool ds_dxd::check(const std::vector<const asm_operand*>& to_check)
+{
+	if (!operands_size_corresponding(to_check))
+		return false;
+	return true;
+}
 
 }
 }

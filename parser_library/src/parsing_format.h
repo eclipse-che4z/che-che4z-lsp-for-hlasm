@@ -8,7 +8,7 @@ namespace parser_library {
 //helper class for determining parsing format of statements
 struct parsing_format
 {
-	parsing_format() : in_lookahead(false), defered_operands(false), no_operands(false), alt_format(false) {}
+	parsing_format() : in_lookahead(false), defered_operands(false), no_operands(false), alt_format(false), operand_type(context::instruction_type::MACH) {}
 
 	//prepares for next statement, in_lookahead variable is preserved because it remains between statements
 	void reset()

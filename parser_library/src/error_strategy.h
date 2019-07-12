@@ -7,9 +7,39 @@
 namespace hlasm_plugin::parser_library
 {
 
+enum tokens { 
+	#include "grammar/lex.tokens" 
+};
 
 class error_strategy : public antlr4::DefaultErrorStrategy
 {
+	virtual void reportError(antlr4::Parser *recognizer, const antlr4::RecognitionException &e) override
+	{
+		if (inErrorRecoveryMode(recognizer)) {
+			return; // don't report spurious errors
+		}
+
+		//recovery strategy
+		antlr4::misc::IntervalSet endTokens;
+
+		endTokens.addItems(tokens::EOLLN, tokens::COMMA);
+		consumeUntil(recognizer, endTokens);
+
+		beginErrorCondition(recognizer);
+		if (antlrcpp::is<const antlr4::NoViableAltException *>(&e)) {
+			reportNoViableAlternative(recognizer, static_cast<const antlr4::NoViableAltException &>(e));
+		}
+		else if (antlrcpp::is<const antlr4::InputMismatchException *>(&e)) {
+			reportInputMismatch(recognizer, static_cast<const antlr4::InputMismatchException &>(e));
+		}
+		else if (antlrcpp::is<const antlr4::FailedPredicateException *>(&e)) {
+			reportFailedPredicate(recognizer, static_cast<const antlr4::FailedPredicateException &>(e));
+		}
+		else if (antlrcpp::is<const antlr4::RecognitionException *>(&e)) {
+			recognizer->notifyErrorListeners(e.getOffendingToken(), e.what(), std::current_exception());
+		}
+	}
+
 	virtual antlr4::Token* getMissingSymbol(antlr4::Parser *recognizer) override
 	{
 		using namespace antlr4;
@@ -33,8 +63,6 @@ class error_strategy : public antlr4::DefaultErrorStrategy
 		}
 
 		lexer * lex = dynamic_cast<lexer *>(recognizer->getTokenStream()->getTokenSource());
-
-		
 
 		_errorSymbols.push_back(lex->get_token_factory()->create(current->getTokenSource(), current->getInputStream(),
 			expectedTokenType, Token::DEFAULT_CHANNEL, INVALID_INDEX, INVALID_INDEX,

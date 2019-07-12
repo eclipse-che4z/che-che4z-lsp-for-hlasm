@@ -222,7 +222,7 @@ TEST(macro, macro_param_expr)
 )");
 	a.analyze();
 	a.collect_diags();
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)2);
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 

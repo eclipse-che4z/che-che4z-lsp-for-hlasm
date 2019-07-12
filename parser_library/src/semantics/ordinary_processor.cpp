@@ -10,15 +10,15 @@ ordinary_processor::ordinary_processor(processing_manager& mngr) : statement_pro
 
 void ordinary_processor::check_assembler_instr()
 {
+	auto empty_op = checking::one_operand();
 	auto operands = &curr_statement_.op_rem_info.operands;
-
-	std::vector<const checking::one_operand*> operand_vector = {};
+	std::vector<const checking::asm_operand*> operand_vector = {};
 	for (size_t i = 0; i < operands->size(); i++)
 	{
 		auto & operand = (*operands)[i];
 		if (!operand || operand->type == operand_type::EMPTY || operand->type == operand_type::UNDEF || operand->access_model_op())
 		{
-			operand_vector.push_back(&checking::one_operand::empty_one_operand);
+			operand_vector.push_back(&empty_op);
 			continue;
 		}
 		auto asm_op = operand->access_asm_op();
@@ -38,42 +38,136 @@ void ordinary_processor::check_assembler_instr()
 			diag->severity, std::move(diag->code),
 			"HLASM Plugin", std::move(diag->message), {} });
 	}
-
 	assembler_checker.clear_diagnostics();
 }
 
 void ordinary_processor::check_machine_instr()
 {
-	auto operands= &curr_statement_.op_rem_info.operands;
-
-	std::vector<const checking::one_operand*> operand_vector = {};
+	auto operands = &curr_statement_.op_rem_info.operands;
+	std::string instr_name = *curr_op_code_.op_code;
+	auto empty_op = checking::empty_operand_value();
+	std::vector<checking::machine_operand_value*> operand_vector = {};
 	for (size_t i = 0; i < operands->size(); i++)
 	{
 		auto & operand = (*operands)[i];
 		if (!operand || operand->type == operand_type::EMPTY || operand->type == operand_type::UNDEF || operand->access_model_op())
 		{
-			operand_vector.push_back(&checking::one_operand::empty_one_operand);
+			operand_vector.push_back(&empty_op);
+			if (!operand)
+			{
+				operand_vector.at(operand_vector.size() - 1)->range = curr_statement_.range;
+				continue;
+			}
+			operand_vector.at(operand_vector.size() - 1)->range = operand->range;
 			continue;
 		}
 		auto mach_op = operand->access_mach_op();
 		assert(mach_op);
 		operand_vector.push_back(mach_op->op_value.get());
 	}
-
-	mach_checker.mach_instr_check(*curr_op_code_.op_code, operand_vector);
-
-	const auto & diags = mach_checker.get_diagnostics();
-	auto range = curr_statement_.range;
-	for (auto diag : diags)
+	auto curr_instr = &hlasm_plugin::parser_library::context::instruction::machine_instructions.at(instr_name);
+	curr_instr->get()->check(instr_name, operand_vector);
+	const auto & diags = curr_instr->get()->diagnostics;
+	for (auto & diag : diags)
 	{
-		if (diagnostic_op::is_error(diag))
+		auto range = diag.range;
+		if (range.begin_col == 0 && range.begin_ln == 0 && range.end_col == 0 && range.end_ln == 0)
+			range = curr_statement_.range;
+		if (diagnostic_op::is_error(diag.diag))
 		{
 			add_diagnostic(diagnostic_s{ "",{{range.begin_ln, range.begin_col},{range.end_ln, range.end_col}},
-				diag.severity, std::move(diag.code),
-				"HLASM Plugin", std::move(diag.message), {} });
+				diag.diag.severity, std::move(diag.diag.code),
+				"HLASM Plugin", std::move(diag.diag.message), {} });
 		}
 	}
-	mach_checker.clear_diagnostic();
+	curr_instr->get()->clear_diagnostics();
+	curr_instr->get()->clear_diagnostics();
+}
+
+void ordinary_processor::check_mnemonic_code_instr()
+{
+	// operands obtained from the user
+	auto operands = &curr_statement_.op_rem_info.operands;
+	// the name of the instruction (mnemonic) obtained from the user
+	auto instr_name = *curr_op_code_.op_code;
+	// the associated mnemonic structure with the given name
+	auto mnemonic = instruction::mnemonic_codes.at(*curr_op_code_.op_code);
+	// the machine instruction structure associated with the given instruction name
+	auto curr_instr = & hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mnemonic.instruction);
+	curr_instr->get()->instr_name = instr_name;
+
+	// check whether substituted mnemonic values are ok
+
+	// check size of mnemonic operands
+	int diff = curr_instr->get()->operands.size() - operands->size() - mnemonic.replaced.size();
+	if (std::abs(diff) > curr_instr->get()->no_optional)
+	{
+		auto curr_diag = diagnostic_op::error_optional_number_of_operands(curr_instr->get()->instr_name, curr_instr->get()->no_optional, curr_instr->get()->operands.size() - mnemonic.replaced.size());
+		auto range = curr_statement_.range;
+		add_diagnostic(diagnostic_s{ "",{{range.begin_ln, range.begin_col},{range.end_ln, range.end_col}},
+		curr_diag.severity, std::move(curr_diag.code),
+		"HLASM Plugin", std::move(curr_diag.message), {} });
+		return;
+	}
+
+	std::vector<checking::simple_operand_value> substituted_mnems = {};
+	for (auto mnem : mnemonic.replaced)
+		substituted_mnems.push_back( checking::simple_operand_value(mnem.second));
+
+	auto empty_op = checking::empty_operand_value();
+	std::vector<checking::machine_operand_value*> operand_vector = {};
+	// create vector of empty operands
+	for (size_t i = 0; i < curr_instr->get()->operands.size() + curr_instr->get()->no_optional; i++)
+		operand_vector.push_back(nullptr);
+	// add substituted
+	for (size_t i = 0; i < mnemonic.replaced.size(); i++)
+		operand_vector[mnemonic.replaced[i].first] = &substituted_mnems[i];
+	// add other
+	for (size_t i = 0; i < operands->size(); i++)
+	{
+		auto& operand = (*operands)[i];
+		for (size_t j = 0; j < operand_vector.size(); j++)
+		{
+			if (operand_vector[j] == nullptr)
+			{
+				// if operand is empty
+				if (!operand || operand->type == operand_type::EMPTY || operand->type == operand_type::UNDEF || operand->access_model_op())
+				{
+					operand_vector[j] = &empty_op;
+					// hot fix as eg C 2,2(2,) makes server crash
+					// TO DO range once the bug is fixed
+					if (!operand)
+					{
+						operand_vector.at(operand_vector.size() - 1)->range = curr_statement_.range;
+						continue;
+					}
+					operand_vector.at(operand_vector.size() - 1)->range = operand->range;
+					continue;
+				}
+				auto mach_op = operand->access_mach_op();
+				//mach_op->range = operand->range;
+				assert(mach_op);
+				operand_vector[j] = mach_op->op_value.get();
+			}
+		}
+	}
+
+	// check
+	curr_instr->get()->check(instr_name, operand_vector);
+	const auto & diags = curr_instr->get()->diagnostics;
+	for (auto & diag : diags)
+	{
+		auto range = diag.range;
+		if (range.begin_col == 0 && range.begin_ln == 0 && range.end_col == 0 && range.end_ln == 0)
+			range = curr_statement_.range;
+		if (diagnostic_op::is_error(diag.diag))
+		{
+			add_diagnostic(diagnostic_s{ "",{{range.begin_ln, range.begin_col},{range.end_ln, range.end_col}},
+				diag.diag.severity, std::move(diag.diag.code),
+				"HLASM Plugin", std::move(diag.diag.message), {} });
+		}
+	}
+	curr_instr->get()->clear_diagnostics();
 }
 
 void hlasm_plugin::parser_library::semantics::ordinary_processor::process_statement(statement  statement)
@@ -413,6 +507,21 @@ void hlasm_plugin::parser_library::semantics::ordinary_processor::process_MEXIT(
 		;//err MEXIT not expected outside of macro definition
 }
 
+void hlasm_plugin::parser_library::semantics::ordinary_processor::process_ASPACE()
+{
+	// TO DO
+}
+
+void hlasm_plugin::parser_library::semantics::ordinary_processor::process_AREAD()
+{
+	// TO DO
+}
+
+void hlasm_plugin::parser_library::semantics::ordinary_processor::process_AEJECT()
+{
+	// TO DO
+}
+
 
 void hlasm_plugin::parser_library::semantics::ordinary_processor::process_empty()
 {
@@ -455,18 +564,29 @@ process_table_t hlasm_plugin::parser_library::semantics::ordinary_processor::ini
 		std::bind(&ordinary_processor::process_MEND, this));
 	table.emplace(ctx.ids.add("MEXIT"),
 		std::bind(&ordinary_processor::process_MEXIT, this));
+	table.emplace(ctx.ids.add("ASPACE"),
+		std::bind(&ordinary_processor::process_ASPACE, this));
+	table.emplace(ctx.ids.add("AREAD"),
+		std::bind(&ordinary_processor::process_AREAD, this));
+	table.emplace(ctx.ids.add("AEJECT"),
+		std::bind(&ordinary_processor::process_AEJECT, this));
 	table.emplace(nullptr,
 		std::bind(&ordinary_processor::process_empty, this));
 
-	for (size_t i = 0; i < instruction::machine_instructions.size(); i++)
+	for (const auto & mach_instr : instruction::machine_instructions)
 	{
-		table.emplace(ctx.ids.add(instruction::machine_instructions[i].name),
+		table.emplace(ctx.ids.add(mach_instr.first),
 			std::bind(&ordinary_processor::check_machine_instr, this));
-	}
-	for (size_t i = 0; i < instruction::assembler_instructions.size(); i++)
+	};
+	for (const auto & asm_instr : instruction::assembler_instructions)
 	{
-		table.emplace(ctx.ids.add(instruction::assembler_instructions[i].name),
+		table.emplace(ctx.ids.add(asm_instr.first),
 			std::bind(&ordinary_processor::check_assembler_instr, this));
+	}
+	for (const auto & instr : instruction::mnemonic_codes)
+	{
+		table.emplace(ctx.ids.add(instr.first),
+			std::bind(&ordinary_processor::check_mnemonic_code_instr, this));
 	}
 
 	return table;
