@@ -10,17 +10,34 @@ else()
 	set(CALL "")
 endif()
 
+if(WIN32)
+	set(ANTLR_VERSION_SUFFIX "")
+else()
+	set(ANTLR_VERSION_SUFFIX .${ANTLR4CPP_EXTERNAL_TAG})
+endif()
+
+set(COPY_PARSER_LIBRARY_COMMAND "")
+set(COPY_ANTLR_LIBRARY_COMMAND "")
+if(BUILD_SHARED_LIBS)
+	set(COPY_PARSER_LIBRARY_COMMAND
+		${CMAKE_COMMAND} -E copy $<TARGET_FILE:parser_library> ${CMAKE_CURRENT_SOURCE_DIR}/bin/)
+	set(COPY_ANTLR_LIBRARY_COMMAND
+        ${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${CMAKE_CURRENT_SOURCE_DIR}/bin/)
+	
+endif()
+
 add_custom_command(
 		OUTPUT
 			${CHECK}
 		COMMAND
-			${CALL} npm install
+			${CALL} npm --unsafe-perm install
+			#the --unsafe-perm is needed when user with root rights runs the build on linux
 		COMMAND
 			${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/bin/
 		COMMAND
-			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:parser_library> ${CMAKE_CURRENT_SOURCE_DIR}/bin/
+			${COPY_PARSER_LIBRARY_COMMAND}
 		COMMAND
-			${CMAKE_COMMAND} -E copy  ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX} ${CMAKE_CURRENT_SOURCE_DIR}/bin/
+			${COPY_ANTLR_LIBRARY_COMMAND}
 		COMMAND
 			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:language_server> ${CMAKE_CURRENT_SOURCE_DIR}/bin/
 		COMMAND

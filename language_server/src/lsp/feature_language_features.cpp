@@ -1,5 +1,5 @@
 
-#include "feature.h"
+#include "../feature.h"
 #include "feature_language_features.h"
 
 #include "shared/protocol.h"
@@ -8,7 +8,7 @@
 
 namespace hlasm_plugin::language_server {
 
-	feature_language_features::feature_language_features(parser_library::workspace_manager & ws_mngr) : feature(ws_mngr)
+	feature_language_features::feature_language_features(parser_library::workspace_manager & ws_mngr, response_provider& response_provider) : feature(ws_mngr, response_provider)
 	{}
 
 	void feature_language_features::register_methods(std::map<std::string, method> & methods)
@@ -21,11 +21,6 @@ namespace hlasm_plugin::language_server {
 			std::bind(&feature_language_features::hover, this, std::placeholders::_1, std::placeholders::_2));
 		methods.emplace("textDocument/completion",
 			std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
-
-	}
-
-	void feature_language_features::register_notifications(std::map<std::string, notification> &)
-	{
 
 	}
 
@@ -45,17 +40,11 @@ namespace hlasm_plugin::language_server {
 		};
 	}
 
-	void feature_language_features::register_callbacks(response_callback response, response_error_callback error, notify_callback notify)
-	{
-		response_ = response;
-		callbacks_registered_ = true;
-	}
-
 	void feature_language_features::initialize_feature(const json &)
 	{
 	}
 
-	void feature_language_features::definition(id id, const parameter & params)
+	void feature_language_features::definition(const json & id, const json& params)
 	{
 		auto document_uri = params["textDocument"]["uri"].get<std::string>();
 		auto pos = parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
@@ -67,10 +56,10 @@ namespace hlasm_plugin::language_server {
 			{"uri", document_uri},
 			{"range", range_to_json({definition_position_uri.pos(),definition_position_uri.pos()})}
 		};
-		response_(id,to_ret);
+		response_->respond(id,"",to_ret);
 	}
 
-	void feature_language_features::references(id id, const parameter & params)
+	void feature_language_features::references(const json& id, const json& params)
 	{
 		auto document_uri = params["textDocument"]["uri"].get<std::string>();
 		auto pos = parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
@@ -85,9 +74,9 @@ namespace hlasm_plugin::language_server {
 				{ "range",range_to_json({ ref.pos(), ref.pos() })}
 			});
 		}
-		response_(id, to_ret);
+		response_->respond(id, "", to_ret);
 	}
-	void feature_language_features::hover(id id, const parameter & params)
+	void feature_language_features::hover(const json& id, const json& params)
 	{
 		auto document_uri = params["textDocument"]["uri"].get<std::string>();
 		auto pos = parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
@@ -98,9 +87,9 @@ namespace hlasm_plugin::language_server {
 		{
 			hover_arr.push_back(hover_list.arr[i]);
 		}
-		response_(id, json{ { "contents", hover_arr } });
+		response_->respond(id, "", json{ { "contents", hover_arr } });
 	}
-	void feature_language_features::completion(id id, const parameter& params)
+	void feature_language_features::completion(const json& id, const json& params)
 	{
 		auto document_uri = params["textDocument"]["uri"].get<std::string>();
 		auto pos = parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
@@ -130,6 +119,7 @@ namespace hlasm_plugin::language_server {
 			{"isIncomplete", completion_list.is_incomplete()},
 			{"items", completion_item_array}
 		};
-		response_(id, to_ret);
+
+		response_->respond(id, "", to_ret);
 	}
 }

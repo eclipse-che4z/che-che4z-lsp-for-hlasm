@@ -10,10 +10,6 @@ if(BUILD_TESTING)
 	)
 	
 	target_link_libraries(private_test gmock_main)
-	target_link_libraries(private_test jsonrpcpp)
-	target_link_libraries(private_test antlr4-runtime)
 	target_link_libraries(private_test parser_library)
-	gtest_discover_tests(private_test)
-
 
 endif()

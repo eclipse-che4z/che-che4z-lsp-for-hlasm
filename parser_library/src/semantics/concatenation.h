@@ -31,7 +31,7 @@ void clear_concat_chain(concat_chain& conc_list);
 
 
 template <typename it_T>
-struct clone_iterator : public std::iterator<std::input_iterator_tag,typename it_T::value_type, typename it_T::difference_type, typename it_T::pointer, typename it_T::reference>
+struct clone_iterator : public std::iterator<std::input_iterator_tag,typename it_T::value_type, typename it_T::difference_type, typename it_T::pointer, typename std::remove_const_t<typename it_T::value_type> &&>
 {
 	clone_iterator(it_T iterator) :iterator_(std::move(iterator)) {}
 

@@ -15,16 +15,58 @@ std::string get_content(std::string source);
 
 using parser = hlasm_plugin::parser_library::generated::hlasmparser;
 
-class lexer_test : public testing::Test
-{
-};
-
-TEST_F(lexer_test, aread)
+TEST(lexer_test, aread)
 {
 	std::string tcase = "aread";
+	std::string in =
+R"(        AINSERT 'test string1',FRONT
+        AINSERT 'test string2',BACK
+&SYMBOL AREAD
+This does not go to symbol
+     INSTR 1,2,3)";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
-	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
+	std::string out =
+R"(AREAD
+IGNORED
+AREAD
+IGNORED
+AREAD
+IGNORED
+AREAD
+IGNORED
+AREAD
+IGNORED
+AMPERSAND
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+SPACE
+ORDSYMBOL
+SPACE
+IDENTIFIER
+COMMA
+IDENTIFIER
+COMMA
+IDENTIFIER
+EOLLN
+EOF
+)";
+
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "aread","",std::make_shared<lsp_context>()};
+	hlasm_plugin::parser_library::input_source input(in);
 	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -45,14 +87,26 @@ TEST_F(lexer_test, aread)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 	auto token_string = token_stream.str();
 
-	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
+	ASSERT_EQ(token_string, out);
 }
 
-TEST_F(lexer_test, rntest)
+TEST(lexer_test, rntest)
 {
-	std::string tcase = "rntest";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
+	std::string out = R"(ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+EOLLN
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+EOF
+)";
+
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rntest","",std::make_shared<lsp_context>()};
 	hlasm_plugin::parser_library::input_source input("TEST TEST \r\n TEST1 TEST2");
 	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
@@ -65,13 +119,12 @@ TEST_F(lexer_test, rntest)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 	auto token_string = token_stream.str();
 
-	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
+	ASSERT_EQ(token_string, out);
 }
 
-TEST_F(lexer_test, new_line_in_ignored)
+TEST(lexer_test, new_line_in_ignored)
 {
-	std::string tcase = "new_line_in_ignored";
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "new_line_in_ignored","",std::make_shared<lsp_context>()};
 	//test case, when a newline is in the first 15 ignored characters after continuation
 	hlasm_plugin::parser_library::input_source input(
 		R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
@@ -96,12 +149,59 @@ label lr 1,1)");
 	
 }
 
-TEST_F(lexer_test, unlimited_line)
+TEST(lexer_test, unlimited_line)
 {
-	std::string tcase = "unlimited_line";
+	std::string in =
+R"(LABEL INSTR    2,1,                                                                   THIS SHOULD NOT BE IGNORED
+      INSTR    2    REMARK
+      INSTR    2,1, TOTO JE REMARK)";
+	std::string out = R"(ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+IDENTIFIER
+COMMA
+IDENTIFIER
+COMMA
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+IGNORED
+SPACE
+ORDSYMBOL
+SPACE
+IDENTIFIER
+SPACE
+ORDSYMBOL
+EOLLN
+IGNORED
+SPACE
+ORDSYMBOL
+SPACE
+IDENTIFIER
+COMMA
+IDENTIFIER
+COMMA
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+EOF
+)";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
-	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "unlimited_line","",std::make_shared<lsp_context>()};
+	hlasm_plugin::parser_library::input_source input(in);
 	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -114,15 +214,37 @@ TEST_F(lexer_test, unlimited_line)
 		token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
 	auto token_string = token_stream.str();
 
-	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
+	ASSERT_EQ(token_string, out);
 }
 
-TEST_F(lexer_test, rewind_input)
+TEST(lexer_test, rewind_input)
 {
-	std::string tcase = "rewind_input";
-
-	hlasm_plugin::parser_library::input_source input(get_content("test/library/input/" + tcase + ".in"));
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "test/library/input/" + tcase + ".in","",std::make_shared<lsp_context>()};
+	std::string in =
+R"(    REWIND1
+REWIND2
+    REWIND3)";
+	std::string out = R"(SPACE
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+ORDSYMBOL
+SPACE
+ORDSYMBOL
+EOLLN
+ORDSYMBOL
+EOLLN
+SPACE
+ORDSYMBOL
+ORDSYMBOL
+EOLLN
+SPACE
+ORDSYMBOL
+EOLLN
+EOF
+)";
+	hlasm_plugin::parser_library::input_source input(in);
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input","",std::make_shared<lsp_context>()};
 	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
@@ -170,7 +292,7 @@ TEST_F(lexer_test, rewind_input)
 
 	auto token_string = token_stream.str();
 
-	ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
+	ASSERT_EQ(token_string, out);
 }
 
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H

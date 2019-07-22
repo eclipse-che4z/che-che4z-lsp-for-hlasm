@@ -1,39 +1,28 @@
 #include <filesystem>
 
-#include "feature.h"
 #include "feature_workspace_folders.h"
 
-namespace hlasm_plugin::language_server {
+namespace hlasm_plugin::language_server::lsp {
 
 feature_workspace_folders::feature_workspace_folders(parser_library::workspace_manager & ws_mngr) :feature(ws_mngr) {}
 
-void feature_workspace_folders::register_methods(std::map<std::string, method> &)
+void feature_workspace_folders::register_methods(std::map<std::string, method> & methods)
 {
-
-}
-
-void feature_workspace_folders::register_notifications(std::map<std::string, notification> & notifications) 
-{
-	notifications.emplace("workspace/didChangeWorkspaceFolders",
-		std::bind(&feature_workspace_folders::on_did_change_workspace_folders, this, std::placeholders::_1));
+	methods.emplace("workspace/didChangeWorkspaceFolders",
+		std::bind(&feature_workspace_folders::on_did_change_workspace_folders, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_workspace_folders::register_capabilities()
 {
-	return json { { "workspace", Json
+	return json { { "workspace", json
 	{
-		{"workspaceFolders", Json
+		{"workspaceFolders", json
 		{
 			{"supported", true},
 			{"changeNotifications", true}
 		}
 		}
 	} } };
-}
-
-void feature_workspace_folders::register_callbacks(response_callback response, response_error_callback error, notify_callback notify)
-{
-	callbacks_registered_ = true;
 }
 
 void feature_workspace_folders::initialize_feature(const json & initialize_params)
@@ -78,7 +67,7 @@ void feature_workspace_folders::initialize_feature(const json & initialize_param
 }
 
 
-void feature_workspace_folders::on_did_change_workspace_folders(const parameter & params)
+void feature_workspace_folders::on_did_change_workspace_folders(const json & id, const json & params)
 {
 	const auto & added = params["event"]["added"];
 	const auto & removed = params["event"]["removed"];

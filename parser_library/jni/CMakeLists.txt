@@ -30,20 +30,24 @@ add_custom_target(jni_interface_header
 			${PROJECT_SOURCE_DIR}/generated/com_broadcom_HlasmPlugin_HlasmPlugin.h
 )
 
+
+
+
 include(../tag_generated_files.cmake)
 
 
 add_library(jni_parser_library SHARED
-    ${LIB_NOT_EXPORTED_SRC}
+    ${LIB_SRC}
     ${GENERATED_SRC}
 	${PROJECT_SOURCE_DIR}/src/hlasm_plugin.cpp
 )
+if(NOT BUILD_SHARED_LIBS)
+	set_target_properties(jni_parser_library PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+endif()
 
-
-
-target_link_libraries(jni_parser_library antlr4-runtime)
-if(CMAKE_COMPILER_IS_GNUCXX)
-	target_link_libraries(jni_parser_library stdc++fs)
+target_link_libraries(jni_parser_library ${ANTLR4_RUNTIME})
+if(FILESYSTEM_LINK)
+	target_link_libraries(jni_parser_library ${FILESYSTEM_LIBRARY})
 endif()
 
 target_include_directories(jni_parser_library
@@ -57,11 +61,11 @@ target_include_directories(jni_parser_library
 ) 
 
 add_dependencies(jni_parser_library antlr4jar GenerateParser)
-add_dependencies(jni_parser_library jsonrpcppext)
+add_dependencies(jni_parser_library json)
 add_dependencies(jni_parser_library jni_interface_header)
 
+
 if(BUILD_TESTING)
-	
 	add_custom_target(jni_interface_test
 		ALL
 		DEPENDS
@@ -80,6 +84,6 @@ if(BUILD_TESTING)
 		WORKING_DIRECTORY
 			${PROJECT_SOURCE_DIR}/HlasmPlugin-JNI/src/main/java/
 	)
-
 endif()
+
 

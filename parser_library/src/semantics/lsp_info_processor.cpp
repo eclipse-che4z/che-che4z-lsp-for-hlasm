@@ -427,7 +427,7 @@ void lsp_info_processor::process_seq_sym_(definition & symbol)
 				//there is definition, add occurence to it and remove it from deferred
 				if (def_sym == symbol)
 				{
-					std::remove(temp_seqs.begin(), temp_seqs.end(), def_sym);
+					temp_seqs.erase(std::remove(temp_seqs.begin(), temp_seqs.end(), def_sym));
 					ctx_->seq_symbols.insert({ symbol,{def_sym.range,def_sym.file_name} });
 				}
 			}

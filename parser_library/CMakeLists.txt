@@ -6,10 +6,6 @@ project(parser_library)
 SET (CMAKE_CXX_STANDARD 17)
 
 
-# set ANTLR jar location
-set(ANTLR_JAR_LOCATION 
-	${ANTLR4CPP_EXTERNAL_ROOT}/src/antlr4cpp/tool/target/antlr4-4.7.1-complete.jar)
-
 # generated grammar source files
 set(GENERATED_SRC
    ${PROJECT_SOURCE_DIR}/src/generated/hlasmparser.cpp
@@ -18,6 +14,9 @@ set(GENERATED_SRC
    ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserListener.cpp
    ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserVisitor.cpp
  )
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "CLANG")
+	set_source_files_properties(${PROJECT_SOURCE_DIR}/src/generated/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+endif()
 
 include(tag_generated_files.cmake)
 
@@ -33,7 +32,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4 ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
    )
 
-set(LIB_NOT_EXPORTED_SRC    
+set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/common_types.cpp
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_context.cpp
 	${PROJECT_SOURCE_DIR}/src/context/lsp_context.cpp
@@ -83,20 +82,23 @@ set(LIB_NOT_EXPORTED_SRC
     ${PROJECT_SOURCE_DIR}/src/token_stream.cpp
     ${PROJECT_SOURCE_DIR}/src/input_source.cpp
     ${PROJECT_SOURCE_DIR}/src/protocol.cpp
-)
+	)
 
 #Generate the shared library from the library sources
-add_library(parser_library SHARED
-    ${LIB_NOT_EXPORTED_SRC}
+add_library(parser_library
+    ${LIB_SRC}
     ${GENERATED_SRC}
 )
+if(NOT BUILD_SHARED_LIBS)
+	set_target_properties(parser_library PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+endif()
 
 generate_export_header(parser_library
 			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/export/parser_library_export.h)
 
-target_link_libraries(parser_library antlr4-runtime)
-if(CMAKE_COMPILER_IS_GNUCXX)
-	target_link_libraries(parser_library stdc++fs)
+target_link_libraries(parser_library ${ANTLR4_RUNTIME})
+if(FILESYSTEM_LINK)
+	target_link_libraries(parser_library ${FILESYSTEM_LIBRARY})
 endif()
 
 target_include_directories(parser_library
@@ -112,7 +114,7 @@ ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build ev
         "${PROJECT_BINARY_DIR}/../bin/" )  
 
 add_dependencies(parser_library antlr4jar GenerateParser)
-add_dependencies(parser_library jsonrpcppext)
+add_dependencies(parser_library json)
 
 if(BUILD_JNI_INTERFACE)
 	add_subdirectory(jni)
@@ -120,9 +122,12 @@ endif()
 
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp
-    ${LIB_NOT_EXPORTED_SRC}
+	${LIB_SRC}
 	${GENERATED_SRC}
 	)
+	if(NOT BUILD_SHARED_LIBS)
+		set_target_properties(library_test PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+	endif()
 
 	target_include_directories(library_test
     PUBLIC 
@@ -141,13 +146,16 @@ if(BUILD_TESTING)
                        ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
 
 	target_link_libraries(library_test gmock)
-	target_link_libraries(library_test antlr4-runtime)
-	if(CMAKE_COMPILER_IS_GNUCXX)
-		target_link_libraries(library_test stdc++fs)
+	target_link_libraries(library_test ${ANTLR4_RUNTIME})
+	if(FILESYSTEM_LINK)
+		target_link_libraries(library_test ${FILESYSTEM_LIBRARY})
     endif()
     
 	add_dependencies(library_test library_tests_copy)
 	add_dependencies(library_test antlr4jar)
-	add_dependencies(library_test jsonrpcppext)
-  #  gtest_discover_tests(library_test)
+	add_dependencies(library_test json)
+
+    if(DISCOVER_TESTS)
+	    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    endif()
 endif()

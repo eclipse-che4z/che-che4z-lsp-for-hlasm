@@ -3,7 +3,6 @@
 using namespace hlasm_plugin::parser_library::generated;
 using namespace hlasm_plugin::parser_library::context;
 
-inline antlrcpp::Any::Base::~Base(void) {}
 
 antlrcpp::Any hlasm_plugin::parser_library::context::expression_visitor::visitExpr(hlasmparser::ExprContext * ctx)
 {

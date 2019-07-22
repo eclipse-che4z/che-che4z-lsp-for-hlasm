@@ -1,82 +1,50 @@
-#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_SERVER_H
-#define HLASMPLUGIN_HLASMLANGUAGESERVER_SERVER_H
+#ifndef HLASMPLUGIN_LANGUAGESERVER_SERVER
+#define HLASMPLUGIN_LANGUAGESERVER_SERVER
 
-#include <functional>
-#include <memory>
 #include <unordered_set>
 
-#include "jsonrp.hpp"
-#include "json.hpp"
-
-#include "shared/workspace_manager.h"
-#include "common_types.h"
 #include "feature.h"
+#include "common_types.h"
+#include "shared/workspace_manager.h"
 
+namespace hlasm_plugin::language_server
+{
 
-namespace hlasm_plugin {
-namespace language_server {
-
-enum class message_type {
-	MT_ERROR = 1,
-	MT_WARNING = 2,
-	MT_INFO = 3,
-	MT_LOG = 4
+class send_message_provider
+{
+public:
+	virtual void reply(const json & result) = 0;
 };
 
-class server : public parser_library::diagnostics_consumer
+class server : public response_provider
 {
 
 public:
-	server();
+	server(parser_library::workspace_manager & ws_mngr);
 
-	void call_method(jsonrpcpp::request_ptr request);
-	void call_notification(jsonrpcpp::notification_ptr notification);
-
-	void register_callbacks(response_callback replyCb, notify_callback notifyCb, response_error_callback replyErrorCb);
+	virtual void message_received(const json & message) = 0;
 
 	bool is_shutdown_request_received();
 	bool is_exit_notification_received();
 
-	
-private:
-	response_callback reply_;
-	notify_callback notify_;
-	response_error_callback replyError_;
-
-	bool shutdown_request_received_ = false;
-	bool exit_notification_received_ = false;
+	void set_send_message_provider(send_message_provider* provider);
+protected:
+	send_message_provider * send_message_ = nullptr;
 
 	std::vector<std::unique_ptr<feature> > features_;
 
 	std::map<std::string, method> methods_;
-	std::map<std::string, notification> notifications_;
 
-	parameter client_initialize_params_;
+	bool shutdown_request_received_ = false;
+	bool exit_notification_received_ = false;
 
-	parser_library::workspace_manager ws_mngr_;
+	parser_library::workspace_manager & ws_mngr_;
 
-	void register_methods();
-	void register_notifications();
+	virtual void register_methods();
 
-	//requests
-	void on_initialize(id id, const parameter & param);
-	void on_shutdown(id id, const parameter & param);
 
-	std::unordered_set<std::string> last_diagnostics_files;
-	
-
-	//notifications
-	void on_exit(const parameter & param);
-
-	//client notifications
-	void show_message(const std::string & message, message_type type);
-
-	virtual void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
-	
+	void call_method(const std::string & method, const json & id, const json & args);
 };
 
-}//namespace language_server
-}//namespace hlasm_plugin
-
-
+}
 #endif

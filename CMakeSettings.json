@@ -52,7 +52,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DBUILD_JNI_INTERFACE=On",
+      "cmakeCommandArgs": "-DBUILD_JNI_INTERFACE=On -DWITH_STATIC_CRT=Off",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },

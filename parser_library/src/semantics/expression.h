@@ -24,7 +24,7 @@ namespace hlasm_plugin
 			{
 			public:
 				std::unique_ptr<diagnostic_op> diag;
-				bool has_error() const { return diag != nullptr; };
+				bool has_error() const { return diag != nullptr; }
 				virtual ~expression() = default;
 
 				virtual expr_ptr binary_operation(str_ref operation_name, expr_ref arg2) const;
@@ -54,13 +54,13 @@ namespace hlasm_plugin
 				T *retype()
 				{
 					return dynamic_cast<T *>(this);
-				};
+				}
 
 				template <typename T>
 				const T *retype() const
 				{
 					return dynamic_cast<const T *>(this);
-				};
+				}
 
 
 				expression(expression&&) = default;

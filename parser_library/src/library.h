@@ -20,7 +20,7 @@ private:
 #pragma warning(push)
 #pragma warning(disable: 4250)
 
-//library holds absolute path to a directory and find
+//library holds absolute path to a directory and finds macro files in it
 class library_local : public library, public diagnosable_impl
 {
 public:

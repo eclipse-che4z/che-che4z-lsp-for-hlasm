@@ -1,6 +1,10 @@
 #pragma once
 #include "common_testing.h"
 
+using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::context;
+using namespace hlasm_plugin::parser_library::semantics;
+
 TEST(var_subs, gbl_instr_only)
 {
 	analyzer a("   gbla var");

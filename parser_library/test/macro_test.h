@@ -4,14 +4,15 @@
 
 TEST(macro, macro_def)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
 &l M1 &op,&k=5,&op2,&k2=(1,2,3)
  ago .a
  lr 1,1
  anop
 .a mend
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 
 	id_index id = a.context()->ids.add("m1");
@@ -47,8 +48,8 @@ TEST(macro, macro_def)
 
 TEST(macro, macro_def_count)
 {
-	analyzer a(R"(
- MACRO
+	std::string input = 
+R"( MACRO
  M1
  ANOP
  MEND
@@ -63,7 +64,8 @@ TEST(macro, macro_def_count)
  MEND
 
  MEND
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 
 	ASSERT_EQ(a.context()->macros().size(),(size_t)2);
@@ -79,8 +81,8 @@ TEST(macro, macro_def_count)
 
 TEST(macro, macro_def_count_inner)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1
  ANOP
  MEND
@@ -97,7 +99,8 @@ TEST(macro, macro_def_count_inner)
  MEND
 
  M2
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 
 	ASSERT_EQ(a.context()->macros().size(), (size_t)3);
@@ -116,8 +119,8 @@ TEST(macro, macro_def_count_inner)
 
 TEST(macro, macro_lookahead_pass)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1
  AGO .A
 
@@ -131,7 +134,8 @@ TEST(macro, macro_lookahead_pass)
  MEND
 
  M1
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 
 	ASSERT_EQ(a.context()->macros().size(), (size_t)1);
@@ -144,8 +148,8 @@ TEST(macro, macro_lookahead_pass)
 
 TEST(macro, macro_lookahead_fail)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1
  AGO .A
 
@@ -159,7 +163,8 @@ TEST(macro, macro_lookahead_fail)
  MEND
 
  M1
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 
 	ASSERT_EQ(a.context()->macros().size(), (size_t)2);
@@ -175,14 +180,15 @@ TEST(macro, macro_lookahead_fail)
 
 TEST(macro, macro_positional_param_subs)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1 &p
  lr &p,1
  mend
  
  M1 20
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
@@ -191,15 +197,16 @@ TEST(macro, macro_positional_param_subs)
 
 TEST(macro, macro_keyword_param)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1 &p=50
  lr &p,1
  mend
  
  M1
  M1 p=1
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
@@ -208,8 +215,8 @@ TEST(macro, macro_keyword_param)
 
 TEST(macro, macro_param_expr)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1 &a,&b
 &c seta &a
 &d seta &b
@@ -219,7 +226,8 @@ TEST(macro, macro_param_expr)
  
  M1 1,1
  M1 10,6
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)2);
@@ -228,14 +236,15 @@ TEST(macro, macro_param_expr)
 
 TEST(macro, macro_composite_param_no_err)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
  M1 &a,&b
  lr &a(2,3),&a(1)
  mend
  
  M1 (1,(1,2,3))
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
@@ -244,14 +253,15 @@ TEST(macro, macro_composite_param_no_err)
 
 TEST(macro, macro_composite_param_err)
 {
-	analyzer a(R"(
- MACRO
+	std::string input = 
+R"( MACRO
  M1 &a,&b
  lr &a(2,3),&a(1)
  mend
  
  M1 (100,(1,2,3))
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
@@ -261,14 +271,15 @@ TEST(macro, macro_composite_param_err)
 
 TEST(macro, macro_name_param)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
 &n M1 &a,&b
  lr &n,&n
  mend
  
 1 M1 
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
@@ -277,8 +288,8 @@ TEST(macro, macro_name_param)
 
 TEST(macro, macro_name_param_repetition)
 {
-	analyzer a(R"(
- MACRO
+	std::string input =
+R"( MACRO
 &n M1 &n,&b
  mend
 1 m1 2,3
@@ -294,7 +305,8 @@ TEST(macro, macro_name_param_repetition)
  
  m3 1,2,3
 
-)");
+)";
+	analyzer a(input);
 	a.analyze();
 	a.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)3);

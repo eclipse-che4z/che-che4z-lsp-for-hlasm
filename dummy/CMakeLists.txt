@@ -8,7 +8,6 @@ add_executable(dummy
 	)
 
 # link executable with libraries
-target_link_libraries(dummy  antlr4-runtime)
 target_link_libraries(dummy  parser_library)
 
 if(BUILD_TESTING)

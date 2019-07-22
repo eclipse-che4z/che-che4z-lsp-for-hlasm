@@ -1,28 +1,22 @@
 
-#include "feature.h"
 #include "feature_text_synchronization.h"
 
 #include "shared/protocol.h"
-namespace hlasm_plugin::language_server {
+namespace hlasm_plugin::language_server::lsp {
 
-feature_text_synchronization::feature_text_synchronization(parser_library::workspace_manager & ws_mngr) : feature(ws_mngr)
+feature_text_synchronization::feature_text_synchronization(parser_library::workspace_manager & ws_mngr, response_provider & response_provider) : feature(ws_mngr, response_provider)
 {
 	ws_mngr.register_highlighting_consumer(this);
 }
 
-void feature_text_synchronization::register_methods(std::map<std::string, method> &)
+void feature_text_synchronization::register_methods(std::map<std::string, method> & methods)
 {
-
-}
-
-void feature_text_synchronization::register_notifications(std::map<std::string, notification> & notifications)
-{
-	notifications.emplace("textDocument/didOpen",
-		std::bind(&feature_text_synchronization::on_did_open, this, std::placeholders::_1));
-	notifications.emplace("textDocument/didChange",
-		std::bind(&feature_text_synchronization::on_did_change, this, std::placeholders::_1));
-	notifications.emplace("textDocument/didClose",
-		std::bind(&feature_text_synchronization::on_did_close, this, std::placeholders::_1));
+	methods.emplace("textDocument/didOpen",
+		std::bind(&feature_text_synchronization::on_did_open, this, std::placeholders::_1, std::placeholders::_2));
+	methods.emplace("textDocument/didChange",
+		std::bind(&feature_text_synchronization::on_did_change, this, std::placeholders::_1, std::placeholders::_2));
+	methods.emplace("textDocument/didClose",
+		std::bind(&feature_text_synchronization::on_did_close, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_text_synchronization::register_capabilities()
@@ -33,13 +27,13 @@ json feature_text_synchronization::register_capabilities()
 	//want many hanging requests
 	return json 
 	{
-		{ "textDocumentSync", Json
+		{ "textDocumentSync", json
 		{
 			{"openClose", true},
 			{"change", (int)text_document_sync_kind::incremental},
 			{"willSave", true},
 			{"willSaveWaitUntil", false},
-			{"save", Json
+			{"save", json
 			{
 				{"includeText", true}
 			}
@@ -47,17 +41,12 @@ json feature_text_synchronization::register_capabilities()
 	} } };
 }
 
-void feature_text_synchronization::register_callbacks(response_callback response, response_error_callback error, notify_callback notify)
-{
-	notify_ = notify;
-	callbacks_registered_ = true;
-}
 
 void feature_text_synchronization::initialize_feature(const json &)
 {
 }
 
-void feature_text_synchronization::on_did_open(const parameter & params)
+void feature_text_synchronization::on_did_open(const json &, const json & params)
 {
 	json text_doc = params["textDocument"];
 	std::string doc_uri = text_doc["uri"].get<std::string>();
@@ -67,7 +56,7 @@ void feature_text_synchronization::on_did_open(const parameter & params)
 	ws_mngr_.did_open_file(uri_to_path(doc_uri).c_str(), version, text.c_str(), text.size());
 }
 
-void feature_text_synchronization::on_did_change(const parameter & params)
+void feature_text_synchronization::on_did_change(const json &, const json & params)
 {
 	json text_doc = params["textDocument"];
 	std::string doc_uri = text_doc["uri"].get<std::string>();
@@ -98,7 +87,7 @@ void feature_text_synchronization::on_did_change(const parameter & params)
 	ws_mngr_.did_change_file(uri_to_path(doc_uri).c_str(), version, &*changes.begin(), changes.size());
 }
 
-void feature_text_synchronization::on_did_close(const parameter & params)
+void feature_text_synchronization::on_did_close(const json &, const json & params)
 {
 	std::string uri = params["textDocument"]["uri"].get<std::string>();
 	
@@ -193,8 +182,7 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 		}
 		};
 
-		if (callbacks_registered_)
-			notify_("textDocument/semanticHighlighting", args);
+		response_->notify("textDocument/semanticHighlighting", args);
 	}
 }
 }

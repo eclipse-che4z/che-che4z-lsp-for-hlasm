@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
+import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import * as path from 'path'
+import * as Net from 'net';
 import { ASMSemanticHighlightingFeature } from './ASMsemanticHighlighting'
+import * as fork from 'child_process'
+const useTcp = false;
+
+
 
 /**
  * ACTIVATION
@@ -10,15 +16,44 @@ import { ASMSemanticHighlightingFeature } from './ASMsemanticHighlighting'
  */
 var highlight: ASMSemanticHighlightingFeature;
 export function activate(context: vscode.ExtensionContext) {
+    //debug setup
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', config => {
+		return vscode.window.showInputBox({
+			placeHolder: "Please enter the name of a program in the workspace folder",
+			value: "pgm"
+		});
+    }));
+
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
+    
+    if(useTcp)
+    {
+        const port = 4746;
+        //spawn the server
+        fork.spawn(path.join(__dirname, '..', 'bin', 'language_server'), ["-p", port.toString()]);
 
-    //server setup
-    const server: vscodelc.Executable = {
-        command: path.join(__dirname, '..', 'bin', 'language_server'),
-        args: getConfig<string[]>('arguments')
-    };
-    const serverOptions: vscodelc.ServerOptions = server;
-
+        //set the tcp communication
+        let connectionInfo = {
+            port: port,
+            host:'localhost'
+        };
+        var serverOptions: vscodelc.ServerOptions = () => {
+            let socket = Net.connect(connectionInfo);
+            let result: vscodelc.StreamInfo = {
+                writer: socket,
+                reader: socket
+            };
+            return Promise.resolve(result);
+        };
+    }
+    else
+    {
+        const server: vscodelc.Executable = {
+            command: path.join(__dirname, '..', 'bin', 'language_server'),
+            args: getConfig<string[]>('arguments')
+        };
+        var serverOptions: vscodelc.ServerOptions = server;
+    }
     const filePattern: string = '**/*'
     const configPattern: string = '**/{' + ['proc_grps.json', 'pgm_conf.json'].join() + '}';
     

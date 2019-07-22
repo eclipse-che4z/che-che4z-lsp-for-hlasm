@@ -22,16 +22,20 @@ std::string feature::uri_to_path(const std::string & uri)
 	if (u.has_authority() && u.authority().to_string() != "")
 	{
 		auth_path = u.authority().to_string() + u.path().to_string();
-#ifdef _WIN32
+#ifdef _WIN32 //handle remote locations correctly, like \\server\path
 		auth_path = "//" + auth_path;
 #endif
 	}
 	else
 	{
-#ifdef _WIN32
+#ifdef _WIN32 //we get path always beginning with / on windows, e.g. /c:/Users/path
 		path.remove_prefix(1);
 #endif
 		auth_path = path.to_string();
+
+#ifdef _WIN32
+		auth_path[0] = tolower(auth_path[0]);
+#endif
 	}
 
 	std::filesystem::path p(network::detail::decode(auth_path));

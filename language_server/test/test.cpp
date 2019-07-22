@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
-#include "../src/server.h"
 
+#include "workspace_folders_test.h"
+#include "feature_text_synchronization_test.h"
 #include "server_test.h"
 #include "regress_test.h"
 

@@ -51,7 +51,8 @@ TEST(workspace_manager, did_open_file)
 
 	ws_mngr.add_workspace("workspace", "test/library/test_wks");
 
-	ws_mngr.did_open_file("test/library/test_wks/some_file", 1, "label lr 1,2", 12);
+	std::string input_text = "label lr 1,2";
+	ws_mngr.did_open_file("test/library/test_wks/some_file", 1, input_text.c_str(), input_text.size());
 
 	EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
 
@@ -64,14 +65,14 @@ TEST(workspace_manager, did_change_file)
 	ws_mngr.register_diagnostics_consumer(&consumer);
 
 	ws_mngr.add_workspace("workspace", "test/library/test_wks");
-
-	ws_mngr.did_open_file("test/library/test_wks/new_file", 1, "label lr 1,2 remark", 23);
+	std::string input = "label lr 1,2 remark";
+	ws_mngr.did_open_file("test/library/test_wks/new_file", 1, input.c_str(), input.size());
 
 	EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t) 0);
 
 	std::vector<document_change> changes;
 	std::string new_text = "anop";
-	changes.push_back(document_change({ {0, 6}, {0, 23} }, new_text.c_str(), 4));
+	changes.push_back(document_change({ {0, 6}, {0, input.size()} }, new_text.c_str(), new_text.size()));
 
 	ws_mngr.did_change_file("test/library/test_wks/new_file", 2, changes.data(), 1);
 
@@ -79,7 +80,7 @@ TEST(workspace_manager, did_change_file)
 
 	std::vector<document_change> changes1;
 	std::string new_text1 = "";
-	changes1.push_back(document_change({ {0, 6}, {0, 10} }, new_text1.c_str(), 0));
+	changes1.push_back(document_change({ {0, 6}, {0, 10} }, new_text1.c_str(), new_text1.size()));
 
 	ws_mngr.did_change_file("test/library/test_wks/new_file", 3, changes1.data(), 1);
 

@@ -5,7 +5,6 @@
 #include <string>
 
 #include "json.hpp"
-#include "jsonrp.hpp"
 
 #include "common_types.h"
 #include "shared/workspace_manager.h"
@@ -13,16 +12,24 @@
 namespace hlasm_plugin {
 namespace language_server {
 
+class response_provider
+{
+public:
+	virtual void respond(const json & id, const std::string & requested_method, const json & args) = 0;
+	virtual void notify(const std::string & method, const json & args) = 0;
+	virtual void respond_error(const json & id, const std::string & requested_method,
+		int err_code, const std::string & err_message, const json & error) = 0;
+};
+
 class feature
 {
 
 public:
-	feature(parser_library::workspace_manager & ws_mngr) :ws_mngr_(ws_mngr) {}
+	feature(parser_library::workspace_manager & ws_mngr) : ws_mngr_(ws_mngr) {}
+	feature(parser_library::workspace_manager & ws_mngr, response_provider & response_provider) : ws_mngr_(ws_mngr), response_(&response_provider) {}
 
 	void virtual register_methods(std::map<std::string, method> & methods) = 0;
-	void virtual register_notifications(std::map<std::string, notification> & notification) = 0;
 	json virtual register_capabilities() = 0;
-	void virtual register_callbacks(response_callback response, response_error_callback error, notify_callback notify) = 0;
 
 	void virtual initialize_feature(const json & client_capabilities) = 0;
 	
@@ -39,6 +46,7 @@ public:
 protected:
 	parser_library::workspace_manager & ws_mngr_;
 	bool callbacks_registered_ = false;
+	response_provider * response_ = nullptr;
 };
 
 }
