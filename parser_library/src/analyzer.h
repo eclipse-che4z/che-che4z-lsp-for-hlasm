@@ -5,7 +5,7 @@
 #include "generated/hlasmparser.h"
 #include "parser_error_listener.h"
 #include "shared/token_stream.h"
-#include "semantics/processing_manager.h"
+#include "processing/processing_manager.h"
 #include "processor.h"
 #include "diagnosable_ctx.h"
 
@@ -15,28 +15,34 @@ namespace parser_library {
 //this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context 
 class analyzer : public diagnosable_ctx
 {
-	context::ctx_ptr ctx_;
+	context::ctx_ptr hlasm_ctx_;
+	context::hlasm_context& hlasm_ctx_ref_;
 
 	parser_error_listener listener_;
 
-	input_source input_;
 	semantics::lsp_info_processor lsp_proc_;
+
+	input_source input_;
 	lexer lexer_;
 	token_stream tokens_;
-	generated::hlasmparser parser_;
-	semantics::processing_manager mngr_;
-public:
-	analyzer(const std::string& text);
-	analyzer(const std::string& text, std::string file_name);
-	analyzer(const std::string& text, context::ctx_ptr ctx, parse_lib_provider & lib_provider, std::string file_name);
+	generated::hlasmparser* parser_;
 
-	context::ctx_ptr context();
+	processing::processing_manager mngr_;
+public:
+	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx);
+	analyzer(const std::string& text, std::string file_name = "", parse_lib_provider& lib_provider = empty_parse_lib_provider::instance);
+
+	context::hlasm_context& context();
 	generated::hlasmparser& parser();
 	semantics::lsp_info_processor& lsp_processor();
 
 	void analyze();
 
 	void collect_diags() const override;
+
+private:
+	analyzer(const std::string& text, std::string file_name, parse_lib_provider& lib_provider, context::hlasm_context* hlasm_ctx, bool own_ctx);
+
 };
 
 }

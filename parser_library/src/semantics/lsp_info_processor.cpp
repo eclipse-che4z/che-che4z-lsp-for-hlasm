@@ -51,7 +51,8 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 
 		for (const auto& asm_instr : instruction::assembler_instructions)
 		{
-			auto [min_op, max_op] = asm_instr.second;
+			int min_op = asm_instr.second.min_operands;
+			int max_op = asm_instr.second.max_operands;
 			std::stringstream ss(" ");
 			bool first = true;
 			for (int i = 0; i < max_op; ++i)
@@ -159,12 +160,7 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 
 		for (const auto& ca_instr : instruction::ca_instructions)
 		{
-			ctx_->all_instructions.push_back({ ca_instr,1,"","Conditional Assembly",false,ca_instr });
-		}
-
-		for (const auto& macro_instr : instruction::macro_processing_instructions)
-		{
-			ctx_->all_instructions.push_back({ macro_instr,1,"","Macro Processing",false,macro_instr });
+			ctx_->all_instructions.push_back({ ca_instr.name,1,"","Conditional Assembly",false,ca_instr.name });
 		}
 
 		ctx_->initialized = true;
@@ -195,7 +191,7 @@ bool lsp_info_processor::find_definition_(const position & pos,const definitions
 	{
 		if (is_in_range_(pos, it->second))
 		{
-			found = { it->first.file_name, {it->first.range.begin_ln, it->first.range.begin_col} };
+			found = { it->first.file_name, it->first.definition_range.start };
 			return true;
 		}
 	}
@@ -210,7 +206,7 @@ bool lsp_info_processor::find_references_(const position & pos, const definition
 		{
 			auto range = symbols.equal_range(it->first);
 			for (auto i = range.first; i != range.second; ++i)
-				found.push_back({ i->second.file_name,{i->second.range.begin_ln,i->second.range.begin_col}});
+				found.push_back({ i->second.file_name,i->second.definition_range.start });
 
 			return true;
 		}
@@ -289,7 +285,7 @@ void lsp_info_processor::add_lsp_symbol(lsp_symbol symbol)
 	std::string scope;
 	if (parser_macro_stack_.size() > 0)
 		scope = parser_macro_stack_.top();
-	definition symbol_def(symbol.name, scope, file_name, symbol.range);
+	definition symbol_def(symbol.name, scope, file_name, symbol.symbol_range);
 	switch (symbol.type)
 	{
 	case symbol_type::ord:
@@ -299,7 +295,7 @@ void lsp_info_processor::add_lsp_symbol(lsp_symbol symbol)
 		deferred_vars_.push_back(symbol_def);
 		break;
 	case symbol_type::instruction:
-		deferred_instruction_ = {symbol.name,scope,file_name,symbol.range,false};
+		deferred_instruction_ = {symbol.name,scope,file_name,symbol.symbol_range,false};
 		break;
 	case symbol_type::seq:
 		process_seq_sym_(symbol_def);
@@ -324,11 +320,11 @@ semantics::highlighting_info & hlasm_plugin::parser_library::semantics::lsp_info
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {
 	//check for multi line
-	if (occ.range.begin_ln != occ.range.end_ln)
+	if (occ.definition_range.start.line != occ.definition_range.end.line)
 	{
 		if (file_name != occ.file_name)
 			return false;
-		if (pos.line < occ.range.begin_ln || pos.line > occ.range.end_ln)
+		if (pos.line < occ.definition_range.start.line || pos.line > occ.definition_range.end.line)
 			return false;
 		// find appropriate line
 		for (const auto& cont_pos : hl_info_.cont_info.continuation_positions)
@@ -337,10 +333,10 @@ bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ)
 			if (cont_pos.line == pos.line)
 			{
 				// occurences begin line, position cannot be smaller than occ begin column or bigger than continuation column
-				if (pos.line == occ.range.begin_ln && (pos.column < occ.range.begin_col || pos.column > cont_pos.column))
+				if (pos.line == occ.definition_range.start.line && (pos.column < occ.definition_range.start.column || pos.column > cont_pos.column))
 					return false;
 				// occurences end line, position cannot be bigger than occ end column or smaller than continue column
-				if (pos.line == occ.range.end_ln && (pos.column > occ.range.end_col || pos.column < hl_info_.cont_info.continue_column))
+				if (pos.line == occ.definition_range.end.line && (pos.column > occ.definition_range.end.column || pos.column < hl_info_.cont_info.continue_column))
 					return false;
 				// in between begin and end lines, only check for continue/continuation columns
 				if (pos.column < hl_info_.cont_info.continue_column || pos.column > cont_pos.column)
@@ -350,7 +346,7 @@ bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ)
 		}
 	}
 	// no continuation, symbol is single line 
-	return file_name == occ.file_name && pos.line == occ.range.begin_ln && pos.line == occ.range.end_ln && pos.column >= occ.range.begin_col && pos.column <= occ.range.end_col;
+	return file_name == occ.file_name && pos.line == occ.definition_range.start.line && pos.line == occ.definition_range.end.line && pos.column >= occ.definition_range.start.column && pos.column <= occ.definition_range.end.column;
 }
 
 bool lsp_info_processor::get_text_(const position& pos, const definitions& symbols, std::vector<std::string>& found) const
@@ -382,7 +378,7 @@ void lsp_info_processor::process_var_syms_()
 		auto it = ctx_->var_symbols.find(symbol);
 		//there is definition, add occurence to it
 		if (it != ctx_->var_symbols.end())
-			ctx_->var_symbols.insert({ it->first,{symbol.range,symbol.file_name} });
+			ctx_->var_symbols.insert({ it->first,{symbol.definition_range,symbol.file_name} });
 		//first occurence, create new definition
 		else
 		{
@@ -397,7 +393,7 @@ void lsp_info_processor::process_var_syms_()
 				symbol.scope = parser_macro_stack_.top();
 			else
 				return;
-			ctx_->var_symbols.insert({ symbol,{symbol.range,symbol.file_name} });
+			ctx_->var_symbols.insert({ symbol,{symbol.definition_range,symbol.file_name} });
 		}
 	}
 	deferred_vars_.clear();
@@ -410,29 +406,32 @@ void lsp_info_processor::process_seq_sym_(definition & symbol)
 	//there is definition, add occurence
 	if (it != ctx_->seq_symbols.end())
 	{
-		ctx_->seq_symbols.insert({ it->first,{symbol.range,symbol.file_name} });
+		ctx_->seq_symbols.insert({ it->first,{symbol.definition_range,symbol.file_name} });
 	}
 	else
 	{
 		//is definition, create it
-		if (symbol.range.begin_col == 0)
+		if (symbol.definition_range.start.column == 0)
 		{
 			std::stringstream ss;
-			ss << "Defined at line " << symbol.range.begin_ln + 1;
+			ss << "Defined at line " << symbol.definition_range.start.line + 1;
 			symbol.value = ss.str();
 			//add deferred if its matching current definition
-			auto temp_seqs = deferred_seqs_;
-			for (const auto & def_sym : deferred_seqs_)
+			decltype(deferred_seqs_) temp_seqs;
+			for (auto& def_sym : deferred_seqs_)
 			{
 				//there is definition, add occurence to it and remove it from deferred
 				if (def_sym == symbol)
 				{
-					temp_seqs.erase(std::remove(temp_seqs.begin(), temp_seqs.end(), def_sym));
-					ctx_->seq_symbols.insert({ symbol,{def_sym.range,def_sym.file_name} });
+					ctx_->seq_symbols.insert({ symbol,{def_sym.definition_range,def_sym.file_name} });
+				}
+				else
+				{
+					temp_seqs.push_back(std::move(def_sym));
 				}
 			}
-			std::swap(deferred_seqs_, temp_seqs);
-			ctx_->seq_symbols.insert({ symbol,{symbol.range,symbol.file_name} });
+			deferred_seqs_ = std::move(temp_seqs);
+			ctx_->seq_symbols.insert({ symbol,{symbol.definition_range,symbol.file_name} });
 		}
 		//not a definition, remember it
 		else
@@ -464,7 +463,7 @@ void lsp_info_processor::process_instruction_sym_()
 		parser_macro_stack_.top() = deferred_instruction_.name;
 		size_t index = 0;
 		//before parameter
-		if (!deferred_vars_.empty() && deferred_vars_[0].range.begin_col == 0)
+		if (!deferred_vars_.empty() && deferred_vars_[0].definition_range.start.column == 0)
 		{
 			ss << deferred_vars_[0].name << " ";
 			deferred_vars_[0].scope = deferred_instruction_.name;
@@ -485,7 +484,7 @@ void lsp_info_processor::process_instruction_sym_()
 		deferred_instruction_.value = ss.str();
 		std::stringstream out_ss("Macro");
 		size_t start = 0;
-		std::string line = get_line_(deferred_instruction_.range.begin_ln + 1, start);
+		std::string line = get_line_(deferred_instruction_.definition_range.start.line + 1, start);
 		for (size_t i = 0; i < 10; i++)
 		{
 			line = get_line_(1, start);
@@ -499,14 +498,14 @@ void lsp_info_processor::process_instruction_sym_()
 		deferred_instruction_.documentation = out_ss.str();
 
 		ctx_->all_instructions.push_back({ deferred_instruction_.name,1,deferred_instruction_.value,deferred_instruction_.documentation,false,deferred_instruction_.name + "   " + deferred_instruction_.value });
-		ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.range,deferred_instruction_.file_name} });
+		ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
 	}
 	else
 	{
 		//check for already defined instruction
 		auto it = ctx_->instructions.find(deferred_instruction_);
 		if (it != ctx_->instructions.end())
-			ctx_->instructions.insert({ it->first,{deferred_instruction_.range,deferred_instruction_.file_name} });
+			ctx_->instructions.insert({ it->first,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
 		//define new instruction
 		else
 		{
@@ -516,7 +515,7 @@ void lsp_info_processor::process_instruction_sym_()
 			{
 				deferred_instruction_.value = instr->detail;
 				deferred_instruction_.documentation = instr->documentation;
-				ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.range,deferred_instruction_.file_name} });
+				ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
 			}
 		}
 	}
@@ -530,7 +529,7 @@ completion_list_s lsp_info_processor::complete_var_(const position& pos) const
 		it = ctx_->var_symbols.upper_bound(it->first)
 		)
 	{
-		if (it->first.range.end_ln < pos.line && it->first.file_name == file_name)
+		if (it->first.definition_range.end.line < pos.line && it->first.file_name == file_name)
 			items.push_back({ "&" + it->first.name,1,it->first.value,"",false,it->first.name });
 	}
 	return { false,items };
@@ -544,7 +543,7 @@ completion_list_s lsp_info_processor::complete_seq_(const position& pos) const
 		it = ctx_->seq_symbols.upper_bound(it->first)
 		)
 	{
-		if (it->first.range.end_ln < pos.line && it->first.file_name == file_name)
+		if (it->first.definition_range.end.line < pos.line && it->first.file_name == file_name)
 			items.push_back({ "." + it->first.name,1,it->first.value,"",false,it->first.name });
 	}
 	return { false, items };

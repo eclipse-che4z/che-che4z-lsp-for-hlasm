@@ -5,7 +5,7 @@
 
 TEST(diagnostics, overall_correctness)
 {
-	analyzer a(
+	std::string input(
 		R"( 
  J 5
  ACONTROL COMPAT(CASE)
@@ -17,7 +17,7 @@ TEST(diagnostics, overall_correctness)
  AINSERT '&x',BACK
 )"
 );
-
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -27,9 +27,9 @@ TEST(diagnostics, overall_correctness)
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
 }*/
 
-TEST(diagnostics, divison_by_zero) //test ok
+TEST(diagnostics, division_by_zero) //test ok
 {
-	analyzer a(
+	std::string input(
 		R"( 
  ADATA 3,4,5,6/0,'test'
 
@@ -45,9 +45,10 @@ TEST(diagnostics, divison_by_zero) //test ok
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
-	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+	a.collect_diags();
 
 	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
@@ -56,7 +57,7 @@ TEST(diagnostics, divison_by_zero) //test ok
 
 TEST(diagnostics, instr_zero_op) // test ok
 {
-	analyzer a(
+	std::string input(
 		R"( 
  SPACE
  EJECT
@@ -66,6 +67,7 @@ TEST(diagnostics, instr_zero_op) // test ok
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -78,7 +80,7 @@ TEST(diagnostics, instr_zero_op) // test ok
 /*
 TEST(diagnostics, unkown_symbols) // to do? number of errors?
 {
-	analyzer a(
+	std::string input(
 		R"( 
  ADATA 1,2,3,10,’&a’
  Ĵ
@@ -88,6 +90,7 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -100,7 +103,7 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 
 TEST(diagnostics, string_substitution) // to do 
 {
-	analyzer a(
+	std::string input(
 		R"( 
 &x setc 10
  AINSERT '&x',BACK
@@ -116,6 +119,7 @@ TEST(diagnostics, string_substitution) // to do
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -127,7 +131,7 @@ TEST(diagnostics, string_substitution) // to do
 
 TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
 {
-	analyzer a(
+	std::string input(
 		R"( 
  ACONTROL NOAFPR,COMPAT(CASE,NOCASE),FLAG(USING0,AL),OPTABLE(ZS5,LIST)
  ACONTROL NOTYPECHECK,TYPECHECK(MAGNITUDE,NOREG),OPTABLE(DOS)
@@ -135,12 +139,8 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
  AINSERT 'test',BACK
  ALIAS C'lower1'
  AMODE ANY31
- CATTR RMODE(31),ALIGN(78/6)
- CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(-2)
- CCW1 X'0C',BUF1,X'00',L'BUF1
- CCW X'47',LocData,X'48',L'LocData
- CCW0 X'06',MyData,X'40',MyBlkSize
- CCW0 X'06',MyData+MyBlkSize,0,80
+ CATTR RMODE(31),ALIGN(2)
+ CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)
  CEJECT 10/2
  CNOP 6,8
  COM    
@@ -148,17 +148,17 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
  CSECT
  END ,(MYCOMPIlER,0101,00273)
  EXITCTL LISTING,256,*+128,,-2
- EXITCTL SOURCE,
+ EXITCTL SOURCE,,,
  EXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
- ICTL --(--1),71+(3)/0,16/2 
- ICTL 9,8*10
+ ICTL 1,71,16 
+ ICTL 9,80
  ISEQ 10,50-4
  LOCTR
  LTORG
  MNOTE 120,'message'
  OPSYN   
  ORG *-500   remark
- ORG ,,4 
+ ORG 2+1,,4 
  PRINT ON,OFF,ON,DATA,MCALL,NOPRINT 
  PUNCH 'string'
  PUSH PRINT,NOPRINT
@@ -175,6 +175,7 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -186,7 +187,7 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
 
 TEST(diagnostics, substitution)
 {
-	analyzer a(
+	std::string input(
 		R"( 
 
 &x seta 4
@@ -212,7 +213,7 @@ TEST(diagnostics, mnemonics)
 	// 10(2,2) - D(4bit, base)
 	// 30000 - 16b
 	// 80000 - 32bit
-	analyzer a(
+	std::string input(
 		R"( 
   B 10(2,2)
   BR 4 
@@ -258,6 +259,7 @@ TEST(diagnostics, mnemonics)
 )"
 );
 
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();

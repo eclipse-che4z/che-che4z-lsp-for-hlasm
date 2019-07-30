@@ -1,0 +1,29 @@
+parser grammar ca_operand_rules; 
+
+
+ca_op returns [operand_ptr op]
+	: lpar expr rpar seq_symbol
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
+		collector.add_lsp_symbol({*$seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq});
+		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss),$expr.ctx,provider.get_range($lpar.ctx->getStart(),$seq_symbol.ctx->getStop()));
+	}
+	| seq_symbol
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
+		collector.add_lsp_symbol({*$seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq});
+		$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
+	}
+	| expr_p
+	{
+		if($expr_p.vs_link && is_var_def()) 
+		{
+			
+			auto tmp = std::make_unique<var_ca_operand>(std::move(*$expr_p.vs_link),provider.get_range($expr_p.ctx));
+			$op = std::move(tmp);
+		}
+		else 
+		{
+			$op = std::make_unique<expr_ca_operand>($expr_p.ctx,provider.get_range($expr_p.ctx));
+		}
+	};

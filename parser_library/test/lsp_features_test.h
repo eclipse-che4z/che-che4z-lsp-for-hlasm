@@ -13,9 +13,9 @@ using namespace hlasm_plugin::parser_library;
 class mock_parse_lib_provider : public parse_lib_provider
 {
 public:
-	virtual parse_result parse_library(const std::string& library, context::ctx_ptr ctx)
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx)
 	{
-		analyzer a(macro_contents, ctx, empty_parse_lib_provider::instance, MACRO_FILE);
+		analyzer a(macro_contents, MACRO_FILE, hlasm_ctx);
 		a.analyze();
 		return true;
 	}
@@ -31,12 +31,11 @@ R"(   MACRO
 class lsp_features_test : public testing::Test
 {
 public:
-	lsp_features_test() : ctx(std::make_shared<context::hlasm_context>(SOURCE_FILE)), a(contents,ctx,lib_provider, SOURCE_FILE), 
+	lsp_features_test() : a(contents, SOURCE_FILE,lib_provider ),
 		instruction_count(context::instruction::machine_instructions.size() +
 			context::instruction::assembler_instructions.size() +
 			context::instruction::ca_instructions.size() +
-			context::instruction::mnemonic_codes.size() +
-			context::instruction::macro_processing_instructions.size())
+			context::instruction::mnemonic_codes.size())
 	{};
 
 	virtual void SetUp()
@@ -66,7 +65,6 @@ R"(   MAC  1
 1      MAC2   2
 )";
 	std::string content;
-	context::ctx_ptr ctx;
 	mock_parse_lib_provider lib_provider;
 	analyzer a;
 	const size_t instruction_count;

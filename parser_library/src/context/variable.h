@@ -3,9 +3,10 @@
 
 #include "common_types.h"
 #include "macro_param_data.h"
-#include <memory>
 #include "id_storage.h"
-#include "../common_structures.h"
+#include "../../include/shared/range.h"
+
+#include <memory>
 #include <unordered_map>
 
 namespace hlasm_plugin {
@@ -217,21 +218,52 @@ public:
 
 
 //*********************sequence symbol*********************//
+struct sequence_symbol;
+struct opencode_sequence_symbol;
+struct macro_sequence_symbol;
+using sequence_symbol_ptr = std::unique_ptr<sequence_symbol>;
 
-
-
-
+enum class sequence_symbol_kind
+{
+	OPENCODE,MACRO
+};
 
 //structure representing sequence symbol
 struct sequence_symbol
 {
-	static const sequence_symbol EMPTY;
-
 	id_index name;
-	hlasm_plugin::parser_library::location location;
+	location symbol_location; //TODO for lsp
+	sequence_symbol_kind kind;
 
-	operator bool() const;
+	const macro_sequence_symbol* access_macro_symbol() const;
+	const opencode_sequence_symbol* access_opencode_symbol() const;
 
+	virtual ~sequence_symbol() = default;
+
+protected:
+	sequence_symbol(id_index name, const sequence_symbol_kind kind, location symbol_location);
+};
+
+struct opencode_sequence_symbol : public sequence_symbol
+{
+	struct opencode_position {
+		opencode_position(size_t file_line=0, size_t file_offset=0) :file_line(file_line), file_offset(file_offset) {}
+		size_t file_line; size_t file_offset; 
+		bool operator==(const opencode_position& oth) const { return file_line == oth.file_line && file_offset == oth.file_offset; }
+	};
+	struct copy_frame { id_index member; size_t statement_offset; };
+
+	opencode_position statement_position;
+	std::vector<copy_frame> copy_stack;
+
+	opencode_sequence_symbol(id_index name, location symbol_location, opencode_position statement_position, std::vector<copy_frame> copy_stack = {});
+};
+
+struct macro_sequence_symbol : public sequence_symbol
+{
+	size_t statement_offset;
+
+	macro_sequence_symbol(id_index name, location symbol_location, size_t statement_offset);
 };
 
 }

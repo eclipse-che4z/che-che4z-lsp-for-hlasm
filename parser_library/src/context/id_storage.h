@@ -2,9 +2,7 @@
 #define CONTEXT_LITERAL_STORAGE_H
 
 #include <unordered_set>
-#include <list>
 #include <string>
-#include "common_types.h"
 
 namespace hlasm_plugin{
 namespace parser_library{
@@ -15,36 +13,22 @@ namespace context{
 //changes strings of identifiers to indexes of this storage class for easier work with them
 class id_storage
 {
+	static const std::string empty_string_;
 public:
-	typedef std::string value_type;
-	typedef std::string & reference;
-	typedef const std::string & const_reference;
-	typedef const std::string * const_pointer;
-	typedef typename std::unordered_set<std::string>::size_type size_type;
-	typedef typename std::unordered_set<std::string>::const_iterator const_iterator;
+	using const_pointer = const std::string *;
+	using const_iterator = typename std::unordered_set<std::string>::const_iterator;
 
-	size_type size() const { return lit_.size(); }	
-	const_iterator begin() const { return lit_.begin(); }		
-	const_iterator end() const { return lit_.end(); }		
-	bool empty() const { return lit_.empty(); }
+	//represents value of empty identifier
+	static const const_pointer empty_id;
 
-	const_pointer find(const std::string& val) const
-	{
-		std::string up(val);
-		to_upper(up);
+	size_t size() const;
+	const_iterator begin() const;
+	const_iterator end() const;
+	bool empty() const;
 
-		const_iterator tmp = lit_.find(up);
+	const_pointer find(std::string val) const;
 
-		if (tmp == lit_.end())
-			return nullptr;
-
-		return &*tmp;
-	}
-
-	const_pointer add(std::string value)
-	{
-		return &*lit_.insert(std::move(to_upper(value))).first;
-	}
+	const_pointer add(std::string value);
 
 private:
 	std::unordered_set<std::string> lit_;

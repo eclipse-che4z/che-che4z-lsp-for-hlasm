@@ -36,8 +36,12 @@ TEST_F(workspace_test, parse_lib_provider)
 
 #if _WIN32
 	ws.did_open_file("test\\library\\test_wks\\correct");
+	context::hlasm_context ctx_1("test\\library\\test_wks\\correct");
+	context::hlasm_context ctx_2("test\\library\\test_wks\\correct");
 #else
 	ws.did_open_file("test/library/test_wks/correct");
+	context::hlasm_context ctx_1("test/library/test_wks/correct");
+	context::hlasm_context ctx_2("test/library/test_wks/correct");
 #endif
 
 	collect_diags_from_child(file_mngr);
@@ -45,23 +49,14 @@ TEST_F(workspace_test, parse_lib_provider)
 
 	diags().clear();
 
-	#if _WIN32
-		ws.parse_library("MACRO1", std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
-	#else
-		ws.parse_library("MACRO1", std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
-	#endif
+	ws.parse_library("MACRO1", ctx_1);
 
 	//test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
 	collect_diags_from_child(ws);
 	EXPECT_EQ(diags().size(), (size_t) 0);
 
-
-#if _WIN32
-	ws.parse_library("not_existing", std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
-#else
-	ws.parse_library("not_existing", std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
-#endif
+	ws.parse_library("not_existing", ctx_2);
 
 }
 

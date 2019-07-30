@@ -85,89 +85,86 @@ const std::map<mach_format, const std::string> instruction::mach_format_to_strin
 	{mach_format::VRX,"VRX"}
 };
 
-const std::vector<std::string> instruction::ca_instructions = {
-	"AIF",
-	"AGO",
-	"ACTR",
-	"SETA",
-	"SETB",
-	"SETC",
-	"ANOP",
-	"LCLA",
-	"LCLB",
-	"LCLC",
-	"GBLA",
-	"GBLB",
-	"GBLC"
+const std::vector<ca_instruction> instruction::ca_instructions = {
+	{"AIF",false},
+	{"AGO",false},
+	{"ACTR",false},
+	{"SETA",false},
+	{"SETB",false},
+	{"SETC",false},
+	{"ANOP",true},
+	{"LCLA",false},
+	{"LCLB",false},
+	{"LCLC",false},
+	{"GBLA",false},
+	{"GBLB",false},
+	{"GBLC",false},
+	{"MACRO",true},
+	{"MEND",true},
+	{"MEXIT",true},
+	{"AEJECT",true},
+	{"AREAD",false},
+	{"ASPACE",false}
 };
 
-const std::map<const std::string, const std::pair<int, int>> instruction::assembler_instructions = { {
-	{ "*PROCESS", std::make_pair<int,int>(1,-1) },
-	{ "ACONTROL", std::make_pair<int,int>(1,-1) },
-	{ "ADATA", std::make_pair<int,int>(5,5) },
-	{ "AINSERT", std::make_pair<int,int>(2,2) },
-	{ "ALIAS", std::make_pair<int,int>(1,1) },
-	{ "AMODE", std::make_pair<int,int>(1,1) },
-	{ "CATTR", std::make_pair<int,int>(1,-1) },
-	{ "CCW", std::make_pair<int,int>(4,4) },
-	{ "CCW0" ,std::make_pair<int,int>(4,4) },
-	{ "CCW1", std::make_pair<int,int>(4,4) },
-	{ "CEJECT", std::make_pair<int,int>(0,1) },
-	{ "CNOP", std::make_pair<int,int>(2,2) },
-	{ "COM", std::make_pair<int,int>(0,0) },
-	{ "COPY", std::make_pair<int,int>(1,1) },
-	{ "CSECT", std::make_pair<int,int>(0,0) },
-	{ "CXD", std::make_pair<int,int>(0,0) },
-	{ "DC", std::make_pair<int,int>(1,-1) },
-	{ "DROP", std::make_pair<int,int>(0,-1) },
-	{ "DS", std::make_pair<int,int>(1,-1) },
-	{ "DSECT", std::make_pair<int,int>(0,0) },
-	{ "DXD", std::make_pair<int,int>(1,-1) },
-	{ "EJECT", std::make_pair<int,int>(0,0) },
-	{ "END", std::make_pair<int,int>(0,2) },
-	{ "ENTRY", std::make_pair<int,int>(1,-1) },
-	{ "EQU", std::make_pair<int,int>(1,5) },
-	{ "EXITCTL", std::make_pair<int,int>(2,5) },
-	{ "EXTRN", std::make_pair<int,int>(1,-1) },
-	{ "ICTL", std::make_pair<int,int>(1,3) },
-	{ "ISEQ", std::make_pair<int,int>(0,2) },
-	{ "LOCTR", std::make_pair<int,int>(0,0) },
-	{ "LTORG", std::make_pair<int,int>(0,0) },
-	{ "MNOTE", std::make_pair<int,int>(1,2) },
-	{ "OPSYN", std::make_pair<int,int>(0,1) },
-	{ "ORG", std::make_pair<int,int>(0,3) },
-	{ "POP", std::make_pair<int,int>(1,4) },
-	{ "PRINT", std::make_pair<int,int>(1,-1) },
-	{ "PUNCH", std::make_pair<int,int>(1,1) },
-	{ "PUSH", std::make_pair<int,int>(1,4) },
-	{ "REPRO", std::make_pair<int,int>(0,0) },
-	{ "RMODE", std::make_pair<int,int>(1,1) },
-	{ "RSECT", std::make_pair<int,int>(0,0) },
-	{ "SPACE", std::make_pair<int,int>(0,1) },
-	{ "START", std::make_pair<int,int>(0,1) },
-	{ "TITLE", std::make_pair<int,int>(1,1) },
-	{ "USING", std::make_pair<int,int>(2,-1) },
-	{ "WXTRN", std::make_pair<int,int>(1,-1) },
-	{ "XATTR", std::make_pair<int,int>(1,-1) }
+const std::map<const std::string, assembler_instruction> instruction::assembler_instructions = { {
+	{ "*PROCESS", {1,-1, true} }, // TO DO
+	{ "ACONTROL", {1,-1, false} },
+	{ "ADATA", {5,5, false} },
+	{ "AINSERT", {2,2, false} },
+	{ "ALIAS", {1,1, false} },
+	{ "AMODE", {1,1, false} },
+	{ "CATTR", {1,-1, false} },
+	{ "CCW", {4,4, true} },
+	{ "CCW0",  {4,4, true} },
+	{ "CCW1", {4,4, true} },
+	{ "CEJECT", {0,1, true} },
+	{ "CNOP", {2,2, true} },
+	{ "COM", {0,0, false} },
+	{ "COPY", {1,1, false} },
+	{ "CSECT", {0,0, false} },
+	{ "CXD", {0,0, false} },
+	{ "DC", {1,-1, true} },
+	{ "DROP", {0,-1, true} },
+	{ "DS", {1,-1, true} },
+	{ "DSECT", {0,0, false} },
+	{ "DXD", {1,-1, true} },
+	{ "EJECT", {0,0, false} },
+	{ "END", {0,2, true} },
+	{ "ENTRY", {1,-1, true} },
+	{ "EQU", {1,5, true} },
+	{ "EXITCTL", {2,5, false} },
+	{ "EXTRN", {1,-1, false} },
+	{ "ICTL", {1,3, false} },
+	{ "ISEQ", {0,2, false} },
+	{ "LOCTR", {0,0, false} },
+	{ "LTORG", {0,0, false} },
+	{ "MNOTE", {1,2, false} },
+	{ "OPSYN", {0,1, true} },
+	{ "ORG", {0,3, true} },
+	{ "POP", {1,4, true} },
+	{ "PRINT", {1,-1, false } },
+	{ "PUNCH", {1,1, false} },
+	{ "PUSH", {1,4, false} },
+	{ "REPRO", {0,0, false} },
+	{ "RMODE", {1,1, false} },
+	{ "RSECT", {0,0, false } },
+	{ "SPACE", {0,1, true} },
+	{ "START", {0,1, true} },
+	{ "TITLE", {1,1, false} },
+	{ "USING", {2,-1, true} },
+	{ "WXTRN", {1,-1, false} },
+	{ "XATTR", {1,-1, false} }
 }};
 
-const std::vector<std::string> instruction::macro_processing_instructions = {
-	"MACRO",
-	"MEND",
-	"MEXIT",
-	"AREAD",
-	"AEJECT",
-	"ASPACE"
-};
-
-bool hlasm_plugin::parser_library::context::machine_instruction::check(std::string & name_of_instruction, std::vector<hlasm_plugin::parser_library::checking::machine_operand_value*> to_check)
+bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check)
 {
 	// check size of operands
 	int diff = operands.size() - to_check.size();
 	if (diff > no_optional || diff < 0)
 	{
 		auto diag = diagnostic_op::error_optional_number_of_operands(name_of_instruction, no_optional, operands.size());
-		diag_range curr_diag = diag_range(diag, semantics::symbol_range(0, 0, 0, 0));
+		diag_range curr_diag = diag_range(diag, range());
 		diagnostics.push_back(curr_diag);
 		return false;
 	}
@@ -179,16 +176,16 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(std::stri
 			diag_range diagnostic;
 			if (!(*to_check[i]).check(diagnostic.diag, operands[i], name_of_instruction))
 			{
-				diagnostic.range = (*to_check[i]).range;
+				diagnostic.diagnostic_range = (*to_check[i]).operand_range;
 				diagnostics.push_back(std::move(diagnostic));
 				error = true;
 			}
 		}
 		else
 		{
-			hlasm_plugin::parser_library::checking::machine_operand_value temp;
+			hlasm_plugin::parser_library::checking::machine_operand temp;
 			auto diag = temp.get_address_operand_expected(operands[i], name_of_instruction);
-			diag_range curr_diag = diag_range(diag, semantics::symbol_range(0, 0, 0, 0));
+			diag_range curr_diag = diag_range(diag, range());
 			diagnostics.push_back(curr_diag);
 			error = true;
 		}
@@ -207,7 +204,7 @@ public:
 	vnot_instruction(const std::string& name, mach_format format, std::vector<machine_operand_format> operands, size_t size, size_t page_no)
 		:machine_instruction(name, format, operands, size, page_no, 0) {}
 
-	virtual bool check(std::string& name_of_instruction, std::vector<hlasm_plugin::parser_library::checking::machine_operand_value*> to_check) override
+	virtual bool check(const std::string& name_of_instruction,const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check) override
 	{
 		if (!machine_instruction::check(name_of_instruction, to_check))
 			return false;
@@ -215,13 +212,13 @@ public:
 		{
 			try
 			{
-				const simple_operand_value& second = dynamic_cast<const simple_operand_value&>(*to_check[1]);
-				const simple_operand_value& third = dynamic_cast<const simple_operand_value&>(*to_check[2]);
+				const one_operand& second = dynamic_cast<const one_operand&>(*to_check[1]);
+				const one_operand& third = dynamic_cast<const one_operand&>(*to_check[2]);
 				if (second.value == third.value)
 					return true;
 				else
 				{
-					diagnostics.push_back(diag_range(diagnostic_op::error_M200(name_of_instruction), semantics::symbol_range(0, 0, 0, 0)));
+					diagnostics.push_back(diag_range(diagnostic_op::error_M200(name_of_instruction), range()));
 					return false;
 				}
 			}
@@ -230,7 +227,7 @@ public:
 				assert(false);
 			}
 		}
-		diagnostics.push_back(diag_range(diagnostic_op::error_M000(name_of_instruction, operands.size()), semantics::symbol_range(0, 0, 0, 0)));
+		diagnostics.push_back(diag_range(diagnostic_op::error_M000(name_of_instruction, operands.size()), range()));
 		return false;
 	}
 };

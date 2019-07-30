@@ -15,31 +15,31 @@ R"( MACRO
 	analyzer a(input);
 	a.analyze();
 
-	id_index id = a.context()->ids.add("m1");
-	auto& macros = a.context()->macros();
+	id_index id = a.context().ids().add("m1");
+	auto& macros = a.context().macros();
 
 	auto tmp = macros.find(id);
 	ASSERT_TRUE(tmp !=macros.end());
 
 	auto& m = tmp->second;
 	
-	auto op = a.context()->ids.add("op");
+	auto op = a.context().ids().add("op");
 
 	EXPECT_EQ(m->named_params().find(op)->second->access_positional_param()->position, (size_t)1);
 
-	auto op2 = a.context()->ids.add("op2");
+	auto op2 = a.context().ids().add("op2");
 
 	EXPECT_EQ(m->named_params().find(op2)->second->access_positional_param()->position, (size_t)2);
 
-	auto l = a.context()->ids.add("l");
+	auto l = a.context().ids().add("l");
 
 	EXPECT_EQ(m->named_params().find(l)->second->access_positional_param()->position, (size_t)0);
 
-	auto k = a.context()->ids.add("k");
+	auto k = a.context().ids().add("k");
 
 	EXPECT_EQ(m->named_params().find(k)->second->access_keyword_param()->get_value(), "5");
 
-	auto k2 = a.context()->ids.add("k2");
+	auto k2 = a.context().ids().add("k2");
 
 	EXPECT_EQ(m->named_params().find(k2)->second->access_keyword_param()->get_value(), "(1,2,3)");
 
@@ -68,15 +68,15 @@ R"( MACRO
 	analyzer a(input);
 	a.analyze();
 
-	ASSERT_EQ(a.context()->macros().size(),(size_t)2);
+	ASSERT_EQ(a.context().macros().size(),(size_t)2);
 
 	id_index id;
 
-	id = a.context()->ids.add("M1");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("M1");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 
-	id = a.context()->ids.add("m2");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("m2");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 }
 
 TEST(macro, macro_def_count_inner)
@@ -93,6 +93,7 @@ R"( MACRO
 
  MACRO
  INNER_M
+ LR 1,1 
  ANOP
  MEND
 
@@ -103,18 +104,18 @@ R"( MACRO
 	analyzer a(input);
 	a.analyze();
 
-	ASSERT_EQ(a.context()->macros().size(), (size_t)3);
+	ASSERT_EQ(a.context().macros().size(), (size_t)3);
 
 	id_index id;
 
-	id = a.context()->ids.add("M1");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("M1");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 
-	id = a.context()->ids.add("M2");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("M2");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 
-	id = a.context()->ids.add("INNER_M");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("INNER_M");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 }
 
 TEST(macro, macro_lookahead_pass)
@@ -138,12 +139,12 @@ R"( MACRO
 	analyzer a(input);
 	a.analyze();
 
-	ASSERT_EQ(a.context()->macros().size(), (size_t)1);
+	ASSERT_EQ(a.context().macros().size(), (size_t)1);
 
 	id_index id;
 
-	id = a.context()->ids.add("M1");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("M1");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 }
 
 TEST(macro, macro_lookahead_fail)
@@ -167,15 +168,15 @@ R"( MACRO
 	analyzer a(input);
 	a.analyze();
 
-	ASSERT_EQ(a.context()->macros().size(), (size_t)2);
+	ASSERT_EQ(a.context().macros().size(), (size_t)2);
 
 	id_index id;
 
-	id = a.context()->ids.add("M1");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("M1");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 
-	id = a.context()->ids.add("INNER_M");
-	EXPECT_TRUE(a.context()->macros().find(id) != a.context()->macros().end());
+	id = a.context().ids().add("INNER_M");
+	EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
 }
 
 TEST(macro, macro_positional_param_subs)
@@ -312,17 +313,17 @@ R"( MACRO
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)3);
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-	auto& m1 = a.context()->macros().find(a.context()->ids.add("m1"))->second;
-	auto& m2 = a.context()->macros().find(a.context()->ids.add("m2"))->second;
-	auto& m3 = a.context()->macros().find(a.context()->ids.add("m3"))->second;
+	auto& m1 = a.context().macros().find(a.context().ids().add("m1"))->second;
+	auto& m2 = a.context().macros().find(a.context().ids().add("m2"))->second;
+	auto& m3 = a.context().macros().find(a.context().ids().add("m3"))->second;
 
 	{
 		std::vector<macro_arg> args;
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("3"),nullptr });
 		auto invo = m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args));
-		auto n = a.context()->ids.add("n");
-		auto b = a.context()->ids.add("b");
+		auto n = a.context().ids().add("n");
+		auto b = a.context().ids().add("b");
 		EXPECT_EQ(invo->named_params.find(n)->second->data->get_value(), "1");
 		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "3");
 	}
@@ -332,8 +333,8 @@ R"( MACRO
 		args.push_back({ std::make_unique<macro_param_data_single>("1"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
 		auto invo = m2->call(nullptr, std::move(args));
-		auto n = a.context()->ids.add("a");
-		auto b = a.context()->ids.add("b");
+		auto n = a.context().ids().add("a");
+		auto b = a.context().ids().add("b");
 		EXPECT_EQ(invo->named_params.find(n)->second->data->get_value(), "1");
 		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "2");
 		EXPECT_EQ(invo->SYSLIST(2), "2");
@@ -345,12 +346,73 @@ R"( MACRO
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("3"),nullptr });
 		auto invo = m3->call(nullptr, std::move(args));
-		auto n = a.context()->ids.add("a");
-		auto b = a.context()->ids.add("b");
+		auto n = a.context().ids().add("a");
+		auto b = a.context().ids().add("b");
 		EXPECT_EQ(invo->named_params.find(n)->second->access_keyword_param()->get_value(), "5");
 		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "2");
 	}
 
+}
+
+TEST(macro, MEXIT)
+{
+	std::string input =
+R"(
+ MACRO
+ M1
+ LR 1
+ MEXIT
+ LR 1
+ MEND
+ 
+ M1 
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, cyclic_call_infinite)
+{
+	std::string input =
+R"(
+ MACRO
+ M1
+ LR 1,1
+ M1
+ MEND
+ 
+ M1 
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, cyclic_call_finite)
+{
+	std::string input =
+		R"(
+ MACRO
+ M1
+ LR 1
+ GBLA V
+&V SETA &V+1
+ AIF (&V GE 10).A
+ M1
+.A MEND
+
+ M1
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)10);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
 

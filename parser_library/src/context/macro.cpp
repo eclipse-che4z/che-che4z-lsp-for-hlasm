@@ -1,8 +1,10 @@
 #include "macro.h"
 
+#include <stdexcept>
+
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
-using namespace antlr4;
 using namespace std;
 
 
@@ -12,8 +14,8 @@ const std::unordered_map<id_index, macro_param_ptr>& macro_definition::named_par
 	return named_params_;
 }
 
-macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, std::string file_name, hlasm_plugin::parser_library::location location)
-	: label_param_name_(label_param_name), id(name), definition(std::move(definition)), location(location), file_name(std::move(file_name))
+macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location)
+	: label_param_name_(label_param_name), id(name), definition(std::move(definition)),labels(std::move(labels)), definition_location(std::move(definition_location))
 {
 	if (label_param_name_)
 	{
@@ -86,13 +88,13 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 			named_cpy.find(pos_par->id)->second->data = syslist[pos_par->position];
 	}
 
-	return std::make_shared<macro_invocation>(this->id, &this->definition, std::move(named_cpy), std::move(syslist),location);
+	return std::make_shared<macro_invocation>(id, definition,labels, std::move(named_cpy), std::move(syslist),definition_location);
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
-macro_invocation::macro_invocation(id_index name, const statement_block * definition, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist, hlasm_plugin::parser_library::location location)
-	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)), definition(definition),  location(location), current_statement(0)
+macro_invocation::macro_invocation(id_index name, const statement_block&  definition, const label_storage& labels, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,const location& definition_location)
+	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)), definition(definition),labels(labels), definition_location(definition_location), current_statement(-1)
 {
 }
 

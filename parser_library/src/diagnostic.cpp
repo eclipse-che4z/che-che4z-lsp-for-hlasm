@@ -14,10 +14,11 @@ namespace hlasm_plugin::parser_library
 		return diagnostic_op(diagnostic_severity::error, "I999", "Fatal error at " + instr_name + " instruction: implementation error.");
 	}
 
+	/*
 	diagnostic_op diagnostic_op::error_A000_simple_op_expected(const std::string & instr_name)
 {
 	return diagnostic_op(diagnostic_severity::error, "A000", "Error at " + instr_name + ": simple operand expected");
-}
+}*/
 
 diagnostic_op diagnostic_op::error_A001_complex_op_expected(const std::string & instr_name)
 {
@@ -31,7 +32,7 @@ diagnostic_op diagnostic_op::error_A002_simple_par_expected(const std::string & 
 
 diagnostic_op diagnostic_op::error_A003_complex_par_expected(const std::string & instr_name, const std::string & op_name)
 {
-	return diagnostic_op(diagnostic_severity::error, "A002", "Error at " + instr_name + " at " + op_name + " operand: complex parameter expected");
+	return diagnostic_op(diagnostic_severity::error, "A002", "Error at " + instr_name + " at " + op_name + " operand: parameter in a form identifier(parameters) expected");
 }
 
 diagnostic_op diagnostic_op::error_A010_minimum(const std::string & instr_name, size_t min_params)
@@ -88,6 +89,16 @@ diagnostic_op diagnostic_op::error_A018_either(const std::string & instr_name, c
 diagnostic_op diagnostic_op::error_A019_lower_than(const std::string & instr_name, const std::string & op_name, size_t number)
 {
 	return diagnostic_op(diagnostic_severity::error, "A019", "Error at " + instr_name + " instruction at " + op_name + " operand: number of parameters has to be lower than " + std::to_string(number));
+}
+
+diagnostic_op diagnostic_op::error_A020_absolute_val_or_empty_expected(const std::string& instr_name)
+{
+	return diagnostic_op(diagnostic_severity::error, "A020", "Error at " + instr_name + " instruction: operand must either specify an absolute value or must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A021_cannot_be_empty(const std::string& instr_name)
+{
+	return diagnostic_op(diagnostic_severity::error, "A021", "Error at " + instr_name + " instruction: operand cannot be empty");
 }
 
 diagnostic_op diagnostic_op::error_A100_XATTR_identifier()
@@ -182,7 +193,7 @@ diagnostic_op diagnostic_op::error_A116_ORG_boundary_operand()
 
 diagnostic_op diagnostic_op::error_A117_MNOTE_message_size()
 {
-	return diagnostic_op(diagnostic_severity::error, "A117", "Error at MNOTE instruction: operand value must be a message string of maximum 1020 characters");
+	return diagnostic_op(diagnostic_severity::error, "A117", "Error at MNOTE instruction: operand must specify a message string of maximum 1020 characters");
 }
 
 diagnostic_op diagnostic_op::error_A118_MNOTE_operands_size()
@@ -205,7 +216,7 @@ diagnostic_op diagnostic_op::error_A121_ISEQ_right_GT_left()
 	return diagnostic_op(diagnostic_severity::error, "A121", "Error at ISEQ instruction: right operand value must be greater than left operand value, or both operands must be omitted");
 }
 
-diagnostic_op diagnostic_op::error_A122_ICTL_op_format()
+diagnostic_op diagnostic_op::error_A122_ICTL_op_format_first()
 {
 	return diagnostic_op(diagnostic_severity::error, "A122", "Error at ICTL instruction: operand value must be a decimal self-defining term");
 }
@@ -302,7 +313,7 @@ diagnostic_op diagnostic_op::error_A140_END_lang_third()
 
 diagnostic_op diagnostic_op::error_A141_DROP_op_format()
 {
-	return diagnostic_op(diagnostic_severity::error, "A141", "Error at DROP instruction: operand must either specify a base register (value 0 through 15) or a label (either an ordinary or a variable symbol)");
+	return diagnostic_op(diagnostic_severity::error, "A141", "Error at DROP instruction: operand must either specify a base register (value 0 through 15), label (either an ordinary or a variable symbol) or must be omitted");
 }
 
 diagnostic_op diagnostic_op::error_A142_COPY_op_format()
@@ -310,9 +321,9 @@ diagnostic_op diagnostic_op::error_A142_COPY_op_format()
 	return diagnostic_op(diagnostic_severity::error, "A142", "Error at COPY instruction: operand must specify a member name");
 }
 
-diagnostic_op diagnostic_op::error_A143_CNOP_op_format_value()
+diagnostic_op diagnostic_op::error_A143_must_be_absolute_expr(const std::string& instr_name)
 {
-	return diagnostic_op(diagnostic_severity::error, "A143", "Error at CNOP instruction: operand value must be an absolute expression");
+	return diagnostic_op(diagnostic_severity::error, "A143", "Error at " + instr_name + " instruction: operand value must be an absolute expression");
 }
 
 diagnostic_op diagnostic_op::error_A144_CNOP_byte_size()
@@ -395,7 +406,7 @@ diagnostic_op diagnostic_op::error_A159_ADATA_val_size()
 	return diagnostic_op(diagnostic_severity::error, "A159", "Error at ADATA instruction: operand value must be in range -2^32 through 2^32-1");
 }
 
-diagnostic_op diagnostic_op::error_A160_ADATA_char_string_format()
+diagnostic_op diagnostic_op::error_A160_ADATA_char_string_size()
 {
 	return diagnostic_op(diagnostic_severity::error, "A160", "Error at ADATA instruction: the maximum size of character string operand is 255 bytes");
 }
@@ -484,7 +495,7 @@ diagnostic_op diagnostic_op::error_A213_OPTABLE_second_op(const std::string & in
 
 diagnostic_op diagnostic_op::error_A214_TYPECHECK_format(const std::string & instr_name)
 {
-	return diagnostic_op(diagnostic_severity::error, "A214", "Error at " + instr_name + " instruction: second parameter of the TYPECHECK option must be one of the following values: MAGNITUDE|MAG, REGISTER|REG, NOMAGNITUDE|NOMAG, NOREGISTER|NOREG");
+	return diagnostic_op(diagnostic_severity::error, "A214", "Error at " + instr_name + " instruction: the parameter of the TYPECHECK option must be one of the following values: MAGNITUDE|MAG, REGISTER|REG, NOMAGNITUDE|NOMAG, NOREGISTER|NOREG");
 }
 
 diagnostic_op diagnostic_op::error_A215_CODEPAGE_format(const std::string & instr_name)
@@ -539,7 +550,7 @@ diagnostic_op diagnostic_op::error_A224_XREF_par_format(const std::string & inst
 
 diagnostic_op diagnostic_op::error_A225_SUPRWARN_par_format(const std::string & instr_name, const std::string & op_name)
 {
-	return diagnostic_op(diagnostic_severity::error, "A225", "Error at " + instr_name + " instruction at " + op_name + " option: message number must be an absolute value");
+	return diagnostic_op(diagnostic_severity::error, "A225", "Error at " + instr_name + " instruction at " + op_name + " option: operand must specify a 1-4 digit message number");
 }
 
 diagnostic_op diagnostic_op::error_A226_SUPRWARN_par_size(const std::string & instr_name, const std::string & op_name)
@@ -605,6 +616,56 @@ diagnostic_op diagnostic_op::error_A237_FAIL_severity_message(const std::string 
 diagnostic_op diagnostic_op::error_A238_REF_format(const std::string& instr_name)
 {
 	return diagnostic_op(diagnostic_severity::error, "A288", "Error at " + instr_name + " instruction at REFERENCE option: parameter must be in one of the following formats: DIRECT|INDIRECT, CODE|DATA");
+}
+
+diagnostic_op diagnostic_op::error_A239_ADATA_char_string_format()
+{
+	return diagnostic_op(diagnostic_severity::error, "A239", "Error at ADATA instruction: the last operand must either be a character string enclosed in single quotes, or it must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A240_expression_format(const std::string& instr_name)
+{
+	return diagnostic_op(diagnostic_severity::error, "A240", "Error at " + instr_name + " instruction: operand must either specify an absolute value or must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A241_MNOTE_severity_expr()
+{
+	return diagnostic_op(diagnostic_severity::error, "A241", "Error at MNOTE instruction: expression not allowed");
+}
+
+diagnostic_op diagnostic_op::error_A242_ICTL_op_format_second_third()
+{
+	return diagnostic_op(diagnostic_severity::error, "A242", "Error at ICTL instruction: operand value must either be a decimal self-defining term or the operand must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A243_END_expr_format()
+{
+	return diagnostic_op(diagnostic_severity::error, "A243", "Error at END instruction: first operand must either be an expresison or the operand must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A244_PUNCH_char_string()
+{
+	return diagnostic_op(diagnostic_severity::error, "A244", "Error at PUNCH instruction: operand must specify a character string");
+}
+
+diagnostic_op diagnostic_op::error_A245_ORG_expression()
+{
+	return diagnostic_op(diagnostic_severity::error, "A245", "Error at ORG instruction: operand must specify relocatable expression or must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A246_OPSYN()
+{
+	return diagnostic_op(diagnostic_severity::error, "A246", "Error at OPSYN instruction: operand must either specify an operation code or must be omitted");
+}
+
+diagnostic_op diagnostic_op::error_A247_must_be_rel_abs_expr(const std::string& instr_name)
+{
+	return diagnostic_op(diagnostic_severity::error, "A247", "Error at " + instr_name + " instruction: operand must be a relocatable or an absolute expression");
+}
+
+diagnostic_op diagnostic_op::error_A248_END_lang_char_sequence()
+{
+	return diagnostic_op(diagnostic_severity::error, "A248", "Error at END instruction at language operand: parameter must be a character sequence");
 }
 
 diagnostic_op diagnostic_op::warning_A300_op_apostrophes_missing(const std::string & instr_name)
@@ -836,9 +897,104 @@ diagnostic_s diagnostic_s::error_E031(const std::string& filename, const std::st
 	return diagnostic_s(filename, range, diagnostic_severity::error, "E031", "HLASM Plugin", "Cannot declare " + message + " with the same name", {});
 }
 
+diagnostic_s diagnostic_s::error_E032(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E032", "HLASM Plugin", "Undefined symbol - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E033(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E033", "HLASM Plugin", "Cyclic symbol definition", {});
+}
+
+diagnostic_s diagnostic_s::error_E041(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E041", "HLASM Plugin", "Long ordinary symbol name - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E042(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E042", "HLASM Plugin", "Macro name ommited - ASPACE instead", {});
+}
+
+diagnostic_s diagnostic_s::error_E043(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E043", "HLASM Plugin", "Invalid name of variable in macro prototype", {});
+}
+
+diagnostic_s diagnostic_s::error_E048(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E048", "HLASM Plugin", "Undefined sequence symbol, macro aborted - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E049(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E049", "HLASM Plugin", "Operation code not found - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E050(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E050", "HLASM Plugin", "Illegal set symbol name", {});
+}
+
+diagnostic_s diagnostic_s::error_E051(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E051", "HLASM Plugin", "Duplicate SET symbol declaration, first is retained - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E052(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E052", "HLASM Plugin", "Illegal use of symbolic parameter - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E053(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E053", "HLASM Plugin", "Required name missing", {});
+}
+
+diagnostic_s diagnostic_s::error_E054(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E054", "HLASM Plugin", "Illegal statement outside macro definition", {});
+}
+
+diagnostic_s diagnostic_s::error_E055(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E055", "HLASM Plugin", "Too many nested macro calls", {});
+}
+
+diagnostic_s diagnostic_s::error_E056(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E055", "HLASM Plugin", "ACTR counter exceeded", {});
+}
+
+diagnostic_s diagnostic_s::error_E057(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E056", "HLASM Plugin", "Symbol not an ordinary or sequence symbol", {});
+}
+
+diagnostic_s diagnostic_s::error_E044(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E044", "HLASM Plugin", "Illegal name field in macro prototype, discarted", {});
+}
+
+diagnostic_s diagnostic_s::error_E045(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E045", "HLASM Plugin", "Sequence symbol already defined - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E046(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E046", "HLASM Plugin", "Missing MEND in " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E047(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E047", "HLASM Plugin", "Lookahead failed, symbol not found - " + message, {});
+}
+
 diagnostic_s diagnostic_s::warning_W010(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "W010", "HLASM Plugin", message + " not expected", {});
+	return diagnostic_s(filename, range, diagnostic_severity::warning, "W010", "HLASM Plugin", message + " not expected", {});
 }
 
 diagnostic_s diagnostic_s::error_EQU1(const std::string& filename, hlasm_plugin::parser_library::range range)
@@ -849,6 +1005,16 @@ diagnostic_s diagnostic_s::error_EQU1(const std::string& filename, hlasm_plugin:
 diagnostic_s diagnostic_s::error_EQU2(const std::string& filename, hlasm_plugin::parser_library::range range)
 {
 	return diagnostic_s(filename, range, diagnostic_severity::error, "EQU2", "HLASM Plugin", "Label redefinition", {});
+}
+
+diagnostic_s diagnostic_s::error_ME001(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "ME001", "HLASM Plugin", "Constant number overflow.", {});
+}
+
+diagnostic_s diagnostic_s::error_ME002(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "ME002", "HLASM Plugin", "multiplication or division of address", {});
 }
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
@@ -871,6 +1037,36 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
 		"W0004", "HLASM plugin",
 		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
 
+}
+
+diagnostic_s diagnostic_s::error_D001(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D001", "HLASM Plugin", "Integer out of range", {});
+}
+
+diagnostic_s diagnostic_s::error_D002(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D002", "HLASM Plugin", "Expected an integer", {});
+}
+
+diagnostic_s diagnostic_s::error_D003(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D003", "HLASM Plugin", "Expected an integer or an expression after modifier", {});
+}
+
+diagnostic_s diagnostic_s::error_D004(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D004", "HLASM Plugin", "Wrong order of modifiers", {});
+}
+
+diagnostic_s diagnostic_s::error_D005(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D005", "HLASM Plugin", "Unexpected '.' in modifier other than length", {});
+}
+
+diagnostic_s diagnostic_s::error_D006(hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s("", range, diagnostic_severity::error, "D006", "HLASM Plugin", "Unexpected character. Nominal value or modifier expected", {});
 }
 
 

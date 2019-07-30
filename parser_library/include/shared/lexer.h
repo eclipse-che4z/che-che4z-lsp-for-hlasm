@@ -11,8 +11,8 @@
 #include <string_view>
 #include "input_source.h"
 #include "../src/semantics/lsp_info_processor.h"
-#include "parser_library_export.h"
-#include "../src/common_structures.h"
+#include "../src/context/variable.h"
+#include "range.h"
 
 
 namespace hlasm_plugin {
@@ -24,6 +24,7 @@ namespace hlasm_plugin {
 		class PARSER_LIBRARY_EXPORT lexer : public antlr4::TokenSource
 		{
 		public:
+			struct stream_position { size_t line; size_t offset; };
 			lexer(input_source*,semantics::lsp_info_processor * lsp_proc);
 
 			lexer(const lexer &) = delete;
@@ -83,10 +84,10 @@ namespace hlasm_plugin {
 			bool is_ord_char() const;
 			bool get_unlimited_line() const;
 			void set_unlimited_line(bool);
-			void rewind_input(location loc);
+			void rewind_input(stream_position pos);
 			bool is_last_line() const;
 			bool eof_generated() const;
-			location last_lln_begin_location() const;
+			stream_position last_lln_begin_position() const;
 		protected:
 			void create_token(size_t ttype, size_t channel);
 			void consume();
@@ -108,8 +109,8 @@ namespace hlasm_plugin {
 			size_t last_token_id_ = 0;
 			size_t last_continuation_ = static_cast<size_t>(-1);
 
-			location last_lln_begin_loc_ = { 0,0 };
-			location last_lln_end_loc_ = { static_cast<size_t>(-1),static_cast<size_t>(-1) };
+			stream_position last_lln_begin_pos_ = { 0,0 };
+			stream_position last_lln_end_pos_ = { static_cast<size_t>(-1),static_cast<size_t>(-1) };
 
 			std::queue<token_ptr> token_queue_;
 			Ref<antlr4::CommonTokenFactory> dummy_factory;

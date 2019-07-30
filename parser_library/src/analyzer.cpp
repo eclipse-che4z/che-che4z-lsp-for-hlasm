@@ -1,32 +1,39 @@
 #include "analyzer.h"
 #include "error_strategy.h"
 
-namespace hlasm_plugin::parser_library
+using namespace hlasm_plugin::parser_library;
+
+analyzer::analyzer(const std::string& text, std::string file_name, parse_lib_provider& lib_provider, context::hlasm_context* hlasm_ctx, bool own_ctx)
+	:diagnosable_ctx(*hlasm_ctx),
+	hlasm_ctx_(own_ctx ? context::ctx_ptr(hlasm_ctx) : nullptr), hlasm_ctx_ref_(*hlasm_ctx),
+	listener_(file_name), 
+	lsp_proc_(file_name, text, hlasm_ctx_ref_.lsp_ctx),
+	input_(text), lexer_(&input_, &lsp_proc_), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
+	mngr_(processing::provider_ptr(parser_), hlasm_ctx_ref_, lib_provider,*parser_)
 {
-
-analyzer::analyzer(const std::string& text) : analyzer(text, std::make_shared<context::hlasm_context>(), empty_parse_lib_provider::instance, "") {}
-analyzer::analyzer(const std::string& text, std::string file_name) : analyzer(text, std::make_shared<context::hlasm_context>(file_name), empty_parse_lib_provider::instance, file_name) {}
-analyzer::analyzer(const std::string& text, context::ctx_ptr ctx, parse_lib_provider & lib_provider, std::string file_name)
-	: diagnosable_ctx(ctx),
-	ctx_(ctx), listener_(file_name), input_(text), lsp_proc_(file_name, text, ctx->lsp_ctx), lexer_(&input_,&lsp_proc_), tokens_(&lexer_), parser_(&tokens_), mngr_(std::move(file_name), std::move(ctx), lib_provider)
-{
-	parser_.setErrorHandler(std::make_shared<error_strategy>());
-
-	parser_.initialize(&mngr_,&lsp_proc_);
-	mngr_.initialize(&parser_);
-
-	parser_.removeErrorListeners();
-	parser_.addErrorListener(&listener_);
+	parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_);
+	parser_->setErrorHandler(std::make_shared<error_strategy>());
+	parser_->removeErrorListeners();
+	parser_->addErrorListener(&listener_);
 }
 
-context::ctx_ptr analyzer::context()
+analyzer::analyzer(const std::string& text, const std::string file_name, context::hlasm_context& hlasm_ctx)
+	: analyzer(text, file_name, empty_parse_lib_provider::instance, &hlasm_ctx, false) 
 {
-	return ctx_;
+	hlasm_ctx.push_processing_file(std::move(file_name), context::file_processing_type::MACRO);
 }
 
-generated::hlasmparser & analyzer::parser()
+analyzer::analyzer(const std::string& text, const std::string file_name, parse_lib_provider& lib_provider)
+	: analyzer(text, std::move(file_name), lib_provider, new context::hlasm_context(file_name), true) {}
+
+context::hlasm_context& analyzer::context()
 {
-	return parser_;
+	return hlasm_ctx_ref_;
+}
+
+generated::hlasmparser& analyzer::parser()
+{
+	return *parser_;
 }
 
 semantics::lsp_info_processor& analyzer::lsp_processor()
@@ -36,7 +43,7 @@ semantics::lsp_info_processor& analyzer::lsp_processor()
 
 void analyzer::analyze()
 {
-	parser_.program();
+	mngr_.start_processing();
 }
 
 void analyzer::collect_diags() const
@@ -45,4 +52,3 @@ void analyzer::collect_diags() const
 	collect_diags_from_child(listener_);
 }
 
-}

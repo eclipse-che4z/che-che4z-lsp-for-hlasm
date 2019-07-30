@@ -2,11 +2,15 @@
 #define HLASMPLUGIN_PARSERLIBRARY_INSTR_OPERAND_H
 
 #include <vector>
-#include "../semantics/concatenation.h"
+#include <variant>
+#include <string>
+#include <memory>
+#include <assert.h>
+#include "shared/range.h"
+#include "../diagnostic.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking
+{
 
 	enum class address_state { RES_VALID, RES_INVALID, UNRES };
 
@@ -22,36 +26,18 @@ namespace checking {
 	public:
 		operand();
 
-		semantics::symbol_range range;
+		range operand_range;
 
 		virtual ~operand() = default;
 	};
 
-	class asm_operand : public operand
+	using check_op_ptr = std::unique_ptr<operand>;
+
+	class asm_operand : public virtual operand
 	{
 	public:
 		asm_operand();
 		virtual ~asm_operand() = default;
-
-		virtual std::unique_ptr<asm_operand> clone() const;
-		virtual std::string to_string() const;
-	};
-
-	// class that represents one operand
-	// used alone for simple operands (operands that have only string value with no futher meaning) - LIBMAC, RA2, AFPR...
-	class one_operand final : public asm_operand
-	{
-	public:
-		//static const one_operand empty_one_operand;
-
-		//the string value of the operand
-		std::string operand_identifier;
-
-		one_operand() : one_operand("") {};
-
-		one_operand(std::string operand_identifier);
-
-		virtual std::unique_ptr<asm_operand> clone() const;
 
 		virtual std::string to_string() const;
 	};
@@ -66,8 +52,6 @@ namespace checking {
 
 		complex_operand();
 		complex_operand(std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params);
-
-		std::unique_ptr<asm_operand> clone() const override;
 
 		std::string to_string() const override;
 	};
@@ -100,15 +84,12 @@ namespace checking {
 		std::string to_string() const;
 	};
 
-
-	class machine_operand_value : public operand
+	class machine_operand : public virtual operand
 	{
 	public:
-		machine_operand_value();
+		machine_operand();
 
 		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const;
-
-		std::unique_ptr<machine_operand_value> clone() const;
 
 		std::string to_string() const;
 
@@ -122,7 +103,7 @@ namespace checking {
 		bool is_size_corresponding_unsigned(int operand, int size) const;
 	};
 
-	class address_operand_value final : public machine_operand_value
+	class address_operand final : public machine_operand
 	{
 	public:
 		address_state state;
@@ -131,34 +112,85 @@ namespace checking {
 		int second_op;
 		operand_state first_state;
 
-		address_operand_value(address_state state, int displacement, int first, int second);
-		address_operand_value(address_state state, int displacement, int second, operand_state first_state);
+		address_operand(address_state state, int displacement, int first, int second);
+		address_operand(address_state state, int displacement, int second, operand_state first_state);
 
 		diagnostic_op get_first_parameter_error(const machine_operand_type & op_type, const std::string & instr_name, long long from, long long to) const;
 
 		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const override;
 	};
 
-	class simple_operand_value final : public machine_operand_value
+	// class that represents both one_operand and value operands
+	class one_operand final : public asm_operand, public machine_operand
 	{
 	public:
+
+		//the string value of the operand
+		std::string operand_identifier;
 		int value;
+		bool is_default;
 
-		simple_operand_value(int value);
+		one_operand();
 
-		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const override;
+		one_operand(std::string operand_identifier, int value);
 
+		one_operand(std::string operand_identifier);
+
+		one_operand(int value);
+
+		one_operand(const one_operand& op);
+
+		bool check(diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name) const override;
+
+		virtual std::string to_string() const;
 	};
 
-	class empty_operand_value final : public machine_operand_value
+	class empty_operand final : public machine_operand, public asm_operand
 	{
 	public:
-		empty_operand_value();
+		empty_operand();
+
+		virtual std::unique_ptr<asm_operand> clone() const;
 
 		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const override;
 	};
-}
-}
+
+	template<typename T>
+	struct data_def_field
+	{
+		bool present;
+		T value;
+		range rng;
+	};
+
+	struct data_def_address
+	{
+		int base;
+		int displacement;
+	};
+
+	class data_definition_operand : public asm_operand
+	{
+	public:
+		using num_t = int32_t;
+
+		enum class length_type
+		{
+			BYTE,
+			BIT
+		};
+
+		data_def_field<num_t> dupl_factor;
+		data_def_field<char> type;
+		data_def_field<char> extension;
+		data_def_field<num_t> length;
+		length_type len_type;
+		data_def_field<num_t> exponent;
+		data_def_field<num_t> scale;
+		
+		data_def_field < std::variant<std::string, std::vector<data_def_field<int>>, data_def_address> > nominal_value;
+	};
+
 }
 
 #endif

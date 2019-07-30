@@ -1,196 +1,203 @@
 #include "collector.h"
-#include "../include/shared/lexer.h"
+#include "shared/lexer.h"
+#include "range_provider.h"
 
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 
-hlasm_plugin::parser_library::semantics::collector::collector() : instruction_extracted_(false), statement_extracted_(false), lsp_symbols_extracted_(false), hl_symbols_extracted_(false)
+
+collector::collector()
+	: lsp_symbols_extracted_(false), hl_symbols_extracted_(false) {}
+
+const label_si& collector::current_label()
 {
+	return *lbl_;
 }
 
-const label_semantic_info& hlasm_plugin::parser_library::semantics::collector::current_label()
+const instruction_si& collector::current_instruction()
 {
-	if (statement_extracted_)
-		throw std::runtime_error("bad operation");
-	return stmt_.label_info;
+	return *instr_;
 }
 
-const instruction_semantic_info& hlasm_plugin::parser_library::semantics::collector::current_instruction()
+const operands_si& collector::current_operands()
 {
-	if (instruction_extracted_)
-		throw std::runtime_error("bad operation");
-	return stmt_.instr_info;
+	return *op_;
 }
 
-const operand_remark_semantic_info& hlasm_plugin::parser_library::semantics::collector::current_operands_and_remarks()
+const remarks_si& collector::current_remarks()
 {
-	if (statement_extracted_)
-		throw std::runtime_error("bad operation");
-	return stmt_.op_rem_info;
+	return *rem_;
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_label_field(symbol_range range)
+void collector::set_label_field(range symbol_range)
 {
-	stmt_.label_info.type = label_type::EMPTY;
-	stmt_.label_info.range = std::move(range);
+	if (lbl_)
+		throw std::runtime_error("field already assigned");
+	lbl_.emplace(symbol_range);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_label_field(std::string label, symbol_range range)
+void collector::set_label_field(std::string label, range symbol_range)
 {
-	stmt_.label_info.type = label_type::MAC;
-	stmt_.label_info.name = std::move(label);
-	stmt_.label_info.range = std::move(range);
+	if (lbl_)
+		throw std::runtime_error("field already assigned");
+	lbl_.emplace(symbol_range, std::move(label), label_si::mac_flag());
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_label_field(seq_sym sequence_symbol, symbol_range range)
+void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
 {
-	stmt_.label_info.type = label_type::SEQ;
-	stmt_.label_info.sequence_symbol = std::move(sequence_symbol);
-	stmt_.label_info.range = std::move(range);
+	if (lbl_)
+		throw std::runtime_error("field already assigned");
+	lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_label_field(std::string label, antlr4::ParserRuleContext * parser_ctx)
+void collector::set_label_field(context::id_index label, antlr4::ParserRuleContext * parser_ctx, range symbol_range)
 {
-	auto range = symbol_range::get_range(parser_ctx);
-
+	if (lbl_)
+		throw std::runtime_error("field already assigned");
 	//recognise, whether label consists only of ORDSYMBOL token
 	if (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL)
 	{
-		stmt_.label_info.type = label_type::ORD;
-		stmt_.label_info.name = std::move(label);
-		stmt_.label_info.range = std::move(range);
+		lbl_.emplace(symbol_range ,*label );
 	}
 	//recognise, whether label consists of DOT ORDSYMBOL tokens, so it is sequence symbol
 	else if (parser_ctx->children.size() == 2 && parser_ctx->getStart()->getType() == lexer::Tokens::DOT && parser_ctx->getStop()->getType() == lexer::Tokens::ORDSYMBOL)
 	{
-		stmt_.label_info.type = label_type::SEQ;
-		stmt_.label_info.sequence_symbol = { std::move(label.erase(0, 1)), { parser_ctx->getStart()->getLine(), parser_ctx->getStart()->getStartIndex() } };
-		stmt_.label_info.sequence_symbol.range = range;
-		stmt_.label_info.range = std::move(range);
+		seq_sym ss = { label, symbol_range };
+		lbl_.emplace(symbol_range,ss );
 	}
 	//otherwise it is macro label parameter
 	else
-		set_label_field(std::move(label), std::move(range));
+	{
+		lbl_.emplace(symbol_range, *label, label_si::mac_flag());
+	}
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_label_field(concat_chain label, symbol_range range)
+void collector::set_label_field(concat_chain label, range symbol_range)
 {
-	clear_concat_chain(label);
-	if (label.size() == 1 && label[0]->get_type() == concat_type::VAR) //label is variable symbol
+	if (lbl_)
+		throw std::runtime_error("field already assigned");
+	concatenation_point::clear_concat_chain(label);
+	if (label.size() == 1 && label[0]->type == concat_type::VAR) //label is variable symbol
 	{
-		stmt_.label_info.type = label_type::VAR;
-		stmt_.label_info.variable_symbol = std::move(*label[0]->access_var());
+		auto vs = std::unique_ptr<var_sym>(label[0]->access_var());
+		label[0].release();
+		lbl_.emplace(symbol_range, std::move(vs));
 	}
 	else //label is concatenation
 	{
-		stmt_.label_info.type = label_type::CONC;
-		stmt_.label_info.concatenation = std::move(label);
+		lbl_.emplace(symbol_range, std::move(label));
 	}
-	stmt_.label_info.range = std::move(range);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_instruction_field(symbol_range range)
+void collector::set_instruction_field(range symbol_range)
 {
-	stmt_.instr_info.type = instr_semantic_type::EMPTY;
-	stmt_.instr_info.range = std::move(range);
+	if (instr_)
+		throw std::runtime_error("field already assigned");
+	instr_.emplace(symbol_range);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_instruction_field(std::string instr, symbol_range range)
+void collector::set_instruction_field(context::id_index instr, range symbol_range)
 {
-
-	stmt_.instr_info.type = instr_semantic_type::ORD;
-	stmt_.instr_info.ordinary_name = std::move(instr);
-	stmt_.instr_info.range = std::move(range);
+	if (instr_)
+		throw std::runtime_error("field already assigned");
+	instr_.emplace(symbol_range, instr);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_instruction_field(concat_chain instr, symbol_range range)
+void collector::set_instruction_field(concat_chain instr, range symbol_range)
 {
-	stmt_.instr_info.type = instr_semantic_type::CONC;
-	stmt_.instr_info.model_name = std::move(instr);
-	stmt_.range = std::move(range);
+	if (instr_)
+		throw std::runtime_error("field already assigned");
+	instr_.emplace(symbol_range, std::move(instr));
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_operand_remark_field(symbol_range range)
+void collector::set_operand_remark_field(range symbol_range)
 {
-	stmt_.op_rem_info.range = std::move(range);
+	if (op_ || rem_ ||def_)
+		throw std::runtime_error("field already assigned");
+	op_.emplace(symbol_range,operand_list());
+	rem_.emplace(symbol_range, std::vector<range>());
+	def_.emplace("", symbol_range);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_operand_remark_field(concat_chain chain, symbol_range range)
+void collector::set_operand_remark_field(std::string deferred, range symbol_range)
 {
-	stmt_.op_rem_info.defered_field = std::move(chain);
-	stmt_.op_rem_info.range = std::move(range);
-	stmt_.op_rem_info.is_defered = true;
+	if (op_ || rem_ || def_)
+		throw std::runtime_error("field already assigned");
+	def_.emplace(std::move(deferred), symbol_range);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_operand_remark_field(std::vector<operand_ptr> operands, std::vector<symbol_range> remarks)
+void collector::set_operand_remark_field(std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range)
 {
-	stmt_.op_rem_info.operands = std::move(operands);
-	stmt_.op_rem_info.remarks = std::move(remarks);
+	if (op_ || rem_ || def_)
+		throw std::runtime_error("field already assigned");
+	op_.emplace(symbol_range, std::move(operands));
+	rem_.emplace(symbol_range,std::move(remarks));
 }
 
-void hlasm_plugin::parser_library::semantics::collector::set_statement_range(symbol_range range)
-{
-	stmt_.range = range;
-}
-
-void hlasm_plugin::parser_library::semantics::collector::add_lsp_symbol(lsp_symbol symbol)
+void collector::add_lsp_symbol(lsp_symbol symbol)
 {
 	lsp_symbols_.push_back(std::move(symbol));
 }
 
-void hlasm_plugin::parser_library::semantics::collector::add_hl_symbol(token_info symbol)
+void collector::add_hl_symbol(token_info symbol)
 {
 	hl_symbols_.push_back(std::move(symbol));
 }
 
-instruction_semantic_info&& hlasm_plugin::parser_library::semantics::collector::extract_instruction_field()
+const instruction_si& collector::peek_instruction()
 {
-	if (instruction_extracted_)
-		throw std::runtime_error("bad operation");
-
-	instruction_extracted_ = true;
-	return std::move(stmt_.instr_info);
+	return *instr_;
 }
 
-statement&& hlasm_plugin::parser_library::semantics::collector::extract_statement()
+std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint)
 {
-	if (statement_extracted_)
-		throw std::runtime_error("bad operation");
-
-	for (size_t i = 0; i < stmt_.op_rem_info.operands.size(); i++)
+	//foreach operand substitute null with empty
+	for (size_t i = 0; i < op_->value.size(); i++)
 	{
-		if (!stmt_.op_rem_info.operands[i])
-			stmt_.op_rem_info.operands[i] = std::make_unique<empty_operand>();
+		if (!op_->value[i])
+			op_->value[i] = std::make_unique<undefined_operand>(range());
 	}
 
-	statement_extracted_ = true;
-	return std::move(stmt_);
+	assert(!deferred_hint || !(op_ && !op_->value.empty()));
+
+	if (deferred_hint)
+		return statement_si_deferred(
+			range_provider::union_range(lbl_->field_range,def_->second), 
+			std::move(*lbl_), std::move(*instr_), std::move(def_.value().first), def_.value().second);
+	else
+		return statement_si(
+			range_provider::union_range(lbl_->field_range, op_->field_range), 
+			std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
 }
 
-std::vector<lsp_symbol>&& hlasm_plugin::parser_library::semantics::collector::extract_lsp_symbols()
+std::vector<lsp_symbol> collector::extract_lsp_symbols()
 {
 	if (lsp_symbols_extracted_)
-		throw std::runtime_error("bad operation");
+		throw std::runtime_error("data already extracted");
 
 	lsp_symbols_extracted_ = true;
 	return std::move(lsp_symbols_);
 }
 
-std::vector<hlasm_plugin::parser_library::token_info>&& hlasm_plugin::parser_library::semantics::collector::extract_hl_symbols()
+std::vector<token_info> collector::extract_hl_symbols()
 {
 	if (hl_symbols_extracted_)
-		throw std::runtime_error("bad operation");
+		throw std::runtime_error("data already extracted");
 
 	hl_symbols_extracted_ = true;
 	return std::move(hl_symbols_);
 }
 
-void hlasm_plugin::parser_library::semantics::collector::prepare_for_next_statement()
+void collector::prepare_for_next_statement()
 {
-	instruction_extracted_ = false;
-	statement_extracted_ = false;
-	lsp_symbols_extracted_ = false;
-	hl_symbols_extracted_ = false;
-	stmt_ = statement();
+	lbl_.reset();
+	instr_.reset();
+	op_.reset();
+	rem_.reset();
+	def_.reset();
+	
 	lsp_symbols_.clear();
 	hl_symbols_.clear();
+	lsp_symbols_extracted_ = false;
+	hl_symbols_extracted_ = false;
 }

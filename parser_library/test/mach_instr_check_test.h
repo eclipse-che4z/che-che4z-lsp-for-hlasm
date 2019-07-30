@@ -29,21 +29,21 @@ public:
 
 protected:
 
-	simple_operand_value op_val_0 = simple_operand_value(0);
-	simple_operand_value op_val_2 = simple_operand_value(2);
-	simple_operand_value op_val_4 = simple_operand_value(4);
-	simple_operand_value op_val_11 = simple_operand_value(11);
-	simple_operand_value op_val_12 = simple_operand_value(12);
-	simple_operand_value op_val_13 = simple_operand_value(13);
-	simple_operand_value op_val_14 = simple_operand_value(14);
-	simple_operand_value op_val_15 = simple_operand_value(15);
+	one_operand op_val_0 = one_operand(0);
+	one_operand op_val_2 = one_operand(2);
+	one_operand op_val_4 = one_operand(4);
+	one_operand op_val_11 = one_operand(11);
+	one_operand op_val_12 = one_operand(12);
+	one_operand op_val_13 = one_operand(13);
+	one_operand op_val_14 = one_operand(14);
+	one_operand op_val_15 = one_operand(15);
 
-	std::vector<machine_operand_value*> test_no_operand_true = std::vector<machine_operand_value*>();
-	std::vector<machine_operand_value*> test_balr_true = std::vector<machine_operand_value*>();
-	std::vector<machine_operand_value*> test_lr_true = std::vector<machine_operand_value*>();
-	std::vector<machine_operand_value*> test_br_true = std::vector<machine_operand_value*>();
-	std::vector<machine_operand_value*> test_mvcl_true = std::vector<machine_operand_value*>();
-	std::vector<machine_operand_value*> test_xr_true = std::vector<machine_operand_value*>();
+	std::vector<const checking::machine_operand*> test_no_operand_true = std::vector<const checking::machine_operand*>();
+	std::vector<const checking::machine_operand*> test_balr_true = std::vector<const checking::machine_operand*>();
+	std::vector<const checking::machine_operand*> test_lr_true = std::vector<const checking::machine_operand*>();
+	std::vector<const checking::machine_operand*> test_br_true = std::vector<const checking::machine_operand*>();
+	std::vector<const checking::machine_operand*> test_mvcl_true = std::vector<const checking::machine_operand*>();
+	std::vector<const checking::machine_operand*> test_xr_true = std::vector<const checking::machine_operand*>();
 };
 
 TEST_F(machine_instr_test, checker_test)
@@ -61,6 +61,11 @@ TEST_F(machine_instr_test, checker_test)
 	EXPECT_TRUE(mvcl_true);
 	auto xr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(xr_name))->get()->check(xr_name, test_xr_true);
 	EXPECT_TRUE(xr_true);
+
+	(&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(balr_name))->get()->clear_diagnostics();
+	(&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(lr_name))->get()->clear_diagnostics();
+	(&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mvcl_name))->get()->clear_diagnostics();
+	(&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(xr_name))->get()->clear_diagnostics();
 }
 
 #endif

@@ -3,17 +3,24 @@
 
 #include <memory>
 #include <deque>
+#include <vector>
 #include <set>
 
 #include "lsp_context.h"
 #include "code_scope.h"
 #include "id_storage.h"
 #include "macro.h"
+#include "ordinary_assembly_context.h"
+#include "instruction.h"
+#include "file_processing_status.h"
+#include "../include/shared/range.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
+class hlasm_context;
+using ctx_ptr = std::unique_ptr<hlasm_context>;
 
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
@@ -22,7 +29,8 @@ class hlasm_context
 {
 	using macro_storage = std::unordered_map<id_index, std::unique_ptr<macro_definition>>;
 	using literal_map = std::unordered_map<id_index, id_index>;
-	using called_macros_storage = std::set<const macro_definition *>;
+	using copy_storage = std::vector<id_index>;
+	using instruction_storage = std::unordered_map<id_index, instruction::instruction_array>;
 
 	//storage of global variables
 	code_scope::set_sym_storage globals_;
@@ -33,42 +41,60 @@ class hlasm_context
 	macro_storage macros_;
 	//map of OPSYN mnemonics
 	literal_map opcode_mnemo_;
+	//storage of identifiers
+	id_storage ids_;
+
+	copy_storage copys_;
 
 	code_scope* curr_scope();
+	const code_scope* curr_scope() const;
 
-	std::string top_level_file_name_;
 
-	called_macros_storage called_macros_;
+	std::set<std::string> visited_files_;
 
+	const instruction_storage instruction_map_;
+	instruction_storage init_instruction_map();
+
+	file_proc_stack proc_stack_;
 public:
+	hlasm_context(std::string file_name = "");
 
-	hlasm_context();
-	hlasm_context(std::string file_name);
-	//storage for identifiers
-	id_storage ids;
+	void set_file_position(position pos);
 
-	//represents value of empty identifier
-	const id_index empty_id;
+	void push_processing_file(std::string file_name, const file_processing_type type);
+	void pop_processing_file();
+
+	file_processing_type current_file_proc_type();
+
+	id_storage& ids();
+
+	const instruction_storage& instruction_map() const;
+
+	const std::vector<location> processing_stack() const;
+
+	const std::deque<code_scope>& scope_stack() const;
+
+	ordinary_assembly_context ord_ctx;
 
 	//return map of global set vars
 	const code_scope::set_sym_storage& globals() const;
 
 	//return variable symbol in current scope
-	//returns empty shared_ptr if there is none
+	//returns empty shared_ptr if there is none in the current scope
 	var_sym_ptr get_var_sym(id_index name);
 
-	void add_sequence_symbol(sequence_symbol seq_sym);
+	void add_sequence_symbol(sequence_symbol_ptr seq_sym);
 
-	sequence_symbol get_sequence_symbol(id_index name);
+	const sequence_symbol* get_sequence_symbol(id_index name) const;
 
 	void set_branch_counter(A_t value);
 
-	A_t get_branch_counter();
+	A_t get_branch_counter() const;
 
 	void decrement_branch_counter();
 
 	//adds opsyn mnemonic
-	void add_mnemonic(id_index mnemo, id_index op_code);
+	void add_mnemonic(id_index mnemo,id_index op_code);
 
 	//removes opsyn mnemonic
 	void remove_mnemonic(id_index mnemo);
@@ -81,7 +107,7 @@ public:
 
 	//creates specified global set symbol
 	template <typename T>
-	set_sym_ptr create_global_variable(id_index id, bool is_scalar)
+	set_sym_ptr create_global_variable(id_index id,bool is_scalar)
 	{
 		//TODO error handling
 		//if there is symbolic param with same name
@@ -111,7 +137,7 @@ public:
 
 	//creates specified local set symbol
 	template <typename T>
-	set_sym_ptr create_local_variable(id_index id, bool is_scalar)
+	set_sym_ptr create_local_variable(id_index id,bool is_scalar)
 	{
 		auto tmp = curr_scope()->variables.find(id);
 		if (tmp != curr_scope()->variables.end())
@@ -125,33 +151,32 @@ public:
 		return val;
 	}
 
-	const macro_storage& macros();
+	const macro_storage& macros() const;
 
 	bool is_in_macro() const;
 
 	//returns macro we are currently in or empty shared_ptr if in open code
-	macro_invo_ptr this_macro();
+	macro_invo_ptr this_macro() const;
 
-	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, semantics::statement_block definition, std::string file_name, location location);
+	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location);
 
 	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
 
 	void leave_macro();
 	
-	const std::string & get_top_level_file_name() const;
+	const std::string & opencode_file_name() const;
 
-	const std::deque<code_scope> & get_scope_stack() const;
-
-	void set_current_statement_range(semantics::symbol_range);
-
-	semantics::symbol_range get_current_statement_range();
-
-	const called_macros_storage & get_called_macros();
+	const std::set<std::string>& get_visited_files();
 
 	lsp_ctx_ptr lsp_ctx;
-};
 
-using ctx_ptr = std::shared_ptr<hlasm_context>;
+	/*
+	bool enter_copy(std::string member);
+	void leave_copy();
+
+	const copy_storage& copys();
+	*/
+};
 
 }
 }

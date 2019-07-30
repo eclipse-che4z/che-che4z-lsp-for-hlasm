@@ -41,7 +41,7 @@ public:
 
 	//this function should be called from workspace, once watchedFilesChanged request is implemented
 	void refresh();
-private:
+private: 
 	file_manager & file_manager_;
 
 	std::string lib_path_;

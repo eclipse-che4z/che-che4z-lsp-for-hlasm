@@ -7,12 +7,13 @@ using namespace hlasm_plugin::parser_library::semantics;
 
 TEST(var_subs, gbl_instr_only)
 {
-	analyzer a("   gbla var");
+	std::string input("   gbla var");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
@@ -20,12 +21,13 @@ TEST(var_subs, gbl_instr_only)
 
 TEST(var_subs, lcl_instr_only)
 {
-	analyzer a("   lcla var");
+	std::string input("   lcla var");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
@@ -33,14 +35,15 @@ TEST(var_subs, lcl_instr_only)
 
 TEST(var_subs, gbl_instr_more)
 {
-	analyzer a("   gbla var,var2,var3");
+	std::string input("   gbla var,var2,var3");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it = ctx.ids.find("var");
-	auto it2 = ctx.ids.find("var2");
-	auto it3 = ctx.ids.find("var3");
+	auto it = ctx.ids().find("var");
+	auto it2 = ctx.ids().find("var2");
+	auto it3 = ctx.ids().find("var3");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 	ASSERT_TRUE(ctx.get_var_sym(it2));
@@ -50,14 +53,15 @@ TEST(var_subs, gbl_instr_more)
 
 TEST(var_subs, lcl_instr_more)
 {
-	analyzer a("   lcla var,var2,var3");
+	std::string input("   lcla var,var2,var3");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it = ctx.ids.find("var");
-	auto it2 = ctx.ids.find("var2");
-	auto it3 = ctx.ids.find("var3");
+	auto it = ctx.ids().find("var");
+	auto it2 = ctx.ids().find("var2");
+	auto it3 = ctx.ids().find("var3");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 	ASSERT_TRUE(ctx.get_var_sym(it2));
@@ -67,108 +71,118 @@ TEST(var_subs, lcl_instr_more)
 
 TEST(var_subs, set_to_var)
 {
-	analyzer a("&var seta 3");
+	std::string input("&var seta 3");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
-	semantics::context_manager m(a.context());
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	int tmp = m.get_var_sym_value(semantics::var_sym("var", {}, {})).access_a();
+	int tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_a();
 	EXPECT_EQ(tmp, 3);
 
 }
 
 TEST(var_subs, set_to_var_idx)
 {
-	analyzer a("&var(2) seta 3");
-	analyzer s("2");
+	std::string input("&var(2) seta 3");
+	std::string input_s("2");
+	analyzer a(input);
+	analyzer s(input_s);
 	a.analyze();
 
-	auto& ctx = *a.context();
-	semantics::context_manager m(a.context());
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 	std::vector<antlr4::ParserRuleContext*> subscript1;
 	subscript1.push_back(s.parser().expr());
-	int tmp = m.get_var_sym_value(semantics::var_sym("var", std::move(subscript1), {})).access_a();
+	int tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript1), {})).access_a();
 	EXPECT_EQ(tmp, 3);
 
 }
 
 TEST(var_subs, set_to_var_idx_many)
 {
-	analyzer a("&var(2) seta 3,4,5");
-	analyzer s1("2");
-	analyzer s2("3");
-	analyzer s3("4");
+	std::string input("&var(2) seta 3,4,5");
+	std::string input_s1("2");
+	std::string input_s2("3");
+	std::string input_s3("4");
+	analyzer s1(input_s1);
+	analyzer s2(input_s2);
+	analyzer s3(input_s3);
+
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
-	semantics::context_manager m(a.context());
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
 	int tmp;
 	std::vector<antlr4::ParserRuleContext*> subscript1;
 	subscript1.push_back(s1.parser().expr());
-	tmp = m.get_var_sym_value(semantics::var_sym("var", std::move(subscript1), {})).access_a();
+	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript1), {})).access_a();
 	EXPECT_EQ(tmp, 3);
 	std::vector<antlr4::ParserRuleContext*> subscript2;
 	subscript2.push_back(s2.parser().expr());
-	tmp = m.get_var_sym_value(semantics::var_sym("var", std::move(subscript2), {})).access_a();
+	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript2), {})).access_a();
 	EXPECT_EQ(tmp, 4);
 	std::vector<antlr4::ParserRuleContext*> subscript3;
 	subscript3.push_back(s3.parser().expr());
-	tmp = m.get_var_sym_value(semantics::var_sym("var", std::move(subscript3), {})).access_a();
+	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript3), {})).access_a();
 	EXPECT_EQ(tmp, 5);
 
 }
 
 TEST(var_subs, var_sym_reset)
 {
-	analyzer a("&var setc 'avc'   \n&var setc 'XXX'");
+	std::string input("&var setc 'avc'   \n&var setc 'XXX'");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
-	semantics::context_manager m(a.context());
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
 
-	auto it = ctx.ids.find("var");
+	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	std::string tmp = m.get_var_sym_value(semantics::var_sym("var", {}, {})).access_c();
+	std::string tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_c();
 	EXPECT_EQ(tmp, "XXX");
 
 }
 
 TEST(var_subs, created_set_sym)
 {
-	analyzer a("&var setc 'avc'   \n&var2 setb 0  \n&(ab&var.cd&var2) seta 11");
+	std::string input("&var setc 'avc'   \n&var2 setb 0  \n&(ab&var.cd&var2) seta 11");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
-	semantics::context_manager m(a.context());
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
 
-	auto it = ctx.ids.find("abavccd0");
+	auto it = ctx.ids().find("abavccd0");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	auto tmp = m.get_var_sym_value(semantics::var_sym("abavccd0", {}, {})).access_a();
+	auto tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_a();
 	EXPECT_EQ(tmp, 11);
 
 }
 
 TEST(AGO, extended)
 {
-	analyzer a(R"(
+	std::string input(R"(
  AGO (2).a,.b,.c
 .a anop   
 &var1 setb 0
@@ -177,13 +191,14 @@ TEST(AGO, extended)
 .c anop
 &var3 setb 0
 )");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it1 = ctx.ids.add("var1");
-	auto it2 = ctx.ids.add("var2");
-	auto it3 = ctx.ids.add("var3");
+	auto it1 = ctx.ids().add("var1");
+	auto it2 = ctx.ids().add("var2");
+	auto it3 = ctx.ids().add("var3");
 
 	EXPECT_FALSE(ctx.get_var_sym(it1));
 	EXPECT_TRUE(ctx.get_var_sym(it2));
@@ -192,7 +207,7 @@ TEST(AGO, extended)
 
 TEST(AGO, extended_fail)
 {
-	analyzer a(R"(
+	std::string input(R"(
  AGO (8).a,.b,.c
 .a anop   
 &var1 setb 0
@@ -201,13 +216,14 @@ TEST(AGO, extended_fail)
 .c anop
 &var3 setb 0
 )");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it1 = ctx.ids.add("var1");
-	auto it2 = ctx.ids.add("var2");
-	auto it3 = ctx.ids.add("var3");
+	auto it1 = ctx.ids().add("var1");
+	auto it2 = ctx.ids().add("var2");
+	auto it3 = ctx.ids().add("var3");
 
 	EXPECT_TRUE(ctx.get_var_sym(it1));
 	EXPECT_TRUE(ctx.get_var_sym(it2));
@@ -216,7 +232,7 @@ TEST(AGO, extended_fail)
 
 TEST(AIF, extended)
 {
-	analyzer a(R"(
+	std::string input(R"(
  AIF (0).a,(1).b,(1).c
 .a anop   
 &var1 setb 0
@@ -225,13 +241,14 @@ TEST(AIF, extended)
 .c anop
 &var3 setb 0
 )");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it1 = ctx.ids.add("var1");
-	auto it2 = ctx.ids.add("var2");
-	auto it3 = ctx.ids.add("var3");
+	auto it1 = ctx.ids().add("var1");
+	auto it2 = ctx.ids().add("var2");
+	auto it3 = ctx.ids().add("var3");
 
 	EXPECT_FALSE(ctx.get_var_sym(it1));
 	EXPECT_TRUE(ctx.get_var_sym(it2));
@@ -240,7 +257,7 @@ TEST(AIF, extended)
 
 TEST(AIF, extended_fail)
 {
-	analyzer a(R"(
+	std::string input(R"(
  AIF (0).a,(0).b,(0).c
 .a anop   
 &var1 setb 0
@@ -249,13 +266,14 @@ TEST(AIF, extended_fail)
 .c anop
 &var3 setb 0
 )");
+	analyzer a(input);
 	a.analyze();
 
-	auto& ctx = *a.context();
+	auto& ctx = a.context();
 
-	auto it1 = ctx.ids.add("var1");
-	auto it2 = ctx.ids.add("var2");
-	auto it3 = ctx.ids.add("var3");
+	auto it1 = ctx.ids().add("var1");
+	auto it2 = ctx.ids().add("var2");
+	auto it3 = ctx.ids().add("var3");
 
 	EXPECT_TRUE(ctx.get_var_sym(it1));
 	EXPECT_TRUE(ctx.get_var_sym(it2));

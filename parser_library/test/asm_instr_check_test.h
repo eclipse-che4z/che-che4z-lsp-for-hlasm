@@ -7,7 +7,10 @@ class instruction_test : public testing::Test
 {
 public:
 	virtual void SetUp(std::string param) {}
-	virtual void TearDown() {}
+	virtual void TearDown() 
+	{
+		checker.clear_diagnostics();
+	}
 	instruction_test(){
 
 		test_adata_true_one.push_back(&op_val_287);
@@ -21,13 +24,6 @@ public:
 		test_adata_true_two.push_back(&empty_val);
 		test_adata_true_two.push_back(&empty_val);
 		test_adata_true_two.push_back(&empty_val);
-
-		test_adata_false.push_back(&empty_val);
-		test_adata_false.push_back(&empty_val);
-		test_adata_false.push_back(&empty_val);
-		test_adata_false.push_back(&adata_wrong_val);
-		test_adata_false.push_back(&adata_string_wrong_val);
-
 		// acontrol instruction
 
 		auto acontrol_compat_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -39,7 +35,7 @@ public:
 		acontrol_operand_compat = complex_operand("COMPAT", std::move(acontrol_compat_vector));
 
 		auto acontrol_flag_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		acontrol_flag_vector.push_back(std::make_unique<one_operand>("2"));
+		acontrol_flag_vector.push_back(std::make_unique<one_operand>(2));
 		acontrol_flag_vector.push_back(std::make_unique<one_operand>("AL"));
 		acontrol_flag_vector.push_back(std::make_unique<one_operand>("NOCONT"));
 		acontrol_flag_vector.push_back(std::make_unique<one_operand>("IMPLEN"));
@@ -94,11 +90,11 @@ public:
 		cattr_operand_rmode = complex_operand("RMODE", std::move(cattr_rmode_vector));
 
 		auto cattr_align_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		cattr_align_vector.push_back(std::make_unique<one_operand>("12"));
+		cattr_align_vector.push_back(std::make_unique<one_operand>(12));
 		cattr_operand_align = complex_operand("ALIGN", std::move(cattr_align_vector));
 
 		auto cattr_fill_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		cattr_fill_vector.push_back(std::make_unique<one_operand>("128"));
+		cattr_fill_vector.push_back(std::make_unique<one_operand>(128));
 		cattr_operand_fill = complex_operand("FILL", std::move(cattr_fill_vector));
 
 		auto cattr_part_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -106,7 +102,7 @@ public:
 		cattr_operand_part = complex_operand("PART", std::move(cattr_part_vector));
 
 		auto cattr_priority_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		cattr_priority_vector.push_back(std::make_unique<one_operand>("256"));
+		cattr_priority_vector.push_back(std::make_unique<one_operand>(256));
 		cattr_operand_priority = complex_operand("PRIORITY", std::move(cattr_priority_vector));
 
 		test_cattr_true.push_back(&op_str_defload);
@@ -165,20 +161,20 @@ public:
 		// end
 		auto end_lang_one_vector = std::vector<std::unique_ptr<asm_operand>>{};
 		end_lang_one_vector.push_back(std::make_unique<one_operand>("MYCOMPILER"));
-		end_lang_one_vector.push_back(std::make_unique<one_operand>("0101"));
-		end_lang_one_vector.push_back(std::make_unique<one_operand>("00273"));
+		end_lang_one_vector.push_back(std::make_unique<one_operand>("0101", 101));
+		end_lang_one_vector.push_back(std::make_unique<one_operand>("00273", 273));
 		end_lang_operand_first = complex_operand("", std::move(end_lang_one_vector));
 
 		auto end_lang_two_vector = std::vector<std::unique_ptr<asm_operand>>{};
 		end_lang_two_vector.push_back(std::make_unique<one_operand>("MYCOMPILER"));
-		end_lang_two_vector.push_back(std::make_unique<one_operand>("0101"));
-		end_lang_two_vector.push_back(std::make_unique<one_operand>("00273"));
+		end_lang_two_vector.push_back(std::make_unique<one_operand>("0101", 101));
+		end_lang_two_vector.push_back(std::make_unique<one_operand>("00273", 273));
 		end_lang_operand_second = complex_operand("", std::move(end_lang_two_vector));
 
 		auto end_lang_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
 		end_lang_false_vector.push_back(std::make_unique<one_operand>("MYOWNCOMPILER"));
-		end_lang_false_vector.push_back(std::make_unique<one_operand>("01010"));
-		end_lang_false_vector.push_back(std::make_unique<one_operand>("002737"));
+		end_lang_false_vector.push_back(std::make_unique<one_operand>("01010", 1010));
+		end_lang_false_vector.push_back(std::make_unique<one_operand>("002737", 2737));
 		end_lang_operand_false = complex_operand("", std::move(end_lang_false_vector));
 
 		test_end_true_one.push_back(&end_one);
@@ -188,26 +184,11 @@ public:
 		test_end_false.push_back(&end_two);
 		test_end_false.push_back(&end_lang_operand_false);
 
-		// equ
-
-		test_equ_true_one.push_back(&op_val_256);
-		test_equ_true_one.push_back(&op_val_40);
-		test_equ_true_one.push_back(&op_val_128);
-		test_equ_true_one.push_back(&op_val_128);
-		test_equ_true_one.push_back(&equ_CR32);
-
 		test_equ_true_two.push_back(&op_val_16);
 		test_equ_true_two.push_back(&op_val_8);
 		test_equ_true_two.push_back(&op_val_128);
 		test_equ_true_two.push_back(&empty_val);
 		test_equ_true_two.push_back(&equ_CR32);
-
-		test_equ_false.push_back(&equ_A1);
-		test_equ_false.push_back(&op_val_256);
-		test_equ_false.push_back(&op_val_256);
-		test_equ_false.push_back(&op_val_256);
-		test_equ_false.push_back(&op_val_18);
-
 		// exitctl
 
 		test_exitctl_true.push_back(&exitctl_one);
@@ -317,13 +298,13 @@ public:
 		// using
 
 		auto using_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		using_true_vector.push_back(std::make_unique<one_operand>("2048"));
-		using_true_vector.push_back(std::make_unique<one_operand>("4096"));
+		using_true_vector.push_back(std::make_unique<one_operand>(2048));
+		using_true_vector.push_back(std::make_unique<one_operand>(4096));
 		using_first_true_operand = complex_operand("", std::move(using_true_vector));
 
 		auto using_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		using_false_vector.push_back(std::make_unique<one_operand>("1024"));
-		using_false_vector.push_back(std::make_unique<one_operand>("1024"));
+		using_false_vector.push_back(std::make_unique<one_operand>(1024));
+		using_false_vector.push_back(std::make_unique<one_operand>(1024));
 		using_first_false_operand = complex_operand("", std::move(using_false_vector));
 
 		test_using_true_one.push_back(&op_val_256);
@@ -389,7 +370,7 @@ public:
 		process_codepage_true_operand = complex_operand("CP", std::move(process_codepage_true_vector));
 
 		auto process_codepage_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_codepage_false_vector.push_back(std::make_unique<one_operand>("63978"));
+		process_codepage_false_vector.push_back(std::make_unique<one_operand>(63978));
 		process_codepage_false_operand = complex_operand("CP", std::move(process_codepage_false_vector));
 
 		auto process_compat_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -402,15 +383,15 @@ public:
 		process_compat_true_operand = complex_operand("CPAT", std::move(process_compat_true_vector));
 
 		auto msg_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		msg_true_vector.push_back(std::make_unique<one_operand>("4"));
+		msg_true_vector.push_back(std::make_unique<one_operand>(4));
 		auto msg_true_operand = std::make_unique<complex_operand>("MSG", std::move(msg_true_vector));
 
 		auto mnote_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		mnote_true_vector.push_back(std::make_unique<one_operand>("6"));
+		mnote_true_vector.push_back(std::make_unique<one_operand>(6));
 		auto mnote_true_operand = std::make_unique<complex_operand>("MNOTE", std::move(mnote_true_vector));
 
 		auto maxxers_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		maxxers_true_vector.push_back(std::make_unique<one_operand>("256"));
+		maxxers_true_vector.push_back(std::make_unique<one_operand>(256));
 		auto maxxers_true_operand = std::make_unique<complex_operand>("MAXXERS", std::move(maxxers_true_vector));
 
 		auto process_fail_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -422,7 +403,7 @@ public:
 		auto process_fail_true_operand = std::make_unique<complex_operand>("FAIL", std::move(process_fail_true_vector));
 
 		auto maxxers_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		maxxers_false_vector.push_back(std::make_unique<one_operand>("16"));
+		maxxers_false_vector.push_back(std::make_unique<one_operand>(16));
 		auto maxxers_false_operand = std::make_unique<complex_operand>("MAXXERS", std::move(maxxers_false_vector));
 
 		auto process_fail_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -430,7 +411,7 @@ public:
 		process_fail_false_operand = complex_operand("FAIL", std::move(process_fail_false_vector));
 
 		auto process_flag_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_flag_true_vector.push_back(std::make_unique<one_operand>("128"));
+		process_flag_true_vector.push_back(std::make_unique<one_operand>(128));
 		process_flag_true_vector.push_back(std::make_unique<one_operand>("EXLITW"));
 		process_flag_true_vector.push_back(std::make_unique<one_operand>("NOSUBSTR"));
 		process_flag_true_vector.push_back(std::make_unique<one_operand>("PAGE0"));
@@ -438,15 +419,15 @@ public:
 		process_flag_true_operand = complex_operand("FLAG", std::move(process_flag_true_vector));
 
 		auto process_flag_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_flag_false_vector.push_back(std::make_unique<one_operand>("256"));
+		process_flag_false_vector.push_back(std::make_unique<one_operand>(256));
 		process_flag_false_operand = complex_operand("FLAG", std::move(process_flag_false_vector));
 
 		auto process_info_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_info_true_vector.push_back(std::make_unique<one_operand>("20180918"));
+		process_info_true_vector.push_back(std::make_unique<one_operand>(20180918));
 		auto process_info_true_operand = std::make_unique<complex_operand>("INFO", std::move(process_info_true_vector));
 
 		auto process_info_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_info_false_vector.push_back(std::make_unique<one_operand>("20180931"));
+		process_info_false_vector.push_back(std::make_unique<one_operand>(20180931));
 		process_info_false_operand = complex_operand("INFO", std::move(process_info_false_vector));
 
 		auto process_machine_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -482,16 +463,16 @@ public:
 		process_profile_true_operand = complex_operand("PROF", std::move(process_profile_true_vector));
 
 		auto process_sectalgn_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_sectalgn_true_vector.push_back(std::make_unique<one_operand>("8"));
+		process_sectalgn_true_vector.push_back(std::make_unique<one_operand>(8));
 		auto process_sectalgn_true_operand = std::make_unique<complex_operand>("SECTALGN", std::move(process_sectalgn_true_vector));
 
 		auto process_sectalgn_false_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_sectalgn_false_vector.push_back(std::make_unique<one_operand>("8192"));
+		process_sectalgn_false_vector.push_back(std::make_unique<one_operand>(8192));
 		process_sectalgn_false_operand = complex_operand("SECTALGN", std::move(process_sectalgn_false_vector));
 
 		auto process_suprwarn_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_suprwarn_true_vector.push_back(std::make_unique<one_operand>("066"));
-		process_suprwarn_true_vector.push_back(std::make_unique<one_operand>("318"));
+		process_suprwarn_true_vector.push_back(std::make_unique<one_operand>(066));
+		process_suprwarn_true_vector.push_back(std::make_unique<one_operand>(318));
 		process_suprwarn_true_operand = complex_operand("NOSUP", std::move(process_suprwarn_true_vector));
 
 		auto process_typecheck_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -504,7 +485,7 @@ public:
 		process_typecheck_false_operand = complex_operand("TYPECHECK", std::move(process_typecheck_false_vector));
 
 		auto process_warn_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
-		process_warn_true_vector.push_back(std::make_unique<one_operand>("15"));
+		process_warn_true_vector.push_back(std::make_unique<one_operand>(15));
 		auto process_warn_true_operand = std::make_unique<complex_operand>("WARN", std::move(process_warn_true_vector));
 
 		auto process_limit_true_vector = std::vector<std::unique_ptr<asm_operand>>{};
@@ -649,31 +630,31 @@ protected:
 	one_operand end_one = one_operand("BEGIN");
 	one_operand end_two = one_operand("ENTRYPT");
 	one_operand copy_first = one_operand("A");
-	one_operand empty_val = one_operand("");
-	one_operand zero_val = one_operand("0");
-	one_operand op_val_1 = one_operand("1");
-	one_operand op_val_5 = one_operand("5");
-	one_operand op_val_6 = one_operand("6");
-	one_operand op_val_7 = one_operand("7");
-	one_operand op_val_8 = one_operand("8");
-	one_operand op_val_11 = one_operand("11");
-	one_operand op_val_12 = one_operand("12");
-	one_operand op_val_13 = one_operand("13");
-	one_operand op_val_15 = one_operand("15");
-	one_operand op_val_16 = one_operand("16");
-	one_operand op_val_18 = one_operand("18");
-	one_operand op_val_35 = one_operand("35");
-	one_operand op_val_40 = one_operand("40");
-	one_operand op_val_71 = one_operand("71");
-	one_operand op_val_128 = one_operand("128");
-	one_operand op_val_256 = one_operand("256");
-	one_operand op_val_287 = one_operand("287");
-	one_operand op_val_1024 = one_operand("1024");
-	one_operand op_val_1025 = one_operand("1025");
-	one_operand op_val_2048 = one_operand("2048");
-	one_operand op_val_min_1 = one_operand("-1");
-	one_operand op_val_min_567 = one_operand("-567");
-	one_operand op_val_min_1024 = one_operand("-1024");
+	checking::empty_operand empty_val = checking::empty_operand();
+	one_operand zero_val = one_operand(0);
+	one_operand op_val_1 = one_operand(1);
+	one_operand op_val_5 = one_operand(5);
+	one_operand op_val_6 = one_operand(6);
+	one_operand op_val_7 = one_operand(7);
+	one_operand op_val_8 = one_operand(8);
+	one_operand op_val_11 = one_operand(11);
+	one_operand op_val_12 = one_operand(12);
+	one_operand op_val_13 = one_operand(13);
+	one_operand op_val_15 = one_operand(15);
+	one_operand op_val_16 = one_operand(16);
+	one_operand op_val_18 = one_operand(18);
+	one_operand op_val_35 = one_operand(35);
+	one_operand op_val_40 = one_operand(40);
+	one_operand op_val_71 = one_operand(71);
+	one_operand op_val_128 = one_operand(128);
+	one_operand op_val_256 = one_operand(256);
+	one_operand op_val_287 = one_operand(287);
+	one_operand op_val_1024 = one_operand(1024);
+	one_operand op_val_1025 = one_operand(1025);
+	one_operand op_val_2048 = one_operand(2048);
+	one_operand op_val_min_1 = one_operand(-1);
+	one_operand op_val_min_567 = one_operand(-567);
+	one_operand op_val_min_1024 = one_operand(-1024);
 	one_operand op_str_off = one_operand("OFF");
 	one_operand op_str_nogen = one_operand("NOGEN");
 	one_operand op_str_data = one_operand("DATA");
@@ -715,7 +696,7 @@ protected:
 	one_operand op_str_reus = one_operand("REUS");
 	one_operand adata_string_val = one_operand("'temporary_string'");
 	one_operand adata_string_wrong_val = one_operand("'temporary");
-	one_operand adata_wrong_val = one_operand("21474836484");
+	one_operand adata_wrong_val = one_operand(21474836484);
 	one_operand op_str_alias_one = one_operand("C'lowerl'");
 	one_operand op_str_alias_two = one_operand("X'9396A68599F2'");
 	one_operand op_str_alias_three = one_operand("X'FF92'");
@@ -729,7 +710,7 @@ protected:
 	one_operand ainsert_front = one_operand("FRONT");
 	one_operand ainsert_lorem = one_operand("'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmo magna'");
 	one_operand ainsert_apo = one_operand("'");
-	one_operand rmode_64 = one_operand("64");
+	one_operand rmode_64 = one_operand(64);
 	one_operand rmode_any = one_operand("ANY");
 	one_operand data_first_val = one_operand(" FS4'-10,25.3,U268435455'");
 	one_operand data_second_val = one_operand("DL7S3E50'2.7182'");
@@ -745,10 +726,10 @@ protected:
 	one_operand ccw_third = one_operand("X'40'");
 	one_operand ccw_fourth = one_operand("MyBlkSize");
 	one_operand exitctl_one = one_operand("SOURCE");
-	one_operand exitctl_two = one_operand("2147483647");
+	one_operand exitctl_two = one_operand(2147483647);
 	one_operand exitctl_three = one_operand("SOURCES");
 	one_operand exitctl_four = one_operand("LISTING");
-	one_operand exitctl_five = one_operand("21474836489");
+	one_operand exitctl_five = one_operand(21474836489);
 	one_operand first_val = one_operand("FIRST");
 	one_operand second_val = one_operand("SECOND");
 	one_operand drop_lorem_val = one_operand("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");
@@ -757,87 +738,84 @@ protected:
 	one_operand equ_CR32 = one_operand("CR32");
 	one_operand equ_A1 = one_operand("A1");
 
-	assembler_instruction_checker checker;
+	assembler_checker checker;
 
-	std::vector<const asm_operand*> test_no_operand_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_adata_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_adata_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_adata_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_acontrol_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ainsert_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ainsert_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ainsert_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_alias_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_alias_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_alias_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_amode_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_cattr_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_expression_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ccw_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_cnop_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_cnop_one_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_cnop_two_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_copy_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_data_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_data_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_drop_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_drop_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_drop_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_end_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_end_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_end_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_equ_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_equ_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_equ_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_exitctl_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_exitctl_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_exitctl_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_extrn_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_extrn_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ictl_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ictl_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ictl_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_ictl_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_iseq_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_iseq_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_mnote_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_mnote_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_mnote_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_mnote_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_opsyn_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_org_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_org_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_org_false = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_stack_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_stack_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_stack_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_stack_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_print_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_punch_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_punch_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_punch_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_rmode_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_rmode_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_using_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_using_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_using_true_three = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_using_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_using_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_xattr_true = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_xattr_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_xattr_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_true_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_true_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_true_three = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_one = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_two = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_three = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_four = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_five = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_six = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_seven = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_eight = std::vector<const asm_operand*>();
-	std::vector<const asm_operand*> test_process_false_nine = std::vector<const asm_operand*>();
+	std::vector<const checking::operand*> test_no_operand_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_adata_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_adata_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_acontrol_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ainsert_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ainsert_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ainsert_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_alias_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_alias_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_alias_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_amode_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_cattr_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_expression_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ccw_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_cnop_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_cnop_one_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_cnop_two_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_copy_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_data_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_data_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_drop_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_drop_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_drop_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_end_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_end_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_end_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_equ_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_exitctl_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_exitctl_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_exitctl_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_extrn_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_extrn_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ictl_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ictl_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ictl_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_ictl_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_iseq_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_iseq_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_mnote_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_mnote_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_mnote_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_mnote_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_opsyn_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_org_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_org_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_org_false = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_stack_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_stack_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_stack_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_stack_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_print_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_punch_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_punch_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_punch_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_rmode_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_rmode_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_using_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_using_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_using_true_three = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_using_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_using_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_xattr_true = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_xattr_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_xattr_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_true_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_true_three = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_one = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_three = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_four = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_five = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_six = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_seven = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_eight = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_process_false_nine = std::vector<const checking::operand*>();
 
 };
 
@@ -869,7 +847,6 @@ TEST_F(instruction_test, adata)
 	EXPECT_FALSE(checker.check("ADATA", test_no_operand_true));
 	EXPECT_TRUE(checker.check("ADATA", test_adata_true_one));
 	EXPECT_TRUE(checker.check("ADATA", test_adata_true_two));
-	EXPECT_FALSE(checker.check("ADATA", test_adata_false));
 }
 
 TEST_F(instruction_test, acontrol)
@@ -972,15 +949,6 @@ TEST_F(instruction_test, entry)
 	EXPECT_TRUE(checker.check("ENTRY", test_ainsert_true_one));
 	EXPECT_FALSE(checker.check("ENTRY", test_end_true_one));
 }
-
-TEST_F(instruction_test, equ)
-{
-	EXPECT_FALSE(checker.check("EQU", test_no_operand_true));
-	EXPECT_TRUE(checker.check("EQU", test_equ_true_one));
-	EXPECT_TRUE(checker.check("EQU", test_equ_true_two));
-	EXPECT_FALSE(checker.check("EQU", test_equ_false));
-}
-
 TEST_F(instruction_test, exitctl)
 {
 	EXPECT_FALSE(checker.check("EXITCTL", test_no_operand_true));
@@ -1090,13 +1058,17 @@ TEST_F(instruction_test, title)
 TEST_F(instruction_test, using_instr)
 {
 	EXPECT_FALSE(checker.check("USING", test_no_operand_true));
+	/*
+
+	TO DO once using is resolved
+
 	EXPECT_FALSE(checker.check("USING", test_extrn_true_two));
 	EXPECT_TRUE(checker.check("USING", test_using_true_one));
 	EXPECT_TRUE(checker.check("USING", test_using_true_two));
 	EXPECT_TRUE(checker.check("USING", test_using_true_three));
 	EXPECT_FALSE(checker.check("USING", test_using_false_one));
 	EXPECT_FALSE(checker.check("USING", test_using_false_two));
-	EXPECT_FALSE(checker.check("USING", test_rmode_true_one));
+	EXPECT_FALSE(checker.check("USING", test_rmode_true_one)); */
 }
 
 TEST_F(instruction_test, xattr)

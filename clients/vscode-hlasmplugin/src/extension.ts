@@ -90,8 +90,10 @@ export function activate(context: vscode.ExtensionContext) {
             completeCommand = "monaco.editor.action.triggerSuggest";
     }).then(() =>
     {
-        //start the client
-        hlasmpluginClient.start();
+        //give the server some time to start listening
+        setTimeout(function() {
+            hlasmpluginClient.start();
+        }, 2000);
     });
 }
 

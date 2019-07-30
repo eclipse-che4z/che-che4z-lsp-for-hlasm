@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "parser_library_export.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -17,7 +18,6 @@ struct PARSER_LIBRARY_EXPORT string_array
 };
 
 using version_t = uint64_t;
-using position_t = uint64_t;
 
 namespace context {
 	struct completion_item_s;
@@ -26,6 +26,8 @@ namespace context {
 namespace semantics {
 	struct position_uri_s;
 	struct completion_list_s;
+	struct highlighting_info;
+	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand };
 }
 struct PARSER_LIBRARY_EXPORT completion_item
 {
@@ -51,19 +53,6 @@ private:
 	semantics::completion_list_s & impl_;
 };
 
-struct PARSER_LIBRARY_EXPORT position
-{
-	position() : line(0), column(0) {}
-	position(position_t line, position_t column) : line(line), column(column) {}
-	bool operator==(const position & l) const
-	{
-		return line == l.line && column == l.column;
-	}
-	position_t line;
-	position_t column;
-};
-
-
 struct PARSER_LIBRARY_EXPORT position_uri
 {
 	position_uri(semantics::position_uri_s &);
@@ -83,18 +72,6 @@ struct PARSER_LIBRARY_EXPORT position_uris
 private:
 	semantics::position_uri_s * data_;
 	size_t size_;
-};
-
-struct PARSER_LIBRARY_EXPORT range
-{
-	range() {}
-	range(position start, position end) : start(start), end(end) {}
-	bool operator==(const range & r) const
-	{
-		return start == r.start && end == r.end;
-	}
-	position start;
-	position end;
 };
 
 struct range_uri_s;
@@ -188,16 +165,10 @@ private:
 	size_t size_;
 };
 
-namespace semantics {
-	struct highlighting_info;
-	struct symbol_range;
-	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand };
-}
-
 struct PARSER_LIBRARY_EXPORT token_info
 {
 	token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope);
-	token_info(const semantics::symbol_range & range, semantics::hl_scopes scope);
+	token_info(const range& token_range, semantics::hl_scopes scope);
 	range token_range;
 	semantics::hl_scopes scope;
 };

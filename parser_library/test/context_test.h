@@ -16,11 +16,11 @@ TEST(context_id_storage, add)
 {
 	hlasm_context ctx;
 
-	ASSERT_FALSE(!ctx.ids.find(""));
+	ASSERT_FALSE(!ctx.ids().find(""));
 
-	auto it1 = ctx.ids.add("var");
-	auto it2 = ctx.ids.find("var");
-	auto it3 = ctx.ids.add("var");
+	auto it1 = ctx.ids().add("var");
+	auto it2 = ctx.ids().find("var");
+	auto it3 = ctx.ids().add("var");
 	ASSERT_TRUE(it1==it2);
 	ASSERT_TRUE(it1 == it3);
 }
@@ -29,9 +29,9 @@ TEST(context_id_storage, case_insensitive)
 {
 	hlasm_context ctx;
 
-	auto it1 = ctx.ids.add("var");
-	auto it2 = ctx.ids.add("vaR");
-	auto it3 = ctx.ids.add("Var");
+	auto it1 = ctx.ids().add("var");
+	auto it2 = ctx.ids().add("vaR");
+	auto it3 = ctx.ids().add("Var");
 	ASSERT_TRUE(it1 == it2);
 	ASSERT_TRUE(it1 == it3);
 }
@@ -41,7 +41,7 @@ TEST(context, create_global_var)
 	hlasm_context ctx;
 
 
-	auto idx = ctx.ids.add("var");
+	auto idx = ctx.ids().add("var");
 
 	auto glob = ctx.create_global_variable<int>(idx, true);
 
@@ -57,7 +57,7 @@ TEST(context, create_local_var)
 	hlasm_context ctx;
 
 
-	auto idx = ctx.ids.add("var");
+	auto idx = ctx.ids().add("var");
 
 	auto loc = ctx.create_local_variable<int>(idx, true);
 
@@ -74,10 +74,10 @@ TEST(context, OPSYN)
 	hlasm_context ctx;
 
 
-	auto lr = ctx.ids.add("LR");
-	auto mvc = ctx.ids.add("MVC");
-	auto st = ctx.ids.add("ST");
-	auto mv = ctx.ids.add("MV");
+	auto lr = ctx.ids().add("LR");
+	auto mvc = ctx.ids().add("MVC");
+	auto st = ctx.ids().add("ST");
+	auto mv = ctx.ids().add("MV");
 
 	ctx.add_mnemonic(lr, st);
 	EXPECT_EQ(ctx.get_mnemonic_opcode(lr), st);
@@ -86,9 +86,9 @@ TEST(context, OPSYN)
 	EXPECT_EQ(ctx.get_mnemonic_opcode(mv), st);
 
 	ctx.remove_mnemonic(lr);
-	EXPECT_EQ(ctx.get_mnemonic_opcode(lr), ctx.ids.find(""));
+	EXPECT_EQ(ctx.get_mnemonic_opcode(lr), ctx.ids().empty_id);
 
-	EXPECT_FALSE(ctx.get_mnemonic_opcode(mvc));
+	EXPECT_EQ(ctx.get_mnemonic_opcode(mvc), mvc);
 }
 
 TEST(context_set_vars, set_scalar)
@@ -96,7 +96,7 @@ TEST(context_set_vars, set_scalar)
 	hlasm_context ctx;
 
 
-	auto idx = ctx.ids.add("var");
+	auto idx = ctx.ids().add("var");
 
 	set_symbol<int> var(idx, true);
 
@@ -122,7 +122,7 @@ TEST(context_set_vars, set_non_scalar)
 	hlasm_context ctx;
 
 
-	auto idx = ctx.ids.add("var");
+	auto idx = ctx.ids().add("var");
 
 	set_symbol<string> var(idx, false);
 
@@ -215,11 +215,11 @@ TEST(context_macro, add_macro)
 
 
 	//creating names of params
-	auto idx = ctx.ids.add("mac");
-	auto lbl = ctx.ids.add("lbl");
-	auto key = ctx.ids.add("key");
-	auto op1 = ctx.ids.add("op1");
-	auto op3 = ctx.ids.add("op3");
+	auto idx = ctx.ids().add("mac");
+	auto lbl = ctx.ids().add("lbl");
+	auto key = ctx.ids().add("key");
+	auto op1 = ctx.ids().add("op1");
+	auto op3 = ctx.ids().add("op3");
 
 	//creating data of params
 	macro_data_ptr p1(make_unique< macro_param_data_single>(""));
@@ -233,7 +233,7 @@ TEST(context_macro, add_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	auto& m = ctx.add_macro(idx, lbl, move(args), {}, "", {});
+	auto& m = ctx.add_macro(idx, lbl, move(args), {}, {}, {});
 
 	EXPECT_EQ(m.named_params().size(), (size_t)4);
 	EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -248,10 +248,10 @@ TEST(context_macro, call_and_leave_macro)
 
 
 	//creating names of params
-	auto idx = ctx.ids.add("mac");
-	auto key = ctx.ids.add("key");
-	auto op1 = ctx.ids.add("op1");
-	auto op3 = ctx.ids.add("op3");
+	auto idx = ctx.ids().add("mac");
+	auto key = ctx.ids().add("key");
+	auto op1 = ctx.ids().add("op1");
+	auto op3 = ctx.ids().add("op3");
 
 	//creating data of params
 	macro_data_ptr p1(make_unique< macro_param_data_single>(""));
@@ -265,7 +265,7 @@ TEST(context_macro, call_and_leave_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|		MAC		&KEY=,&OP1,,&OP3
-	auto& m = ctx.add_macro(idx, nullptr, move(args), {}, "", {});
+	auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {}, {});
 
 	//creating param data
 	macro_data_ptr p2(make_unique < macro_param_data_single>("ada"));
@@ -307,11 +307,11 @@ TEST(context_macro, repeat_call_same_macro)
 
 
 	//creating names of params
-	auto idx = ctx.ids.add("mac");
-	auto key = ctx.ids.add("key");
-	auto op1 = ctx.ids.add("op1");
-	auto op3 = ctx.ids.add("op3");
-	auto lbl = ctx.ids.add("lbl");
+	auto idx = ctx.ids().add("mac");
+	auto key = ctx.ids().add("key");
+	auto op1 = ctx.ids().add("op1");
+	auto op3 = ctx.ids().add("op3");
+	auto lbl = ctx.ids().add("lbl");
 
 	//creating data of params
 	macro_data_ptr p1(make_unique< macro_param_data_single>(""));
@@ -325,7 +325,7 @@ TEST(context_macro, repeat_call_same_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	ctx.add_macro(idx, lbl, move(args), {}, "", {});
+	ctx.add_macro(idx, lbl, move(args), {}, {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));
@@ -398,11 +398,11 @@ TEST(context_macro, recurr_call)
 
 
 	//creating names of params
-	auto idx = ctx.ids.add("mac");
-	auto key = ctx.ids.add("key");
-	auto op1 = ctx.ids.add("op1");
-	auto op3 = ctx.ids.add("op3");
-	auto lbl = ctx.ids.add("lbl");
+	auto idx = ctx.ids().add("mac");
+	auto key = ctx.ids().add("key");
+	auto op1 = ctx.ids().add("op1");
+	auto op3 = ctx.ids().add("op3");
+	auto lbl = ctx.ids().add("lbl");
 
 	//creating data of params
 	macro_data_ptr p1(make_unique< macro_param_data_single>(""));
@@ -416,7 +416,7 @@ TEST(context_macro, recurr_call)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	ctx.add_macro(idx, lbl, move(args), {}, "", {});
+	ctx.add_macro(idx, lbl, move(args), {}, {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));

@@ -26,35 +26,37 @@ lexer::lexer(input_source* input,semantics::lsp_info_processor * lsp_proc)
 	dummy_factory = make_shared<antlr4::CommonTokenFactory>();
 }
 
-void lexer::rewind_input(location loc)
+void lexer::rewind_input(stream_position pos)
 {
 	if (eof_generated_)
 	{
 		eof_generated_ = false;
-		token_queue_.pop();
+		if(!token_queue_.empty())
+			token_queue_.pop();
 	}
 	auto inp = file_input_state_.input;
-	inp->rewind_input(loc.offset);
+	inp->rewind_input(pos.offset);
 
-	/* rewind input to line start */
+	/* rewind input to line start 
 	ssize_t i = 0;
 	for (;
-		loc.offset - i != 0
+		pos.offset - i != 0
 		&& static_cast<char_t>(inp->LA(-i)) != '\n'
 		&& static_cast<char_t>(inp->LA(-i)) != '\r';
 		++i);
 
-	loc.offset = loc.offset - i;
-	inp->rewind_input(loc.offset);
-
-	file_input_state_.char_position = loc.offset;
-	file_input_state_.line = loc.line;
+	pos.offset = pos.offset - i;
+	inp->rewind_input(pos.offset);
+	*/
+	file_input_state_.char_position = pos.offset;
+	file_input_state_.line = pos.line;
 	file_input_state_.char_position_in_line = 0;
 	file_input_state_.char_position_in_line_utf16 = 0;
+	last_lln_end_pos_ = { pos.line-1,pos.offset };
 
 	if (static_cast<char_t>(inp->LA(1)) == '\n' || static_cast<char_t>(inp->LA(1)) == '\r')
 	{
-		inp->rewind_input(loc.offset + 1);
+		inp->rewind_input(pos.offset + 1);
 		++file_input_state_.char_position;
 	}
 
@@ -68,13 +70,13 @@ bool lexer::is_last_line() const
 		if (input_->LA(i) == '\n' || input_->LA(i) == '\r')
 			return false;
 	}
-	return eof_generated_;
+	return true;
 	//return ainsert_buffer_.empty();
 }
 
-location lexer::last_lln_begin_location() const
+lexer::stream_position lexer::last_lln_begin_position() const
 {
-	return  last_lln_begin_loc_;
+	return  last_lln_begin_pos_;
 }
 
 bool hlasm_plugin::parser_library::lexer::eof_generated() const
@@ -163,12 +165,14 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 	//record begin of logical line
 	if (ttype == EOLLN)
 	{
-		if (!(last_lln_end_loc_.line == static_cast<size_t>(-1) && last_lln_end_loc_.offset == static_cast<size_t>(-1)))
+		if (!(last_lln_end_pos_.line == static_cast<size_t>(-1) && last_lln_end_pos_.offset == static_cast<size_t>(-1)))
 		{
-			last_lln_begin_loc_ = last_lln_end_loc_;
+			last_lln_begin_pos_ = { last_lln_end_pos_.line + 1,last_lln_end_pos_.offset };
 		}
-		last_lln_end_loc_ = { input_state_->line,input_state_->char_position };
+		last_lln_end_pos_ = { input_state_->line - 1,input_state_->char_position };
 	}
+	else if (ttype == Token::EOF)
+		++last_lln_end_pos_.line;
 
 	last_token_id_++;
 
@@ -186,18 +190,29 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 		input_state_->char_position_in_line_utf16));
 
 	auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 1 : input_state_->char_position_in_line_utf16;
-	switch (ttype)
-	{
-		case CONTINUATION:
-			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::continuation));
-			break;
-		case IGNORED:
-			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::ignored));
-			break;
-		case COMMENT:
-			lsp_proc_->add_hl_symbol(token_info(semantics::symbol_range(token_start_state_.line, token_start_state_.char_position_in_line_utf16, input_state_->line, stop_position_in_line), semantics::hl_scopes::comment));
-			break;
-	}
+
+	if(lsp_proc_)
+		switch (ttype)
+		{
+			case CONTINUATION:
+				lsp_proc_->add_hl_symbol(
+					token_info(
+						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+						semantics::hl_scopes::continuation));
+				break;
+			case IGNORED:
+				lsp_proc_->add_hl_symbol(
+					token_info(
+						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+						semantics::hl_scopes::ignored));
+				break;
+			case COMMENT:
+				lsp_proc_->add_hl_symbol(
+					token_info(
+						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+						semantics::hl_scopes::comment));
+				break; 
+		}
 		
 }
 
@@ -435,6 +450,11 @@ void lexer::lex_tokens()
 		create_token(VERTICAL);
 		break;
 
+	case '"':
+		consume();
+		create_token(DAPOSTROPHE);
+		break;
+
 	default:
 		lex_word();
 		break;
@@ -456,6 +476,7 @@ bool lexer::identifier_divider() const
 	case '(':
 	case ')':
 	case '\'':
+	case '"':
 	case '/':
 	case '&':
 	case '|':

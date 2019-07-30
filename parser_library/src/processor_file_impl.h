@@ -17,7 +17,7 @@ public:
 	//starts parser with new (empty) context
 	parse_result parse(parse_lib_provider &);
 	//starts parser with in the context of parameter
-	parse_result parse(parse_lib_provider &, context::ctx_ptr);
+	parse_result parse(parse_lib_provider &, context::hlasm_context&);
 
 	bool parse_info_updated() override;
 
@@ -28,6 +28,8 @@ public:
 	virtual const semantics::lsp_info_processor get_lsp_info();
 private:
 	std::unique_ptr<analyzer> analyzer_;
+
+	bool parse_inner(analyzer&);
 
 	bool parse_info_updated_ = false;
 

@@ -2,7 +2,7 @@
 #define HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
 
 #include "common_testing.h"
-#include "../src/semantics/expression_visitor.h"
+#include "../src/expressions/expression_visitor.h"
 
 #include "../src/parser_tools.h"
 
@@ -26,10 +26,11 @@ TEST_F(library_test, expression_test)
 	auto tree = holder->parser().expr_test();
 	context_manager m(holder->context());
 	//ASSERT_EQ(t, get_content("test/library/output/" + tcase + ".output"));
-	auto v = std::make_unique<expression_visitor>(m);
-	auto id = m.get_id("TEST_VAR");
-	holder->context()->create_local_variable<int>(id, true);
-	m.set_var_sym_value<int>(semantics::var_sym("TEST_VAR", {}, {}), { 11 });
+	auto v = std::make_unique<expression_visitor>(holder->context());
+	auto id = m.get_symbol_name("TEST_VAR");
+	holder->context().create_local_variable<int>(id, true);
+	holder->context().get_var_sym(id)->access_set_symbol_base()->access_set_symbol<A_t>()->set_value(11);
+	//m.set_var_sym_value<int>(semantics::var_sym("TEST_VAR", {}, {}), { 11 });
 
 	auto res = v->visit(tree).as<std::string>();
 	res.erase(std::remove(res.begin(), res.end(), '\r'), res.end());
@@ -122,5 +123,16 @@ TEST_F(library_test, comment)
 	holder->analyze();
 	//no errors found while parsing
 	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+}
+
+//simply parse correctly
+TEST_F(library_test, empty_string)
+{
+	std::string input = " LR ''";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H

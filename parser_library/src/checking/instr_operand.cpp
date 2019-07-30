@@ -1,14 +1,9 @@
+
 #include "instr_operand.h"
+#include <algorithm>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
-
-one_operand::one_operand(std::string operand_identifier) : operand_identifier(operand_identifier) {}
-
-std::unique_ptr<asm_operand> one_operand::clone() const
-{
-	return std::unique_ptr<asm_operand>();
-}
 
 std::string one_operand::to_string() const
 {
@@ -22,11 +17,6 @@ complex_operand::complex_operand()
 complex_operand::complex_operand(std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params) :
 	operand_identifier(operand_identifier), operand_parameters(std::move(operand_params)) {};
 
-std::unique_ptr<asm_operand> complex_operand::clone() const
-{
-	return std::unique_ptr<asm_operand>();
-}
-
 std::string complex_operand::to_string() const 
 {
 	std::string res(operand_identifier);
@@ -39,27 +29,22 @@ std::string complex_operand::to_string() const
 	return res;
 }
 
-machine_operand_value::machine_operand_value()
+machine_operand::machine_operand()
 {
 }
 
-bool machine_operand_value::check(diagnostic_op &, const machine_operand_format, const std::string &) const
+bool machine_operand::check(diagnostic_op &, const machine_operand_format, const std::string &) const
 {
 	return true;
 }
 
-std::unique_ptr<machine_operand_value> machine_operand_value::clone() const
-{
-	return std::unique_ptr<machine_operand_value>();
-}
-
-std::string machine_operand_value::to_string() const
+std::string machine_operand::to_string() const
 {
 	return std::string("");
 }
 
 
-bool machine_operand_value::is_operand_corresponding(int operand, parameter param) const
+bool machine_operand::is_operand_corresponding(int operand, parameter param) const
 {
 	if (param.is_signed && is_size_corresponding_signed(operand, param.size))
 		return true;
@@ -68,31 +53,31 @@ bool machine_operand_value::is_operand_corresponding(int operand, parameter para
 	return false;
 }
 
-bool machine_operand_value::is_size_corresponding_signed(int operand, int size) const
+bool machine_operand::is_size_corresponding_signed(int operand, int size) const
 {
 	auto boundary = 1ll << (size - 1);
 	return operand < boundary && operand >= -boundary;
 }
 
-bool machine_operand_value::is_size_corresponding_unsigned(int operand, int size) const
+bool machine_operand::is_size_corresponding_unsigned(int operand, int size) const
 {
 	return operand >= 0 && operand <= (1ll << size) - 1;
 }
 
-bool machine_operand_value::is_simple_operand(const machine_operand_format & operand) const
+bool machine_operand::is_simple_operand(const machine_operand_format & operand) const
 {
 	return (operand.first.is_signed == false && operand.first.size == 0 && operand.second.is_signed == false && operand.second.size == 0
 		&& operand.first.type == machine_operand_type::NONE && operand.second.type == machine_operand_type::NONE);
 }
 
-address_operand_value::address_operand_value(address_state state, int displacement, int first, int second) :
+address_operand::address_operand(address_state state, int displacement, int first, int second) :
 	state(state), displacement(displacement), first_op(first), second_op(second), first_state(operand_state::PRESENT) {};
 
-address_operand_value::address_operand_value(address_state state, int displacement, int second, operand_state first_state) :
+address_operand::address_operand(address_state state, int displacement, int second, operand_state first_state) :
 	state(state), displacement(displacement), first_op(0), second_op(second), first_state(first_state) {};
 
 
-hlasm_plugin::parser_library::diagnostic_op machine_operand_value::get_address_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const
+hlasm_plugin::parser_library::diagnostic_op machine_operand::get_address_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const
 {
 	if (op_format.first.is_empty()) // D(B)
 		return diagnostic_op::error_M104(instr_name);
@@ -111,7 +96,7 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand_value::get_address_o
 	return diagnostic_op::error_I999(instr_name);
 }
 
-hlasm_plugin::parser_library::diagnostic_op address_operand_value::get_first_parameter_error(const machine_operand_type & op_type, const std::string & instr_name, long long from, long long to) const
+hlasm_plugin::parser_library::diagnostic_op address_operand::get_first_parameter_error(const machine_operand_type & op_type, const std::string & instr_name, long long from, long long to) const
 {
 	switch (op_type)
 	{
@@ -128,7 +113,7 @@ hlasm_plugin::parser_library::diagnostic_op address_operand_value::get_first_par
 	return diagnostic_op::error_I999(instr_name);
 }
 
-bool address_operand_value::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const
+bool address_operand::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const
 {
 	if (is_simple_operand(to_check))
 	{
@@ -205,9 +190,7 @@ bool address_operand_value::check(diagnostic_op & diag, const machine_operand_fo
 }
 ;
 
-simple_operand_value::simple_operand_value(int value) : value(value) {};
-
-hlasm_plugin::parser_library::diagnostic_op machine_operand_value::get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const
+hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const
 {
 	switch (op_format.identifier.type)
 	{
@@ -226,7 +209,22 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand_value::get_simple_op
 	return diagnostic_op::error_I999(instr_name);
 }
 
-bool simple_operand_value::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const
+hlasm_plugin::parser_library::checking::one_operand::one_operand() : value(0), operand_identifier(""), is_default(true) {}
+
+hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier, int value) : value(value), operand_identifier(operand_identifier), is_default(false) {}
+
+hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier) : value(0), operand_identifier(operand_identifier), is_default(true) {}
+
+hlasm_plugin::parser_library::checking::one_operand::one_operand(int value) : value(value), operand_identifier(std::to_string(value)), is_default(false) {}
+
+hlasm_plugin::parser_library::checking::one_operand::one_operand(const one_operand& op)
+{
+	operand_identifier = op.operand_identifier;
+	value = op.value;
+	is_default = op.is_default;
+};
+
+bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const
 {
 	if (!is_simple_operand(to_check))
 	{
@@ -279,11 +277,16 @@ operand::operand()
 {
 }
 
-empty_operand_value::empty_operand_value()
+empty_operand::empty_operand()
 {
 }
 
-bool empty_operand_value::check(diagnostic_op & diag, const machine_operand_format, const std::string & instr_name) const
+std::unique_ptr<asm_operand> hlasm_plugin::parser_library::checking::empty_operand::clone() const
+{
+	return std::make_unique<empty_operand>();
+}
+
+bool empty_operand::check(diagnostic_op & diag, const machine_operand_format, const std::string & instr_name) const
 {
 	diag = std::move(diagnostic_op::error_M003(instr_name));
 	return false;
@@ -341,11 +344,6 @@ std::string parameter::to_string() const
 
 asm_operand::asm_operand()
 {
-}
-
-std::unique_ptr<asm_operand> asm_operand::clone() const
-{
-	return std::unique_ptr<asm_operand>();
 }
 
 std::string asm_operand::to_string() const

@@ -28,12 +28,12 @@ int main(int argc, char *argv[])
 
 	//std::string tcase = "simple";
 	//std::string tcase = "operand";
-	std::string tcase = "continuation";
+	//std::string tcase = "continuation";
 	//std::string tcase = "model_statement";
 	//std::string tcase = "correctness";
 	//std::string tcase = "aread";
 	//std::string tcase = "comment";
-	//std::string tcase = "test";
+	std::string tcase = "test";
 	std::string inp = "test/library/input/"+ tcase +".in";
 	if (argc > 1)
 		inp = std::string(argv[1]);

@@ -25,6 +25,8 @@ public:
 
 	std::string getText(const antlr4::misc::Interval &interval) override;
 
+	void rewind_input(lexer::stream_position pos);
+
 protected:
 	virtual ssize_t adjustSeekIndex(size_t i) override;
 

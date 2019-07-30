@@ -34,13 +34,14 @@ namespace hlasm_plugin
 				return ((antlr4::ParserRuleContext *)tree)->getRuleIndex() == type;
 		}
 
-		useful_tree::useful_tree(antlr4::ParserRuleContext * tree, const antlr4::dfa::Vocabulary& vocab, const std::vector<std::string>& rules)
+		useful_tree::useful_tree(std::vector<antlr4::ParserRuleContext *> tree, const antlr4::dfa::Vocabulary& vocab, const std::vector<std::string>& rules)
 			:  tree_(tree), vocab_(vocab), rules_(rules)
 		{};
 
 		void useful_tree::out_tree(std::ostream &stream)
 		{
-			out_tree_rec(tree_, "", stream);
+			for(auto node : tree_)
+			out_tree_rec(node, "", stream);
 		}
 
 		void useful_tree::out_tree_rec(antlr4::ParserRuleContext * tree, std::string indent, std::ostream & stream)

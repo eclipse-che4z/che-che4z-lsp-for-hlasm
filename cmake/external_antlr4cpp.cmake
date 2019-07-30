@@ -13,6 +13,7 @@ set(ANTLR4CPP_EXTERNAL_ROOT ${CMAKE_BINARY_DIR}/externals/antlr4cpp)
 # GIT_REPOSITORY     https://github.com/antlr/antlr4.git
 set(ANTLR4CPP_EXTERNAL_REPO "https://github.com/antlr/antlr4.git")
 set(ANTLR4CPP_EXTERNAL_TAG  "4.7.2")
+
 set(ANTLR_VERSION "4.7.2")
 
 # download runtime environment
@@ -21,6 +22,8 @@ ExternalProject_ADD(
   PREFIX             ${ANTLR4CPP_EXTERNAL_ROOT}
   GIT_REPOSITORY     ${ANTLR4CPP_EXTERNAL_REPO}
   GIT_TAG            ${ANTLR4CPP_EXTERNAL_TAG}
+  # the fix for https://github.com/antlr/antlr4/issues/2550
+  PATCH_COMMAND      ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/no_viable_shared.diff
   TIMEOUT            10
   LOG_DOWNLOAD       ON
   GIT_PROGRESS       1

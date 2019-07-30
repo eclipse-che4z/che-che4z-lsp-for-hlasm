@@ -20,11 +20,11 @@ namespace hlasm_plugin
 		class useful_tree
 		{
 		public:
-			useful_tree(antlr4::ParserRuleContext * _tree, const antlr4::dfa::Vocabulary& _vocab, const std::vector<std::string>& _rules);
+			useful_tree(std::vector<antlr4::ParserRuleContext *> _tree, const antlr4::dfa::Vocabulary& _vocab, const std::vector<std::string>& _rules);
 
 			void out_tree(std::ostream &stream);
 		private:
-			antlr4::ParserRuleContext * tree_;
+			std::vector<antlr4::ParserRuleContext*> tree_;
 			const antlr4::dfa::Vocabulary &vocab_;
 			const std::vector<std::string> &rules_;
 

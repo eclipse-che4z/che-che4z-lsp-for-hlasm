@@ -1,10 +1,12 @@
 #ifndef SEMANTICS_OPERAND_H
 #define SEMANTICS_OPERAND_H
+
 #include <vector>
-#include "semantic_objects.h"
+
 #include "concatenation.h"
+#include "../expressions/mach_expression.h"
+#include "../expressions/data_definition.h"
 #include "../checking/instr_operand.h"
-#include "antlr4-common.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -17,133 +19,323 @@ enum class operand_type
 
 struct model_operand;
 struct ca_operand;
-struct substituable_operand;
 struct macro_operand;
 struct machine_operand;
 struct assembler_operand;
+struct data_def_operand;
 
 struct operand;
 using operand_ptr = std::unique_ptr<operand>;
+using operand_list = std::vector<operand_ptr>;
 
 struct op_rem
 {
 	std::vector<operand_ptr> operands;
-	std::vector<symbol_range> remarks;
+	std::vector<range> remarks;
+};
+
+struct seq_sym
+{
+	context::id_index name;
+	range symbol_range;
 };
 
 //struct representing operand of instruction
 struct operand
 {
-	symbol_range range;
+	operand(const operand_type type, const range operand_range);
 
-	operand(operand_type type);
-
-	model_operand* access_model_op();
-	ca_operand* access_ca_op();
-	substituable_operand* access_subs_op();
-	macro_operand* access_mac_op();
-	machine_operand* access_mach_op();
-	assembler_operand* access_asm_op();
+	model_operand* access_model();
+	ca_operand* access_ca();
+	macro_operand* access_mac();
+	data_def_operand* access_data_def();
+	machine_operand* access_mach();
+	assembler_operand* access_asm();
 
 	const operand_type type;
-
-	virtual operand_ptr clone() const = 0;
+	const range operand_range;
 
 	virtual ~operand() = default;
 };
 
-struct empty_operand : public operand
-{
-	empty_operand();
 
-	operand_ptr clone() const override;
+
+struct empty_operand final : public operand
+{
+	empty_operand(const range operand_range);
 };
+
+struct undefined_operand final : public operand
+{
+	undefined_operand(const range operand_range);
+};
+
+
 
 //operand that contains variable symbol thus is 'model operand'
-struct model_operand : public operand
+struct model_operand final : public operand
 {
-	model_operand(concat_chain chain);
+	model_operand(concat_chain chain, const range operand_range);
 
 	concat_chain chain;
-
-	operand_ptr clone() const override;
 };
 
-//this operand can contibute in evaluation of model operands, creating substituted operand and remark field
-struct substituable_operand : public operand
+
+
+struct evaluable_operand : public operand, public diagnosable_impl
 {
-	substituable_operand(operand_type type);
+	evaluable_operand(const operand_type type, const range operand_range);
 
-	virtual std::string to_string() const = 0;
+	virtual bool has_dependencies(expressions::mach_evaluate_info info) const = 0;
 
-	operand_ptr clone() const =0;
+	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const = 0;
 };
 
-struct machine_operand : public substituable_operand
+
+
+struct simple_expr_operand : public virtual evaluable_operand
 {
-	machine_operand(std::unique_ptr<checking::machine_operand_value> op_value);
+	simple_expr_operand(expressions::mach_expr_ptr expression);
 
-	std::string to_string() const override;
-	operand_ptr clone() const override;
-
-	std::unique_ptr<checking::machine_operand_value> op_value;
+	expressions::mach_expr_ptr expression;
 };
 
-struct assembler_operand : public substituable_operand
+
+enum class mach_kind {EXPR,ADDR};
+struct expr_machine_operand;
+struct address_machine_operand;
+
+struct machine_operand : public virtual evaluable_operand
 {
-	assembler_operand( std::unique_ptr<checking::asm_operand> op_value);
+	machine_operand(const mach_kind kind);
 
-	std::string to_string() const override;
-	operand_ptr clone() const override;
+	expr_machine_operand* access_expr();
+	address_machine_operand* access_address();
 
-	std::unique_ptr<checking::asm_operand> op_value;
+	const mach_kind kind;
 };
 
-struct data_def_operand : public substituable_operand
+
+
+struct expr_machine_operand final : public machine_operand, public simple_expr_operand
 {
-	data_def_operand();
+	expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range);
 
-	int32_t duplication_factor = 1;
-	char data_type;
-	char extension = 0;
-	int32_t program_type;
-	std::string modifier;
-	std::string nominal_value;
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	void collect_diags() const override;
 };
 
-enum class ca_operand_kind
+
+
+struct address_machine_operand final : public machine_operand
 {
-	VAR, EXPR, BRANCH_SIMPLE, BRANCH_EXPR
+	address_machine_operand(
+		expressions::mach_expr_ptr displacement, 
+		expressions::mach_expr_ptr first_par, 
+		expressions::mach_expr_ptr second_par, 
+		const range operand_range);
+	
+	expressions::mach_expr_ptr displacement;
+	expressions::mach_expr_ptr first_par;
+	expressions::mach_expr_ptr second_par;
+
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	virtual void collect_diags() const override;
 };
+
+
+enum class asm_kind {EXPR, BASE_END, COMPLEX, STRING};
+struct expr_assembler_operand;
+struct end_instr_assembler_operand;
+struct complex_assembler_operand;
+struct string_assembler_operand;
+
+struct assembler_operand : public virtual evaluable_operand
+{
+	assembler_operand(const asm_kind kind);
+
+	expr_assembler_operand* access_expr();
+	end_instr_assembler_operand* access_base_end();
+	complex_assembler_operand* access_complex();
+	string_assembler_operand* access_string();
+
+	const asm_kind kind;
+};
+
+
+struct expr_assembler_operand final : public assembler_operand, public simple_expr_operand
+{
+private:
+	std::string value_;
+public:
+	expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value,const range operand_range);
+
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	void collect_diags() const override;
+};
+
+
+
+struct end_instr_assembler_operand final : public assembler_operand
+{
+	end_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
+
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	expressions::mach_expr_ptr base;
+	expressions::mach_expr_ptr end;
+
+	virtual void collect_diags() const override;
+};
+
+
+
+struct complex_assembler_operand final : public assembler_operand
+{
+	struct component_value_t 
+	{
+		virtual std::unique_ptr<checking::asm_operand> create_operand() const= 0;
+		virtual ~component_value_t() = default;
+	};
+	struct int_value_t final : public component_value_t
+	{
+		int_value_t(int value) : value(value) {}
+		virtual std::unique_ptr<checking::asm_operand> create_operand() const override { return std::make_unique<checking::one_operand>(value); }
+		int value;
+	};
+	struct string_value_t final : public component_value_t
+	{
+		string_value_t(std::string value) : value(std::move(value)) {}
+		virtual std::unique_ptr<checking::asm_operand> create_operand() const override { return std::make_unique<checking::one_operand>(value); }
+		std::string value;
+	};
+	struct composite_value_t final : public component_value_t
+	{
+		composite_value_t(std::string identifier, std::vector<std::unique_ptr<component_value_t>> values)
+			: identifier(std::move(identifier)), values(std::move(values)) {}
+		virtual std::unique_ptr<checking::asm_operand> create_operand() const override
+		{ 
+			std::vector<std::unique_ptr<checking::asm_operand>> ret;
+			for (auto& val : values)
+				ret.push_back(val->create_operand());
+			return std::make_unique<checking::complex_operand>(identifier,std::move(ret));
+		}
+
+		std::string identifier;
+		std::vector<std::unique_ptr<component_value_t>> values;
+	};
+
+	complex_assembler_operand(std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range);
+
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	composite_value_t value;
+
+	virtual void collect_diags() const override;
+};
+
+
+
+struct string_assembler_operand : public assembler_operand
+{
+
+	string_assembler_operand(std::string value, const range operand_range);
+
+	bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	std::string value;
+
+	virtual void collect_diags() const override;
+};
+
+//TODO operand_range*************
+struct data_def_operand final : public evaluable_operand
+{
+	data_def_operand(expressions::data_definition data_def, const range operand_range);
+
+	std::shared_ptr<expressions::data_definition> value;
+
+	virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+
+	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+	void collect_diags() const override;
+};
+
+
+enum class ca_kind { VAR, EXPR, SEQ, BRANCH };
+struct var_ca_operand;
+struct expr_ca_operand;
+struct seq_ca_operand;
+struct branch_ca_operand;
 
 struct ca_operand : public operand
 {
-	antlr4::ParserRuleContext* expression;
-	seq_sym sequence_symbol;
-	var_sym vs;
+	ca_operand(const ca_kind kind, const range operand_range);
 
-	const ca_operand_kind kind;
+	var_ca_operand* access_var();
+	const var_ca_operand* access_var() const;
+	expr_ca_operand* access_expr();
+	const expr_ca_operand* access_expr() const;
+	seq_ca_operand* access_seq();
+	const seq_ca_operand* access_seq() const;
+	branch_ca_operand* access_branch();
+	const branch_ca_operand* access_branch() const;
 
-	ca_operand(seq_sym seqence_symbol);
-
-	ca_operand(var_sym vs);
-
-	ca_operand(seq_sym seqence_symbol, antlr4::ParserRuleContext* expression);
-
-	ca_operand(antlr4::ParserRuleContext* expression);
-
-	ca_operand(const ca_operand& ca_op);
-
-	operand_ptr clone() const override;
+	const ca_kind kind;
 };
 
-struct macro_operand : public operand
+struct var_ca_operand final : public ca_operand
 {
+	var_ca_operand(vs_ptr variable_symbol, const range operand_range);
+
+	vs_ptr variable_symbol;
+};
+
+struct expr_ca_operand final : public ca_operand
+{
+	expr_ca_operand(antlr4::ParserRuleContext* expression, const range operand_range);
+
+	antlr4::ParserRuleContext* expression;
+};
+
+struct seq_ca_operand final : public ca_operand
+{
+	seq_ca_operand(seq_sym sequence_symbol, const range operand_range);
+
+	seq_sym sequence_symbol;
+};
+
+struct branch_ca_operand final : public ca_operand
+{
+	branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, const range operand_range);
+
+	seq_sym sequence_symbol;
+	antlr4::ParserRuleContext* expression;
+};
+
+
+
+struct macro_operand final : public operand
+{
+	macro_operand(concat_chain chain, const range operand_range);
+
 	concat_chain chain;
-
-	macro_operand(concat_chain chain);
-
-	operand_ptr clone() const override;
 };
 
 }

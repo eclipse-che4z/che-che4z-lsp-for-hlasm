@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.10)
-INCLUDE(GenerateExportHeader)
+include(GenerateExportHeader)
 include(GoogleTest)
 project(parser_library)
 
@@ -18,9 +18,23 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
 	set_source_files_properties(${PROJECT_SOURCE_DIR}/src/generated/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 
+ set(GRAMMAR_SRC
+	 ${PROJECT_SOURCE_DIR}/src/grammar/assembler_operand_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/ca_expr_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/ca_operand_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/instruction_field_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/label_field_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/lookahead_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/machine_expr_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/machine_operand_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/macro_operand_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/model_operand_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/operand_field_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/data_def_rules.g4
+ )
+
 include(tag_generated_files.cmake)
-
-
 
 add_custom_target(GenerateParser DEPENDS ${GENERATED_SRC})
 add_custom_command(OUTPUT ${GENERATED_SRC}
@@ -29,7 +43,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND
    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/grammar/ -listener -visitor -o ${PROJECT_SOURCE_DIR}/src/generated/ -package hlasm_plugin::parser_library::generated hlasmparser.g4
    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/grammar/"
-   DEPENDS antlr4jar ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4 ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
+   DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
    )
 
 set(LIB_SRC
@@ -40,20 +54,45 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
     ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
     ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/id_storage.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/id_generator.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/location_counter.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly_context.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/symbol_dependency_tables.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/section.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/symbol.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/symbol_attributes.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/address_resolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/dependable.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/address.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/hlasm_statement.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/context_manager.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/lookahead_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/macro_statement_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/macrodef_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/ordinary_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/empty_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/processing_manager.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/asm_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/ca_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/low_language_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/mach_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/macro_processor.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_tools.cpp
     ${PROJECT_SOURCE_DIR}/src/ebcdic_encoding.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/keyword_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/arithmetic_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/logic_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/character_expression.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/keyword_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/arithmetic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/logic_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/character_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/mach_expression.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/mach_expr_term.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/nominal_value.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/data_definition.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/concatenation.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/semantic_objects.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/ordinary_processor.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/lookahead_processor.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/macro_def_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
-    ${PROJECT_SOURCE_DIR}/src/semantics/expression_visitor.cpp
+	${PROJECT_SOURCE_DIR}/src/semantics/range_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/expression_visitor.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/lsp_info_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
@@ -64,14 +103,11 @@ set(LIB_SRC
 	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
-	${PROJECT_SOURCE_DIR}/src/checking/assembler_instruction.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/asm_instr_check.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
-	${PROJECT_SOURCE_DIR}/src/checking/instr_class.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/asm_instr_class.cpp
 	${PROJECT_SOURCE_DIR}/src/analyzer.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/collector.cpp
-	${PROJECT_SOURCE_DIR}/src/semantics/context_manager.cpp
-	${PROJECT_SOURCE_DIR}/src/semantics/processing_manager.cpp
-	${PROJECT_SOURCE_DIR}/src/semantics/statement_processor.cpp
 	${PROJECT_SOURCE_DIR}/src/parse_lib_provider.cpp
 
 	${PROJECT_SOURCE_DIR}/src/parser_library.cpp

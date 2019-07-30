@@ -7,11 +7,14 @@
 #include "shared/token_stream.h"
 #include "shared/input_source.h"
 #include "../src/analyzer.h"
+#include "../src/processing/context_manager.h"
 
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
+using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
 

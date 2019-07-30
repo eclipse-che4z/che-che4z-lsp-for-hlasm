@@ -1,119 +1,98 @@
 #ifndef SEMANTICS_STATEMENTFIELDS_H
 #define SEMANTICS_STATEMENTFIELDS_H
-#include "../context/id_storage.h"
-#include "../context/instruction.h"
+
 #include "operand.h"
-#include "concatenation.h"
+#include "../context/id_storage.h"
+
+#include <variant>
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
-enum class label_type
+enum class label_si_type
 {
 	ORD, SEQ, VAR, MAC, CONC, EMPTY
 };
 
-//struct holding info about label field
-struct label_semantic_info
+using label_si_value_t = std::variant<std::string, concat_chain, seq_sym, vs_ptr>;
+
+//struct holding semantic information (si) about label field
+struct label_si
 {
-	label_semantic_info() : type(label_type::EMPTY) {}
+	struct mac_flag {};
+	label_si(const range field_range, std::string value)
+		: type(label_si_type::ORD), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_semantic_info(const label_semantic_info& label): type(label.type),name(label.name), sequence_symbol(label.sequence_symbol), variable_symbol(label.variable_symbol), range(label.range)
-	{
-		concatenation.insert(concatenation.end(), make_clone_iterator(label.concatenation.begin()), make_clone_iterator(label.concatenation.end()));
-	}
+	label_si(const range field_range, std::string value, mac_flag)
+		: type(label_si_type::MAC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_semantic_info(label_semantic_info&&) = default;
-	label_semantic_info& operator=(label_semantic_info&&) = default;
+	label_si(const range field_range, concat_chain value)
+		: type(label_si_type::CONC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_type type;
+	label_si(const range field_range, seq_sym value)
+		: type(label_si_type::SEQ), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	std::string name;
-	concat_chain concatenation;
-	seq_sym sequence_symbol;
-	var_sym variable_symbol;
+	label_si(const range field_range, vs_ptr value)
+		: type(label_si_type::VAR), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	symbol_range range;
+	label_si(const range field_range)
+		: type(label_si_type::EMPTY), field_range(std::move(field_range)) {}
+
+	const label_si_type type;
+	const range field_range;
+
+	label_si_value_t value;
 };
 
-enum class instr_semantic_type
+enum class instruction_si_type
 {
-	ORD,CONC,EMPTY
+	ORD, CONC, EMPTY
 };
 
-//struct holding info about instruction field
-struct instruction_semantic_info
+using instruction_si_value_t = std::variant<context::id_index, concat_chain>;
+
+//struct holding semantic information (si) about instruction field
+struct instruction_si
 {
-	instruction_semantic_info() : type(instr_semantic_type::EMPTY) {}
+	instruction_si(const range field_range, context::id_index value)
+		: type(instruction_si_type::ORD), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	instruction_semantic_info(const instruction_semantic_info& instruction) : type(instruction.type), ordinary_name(instruction.ordinary_name), range(instruction.range)
-	{
-		model_name.insert(model_name.end(), make_clone_iterator(instruction.model_name.begin()), make_clone_iterator(instruction.model_name.end()));
-	}
+	instruction_si(const range field_range, concat_chain value)
+		: type(instruction_si_type::CONC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	instruction_semantic_info& operator=(const instruction_semantic_info& instruction)
-	{
-		type = instruction.type;
-		ordinary_name= instruction.ordinary_name;
-		range = instruction.range;
-		model_name.insert(model_name.end(), make_clone_iterator(instruction.model_name.begin()), make_clone_iterator(instruction.model_name.end()));
+	instruction_si(const range field_range)
+		: type(instruction_si_type::EMPTY), field_range(std::move(field_range)), value(context::id_storage::empty_id) {}
 
-		return *this;
-	}
+	const instruction_si_type type;
+	const range field_range;
 
-	instruction_semantic_info(instruction_semantic_info&&) = default;
-	instruction_semantic_info& operator=(instruction_semantic_info&&) = default;
-
-	instr_semantic_type type;
-
-	std::string ordinary_name;
-
-	concat_chain model_name;
-
-	symbol_range range;
+	instruction_si_value_t value;
 };
 
-//struct holding info about operand and remark field
-struct operand_remark_semantic_info
+//struct holding semantic information (si) about operand field
+struct operands_si
 {
-	operand_remark_semantic_info() :is_defered(false) {}
+	operands_si(const range field_range, operand_list operands)
+		: field_range(std::move(field_range)),value(std::move(operands)) {}
 
-	operand_remark_semantic_info(const operand_remark_semantic_info& op_rem) : remarks(op_rem.remarks), is_defered(op_rem.is_defered), range(op_rem.range)
-	{
-		operands.insert(operands.end(), make_clone_iterator(op_rem.operands.begin()), make_clone_iterator(op_rem.operands.end()));
+	const range field_range;
 
-		defered_field.insert(defered_field.end(), make_clone_iterator(op_rem.defered_field.begin()), make_clone_iterator(op_rem.defered_field.end()));
-	}
-
-	operand_remark_semantic_info(operand_remark_semantic_info&&) = default;
-
-	operand_remark_semantic_info& operator=(operand_remark_semantic_info&&) = default;
-
-	std::vector<operand_ptr> operands;
-
-	std::vector<symbol_range> remarks;
-
-	bool is_defered;
-
-	concat_chain defered_field;
-
-	symbol_range range;
+	operand_list value;
 };
 
-//struct holding info about whole instruction statement, whole logical line
-struct statement
+//struct holding semantic information (si) about remark field
+struct remarks_si
 {
-	label_semantic_info label_info;
+	remarks_si(const range field_range, std::vector<range> remarks)
+		: field_range(std::move(field_range)), value(std::move(remarks)) {}
 
-	instruction_semantic_info instr_info;
+	const range field_range;
 
-	operand_remark_semantic_info op_rem_info;
-
-	symbol_range range;
+	std::vector<range> value;
 };
 
-using statement_block = std::vector<statement>;
+
 
 }
 }

@@ -1,9 +1,12 @@
 #include "gmock/gmock.h"
 
+#include "data_definition_test.h"
+
 #include "lsp_features_test.h"
 #include "workspace_test.h"
 
 #include "macro_test.h"
+#include "ord_sym_test.h"
 
 #include "text_synchronization_test.h"
 #include "asm_instr_check_test.h"

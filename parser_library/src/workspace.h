@@ -56,7 +56,7 @@ public:
 
 	void did_change_file(const std::string document_uri, const document_change * changes, size_t ch_size);
 
-	virtual parse_result parse_library(const std::string & library, context::ctx_ptr ctx) override;
+	virtual parse_result parse_library(const std::string & library, context::hlasm_context& hlasm_ctx) override;
 
 	const ws_uri & uri();
 

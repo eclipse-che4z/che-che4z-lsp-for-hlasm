@@ -1,4 +1,5 @@
 #include "../include/shared/token_stream.h"
+#include "../include/shared/lexer.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace antlr4;
@@ -8,6 +9,15 @@ token_stream::token_stream(antlr4::TokenSource* token_source) : antlr4::Buffered
 void token_stream::enable_continuation() { enabled_ = true; }
 
 void token_stream::disable_continuation() { enabled_ = false; }
+
+void token_stream::rewind_input(lexer::stream_position pos)
+{
+	dynamic_cast<lexer&>(*_tokenSource).rewind_input(pos);
+
+	_tokens.pop_back();
+	_fetchedEOF = false;
+	sync(_p);
+}
 
 antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)
 {

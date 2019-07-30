@@ -25,39 +25,27 @@ bool processor_file_impl::is_once_only() const
 	return false;
 }
 
-parse_result processor_file_impl::parse(parse_lib_provider & find_provider)
+parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 {
-	auto ctx = std::make_shared<hlasm_plugin::parser_library::context::hlasm_context>(get_file_name());
+	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider);
 
-	auto res = parse(find_provider, ctx);
+	dependencies_.clear();
 
-	for (auto m : ctx->get_called_macros())
-		if(m->file_name != get_file_name())
-			dependencies_.insert(std::move(m->file_name));
+	auto res = parse_inner(*analyzer_);
+
+	for (auto& file : analyzer_->context().get_visited_files())
+		if(file != get_file_name())
+			dependencies_.insert(file);
 	
-
 	return res;
 }
 
 
-parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::ctx_ptr ctx)
+parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx)
 {
-	diags().clear();
+	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx);
 
-	analyzer_ = std::make_unique<analyzer>(get_text(), ctx, lib_provider, get_file_name());
-
-	analyzer_->analyze();
-	
-	collect_diags_from_child(*analyzer_);
-	
-	//TO DO ICTL
-	analyzer_->lsp_processor().get_hl_info().cont_info.continue_column = 15;
-	analyzer_->lsp_processor().get_hl_info().cont_info.continuation_column = 71;
-
-	//collect semantic info
-	parse_info_updated_ = true;
-	
-	return true;
+	return parse_inner(*analyzer_);
 }
 
 bool processor_file_impl::parse_info_updated()
@@ -80,6 +68,24 @@ const file_highlighting_info processor_file_impl::get_hl_info()
 const semantics::lsp_info_processor processor_file_impl::get_lsp_info()
 {
 	return analyzer_->lsp_processor();
+}
+
+bool processor_file_impl::parse_inner(analyzer& new_analyzer)
+{
+	diags().clear();
+
+	new_analyzer.analyze();
+
+	collect_diags_from_child(new_analyzer);
+
+	//TO DO ICTL
+	analyzer_->lsp_processor().get_hl_info().cont_info.continue_column = 15;
+	analyzer_->lsp_processor().get_hl_info().cont_info.continuation_column = 71;
+
+	//collect semantic info
+	parse_info_updated_ = true;
+
+	return true;
 }
 
 }

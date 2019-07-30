@@ -32,7 +32,7 @@ namespace hlasm_plugin {
 		struct lsp_symbol
 		{
 			std::string name;
-			symbol_range range;
+			range symbol_range;
 			symbol_type type;
 		};
 

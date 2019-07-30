@@ -3,26 +3,41 @@
 
 #include <map>
 
-#include "assembler_instruction.h"
+#include "asm_instr_check.h"
 
-namespace hlasm_plugin
-{
-namespace parser_library
-{
-namespace checking
-{
-	class assembler_instruction_checker
-	{
-	public:
-		assembler_instruction_checker();
-		bool check(const std::string& instruction_name, const std::vector<const hlasm_plugin::parser_library::checking::asm_operand*>& operand_vector) const;
+namespace hlasm_plugin{
+namespace parser_library{
+namespace checking{
 
-		std::vector<diagnostic_op *> get_diagnostics();
-		void clear_diagnostics();
-	protected:
-		std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_instruction_map;
-		void initialize_assembler_map();
-	};
+//interface for unified checking
+class instruction_checker
+{
+public:
+	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector) const = 0;
+	virtual std::vector<diagnostic_op*> get_diagnostics() = 0;
+	virtual void clear_diagnostics() = 0;
+};
+
+class assembler_checker : public instruction_checker
+{
+public:
+	assembler_checker();
+	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector) const override;
+	virtual std::vector<diagnostic_op*> get_diagnostics() override;
+	virtual void clear_diagnostics() override;
+	static std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_instruction_map;
+protected:
+	void initialize_assembler_map();
+};
+
+class machine_checker : public instruction_checker
+{
+	mutable context::machine_instruction* curr_checker_;
+public:
+	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector) const override;
+	virtual std::vector<diagnostic_op*> get_diagnostics() override;
+	virtual void clear_diagnostics() override;
+};
 
 }
 }

@@ -1,7 +1,6 @@
 #ifndef CONTEXT_CODE_SCOPE_H
 #define CONTEXT_CODE_SCOPE_H
 
-
 #include "macro.h"
 
 namespace hlasm_plugin {
@@ -13,7 +12,6 @@ namespace context {
 struct code_scope
 {
 	using set_sym_storage = std::unordered_map<id_index, set_sym_ptr>;
-	using label_storage = std::unordered_map<id_index, sequence_symbol>;
 
 	//local variables of scope
 	set_sym_storage variables;
@@ -24,7 +22,7 @@ struct code_scope
 	//the ACTR branch counter
 	A_t branch_counter;
 
-	semantics::symbol_range current_stmt_range;
+	//semantics::symbol_range current_stmt_range;
 	
 	bool is_in_macro() const { return !!this_macro; }
 

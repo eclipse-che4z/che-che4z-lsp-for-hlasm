@@ -236,7 +236,7 @@ size_t position_uris::size()
 	return size_;
 }
 
-token_info::token_info(const semantics::symbol_range & range, semantics::hl_scopes scope) : token_range({ {range.begin_ln, range.begin_col}, {range.end_ln, range.end_col} }), scope(scope) {};
+token_info::token_info(const range & token_range, semantics::hl_scopes scope) : token_range(token_range), scope(scope) {};
 token_info::token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope) : token_range({ {line_start, column_start}, {line_end, column_end} }), scope(scope) {};
 
 }

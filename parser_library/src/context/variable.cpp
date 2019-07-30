@@ -116,11 +116,24 @@ const C_t & positional_param::get_value() const
 
 positional_param::positional_param(id_index name, size_t position) : macro_param_base(name), position(position) {}
 
-const sequence_symbol sequence_symbol::EMPTY = { nullptr,{0,0} };
-
-sequence_symbol::operator bool() const
+const macro_sequence_symbol* sequence_symbol::access_macro_symbol() const
 {
-	return name;
+	return kind == sequence_symbol_kind::MACRO ? static_cast<const macro_sequence_symbol*>(this) : nullptr;
 }
+
+const opencode_sequence_symbol* sequence_symbol::access_opencode_symbol() const
+{
+	return kind == sequence_symbol_kind::OPENCODE ? static_cast<const opencode_sequence_symbol*>(this) : nullptr;
+}
+
+sequence_symbol::sequence_symbol(id_index name, const sequence_symbol_kind kind, location symbol_location)
+	: name(name), symbol_location(std::move(symbol_location)), kind(kind) {}
+
+opencode_sequence_symbol::opencode_sequence_symbol(id_index name, location loc, opencode_position statement_position,std::vector<copy_frame> copy_stack)
+	: sequence_symbol(name, sequence_symbol_kind::OPENCODE, std::move(loc)), statement_position(statement_position), copy_stack(std::move(copy_stack)) {}
+
+macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t statement_offset)
+	: sequence_symbol(name, sequence_symbol_kind::MACRO, std::move(loc)), statement_offset(statement_offset) {}
+
 
 }
