@@ -1,4 +1,5 @@
 #include "lookahead_processor.h"
+#include "../instruction_sets/asm_processor.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -9,7 +10,14 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
 	{
 		auto opcode = hlasm_ctx.get_mnemonic_opcode(std::get<context::id_index>(instruction.value));
 		if (opcode == copy_id || opcode == equ_id_)
-			return std::make_pair(processing_format(processing_kind::LOOKAHEAD, processing_form::ASM), op_code(opcode,context::instruction_type::ASM));
+			return std::make_pair(
+				processing_format(processing_kind::LOOKAHEAD, processing_form::ASM, operand_occurence::PRESENT),
+				op_code(opcode,context::instruction_type::ASM));
+
+		if (opcode == macro_id || opcode == mend_id)
+			return std::make_pair(
+				processing_format(processing_kind::LOOKAHEAD, processing_form::CA,operand_occurence::ABSENT),
+				op_code(opcode, context::instruction_type::CA));
 	}
 
 	return std::make_pair(processing_format(processing_kind::LOOKAHEAD, processing_form::IGNORED), op_code());
@@ -46,22 +54,32 @@ bool lookahead_processor::finished()
 
 void lookahead_processor::collect_diags() const {}
 
-lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, processing_state_listener& listener, const lookahead_start_data start)
+lookahead_processor::lookahead_processor(
+	context::hlasm_context& hlasm_ctx,
+	branching_provider& branch_provider, processing_state_listener& listener, parse_lib_provider& lib_provider, const lookahead_start_data start)
 	: statement_processor(processing_kind::LOOKAHEAD, hlasm_ctx),
-	finished_flag_(false),result_(start.source), macro_nest_(0),provider_(branch_provider), listener_(listener), equ_id_(hlasm_ctx.ids().add("EQU")), start(std::move(start)) {}
+	finished_flag_(false), result_(start.source), macro_nest_(0), branch_provider_(branch_provider),
+	listener_(listener), lib_provider_(lib_provider), equ_id_(hlasm_ctx.ids().add("EQU")), start(std::move(start)) {}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
-void lookahead_processor::process_MEND() { --macro_nest_; }
-void lookahead_processor::process_COPY() {  }
+void lookahead_processor::process_MEND() { macro_nest_ -= macro_nest_ == 0 ? 0 : 1; }
+void lookahead_processor::process_COPY(const resolved_statement& statement)
+{
+	if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
+	{
+		asm_processor::process_copy(statement, hlasm_ctx, lib_provider_, nullptr);
+	}
+}
 
 void lookahead_processor::process_statement(const context::hlasm_statement& statement)
 {
-	assert(statement.kind == context::statement_kind::RESOLVED);
+	if (macro_nest_ == 0)
+		find_target(statement);
 
 	auto resolved = statement.access_resolved();
 
-	if (macro_nest_ == 0)
-		find_target(*resolved);
+	if (!resolved)
+		return;
 
 	if (resolved->opcode_ref().value == macro_id)
 	{
@@ -71,18 +89,18 @@ void lookahead_processor::process_statement(const context::hlasm_statement& stat
 	{
 		process_MEND();
 	}
-	else if (resolved->opcode_ref().value == copy_id)
+	else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
 	{
-		process_COPY();
+		process_COPY(*resolved);
 	}
 }
 
-void lookahead_processor::find_target(const semantics::complete_statement& statement)
+void lookahead_processor::find_target(const context::hlasm_statement& statement)
 {
 	switch (start.action)
 	{
 	case lookahead_action::SEQ:
-		find_seq(statement);
+		find_seq(dynamic_cast<const semantics::core_statement&>(statement));
 		break;
 	case lookahead_action::ORD:
 		//TODO
@@ -93,16 +111,13 @@ void lookahead_processor::find_target(const semantics::complete_statement& state
 	}
 }
 
-void lookahead_processor::find_seq(const semantics::complete_statement& statement)
+void lookahead_processor::find_seq(const semantics::core_statement& statement)
 {
 	if (statement.label_ref().type == semantics::label_si_type::SEQ)
 	{
 		auto symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
 		
-		if (!hlasm_ctx.get_sequence_symbol(symbol.name))
-		{
-			provider_.register_sequence_symbol(symbol.name,symbol.symbol_range);
-		}
+		branch_provider_.register_sequence_symbol(symbol.name,symbol.symbol_range);
 
 		if (symbol.name == start.target)
 		{

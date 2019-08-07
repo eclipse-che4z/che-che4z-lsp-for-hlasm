@@ -7,7 +7,7 @@ namespace processing {
 
 enum class statement_provider_kind
 {
-	MACRO = 0, OPEN = 1 //MACRO = 0, AINS = 1, COPY = 2, OPEN = 3
+	MACRO = 0, COPY=1, OPEN = 2 //MACRO = 0, AINS = 1, COPY = 2, OPEN = 3 -- priority
 };
 
 }

@@ -13,7 +13,7 @@
 #include "ordinary_assembly_context.h"
 #include "instruction.h"
 #include "file_processing_status.h"
-#include "../include/shared/range.h"
+#include "copy_member.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -29,7 +29,7 @@ class hlasm_context
 {
 	using macro_storage = std::unordered_map<id_index, std::unique_ptr<macro_definition>>;
 	using literal_map = std::unordered_map<id_index, id_index>;
-	using copy_storage = std::vector<id_index>;
+	using copy_member_storage = std::unordered_map<id_index, copy_member>;
 	using instruction_storage = std::unordered_map<id_index, instruction::instruction_array>;
 
 	//storage of global variables
@@ -39,12 +39,12 @@ class hlasm_context
 
 	//storage of defined macros
 	macro_storage macros_;
+	//storage of copy members
+	copy_member_storage copy_members_;
 	//map of OPSYN mnemonics
 	literal_map opcode_mnemo_;
 	//storage of identifiers
 	id_storage ids_;
-
-	copy_storage copys_;
 
 	code_scope* curr_scope();
 	const code_scope* curr_scope() const;
@@ -56,6 +56,7 @@ class hlasm_context
 	instruction_storage init_instruction_map();
 
 	file_proc_stack proc_stack_;
+	std::vector<copy_member_invocation> copy_stack_;
 public:
 	hlasm_context(std::string file_name = "");
 
@@ -73,6 +74,10 @@ public:
 	const std::vector<location> processing_stack() const;
 
 	const std::deque<code_scope>& scope_stack() const;
+
+	std::vector<copy_member_invocation>& copy_stack();
+
+	void apply_copy_frame_stack(std::vector<opencode_sequence_symbol::copy_frame> copy_frame_stack);
 
 	ordinary_assembly_context ord_ctx;
 
@@ -158,7 +163,11 @@ public:
 	//returns macro we are currently in or empty shared_ptr if in open code
 	macro_invo_ptr this_macro() const;
 
-	const macro_definition& add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location);
+	const macro_definition& add_macro(
+		id_index name, 
+		id_index label_param_name, std::vector<macro_arg> params,
+		statement_block definition, copy_nest_storage copy_nests, label_storage labels, 
+		location definition_location);
 
 	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
 
@@ -170,12 +179,14 @@ public:
 
 	lsp_ctx_ptr lsp_ctx;
 
-	/*
-	bool enter_copy(std::string member);
-	void leave_copy();
+	const copy_member_storage& copy_members();
 
-	const copy_storage& copys();
-	*/
+	void add_copy_member(id_index member, statement_block definition, location definition_location);
+
+	void enter_copy_member(id_index member);
+
+	void leave_copy_member();
+	
 };
 
 }

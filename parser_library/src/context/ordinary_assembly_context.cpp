@@ -7,11 +7,11 @@ using namespace hlasm_plugin::parser_library::context;
 
 void ordinary_assembly_context::create_private_section()
 {
-	sections_.emplace_back(id_storage::empty_id, section_kind::EXECUTABLE, ids);
-	curr_section_ = &sections_.back();
+	sections_.emplace_back(std::make_unique<section>(id_storage::empty_id, section_kind::EXECUTABLE, ids));
+	curr_section_ = sections_.back().get();
 }
 
-const std::vector<section>& ordinary_assembly_context::sections() const
+const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const
 {
 	return sections_;
 }
@@ -36,17 +36,17 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 
 void ordinary_assembly_context::set_section(id_index name, const section_kind kind)
 {
-	auto tmp = std::find_if(sections_.begin(), sections_.end(), [&](auto & sect) {return sect.name == name && sect.kind == kind; });
+	auto tmp = std::find_if(sections_.begin(), sections_.end(), [&](auto & sect) {return sect->name == name && sect->kind == kind; });
 
 	if (tmp != sections_.end())
-		curr_section_ = &*tmp;
+		curr_section_ = &**tmp;
 	else
 	{
 		if (symbols_.find(name)!=symbols_.end())
 			throw std::invalid_argument("symbol already defined");
 
-		sections_.emplace_back(name, kind,ids);
-		curr_section_ = &sections_.back();
+		sections_.emplace_back(std::make_unique<section>(name, kind,ids));
+		curr_section_ = sections_.back().get();
 
 		auto tmp_addr = curr_section_->current_location_counter().reserve_storage_area(0, no_align);
 		symbols_.emplace(std::piecewise_construct,
@@ -80,7 +80,7 @@ bool ordinary_assembly_context::symbol_defined(id_index name)
 
 bool ordinary_assembly_context::section_defined(id_index name, const section_kind kind)
 {
-	return std::find_if(sections_.begin(), sections_.end(), [&](auto & sect) {return sect.name == name && sect.kind == kind; }) != sections_.end();
+	return std::find_if(sections_.begin(), sections_.end(), [&](auto & sect) {return sect->name == name && sect->kind == kind; }) != sections_.end();
 }
 
 bool ordinary_assembly_context::counter_defined(id_index name)
@@ -102,5 +102,5 @@ space_ptr ordinary_assembly_context::register_space()
 void ordinary_assembly_context::finish_module_layout()
 {
 	for (auto& sect : sections_)
-		sect.finish_layout();
+		sect->finish_layout();
 }

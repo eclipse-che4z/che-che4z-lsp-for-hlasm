@@ -17,14 +17,14 @@ namespace context {
 //it contains 'sections' ordinary 'symbols' and all dependencies between them
 class ordinary_assembly_context : public dependency_solver
 {
-	std::vector<section> sections_;
+	std::vector<std::unique_ptr<section>> sections_;
 	std::unordered_map<id_index,symbol> symbols_;
 
 	section* curr_section_;
 public:
 	id_storage& ids;
 
-	const std::vector<section>& sections() const;
+	const std::vector<std::unique_ptr<section>>& sections() const;
 
 	symbol_dependency_tables symbol_dependencies;
 

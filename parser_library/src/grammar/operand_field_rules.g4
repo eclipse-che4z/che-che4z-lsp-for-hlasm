@@ -45,8 +45,7 @@ deferred_entry
 	| AMPERSAND SPACE; 
 
 deferred_op_rem
-	: deferred_entry deferred_op_rem
-	| ;
+	: deferred_entry*;
 
 op_rem_body returns [op_rem line]
 	: {!alt_format()}? op_list_comma remark_o
@@ -70,10 +69,10 @@ op_rem_body returns [op_rem line]
 	{
 		$line = std::move($op_rem_body_alt.line);
 	}
-	| ;
+	| remark_o;
 
 op_rem_body_alt returns [op_rem line]
-	: alt_op_list_comma_o alt_operand_not_empty remark_o				
+	: alt_op_list_comma_o alt_operand_not_empty remark_o
 	{
 		$alt_op_list_comma_o.operands.push_back(std::move($alt_operand_not_empty.op)); 
 		$line.operands = std::move($alt_op_list_comma_o.operands); 
@@ -112,8 +111,8 @@ cont_body returns [op_rem line]
 	};
 
 alt_op_list_comma_o returns [std::vector<operand_ptr> operands]
-	: alt_op_list_comma													{$operands = std::move($alt_op_list_comma.operands);}
-	| ;
+	:
+	| alt_op_list_comma													{$operands = std::move($alt_op_list_comma.operands);};
 
 alt_op_list_comma returns [std::vector<operand_ptr> operands]
 	: alt_operand comma													{$operands.push_back(std::move($alt_operand.op)); }
@@ -125,11 +124,11 @@ alt_operand returns [operand_ptr op]
 
 
 alt_operand_not_empty returns [operand_ptr op]
-	: {CA() && alt_format()}? ca_op																		
+	: {CA()}? ca_op																		
 	{
 		$op = std::move($ca_op.op);
 	}
-	| {MAC() && alt_format()}? mac_op																	
+	| {MAC()}? mac_op																	
 	{
 		$op = std::move($mac_op.op); 
 	};

@@ -161,9 +161,12 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
 	assert(!deferred_hint || !(op_ && !op_->value.empty()));
 
 	if (deferred_hint)
+	{
+		def_ = def_ ? def_ : std::make_pair("", range(instr_->field_range.start));
 		return statement_si_deferred(
-			range_provider::union_range(lbl_->field_range,def_->second), 
+			range_provider::union_range(lbl_->field_range, def_->second),
 			std::move(*lbl_), std::move(*instr_), std::move(def_.value().first), def_.value().second);
+	}
 	else
 		return statement_si(
 			range_provider::union_range(lbl_->field_range, op_->field_range), 

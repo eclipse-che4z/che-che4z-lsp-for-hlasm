@@ -13,9 +13,9 @@ using namespace hlasm_plugin::parser_library;
 class mock_parse_lib_provider : public parse_lib_provider
 {
 public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx)
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
 	{
-		analyzer a(macro_contents, MACRO_FILE, hlasm_ctx);
+		analyzer a(macro_contents, MACRO_FILE, hlasm_ctx,*this, data);
 		a.analyze();
 		return true;
 	}

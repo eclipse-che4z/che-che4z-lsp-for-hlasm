@@ -513,6 +513,16 @@ public:
 
 	static diagnostic_s error_E057(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
 
+	static diagnostic_s error_E058(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+
+	static diagnostic_s error_E059(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+
+	static diagnostic_s error_E060(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+
+	static diagnostic_s error_E061(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+
+	static diagnostic_s error_E062(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+
 	static diagnostic_s error_ME001(hlasm_plugin::parser_library::range range);
 
 	static diagnostic_s error_ME002(hlasm_plugin::parser_library::range range);

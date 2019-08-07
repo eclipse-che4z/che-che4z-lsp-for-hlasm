@@ -31,6 +31,8 @@ public:
 	virtual void did_change(std::string new_text) override;
 	virtual void did_change(range range, std::string new_text) override;
 	virtual void did_close() override;
+	
+	static std::string replace_non_utf8_chars(const std::string& text);
 
 	virtual ~file_impl() = default;
 protected:
@@ -51,8 +53,8 @@ private:
 	
 
 	void load_text();
-
-	size_t index_from_location(position pos);
+	
+	size_t index_from_location(position pos) const;
 };
 
 #pragma warning(pop)

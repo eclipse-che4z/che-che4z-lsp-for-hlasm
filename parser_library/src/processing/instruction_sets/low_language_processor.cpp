@@ -103,10 +103,11 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	// check whether substituted mnemonic values are ok
 
 	// check size of mnemonic operands
-	int diff = curr_instr->get()->operands.size() - operands.size() - mnemonic.replaced.size();
+	int diff = (int)curr_instr->get()->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
 	if (std::abs(diff) > curr_instr->get()->no_optional)
 	{
-		auto curr_diag = diagnostic_op::error_optional_number_of_operands(curr_instr->get()->instr_name, curr_instr->get()->no_optional, curr_instr->get()->operands.size() - mnemonic.replaced.size());
+		auto curr_diag = 
+			diagnostic_op::error_optional_number_of_operands(curr_instr->get()->instr_name, curr_instr->get()->no_optional, (int)curr_instr->get()->operands.size() - (int)mnemonic.replaced.size());
 		auto range = stmt.stmt_range_ref();
 		diagnoser.add_diagnostic(diagnostic_s{ "",range,
 		curr_diag.severity, std::move(curr_diag.code),
@@ -116,7 +117,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 
 	std::vector<checking::check_op_ptr> substituted_mnems;
 	for (auto mnem : mnemonic.replaced)
-		substituted_mnems.push_back(std::make_unique<checking::one_operand>(mnem.second));
+		substituted_mnems.push_back(std::make_unique<checking::one_operand>((int)mnem.second));
 
 	std::vector<checking::check_op_ptr> operand_vector;
 	// create vector of empty operands
@@ -152,7 +153,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	return operand_vector;
 }
 
-low_language_processor::transform_result low_language_processor::transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser,bool mach)
+low_language_processor::transform_result low_language_processor::transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser)
 {
 	std::vector<checking::check_op_ptr> operand_vector;
 	for (auto& op : stmt.operands_ref().value)
@@ -216,7 +217,7 @@ void low_language_processor::check(const resolved_statement& stmt,context::hlasm
 	}
 	else
 	{
-		operand_vector = transform_default(stmt, hlasm_ctx, diagnoser, dynamic_cast<checking::machine_checker*>(&checker));
+		operand_vector = transform_default(stmt, hlasm_ctx, diagnoser);
 		instruction_name = stmt.opcode_ref().value;
 	}
 

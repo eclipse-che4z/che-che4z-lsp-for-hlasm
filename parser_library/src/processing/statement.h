@@ -55,18 +55,18 @@ private:
 struct rebuilt_statement : public resolved_statement
 {
 	rebuilt_statement(const resolved_statement_impl& base_stmt, std::optional<semantics::label_si> label, std::optional<semantics::operands_si> operands)
-		: base_value(&base_stmt), label(std::move(label)), operands(std::move(operands)) {}
+		: base_value(&base_stmt), rebuilt_label(std::move(label)), rebuilt_operands(std::move(operands)) {}
 
 	rebuilt_statement(resolved_statement_impl&& base_stmt, std::optional<semantics::label_si> label, std::optional<semantics::operands_si> operands)
-		: base_value(std::move(base_stmt)), label(std::move(label)), operands(std::move(operands)) {}
+		: base_value(std::move(base_stmt)), rebuilt_label(std::move(label)), rebuilt_operands(std::move(operands)) {}
 
 	std::variant<const resolved_statement_impl*,resolved_statement_impl> base_value;
-	std::optional<semantics::label_si> label;
-	std::optional<semantics::operands_si> operands;
+	std::optional<semantics::label_si> rebuilt_label;
+	std::optional<semantics::operands_si> rebuilt_operands;
 
-	virtual const semantics::label_si& label_ref() const { return label ? *label : get_stmt().label_ref(); }
+	virtual const semantics::label_si& label_ref() const { return rebuilt_label ? *rebuilt_label : get_stmt().label_ref(); }
 	virtual const semantics::instruction_si& instruction_ref() const { return get_stmt().instruction_ref(); }
-	virtual const semantics::operands_si& operands_ref() const { return operands ? *operands : get_stmt().operands_ref(); }
+	virtual const semantics::operands_si& operands_ref() const { return rebuilt_operands ? *rebuilt_operands : get_stmt().operands_ref(); }
 	virtual const semantics::remarks_si& remarks_ref() const { return get_stmt().remarks_ref(); }
 	virtual const range& stmt_range_ref() const { return get_stmt().stmt_range_ref(); }
 	virtual const op_code& opcode_ref() const { return get_stmt().opcode_ref(); }

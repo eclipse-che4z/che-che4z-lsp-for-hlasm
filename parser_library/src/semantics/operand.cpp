@@ -363,12 +363,12 @@ undefined_operand::undefined_operand(const range operand_range)
 string_assembler_operand::string_assembler_operand(std::string value, const range operand_range)
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::STRING), value(std::move(value)) {}
 
-bool hlasm_plugin::parser_library::semantics::string_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool hlasm_plugin::parser_library::semantics::string_assembler_operand::has_dependencies(expressions::mach_evaluate_info ) const
 {
 	return false;
 }
 
-std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info ) const
 {
 	return std::make_unique<checking::one_operand>("'" + value + "'");
 }

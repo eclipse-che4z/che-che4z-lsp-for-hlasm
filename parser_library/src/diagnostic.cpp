@@ -969,7 +969,32 @@ diagnostic_s diagnostic_s::error_E056(const std::string& filename, const std::st
 
 diagnostic_s diagnostic_s::error_E057(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E056", "HLASM Plugin", "Symbol not an ordinary or sequence symbol", {});
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E057", "HLASM Plugin", "Symbol not an ordinary or sequence symbol", {});
+}
+
+diagnostic_s diagnostic_s::error_E058(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E058", "HLASM Plugin", "Copy member not found", {});
+}
+
+diagnostic_s diagnostic_s::error_E059(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E059", "HLASM Plugin", "First statement not MACRO in library " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E060(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E060", "HLASM Plugin", "Library macro name incorrect, expected " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E061(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E061", "HLASM Plugin", "Unbalanced MACRO MEND statements in copy member " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_E062(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "E062", "HLASM Plugin", "Recursive COPY", {});
 }
 
 diagnostic_s diagnostic_s::error_E044(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)

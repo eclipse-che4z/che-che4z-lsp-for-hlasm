@@ -415,6 +415,62 @@ TEST(macro, cyclic_call_finite)
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
+class bad_mock : public parse_lib_provider
+{
+public:
+	bad_mock(bool bad_name) : current_content(bad_name ? &content_bad_name : &content_bad_begin) {}
+
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	{
+		a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", hlasm_ctx,*this, data);
+		a->analyze();
+		a->collect_diags();
+		return true;
+	}
+	std::unique_ptr<analyzer> a;
+private:
+	const std::string* current_content;
+
+	const std::string content_bad_name =
+		R"(   MACRO
+       MACC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+	const std::string content_bad_begin =
+		R"(  aMACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+
+
+};
+
+TEST(external_macro, bad_library)
+{
+	std::string input =
+		R"(
+ MAC
+ MAC
+)";
+	bad_mock m1(true);
+	analyzer a1(input,"",m1);
+	a1.analyze();
+	a1.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m1.a)->diags().size(), (size_t)1);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a1)->diags().size(), (size_t)0);
+	EXPECT_EQ(a1.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	bad_mock m2(false);
+	analyzer a2(input, "", m2);
+	a2.analyze();
+	a2.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m2.a)->diags().size(), (size_t)1);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a2)->diags().size(), (size_t)0);
+	EXPECT_EQ(a2.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
 
 
 #endif

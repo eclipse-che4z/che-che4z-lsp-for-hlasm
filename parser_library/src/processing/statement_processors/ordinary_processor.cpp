@@ -16,7 +16,7 @@ ordinary_processor::ordinary_processor(
 	lib_provider_(lib_provider),
 	ca_proc_(hlasm_ctx,branch_provider,state_listener),
 	mac_proc_(hlasm_ctx),
-	asm_proc_(hlasm_ctx,branch_provider,parser),
+	asm_proc_(hlasm_ctx,branch_provider, lib_provider,parser),
 	mach_proc_(hlasm_ctx,branch_provider,parser),
 	finished_flag_(false) {}
 
@@ -40,7 +40,7 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 	
 	if (!status)
 	{
-		auto found = lib_provider_.parse_library(*id, hlasm_ctx);
+		auto found = lib_provider_.parse_library(*id, hlasm_ctx, library_data{ context::file_processing_type::MACRO,id });
 		processing_form f;
 		context::instruction_type t;
 		if (found)
@@ -168,16 +168,16 @@ std::pair<std::vector<context::id_index>, bool> ordinary_processor::check_layout
 	std::vector<context::id_index> ret;
 	for (auto& sect : hlasm_ctx.ord_ctx.sections())
 	{
-		for (size_t i = 0; i < sect.location_counters().size(); i++)
+		for (size_t i = 0; i < sect->location_counters().size(); i++)
 		{
 			if (i == 0)
 				continue;
 
-			if (sect.location_counters()[i - 1]->has_undefined_layout())
+			if (sect->location_counters()[i - 1]->has_undefined_layout())
 				return { {},false };
 
 			if (i != 0)
-				ret.push_back(sect.location_counters()[i]->spaces()[0]->name);
+				ret.push_back(sect->location_counters()[i]->spaces()[0]->name);
 		}
 	}
 	return { ret,true };

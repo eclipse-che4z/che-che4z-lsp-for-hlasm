@@ -1,6 +1,7 @@
 #pragma once
 #include "common_testing.h"
 #include "../src/ebcdic_encoding.h"
+#include "../src/file_impl.h"
 
 TEST(input_source, utf8conv)
 {
@@ -84,4 +85,60 @@ TEST(ebcdic_encoding, unicode)
 	EXPECT_EQ(hlasm_plugin::parser_library::ebcdic_encoding::to_pseudoascii(++begin), (unsigned char)0xE4);
 
 	EXPECT_EQ(begin, u8.c_str() + 4 + 3 + 2 + 1 + 1);
+}
+
+TEST(replace_non_utf8_chars, no_change)
+{
+	std::string u8;
+
+	u8.push_back((unsigned char)0xf0);
+	u8.push_back((unsigned char)0x90);
+	u8.push_back((unsigned char)0x80);
+	u8.push_back((unsigned char)0x80);
+
+	u8.push_back((unsigned char)0xEA);
+	u8.push_back((unsigned char)0x84);
+	u8.push_back((unsigned char)0xA3);
+
+	u8.push_back((unsigned char)0xC5);
+	u8.push_back((unsigned char)0x80);
+
+	u8.push_back((unsigned char)0x41);
+
+	std::string res = file_impl::replace_non_utf8_chars(u8);
+
+	EXPECT_EQ(u8, res);
+}
+
+TEST(replace_non_utf8_chars, last_char)
+{
+	std::string common_str = "this is some common string";
+	std::string u8 = common_str;
+	u8.push_back((uint8_t) 0xAF);
+
+	std::string res = file_impl::replace_non_utf8_chars(u8);
+
+	EXPECT_NE(u8, res);
+	EXPECT_EQ(res.size(), u8.size() + 2);
+	EXPECT_EQ(res[res.size() - 3], '\xEF');
+	EXPECT_EQ(res[res.size() - 2], '\xBF');
+	EXPECT_EQ(res[res.size() - 1], '\xBD');
+	EXPECT_EQ(res.substr(0, common_str.size()), common_str);
+}
+
+TEST(replace_non_utf8_chars, middle_char)
+{
+	std::string begin = "begin";
+	std::string end = "end";
+	std::string u8 = begin + '\xF0' + end;
+
+	std::string res = file_impl::replace_non_utf8_chars(u8);
+
+	EXPECT_NE(u8, res);
+	EXPECT_EQ(res.size(), u8.size() + 2);
+	EXPECT_EQ(res[begin.size()], '\xEF');
+	EXPECT_EQ(res[begin.size() + 1], '\xBF');
+	EXPECT_EQ(res[begin.size() + 2], '\xBD');
+	EXPECT_EQ(res.substr(0, begin.size()), begin);
+	EXPECT_EQ(res.substr(begin.size()+3), end);
 }

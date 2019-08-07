@@ -25,6 +25,7 @@ struct macro_arg
 struct macro_invocation;
 using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
+using copy_nest_storage = std::vector<std::vector<location>>;
 
 //class representing macro definition
 //contains info about keyword, positional parameters of HLASM mascro as well as derivation tree of the actual code
@@ -43,14 +44,20 @@ public:
 	const id_index id;
 	//params of macro
 	const std::unordered_map<id_index, macro_param_ptr>& named_params() const;
-	//tree representing macro definition
+	//vector of statements representing macro definition
 	const statement_block definition;
+	//vector assigning each statement its copy nest
+	const copy_nest_storage copy_nests;
 	//storage of sequence symbols in the macro
 	const label_storage labels;
 	//location of the macro definition in code
 	const location definition_location;
 	//initializes macro with its name and params - positional or keyword
-	macro_definition(id_index name, id_index label_param_name, std::vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location);
+	macro_definition(
+		id_index name, 
+		id_index label_param_name, std::vector<macro_arg> params,
+		statement_block definition, copy_nest_storage copy_nests, label_storage labels,
+		location definition_location);
 
 	//returns object with parameters' data set to actual parameters in macro call
 	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params) const;
@@ -71,8 +78,10 @@ public:
 	const id_index id;
 	//params of macro
 	const std::unordered_map<id_index, macro_param_ptr> named_params;
-	//tree representing macro definition
+	//vector of statements representing macro definition
 	const statement_block& definition;
+	//vector assigning each statement its copy nest
+	const copy_nest_storage& copy_nests;
 	//storage of sequence symbols in the macro
 	const label_storage& labels;
 	//location of the macro definition in code
@@ -81,7 +90,10 @@ public:
 	int current_statement;
 	//stackk get_nest();
 
-	macro_invocation(id_index name, const statement_block& definition, const label_storage& labels, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,const location& definition_location);
+	macro_invocation(
+		id_index name, const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
+		std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,
+		const location& definition_location);
 
 	//gets syslist value
 	const C_t& SYSLIST(size_t idx) const;

@@ -32,6 +32,7 @@ public:
 	bool is_last_line();
 	virtual void rewind_input(context::opencode_sequence_symbol::opencode_position loc) override;
 	virtual context::opencode_sequence_symbol::opencode_position statement_start() const override;
+	virtual context::opencode_sequence_symbol::opencode_position statement_end() const override;
 
 	virtual processing::statement_field_reparser::parse_result reparse_operand_field(
 		context::hlasm_context* hlasm_ctx, 

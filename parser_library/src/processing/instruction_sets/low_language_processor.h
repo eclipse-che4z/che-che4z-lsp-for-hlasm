@@ -39,7 +39,7 @@ private:
 
 	using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
 	static transform_result transform_mnemonic(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser);
-	static transform_result transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser, bool mach);
+	static transform_result transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser);
 
 	static checking::check_op_ptr get_check_op(const semantics::operand* op, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser, const resolved_statement& stmt);
 };

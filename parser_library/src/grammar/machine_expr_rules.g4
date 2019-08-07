@@ -88,14 +88,6 @@ string_ch_c returns [std::string value]
 	:
 	| tmp=string_ch_c string_ch				{$value = std::move($tmp.value); $value.append($string_ch.value);};
 
-string_ch_v returns [concat_point_ptr point]
-	: l_sp_ch_v							{$point = std::move($l_sp_ch_v.point);}
-	| APOSTROPHE APOSTROPHE				{$point = std::make_unique<char_str>("'");};
-
-string_ch_v_c returns [concat_chain chain]
-	:
-	| cl=string_ch_v_c string_ch_v		{$cl.chain.push_back(std::move($string_ch_v.point)); $chain = std::move($cl.chain);};
-
 
 
 string returns [std::string value]

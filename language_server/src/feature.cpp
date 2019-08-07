@@ -42,20 +42,28 @@ std::string feature::uri_to_path(const std::string & uri)
 	return p.lexically_normal().string();
 }
 
-std::string feature::path_to_uri(std::string uri)
+std::string feature::path_to_uri(std::string path)
 {
-	std::replace(uri.begin(), uri.end(), '\\', '/');
-	std::string s = network::detail::encode_path(uri);
+	std::replace(path.begin(), path.end(), '\\', '/');
+	// network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
+	std::string uri;
+	auto out = std::back_inserter(uri);
+	auto it = path.cbegin();
+	while (it != path.cend()) {
+		network::detail::encode_char(*it, out, "/.%;=");
+		++it;
+	}
+
 #ifdef _WIN32
-	if(s.size() >= 2 && s[0] == '/' && s[1] == '/')
-		s.insert(0, "file:");
+	if(uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')
+		uri.insert(0, "file:");
 	else
-		s.insert(0, "file:///");
+		uri.insert(0, "file:///");
 #else
-	s.insert(0, "file://");
+	path.insert(0, "file://");
 #endif // _WIN32
 
-	return s;
+	return uri;
 }
 
 parser_library::range feature::parse_range(const json & range_json)

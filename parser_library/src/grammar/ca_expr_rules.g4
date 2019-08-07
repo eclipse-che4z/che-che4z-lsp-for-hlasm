@@ -63,9 +63,17 @@ expr_p_comma_c returns [std::vector<ParserRuleContext*> ext]
 		$ext = $exs.ext;
 	};
 	
-expr_p_space_c
-	: expr_p
-	| exs=expr_p_space_c SPACE+ expr_p;
+expr_p_space_c returns [std::vector<ParserRuleContext*> ext]
+ 	: expr_p
+	{ 
+		$ext.push_back($expr_p.ctx); 
+	}
+	| exs=expr_p_space_c SPACE+ expr_p
+	{ 
+		$exs.ext.push_back($expr_p.ctx); 
+		$ext = $exs.ext;
+	};
+ 
 
 
 seq_symbol returns [seq_sym ss]
@@ -131,3 +139,11 @@ ca_string_b // returns [std::unique_ptr<char_expr> e]
 ca_string // returns [std::unique_ptr<char_expr> e]
 	: ca_string_b											//	{$e = std::move($ca_string_b.e);}
 	| tmp=ca_string dot_ ca_string_b;
+
+string_ch_v returns [concat_point_ptr point]
+	: l_sp_ch_v							{$point = std::move($l_sp_ch_v.point);}
+	| APOSTROPHE APOSTROPHE				{$point = std::make_unique<char_str>("'");};
+
+string_ch_v_c returns [concat_chain chain]
+	:
+	| cl=string_ch_v_c string_ch_v		{$cl.chain.push_back(std::move($string_ch_v.point)); $chain = std::move($cl.chain);};

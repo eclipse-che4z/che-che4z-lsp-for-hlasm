@@ -13,6 +13,7 @@ class opencode_provider
 public:
 	virtual void rewind_input(context::opencode_sequence_symbol::opencode_position loc) = 0;
 	virtual context::opencode_sequence_symbol::opencode_position statement_start() const = 0;
+	virtual context::opencode_sequence_symbol::opencode_position statement_end() const = 0;
 
 	virtual ~opencode_provider() = default;
 };

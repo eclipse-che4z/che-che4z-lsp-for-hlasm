@@ -3,7 +3,6 @@
 
 #include "statement_processors/statement_processor.h"
 #include "statement_provider_kind.h"
-#include "../context/hlasm_context.h"
 
 
 namespace hlasm_plugin {
@@ -18,13 +17,13 @@ using provider_ptr = std::unique_ptr<statement_provider>;
 class statement_provider
 {
 public:
+	const statement_provider_kind kind;
+
 	statement_provider(const statement_provider_kind kind) : kind(kind) {}
 
 	virtual void process_next(statement_processor& processor) = 0;
 
 	virtual bool finished() const = 0;
-
-	const statement_provider_kind kind;
 
 	virtual ~statement_provider() = default;
 };

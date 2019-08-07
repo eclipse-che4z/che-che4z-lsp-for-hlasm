@@ -26,7 +26,12 @@ class ordinary_processor : public statement_processor
 
 	bool finished_flag_;
 public:
-	ordinary_processor(context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, branching_provider& branch_provider, processing_state_listener& state_listener,statement_field_reparser& parser);
+	ordinary_processor(
+		context::hlasm_context& hlasm_ctx, 
+		parse_lib_provider& lib_provider, 
+		branching_provider& branch_provider, 
+		processing_state_listener& state_listener,
+		statement_field_reparser& parser);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;

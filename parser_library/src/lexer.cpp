@@ -28,14 +28,11 @@ lexer::lexer(input_source* input,semantics::lsp_info_processor * lsp_proc)
 
 void lexer::rewind_input(stream_position pos)
 {
-	if (eof_generated_)
-	{
-		eof_generated_ = false;
-		if(!token_queue_.empty())
-			token_queue_.pop();
-	}
 	auto inp = file_input_state_.input;
 	inp->rewind_input(pos.offset);
+
+	if(!token_queue_.empty())
+		delete_token(token_queue_.front()->getTokenIndex());
 
 	/* rewind input to line start 
 	ssize_t i = 0;
@@ -53,6 +50,7 @@ void lexer::rewind_input(stream_position pos)
 	file_input_state_.char_position_in_line = 0;
 	file_input_state_.char_position_in_line_utf16 = 0;
 	last_lln_end_pos_ = { pos.line-1,pos.offset };
+	last_lln_begin_pos_ = { pos.line,pos.offset };
 
 	if (static_cast<char_t>(inp->LA(1)) == '\n' || static_cast<char_t>(inp->LA(1)) == '\r')
 	{
@@ -77,6 +75,11 @@ bool lexer::is_last_line() const
 lexer::stream_position lexer::last_lln_begin_position() const
 {
 	return  last_lln_begin_pos_;
+}
+
+lexer::stream_position lexer::last_lln_end_position() const
+{
+	return last_lln_end_pos_;
 }
 
 bool hlasm_plugin::parser_library::lexer::eof_generated() const
@@ -342,6 +345,14 @@ token_ptr lexer::nextToken()
 	}
 }
 
+void lexer::delete_token(ssize_t index)
+{
+	eof_generated_ = false;
+	last_token_id_ = index;
+	token_queue_ = {};
+}
+
+
 void lexer::lex_tokens()
 {
 
@@ -599,9 +610,15 @@ bool lexer::before_end() const
 
 bool lexer::is_ord_char() const
 {
-	return isalnum(input_state_->c) || isalpha(input_state_->c)
+	return (input_state_->c >=0 && input_state_->c <= 255)
+		&& (isalnum(input_state_->c) || isalpha(input_state_->c)
 		|| input_state_->c == '_' || input_state_->c == '@'
-		|| input_state_->c == '$' || input_state_->c == '#';
+		|| input_state_->c == '$' || input_state_->c == '#');
+}
+
+bool lexer::is_space() const
+{
+	return input_state_->c >= 0 && input_state_->c <= 255 && isspace(input_state_->c);
 }
 
 void lexer::lex_word()
@@ -609,7 +626,7 @@ void lexer::lex_word()
 	bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
 
 	size_t w_len = 0;
-	while (!isspace(input_state_->c) && !eof() && !identifier_divider()
+	while (!is_space() && !eof() && !identifier_divider()
 		&& before_end())
 	{
 		++w_len;

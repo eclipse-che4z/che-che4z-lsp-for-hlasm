@@ -691,7 +691,7 @@ bool exitctl::check(const std::vector<const asm_operand*> & to_check)
 
 equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
-bool equ::check(const std::vector<const asm_operand*> & to_check)
+bool equ::check(const std::vector<const asm_operand*> & )
 {
 	/*
 	if (!operands_size_corresponding(to_check))

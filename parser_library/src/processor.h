@@ -22,7 +22,7 @@ public:
 	//starts parser with new (empty) context
 	virtual parse_result parse(parse_lib_provider &) = 0;
 	//starts parser with in the context of parameter
-	virtual parse_result parse(parse_lib_provider &, context::hlasm_context&) = 0;
+	virtual parse_result parse(parse_lib_provider &, context::hlasm_context&, const library_data) = 0;
 	
 };
 

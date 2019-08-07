@@ -11,7 +11,7 @@ using namespace hlasm_plugin::parser_library::context;
 space::space(location_counter& owner, id_index name)
 	: name(name), resolved_(false), owner_(owner) {}
 
-void space::resolve(space_ptr this_space, size_t length)
+void space::resolve(space_ptr this_space, int length)
 {
 	if (this_space->resolved_)
 		throw std::invalid_argument("space already resolved");
@@ -53,7 +53,7 @@ void space::remove_listener(address* addr)
 	listeners_.erase(it);
 }
 
-address::address(base address_base, size_t offset, const space_storage& spaces)
+address::address(base address_base, int offset, const space_storage& spaces)
 	: offset(offset)
 {
 	bases.emplace_back(address_base, 1);

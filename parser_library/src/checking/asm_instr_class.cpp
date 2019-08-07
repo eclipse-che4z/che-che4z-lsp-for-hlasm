@@ -45,7 +45,7 @@ bool assembler_instruction::operands_size_corresponding(const std::vector<const 
 }
 
 // functions for checking complex operands
-bool assembler_instruction::check_compat_operands(const std::vector<std::unique_ptr<asm_operand>>& input, const std::string& instr_name, const std::string& op_name)
+bool assembler_instruction::check_compat_operands(const std::vector<std::unique_ptr<asm_operand>>& input, const std::string& instr_name, const std::string& )
 {
 	//vector of keywords that can be used in compat option
 	const static std::vector<std::string> keywords = { "NOCASE", "NOLITTYPE", "NOMACROCASE", "NOSYSLIST", "NOTRANSDT", "NOLIT", "NOMC", "NOSYSL", "NOTRS", "CASE", "LITTYPE", "MACROCASE", "SYSLIST", "TRANSDT", "LIT", "MC", "SYSL", "TRS" };

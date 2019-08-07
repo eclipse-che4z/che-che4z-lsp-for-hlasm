@@ -38,7 +38,7 @@ const checking::parameter dis_reg_r = { false, 4, hlasm_plugin::parser_library::
 const checking::parameter mask = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::MASK };
 const checking::parameter dis_12u = { false, 12, hlasm_plugin::parser_library::checking::machine_operand_type::DISPLC };
 const checking::parameter dis_20s = { true, 12, hlasm_plugin::parser_library::checking::machine_operand_type::DISPLC };
-const checking::parameter base = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::BASE };
+const checking::parameter base_ = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::BASE };
 const checking::parameter length_8 = { false, 8, hlasm_plugin::parser_library::checking::machine_operand_type::LENGTH };
 const checking::parameter length_4 = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::LENGTH };
 const checking::parameter imm_4u = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
@@ -64,12 +64,12 @@ With DXB Formats
 	- can be either D(X,B) or D(,B) - in this case, the X is replaced with 0
 	- parser returns this in (displacement, x, base, false) format
 */
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, empty, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_20_4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, empty, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format drb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg_r, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format dxb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format dxb_20_4x4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, dis_reg, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format dvb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, vec_reg, base);
+const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, empty, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format db_20_4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, empty, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format drb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg_r, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format dxb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format dxb_20_4x4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, dis_reg, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format dvb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, vec_reg, base_);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(reg, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format mask_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(mask, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_4u, empty, empty);
@@ -80,8 +80,8 @@ const hlasm_plugin::parser_library::checking::machine_operand_format imm_12_S = 
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_16s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_32s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format vec_reg_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(vec_reg, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_8x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_8, base);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_4, base);
+const hlasm_plugin::parser_library::checking::machine_operand_format db_12_8x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_8, base_);
+const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_4, base_);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_12_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_12s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_16s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_24_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_24s, empty, empty);

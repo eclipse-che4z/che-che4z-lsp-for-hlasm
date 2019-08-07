@@ -36,6 +36,8 @@ namespace hlasm_plugin {
 
 			token_ptr nextToken() override;
 
+			void delete_token(ssize_t index);
+
 			size_t getLine() const override;
 
 			size_t getCharPositionInLine() override;
@@ -82,12 +84,14 @@ namespace hlasm_plugin {
 			std::unique_ptr<input_source>& get_ainsert_stream();
 
 			bool is_ord_char() const;
+			bool is_space() const;
 			bool get_unlimited_line() const;
 			void set_unlimited_line(bool);
 			void rewind_input(stream_position pos);
 			bool is_last_line() const;
 			bool eof_generated() const;
 			stream_position last_lln_begin_position() const;
+			stream_position last_lln_end_position() const;
 		protected:
 			void create_token(size_t ttype, size_t channel);
 			void consume();

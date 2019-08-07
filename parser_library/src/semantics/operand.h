@@ -174,7 +174,7 @@ struct expr_assembler_operand final : public assembler_operand, public simple_ex
 private:
 	std::string value_;
 public:
-	expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value,const range operand_range);
+	expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range);
 
 	bool has_dependencies(expressions::mach_evaluate_info info) const override;
 

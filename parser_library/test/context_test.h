@@ -21,7 +21,7 @@ TEST(context_id_storage, add)
 	auto it1 = ctx.ids().add("var");
 	auto it2 = ctx.ids().find("var");
 	auto it3 = ctx.ids().add("var");
-	ASSERT_TRUE(it1==it2);
+	ASSERT_TRUE(it1 == it2);
 	ASSERT_TRUE(it1 == it3);
 }
 
@@ -102,7 +102,7 @@ TEST(context_set_vars, set_scalar)
 
 	EXPECT_EQ(var.get_value(1), 0);
 
-	EXPECT_EQ(var.get_value(),0);
+	EXPECT_EQ(var.get_value(), 0);
 
 	var.set_value(5);
 
@@ -190,9 +190,9 @@ TEST(context_macro_param, param_data_composite)
 	vector<macro_data_ptr> v3;
 	v3.push_back(unique_ptr<macro_param_data_component>(make_unique < macro_param_data_single>("third")));
 
-	macro_data_ptr c1 (make_unique< macro_param_data_composite>(move(v)));
-	macro_data_ptr c2 (make_unique< macro_param_data_composite>(move(v2)));
-	macro_data_ptr c3 (make_unique< macro_param_data_composite>(move(v3)));
+	macro_data_ptr c1(make_unique< macro_param_data_composite>(move(v)));
+	macro_data_ptr c2(make_unique< macro_param_data_composite>(move(v2)));
+	macro_data_ptr c3(make_unique< macro_param_data_composite>(move(v3)));
 
 	vector<macro_data_ptr> v4;
 	v4.push_back(move(c1));
@@ -201,7 +201,7 @@ TEST(context_macro_param, param_data_composite)
 
 	macro_param_data_composite  c(move(v4));
 
-	EXPECT_EQ(c.get_value(),"((first,second),(second,third),(third))");
+	EXPECT_EQ(c.get_value(), "((first,second),(second,third),(third))");
 	EXPECT_EQ(c.get_ith(0)->get_value(), "(first,second)");
 	EXPECT_EQ(c.get_ith(3)->get_value(), "");
 	EXPECT_EQ(c.get_ith(2)->get_value(), "(third)");
@@ -233,7 +233,7 @@ TEST(context_macro, add_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	auto& m = ctx.add_macro(idx, lbl, move(args), {}, {}, {});
+	auto& m = ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
 
 	EXPECT_EQ(m.named_params().size(), (size_t)4);
 	EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -265,7 +265,7 @@ TEST(context_macro, call_and_leave_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|		MAC		&KEY=,&OP1,,&OP3
-	auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {}, {});
+	auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
 
 	//creating param data
 	macro_data_ptr p2(make_unique < macro_param_data_single>("ada"));
@@ -279,15 +279,15 @@ TEST(context_macro, call_and_leave_macro)
 	params.push_back({ move(p4) });
 
 	//call->|		MAC		ada,mko,
-	auto m2 = ctx.enter_macro(idx,nullptr, move(params));
+	auto m2 = ctx.enter_macro(idx, nullptr, move(params));
 
 	ASSERT_TRUE(m.id == m2->id);
 	ASSERT_TRUE(ctx.is_in_macro());
-	ASSERT_TRUE(ctx.this_macro()==m2);
+	ASSERT_TRUE(ctx.this_macro() == m2);
 
 	//testing syslist
 	EXPECT_EQ(m2->SYSLIST(0), "");
-	EXPECT_EQ(m2->SYSLIST(1),"ada");
+	EXPECT_EQ(m2->SYSLIST(1), "ada");
 	EXPECT_EQ(m2->SYSLIST(2), "mko");
 	EXPECT_EQ(m2->SYSLIST(3), "");
 
@@ -325,7 +325,7 @@ TEST(context_macro, repeat_call_same_macro)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	ctx.add_macro(idx, lbl, move(args), {}, {}, {});
+	ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));
@@ -385,7 +385,7 @@ TEST(context_macro, repeat_call_same_macro)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(m3->SYSLIST({2,2}), "");
+	EXPECT_EQ(m3->SYSLIST({ 2,2 }), "");
 	EXPECT_EQ(m3->SYSLIST({ 3 }), "(first,second,third)");
 	EXPECT_EQ(m3->SYSLIST({ 3,1 }), "second");
 	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0 }), "second");
@@ -416,7 +416,7 @@ TEST(context_macro, recurr_call)
 	args.push_back({ nullptr,op3 });
 
 	//prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-	ctx.add_macro(idx, lbl, move(args), {}, {}, {});
+	ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
 
 	//creating param data
 	macro_data_ptr lb(make_unique < macro_param_data_single>("lbl"));
@@ -465,7 +465,7 @@ TEST(context_macro, recurr_call)
 
 	//call->|		MAC		,KEY=cas,,(first,second,third)
 	auto m3 = ctx.enter_macro(idx, nullptr, move(params));
-	
+
 	//********called again the same macro without calling leave
 	ASSERT_TRUE(ctx.this_macro() == m3);
 	ASSERT_TRUE(ctx.is_in_macro());

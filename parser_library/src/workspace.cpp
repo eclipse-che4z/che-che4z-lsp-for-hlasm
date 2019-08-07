@@ -222,14 +222,14 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	return true;
 }
 
-parse_result workspace::parse_library(const std::string & library, context::hlasm_context& hlasm_ctx)
+parse_result workspace::parse_library(const std::string & library, context::hlasm_context& hlasm_ctx, const library_data data)
 {
 	auto & proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
 	for (auto && lib : proc_grp.libraries())
 	{
 		processor * found = lib->find_file(library);
 		if (found)
-			return found->parse(*this, hlasm_ctx);
+			return found->parse(*this, hlasm_ctx, data);
 	}
 	
 	return false;

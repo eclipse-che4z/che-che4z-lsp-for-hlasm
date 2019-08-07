@@ -1,8 +1,6 @@
 #ifndef CONTEXT_FILE_PROCESSING_STATUS_H
 #define CONTEXT_FILE_PROCESSING_STATUS_H
 
-#include "variable.h"
-
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {

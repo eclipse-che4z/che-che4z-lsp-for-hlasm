@@ -23,8 +23,16 @@ lookahead_instruction_statement
 		collector.set_instruction_field(
 			parse_identifier(std::move($ORDSYMBOL->getText()),provider.get_range( $ORDSYMBOL)),
 			provider.get_range( $ORDSYMBOL));
-		//collector.set_operand_remark_field($word.ctx->getText(), provider.get_range( $word.ctx)); TODO make special operand
-		collector.set_operand_remark_field(provider.get_range($word.ctx));
+		operand_list ops;
+		auto text = $word.ctx->getText();
+		auto r = provider.get_range( $word.ctx);
+		auto id = parse_identifier(text,r);
+		ops.push_back(
+			std::make_unique<expr_assembler_operand>(
+				std::make_unique<mach_expr_symbol>(id,r),text,r
+			)
+		);
+		collector.set_operand_remark_field(std::move(ops),{},r); 
 		process_instruction();
 	}
 	| seq_symbol ~EOLLN*	//seq										

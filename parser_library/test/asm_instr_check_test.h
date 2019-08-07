@@ -197,9 +197,6 @@ public:
 		test_exitctl_true.push_back(&exitctl_two);
 		test_exitctl_false_one.push_back(&exitctl_three);
 		test_exitctl_false_one.push_back(&op_val_15);
-		test_exitctl_false_two.push_back(&exitctl_four);
-		test_exitctl_false_two.push_back(&exitctl_five);
-		test_exitctl_false_two.push_back(&op_val_128);
 
 		// extrn
 
@@ -696,7 +693,6 @@ protected:
 	one_operand op_str_reus = one_operand("REUS");
 	one_operand adata_string_val = one_operand("'temporary_string'");
 	one_operand adata_string_wrong_val = one_operand("'temporary");
-	one_operand adata_wrong_val = one_operand(21474836484);
 	one_operand op_str_alias_one = one_operand("C'lowerl'");
 	one_operand op_str_alias_two = one_operand("X'9396A68599F2'");
 	one_operand op_str_alias_three = one_operand("X'FF92'");
@@ -729,7 +725,6 @@ protected:
 	one_operand exitctl_two = one_operand(2147483647);
 	one_operand exitctl_three = one_operand("SOURCES");
 	one_operand exitctl_four = one_operand("LISTING");
-	one_operand exitctl_five = one_operand(21474836489);
 	one_operand first_val = one_operand("FIRST");
 	one_operand second_val = one_operand("SECOND");
 	one_operand drop_lorem_val = one_operand("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");

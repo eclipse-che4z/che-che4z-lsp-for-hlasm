@@ -84,13 +84,21 @@ const std::vector<location> hlasm_context::processing_stack() const
 	std::vector<location> res;
 	res.push_back(proc_stack_[0].processing_location);
 
+	for (auto& member : copy_stack_)
+	{
+		auto& stmt = member.definition[member.current_statement];
+		res.emplace_back(stmt->statement_position(),member.definition_location.file);
+	}
+
 	for (auto& scope : scope_stack_)
 	{
 		if (!scope.is_in_macro())
 			continue;
 
-		auto& stmt = scope.this_macro->definition[scope.this_macro->current_statement];
-		res.emplace_back(stmt->statement_position(),scope.this_macro->definition_location.file);
+		auto offs = scope.this_macro->current_statement;
+
+		for (auto loc : scope.this_macro->copy_nests[offs])
+			res.push_back(loc);
 	}
 
 	for (auto& entry : proc_stack_)
@@ -107,6 +115,11 @@ const std::vector<location> hlasm_context::processing_stack() const
 const std::deque<code_scope>& hlasm_context::scope_stack() const
 {
 	return scope_stack_;
+}
+
+std::vector<copy_member_invocation>& hlasm_context::copy_stack()
+{
+	return copy_stack_;
 }
 
 const code_scope::set_sym_storage & hlasm_context::globals() const
@@ -213,9 +226,19 @@ id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
 		return mnemo;
 }
 
-const macro_definition& hlasm_context::add_macro(id_index name, id_index label_param_name, std::vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location)
+const macro_definition& hlasm_context::add_macro(
+	id_index name,
+	id_index label_param_name, std::vector<macro_arg> params, 
+	statement_block definition, copy_nest_storage copy_nests, label_storage labels,
+	location definition_location)
 {
-	return *macros_.insert_or_assign(name, std::make_unique< macro_definition>(name, label_param_name, std::move(params), std::move(definition),std::move(labels), std::move(definition_location))).first->second.get();
+	return *macros_.insert_or_assign(
+		name, 
+		std::make_unique< macro_definition>(name, 
+			label_param_name, std::move(params),
+			std::move(definition),std::move(copy_nests),std::move(labels), 
+			std::move(definition_location))
+	).first->second.get();
 }
 
 const hlasm_context::macro_storage& hlasm_context::macros() const
@@ -264,29 +287,43 @@ const std::set<std::string> & hlasm_context::get_visited_files()
 	return visited_files_; 
 }
 
-/*
-bool hlasm_context::enter_copy(std::string member)
+void hlasm_context::add_copy_member(id_index member, statement_block definition, location definition_location)
 {
-	auto id = ids.add(member);
-	bool recursive = std::find(copys_.begin(), copys_.end(), id) != copys_.end();
-	if (!recursive)
+	copy_members_.try_emplace(member, member, std::move(definition), definition_location);
+	visited_files_.insert(std::move(definition_location.file));
+}
+
+void hlasm_context::enter_copy_member(id_index member_name)
+{
+	//assert(!is_in_macro());
+
+	auto tmp = copy_members_.find(member_name);
+	if (tmp == copy_members_.end())
+		throw std::runtime_error("unknown copy member");
+
+	auto& [name, member] = *tmp;
+
+	copy_stack_.push_back(member.enter());
+}
+
+const hlasm_context::copy_member_storage& hlasm_context::copy_members()
+{
+	return copy_members_;
+}
+
+void hlasm_context::leave_copy_member()
+{
+	copy_stack_.pop_back();
+}
+
+void hlasm_context::apply_copy_frame_stack(std::vector<opencode_sequence_symbol::copy_frame> copy_frame_stack)
+{
+	copy_stack_.clear();
+
+	for (auto& frame : copy_frame_stack)
 	{
-		copys_.push_back(id);
-		file_positions.emplace_back(member, range());
+		auto invo = copy_members_.at(frame.copy_member).enter();
+		invo.current_statement = (int)frame.statement_offset;
+		copy_stack_.push_back(std::move(invo));
 	}
-
-	return !recursive;
 }
-void hlasm_context::leave_copy()
-{
-	copys_.pop_back();
-	file_positions.pop_back();
-}
-
-const hlasm_context::copy_storage& hlasm_context::copys()
-{
-	return copys_;
-}
-*/
-
-

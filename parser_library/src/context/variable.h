@@ -251,12 +251,18 @@ struct opencode_sequence_symbol : public sequence_symbol
 		size_t file_line; size_t file_offset; 
 		bool operator==(const opencode_position& oth) const { return file_line == oth.file_line && file_offset == oth.file_offset; }
 	};
-	struct copy_frame { id_index member; size_t statement_offset; };
+
+	struct copy_frame { 
+		id_index copy_member; size_t statement_offset;
+		bool operator==(const copy_frame& oth) const { return copy_member == oth.copy_member && statement_offset == oth.statement_offset; }
+	};
 
 	opencode_position statement_position;
 	std::vector<copy_frame> copy_stack;
 
 	opencode_sequence_symbol(id_index name, location symbol_location, opencode_position statement_position, std::vector<copy_frame> copy_stack = {});
+
+	bool operator==(const opencode_sequence_symbol& oth) const;
 };
 
 struct macro_sequence_symbol : public sequence_symbol

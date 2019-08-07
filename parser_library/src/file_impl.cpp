@@ -42,6 +42,8 @@ void file_impl::load_text()
 		fin.read(&text_[0], text_.size());
 		fin.close();
 
+		text_ = replace_non_utf8_chars(text_);
+
 		up_to_date_ = true;
 		bad_ = false;
 		return;
@@ -189,9 +191,34 @@ bool file_impl::is_bad() const
 	return bad_;
 }
 
+bool utf8_one_byte_begin(char ch)
+{
+	return (ch & 0x80) == 0; //0xxxxxxx
+}
+
+bool utf8_continue_byte(char ch)
+{
+	return (ch & 0xC0) == 0x80; //10xxxxxx
+}
+
+
+bool utf8_two_byte_begin(char ch)
+{
+	return (ch & 0xE0) == 0xC0; //110xxxxx
+}
+
+bool utf8_three_byte_begin(char ch)
+{
+	return (ch & 0xF0) == 0xE0; //1110xxxx
+}
+
+bool utf8_four_byte_begin(char ch)
+{
+	return (ch & 0xF8) == 0xF0; //11110xxx
+}
 
 //returns the location in text_ that corresponds to utf-16 based location
-size_t file_impl::index_from_location(position loc)
+size_t file_impl::index_from_location(position loc) const
 {
 	size_t end = (size_t)loc.column;
 	size_t i = lines_ind_[(size_t)loc.line];
@@ -199,21 +226,21 @@ size_t file_impl::index_from_location(position loc)
 
 	while(utf16_counter < end)
 	{
-		if (text_[i] & 0x80)
+		if (!utf8_one_byte_begin(text_[i]))
 		{
 			char width;
 			char utf16_width;
-			if ((text_[i] & 0xF0) == 0xF0 && (text_[i] & 0x08) == 0) //11110xxx
+			if (utf8_four_byte_begin(text_[i])) //11110xxx
 			{
 				width = 4;
 				utf16_width = 2;
 			}
-			else if ((text_[i] & 0xE0) == 0xE0 && (text_[i] & 0x10) == 0) //1110xxxx
+			else if (utf8_three_byte_begin(text_[i])) //1110xxxx
 			{
 				width = 3;
 				utf16_width = 1;
 			}
-			else if ((text_[i] & 0xA0) == 0xA0 && (text_[i] & 0x20) == 0) //110xxxxx
+			else if (utf8_two_byte_begin(text_[i])) //110xxxxx
 			{
 				width = 2;
 				utf16_width = 1;
@@ -231,6 +258,66 @@ size_t file_impl::index_from_location(position loc)
 		}
 	}
 	return i;
+}
+
+/*bool (const std::string& text, size_t index, size_t to_check)
+{
+
+}*/
+
+std::string file_impl::replace_non_utf8_chars(const std::string & text)
+{
+	std::string ret;
+	ret.reserve(text.size());
+	size_t i = 0;
+	while (i < text.size())
+	{
+		bool OK = true;
+		size_t ch_len = 0;
+		if (utf8_one_byte_begin(text[i]))
+			ch_len = 1;
+		else if (utf8_two_byte_begin(text[i]))
+			ch_len = 2;
+		else if (utf8_three_byte_begin(text[i]))
+			ch_len = 3;
+		else if (utf8_four_byte_begin(text[i]))
+			ch_len = 4;
+		else
+			OK = false;
+
+		//check whether all subsequent bytes of one character begin with 10
+		if (OK)
+		{
+			for (size_t j = 1; j < ch_len; ++j)
+			{
+				if (i + j >= text.size() || !utf8_continue_byte(text[i + j]))
+				{
+					OK = false; //we consider the first byte of character wrong
+					break;
+				}
+			}
+		}
+
+		if (OK)
+		{
+			//copy the character to output
+			for (size_t j = 0; j < ch_len; ++j)
+			{
+				ret.push_back(text[i + j]);
+			}
+			i += ch_len;
+		}
+		else
+		{
+			//UTF8 replacement for unknown character
+			ret.push_back((uint8_t)0xEF);
+			ret.push_back((uint8_t)0xBF);
+			ret.push_back((uint8_t)0xBD);
+			++i;
+		}
+		
+	}
+	return ret;
 }
 
 }

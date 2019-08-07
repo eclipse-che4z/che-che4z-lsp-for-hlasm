@@ -68,9 +68,12 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/context_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/lookahead_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/common_statement_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/copy_statement_provider.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/macro_statement_provider.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/macrodef_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/ordinary_processor.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/copy_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/empty_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/processing_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/instruction_sets/asm_processor.cpp

@@ -6,6 +6,7 @@
 #include "workspace_test.h"
 
 #include "macro_test.h"
+#include "copy_test.h"
 #include "ord_sym_test.h"
 
 #include "text_synchronization_test.h"

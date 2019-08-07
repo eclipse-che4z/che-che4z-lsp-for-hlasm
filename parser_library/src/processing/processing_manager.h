@@ -19,7 +19,12 @@ namespace processing {
 class processing_manager : public processing_state_listener, public branching_provider, public diagnosable_ctx
 {
 public:
-	processing_manager(provider_ptr base_provider, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider,statement_field_reparser& parser);
+	processing_manager(
+		provider_ptr base_provider, 
+		context::hlasm_context& hlasm_ctx, 
+		const library_data data,
+		parse_lib_provider& lib_provider,
+		statement_field_reparser& parser);
 
 	void start_processing();
 
@@ -38,9 +43,12 @@ private:
 	virtual void finish_macro_definition(macrodef_processing_result result) override;
 	virtual void start_lookahead(const lookahead_start_data start) override;
 	virtual void finish_lookahead(lookahead_processing_result result) override;
+	virtual void start_copy_member(const copy_start_data start) override;
+	virtual void finish_copy_member(copy_processing_result result) override;
 
 	virtual void jump_in_statements(context::id_index target, range symbol_range) override;
 	virtual void register_sequence_symbol(context::id_index target, range symbol_range) override;
+	context::sequence_symbol_ptr create_opencode_sequence_symbol(context::id_index name, range symbol_range);
 };
 
 }

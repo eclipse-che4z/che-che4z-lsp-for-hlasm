@@ -1,6 +1,7 @@
 #include "asm_processor.h"
 #include "postponed_statement_impl.h"
 #include "../context_manager.h"
+#include "../../expressions/mach_expr_term.h"
 #include "../../checking/instr_operand.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -107,16 +108,72 @@ void asm_processor::process_DC(rebuilt_statement stmt)
 	}
 }
 
-void asm_processor::process_COPY(rebuilt_statement stmt)
+void asm_processor::process_DS(rebuilt_statement stmt)
 {
+	auto label = find_label_symbol(stmt);
+
+	if (label != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.symbol_defined(label))
+		hlasm_ctx.ord_ctx.create_symbol(label, context::symbol_value(0), {});
 }
 
-asm_processor::asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_field_reparser& parser)
-	:low_language_processor(hlasm_ctx, provider,parser),table_(create_table(hlasm_ctx)) {}
+void asm_processor::process_COPY(rebuilt_statement stmt)
+{
+	find_sequence_symbol(stmt);
+
+	if (stmt.operands_ref().value.size() == 1)
+	{
+		process_copy(stmt, hlasm_ctx, lib_provider_, this);
+	}
+	else
+	{
+		check(stmt, hlasm_ctx, checker_, *this);
+	}
+}
+
+asm_processor::asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_field_reparser& parser)
+	:low_language_processor(hlasm_ctx, branch_provider, parser), table_(create_table(hlasm_ctx)), lib_provider_(lib_provider) {}
 
 void asm_processor::process(context::shared_stmt_ptr stmt)
 {
 	process(preprocess(stmt));
+}
+
+void asm_processor::process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable* diagnoser)
+{
+	auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
+	auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
+
+	if (!sym_expr)
+	{
+		if(diagnoser)
+			diagnoser->add_diagnostic(diagnostic_s::error_E058("", "", stmt.operands_ref().value.front()->operand_range));
+		return;
+	}
+
+	auto tmp = hlasm_ctx.copy_members().find(sym_expr->value);
+
+	if (tmp == hlasm_ctx.copy_members().end())
+	{
+		bool result = lib_provider.parse_library(*sym_expr->value, hlasm_ctx, library_data{ context::file_processing_type::COPY, sym_expr->value });
+
+		if (!result)
+		{
+			if(diagnoser)
+				diagnoser->add_diagnostic(diagnostic_s::error_E058("", "", stmt.operands_ref().value.front()->operand_range));
+			return;
+		}
+	}
+
+	auto cycle_tmp = std::find_if(hlasm_ctx.copy_stack().begin(), hlasm_ctx.copy_stack().end(), [&](auto& entry) {return entry.name == sym_expr->value; });
+
+	if (cycle_tmp != hlasm_ctx.copy_stack().end())
+	{
+		if (diagnoser)
+			diagnoser->add_diagnostic(diagnostic_s::error_E062("", "", stmt.stmt_range_ref()));
+		return;
+	}
+
+	hlasm_ctx.enter_copy_member(sym_expr->value);
 }
 
 void asm_processor::process(context::unique_stmt_ptr stmt)
@@ -143,6 +200,10 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
 		std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("DC"),
 		std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("DS"),
+		std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("COPY"),
+		std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
 
 	return table;
 }
@@ -163,13 +224,13 @@ context::id_index asm_processor::find_label_symbol(const rebuilt_statement& stmt
 
 context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& stmt)
 {
+	semantics::seq_sym symbol;
 	switch (stmt.label_ref().type)
 	{
-	case semantics::label_si_type::ORD:
-	case semantics::label_si_type::EMPTY:
-		return context::id_storage::empty_id;
 	case semantics::label_si_type::SEQ:
-		return std::get<semantics::seq_sym>(stmt.label_ref().value).name;
+		symbol = std::get<semantics::seq_sym>(stmt.label_ref().value);
+		provider.register_sequence_symbol(symbol.name,symbol.symbol_range);
+		return symbol.name;
 	default:
 		return context::id_storage::empty_id;
 	}

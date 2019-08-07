@@ -209,13 +209,13 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
 	return diagnostic_op::error_I999(instr_name);
 }
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand() : value(0), operand_identifier(""), is_default(true) {}
+hlasm_plugin::parser_library::checking::one_operand::one_operand() : operand_identifier(""), value(0), is_default(true) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier, int value) : value(value), operand_identifier(operand_identifier), is_default(false) {}
+hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier, int value) : operand_identifier(operand_identifier), value(value), is_default(false) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier) : value(0), operand_identifier(operand_identifier), is_default(true) {}
+hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier) : operand_identifier(operand_identifier), value(0), is_default(true) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(int value) : value(value), operand_identifier(std::to_string(value)), is_default(false) {}
+hlasm_plugin::parser_library::checking::one_operand::one_operand(int value) :  operand_identifier(std::to_string(value)), value(value), is_default(false) {}
 
 hlasm_plugin::parser_library::checking::one_operand::one_operand(const one_operand& op)
 {

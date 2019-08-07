@@ -11,11 +11,13 @@ class library_test : public testing::Test
 public:
 	virtual void SetUp(std::string param)
 	{
-		holder = std::make_unique<analyzer>(get_content("test/library/input/" + param + ".in"));
+		input = get_content("test/library/input/" + param + ".in");
+		holder = std::make_unique<analyzer>(input);
 	}
 	virtual void TearDown() {}
 protected:
 	std::unique_ptr<analyzer> holder;
+	std::string input;
 };
 
 TEST_F(library_test, expression_test)
@@ -135,4 +137,18 @@ TEST_F(library_test, empty_string)
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
+
+TEST_F(library_test, long_macro)
+{
+	std::string tcase = "long_macro";
+
+	SetUp(tcase);
+
+	//compare tokens with output file
+
+	holder->analyze();
+	//no errors found while parsing
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+}
+
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H

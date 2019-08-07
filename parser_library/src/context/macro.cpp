@@ -14,8 +14,13 @@ const std::unordered_map<id_index, macro_param_ptr>& macro_definition::named_par
 	return named_params_;
 }
 
-macro_definition::macro_definition(id_index name, id_index label_param_name, vector<macro_arg> params, statement_block definition, label_storage labels, location definition_location)
-	: label_param_name_(label_param_name), id(name), definition(std::move(definition)),labels(std::move(labels)), definition_location(std::move(definition_location))
+macro_definition::macro_definition(
+	id_index name, 
+	id_index label_param_name, vector<macro_arg> params,
+	statement_block definition, copy_nest_storage copy_nests, label_storage labels,
+	location definition_location)
+	: label_param_name_(label_param_name), 
+	id(name), definition(std::move(definition)),copy_nests(std::move(copy_nests)), labels(std::move(labels)), definition_location(std::move(definition_location))
 {
 	if (label_param_name_)
 	{
@@ -88,13 +93,18 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<ma
 			named_cpy.find(pos_par->id)->second->data = syslist[pos_par->position];
 	}
 
-	return std::make_shared<macro_invocation>(id, definition,labels, std::move(named_cpy), std::move(syslist),definition_location);
+	return std::make_shared<macro_invocation>(id, definition,copy_nests,labels, std::move(named_cpy), std::move(syslist),definition_location);
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
-macro_invocation::macro_invocation(id_index name, const statement_block&  definition, const label_storage& labels, std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,const location& definition_location)
-	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)), definition(definition),labels(labels), definition_location(definition_location), current_statement(-1)
+macro_invocation::macro_invocation(
+	id_index name,
+	const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
+	std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,
+	const location& definition_location)
+	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)),
+	definition(definition), copy_nests(copy_nests), labels(labels), definition_location(definition_location), current_statement(-1)
 {
 }
 

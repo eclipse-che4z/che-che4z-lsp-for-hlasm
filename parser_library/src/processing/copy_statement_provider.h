@@ -1,5 +1,5 @@
-#ifndef PROCESSING_MACRO_STATEMENT_PROVIDER_H
-#define PROCESSING_MACRO_STATEMENT_PROVIDER_H
+#ifndef PROCESSING_COPY_STATEMENT_PROVIDER_H
+#define PROCESSING_COPY_STATEMENT_PROVIDER_H
 
 #include "common_statement_provider.h"
 
@@ -8,11 +8,11 @@ namespace parser_library {
 namespace processing {
 
 //statement provider providing statements of macro defintion
-class macro_statement_provider : public common_statement_provider
+class copy_statement_provider : public common_statement_provider
 {
 	size_t initial_nest_;
 public:
-	macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_field_reparser& parser);
+	copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_field_reparser& parser);
 
 	virtual void process_next(statement_processor& processor) override;
 

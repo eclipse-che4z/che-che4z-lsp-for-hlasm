@@ -28,7 +28,7 @@ struct space
 
 	space(const space&) = delete;
 
-	static void resolve(space_ptr this_space, size_t length);
+	static void resolve(space_ptr this_space, int length);
 
 	void add_listener(address* addr);
 
@@ -55,7 +55,7 @@ struct address
 	int offset;
 	std::vector<space_entry> spaces;
 
-	address(base address_base, size_t offset, const space_storage& spaces);
+	address(base address_base, int offset, const space_storage& spaces);
 
 	address(const address& addr);
 	address& operator=(const address& addr);

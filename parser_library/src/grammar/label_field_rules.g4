@@ -122,6 +122,7 @@ common_ch returns [std::string value]
 
 l_ch returns [std::string value]
 	: common_ch												{$value = std::move($common_ch.value);}
+	| EQUALS												{$value = "=";}
 	| COMMA													{$value = ",";}
 	| LPAR													{$value = "(";}
 	| RPAR													{$value = ")";};
@@ -236,8 +237,8 @@ l_sp_ch returns [std::string value] //l_ch with SPACE
 	: l_ch															{$value = std::move($l_ch.value);}
 	| SPACE															{$value = " ";}; 					
 l_sp_ch_v returns [concat_point_ptr point]
-	: l_sp_ch														{$point = std::make_unique<char_str>(std::move($l_sp_ch.value));}
-	| var_symbol													{$point = std::move($var_symbol.vs);};
+	: l_ch_v														{$point = std::move($l_ch_v.point);}
+	| SPACE															{$point = std::make_unique<char_str>(" ");};
 
 l_sp_str_v returns [concat_chain chain]
 	:		

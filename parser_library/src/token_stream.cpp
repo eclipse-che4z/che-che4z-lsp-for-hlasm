@@ -12,9 +12,15 @@ void token_stream::disable_continuation() { enabled_ = false; }
 
 void token_stream::rewind_input(lexer::stream_position pos)
 {
-	dynamic_cast<lexer&>(*_tokenSource).rewind_input(pos);
+	auto& lexer_tmp = dynamic_cast<lexer&>(*_tokenSource);
+	lexer_tmp.rewind_input(pos);
 
-	_tokens.pop_back();
+	if (_tokens.back()->getType() != lexer::EOLLN)
+	{
+		auto index_tmp = _tokens.back()->getTokenIndex();
+		_tokens.pop_back();
+		lexer_tmp.delete_token(index_tmp);
+	}
 	_fetchedEOF = false;
 	sync(_p);
 }

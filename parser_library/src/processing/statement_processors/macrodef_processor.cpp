@@ -2,20 +2,25 @@
 #include "../../semantics/concatenation.h"
 #include "../statement.h"
 #include "../context_manager.h"
+#include "../instruction_sets/asm_processor.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, const macrodef_start_data start)
-	: statement_processor(processing_kind::MACRO, hlasm_ctx),
-	listener_(listener), start_(start), macro_nest_(1),curr_line_(0),expecting_prototype_(true), finished_flag_(false)
+macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, processing_state_listener& listener, parse_lib_provider& provider, const macrodef_start_data start)
+	: statement_processor(processing_kind::MACRO, hlasm_context),
+	listener_(listener),provider_(provider), start_(std::move(start)), macro_nest_(1), curr_line_(0),
+	expecting_prototype_(true), expecting_MACRO_(start_.is_external), omit_next_(false),
+	initial_copy_nest_(hlasm_ctx.copy_stack().size()), finished_flag_(false)
 {
 	result_.definition_location = hlasm_ctx.processing_stack().back();
+	if (start_.is_external)
+		result_.prototype.macro_name = start_.external_name;
 }
 
 processing_status macrodef_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {
-	if (expecting_prototype_)
+	if (expecting_prototype_ && !expecting_MACRO_)
 	{
 		processing_format format(processing_kind::MACRO, processing_form::MAC);
 		context::id_index id;
@@ -37,17 +42,31 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
 	{
 		if (instruction.type == semantics::instruction_si_type::ORD)
 		{
-			auto it = hlasm_ctx.instruction_map().find(std::get<context::id_index>(instruction.value));
+			auto id = std::get<context::id_index>(instruction.value);
+			auto it = hlasm_ctx.instruction_map().find(id);
 			if (it != hlasm_ctx.instruction_map().end() && it->second == context::instruction::instruction_array::CA)
 			{
-				auto operandless = std::find_if(context::instruction::ca_instructions.begin(), context::instruction::ca_instructions.end(), 
-					[&](auto& instr) {return instr.name == *it->first; })->operandless;
+				auto operandless = std::find_if(context::instruction::ca_instructions.begin(), context::instruction::ca_instructions.end(),
+					[&](auto& instr) {return instr.name == *id; })->operandless;
 
 				processing_format format(processing_kind::MACRO, processing_form::CA,
 					operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
 
-				return std::make_pair(format, op_code(it->first, context::instruction_type::CA));
+				return std::make_pair(format, op_code(id, context::instruction_type::CA));
 			}
+			else if (id == copy_id)
+			{
+				processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
+
+				return std::make_pair(format, op_code(id, context::instruction_type::ASM));
+			}
+		}
+
+		if (instruction.type == semantics::instruction_si_type::EMPTY)
+		{
+			processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
+
+			return std::make_pair(format, op_code(context::id_storage::empty_id, context::instruction_type::CA));
 		}
 
 		processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
@@ -57,22 +76,28 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
 
 void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 {
-	bool expecting_tmp = expecting_prototype_;
+	bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
 
 	process_statement(*statement);
 
-	if(!expecting_tmp)
+	if (!expecting_tmp && !omit_next_)
+	{
 		result_.definition.push_back(statement);
+		add_correct_copy_nest();
+	}
 }
 
 void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
 {
-	bool expecting_tmp = expecting_prototype_;
+	bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
 
 	process_statement(*statement);
 
-	if (!expecting_tmp)
+	if (!expecting_tmp && !omit_next_)
+	{
 		result_.definition.push_back(std::move(statement));
+		add_correct_copy_nest();
+	}
 }
 
 void macrodef_processor::end_processing()
@@ -81,6 +106,10 @@ void macrodef_processor::end_processing()
 		add_diagnostic(diagnostic_s::error_E046("", *result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().pos, hlasm_ctx.processing_stack().back().pos)));
 
 	listener_.finish_macro_definition(std::move(result_));
+
+	if (start_.is_external)
+		hlasm_ctx.pop_processing_file();
+
 	finished_flag_ = true;
 }
 
@@ -94,6 +123,41 @@ bool macrodef_processor::finished()
 	return finished_flag_;
 }
 
+processing_status macrodef_processor::get_macro_processing_status(const semantics::instruction_si& instruction, context::hlasm_context& hlasm_ctx)
+{
+	if (instruction.type == semantics::instruction_si_type::ORD)
+	{
+		auto id = std::get<context::id_index>(instruction.value);
+		auto it = hlasm_ctx.instruction_map().find(id);
+		if (it != hlasm_ctx.instruction_map().end() && it->second == context::instruction::instruction_array::CA)
+		{
+			auto operandless = std::find_if(context::instruction::ca_instructions.begin(), context::instruction::ca_instructions.end(),
+				[&](auto& instr) {return instr.name == *id; })->operandless;
+
+			processing_format format(processing_kind::MACRO, processing_form::CA,
+				operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
+
+			return std::make_pair(format, op_code(id, context::instruction_type::CA));
+		}
+		else if (id == hlasm_ctx.ids().add("COPY"))
+		{
+			processing_format format(processing_kind::MACRO, processing_form::ASM,operand_occurence::PRESENT);
+
+			return std::make_pair(format, op_code(id, context::instruction_type::ASM));
+		}
+	}
+
+	if (instruction.type == semantics::instruction_si_type::EMPTY)
+	{
+		processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
+
+		return std::make_pair(format, op_code(context::id_storage::empty_id, context::instruction_type::CA));
+	}
+
+	processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
+	return std::make_pair(format, op_code());
+}
+
 void macrodef_processor::collect_diags() const {}
 
 void macrodef_processor::process_statement(const context::hlasm_statement& statement)
@@ -101,7 +165,25 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 	if (finished_flag_)
 		throw std::runtime_error("bad operation");
 
-	if (expecting_prototype_)
+	omit_next_ = false;
+
+	if (expecting_MACRO_)
+	{
+		result_.definition_location = hlasm_ctx.processing_stack().back();
+
+		auto res_stmt = statement.access_resolved();
+
+		if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
+		{
+			range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
+			add_diagnostic(diagnostic_s::error_E059("", *start_.external_name, r));
+			finished_flag_ = true;
+			return;
+		}
+		else
+			expecting_MACRO_ = false;
+	}
+	else if (expecting_prototype_)
 	{
 		assert(statement.access_resolved());
 		process_prototype(*statement.access_resolved());
@@ -118,13 +200,16 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 			else if (res_stmt->opcode_ref().value == mend_id)
 				process_MEND();
 			else if (res_stmt->opcode_ref().value == copy_id)
-				process_COPY();
+				process_COPY(*res_stmt);
 		}
 		else if (auto def_stmt = statement.access_deferred())
 		{
 			process_sequence_symbol(def_stmt->label_ref());
 		}
 		else assert(false);
+
+		if (initial_copy_nest_ == hlasm_ctx.copy_stack().size() || omit_next_)
+			curr_outer_position_ = statement.statement_position();
 
 		++curr_line_;
 	}
@@ -171,6 +256,13 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 		add_diagnostic(diagnostic_s::error_E044("", "", statement.label_ref().field_range));
 
 	//instr
+	auto macro_name = statement.opcode_ref().value;
+	if (start_.is_external && macro_name != start_.external_name)
+	{
+		add_diagnostic(diagnostic_s::error_E060("", *start_.external_name, statement.instruction_ref().field_range));
+		finished_flag_ = true;
+		return;
+	}
 	result_.prototype.macro_name = statement.opcode_ref().value;
 
 	//ops
@@ -262,13 +354,22 @@ void macrodef_processor::process_MEND()
 		finished_flag_ = true;
 }
 
-void macrodef_processor::process_COPY()
+void macrodef_processor::process_COPY(const resolved_statement& statement)
 {
+	if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
+	{
+		asm_processor::process_copy(statement,hlasm_ctx,provider_,this);
+	}
+	else
+		add_diagnostic(diagnostic_s::error_E058("", "", statement.operands_ref().field_range));
+
+	omit_next_ = true;
+	--curr_line_;
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
 {
-	if (label.type == semantics::label_si_type::SEQ)
+	if (macro_nest_==1 && label.type == semantics::label_si_type::SEQ)
 	{
 		auto& seq = std::get<semantics::seq_sym>(label.value);
 
@@ -283,3 +384,12 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 	}
 
 }
+
+void macrodef_processor::add_correct_copy_nest()
+{
+	result_.nests.push_back({ location(curr_outer_position_,result_.definition_location.file) });
+
+	for (size_t i = initial_copy_nest_; i < hlasm_ctx.copy_stack().size(); i++)
+		result_.nests.back().push_back(hlasm_ctx.copy_stack()[i].definition_location);
+}
+

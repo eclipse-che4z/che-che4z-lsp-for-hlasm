@@ -41,9 +41,9 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 }
 
 
-parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx)
+parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
-	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx);
+	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data);
 
 	return parse_inner(*analyzer_);
 }

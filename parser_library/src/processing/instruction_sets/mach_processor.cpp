@@ -46,7 +46,8 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		{
 			auto addr = hlasm_ctx.ord_ctx.align(context::no_align);
 
-			hlasm_ctx.ord_ctx.create_symbol(label_name, addr, context::symbol_attributes::make_machine_attrs(instr->size_for_alloc / 8));
+			hlasm_ctx.ord_ctx.create_symbol(label_name, addr, 
+				context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr->size_for_alloc / 8));
 
 			if (!addr.spaces.empty())
 				add_dependency(stmt.stmt_range_ref(), label_name, std::move(addr), nullptr);

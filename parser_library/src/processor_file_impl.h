@@ -17,7 +17,7 @@ public:
 	//starts parser with new (empty) context
 	parse_result parse(parse_lib_provider &);
 	//starts parser with in the context of parameter
-	parse_result parse(parse_lib_provider &, context::hlasm_context&);
+	parse_result parse(parse_lib_provider &, context::hlasm_context&, const library_data);
 
 	bool parse_info_updated() override;
 

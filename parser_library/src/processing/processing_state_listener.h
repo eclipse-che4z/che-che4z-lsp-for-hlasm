@@ -3,6 +3,7 @@
 
 #include "statement_processors/macrodef_processing_info.h"
 #include "statement_processors/lookahead_processing_info.h"
+#include "statement_processors/copy_processing_info.h"
 #include "../context/variable.h"
 
 namespace hlasm_plugin {
@@ -18,6 +19,9 @@ public:
 
 	virtual void start_lookahead(const lookahead_start_data start) = 0;
 	virtual void finish_lookahead(lookahead_processing_result result) = 0;
+
+	virtual void start_copy_member(const copy_start_data start) = 0;
+	virtual void finish_copy_member(copy_processing_result result) = 0;
 
 	virtual ~processing_state_listener() = default;
 };

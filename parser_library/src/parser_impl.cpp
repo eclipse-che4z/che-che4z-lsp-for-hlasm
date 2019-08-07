@@ -39,6 +39,12 @@ context::opencode_sequence_symbol::opencode_position parser_impl::statement_star
 	return { pos.line,pos.offset };
 }
 
+context::opencode_sequence_symbol::opencode_position parser_impl::statement_end() const
+{
+	auto pos = dynamic_cast<lexer&>(*_input->getTokenSource()).last_lln_end_position();
+	return { pos.line,pos.offset };
+}
+
 
 std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::reparse_operand_field(
 	context::hlasm_context* hlasm_ctx, std::string field, semantics::range_provider field_range, processing::processing_status status)

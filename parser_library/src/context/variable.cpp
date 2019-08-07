@@ -132,6 +132,20 @@ sequence_symbol::sequence_symbol(id_index name, const sequence_symbol_kind kind,
 opencode_sequence_symbol::opencode_sequence_symbol(id_index name, location loc, opencode_position statement_position,std::vector<copy_frame> copy_stack)
 	: sequence_symbol(name, sequence_symbol_kind::OPENCODE, std::move(loc)), statement_position(statement_position), copy_stack(std::move(copy_stack)) {}
 
+bool opencode_sequence_symbol::operator==(const opencode_sequence_symbol& oth) const
+{
+	if (!(statement_position == oth.statement_position && copy_stack.size() == oth.copy_stack.size()))
+		return false;
+
+	for (size_t i = 0; i < copy_stack.size(); i++)
+	{
+		if (!(copy_stack[i] == oth.copy_stack[i]))
+			return false;
+	}
+	
+	return true;
+}
+
 macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t statement_offset)
 	: sequence_symbol(name, sequence_symbol_kind::MACRO, std::move(loc)), statement_offset(statement_offset) {}
 
