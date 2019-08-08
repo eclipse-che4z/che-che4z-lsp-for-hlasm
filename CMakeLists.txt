@@ -210,6 +210,7 @@ add_subdirectory(language_server)
 add_subdirectory(dummy)
 add_subdirectory(clients)
 add_subdirectory(private_test)
+add_subdirectory(benchmark)
 
 add_dependencies(vsix language_server parser_library)
 
