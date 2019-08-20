@@ -155,8 +155,10 @@ function deleteLeft(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, info
     var selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? info.currentPosition.character - editor.selection.anchor.character : 1;
     // position of cursor after delete
     var newCursorPosition = new vscode.Position(info.currentPosition.line, info.currentPosition.character - ((selectionSize > 0 && info.currentPosition.character > 0) ? selectionSize : 0));
+    //end of selection
+    var endPos = (info.currentPosition.character < editor.selection.anchor.character) ? editor.selection.anchor.character : info.currentPosition.character;
     // there is a continuation and it is after our position, handle it
-    if (info.continuationOffset != -1 && info.currentPosition.character <= info.continuationOffset && info.currentPosition.character > 0 && editor.selection.isSingleLine) {
+    if (info.continuationOffset != -1 && endPos < info.continuationOffset && info.currentPosition.character > 0 && editor.selection.isSingleLine) {
         var beforeContinuationChars = new vscode.Range(info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), info.currentPosition.line, info.continuationOffset);
         edit.insert(beforeContinuationChars.end, " ".repeat(Math.abs(selectionSize)));
     }
@@ -317,17 +319,21 @@ vscode.commands.registerTextEditorCommand("removeContinuation", (editor: vscode.
  */
 
 const referenceInstructions =new RegExp("( |\\t)+(ICTL|\\*PROCESS|END|COND|IC|ICM|L|LA|LCR|LH|LHI|LM|LNR|LPR|LR|LTR|MVC|MVCL|MVI|ST|STC|STCM|STH|STM|A|AH|AHI|AL|ALR|AR|C|CH|CR|D|DR|M|MH|MHI|MR|S|SH|SL|SLR|SR|CL|CLC|CLCL|CLI|CLM|CLR|N|NC|NI|NR|O|OC|OI|OR|SLA|SLDA|SLDL|SLDA|SLL|SRA|SRDA|SRDL|SRL|TM|X|XC|XI|XR|BAL|BALR|BAS|BASR|BC|BCR|BCT|BCTR|BXH|BXLE|AP|CP|CVB|CVD|DP|ED|EDMK|MP|MVN|MVO|MVZ|PACK|SP|SRP|UNPK|ZAP|CDS|CS|EX|STCK|SVC|TR|TRT|TS|B|J|NOP|BE|BNE|BL|BNL|BH|BHL|BZ|BNZ|BM|BNM|AMODE|CSECT|DC|DS|DSECT|DROP|EJECT|END|EQU|LTORG|ORG|POP|PRINT|PUSH|RMODE|SPACE|USING|TITLE|BP|BNP|BO|BNO|ABEND|CALL|CLOSE|DCB|GET|OPEN|PUT|RETURN|SAVE|STORAGE|COPY|GBLC|GBLB|SETA|SETB|SETC)( |\\t)+");
+const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
 
 // when contents of a document change, issue a completion request
 vscode.workspace.onDidChangeTextDocument(event => {
-    if (event.contentChanges.length == 0)
+    if ( event.document.languageId != 'hlasm')
+        return;
+
+    const editor = vscode.window.activeTextEditor;
+    if (event.contentChanges.length == 0 || editor.document.languageId != "hlasm")
         return;
     const change = event.contentChanges[0].text;
-    const editor = vscode.window.activeTextEditor;
     var info = new LinePositionsInfo(editor);
     var currentLine = editor.document.getText(new vscode.Range(new vscode.Position(info.currentPosition.line, 0), info.currentPosition));
     var notContinued = info.currentPosition.line == 0 || highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
-    if (((currentLine != "" && isTrigger.test(change) && isInstruction.test(currentLine) && notContinued && currentLine[0] != "*") || change == "." || change == "&") && editor.document.languageId == "hlasm") {
+    if ((currentLine != "" && isTrigger.test(change) && isInstruction.test(currentLine) && notContinued && currentLine[0] != "*") || change == "." || change == "&") {
         vscode.commands.executeCommand(completeCommand);
     }
 })
@@ -335,12 +341,20 @@ vscode.workspace.onDidChangeTextDocument(event => {
 // when active editor changes, try to set a language for it
 vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
 {
-    setHlasmLanguage(editor.document);
+    if (editor != null)
+        setHlasmLanguage(editor.document);
 })
 
 // when any visible text editor changes, apply decorations for it
-vscode.window.onDidChangeVisibleTextEditors((editor: vscode.TextEditor[]) => {
-    highlight.applyDecorations();
+vscode.window.onDidChangeVisibleTextEditors((editors: vscode.TextEditor[]) => {
+    for (var i = 0; i < editors.length; i++)
+    {
+        if (editors[i].document.languageId == 'hlasm')
+        {
+            highlight.applyDecorations();
+            break;
+        }
+    };
 });
 
 //automatic detection function
@@ -349,11 +363,23 @@ function setHlasmLanguage(document: vscode.TextDocument) {
         var score = 0;
         var lines = 0;
         var lastContinued = false;
+        var first = true;
         //iterate line by line
         document.getText().split('\n').forEach(line => {
             // irrelevant line, remove from total count
             if (line != "" && (line[0] != "*" || (line.length > 1 && line[0] == "." && line[1] == "*"))) {
                 lines++;
+                if (first)
+                {
+                    //check whether the first line is MACRO and immediately set to hlasm
+                    if (macroInstruction.test(line.toUpperCase()))
+                    {
+                        vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+                        return;
+                    }
+                    else
+                        first = false;
+                }
                 //test if line contains reference instruction
                 if ((referenceInstructions.test(line.toUpperCase()) || lastContinued) && line.length <= 80) {
                     score++;

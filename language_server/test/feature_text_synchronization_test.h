@@ -85,4 +85,28 @@ TEST(feature, uri_to_path)
 	EXPECT_EQ(feature::uri_to_path("file://czprfs50/Public"), "\\\\czprfs50\\Public");
 	EXPECT_EQ(feature::uri_to_path("file:///C%3A/Public"), "c:\\Public");
 }
+
+TEST(feature, path_to_uri)
+{
+	using namespace hlasm_plugin::language_server;
+	EXPECT_EQ(feature::path_to_uri("\\\\czprfs50\\Public"), "file://czprfs50/Public");
+	EXPECT_EQ(feature::path_to_uri("c:\\Public"), "file:///c%3A/Public");
+}
+#else
+
+TEST(feature, uri_to_path)
+{
+	using namespace hlasm_plugin::language_server;
+	EXPECT_EQ(feature::uri_to_path("file:///home/user/somefile"), "/home/user/somefile");
+	EXPECT_EQ(feature::uri_to_path("file:///C%3A/Public"), "/C:/Public");
+}
+
+TEST(feature, path_to_uri)
+{
+	using namespace hlasm_plugin::language_server;
+	EXPECT_EQ(feature::path_to_uri("/home/user/somefile"), "file:///home/user/somefile");
+	EXPECT_EQ(feature::path_to_uri("/C:/Public"), "file:///C%3A/Public");
+}
+
 #endif // _WIN32
+

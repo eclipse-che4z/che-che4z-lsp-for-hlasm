@@ -55,12 +55,13 @@ std::string feature::path_to_uri(std::string path)
 	}
 
 #ifdef _WIN32
+	//in case of remote address such as \\server\path\to\file
 	if(uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')
 		uri.insert(0, "file:");
 	else
 		uri.insert(0, "file:///");
 #else
-	path.insert(0, "file://");
+	uri.insert(0, "file://");
 #endif // _WIN32
 
 	return uri;
