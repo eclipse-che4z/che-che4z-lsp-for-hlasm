@@ -8,7 +8,7 @@ set(JSON_EXTERNAL_ROOT ${CMAKE_BINARY_DIR}/externals/json)
 
 # external repository
 set(JSON_EXTERNAL_REPO "https://github.com/nlohmann/json.git")
-set(JSON_EXTERNAL_TAG  "910a895027b674df1366a473f4e6817683595eac")
+set(JSON_EXTERNAL_TAG  "v3.3.0")
 
 
 # download runtime environment
