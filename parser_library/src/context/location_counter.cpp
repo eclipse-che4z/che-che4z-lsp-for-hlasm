@@ -72,7 +72,7 @@ void location_counter::finish_layout(size_t offset)
 	assert(!(kind == loctr_kind::NONSTARTING) || (*spaces_[0]->name)[0] == 'B');
 
 	if (kind == loctr_kind::NONSTARTING)
-		space::resolve(spaces_[0], offset);
+		space::resolve(spaces_[0], (int)offset);
 
 	layuot_created_ = true;
 }

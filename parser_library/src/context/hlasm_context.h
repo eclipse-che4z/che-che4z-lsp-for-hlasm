@@ -22,6 +22,8 @@ namespace context {
 class hlasm_context;
 using ctx_ptr = std::unique_ptr<hlasm_context>;
 
+enum class data_attr_kind { T, L, S, I, K, N, D, O, UNKNOWN };
+
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
 //contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed code 
@@ -57,6 +59,9 @@ class hlasm_context
 
 	file_proc_stack proc_stack_;
 	std::vector<copy_member_invocation> copy_stack_;
+
+	size_t SYSNDX_;
+	void add_system_vars_to_scope();
 public:
 	hlasm_context(std::string file_name = "");
 
@@ -109,6 +114,9 @@ public:
 	//returns index to default string ("") if opcode was deleted by opsyn
 	//returns anything else if opcode was changed by opsyn
 	id_index get_mnemonic_opcode(id_index mnemo) const;
+
+	SET_t get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset = {});
+	SET_t get_data_attribute(data_attr_kind attribute, id_index symbol);
 
 	//creates specified global set symbol
 	template <typename T>

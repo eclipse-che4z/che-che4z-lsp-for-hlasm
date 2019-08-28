@@ -219,19 +219,18 @@ context::macro_data_ptr macrodef_processor::create_macro_data(const semantics::c
 {
 	context_manager mngr(hlasm_ctx);
 
-	if (chain.size() == 0 || chain.size() > 1 || (chain.size() == 1 && chain[0]->type != semantics::concat_type::SUB))
+	if(chain.size() == 0)
+		return std::make_unique<context::macro_param_data_dummy>();
+	else if (chain.size() > 1 || (chain.size() == 1 && chain[0]->type != semantics::concat_type::SUB))
 		return std::make_unique<context::macro_param_data_single>(mngr.concatenate_str(chain));
 
-	const auto& inner_chain = chain[0]->access_sub()->list;
+	const auto& inner_chains = chain[0]->access_sub()->list;
 
 	std::vector<context::macro_data_ptr> sublist;
 
-	for (auto& point : inner_chain)
+	for (auto& inner_chain : inner_chains)
 	{
-		semantics::concat_chain tmp_chain;
-		tmp_chain.push_back(semantics::concat_point_ptr(point.get()));
-		sublist.push_back(create_macro_data(tmp_chain,hlasm_ctx));
-		tmp_chain.back().release();
+		sublist.push_back(create_macro_data(inner_chain, hlasm_ctx));
 	}
 	return std::make_unique<context::macro_param_data_composite>(std::move(sublist));
 }

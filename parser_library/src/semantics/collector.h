@@ -33,7 +33,7 @@ public:
 	void set_instruction_field(concat_chain instr, range symbol_range);
 
 	void set_operand_remark_field(range symbol_range);
-	void set_operand_remark_field(std::string deferred, range symbol_range);
+	void set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range);
 	void set_operand_remark_field(std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range);
 
 	void add_lsp_symbol(lsp_symbol symbol);

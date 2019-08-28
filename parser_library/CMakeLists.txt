@@ -105,6 +105,7 @@ set(LIB_SRC
 	${PROJECT_SOURCE_DIR}/src/parser_error_listener.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
+	${PROJECT_SOURCE_DIR}/src/diagnostic_collector.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/asm_instr_check.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp

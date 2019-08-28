@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 #include <map>
+#include <functional>
 
 #include <vector>
 #include "id_storage.h"
@@ -49,6 +50,7 @@ const checking::parameter imm_16s = { true, 16, hlasm_plugin::parser_library::ch
 const checking::parameter imm_16u = { false, 16, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
 const checking::parameter imm_24s = { true, 24, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
 const checking::parameter imm_32s = { true, 32, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
+const checking::parameter imm_32u = { false, 32, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
 const checking::parameter vec_reg = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::VEC_REG };
 const checking::parameter reg_imm_12s = { true, 12, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
 const checking::parameter reg_imm_16s = { true, 16, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
@@ -79,6 +81,7 @@ const hlasm_plugin::parser_library::checking::machine_operand_format imm_16_U = 
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_12_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_12s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_16s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_32s, empty, empty);
+const hlasm_plugin::parser_library::checking::machine_operand_format imm_32_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_32u, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format vec_reg_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(vec_reg, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format db_12_8x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_8, base_);
 const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_4, base_);
@@ -86,19 +89,6 @@ const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_12_
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_16s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_24_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_24s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_32s, empty, empty);
-
-struct diag_range
-{
-public:
-	diagnostic_op diag;
-	range diagnostic_range;
-
-	diag_range() : diag(diagnostic_op::error_NOERR()), diagnostic_range(range()) {};
-	diag_range(diagnostic_op diag, range diagnostic_range) : diag(diag), diagnostic_range(diagnostic_range) {};
-
-	diag_range(diag_range&& d) noexcept :diag(d.diag), diagnostic_range(std::move(d.diagnostic_range)) {};
-	diag_range(const diag_range& d) : diag(d.diag), diagnostic_range(std::move(d.diagnostic_range)) {};
-};
 
 class machine_instruction
 {
@@ -115,14 +105,15 @@ public:
 	machine_instruction(const std::string& name, mach_format format, std::vector<checking::machine_operand_format> operands, size_t size, size_t page_no)
 		:machine_instruction(name, format, operands, 0, size, page_no) {}
 
-	virtual bool check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> operands); //input vector is the vector of the actual incoming values
+	virtual bool check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> operands, const range& stmt_range, const diagnostic_collector& add_diagnostic); //input vector is the vector of the actual incoming values
 
 	//std::vector<diag_range> & get_diagnostics();
 	void clear_diagnostics();
-
-	std::vector<diag_range> diagnostics;
-
+	std::vector<diagnostic_op> diagnostics;
 	virtual ~machine_instruction() = default;
+
+protected:
+	void add_diagnostic(diagnostic_op diag);
 };
 
 using machine_instruction_ptr = std::unique_ptr<machine_instruction>;

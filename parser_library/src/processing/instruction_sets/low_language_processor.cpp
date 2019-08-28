@@ -7,7 +7,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_field_reparser& parser)
+low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_fields_parser& parser)
 	:instruction_processor(hlasm_ctx), provider(provider),parser(parser)  {}
 
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
@@ -42,7 +42,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 		break;
 	case semantics::label_si_type::VAR:
 		new_label = mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value)).template to<context::C_t>();
-		if (new_label.empty())
+		if (new_label.empty() || new_label[0]==' ')
 			label.emplace(stmt.label_ref().field_range);
 		else
 			label.emplace(stmt.label_ref().field_range, std::move(new_label));
@@ -62,9 +62,10 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	{
 		assert(stmt.operands_ref().value.size() == 1);
 		std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain));
-		operands.emplace(parser.reparse_operand_field(
+		operands.emplace(parser.parse_operand_field(
 			&hlasm_ctx,
 			std::move(field),
+			true,
 			semantics::range_provider(stmt.operands_ref().value[0]->operand_range,true),
 			*ordinary_processor::get_instruction_processing_status(stmt.opcode.value, hlasm_ctx)).first);
 	}
@@ -78,18 +79,9 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	return std::make_pair(std::move(label), std::move(operands));
 }
 
-void add_diag_(diagnostic_s diag, diagnosable& diagnoser, const context::hlasm_statement& stmt)
-{
-	auto diagnoser_ctx = dynamic_cast<diagnosable_ctx*>(&diagnoser);
-	auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
 
-	if (diagnoser_ctx && postponed_stmt)
-		diagnoser_ctx->add_diagnostic(std::move(diag), postponed_stmt->location_stack());
-	else
-		diagnoser.add_diagnostic(std::move(diag));
-}
-
-low_language_processor::transform_result low_language_processor::transform_mnemonic(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser)
+low_language_processor::transform_result low_language_processor::transform_mnemonic(
+	const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
 {
 	// operands obtained from the user
 	const auto& operands = stmt.operands_ref().value;
@@ -107,11 +99,10 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	if (std::abs(diff) > curr_instr->get()->no_optional)
 	{
 		auto curr_diag = 
-			diagnostic_op::error_optional_number_of_operands(curr_instr->get()->instr_name, curr_instr->get()->no_optional, (int)curr_instr->get()->operands.size() - (int)mnemonic.replaced.size());
-		auto range = stmt.stmt_range_ref();
-		diagnoser.add_diagnostic(diagnostic_s{ "",range,
-		curr_diag.severity, std::move(curr_diag.code),
-		"HLASM Plugin", std::move(curr_diag.message), {} });
+			diagnostic_op::error_optional_number_of_operands(
+				instr_name, curr_instr->get()->no_optional, (int)curr_instr->get()->operands.size() - (int)mnemonic.replaced.size(), stmt.stmt_range_ref());
+
+		add_diagnostic(curr_diag);
 		return std::nullopt;
 	}
 
@@ -127,25 +118,23 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	for (size_t i = 0; i < mnemonic.replaced.size(); i++)
 		operand_vector[mnemonic.replaced[i].first] = std::move(substituted_mnems[i]);
 	// add other
-	for (size_t i = 0; i < operands.size(); i++)
+	size_t real_op_idx = 0;
+	for (size_t j = 0; j < operand_vector.size() && real_op_idx < operands.size(); j++)
 	{
-		auto& operand = operands[i];
-		for (size_t j = 0; j < operand_vector.size(); j++)
+		if (operand_vector[j] == nullptr)
 		{
-			if (operand_vector[j] == nullptr)
+			auto& operand = operands[real_op_idx++];
+			if (operand->type == semantics::operand_type::EMPTY || operand->type == semantics::operand_type::UNDEF) // if operand is empty
 			{
-				// if operand is empty
-				if (operand->type == semantics::operand_type::EMPTY || operand->type == semantics::operand_type::UNDEF)
-				{
-					operand_vector[j] = std::make_unique<checking::empty_operand>();
-					operand_vector.at(operand_vector.size() - 1)->operand_range = operand->operand_range;
-					continue;
-				}
-
-				auto uniq = get_check_op(operand.get(), hlasm_ctx, diagnoser, stmt);
-
+				operand_vector[j] = std::make_unique<checking::empty_operand>();
+				operand_vector[j]->operand_range = operand->operand_range;
+			}
+			else // if operand is not empty
+			{
+				auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic.instruction);
 				if (!uniq) return std::nullopt; //contains dependencies
 
+				uniq->operand_range = operand.get()->operand_range;
 				operand_vector[j] = std::move(uniq);
 			}
 		}
@@ -153,7 +142,8 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	return operand_vector;
 }
 
-low_language_processor::transform_result low_language_processor::transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser)
+low_language_processor::transform_result low_language_processor::transform_default(
+	const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
 {
 	std::vector<checking::check_op_ptr> operand_vector;
 	for (auto& op : stmt.operands_ref().value)
@@ -162,20 +152,23 @@ low_language_processor::transform_result low_language_processor::transform_defau
 		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
 		{
 			operand_vector.push_back(std::make_unique<checking::empty_operand>());
-
+			operand_vector.back()->operand_range = op->operand_range;
 			continue;
 		}
 
-		auto uniq = get_check_op(op.get(), hlasm_ctx, diagnoser, stmt);
+		auto uniq = get_check_op(op.get(), hlasm_ctx, add_diagnostic, stmt, operand_vector.size());
 
 		if (!uniq) return std::nullopt;//contains dependencies
-
+		
+		uniq->operand_range = op.get()->operand_range;
 		operand_vector.push_back(std::move(uniq));
 	}
 	return operand_vector;
 }
 
-checking::check_op_ptr low_language_processor::get_check_op(const semantics::operand* op, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser, const resolved_statement& stmt)
+checking::check_op_ptr low_language_processor::get_check_op(
+	const semantics::operand* op, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic, const resolved_statement& stmt,
+	size_t op_position, const std::string* mnemonic)
 {
 	auto ev_op = dynamic_cast<const semantics::evaluable_operand*>(op);
 	assert(ev_op);
@@ -185,15 +178,27 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
 	if (can_have_ord_syms && ev_op->has_dependencies(hlasm_ctx.ord_ctx))
 	{
-		add_diag_(diagnostic_s::error_E010("", "ordinary symbol", ev_op->operand_range), diagnoser, stmt);
+		auto d_s = diagnostic_s::error_E010("", "ordinary symbol", ev_op->operand_range);
+		add_diagnostic(diagnostic_op(d_s.severity, d_s.code, d_s.message, d_s.diag_range));
 		return nullptr;
 	}
 
-	auto uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+	checking::check_op_ptr uniq;
+
+	if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(ev_op))
+	{
+		auto type = context::instruction::machine_instructions
+			.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)->operands[op_position].identifier.type;
+		uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
+	}
+	else
+	{
+		uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+	}
 
 	ev_op->collect_diags();
 	for (auto& diag : ev_op->diags())
-		add_diag_(std::move(diag), diagnoser, stmt);
+		add_diagnostic(diagnostic_op(diag.severity, diag.code, diag.message, diag.diag_range));
 	ev_op->diags().clear();
 
 	return uniq;
@@ -201,8 +206,10 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
 void low_language_processor::check(const resolved_statement& stmt,context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable& diagnoser)
 {
-	auto empty_asm_op = checking::one_operand();
-	auto empty_mach_op = checking::empty_operand();
+	auto diagnoser_ctx = dynamic_cast<diagnosable_ctx*>(&diagnoser);
+	auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
+	diagnostic_collector collector(diagnoser_ctx,
+		postponed_stmt ? postponed_stmt->location_stack() : hlasm_ctx.processing_stack());
 
 	std::vector<const checking::operand*> operand_ptr_vector;
 	transform_result operand_vector;
@@ -212,12 +219,13 @@ void low_language_processor::check(const resolved_statement& stmt,context::hlasm
 
 	if (mnem_tmp != context::instruction::mnemonic_codes.end())
 	{
-		operand_vector = transform_mnemonic(stmt, hlasm_ctx, diagnoser);
-		instruction_name = &mnem_tmp->second.instruction;
+		operand_vector = transform_mnemonic(stmt, hlasm_ctx, collector);
+		// save the actual mnemonic name
+		instruction_name = &mnem_tmp->first;
 	}
 	else
 	{
-		operand_vector = transform_default(stmt, hlasm_ctx, diagnoser);
+		operand_vector = transform_default(stmt, hlasm_ctx, collector);
 		instruction_name = stmt.opcode_ref().value;
 	}
 
@@ -227,21 +235,5 @@ void low_language_processor::check(const resolved_statement& stmt,context::hlasm
 	for (const auto& op : *operand_vector)
 		operand_ptr_vector.push_back(op.get());
 
-	checker.check(*instruction_name, operand_ptr_vector);
-
-	auto diags = checker.get_diagnostics();
-	auto range = stmt.stmt_range_ref();
-	for (auto diag : diags)
-	{
-		if (diagnostic_op::is_error(*diag))
-		{
-			add_diag_(
-				diagnostic_s{ "",range,
-					diag->severity, std::move(diag->code),
-					"HLASM Plugin", std::move(diag->message), {} },
-				diagnoser, stmt);
-		}
-	}
-
-	checker.clear_diagnostics();
+	checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }

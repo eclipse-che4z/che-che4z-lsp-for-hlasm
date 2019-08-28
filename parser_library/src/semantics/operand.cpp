@@ -60,14 +60,24 @@ address_machine_operand* machine_operand::access_address()
 	return kind == mach_kind::EXPR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
-std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info, expressions::mach_expression & expr)
+std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info, expressions::mach_expression & expr, std::optional<checking::machine_operand_type> type_hint = std::nullopt)
 {
-	//TODO get_abs get_reloc
 	auto res = expr.evaluate(info);
-	if(res.value_kind() == context::symbol_kind::ABS)
+	if (res.value_kind() == context::symbol_kind::ABS)
+	{
 		return std::make_unique<checking::one_operand>(res.get_abs());
+	}
 	else
-		return std::make_unique<checking::address_operand>(checking::address_state::UNRES,0,0,0);
+	{
+		if (type_hint && *type_hint == checking::machine_operand_type::REG_IMM)
+		{
+			return std::make_unique<checking::one_operand>(0);
+		}
+		else
+		{
+			return std::make_unique<checking::address_operand>(checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
+		}
+	}
 }
 
 //***************** expr_machine_operand *********************
@@ -75,14 +85,14 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
 expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range) 
 	:  evaluable_operand(operand_type::MACH, std::move(operand_range)), machine_operand(mach_kind::EXPR), simple_expr_operand(std::move(expression)) {}
 
-bool expr_machine_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
-{
-	return expression->get_dependencies(info).contains_dependencies();
-}
-
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
 	return make_check_operand(info, *expression);
+}
+
+std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
+{
+	return make_check_operand(info, *expression, type_hint);
 }
 
 void expr_machine_operand::collect_diags() const
@@ -96,12 +106,14 @@ address_machine_operand::address_machine_operand(
 	expressions::mach_expr_ptr displacement,
 	expressions::mach_expr_ptr first_par, 
 	expressions::mach_expr_ptr second_par, 
-	const range operand_range)
+	const range operand_range,
+	checking::operand_state state)
 	: evaluable_operand(operand_type::MACH,std::move(operand_range)),
 	machine_operand(mach_kind::ADDR),
 	displacement(std::move(displacement)),
 	first_par(std::move(first_par)),
-	second_par(std::move(second_par)) {}
+	second_par(std::move(second_par)),
+	state(std::move(state)) {}
 
 bool address_machine_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
 {
@@ -111,6 +123,17 @@ bool address_machine_operand::has_dependencies(hlasm_plugin::parser_library::exp
 			: displacement->get_dependencies(info).contains_dependencies() ||  first_par->get_dependencies(info).contains_dependencies() //D(B)
 			)
 		: displacement->get_dependencies(info).contains_dependencies()|| second_par->get_dependencies(info).contains_dependencies(); //D(,B)
+}
+
+std::vector<context::resolvable*> address_machine_operand::get_resolvables() const
+{
+	std::vector<context::resolvable*> res;
+
+	res.push_back(&*displacement);
+	if (first_par) res.push_back(&*first_par);
+	if (second_par) res.push_back(&*second_par);
+	
+	return res;
 }
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
@@ -131,12 +154,18 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(ex
 		second_v = second.value_kind() == context::symbol_kind::ABS ? second.get_abs() : 0;
 	}
 
-	return first_par ?
-		(second_par ?
-			std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, first_v, second_v) //D(B1,B2)
-			: std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, 0, first_v) //D(B)
-		)
-		: std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, 0, second_v); //D(,B)
+	if (first_par && second_par) // both defined
+		return std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, first_v, second_v); //D(B1,B2)
+	if (first_par) // only first defined
+		return std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, first_v, 0, state); //D(B1,)
+	if (second_par) //only second defined
+		return std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, 0, second_v, state); //D(B) or D(,B)
+	return std::make_unique<checking::address_operand>(checking::address_state::UNRES, displ_v, 0, 0, state); //D(,)
+}
+
+std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(expressions::mach_evaluate_info info, checking::machine_operand_type ) const
+{
+	return get_operand_value(info);
 }
 
 void address_machine_operand::collect_diags() const
@@ -176,11 +205,6 @@ string_assembler_operand* assembler_operand::access_string()
 expr_assembler_operand::expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range)
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::EXPR), simple_expr_operand(std::move(expression)),value_(std::move(string_value)) {}
 
-bool expr_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
-{
-	return expression->get_dependencies(info).contains_dependencies();
-}
-
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
 	auto res = expression->evaluate(info);
@@ -191,7 +215,7 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(exp
 	case context::symbol_kind::ABS:
 		return std::make_unique<checking::one_operand>(value_, res.get_abs());
 	case context::symbol_kind::RELOC:
-		return std::make_unique<checking::address_operand>(checking::address_state::UNRES, 0, 0, 0);
+		return std::make_unique<checking::one_operand>("0", 0);
 	default:
 		assert(false);
 		return std::make_unique<checking::empty_operand>();
@@ -213,6 +237,11 @@ bool end_instr_assembler_operand::has_dependencies(hlasm_plugin::parser_library:
 	return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
 }
 
+std::vector<context::resolvable*> end_instr_assembler_operand::get_resolvables() const
+{
+	return { &*base,&*end };
+}
+
 std::unique_ptr<checking::operand> end_instr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
 	std::vector<std::unique_ptr<checking::asm_operand>> pair;
@@ -229,11 +258,16 @@ void end_instr_assembler_operand::collect_diags() const
 
 //***************** complex_assempler_operand *********************
 complex_assembler_operand::complex_assembler_operand(std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range)
-	:  evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::COMPLEX), value(identifier,std::move(values)) {}
+	:  evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::COMPLEX), value(identifier,std::move(values),operand_range) {}
 
 bool complex_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info) const
 {
 	return false;
+}
+
+std::vector<context::resolvable*> complex_assembler_operand::get_resolvables() const
+{
+	return std::vector<context::resolvable*>();
 }
 
 std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
@@ -290,6 +324,16 @@ const branch_ca_operand* ca_operand::access_branch() const
 simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
 	: expression(std::move(expression)) {}
 
+bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
+{
+	return expression->get_dependencies(info).contains_dependencies();
+}
+
+std::vector<context::resolvable*> simple_expr_operand::get_resolvables() const
+{
+	return { &*expression };
+}
+
 var_ca_operand::var_ca_operand(vs_ptr variable_symbol, const range operand_range)
 	: ca_operand(ca_kind::VAR, std::move(operand_range)), variable_symbol(std::move(variable_symbol)) {}
 
@@ -316,6 +360,11 @@ data_def_operand::data_def_operand(expressions::data_definition val, const range
 bool data_def_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
 	return value->get_dependencies(info).contains_dependencies();
+}
+
+std::vector<context::resolvable*> data_def_operand::get_resolvables() const
+{
+	return std::vector<context::resolvable*>();
 }
 
 checking::data_def_field<checking::data_definition_operand::num_t> set_data_def_field(const expressions::mach_expression * e, expressions::mach_evaluate_info info)
@@ -363,9 +412,14 @@ undefined_operand::undefined_operand(const range operand_range)
 string_assembler_operand::string_assembler_operand(std::string value, const range operand_range)
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::STRING), value(std::move(value)) {}
 
-bool hlasm_plugin::parser_library::semantics::string_assembler_operand::has_dependencies(expressions::mach_evaluate_info ) const
+bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info ) const
 {
 	return false;
+}
+
+std::vector<context::resolvable*> string_assembler_operand::get_resolvables() const
+{
+	return std::vector<context::resolvable*>();
 }
 
 std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info ) const
@@ -373,4 +427,4 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
 	return std::make_unique<checking::one_operand>("'" + value + "'");
 }
 
-void hlasm_plugin::parser_library::semantics::string_assembler_operand::collect_diags() const { }
+void string_assembler_operand::collect_diags() const { }

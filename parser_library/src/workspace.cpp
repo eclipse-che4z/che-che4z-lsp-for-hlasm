@@ -145,6 +145,9 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 
 	//proc_grps.json parse
 	file * proc_grps_file = file_manager_.add_file((ws_path / FILENAME_PROC_GRPS).string());
+	
+	if (proc_grps_file->update_and_get_bad())
+		return false;
 
 	json proc_grps_json;
 	try
@@ -189,7 +192,9 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 
 	//pgm_conf.json parse
 	file * pgm_conf_file = file_manager_.add_file((ws_path / FILENAME_PGM_CONF).string());
-	//files_.emplace(pgm_conf_file->get_file_name(), &pgm_conf_file);
+
+	if (pgm_conf_file->update_and_get_bad())
+		return false;
 
 	json pgm_conf_json;
 

@@ -18,7 +18,7 @@ class file : public virtual diagnosable
 public:
 	virtual const file_uri & get_file_name() = 0;
 	virtual const std::string & get_text() = 0;
-	virtual bool is_bad() const = 0;
+	virtual bool update_and_get_bad() = 0;
 
 	virtual version_t get_version() = 0;
 

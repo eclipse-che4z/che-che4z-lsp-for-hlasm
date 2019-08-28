@@ -47,6 +47,15 @@ void character_expression::append(std::string v)
 	value_.append(v);
 }
 
+std::string ebcdic_string_transform(const std::string& str)
+{
+	std::string tmp;
+	tmp.reserve(str.size());
+	for (auto ch : str)
+		tmp.push_back(ebcdic_encoding::a2e[ch]);
+	return tmp;
+}
+
 expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2) const
 {
 	std::string o = operation;
@@ -71,25 +80,26 @@ expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2
 	if (o == "LE")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ <= b);
+
+		return make_logic(ebcdic_string_transform(value_) <= ebcdic_string_transform(b));
 	}
 
 	if (o == "LT")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ < b);
+		return make_logic(ebcdic_string_transform(value_) < ebcdic_string_transform(b));
 	}
 
 	if (o == "GT")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ > b);
+		return make_logic(ebcdic_string_transform(value_) > ebcdic_string_transform(b));
 	}
 
 	if (o == "GE")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ >= b);
+		return make_logic(ebcdic_string_transform(value_) >= ebcdic_string_transform(b));
 	}
 
 	if (value_.empty() || b.empty())

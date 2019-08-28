@@ -8,6 +8,7 @@
 #include "shared/input_source.h"
 #include "../src/analyzer.h"
 #include "../src/processing/context_manager.h"
+#include "../src/processing/instruction_sets/macro_processor.h"
 
 
 using namespace hlasm_plugin::parser_library;

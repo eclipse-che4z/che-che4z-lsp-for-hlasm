@@ -142,7 +142,7 @@ const std::map<const std::string, assembler_instruction> instruction::assembler_
 	{ "MNOTE", {1,2, false} },
 	{ "OPSYN", {0,1, true} },
 	{ "ORG", {0,3, true} },
-	{ "POP", {1,4, true} },
+	{ "POP", {1,4, false} },
 	{ "PRINT", {1,-1, false } },
 	{ "PUNCH", {1,1, false} },
 	{ "PUSH", {1,4, false} },
@@ -157,15 +157,13 @@ const std::map<const std::string, assembler_instruction> instruction::assembler_
 	{ "XATTR", {1,-1, false} }
 }};
 
-bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check)
+bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic)
 {
 	// check size of operands
 	int diff = operands.size() - to_check.size();
 	if (diff > no_optional || diff < 0)
 	{
-		auto diag = diagnostic_op::error_optional_number_of_operands(name_of_instruction, no_optional, operands.size());
-		diag_range curr_diag = diag_range(diag, range());
-		diagnostics.push_back(curr_diag);
+		add_diagnostic(diagnostic_op::error_optional_number_of_operands(name_of_instruction, no_optional, operands.size(), stmt_range));
 		return false;
 	}
 	bool error = false;
@@ -173,20 +171,18 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
 	{
 		if ((to_check[i]) != nullptr)
 		{
-			diag_range diagnostic;
-			if (!(*to_check[i]).check(diagnostic.diag, operands[i], name_of_instruction))
+			diagnostic_op diag;
+			if (!(*to_check[i]).check(diag, operands[i], name_of_instruction, stmt_range))
 			{
-				diagnostic.diagnostic_range = (*to_check[i]).operand_range;
-				diagnostics.push_back(std::move(diagnostic));
+				add_diagnostic(diag);
 				error = true;
 			}
 		}
 		else
 		{
 			hlasm_plugin::parser_library::checking::machine_operand temp;
-			auto diag = temp.get_address_operand_expected(operands[i], name_of_instruction);
-			diag_range curr_diag = diag_range(diag, range());
-			diagnostics.push_back(curr_diag);
+			temp.operand_range = stmt_range;
+			add_diagnostic(temp.get_address_operand_expected(operands[i], name_of_instruction, stmt_range));
 			error = true;
 		}
 	};
@@ -204,9 +200,9 @@ public:
 	vnot_instruction(const std::string& name, mach_format format, std::vector<machine_operand_format> operands, size_t size, size_t page_no)
 		:machine_instruction(name, format, operands, size, page_no, 0) {}
 
-	virtual bool check(const std::string& name_of_instruction,const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check) override
+	virtual bool check(const std::string& name_of_instruction,const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic) override
 	{
-		if (!machine_instruction::check(name_of_instruction, to_check))
+		if (!machine_instruction::check(name_of_instruction, to_check, stmt_range, add_diagnostic))
 			return false;
 		if (to_check.size() == 3)
 		{
@@ -218,7 +214,7 @@ public:
 					return true;
 				else
 				{
-					diagnostics.push_back(diag_range(diagnostic_op::error_M200(name_of_instruction), range()));
+					add_diagnostic(diagnostic_op::error_M200(name_of_instruction, stmt_range));
 					return false;
 				}
 			}
@@ -227,7 +223,7 @@ public:
 				assert(false);
 			}
 		}
-		diagnostics.push_back(diag_range(diagnostic_op::error_M000(name_of_instruction, operands.size()), range()));
+		add_diagnostic(diagnostic_op::error_M000(name_of_instruction, operands.size(), stmt_range));
 		return false;
 	}
 };
@@ -288,15 +284,15 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("N", std::make_unique<machine_instruction>("N", mach_format::RX_a, std::vector<machine_operand_format>{ reg_4_U, dxb_12_4x4_U }, 32, 517)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("NY", std::make_unique<machine_instruction>("NY", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 517)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("NG", std::make_unique<machine_instruction>("NG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 517)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NI", std::make_unique<machine_instruction>("NI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 32, 517)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIY", std::make_unique<machine_instruction>("NIY", mach_format::SIY, std::vector<machine_operand_format>{db_20_4_S, imm_8_S }, 48, 518)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NI", std::make_unique<machine_instruction>("NI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 32, 517)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIY", std::make_unique<machine_instruction>("NIY", mach_format::SIY, std::vector<machine_operand_format>{db_20_4_S, imm_8_U }, 48, 518)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("NC", std::make_unique<machine_instruction>("NC", mach_format::SS_a, std::vector<machine_operand_format>{ db_12_8x4L_U, db_12_4_U }, 48, 518)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHF", std::make_unique<machine_instruction>("NIHF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 48, 518)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHH", std::make_unique<machine_instruction>("NIHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 518)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHL", std::make_unique<machine_instruction>("NIHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 518)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILF", std::make_unique<machine_instruction>("NILF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 48, 519)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILH", std::make_unique<machine_instruction>("NILH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 519)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILL", std::make_unique<machine_instruction>("NILL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 519)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHF", std::make_unique<machine_instruction>("NIHF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_U }, 48, 518)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHH", std::make_unique<machine_instruction>("NIHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 518)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NIHL", std::make_unique<machine_instruction>("NIHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 518)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILF", std::make_unique<machine_instruction>("NILF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_U }, 48, 519)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILH", std::make_unique<machine_instruction>("NILH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 519)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("NILL", std::make_unique<machine_instruction>("NILL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 519)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("BALR", std::make_unique<machine_instruction>("BALR", mach_format::RR, std::vector<machine_operand_format>{ reg_4_U, reg_4_U }, 16, 519)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("BAL", std::make_unique<machine_instruction>("BAL", mach_format::RX_a, std::vector<machine_operand_format>{reg_4_U, dxb_12_4x4_U }, 32, 519)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("BASR", std::make_unique<machine_instruction>("BASR", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 520)));
@@ -390,11 +386,11 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLC", std::make_unique<machine_instruction>("CLC", mach_format::SS_a, std::vector<machine_operand_format>{ db_12_8x4L_U, db_12_4_U, }, 48, 636)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLFI", std::make_unique<machine_instruction>("CLFI", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 48, 636)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLGFI", std::make_unique<machine_instruction>("CLGFI", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 32, 636)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLI", std::make_unique<machine_instruction>("CLI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 48, 636)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLIY", std::make_unique<machine_instruction>("CLIY", mach_format::SIY, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 48, 636)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLFHSI", std::make_unique<machine_instruction>("CLFHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 636)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLGHSI", std::make_unique<machine_instruction>("CLGHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 636)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLHHSI", std::make_unique<machine_instruction>("CLHHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 636)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLI", std::make_unique<machine_instruction>("CLI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 48, 636)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLIY", std::make_unique<machine_instruction>("CLIY", mach_format::SIY, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 48, 636)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLFHSI", std::make_unique<machine_instruction>("CLFHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_U  }, 48, 636)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLGHSI", std::make_unique<machine_instruction>("CLGHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_U  }, 48, 636)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLHHSI", std::make_unique<machine_instruction>("CLHHSI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_U  }, 48, 636)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLRL", std::make_unique<machine_instruction>("CLRL", mach_format::RIL_b, std::vector<machine_operand_format>{reg_4_U, reg_imm_32_S }, 48, 637)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLGRL", std::make_unique<machine_instruction>("CLGRL", mach_format::RIL_b, std::vector<machine_operand_format>{reg_4_U, reg_imm_32_S }, 48, 637)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("CLGFRL", std::make_unique<machine_instruction>("CLGFRL", mach_format::RIL_b, std::vector<machine_operand_format>{reg_4_U, reg_imm_32_S }, 48, 637)));
@@ -480,12 +476,12 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("ICM", std::make_unique<machine_instruction>("ICM", mach_format::RS_b, std::vector<machine_operand_format>{reg_4_U, mask_4_U, db_12_4_U  }, 32, 746)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("ICMY", std::make_unique<machine_instruction>("ICMY", mach_format::RSY_b, std::vector<machine_operand_format>{reg_4_U, mask_4_U, db_20_4_S }, 48, 746)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("ICMH", std::make_unique<machine_instruction>("ICMH", mach_format::RSY_b, std::vector<machine_operand_format>{reg_4_U, mask_4_U, db_20_4_S }, 48, 746)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHF", std::make_unique<machine_instruction>("IIHF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 48, 747)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHH", std::make_unique<machine_instruction>("IIHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 747)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHL", std::make_unique<machine_instruction>("IIHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 747)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILF", std::make_unique<machine_instruction>("IILF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 48, 747)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILH", std::make_unique<machine_instruction>("IILH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 747)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILL", std::make_unique<machine_instruction>("IILL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHF", std::make_unique<machine_instruction>("IIHF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_U }, 48, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHH", std::make_unique<machine_instruction>("IIHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IIHL", std::make_unique<machine_instruction>("IIHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILF", std::make_unique<machine_instruction>("IILF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_U }, 48, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILH", std::make_unique<machine_instruction>("IILH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 747)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("IILL", std::make_unique<machine_instruction>("IILL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 747)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("IPM", std::make_unique<machine_instruction>("IPM", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U }, 32, 748)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LR", std::make_unique<machine_instruction>("LR", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 748)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LGR", std::make_unique<machine_instruction>("LGR", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 748)));
@@ -518,13 +514,13 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTR", std::make_unique<machine_instruction>("LTR", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 754)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTGR", std::make_unique<machine_instruction>("LTGR", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 32, 754)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTGFR", std::make_unique<machine_instruction>("LTGFR", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 32, 754)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LT", std::make_unique<machine_instruction>("LT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTG", std::make_unique<machine_instruction>("LTG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTGF", std::make_unique<machine_instruction>("LTGF", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LAT", std::make_unique<machine_instruction>("LAT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LGAT", std::make_unique<machine_instruction>("LGAT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LZRF", std::make_unique<machine_instruction>("LZRF", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("LZRG", std::make_unique<machine_instruction>("LZRG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, db_20_4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LT", std::make_unique<machine_instruction>("LT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTG", std::make_unique<machine_instruction>("LTG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LTGF", std::make_unique<machine_instruction>("LTGF", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LAT", std::make_unique<machine_instruction>("LAT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LGAT", std::make_unique<machine_instruction>("LGAT", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LZRF", std::make_unique<machine_instruction>("LZRF", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("LZRG", std::make_unique<machine_instruction>("LZRG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 755)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LBR", std::make_unique<machine_instruction>("LBR", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 32, 756)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LGBR", std::make_unique<machine_instruction>("LGBR", mach_format::RRE, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 32, 756)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("LB", std::make_unique<machine_instruction>("LB", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 756)));
@@ -608,8 +604,8 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVHHI", std::make_unique<machine_instruction>("MVHHI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 773)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVHI", std::make_unique<machine_instruction>("MVHI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 773)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVGHI", std::make_unique<machine_instruction>("MVGHI", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 773)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVI", std::make_unique<machine_instruction>("MVI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 32, 773)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVIY", std::make_unique<machine_instruction>("MVIY", mach_format::SIY, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 48, 773)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVI", std::make_unique<machine_instruction>("MVI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 32, 773)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVIY", std::make_unique<machine_instruction>("MVIY", mach_format::SIY, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 48, 773)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVCIN", std::make_unique<machine_instruction>("MVCIN", mach_format::SS_a, std::vector<machine_operand_format>{ db_12_8x4L_U, db_12_4_U }, 48, 774)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVCL", std::make_unique<machine_instruction>("MVCL", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 774)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("MVCLE", std::make_unique<machine_instruction>("MVCLE", mach_format::RS_a, std::vector<machine_operand_format>{reg_4_U, reg_4_U, db_12_4_U }, 32, 778)));
@@ -654,8 +650,8 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("O", std::make_unique<machine_instruction>("O", mach_format::RX_a, std::vector<machine_operand_format>{ reg_4_U, dxb_12_4x4_U }, 32, 794)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("OY", std::make_unique<machine_instruction>("OY", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 32, 794)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("OG", std::make_unique<machine_instruction>("OG", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 795)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("OI", std::make_unique<machine_instruction>("OI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 48, 795)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("OIY", std::make_unique<machine_instruction>("OIY", mach_format::SIY, std::vector<machine_operand_format>{ db_20_4_S, imm_8_S }, 48, 795)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("OI", std::make_unique<machine_instruction>("OI", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 48, 795)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("OIY", std::make_unique<machine_instruction>("OIY", mach_format::SIY, std::vector<machine_operand_format>{ db_20_4_S, imm_8_U }, 48, 795)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("OC", std::make_unique<machine_instruction>("OC", mach_format::SS_a, std::vector<machine_operand_format>{ db_12_8x4L_U, db_12_4_U }, 48, 795)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("OIHF", std::make_unique<machine_instruction>("OIHF", mach_format::RIL_a, std::vector<machine_operand_format>{reg_4_U, imm_32_S }, 32, 796)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("OIHH", std::make_unique<machine_instruction>("OIHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 796)));
@@ -774,14 +770,14 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("SVC", std::make_unique<machine_instruction>("SVC", mach_format::I, std::vector<machine_operand_format>{imm_8_U }, 16, 876)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TS", std::make_unique<machine_instruction>("TS", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U }, 32, 876)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TAM", std::make_unique<machine_instruction>("TAM", mach_format::E, std::vector<machine_operand_format>{ }, 16, 876)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TM", std::make_unique<machine_instruction>("TM", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_S }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMY", std::make_unique<machine_instruction>("TMY", mach_format::SIY, std::vector<machine_operand_format>{db_20_4_S, imm_8_S }, 48, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMHH", std::make_unique<machine_instruction>("TMHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMHL", std::make_unique<machine_instruction>("TMHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMH", std::make_unique<machine_instruction>("TMH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMLH", std::make_unique<machine_instruction>("TMLH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TML", std::make_unique<machine_instruction>("TML", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMLL", std::make_unique<machine_instruction>("TMLL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TM", std::make_unique<machine_instruction>("TM", mach_format::SI, std::vector<machine_operand_format>{db_12_4_U, imm_8_U }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMY", std::make_unique<machine_instruction>("TMY", mach_format::SIY, std::vector<machine_operand_format>{db_20_4_S, imm_8_U }, 48, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMHH", std::make_unique<machine_instruction>("TMHH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMHL", std::make_unique<machine_instruction>("TMHL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMH", std::make_unique<machine_instruction>("TMH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMLH", std::make_unique<machine_instruction>("TMLH", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TML", std::make_unique<machine_instruction>("TML", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("TMLL", std::make_unique<machine_instruction>("TMLL", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_U  }, 32, 877)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TABORT", std::make_unique<machine_instruction>("TABORT", mach_format::S, std::vector<machine_operand_format>{db_12_4_U }, 32, 878)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TBEGIN", std::make_unique<machine_instruction>("TBEGIN", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 879)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TBEGINC", std::make_unique<machine_instruction>("TBEGINC", mach_format::SIL, std::vector<machine_operand_format>{db_12_4_U, imm_16_S  }, 48, 883)));
@@ -1460,14 +1456,8 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BP", { "BC", { {0,2} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BPR", { "BCR", { {0,2} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JP", { "BRC", { {0,2} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BM", { "BC", { {0,4} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BMR", { "BCR", { {0,4} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JM", { "BRC", { {0,4} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BZ", { "BC", { {0,8} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BZR", { "BCR", { {0,8} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JZ", { "BRC", { {0,8} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BO", { "BC", { {0,1} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BOR", { "BCR", { {0,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JO", { "BRC", { {0,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNP", { "BC", { {0,13} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNPR", { "BCR", { {0,13} } }));
@@ -1539,6 +1529,14 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JLNM", { "BRCL", { {0,11} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JLNZ", { "BRCL", { {0,7} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JLNO", { "BRCL", { {0,14} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JAS", { "BRAS", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JASL", { "BRASL", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JCT", { "BRCT", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JCTG", { "BRCTG", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JXH", { "BRXH", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JXHG", { "BRXHG", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JXLE", { "BRXLE", { } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("JXLEG", { "BRXLG", { } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BIO", { "BIC", { {0,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BIP", { "BIC", { {0,2} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BIH", { "BIC", { {0,2} } }));
@@ -2038,6 +2036,199 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WLEDB", { "VFLR", { {2,3} } })); // operand with index 3 ORed with 8
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFLRD", { "VFLR", { {2,3} } })); // operand with index 3 ORed with 8
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFLRX", { "VFLR", { {2,4} } })); // operand with index 3 ORed with 8
+	// mnemonics not in principles
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJE", { "CIJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJH", { "CIJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJL", { "CIJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJNE", { "CIJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJNH", { "CIJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIJNL", { "CIJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBE", { "CGIB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBH", { "CGIB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBL", { "CGIB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBNE", { "CGIB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBNH", { "CGIB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIBNL", { "CGIB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJE", { "CGIJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJH", { "CGIJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJL", { "CGIJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJNE", { "CGIJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJNH", { "CGIJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGIJNL", { "CGIJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITE", { "CGIT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITH", { "CGIT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITL", { "CGIT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITNE", { "CGIT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITNH", { "CGIT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGITNL", { "CGIT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBE", { "CGRB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBH", { "CGRB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBL", { "CGRB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBNE", { "CGRB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBNH", { "CGRB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRBNL", { "CGRB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJE", { "CGRJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJH", { "CGRJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJL", { "CGRJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJNE", { "CGRJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJNH", { "CGRJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRJNL", { "CGRJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTE", { "CGRT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTH", { "CGRT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTL", { "CGRT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTNE", { "CGRT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTNH", { "CGRT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CGRTNL", { "CGRT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBE", { "CIB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBH", { "CIB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBL", { "CIB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBNE", { "CIB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBNH", { "CIB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CIBNL", { "CIB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITE", { "CIT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITH", { "CIT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITL", { "CIT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITNE", { "CIT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITNH", { "CIT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CITNL", { "CIT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITE", { "CLFIT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITH", { "CLFIT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITL", { "CLFIT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITNE", { "CLFIT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITNH", { "CLFIT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLFITNL", { "CLFIT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBE", { "CLGIB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBH", { "CLGIB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBL", { "CLGIB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBNE", { "CLGIB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBNH", { "CLGIB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIBNL", { "CLGIB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJE", { "CLGIJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJH", { "CLGIJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJL", { "CLGIJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJNE", { "CLGIJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJNH", { "CLGIJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGIJNL", { "CLGIJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITE", { "CLGIT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITH", { "CLGIT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITL", { "CLGIT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITNE", { "CLGIT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITNH", { "CLGIT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGITNL", { "CLGIT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBE", { "CLGRB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBH", { "CLGRB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBL", { "CLGRB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBNE", { "CLGRB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBNH", { "CLGRB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRBNL", { "CLGRB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJE", { "CLGRJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJH", { "CLGRJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJL", { "CLGRJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJNE", { "CLGRJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJNH", { "CLGRJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRJNL", { "CLGRJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTE", { "CLGRT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTH", { "CLGRT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTL", { "CLGRT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTNE", { "CLGRT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTNH", { "CLGRT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGRTNL", { "CLGRT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTE", { "CLGT", { {1,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTH", { "CLGT", { {1,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTL", { "CLGT", { {1,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTNE", { "CLGT", { {1,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTNH", { "CLGT", { {1,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLGTNL", { "CLGT", { {1,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBE", { "CLIB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBH", { "CLIB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBL", { "CLIB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBNE", { "CLIB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBNH", { "CLIB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIBNL", { "CLIB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJE", { "CLIJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJH", { "CLIJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJL", { "CLIJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJNE", { "CLIJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJNH", { "CLIJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLIJNL", { "CLIJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBE", { "CLRB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBH", { "CLRB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBL", { "CLRB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBNE", { "CLRB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBNH", { "CLRB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRBNL", { "CLRB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJE", { "CLRJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJH", { "CLRJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJL", { "CLRJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJNE", { "CLRJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJNH", { "CLRJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRJNL", { "CLRJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTE", { "CLRT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTH", { "CLRT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTL", { "CLRT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTNE", { "CLRT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTNH", { "CLRT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLRTNL", { "CLRT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTE", { "CLT", { {1,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTH", { "CLT", { {1,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTL", { "CLT", { {1,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTNE", { "CLT", { {1,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTNH", { "CLT", { {1,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CLTNL", { "CLT", { {1,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBE", { "CRB", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBH", { "CRB", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBL", { "CRB", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBNE", { "CRB", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBNH", { "CRB", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRBNL", { "CRB", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJE", { "CRJ", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJH", { "CRJ", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJL", { "CRJ", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJNE", { "CRJ", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJNH", { "CRJ", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRJNL", { "CRJ", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTE", { "CRT", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTH", { "CRT", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTL", { "CRT", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTNE", { "CRT", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTNH", { "CRT", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("CRTNL", { "CRT", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGE", { "LOCG", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGH", { "LOCG", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGL", { "LOCG", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGNE", { "LOCG", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGNH", { "LOCG", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGNL", { "LOCG", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRE", { "LOCR", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRH", { "LOCR", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRL", { "LOCR", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRNE", { "LOCR", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRNH", { "LOCR", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCRNL", { "LOCR", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRE", { "LOCGR", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRH", { "LOCGR", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRL", { "LOCGR", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRNE", { "LOCGR", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRNH", { "LOCGR", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCGRNL", { "LOCGR", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCE", { "LOC", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCH", { "LOC", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCL", { "LOC", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCNE", { "LOC", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCNH", { "LOC", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("LOCNL", { "LOC", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGE", { "STOCG", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGH", { "STOCG", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGL", { "STOCG", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGNE", { "STOCG", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGNH", { "STOCG", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCGNL", { "STOCG", { {2,10} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCE", { "STOC", { {2,8} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCH", { "STOC", { {2,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCL", { "STOC", { {2,4} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCNE", { "STOC", { {2,6} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCNH", { "STOC", { {2,12} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("STOCNL", { "STOC", { {2,10} } }));
 	return result;
 }
 

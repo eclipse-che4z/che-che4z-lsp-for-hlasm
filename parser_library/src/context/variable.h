@@ -7,7 +7,7 @@
 #include "../../include/shared/range.h"
 
 #include <memory>
-#include <unordered_map>
+#include <map>
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -28,7 +28,7 @@ public:
 	const id_index id;
 
 	//returns kind of variable symbol
-	virtual variable_kind var_kind() const;
+	const variable_kind var_kind;
 
 	//casts this to set_symbol_base
 	set_symbol_base* access_set_symbol_base();
@@ -36,9 +36,14 @@ public:
 	//casts this to macro_param
 	macro_param_base* access_macro_param_base();
 
-	virtual ~variable_symbol();
+	//N' attribute of the symbol
+	virtual A_t number(std::vector<size_t> offset = {}) const = 0;
+	//K' attribute of the symbol
+	virtual A_t count(std::vector<size_t> offset = {}) const = 0;
+
+	virtual ~variable_symbol() = default;
 protected:
-	variable_symbol(id_index name);
+	variable_symbol(variable_kind var_kind, id_index name);
 };
 
 
@@ -62,20 +67,17 @@ public:
 	const bool is_scalar;
 
 	//returns type of set symbol
-	virtual SET_t_enum type() const;
-
-	//returns kind of set symbol
-	virtual variable_kind var_kind() const override;
+	const SET_t_enum type;
 
 	//casts this to specialized set symbol
 	template <typename T>
 	set_symbol<T>* access_set_symbol()
 	{
-		return dynamic_cast<set_symbol<T>*>(this);
+		return (type == object_traits<T>::type_enum) ? static_cast<set_symbol<T>*>(this) : nullptr;
 	}
 
 protected:
-	set_symbol_base(id_index name, bool is_scalar);
+	set_symbol_base(id_index name, bool is_scalar, SET_t_enum type);
 };
 
 //specialized set symbol holding data T (int = A_t, bool = B_t, std::string=C_t)
@@ -86,13 +88,11 @@ class set_symbol : public set_symbol_base
 
 	//data holding this set_symbol 
 	//can be scalar or only array of scallars - no other nesting allowed
-	std::unordered_map<size_t, T> data;
+	std::map<size_t, T> data;
 public:
 
-	set_symbol(id_index name, bool is_scalar) : set_symbol_base(name, is_scalar) {}
-
-	//returns type of set symbol
-	SET_t_enum type() const override { return object_traits<T>::type_enum; }
+	set_symbol(id_index name, bool is_scalar) 
+		: set_symbol_base(name, is_scalar, object_traits<T>::type_enum) {}
 
 	//gets value from non scalar set symbol
 	//if data at idx is not set or it does not exists, default is returned
@@ -134,7 +134,47 @@ public:
 		else
 			data.insert_or_assign(idx, std::move(value));
 	}
+
+	virtual A_t number(std::vector<size_t> offset = {}) const override
+	{
+		return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
+	}
+
+	virtual A_t count(std::vector<size_t> offset = {}) const override;
+
+private:
+	const T* get_data(std::vector<size_t> offset = {}) const
+	{
+		if ((is_scalar && !offset.empty()) || (!is_scalar && offset.size() != 1))
+			return nullptr;
+
+		auto tmp_offs = is_scalar ? 0 : offset.front();
+
+		if (data.find(tmp_offs) == data.end())
+			return nullptr;
+
+		return &data.at(tmp_offs);
+	}
 };
+
+
+template<>
+inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
+{
+	auto tmp = get_data(std::move(offset));
+	return tmp ? (A_t)std::to_string(*tmp).size() : (A_t)1;
+}
+template<>
+inline A_t set_symbol<B_t>::count(std::vector<size_t> offset) const
+{
+	return (A_t)1;
+}
+template<>
+inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
+{
+	auto tmp = get_data(std::move(offset));
+	return tmp ? (A_t)tmp->size() : (A_t)0;
+}
 
 
 
@@ -148,30 +188,32 @@ public:
 
 class keyword_param;
 class positional_param;
+class syslist_param;
 
 //class wrapping macro parameters data
 class macro_param_base : public variable_symbol
 {
 public:
-	macro_data_shared_ptr data;
-
-	//returns kind of macro_param
-	virtual variable_kind var_kind() const override;
 	//returns type of macro parameter
-	virtual macro_param_type param_type() const;
+	const macro_param_type param_type;
 
-	keyword_param* access_keyword_param();
-	positional_param* access_positional_param();
+	const keyword_param* access_keyword_param() const;
+	const positional_param* access_positional_param() const;
+	const syslist_param* access_syslist_param() const;
 
 	//gets value of data where parameter is list of nested data offsets
-	virtual const C_t& get_value(const std::vector<size_t>& offset) const = 0;
+	virtual const C_t& get_value(std::vector<int> offset) const;
 	//gets value of data where parameter is offset to data field
-	virtual const C_t& get_value(size_t idx) const = 0;
+	virtual const C_t& get_value(int idx) const;
 	//gets value of whole macro parameter
-	virtual const C_t& get_value() const = 0;
+	virtual const C_t& get_value() const;
+
+	virtual A_t number(std::vector<size_t> offset = {}) const override;
+	virtual A_t count(std::vector<size_t> offset = {}) const override;
 
 protected:
-	macro_param_base(id_index name);
+	macro_param_base(macro_param_type param_type, id_index name);
+	virtual const macro_param_data_component* real_data() const = 0;
 };
 
 using macro_param_ptr = std::shared_ptr<macro_param_base>;
@@ -179,40 +221,45 @@ using macro_param_ptr = std::shared_ptr<macro_param_base>;
 //represent macro param with stated position and name, positional param
 class keyword_param : public macro_param_base
 {
-	macro_data_shared_ptr default_data_;
+	const macro_data_ptr assigned_data_;
 public:
-	//returns type of macro parameter
-	virtual macro_param_type param_type() const override;
+	keyword_param(id_index name, macro_data_shared_ptr default_value, macro_data_ptr assigned_value);
 
-	//gets value of data where parameter is list of nested data offsets
-	virtual const C_t& get_value(const std::vector<size_t>& offset) const override;
-	//gets value of data where parameter is offset to data field
-	virtual const C_t& get_value(size_t idx) const override;
-	//gets value of whole macro parameter
-	virtual const C_t& get_value() const override;
-
-	keyword_param(id_index name, macro_data_ptr default_value);
+	const macro_data_shared_ptr default_data;
+protected:
+	virtual const macro_param_data_component* real_data() const override;
 };
 
 //represents macro param with default value, name and no position, keyword param
 class positional_param : public macro_param_base
 {
+	const macro_param_data_component& data_;
 public:
 	const size_t position;
 
-	//returns type of macro parameter
-	virtual macro_param_type param_type() const override;
+	positional_param(id_index name, size_t position, const macro_param_data_component& assigned_value);
 
-	//gets value of data where parameter is list of nested data offsets
-	virtual const C_t& get_value(const std::vector<size_t>& offset) const override;
-	//gets value of data where parameter is offset to data field
-	virtual const C_t& get_value(size_t idx) const override;
-	//gets value of whole macro parameter
-	virtual const C_t& get_value() const override;
-
-	positional_param(id_index name, size_t position);
+protected:
+	virtual const macro_param_data_component* real_data() const override;
 };
 
+//represents macro param with default value, name and no position, keyword param
+class syslist_param : public macro_param_base
+{
+	const macro_data_ptr data_;
+public:
+	syslist_param(id_index name, macro_data_ptr value);
+
+	virtual const C_t& get_value(std::vector<int> offset) const override;
+	virtual const C_t& get_value(int idx) const override;
+	virtual const C_t& get_value() const override;
+
+	virtual A_t number(std::vector<size_t> offset = {}) const override;
+	virtual A_t count(std::vector<size_t> offset = {}) const override;
+
+protected:
+	virtual const macro_param_data_component* real_data() const override;
+};
 
 
 

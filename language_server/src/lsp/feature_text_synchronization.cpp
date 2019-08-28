@@ -1,5 +1,6 @@
 
 #include "feature_text_synchronization.h"
+#include "../logger.h"
 
 #include "shared/protocol.h"
 namespace hlasm_plugin::language_server::lsp {
@@ -53,7 +54,15 @@ void feature_text_synchronization::on_did_open(const json &, const json & params
 	auto version = text_doc["version"].get<nlohmann::json::number_unsigned_t>();
 	std::string text = text_doc["text"].get<std::string>();
 	
-	ws_mngr_.did_open_file(uri_to_path(doc_uri).c_str(), version, text.c_str(), text.size());
+	auto path = uri_to_path(doc_uri);
+
+	if (path.empty())
+	{
+		LOG_WARNING("Ignoring on_did_open with unsupported scheme for document URI. URI was " + doc_uri);
+		return;
+	}
+
+	ws_mngr_.did_open_file(path.c_str(), version, text.c_str(), text.size());
 }
 
 void feature_text_synchronization::on_did_change(const json &, const json & params)

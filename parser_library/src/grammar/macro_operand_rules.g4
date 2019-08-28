@@ -16,7 +16,7 @@ mac_str_b returns [concat_chain chain]
 	| tmp=mac_str_b mac_str_ch						{$tmp.chain.push_back(std::move($mac_str_ch.point)); $chain = std::move($tmp.chain);};
 
 mac_str returns [concat_chain chain]
-	: ap1=APOSTROPHE mac_str_b ap2=APOSTROPHE				
+	: ap1=(APOSTROPHE|ATTR) mac_str_b ap2=(APOSTROPHE|ATTR)				
 	{
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($mac_str_b.chain.begin()), std::make_move_iterator($mac_str_b.chain.end()));
@@ -27,7 +27,7 @@ mac_str returns [concat_chain chain]
 mac_ch returns [concat_chain chain]
 	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));}
 	| mac_str										{$chain = std::move($mac_str.chain);}
-	| APOSTROPHE									{$chain.push_back(std::make_unique<char_str>("'"));}
+	| ATTR											{$chain.push_back(std::make_unique<char_str>("'"));}
 	| mac_sublist									{$chain.push_back(std::move($mac_sublist.point));};
 
 mac_ch_c returns [concat_chain chain]
@@ -46,13 +46,13 @@ mac_entry returns [concat_chain chain]
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
 	};
 
-mac_sublist_b returns [concat_chain chain]
-	: mac_ch_c										{$chain = std::move($mac_ch_c.chain);}
+mac_sublist_b returns [std::vector<concat_chain> chains]
+	: mac_ch_c										{$chains.push_back(std::move($mac_ch_c.chain));}
 	| tmp=mac_sublist_b comma mac_ch_c			
 	{
-		$chain = std::move($tmp.chain);
-		$chain.insert($chain.end(), std::make_move_iterator($mac_ch_c.chain.begin()), std::make_move_iterator($mac_ch_c.chain.end()));
+		$chains = std::move($tmp.chains);
+		$chains.push_back(std::move($mac_ch_c.chain));
 	};
 
 mac_sublist returns [concat_point_ptr point]
-	: lpar mac_sublist_b rpar						{ $point = std::make_unique<sublist>(std::move($mac_sublist_b.chain)); };
+	: lpar mac_sublist_b rpar						{ $point = std::make_unique<sublist>(std::move($mac_sublist_b.chains)); };

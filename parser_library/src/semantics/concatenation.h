@@ -36,8 +36,6 @@ struct concatenation_point
 
 	static bool contains_var_sym(const concat_chain& chain);
 
-	static concat_chain clone(const concat_chain& chain);
-
 	const concat_type type;
 
 	concatenation_point(const concat_type type);
@@ -112,9 +110,9 @@ struct equals :public concatenation_point
 //concatenation point representing macro operand sublist
 struct sublist : public concatenation_point
 {
-	sublist(concat_chain list);
+	sublist(std::vector<concat_chain> list);
 
-	concat_chain list;
+	std::vector<concat_chain> list;
 };
 
 }

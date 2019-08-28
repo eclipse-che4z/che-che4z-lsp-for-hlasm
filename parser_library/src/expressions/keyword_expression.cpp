@@ -44,18 +44,18 @@ uint8_t keyword_expression::priority() const
 	switch (value_)
 	{
 	case keyword_type::AND:
-		return 1;
-	case keyword_type::OR:
 		return 2;
-	case keyword_type::XOR:
+	case keyword_type::OR:
 		return 3;
+	case keyword_type::XOR:
+		return 4;
 	case keyword_type::SLA:
 	case keyword_type::SLL:
 	case keyword_type::SRA:
 	case keyword_type::SRL:
-		return 4;
-	default:
 		return 5;
+	default:
+		return 1;
 	}
 }
 

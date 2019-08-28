@@ -26,7 +26,7 @@ TEST(workspace_manager, add_not_existing_workspace)
 	size_t count = ws_mngr.get_workspaces_count();
 	EXPECT_EQ(count, (size_t) 1);
 
-	EXPECT_GE(consumer.diags.diagnostics_size(), (size_t) 1);
+	EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t) 0);
 }
 
 TEST(workspace_manager, add_existing_workspace)

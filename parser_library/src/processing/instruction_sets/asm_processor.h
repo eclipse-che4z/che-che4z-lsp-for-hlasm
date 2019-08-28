@@ -18,7 +18,7 @@ class asm_processor : public low_language_processor
 
 	parse_lib_provider& lib_provider_;
 public:
-	asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_field_reparser& parser);
+	asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_fields_parser& parser);
 
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;

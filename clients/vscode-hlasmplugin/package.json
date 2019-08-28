@@ -1,179 +1,184 @@
 {
-	"name": "vscode-hlasmplugin",
-	"repository": {},
-	"displayName": "vscode-hlasmplugin",
-	"description": "HLASM Language Server",
-	"version": "0.0.1",
-	"publisher": "CA",
-	"homepage": "https://ca.com/",
-	"categories": [
-		"Programming Languages",
-		"Linters",
-		"Snippets"
-	],
-	"keywords": [
-		"HLASM",
-		"LSP"
-	],
-	"activationEvents": [
-		"*"
-	],
-	"main": "./lib/extension.js",
-	"typings": "./lib/extension",
-	"engines": {
-		"vscode": "^1.32.3"
-	},
-	"devDependencies": {
-		"vsce": "^1.52.0",
-		"shelljs": "^0.8.2",
-		"shx": "^0.3.2",
-		"typescript": "^3.1.5",
-		"vscode": "^1.1.33"
-	},
-	"dependencies": {
-		"vscode-languageclient": "^5.2.1",
-		"path": "^0.12.7",
-		"@types/mocha": "^5.2.5",
-		"@types/node": "^10.12.1",
-		"mocha": "^5.2.0"
-	},
-	"scripts": {
-		"postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
-		"prepare": "npm run update-vscode",
-		"update-vscode": "node ./node_modules/vscode/bin/install",
-		"compile": "tsc -p ./tsconfig.json",
-		"clean": "node ./build/bin/clean.js",
-		"package": "vsce package"
-	},
-	"contributes": {
-		"languages": [
-			{
-				"id": "hlasm",
-				"extensions": [
-					".hlasm"
-				],
-				"aliases": [
-					"HLASM"
-				],
-				"filenames": [],
-				"firstLine": " *MACRO *"
-			}
-		],
-		"configurationDefaults": {
-			"[hlasm]": {
-				"editor.rulers": [
-					72
-				],
-				"editor.wordBasedSuggestions": false
-			}
-		},
-		"commands": [
-			{
-				"command": "insertContinuation",
-				"category": "HLASM",
-				"title": "Insert Continuation"
-			},
-			{
-				"command": "removeContinuation",
-				"category": "HLASM",
-				"title": "Remove Continuation"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "insertContinuation",
-				"key": "shift+alt+enter",
-				"when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
-			},
-			{
-				"command": "removeContinuation",
-				"key": "shift+alt+backspace",
-				"when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
-			}
-		],
-		"configuration": {
-			"type": "object",
-			"title": "hlasmplugin configuration",
-			"properties": {
-				"semanticHighlightingColors": {
-					"type": "array",
-					"default": [
-						{
-							"id": "comment",
-							"description": "Color for comments",
-							"hex": "#4c9b3f"
-						},
-						{
-							"id": "ignored",
-							"description": "Color for ignored characters",
-							"hex": "#b0a6c9"
-						},
-						{
-							"id": "continuation",
-							"description": "Color for continuation characters",
-							"hex": "#5fffff"
-						},
-						{
-							"id": "remark",
-							"description": "Color for remarks",
-							"hex": "#06aed8"
-						},
-						{
-							"id": "varSymbol",
-							"description": "Color for variable symbols",
-							"hex": "#ee4f7c"
-						},
-						{
-							"id": "string",
-							"description": "Color for strings",
-							"hex": "#ff6600"
-						},
-						{
-							"id": "number",
-							"description": "Color for numbers",
-							"hex": "#2a397a"
-						},
-						{
-							"id": "seqSymbol",
-							"description": "Color for sequence symbols",
-							"hex": "#8b7d6b"
-						},
-						{
-							"id": "label",
-							"description": "Color for labels",
-							"hex": "#ffff00"
-						},
-						{
-							"id": "operator",
-							"description": "Color for operators",
-							"hex": "#f5e5c2"
-						},
-						{
-							"id": "instruction",
-							"description": "Color for instructions",
-							"hex": "#ff0000"
-						},
-						{
-							"id": "operand",
-							"description": "Color for operands",
-							"hex": "#797979"
-						}
-					]
-				},
-				"hlasmplugin.arguments": {
-					"type": "array",
-					"default": [],
-					"items": {
-						"type": "string"
-					},
-					"description": "Arguments for hlasmplugin server"
-				},
-				"hlasmplugin.syncFileEvents": {
-					"type": "boolean",
-					"default": true,
-					"description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
-				}
-			}
-		}
-	}
+  "name": "vscode-hlasmplugin",
+  "repository": {},
+  "displayName": "vscode-hlasmplugin",
+  "description": "HLASM Language Server",
+  "version": "0.0.1",
+  "publisher": "CA",
+  "homepage": "https://ca.com/",
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "HLASM",
+    "LSP"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./lib/extension.js",
+  "typings": "./lib/extension",
+  "engines": {
+    "vscode": "^1.32.3"
+  },
+  "devDependencies": {
+    "vsce": "^1.52.0",
+    "shelljs": "^0.8.2",
+    "shx": "^0.3.2",
+    "typescript": "^3.1.5",
+    "vscode": "^1.1.33"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^5.2.1",
+    "path": "^0.12.7",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.1",
+    "mocha": "^5.2.0"
+  },
+  "scripts": {
+    "postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
+    "prepare": "npm run update-vscode",
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "compile": "tsc -p ./tsconfig.json",
+    "clean": "node ./build/bin/clean.js",
+    "package": "vsce package"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "hlasm",
+        "extensions": [
+          ".hlasm"
+        ],
+        "aliases": [
+          "HLASM"
+        ],
+        "filenames": [],
+        "firstLine": " *MACRO *"
+      }
+    ],
+    "configurationDefaults": {
+      "[hlasm]": {
+        "editor.rulers": [
+          72
+        ],
+        "editor.wordBasedSuggestions": false
+      }
+    },
+    "commands": [
+      {
+        "command": "insertContinuation",
+        "category": "HLASM",
+        "title": "Insert Continuation"
+      },
+      {
+        "command": "removeContinuation",
+        "category": "HLASM",
+        "title": "Remove Continuation"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "insertContinuation",
+        "key": "shift+alt+enter",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "removeContinuation",
+        "key": "shift+alt+backspace",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "hlasmplugin configuration",
+      "properties": {
+        "semanticHighlightingColors": {
+          "type": "array",
+          "default": [
+            {
+              "id": "comment",
+              "description": "Color for comments",
+              "hex": "#4c9b3f"
+            },
+            {
+              "id": "ignored",
+              "description": "Color for ignored characters",
+              "hex": "#b0a6c9"
+            },
+            {
+              "id": "continuation",
+              "description": "Color for continuation characters",
+              "hex": "#5fffff"
+            },
+            {
+              "id": "remark",
+              "description": "Color for remarks",
+              "hex": "#06aed8"
+            },
+            {
+              "id": "varSymbol",
+              "description": "Color for variable symbols",
+              "hex": "#ee4f7c"
+            },
+            {
+              "id": "string",
+              "description": "Color for strings",
+              "hex": "#ff6600"
+            },
+            {
+              "id": "number",
+              "description": "Color for numbers",
+              "hex": "#2a397a"
+            },
+            {
+              "id": "seqSymbol",
+              "description": "Color for sequence symbols",
+              "hex": "#8b7d6b"
+            },
+            {
+              "id": "label",
+              "description": "Color for labels",
+              "hex": "#ffff00"
+            },
+            {
+              "id": "operator",
+              "description": "Color for operators",
+              "hex": "#f5e5c2"
+            },
+            {
+              "id": "instruction",
+              "description": "Color for instructions",
+              "hex": "#ff0000"
+            },
+            {
+              "id": "operand",
+              "description": "Color for operands",
+              "hex": "#797979"
+            }
+          ]
+        },
+        "hlasmplugin.arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments for hlasmplugin server"
+        },
+        "hlasmplugin.syncFileEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
+        },
+        "hlasmplugin.continuationHandling": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable in case you experience lags when typing. Note: Extension will be restarted upon changing this option."
+        }
+      }
+    }
+  }
 }

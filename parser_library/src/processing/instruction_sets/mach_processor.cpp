@@ -9,7 +9,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-mach_processor::mach_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_field_reparser& parser)
+mach_processor::mach_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_fields_parser& parser)
 	:low_language_processor(hlasm_ctx, provider,parser) {}
 
 void mach_processor::process(context::shared_stmt_ptr stmt)
@@ -57,12 +57,14 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 	std::vector<const context::resolvable*> dependencies;
 	for (auto& op : stmt.operands_ref().value)
 	{
-		auto expr_op = &*dynamic_cast<semantics::expr_machine_operand*>(op.get());
-		if (expr_op)
+		auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
+		if (evaluable)
 		{
-			auto evaluable = &*expr_op->expression;
-			if (evaluable && evaluable->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-				dependencies.push_back(evaluable);
+			if (evaluable->has_dependencies(hlasm_ctx.ord_ctx))
+			{
+				auto deps_tmp = evaluable->get_resolvables();
+				dependencies.insert(dependencies.end(), std::make_move_iterator(deps_tmp.begin()), std::make_move_iterator(deps_tmp.end()));
+			}
 		}
 	}
 

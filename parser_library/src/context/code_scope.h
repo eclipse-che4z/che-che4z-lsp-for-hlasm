@@ -21,13 +21,14 @@ struct code_scope
 	macro_invo_ptr this_macro;
 	//the ACTR branch counter
 	A_t branch_counter;
+	size_t branch_counter_change;
 
 	//semantics::symbol_range current_stmt_range;
 	
 	bool is_in_macro() const { return !!this_macro; }
 
-	code_scope(macro_invo_ptr macro_invo) : this_macro(std::move(macro_invo)), branch_counter(4096) {}
-	code_scope() : branch_counter(4096) {}
+	code_scope(macro_invo_ptr macro_invo) : this_macro(std::move(macro_invo)), branch_counter(4096), branch_counter_change(0) {}
+	code_scope() : branch_counter(4096), branch_counter_change(0) {}
 };
 
 }

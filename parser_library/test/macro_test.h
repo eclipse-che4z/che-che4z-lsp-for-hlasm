@@ -321,23 +321,23 @@ R"( MACRO
 		std::vector<macro_arg> args;
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("3"),nullptr });
-		auto invo = m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args));
+		auto invo = m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args),a.context().ids().add("SYSLIST"));
 		auto n = a.context().ids().add("n");
 		auto b = a.context().ids().add("b");
-		EXPECT_EQ(invo->named_params.find(n)->second->data->get_value(), "1");
-		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "3");
+		EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
+		EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "3");
 	}
 
 	{
 		std::vector<macro_arg> args;
 		args.push_back({ std::make_unique<macro_param_data_single>("1"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
-		auto invo = m2->call(nullptr, std::move(args));
+		auto invo = m2->call(nullptr, std::move(args), a.context().ids().add("SYSLIST"));
 		auto n = a.context().ids().add("a");
 		auto b = a.context().ids().add("b");
-		EXPECT_EQ(invo->named_params.find(n)->second->data->get_value(), "1");
-		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "2");
-		EXPECT_EQ(invo->SYSLIST(2), "2");
+		EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
+		EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
+		EXPECT_EQ(invo->named_params.find(a.context().ids().add("SYSLIST"))->second->get_value(1), "2");
 	}
 
 	{
@@ -345,11 +345,11 @@ R"( MACRO
 		args.push_back({ std::make_unique<macro_param_data_single>("1"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("2"),nullptr });
 		args.push_back({ std::make_unique<macro_param_data_single>("3"),nullptr });
-		auto invo = m3->call(nullptr, std::move(args));
+		auto invo = m3->call(nullptr, std::move(args), a.context().ids().add("SYSLIST"));
 		auto n = a.context().ids().add("a");
 		auto b = a.context().ids().add("b");
 		EXPECT_EQ(invo->named_params.find(n)->second->access_keyword_param()->get_value(), "5");
-		EXPECT_EQ(invo->named_params.find(b)->second->data->get_value(), "2");
+		EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
 	}
 
 }
@@ -471,6 +471,71 @@ TEST(external_macro, bad_library)
 	EXPECT_EQ(a2.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
+TEST(variable_argument_passing, positive_sublist)
+{
+	auto data = macro_processor::string_to_macrodata("(a,b,c)");
 
+	ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
+	ASSERT_EQ(data->number, (size_t)3);
+	EXPECT_EQ(data->get_ith(0)->get_value(), "a");
+	EXPECT_EQ(data->get_ith(1)->get_value(), "b");
+	EXPECT_EQ(data->get_ith(2)->get_value(), "c");
+
+	data = macro_processor::string_to_macrodata("(a,(b,1),((c),1))");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
+	ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1))");
+	ASSERT_EQ(data->number, (size_t)3);
+	EXPECT_EQ(data->get_ith(0)->get_value(), "a");
+	EXPECT_EQ(data->get_ith(1)->get_value(), "(b,1)");
+	EXPECT_EQ(data->get_ith(1)->get_value(), "(b,1)");
+	EXPECT_EQ(data->get_ith(2)->get_value(), "((c),1)");
+	EXPECT_EQ(data->get_ith(2)->get_ith(0)->get_value(), "(c)");
+
+	data = macro_processor::string_to_macrodata("(a(1),(1,(1))b,()c())");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
+	ASSERT_EQ(data->number, (size_t)3);
+	EXPECT_EQ(data->get_ith(0)->get_value(), "a(1)");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(0)));
+	EXPECT_EQ(data->get_ith(1)->get_value(), "(1,(1))b");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
+	EXPECT_EQ(data->get_ith(2)->get_value(), "()c()");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
+}
+
+TEST(variable_argument_passing, negative_sublist)
+{
+	auto data = macro_processor::string_to_macrodata("a,b,c");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->number, (size_t)1);
+	EXPECT_EQ(data->get_value(), "a,b,c");
+
+	data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)))");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1)))");
+
+	data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)()");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1)()");
+
+	data = macro_processor::string_to_macrodata("=A(((TDXENTPL+TBXT001EntryLen+7)/8)*8)");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->get_value(), "=A(((TDXENTPL+TBXT001EntryLen+7)/8)*8)");
+
+	data = macro_processor::string_to_macrodata("(a(1)");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->get_value(), "(a(1)");
+
+	data = macro_processor::string_to_macrodata("(a(1)))");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
+	ASSERT_EQ(data->get_value(), "(a(1)))");
+}
 
 #endif

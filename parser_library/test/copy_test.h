@@ -25,6 +25,8 @@ public:
 			current_content = &content_MAC;
 		else if (library == "COPYM")
 			current_content = &content_COPYM;
+		else if (library == "COPYJ")
+			current_content = &content_COPYJ;
 		else
 			return false;
 
@@ -120,6 +122,13 @@ private:
 .A ANOP
  GBLA &X
 &X SETA 4
+)";
+
+	const std::string content_COPYJ =
+		R"(
+ AGO .X
+ LR
+.X ANOP
 )";
 	
 };
@@ -360,6 +369,26 @@ TEST(copy, nested_macro_copy_call)
 	EXPECT_EQ(a.context().globals().find(a.context().ids().add("X"))->second->access_set_symbol_base()->access_set_symbol<context::A_t>()->get_value(), 4);
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(copy, inner_copy_jump)
+{
+	std::string input =
+		R"(
+ COPY COPYJ
+ LR
+ 
+)";
+	copy_mock mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
 

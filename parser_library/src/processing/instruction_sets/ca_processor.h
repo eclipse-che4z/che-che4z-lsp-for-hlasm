@@ -104,6 +104,8 @@ private:
 	void process_AREAD(const semantics::complete_statement& stmt);
 
 	void process_empty(const semantics::complete_statement& );
+
+	virtual void collect_diags() const override;
 };
 
 }

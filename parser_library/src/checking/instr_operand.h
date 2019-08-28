@@ -5,26 +5,29 @@
 #include <variant>
 #include <string>
 #include <memory>
+#include <functional>
 #include <assert.h>
 #include "shared/range.h"
 #include "../diagnostic.h"
+#include "../diagnostic_collector.h"
 
 namespace hlasm_plugin::parser_library::checking
 {
-
 	enum class address_state { RES_VALID, RES_INVALID, UNRES };
 
 	/*
+	FIRST_OMITTED = D(,B)
+	SECOND_OMMITED = D(X,)
 	PRESENT - D(X,B)
-	EMPTY - D(B,)
-	OMITTED - D(B)
+	ONE_OP - D(B)
 	*/
-	enum class operand_state { OMITTED, EMPTY, PRESENT };
+	enum class operand_state { FIRST_OMITTED, SECOND_OMITTED, PRESENT, ONE_OP };
 
 	class operand
 	{
 	public:
 		operand();
+		operand(range operand_range);
 
 		range operand_range;
 
@@ -71,7 +74,7 @@ namespace hlasm_plugin::parser_library::checking
 
 	struct machine_operand_format
 	{
-		parameter identifier; // used as displacement operand in adress operand
+		parameter identifier; // used as displacement operand in address operand
 		parameter first; // empty when simple operand
 		parameter second; // empty when simple operand
 
@@ -89,12 +92,12 @@ namespace hlasm_plugin::parser_library::checking
 	public:
 		machine_operand();
 
-		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const;
+		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const;
 
 		std::string to_string() const;
 
-		diagnostic_op get_address_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const;
-		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name) const;
+		diagnostic_op get_address_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
+		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
 
 	protected:
 		bool is_operand_corresponding(int operand, parameter param) const;
@@ -110,14 +113,16 @@ namespace hlasm_plugin::parser_library::checking
 		int displacement;
 		int first_op;
 		int second_op;
-		operand_state first_state;
+		operand_state op_state;
 
 		address_operand(address_state state, int displacement, int first, int second);
-		address_operand(address_state state, int displacement, int second, operand_state first_state);
+		address_operand(address_state state, int displacement, int first, int second, operand_state op_state);
 
-		diagnostic_op get_first_parameter_error(const machine_operand_type & op_type, const std::string & instr_name, long long from, long long to) const;
+		diagnostic_op get_first_parameter_error(const machine_operand_type & op_type, const std::string & instr_name, long long from, long long to, const range& stmt_range) const;
 
-		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const override;
+		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& range) const override;
+
+		bool is_length_corresponding(int param_value, int length_size) const;
 	};
 
 	// class that represents both one_operand and value operands
@@ -138,9 +143,13 @@ namespace hlasm_plugin::parser_library::checking
 
 		one_operand(int value);
 
+		one_operand(std::string operand_identifier, range range);
+
+		one_operand(int value, range range);
+
 		one_operand(const one_operand& op);
 
-		bool check(diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name) const override;
+		bool check(diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range& stmt_range) const override;
 
 		virtual std::string to_string() const;
 	};
@@ -152,7 +161,7 @@ namespace hlasm_plugin::parser_library::checking
 
 		virtual std::unique_ptr<asm_operand> clone() const;
 
-		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name) const override;
+		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const override;
 	};
 
 	template<typename T>

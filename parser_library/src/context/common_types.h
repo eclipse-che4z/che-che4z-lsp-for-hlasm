@@ -23,13 +23,13 @@ enum class SET_t_enum
 //enum of variable symbols
 enum class variable_kind
 {
-	SET_VAR_KIND, MACRO_VAR_KIND, UNDEF_VAR_KIND
+	SET_VAR_KIND, MACRO_VAR_KIND
 };
 
 //enum of macro symbolic parameters
 enum class macro_param_type
 {
-	POS_PAR_TYPE, KEY_PAR_TYPE, UNDEF_PAR_TYPE
+	POS_PAR_TYPE, KEY_PAR_TYPE, SYSLIST_TYPE
 };
 
 template <typename T>
@@ -135,8 +135,7 @@ inline C_t SET_t::to()
 	case SET_t_enum::A_TYPE:
 		return std::to_string(std::abs(a_value));
 	case SET_t_enum::B_TYPE:
-		if (b_value) return "1";
-		else return "0";
+		return b_value ? "1" : "0";
 	case SET_t_enum::C_TYPE:
 		return c_value;
 	default:

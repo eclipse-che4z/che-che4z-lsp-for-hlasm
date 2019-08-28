@@ -90,22 +90,7 @@ void asm_processor::process_DC(rebuilt_statement stmt)
 	auto label = find_label_symbol(stmt);
 
 	if (label != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.symbol_defined(label))
-		hlasm_ctx.ord_ctx.create_symbol(label, context::symbol_value(0), {});
-
-	if (!stmt.operands_ref().value.empty())
-	{
-		if (stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY || stmt.operands_ref().value[0]->type == semantics::operand_type::UNDEF)
-			return;
-
-		auto dat_op = stmt.operands_ref().value[0]->access_data_def();
-		assert(dat_op);
-
-		if (dat_op->value->dupl_factor && dat_op->value->dupl_factor->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-		{
-			auto space = hlasm_ctx.ord_ctx.register_space();
-			add_dependency(stmt.stmt_range_ref(), space, dat_op->value->dupl_factor.get(), std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
-		}
-	}
+		hlasm_ctx.ord_ctx.create_symbol(label, hlasm_ctx.ord_ctx.align(context::no_align), {});
 }
 
 void asm_processor::process_DS(rebuilt_statement stmt)
@@ -113,14 +98,14 @@ void asm_processor::process_DS(rebuilt_statement stmt)
 	auto label = find_label_symbol(stmt);
 
 	if (label != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.symbol_defined(label))
-		hlasm_ctx.ord_ctx.create_symbol(label, context::symbol_value(0), {});
+		hlasm_ctx.ord_ctx.create_symbol(label, hlasm_ctx.ord_ctx.align(context::no_align), {});
 }
 
 void asm_processor::process_COPY(rebuilt_statement stmt)
 {
 	find_sequence_symbol(stmt);
 
-	if (stmt.operands_ref().value.size() == 1)
+	if (stmt.operands_ref().value.size() == 1 && stmt.operands_ref().value.front()->access_asm()->access_expr())
 	{
 		process_copy(stmt, hlasm_ctx, lib_provider_, this);
 	}
@@ -130,7 +115,7 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
 	}
 }
 
-asm_processor::asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_field_reparser& parser)
+asm_processor::asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_fields_parser& parser)
 	:low_language_processor(hlasm_ctx, branch_provider, parser), table_(create_table(hlasm_ctx)), lib_provider_(lib_provider) {}
 
 void asm_processor::process(context::shared_stmt_ptr stmt)
@@ -246,6 +231,15 @@ void asm_processor::process(rebuilt_statement statement)
 	}
 	else
 	{
-		check(std::move(statement), hlasm_ctx, checker_, *this);
+		//until implementation of all instructions, if has deps, ignore 
+		for (auto& op : statement.operands_ref().value)
+		{
+			auto tmp = context::instruction::assembler_instructions.find(*statement.opcode_ref().value);
+			bool can_have_ord_syms = tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+
+			if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms  && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
+				return;
+		}
+		check(statement, hlasm_ctx, checker_, *this);
 	}
 }

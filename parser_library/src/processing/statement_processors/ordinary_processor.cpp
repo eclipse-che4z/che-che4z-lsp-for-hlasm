@@ -11,7 +11,7 @@ ordinary_processor::ordinary_processor(
 	parse_lib_provider& lib_provider,
 	branching_provider& branch_provider,
 	processing_state_listener& state_listener,
-	statement_field_reparser& parser)
+	statement_fields_parser& parser)
 	:statement_processor(processing_kind::ORDINARY, hlasm_ctx),
 	lib_provider_(lib_provider),
 	ca_proc_(hlasm_ctx,branch_provider,state_listener),
@@ -144,7 +144,10 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
 		break;
 	case context::instruction::instruction_array::MNEM:
 		f = processing_form::MACH;
-		o = context::instruction::mnemonic_codes.find(*id)->second.replaced.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+		o = (context::instruction::machine_instructions.at(context::instruction::mnemonic_codes.at(*id).instruction)->operands.size()
+			+ context::instruction::machine_instructions.at(context::instruction::mnemonic_codes.at(*id).instruction)->no_optional
+			- context::instruction::mnemonic_codes.at(*id).replaced.size() == 0 ) //counting  number of operands in mnemonic
+			? operand_occurence::ABSENT : operand_occurence::PRESENT;
 		t = context::instruction_type::MACH;
 		break;
 	default:
@@ -197,4 +200,36 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
 		else
 			low_language_processor::check(*stmt, hlasm_ctx, mach_checker,*this);
 	}
+}
+
+bool ordinary_processor::check_fatals(range line_range)
+{
+	if (hlasm_ctx.scope_stack().size() > NEST_LIMIT)
+	{
+		while (hlasm_ctx.is_in_macro())
+			hlasm_ctx.leave_macro();
+
+		add_diagnostic(diagnostic_s::error_E055("", "", line_range));
+		return true;
+	}
+
+	if (hlasm_ctx.get_branch_counter() < 0)
+	{
+		add_diagnostic(diagnostic_s::error_E056("", "", line_range));
+		if (hlasm_ctx.is_in_macro())
+			hlasm_ctx.leave_macro();
+		else
+			finished_flag_ = true;
+
+		return true;
+	}
+
+	if (hlasm_ctx.scope_stack().back().branch_counter_change > ACTR_LIMIT)
+	{
+		add_diagnostic(diagnostic_s::error_E063("", "", line_range));
+		finished_flag_ = true;
+		return true;
+	}
+
+	return false;
 }

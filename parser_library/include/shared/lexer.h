@@ -85,8 +85,9 @@ namespace hlasm_plugin {
 
 			bool is_ord_char() const;
 			bool is_space() const;
-			bool get_unlimited_line() const;
-			void set_unlimited_line(bool);
+			bool is_data_attribute() const;
+			void set_unlimited_line(bool unlimited_lines);
+			void set_file_offset(position file_offset);
 			void rewind_input(stream_position pos);
 			bool is_last_line() const;
 			bool eof_generated() const;
@@ -99,6 +100,7 @@ namespace hlasm_plugin {
 		private:
 			bool eof_generated_ = false;
 			bool last_char_utf16_long_ = false;
+			bool creating_var_symbol_ = false;
 			void ainsert(const std::string & inp, bool front);
 			/* UTF8 <-> UTF32 */
 			#ifdef __GNUG__

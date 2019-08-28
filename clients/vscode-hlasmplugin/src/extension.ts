@@ -213,137 +213,138 @@ function insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, tex
     } 
 }
 
-/**
- * Overriden type to handle continuations
- * Removes space in front of the continuation character to compensate for the newly added
- */
-vscode.commands.registerTextEditorCommand("type", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}) => {
-    insertChars(editor,edit,args.text);
-});
 
-/**
- * Overriden paste to handle continuations
- * Removes spaces in front of the continuation character to compensate for the newly added
- */
-vscode.commands.registerTextEditorCommand("paste", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}) => {
-    insertChars(editor,edit,args.text);
-});
-
-/**
- * Overriden cut to handle continuations
- * Works similarly to deleteLeft
- */
-vscode.commands.registerTextEditorCommand("cut", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-    var info = new LinePositionsInfo(editor);
-    // do not cut 0 length sequences 
-    if (info.currentPosition.line == editor.selection.anchor.line && info.currentPosition.character == editor.selection.anchor.character)
-        return;
-    var cursorPos = deleteLeft(editor,edit,info);
-    // move the cursor if necessary
-    if (info.currentPosition.character == info.continuationOffset)
-        setCursor(editor,cursorPos);
-});
-
-/**
- * Overriden default deleteLeft (backspace) to handle continuations
- * Adds extra space(s) in front of the continuation to compensate for the removed characters
- * Works on single line deletions only
- */ 
-vscode.commands.registerTextEditorCommand("deleteLeft", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-    var info = new LinePositionsInfo(editor);
-    var cursorPos = deleteLeft(editor,edit,info);
-    // move the cursor if necessary
-    if (info.currentPosition.character == info.continuationOffset)
-        setCursor(editor,cursorPos);
-});
-
-/**
- * Overriden default deleteRight (delete) to handle continuations
- * Adds extra space(s) in front of the continuation to compensate for the removed characters
- * Works on single line deletions only
- */ 
-vscode.commands.registerTextEditorCommand("deleteRight", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-    var info = new LinePositionsInfo(editor);
-    // size of deleted selection
-    var selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? info.currentPosition.character - editor.selection.anchor.character : -1;
-    // position of cursor after delete
-    var newCursorPosition = new vscode.Position(info.currentPosition.line, info.currentPosition.character - ((selectionSize >= -1) ? selectionSize : 0));
-    // there is a continuation and it is after our position, handle it
-    if (info.continuationOffset != -1 && info.currentPosition.character < info.continuationOffset && editor.selection.isSingleLine) {
-        var beforeContinuationChars = new vscode.Range(info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), info.currentPosition.line, info.continuationOffset);
-        edit.insert(beforeContinuationChars.end, " ".repeat(Math.abs(selectionSize)));
-    }
-    // change the cursor if needed
-    if (editor.document.lineAt(info.currentPosition).text.substring(info.currentPosition.character) == "")
-        newCursorPosition = new vscode.Position(info.currentPosition.line + 1, 0);
-    // delete as default
-    edit.delete(new vscode.Range(info.currentPosition, (editor.selection.anchor.character == info.currentPosition.character && editor.selection.anchor.line == info.currentPosition.line) ?
-        newCursorPosition :
-        new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
-});
-
-// insert continuation to the current line
-vscode.commands.registerTextEditorCommand("insertContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-    var info = new LinePositionsInfo(editor,true);
-    var continueColumn = highlight.getContinueColumn(editor.document.uri.toString());
-    // not a continued line, create new continuation
-    if (highlight.getContinuation(info.currentPosition.line, editor.document.uri.toString()) == -1) {
-        var lastChar = info.currentPosition.character;
-        if (info.currentPosition.character < info.continuationOffset) {
-            lastChar = editor.document.lineAt(info.currentPosition).text.length;
-            lastChar = (lastChar < info.continuationOffset) ? lastChar : info.continuationOffset;
-            edit.insert(new vscode.Position(info.currentPosition.line, lastChar), " ".repeat(info.continuationOffset - lastChar));
-        }
-        var continuationPosition = new vscode.Position(info.currentPosition.line, info.continuationOffset);
-        edit.replace(new vscode.Range(continuationPosition, new vscode.Position(info.currentPosition.line, info.continuationOffset + 1)), "X");
-        edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(continueColumn)));
-    }
-    // add extra continuation on already continued line
-    else
-        edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(info.continuationOffset).concat("X")));
-});
-
-// remove continuation from previous line
-vscode.commands.registerTextEditorCommand("removeContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-    var info = new LinePositionsInfo(editor,true);
-    if (info.currentPosition.line > 0 && highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
-        var continuationPosition = new vscode.Position(info.currentPosition.line - 1, info.continuationOffset);
-        edit.delete(new vscode.Range(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), new vscode.Position(info.currentPosition.line - 1, editor.document.lineAt(info.currentPosition.line - 1).text.length)));
-        edit.replace(new vscode.Range(continuationPosition, new vscode.Position(continuationPosition.line, info.continuationOffset + 1)), " ");
-        setCursor(editor, continuationPosition);
-    }
-});
-
-/**
- * EVENTS
- */
-
-const referenceInstructions =new RegExp("( |\\t)+(ICTL|\\*PROCESS|END|COND|IC|ICM|L|LA|LCR|LH|LHI|LM|LNR|LPR|LR|LTR|MVC|MVCL|MVI|ST|STC|STCM|STH|STM|A|AH|AHI|AL|ALR|AR|C|CH|CR|D|DR|M|MH|MHI|MR|S|SH|SL|SLR|SR|CL|CLC|CLCL|CLI|CLM|CLR|N|NC|NI|NR|O|OC|OI|OR|SLA|SLDA|SLDL|SLDA|SLL|SRA|SRDA|SRDL|SRL|TM|X|XC|XI|XR|BAL|BALR|BAS|BASR|BC|BCR|BCT|BCTR|BXH|BXLE|AP|CP|CVB|CVD|DP|ED|EDMK|MP|MVN|MVO|MVZ|PACK|SP|SRP|UNPK|ZAP|CDS|CS|EX|STCK|SVC|TR|TRT|TS|B|J|NOP|BE|BNE|BL|BNL|BH|BHL|BZ|BNZ|BM|BNM|AMODE|CSECT|DC|DS|DSECT|DROP|EJECT|END|EQU|LTORG|ORG|POP|PRINT|PUSH|RMODE|SPACE|USING|TITLE|BP|BNP|BO|BNO|ABEND|CALL|CLOSE|DCB|GET|OPEN|PUT|RETURN|SAVE|STORAGE|COPY|GBLC|GBLB|SETA|SETB|SETC)( |\\t)+");
-const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
-
-// when contents of a document change, issue a completion request
-vscode.workspace.onDidChangeTextDocument(event => {
-    if ( event.document.languageId != 'hlasm')
-        return;
-
-    const editor = vscode.window.activeTextEditor;
-    if (event.contentChanges.length == 0 || editor.document.languageId != "hlasm")
-        return;
-    const change = event.contentChanges[0].text;
-    var info = new LinePositionsInfo(editor);
-    var currentLine = editor.document.getText(new vscode.Range(new vscode.Position(info.currentPosition.line, 0), info.currentPosition));
-    var notContinued = info.currentPosition.line == 0 || highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
-    if ((currentLine != "" && isTrigger.test(change) && isInstruction.test(currentLine) && notContinued && currentLine[0] != "*") || change == "." || change == "&") {
-        vscode.commands.executeCommand(completeCommand);
-    }
-})
-
-// when active editor changes, try to set a language for it
-vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
+// overrides should happen only if the user wishes
+if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
 {
-    if (editor != null)
-        setHlasmLanguage(editor.document);
-})
+    /**
+     * Overriden type to handle continuations
+     * Removes space in front of the continuation character to compensate for the newly added
+     */
+    vscode.commands.registerTextEditorCommand("type", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}) => {
+        insertChars(editor,edit,args.text);
+    });
+
+    /**
+     * Overriden paste to handle continuations
+     * Removes spaces in front of the continuation character to compensate for the newly added
+     */
+    vscode.commands.registerTextEditorCommand("paste", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}) => {
+        insertChars(editor,edit,args.text);
+    });
+
+    /**
+     * Overriden cut to handle continuations
+     * Works similarly to deleteLeft
+     */
+    vscode.commands.registerTextEditorCommand("cut", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+        var info = new LinePositionsInfo(editor);
+        // do not cut 0 length sequences 
+        if (info.currentPosition.line == editor.selection.anchor.line && info.currentPosition.character == editor.selection.anchor.character)
+            return;
+        var cursorPos = deleteLeft(editor,edit,info);
+        // move the cursor if necessary
+        if (info.currentPosition.character == info.continuationOffset)
+            setCursor(editor,cursorPos);
+    });
+
+    /**
+     * Overriden default deleteLeft (backspace) to handle continuations
+     * Adds extra space(s) in front of the continuation to compensate for the removed characters
+     * Works on single line deletions only
+     */ 
+    vscode.commands.registerTextEditorCommand("deleteLeft", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+        var info = new LinePositionsInfo(editor);
+        var cursorPos = deleteLeft(editor,edit,info);
+        // move the cursor if necessary
+        if (info.currentPosition.character == info.continuationOffset)
+            setCursor(editor,cursorPos);
+    });
+
+    /**
+     * Overriden default deleteRight (delete) to handle continuations
+     * Adds extra space(s) in front of the continuation to compensate for the removed characters
+     * Works on single line deletions only
+     */ 
+    vscode.commands.registerTextEditorCommand("deleteRight", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+        var info = new LinePositionsInfo(editor);
+        // size of deleted selection
+        var selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? info.currentPosition.character - editor.selection.anchor.character : -1;
+        // position of cursor after delete
+        var newCursorPosition = new vscode.Position(info.currentPosition.line, info.currentPosition.character - ((selectionSize >= -1) ? selectionSize : 0));
+        // there is a continuation and it is after our position, handle it
+        if (info.continuationOffset != -1 && info.currentPosition.character < info.continuationOffset && editor.selection.isSingleLine) {
+            var beforeContinuationChars = new vscode.Range(info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), info.currentPosition.line, info.continuationOffset);
+            edit.insert(beforeContinuationChars.end, " ".repeat(Math.abs(selectionSize)));
+        }
+        // change the cursor if needed
+        if (editor.document.lineAt(info.currentPosition).text.substring(info.currentPosition.character) == "")
+            newCursorPosition = new vscode.Position(info.currentPosition.line + 1, 0);
+        // delete as default
+        edit.delete(new vscode.Range(info.currentPosition, (editor.selection.anchor.character == info.currentPosition.character && editor.selection.anchor.line == info.currentPosition.line) ?
+            newCursorPosition :
+            new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
+    });
+
+    // insert continuation to the current line
+    vscode.commands.registerTextEditorCommand("insertContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+        var info = new LinePositionsInfo(editor,true);
+        var continueColumn = highlight.getContinueColumn(editor.document.uri.toString());
+        // not a continued line, create new continuation
+        if (highlight.getContinuation(info.currentPosition.line, editor.document.uri.toString()) == -1) {
+            var lastChar = info.currentPosition.character;
+            if (info.currentPosition.character < info.continuationOffset) {
+                lastChar = editor.document.lineAt(info.currentPosition).text.length;
+                lastChar = (lastChar < info.continuationOffset) ? lastChar : info.continuationOffset;
+                edit.insert(new vscode.Position(info.currentPosition.line, lastChar), " ".repeat(info.continuationOffset - lastChar));
+            }
+            var continuationPosition = new vscode.Position(info.currentPosition.line, info.continuationOffset);
+            edit.replace(new vscode.Range(continuationPosition, new vscode.Position(info.currentPosition.line, info.continuationOffset + 1)), "X");
+            edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(continueColumn)));
+        }
+        // add extra continuation on already continued line
+        else
+            edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(info.continuationOffset).concat("X")));
+    });
+
+    // remove continuation from previous line
+    vscode.commands.registerTextEditorCommand("removeContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
+        var info = new LinePositionsInfo(editor,true);
+        if (info.currentPosition.line > 0 && highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
+            var continuationPosition = new vscode.Position(info.currentPosition.line - 1, info.continuationOffset);
+            edit.delete(new vscode.Range(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), new vscode.Position(info.currentPosition.line - 1, editor.document.lineAt(info.currentPosition.line - 1).text.length)));
+            edit.replace(new vscode.Range(continuationPosition, new vscode.Position(continuationPosition.line, info.continuationOffset + 1)), " ");
+            setCursor(editor, continuationPosition);
+        }
+    });
+
+    /**
+     * EVENTS
+     */
+
+    // when contents of a document change, issue a completion request
+    vscode.workspace.onDidChangeTextDocument(event => {
+        if ( event.document.languageId != 'hlasm')
+            return;
+
+        const editor = vscode.window.activeTextEditor;
+        if (event.contentChanges.length == 0 || editor.document.languageId != "hlasm")
+            return;
+        const change = event.contentChanges[0].text;
+        var info = new LinePositionsInfo(editor);
+        var currentLine = editor.document.getText(new vscode.Range(new vscode.Position(info.currentPosition.line, 0), info.currentPosition));
+        var notContinued = info.currentPosition.line == 0 || highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
+        if ((currentLine != "" && isTrigger.test(change) && isInstruction.test(currentLine) && notContinued && currentLine[0] != "*") || change == "." || change == "&") {
+            vscode.commands.executeCommand(completeCommand);
+        }
+    })
+}
+
+vscode.workspace.onDidChangeConfiguration(event =>
+{
+    if (event.affectsConfiguration("hlasmplugin.continuationHandling"))
+        vscode.commands.executeCommand("workbench.action.reloadWindow");
+});
 
 // when any visible text editor changes, apply decorations for it
 vscode.window.onDidChangeVisibleTextEditors((editors: vscode.TextEditor[]) => {
@@ -356,6 +357,16 @@ vscode.window.onDidChangeVisibleTextEditors((editors: vscode.TextEditor[]) => {
         }
     };
 });
+
+const referenceInstructions =new RegExp("( |\\t)+(ICTL|\\*PROCESS|END|COND|IC|ICM|L|LA|LCR|LH|LHI|LM|LNR|LPR|LR|LTR|MVC|MVCL|MVI|ST|STC|STCM|STH|STM|A|AH|AHI|AL|ALR|AR|C|CH|CR|D|DR|M|MH|MHI|MR|S|SH|SL|SLR|SR|CL|CLC|CLCL|CLI|CLM|CLR|N|NC|NI|NR|O|OC|OI|OR|SLA|SLDA|SLDL|SLDA|SLL|SRA|SRDA|SRDL|SRL|TM|X|XC|XI|XR|BAL|BALR|BAS|BASR|BC|BCR|BCT|BCTR|BXH|BXLE|AP|CP|CVB|CVD|DP|ED|EDMK|MP|MVN|MVO|MVZ|PACK|SP|SRP|UNPK|ZAP|CDS|CS|EX|STCK|SVC|TR|TRT|TS|B|J|NOP|BE|BNE|BL|BNL|BH|BHL|BZ|BNZ|BM|BNM|AMODE|CSECT|DC|DS|DSECT|DROP|EJECT|END|EQU|LTORG|ORG|POP|PRINT|PUSH|RMODE|SPACE|USING|TITLE|BP|BNP|BO|BNO|ABEND|CALL|CLOSE|DCB|GET|OPEN|PUT|RETURN|SAVE|STORAGE|COPY|GBLC|GBLB|SETA|SETB|SETC)( |\\t)+");
+const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
+
+// when active editor changes, try to set a language for it
+vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
+{
+    if (editor != null)
+        setHlasmLanguage(editor.document);
+})
 
 //automatic detection function
 function setHlasmLanguage(document: vscode.TextDocument) {

@@ -12,7 +12,8 @@ macro_operand_rules,
 model_operand_rules,
 machine_expr_rules,
 data_def_rules,
-ca_expr_rules;
+ca_expr_rules,
+deferred_operand_rules;
 
 @header
 {
@@ -195,7 +196,7 @@ id returns [id_index name, id_index using_qualifier]
 	: id_no_dot									{$name = $id_no_dot.name;}
 	| id_no_dot dot_ id_no_dot					{$name = $id_no_dot.name; $using_qualifier = $id_no_dot.name; };
 
-id_no_dot returns [id_index name]
+id_no_dot returns [id_index name = id_storage::empty_id]
 	: ORDSYMBOL id_ch_c
 	{
 		std::string tmp($ORDSYMBOL->getText());
@@ -216,13 +217,13 @@ id_comma_c: id
 
 
 
-remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|DAPOSTROPHE|IDENTIFIER|VERTICAL|ORDSYMBOL|SPACE;
+remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|VERTICAL|ORDSYMBOL|SPACE|ATTR;
 
 remark
 	: remark_ch*;
 
-remark_o returns [std::optional<range> range_opt]
-	: SPACE remark							{$range_opt = provider.get_range( $remark.ctx);}
+remark_o returns [std::optional<range> value]
+	: SPACE remark							{$value = provider.get_range( $remark.ctx);}
 	| ;
 
 
@@ -236,6 +237,8 @@ dot_
 	: DOT {collector.add_hl_symbol(token_info(provider.get_range( $DOT),hl_scopes::operator_symbol)); };
 apostrophe 
 	: APOSTROPHE {collector.add_hl_symbol(token_info(provider.get_range( $APOSTROPHE),hl_scopes::operator_symbol)); };
+attr 
+	: ATTR {collector.add_hl_symbol(token_info(provider.get_range( $ATTR),hl_scopes::operator_symbol)); };
 lpar 
 	: LPAR { collector.add_hl_symbol(token_info(provider.get_range( $LPAR),hl_scopes::operator_symbol)); };
 rpar 
@@ -257,8 +260,8 @@ plus
 
 
 expr_statement
-	: expr
-	| tmp=expr_statement EOLLN expr
+	: expr_p
+	| tmp=expr_statement EOLLN expr_p
 	;
 
 expr_test

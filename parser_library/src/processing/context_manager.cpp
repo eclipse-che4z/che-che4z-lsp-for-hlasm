@@ -76,7 +76,7 @@ context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symb
 
 		if (subscript.empty())
 		{
-			switch (set_sym->type())
+			switch (set_sym->type)
 			{
 			case context::SET_t_enum::A_TYPE:
 				return set_sym->access_set_symbol<context::A_t>()->get_value();
@@ -96,7 +96,7 @@ context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symb
 		{
 			idx = (size_t)(subscript[0] ? subscript[0]->get_numeric_value() - 1 : 0);
 
-			switch (set_sym->type())
+			switch (set_sym->type)
 			{
 			case context::SET_t_enum::A_TYPE:
 				return set_sym->access_set_symbol<context::A_t>()->get_value(idx);
@@ -115,10 +115,10 @@ context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symb
 	}
 	else if (auto mac_par = var->access_macro_param_base())
 	{
-		std::vector<size_t> tmp;
+		std::vector<int> tmp;
 		for (auto& e : subscript)
 		{
-			tmp.push_back((size_t)(e->get_numeric_value() - 1));
+			tmp.push_back(e->get_numeric_value() - 1);
 		}
 		return mac_par->get_value(tmp);
 	}
@@ -182,22 +182,25 @@ std::string context_manager::concat(semantics::sublist* sublist) const
 	std::string ret("(");
 	for (size_t i = 0; i < sublist->list.size(); ++i)
 	{
-		if (!sublist->list[i]) continue;
-
-		switch (sublist->list[i]->type)
+		for (auto& point : sublist->list[i])
 		{
-		case semantics::concat_type::STR:
-			ret.append(concat(sublist->list[i]->access_str()));
-			break;
-		case semantics::concat_type::DOT:
-			ret.append(concat(sublist->list[i]->access_dot()));
-			break;
-		case semantics::concat_type::VAR:
-			ret.append(concat(sublist->list[i]->access_var()));
-			break;
-		case semantics::concat_type::SUB:
-			ret.append(concat(sublist->list[i]->access_sub()));
-			break;
+			if (!point) continue;
+
+			switch (point->type)
+			{
+			case semantics::concat_type::STR:
+				ret.append(concat(point->access_str()));
+				break;
+			case semantics::concat_type::DOT:
+				ret.append(concat(point->access_dot()));
+				break;
+			case semantics::concat_type::VAR:
+				ret.append(concat(point->access_var()));
+				break;
+			case semantics::concat_type::SUB:
+				ret.append(concat(point->access_sub()));
+				break;
+			}
 		}
 		if (i != sublist->list.size() - 1) ret.append(",");
 	}

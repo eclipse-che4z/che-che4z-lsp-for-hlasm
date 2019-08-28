@@ -116,7 +116,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 	
 	auto set_sym = var_symbol->access_set_symbol_base();
 	assert(set_sym);
-	if (set_sym->type() != type)
+	if (set_sym->type != type)
 	{
 		add_diagnostic(diagnostic_s::error_E013("", "wrong type of variable symbol", symbol->symbol_range));
 		return false;
@@ -364,10 +364,15 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 	}
 
 	bool has_operand = false;
-	for (const auto& op : stmt.operands_ref().value)
+	for (auto it = stmt.operands_ref().value.begin(); it != stmt.operands_ref().value.end(); ++it)
 	{
+		const auto& op = *it;
+
 		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
 		{
+			if (it == stmt.operands_ref().value.end() - 1)
+				continue;
+
 			add_diagnostic(diagnostic_s::error_E010("", "operand", op->operand_range));
 			return false;
 		}
@@ -453,3 +458,8 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) {}
+
+void ca_processor::collect_diags() const
+{
+	//collect_diags_from_child(mngr_);
+}

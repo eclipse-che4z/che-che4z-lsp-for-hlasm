@@ -3,7 +3,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-common_statement_provider::common_statement_provider(const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_field_reparser& parser)
+common_statement_provider::common_statement_provider(const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
 	: statement_provider(kind), hlasm_ctx(hlasm_ctx),parser(parser) {}
 
 void common_statement_provider::preprocess_deferred(statement_processor& processor, context::shared_stmt_ptr stmt)
@@ -30,9 +30,10 @@ void common_statement_provider::preprocess_deferred(statement_processor& process
 		}
 		else
 		{
-			auto [op, rem] = parser.reparse_operand_field(
+			auto [op, rem] = parser.parse_operand_field(
 				&hlasm_ctx,
 				def_stmt.deferred_ref(),
+				false,
 				semantics::range_provider(def_stmt.deferred_range_ref(), false),
 				status);
 

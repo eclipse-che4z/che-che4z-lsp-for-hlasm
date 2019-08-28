@@ -63,7 +63,7 @@ expr_ptr arithmetic_expression::from_string(const std::string &s, int base)
 
 	if (tt != s.length())
 		return default_expr_with_error<arithmetic_expression>
-		(error_messages::ea02());
+		(error_messages::ea02(s));
 
 
 	return make_arith(val);

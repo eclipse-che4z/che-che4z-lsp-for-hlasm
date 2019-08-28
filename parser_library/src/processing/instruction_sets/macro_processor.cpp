@@ -16,11 +16,122 @@ void macro_processor::process(context::shared_stmt_ptr stmt)
 	hlasm_ctx.enter_macro(stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
+
 void macro_processor::process(context::unique_stmt_ptr stmt)
 {
 	auto args = get_args(*stmt->access_resolved());
 
 	hlasm_ctx.enter_macro(stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
+}
+
+std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const std::string& data, size_t& start)
+{
+	size_t begin = start;
+
+	while (true)
+	{
+		start = data.find_first_of(",()", start);
+
+		if (start == std::string::npos)
+			return nullptr;
+
+		if (data[start] == '(')
+		{
+			size_t nest = 1;
+			while (nest != 0)
+			{
+				++start;
+				if (start == data.size())
+					return nullptr;
+
+				if (data[start] == '(') ++nest;
+				if (data[start] == ')') --nest;
+			}
+			++start;
+		}
+		else
+			break;
+	}
+
+	auto tmp_start = start;
+	if (data[start] == ',')
+		++start;
+
+	return std::make_unique<context::macro_param_data_single>(data.substr(begin, tmp_start - begin));
+}
+
+context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
+{
+	if(data.empty())
+		return std::make_unique<context::macro_param_data_dummy>();
+
+	if (data.front() != '(' || data.back() != ')')
+		return std::make_unique<context::macro_param_data_single>(std::move(data));
+
+
+	std::stack<size_t> nests;
+	std::stack<std::vector<context::macro_data_ptr>> macro_data;
+
+	nests.push(0);
+	macro_data.emplace();
+
+	while (true)
+	{
+		auto begin = nests.top();
+
+		if (begin == data.size())
+			return std::make_unique<context::macro_param_data_single>(std::move(data));
+
+		if (data[begin] == '(')
+		{
+			nests.push(begin + 1);
+			macro_data.emplace();
+		}
+		else if (data[begin] == ')')
+		{
+			++begin;
+			nests.pop();
+
+			auto vec = std::move(macro_data.top());
+			macro_data.pop();
+
+			if (begin != data.size() && data[begin] != ',' && data[begin] != ')')
+			{
+				auto tmp_single = find_single_macro_param(data, begin);
+
+				if(tmp_single == nullptr)
+					return std::make_unique<context::macro_param_data_single>(std::move(data));
+
+				auto single = context::macro_param_data_composite(std::move(vec)).get_value() + tmp_single->get_value();
+
+				macro_data.top().emplace_back(std::make_unique<context::macro_param_data_single>(std::move(single)));
+			}
+			else
+				macro_data.top().emplace_back(std::make_unique<context::macro_param_data_composite>(std::move(vec)));
+
+			nests.top() = begin + (begin != data.size() && data[begin] == ',' ? 1 : 0);
+
+			if (nests.size() == 1)
+			{
+				break;
+			}
+		}
+		else 
+		{
+			macro_data.top().push_back(find_single_macro_param(data,begin));
+			nests.top() = begin;
+
+			if(macro_data.top().back() == nullptr)
+				return std::make_unique<context::macro_param_data_single>(std::move(data));
+		}
+	}
+
+	if(nests.top() != data.size())
+		return std::make_unique<context::macro_param_data_single>(std::move(data));
+
+	assert(macro_data.size() == 1 && macro_data.top().size() == 1);
+
+	return std::move(macro_data.top().front());
 }
 
 macro_arguments macro_processor::get_args(const resolved_statement& statement) const
@@ -65,7 +176,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 	{
 		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
 		{
-			args.symbolic_params.push_back({ nullptr,nullptr });
+			args.symbolic_params.push_back({ std::make_unique<context::macro_param_data_dummy>(),nullptr });
 			continue;
 		}
 
@@ -79,7 +190,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		{
 			auto id = mngr.get_symbol_name(tmp->chain[0]->access_str()->value);
 			auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
-			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type() == context::macro_param_type::POS_PAR_TYPE)
+			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
 			{
 				add_diagnostic(diagnostic_s::error_E010("", "keyword parameter", tmp->operand_range)); //error - unknown name of keyword parameter
 
@@ -105,9 +216,14 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 				tmp->chain.erase(tmp->chain.begin());
 				tmp->chain.erase(tmp->chain.begin());
 
-				args.symbolic_params.push_back({ macrodef_processor::create_macro_data(std::move(tmp->chain),hlasm_ctx),id });
+				if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
+					args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var()).to<context::C_t>()),id });
+				else
+					args.symbolic_params.push_back({ macrodef_processor::create_macro_data(std::move(tmp->chain),hlasm_ctx),id });
 			}
 		}
+		else if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
+			args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var()).to<context::C_t>()),nullptr });
 		else
 			args.symbolic_params.push_back({ macrodef_processor::create_macro_data(std::move(tmp->chain),hlasm_ctx) ,nullptr });
 	}

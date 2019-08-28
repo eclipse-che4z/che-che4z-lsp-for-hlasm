@@ -25,7 +25,7 @@ public:
 	virtual const file_uri & get_file_name() override;
 	virtual const std::string & get_text() override;
 	virtual version_t get_version() override;
-	virtual bool is_bad() const override;
+	virtual bool update_and_get_bad() override;
 
 	virtual void did_open(std::string new_text, version_t version) override;
 	virtual void did_change(std::string new_text) override;

@@ -8,6 +8,7 @@
 #include "macro_test.h"
 #include "copy_test.h"
 #include "ord_sym_test.h"
+#include "data_attributes.h"
 
 #include "text_synchronization_test.h"
 #include "asm_instr_check_test.h"
@@ -17,7 +18,7 @@
 
 #include "workspace_manager_test.h"
 
-//#include "parser_substitutions_test.h"
+#include "parser_deferred_test.h"
 #include "ca_instr_test.h"
 #include "context_test.h"
 #include "lexer_test.h"

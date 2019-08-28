@@ -4,15 +4,25 @@
 using namespace hlasm_plugin::parser_library;
 using namespace antlr4;
 
-token_stream::token_stream(antlr4::TokenSource* token_source) : antlr4::BufferedTokenStream(token_source), enabled_(false) {}
+token_stream::token_stream(antlr4::TokenSource* token_source) 
+	: antlr4::BufferedTokenStream(token_source), enabled_cont_(false),enabled_hidden_(false) {}
 
-void token_stream::enable_continuation() { enabled_ = true; }
+void token_stream::enable_continuation() { enabled_cont_ = true; }
 
-void token_stream::disable_continuation() { enabled_ = false; }
+void token_stream::disable_continuation() { enabled_cont_ = false; }
+
+void token_stream::enable_hidden() { enabled_hidden_ = true; }
+
+void token_stream::disable_hidden() { enabled_hidden_ = false; }
 
 void token_stream::rewind_input(lexer::stream_position pos)
 {
 	auto& lexer_tmp = dynamic_cast<lexer&>(*_tokenSource);
+	
+	if (lexer_tmp.last_lln_end_position().line == pos.line - 1 && 
+		lexer_tmp.last_lln_end_position().offset == pos.offset) // no rewind needed
+		return; 
+
 	lexer_tmp.rewind_input(pos);
 
 	if (_tokens.back()->getType() != lexer::EOLLN)
@@ -145,5 +155,8 @@ antlr4::Token* hlasm_plugin::parser_library::token_stream::previous_token_on_cha
 
 bool hlasm_plugin::parser_library::token_stream::is_on_channel(antlr4::Token * token)
 {
-	return token->getChannel() == lexer::Channels::DEFAULT_CHANNEL || (enabled_ && token->getType() == lexer::CONTINUATION) || token->getType() == antlr4::Token::EOF;
+	return token->getChannel() == lexer::Channels::DEFAULT_CHANNEL 
+		|| (enabled_hidden_ && token->getChannel() == lexer::Channels::HIDDEN_CHANNEL)
+		|| (enabled_cont_ && token->getType() == lexer::CONTINUATION) 
+		|| token->getType() == antlr4::Token::EOF;
 }

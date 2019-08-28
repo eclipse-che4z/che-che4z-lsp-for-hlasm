@@ -12,7 +12,7 @@ using namespace std;
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-lexer::lexer(input_source* input,semantics::lsp_info_processor * lsp_proc)
+lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc)
 	: input_(input), lsp_proc_(lsp_proc)
 {
 	factory_ = std::make_unique<token_factory>();
@@ -87,15 +87,17 @@ bool hlasm_plugin::parser_library::lexer::eof_generated() const
 	return eof_generated_;
 }
 
-void lexer::set_unlimited_line(bool ul)
+void lexer::set_unlimited_line(bool unlimited_lines)
 {
-	unlimited_line_ = ul;
+	unlimited_line_ = unlimited_lines;
+}
+void lexer::set_file_offset(position file_offset)
+{
+	input_state_->line = (size_t)file_offset.line;
+	input_state_->char_position_in_line = (size_t)file_offset.column;
+	input_state_->char_position_in_line_utf16 = (size_t)file_offset.column;
 }
 
-bool lexer::get_unlimited_line() const
-{
-	return unlimited_line_;
-}
 
 size_t lexer::getLine() const
 {
@@ -164,6 +166,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 	/* record last continuation */
 	if (ttype == CONTINUATION)
 		last_continuation_ = last_token_id_;
+
+	creating_var_symbol_ = ttype == AMPERSAND;
 
 	//record begin of logical line
 	if (ttype == EOLLN)
@@ -461,11 +465,6 @@ void lexer::lex_tokens()
 		create_token(VERTICAL);
 		break;
 
-	case '"':
-		consume();
-		create_token(DAPOSTROPHE);
-		break;
-
 	default:
 		lex_word();
 		break;
@@ -487,7 +486,6 @@ bool lexer::identifier_divider() const
 	case '(':
 	case ')':
 	case '\'':
-	case '"':
 	case '/':
 	case '&':
 	case '|':
@@ -621,23 +619,45 @@ bool lexer::is_space() const
 	return input_state_->c >= 0 && input_state_->c <= 255 && isspace(input_state_->c);
 }
 
+bool lexer::is_data_attribute() const
+{
+	auto tmp = std::toupper(input_state_->c);
+	return tmp == 'D' || tmp == 'O' || tmp == 'N' || tmp == 'S' || tmp == 'K' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+}
+
 void lexer::lex_word()
 {
+	bool last_char_data_attr=false;
 	bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
 
 	size_t w_len = 0;
 	while (!is_space() && !eof() && !identifier_divider()
 		&& before_end())
 	{
-		++w_len;
 		ord &= is_ord_char();
+		last_char_data_attr = is_data_attribute();
+
+		if (creating_var_symbol_ && !ord && w_len >0 &&  w_len <= 63)
+		{
+			create_token(ORDSYMBOL);
+			break;
+		}
+
 		consume();
+		++w_len;
 	}
 
 	if (ord && w_len <= 63)
 		create_token(ORDSYMBOL);
 	else
 		create_token(IDENTIFIER);
+
+	if (input_state_->c == '\'' && last_char_data_attr && input_state_->char_position_in_line != end_)
+	{
+		start_token();
+		consume();
+		create_token(ATTR);
+	}
 }
 
 bool lexer::set_begin(size_t begin)

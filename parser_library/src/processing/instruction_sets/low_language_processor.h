@@ -3,7 +3,7 @@
 
 #include "instruction_processor.h"
 #include "../branching_provider.h"
-#include "../deferred_parser.h"
+#include "../statement_fields_parser.h"
 #include "../../checking/instruction_checker.h"
 
 namespace hlasm_plugin {
@@ -18,9 +18,9 @@ public:
 
 protected:
 	branching_provider& provider;
-	statement_field_reparser& parser;
+	statement_fields_parser& parser;
 
-	low_language_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider,statement_field_reparser& parser);
+	low_language_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_fields_parser& parser);
 
 	rebuilt_statement preprocess(context::unique_stmt_ptr stmt);
 	rebuilt_statement preprocess(context::shared_stmt_ptr stmt);
@@ -38,10 +38,12 @@ private:
 	preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
 
 	using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
-	static transform_result transform_mnemonic(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser);
-	static transform_result transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser);
+	static transform_result transform_mnemonic(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
+	static transform_result transform_default(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
 
-	static checking::check_op_ptr get_check_op(const semantics::operand* op, context::hlasm_context& hlasm_ctx, diagnosable& diagnoser, const resolved_statement& stmt);
+	static checking::check_op_ptr get_check_op(
+		const semantics::operand* op, context::hlasm_context& hlasm_ctx, diagnostic_collector collector, const resolved_statement& stmt,
+		size_t op_position, const std::string* mnemonic = nullptr);
 };
 
 }

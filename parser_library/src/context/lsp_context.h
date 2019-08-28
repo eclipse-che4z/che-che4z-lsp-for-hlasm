@@ -20,7 +20,7 @@ struct completion_item_s
 
 struct definition
 {
-	definition() = default;
+	definition() : check_scopes(false) {}
 	definition(std::string name, std::string scope, std::string file_name, range definition_range, bool check_scopes = true) : name(std::move(name)), scope(std::move(scope)), file_name(std::move(file_name)), definition_range(definition_range), documentation(std::move(documentation)), check_scopes(check_scopes) {}
 
 	std::string name;

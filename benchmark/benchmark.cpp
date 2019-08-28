@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include <fstream>
 #include "shared/workspace_manager.h"
+#include "../parser_library/src/file_impl.h"
 
 using json = nlohmann::json;
 
@@ -61,11 +62,12 @@ int main(int argc, char** argv)
 			// program file
 			auto source_file = program["program"].get<std::string>();
 			auto source_path = ws_folder + "/" + source_file;
-			std::ifstream in(source_path);
+			in = std::ifstream(source_path);
 			if (in.fail())
 				continue;
 			// program's contents
 			auto content = std::string((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
+			content = hlasm_plugin::parser_library::file_impl::replace_non_utf8_chars(content);
 
 			// new workspace manager
 			hlasm_plugin::parser_library::workspace_manager ws;
@@ -85,11 +87,11 @@ int main(int argc, char** argv)
 			}
 			catch (...)
 			{
-				std::clog << "Parse ended with an error" << std::endl;
+				std::clog << "Parse failed" << std::endl;
 				result.push_back(json(
 					{
-						{"File: ", source_file },
-						{"Success: ", false}
+						{"File", source_file },
+						{"Success", false}
 					}
 				));
 				continue;
@@ -97,18 +99,25 @@ int main(int argc, char** argv)
 			auto c_end = std::clock();
 			auto end = std::chrono::high_resolution_clock::now();
 
-			std::clog << "Parse succeeded" << std::endl;
+			std::clog << "Parse succeeded after "
+				<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+				<< "ms with "
+				<< consumer.error_count
+				<< " errors" << std::endl;
+
 			result.push_back(json(
 				{
-					{"File: ", source_file },
-					{"Success: ", true},
-					{"Errors: ", consumer.error_count},
-					{"Warnings: ", consumer.warning_count },
-					{"Wall Time (ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()},
-					{"CPU Time (ms/n): ", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC}
+					{"File", source_file },
+					{"Success", true},
+					{"Errors", consumer.error_count},
+					{"Warnings", consumer.warning_count },
+					{"Wall Time (ms)", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()},
+					{"CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC}
 				}
 			));
 		}
+
+		std::clog << "Parse finished" << std::endl;
 
 		std::cout << result << std::endl;
 	}

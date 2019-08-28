@@ -5,7 +5,7 @@
 #include "processing_state_listener.h"
 #include "statement_provider.h"
 #include "branching_provider.h"
-#include "deferred_parser.h"
+#include "statement_fields_parser.h"
 
 #include <stack>
 
@@ -24,7 +24,7 @@ public:
 		context::hlasm_context& hlasm_ctx, 
 		const library_data data,
 		parse_lib_provider& lib_provider,
-		statement_field_reparser& parser);
+		statement_fields_parser& parser);
 
 	void start_processing();
 

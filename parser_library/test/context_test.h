@@ -1,3 +1,6 @@
+#ifndef HLASMPLUGIN_PARSERLIBARY_CONTEXTTEST_H
+#define HLASMPLUGIN_PARSERLIBARY_CONTEXTTEST_H
+
 #include "../src/context/hlasm_context.h"
 
 #include <string>
@@ -285,11 +288,13 @@ TEST(context_macro, call_and_leave_macro)
 	ASSERT_TRUE(ctx.is_in_macro());
 	ASSERT_TRUE(ctx.this_macro() == m2);
 
+	auto SYSLIST = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	ASSERT_TRUE(SYSLIST);
 	//testing syslist
-	EXPECT_EQ(m2->SYSLIST(0), "");
-	EXPECT_EQ(m2->SYSLIST(1), "ada");
-	EXPECT_EQ(m2->SYSLIST(2), "mko");
-	EXPECT_EQ(m2->SYSLIST(3), "");
+	EXPECT_EQ(SYSLIST->get_value(-1), "");
+	EXPECT_EQ(SYSLIST->get_value(0), "ada");
+	EXPECT_EQ(SYSLIST->get_value(1), "mko");
+	EXPECT_EQ(SYSLIST->get_value(2), "");
 
 	//testing named params
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
@@ -343,7 +348,7 @@ TEST(context_macro, repeat_call_same_macro)
 	//call->|lbl		MAC		ada,mko,
 	auto m2 = ctx.enter_macro(idx, move(lb), move(params));
 
-	EXPECT_EQ(m2->named_params.find(lbl)->second->data->get_value(), "lbl");
+	EXPECT_EQ(m2->named_params.find(lbl)->second->get_value(), "lbl");
 
 	//leaving macro
 	ctx.leave_macro();
@@ -375,9 +380,12 @@ TEST(context_macro, repeat_call_same_macro)
 
 	ASSERT_TRUE(m2 != m3);
 
-	for (size_t i = 0; i < 3; i++)
+	auto SYSLIST = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	ASSERT_TRUE(SYSLIST);
+
+	for (int i = -1; i < 2; i++)
 	{
-		EXPECT_EQ(m3->SYSLIST(i), "");
+		EXPECT_EQ(SYSLIST->get_value(i), "");
 	}
 
 	EXPECT_EQ(m3->named_params.find(lbl)->second->get_value(), "");
@@ -385,11 +393,11 @@ TEST(context_macro, repeat_call_same_macro)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(m3->SYSLIST({ 2,2 }), "");
-	EXPECT_EQ(m3->SYSLIST({ 3 }), "(first,second,third)");
-	EXPECT_EQ(m3->SYSLIST({ 3,1 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0,1 }), "");
+	EXPECT_EQ(SYSLIST->get_value({ 1,2 }), "");
+	EXPECT_EQ(SYSLIST->get_value({ 2 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST->get_value({ 2,1 }), "second");
+	EXPECT_EQ(SYSLIST->get_value({ 2,1,0,0 }), "second");
+	EXPECT_EQ(SYSLIST->get_value({ 2,1,0,0,1 }), "");
 }
 
 TEST(context_macro, recurr_call)
@@ -471,9 +479,14 @@ TEST(context_macro, recurr_call)
 	ASSERT_TRUE(ctx.is_in_macro());
 	ASSERT_FALSE(m2 == m3);
 
-	for (size_t i = 0; i < 2; i++)
+	auto SYSLIST2 = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	ASSERT_TRUE(SYSLIST2);
+	auto SYSLIST3 = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	ASSERT_TRUE(SYSLIST3);
+
+	for (int i = -1; i < 1; i++)
 	{
-		EXPECT_EQ(m3->SYSLIST(i), "");
+		EXPECT_EQ(SYSLIST3->get_value(i), "");
 	}
 
 	//testing inner macro
@@ -482,18 +495,18 @@ TEST(context_macro, recurr_call)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(m3->SYSLIST(0), "");
-	EXPECT_EQ(m3->SYSLIST({ 2,2 }), "");
-	EXPECT_EQ(m3->SYSLIST({ 3 }), "(first,second,third)");
-	EXPECT_EQ(m3->SYSLIST({ 3,1 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0 }), "second");
-	EXPECT_EQ(m3->SYSLIST({ 3,1,0,0,1 }), "");
+	EXPECT_EQ(SYSLIST3->get_value(-1), "");
+	EXPECT_EQ(SYSLIST3->get_value({ 1,2 }), "");
+	EXPECT_EQ(SYSLIST3->get_value({ 2 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST3->get_value({ 2,1 }), "second");
+	EXPECT_EQ(SYSLIST3->get_value({ 2,1,0,0 }), "second");
+	EXPECT_EQ(SYSLIST3->get_value({ 2,1,0,0,1 }), "");
 
 	//testing outer macro
-	EXPECT_EQ(m2->SYSLIST(0), "lbl");
-	EXPECT_EQ(m2->SYSLIST(1), "ada");
-	EXPECT_EQ(m2->SYSLIST(2), "mko");
-	EXPECT_EQ(m2->SYSLIST(3), "");
+	EXPECT_EQ(SYSLIST2->get_value(-1), "lbl");
+	EXPECT_EQ(SYSLIST2->get_value(0), "ada");
+	EXPECT_EQ(SYSLIST2->get_value(1), "mko");
+	EXPECT_EQ(SYSLIST2->get_value(2), "");
 
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
 	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "");
@@ -507,3 +520,4 @@ TEST(context_macro, recurr_call)
 	ctx.leave_macro();
 	ASSERT_FALSE(ctx.is_in_macro());
 }
+#endif

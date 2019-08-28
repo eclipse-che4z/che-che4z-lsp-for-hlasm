@@ -279,3 +279,34 @@ TEST(AIF, extended_fail)
 	EXPECT_TRUE(ctx.get_var_sym(it2));
 	EXPECT_TRUE(ctx.get_var_sym(it3));
 }
+
+TEST(ACTR, exceeded)
+{
+	std::string input(R"(
+.A ANOP
+ LR 1,1
+ AGO .A
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ACTR, infinite_ACTR)
+{
+	std::string input(R"(
+.A ANOP
+ ACTR 1024
+ LR 1,1
+ AGO .A
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+}

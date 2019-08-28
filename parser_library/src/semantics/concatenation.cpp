@@ -33,49 +33,9 @@ sublist * concatenation_point::access_sub()
 }
 
 char_str::char_str(std::string value) : concatenation_point(concat_type::STR), value(std::move(value)) {}
-/*
-concat_point_ptr char_str::clone() const
-{
-	return std::make_unique<char_str>(*this);
-}
-*/
+
 basic_var_sym::basic_var_sym(id_index name, std::vector<antlr4::ParserRuleContext*> subscript, hlasm_plugin::parser_library::range symbol_range)
 	: var_sym(false,std::move(subscript),std::move(symbol_range)), name(name) {}
-
-/*
-var_sym::var_sym(const var_sym & variable_symbol)
-	: concatenation_point(concat_type::VAR), created(variable_symbol.created), name(variable_symbol.name), symbol_range(variable_symbol.symbol_range), subscript(variable_symbol.subscript)
-{
-	created_name.insert(created_name.end(), make_clone_iterator(variable_symbol.created_name.begin()), make_clone_iterator(variable_symbol.created_name.end()));
-}
-
-var_sym& var_sym::operator=(const var_sym & variable_symbol)
-{
-	created = variable_symbol.created;
-	name = variable_symbol.name;
-	symbol_range = variable_symbol.symbol_range;
-
-	created_name.insert(created_name.end(), make_clone_iterator(variable_symbol.created_name.begin()), make_clone_iterator(variable_symbol.created_name.end()));
-
-
-	for (const auto& expr : variable_symbol.subscript)
-		subscript.push_back(expr);
-
-	return *this;
-}
-
-
-var_sym::var_sym() 
-	: concatenation_point(concat_type::VAR), created(false),name(context::id_storage::empty_id) {}
-
-*/
-
-/*
-concat_point_ptr var_sym::clone() const
-{
-	return std::make_unique<var_sym>(*this);
-}
-*/
 
 
 created_var_sym::created_var_sym(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, hlasm_plugin::parser_library::range symbol_range)
@@ -84,30 +44,10 @@ created_var_sym::created_var_sym(concat_chain created_name, std::vector<antlr4::
 dot::dot()
 	:concatenation_point(concat_type::DOT) {}
 
-/*
-concat_point_ptr dot::clone() const
-{
-	return std::make_unique<dot>();
-}
-concat_point_ptr equals::clone() const
-{
-	return std::make_unique<equals>();
-}
-concat_point_ptr sublist::clone() const
-{
-	concat_chain new_chain;
-
-	new_chain.insert(new_chain.end(), make_clone_iterator(list.begin()), make_clone_iterator(list.end()));
-
-	return std::make_unique<sublist>(std::move(new_chain));
-}
-*/
 equals::equals()
 	:concatenation_point(concat_type::EQU) {}
 
-
-
-sublist::sublist(concat_chain list) 
+sublist::sublist(std::vector<concat_chain> list)
 	: concatenation_point(concat_type::SUB), list(std::move(list)) {}
 
 void concatenation_point::clear_concat_chain(concat_chain & chain)
@@ -154,47 +94,18 @@ bool concatenation_point::contains_var_sym(const concat_chain& chain)
 	for (const auto& point : chain)
 	{
 		if (point->type == concat_type::VAR)
+		{
 			return true;
+		}
 		else if (point->type == concat_type::SUB)
-			if (contains_var_sym(point->access_sub()->list)) return true;
+		{
+			for(const auto& entry : point->access_sub()->list)
+				if (contains_var_sym(entry)) return true;
+		}
 		else
 			continue;
 	}
 	return false;
-}
-
-concat_chain concatenation_point::clone(const concat_chain& chain)
-{
-	concat_chain res, tmp;
-	var_sym* var;
-	
-	for (auto& point : chain)
-	{
-		switch (point->type)
-		{
-		case concat_type::DOT:
-			res.push_back(std::make_unique<dot>());
-			break;
-		case concat_type::EQU:
-			res.push_back(std::make_unique<equals>());
-			break;
-		case concat_type::STR:
-			res.push_back(std::make_unique<char_str>(point->access_str()->value));
-			break;
-		case concat_type::SUB:
-			tmp = clone(point->access_sub()->list);
-			for (auto& tmp_point : tmp) res.push_back(std::move(tmp_point));
-		case concat_type::VAR:
-			var = point->access_var();
-			if (var->created)
-				res.push_back(std::make_unique<created_var_sym>(clone(var->access_created()->created_name), var->subscript, var->symbol_range));
-			else
-				res.push_back(std::make_unique<basic_var_sym>(var->access_basic()->name, var->subscript, var->symbol_range));
-		default:
-			break;
-		}
-	}
-	return res;
 }
 
 basic_var_sym* var_sym::access_basic() 

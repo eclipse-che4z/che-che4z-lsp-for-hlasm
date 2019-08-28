@@ -28,7 +28,7 @@ antlrcpp::Any expression_visitor::visitExpr_statement(hlasm_plugin::parser_libra
 		res.push_back('\n');
 		
 	}
-	res.append(visit(ctx->expr()).as<expr_ptr>()->get_str_val());
+	res.append(visit(ctx->expr_p()).as<expr_ptr>()->get_str_val());
 	return res;
 }
 
@@ -83,7 +83,7 @@ antlrcpp::Any expression_visitor::visitTerm(hlasm_plugin::parser_library::genera
 		case context::SET_t_enum::B_TYPE:
 			return (expr_ptr)make_logic(var.access_b());
 		case context::SET_t_enum::C_TYPE:
-			return (expr_ptr)make_char(var.access_c());
+			return (expr_ptr)arithmetic_expression::from_string("",var.access_c(),false);
 		default:
 			return (expr_ptr)make_arith(0);
 		}
@@ -114,8 +114,8 @@ antlrcpp::Any expression_visitor::visitTerm(hlasm_plugin::parser_library::genera
 		return visit(ctx->children.at(0));
 	}
 
-	assert(false);
-	return make_arith(0);
+	assert(ctx->exception);
+	return (expr_ptr)make_arith(0);
 }
 
 antlrcpp::Any hlasm_plugin::parser_library::expressions::expression_visitor::visitId_sub(hlasm_plugin::parser_library::generated::hlasmparser::Id_subContext* ctx)
@@ -202,6 +202,43 @@ antlrcpp::Any expression_visitor::visitExpr_p_space_c(hlasm_plugin::parser_libra
 
 antlrcpp::Any expression_visitor::visitData_attribute(hlasm_plugin::parser_library::generated::hlasmparser::Data_attributeContext * ctx)
 {
+	if (ctx->ORDSYMBOL()->getText() == "K" && ctx->var_symbol() && ctx->var_symbol()->vs->access_basic())
+	{
+		std::vector<size_t> subscript;						//TODO check expr errors
+		for (auto tree : ctx->var_symbol()->vs->subscript)
+			subscript.push_back((size_t)processing::context_manager(hlasm_ctx_).evaluate_expression_tree(tree)->get_set_value().to<A_t>()-1);
+
+		auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::K, hlasm_ctx_.get_var_sym(ctx->var_symbol()->vs->access_basic()->name), subscript).access_a();
+		return static_cast<expr_ptr>(make_arith(val));
+	}
+	if (ctx->ORDSYMBOL()->getText() == "N" && ctx->var_symbol() && ctx->var_symbol()->vs->access_basic())
+	{
+		std::vector<size_t> subscript;						//TODO check expr errors
+		for (auto tree : ctx->var_symbol()->vs->subscript)
+			subscript.push_back((size_t)processing::context_manager(hlasm_ctx_).evaluate_expression_tree(tree)->get_set_value().to<A_t>() - 1);
+
+		auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::N, hlasm_ctx_.get_var_sym(ctx->var_symbol()->vs->access_basic()->name),subscript).access_a();
+		return static_cast<expr_ptr>(make_arith(val));
+	}
+	if (ctx->ORDSYMBOL()->getText() == "D")
+	{
+		if (ctx->id())
+		{
+			auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::D, ctx->id()->name).access_b();
+			return static_cast<expr_ptr>(make_logic(val));
+		}
+		else if (ctx->var_symbol())
+		{
+			auto id = hlasm_ctx_.ids().add(processing::context_manager(hlasm_ctx_).get_var_sym_value(*ctx->var_symbol()->vs).to<context::C_t>());
+			auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::D, id).access_b();
+			return static_cast<expr_ptr>(make_logic(val));
+		}
+	}
+	if (ctx->ORDSYMBOL()->getText() == "T")
+	{
+		return static_cast<expr_ptr>(make_char(""));
+	}
+
 	return static_cast<expr_ptr>(make_arith(0));
 }
 

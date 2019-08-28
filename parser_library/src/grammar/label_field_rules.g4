@@ -117,8 +117,7 @@ common_ch returns [std::string value]
 	| VERTICAL												{$value = "|";}
 	| IDENTIFIER											{$value = $IDENTIFIER->getText();}
 	| ORDSYMBOL												{$value = $ORDSYMBOL->getText();}
-	| DOT													{$value = ".";}
-	| DAPOSTROPHE											{$value = "\"";};
+	| DOT													{$value = ".";};
 
 l_ch returns [std::string value]
 	: common_ch												{$value = std::move($common_ch.value);}
@@ -139,8 +138,7 @@ common_ch_v returns [concat_point_ptr point]
 	| VERTICAL												{$point = std::make_unique<char_str>("|");}
 	| IDENTIFIER											{$point = std::make_unique<char_str>(std::move($IDENTIFIER->getText()));}
 	| ORDSYMBOL												{$point = std::make_unique<char_str>(std::move($ORDSYMBOL->getText()));}
-	| DOT													{$point = std::make_unique<dot>();}		
-	| DAPOSTROPHE											{$point = std::make_unique<char_str>("\"");}										
+	| DOT													{$point = std::make_unique<dot>();}											
 	| var_symbol											{$point = std::move($var_symbol.vs);};
 
 l_ch_v returns [concat_point_ptr point]
@@ -152,7 +150,7 @@ l_ch_v returns [concat_point_ptr point]
 
 l_str_v returns [concat_chain chain]
 	:														
-	| tmp=l_str_v l_ch_v									{$chain=std::move($tmp.chain);};
+	| tmp=l_str_v l_ch_v									{$tmp.chain.push_back(std::move($l_ch_v.point)); $chain=std::move($tmp.chain);};
 
 l_string returns [std::string value]
 	: l_ch													{$value = std::move($l_ch.value);}
@@ -171,30 +169,30 @@ l_string_o returns [std::string value]
 	| ;
 
 l_string_no_space_c returns [std::string value]
-	: APOSTROPHE str1=l_string_o APOSTROPHE str2=l_string_o			
+	: l_apo str1=l_string_o l_apo str2=l_string_o			
 	{
 		$value.append("'"); $value.append(std::move($str1.value)); $value.append("'"); $value.append(std::move($str2.value));
 	}
-	| tmp=l_string_no_space_c APOSTROPHE str1=l_string_o APOSTROPHE str2=l_string_o
+	| tmp=l_string_no_space_c l_apo str1=l_string_o l_apo str2=l_string_o
 	{
 		$value = std::move($tmp.value); $value.append("'"); $value.append(std::move($str1.value)); $value.append("'"); $value.append(std::move($str2.value));
 	};
 
 l_string_no_space_v returns [concat_chain chain]
-	: APOSTROPHE l_string_o APOSTROPHE l_string_v
+	: l_apo l_string_o l_apo l_string_v
 	{
 		std::string tmp("'"); tmp.append(std::move($l_string_o.value)); tmp.append("'");
 		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v.chain.begin()), std::make_move_iterator($l_string_v.chain.end()));
 	}
-	| APOSTROPHE l_string_v APOSTROPHE l_string_o
+	| l_apo l_string_v l_apo l_string_o
 	{
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v.chain.begin()), std::make_move_iterator($l_string_v.chain.end()));
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.push_back(std::make_unique<char_str>(std::move($l_string_o.value)));
 	}
-	| APOSTROPHE str1=l_string_v APOSTROPHE str2=l_string_v
+	| l_apo str1=l_string_v l_apo str2=l_string_v
 	{
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($str1.chain.begin()), std::make_move_iterator($str1.chain.end()));
@@ -204,7 +202,7 @@ l_string_no_space_v returns [concat_chain chain]
 
 l_string_no_space_u returns [concat_chain chain]
 	: l_string_no_space_v													{$chain = std::move($l_string_no_space_v.chain);}
-	| APOSTROPHE str1=l_string_o APOSTROPHE str2=l_string_o
+	| l_apo str1=l_string_o l_apo str2=l_string_o
 	{
 		std::string tmp("'"); tmp.append(std::move($str1.value)); tmp.append("'");  tmp.append(std::move($str2.value));
 		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
@@ -258,20 +256,20 @@ l_sp_string_v returns [concat_chain chain]
 
 
 l_string_poss_space_c returns [std::string value]
-	: APOSTROPHE l_sp_string APOSTROPHE										{$value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");}
-	| tmp=l_string_poss_space_c APOSTROPHE l_sp_string APOSTROPHE			{$value=std::move($tmp.value); $value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");};
+	: l_apo l_sp_string l_apo										{$value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");}
+	| tmp=l_string_poss_space_c l_apo l_sp_string l_apo			{$value=std::move($tmp.value); $value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");};
 
 l_string_poss_space_c_o returns [std::string value]
 	: l_string_poss_space_c													{$value = std::move($l_string_poss_space_c.value);}
 	| ;
 
 l_string_poss_space_u returns [concat_chain chain]
-	: APOSTROPHE l_sp_string APOSTROPHE										
+	: l_apo l_sp_string l_apo										
 	{
 		std::string tmp("'"); tmp.append(std::move($l_sp_string.value)); tmp.append("'"); 
 		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
 	}
-	| APOSTROPHE l_sp_string_v APOSTROPHE
+	| l_apo l_sp_string_v l_apo
 	{
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($l_sp_string_v.chain.begin()), std::make_move_iterator($l_sp_string_v.chain.end()));
@@ -287,7 +285,7 @@ l_string_poss_space_u_c returns [concat_chain chain]
 	| ;
 
 l_string_v_apo_sp returns [concat_chain chain]
-	: cl1=l_string_poss_space_c_o APOSTROPHE cl2=l_sp_string_v APOSTROPHE cl3=l_string_poss_space_u_c
+	: cl1=l_string_poss_space_c_o l_apo cl2=l_sp_string_v l_apo cl3=l_string_poss_space_u_c
 	{
 		$cl1.value.append("'");
 		$cl2.chain.push_back(std::make_unique<char_str>("'"));
@@ -302,7 +300,7 @@ l_string_v_apo_sp returns [concat_chain chain]
 
 l_a_ch returns [std::string value]		//l_ch with apo
 	: l_ch										{$value = std::move($l_ch.value);}
-	| APOSTROPHE								{$value = "'";};
+	| l_apo								{$value = "'";};
 
 
 l_a_string returns [std::string value]
@@ -318,6 +316,11 @@ l_char_string_o returns [std::string value]
 
 
 l_char_string_sp returns [std::string value]
-	: APOSTROPHE l_sp_string APOSTROPHE							{$value = "'"; $value.append(std::move($l_sp_string.value)); $value.append("'");}
-	| tmp=l_char_string_sp APOSTROPHE l_sp_string APOSTROPHE	{$value = std::move($tmp.value); $value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");};
+	: l_apo l_sp_string l_apo							{$value = "'"; $value.append(std::move($l_sp_string.value)); $value.append("'");}
+	| tmp=l_char_string_sp l_apo l_sp_string l_apo	{$value = std::move($tmp.value); $value.append("'"); $value.append(std::move($l_sp_string.value)); $value.append("'");};
+
+
+l_apo
+	: APOSTROPHE
+	| ATTR;
 

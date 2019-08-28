@@ -8,12 +8,18 @@ namespace hlasm_plugin::parser_library::context
 
 macro_param_data_component::~macro_param_data_component() {}
 
+macro_param_data_component::macro_param_data_component(size_t number)
+	:number(number) {}
+
 const C_t & macro_param_data_single::get_value() const
 {
 	return data_;
 }
 
 const macro_data_shared_ptr macro_param_data_component::dummy(new macro_param_data_dummy());
+
+macro_param_data_dummy::macro_param_data_dummy()
+	:macro_param_data_component((size_t)0) {}
 
 const C_t & macro_param_data_dummy::get_value() const
 {
@@ -32,9 +38,9 @@ const macro_param_data_component * macro_param_data_single::get_ith(size_t idx) 
 	return macro_param_data_component::dummy.get();
 }
 
-macro_param_data_single::macro_param_data_single(const C_t & value) :data_(value) {}
+macro_param_data_single::macro_param_data_single(C_t value) 
+	:macro_param_data_component(value.empty() ? 0 : 1), data_(std::move(value)) {}
 
-macro_param_data_single::macro_param_data_single(C_t && value) : data_(std::move(value)) {}
 
 const C_t & macro_param_data_composite::get_value() const
 {
@@ -60,6 +66,7 @@ const macro_param_data_component * macro_param_data_composite::get_ith(size_t id
 }
 
 
-macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_ptr> value) : data_(move(value)) {}
+macro_param_data_composite::macro_param_data_composite(std::vector<macro_data_ptr> value) 
+	: macro_param_data_component(value.size()), data_(move(value)) {}
 
 }

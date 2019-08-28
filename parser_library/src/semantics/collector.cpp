@@ -119,11 +119,12 @@ void collector::set_operand_remark_field(range symbol_range)
 	def_.emplace("", symbol_range);
 }
 
-void collector::set_operand_remark_field(std::string deferred, range symbol_range)
+void collector::set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range)
 {
 	if (op_ || rem_ || def_)
 		throw std::runtime_error("field already assigned");
 	def_.emplace(std::move(deferred), symbol_range);
+	rem_.emplace(symbol_range, std::move(remarks));
 }
 
 void collector::set_operand_remark_field(std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range)
@@ -141,7 +142,7 @@ void collector::add_lsp_symbol(lsp_symbol symbol)
 
 void collector::add_hl_symbol(token_info symbol)
 {
-	hl_symbols_.push_back(std::move(symbol));
+		hl_symbols_.push_back(std::move(symbol));
 }
 
 const instruction_si& collector::peek_instruction()

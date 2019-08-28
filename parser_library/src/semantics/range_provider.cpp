@@ -36,8 +36,6 @@ range range_provider::get_range(const antlr4::Token* start, const antlr4::Token*
 		ret.end = ret.start;
 	}
 
-	apply_offset(ret, original_range.start);
-
 	return ret;
 }
 
@@ -59,16 +57,7 @@ range range_provider::get_empty_range(const antlr4::Token* start)
 	ret.start.line = start->getLine();
 	ret.start.column = start->getCharPositionInLine();
 	ret.end = ret.start;
-	apply_offset(ret, original_range.start);
 	return ret;
-}
-
-void range_provider::apply_offset(range& this_range, const position& offset)
-{
-	this_range.start.line += offset.line;
-	this_range.start.column += offset.column;
-	this_range.end.line += offset.line;
-	this_range.end.column += offset.column;
 }
 
 range_provider::range_provider(range original_original_range, bool enable_substitute)

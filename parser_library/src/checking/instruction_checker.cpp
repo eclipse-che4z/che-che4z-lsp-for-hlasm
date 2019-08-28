@@ -13,14 +13,14 @@ namespace checking
 		initialize_assembler_map();
 	}
 
-	bool assembler_checker::check(const std::string & instruction_name, const std::vector<const operand*>& operand_vector) const
+	bool assembler_checker::check(const std::string & instruction_name, const std::vector<const operand*>& operand_vector, const range& stmt_range, const diagnostic_collector& add_diagnostic) const
 	{
 		try 
 		{
 			std::vector<const asm_operand*> ops;
 			for (auto& op : operand_vector)
 				ops.push_back(dynamic_cast<const asm_operand*>(op));
-			return assembler_instruction_map.at(instruction_name)->check(ops);
+			return assembler_instruction_map.at(instruction_name)->check(ops, stmt_range, add_diagnostic);
 		}
 		catch (...)
 		{
@@ -28,26 +28,8 @@ namespace checking
 		}
 	}
 
-	std::vector<diagnostic_op *> assembler_checker::get_diagnostics()
-	{
-		std::vector<diagnostic_op *> diags;
-		for (auto& [key, instr] : assembler_instruction_map)
-		{
-			for(auto & d : instr->diagnostics)
-				diags.push_back(&d);
-		}
-		return diags;
-	}
-
-	void assembler_checker::clear_diagnostics()
-	{
-		for (auto &[key, instr] : assembler_instruction_map)
-		{
-			instr->diagnostics.clear();
-		}
-	}
-
 	std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_checker::assembler_instruction_map = {};
+
 	void assembler_checker::initialize_assembler_map()
 	{
 		assembler_instruction_map.insert(std::pair < std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
@@ -337,32 +319,24 @@ namespace checking
 				));
 	}
 
-	bool machine_checker::check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector) const
+	bool machine_checker::check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range& stmt_range, const diagnostic_collector& add_diagnostic) const
 	{
+		// get operands
 		std::vector<const machine_operand*> ops;
-
 		for (auto& op : operand_vector)
 			ops.push_back(dynamic_cast<const machine_operand*>(op));
 
-		curr_checker_ = &*hlasm_plugin::parser_library::context::instruction::machine_instructions.at(instruction_name);
-		return curr_checker_->check(instruction_name, ops);
+		// instruction name is the mnemonic name in case of a mnemonic instruction
+
+		std::string mach_name = instruction_name;
+
+		// instruction is a mnemonic instruction
+		if (hlasm_plugin::parser_library::context::instruction::mnemonic_codes.find(instruction_name) != hlasm_plugin::parser_library::context::instruction::mnemonic_codes.end())
+			mach_name = hlasm_plugin::parser_library::context::instruction::mnemonic_codes.at(instruction_name).instruction;
+
+		return hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mach_name)
+			->check(instruction_name, ops, stmt_range, add_diagnostic);
 	}
-
-	std::vector<diagnostic_op*> machine_checker::get_diagnostics()
-	{
-		std::vector<diagnostic_op*> res;
-
-		for (auto& diag : curr_checker_->diagnostics)
-			res.push_back(&diag.diag);
-
-		return res;
-	}
-
-	void machine_checker::clear_diagnostics()
-	{
-		curr_checker_->clear_diagnostics();
-	}
-
 }
 }
 }

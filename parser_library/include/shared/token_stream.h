@@ -13,13 +13,16 @@ namespace parser_library {
 
 class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
 {
-	bool enabled_;
+	bool enabled_cont_;
+	bool enabled_hidden_;
 public:
 	token_stream(antlr4::TokenSource* token_source);
 
 	void enable_continuation();
-
 	void disable_continuation();
+
+	void enable_hidden();
+	void disable_hidden();
 
 	antlr4::Token* LT(ssize_t k) override;
 

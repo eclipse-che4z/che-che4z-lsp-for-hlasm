@@ -5,12 +5,6 @@ using namespace std;
 namespace hlasm_plugin::parser_library::context
 {
 
-
-variable_kind variable_symbol::var_kind() const
-{
-	return variable_kind::UNDEF_VAR_KIND;
-}
-
 set_symbol_base * variable_symbol::access_set_symbol_base()
 {
 	return dynamic_cast<set_symbol_base*>(this);
@@ -21,53 +15,33 @@ macro_param_base * variable_symbol::access_macro_param_base()
 	return dynamic_cast<macro_param_base*>(this);
 }
 
-variable_symbol::variable_symbol(id_index name) :id(name) {}
+variable_symbol::variable_symbol(variable_kind var_kind, id_index name)
+	:id(name), var_kind(var_kind) {}
 
-variable_symbol::~variable_symbol() {}
+set_symbol_base::set_symbol_base(id_index name, bool is_scalar, SET_t_enum type)
+	: variable_symbol(variable_kind::SET_VAR_KIND, name), is_scalar(is_scalar),type(type) {}
 
-SET_t_enum set_symbol_base::type() const
+const keyword_param * macro_param_base::access_keyword_param() const
 {
-	return SET_t_enum::UNDEF_TYPE;
+	return (param_type == macro_param_type::KEY_PAR_TYPE) ? static_cast<const keyword_param*>(this) : nullptr;
 }
 
-variable_kind set_symbol_base::var_kind() const
+const positional_param * macro_param_base::access_positional_param() const
 {
-	return variable_kind::SET_VAR_KIND;
+	return (param_type == macro_param_type::POS_PAR_TYPE) ? static_cast<const positional_param*>(this) : nullptr;
 }
 
-set_symbol_base::set_symbol_base(id_index name, bool is_scalar) : variable_symbol(name), is_scalar(is_scalar) {}
-
-
-variable_kind macro_param_base::var_kind() const
+const syslist_param* macro_param_base::access_syslist_param() const
 {
-	return variable_kind::MACRO_VAR_KIND;
+	return (param_type == macro_param_type::SYSLIST_TYPE) ? static_cast<const syslist_param*>(this) : nullptr;
 }
 
-macro_param_type macro_param_base::param_type() const
-{
-	return macro_param_type::UNDEF_PAR_TYPE;
-}
+macro_param_base::macro_param_base(macro_param_type param_type, id_index name)
+	:variable_symbol(variable_kind::MACRO_VAR_KIND, name), param_type(param_type) {}
 
-keyword_param * macro_param_base::access_keyword_param()
+const C_t & macro_param_base::get_value(std::vector<int> offset) const
 {
-	return dynamic_cast<keyword_param*>(this);
-}
-
-positional_param * macro_param_base::access_positional_param()
-{
-	return dynamic_cast<positional_param*>(this);
-}
-
-macro_param_base::macro_param_base(id_index name) :variable_symbol(name) {}
-
-macro_param_type keyword_param::param_type() const
-{
-	return macro_param_type::KEY_PAR_TYPE;
-}
-
-const C_t & keyword_param::get_value(const std::vector<size_t>& offset) const
-{
-	const macro_param_data_component* tmp = data ? data.get() : default_data_.get();
+	const macro_param_data_component* tmp = real_data();
 
 	for (auto idx : offset)
 	{
@@ -76,45 +50,53 @@ const C_t & keyword_param::get_value(const std::vector<size_t>& offset) const
 	return tmp->get_value();
 }
 
-const C_t & keyword_param::get_value(size_t idx) const
+const C_t & macro_param_base::get_value(int idx) const
 {
-	return (data ? data.get() : default_data_.get())->get_ith(idx)->get_value();
+	return real_data()->get_ith(idx)->get_value();
 }
 
-const C_t & keyword_param::get_value() const
+const C_t & macro_param_base::get_value() const
 {
-	return (data ? data.get() : default_data_.get())->get_value();
+	return real_data()->get_value();
 }
 
-keyword_param::keyword_param(id_index name, macro_data_ptr default_value) : macro_param_base(name), default_data_(std::move(default_value)) {}
-
-macro_param_type positional_param::param_type() const
+A_t macro_param_base::number(std::vector<size_t> offset) const
 {
-	return macro_param_type::POS_PAR_TYPE;
-}
-
-const C_t & positional_param::get_value(const std::vector<size_t>& offset) const
-{
-	const macro_param_data_component* tmp = (data ? data.get() : &*macro_param_data_component::dummy);
+	const macro_param_data_component* tmp = real_data();
 
 	for (auto idx : offset)
 	{
 		tmp = tmp->get_ith(idx);
 	}
-	return tmp->get_value();
+	return (A_t)tmp->number;
 }
 
-const C_t & positional_param::get_value(size_t idx) const
+A_t macro_param_base::count(std::vector<size_t> offset) const
 {
-	return (data ? data : macro_param_data_component::dummy)->get_ith(idx)->get_value();
+	const macro_param_data_component* tmp = real_data();
+
+	for (auto idx : offset)
+	{
+		tmp = tmp->get_ith(idx);
+	}
+	return (A_t)tmp->get_value().size();
 }
 
-const C_t & positional_param::get_value() const
+keyword_param::keyword_param(id_index name, macro_data_shared_ptr default_value, macro_data_ptr assigned_value)
+	: macro_param_base(macro_param_type::KEY_PAR_TYPE, name), assigned_data_(std::move(assigned_value)), default_data(std::move(default_value)) {}
+
+const macro_param_data_component* keyword_param::real_data() const
 {
-	return (data ? data->get_value() : object_traits<C_t>::default_v());
+	return assigned_data_ ? assigned_data_.get() : default_data.get();
 }
 
-positional_param::positional_param(id_index name, size_t position) : macro_param_base(name), position(position) {}
+positional_param::positional_param(id_index name, size_t position, const macro_param_data_component& assigned_value)
+	: macro_param_base(macro_param_type::POS_PAR_TYPE, name), data_(assigned_value), position(position) {}
+
+const macro_param_data_component* positional_param::real_data() const
+{
+	return &data_;
+}
 
 const macro_sequence_symbol* sequence_symbol::access_macro_symbol() const
 {
@@ -149,5 +131,46 @@ bool opencode_sequence_symbol::operator==(const opencode_sequence_symbol& oth) c
 macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t statement_offset)
 	: sequence_symbol(name, sequence_symbol_kind::MACRO, std::move(loc)), statement_offset(statement_offset) {}
 
+
+syslist_param::syslist_param(id_index name, macro_data_ptr value)
+	: macro_param_base(macro_param_type::SYSLIST_TYPE, name), data_(std::move(value)) {}
+
+const C_t& syslist_param::get_value(std::vector<int> offset) const
+{
+	if (!offset.empty()) ++offset.front();
+
+	return macro_param_base::get_value(std::move(offset));
+}
+
+const C_t& syslist_param::get_value(int idx) const
+{
+	return macro_param_base::get_value(idx+1);
+}
+
+const C_t& syslist_param::get_value() const
+{
+	return macro_param_base::get_value(1);
+}
+
+A_t syslist_param::number(std::vector<size_t> offset) const
+{
+	if (offset.empty())
+		return (A_t)data_->number - 1;
+	else
+		return (A_t)macro_param_base::number(std::move(offset));
+}
+
+A_t syslist_param::count(std::vector<size_t> offset) const
+{
+	if (offset.empty())
+		return (A_t)data_->get_ith(1)->get_value().size();
+	else
+		return (A_t)macro_param_base::count(std::move(offset));
+}
+
+const macro_param_data_component* syslist_param::real_data() const
+{
+	return &*data_;
+}
 
 }

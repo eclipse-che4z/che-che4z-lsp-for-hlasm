@@ -8,7 +8,7 @@
 #include "semantics/lsp_info_processor.h"
 #include "processing/statement_provider.h"
 #include "processing/opencode_provider.h"
-#include "processing/deferred_parser.h"
+#include "processing/statement_fields_parser.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -20,7 +20,7 @@ struct parser_holder;
 //class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl
 	: public antlr4::Parser, public diagnosable_impl, 
-	public processing::statement_provider , public processing::opencode_provider, public processing::statement_field_reparser
+	public processing::statement_provider , public processing::opencode_provider, public processing::statement_fields_parser
 {
 public:
 	parser_impl(antlr4::TokenStream* input);
@@ -34,9 +34,9 @@ public:
 	virtual context::opencode_sequence_symbol::opencode_position statement_start() const override;
 	virtual context::opencode_sequence_symbol::opencode_position statement_end() const override;
 
-	virtual processing::statement_field_reparser::parse_result reparse_operand_field(
+	virtual processing::statement_fields_parser::parse_result parse_operand_field(
 		context::hlasm_context* hlasm_ctx, 
-		std::string field,semantics::range_provider field_range, 
+		std::string field, bool after_substitution, semantics::range_provider field_range,
 		processing::processing_status status) override;
 
 	void collect_diags() const override;
@@ -45,6 +45,8 @@ public:
 protected:
 	void enable_continuation();
 	void disable_continuation();
+	void enable_hidden();
+	void disable_hidden();
 	bool is_self_def();
 	bool is_data_attr();
 	bool is_var_def();

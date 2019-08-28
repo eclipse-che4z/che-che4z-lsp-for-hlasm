@@ -34,6 +34,11 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 	return tmp == symbols_.end() ? nullptr : &tmp->second;
 }
 
+const section* ordinary_assembly_context::current_section() const
+{
+	return curr_section_;
+}
+
 void ordinary_assembly_context::set_section(id_index name, const section_kind kind)
 {
 	auto tmp = std::find_if(sections_.begin(), sections_.end(), [&](auto & sect) {return sect->name == name && sect->kind == kind; });

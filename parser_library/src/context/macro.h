@@ -35,15 +35,16 @@ class macro_definition
 {
 	using macro_param_ptr = std::shared_ptr<macro_param_base>;
 
-	std::vector<std::shared_ptr<positional_param>> positional_params_;
-	std::unordered_map<id_index, macro_param_ptr> named_params_;
+	std::vector<std::unique_ptr<positional_param>> positional_params_;
+	std::vector<std::unique_ptr<keyword_param>> keyword_params_;
+	std::unordered_map<id_index,const macro_param_base*> named_params_;
 	const id_index label_param_name_;
 	
 public:
 	//identifier of macro
 	const id_index id;
 	//params of macro
-	const std::unordered_map<id_index, macro_param_ptr>& named_params() const;
+	const std::unordered_map<id_index, const macro_param_base*>& named_params() const;
 	//vector of statements representing macro definition
 	const statement_block definition;
 	//vector assigning each statement its copy nest
@@ -60,7 +61,7 @@ public:
 		location definition_location);
 
 	//returns object with parameters' data set to actual parameters in macro call
-	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params) const;
+	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params,id_index syslist_name) const;
 
 	//satifying unordered_map needs 
 	bool operator=(const macro_definition& m);
@@ -71,8 +72,6 @@ public:
 //contains parameters with set values provided with the call 
 struct macro_invocation
 {
-private:
-	std::vector<macro_data_shared_ptr> syslist_;
 public:
 	//identifier of macro
 	const id_index id;
@@ -88,18 +87,11 @@ public:
 	const location& definition_location;
 	//index to definition vector
 	int current_statement;
-	//stackk get_nest();
 
 	macro_invocation(
 		id_index name, const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
-		std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,
+		std::unordered_map<id_index, macro_param_ptr> named_params, 
 		const location& definition_location);
-
-	//gets syslist value
-	const C_t& SYSLIST(size_t idx) const;
-
-	//gets syslist sublisted value
-	const C_t& SYSLIST(const std::vector<size_t>& offset) const;
 };
 
 }

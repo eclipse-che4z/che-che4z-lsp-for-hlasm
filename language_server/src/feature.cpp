@@ -6,10 +6,17 @@
 
 namespace hlasm_plugin::language_server {
 
+const std::string untitled = "untitled";
+
 std::string feature::uri_to_path(const std::string & uri)
 { 
 	network::uri u(uri);
 	
+	//vscode sometimes sends us uri in form 'untitled:Untitled-1',
+	//when user opens new file that is not saved to disk yet
+	if (!u.scheme().compare(untitled))
+		return uri;
+
 	if (u.scheme().compare("file"))
 		return "";
 	if (!u.has_path())
@@ -44,6 +51,9 @@ std::string feature::uri_to_path(const std::string & uri)
 
 std::string feature::path_to_uri(std::string path)
 {
+	if (path.substr(0, untitled.size()) == untitled)
+		return path;
+
 	std::replace(path.begin(), path.end(), '\\', '/');
 	// network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
 	std::string uri;

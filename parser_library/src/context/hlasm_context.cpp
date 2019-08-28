@@ -42,8 +42,28 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
 	return instr_map;
 }
 
-hlasm_context::hlasm_context(std::string file_name) 
-	: instruction_map_(init_instruction_map()),  ord_ctx(ids_), lsp_ctx(std::make_shared<lsp_context>())
+void hlasm_context::add_system_vars_to_scope()
+{
+	if (curr_scope()->is_in_macro())
+	{
+		auto SYSECT = ids().add("SYSECT");
+
+		auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true);
+		auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
+		val_sect->set_value(*sect_name);
+		curr_scope()->variables.insert({ SYSECT,val_sect });
+
+		auto SYSNDX = ids().add("SYSNDX");
+
+		auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true);
+		val_ndx->set_value((A_t)SYSNDX_);
+		curr_scope()->variables.insert({ SYSNDX,val_ndx });
+		
+	}
+}
+
+hlasm_context::hlasm_context(std::string file_name)
+	: instruction_map_(init_instruction_map()),SYSNDX_(0), ord_ctx(ids_), lsp_ctx(std::make_shared<lsp_context>())
 {
 	scope_stack_.emplace_back();
 	proc_stack_.push_back(file_processing_status{ file_processing_type::OPENCODE, location(position{}, file_name) });
@@ -176,6 +196,7 @@ const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
 void hlasm_context::set_branch_counter(A_t value)
 {
 	curr_scope()->branch_counter = value;
+	++curr_scope()->branch_counter_change;
 }
 
 int hlasm_context::get_branch_counter() const
@@ -226,6 +247,34 @@ id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
 		return mnemo;
 }
 
+SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
+{
+	switch (attribute)
+	{
+	case hlasm_plugin::parser_library::context::data_attr_kind::K:
+		return var_symbol ? var_symbol->count(offset) : 0;
+	case hlasm_plugin::parser_library::context::data_attr_kind::N:
+		return var_symbol ? var_symbol->number(offset) : 0;
+	default:
+		break;
+	}
+
+	return SET_t();
+}
+
+SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbol)
+{
+	switch (attribute)
+	{
+	case hlasm_plugin::parser_library::context::data_attr_kind::D:
+		return ord_ctx.symbol_defined(symbol);
+	default:
+		break;
+	}
+
+	return SET_t();
+}
+
 const macro_definition& hlasm_context::add_macro(
 	id_index name,
 	id_index label_param_name, std::vector<macro_arg> params, 
@@ -258,10 +307,13 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
 
 	auto& [macro_name, macro_def] = *tmp;
 
-	auto invo((macro_def->call(std::move(label_param_data), std::move(params))));
+	auto invo((macro_def->call(std::move(label_param_data), std::move(params),ids().add("SYSLIST"))));
 	scope_stack_.emplace_back(invo);
+	add_system_vars_to_scope();
 
 	visited_files_.insert(macro_def->definition_location.file);
+
+	++SYSNDX_;
 	return invo;
 }
 

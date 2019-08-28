@@ -3,16 +3,12 @@
 
 #include "diagnosable_impl.h"
 #include "context/hlasm_context.h"
+#include "diagnostic_collector.h"
 
 namespace hlasm_plugin::parser_library {
 
 class diagnosable_ctx : public diagnosable_impl
 {
-public:
-	void add_diagnostic(diagnostic_s diagnostic,const std::vector<location>& stack) const
-	{
-		add_diagnostic_inner(std::move(diagnostic), stack);
-	}
 protected:
 	
 	diagnosable_ctx(context::hlasm_context& ctx) : ctx_(ctx) {}
@@ -40,6 +36,8 @@ private:
 	}
 
 	context::hlasm_context& ctx_;
+
+	friend diagnostic_collector;
 };
 
 }

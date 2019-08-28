@@ -15,7 +15,7 @@ public:
 
 	mach_expr_binary(mach_expr_ptr left, mach_expr_ptr right, range rng)
 		: mach_expression(rng),
-		left_(std::move(left)), right_(std::move(right))
+		left_(assign_expr(std::move(left),rng)), right_(assign_expr(std::move(right),rng))
 	{
 		//text = left_->move_text() + T::sign_char() + right_->move_text();
 	}
@@ -46,7 +46,7 @@ class mach_expr_unary final : public mach_expression
 public:
 
 	mach_expr_unary(mach_expr_ptr child, range rng)
-		: mach_expression(rng), child_(std::move(child))
+		: mach_expression(rng), child_(assign_expr(std::move(child),rng))
 	{
 		//text = T::sign_char_begin() + child_->move_text() + T::sign_char_end();
 	}
@@ -161,15 +161,11 @@ inline mach_expression::value_t mach_expr_binary<div>::evaluate(mach_evaluate_in
 	auto left_res = left_->evaluate(info);
 	auto right_res = right_->evaluate(info);
 
-	// division by zero
-	if (right_res.value_kind() == context::symbol_kind::ABS && right_res.get_abs() == 0)
-		return 0;
-
 	if (!(left_res.value_kind() == context::symbol_kind::ABS && right_res.value_kind() == context::symbol_kind::ABS) &&
-		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF)
+		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF) 
 		add_diagnostic(diagnostic_s::error_ME002(get_range()));
 
-	return left_res * right_res;
+	return left_res / right_res;
 }
 
 template<>

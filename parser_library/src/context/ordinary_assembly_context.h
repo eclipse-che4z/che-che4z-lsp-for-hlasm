@@ -36,6 +36,8 @@ public:
 
 	//void create_literal();
 
+	const section* current_section() const;
+
 	void set_section(id_index name, const section_kind kind);
 
 	void set_location_counter(id_index name);

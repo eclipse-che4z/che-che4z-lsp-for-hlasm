@@ -22,6 +22,8 @@ public:
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 
+	static context::macro_data_ptr string_to_macrodata(std::string data);
+
 private:
 	macro_arguments get_args(const resolved_statement& statement) const;
 };

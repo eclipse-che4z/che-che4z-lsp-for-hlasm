@@ -53,8 +53,8 @@ void file_impl::load_text()
 		text_ = "";
 		up_to_date_ = false;
 		bad_ = true;
-		add_diagnostic(diagnostic_s{file_name_, {}, diagnostic_severity::error,
-			"W0001", "HLASM plugin", "Could not open file" + file_name_, {} });
+		//add_diagnostic(diagnostic_s{file_name_, {}, diagnostic_severity::error,
+		//	"W0001", "HLASM plugin", "Could not open file" + file_name_, {} });
 	}
 }
 
@@ -186,8 +186,12 @@ version_t file_impl::get_version()
 	return version_;
 }
 
-bool file_impl::is_bad() const
+bool file_impl::update_and_get_bad()
 {
+	//if the file is not up_to_date, the next 'get_text' would cause
+	//the load anyway, which will make this call obsolete
+	if (!up_to_date_)
+		load_text();
 	return bad_;
 }
 

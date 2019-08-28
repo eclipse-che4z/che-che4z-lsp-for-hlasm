@@ -15,7 +15,8 @@ namespace processing {
 //statement processor that evaluates the writen code, processes instructions
 class ordinary_processor : public statement_processor
 {
-	static constexpr size_t MAX_MACRO_NEST = 100;
+	static constexpr size_t NEST_LIMIT = 100;
+	static constexpr size_t ACTR_LIMIT = 100;
 
 	parse_lib_provider& lib_provider_;
 
@@ -31,7 +32,7 @@ public:
 		parse_lib_provider& lib_provider, 
 		branching_provider& branch_provider, 
 		processing_state_listener& state_listener,
-		statement_field_reparser& parser);
+		statement_fields_parser& parser);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;
@@ -46,19 +47,15 @@ public:
 private:
 	std::pair<std::vector<context::id_index>, bool> check_layout();
 	void check_postponed_statements(std::vector<context::post_stmt_ptr> stmts);
+	bool check_fatals(range line_range);
 
 	template <typename T>
 	void process_statement_base(T statement)
 	{
 		assert(statement->kind == context::statement_kind::RESOLVED);
 
-		if (hlasm_ctx.scope_stack().size() > MAX_MACRO_NEST)
-		{
-			while (hlasm_ctx.is_in_macro())
-				hlasm_ctx.leave_macro();
-
-			add_diagnostic(diagnostic_s::error_E055("","", range(hlasm_ctx.processing_stack().front().pos)));
-		}
+		bool fatal = check_fatals(range(statement->statement_position()));
+		if (fatal) return;
 
 		switch (statement->access_resolved()->opcode_ref().type)
 		{

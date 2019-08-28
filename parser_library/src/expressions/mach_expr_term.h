@@ -79,6 +79,20 @@ public:
 	void collect_diags() const override {}
 };
 
+class mach_expr_default : public mach_expression
+{
+public:
+	mach_expr_default(range rng);
+
+	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+
+	virtual value_t evaluate(mach_evaluate_info info) const override;
+
+	virtual void fill_location_counter(context::address addr) override;
+
+	virtual void collect_diags() const override;
+};
+
 }
 
 #endif

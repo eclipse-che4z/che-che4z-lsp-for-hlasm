@@ -41,9 +41,9 @@ prog_type_and_modifier_p returns [std::string format, mach_expr_list exprs]
 	| ;
 
 nominal_value returns [nominal_value_ptr value]
-	: string
+	: data_def_string
 	{
-		$value = std::make_unique<nominal_value_string>($string.value);
+		$value = std::make_unique<nominal_value_string>($data_def_string.value);
 	}
 	| lpar exprs=mach_expr_comma_c rpar
 	{
@@ -110,3 +110,11 @@ data_def_ch returns [std::string value]
 data_def_id returns [std::string value]
 	: data_def_ch								{$value = std::move($data_def_ch.value);}
 	| tmp=data_def_id data_def_ch				{$tmp.value.append(std::move($data_def_ch.value));  $value = std::move($tmp.value);};
+
+
+data_def_string returns [std::string value]
+	: ap1=(APOSTROPHE|ATTR) string_ch_c ap2=(APOSTROPHE|ATTR)	
+	{ 
+		$value.append(std::move($string_ch_c.value));
+		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
+	};

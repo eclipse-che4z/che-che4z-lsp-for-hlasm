@@ -173,7 +173,7 @@ TEST(data_definition, all_fields)
 	EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), 8);
 	EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
 	ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
-	EXPECT_EQ(parsed.nominal_value->access_string()->value, "'2.25'");
+	EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
 
 TEST(data_definition, no_nominal)
@@ -232,7 +232,7 @@ TEST(data_definition, bit_length)
 	EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), -8);
 	EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
 	ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
-	EXPECT_EQ(parsed.nominal_value->access_string()->value, "'2.25'");
+	EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
 
 TEST(data_definition, unexpected_dot)
@@ -253,7 +253,7 @@ TEST(data_definition, unexpected_dot)
 	EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), -8);
 	EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
 	ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
-	EXPECT_EQ(parsed.nominal_value->access_string()->value, "'2.25'");
+	EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
 
 TEST(data_definition, unexpected_minus)

@@ -41,6 +41,11 @@ namespace checking
 		return dynamic_cast<const empty_operand*> (to_check_operand) != nullptr;
 	}
 
+	inline bool has_one_comma(const std::vector<const asm_operand*> to_check)
+	{
+		return to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]);
+	}
+
 	inline static bool is_number(const std::string& to_test, bool must_be_positive = false) //is any negative or positive number
 	{
 		bool is_negative = false;
@@ -110,7 +115,7 @@ namespace checking
 
 	inline static bool is_character_string(const std::string& to_test)
 	{
-		return to_test.empty() || !(to_test.size() == 1 || to_test.front() != '\'' || to_test.back() != '\'' || to_test.size() > 255);
+		return to_test.empty() || !(to_test.size() == 1 || to_test.size() > 255);
 	}
 
 	inline static bool is_date(const std::string& to_test)

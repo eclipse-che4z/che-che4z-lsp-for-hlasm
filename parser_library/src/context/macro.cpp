@@ -1,22 +1,21 @@
 #include "macro.h"
 
 #include <stdexcept>
+#include <cassert>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library::semantics;
-using namespace std;
 
 
 
-const std::unordered_map<id_index, macro_param_ptr>& macro_definition::named_params() const
+const std::unordered_map<id_index, const macro_param_base*>& macro_definition::named_params() const
 {
 	return named_params_;
 }
 
 macro_definition::macro_definition(
 	id_index name, 
-	id_index label_param_name, vector<macro_arg> params,
+	id_index label_param_name, std::vector<macro_arg> params,
 	statement_block definition, copy_nest_storage copy_nests, label_storage labels,
 	location definition_location)
 	: label_param_name_(label_param_name), 
@@ -24,9 +23,13 @@ macro_definition::macro_definition(
 {
 	if (label_param_name_)
 	{
-		auto tmp(std::make_shared<positional_param>(label_param_name, 0));
-		named_params_.emplace(label_param_name, tmp);
+		auto tmp = std::make_unique<positional_param>(label_param_name, 0, *macro_param_data_component::dummy);
+		named_params_.emplace(label_param_name, &*tmp);
 		positional_params_.push_back(std::move(tmp));
+	}
+	else
+	{
+		positional_params_.push_back(nullptr);
 	}
 	size_t idx = 1;
 
@@ -36,64 +39,87 @@ macro_definition::macro_definition(
 		{
 			if (!it->id)
 				throw std::invalid_argument("keyword parameter without name used");
-
-			named_params_.emplace(it->id, std::make_shared<keyword_param>(it->id, move(it->data)));
+			
+			auto tmp = std::make_unique<keyword_param>(it->id, move(it->data), nullptr);
+			named_params_.emplace(it->id, &*tmp);
+			keyword_params_.push_back(std::move(tmp));
 		}
 		else
 		{
 			if (it->id)
 			{
-				std::shared_ptr<positional_param> tmp(std::make_shared<positional_param>(it->id, idx));
-				named_params_.insert({ it->id,tmp });
+				auto tmp = std::make_unique<positional_param>(it->id, idx, *macro_param_data_component::dummy);
+				named_params_.emplace(it->id, &*tmp);
 				positional_params_.push_back(std::move(tmp));
+			}
+			else
+			{
+				positional_params_.push_back(nullptr);
 			}
 			++idx;
 		}
 	}
 }
 
-macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, vector<macro_arg> actual_params) const
+macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name) const
 {
+	std::vector<macro_data_ptr> syslist;
 	std::unordered_map<id_index, macro_param_ptr> named_cpy;
-	for (auto&& field : named_params_)
-	{
-		if (field.second->param_type() == macro_param_type::POS_PAR_TYPE)
-			named_cpy.emplace(field.first, std::make_shared<positional_param>(*field.second->access_positional_param()));
-		else
-			named_cpy.emplace(field.first, std::make_shared<keyword_param>(*field.second->access_keyword_param()));
-	}
-
-	std::vector<macro_data_shared_ptr> syslist;
 
 	if (label_param_data)
 		syslist.push_back(std::move(label_param_data));
 	else
-		syslist.push_back(macro_param_data_component::dummy);
+		syslist.push_back(std::make_unique<macro_param_data_dummy>());
+
+	if (positional_params_[0])
+	{
+		named_cpy.emplace(positional_params_[0]->id,
+			std::make_unique<positional_param>(positional_params_[0]->id, 0, *syslist.back()));
+	}
 
 	for (auto&& param : actual_params)
 	{
 		if (param.id)
 		{
-			auto tmp = named_cpy.find(param.id);
+			auto tmp = named_params_.find(param.id);
 
-			if(tmp == named_cpy.end() || tmp->second->param_type() == macro_param_type::POS_PAR_TYPE)
+			if(tmp == named_params_.end() || tmp->second->param_type == macro_param_type::POS_PAR_TYPE)
 				throw std::invalid_argument("use of undefined keyword parameter");
 
-			tmp->second->data = std::move(param.data);
+			auto key_par = dynamic_cast<const keyword_param*>(tmp->second);
+			assert(key_par);
+			named_cpy.emplace(param.id, std::make_unique<keyword_param>(param.id, key_par->default_data, std::move(param.data)));
 		}
 		else
 		{
+			if (positional_params_.size() > syslist.size() && positional_params_[syslist.size()])
+			{
+				named_cpy.emplace(positional_params_[syslist.size()]->id,
+					std::make_unique<positional_param>(positional_params_[syslist.size()]->id, positional_params_[syslist.size()]->position, *param.data));
+			}
 			syslist.push_back(move(param.data));
 		}
 	}
 
-	for (auto&& pos_par : positional_params_)
+	for (size_t i = syslist.size(); i < positional_params_.size(); ++i)
 	{
-		if (pos_par->position < syslist.size())
-			named_cpy.find(pos_par->id)->second->data = syslist[pos_par->position];
+		if (positional_params_[i])
+		{
+			named_cpy.emplace(positional_params_[i]->id,
+				std::make_unique<positional_param>(positional_params_[i]->id, positional_params_[i]->position, *macro_param_data_component::dummy));
+		}
+	}
+	for (auto&& key_par : keyword_params_)
+	{
+		if (named_cpy.find(key_par->id) == named_cpy.end())
+		{
+			named_cpy.emplace(key_par->id, std::make_unique<keyword_param>(key_par->id, key_par->default_data, nullptr));
+		}
 	}
 
-	return std::make_shared<macro_invocation>(id, definition,copy_nests,labels, std::move(named_cpy), std::move(syslist),definition_location);
+	named_cpy.emplace(syslist_name, std::make_unique <syslist_param>(syslist_name, std::make_unique<macro_param_data_composite>(std::move(syslist))));
+
+	return std::make_shared<macro_invocation>(id, definition, copy_nests, labels, std::move(named_cpy), definition_location);
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
@@ -101,39 +127,10 @@ bool macro_definition::operator=(const macro_definition& m) { return id == m.id;
 macro_invocation::macro_invocation(
 	id_index name,
 	const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
-	std::unordered_map<id_index, macro_param_ptr> named_params, std::vector<macro_data_shared_ptr> syslist,
+	std::unordered_map<id_index, macro_param_ptr> named_params, 
 	const location& definition_location)
-	:syslist_(std::move(syslist)), id(name), named_params(std::move(named_params)),
+	: id(name), named_params(std::move(named_params)),
 	definition(definition), copy_nests(copy_nests), labels(labels), definition_location(definition_location), current_statement(-1)
 {
 }
 
-const C_t & hlasm_plugin::parser_library::context::macro_invocation::SYSLIST(size_t idx) const
-{
-	if (idx < syslist_.size())
-		return syslist_[idx]->get_value();
-	else
-		return object_traits<C_t>::default_v();
-}
-
-const C_t & hlasm_plugin::parser_library::context::macro_invocation::SYSLIST(const std::vector<size_t>& offset) const
-{
-	auto it = offset.begin();
-
-	if (it == offset.end())
-		return object_traits<C_t>::default_v();
-
-	const macro_param_data_component* param;
-
-	if (*it < syslist_.size())
-		param = &*syslist_[*it];
-	else
-		return object_traits<C_t>::default_v();
-
-	++it;
-
-	for (; it != offset.end(); ++it)
-		param = param->get_ith(*it);
-
-	return param->get_value();
-}

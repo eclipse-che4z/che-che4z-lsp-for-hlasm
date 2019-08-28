@@ -28,7 +28,7 @@ mach_expr_constant::value_t mach_expr_constant::evaluate(mach_evaluate_info ) co
 	return value_;
 }
 
-void hlasm_plugin::parser_library::expressions::mach_expr_constant::fill_location_counter(context::address)
+void mach_expr_constant::fill_location_counter(context::address)
 {
 }
 
@@ -68,7 +68,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) 
 
 	return symbol->value();
 }
-void hlasm_plugin::parser_library::expressions::mach_expr_symbol::fill_location_counter(context::address )
+void mach_expr_symbol::fill_location_counter(context::address )
 {
 }
 //***********  mach_expr_self_def ************
@@ -88,27 +88,48 @@ mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info ) co
 	return value_;
 }
 
-void hlasm_plugin::parser_library::expressions::mach_expr_self_def::fill_location_counter(context::address addr)
+void mach_expr_self_def::fill_location_counter(context::address addr)
 {
 }
 
 mach_expr_location_counter::mach_expr_location_counter(range rng)
 	: mach_expression(rng) {}
 
-context::dependency_holder hlasm_plugin::parser_library::expressions::mach_expr_location_counter::get_dependencies(context::dependency_solver& ) const
+context::dependency_holder mach_expr_location_counter::get_dependencies(context::dependency_solver& ) const
 {
 	return context::dependency_holder(*location_counter);
 }
 
-mach_expression::value_t hlasm_plugin::parser_library::expressions::mach_expr_location_counter::evaluate(mach_evaluate_info ) const
+mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info ) const
 {
 	return *location_counter;
 }
 
-void hlasm_plugin::parser_library::expressions::mach_expr_location_counter::fill_location_counter(context::address addr)
+void mach_expr_location_counter::fill_location_counter(context::address addr)
 {
 	if (location_counter)
 		throw std::runtime_error("location counter already set");
 
 	location_counter = std::move(addr);
+}
+
+mach_expr_default::mach_expr_default(range rng)
+	: mach_expression(rng) {}
+
+context::dependency_holder mach_expr_default::get_dependencies(context::dependency_solver& ) const
+{
+	return context::dependency_holder();
+}
+
+mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info ) const
+{
+	return value_t();
+}
+
+void mach_expr_default::fill_location_counter(context::address addr)
+{
+}
+
+void mach_expr_default::collect_diags() const
+{
 }

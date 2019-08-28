@@ -13,6 +13,9 @@ namespace hlasm_plugin::parser_library::expressions
 
 using mach_evaluate_info = context::dependency_solver&;
 
+class mach_expression;
+using mach_expr_ptr = std::unique_ptr<mach_expression>;
+using mach_expr_list = std::vector<mach_expr_ptr>;
 
 class mach_expression : public diagnosable_impl, public context::resolvable
 {
@@ -29,6 +32,8 @@ public:
 	range get_range() const;
 	virtual ~mach_expression() {}
 
+	static mach_expr_ptr assign_expr(mach_expr_ptr expr, range expr_range);
+
 protected:
 
 	mach_expression(range rng);
@@ -37,8 +42,6 @@ private:
 	range expr_range_;
 };
 
-using mach_expr_ptr = std::unique_ptr<mach_expression>;
-using mach_expr_list = std::vector<mach_expr_ptr>;
 
 
 }

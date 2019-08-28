@@ -77,6 +77,11 @@ public:
 		return file;
 	}
 
+	virtual bool update_and_get_bad() override
+	{
+		return false;
+	}
+
 #ifdef _WIN32
 	std::string file = R"({
   "pgroups": [
@@ -159,6 +164,11 @@ public:
 	virtual const std::string & get_text() override
 	{
 		return file;
+	}
+
+	virtual bool update_and_get_bad() override
+	{
+		return false;
 	}
 
 #if _WIN32

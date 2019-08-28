@@ -140,7 +140,7 @@ TEST(regress_test, behaviour_error)
 	ASSERT_EQ(mess_p.notfs[1]["method"], "textDocument/publishDiagnostics");
 	diagnostics = mess_p.notfs[1]["params"]["diagnostics"];
 	ASSERT_EQ(diagnostics.size(), (size_t)1);
-	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0003");
+	EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0004");
 
 	mess_p.notfs.clear();
 }

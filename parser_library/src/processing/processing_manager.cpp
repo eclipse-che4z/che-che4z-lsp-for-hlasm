@@ -7,6 +7,7 @@
 #include "opencode_provider.h"
 #include "macro_statement_provider.h"
 #include "copy_statement_provider.h"
+#include "../parser_impl.h"
 
 #include <assert.h>
 
@@ -18,7 +19,7 @@ processing_manager::processing_manager(
 	context::hlasm_context& hlasm_ctx,
 	const library_data data,
 	parse_lib_provider& lib_provider, 
-	statement_field_reparser& parser)
+	statement_fields_parser& parser)
 	: diagnosable_ctx(hlasm_ctx), hlasm_ctx_(hlasm_ctx), lib_provider_(lib_provider)
 {
 	provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx,parser));
@@ -146,12 +147,6 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
 	}
 	else
 	{
-		if (hlasm_ctx_.get_branch_counter() < 0)
-		{
-			add_diagnostic(diagnostic_s::error_E056("", *target, symbol_range));
-			return;
-		}
-
 		if (symbol->kind == context::sequence_symbol_kind::MACRO)
 		{
 			assert(hlasm_ctx_.is_in_macro());
@@ -223,4 +218,6 @@ void processing_manager::collect_diags() const
 {
 	for (auto& proc : procs_)
 		collect_diags_from_child(*proc);
+
+	collect_diags_from_child(dynamic_cast<parser_impl&>(*provs_.back()));
 }

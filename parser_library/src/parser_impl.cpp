@@ -46,8 +46,8 @@ context::opencode_sequence_symbol::opencode_position parser_impl::statement_end(
 }
 
 
-std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::reparse_operand_field(
-	context::hlasm_context* hlasm_ctx, std::string field, semantics::range_provider field_range, processing::processing_status status)
+std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
+	context::hlasm_context* hlasm_ctx, std::string field, bool after_substitution, semantics::range_provider field_range, processing::processing_status status)
 {
 	parser_holder h;
 	h.input = std::make_unique<input_source>(std::move(field));
@@ -55,6 +55,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::reparse_op
 	h.stream = std::make_unique<token_stream>(h.lex.get());
 	h.parser = std::make_unique<generated::hlasmparser>(h.stream.get());
 
+	h.lex->set_file_offset(field_range.original_range.start);
+	h.lex->set_unlimited_line(after_substitution);
 	h.parser->initialize(hlasm_ctx, field_range, status);
 	h.parser->removeErrorListeners();
 
@@ -72,7 +74,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::reparse_op
 		field_range.original_range :
 		semantics::range_provider::union_range(line.operands.front()->operand_range, line.operands.back()->operand_range);
 	range rem_range = line.remarks.empty() ?
-		op_range : 
+		range(op_range.end) : 
 		semantics::range_provider::union_range(line.remarks.front(), line.remarks.back());
 
 	return std::make_pair(
@@ -94,6 +96,16 @@ void parser_impl::enable_continuation()
 void parser_impl::disable_continuation()
 {
 	dynamic_cast<token_stream&>(*_input).disable_continuation();
+}
+
+void parser_impl::enable_hidden()
+{
+	dynamic_cast<token_stream&>(*_input).enable_hidden();
+}
+
+void parser_impl::disable_hidden()
+{
+	dynamic_cast<token_stream&>(*_input).disable_hidden();
 }
 
 bool parser_impl::is_self_def()
@@ -121,7 +133,7 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
 {
 	auto ae = expressions::arithmetic_expression::from_string(option, value, false); //could generate diagnostic + DBCS
 	if (ae->has_error())
-		add_diagnostic({ term_range, *ae->diag });
+		add_diagnostic(diagnostic_s(ctx->opencode_file_name(), term_range, *ae->diag));
 	else
 		return ae->get_numeric_value();
 

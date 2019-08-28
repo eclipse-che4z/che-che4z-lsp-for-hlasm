@@ -205,51 +205,81 @@ Y LR 1,1
 
 TEST(ordinary_symbols, relocatable_no_loctr_cycle)
 {
-	std::string input(R"(
-  DC (A)C'D'
-  LR 1,1
-X LR 1,1
-Y LR 1,1
-A EQU Y-X 
-)");
-	analyzer a(input);
-	a.analyze();
+	id_storage s;
+	ordinary_assembly_context ord_ctx(s);
+	symbol_dependency_tables tables(ord_ctx);
 
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("X")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Y")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::ABS);
+	//created space in location counter value
+	//  DC (A)C'D'
+	auto space = ord_ctx.register_space();
+	auto dep = expressions::mach_expr_symbol(s.add("A"),range());
+	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+	//created symbols each dependent on location counter value
+	//  LR 1,1
+	//X LR 1, 1
+	//Y LR 1, 1
+	auto x = ord_ctx.reserve_storage_area(4, context::no_align);
+	auto y = ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
+	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
+	ASSERT_FALSE(x.spaces.empty());
+	ASSERT_FALSE(y.spaces.empty());
+	ASSERT_TRUE(tables.add_dependency(s.add("X"),x,nullptr));
+	ASSERT_TRUE(tables.add_dependency(s.add("Y"),y,nullptr));
+
+	//expr should not be dependent on space in location counter value
+	//A EQU Y-X
+	auto expr = mach_expr_binary<sub>(
+		std::make_unique<mach_expr_symbol>(s.add("Y"),range()),
+		std::make_unique<mach_expr_symbol>(s.add("X"),range()),
+		range()
+		);
+
+	auto deps = expr.get_dependencies(ord_ctx);
+
+	ASSERT_FALSE(deps.contains_dependencies());
 }
 
 TEST(ordinary_symbols, relocatable_loctr_cycle)
 {
-	std::string input(R"(
-Z LR 1,1
-  DC (A)C'D'
-  LR 1,1
-X LR 1,1
-Y LR 1,1
-A EQU Y-Z 
-)");
-	analyzer a(input);
-	a.analyze();
+	id_storage s;
+	ordinary_assembly_context ord_ctx(s);
+	symbol_dependency_tables tables(ord_ctx);
 
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("X")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Y")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Z")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::UNDEF);
+	//created symbol before space
+	//X LR 1,1
+	auto x = ord_ctx.align(context::no_align);
+	ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
+	ASSERT_TRUE(x.spaces.empty());
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)2);
+	//created space in location counter value
+	//  DC (A)C'D'
+	auto space = ord_ctx.register_space();
+	auto dep = expressions::mach_expr_symbol(s.add("A"), range());
+	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
+
+	//created symbol dependent on location counter value
+	//Y LR 1, 1
+	auto y = ord_ctx.align(context::no_align);
+	ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
+	ASSERT_FALSE(y.spaces.empty());
+	ASSERT_TRUE(tables.add_dependency(s.add("Y"), y, nullptr));
+
+	//expr should be dependent on space in location counter value
+	//A EQU Y-X
+	auto expr = mach_expr_binary<sub>(
+		std::make_unique<mach_expr_symbol>(s.add("Y"), range()),
+		std::make_unique<mach_expr_symbol>(s.add("X"), range()),
+		range()
+		);
+
+	auto deps = expr.get_dependencies(ord_ctx);
+
+	ASSERT_TRUE(deps.contains_dependencies());
 }
 
 TEST(ordinary_symbols, complex_relocatable_address)
@@ -322,25 +352,68 @@ Z EQU Y-X
 
 TEST(ordinary_symbols, relocatable_bad_layout)
 {
-	auto input = R"(
-A CSECT
- DC (D)C'A'
-X LR 1,1
-B LOCTR
-Y LR 1,1
+	id_storage s;
+	ordinary_assembly_context ord_ctx(s);
+	symbol_dependency_tables tables(ord_ctx);
 
-D EQU Y-X
-)";
+	//A CSECT
+	ord_ctx.set_section(s.add("A"), section_kind::COMMON);
 
-	analyzer a(input);
-	a.analyze();
+	//created space in location counter value
+	//  DC (D)C'A'
+	auto space = ord_ctx.register_space();
+	auto dep = expressions::mach_expr_symbol(s.add("D"), range());
+	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("D"))->kind() == symbol_kind::UNDEF);
+	//created symbol in A
+	//X LR 1,1
+	auto x = ord_ctx.align(context::no_align);
+	ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
+	ASSERT_FALSE(x.spaces.empty());
+	ASSERT_TRUE(tables.add_dependency(s.add("X"), x, nullptr));
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)2);
+	//change location counter
+	ord_ctx.set_location_counter(s.add("B"));
+
+	//created symbol in B
+	//Y LR 1,1
+	auto y = ord_ctx.align(context::no_align);
+	ord_ctx.reserve_storage_area(4, context::no_align);
+	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
+	ASSERT_FALSE(y.spaces.empty());
+	ASSERT_TRUE(tables.add_dependency(s.add("Y"), y, nullptr));
+
+	//expr should be dependent on layout of the section
+	//D EQU Y-X
+	auto expr = mach_expr_binary<sub>(
+		std::make_unique<mach_expr_symbol>(s.add("Y"), range()),
+		std::make_unique<mach_expr_symbol>(s.add("X"), range()),
+		range()
+		);
+
+	auto deps = expr.get_dependencies(ord_ctx);
+
+	ASSERT_TRUE(deps.contains_dependencies());
+	ASSERT_FALSE(deps.is_address());
+
+	ord_ctx.create_symbol(s.add("D"), context::symbol_value(), context::symbol_attributes());
+
+	std::vector<const context::resolvable*> tmp = { &expr };
+	ASSERT_TRUE(tables.add_dependency(s.add("D"), tmp, nullptr));
+
+	bool bad_layout = false;
+
+	try 
+	{
+		ord_ctx.finish_module_layout();
+	}
+	catch (std::runtime_error& )
+	{
+		bad_layout = true;
+	}
+
+	ASSERT_TRUE(bad_layout);
 }
 
 TEST(ordinary_symbols, location_counter_simple)

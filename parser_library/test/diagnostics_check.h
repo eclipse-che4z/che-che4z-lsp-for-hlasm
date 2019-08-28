@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "common_testing.h"
 
-/*
 
 TEST(diagnostics, overall_correctness)
 {
@@ -10,8 +9,7 @@ TEST(diagnostics, overall_correctness)
  J 5
  ACONTROL COMPAT(CASE)
  CATTR DEFLOAD,FILL(3)
- CATTR FILL(3) 
- EXTSYM1 ALIAS C'lowerl'
+ CATTR FILL(3)
  AINSERT 'abc',BACK
 &x setc 'abc'
  AINSERT '&x',BACK
@@ -25,7 +23,34 @@ TEST(diagnostics, overall_correctness)
 	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
-}*/
+}
+
+TEST(diagnostics, string_substitution)
+{
+	std::string input(
+		R"( 
+&x setc 10
+ AINSERT '&x',BACK
+
+&a seta 31
+&b setc 'ANY'
+ AMODE &b&a
+
+&z setc 'string'
+ EXTRN 2,PART(2),PART(2,2),1000,'3',PART(&z,4) 
+
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+
+	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+
+	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+}
 
 TEST(diagnostics, division_by_zero) //test ok
 {
@@ -98,36 +123,7 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
-}
-
-
-TEST(diagnostics, string_substitution) // to do 
-{
-	std::string input(
-		R"( 
-&x setc 10
- AINSERT '&x',BACK
- COPY '&x'
-
-&a seta 31
-&b setc 'ANY'
- AMODE &b&a
-
-&z setc 'string'
- EXTRN 2,PART(2),PART(2,2),1000,'3',PART(&z,4) 
-
-)"
-);
-
-	analyzer a(input);
-	a.analyze();
-
-	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
-
-	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-
-	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
-}
+}*/
 
 TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
 {
@@ -137,14 +133,12 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
  ACONTROL NOTYPECHECK,TYPECHECK(MAGNITUDE,NOREG),OPTABLE(DOS)
  ADATA -300,2*100,2,3,'test'
  AINSERT 'test',BACK
- ALIAS C'lower1'
  AMODE ANY31
  CATTR RMODE(31),ALIGN(2)
  CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)
  CEJECT 10/2
  CNOP 6,8
  COM    
- COPY 'test'
  CSECT
  END ,(MYCOMPIlER,0101,00273)
  EXITCTL LISTING,256,*+128,,-2
@@ -153,7 +147,7 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
  ICTL 1,71,16 
  ICTL 9,80
  ISEQ 10,50-4
- LOCTR
+label LOCTR
  LTORG
  MNOTE 120,'message'
  OPSYN   
@@ -164,7 +158,7 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
  PUSH PRINT,NOPRINT
  REPRO
  RMODE 24
-    RSECT
+label1 RSECT
  SPACE 4
  START 34
  TITLE 'string'   remark
@@ -185,19 +179,18 @@ TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSY
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
 }
 
-TEST(diagnostics, substitution)
+TEST(diagnostics, case_insensitivity)
 {
 	std::string input(
 		R"( 
-
-&x seta 4
- CNOP &x+2,16
-
-
-
+ AcOnTROL NoAfPR,compat(CaSe,cASE),FLAG(USING0),OPTABLE(zs5,LIsT)
+ ADATA -300,2*100,2,3,'TEST'
+ AINSERT 'test',bacK
+ AMODE any31
+ CATTR rMODE(31),ALIgn(2)
 )"
 );
-
+	analyzer a(input);
 	a.analyze();
 
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
@@ -206,7 +199,30 @@ TEST(diagnostics, substitution)
 
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
 }
-*/
+
+TEST(diagnostics, machine)
+{
+	std::string input(
+		R"( 
+ L 0,2222
+ AHI 0,2
+ ST 0,2(2,2)
+ LR  12,15                  SET BASE REGISTER
+ ST  15,16(,7)
+ LA  1,255(,1) 
+)"
+);
+	analyzer a(input);
+	a.analyze();
+
+	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+
+	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+}
+
+
 TEST(diagnostics, mnemonics)
 {
 	// 4 - 4bit
@@ -255,7 +271,6 @@ TEST(diagnostics, mnemonics)
   BROL 80000
   BRNOL 80000
   JLNOP 80000
-
 )"
 );
 

@@ -91,7 +91,7 @@ symbol_value symbol_value::operator*(const symbol_value& value) const
 symbol_value symbol_value::operator/(const symbol_value& value) const
 {
 	if (value_kind() == symbol_kind::ABS && value.value_kind() == symbol_kind::ABS)
-		return get_abs() / value.get_abs();
+		return value.get_abs() == 0 ? 0 : get_abs() / value.get_abs();
 
 	return symbol_value();
 }

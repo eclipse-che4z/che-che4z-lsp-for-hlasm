@@ -38,8 +38,8 @@ term returns [vs_ptr* vs_link = nullptr]
 	{ 
 		collector.add_hl_symbol(token_info(provider.get_range( $ca_string.ctx),hl_scopes::string));
 	}
-	| {!is_self_def()}? data_attribute
-	| { is_self_def()}? ORDSYMBOL string
+	| data_attribute
+	| {is_self_def()}? ORDSYMBOL string
 	| num
 	| id_sub
 	{ 
@@ -63,12 +63,12 @@ expr_p_comma_c returns [std::vector<ParserRuleContext*> ext]
 		$ext = $exs.ext;
 	};
 	
-expr_p_space_c returns [std::vector<ParserRuleContext*> ext]
+expr_p_space_c returns [std::deque<ParserRuleContext*> ext]
  	: expr_p
 	{ 
 		$ext.push_back($expr_p.ctx); 
 	}
-	| exs=expr_p_space_c SPACE+ expr_p
+	| exs=expr_p_space_c SPACE* expr_p
 	{ 
 		$exs.ext.push_back($expr_p.ctx); 
 		$ext = $exs.ext;
@@ -134,15 +134,15 @@ substring // returns [expr_ptr start, expr_ptr end]
 	|;
 
 ca_string_b // returns [std::unique_ptr<char_expr> e]
-	: ca_dupl_factor apostrophe string_ch_v_c apostrophe substring;
+	: ca_dupl_factor apostrophe string_ch_v_c (apostrophe|attr) substring;
 
 ca_string // returns [std::unique_ptr<char_expr> e]
 	: ca_string_b											//	{$e = std::move($ca_string_b.e);}
 	| tmp=ca_string dot_ ca_string_b;
 
 string_ch_v returns [concat_point_ptr point]
-	: l_sp_ch_v							{$point = std::move($l_sp_ch_v.point);}
-	| APOSTROPHE APOSTROPHE				{$point = std::make_unique<char_str>("'");};
+	: l_sp_ch_v								{$point = std::move($l_sp_ch_v.point);}
+	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str>("'");};
 
 string_ch_v_c returns [concat_chain chain]
 	:

@@ -48,7 +48,7 @@ public:
 
 		storage_ += length;
 
-		return address({&owner}, storage_, spaces_);
+		return address({&owner}, (int)storage_, spaces_);
 	}
 
 	//aligns storage

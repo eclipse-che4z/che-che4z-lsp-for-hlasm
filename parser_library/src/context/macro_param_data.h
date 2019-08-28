@@ -26,13 +26,20 @@ public:
 	//dummy data returning default value everytime
 	static const macro_data_shared_ptr dummy;
 
+	//number of components in the object
+	const size_t number;
+
 	virtual ~macro_param_data_component();
+protected:
+	macro_param_data_component(size_t number);
 };
 
 //dummy macro data class returning default value everytime
-class macro_param_data_dummy :public macro_param_data_component
+class macro_param_data_dummy : public macro_param_data_component
 {
 public:
+	macro_param_data_dummy();
+
 	//gets default value ("")
 	const C_t& get_value() const override;
 
@@ -52,8 +59,7 @@ public:
 	//get_ith(0) returns this to mimic HLASM
 	virtual const macro_param_data_component* get_ith(size_t idx) const override;
 
-	macro_param_data_single(const C_t& value);
-	macro_param_data_single(C_t&& value);
+	macro_param_data_single(C_t value);
 };
 
 //class representing data of macro parameters holding more nested data

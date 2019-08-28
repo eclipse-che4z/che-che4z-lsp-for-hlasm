@@ -4,10 +4,11 @@ model_operands returns [op_rem line]													//rule for variable substitutio
 	: op_rem_body				{$line = std::move($op_rem_body.line);};
 
 operands_and_remarks
-	: { deferred() }? SPACE deferred_op_rem					                 		//TODO make special grammar for defered, for now mac_entry
+	: { deferred() }? SPACE {enable_hidden();} deferred_op_rem					                 		
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
-		collector.set_operand_remark_field(std::move($deferred_op_rem.ctx->getText()),r);
+		collector.set_operand_remark_field(std::move($deferred_op_rem.ctx->getText()),std::move($deferred_op_rem.remarks),r);
+		disable_hidden();
 	} 
 	| {!deferred()}? operands_and_remarks_nd
 	|
@@ -16,67 +17,55 @@ operands_and_remarks
 	};
 
 operands_and_remarks_nd
-	: { no_op() ||  UNKNOWN() }? SPACE+ remark								/*noop instr*/
+	: { no_op() ||  UNKNOWN() }? SPACE* remark_o								/*noop instr*/
 	{
-		collector.set_operand_remark_field(std::vector<operand_ptr>(),{provider.get_range( $remark.ctx)}, provider.get_range( $remark.ctx));
+		collector.set_operand_remark_field(operand_list{},$remark_o.value ? remark_list{*$remark_o.value} : remark_list{}, provider.get_range( $remark_o.ctx));
 	}
 	| {!no_op() && !UNKNOWN() }? SPACE+ op_rem_body
 	{
 		collector.set_operand_remark_field(std::move($op_rem_body.line.operands),std::move($op_rem_body.line.remarks), provider.get_range( $op_rem_body.ctx));
 	};
 
-/*
-deferred_entry 
-	: op_ch_v_c
-	| AMPERSAND SPACE; 
 
-deferred_op_rem returns [concat_chain chain] 
-	: deferred_entry		{$chain = std::move($deferred_entry.chain);}
-	| deferred_entry comma ch=deferred_op_rem
-	{
-		$chain = std::move($deferred_entry.chain);
-		$chain.push_back(std::make_unique<char_str>(","));
-		$chain.insert($chain.end(), std::make_move_iterator($ch.chain.begin()), std::make_move_iterator($ch.chain.end()));
-	};
-*/
-
-deferred_entry 
-	: op_ch_v
-	| AMPERSAND SPACE; 
-
-deferred_op_rem
-	: deferred_entry*;
 
 op_rem_body returns [op_rem line]
 	: {!alt_format()}? op_list_comma remark_o
 	{
 		$line.operands = std::move($op_list_comma.operands);
-		$line.operands.push_back(std::make_unique<semantics::empty_operand>(provider.get_range($op_list_comma.ctx)));
-		if($remark_o.range_opt) $line.remarks.push_back(*$remark_o.range_opt);
+		$line.operands.push_back(std::make_unique<semantics::empty_operand>(provider.get_range($op_list_comma.ctx->getStop())));
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	}
-	| {!alt_format()}? op_list_comma_o operand_not_empty remark_o
+	| {!alt_format()}? op_list_comma_o last_operand_not_empty remark_o
 	{
-		$op_list_comma_o.operands.push_back(std::move($operand_not_empty.op));
+		$op_list_comma_o.operands.push_back(std::move($last_operand_not_empty.op));
 		$line.operands = std::move($op_list_comma_o.operands);
-		if($remark_o.range_opt) $line.remarks.push_back(*$remark_o.range_opt);
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	}
-	| {!alt_format()}? model_op
+	| {!alt_format()}? model_op remark_o
 	{
-		auto op = std::make_unique<model_operand>(std::move($model_op.chain),provider.get_range( $model_op.ctx)); 
+		operand_ptr op;
+		if($model_op.chain_opt)
+			op = std::make_unique<model_operand>(std::move(*$model_op.chain_opt),provider.get_range( $model_op.ctx)); 
+		else
+			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
 		$line.operands.push_back(std::move(op));
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	}
 	| { alt_format()}? op_rem_body_alt
 	{
 		$line = std::move($op_rem_body_alt.line);
 	}
-	| remark_o;
+	| remark_o
+	{
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
+	};
 
 op_rem_body_alt returns [op_rem line]
 	: alt_op_list_comma_o alt_operand_not_empty remark_o
 	{
 		$alt_op_list_comma_o.operands.push_back(std::move($alt_operand_not_empty.op)); 
 		$line.operands = std::move($alt_op_list_comma_o.operands); 
-		if($remark_o.range_opt) $line.remarks.push_back(*$remark_o.range_opt);
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	}
 	| alt_op_list_comma cont												
 	{
@@ -92,20 +81,20 @@ cont returns [op_rem line]
 cont_body returns [op_rem line]
 	: remark_o																					
 	{ 
-		if($remark_o.range_opt) $line.remarks.push_back(*$remark_o.range_opt);
 		auto tmp = std::make_unique<semantics::empty_operand>(provider.get_empty_range( $remark_o.ctx->getStart()));
 		$line.operands.push_back(std::move(tmp));
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	}
-	| SPACE r1=remark CONTINUATION /*empty op*/ sp=SPACE {disable_continuation();} r2=remark				
+	| r1=remark_o CONTINUATION {disable_continuation();} /*empty op*/ r2=remark_o			
 	{
-		$line.remarks.push_back(provider.get_range( $r1.ctx)); 
-		auto tmp = std::make_unique<semantics::empty_operand>(provider.get_empty_range( $sp));
+		if($r1.value) $line.remarks.push_back(*$r1.value); 
+		auto tmp = std::make_unique<semantics::empty_operand>(range(provider.get_range( $r2.ctx).start));
 		$line.operands.push_back(std::move(tmp));
-		$line.remarks.push_back(provider.get_range( $r2.ctx));
+		if($r2.value) $line.remarks.push_back(*$r2.value); 
 	}
-	| SPACE remark CONTINUATION {disable_continuation();} next=op_rem_body_alt
+	| remark_o CONTINUATION {disable_continuation();} next=op_rem_body_alt
 	{
-		$line.remarks.push_back(provider.get_range( $remark.ctx));
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		$line.remarks.insert($line.remarks.end(),std::make_move_iterator($next.line.remarks.begin()),std::make_move_iterator($next.line.remarks.end()));
 		$line.operands = std::move($next.line.operands);
 	};
@@ -154,6 +143,27 @@ operand_not_empty returns [operand_ptr op]
 	| {ASM()}? asm_op																	
 	{
 		$op = std::move($asm_op.op);
+	}
+	| {DAT()}? data_def
+	{
+		$op = std::make_unique<data_def_operand>(std::move($data_def.value),provider.get_range($data_def.ctx));
+	};
+
+last_operand_not_empty returns [operand_ptr op]
+	: {MACH()}? mach_op																	
+	{
+		$op = std::move($mach_op.op);
+	}
+	| {ASM()}? asm_op																	
+	{
+		$op = std::move($asm_op.op);
+	}
+	| {ASM()}? string (ORDSYMBOL|IDENTIFIER)
+	{
+		$op = std::make_unique<string_assembler_operand>(std::move($string.value),provider.get_range($string.ctx));
+		auto diag = diagnostic_s{ provider.get_range($string.ctx),diagnostic_op::warning_A300_op_apostrophes_missing("", provider.get_range($string.ctx)) };
+		diag.file_name = ctx->opencode_file_name();
+		add_diagnostic(diag);
 	}
 	| {DAT()}? data_def
 	{
