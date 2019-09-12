@@ -67,19 +67,21 @@ parallel (
           Alpine: {
             buildImageAlpine.inside('-u 0:0')  {
               sh 'mkdir -p build/alpine'
-              sh 'cd ./build/alpine && cmake -G Ninja ../../HlasmPlugin && cmake --build . && cd bin && ./library_test && ./server_test'
+              sh 'cd ./build/alpine && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
             }
           },
           Gnu: {
             buildImageGnu.inside('-u 0:0')  {
               sh 'mkdir -p build/gnu'
-              sh 'cd ./build/gnu && rm -rf * && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 1 && cd bin && ./library_test && ./server_test'
+              sh 'cd ./build/gnu && rm -rf * && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
             }
           },
           Clang: {
             buildImageClang.inside('-u 0:0 --cap-add SYS_PTRACE')  {
               sh 'mkdir -p build/clang'
-              sh 'cd ./build/clang && cmake -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=-fsanitize=address,undefined,fuzzer-no-link ../../HlasmPlugin && cmake --build . -- -j 4 && cd bin && ./library_test && ./server_test'
+              sh 'cd ./build/clang && cmake -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link -fprofile-instr-generate -fcoverage-mapping" ../../HlasmPlugin && cmake --build . -- -j 9 && cd bin && LLVM_PROFILE_FILE="library_profile" ./library_test && LLVM_PROFILE_FILE="server_profile" ./server_test'
+              sh 'cd ./build/clang/bin && llvm-profdata-8 merge -o hlasm_profile library_profile server_profile'
+              sh 'cd ./build/clang/bin && llvm-cov-8 export -format=text -instr-profile ./hlasm_profile ./library_test ./server_test > coverage.json'
             }
           }         
         )
@@ -91,42 +93,48 @@ parallel (
         sh "cd ./build/gnu/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
         sh "cd ./build/clang/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
         
-        archiveArtifacts artifacts: 'build/*/bin/*.vsix'
+        archiveArtifacts artifacts: 'build/*/bin/*.vsix,build/clang/bin/coverage.*'
       }
       
-      if (env.BRANCH_NAME == "development" || env.BRANCH_NAME == "master") {
-        stage ('[L] Upload to Artifactory') {
-          // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
-          server = Artifactory.server 'Test_Artifactory'
-          // Configure upload of artifact
-          def uploadSpec = """{
-            "files": [
-              {
-                "pattern": "./build/alpine/bin/vscode-hlasmplugin*.vsix",
-                "target": "local-files/hlasm/alpine/"
-              },
-              {
-                "pattern": "./build/gnu/bin/vscode-hlasmplugin*.vsix",
-                "target": "local-files/hlasm/gnu/"
-              },
-              {
-                "pattern": "./build/clang/bin/vscode-hlasmplugin*.vsix",
-                "target": "local-files/hlasm/clang/"
-              }
-            ]
-          }"""
-          server.upload spec: uploadSpec
-        }
+      stage ('[L] Upload to Artifactory') {
+        // Create 'latest' artifact
+        sh 'sudo cp ./build/alpine/bin/vscode-hlasmplugin*.vsix ./build/alpine/bin/vscode-hlasmplugin-latest.vsix'
+        sh 'sudo cp ./build/gnu/bin/vscode-hlasmplugin*.vsix ./build/gnu/bin/vscode-hlasmplugin-latest.vsix'
+        sh 'sudo cp ./build/clang/bin/vscode-hlasmplugin*.vsix ./build/clang/bin/vscode-hlasmplugin-latest.vsix'
+        // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
+        server = Artifactory.server 'Test_Artifactory'
+        // Configure upload of artifact
+        def uploadSpec = """{
+          "files": [
+            {
+              "pattern": "./build/alpine/bin/vscode-hlasmplugin*.vsix",
+              "target": "local-files/hlasm/alpine/"
+            },
+            {
+              "pattern": "./build/gnu/bin/vscode-hlasmplugin*.vsix",
+              "target": "local-files/hlasm/gnu/"
+            },
+            {
+              "pattern": "./build/clang/bin/vscode-hlasmplugin*.vsix",
+              "target": "local-files/hlasm/clang/"
+            }
+          ]
+        }"""
+        server.upload spec: uploadSpec
       }
     } 
   },
   Windows: {
     node('Kenny') {
+      // set workspace directories
+      def BLDX86 = env.CHANGE_ID + 'b' + env.BUILD_NUMBER + 'x86'
+      def BLDX64 = env.CHANGE_ID + 'b' + env.BUILD_NUMBER + 'x64'
+      
       // delete workspace
       stage('[W] Clear workspace') {
         deleteDir()
-        bat "if exist \\bldx86 rd /q/s \\bldx86"
-        bat "if exist \\bldx64 rd /q/s \\bldx64"
+        bat "if exist \\${BLDX86} rd /q/s \\${BLDX86}"
+        bat "if exist \\${BLDX64} rd /q/s \\${BLDX64}"
       }
     
       // Mark the code checkout 'stage'....
@@ -164,14 +172,14 @@ parallel (
         parallel (
           x86: {
             bat """
-              mkdir \\bldx86 && cd \\bldx86
-              pushd \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\" && vcvars32.bat && popd && cmake -D CMAKE_BUILD_TYPE=Release -A win32 ${env.WORKSPACE}\\HlasmPlugin && cmake --build .\\ --config Release
+              mkdir \\${BLDX86} && cd \\${BLDX86}
+              pushd \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\" && vcvars32.bat && popd && cmake -D CMAKE_BUILD_TYPE=Release -A win32 ${env.WORKSPACE}\\HlasmPlugin && cmake --build .\\ --config Release && cd bin && library_test.exe && server_test.exe
             """
           },
           x64: {
             bat """
-              mkdir \\bldx64 && cd \\bldx64
-              pushd \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\" && vcvars64.bat && popd && cmake -D CMAKE_BUILD_TYPE=Release -A x64 ${env.WORKSPACE}\\HlasmPlugin && cmake --build .\\ --config Release
+              mkdir \\${BLDX64} && cd \\${BLDX64}
+              pushd \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\" && vcvars64.bat && popd && cmake -D CMAKE_BUILD_TYPE=Release -A x64 ${env.WORKSPACE}\\HlasmPlugin && cmake --build .\\ --config Release && cd bin && library_test.exe && server_test.exe
             """
           }
         )
@@ -179,33 +187,34 @@ parallel (
       
       stage('[w] Archive artifacts') {
       // Add version to file name
-        bat "move /Y \\bldx86 ${env.WORKSPACE}\\HlasmPlugin\\buildx86"
+        bat "move /Y \\${BLDX86} ${env.WORKSPACE}\\HlasmPlugin\\buildx86"
         bat "cd ${env.WORKSPACE}\\HlasmPlugin\\buildx86\\bin && rename vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
-        bat "move /Y \\bldx64 ${env.WORKSPACE}\\HlasmPlugin\\buildx64"
+        bat "move /Y \\${BLDX64} ${env.WORKSPACE}\\HlasmPlugin\\buildx64"
         bat "cd ${env.WORKSPACE}\\HlasmPlugin\\buildx64\\bin && rename vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
         
         archiveArtifacts artifacts: 'HlasmPlugin\\build*\\bin\\*.exe,HlasmPlugin\\build*\\bin\\*.dll,HlasmPlugin\\build*\\bin\\*.lib,HlasmPlugin\\build*\\bin\\*.vsix,HlasmPlugin\\build*\\bin\\test\\**', excludes: 'x64\\Release\\*.*pdb,x64\\Release\\*.*obj'
       }
       
-      if (env.BRANCH_NAME == "development" || env.BRANCH_NAME == "master") {
-        stage ('[L] Upload to Artifactory') {
-          // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
-          server = Artifactory.server 'Test_Artifactory'
-          // Configure upload of artifact
-          def uploadSpec = """{
-            "files": [
-              {
-                "pattern": "./HlasmPlugin/buildx86/bin/vscode-hlasmplugin*.vsix",
-                "target": "local-files/hlasm/win_x86/"
-              },
-              {
-                "pattern": "./HlasmPlugin/buildx64/bin/vscode-hlasmplugin*.vsix",
-                "target": "local-files/hlasm/win_x64/"
-              }
-            ]
-          }"""
-          server.upload spec: uploadSpec
-        }
+      stage ('[L] Upload to Artifactory') {
+        // Create 'latest' artifact
+        bat "copy /Y/B ${env.WORKSPACE}\\HlasmPlugin\\buildx86\\bin\\vscode-hlasmplugin*.vsix ${env.WORKSPACE}\\HlasmPlugin\\buildx86\\bin\\vscode-hlasmplugin-latest.vsix"
+        bat "copy /Y/B ${env.WORKSPACE}\\HlasmPlugin\\buildx64\\bin\\vscode-hlasmplugin*.vsix ${env.WORKSPACE}\\HlasmPlugin\\buildx64\\bin\\vscode-hlasmplugin-latest.vsix"
+        // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
+        server = Artifactory.server 'Test_Artifactory'
+        // Configure upload of artifact
+        def uploadSpec = """{
+          "files": [
+            {
+              "pattern": "./HlasmPlugin/buildx86/bin/vscode-hlasmplugin*.vsix",
+              "target": "local-files/hlasm/win_x86/"
+            },
+            {
+              "pattern": "./HlasmPlugin/buildx64/bin/vscode-hlasmplugin*.vsix",
+              "target": "local-files/hlasm/win_x64/"
+            }
+          ]
+        }"""
+        server.upload spec: uploadSpec
       }
     }
   }
