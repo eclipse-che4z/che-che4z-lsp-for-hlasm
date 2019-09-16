@@ -72,7 +72,7 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
 	}
 	else if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
 	{
-		add_diagnostic(diagnostic_s::warning_W010("", "Name field", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::warning_W010("Name field", stmt.label_ref().field_range));
 	}
 }
 
@@ -89,13 +89,13 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 
 	if (var_symbol && var_symbol->access_macro_param_base())
 	{
-		add_diagnostic(diagnostic_s::error_E030("", "symbolic parameter", symbol->symbol_range));
+		add_diagnostic(diagnostic_op::error_E030("symbolic parameter", symbol->symbol_range));
 		return false;
 	}
 
 	if (symbol->subscript.size() > 1)
 	{
-		add_diagnostic(diagnostic_s::error_E020("", "variable symbol subscript", symbol->symbol_range));
+		add_diagnostic(diagnostic_op::error_E020("variable symbol subscript", symbol->symbol_range));
 		return false;
 	}
 	else if (symbol->subscript.size() == 1)
@@ -106,7 +106,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 
 		if (idx < 1)
 		{
-			add_diagnostic(diagnostic_s::error_E012("", "subscript value has to be 1 or more", symbol->symbol_range));
+			add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol->symbol_range));
 			return false;
 		}
 	}
@@ -118,13 +118,13 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 	assert(set_sym);
 	if (set_sym->type != type)
 	{
-		add_diagnostic(diagnostic_s::error_E013("", "wrong type of variable symbol", symbol->symbol_range));
+		add_diagnostic(diagnostic_op::error_E013("wrong type of variable symbol", symbol->symbol_range));
 		return false;
 	}
 
 	if ((set_sym->is_scalar && symbol->subscript.size() == 1) || (!set_sym->is_scalar && symbol->subscript.size() == 0))
 	{
-		add_diagnostic(diagnostic_s::error_E013("", "subscript error", symbol->symbol_range));
+		add_diagnostic(diagnostic_op::error_E013("subscript error", symbol->symbol_range));
 		return false;
 	}
 
@@ -137,7 +137,7 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 {
 	if (stmt.label_ref().type != semantics::label_si_type::VAR)
 	{
-		add_diagnostic(diagnostic_s::error_E010("", "label", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
 		return false;
 	}
 
@@ -161,7 +161,7 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 
 		if (ca_op->kind != semantics::ca_kind::VAR && ca_op->kind != semantics::ca_kind::EXPR)
 		{
-			add_diagnostic(diagnostic_s::error_E012("", "SET instruction",ca_op->operand_range));
+			add_diagnostic(diagnostic_op::error_E012("SET instruction",ca_op->operand_range));
 			return false;
 		}
 
@@ -174,7 +174,7 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 
 	if (!has_operand)
 	{
-		add_diagnostic(diagnostic_s::error_E022("", "SET instruction", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E022("SET instruction", stmt.instruction_ref().field_range));
 		return false;
 	}
 	return true;
@@ -202,15 +202,15 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 			if (auto var_sym = hlasm_ctx.get_var_sym(id))
 			{
 				if (var_sym->access_set_symbol_base())
-					add_diagnostic(diagnostic_s::error_E051("", *id, ca_op->operand_range));
+					add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
 				else if (var_sym->access_macro_param_base())
-					add_diagnostic(diagnostic_s::error_E052("", *id, ca_op->operand_range));
+					add_diagnostic(diagnostic_op::error_E052(*id, ca_op->operand_range));
 				else assert(false);
 				continue;
 			}
 			if (std::find(ids.begin(), ids.end(), id) != ids.end())
 			{
-				add_diagnostic(diagnostic_s::error_E051("", *id, ca_op->operand_range));
+				add_diagnostic(diagnostic_op::error_E051(*id, ca_op->operand_range));
 			}
 			else
 			{
@@ -221,20 +221,20 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 		}
 		else
 		{
-			add_diagnostic(diagnostic_s::error_E010("", "operand", ca_op->operand_range));
+			add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
 			return false;
 		}
 	}
 
 	if (!has_operand)
 	{
-		add_diagnostic(diagnostic_s::error_E022("", "variable symbol definition", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E022("variable symbol definition", stmt.instruction_ref().field_range));
 		return false;
 	}
 
 	if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
 	{
-		add_diagnostic(diagnostic_s::warning_W010("", "Label field", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::warning_W010("Label field", stmt.label_ref().field_range));
 	}
 	return true;
 }
@@ -249,7 +249,7 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
 {
 	if (stmt.operands_ref().value.size() != 1)
 	{
-		add_diagnostic(diagnostic_s::error_E020("", "operand", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E020("operand", stmt.instruction_ref().field_range));
 		return false;
 	}
 
@@ -263,7 +263,7 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
 	}
 	else
 	{
-		add_diagnostic(diagnostic_s::error_E010("", "operand", ca_op->operand_range));
+		add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
 		return false;
 	}
 }
@@ -283,7 +283,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 {
 	if (stmt.operands_ref().value.empty())
 	{
-		add_diagnostic(diagnostic_s::error_E022("", "AGO", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E022("AGO", stmt.instruction_ref().field_range));
 		return false;
 	}
 
@@ -291,7 +291,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 	{
 		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
 		{
-			add_diagnostic(diagnostic_s::error_E010("", "operand", op->operand_range));
+			add_diagnostic(diagnostic_op::error_E010("operand", op->operand_range));
 			return false;
 		}
 	}
@@ -303,7 +303,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 	{
 		if (stmt.operands_ref().value.size() != 1)
 		{
-			add_diagnostic(diagnostic_s::error_E010("", "operand", ca_op->operand_range));
+			add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
 			return false;
 		}
 
@@ -331,7 +331,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 			}
 			else
 			{
-				add_diagnostic(diagnostic_s::error_E010("", "operand", tmp->operand_range));
+				add_diagnostic(diagnostic_op::error_E010("operand", tmp->operand_range));
 				return false;
 			}
 		}
@@ -359,7 +359,7 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 
 	if (stmt.operands_ref().value.empty())
 	{
-		add_diagnostic(diagnostic_s::error_E022("", "AIF", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E022("AIF", stmt.instruction_ref().field_range));
 		return false;
 	}
 
@@ -373,7 +373,7 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 			if (it == stmt.operands_ref().value.end() - 1)
 				continue;
 
-			add_diagnostic(diagnostic_s::error_E010("", "operand", op->operand_range));
+			add_diagnostic(diagnostic_op::error_E010("operand", op->operand_range));
 			return false;
 		}
 		has_operand = true;
@@ -394,14 +394,14 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 		}
 		else
 		{
-			add_diagnostic(diagnostic_s::error_E010("", "operand", ca_op->operand_range));
+			add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
 			return false;
 		}
 	}
 
 	if (!has_operand)
 	{
-		add_diagnostic(diagnostic_s::error_E022("", "variable symbol definition", stmt.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E022("variable symbol definition", stmt.instruction_ref().field_range));
 		return false;
 	}
 
@@ -431,7 +431,7 @@ void ca_processor::process_MACRO(const semantics::complete_statement& stmt)
 void ca_processor::process_MEXIT(const semantics::complete_statement& stmt)
 {
 	if (!hlasm_ctx.is_in_macro())
-		add_diagnostic(diagnostic_s::error_E054("", "", stmt.stmt_range_ref()));
+		add_diagnostic(diagnostic_op::error_E054(stmt.stmt_range_ref()));
 	else
 		hlasm_ctx.leave_macro();
 }
@@ -439,7 +439,7 @@ void ca_processor::process_MEXIT(const semantics::complete_statement& stmt)
 void ca_processor::process_MEND(const semantics::complete_statement& stmt)
 {
 	if (!hlasm_ctx.is_in_macro())
-		add_diagnostic(diagnostic_s::error_E054("", "", stmt.stmt_range_ref()));
+		add_diagnostic(diagnostic_op::error_E054(stmt.stmt_range_ref()));
 }
 
 void ca_processor::process_AEJECT(const semantics::complete_statement&)

@@ -83,7 +83,7 @@ struct model_operand final : public operand
 
 
 
-struct evaluable_operand : public operand, public diagnosable_impl
+struct evaluable_operand : public operand, public diagnosable_op_impl
 {
 	evaluable_operand(const operand_type type, const range operand_range);
 

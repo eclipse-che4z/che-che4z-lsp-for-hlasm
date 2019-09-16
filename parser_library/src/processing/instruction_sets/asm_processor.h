@@ -23,7 +23,7 @@ public:
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 
-	static void process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable* diagnoser);
+	static void process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable_ctx* diagnoser);
 
 private:
 	process_table_t create_table(context::hlasm_context& hlasm_ctx);

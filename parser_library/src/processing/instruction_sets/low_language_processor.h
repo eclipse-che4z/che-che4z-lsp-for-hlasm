@@ -14,7 +14,7 @@ namespace processing {
 class low_language_processor : public instruction_processor
 {
 public:
-	static void check(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable& diagnoser);
+	static void check(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable_ctx& diagnoser);
 
 protected:
 	branching_provider& provider;
@@ -30,7 +30,7 @@ protected:
 	{
 		bool cycle_ok = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::forward<Args>(args)...);
 		if (!cycle_ok)
-			add_diagnostic(diagnostic_s::error_E033("", "", err_range));
+			add_diagnostic(diagnostic_op::error_E033(err_range));
 	}
 
 private:

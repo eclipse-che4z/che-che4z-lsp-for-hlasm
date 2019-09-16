@@ -67,7 +67,7 @@ std::optional<int> data_definition::parser::parse_number()
 	{
 		size_t end = get_number_end(p_); //Integer out of range
 		position new_pos = { pos_.line, pos_.column + (end - p_) };
-		result_.add_diagnostic(diagnostic_s::error_D001({ pos_, new_pos }));
+		result_.add_diagnostic(diagnostic_op::error_D001({ pos_, new_pos }));
 		p_ = end;
 		pos_ = new_pos;
 		return std::nullopt;
@@ -76,7 +76,7 @@ std::optional<int> data_definition::parser::parse_number()
 	{
 		size_t end = get_number_end(p_); //Expected an integer
 		position new_pos = { pos_.line, pos_.column + (end - p_) };
-		result_.add_diagnostic(diagnostic_s::error_D002({ pos_, new_pos }));
+		result_.add_diagnostic(diagnostic_op::error_D002({ pos_, new_pos }));
 		p_ = end;
 		pos_ = new_pos;
 		return std::nullopt;
@@ -169,7 +169,7 @@ mach_expr_ptr data_definition::parser::parse_modifier_num_or_expr()
 		}
 		else
 		{
-			result_.add_diagnostic(diagnostic_s::error_D003({ pos_, {pos_.line, pos_.column + 1} }));
+			result_.add_diagnostic(diagnostic_op::error_D003({ pos_, {pos_.line, pos_.column + 1} }));
 			++p_;
 			//no need to update pos_, nominal value (if present) is the last character of the format string
 		}
@@ -208,7 +208,7 @@ void data_definition::parser::parse_modifier()
 	if (p_ >= format_.size())
 	{
 		//expected something after modifier character
-		result_.add_diagnostic(diagnostic_s::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
+		result_.add_diagnostic(diagnostic_op::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
 		return;
 	}
 
@@ -221,14 +221,14 @@ void data_definition::parser::parse_modifier()
 		if (modifier == 'L')
 			result_.length_type = length_type::BIT;
 		else
-			result_.add_diagnostic(diagnostic_s::error_D005({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
+			result_.add_diagnostic(diagnostic_op::error_D005({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
 
 		update_position_by_one();
 
 		if (p_ >= format_.size())
 		{
 			//expected something after modifier character
-			result_.add_diagnostic(diagnostic_s::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
+			result_.add_diagnostic(diagnostic_op::error_D003({ begin_pos, { begin_pos.line, begin_pos.column + 1 } }));
 			return;
 		}
 	}
@@ -236,7 +236,7 @@ void data_definition::parser::parse_modifier()
 	
 	size_t rem_pos = remaining_modifiers_.find(modifier);
 	if (rem_pos == std::string::npos)//wrong order
-		result_.add_diagnostic(diagnostic_s::error_D004({begin_pos, pos_}));
+		result_.add_diagnostic(diagnostic_op::error_D004({begin_pos, pos_}));
 	else
 		remaining_modifiers_ = remaining_modifiers_.substr(rem_pos + 1);
 
@@ -276,7 +276,7 @@ data_definition data_definition::parser::parse()
 		}
 		else
 		{
-			result_.add_diagnostic(diagnostic_s::error_D006({ pos_, {pos_.line, pos_.column + 1} }));
+			result_.add_diagnostic(diagnostic_op::error_D006({ pos_, {pos_.line, pos_.column + 1} }));
 			++p_;
 			update_position_by_one();
 		}

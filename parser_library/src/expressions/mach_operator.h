@@ -149,7 +149,7 @@ inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_in
 
 	if (!(left_res.value_kind() == context::symbol_kind::ABS && right_res.value_kind() == context::symbol_kind::ABS) &&
 		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF)
-		add_diagnostic(diagnostic_s::error_ME002(get_range()));
+		add_diagnostic(diagnostic_op::error_ME002(get_range()));
 		
 		
 	return left_res * right_res;
@@ -163,7 +163,7 @@ inline mach_expression::value_t mach_expr_binary<div>::evaluate(mach_evaluate_in
 
 	if (!(left_res.value_kind() == context::symbol_kind::ABS && right_res.value_kind() == context::symbol_kind::ABS) &&
 		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF) 
-		add_diagnostic(diagnostic_s::error_ME002(get_range()));
+		add_diagnostic(diagnostic_op::error_ME002(get_range()));
 
 	return left_res / right_res;
 }

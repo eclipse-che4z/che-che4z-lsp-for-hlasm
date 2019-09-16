@@ -153,47 +153,47 @@ void parser_error_listener::syntaxError(antlr4::Recognizer *, antlr4::Token * , 
 
 		// right paranthesis has no left match
 		if (right_prec)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0012", "HLASM plugin", "Right parenthesis has no left match", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0012","Right parenthesis has no left match", {}));
 		// left paranthesis has no right match
 		else if (left_prec)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0011", "HLASM plugin", "Left parenthesis has no right match", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0011","Left parenthesis has no right match", {}));
 		// nothing else but left and right parenthesis is present
 		else if (only_par)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0010", "HLASM plugin", "Only left and right paranthesis present", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0010","Only left and right paranthesis present", {}));
 		// sign followed by a wrong token
 		else if (!sign_followed)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0009", "HLASM plugin", "A sign has to be followed by an expression", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0009","A sign has to be followed by an expression", {}));
 		// ampersand not followed with a name of a variable symbol
 		else if (!ampersand_followed)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0008", "HLASM plugin", "Ampersand has to be followed by a name of a variable", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0008","Ampersand has to be followed by a name of a variable", {}));
 		// expression starting with a sign
 		else if (!sign_preceding)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0007", "HLASM plugin", "A sign needs to be preceded by an expression", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0007","A sign needs to be preceded by an expression", {}));
 		// unexpected sign in an expression - GT, LT etc
 		else if (unexpected_sign)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0006", "HLASM plugin", "Unexpected sign in an epxression", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0006","Unexpected sign in an epxression", {}));
 		// apostrophe expected  
 		else if (odd_apostrophes && is_expected(APOSTROPHE, expected_tokens))
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0005", "HLASM plugin", "Expected an apostrophe", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0005","Expected an apostrophe", {}));
 		// unfinished statement - solo label on line
 		else if (start_token->getCharPositionInLine() == 0)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004", "HLASM plugin", "Unfinished statement, the label cannot be alone on a line", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004","Unfinished statement, the label cannot be alone on a line", {}));
 		// other undeclared errors
 		else
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002", "HLASM plugin", "Syntax error", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002","Syntax error", {}));
 	}
 	catch (antlr4::InputMismatchException & excp)
 	{
 		auto offender = excp.getOffendingToken();
 
 		if (offender->getType() == EOLLN)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0003", "HLASM plugin", "Unexpected end of statement", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0003", "Unexpected end of statement", {}));
 		else
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002", "HLASM plugin", "Syntax error", {}));
+			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002", "Syntax error", {}));
 	}
 	catch (...)
 	{
-		add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0001", "HLASM plugin", "C++ error", {}));
+		add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0001", "C++ error", {}));
 	}
 }
 

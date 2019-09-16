@@ -15,7 +15,7 @@ mach_expr_constant::mach_expr_constant(std::string value_text, range rng) : mach
 	}
 	catch (std::out_of_range&)
 	{
-		add_diagnostic(diagnostic_s::error_ME001(get_range()));
+		add_diagnostic(diagnostic_op::error_ME001(get_range()));
 	}
 }
 mach_expr_constant::mach_expr_constant(int value, range rng) : mach_expression( rng), value_(value)
@@ -75,8 +75,9 @@ void mach_expr_symbol::fill_location_counter(context::address )
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng) : mach_expression(rng)
 {
 	auto ae = arithmetic_expression::from_string(std::move(option), std::move(value), false); //could generate diagnostic + DBCS
+	ae->diag->diag_range = rng;
 	if (ae->has_error())
-		add_diagnostic({ rng, *ae->diag });
+		add_diagnostic(*ae->diag);
 	else
 		value_ = ae->get_numeric_value();
 }

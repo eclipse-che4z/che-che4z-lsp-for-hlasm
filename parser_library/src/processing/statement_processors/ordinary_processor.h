@@ -60,7 +60,7 @@ private:
 		switch (statement->access_resolved()->opcode_ref().type)
 		{
 		case context::instruction_type::UNDEF:
-			add_diagnostic(diagnostic_s::error_E049("", *statement->access_resolved()->opcode_ref().value, statement->access_resolved()->instruction_ref().field_range));
+			add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value, statement->access_resolved()->instruction_ref().field_range));
 			return;
 		case context::instruction_type::CA:
 			ca_proc_.process(std::move(statement));

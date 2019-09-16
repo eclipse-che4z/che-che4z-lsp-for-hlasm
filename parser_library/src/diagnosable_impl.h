@@ -5,17 +5,19 @@
 
 namespace hlasm_plugin::parser_library {
 
-class diagnosable_impl : public virtual diagnosable
+
+template<typename T>
+class collectable_impl : public virtual collectable<T>
 {
 public:
-	virtual diagnostic_container & diags() const override
+	virtual typename collectable<T>::diagnostic_container& diags() const override
 	{
 		return container;
 	}
 
 protected:
 
-	virtual void collect_diags_from_child(const diagnosable & child) const
+	virtual void collect_diags_from_child(const collectable<T> & child) const
 	{
 		child.collect_diags();
 		if (child.is_once_only())
@@ -30,7 +32,7 @@ protected:
 		}
 	}
 
-	virtual void add_diagnostic(diagnostic_s diagnostic) const override
+	virtual void add_diagnostic(T diagnostic) const override
 	{
 		container.push_back(std::move(diagnostic));
 	}
@@ -40,10 +42,13 @@ protected:
 		return true;
 	}
 
-	virtual ~diagnosable_impl() {};
+	virtual ~collectable_impl<T>() {};
 private:
-	mutable diagnostic_container container;
+	mutable typename collectable<T>::diagnostic_container container;
 };
+
+using diagnosable_impl = collectable_impl<diagnostic_s>;
+using diagnosable_op_impl = collectable_impl<diagnostic_op>;
 
 }
 

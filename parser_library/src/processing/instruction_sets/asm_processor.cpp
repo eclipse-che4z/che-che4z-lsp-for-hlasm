@@ -13,7 +13,7 @@ void asm_processor::process_sect(const context::section_kind kind,rebuilt_statem
 
 	if (hlasm_ctx.ord_ctx.symbol_defined(sect_name) && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind))
 	{
-		add_diagnostic(diagnostic_s::error_E031("", "symbol", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
 	}
 	else
 	{
@@ -27,11 +27,11 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 	auto loctr_name = find_label_symbol(stmt);
 
 	if (loctr_name == context::id_storage::empty_id)
-		add_diagnostic(diagnostic_s::error_E053("", "", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
 
 	if (hlasm_ctx.ord_ctx.symbol_defined(loctr_name) && !hlasm_ctx.ord_ctx.counter_defined(loctr_name))
 	{
-		add_diagnostic(diagnostic_s::error_E031("", "symbol", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
 	}
 	else
 	{
@@ -47,13 +47,13 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 	if (symbol_name == context::id_storage::empty_id)
 	{
 		if(stmt.label_ref().type == semantics::label_si_type::EMPTY)
-			add_diagnostic(diagnostic_s::error_E053("", "", stmt.label_ref().field_range));
+			add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
 		return;
 	}
 
 	if (hlasm_ctx.ord_ctx.symbol_defined(symbol_name))
 	{
-		add_diagnostic(diagnostic_s::error_E031("", "symbol", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
 		return;
 	}
 
@@ -123,7 +123,7 @@ void asm_processor::process(context::shared_stmt_ptr stmt)
 	process(preprocess(stmt));
 }
 
-void asm_processor::process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable* diagnoser)
+void asm_processor::process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable_ctx* diagnoser)
 {
 	auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
 	auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
@@ -131,7 +131,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt, cont
 	if (!sym_expr)
 	{
 		if(diagnoser)
-			diagnoser->add_diagnostic(diagnostic_s::error_E058("", "", stmt.operands_ref().value.front()->operand_range));
+			diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
 		return;
 	}
 
@@ -144,7 +144,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt, cont
 		if (!result)
 		{
 			if(diagnoser)
-				diagnoser->add_diagnostic(diagnostic_s::error_E058("", "", stmt.operands_ref().value.front()->operand_range));
+				diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
 			return;
 		}
 	}
@@ -154,7 +154,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt, cont
 	if (cycle_tmp != hlasm_ctx.copy_stack().end())
 	{
 		if (diagnoser)
-			diagnoser->add_diagnostic(diagnostic_s::error_E062("", "", stmt.stmt_range_ref()));
+			diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
 		return;
 	}
 

@@ -40,7 +40,7 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		auto label_name = context_manager(hlasm_ctx).get_symbol_name(std::get<std::string>(stmt.label_ref().value));
 		if (hlasm_ctx.ord_ctx.symbol_defined(label_name))
 		{
-			add_diagnostic(diagnostic_s::error_E031("", "symbol", stmt.label_ref().field_range));
+			add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
 		}
 		else
 		{

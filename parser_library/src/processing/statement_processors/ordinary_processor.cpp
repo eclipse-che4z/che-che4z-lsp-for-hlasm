@@ -209,13 +209,13 @@ bool ordinary_processor::check_fatals(range line_range)
 		while (hlasm_ctx.is_in_macro())
 			hlasm_ctx.leave_macro();
 
-		add_diagnostic(diagnostic_s::error_E055("", "", line_range));
+		add_diagnostic(diagnostic_op::error_E055(line_range));
 		return true;
 	}
 
 	if (hlasm_ctx.get_branch_counter() < 0)
 	{
-		add_diagnostic(diagnostic_s::error_E056("", "", line_range));
+		add_diagnostic(diagnostic_op::error_E056(line_range));
 		if (hlasm_ctx.is_in_macro())
 			hlasm_ctx.leave_macro();
 		else
@@ -226,7 +226,7 @@ bool ordinary_processor::check_fatals(range line_range)
 
 	if (hlasm_ctx.scope_stack().back().branch_counter_change > ACTR_LIMIT)
 	{
-		add_diagnostic(diagnostic_s::error_E063("", "", line_range));
+		add_diagnostic(diagnostic_op::error_E063(line_range));
 		finished_flag_ = true;
 		return true;
 	}

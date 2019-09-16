@@ -36,7 +36,7 @@ void lookahead_processor::process_statement(context::unique_stmt_ptr statement)
 void lookahead_processor::end_processing()
 {
 	if (!finished_flag_)
-		add_diagnostic(diagnostic_s::error_E047("", *start.target, start.target_range));
+		add_diagnostic(diagnostic_op::error_E047(*start.target, start.target_range));
 
 	listener_.finish_lookahead(std::move(result_));
 	finished_flag_ = true;

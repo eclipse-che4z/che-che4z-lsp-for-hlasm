@@ -135,7 +135,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
 	{
 		if (hlasm_ctx_.is_in_macro())
 		{
-			add_diagnostic(diagnostic_s::error_E047("", *target, symbol_range));
+			add_diagnostic(diagnostic_op::error_E047(*target, symbol_range));
 		}
 		else
 			start_lookahead(lookahead_start_data{
@@ -180,7 +180,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
 	}
 	else if(!(*symbol->access_opencode_symbol() == *new_symbol->access_opencode_symbol()))
 	{
-		add_diagnostic(diagnostic_s::error_E045("", *target, symbol_range));
+		add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
 	}
 }
 

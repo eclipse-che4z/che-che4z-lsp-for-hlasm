@@ -147,11 +147,9 @@ expressions::expr_ptr context_manager::evaluate_expression_tree(antlr4::ParserRu
 
 	if (e->diag)
 		add_diagnostic(
-			diagnostic_s{ 
-				"", 
-				semantics::range_provider(range()).get_range(expr_context), 
+			diagnostic_op{ 
 				e->diag->severity, std::move(e->diag->code), 
-				"HLASM Plugin", std::move(e->diag->message), {} });
+				std::move(e->diag->message), semantics::range_provider(range()).get_range(expr_context)});
 
 	return e;
 }
@@ -213,7 +211,7 @@ bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::e
 {
 	if (!var)
 	{
-		add_diagnostic(diagnostic_s::error_E010("", "variable", symbol_range)); //error - unknown name of variable
+		add_diagnostic(diagnostic_op::error_E010("variable", symbol_range)); //error - unknown name of variable
 		return false;
 	}
 
@@ -221,19 +219,19 @@ bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::e
 	{
 		if (subscript.size() > 1)
 		{
-			add_diagnostic(diagnostic_s::error_E020("", "variable symbol subscript", symbol_range)); //error - too many operands
+			add_diagnostic(diagnostic_op::error_E020("variable symbol subscript", symbol_range)); //error - too many operands
 			return false;
 		}
 
 		if ((set_sym->is_scalar && subscript.size() == 1) || (!set_sym->is_scalar && subscript.size() == 0))
 		{
-			add_diagnostic(diagnostic_s::error_E013("", "subscript error", symbol_range)); //error - inconsistent format of subcript
+			add_diagnostic(diagnostic_op::error_E013("subscript error", symbol_range)); //error - inconsistent format of subcript
 			return false;
 		}
 
 		if (!set_sym->is_scalar && (!subscript[0] || subscript[0]->get_numeric_value() < 1))
 		{
-			add_diagnostic(diagnostic_s::error_E012("", "subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1
+			add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1
 			return false;
 		}
 	}
@@ -244,7 +242,7 @@ bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::e
 		{
 			if (!e || e->get_numeric_value() < 1)
 			{
-				add_diagnostic(diagnostic_s::error_E012("", "subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1
+				add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1
 				return false;
 			}
 		}

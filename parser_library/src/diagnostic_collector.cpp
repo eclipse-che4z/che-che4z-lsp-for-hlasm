@@ -15,8 +15,7 @@ diagnostic_collector::diagnostic_collector()
 void diagnostic_collector::operator()(diagnostic_op diagnostic) const
 {
 	if (!diagnoser_) return;
-	diagnostic_s tmp_diag(diagnostic.range_,std::move(diagnostic));
-	diagnoser_->add_diagnostic_inner(std::move(tmp_diag), location_stack_);
+	diagnoser_->add_diagnostic_inner(std::move(diagnostic), location_stack_);
 }
 
 }

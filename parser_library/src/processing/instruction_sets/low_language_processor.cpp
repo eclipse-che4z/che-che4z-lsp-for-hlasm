@@ -48,7 +48,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 			label.emplace(stmt.label_ref().field_range, std::move(new_label));
 		break;
 	case semantics::label_si_type::MAC:
-		add_diagnostic(diagnostic_s::error_E057("", "", stmt.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E057(stmt.label_ref().field_range));
 		break;
 	case semantics::label_si_type::SEQ:
 		provider.register_sequence_symbol(std::get<semantics::seq_sym>(stmt.label_ref().value).name, std::get<semantics::seq_sym>(stmt.label_ref().value).symbol_range);
@@ -178,9 +178,7 @@ checking::check_op_ptr low_language_processor::get_check_op(
 
 	if (can_have_ord_syms && ev_op->has_dependencies(hlasm_ctx.ord_ctx))
 	{
-		auto d_s = diagnostic_s::error_E010("", "ordinary symbol", ev_op->operand_range);
-		add_diagnostic(diagnostic_op(d_s.severity, d_s.code, d_s.message, d_s.diag_range));
-		return nullptr;
+		add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op->operand_range));
 	}
 
 	checking::check_op_ptr uniq;
@@ -204,7 +202,7 @@ checking::check_op_ptr low_language_processor::get_check_op(
 	return uniq;
 }
 
-void low_language_processor::check(const resolved_statement& stmt,context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable& diagnoser)
+void low_language_processor::check(const resolved_statement& stmt,context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable_ctx& diagnoser)
 {
 	auto diagnoser_ctx = dynamic_cast<diagnosable_ctx*>(&diagnoser);
 	auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);

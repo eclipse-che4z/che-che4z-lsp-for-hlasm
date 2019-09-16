@@ -133,7 +133,10 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
 {
 	auto ae = expressions::arithmetic_expression::from_string(option, value, false); //could generate diagnostic + DBCS
 	if (ae->has_error())
-		add_diagnostic(diagnostic_s(ctx->opencode_file_name(), term_range, *ae->diag));
+	{
+		ae->diag->diag_range = term_range;
+		add_diagnostic(diagnostic_s(ctx->opencode_file_name(), *ae->diag));
+	}
 	else
 		return ae->get_numeric_value();
 
@@ -143,7 +146,7 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
 	if (value.size() > 63)
-		add_diagnostic(diagnostic_s::error_E041("",value, id_range));
+		add_diagnostic(diagnostic_s::error_S100("",value, id_range));
 
 	return ctx->ids().add(std::move(value));
 }

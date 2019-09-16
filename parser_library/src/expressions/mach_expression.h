@@ -17,7 +17,7 @@ class mach_expression;
 using mach_expr_ptr = std::unique_ptr<mach_expression>;
 using mach_expr_list = std::vector<mach_expr_ptr>;
 
-class mach_expression : public diagnosable_impl, public context::resolvable
+class mach_expression : public diagnosable_op_impl, public context::resolvable
 {
 	
 public:

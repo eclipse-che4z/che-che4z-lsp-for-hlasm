@@ -111,9 +111,6 @@ public:
 	void clear_diagnostics();
 	std::vector<diagnostic_op> diagnostics;
 	virtual ~machine_instruction() = default;
-
-protected:
-	void add_diagnostic(diagnostic_op diag);
 };
 
 using machine_instruction_ptr = std::unique_ptr<machine_instruction>;

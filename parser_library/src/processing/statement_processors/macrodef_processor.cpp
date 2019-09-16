@@ -26,7 +26,7 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
 		context::id_index id;
 		if (instruction.type == semantics::instruction_si_type::EMPTY)
 		{
-			add_diagnostic(diagnostic_s::error_E042("", "", instruction.field_range));
+			add_diagnostic(diagnostic_op::error_E042(instruction.field_range));
 
 			id = hlasm_ctx.ids().add("ASPACE");
 		}
@@ -103,7 +103,7 @@ void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
 void macrodef_processor::end_processing()
 {
 	if (!finished_flag_)
-		add_diagnostic(diagnostic_s::error_E046("", *result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().pos, hlasm_ctx.processing_stack().back().pos)));
+		add_diagnostic(diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().pos, hlasm_ctx.processing_stack().back().pos)));
 
 	listener_.finish_macro_definition(std::move(result_));
 
@@ -176,7 +176,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 		if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
 		{
 			range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
-			add_diagnostic(diagnostic_s::error_E059("", *start_.external_name, r));
+			add_diagnostic(diagnostic_op::error_E059(*start_.external_name, r));
 			finished_flag_ = true;
 			return;
 		}
@@ -244,7 +244,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 	{
 		auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
 		if (var->created || var->subscript.size() != 0)
-			add_diagnostic(diagnostic_s::error_E043("", "", var->symbol_range));
+			add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
 		else
 		{
 			result_.prototype.name_param = var->access_basic()->name;
@@ -252,13 +252,13 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 		}
 	}
 	else if (statement.label_ref().type != semantics::label_si_type::EMPTY)
-		add_diagnostic(diagnostic_s::error_E044("", "", statement.label_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E044(statement.label_ref().field_range));
 
 	//instr
 	auto macro_name = statement.opcode_ref().value;
 	if (start_.is_external && macro_name != start_.external_name)
 	{
-		add_diagnostic(diagnostic_s::error_E060("", *start_.external_name, statement.instruction_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E060(*start_.external_name, statement.instruction_ref().field_range));
 		finished_flag_ = true;
 		return;
 	}
@@ -284,7 +284,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 
 			if (var->created || !var->subscript.empty())
 			{
-				add_diagnostic(diagnostic_s::error_E043("", "", var->symbol_range));
+				add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
 				result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
 				continue;
 			}
@@ -293,7 +293,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 
 			if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
 			{
-				add_diagnostic(diagnostic_s::error_E011("", "Symbolic parameter", tmp->operand_range));
+				add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", tmp->operand_range));
 				result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
 			}
 			else
@@ -314,7 +314,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 
 				if (var->created || !var->subscript.empty())
 				{
-					add_diagnostic(diagnostic_s::error_E043("", "", var->symbol_range));
+					add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
 					result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
 					continue;
 				}
@@ -323,7 +323,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 
 				if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
 				{
-					add_diagnostic(diagnostic_s::error_E011("", "Symbolic parameter", tmp->operand_range));
+					add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", tmp->operand_range));
 				}
 				else
 				{
@@ -336,7 +336,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 				}
 			}
 			else
-				add_diagnostic(diagnostic_s::error_E043("", "", op->operand_range));
+				add_diagnostic(diagnostic_op::error_E043(op->operand_range));
 		}
 	}
 
@@ -360,7 +360,7 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 		asm_processor::process_copy(statement,hlasm_ctx,provider_,this);
 	}
 	else
-		add_diagnostic(diagnostic_s::error_E058("", "", statement.operands_ref().field_range));
+		add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
 
 	omit_next_ = true;
 	--curr_line_;
@@ -374,7 +374,7 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 
 		if (result_.sequence_symbols.find(seq.name) != result_.sequence_symbols.end())
 		{
-			add_diagnostic(diagnostic_s::error_E044("", *seq.name, seq.symbol_range));
+			add_diagnostic(diagnostic_op::error_E044(seq.symbol_range));
 		}
 		else
 		{

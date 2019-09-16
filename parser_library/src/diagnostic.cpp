@@ -840,253 +840,252 @@ diagnostic_op diagnostic_op::error_M200(const std::string & instr_name, const ra
 
 // diagnostic_s errors
 
-diagnostic_s diagnostic_s::error_E010(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E010(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E010", "HLASM Plugin", "Unknown name of " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E010", "Unknown name of " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E011(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E011(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E011", "HLASM Plugin", message + " already specified", {});
+	return diagnostic_op(diagnostic_severity::error, "E011", message + " already specified", range);
 }
 
-diagnostic_s diagnostic_s::error_E012(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E012(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E012", "HLASM Plugin", "Wrong format: " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E012", "Wrong format: " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E013(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E013(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E013", "HLASM Plugin", "Inconsistent format: " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E013", "Inconsistent format: " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E020(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E020(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E020", "HLASM Plugin", "Error at " + message + " - too many operands", {});
+	return diagnostic_op(diagnostic_severity::error, "E020", "Error at " + message + " - too many operands", range);
 }
 
-diagnostic_s diagnostic_s::error_E021(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E021(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E021", "HLASM Plugin", "Error at " + message + " - operand number too low", {});
+	return diagnostic_op(diagnostic_severity::error, "E021", "Error at " + message + " - operand number too low", range);
 }
 
-diagnostic_s diagnostic_s::error_E022(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E022(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E022", "HLASM Plugin", "Error at " + message + " - operand missing", {});
+	return diagnostic_op(diagnostic_severity::error, "E022", "Error at " + message + " - operand missing", range);
 }
 
-diagnostic_s diagnostic_s::error_E030(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E030(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E030", "HLASM Plugin", "Can't assign value to " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E030", "Can't assign value to " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E031(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E031(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E031", "HLASM Plugin", "Cannot declare " + message + " with the same name", {});
+	return diagnostic_op(diagnostic_severity::error, "E031", "Cannot declare " + message + " with the same name", range);
 }
 
-diagnostic_s diagnostic_s::error_E032(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E032(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E032", "HLASM Plugin", "Undefined symbol - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E032", "Undefined symbol - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E033(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E033(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E033", "HLASM Plugin", "Cyclic symbol definition", {});
+	return diagnostic_op(diagnostic_severity::error, "E033", "Cyclic symbol definition", range);
 }
 
-diagnostic_s diagnostic_s::error_E041(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E042(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E041", "HLASM Plugin", "Long ordinary symbol name - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E042", "Macro name ommited - ASPACE instead", range);
 }
 
-diagnostic_s diagnostic_s::error_E042(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E043(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E042", "HLASM Plugin", "Macro name ommited - ASPACE instead", {});
+	return diagnostic_op(diagnostic_severity::error, "E043", "Invalid name of variable in macro prototype", range);
 }
 
-diagnostic_s diagnostic_s::error_E043(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E048(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E043", "HLASM Plugin", "Invalid name of variable in macro prototype", {});
+	return diagnostic_op(diagnostic_severity::error, "E048", "Undefined sequence symbol, macro aborted - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E048(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E049(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E048", "HLASM Plugin", "Undefined sequence symbol, macro aborted - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E049", "Operation code not found - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E049(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E050(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E049", "HLASM Plugin", "Operation code not found - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E050", "Illegal set symbol name", range);
 }
 
-diagnostic_s diagnostic_s::error_E050(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E051(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E050", "HLASM Plugin", "Illegal set symbol name", {});
+	return diagnostic_op(diagnostic_severity::error, "E051", "Duplicate SET symbol declaration, first is retained - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E051(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E052(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E051", "HLASM Plugin", "Duplicate SET symbol declaration, first is retained - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E052", "Illegal use of symbolic parameter - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E052(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E053(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E052", "HLASM Plugin", "Illegal use of symbolic parameter - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E053", "Required name missing", range);
 }
 
-diagnostic_s diagnostic_s::error_E053(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E054(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E053", "HLASM Plugin", "Required name missing", {});
+	return diagnostic_op(diagnostic_severity::error, "E054", "Illegal statement outside macro definition", range);
 }
 
-diagnostic_s diagnostic_s::error_E054(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E055(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E054", "HLASM Plugin", "Illegal statement outside macro definition", {});
+	return diagnostic_op(diagnostic_severity::error, "E055", "Too many nested macro calls, continuing opencode", range);
 }
 
-diagnostic_s diagnostic_s::error_E055(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E056(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E055", "HLASM Plugin", "Too many nested macro calls, continuing opencode", {});
+	return diagnostic_op(diagnostic_severity::error, "E055", "ACTR counter exceeded", range);
 }
 
-diagnostic_s diagnostic_s::error_E056(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E057(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E055", "HLASM Plugin", "ACTR counter exceeded", {});
+	return diagnostic_op(diagnostic_severity::error, "E057", "Symbol not an ordinary or sequence symbol", range);
 }
 
-diagnostic_s diagnostic_s::error_E057(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E058(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E057", "HLASM Plugin", "Symbol not an ordinary or sequence symbol", {});
+	return diagnostic_op(diagnostic_severity::error, "E058", "Copy member not found", range);
 }
 
-diagnostic_s diagnostic_s::error_E058(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E059(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E058", "HLASM Plugin", "Copy member not found", {});
+	return diagnostic_op(diagnostic_severity::error, "E059", "First statement not MACRO in library " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E059(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E060(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E059", "HLASM Plugin", "First statement not MACRO in library " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E060", "Library macro name incorrect, expected " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E060(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E061(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E060", "HLASM Plugin", "Library macro name incorrect, expected " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E061", "Unbalanced MACRO MEND statements in copy member " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E061(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E062(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E061", "HLASM Plugin", "Unbalanced MACRO MEND statements in copy member " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E062", "Recursive COPY", range);
 }
 
-diagnostic_s diagnostic_s::error_E062(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E063(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E062", "HLASM Plugin", "Recursive COPY", {});
+	return diagnostic_op(diagnostic_severity::error, "E063", "Too many ACTR calls, exiting", range);
 }
 
-diagnostic_s diagnostic_s::error_E063(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E044(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E063", "HLASM Plugin", "Too many ACTR calls, exiting", {});
+	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
 }
 
-diagnostic_s diagnostic_s::error_E044(const std::string& filename, const std::string& , hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E045(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E044", "HLASM Plugin", "Illegal name field in macro prototype, discarted", {});
+	return diagnostic_op(diagnostic_severity::error, "E045", "Sequence symbol already defined - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E045(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E046(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E045", "HLASM Plugin", "Sequence symbol already defined - " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E046", "Missing MEND in " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E046(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E047(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E046", "HLASM Plugin", "Missing MEND in " + message, {});
+	return diagnostic_op(diagnostic_severity::error, "E047", "Lookahead failed, symbol not found - " + message, range);
 }
 
-diagnostic_s diagnostic_s::error_E047(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::warning_W010(const std::string& message, hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "E047", "HLASM Plugin", "Lookahead failed, symbol not found - " + message, {});
+	return diagnostic_op(diagnostic_severity::warning, "W010", message + " not expected", range);
 }
 
-diagnostic_s diagnostic_s::warning_W010(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_EQU1(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::warning, "W010", "HLASM Plugin", message + " not expected", {});
+	return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);
 }
 
-diagnostic_s diagnostic_s::error_EQU1(const std::string& filename, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_EQU2(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "EQU1", "HLASM Plugin", "Constant redefinition", {});
+	return diagnostic_op(diagnostic_severity::error, "EQU2", "Label redefinition", range);
 }
 
-diagnostic_s diagnostic_s::error_EQU2(const std::string& filename, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_ME001(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s(filename, range, diagnostic_severity::error, "EQU2", "HLASM Plugin", "Label redefinition", {});
+	return diagnostic_op(diagnostic_severity::error, "ME001", "Constant number overflow.", range);
 }
 
-diagnostic_s diagnostic_s::error_ME001(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_ME002(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "ME001", "HLASM Plugin", "Constant number overflow.", {});
-}
-
-diagnostic_s diagnostic_s::error_ME002(hlasm_plugin::parser_library::range range)
-{
-	return diagnostic_s("", range, diagnostic_severity::error, "ME002", "HLASM Plugin", "multiplication or division of address", {});
+	return diagnostic_op(diagnostic_severity::error, "ME002", "multiplication or division of address",range);
 }
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
 	return diagnostic_s(ws_uri, {}, diagnostic_severity::error,
-		"W0002", "HLASM plugin",
+		"W0002",
 		"The configuration file proc_grps for workspace " + ws_name + " is malformed.", {});
 }
 
 diagnostic_s diagnostic_s::error_W003(const std::string& file_name, const std::string& ws_name)
 {
 	return diagnostic_s(file_name, {}, diagnostic_severity::error,
-		"W0003", "HLASM plugin",
+		"W0003",
 		"The configuration file pgm_conf for workspace " + ws_name + " is malformed.", {});
 }
 
 diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::string& ws_name)
 {
 	return diagnostic_s(file_name, {}, diagnostic_severity::warning,
-		"W0004", "HLASM plugin",
+		"W0004",
 		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
 
 }
 
-diagnostic_s diagnostic_s::error_D001(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D001(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D001", "HLASM Plugin", "Integer out of range", {});
+	return diagnostic_op(diagnostic_severity::error, "D001", "Integer out of range", range);
 }
 
-diagnostic_s diagnostic_s::error_D002(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D002(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D002", "HLASM Plugin", "Expected an integer", {});
+	return diagnostic_op(diagnostic_severity::error, "D002", "Expected an integer", range);
 }
 
-diagnostic_s diagnostic_s::error_D003(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D003(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D003", "HLASM Plugin", "Expected an integer or an expression after modifier", {});
+	return diagnostic_op(diagnostic_severity::error, "D003", "Expected an integer or an expression after modifier", range);
 }
 
-diagnostic_s diagnostic_s::error_D004(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D004(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D004", "HLASM Plugin", "Wrong order of modifiers", {});
+	return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
 }
 
-diagnostic_s diagnostic_s::error_D005(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D005(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D005", "HLASM Plugin", "Unexpected '.' in modifier other than length", {});
+	return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
 }
 
-diagnostic_s diagnostic_s::error_D006(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D006(hlasm_plugin::parser_library::range range)
 {
-	return diagnostic_s("", range, diagnostic_severity::error, "D006", "HLASM Plugin", "Unexpected character. Nominal value or modifier expected", {});
+	return diagnostic_op(diagnostic_severity::error, "D006", "Unexpected character. Nominal value or modifier expected", range);
 }
 
+diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
+}
 
 
 }

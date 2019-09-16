@@ -161,7 +161,7 @@ last_operand_not_empty returns [operand_ptr op]
 	| {ASM()}? string (ORDSYMBOL|IDENTIFIER)
 	{
 		$op = std::make_unique<string_assembler_operand>(std::move($string.value),provider.get_range($string.ctx));
-		auto diag = diagnostic_s{ provider.get_range($string.ctx),diagnostic_op::warning_A300_op_apostrophes_missing("", provider.get_range($string.ctx)) };
+		auto diag = diagnostic_s{ diagnostic_op::warning_A300_op_apostrophes_missing("", provider.get_range($string.ctx)) };
 		diag.file_name = ctx->opencode_file_name();
 		add_diagnostic(diag);
 	}

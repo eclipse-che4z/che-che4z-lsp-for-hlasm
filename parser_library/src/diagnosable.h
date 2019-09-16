@@ -9,21 +9,26 @@
 
 namespace hlasm_plugin::parser_library {
 
-
-using diagnostic_container = std::vector<diagnostic_s>;
-
-class diagnosable
+template <typename T>
+class collectable
 {
 public:
+	using diagnostic_container = std::vector<T>;
+
 	virtual void collect_diags() const = 0;
 	virtual diagnostic_container & diags() const = 0;
-	virtual void add_diagnostic(diagnostic_s diagnostic) const = 0;
+	virtual void add_diagnostic(T diagnostic) const = 0;
 	virtual bool is_once_only() const = 0;
 
-	virtual ~diagnosable() = 0;
+	virtual ~collectable() = 0;
 };
 
-inline diagnosable::~diagnosable() {};
+template <typename T>
+inline collectable<T>::~collectable() {};
+
+using diagnosable = collectable<diagnostic_s>;
 
 }
+
 #endif
+

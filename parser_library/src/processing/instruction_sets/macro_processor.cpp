@@ -192,7 +192,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 			auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
 			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
 			{
-				add_diagnostic(diagnostic_s::error_E010("", "keyword parameter", tmp->operand_range)); //error - unknown name of keyword parameter
+				add_diagnostic(diagnostic_op::error_E010("keyword parameter", tmp->operand_range)); //error - unknown name of keyword parameter
 
 				//MACROCASE TODO
 				auto name = tmp->chain[0]->access_str()->value;
@@ -206,7 +206,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 			{
 				if (std::find(keyword_params.begin(), keyword_params.end(), id) != keyword_params.end())
 				{
-					add_diagnostic(diagnostic_s::error_E011("", "Keyword", tmp->operand_range)); // error - keyword already defined
+					add_diagnostic(diagnostic_op::error_E011("Keyword", tmp->operand_range)); // error - keyword already defined
 				}
 				else
 				{

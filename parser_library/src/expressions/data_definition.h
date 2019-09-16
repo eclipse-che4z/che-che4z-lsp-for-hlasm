@@ -7,7 +7,7 @@
 namespace hlasm_plugin::parser_library::expressions
 {
 
-struct data_definition : public diagnosable_impl, public context::dependable
+struct data_definition : public diagnosable_op_impl, public context::dependable
 {
 	
 	enum class length_type
