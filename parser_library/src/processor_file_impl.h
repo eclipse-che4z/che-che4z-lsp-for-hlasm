@@ -10,8 +10,8 @@ namespace hlasm_plugin::parser_library {
 class processor_file_impl : public virtual file_impl, public virtual processor_file
 {
 public:
-	processor_file_impl(std::string file_uri);
-	processor_file_impl(file_impl &&);
+	processor_file_impl(std::string file_uri, std::atomic<bool>* cancel = nullptr);
+	processor_file_impl(file_impl &&, std::atomic<bool>* cancel = nullptr);
 	void collect_diags() const override;
 	bool is_once_only() const override;
 	//starts parser with new (empty) context
@@ -32,6 +32,7 @@ private:
 	bool parse_inner(analyzer&);
 
 	bool parse_info_updated_ = false;
+	std::atomic<bool>* cancel_;
 
 	std::set<std::string> dependencies_;
 };

@@ -11,7 +11,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 
 
-workspace_manager::workspace_manager() : impl_(new impl) {}
+workspace_manager::workspace_manager(std::atomic<bool>* cancel) : impl_(new impl(cancel)) {}
 
 workspace_manager::workspace_manager(workspace_manager && ws_mngr) : impl_(ws_mngr.impl_)
 {

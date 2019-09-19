@@ -10,8 +10,11 @@
 namespace hlasm_plugin {
 namespace language_server {
 
-dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server) :
-	server_(server), in_(in), out_(out)
+constexpr const char* didOpen = "textDocument/didOpen";
+constexpr const char* didChange = "textDocument/didChange";
+
+dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server, std::atomic<bool> * cancel) :
+	server_(server), in_(in), out_(out), cancel_(cancel), worker_(&dispatcher::handle_request_,this)
 {
 	server_.set_send_message_provider(this);
 }
@@ -27,11 +30,47 @@ void dispatcher::write_message(const std::string & in)
 	out_.write(size.c_str(), size.size());
 	out_.write("\r\n\r\n", 4);
 	out_.write(in.c_str(), in.size());
+	out_.flush();
 }
 
 void dispatcher::reply(const json & message)
 {
+	// do not respond if the request was cancelled
+	if (cancel_ != nullptr  && *cancel_)
+		return;
 	write_message(message.dump());
+}
+
+void dispatcher::handle_request_()
+{
+	// endless cycle in separate thread, pick up work if there is some, otherwise wait for work
+	while (true)
+	{
+		std::unique_lock<std::mutex> lock(q_mtx_);
+		//wait for work to come
+		if (requests_.empty())
+			cond_.wait(lock, [&] { return !requests_.empty(); });
+		//get first request
+		auto to_run = std::move(requests_.front());
+		requests_.pop_front();
+		//remember file name that is about to be parsed
+		currently_running_file_ = get_request_file_(to_run.message);
+		// if the request is valid, do not cancel
+		// if not, cancel the parsing right away, only the file manager should update the data
+		*cancel_ = !to_run.valid;
+		//unlock the mutex, main thread may add new requests
+		lock.unlock();
+		//handle the request
+		server_.message_received(to_run.message);
+	}
+}
+
+std::string dispatcher::get_request_file_(json r)
+{
+	auto method = r["method"].get<std::string>();
+	if (method == didOpen || method == didChange)
+		return r["params"]["textDocument"]["uri"].get<std::string>();
+	return std::string();
 }
 
 bool dispatcher::read_message(std::string & out)
@@ -142,12 +181,31 @@ int dispatcher::run_server_loop()
 			try {
 				message_json = nlohmann::json::parse(message);
 			}
-			catch (nlohmann::json::exception)
+			catch (const nlohmann::json::exception &)
 			{
 				LOG_WARNING("Could not parse received JSON: " + message);
 				continue;
 			}
-			server_.message_received(message_json);
+
+			//add request to q
+			{
+				std::unique_lock<std::mutex> lock(q_mtx_);
+				//get new file
+				auto file = get_request_file_(message_json);
+				// if the new file is the same as the currently running one, cancel the old one
+				if (currently_running_file_ == file && currently_running_file_ != "")
+					*cancel_ = true;
+				// mark redundant requests as non valid
+				for (auto & req : requests_)
+				{
+					if (get_request_file_(req.message) == file)
+						req.valid = false;
+				}
+				//finally add it to the q
+				requests_.push_back({ message_json, true });
+			}
+			//wake up the worker thread
+			cond_.notify_one();
 		}
 
 		//if exit notification came without prior shutdown request, return error 1

@@ -53,9 +53,9 @@ semantics::lsp_info_processor& analyzer::lsp_processor()
 	return lsp_proc_;
 }
 
-void analyzer::analyze()
+void analyzer::analyze(std::atomic<bool>* cancel)
 {
-	mngr_.start_processing();
+	mngr_.start_processing(cancel);
 }
 
 void analyzer::collect_diags() const

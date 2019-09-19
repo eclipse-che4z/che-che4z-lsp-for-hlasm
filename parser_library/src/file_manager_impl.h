@@ -13,7 +13,7 @@ namespace hlasm_plugin::parser_library {
 class file_manager_impl : public file_manager, public diagnosable_impl
 {
 public:
-	file_manager_impl() {};
+	file_manager_impl(std::atomic<bool>* cancel = nullptr) : cancel_(cancel) {};
 	file_manager_impl(const file_manager_impl &) = delete;
 	file_manager_impl & operator=(const file_manager_impl &) = delete;
 
@@ -43,6 +43,9 @@ public:
 	virtual ~file_manager_impl() = default;
 private:
 	std::unordered_map <std::string, std::unique_ptr<file_impl>> files_;
+	std::atomic<bool>* cancel_;
+
+	processor_file* change_into_processor_file_if_not_already_(std::unique_ptr<file_impl>& ret);
 };
 
 #pragma warning(pop)

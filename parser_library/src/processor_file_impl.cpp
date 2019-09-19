@@ -5,13 +5,13 @@
 #include "file.h"
 namespace hlasm_plugin::parser_library {
 
-processor_file_impl::processor_file_impl(std::string file_name) :
-	file_impl(std::move(file_name))
+processor_file_impl::processor_file_impl(std::string file_name, std::atomic<bool>* cancel) :
+	file_impl(std::move(file_name)), cancel_(cancel)
 {
 }
 
-processor_file_impl::processor_file_impl(file_impl && f_impl) :
-	file_impl(std::move(f_impl))
+processor_file_impl::processor_file_impl(file_impl && f_impl, std::atomic<bool>* cancel) :
+	file_impl(std::move(f_impl)), cancel_(cancel)
 {
 }
 
@@ -74,7 +74,7 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 {
 	diags().clear();
 
-	new_analyzer.analyze();
+	new_analyzer.analyze(cancel_);
 
 	collect_diags_from_child(new_analyzer);
 

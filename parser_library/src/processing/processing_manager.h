@@ -26,7 +26,7 @@ public:
 		parse_lib_provider& lib_provider,
 		statement_fields_parser& parser);
 
-	void start_processing();
+	void start_processing(std::atomic<bool>* cancel);
 
 	virtual void collect_diags() const override;
 private:

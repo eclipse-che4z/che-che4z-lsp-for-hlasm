@@ -11,7 +11,7 @@ namespace hlasm_plugin::parser_library
 class workspace_manager::impl : public diagnosable_impl
 {
 public:
-	impl() : implicit_workspace_({ file_manager_ }) {}
+	impl(std::atomic<bool>* cancel = nullptr) : file_manager_(cancel), implicit_workspace_({ file_manager_ }), cancel_(cancel) {}
 	impl(const impl &) = delete;
 	impl & operator= (const impl &) = delete;
 
@@ -53,6 +53,8 @@ public:
 	void did_open_file(const std::string & document_uri, version_t version, std::string text)
 	{
 		file_manager_.did_open_file(document_uri, version, std::move(text));
+		if (cancel_ != nullptr && *cancel_)
+			return;
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_open_file(document_uri);
 		notify_highlighting_consumers();
@@ -61,6 +63,8 @@ public:
 	void did_change_file(const std::string document_uri, version_t version, const document_change * changes, size_t ch_size)
 	{
 		file_manager_.did_change_file(document_uri, version, changes, ch_size);
+		if (cancel_ != nullptr && *cancel_)
+			return;
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_change_file(document_uri, changes, ch_size);
 		notify_highlighting_consumers();
@@ -198,7 +202,7 @@ private:
 
 	std::unordered_map<std::string, workspace> workspaces_;
 	file_manager_impl file_manager_;
-
+	std::atomic<bool> * cancel_;
 	workspace implicit_workspace_;
 
 	std::vector<highlighting_consumer *> hl_consumers_;

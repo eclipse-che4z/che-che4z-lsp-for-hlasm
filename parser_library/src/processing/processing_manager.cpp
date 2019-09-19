@@ -42,10 +42,13 @@ processing_manager::processing_manager(
 	}
 }
 
-void processing_manager::start_processing()
+void processing_manager::start_processing(std::atomic<bool>* cancel)
 {
 	while (!procs_.empty())
 	{
+		if (cancel != nullptr && *cancel)
+			break;
+
 		statement_processor& proc = *procs_.back();
 		statement_provider& prov = find_provider();
 

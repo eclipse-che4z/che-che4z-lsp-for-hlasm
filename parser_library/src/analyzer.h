@@ -36,7 +36,7 @@ public:
 	generated::hlasmparser& parser();
 	semantics::lsp_info_processor& lsp_processor();
 
-	void analyze();
+	void analyze(std::atomic<bool>* cancel = nullptr);
 
 	void collect_diags() const override;
 

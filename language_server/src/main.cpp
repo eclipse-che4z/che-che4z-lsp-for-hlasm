@@ -36,13 +36,14 @@ int main(int argc, char ** argv) {
 	using namespace std;
 	using namespace hlasm_plugin::language_server;
 	
+	std::atomic<bool> cancel = false;
+
 	try {
 		SET_BINARY_MODE(stdin);
 		SET_BINARY_MODE(stdout);
 		
 		cin.imbue(locale(cin.getloc(), new colon_is_space));
-
-		hlasm_plugin::parser_library::workspace_manager ws_mngr;
+		hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
 		lsp::server server(ws_mngr);
 		int ret;
 
@@ -63,7 +64,7 @@ int main(int argc, char ** argv) {
 			acceptor_.accept(stream.socket());
 			
 			stream.imbue(locale(stream.getloc(), new colon_is_space));
-			dispatcher lsp_dispatcher(stream, stream, server);
+			dispatcher lsp_dispatcher(stream, stream, server, &cancel);
 			server.set_send_message_provider(&lsp_dispatcher);
 			ret = lsp_dispatcher.run_server_loop();
 			stream.close();
@@ -72,7 +73,7 @@ int main(int argc, char ** argv) {
 		else
 		{
 			//communicate with standard IO
-			dispatcher lsp_dispatcher(std::cin, std::cout, server);
+			dispatcher lsp_dispatcher(std::cin, std::cout, server, &cancel);
 			server.set_send_message_provider(&lsp_dispatcher);
 			ret = lsp_dispatcher.run_server_loop();
 		}

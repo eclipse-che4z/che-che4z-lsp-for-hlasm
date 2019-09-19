@@ -20,14 +20,14 @@ file * file_manager_impl::add_file(const file_uri & uri)
 	return ret.first->second.get();
 }
 
-processor_file * change_into_processor_file_if_not_already(std::unique_ptr<file_impl>& ret)
+processor_file * file_manager_impl::change_into_processor_file_if_not_already_(std::unique_ptr<file_impl>& ret)
 {
 	auto processor = dynamic_cast<processor_file *>(ret.get());
 	if (processor)
 		return processor;
 	else
 	{
-		auto processor_unique_ptr = std::make_unique<processor_file_impl>(std::move(*ret));
+		auto processor_unique_ptr = std::make_unique<processor_file_impl>(std::move(*ret), cancel_);
 		auto processor_ptr = processor_unique_ptr.get();
 		ret = std::move(processor_unique_ptr);
 		return processor_ptr;
@@ -39,14 +39,14 @@ processor_file * file_manager_impl::add_processor_file(const file_uri & uri)
 	auto ret = files_.find(uri);
 	if (ret == files_.end())
 	{
-		auto unique = std::make_unique<processor_file_impl>(uri);
+		auto unique = std::make_unique<processor_file_impl>(uri, cancel_);
 		auto ptr = unique.get();
 		files_.emplace(uri, std::move(unique));
 		return ptr;
 	}
 	else
 	{
-		return change_into_processor_file_if_not_already(ret->second);
+		return change_into_processor_file_if_not_already_(ret->second);
 	}
 }
 
@@ -65,7 +65,7 @@ processor_file * file_manager_impl::find_processor_file(const std::string & key)
 	if(ret == files_.end())
 		return nullptr;
 
-	return change_into_processor_file_if_not_already(ret->second);
+	return change_into_processor_file_if_not_already_(ret->second);
 }
 
 std::vector<file*> file_manager_impl::list_files()
