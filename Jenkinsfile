@@ -6,121 +6,123 @@ properties([
 
 parallel (
   Linux: {
-    node('Frank') {
+    node('Frank') {    
+      ws("workspace/Hlasm_Plugin/${env.JOB_BASE_NAME}") {
     
-      // delete workspace
-      stage('[L] Clear workspace') {
-        sh 'sudo chown -R jenkins:jenkins ./* || true'
-        deleteDir()
-      }
-      
-      // Mark the code checkout 'stage'....
-      stage('[L] Checkout') {
-        
-        // Checkout code from repository
-        dir('HlasmPlugin') {
-          /*checkout([
-            $class: 'GitSCM',
-            branches: [[name: env.BRANCH_NAME]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [[$class: 'SubmoduleOption',
-              disableSubmodules: false,
-              parentCredentials: true,
-              recursiveSubmodules: true,
-              reference: '',
-              trackingSubmodules: false]],
-            submoduleCfg: [],
-            userRemoteConfigs: [[credentialsId: 'e965a9af-098d-43ca-9b7a-17ee1344f223',
-              url: 'https://github.gwd.broadcom.net/MFD/HlasmPlugin.git']]
-          ])
-          */
-          checkout scm
+        // delete workspace
+        stage('[L] Clear workspace') {
+          sh 'sudo chown -R jenkins:jenkins ./* || true'
+          deleteDir()
         }
         
-        dir('machines') {
-          git url: 'https://github.gwd.broadcom.net/mb890989/hlasmplugin-build.git',
-            branch: 'master',
-            credentialsId: 'e965a9af-098d-43ca-9b7a-17ee1344f223'
+        // Mark the code checkout 'stage'....
+        stage('[L] Checkout') {
+          
+          // Checkout code from repository
+          dir('HlasmPlugin') {
+            /*checkout([
+              $class: 'GitSCM',
+              branches: [[name: env.BRANCH_NAME]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'SubmoduleOption',
+                disableSubmodules: false,
+                parentCredentials: true,
+                recursiveSubmodules: true,
+                reference: '',
+                trackingSubmodules: false]],
+              submoduleCfg: [],
+              userRemoteConfigs: [[credentialsId: 'e965a9af-098d-43ca-9b7a-17ee1344f223',
+                url: 'https://github.gwd.broadcom.net/MFD/HlasmPlugin.git']]
+            ])
+            */
+            checkout scm
+          }
+          
+          dir('machines') {
+            git url: 'https://github.gwd.broadcom.net/mb890989/hlasmplugin-build.git',
+              branch: 'master',
+              credentialsId: 'e965a9af-098d-43ca-9b7a-17ee1344f223'
+          }
         }
-      }
-      
-      def version = ''    
-      
-      stage('[L] Version') {
-        sh "cd ./HlasmPlugin/clients/vscode-hlasmplugin && node -e \"console.log(require('./package.json').version)\" > vscode-hlasmpluginVersion"
-        version = readFile("./HlasmPlugin/clients/vscode-hlasmplugin/vscode-hlasmpluginVersion").trim()
-        echo "vscode-hlasmplugin version: ${version}"
-      }
-      
-      def buildImageAlpine = ''
-      def buildImageGnu = ''
-      def buildImageClang = ''
-      
-      stage('[L] Build docker images') {
-        buildImageAlpine = docker.build("build-image-alpine", "./machines/alpine")
-        buildImageGnu = docker.build("gnu-19.04", "./machines/gnu-19.04")
-        buildImageClang = docker.build("clang-19.04", "./machines/clang-19.04")
-      }
-      
-      stage('[L] Compile') {
-        parallel (
-          Alpine: {
-            buildImageAlpine.inside('-u 0:0')  {
-              sh 'mkdir -p build/alpine'
-              sh 'cd ./build/alpine && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
-            }
-          },
-          Gnu: {
-            buildImageGnu.inside('-u 0:0')  {
-              sh 'mkdir -p build/gnu'
-              sh 'cd ./build/gnu && rm -rf * && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
-            }
-          },
-          Clang: {
-            buildImageClang.inside('-u 0:0 --cap-add SYS_PTRACE')  {
-              sh 'mkdir -p build/clang'
-              sh 'cd ./build/clang && cmake -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link -fprofile-instr-generate -fcoverage-mapping" ../../HlasmPlugin && cmake --build . -- -j 9 && cd bin && LLVM_PROFILE_FILE="library_profile" ./library_test && LLVM_PROFILE_FILE="server_profile" ./server_test'
-              sh 'cd ./build/clang/bin && llvm-profdata-8 merge -o hlasm_profile library_profile server_profile'
-              sh 'cd ./build/clang/bin && llvm-cov-8 export -format=text -instr-profile ./hlasm_profile ./library_test ./server_test > coverage.json'
-            }
-          }         
-        )
-      }
-      
-      stage('[L] Archive artifacts') {
-        // Add version to file name
-        sh "cd ./build/alpine/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
-        sh "cd ./build/gnu/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
-        sh "cd ./build/clang/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
         
-        archiveArtifacts artifacts: 'build/*/bin/*.vsix,build/clang/bin/coverage.*'
-      }
-      
-      stage ('[L] Upload to Artifactory') {
-        // Create 'latest' artifact
-        sh 'sudo cp ./build/alpine/bin/vscode-hlasmplugin*.vsix ./build/alpine/bin/vscode-hlasmplugin-latest.vsix'
-        sh 'sudo cp ./build/gnu/bin/vscode-hlasmplugin*.vsix ./build/gnu/bin/vscode-hlasmplugin-latest.vsix'
-        sh 'sudo cp ./build/clang/bin/vscode-hlasmplugin*.vsix ./build/clang/bin/vscode-hlasmplugin-latest.vsix'
-        // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
-        server = Artifactory.server 'Test_Artifactory'
-        // Configure upload of artifact
-        def uploadSpec = """{
-          "files": [
-            {
-              "pattern": "./build/alpine/bin/vscode-hlasmplugin*.vsix",
-              "target": "local-files/hlasm/alpine/"
+        def version = ''    
+        
+        stage('[L] Version') {
+          sh "cd ./HlasmPlugin/clients/vscode-hlasmplugin && node -e \"console.log(require('./package.json').version)\" > vscode-hlasmpluginVersion"
+          version = readFile("./HlasmPlugin/clients/vscode-hlasmplugin/vscode-hlasmpluginVersion").trim()
+          echo "vscode-hlasmplugin version: ${version}"
+        }
+        
+        def buildImageAlpine = ''
+        def buildImageGnu = ''
+        def buildImageClang = ''
+        
+        stage('[L] Build docker images') {
+          buildImageAlpine = docker.build("build-image-alpine", "./machines/alpine")
+          buildImageGnu = docker.build("gnu-19.04", "./machines/gnu-19.04")
+          buildImageClang = docker.build("clang-19.04", "./machines/clang-19.04")
+        }
+        
+        stage('[L] Compile') {
+          parallel (
+            Alpine: {
+              buildImageAlpine.inside('-u 0:0')  {
+                sh 'mkdir -p build/alpine'
+                sh 'cd ./build/alpine && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
+              }
             },
-            {
-              "pattern": "./build/gnu/bin/vscode-hlasmplugin*.vsix",
-              "target": "local-files/hlasm/gnu/"
+            Gnu: {
+              buildImageGnu.inside('-u 0:0')  {
+                sh 'mkdir -p build/gnu'
+                sh 'cd ./build/gnu && rm -rf * && cmake -G Ninja ../../HlasmPlugin && cmake --build . -- -j 2 && cd bin && ./library_test && ./server_test'
+              }
             },
-            {
-              "pattern": "./build/clang/bin/vscode-hlasmplugin*.vsix",
-              "target": "local-files/hlasm/clang/"
-            }
-          ]
-        }"""
-        server.upload spec: uploadSpec
+            Clang: {
+              buildImageClang.inside('-u 0:0 --cap-add SYS_PTRACE')  {
+                sh 'mkdir -p build/clang'
+                sh 'cd ./build/clang && cmake -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link -fprofile-instr-generate -fcoverage-mapping" ../../HlasmPlugin && cmake --build . -- -j 9 && cd bin && LLVM_PROFILE_FILE="library_profile" ./library_test && LLVM_PROFILE_FILE="server_profile" ./server_test'
+                sh 'cd ./build/clang/bin && llvm-profdata-8 merge -o hlasm_profile library_profile server_profile'
+                sh 'cd ./build/clang/bin && llvm-cov-8 export -format=text -instr-profile ./hlasm_profile ./library_test ./server_test > coverage.json'
+              }
+            }         
+          )
+        }
+        
+        stage('[L] Archive artifacts') {
+          // Add version to file name
+          sh "cd ./build/alpine/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
+          sh "cd ./build/gnu/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
+          sh "cd ./build/clang/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
+          
+          archiveArtifacts artifacts: 'build/*/bin/*.vsix,build/clang/bin/coverage.*'
+        }
+        
+        stage ('[L] Upload to Artifactory') {
+          // Create 'latest' artifact
+          sh 'sudo cp ./build/alpine/bin/vscode-hlasmplugin*.vsix ./build/alpine/bin/vscode-hlasmplugin-latest.vsix'
+          sh 'sudo cp ./build/gnu/bin/vscode-hlasmplugin*.vsix ./build/gnu/bin/vscode-hlasmplugin-latest.vsix'
+          sh 'sudo cp ./build/clang/bin/vscode-hlasmplugin*.vsix ./build/clang/bin/vscode-hlasmplugin-latest.vsix'
+          // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
+          server = Artifactory.server 'Test_Artifactory'
+          // Configure upload of artifact
+          def uploadSpec = """{
+            "files": [
+              {
+                "pattern": "./build/alpine/bin/vscode-hlasmplugin*.vsix",
+                "target": "local-files/hlasm/alpine/"
+              },
+              {
+                "pattern": "./build/gnu/bin/vscode-hlasmplugin*.vsix",
+                "target": "local-files/hlasm/gnu/"
+              },
+              {
+                "pattern": "./build/clang/bin/vscode-hlasmplugin*.vsix",
+                "target": "local-files/hlasm/clang/"
+              }
+            ]
+          }"""
+          server.upload spec: uploadSpec
+        }
       }
     } 
   },
