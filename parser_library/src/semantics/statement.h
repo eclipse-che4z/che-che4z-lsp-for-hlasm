@@ -13,6 +13,8 @@ struct core_statement
 	virtual const range& stmt_range_ref() const = 0;
 	virtual const label_si& label_ref() const = 0;
 	virtual const instruction_si& instruction_ref() const = 0;
+
+	virtual ~core_statement() = default;
 };
 
 struct complete_statement :public core_statement

@@ -145,33 +145,66 @@ void collector::add_hl_symbol(token_info symbol)
 		hl_symbols_.push_back(std::move(symbol));
 }
 
+void collector::add_operands_hl_symbols()
+{
+	if (!op_)
+		return;
+	for (auto&& operand : current_operands().value)
+	{
+		if (operand)
+			add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
+	}
+}
+
+void collector::add_remarks_hl_symbols()
+{
+	if (!rem_)
+		return;
+	for (auto remark : current_remarks().value)
+	{
+		add_hl_symbol(token_info(remark, hl_scopes::remark));
+	}
+}
+
 const instruction_si& collector::peek_instruction()
 {
 	return *instr_;
 }
 
-std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint)
+std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint, range default_range)
 {
-	//foreach operand substitute null with empty
-	for (size_t i = 0; i < op_->value.size(); i++)
-	{
-		if (!op_->value[i])
-			op_->value[i] = std::make_unique<undefined_operand>(range());
-	}
+	if (!lbl_)
+		lbl_.emplace(default_range);
+	if (!instr_)
+		instr_.emplace(default_range);
+	if(!rem_)
+		rem_.emplace(default_range, remark_list{});
 
 	assert(!deferred_hint || !(op_ && !op_->value.empty()));
 
 	if (deferred_hint)
 	{
-		def_ = def_ ? def_ : std::make_pair("", range(instr_->field_range.start));
+		if (!def_)
+			def_.emplace("", default_range);
 		return statement_si_deferred(
 			range_provider::union_range(lbl_->field_range, def_->second),
 			std::move(*lbl_), std::move(*instr_), std::move(def_.value().first), def_.value().second);
 	}
 	else
-		return statement_si(
-			range_provider::union_range(lbl_->field_range, op_->field_range), 
-			std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
+	{
+		if (!op_)
+			op_.emplace(default_range, operand_list{});
+
+		//foreach operand substitute null with empty
+		for (size_t i = 0; i < op_->value.size(); i++)
+		{
+			if (!op_->value[i])
+				op_->value[i] = std::make_unique<empty_operand>(default_range);
+		}
+
+		range r = range_provider::union_range(lbl_->field_range, op_->field_range);
+		return statement_si(r, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
+	}
 }
 
 std::vector<lsp_symbol> collector::extract_lsp_symbols()

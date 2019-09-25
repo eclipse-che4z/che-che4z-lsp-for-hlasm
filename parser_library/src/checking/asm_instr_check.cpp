@@ -682,7 +682,7 @@ bool exitctl::check(const std::vector<const asm_operand*> & to_check, const rang
 
 equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 5) {};
 
-bool equ::check(const std::vector<const asm_operand*> &, const range& , const diagnostic_collector& add_diagnostic) const
+bool equ::check(const std::vector<const asm_operand*> &, const range& , const diagnostic_collector& ) const
 {
 	/*
 	if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
@@ -1308,24 +1308,6 @@ bool acontrol::check(const std::vector<const asm_operand*> & to_check, const ran
 			return false;
 		}
 	}
-	return true;
-}
-
-dc::dc(const std::vector<label_types>& allowed_types, const std::string & name_of_instruction): assembler_instruction(allowed_types, name_of_instruction, 1, -1) {}
-bool dc::check(const std::vector<const asm_operand*>& to_check, const range& stmt_range, const diagnostic_collector& add_diagnostic) const
-{
-	if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
-		return false;
-	return true;
-}
-;
-
-ds_dxd::ds_dxd(const std::vector<label_types>& allowed_types, const std::string & name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
-
-bool ds_dxd::check(const std::vector<const asm_operand*>& to_check, const range& stmt_range, const diagnostic_collector& add_diagnostic) const
-{
-	if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
-		return false;
 	return true;
 }
 

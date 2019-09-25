@@ -8,9 +8,9 @@ using namespace hlasm_plugin::parser_library::context;
 address_resolver::address_resolver(address addr)
 	:address_(std::move(addr)) {}
 
-dependency_holder address_resolver::get_dependencies(dependency_solver& ) const
+dependency_collector address_resolver::get_dependencies(dependency_solver& ) const
 {
-	return dependency_holder(address_);
+	return dependency_collector(address_);
 }
 
 symbol_value address_resolver::resolve(dependency_solver& ) const

@@ -19,12 +19,18 @@ const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections
 ordinary_assembly_context::ordinary_assembly_context(id_storage& storage)
 	: curr_section_(nullptr), ids(storage), symbol_dependencies(*this) {}
 
-void ordinary_assembly_context::create_symbol(id_index name, symbol_value value, symbol_attributes attributes)
+bool ordinary_assembly_context::create_symbol(id_index name, symbol_value value, symbol_attributes attributes)
 {
 	auto res = symbols_.try_emplace(name, name, value, attributes);
 
 	if (!res.second)
 		throw std::runtime_error("symbol name in use");
+
+	bool ok = symbol_dependencies.check_loctr_cycle();
+
+	symbol_dependencies.add_defined(name);
+
+	return ok;
 }
 
 symbol* ordinary_assembly_context::get_symbol(id_index name)
@@ -94,6 +100,26 @@ bool ordinary_assembly_context::counter_defined(id_index name)
 		create_private_section();
 	
 	return curr_section_->counter_defined(name);
+}
+
+//reserves storage area of specified length and alignment
+
+address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
+{
+	if (!curr_section_)
+		create_private_section();
+
+	return curr_section_->current_location_counter().reserve_storage_area(length, align);
+}
+
+//aligns storage
+
+address ordinary_assembly_context::align(alignment align)
+{
+	if (!curr_section_)
+		create_private_section();
+
+	return curr_section_->current_location_counter().align(align);
 }
 
 space_ptr ordinary_assembly_context::register_space()

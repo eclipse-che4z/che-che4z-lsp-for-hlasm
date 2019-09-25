@@ -24,6 +24,12 @@ rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr st
 	return rebuilt_statement(stmt, std::move(label), std::move(ops));
 }
 
+void low_language_processor::create_symbol(range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
+{
+	if (!hlasm_ctx.ord_ctx.create_symbol(symbol_name,std::move(value),std::move(attributes)))
+		add_diagnostic(diagnostic_op::error_E033(err_range));
+}
+
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
 {
 	context_manager mngr(hlasm_ctx);
@@ -124,7 +130,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 		if (operand_vector[j] == nullptr)
 		{
 			auto& operand = operands[real_op_idx++];
-			if (operand->type == semantics::operand_type::EMPTY || operand->type == semantics::operand_type::UNDEF) // if operand is empty
+			if (operand->type == semantics::operand_type::EMPTY) // if operand is empty
 			{
 				operand_vector[j] = std::make_unique<checking::empty_operand>();
 				operand_vector[j]->operand_range = operand->operand_range;
@@ -149,7 +155,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
 	for (auto& op : stmt.operands_ref().value)
 	{
 		// check whether operand isn't empty
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 		{
 			operand_vector.push_back(std::make_unique<checking::empty_operand>());
 			operand_vector.back()->operand_range = op->operand_range;
@@ -179,6 +185,7 @@ checking::check_op_ptr low_language_processor::get_check_op(
 	if (can_have_ord_syms && ev_op->has_dependencies(hlasm_ctx.ord_ctx))
 	{
 		add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op->operand_range));
+		return nullptr;
 	}
 
 	checking::check_op_ptr uniq;
@@ -196,17 +203,17 @@ checking::check_op_ptr low_language_processor::get_check_op(
 
 	ev_op->collect_diags();
 	for (auto& diag : ev_op->diags())
-		add_diagnostic(diagnostic_op(diag.severity, diag.code, diag.message, diag.diag_range));
+		add_diagnostic(std::move(diag));
 	ev_op->diags().clear();
 
 	return uniq;
 }
 
-void low_language_processor::check(const resolved_statement& stmt,context::hlasm_context& hlasm_ctx, checking::instruction_checker& checker, diagnosable_ctx& diagnoser)
+void low_language_processor::check(const resolved_statement& stmt, context::hlasm_context& hlasm_ctx,
+	checking::instruction_checker& checker, diagnosable_ctx& diagnoser)
 {
-	auto diagnoser_ctx = dynamic_cast<diagnosable_ctx*>(&diagnoser);
 	auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
-	diagnostic_collector collector(diagnoser_ctx,
+	diagnostic_collector collector(&diagnoser,
 		postponed_stmt ? postponed_stmt->location_stack() : hlasm_ctx.processing_stack());
 
 	std::vector<const checking::operand*> operand_ptr_vector;

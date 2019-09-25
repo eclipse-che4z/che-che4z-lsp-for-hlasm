@@ -14,7 +14,7 @@ public:
 	mach_expr_constant(std::string value_text, range rng);
 	mach_expr_constant(int value, range rng);
 
-	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
@@ -35,7 +35,7 @@ public:
 
 	static mach_expr_ptr from_id(context::id_index id, range rng);
 
-	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
@@ -51,7 +51,24 @@ public:
 
 	mach_expr_location_counter(range rng);
 
-	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+	virtual value_t evaluate(mach_evaluate_info info) const override;
+
+	virtual void fill_location_counter(context::address addr) override;
+
+	void collect_diags() const override {}
+};
+
+class mach_expr_data_attr : public mach_expression
+{
+public:
+	mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng);
+
+	context::id_index value;
+	context::data_attr_kind attribute;
+
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
@@ -61,16 +78,13 @@ public:
 };
 
 
-
 class mach_expr_self_def : public mach_expression
 {
 	value_t value_;
 public:
 	mach_expr_self_def(std::string option, std::string value, range rng);
 
-	static mach_expr_ptr from_id(std::string id, range rng);
-
-	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
@@ -84,7 +98,7 @@ class mach_expr_default : public mach_expression
 public:
 	mach_expr_default(range rng);
 
-	context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 

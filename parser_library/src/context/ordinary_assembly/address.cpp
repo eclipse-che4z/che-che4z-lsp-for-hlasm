@@ -48,7 +48,6 @@ void space::add_listener(address* addr)
 void space::remove_listener(address* addr)
 {
 	auto it = std::find(listeners_.begin(), listeners_.end(), addr);
-	//assert(std::find_if(addr->spaces.begin(), addr->spaces.end(), [=](auto& sp) {return &*sp.first == this; }) != addr->spaces.end());
 	assert(it != listeners_.end());
 	listeners_.erase(it);
 }
@@ -176,6 +175,11 @@ address address::operator-(int offs) const
 address address::operator-() const
 {
 	return address(merge_entries({}, bases, op::SUB), -offset, merge_entries({}, spaces, op::SUB));
+}
+
+bool address::is_complex() const
+{
+	return bases.size() > 1;
 }
 
 hlasm_plugin::parser_library::context::address::~address()

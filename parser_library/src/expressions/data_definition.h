@@ -3,6 +3,14 @@
 
 #include <optional>
 #include "nominal_value.h"
+#include "../context/ordinary_assembly/alignment.h"
+#include "../diagnostic_collector.h"
+#include "../context/id_storage.h"
+
+namespace hlasm_plugin::parser_library::checking
+{
+class data_def_type;
+}
 
 namespace hlasm_plugin::parser_library::expressions
 {
@@ -32,7 +40,16 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
 	inline static const char * nominal_placeholder = " ";
 	static data_definition create(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
 
-	virtual context::dependency_holder get_dependencies(context::dependency_solver& solver) const override;
+	virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+	context::dependency_collector get_length_dependencies(context::dependency_solver& solver) const;
+	const checking::data_def_type* access_data_def_type() const;
+	context::alignment get_alignment() const;
+	bool expects_single_symbol() const;
+	bool check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const;
+	//expects that check_single_symbol_ok returned true
+	std::vector<context::id_index> get_single_symbol_names() const;
+
+	void assign_location_counter(context::address loctr_value);
 
 	void collect_diags() const override;
 private:

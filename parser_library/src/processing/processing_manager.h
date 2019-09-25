@@ -14,7 +14,7 @@ namespace parser_library {
 namespace processing {
 
 //main class for processing of the opencode
-//is constructed with base statement provider and has stack of statement processors which take statements from providers and go thrue the code creating other providers and processors
+//is constructed with base statement provider and has stack of statement processors which take statements from providers and go through the code creating other providers and processors
 //it holds those providers and processors and manages the whole processing
 class processing_manager : public processing_state_listener, public branching_provider, public diagnosable_ctx
 {
@@ -26,6 +26,7 @@ public:
 		parse_lib_provider& lib_provider,
 		statement_fields_parser& parser);
 
+	//method that starts the processing loop
 	void start_processing(std::atomic<bool>* cancel);
 
 	virtual void collect_diags() const override;

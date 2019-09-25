@@ -14,42 +14,40 @@ nominal_value_exprs* nominal_value_t::access_exprs()
 	return dynamic_cast<nominal_value_exprs*>(this);
 }
 
-nominal_value_address* nominal_value_t::access_address()
-{
-	return dynamic_cast<nominal_value_address*>(this);
-}
-
 //*********** nominal_value_string ***************
-dependency_holder nominal_value_string::get_dependencies(dependency_solver&) const
+dependency_collector nominal_value_string::get_dependencies(dependency_solver&) const
 {
-	return dependency_holder();
+	return dependency_collector();
 }
 
-nominal_value_string::nominal_value_string(std::string value)
-	: value(std::move(value)) {}
-
-
+nominal_value_string::nominal_value_string(std::string value, hlasm_plugin::parser_library::range rng)
+	: value(std::move(value)), value_range(rng) {}
 
 //*********** nominal_value_exprs ***************
-dependency_holder nominal_value_exprs::get_dependencies(dependency_solver& solver) const
+dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& solver) const
 {
-	dependency_holder conjunction;
+	dependency_collector conjunction;
 	for (auto& e : exprs)
 	{
-		auto list = e->get_dependencies(solver);
+		dependency_collector list;
+		if (std::holds_alternative<mach_expr_ptr>(e))
+			list = std::get<mach_expr_ptr>(e)->get_dependencies(solver);
+		else if (std::holds_alternative<address_nominal>(e))
+			list = std::get<address_nominal>(e).get_dependencies(solver);
+		
 		conjunction.undefined_symbols.insert(list.undefined_symbols.begin(), list.undefined_symbols.end());
 	}
 	return conjunction;
 }
 
-nominal_value_exprs::nominal_value_exprs(mach_expr_list exprs)
+nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs)
 	: exprs(std::move(exprs)) {}
 
 
 
 
 //*********** nominal_value_list ***************
-dependency_holder nominal_value_address::get_dependencies(dependency_solver& solver) const
+dependency_collector address_nominal::get_dependencies(dependency_solver& solver) const
 {
 	auto conjunction = base->get_dependencies(solver);
 
@@ -59,7 +57,9 @@ dependency_holder nominal_value_address::get_dependencies(dependency_solver& sol
 	return conjunction;
 }
 
-nominal_value_address::nominal_value_address(mach_expr_ptr displacement, mach_expr_ptr base)
+address_nominal::address_nominal() : displacement(), base() {}
+
+address_nominal::address_nominal(mach_expr_ptr displacement, mach_expr_ptr base)
 	: displacement(std::move(displacement)), base(std::move(base)) {}
 
 

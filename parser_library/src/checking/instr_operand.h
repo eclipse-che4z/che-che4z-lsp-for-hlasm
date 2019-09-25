@@ -7,12 +7,15 @@
 #include <memory>
 #include <functional>
 #include <assert.h>
-#include "shared/range.h"
 #include "../diagnostic.h"
+#include "../context/ordinary_assembly/alignment.h"
 #include "../diagnostic_collector.h"
+#include "operand.h"
 
 namespace hlasm_plugin::parser_library::checking
 {
+	class data_def_type;
+
 	enum class address_state { RES_VALID, RES_INVALID, UNRES };
 
 	/*
@@ -22,26 +25,6 @@ namespace hlasm_plugin::parser_library::checking
 	ONE_OP - D(B)
 	*/
 	enum class operand_state { FIRST_OMITTED, SECOND_OMITTED, PRESENT, ONE_OP };
-
-	class operand
-	{
-	public:
-		operand();
-		operand(range operand_range);
-
-		range operand_range;
-
-		virtual ~operand() = default;
-	};
-
-	using check_op_ptr = std::unique_ptr<operand>;
-
-	class asm_operand : public virtual operand
-	{
-	public:
-		asm_operand();
-		virtual ~asm_operand() = default;
-	};
 
 	// extended class representing complex operands
 	// contains vector of all parameters of operand - for example FLAG, COMPAT, OPTABLE...
@@ -92,11 +75,11 @@ namespace hlasm_plugin::parser_library::checking
 
 		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
 
-	protected:
-		bool is_operand_corresponding(int operand, parameter param) const;
-		bool is_simple_operand(const machine_operand_format & operand) const;
-		bool is_size_corresponding_signed(int operand, int size) const;
-		bool is_size_corresponding_unsigned(int operand, int size) const;
+		static bool is_size_corresponding_signed(int operand, int size);
+		static bool is_size_corresponding_unsigned(int operand, int size);
+		static bool is_operand_corresponding(int operand, parameter param);
+		static bool is_simple_operand(const machine_operand_format& operand);
+
 	};
 
 	class address_operand final : public machine_operand
@@ -151,42 +134,6 @@ namespace hlasm_plugin::parser_library::checking
 		empty_operand();
 
 		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const override;
-	};
-
-	template<typename T>
-	struct data_def_field
-	{
-		bool present;
-		T value;
-		range rng;
-	};
-
-	struct data_def_address
-	{
-		int base;
-		int displacement;
-	};
-
-	class data_definition_operand : public asm_operand
-	{
-	public:
-		using num_t = int32_t;
-
-		enum class length_type
-		{
-			BYTE,
-			BIT
-		};
-
-		data_def_field<num_t> dupl_factor;
-		data_def_field<char> type;
-		data_def_field<char> extension;
-		data_def_field<num_t> length;
-		length_type len_type;
-		data_def_field<num_t> exponent;
-		data_def_field<num_t> scale;
-		
-		data_def_field < std::variant<std::string, std::vector<data_def_field<int>>, data_def_address> > nominal_value;
 	};
 
 }

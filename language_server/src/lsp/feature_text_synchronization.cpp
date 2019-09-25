@@ -152,6 +152,12 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 			case parser_library::semantics::hl_scopes::operand:
 				scope = "operand";
 				break;
+			case parser_library::semantics::hl_scopes::data_def_type:
+				scope = "data_def_type";
+				break;
+			case parser_library::semantics::hl_scopes::data_def_extension:
+				scope = "data_def_extension";
+				break;
 			}
 			tokens_array.push_back(json{
 				{ "lineStart",fi.token(j).token_range.start.line },

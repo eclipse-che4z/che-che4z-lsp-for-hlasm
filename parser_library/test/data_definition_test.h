@@ -76,19 +76,30 @@ TEST(data_definition_grammar, address_nominal)
 	expect_no_errors(" DC S(512(12))");
 	expect_no_errors(" DC SP(13)(512(12))");
 	expect_no_errors(" DC SP(13)L2(512(12))");
-	expect_no_errors(" DC SP(13)L(13)(512(12))");
+	expect_no_errors(" DC SP(13)L(2)(512(12))");
+	expect_no_errors(" DC S(512(12),418(0))");
+	expect_no_errors(
+R"(  USING A,5
+     DC S(512(12),418(0),A_field)
+A       DSECT
+A_field DS F)");
+	expect_no_errors(" DC S(512(0))");
+	expect_no_errors("A DC S(*-A+4(0))");
 
+	expect_errors(" DC S(512())");
+	expect_errors(" DC S(512(0)");
 	expect_errors(" DC SP(13)L(13)(512(12,13))");
+	expect_errors(" DC A(512(12)");
 }
 
 TEST(data_definition_grammar, expression_nominal)
 {
-	expect_no_errors("A DC Y(*-A,*+4)");
-	expect_no_errors("A DC Y(A+32)");
-	expect_no_errors("A DC YL4(A+32)");
-	expect_no_errors("A DC YL(4)(A+32)");
-	expect_no_errors("A DC 10YL(4)(A+32)");
-	expect_no_errors("A DC (1+9)Y(*-A,*+4)");
+	expect_no_errors("A DC A(*-A,*+4)");
+	expect_no_errors("A DC A(A+32)");
+	expect_no_errors("A DC AL4(A+32)");
+	expect_no_errors("A DC AL(4)(A+32)");
+	expect_no_errors("A DC 10AL(4)(A+32)");
+	expect_no_errors("A DC (1+9)A(*-A,*+4)");
 }
 
 TEST(data_definition_grammar, no_nominal)
@@ -276,4 +287,15 @@ TEST(data_definition, wrong_modifier_order)
 
 	auto parsed = std::move(res->value);
 	EXPECT_GT(parsed.diags().size(), (size_t)0);
+}
+
+TEST(data_definition, B_wrong_nominal_value)
+{
+	using namespace hlasm_plugin::parser_library;
+
+	analyzer a(" DC B'12'");
+	a.analyze();
+
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)1);
 }

@@ -130,9 +130,9 @@ TEST_F(library_test, comment)
 //simply parse correctly
 TEST_F(library_test, empty_string)
 {
-	std::string tcase = " LR ''";
+	std::string es_input = " LR ''";
 
-	analyzer a(tcase);
+	analyzer a(es_input);
 	a.analyze();
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)2);

@@ -2,6 +2,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_ASSEMBLER_INSTRUCTION_H
 
 #include "asm_instr_class.h"
+#include "data_definition/data_def_type_base.h"
 
 namespace hlasm_plugin
 {
@@ -173,14 +174,23 @@ public:
 	bool check(const std::vector<const asm_operand*> & to_check, const range & stmt_range, const diagnostic_collector&) const override;
 };
 
-class dc final : public assembler_instruction
+class data : public assembler_instruction
+{
+public:
+	data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction);
+protected:
+	template<data_instr_type instr_type>
+	bool check_data(const std::vector<const asm_operand*>& to_check, const range& stmt_range, const diagnostic_collector&) const;
+};
+
+class dc final : public data
 {
 public:
 	dc(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction);
 	bool check(const std::vector<const asm_operand*> & to_check, const range & stmt_range, const diagnostic_collector&) const override;
 };
 
-class ds_dxd final : public assembler_instruction
+class ds_dxd final : public data
 {
 public:
 	ds_dxd(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction);

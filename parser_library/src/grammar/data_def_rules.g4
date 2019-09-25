@@ -43,15 +43,11 @@ prog_type_and_modifier_p returns [std::string format, mach_expr_list exprs]
 nominal_value returns [nominal_value_ptr value]
 	: data_def_string
 	{
-		$value = std::make_unique<nominal_value_string>($data_def_string.value);
+		$value = std::make_unique<nominal_value_string>($data_def_string.value, provider.get_range($data_def_string.ctx->getStart(),$data_def_string.ctx->getStop()));
 	}
-	| lpar exprs=mach_expr_comma_c rpar
+	| lpar exprs=mach_expr_or_address_comma_c rpar
 	{
 		$value = std::make_unique<nominal_value_exprs>(std::move($exprs.exprs));
-	}
-	| lpar disp=mach_expr lpar base=mach_expr rpar rpar
-	{
-		$value = std::make_unique<nominal_value_address>(std::move($disp.m_e), std::move($base.m_e));
 	};
 
 nominal_value_o returns [nominal_value_ptr nominal, mach_expr_ptr e]
@@ -66,15 +62,31 @@ nominal_value_o returns [nominal_value_ptr nominal, mach_expr_ptr e]
 	}
 	|;
 
-mach_expr_comma_c returns [mach_expr_list exprs]
+data_def_address returns [address_nominal addr]
+	: disp=mach_expr lpar base=mach_expr rpar
+	{
+		$addr.base = std::move($base.m_e);
+		$addr.displacement = std::move($disp.m_e);
+	};
+
+mach_expr_or_address_comma_c returns [expr_or_address_list exprs]
 	: e=mach_expr
 	{
 		$exprs.push_back(std::move($e.m_e));
 	}
-	| p_list=mach_expr_comma_c comma e=mach_expr
+	| a=data_def_address
+	{
+		$exprs.push_back(std::move($a.addr));
+	}
+	| p_list=mach_expr_or_address_comma_c comma e=mach_expr
 	{
 		$exprs = std::move($p_list.exprs);
 		$exprs.push_back(std::move($e.m_e));
+	}
+	| p_list=mach_expr_or_address_comma_c comma data_def_address
+	{
+		$exprs = std::move($p_list.exprs);
+		$exprs.push_back(std::move($data_def_address.addr));
 	}
 	;
 
@@ -99,13 +111,16 @@ data_def returns [data_definition value]
 		auto begin_range = provider.get_range($d_e.ctx->getStart(),$d_e.ctx->getStop());
 
 		$value = data_definition::create(std::move(form), std::move(exprs), std::move($nominal_value_o.nominal), begin_range.start);
+
+		collector.add_hl_symbol(token_info($value.type_range,hl_scopes::data_def_type));
+		collector.add_hl_symbol(token_info($value.extension_range,hl_scopes::data_def_extension));
 	};
 
 data_def_ch returns [std::string value]
 	: IDENTIFIER								{$value = std::move($IDENTIFIER->getText());} 
 	| ORDSYMBOL									{$value = std::move($ORDSYMBOL->getText());}
 	| minus										{$value = "-";}
-	| dot_										{$value = ".";};
+	| DOT										{$value = ".";};
 
 data_def_id returns [std::string value]
 	: data_def_ch								{$value = std::move($data_def_ch.value);}

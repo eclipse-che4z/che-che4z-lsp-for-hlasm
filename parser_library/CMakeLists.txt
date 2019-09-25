@@ -56,15 +56,15 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
     ${PROJECT_SOURCE_DIR}/src/context/id_storage.cpp
     ${PROJECT_SOURCE_DIR}/src/context/id_generator.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/location_counter.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly_context.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/symbol_dependency_tables.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/section.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/symbol.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/symbol_attributes.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/address_resolver.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/dependable.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/address.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/location_counter.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/ordinary_assembly_context.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol_dependency_tables.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/section.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol_attributes.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/address_resolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/dependency_collector.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/address.cpp
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/context_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/lookahead_processor.cpp
@@ -107,7 +107,14 @@ set(LIB_SRC
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic_collector.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instr_operand.cpp
-	${PROJECT_SOURCE_DIR}/src/checking/asm_instr_check.cpp
+    ${PROJECT_SOURCE_DIR}/src/checking/asm_instr_check.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_instruction.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_def_type_base.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_def_types_address.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_def_types_fixed_point.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_def_types_floating_point.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_def_types_string.cpp
+	${PROJECT_SOURCE_DIR}/src/checking/data_definition/data_definition_operand.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/instruction_checker.cpp
 	${PROJECT_SOURCE_DIR}/src/checking/asm_instr_class.cpp
 	${PROJECT_SOURCE_DIR}/src/analyzer.cpp

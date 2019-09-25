@@ -20,7 +20,7 @@ public:
 		//text = left_->move_text() + T::sign_char() + right_->move_text();
 	}
 
-	context::dependency_holder get_dependencies(mach_evaluate_info info) const override;
+	context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
 
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
@@ -51,7 +51,7 @@ public:
 		//text = T::sign_char_begin() + child_->move_text() + T::sign_char_end();
 	}
 
-	context::dependency_holder get_dependencies(mach_evaluate_info info) const override;
+	context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
 
 	virtual void fill_location_counter(context::address addr) override
 	{
@@ -187,43 +187,43 @@ inline mach_expression::value_t mach_expr_unary<par>::evaluate(mach_evaluate_inf
 }
 
 template<>
-inline context::dependency_holder mach_expr_binary<add>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<add>::get_dependencies(mach_evaluate_info info) const
 {
 	return left_->get_dependencies(info) + right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_binary<sub>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(mach_evaluate_info info) const
 {
 	return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_binary<mul>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<mul>::get_dependencies(mach_evaluate_info info) const
 {
 	return left_->get_dependencies(info) * right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_binary<div>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<div>::get_dependencies(mach_evaluate_info info) const
 {
 	return left_->get_dependencies(info) / right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_unary<add>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<add>::get_dependencies(mach_evaluate_info info) const
 {
 	return child_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_unary<sub>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<sub>::get_dependencies(mach_evaluate_info info) const
 {
-	return context::dependency_holder() - child_->get_dependencies(info);
+	return context::dependency_collector() - child_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_holder mach_expr_unary<par>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<par>::get_dependencies(mach_evaluate_info info) const
 {
 	return child_->get_dependencies(info);
 }

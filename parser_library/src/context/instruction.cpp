@@ -160,10 +160,10 @@ const std::map<const std::string, assembler_instruction> instruction::assembler_
 bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic)
 {
 	// check size of operands
-	int diff = operands.size() - to_check.size();
+	int diff = (int)operands.size() - (int)to_check.size();
 	if (diff > no_optional || diff < 0)
 	{
-		add_diagnostic(diagnostic_op::error_optional_number_of_operands(name_of_instruction, no_optional, operands.size(), stmt_range));
+		add_diagnostic(diagnostic_op::error_optional_number_of_operands(name_of_instruction, no_optional, (int)operands.size(), stmt_range));
 		return false;
 	}
 	bool error = false;
@@ -189,7 +189,7 @@ class vnot_instruction : public machine_instruction
 {
 public:
 	vnot_instruction(const std::string& name, mach_format format, std::vector<machine_operand_format> operands, size_t size, size_t page_no)
-		:machine_instruction(name, format, operands, size, page_no, 0) {}
+		:machine_instruction(name, format, operands, (int)size, page_no, (size_t)0) {}
 
 	virtual bool check(const std::string& name_of_instruction,const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic) override
 	{
@@ -214,7 +214,7 @@ public:
 				assert(false);
 			}
 		}
-		add_diagnostic(diagnostic_op::error_M000(name_of_instruction, operands.size(), stmt_range));
+		add_diagnostic(diagnostic_op::error_M000(name_of_instruction, (int)operands.size(), stmt_range));
 		return false;
 	}
 };

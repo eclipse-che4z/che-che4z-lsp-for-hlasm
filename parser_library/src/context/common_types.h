@@ -32,6 +32,7 @@ enum class macro_param_type
 	POS_PAR_TYPE, KEY_PAR_TYPE, SYSLIST_TYPE
 };
 
+//helper traits structure for SET types
 template <typename T>
 struct object_traits
 {
@@ -119,9 +120,7 @@ inline B_t SET_t::to()
 	case SET_t_enum::B_TYPE:
 		return b_value;
 	case SET_t_enum::C_TYPE:
-
 		return b_value; //TODO
-
 	default:
 		return b_value;
 	}

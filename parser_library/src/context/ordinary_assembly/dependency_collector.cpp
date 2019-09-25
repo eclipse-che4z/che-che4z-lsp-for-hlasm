@@ -1,56 +1,55 @@
-#include "dependable.h"
-#include "dependable.h"
+#include "dependency_collector.h"
 
 #include <algorithm>
 
 using namespace hlasm_plugin::parser_library::context;
 
-hlasm_plugin::parser_library::context::dependency_holder::dependency_holder()
+hlasm_plugin::parser_library::context::dependency_collector::dependency_collector()
 	:has_error(false) {}
 
-hlasm_plugin::parser_library::context::dependency_holder::dependency_holder(const std::string* undefined_symbol)
+hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(const std::string* undefined_symbol)
 	: has_error(false)
 {
 	undefined_symbols.insert(undefined_symbol);
 }
 
-hlasm_plugin::parser_library::context::dependency_holder::dependency_holder(const address& unresolved_address)
+hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(const address& unresolved_address)
 	: has_error(false), unresolved_address(unresolved_address) {}
 
-hlasm_plugin::parser_library::context::dependency_holder::dependency_holder(address&& unresolved_address)
+hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(address&& unresolved_address)
 	: has_error(false), unresolved_address(std::move(unresolved_address)) {}
 
-dependency_holder& dependency_holder::operator+(const dependency_holder& holder)
+dependency_collector& dependency_collector::operator+(const dependency_collector& holder)
 {
 	return add_sub(holder, true);
 }
 
-dependency_holder& dependency_holder::operator-(const dependency_holder& holder)
+dependency_collector& dependency_collector::operator-(const dependency_collector& holder)
 {
 	return add_sub(holder, false);
 }
 
-dependency_holder& dependency_holder::operator*(const dependency_holder& holder)
+dependency_collector& dependency_collector::operator*(const dependency_collector& holder)
 {
 	return div_mul(holder);
 }
 
-dependency_holder& dependency_holder::operator/(const dependency_holder& holder)
+dependency_collector& dependency_collector::operator/(const dependency_collector& holder)
 {
 	return div_mul(holder);
 }
 
-bool hlasm_plugin::parser_library::context::dependency_holder::is_address() const
+bool hlasm_plugin::parser_library::context::dependency_collector::is_address() const
 {
 	return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases.empty();
 }
 
-bool hlasm_plugin::parser_library::context::dependency_holder::contains_dependencies() const
+bool hlasm_plugin::parser_library::context::dependency_collector::contains_dependencies() const
 {
 	return !undefined_symbols.empty() || (unresolved_address && !unresolved_address->spaces.empty());
 }
 
-bool dependency_holder::merge_undef(const dependency_holder& holder)
+bool dependency_collector::merge_undef(const dependency_collector& holder)
 {
 	has_error = holder.has_error;
 
@@ -62,7 +61,7 @@ bool dependency_holder::merge_undef(const dependency_holder& holder)
 	return !undefined_symbols.empty();
 }
 
-dependency_holder& dependency_holder::add_sub(const dependency_holder& holder, bool add)
+dependency_collector& dependency_collector::add_sub(const dependency_collector& holder, bool add)
 {
 	bool finished = merge_undef(holder);
 
@@ -78,7 +77,7 @@ dependency_holder& dependency_holder::add_sub(const dependency_holder& holder, b
 	}
 	else if (!unresolved_address && holder.unresolved_address)
 	{
-		if(add)
+		if (add)
 			unresolved_address = *holder.unresolved_address;
 		else
 			unresolved_address = -*holder.unresolved_address;
@@ -87,7 +86,7 @@ dependency_holder& dependency_holder::add_sub(const dependency_holder& holder, b
 	return *this;
 }
 
-dependency_holder& dependency_holder::div_mul(const dependency_holder& holder)
+dependency_collector& dependency_collector::div_mul(const dependency_collector& holder)
 {
 	bool finished = merge_undef(holder);
 

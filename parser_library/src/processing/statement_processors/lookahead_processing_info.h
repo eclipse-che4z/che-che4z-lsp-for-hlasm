@@ -9,6 +9,7 @@ namespace processing {
 
 enum class lookahead_action { SEQ, ORD };
 
+//data to start lookahead_processor
 struct lookahead_start_data
 {
 	lookahead_action action;
@@ -18,6 +19,7 @@ struct lookahead_start_data
 	context::opencode_sequence_symbol::opencode_position source;
 };
 
+//result of lookahead_processor
 struct lookahead_processing_result
 {
 	bool success;

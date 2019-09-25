@@ -8,11 +8,13 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
+//data to start copy_processor
 struct copy_start_data
 {
 	context::id_index member_name;
 };
 
+//result of copy_processor
 struct copy_processing_result
 {
 	context::statement_block definition;

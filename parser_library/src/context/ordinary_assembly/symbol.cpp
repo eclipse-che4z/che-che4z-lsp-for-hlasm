@@ -138,6 +138,11 @@ symbol::symbol()
 
 const symbol_value& symbol::value() const { return value_; }
 
+const symbol_attributes& symbol::attributes() const
+{
+	return attributes_;
+}
+
 symbol_kind symbol::kind() const
 {
 	return value_.value_kind();

@@ -9,6 +9,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
+//structure represents invocation of COPY member in HLASM macro library
 struct copy_member_invocation
 {
 	const id_index name;
@@ -20,10 +21,14 @@ struct copy_member_invocation
 		:name(name), definition(definition), definition_location(definition_location), current_statement(-1) {}
 };
 
+//structure represents COPY member in HLASM macro library
 struct copy_member
 {
+	//member idenifier
 	const id_index name;
+	//block of statements defining the member
 	const statement_block definition;
+	//location of the definition
 	const location definition_location;
 
 	copy_member(id_index name, statement_block definition, location definition_location)

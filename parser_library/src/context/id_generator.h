@@ -9,7 +9,8 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-//class generating id_indexes
+//class generating id_index-es
+//recycles id_index-es that has beed returned via release_id method
 class id_generator
 {
 	id_storage& storage_;

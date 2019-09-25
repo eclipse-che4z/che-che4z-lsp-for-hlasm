@@ -2,7 +2,7 @@
 #define PROCESSING_POSTPONED_STATEMENT_IMPL_H
 
 #include "../statement.h"
-#include "../../context/postponed_statement.h"
+#include "../../context/ordinary_assembly/postponed_statement.h"
 
 #include <variant>
 
@@ -10,6 +10,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
+//implementation of postponed_statement interface
 struct postponed_statement_impl : public context::postponed_statement
 {
 	postponed_statement_impl(rebuilt_statement stmt,std::vector<location> stmt_location_stack)

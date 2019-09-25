@@ -25,7 +25,7 @@ asm_op returns [operand_ptr op]
 	}
 	| lpar base=mach_expr comma end=mach_expr rpar
 	{
-		$op = std::make_unique<end_instr_assembler_operand>(
+		$op = std::make_unique<using_instr_assembler_operand>(
 			std::move($base.m_e), 
 			std::move($end.m_e),
 			provider.get_range($lpar.ctx->getStart(),$rpar.ctx->getStop())

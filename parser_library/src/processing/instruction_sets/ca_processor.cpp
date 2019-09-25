@@ -151,7 +151,7 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 	bool has_operand = false;
 	for (auto& op : stmt.operands_ref().value)
 	{
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 			continue;
 
 		has_operand = true;
@@ -185,7 +185,7 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 	bool has_operand = false;
 	for (auto& op : stmt.operands_ref().value)
 	{
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 			continue;
 
 		has_operand = true;
@@ -289,7 +289,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 
 	for (const auto& op : stmt.operands_ref().value)
 	{
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 		{
 			add_diagnostic(diagnostic_op::error_E010("operand", op->operand_range));
 			return false;
@@ -368,7 +368,7 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 	{
 		const auto& op = *it;
 
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 		{
 			if (it == stmt.operands_ref().value.end() - 1)
 				continue;
@@ -449,11 +449,13 @@ void ca_processor::process_AEJECT(const semantics::complete_statement&)
 
 void ca_processor::process_ASPACE(const semantics::complete_statement& stmt)
 {
+	(stmt);
 	//TODO
 }
 
 void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
 {
+	(stmt);
 	//TODO
 }
 

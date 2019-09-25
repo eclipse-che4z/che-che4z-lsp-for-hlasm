@@ -9,7 +9,6 @@ namespace hlasm_plugin::parser_library {
 
 class diagnosable_ctx : public diagnosable_impl
 {
-
 public:
 	virtual void add_diagnostic(diagnostic_op diagnostic) const
 	{
@@ -17,7 +16,6 @@ public:
 	}
 
 protected:
-	
 	diagnosable_ctx(context::hlasm_context& ctx) : ctx_(ctx) {}
 
 	virtual ~diagnosable_ctx() {};

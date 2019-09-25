@@ -7,6 +7,7 @@
 #include "../expressions/mach_expression.h"
 #include "../expressions/data_definition.h"
 #include "../checking/instr_operand.h"
+#include "../checking/data_definition/data_definition_operand.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -14,7 +15,7 @@ namespace semantics {
 
 enum class operand_type
 {
-	MACH, MAC, ASM, CA, DAT, MODEL, EMPTY, UNDEF
+	MACH, MAC, ASM, CA, DAT, MODEL, EMPTY
 };
 
 struct model_operand;
@@ -66,11 +67,6 @@ struct empty_operand final : public operand
 	empty_operand(const range operand_range);
 };
 
-struct undefined_operand final : public operand
-{
-	undefined_operand(const range operand_range);
-};
-
 
 
 //operand that contains variable symbol thus is 'model operand'
@@ -89,7 +85,7 @@ struct evaluable_operand : public operand, public diagnosable_op_impl
 
 	virtual bool has_dependencies(expressions::mach_evaluate_info info) const = 0;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const = 0;
+	virtual std::vector<const context::resolvable*> get_resolvables() const = 0;
 
 	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const = 0;
 };
@@ -102,7 +98,7 @@ struct simple_expr_operand : public virtual evaluable_operand
 
 	virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	expressions::mach_expr_ptr expression;
 };
@@ -154,7 +150,7 @@ struct address_machine_operand final : public machine_operand
 
 	bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
@@ -165,7 +161,7 @@ struct address_machine_operand final : public machine_operand
 
 enum class asm_kind {EXPR, BASE_END, COMPLEX, STRING};
 struct expr_assembler_operand;
-struct end_instr_assembler_operand;
+struct using_instr_assembler_operand;
 struct complex_assembler_operand;
 struct string_assembler_operand;
 
@@ -174,7 +170,7 @@ struct assembler_operand : public virtual evaluable_operand
 	assembler_operand(const asm_kind kind);
 
 	expr_assembler_operand* access_expr();
-	end_instr_assembler_operand* access_base_end();
+	using_instr_assembler_operand* access_base_end();
 	complex_assembler_operand* access_complex();
 	string_assembler_operand* access_string();
 
@@ -196,13 +192,13 @@ public:
 
 
 
-struct end_instr_assembler_operand final : public assembler_operand
+struct using_instr_assembler_operand final : public assembler_operand
 {
-	end_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
+	using_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
 
 	bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
@@ -260,7 +256,7 @@ struct complex_assembler_operand final : public assembler_operand
 
 	bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
@@ -278,7 +274,7 @@ struct string_assembler_operand : public assembler_operand
 
 	bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
@@ -294,9 +290,13 @@ struct data_def_operand final : public evaluable_operand
 
 	std::shared_ptr<expressions::data_definition> value;
 
+	context::dependency_collector get_length_dependencies(expressions::mach_evaluate_info info) const;
+
+	context::dependency_collector get_dependencies(expressions::mach_evaluate_info info) const;
+
 	virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-	virtual std::vector<context::resolvable*> get_resolvables() const override;
+	virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
 	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 

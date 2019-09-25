@@ -2,10 +2,11 @@
 #define HLASMPLUGIN_PARSERLIBRRY_CHECKER_HELPER_H
 
 #include <string>
-#include "instr_operand.h"
-#include "../context/instruction.h"
 #include <cassert>
 #include <algorithm>
+#include <functional>
+
+#include "instr_operand.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4505)
@@ -127,6 +128,92 @@ namespace checking
 			leap_year = false;
 		return ((size_t)day <= days_in_month[month-1] || (month == 2 && leap_year && day == 29));
 	};
+
+	inline bool is_sign(char c)
+	{
+		return  c == '-' || c == '+';
+	}
+
+	inline bool is_digit(char c)
+	{
+		return (c >= '0' && c <= '9');
+	}
+
+	inline bool is_hexadecimal_digit(char c)
+	{
+		return (c >= '0' && c <= '9') ||
+			(c >= 'a' && c <= 'f') ||
+			(c >= 'A' && c <= 'F');
+	}
+
+	inline bool is_decimal_number_ch(char c)
+	{
+		return is_digit(c) || is_sign(c) || c == '.';
+	}
+
+	//Checks whether a number starts at position i. Leaves i at the first character behind the number.
+	//number_spec must implement two static functions:
+	//bool is_end_char(char c) specifies whether char is valid character that delimits number.
+	//bool is_sign_char(char c) specifies whether char is valid beginning character
+	template<class number_spec>
+	inline bool check_number(const std::string& nominal, size_t& i)
+	{
+		if (nominal[i] == ',')
+			return false;
+
+		if (number_spec::is_sign_char(nominal[i]))
+			++i;
+
+		bool found_digit = false;
+		bool prev_digit = false;
+		bool found_dot = false;
+		bool prev_dot = false;
+
+		while (i < nominal.size() && !number_spec::is_end_char(nominal[i]))
+		{
+			char c = nominal[i];
+			if (c == '.')
+			{
+				if (found_dot)
+					return false;
+				found_dot = true;
+				prev_digit = false;
+				prev_dot = true;
+			}
+			else if (is_digit(c))
+			{
+				prev_digit = true;
+				found_digit = true;
+				prev_dot = false;
+			}
+			else if (c != ' ')
+				return false;
+			++i;
+		}
+
+		//there must be at least one digit in the number and it must end with digit or dot (3. is also valid number)
+		if (!found_digit)
+			return false;
+		if(!prev_digit && !prev_dot)
+			return false;
+
+		return true;
+	}
+	//Checks whether there is valid exponent on position i, we assume nominal[i] == 'E'. Leaves i on the first invalid character.
+	inline bool check_exponent(const std::string& nominal, size_t& i)
+	{
+		assert(nominal[i] == 'E');
+		++i;
+		if (i < nominal.size() && is_sign(nominal[i]))
+			++i;
+		bool found_digit = false;
+		while (i < nominal.size() && is_digit(nominal[i]))
+		{
+			++i;
+			found_digit = true;
+		}
+		return found_digit;
+	}
 }
 }
 }

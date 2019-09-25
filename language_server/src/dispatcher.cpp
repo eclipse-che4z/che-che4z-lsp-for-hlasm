@@ -14,7 +14,7 @@ constexpr const char* didOpen = "textDocument/didOpen";
 constexpr const char* didChange = "textDocument/didChange";
 
 dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server, std::atomic<bool> * cancel) :
-	server_(server), in_(in), out_(out), cancel_(cancel), worker_(&dispatcher::handle_request_,this)
+	server_(server), in_(in), out_(out), worker_(&dispatcher::handle_request_,this), cancel_(cancel)
 {
 	server_.set_send_message_provider(this);
 }

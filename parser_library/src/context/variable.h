@@ -135,11 +135,13 @@ public:
 			data.insert_or_assign(idx, std::move(value));
 	}
 
+	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const override
 	{
 		return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
 	}
 
+	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
 
 private:
@@ -208,7 +210,9 @@ public:
 	//gets value of whole macro parameter
 	virtual const C_t& get_value() const;
 
+	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const override;
+	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
 
 protected:
@@ -225,6 +229,7 @@ class keyword_param : public macro_param_base
 public:
 	keyword_param(id_index name, macro_data_shared_ptr default_value, macro_data_ptr assigned_value);
 
+	//default macro keyword parameter data
 	const macro_data_shared_ptr default_data;
 protected:
 	virtual const macro_param_data_component* real_data() const override;
@@ -250,11 +255,16 @@ class syslist_param : public macro_param_base
 public:
 	syslist_param(id_index name, macro_data_ptr value);
 
-	virtual const C_t& get_value(std::vector<int> offset) const override;
-	virtual const C_t& get_value(int idx) const override;
-	virtual const C_t& get_value() const override;
+	//gets value of data where parameter is list of nested data offsets
+	virtual const C_t& get_value(std::vector<int> offset) const;
+	//gets value of data where parameter is offset to data field
+	virtual const C_t& get_value(int idx) const;
+	//gets value of whole macro parameter
+	virtual const C_t& get_value() const;
 
+	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const override;
+	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
 
 protected:
@@ -278,7 +288,9 @@ enum class sequence_symbol_kind
 //structure representing sequence symbol
 struct sequence_symbol
 {
+	//unique identifier
 	id_index name;
+	//location of the symbol in code
 	location symbol_location; //TODO for lsp
 	sequence_symbol_kind kind;
 
@@ -291,20 +303,25 @@ protected:
 	sequence_symbol(id_index name, const sequence_symbol_kind kind, location symbol_location);
 };
 
+//struct representing sequence symbol that is in open-code
 struct opencode_sequence_symbol : public sequence_symbol
 {
+	//represents position in opencode
 	struct opencode_position {
 		opencode_position(size_t file_line=0, size_t file_offset=0) :file_line(file_line), file_offset(file_offset) {}
 		size_t file_line; size_t file_offset; 
 		bool operator==(const opencode_position& oth) const { return file_line == oth.file_line && file_offset == oth.file_offset; }
 	};
 
+	//represents position in copy member invocation
 	struct copy_frame { 
 		id_index copy_member; size_t statement_offset;
 		bool operator==(const copy_frame& oth) const { return copy_member == oth.copy_member && statement_offset == oth.statement_offset; }
 	};
 
+	//position in opencode
 	opencode_position statement_position;
+	//position in copy member invocation stack
 	std::vector<copy_frame> copy_stack;
 
 	opencode_sequence_symbol(id_index name, location symbol_location, opencode_position statement_position, std::vector<copy_frame> copy_stack = {});
@@ -312,8 +329,10 @@ struct opencode_sequence_symbol : public sequence_symbol
 	bool operator==(const opencode_sequence_symbol& oth) const;
 };
 
+//struct representing sequence symbol that is in macro code
 struct macro_sequence_symbol : public sequence_symbol
 {
+	//offset from start of the macro
 	size_t statement_offset;
 
 	macro_sequence_symbol(id_index name, location symbol_location, size_t statement_offset);

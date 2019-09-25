@@ -7,7 +7,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-//statement provider providing statements of macro defintion
+//statement provider providing statements of copy members
 class copy_statement_provider : public common_statement_provider
 {
 	size_t initial_nest_;

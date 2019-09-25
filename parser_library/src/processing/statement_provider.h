@@ -21,8 +21,10 @@ public:
 
 	statement_provider(const statement_provider_kind kind) : kind(kind) {}
 
+	//processes next statement with help of a processor
 	virtual void process_next(statement_processor& processor) = 0;
 
+	//checks whether provider has finished
 	virtual bool finished() const = 0;
 
 	virtual ~statement_provider() = default;

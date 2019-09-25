@@ -86,7 +86,7 @@ void ordinary_processor::end_processing()
 		hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(loctr_offsets);
 	}
 
-	check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_all());
+	check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
 	hlasm_ctx.pop_processing_file();
 	finished_flag_ = true;
@@ -193,6 +193,8 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
 
 	for (auto& stmt : stmts)
 	{
+		if (!stmt) continue;
+
 		assert(stmt->opcode_ref().type == context::instruction_type::ASM || stmt->opcode_ref().type == context::instruction_type::MACH);
 
 		if (stmt->opcode_ref().type == context::instruction_type::ASM)

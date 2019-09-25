@@ -86,7 +86,7 @@ B EQU A+A-10
 	ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
-TEST(ordinary_symbols, previously_defined_symbol)
+TEST(ordinary_symbols, previously_defined_symbol_abs)
 {
 	std::string input(R"(
 A EQU B+1
@@ -109,6 +109,30 @@ C EQU 10
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(ordinary_symbols, previously_defined_symbol_reloc)
+{
+	std::string input(R"(
+D EQU Y-X
+
+X LR 1,1
+Y LR 1,1
+ LR D,D
+)");
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("D")));
+	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("X")));
+	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Y")));
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("D"))->value().get_abs(), 2);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().value_kind(), symbol_kind::RELOC);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().value_kind(), symbol_kind::RELOC);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(ordinary_symbols, cyclic_dependency)
 {
 	std::string input(R"(
@@ -123,12 +147,12 @@ C EQU A
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("B")));
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("C")));
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::UNDEF);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_kind::UNDEF);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_kind::UNDEF);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_kind::ABS);
 
 	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)3);
+	ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(ordinary_symbols, previously_defined_mach_err)
@@ -203,85 +227,6 @@ Y LR 1,1
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-TEST(ordinary_symbols, relocatable_no_loctr_cycle)
-{
-	id_storage s;
-	ordinary_assembly_context ord_ctx(s);
-	symbol_dependency_tables tables(ord_ctx);
-
-	//created space in location counter value
-	//  DC (A)C'D'
-	auto space = ord_ctx.register_space();
-	auto dep = expressions::mach_expr_symbol(s.add("A"),range());
-	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
-
-	//created symbols each dependent on location counter value
-	//  LR 1,1
-	//X LR 1, 1
-	//Y LR 1, 1
-	auto x = ord_ctx.reserve_storage_area(4, context::no_align);
-	auto y = ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
-	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
-	ASSERT_FALSE(x.spaces.empty());
-	ASSERT_FALSE(y.spaces.empty());
-	ASSERT_TRUE(tables.add_dependency(s.add("X"),x,nullptr));
-	ASSERT_TRUE(tables.add_dependency(s.add("Y"),y,nullptr));
-
-	//expr should not be dependent on space in location counter value
-	//A EQU Y-X
-	auto expr = mach_expr_binary<sub>(
-		std::make_unique<mach_expr_symbol>(s.add("Y"),range()),
-		std::make_unique<mach_expr_symbol>(s.add("X"),range()),
-		range()
-		);
-
-	auto deps = expr.get_dependencies(ord_ctx);
-
-	ASSERT_FALSE(deps.contains_dependencies());
-}
-
-TEST(ordinary_symbols, relocatable_loctr_cycle)
-{
-	id_storage s;
-	ordinary_assembly_context ord_ctx(s);
-	symbol_dependency_tables tables(ord_ctx);
-
-	//created symbol before space
-	//X LR 1,1
-	auto x = ord_ctx.align(context::no_align);
-	ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
-	ASSERT_TRUE(x.spaces.empty());
-
-	//created space in location counter value
-	//  DC (A)C'D'
-	auto space = ord_ctx.register_space();
-	auto dep = expressions::mach_expr_symbol(s.add("A"), range());
-	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
-
-	//created symbol dependent on location counter value
-	//Y LR 1, 1
-	auto y = ord_ctx.align(context::no_align);
-	ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
-	ASSERT_FALSE(y.spaces.empty());
-	ASSERT_TRUE(tables.add_dependency(s.add("Y"), y, nullptr));
-
-	//expr should be dependent on space in location counter value
-	//A EQU Y-X
-	auto expr = mach_expr_binary<sub>(
-		std::make_unique<mach_expr_symbol>(s.add("Y"), range()),
-		std::make_unique<mach_expr_symbol>(s.add("X"), range()),
-		range()
-		);
-
-	auto deps = expr.get_dependencies(ord_ctx);
-
-	ASSERT_TRUE(deps.contains_dependencies());
-}
-
 TEST(ordinary_symbols, complex_relocatable_address)
 {
 	auto input = R"(
@@ -350,72 +295,6 @@ Z EQU Y-X
 	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
 
-TEST(ordinary_symbols, relocatable_bad_layout)
-{
-	id_storage s;
-	ordinary_assembly_context ord_ctx(s);
-	symbol_dependency_tables tables(ord_ctx);
-
-	//A CSECT
-	ord_ctx.set_section(s.add("A"), section_kind::COMMON);
-
-	//created space in location counter value
-	//  DC (D)C'A'
-	auto space = ord_ctx.register_space();
-	auto dep = expressions::mach_expr_symbol(s.add("D"), range());
-	ASSERT_TRUE(tables.add_dependency(space, &dep, nullptr));
-
-	//created symbol in A
-	//X LR 1,1
-	auto x = ord_ctx.align(context::no_align);
-	ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.create_symbol(s.add("X"), x, context::symbol_attributes());
-	ASSERT_FALSE(x.spaces.empty());
-	ASSERT_TRUE(tables.add_dependency(s.add("X"), x, nullptr));
-
-	//change location counter
-	ord_ctx.set_location_counter(s.add("B"));
-
-	//created symbol in B
-	//Y LR 1,1
-	auto y = ord_ctx.align(context::no_align);
-	ord_ctx.reserve_storage_area(4, context::no_align);
-	ord_ctx.create_symbol(s.add("Y"), y, context::symbol_attributes());
-	ASSERT_FALSE(y.spaces.empty());
-	ASSERT_TRUE(tables.add_dependency(s.add("Y"), y, nullptr));
-
-	//expr should be dependent on layout of the section
-	//D EQU Y-X
-	auto expr = mach_expr_binary<sub>(
-		std::make_unique<mach_expr_symbol>(s.add("Y"), range()),
-		std::make_unique<mach_expr_symbol>(s.add("X"), range()),
-		range()
-		);
-
-	auto deps = expr.get_dependencies(ord_ctx);
-
-	ASSERT_TRUE(deps.contains_dependencies());
-	ASSERT_FALSE(deps.is_address());
-
-	ord_ctx.create_symbol(s.add("D"), context::symbol_value(), context::symbol_attributes());
-
-	std::vector<const context::resolvable*> tmp = { &expr };
-	ASSERT_TRUE(tables.add_dependency(s.add("D"), tmp, nullptr));
-
-	bool bad_layout = false;
-
-	try 
-	{
-		ord_ctx.finish_module_layout();
-	}
-	catch (std::runtime_error& )
-	{
-		bad_layout = true;
-	}
-
-	ASSERT_TRUE(bad_layout);
-}
-
 TEST(ordinary_symbols, location_counter_simple)
 {
 	auto input = R"(
@@ -450,5 +329,125 @@ X3 EQU F-E
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(ordinary_symbols, DC_not_defined_symbol_in_length)
+{
+	auto input = R"(
+A DC CL(D-C)'1'
+B LR 1,1
+C LR 1,1
+
+R EQU B-A
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)2);
+}
+
+TEST(ordinary_symbols, DC_non_previously_defined_length)
+{
+	auto input = R"(
+A DC CL(C-B)'1'
+B LR 1,1
+C LR 1,1
+
+R EQU B-A
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+
+	id_index R = a.context().ids().add("R");
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 2);
+}
+
+TEST(ordinary_symbols, DC_previously_defined_length)
+{
+	auto input = R"(
+A LR 1,1
+  LR 1,1
+B DC CL(B-A)'ABCD'
+C LR 1,1
+
+R EQU C-B
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+
+	id_index R = a.context().ids().add("R");
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 4);
+}
+
+TEST(ordinary_symbols, DC_implicit_length)
+{
+	auto input = R"(
+A LR 1,1
+B DC S(1,1)
+C LR 1,1
+
+R EQU C-B
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+
+	id_index R = a.context().ids().add("R");
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 4);
+}
+
+TEST(ordinary_symbols, DC_implicit_length_deferred_checking)
+{
+	auto input = R"(
+B DC S(C,-1)
+C LR 1,1
+
+R EQU C-B
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+	EXPECT_EQ(a.diags()[0].code, "D022");
+}
+
+TEST(ordinary_symbols, DC_simple_cycle)
+{
+	auto input = R"(
+A DC BL(B-A)'101'
+B LR 1,1
+
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, DC_space_cycle)
+{
+	auto input = R"(
+A DC AL(D-C)(1,1,1)
+B LR 1,1
+C DC CL(B-A)'1'
+D LR 1,1
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
 
 #endif

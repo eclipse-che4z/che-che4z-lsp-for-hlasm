@@ -32,6 +32,25 @@ location_counter::location_counter(id_index name, const section& owner, const lo
 	}
 }
 
+//reserves storage area of specified length and alignment
+
+address location_counter::reserve_storage_area(size_t length, alignment a)
+{
+	if (storage_ % a.boundary != a.byte)
+		storage_ += (a.boundary - (storage_ % a.boundary)) + a.byte;
+
+	storage_ += length;
+
+	return address({ &owner }, (int)storage_, spaces_);
+}
+
+//aligns storage
+
+address location_counter::align(alignment align)
+{
+	return reserve_storage_area(0, align);
+}
+
 space_ptr location_counter::register_space()
 {
 	auto id = ids_.add(

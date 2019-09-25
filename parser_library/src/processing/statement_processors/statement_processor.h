@@ -23,6 +23,8 @@ public:
 	statement_processor(const processing_kind kind, context::hlasm_context& hlasm_ctx)
 		:diagnosable_ctx(hlasm_ctx), kind(kind), hlasm_ctx(hlasm_ctx), macro_id(hlasm_ctx.ids().add("MACRO")), mend_id(hlasm_ctx.ids().add("MEND")), copy_id(hlasm_ctx.ids().add("COPY")) {}
 
+	//infers processing status of rest of the statement from instruction field
+	//used for statement providers to correctly provide statement
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const = 0;
 	virtual void process_statement(context::unique_stmt_ptr statement) = 0;
 	virtual void process_statement(context::shared_stmt_ptr statement) = 0;

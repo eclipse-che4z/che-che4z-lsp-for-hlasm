@@ -27,7 +27,7 @@ enum class statement_kind
 	RESOLVED, DEFERRED
 };
 
-//abstract structure representing general hlasm statement
+//abstract structure representing general HLASM statement
 struct hlasm_statement
 {
 	const statement_kind kind;

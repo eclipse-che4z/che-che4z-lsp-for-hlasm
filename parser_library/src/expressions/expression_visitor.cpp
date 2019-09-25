@@ -202,42 +202,69 @@ antlrcpp::Any expression_visitor::visitExpr_p_space_c(hlasm_plugin::parser_libra
 
 antlrcpp::Any expression_visitor::visitData_attribute(hlasm_plugin::parser_library::generated::hlasmparser::Data_attributeContext * ctx)
 {
-	if (ctx->ORDSYMBOL()->getText() == "K" && ctx->var_symbol() && ctx->var_symbol()->vs->access_basic())
+	processing::context_manager mngr(hlasm_ctx_);
+	std::optional<context::SET_t> SET_val;
+	if (ctx->var_symbol())
 	{
-		std::vector<size_t> subscript;						//TODO check expr errors
+		//get subscript
+		std::vector<size_t> subscript;						
 		for (auto tree : ctx->var_symbol()->vs->subscript)
-			subscript.push_back((size_t)processing::context_manager(hlasm_ctx_).evaluate_expression_tree(tree)->get_set_value().to<A_t>()-1);
+			subscript.push_back((size_t)mngr.evaluate_expression_tree(tree)->get_set_value().to<A_t>() - 1);//TODO check expr errors
 
-		auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::K, hlasm_ctx_.get_var_sym(ctx->var_symbol()->vs->access_basic()->name), subscript).access_a();
-		return static_cast<expr_ptr>(make_arith(val));
-	}
-	if (ctx->ORDSYMBOL()->getText() == "N" && ctx->var_symbol() && ctx->var_symbol()->vs->access_basic())
-	{
-		std::vector<size_t> subscript;						//TODO check expr errors
-		for (auto tree : ctx->var_symbol()->vs->subscript)
-			subscript.push_back((size_t)processing::context_manager(hlasm_ctx_).evaluate_expression_tree(tree)->get_set_value().to<A_t>() - 1);
+		//get symbol
+		auto name = mngr.get_symbol_name(ctx->var_symbol()->vs.get());
+		auto symbol = hlasm_ctx_.get_var_sym(name);
 
-		auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::N, hlasm_ctx_.get_var_sym(ctx->var_symbol()->vs->access_basic()->name),subscript).access_a();
-		return static_cast<expr_ptr>(make_arith(val));
-	}
-	if (ctx->ORDSYMBOL()->getText() == "D")
-	{
-		if (ctx->id())
+		//get attr
+		auto attr_value = ctx->ORDSYMBOL()->getText();
+		assert(attr_value.size() == 1);
+		auto attr = context::symbol_attributes::transform_attr(attr_value[0]);
+
+		//get value
+		if (context::symbol_attributes::needs_ordinary(attr))
 		{
-			auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::D, ctx->id()->name).access_b();
-			return static_cast<expr_ptr>(make_logic(val));
+			auto val = mngr.get_var_sym_value(*ctx->var_symbol()->vs).to<context::C_t>();
+			auto new_name = mngr.get_symbol_name(val);
+
+			SET_val.emplace(hlasm_ctx_.get_data_attribute(attr, new_name));
 		}
-		else if (ctx->var_symbol())
-		{
-			auto id = hlasm_ctx_.ids().add(processing::context_manager(hlasm_ctx_).get_var_sym_value(*ctx->var_symbol()->vs).to<context::C_t>());
-			auto val = hlasm_ctx_.get_data_attribute(data_attr_kind::D, id).access_b();
-			return static_cast<expr_ptr>(make_logic(val));
-		}
+		else
+			SET_val.emplace(hlasm_ctx_.get_data_attribute(attr, symbol, subscript));
+
 	}
-	if (ctx->ORDSYMBOL()->getText() == "T")
+	else if (ctx->id())
 	{
-		return static_cast<expr_ptr>(make_char(""));
+		//get attr
+		auto attr_value = ctx->ORDSYMBOL()->getText();
+		assert(attr_value.size() == 1);
+		auto c = attr_value[0];
+
+		//check if valid attr ref
+		if (!(c == 'L' || c == 'I' || c == 'S' || c == 'T' || c == 'D'))
+		{
+			auto ex = make_arith(0);
+			ex->diag = std::make_unique<diagnostic_op>(diagnostic_severity::error, "S101", "Illegal attribute reference - " + attr_value, range());
+			return static_cast<expr_ptr>(ex);
+		}
+		else
+		{
+			//get value
+			SET_val.emplace(hlasm_ctx_.get_data_attribute(context::symbol_attributes::transform_attr(c), ctx->id()->name));
+		}
 	}
+
+	if(SET_val)
+		switch (SET_val->type)
+		{
+		case context::SET_t_enum::A_TYPE:
+			return static_cast<expr_ptr>(make_arith(SET_val->access_a()));
+		case context::SET_t_enum::B_TYPE:
+			return static_cast<expr_ptr>(make_logic(SET_val->access_b()));
+		case context::SET_t_enum::C_TYPE:
+			return static_cast<expr_ptr>(make_char(SET_val->access_c()));
+		default:
+			break;
+		}
 
 	return static_cast<expr_ptr>(make_arith(0));
 }

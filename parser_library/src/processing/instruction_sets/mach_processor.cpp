@@ -46,11 +46,8 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		{
 			auto addr = hlasm_ctx.ord_ctx.align(context::no_align);
 
-			hlasm_ctx.ord_ctx.create_symbol(label_name, addr, 
+			create_symbol(stmt.stmt_range_ref(), label_name, addr,
 				context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr->size_for_alloc / 8));
-
-			if (!addr.spaces.empty())
-				add_dependency(stmt.stmt_range_ref(), label_name, std::move(addr), nullptr);
 		}
 	}
 
@@ -69,7 +66,7 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 	}
 
 	if (!dependencies.empty())
-		add_dependency(stmt.stmt_range_ref(), context::id_storage::empty_id, dependencies, std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+		hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()), dependencies);
 	else
 		check(stmt, hlasm_ctx, checker, *this);
 

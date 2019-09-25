@@ -7,7 +7,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-//helper struct for hlasm code scopes
+//helper struct for HLASM code scopes
 //contains locally valid set symbols, sequence symbols and pointer to macro class (if code is in any) 
 struct code_scope
 {
@@ -21,14 +21,15 @@ struct code_scope
 	macro_invo_ptr this_macro;
 	//the ACTR branch counter
 	A_t branch_counter;
+	//number of changed branch counters
 	size_t branch_counter_change;
-
-	//semantics::symbol_range current_stmt_range;
 	
 	bool is_in_macro() const { return !!this_macro; }
 
-	code_scope(macro_invo_ptr macro_invo) : this_macro(std::move(macro_invo)), branch_counter(4096), branch_counter_change(0) {}
-	code_scope() : branch_counter(4096), branch_counter_change(0) {}
+	code_scope(macro_invo_ptr macro_invo) 
+		: this_macro(std::move(macro_invo)), branch_counter(4096), branch_counter_change(0) {}
+	code_scope() 
+		: branch_counter(4096), branch_counter_change(0) {}
 };
 
 }

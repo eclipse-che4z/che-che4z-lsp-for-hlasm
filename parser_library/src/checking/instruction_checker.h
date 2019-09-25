@@ -4,6 +4,7 @@
 #include <map>
 
 #include "asm_instr_check.h"
+#include "../context/instruction.h"
 
 namespace hlasm_plugin{
 namespace parser_library{

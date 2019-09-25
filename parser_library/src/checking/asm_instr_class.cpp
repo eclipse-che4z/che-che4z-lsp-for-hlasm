@@ -1,5 +1,7 @@
 #include "asm_instr_class.h"
 
+#include <array>
+
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
@@ -249,7 +251,7 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
 	return true;
 }
 
-bool assembler_instruction::check_first_machine_operand(const std::string& input_str, const diagnostic_collector& add_diagnostic) const
+bool assembler_instruction::check_first_machine_operand(const std::string& input_str, const diagnostic_collector& ) const
 {
 	const static std::vector<std::string> machine_operand_options = { "S370", "S370XA", "S370ESA", "S390", "S390E", "ZSERIES", "ZS", "ZSERIES-2",
 		"ZS-2", "ZSERIES-3", "ZS-3", "ZSERIES-4", "ZS-4", "ZSERIES-5", "ZS-5", "ZSERIES-6", "ZS-6", "ZSERIES-7", "ZS-7", "ZSERIES-8", "ZS-8" };

@@ -38,9 +38,11 @@ public:
 
 	void add_lsp_symbol(lsp_symbol symbol);
 	void add_hl_symbol(token_info symbol);
+	void add_operands_hl_symbols();
+	void add_remarks_hl_symbols();
 
 	const instruction_si& peek_instruction();
-	std::variant<statement_si,statement_si_deferred> extract_statement(bool deferred_hint);
+	std::variant<statement_si,statement_si_deferred> extract_statement(bool deferred_hint,range default_range);
 	std::vector<lsp_symbol> extract_lsp_symbols();
 	std::vector<token_info> extract_hl_symbols();
 	void prepare_for_next_statement();

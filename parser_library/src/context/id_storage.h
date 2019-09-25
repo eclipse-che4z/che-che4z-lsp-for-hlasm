@@ -10,7 +10,7 @@ namespace context{
 
 
 //storage for identifiers 
-//changes strings of identifiers to indexes of this storage class for easier work with them
+//changes strings of identifiers to indexes of this storage class for easier and unified work
 class id_storage
 {
 	static const std::string empty_string_;

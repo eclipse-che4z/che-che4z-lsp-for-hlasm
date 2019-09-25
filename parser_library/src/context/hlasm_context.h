@@ -10,7 +10,7 @@
 #include "code_scope.h"
 #include "id_storage.h"
 #include "macro.h"
-#include "ordinary_assembly_context.h"
+#include "ordinary_assembly/ordinary_assembly_context.h"
 #include "instruction.h"
 #include "file_processing_status.h"
 #include "copy_member.h"
@@ -21,8 +21,6 @@ namespace context {
 
 class hlasm_context;
 using ctx_ptr = std::unique_ptr<hlasm_context>;
-
-enum class data_attr_kind { T, L, S, I, K, N, D, O, UNKNOWN };
 
 //class helping to perform semantic analysis of hlasm source code
 //wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one place
@@ -36,9 +34,6 @@ class hlasm_context
 
 	//storage of global variables
 	code_scope::set_sym_storage globals_;
-	//stack of nested scopes
-	std::deque<code_scope> scope_stack_;
-
 	//storage of defined macros
 	macro_storage macros_;
 	//storage of copy members
@@ -48,43 +43,64 @@ class hlasm_context
 	//storage of identifiers
 	id_storage ids_;
 
+	//stack of nested scopes
+	std::deque<code_scope> scope_stack_;
 	code_scope* curr_scope();
 	const code_scope* curr_scope() const;
 
+	//stack of nested copy member invocations
+	std::vector<copy_member_invocation> copy_stack_;
 
+	//all files processes via macro or copy member invocation
 	std::set<std::string> visited_files_;
 
+	//map of all instruction in HLASM
 	const instruction_storage instruction_map_;
 	instruction_storage init_instruction_map();
 
+	//stack of processed files
 	file_proc_stack proc_stack_;
-	std::vector<copy_member_invocation> copy_stack_;
 
+	//value of system variable SYSNDX
 	size_t SYSNDX_;
 	void add_system_vars_to_scope();
 public:
+
 	hlasm_context(std::string file_name = "");
 
+
+	//gets name of file where is open-code located
+	const std::string& opencode_file_name() const;
+	//sets current file position
 	void set_file_position(position pos);
-
+	//pushes new file that is being processed
 	void push_processing_file(std::string file_name, const file_processing_type type);
+	//pops processed file
 	void pop_processing_file();
-
+	//type of currently processed file
 	file_processing_type current_file_proc_type();
+	//accesses visited files
+	const std::set<std::string>& get_visited_files();
 
-	id_storage& ids();
-
-	const instruction_storage& instruction_map() const;
-
+	//gets stack of locations of all currently processed files
 	const std::vector<location> processing_stack() const;
-
+	//gets macro nest
 	const std::deque<code_scope>& scope_stack() const;
-
+	//gets copy nest
 	std::vector<copy_member_invocation>& copy_stack();
-
+	//sets copy nest
 	void apply_copy_frame_stack(std::vector<opencode_sequence_symbol::copy_frame> copy_frame_stack);
 
+	//index storage
+	id_storage& ids();
+
+	//map of instructions
+	const instruction_storage& instruction_map() const;
+
+	//field that accessed ordinary assembly context
 	ordinary_assembly_context ord_ctx;
+	//field that accessed LSP context
+	lsp_ctx_ptr lsp_ctx;
 
 	//return map of global set vars
 	const code_scope::set_sym_storage& globals() const;
@@ -93,19 +109,18 @@ public:
 	//returns empty shared_ptr if there is none in the current scope
 	var_sym_ptr get_var_sym(id_index name);
 
+	//registers sequence symbol
 	void add_sequence_symbol(sequence_symbol_ptr seq_sym);
-
+	//return sequence symbol in current scope
+	//returns nullptr if there is none in the current scope
 	const sequence_symbol* get_sequence_symbol(id_index name) const;
 
 	void set_branch_counter(A_t value);
-
 	A_t get_branch_counter() const;
-
 	void decrement_branch_counter();
 
 	//adds opsyn mnemonic
 	void add_mnemonic(id_index mnemo,id_index op_code);
-
 	//removes opsyn mnemonic
 	void remove_mnemonic(id_index mnemo);
 
@@ -115,8 +130,36 @@ public:
 	//returns anything else if opcode was changed by opsyn
 	id_index get_mnemonic_opcode(id_index mnemo) const;
 
+	//get data attribute value of variable symbol
 	SET_t get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset = {});
+	//get data attribute value of ordinary symbol
 	SET_t get_data_attribute(data_attr_kind attribute, id_index symbol);
+
+	//gets macro storage
+	const macro_storage& macros() const;
+	//checks whether processing is currently in macro
+	bool is_in_macro() const;
+	//returns macro we are currently in or empty shared_ptr if in open code
+	macro_invo_ptr this_macro() const;
+	//registers new macro
+	const macro_definition& add_macro(
+		id_index name,
+		id_index label_param_name, std::vector<macro_arg> params,
+		statement_block definition, copy_nest_storage copy_nests, label_storage labels,
+		location definition_location);
+	//enters a macro with actual params
+	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
+	//leaves current macro
+	void leave_macro();
+
+	//gets copy member storage
+	const copy_member_storage& copy_members();
+	//registers new copy member
+	void add_copy_member(id_index member, statement_block definition, location definition_location);
+	//enters a copy member
+	void enter_copy_member(id_index member);
+	//leaves current copy member
+	void leave_copy_member();
 
 	//creates specified global set symbol
 	template <typename T>
@@ -164,37 +207,6 @@ public:
 		return val;
 	}
 
-	const macro_storage& macros() const;
-
-	bool is_in_macro() const;
-
-	//returns macro we are currently in or empty shared_ptr if in open code
-	macro_invo_ptr this_macro() const;
-
-	const macro_definition& add_macro(
-		id_index name, 
-		id_index label_param_name, std::vector<macro_arg> params,
-		statement_block definition, copy_nest_storage copy_nests, label_storage labels, 
-		location definition_location);
-
-	macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
-
-	void leave_macro();
-	
-	const std::string & opencode_file_name() const;
-
-	const std::set<std::string>& get_visited_files();
-
-	lsp_ctx_ptr lsp_ctx;
-
-	const copy_member_storage& copy_members();
-
-	void add_copy_member(id_index member, statement_block definition, location definition_location);
-
-	void enter_copy_member(id_index member);
-
-	void leave_copy_member();
-	
 };
 
 }

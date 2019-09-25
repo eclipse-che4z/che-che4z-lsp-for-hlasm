@@ -8,11 +8,12 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
+//structure wrapping address providing resolvable interface to it
 struct address_resolver : public resolvable
 {
 	address_resolver(address addr);
 
-	dependency_holder get_dependencies(dependency_solver& solver) const override;
+	dependency_collector get_dependencies(dependency_solver& solver) const override;
 
 	symbol_value resolve(dependency_solver& solver) const override;
 

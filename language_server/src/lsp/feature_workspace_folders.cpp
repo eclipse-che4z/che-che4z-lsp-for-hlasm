@@ -67,7 +67,7 @@ void feature_workspace_folders::initialize_feature(const json & initialize_param
 }
 
 
-void feature_workspace_folders::on_did_change_workspace_folders(const json & id, const json & params)
+void feature_workspace_folders::on_did_change_workspace_folders(const json &, const json & params)
 {
 	const auto & added = params["event"]["added"];
 	const auto & removed = params["event"]["removed"];

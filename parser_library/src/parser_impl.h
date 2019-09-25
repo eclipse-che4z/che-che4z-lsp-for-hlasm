@@ -51,6 +51,7 @@ protected:
 	bool is_data_attr();
 	bool is_var_def();
 	self_def_t parse_self_def_term(const std::string& option, const std::string& value,range term_range);
+	context::data_attr_kind get_attribute(std::string attr_data, range data_range);
 	context::id_index parse_identifier(std::string value, range id_range);
 
 	void process_instruction();

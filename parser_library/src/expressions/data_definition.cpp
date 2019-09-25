@@ -1,5 +1,6 @@
 #include "data_definition.h"
 #include "mach_expr_term.h"
+#include "../checking/data_definition/data_def_type_base.h"
 #include <stdexcept>
 #include <set>
 
@@ -15,17 +16,21 @@ data_definition data_definition::create(std::string format, mach_expr_list exprs
 	return p.parse();
 }
 
-void insert_deps(context::dependency_holder& into, context::dependency_solver& solver, const context::dependable * from)
+void insert_deps(context::dependency_collector& into, context::dependency_solver& solver, const context::dependable * from)
 {
 	if (from)
 		into = into + from->get_dependencies(solver);
 }
 
-context::dependency_holder data_definition::get_dependencies(context::dependency_solver& solver) const
+constexpr char V_type = 'V';
+
+context::dependency_collector data_definition::get_dependencies(context::dependency_solver& solver) const
 {
-	context::dependency_holder conjuction;
-	
-	insert_deps(conjuction, solver, nominal_value.get());
+	context::dependency_collector conjuction;
+	//In V type, the symbols are external, it is not defined in current program and does not
+	//have any dependencies.
+	if(type != V_type)
+		insert_deps(conjuction, solver, nominal_value.get());
 	insert_deps(conjuction, solver, dupl_factor.get());
 	insert_deps(conjuction, solver, length.get());
 	insert_deps(conjuction, solver, scale.get());
@@ -33,10 +38,113 @@ context::dependency_holder data_definition::get_dependencies(context::dependency
 	return conjuction;
 }
 
+context::dependency_collector data_definition::get_length_dependencies(context::dependency_solver& solver) const
+{
+	context::dependency_collector conjuction;
+	insert_deps(conjuction, solver, dupl_factor.get());
+	insert_deps(conjuction, solver, length.get());
+	return conjuction;
+}
+
+const checking::data_def_type* data_definition::access_data_def_type() const
+{
+	return checking::data_def_type::access_data_def_type(type, extension);
+}
+
+context::alignment data_definition::get_alignment() const
+{
+	auto def_type = access_data_def_type();
+	if (def_type)
+		return def_type->get_alignment(length != nullptr);
+	else
+		return context::no_align;
+}
+
+bool data_definition::expects_single_symbol() const
+{
+	auto def_type = access_data_def_type();
+	if (def_type)
+		return def_type->expects_single_symbol();
+	else
+		return false;
+}
+
+bool data_definition::check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const
+{
+	if (!expects_single_symbol() || !nominal_value)
+		return true;
+	if (!nominal_value->access_exprs())
+		return true;
+
+	bool ret = true;
+	for (const auto& expr_or_addr : nominal_value->access_exprs()->exprs)
+	{
+
+		if (!std::holds_alternative<mach_expr_ptr>(expr_or_addr))
+		{
+			add_diagnostic(diagnostic_op::error_D030(
+				{ std::get<address_nominal>(expr_or_addr).base->get_range().start, std::get<address_nominal>(expr_or_addr).base->get_range().end },
+				&type));
+			ret = false;
+			continue;
+		}
+		const mach_expression* expr = std::get<mach_expr_ptr>(expr_or_addr).get();
+		auto symbol = dynamic_cast<const mach_expr_symbol*>(expr);
+		if (!symbol)
+		{
+			add_diagnostic(diagnostic_op::error_D030(expr->get_range(), &type));
+			ret = false;
+		}
+	}
+	return ret;
+}
+
+std::vector<context::id_index> data_definition::get_single_symbol_names() const
+{
+	//expects that check_single_symbol_ok returned true
+	assert(check_single_symbol_ok(diagnostic_collector()));
+	
+	std::vector<context::id_index> symbols;
+	symbols.reserve(nominal_value->access_exprs()->exprs.size());
+	for (const auto& expr_or_addr : nominal_value->access_exprs()->exprs)
+	{
+		const mach_expression* expr = std::get<mach_expr_ptr>(expr_or_addr).get();
+		auto symbol = dynamic_cast<const mach_expr_symbol*>(expr);
+		symbols.push_back(symbol->value);
+	}
+	return symbols;
+}
+
+void data_definition::assign_location_counter(context::address loctr_value)
+{
+	if (dupl_factor) dupl_factor->fill_location_counter(loctr_value);
+	if (program_type) program_type->fill_location_counter(loctr_value);
+	if (length) length->fill_location_counter(loctr_value);
+	if (scale) scale->fill_location_counter(loctr_value);
+	if (exponent) exponent->fill_location_counter(loctr_value);
+	if (nominal_value && nominal_value->access_exprs())
+	{
+		for (auto& entry : nominal_value->access_exprs()->exprs)
+		{
+			if (std::holds_alternative<mach_expr_ptr>(entry))
+				std::get<mach_expr_ptr>(entry)->fill_location_counter(loctr_value);
+			else
+			{
+				std::get<address_nominal>(entry).base->fill_location_counter(loctr_value);
+				std::get<address_nominal>(entry).displacement->fill_location_counter(loctr_value);
+			}
+		}
+	}
+}
+
 void data_definition::collect_diags() const {}
 
 data_definition::parser::parser(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
-	: format_(std::move(format)), exprs_(std::move(exprs)), nominal_(std::move(nominal)), pos_(begin), p_(0), exprs_i_(0) {}
+	: format_(std::move(format)), exprs_(std::move(exprs)), nominal_(std::move(nominal)), pos_(begin), p_(0), exprs_i_(0)
+{
+	for (char& c : format_)
+		c = (char) toupper(c);
+}
 
 bool is_number_char(char c)
 {
@@ -157,15 +265,15 @@ mach_expr_ptr data_definition::parser::parse_modifier_num_or_expr()
 	else if (format_[p_] == nominal_placeholder[0])
 	{
 		auto exprs = nominal_->access_exprs();
-		if (exprs && exprs->exprs.size() == 1)
+		if (exprs && exprs->exprs.size() == 1 && std::holds_alternative<mach_expr_ptr>(exprs->exprs[0]))
 		{
 			//it is possible, that a modifier has been parsed as nominal value,
 			//if nominal value is not present at all and duplication factor is 0
+			mach_expr_ptr& modifier = std::get<mach_expr_ptr>(exprs->exprs[0]);
 			++p_;
-			update_position(*exprs->exprs[0]);
+			update_position(*modifier);
 			nominal_parsed_ = true;
-			return std::move(exprs->exprs[0]);
-			
+			return std::move(modifier);
 		}
 		else
 		{
@@ -258,7 +366,7 @@ data_definition data_definition::parser::parse()
 	if (is_type_extension(format_[p_]))
 	{
 		result_.extension = format_[p_];
-		result_.type_range = { pos_, { pos_.line, pos_.column + 1 } };
+		result_.extension_range = { pos_, { pos_.line, pos_.column + 1 } };
 		++p_;
 		update_position_by_one();
 	}
@@ -273,12 +381,18 @@ data_definition data_definition::parser::parse()
 		{
 			result_.nominal_value = std::move(nominal_);
 			++p_;
+			break;
 		}
 		else
 		{
-			result_.add_diagnostic(diagnostic_op::error_D006({ pos_, {pos_.line, pos_.column + 1} }));
-			++p_;
-			update_position_by_one();
+			auto begin_pos = pos_;
+			while (p_ < format_.size() && !is_modifier_or_prog(format_[p_]) && format_[p_] != nominal_placeholder[0])
+			{
+				++p_;
+				update_position_by_one();
+			}
+
+			result_.add_diagnostic(diagnostic_op::error_D006({ begin_pos, pos_ }));
 		}
 	}
 

@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "../diagnosable_impl.h"
-#include "../context/dependable.h"
+#include "../context/ordinary_assembly/dependable.h"
 
 
 namespace hlasm_plugin::parser_library::expressions

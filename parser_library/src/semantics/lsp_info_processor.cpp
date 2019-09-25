@@ -70,10 +70,10 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 			std::stringstream documentation(" ");
 			std::stringstream detail("");
 
-			int min_op = asm_instr.second.min_operands;
-			int max_op = asm_instr.second.max_operands;
+			//int min_op = asm_instr.second.min_operands;
+			//int max_op = asm_instr.second.max_operands;
 			std::string description = asm_instr.second.description;
-			bool first = true;
+			
 
 			deferred_instruction_.value = description;
 			detail << asm_instr.first << "   " << description;
@@ -95,6 +95,7 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 			auto mach_operands = instruction::machine_instructions[instr_name]->operands;
 			auto no_optional = instruction::machine_instructions[instr_name]->no_optional;
 			bool first = true;
+			
 
 			auto replaces = mnemonic_instr.second.replaced;
 
@@ -380,6 +381,7 @@ bool lsp_info_processor::get_text_(const position& pos, const definitions& symbo
 
 void lsp_info_processor::process_ord_sym_(const definition & symbol)
 {
+	(symbol);
 	/* TODO ORD SYMS
 	*/
 }

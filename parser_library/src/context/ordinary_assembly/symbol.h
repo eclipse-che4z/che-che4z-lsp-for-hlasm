@@ -4,7 +4,6 @@
 #include <variant>
 #include <limits>
 
-#include "id_storage.h"
 #include "symbol_attributes.h"
 #include "address.h"
 
@@ -12,7 +11,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-//defines kind of symbol, absolute or relocatable
+//defines kind of symbol, absolute or relocatable or undefined
 enum class symbol_kind
 {
 	UNDEF = 0, ABS = 1, RELOC = 2
@@ -54,6 +53,7 @@ public:
 	symbol();
 
 	const symbol_value& value() const;
+	const symbol_attributes& attributes() const;
 
 	symbol_kind kind() const;
 

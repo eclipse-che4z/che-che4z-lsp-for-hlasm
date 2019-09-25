@@ -154,15 +154,8 @@ instruction_statement
 ordinary_instruction_statement: label SPACE instruction operands_and_remarks
 {
 	collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
-	for (auto && operand : collector.current_operands().value)
-	{
-		if(operand)
-			collector.add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
-	}
-	for (auto remark : collector.current_remarks().value)
-	{
-		collector.add_hl_symbol(token_info(remark, hl_scopes::remark));
-	}
+	collector.add_operands_hl_symbols();
+	collector.add_remarks_hl_symbols();
 };
 
 
@@ -194,7 +187,7 @@ id_ch_c returns [std::string value]
 
 id returns [id_index name, id_index using_qualifier]
 	: id_no_dot									{$name = $id_no_dot.name;}
-	| id_no_dot dot_ id_no_dot					{$name = $id_no_dot.name; $using_qualifier = $id_no_dot.name; };
+	| q=id_no_dot dot_ n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
 
 id_no_dot returns [id_index name = id_storage::empty_id]
 	: ORDSYMBOL id_ch_c

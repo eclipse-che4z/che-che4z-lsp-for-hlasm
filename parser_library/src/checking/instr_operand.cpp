@@ -1,5 +1,7 @@
 
 #include "instr_operand.h"
+
+#include "data_definition/data_def_type_base.h"
 #include <algorithm>
 
 using namespace hlasm_plugin::parser_library;
@@ -16,7 +18,7 @@ machine_operand::machine_operand()
 {
 }
 
-bool machine_operand::is_operand_corresponding(int operand, parameter param) const
+bool machine_operand::is_operand_corresponding(int operand, parameter param)
 {
 	if (param.is_signed && is_size_corresponding_signed(operand, param.size))
 		return true;
@@ -25,18 +27,18 @@ bool machine_operand::is_operand_corresponding(int operand, parameter param) con
 	return false;
 }
 
-bool machine_operand::is_size_corresponding_signed(int operand, int size) const
+bool machine_operand::is_size_corresponding_signed(int operand, int size)
 {
 	auto boundary = 1ll << (size - 1);
 	return operand < boundary && operand >= -boundary;
 }
 
-bool machine_operand::is_size_corresponding_unsigned(int operand, int size) const
+bool machine_operand::is_size_corresponding_unsigned(int operand, int size)
 {
 	return operand >= 0 && operand <= (1ll << size) - 1;
 }
 
-bool machine_operand::is_simple_operand(const machine_operand_format & operand) const
+bool machine_operand::is_simple_operand(const machine_operand_format & operand)
 {
 	return (operand.first.is_signed == false && operand.first.size == 0 && operand.second.is_signed == false && operand.second.size == 0
 		&& operand.first.type == machine_operand_type::NONE && operand.second.type == machine_operand_type::NONE);
@@ -184,26 +186,26 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
 	return diagnostic_op::error_I999(instr_name, stmt_range);
 }
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand() : operand_identifier(""), value(0), is_default(true) {}
+one_operand::one_operand() : operand_identifier(""), value(0), is_default(true) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier, int value) : operand_identifier(operand_identifier), value(value), is_default(false) {}
+one_operand::one_operand(std::string operand_identifier, int value) : operand_identifier(operand_identifier), value(value), is_default(false) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier) : operand_identifier(operand_identifier), value(0), is_default(true) {}
+one_operand::one_operand(std::string operand_identifier) : operand_identifier(operand_identifier), value(0), is_default(true) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(int value) :  operand_identifier(std::to_string(value)), value(value), is_default(false) {}
+one_operand::one_operand(int value) :  operand_identifier(std::to_string(value)), value(value), is_default(false) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(std::string operand_identifier, range range) : operand(range), operand_identifier(operand_identifier), value(0), is_default(true) {}
+one_operand::one_operand(std::string operand_identifier, range range) : operand(range), operand_identifier(operand_identifier), value(0), is_default(true) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(int value, range range) : operand(range), operand_identifier(std::to_string(value)), value(value), is_default(false) {}
+one_operand::one_operand(int value, range range) : operand(range), operand_identifier(std::to_string(value)), value(value), is_default(false) {}
 
-hlasm_plugin::parser_library::checking::one_operand::one_operand(const one_operand& op)
+one_operand::one_operand(const one_operand& op)
 {
 	operand_identifier = op.operand_identifier;
 	value = op.value;
 	is_default = op.is_default;
 };
 
-bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const
+bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& ) const
 {
 	if (!is_simple_operand(to_check))
 	{
@@ -266,12 +268,6 @@ bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_ch
 	return true;
 }
 
-operand::operand()
-{
-}
-
-hlasm_plugin::parser_library::checking::operand::operand(range operand_range) : operand_range(operand_range) {}
-
 empty_operand::empty_operand()
 {
 }
@@ -330,10 +326,6 @@ std::string parameter::to_string() const
 	else
 		ret_val += "U";
 	return ret_val;
-}
-
-asm_operand::asm_operand()
-{
 }
 
 std::string machine_operand_format::to_string() const

@@ -40,6 +40,9 @@ private:
 	void process_DC(rebuilt_statement stmt);
 	void process_DS(rebuilt_statement stmt);
 	void process_COPY(rebuilt_statement stmt);
+
+	template<checking::data_instr_type instr_type>
+	void process_data_instruction(rebuilt_statement stmt);
 };
 
 }

@@ -255,6 +255,8 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
 		return var_symbol ? var_symbol->count(offset) : 0;
 	case hlasm_plugin::parser_library::context::data_attr_kind::N:
 		return var_symbol ? var_symbol->number(offset) : 0;
+	case hlasm_plugin::parser_library::context::data_attr_kind::T:
+		return "";
 	default:
 		break;
 	}
@@ -268,6 +270,8 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbo
 	{
 	case hlasm_plugin::parser_library::context::data_attr_kind::D:
 		return ord_ctx.symbol_defined(symbol);
+	case hlasm_plugin::parser_library::context::data_attr_kind::T:
+		return "";
 	default:
 		break;
 	}
@@ -347,8 +351,6 @@ void hlasm_context::add_copy_member(id_index member, statement_block definition,
 
 void hlasm_context::enter_copy_member(id_index member_name)
 {
-	//assert(!is_in_macro());
-
 	auto tmp = copy_members_.find(member_name);
 	if (tmp == copy_members_.end())
 		throw std::runtime_error("unknown copy member");

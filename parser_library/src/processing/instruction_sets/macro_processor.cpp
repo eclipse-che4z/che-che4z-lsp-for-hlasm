@@ -174,7 +174,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 
 	for (const auto& op : statement.operands_ref().value)
 	{
-		if (op->type == semantics::operand_type::EMPTY || op->type == semantics::operand_type::UNDEF)
+		if (op->type == semantics::operand_type::EMPTY)
 		{
 			args.symbolic_params.push_back({ std::make_unique<context::macro_param_data_dummy>(),nullptr });
 			continue;

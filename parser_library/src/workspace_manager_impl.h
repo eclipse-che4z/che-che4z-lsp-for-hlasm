@@ -11,7 +11,7 @@ namespace hlasm_plugin::parser_library
 class workspace_manager::impl : public diagnosable_impl
 {
 public:
-	impl(std::atomic<bool>* cancel = nullptr) : file_manager_(cancel), implicit_workspace_({ file_manager_ }), cancel_(cancel) {}
+	impl(std::atomic<bool>* cancel = nullptr) : file_manager_(cancel), cancel_(cancel), implicit_workspace_({ file_manager_ }) {}
 	impl(const impl &) = delete;
 	impl & operator= (const impl &) = delete;
 

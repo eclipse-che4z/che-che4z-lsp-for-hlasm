@@ -1,3 +1,4 @@
+#include <cctype>
 #include "parser_impl.h"
 #include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
@@ -5,6 +6,7 @@
 #include "expressions/arithmetic_expression.h"
 #include "processing/statement.h"
 #include "processing/context_manager.h"
+
 
 using namespace hlasm_plugin::parser_library;
 
@@ -67,7 +69,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	for (size_t i = 0; i < line.operands.size(); i++)
 	{
 		if (!line.operands[i])
-			line.operands[i] = std::make_unique<semantics::undefined_operand>(field_range.original_range);
+			line.operands[i] = std::make_unique<semantics::empty_operand>(field_range.original_range);
 	}
 
 	range op_range = line.operands.empty() ?
@@ -143,6 +145,20 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
 	return 0;
 }
 
+context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range data_range)
+{
+	if (attr_data.size() == 1)
+	{
+		auto c = (char)std::toupper(attr_data[0]);
+		if (c == 'L' || c == 'I' || c == 'S' || c== 'T')
+			return context::symbol_attributes::transform_attr(c);
+	}
+
+	add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
+
+	return context::data_attr_kind::UNKNOWN;
+}
+
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
 	if (value.size() > 63)
@@ -162,7 +178,7 @@ void parser_impl::process_instruction()
 void parser_impl::process_statement()
 {
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
-	auto stmt(collector.extract_statement(hint));
+	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
 
 	context::unique_stmt_ptr ptr;
 

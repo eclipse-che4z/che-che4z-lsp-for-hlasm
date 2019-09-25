@@ -98,6 +98,8 @@ struct diagnostic_op
 
 	static diagnostic_op error_A001_complex_op_expected(const std::string & instr_name, const range& range);
 
+	static diagnostic_op error_A004_data_def_expected();
+	
 	static diagnostic_op error_A010_minimum(const std::string & instr_name, size_t min_params, const range& range);
 
 	static diagnostic_op error_A011_exact(const std::string & instr_name, size_t number_of_params, const range& range);
@@ -370,6 +372,37 @@ struct diagnostic_op
 
 	static diagnostic_op error_M101(const std::string & instr_name, const range& range);
 
+	static diagnostic_op error_D001(const range& range);
+	static diagnostic_op error_D002(const range& range);
+	static diagnostic_op error_D003(const range& range);
+	static diagnostic_op error_D004(const range& range);
+	static diagnostic_op error_D005(const range& range);
+	static diagnostic_op error_D006(const range& range);
+	static diagnostic_op error_D007(const range& range, const std::string & type);
+	static diagnostic_op error_D008(const range& range, const std::string & type, const std::string& modifier, int min, int max);
+	static diagnostic_op error_D009(const range& range, const std::string & type, const std::string& modifier);
+	static diagnostic_op error_D010(const range& range, const std::string & type);
+	static diagnostic_op error_D011(const range& range);
+	static diagnostic_op error_D012(const range& range);
+	static diagnostic_op error_D013(const range& range, const std::string & type);
+	static diagnostic_op error_D014(const range& range, const std::string& type);
+	static diagnostic_op error_D015(const range& range, const std::string& type);
+	static diagnostic_op error_D016(const range& range);
+	static diagnostic_op error_D017(const range& range, const std::string& type);
+	static diagnostic_op error_D018(const range& range, const std::string& type);
+	static diagnostic_op error_D019(const range& range);
+	static diagnostic_op error_D020(const range& range, const std::string& type);
+	static diagnostic_op error_D021(const range& range, const std::string& type);
+	static diagnostic_op error_D022(const range& range);
+	static diagnostic_op error_D023(const range& range);
+	static diagnostic_op error_D024(const range& range, const std::string& type);
+	static diagnostic_op warn_D025(const range& range, const std::string& type, const std::string& modifier);
+	static diagnostic_op error_D026(const range& range);
+	static diagnostic_op error_D027(const range& range);
+	static diagnostic_op error_D028(const range& range);
+	static diagnostic_op error_D029(const range& range);
+	static diagnostic_op error_D030(const range& range, const std::string& type);
+
 	static diagnostic_op error_M102(const std::string & instr_name, const range& range);
 
 	static diagnostic_op error_M103(const std::string & instr_name, const range& range);
@@ -484,6 +517,8 @@ struct diagnostic_op
 	static diagnostic_op error_E063(const range& range);
 
 	static diagnostic_op warning_W010(const std::string& message, const range& range);
+
+	static diagnostic_op warning_W011(const range& range);
 		
 	static diagnostic_op error_EQU1(const range& range);
 
@@ -492,13 +527,6 @@ struct diagnostic_op
 	static diagnostic_op error_ME001(const range& range);
 
 	static diagnostic_op error_ME002(const range& range);
-
-	static diagnostic_op error_D001(const range& range);
-	static diagnostic_op error_D002(const range& range);
-	static diagnostic_op error_D003(const range& range);
-	static diagnostic_op error_D004(const range& range);
-	static diagnostic_op error_D005(const range& range);
-	static diagnostic_op error_D006(const range& range);
 };
 
 struct range_uri_s
@@ -541,6 +569,7 @@ public:
 	std::vector<diagnostic_related_info_s> related;
 
 	static diagnostic_s error_S100(const std::string& filename, const std::string& message, const range& range);
+	static diagnostic_s error_S101(const std::string& filename, const std::string& message, const range& range);
 
 	static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
 

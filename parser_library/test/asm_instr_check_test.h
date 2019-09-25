@@ -149,7 +149,6 @@ public:
 		test_data_true_one.push_back(&data_second_val);
 		test_data_true_one.push_back(&data_third_val);
 		test_data_true_one.push_back(&data_fourth_val);
-		test_data_true_two.push_back(&data_fifth_val);
 
 		// drop
 
@@ -768,7 +767,6 @@ protected:
 	std::vector<const checking::operand*> test_equ_true_two = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_exitctl_true = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_exitctl_false_one = std::vector<const checking::operand*>();
-	std::vector<const checking::operand*> test_exitctl_false_two = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_extrn_true_one = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_extrn_true_two = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_ictl_true_one = std::vector<const checking::operand*>();
@@ -918,14 +916,6 @@ TEST_F(instruction_test, copy)
 	EXPECT_FALSE(checker.check("COPY", test_no_operand_true, range(), collector));
 	EXPECT_TRUE(checker.check("COPY", test_copy_true, range(), collector));
 	EXPECT_FALSE(checker.check("COPY", test_acontrol_true, range(), collector));
-}
-
-TEST_F(instruction_test, data)
-{
-	EXPECT_FALSE(checker.check("DXD", test_no_operand_true, range(), collector));
-	EXPECT_FALSE(checker.check("DC", test_no_operand_true, range(), collector));
-	EXPECT_TRUE(checker.check("DXD", test_data_true_one, range(), collector));
-	EXPECT_TRUE(checker.check("DXD", test_data_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, drop)

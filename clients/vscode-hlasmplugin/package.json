@@ -114,6 +114,16 @@
               "hex": "#5fffff"
             },
             {
+              "id": "data_def_type",
+              "description": "Color for data definition type character",
+              "hex": "#6699ff"
+            },
+            {
+              "id": "data_def_extension",
+              "description": "Color for data definition type extension character",
+              "hex": "#6699AA"
+            },
+            {
               "id": "remark",
               "description": "Color for remarks",
               "hex": "#06aed8"

@@ -11,7 +11,7 @@ namespace processing {
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
 
-//interface for class parsing deferred statement fields
+//interface for objects parsing deferred statement fields
 class statement_fields_parser
 {
 public:

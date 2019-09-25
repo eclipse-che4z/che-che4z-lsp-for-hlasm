@@ -7,6 +7,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
+//data to start macrodef_processor
 struct macrodef_start_data 
 {
 	bool is_external;
@@ -16,6 +17,7 @@ struct macrodef_start_data
 	macrodef_start_data(context::id_index external_name) :is_external(true), external_name(external_name) {}
 };
 
+//data holding info about prototype statement of a macro
 struct macrodef_prototype
 {
 	macrodef_prototype()
@@ -27,6 +29,7 @@ struct macrodef_prototype
 	std::vector<context::macro_arg> symbolic_params;
 };
 
+//result of macrodef_processor
 struct macrodef_processing_result
 {
 	macrodef_prototype prototype;

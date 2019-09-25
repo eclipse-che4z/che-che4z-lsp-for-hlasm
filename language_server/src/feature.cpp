@@ -41,7 +41,7 @@ std::string feature::uri_to_path(const std::string & uri)
 		auth_path = path.to_string();
 
 #ifdef _WIN32
-		auth_path[0] = tolower(auth_path[0]);
+		auth_path[0] = (char) tolower(auth_path[0]);
 #endif
 	}
 

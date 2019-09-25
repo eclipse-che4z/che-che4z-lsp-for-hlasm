@@ -51,9 +51,14 @@ mach_term returns [mach_expr_ptr m_e]
 	{ 
 		$m_e = std::make_unique<mach_expr_location_counter>( provider.get_range( $asterisk.ctx));
 	}
-	| data_attribute		
+	| {is_data_attr()}? mach_data_attribute		
 	{
-		$m_e = std::make_unique<mach_expr_constant>(0, provider.get_range( $data_attribute.ctx));
+		auto rng = provider.get_range( $mach_data_attribute.ctx);
+		auto attr = get_attribute(std::move($mach_data_attribute.attribute),rng);
+		if(attr == data_attr_kind::UNKNOWN || $mach_data_attribute.data == nullptr)
+			$m_e = std::make_unique<mach_expr_default>(rng);
+		else
+			$m_e = std::make_unique<mach_expr_data_attr>($mach_data_attribute.data,attr,rng);
 	}
 	| id
 	{
@@ -67,15 +72,22 @@ mach_term returns [mach_expr_ptr m_e]
 	{
 		$m_e = std::make_unique<mach_expr_constant>($self_def_term.value, provider.get_range( $self_def_term.ctx));
 	}
-	| equals_ data_def
+	| literal
 	{
-		$m_e = std::make_unique<mach_expr_constant>(0, provider.get_range( $equals_.ctx->getStart(), $data_def.ctx->getStop()));
+		$m_e = std::make_unique<mach_expr_constant>(0, provider.get_range($literal.ctx));
 	};
 
 
-data_attribute // returns [expr_ptr e]
-	: ORDSYMBOL ATTR equals_ data_def				
-	| ORDSYMBOL ATTR var_symbol		
+literal
+	: equals_ data_def;
+
+mach_data_attribute returns [std::string attribute, id_index data = nullptr]
+	: ORDSYMBOL ATTR literal	
+	| ORDSYMBOL ATTR id				{$attribute = $ORDSYMBOL->getText(); $data = $id.name;};
+
+data_attribute
+	: ORDSYMBOL ATTR literal
+	| ORDSYMBOL ATTR var_symbol
 	| ORDSYMBOL ATTR id;
 
 

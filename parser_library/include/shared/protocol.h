@@ -27,7 +27,7 @@ namespace semantics {
 	struct position_uri_s;
 	struct completion_list_s;
 	struct highlighting_info;
-	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand };
+	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand, data_def_type, data_def_extension };
 }
 struct PARSER_LIBRARY_EXPORT completion_item
 {

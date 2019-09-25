@@ -15,6 +15,7 @@ namespace processing {
 class context_manager : public diagnosable_ctx
 {
 public:
+	//wrapped context
 	context::hlasm_context& hlasm_ctx;
 
 	context_manager(context::hlasm_context& hlasm_ctx);

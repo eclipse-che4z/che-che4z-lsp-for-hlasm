@@ -19,6 +19,11 @@ diagnostic_op diagnostic_op::error_A001_complex_op_expected(const std::string & 
 	return diagnostic_op(diagnostic_severity::error, "A001", "Error at " + instr_name + ": operand in a form identifier(parameters) expected", range);
 }
 
+diagnostic_op diagnostic_op::error_A004_data_def_expected()
+{
+	return diagnostic_op(diagnostic_severity::error, "A004", "Data definition operand expected");
+}
+
 diagnostic_op diagnostic_op::error_A010_minimum(const std::string & instr_name, size_t min_params, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "A010", "Error at " + instr_name + " instruction: number of operands has to be at least " + std::to_string(min_params), range);
@@ -770,6 +775,163 @@ diagnostic_op diagnostic_op::error_M134(const std::string & instr_name, long lon
 	std::to_string(from) + " and " + std::to_string(to), range);
 }
 
+diagnostic_op diagnostic_op::error_D001(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D001", "Integer out of range", range);
+}
+
+diagnostic_op diagnostic_op::error_D002(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D002", "Expected an integer", range);
+}
+
+diagnostic_op diagnostic_op::error_D003(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D003", "Expected an integer or an expression after modifier", range);
+}
+
+diagnostic_op diagnostic_op::error_D004(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
+}
+
+diagnostic_op diagnostic_op::error_D005(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
+}
+
+diagnostic_op diagnostic_op::error_D006(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D006", "Unexpected character. Nominal value or modifier expected", range);
+}
+
+diagnostic_op diagnostic_op::error_D007(const range& range, const std::string & type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D007", "Bit length not allowed with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D008(const range& range, const std::string & type, const std::string & modifier, int min, int max)
+{
+	if(min == max)
+		return diagnostic_op(diagnostic_severity::error, "D008", "The " + modifier + " modifier of type " + type +
+			" must be " + std::to_string(min), range);
+	else
+		return diagnostic_op(diagnostic_severity::error, "D008", "The " + modifier + " modifier of type " + type +
+			" must be between " + std::to_string(min) + " and " + std::to_string(max), range);
+}
+
+diagnostic_op diagnostic_op::error_D009(const range& range, const std::string& type, const std::string& modifier)
+{
+	return diagnostic_op(diagnostic_severity::error, "D009", "The " + modifier + " modifier not allowed with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D010(const range& range, const std::string & type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D010", "Wrong format of nominal value of type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D011(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D011", "Duplication factor must be non-negative", range);
+}
+
+diagnostic_op diagnostic_op::error_D012(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D012", "Unknown type of data definition", range);
+}
+
+diagnostic_op diagnostic_op::error_D013(const range& range, const std::string & type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D013", "Invalid type extension for type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D014(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D014", "The length modifier must be even with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D015(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D015", "Only hexadecimal digits allowed in nominal value of type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D016(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D016", "Nominal value expected", range);
+}
+
+diagnostic_op diagnostic_op::error_D017(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D017", "Nominal value enclosed in parentheses expected with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D018(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D018", "Nominal value enclosed in apostrophes expected with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D019(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D019", "Name of a symbol expected", range);
+}
+
+diagnostic_op diagnostic_op::error_D020(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D020", "Address in form D(B) is not allowed with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D021(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D021", "Only lengths 3, 4 or 8 are allowed with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D022(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D022", "Displacement out of range", range);
+}
+
+diagnostic_op diagnostic_op::error_D023(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D023", "Base register must be between 0 and 15", range);
+}
+
+diagnostic_op diagnostic_op::error_D024(const range& range, const std::string& type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D024", "With type " + type + " only lengths 2 to 4 and 8 are allowed", range);
+}
+
+diagnostic_op diagnostic_op::warn_D025(const range& range, const std::string& type, const std::string& modifier)
+{
+	return diagnostic_op(diagnostic_severity::warning, "D025", "The " + modifier + " modifier is ignored with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::error_D026(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D026", "Invalid round mode", range);
+}
+
+diagnostic_op diagnostic_op::error_D027(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D027", "Graphic constant must be enclosed in SI '<' and SO '>'", range);
+}
+
+diagnostic_op diagnostic_op::error_D028(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D028", "Data definition operand is longer than 2^31 bytes", range);
+
+}
+
+diagnostic_op diagnostic_op::error_D029(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "D029", "Data definition operands are longer than 2^31 bytes", range);
+}
+
+diagnostic_op diagnostic_op::error_D030(const range& range, const std::string & type)
+{
+	return diagnostic_op(diagnostic_severity::error, "D030", "Only single symbol expected with type " + type, range);
+}
+
+
 diagnostic_op diagnostic_op::error_M135(const std::string & instr_name, long long from, long long to, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "M135", "Error at " + instr_name + " instruction: value of the address operand displacement register parameter must be between " +
@@ -1000,6 +1162,11 @@ diagnostic_op diagnostic_op::warning_W010(const std::string& message, const rang
 	return diagnostic_op(diagnostic_severity::warning, "W010", message + " not expected", range);
 }
 
+diagnostic_op diagnostic_op::warning_W011(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::warning, "W011", "Wrong type of constant for S or I attribute reference, default is 0", range);
+}
+
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);
@@ -1039,42 +1206,17 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
 	return diagnostic_s(file_name, {}, diagnostic_severity::warning,
 		"W0004",
 		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
-
 }
 
-diagnostic_op diagnostic_op::error_D001(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D001", "Integer out of range", range);
-}
-
-diagnostic_op diagnostic_op::error_D002(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D002", "Expected an integer", range);
-}
-
-diagnostic_op diagnostic_op::error_D003(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D003", "Expected an integer or an expression after modifier", range);
-}
-
-diagnostic_op diagnostic_op::error_D004(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
-}
-
-diagnostic_op diagnostic_op::error_D005(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
-}
-
-diagnostic_op diagnostic_op::error_D006(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "D006", "Unexpected character. Nominal value or modifier expected", range);
-}
 
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {
 	return diagnostic_s(filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
+}
+
+diagnostic_s diagnostic_s::error_S101(const std::string& filename, const std::string& message, const range & range)
+{
+	return diagnostic_s(filename, range, diagnostic_severity::error, "S101", "Illegal attribute reference - " + message, {});
 }
 
 
