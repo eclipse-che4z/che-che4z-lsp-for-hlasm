@@ -136,6 +136,10 @@ struct assembler_instruction
 	int min_operands;
 	int max_operands; // -1 in case there is no max value
 	bool has_ord_symbols;
+	std::string description; // used only for hover and completion
+
+	assembler_instruction(int min_operands, int max_operands, bool has_ord_symbols, std::string description) :
+		min_operands(min_operands), max_operands(max_operands), has_ord_symbols(has_ord_symbols), description(std::move(description)) {};
 };
 
 //static class holding string names of instructions with theirs additional info

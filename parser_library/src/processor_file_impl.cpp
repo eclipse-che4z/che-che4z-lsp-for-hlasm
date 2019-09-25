@@ -85,6 +85,8 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 	//collect semantic info
 	parse_info_updated_ = true;
 
+	if (cancel_ && *cancel_)
+		return false;
 	return true;
 }
 

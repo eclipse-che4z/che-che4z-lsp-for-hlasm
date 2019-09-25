@@ -15,63 +15,76 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 	{
 		for (const auto& machine_instr : instruction::machine_instructions)
 		{
-			std::stringstream ss(" ");
+			std::stringstream documentation(" ");
+			std::stringstream detail(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
+			std::stringstream autocomplete(""); // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
 			for (size_t i = 0; i < machine_instr.second->operands.size(); i++)
 			{
 				const auto& op = machine_instr.second->operands[i];
 				if (machine_instr.second->no_optional == 1 && machine_instr.second->operands.size() - i == 1)
 				{
-					ss << "[";
+					autocomplete << " [";
+					detail << "[";
 					if (i != 0)
-						ss << ",";
-					ss << op.to_string() << "]";
+					{
+						autocomplete << ",";
+						detail << ",";
+					}
+					detail << op.to_string() << "]";
+					autocomplete << op.to_string() << "]";
 				}
 				else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 2)
 				{
-					ss << "[";
+					autocomplete << " [";
+					detail << "[";
 					if (i != 0)
-						ss << ",";
-					ss << op.to_string() << "[,";
+					{
+						autocomplete << ",";
+						detail << ",";
+					}
+					detail << op.to_string() << "]";
+					autocomplete << op.to_string() << "[,";
 				}
 				else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 1)
 				{
-					ss << op.to_string() << "]]";
+					detail << op.to_string() << "]]";
+					autocomplete << op.to_string() << "]]";
 				}
 				else
 				{
 					if (i != 0)
-						ss << ",";
-					ss << op.to_string();
+					{
+						autocomplete << ",";
+						detail << ",";
+					}
+					detail << op.to_string();
+					autocomplete << op.to_string();
 				}
-		
 			}
-			ss << " [" << instruction::mach_format_to_string.at(machine_instr.second->format) << "]";
-			ctx_->all_instructions.push_back({ machine_instr.first,1,ss.str(),"Machine",false, machine_instr.first + "   " + ss.str() } );
+			documentation << "Machine instruction " << std::endl << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.second->format);
+			ctx_->all_instructions.push_back({ machine_instr.first,1,"Operands: " + detail.str(),documentation.str(),false, machine_instr.first + "   " + autocomplete.str() } );
 		}
 
 		for (const auto& asm_instr : instruction::assembler_instructions)
 		{
+			std::stringstream documentation(" ");
+			std::stringstream detail("");
+
 			int min_op = asm_instr.second.min_operands;
 			int max_op = asm_instr.second.max_operands;
-			std::stringstream ss(" ");
+			std::string description = asm_instr.second.description;
 			bool first = true;
-			for (int i = 0; i < max_op; ++i)
-			{
-				if (!first)
-					ss << ",";
-				else
-					first = false;
-				if (i >= min_op)
-					ss << "?";
-				ss << "OP" << i + 1;
-			}
-			deferred_instruction_.value = ss.str();
-			ctx_->all_instructions.push_back({ asm_instr.first,1,ss.str(),"Assembler",false,asm_instr.first + "   " + ss.str() });
+
+			deferred_instruction_.value = description;
+			detail << asm_instr.first << "   " << description;
+			documentation << "Assembler instruction";
+			ctx_->all_instructions.push_back({ asm_instr.first,1,detail.str(),documentation.str(),false,asm_instr.first + "   " /*+ description*/ });
 		}
 
 		for (const auto& mnemonic_instr : instruction::mnemonic_codes)
 		{
-			std::stringstream ss(" ");
+			std::stringstream documentation(" ");
+			std::stringstream detail("");
 			std::stringstream subs_ops_mnems (" ");
 			std::stringstream subs_ops_nomnems(" ");
 
@@ -153,9 +166,10 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 				subs_ops_nomnems << curr_op_without_mnem;
 				first = false;
 			}
-			subs_ops_mnems << " [" << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format) << "]";
-			ss << "Mnemonic code for " << instr_name << " with operands " << subs_ops_mnems.str();
-			ctx_->all_instructions.push_back({ mnemonic_instr.first,1,"",ss.str(),false, mnemonic_instr.first + "   " + subs_ops_nomnems.str() });
+			detail << "Operands: " + subs_ops_nomnems.str();
+			documentation << "Mnemonic code for " << instr_name << " instruction" << std::endl << "Substituted operands: " << subs_ops_mnems.str() << std::endl << "Instruction format: " << 
+				instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
+			ctx_->all_instructions.push_back({ mnemonic_instr.first,1,detail.str(),documentation.str(),false, mnemonic_instr.first + "   " + subs_ops_nomnems.str() });
 		}
 
 		for (const auto& ca_instr : instruction::ca_instructions)

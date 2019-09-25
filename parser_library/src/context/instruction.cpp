@@ -108,53 +108,53 @@ const std::vector<ca_instruction> instruction::ca_instructions = {
 };
 
 const std::map<const std::string, assembler_instruction> instruction::assembler_instructions = { {
-	{ "*PROCESS", {1,-1, true} }, // TO DO
-	{ "ACONTROL", {1,-1, false} },
-	{ "ADATA", {5,5, false} },
-	{ "AINSERT", {2,2, false} },
-	{ "ALIAS", {1,1, false} },
-	{ "AMODE", {1,1, false} },
-	{ "CATTR", {1,-1, false} },
-	{ "CCW", {4,4, true} },
-	{ "CCW0",  {4,4, true} },
-	{ "CCW1", {4,4, true} },
-	{ "CEJECT", {0,1, true} },
-	{ "CNOP", {2,2, true} },
-	{ "COM", {0,0, false} },
-	{ "COPY", {1,1, false} },
-	{ "CSECT", {0,0, false} },
-	{ "CXD", {0,0, false} },
-	{ "DC", {1,-1, true} },
-	{ "DROP", {0,-1, true} },
-	{ "DS", {1,-1, true} },
-	{ "DSECT", {0,0, false} },
-	{ "DXD", {1,-1, true} },
-	{ "EJECT", {0,0, false} },
-	{ "END", {0,2, true} },
-	{ "ENTRY", {1,-1, true} },
-	{ "EQU", {1,5, true} },
-	{ "EXITCTL", {2,5, false} },
-	{ "EXTRN", {1,-1, false} },
-	{ "ICTL", {1,3, false} },
-	{ "ISEQ", {0,2, false} },
-	{ "LOCTR", {0,0, false} },
-	{ "LTORG", {0,0, false} },
-	{ "MNOTE", {1,2, false} },
-	{ "OPSYN", {0,1, true} },
-	{ "ORG", {0,3, true} },
-	{ "POP", {1,4, false} },
-	{ "PRINT", {1,-1, false } },
-	{ "PUNCH", {1,1, false} },
-	{ "PUSH", {1,4, false} },
-	{ "REPRO", {0,0, false} },
-	{ "RMODE", {1,1, false} },
-	{ "RSECT", {0,0, false } },
-	{ "SPACE", {0,1, true} },
-	{ "START", {0,1, true} },
-	{ "TITLE", {1,1, false} },
-	{ "USING", {2,-1, true} },
-	{ "WXTRN", {1,-1, false} },
-	{ "XATTR", {1,-1, false} }
+	{ "*PROCESS", assembler_instruction(1,-1, true, "") }, // TO DO
+	{ "ACONTROL", assembler_instruction(1,-1, false,"<selection>+") },
+	{ "ADATA", assembler_instruction(5,5, false, "value1,value2,value3,value4,character_string") },
+	{ "AINSERT", assembler_instruction(2,2, false, "'record',BACK|FRONT") },
+	{ "ALIAS", assembler_instruction(1,1, false, "alias_string") },
+	{ "AMODE", assembler_instruction(1,1, false, "amode_option") },
+	{ "CATTR", assembler_instruction(1,-1, false, "attribute+") },
+	{ "CCW", assembler_instruction(4,4, true, "command_code,data_address,flags,data_count") },
+	{ "CCW0",  assembler_instruction(4,4, true, "command_code,data_address,flags,data_count") },
+	{ "CCW1", assembler_instruction(4,4, true, "command_code,data_address,flags,data_count") },
+	{ "CEJECT", assembler_instruction(0,1, true, "?number_of_lines") },
+	{ "CNOP", assembler_instruction(2,2, true, "byte,boundary") },
+	{ "COM", assembler_instruction(0,0, false, "") },
+	{ "COPY", assembler_instruction(1,1, false, "member") },
+	{ "CSECT", assembler_instruction(0,0, false, "") },
+	{ "CXD", assembler_instruction(0,0, false, "") },
+	{ "DC", assembler_instruction(1,-1, true, "<operand>+") },
+	{ "DROP", assembler_instruction(0,-1, true, "?<<base_register|label>+>") },
+	{ "DS", assembler_instruction(1,-1, true, "<operand>+") },
+	{ "DSECT", assembler_instruction(0,0, false, "") },
+	{ "DXD", assembler_instruction(1,-1, true, "<operand>+") },
+	{ "EJECT", assembler_instruction(0,0, false, "") },
+	{ "END", assembler_instruction(0,2, true, "?expression,?language") },
+	{ "ENTRY", assembler_instruction(1,-1, true, "entry_point+") },
+	{ "EQU", assembler_instruction(1,5, true, "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_value>") },
+	{ "EXITCTL", assembler_instruction(2,5, false, "exit_type,control_value+") },
+	{ "EXTRN", assembler_instruction(1,-1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+	{ "ICTL", assembler_instruction(1,3, false, "begin,?<end>,?<continue>") },
+	{ "ISEQ", assembler_instruction(0,2, false, "?<left,right>") },
+	{ "LOCTR", assembler_instruction(0,0, false, "") },
+	{ "LTORG", assembler_instruction(0,0, false, "") },
+	{ "MNOTE", assembler_instruction(1,2, false, "?<<severity|*|>,>message") },
+	{ "OPSYN", assembler_instruction(0,1, true, "?operation_code_2") },
+	{ "ORG", assembler_instruction(0,3, true, "expression?<,boundary?<,offset>>") },
+	{ "POP", assembler_instruction(1,4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+	{ "PRINT", assembler_instruction(1,-1, false, "operand+") },
+	{ "PUNCH", assembler_instruction(1,1, false, "string") },
+	{ "PUSH", assembler_instruction(1,4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+	{ "REPRO", assembler_instruction(0,0, false, "") },
+	{ "RMODE", assembler_instruction(1,1, false, "rmode_option") },
+	{ "RSECT", assembler_instruction(0,0, false, "") },
+	{ "SPACE", assembler_instruction(0,1, true, "?number_of_lines") },
+	{ "START", assembler_instruction(0,1, true, "?expression") },
+	{ "TITLE", assembler_instruction(1,1, false, "title_string") },
+	{ "USING", assembler_instruction(2,-1, true, "operand+") },
+	{ "WXTRN", assembler_instruction(1,-1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+	{ "XATTR", assembler_instruction(1,-1, false, "attribute+") }
 }};
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic)
@@ -169,20 +169,11 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
 	bool error = false;
 	for (size_t i = 0; i < to_check.size(); i++)
 	{
-		if ((to_check[i]) != nullptr)
+		assert (to_check[i] != nullptr);
+		diagnostic_op diag;
+		if (!(*to_check[i]).check(diag, operands[i], name_of_instruction, stmt_range))
 		{
-			diagnostic_op diag;
-			if (!(*to_check[i]).check(diag, operands[i], name_of_instruction, stmt_range))
-			{
-				add_diagnostic(diag);
-				error = true;
-			}
-		}
-		else
-		{
-			hlasm_plugin::parser_library::checking::machine_operand temp;
-			temp.operand_range = stmt_range;
-			add_diagnostic(temp.get_address_operand_expected(operands[i], name_of_instruction, stmt_range));
+			add_diagnostic(diag);
 			error = true;
 		}
 	};
@@ -249,7 +240,7 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AH", std::make_unique<machine_instruction>("AH", mach_format::RX_a, std::vector<machine_operand_format>{reg_4_U, dxb_12_4x4_U }, 32, 512)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AHY", std::make_unique<machine_instruction>("AHY", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 512)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AGH", std::make_unique<machine_instruction>("AGH", mach_format::RXY_a, std::vector<machine_operand_format>{reg_4_U, dxb_20_4x4_S }, 48, 512)));
-	result.insert(std::pair <const std::string, machine_instruction_ptr>("AHI", std::make_unique<machine_instruction>("AHI", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 512)));
+	result.insert(std::pair <const std::string, machine_instruction_ptr>("AHI", std::make_unique<machine_instruction>("AHI", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S }, 32, 512)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AGHI", std::make_unique<machine_instruction>("AGHI", mach_format::RI_a, std::vector<machine_operand_format>{reg_4_U, imm_16_S  }, 32, 513)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AHHHR", std::make_unique<machine_instruction>("AHHHR", mach_format::RRF_a, std::vector<machine_operand_format>{reg_4_U, reg_4_U, reg_4_U, }, 32, 513)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AHHLR", std::make_unique<machine_instruction>("AHHLR", mach_format::RRF_a, std::vector<machine_operand_format>{reg_4_U, reg_4_U, reg_4_U }, 32, 513)));
@@ -1463,13 +1454,10 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNPR", { "BCR", { {0,13} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JNP", { "BRC", { {0,13} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNM", { "BC", { {0,11} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNMR", { "BCR", { {0,11} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JNM", { "BRC", { {0,11} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNZ", { "BC", { {0,7} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNZR", { "BCR", { {0,7} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JNZ", { "BRC", { {0,7} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNO", { "BC", { {0,14} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNOR", { "BCR", { {0,14} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("JNO", { "BRC", { {0,14} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BO", { "BC", { {0,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BOR", { "BCR", { {0,1} } }));
@@ -1477,11 +1465,8 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BMR", { "BCR", { {0,4} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BZ", { "BC", { {0,8} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BZR", { "BCR", { {0,8} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNO", { "BC", { {0,14} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNOR", { "BCR", { {0,14} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNM", { "BC", { {0,11} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNMR", { "BCR", { {0,11} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("BNZ", { "BC", { {0,7} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BNZR", { "BCR", { {0,7} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BRUL", { "BRCL", { {0,15} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("BRHL", { "BRCL", { {0,2} } }));
@@ -1675,9 +1660,9 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VCLZF", { "VCLZ", { {2,2} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VCLZG", { "VCLZ", { {2,3} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMB", { "VGFM", { {3,0} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMB", { "VGFM", { {3,1} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMB", { "VGFM", { {3,2} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMB", { "VGFM", { {3,3} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMH", { "VGFM", { {3,1} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMF", { "VGFM", { {3,2} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMG", { "VGFM", { {3,3} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMAB", { "VGFMA", { {4,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMAH", { "VGFMA", { {4,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VGFMAF", { "VGFMA", { {4,2} } }));
@@ -1898,7 +1883,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VFCHESBS", { "VFCHE", { {3,2}, {4,0}, {5,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VFCHEDB", { "VFCHE", { {3,3}, {4,0}, {5,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VFCHEDBS", { "VFCHE", { {3,3}, {4,0}, {5,1} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("WFCHSB", { "VFCHE", { {3,2}, {4,8}, {5,0} } }));
+	result.insert(std::make_pair<const std::string, mnemonic_code>("WFCHESB", { "VFCHE", { {3,2}, {4,8}, {5,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFCHESBS", { "VFCHE", { {3,2}, {4,8}, {5,1} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFCHEDB", { "VFCHE", { {3,3}, {4,8}, {5,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFCHEDBS", { "VFCHE", { {3,3}, {4,8}, {5,1} } }));
@@ -1919,7 +1904,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VCLGDB", { "VCLGD", { {2,3} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VFDSB", { "VFD", { {3,2}, {4,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFDSB", { "VFD", { {3,2}, {4,8} } }));
-	result.insert(std::make_pair<const std::string, mnemonic_code>("VFDDB", { "VFD", { {3,3}, {4,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("VFDDB", { "VFD", { {3,3}, {4,0} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFDDB", { "VFD", { {3,3}, {4,8} } }));
 	result.insert(std::make_pair<const std::string, mnemonic_code>("WFDXB", { "VFD", { {3,4}, {4,8} } }));

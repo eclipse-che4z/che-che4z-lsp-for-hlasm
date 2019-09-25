@@ -46,21 +46,6 @@ namespace checking
 		return to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]);
 	}
 
-	inline static bool is_number(const std::string& to_test, bool must_be_positive = false) //is any negative or positive number
-	{
-		bool is_negative = false;
-		std::string::const_iterator it = to_test.begin();
-		if (it != to_test.end() && *it == '-')
-		{
-			if (must_be_positive)
-				return false;
-			it++;
-			is_negative = true;
-		}
-		while (it != to_test.end() && isdigit(*it)) ++it;
-		return !to_test.empty() && it == to_test.end() && (to_test.size() > 1 || !is_negative);
-	}
-
 	inline static bool has_all_digits(const std::string& str)
 	{
 		return std::all_of(str.begin(), str.end(), ::isdigit);
@@ -97,8 +82,7 @@ namespace checking
 	{
 		if (to_check >= 0)
 			return (to_check & (to_check - 1)) == 0;
-		else
-			return false;
+		return false;
 	}
 
 	inline static bool is_ord_symbol(const std::string& to_test)

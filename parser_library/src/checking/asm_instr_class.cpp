@@ -3,23 +3,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
-
-bool assembler_instruction::all_operands_simple(const std::vector<std::unique_ptr<asm_operand>>& input) const
-{
-	for (const auto& operand : input)
-	{
-		if (!is_operand_simple(operand.get()))
-			return false;
-	}
-	return true;
-}
-
 bool assembler_instruction::is_param_in_vector(const std::string& parameter, const std::vector<std::string>& options) const
-{
-	return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
-}
-
-bool assembler_instruction::is_param_in_vector(int parameter, const std::vector<int>& options) const
 {
 	return std::find(options.cbegin(), options.cend(), parameter) != options.cend();
 }
@@ -95,8 +79,7 @@ bool assembler_instruction::check_process_flag_parameters(const std::vector<std:
 
 bool assembler_instruction::check_optable_operands(const std::vector<std::unique_ptr<asm_operand>>& input, const std::string& instr_name, const diagnostic_collector& add_diagnostic) const
 {
-	if (input.size() > 2)
-		assert(false);
+	assert(input.size() <= 2);
 	//declare array of options for first parameter
 	const static std::array<std::string, 13> optable_array = { "DOS", "ESA", "XA", "370", "YOP", "ZOP", "ZS3", "ZS4", "ZS5", "ZS6", "ZS7", "ZS8" };
 	auto first = get_simple_operand(input[0].get());
@@ -461,156 +444,147 @@ bool assembler_instruction::check_assembler_process_operand(const asm_operand* i
 		// checking for individual options
 		if (current_operand->operand_identifier == "FAIL")
 		{
-			if (!check_fail_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-				return false;
-			else
-				return true;
+			return check_fail_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic);
 		}
 		else if (current_operand->operand_identifier == "USING" || current_operand->operand_identifier == "US")
 		{
-			if (!check_using_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-				return false;
-			else
-				return true;
+			return check_using_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic);
 		}
 		// options that must have only simple operands
-		else
+		// check for operands with only one parameter
+		if (is_param_in_vector(current_operand->operand_identifier, one_simple_param))
 		{
-			// check for operands with only one parameter
-			if (is_param_in_vector(current_operand->operand_identifier, one_simple_param))
+			// check for the number of parameters
+			if (current_operand->operand_parameters.size() != 1)
 			{
-				// check for the number of parameters
-				if (current_operand->operand_parameters.size() != 1)
-				{
-					if (current_operand->operand_identifier == "INFO")
-						add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, current_operand->operand_identifier, 0, 1, input->operand_range));
-					else add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, current_operand->operand_identifier, 1, input->operand_range));
-					return false;
-				}
+				if (current_operand->operand_identifier == "INFO")
+					add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, current_operand->operand_identifier, 0, 1, input->operand_range));
+				else add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, current_operand->operand_identifier, 1, input->operand_range));
+				return false;
+			}
 
-				auto param = get_simple_operand(current_operand->operand_parameters[0].get());
-				// check codepage option
-				if (current_operand->operand_identifier == "CODEPAGE" || current_operand->operand_identifier == "CP")
-				{
-					if (param == nullptr)
-					{
-						add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-					if (!check_codepage_parameter(param->operand_identifier, add_diagnostic))
-						return false;
-				}
-				// check info option
-				else if (current_operand->operand_identifier == "INFO")
-				{
-					if (param == nullptr || param->is_default || !is_date(param->operand_identifier))
-					{
-						add_diagnostic(diagnostic_op::error_A217_INFO_value(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-				}
-				// check mxref option
-				else if (current_operand->operand_identifier == "MXREF" || current_operand->operand_identifier == "MX")
-				{
-					if (param == nullptr || param->operand_identifier != "FULL" && param->operand_identifier != "SOURCE" && param->operand_identifier != "XREF")
-					{
-						add_diagnostic(diagnostic_op::error_A218_MXREF_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-				}
-				else if (current_operand->operand_identifier == "SECTALGN")
-				{
-					if (param == nullptr || !has_all_digits(param->operand_identifier) || param->is_default)
-					{
-						add_diagnostic(diagnostic_op::error_A219_SECTALGN_par_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-					if (!is_power_of_two(param->value) || param->value < 8 || param->value > 4096)
-					{
-						add_diagnostic(diagnostic_op::error_A220_SECTALGN_par_value(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-				}
-				// TO DO - PROFILE
-			}
-			else if (is_param_in_vector(current_operand->operand_identifier, two_simple_param)) // check for operands with two parameters
+			auto param = get_simple_operand(current_operand->operand_parameters[0].get());
+			// check codepage option
+			if (current_operand->operand_identifier == "CODEPAGE" || current_operand->operand_identifier == "CP")
 			{
-				if (current_operand->operand_parameters.empty() || current_operand->operand_parameters.size() > 2)
+				if (param == nullptr)
 				{
-					add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, current_operand->operand_identifier, 1, 2, input->operand_range));
+					add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
 					return false;
 				}
-				if (current_operand->operand_identifier == "MACHINE" || current_operand->operand_identifier == "MAC")
-				{
-					auto first_param = get_simple_operand(current_operand->operand_parameters[0].get());
-					if (first_param == nullptr || !check_first_machine_operand(first_param->operand_identifier, add_diagnostic))
-					{
-						add_diagnostic(diagnostic_op::error_A222_MACH_first_par_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
-						return false;
-					}
-					if (current_operand->operand_parameters.size() == 2)
-					{
-						auto second_param = get_simple_operand(current_operand->operand_parameters[1].get());
-						if (second_param == nullptr || (second_param->operand_identifier != "LIST" && second_param->operand_identifier != "NOLIST"))
-						{
-							add_diagnostic(diagnostic_op::error_A221_MACH_second_par_format(name_of_instruction, current_operand->operand_parameters[1]->operand_range));
-							return false;
-						}
-					}
-				}
-				else if (current_operand->operand_identifier == "OPTABLE" || current_operand->operand_identifier == "OP")
-				{
-					if (!check_optable_operands(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-						return false;
-				}
-				else
-				{
-					assert(false);
-					add_diagnostic(diagnostic_op::error_I999(name_of_instruction, input->operand_range));
+				if (!check_codepage_parameter(param->operand_identifier, add_diagnostic))
 					return false;
-				}	
 			}
-			else // any number of parameters
+			// check info option
+			else if (current_operand->operand_identifier == "INFO")
 			{
-				if (current_operand->operand_parameters.empty())
+				if (param == nullptr || param->is_default || !is_date(param->operand_identifier))
 				{
-					add_diagnostic(diagnostic_op::error_A015_minimum(name_of_instruction, current_operand->operand_identifier, 1, input->operand_range));
+					add_diagnostic(diagnostic_op::error_A217_INFO_value(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
 					return false;
 				}
-				if (current_operand->operand_identifier == "COMPAT" || current_operand->operand_identifier == "CPAT")
-				{
-					if (!check_compat_operands(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-						return false;
-				}
-				else if (current_operand->operand_identifier == "TYPECHECK" || current_operand->operand_identifier == "TC")
-				{
-					if (!check_typecheck_operands(current_operand->operand_parameters, name_of_instruction, current_operand->operand_identifier, add_diagnostic))
-						return false;
-				}
-				else if (current_operand->operand_identifier == "PCONTROL" || current_operand->operand_identifier == "PC")
-				{
-					if (!check_pcontrol_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-						return false;
-				}
-				else if (current_operand->operand_identifier == "XREF")
-				{
-					if (!check_xref_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-						return false;
-				}
-				else if (current_operand->operand_identifier == "SUPRWARN" || current_operand->operand_identifier == "SUP"
-					|| current_operand->operand_identifier == "NOSUPRWARN" || current_operand->operand_identifier == "NOSUP")
-				{
-					if (!check_suprwarn_parameters(current_operand->operand_parameters, name_of_instruction, current_operand->operand_identifier, add_diagnostic))
-						return false;
-				}
-				else if (current_operand->operand_identifier == "FLAG")
-				{
-					if (!check_process_flag_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
-						return false;
-				}
-				else
-					assert(false);
 			}
+			// check mxref option
+			else if (current_operand->operand_identifier == "MXREF" || current_operand->operand_identifier == "MX")
+			{
+				if (param == nullptr || param->operand_identifier != "FULL" && param->operand_identifier != "SOURCE" && param->operand_identifier != "XREF")
+				{
+					add_diagnostic(diagnostic_op::error_A218_MXREF_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
+					return false;
+				}
+			}
+			else if (current_operand->operand_identifier == "SECTALGN")
+			{
+				if (param == nullptr || !has_all_digits(param->operand_identifier) || param->is_default)
+				{
+					add_diagnostic(diagnostic_op::error_A219_SECTALGN_par_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
+					return false;
+				}
+				if (!is_power_of_two(param->value) || param->value < 8 || param->value > 4096)
+				{
+					add_diagnostic(diagnostic_op::error_A220_SECTALGN_par_value(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
+					return false;
+				}
+			}
+			// TO DO - PROFILE
+		}
+		else if (is_param_in_vector(current_operand->operand_identifier, two_simple_param)) // check for operands with two parameters
+		{
+			if (current_operand->operand_parameters.empty() || current_operand->operand_parameters.size() > 2)
+			{
+				add_diagnostic(diagnostic_op::error_A018_either(name_of_instruction, current_operand->operand_identifier, 1, 2, input->operand_range));
+				return false;
+			}
+			if (current_operand->operand_identifier == "MACHINE" || current_operand->operand_identifier == "MAC")
+			{
+				auto first_param = get_simple_operand(current_operand->operand_parameters[0].get());
+				if (first_param == nullptr || !check_first_machine_operand(first_param->operand_identifier, add_diagnostic))
+				{
+					add_diagnostic(diagnostic_op::error_A222_MACH_first_par_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
+					return false;
+				}
+				if (current_operand->operand_parameters.size() == 2)
+				{
+					auto second_param = get_simple_operand(current_operand->operand_parameters[1].get());
+					if (second_param == nullptr || (second_param->operand_identifier != "LIST" && second_param->operand_identifier != "NOLIST"))
+					{
+						add_diagnostic(diagnostic_op::error_A221_MACH_second_par_format(name_of_instruction, current_operand->operand_parameters[1]->operand_range));
+						return false;
+					}
+				}
+			}
+			else if (current_operand->operand_identifier == "OPTABLE" || current_operand->operand_identifier == "OP")
+			{
+				if (!check_optable_operands(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
+					return false;
+			}
+			else
+			{
+				assert(false);
+				add_diagnostic(diagnostic_op::error_I999(name_of_instruction, input->operand_range));
+				return false;
+			}	
+		}
+		else // any number of parameters
+		{
+			if (current_operand->operand_parameters.empty())
+			{
+				add_diagnostic(diagnostic_op::error_A015_minimum(name_of_instruction, current_operand->operand_identifier, 1, input->operand_range));
+				return false;
+			}
+			if (current_operand->operand_identifier == "COMPAT" || current_operand->operand_identifier == "CPAT")
+			{
+				if (!check_compat_operands(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
+					return false;
+			}
+			else if (current_operand->operand_identifier == "TYPECHECK" || current_operand->operand_identifier == "TC")
+			{
+				if (!check_typecheck_operands(current_operand->operand_parameters, name_of_instruction, current_operand->operand_identifier, add_diagnostic))
+					return false;
+			}
+			else if (current_operand->operand_identifier == "PCONTROL" || current_operand->operand_identifier == "PC")
+			{
+				if (!check_pcontrol_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
+					return false;
+			}
+			else if (current_operand->operand_identifier == "XREF")
+			{
+				if (!check_xref_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
+					return false;
+			}
+			else if (current_operand->operand_identifier == "SUPRWARN" || current_operand->operand_identifier == "SUP"
+				|| current_operand->operand_identifier == "NOSUPRWARN" || current_operand->operand_identifier == "NOSUP")
+			{
+				if (!check_suprwarn_parameters(current_operand->operand_parameters, name_of_instruction, current_operand->operand_identifier, add_diagnostic))
+					return false;
+			}
+			else if (current_operand->operand_identifier == "FLAG")
+			{
+				if (!check_process_flag_parameters(current_operand->operand_parameters, name_of_instruction, add_diagnostic))
+					return false;
+			}
+			else
+				assert(false);
 		}
 	}
 	else

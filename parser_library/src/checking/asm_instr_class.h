@@ -39,11 +39,7 @@ protected:
 
 	const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
 
-	bool all_operands_simple(const std::vector<std::unique_ptr<asm_operand>>& input) const;
-
 	bool is_param_in_vector(const std::string& parameter, const std::vector<std::string>& options) const;
-
-	bool is_param_in_vector(int parameter, const std::vector<int>& options) const;
 
 	bool operands_size_corresponding(const std::vector<const asm_operand*>& to_check, const range & stmt_range, const diagnostic_collector& add_diagnostic) const;
 

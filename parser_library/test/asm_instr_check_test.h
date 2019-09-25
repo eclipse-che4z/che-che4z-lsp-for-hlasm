@@ -12,6 +12,9 @@ public:
 	}
 	instruction_test(){
 
+		for (auto i = 0; i < 66000; i++)
+			test_entry_false.push_back(&empty_val);
+
 		test_adata_true_one.push_back(&op_val_287);
 		test_adata_true_one.push_back(&empty_val);
 		test_adata_true_one.push_back(&op_val_min_567);
@@ -232,6 +235,7 @@ public:
 		test_mnote_true_one.push_back(&mnote_error_message);
 		test_mnote_true_two.push_back(&mnote_asterisk);
 		test_mnote_true_two.push_back(&mnote_error_message);
+		test_mnote_true_three.push_back(&mnote_error_message);
 		test_mnote_false_one.push_back(&op_val_256);
 		test_mnote_false_one.push_back(&mnote_error_message);
 		test_mnote_false_two.push_back(&mnote_asterisk);
@@ -775,6 +779,7 @@ protected:
 	std::vector<const checking::operand*> test_iseq_false = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_mnote_true_one = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_mnote_true_two = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_mnote_true_three = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_mnote_false_one = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_mnote_false_two = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_opsyn_true = std::vector<const checking::operand*>();
@@ -811,6 +816,7 @@ protected:
 	std::vector<const checking::operand*> test_process_false_seven = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_process_false_eight = std::vector<const checking::operand*>();
 	std::vector<const checking::operand*> test_process_false_nine = std::vector<const checking::operand*>();
+	std::vector<const checking::operand*> test_entry_false = std::vector<const checking::operand*>();
 
 };
 
@@ -917,6 +923,7 @@ TEST_F(instruction_test, copy)
 TEST_F(instruction_test, data)
 {
 	EXPECT_FALSE(checker.check("DXD", test_no_operand_true, range(), collector));
+	EXPECT_FALSE(checker.check("DC", test_no_operand_true, range(), collector));
 	EXPECT_TRUE(checker.check("DXD", test_data_true_one, range(), collector));
 	EXPECT_TRUE(checker.check("DXD", test_data_true_two, range(), collector));
 }
@@ -927,6 +934,7 @@ TEST_F(instruction_test, drop)
 	EXPECT_TRUE(checker.check("DROP", test_drop_true_one, range(), collector));
 	EXPECT_TRUE(checker.check("DROP", test_drop_true_two, range(), collector));
 	EXPECT_FALSE(checker.check("DROP", test_drop_false, range(), collector));
+	EXPECT_FALSE(checker.check("DROP", test_acontrol_true, range(), collector));
 }
 
 TEST_F(instruction_test, end)
@@ -935,6 +943,7 @@ TEST_F(instruction_test, end)
 	EXPECT_TRUE(checker.check("END", test_end_true_one, range(), collector));
 	EXPECT_TRUE(checker.check("END", test_end_true_two, range(), collector));
 	EXPECT_FALSE(checker.check("END", test_end_false, range(), collector));
+	EXPECT_FALSE(checker.check("END", test_exitctl_true, range(), collector));
 }
 
 TEST_F(instruction_test, entry)
@@ -943,6 +952,7 @@ TEST_F(instruction_test, entry)
 	EXPECT_TRUE(checker.check("ENTRY", test_data_true_one, range(), collector));
 	EXPECT_TRUE(checker.check("ENTRY", test_ainsert_true_one, range(), collector));
 	EXPECT_FALSE(checker.check("ENTRY", test_end_true_one, range(), collector));
+	EXPECT_FALSE(checker.check("ENTRY", test_entry_false, range(), collector));
 }
 TEST_F(instruction_test, exitctl)
 {
@@ -982,6 +992,7 @@ TEST_F(instruction_test, mnote)
 	EXPECT_FALSE(checker.check("MNOTE", test_no_operand_true, range(), collector));
 	EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_one, range(), collector));
 	EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_two, range(), collector));
+	EXPECT_TRUE(checker.check("MNOTE", test_mnote_true_three, range(), collector));
 	EXPECT_FALSE(checker.check("MNOTE", test_mnote_false_one, range(), collector));
 	EXPECT_FALSE(checker.check("MNOTE", test_mnote_false_two, range(), collector));
 }

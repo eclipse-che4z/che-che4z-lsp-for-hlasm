@@ -83,7 +83,7 @@ bool xattr::check(const std::vector<const asm_operand*> & to_check, const range 
 						direct_option = true;
 					else
 					{
-						add_diagnostic(diagnostic_op::error_A202_REF_direct(name_of_instruction, param->operand_range));
+						add_diagnostic(diagnostic_op::error_A202_REF_direct(name_of_instruction, parameter->operand_range));
 						return false;
 					}
 				}
@@ -93,7 +93,7 @@ bool xattr::check(const std::vector<const asm_operand*> & to_check, const range 
 						code_data_option = true;
 					else
 					{
-						add_diagnostic(diagnostic_op::error_A203_REF_data(name_of_instruction, param->operand_range));
+						add_diagnostic(diagnostic_op::error_A203_REF_data(name_of_instruction, parameter->operand_range));
 						return false;
 					}
 				}
@@ -496,7 +496,7 @@ bool mnote::check(const std::vector<const asm_operand*> & to_check, const range 
 	// severity is specified
 	if (!has_all_digits(first->operand_identifier))
 	{
-		add_diagnostic(diagnostic_op::error_A241_MNOTE_severity_expr(first->operand_range));
+		add_diagnostic(diagnostic_op::error_A119_MNOTE_first_op_format(first->operand_range));
 		return false;
 	}
 	if (!first->is_default && is_byte_value(first->value))
@@ -511,7 +511,7 @@ bool iseq::check(const std::vector<const asm_operand*> & to_check, const range &
 {
 	if (to_check.empty())
 		return true;
-	else if (to_check.size() == 2)
+	if (to_check.size() == 2)
 	{
 		auto first = get_simple_operand(to_check[0]);
 		auto second = get_simple_operand(to_check[1]);
@@ -532,11 +532,8 @@ bool iseq::check(const std::vector<const asm_operand*> & to_check, const range &
 		add_diagnostic(diagnostic_op::error_A120_ISEQ_op_format(stmt_range));
 		return false;
 	}
-	else
-	{
-		add_diagnostic(diagnostic_op::error_A013_either(name_of_instruction, 0, 2, stmt_range));
-		return false;
-	}
+	add_diagnostic(diagnostic_op::error_A013_either(name_of_instruction, 0, 2, stmt_range));
+	return false;
 }
 
 ictl::ictl(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, 3) {};
@@ -596,12 +593,6 @@ bool ictl::check(const std::vector<const asm_operand*> & to_check, const range &
 	if (continuation < ICTL_continuation_min_val || continuation > ICTL_continuation_max_val)
 	{
 		add_diagnostic(diagnostic_op::error_A126_ICTL_continuation_format(to_check[2]->operand_range));
-		return false;
-	}
-	if (end <= continuation)
-	{
-		range end_cont_range = range(to_check[1]->operand_range.start, to_check[2]->operand_range.end);
-		add_diagnostic(diagnostic_op::error_A128_ICTL_end_continuation_diff(end_cont_range));
 		return false;
 	}
 	if (continuation <= begin)
@@ -1000,54 +991,51 @@ bool cattr::check(const std::vector<const asm_operand*> & to_check, const range 
 				add_diagnostic(diagnostic_op::error_A149_CATTR_identifier_format(complex_op->operand_range));
 				return false;
 			}
-			else
+			if (complex_op->operand_parameters.size() != 1) //has to have exactly one operand
 			{
-				if (complex_op->operand_parameters.size() != 1) //has to have exactly one operand
+				add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, complex_op->operand_identifier, 1, stmt_range));
+				return false;
+			}
+			auto parameter = get_simple_operand(complex_op->operand_parameters[0].get());
+			if (complex_op->operand_identifier == "RMODE")
+			{
+				if (parameter == nullptr || !is_param_in_vector(parameter->operand_identifier, rmode_options))
 				{
-					add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, complex_op->operand_identifier, 1, stmt_range));
+					add_diagnostic(diagnostic_op::error_A204_RMODE_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
 					return false;
 				}
-				auto parameter = get_simple_operand(complex_op->operand_parameters[0].get());
-				if (complex_op->operand_identifier == "RMODE")
+			}
+			else if (complex_op->operand_identifier == "ALIGN") //upon sending, an empty operand has to come in a vector (not an empty vector)
+			{
+				const static std::vector<std::string> align_options = { "0", "1", "2", "3", "4", "12" };
+				if (parameter == nullptr || !is_param_in_vector(parameter->operand_identifier, align_options))
 				{
-					if (parameter == nullptr || !is_param_in_vector(parameter->operand_identifier, rmode_options))
-					{
-						add_diagnostic(diagnostic_op::error_A204_RMODE_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
-						return false;
-					}
+					add_diagnostic(diagnostic_op::error_A205_ALIGN_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
+					return false;
 				}
-				else if (complex_op->operand_identifier == "ALIGN") //upon sending, an empty operand has to come in a vector (not an empty vector)
+			}
+			else if (complex_op->operand_identifier == "FILL")
+			{
+				if (parameter == nullptr || !has_all_digits(parameter->operand_identifier) || parameter->is_default || !is_byte_value(parameter->value))
 				{
-					const static std::vector<std::string> align_options = { "0", "1", "2", "3", "4", "12" };
-					if (parameter == nullptr || !is_param_in_vector(parameter->operand_identifier, align_options))
-					{
-						add_diagnostic(diagnostic_op::error_A205_ALIGN_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
-						return false;
-					}
+					add_diagnostic(diagnostic_op::error_A206_FILL_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
+					return false;
 				}
-				else if (complex_op->operand_identifier == "FILL")
+			}
+			else if (complex_op->operand_identifier == "PART")
+			{
+				if (parameter == nullptr || parameter->operand_identifier.empty() || parameter->operand_identifier.length() > 63)
 				{
-					if (parameter == nullptr || !has_all_digits(parameter->operand_identifier) || parameter->is_default || !is_byte_value(parameter->value))
-					{
-						add_diagnostic(diagnostic_op::error_A206_FILL_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
-						return false;
-					}
+					add_diagnostic(diagnostic_op::error_A207_PART_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
+					return false;
 				}
-				else if (complex_op->operand_identifier == "PART")
+			}
+			else if (complex_op->operand_identifier == "PRIORITY")
+			{
+				if (parameter == nullptr || !has_all_digits(parameter->operand_identifier) || parameter->is_default || !is_positive_number(parameter->value))
 				{
-					if (parameter == nullptr || parameter->operand_identifier.empty() || parameter->operand_identifier.length() > 63)
-					{
-						add_diagnostic(diagnostic_op::error_A207_PART_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
-						return false;
-					}
-				}
-				else if (complex_op->operand_identifier == "PRIORITY")
-				{
-					if (parameter == nullptr || !has_all_digits(parameter->operand_identifier) || parameter->is_default || !is_positive_number(parameter->value))
-					{
-						add_diagnostic(diagnostic_op::error_A208_PRIORITY_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
-						return false;
-					}
+					add_diagnostic(diagnostic_op::error_A208_PRIORITY_param_format(name_of_instruction, complex_op->operand_parameters[0]->operand_range));
+					return false;
 				}
 			}
 		}
@@ -1235,11 +1223,9 @@ bool process::check(const std::vector<const asm_operand*> & to_check, const rang
 		return std::all_of(process_operands->operand_parameters.cbegin(), process_operands->operand_parameters.cend(),
 			[this, &add_diagnostic](const auto& parameter) { return check_assembler_process_operand(parameter.get(), add_diagnostic); });
 	}
-	else //everything is an operand
-	{
-		return std::all_of(to_check.cbegin(), to_check.cend(),
-			[this, &add_diagnostic](const auto& operand) { return check_assembler_process_operand(operand, add_diagnostic); });
-	}
+	//everything is an operand
+	return std::all_of(to_check.cbegin(), to_check.cend(),
+		[this, &add_diagnostic](const auto& operand) { return check_assembler_process_operand(operand, add_diagnostic); });
 }
  
 acontrol::acontrol(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) :assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
@@ -1259,11 +1245,8 @@ bool acontrol::check(const std::vector<const asm_operand*> & to_check, const ran
 			if (is_param_in_vector(simple_op->operand_identifier, pair_option_vector) || (simple_op->operand_identifier == "NOCOMPAT"
 				|| simple_op->operand_identifier == "NOTYPECHECK" || simple_op->operand_identifier == "NOCPAT" || simple_op->operand_identifier == "NOTC"))
 				continue;
-			else
-			{
-				add_diagnostic(diagnostic_op::error_A161_ACONTROL_op_format(operand->operand_range));
-				return false;
-			}
+			add_diagnostic(diagnostic_op::error_A161_ACONTROL_op_format(operand->operand_range));
+			return false;
 		}
 		else if (complex_op != nullptr) //checking complex operands
 		{

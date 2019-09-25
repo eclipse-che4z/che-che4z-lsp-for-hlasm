@@ -229,11 +229,6 @@ diagnostic_op diagnostic_op::error_A127_ICTL_begin_continuation_diff(const range
 	return diagnostic_op(diagnostic_severity::error, "A127", "Error at ICTL instruction: continuation operand value must be greater than begin value", range);
 }
 
-diagnostic_op diagnostic_op::error_A128_ICTL_end_continuation_diff(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "A128", "Error at ICTL instruction: end operand value must be greater than continuation value", range);
-}
-
 diagnostic_op diagnostic_op::error_A129_EXTRN_format(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "A129", "Error at EXTRN instruction: operand must either specify an external symbol, or it must be in a format PART(external symbols), where external symbols must also be a reference to a part as defined on the CATTR instruction.", range);
@@ -611,11 +606,6 @@ diagnostic_op diagnostic_op::error_A240_expression_format(const std::string& ins
 	return diagnostic_op(diagnostic_severity::error, "A240", "Error at " + instr_name + " instruction: operand must either specify an absolute value or must be omitted", range);
 }
 
-diagnostic_op diagnostic_op::error_A241_MNOTE_severity_expr(const range& range)
-{
-	return diagnostic_op(diagnostic_severity::error, "A241", "Error at MNOTE instruction: expression not allowed", range);
-}
-
 diagnostic_op diagnostic_op::error_A242_ICTL_op_format_second_third(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "A242", "Error at ICTL instruction: operand value must either be a decimal self-defining term or the operand must be omitted", range);
@@ -736,7 +726,7 @@ diagnostic_op diagnostic_op::error_M121(const std::string & instr_name, const ra
 
 diagnostic_op diagnostic_op::error_M122(const std::string & instr_name, long long from, long long to, const range& range)
 {
-	return diagnostic_op(diagnostic_severity::error, "M122", "Error at " + instr_name + " instruction: register operand absolute value must be between " +
+	return diagnostic_op(diagnostic_severity::error, "M122", "Error at " + instr_name + " instruction: immediate operand absolute value must be between " +
 		std::to_string(from) + " and " + std::to_string(to), range);
 }
 
@@ -840,192 +830,192 @@ diagnostic_op diagnostic_op::error_M200(const std::string & instr_name, const ra
 
 // diagnostic_s errors
 
-diagnostic_op diagnostic_op::error_E010(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E010(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E010", "Unknown name of " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E011(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E011(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E011", message + " already specified", range);
 }
 
-diagnostic_op diagnostic_op::error_E012(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E012(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E012", "Wrong format: " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E013(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E013(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E013", "Inconsistent format: " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E020(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E020(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E020", "Error at " + message + " - too many operands", range);
 }
 
-diagnostic_op diagnostic_op::error_E021(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E021(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E021", "Error at " + message + " - operand number too low", range);
 }
 
-diagnostic_op diagnostic_op::error_E022(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E022(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E022", "Error at " + message + " - operand missing", range);
 }
 
-diagnostic_op diagnostic_op::error_E030(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E030(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E030", "Can't assign value to " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E031(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E031(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E031", "Cannot declare " + message + " with the same name", range);
 }
 
-diagnostic_op diagnostic_op::error_E032(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E032(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E032", "Undefined symbol - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E033(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E033(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E033", "Cyclic symbol definition", range);
 }
 
-diagnostic_op diagnostic_op::error_E042(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E042(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E042", "Macro name ommited - ASPACE instead", range);
 }
 
-diagnostic_op diagnostic_op::error_E043(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E043(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E043", "Invalid name of variable in macro prototype", range);
 }
 
-diagnostic_op diagnostic_op::error_E048(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E048(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E048", "Undefined sequence symbol, macro aborted - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E049(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E049(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E049", "Operation code not found - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E050(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E050(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E050", "Illegal set symbol name", range);
 }
 
-diagnostic_op diagnostic_op::error_E051(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E051(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E051", "Duplicate SET symbol declaration, first is retained - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E052(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E052(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E052", "Illegal use of symbolic parameter - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E053(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E053(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E053", "Required name missing", range);
 }
 
-diagnostic_op diagnostic_op::error_E054(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E054(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E054", "Illegal statement outside macro definition", range);
 }
 
-diagnostic_op diagnostic_op::error_E055(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E055(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E055", "Too many nested macro calls, continuing opencode", range);
 }
 
-diagnostic_op diagnostic_op::error_E056(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E056(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E055", "ACTR counter exceeded", range);
 }
 
-diagnostic_op diagnostic_op::error_E057(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E057(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E057", "Symbol not an ordinary or sequence symbol", range);
 }
 
-diagnostic_op diagnostic_op::error_E058(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E058(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E058", "Copy member not found", range);
 }
 
-diagnostic_op diagnostic_op::error_E059(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E059(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E059", "First statement not MACRO in library " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E060(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E060(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E060", "Library macro name incorrect, expected " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E061(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E061(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E061", "Unbalanced MACRO MEND statements in copy member " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E062(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E062(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E062", "Recursive COPY", range);
 }
 
-diagnostic_op diagnostic_op::error_E063(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E063(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E063", "Too many ACTR calls, exiting", range);
 }
 
-diagnostic_op diagnostic_op::error_E044(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E044(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
 }
 
-diagnostic_op diagnostic_op::error_E045(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E045(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E045", "Sequence symbol already defined - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E046(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E046(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E046", "Missing MEND in " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_E047(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_E047(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E047", "Lookahead failed, symbol not found - " + message, range);
 }
 
-diagnostic_op diagnostic_op::warning_W010(const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::warning_W010(const std::string& message, const range& range)
 {
 	return diagnostic_op(diagnostic_severity::warning, "W010", message + " not expected", range);
 }
 
-diagnostic_op diagnostic_op::error_EQU1(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);
 }
 
-diagnostic_op diagnostic_op::error_EQU2(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_EQU2(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "EQU2", "Label redefinition", range);
 }
 
-diagnostic_op diagnostic_op::error_ME001(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_ME001(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "ME001", "Constant number overflow.", range);
 }
 
-diagnostic_op diagnostic_op::error_ME002(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_ME002(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "ME002", "multiplication or division of address",range);
 }
@@ -1052,37 +1042,37 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
 
 }
 
-diagnostic_op diagnostic_op::error_D001(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D001(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D001", "Integer out of range", range);
 }
 
-diagnostic_op diagnostic_op::error_D002(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D002(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D002", "Expected an integer", range);
 }
 
-diagnostic_op diagnostic_op::error_D003(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D003(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D003", "Expected an integer or an expression after modifier", range);
 }
 
-diagnostic_op diagnostic_op::error_D004(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D004(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D004", "Wrong order of modifiers", range);
 }
 
-diagnostic_op diagnostic_op::error_D005(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D005(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
 }
 
-diagnostic_op diagnostic_op::error_D006(hlasm_plugin::parser_library::range range)
+diagnostic_op diagnostic_op::error_D006(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "D006", "Unexpected character. Nominal value or modifier expected", range);
 }
 
-diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range)
+diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {
 	return diagnostic_s(filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
 }

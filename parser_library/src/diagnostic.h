@@ -180,8 +180,6 @@ struct diagnostic_op
 
 	static diagnostic_op error_A127_ICTL_begin_continuation_diff(const range& range);
 
-	static diagnostic_op error_A128_ICTL_end_continuation_diff(const range& range);
-
 	static diagnostic_op error_A129_EXTRN_format(const range& range);
 
 	static diagnostic_op error_A130_EXITCTL_exit_type_format(const range& range);
@@ -334,8 +332,6 @@ struct diagnostic_op
 
 	static diagnostic_op error_A240_expression_format(const std::string& instr_name, const range& range);
 
-	static diagnostic_op error_A241_MNOTE_severity_expr(const range& range);
-
 	static diagnostic_op error_A242_ICTL_op_format_second_third(const range& range);
 
 	static diagnostic_op error_A243_END_expr_format(const range& range);
@@ -421,88 +417,88 @@ struct diagnostic_op
 	static diagnostic_op error_M200(const std::string & instr_name, const range& range);
 
 
-	static diagnostic_op error_E010(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E010(const std::string& message, const range& range);
 
-	static diagnostic_op error_E011(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E011(const std::string& message, const range& range);
 
-	static diagnostic_op error_E012(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E012(const std::string& message, const range& range);
 
-	static diagnostic_op error_E013(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E013(const std::string& message, const range& range);
 
-	static diagnostic_op error_E020(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E020(const std::string& message, const range& range);
 
-	static diagnostic_op error_E021(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E021(const std::string& message, const range& range);
 
-	static diagnostic_op error_E022(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E022(const std::string& message, const range& range);
 
-	static diagnostic_op error_E030(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E030(const std::string& message, const range& range);
 
-	static diagnostic_op error_E031(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E031(const std::string& message, const range& range);
 
-	static diagnostic_op error_E032(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E032(const std::string& message, const range& range);
 
-	static diagnostic_op error_E033(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E033(const range& range);
 
-	static diagnostic_op error_E042(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E042(const range& range);
 
-	static diagnostic_op error_E043(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E043(const range& range);
 
-	static diagnostic_op error_E044(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E044(const range& range);
 
-	static diagnostic_op error_E045(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E045(const std::string& message, const range& range);
 
-	static diagnostic_op error_E046(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E046(const std::string& message, const range& range);
 
-	static diagnostic_op error_E047(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E047(const std::string& message, const range& range);
 
-	static diagnostic_op error_E048(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E048(const std::string& message, const range& range);
 
-	static diagnostic_op error_E049(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E049(const std::string& message, const range& range);
 
-	static diagnostic_op error_E050(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E050(const range& range);
 
-	static diagnostic_op error_E051(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E051(const std::string& message, const range& range);
 
-	static diagnostic_op error_E052(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E052(const std::string& message, const range& range);
 
-	static diagnostic_op error_E053(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E053(const range& range);
 
-	static diagnostic_op error_E054(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E054(const range& range);
 
-	static diagnostic_op error_E055(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E055(const range& range);
 
-	static diagnostic_op error_E056(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E056(const range& range);
 
-	static diagnostic_op error_E057(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E057(const range& range);
 
-	static diagnostic_op error_E058(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E058(const range& range);
 
-	static diagnostic_op error_E059(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E059(const std::string& message, const range& range);
 
-	static diagnostic_op error_E060(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E060(const std::string& message, const range& range);
 
-	static diagnostic_op error_E061(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E061(const std::string& message, const range& range);
 
-	static diagnostic_op error_E062(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E062(const range& range);
 
-	static diagnostic_op error_E063(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_E063(const range& range);
 
-	static diagnostic_op warning_W010(const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_op warning_W010(const std::string& message, const range& range);
 		
-	static diagnostic_op error_EQU1(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_EQU1(const range& range);
 
-	static diagnostic_op error_EQU2(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_EQU2(const range& range);
 
-	static diagnostic_op error_ME001(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_ME001(const range& range);
 
-	static diagnostic_op error_ME002(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_ME002(const range& range);
 
-	static diagnostic_op error_D001(hlasm_plugin::parser_library::range range);
-	static diagnostic_op error_D002(hlasm_plugin::parser_library::range range);
-	static diagnostic_op error_D003(hlasm_plugin::parser_library::range range);
-	static diagnostic_op error_D004(hlasm_plugin::parser_library::range range);
-	static diagnostic_op error_D005(hlasm_plugin::parser_library::range range);
-	static diagnostic_op error_D006(hlasm_plugin::parser_library::range range);
+	static diagnostic_op error_D001(const range& range);
+	static diagnostic_op error_D002(const range& range);
+	static diagnostic_op error_D003(const range& range);
+	static diagnostic_op error_D004(const range& range);
+	static diagnostic_op error_D005(const range& range);
+	static diagnostic_op error_D006(const range& range);
 };
 
 struct range_uri_s
@@ -544,7 +540,7 @@ public:
 	std::string message;
 	std::vector<diagnostic_related_info_s> related;
 
-	static diagnostic_s error_S100(const std::string& filename, const std::string& message, hlasm_plugin::parser_library::range range);
+	static diagnostic_s error_S100(const std::string& filename, const std::string& message, const range& range);
 
 	static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
 

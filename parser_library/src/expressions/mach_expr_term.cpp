@@ -38,15 +38,6 @@ void mach_expr_constant::fill_location_counter(context::address)
 //***********  mach_expr_symbol ************
 mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng) : mach_expression(rng),value(value) {}
 
-mach_expr_ptr mach_expr_symbol::from_id(context::id_index id, range r)
-{
-	if (checking::is_number(*id, false))
-		return std::make_unique<mach_expr_constant>(*id, r);
-	else
-		return std::make_unique<mach_expr_symbol>(id, r);
-	
-}
-
 context::dependency_holder mach_expr_symbol::get_dependencies(context::dependency_solver& solver) const
 {
 	auto symbol = solver.get_symbol(value);

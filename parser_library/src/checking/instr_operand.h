@@ -41,8 +41,6 @@ namespace hlasm_plugin::parser_library::checking
 	public:
 		asm_operand();
 		virtual ~asm_operand() = default;
-
-		virtual std::string to_string() const;
 	};
 
 	// extended class representing complex operands
@@ -55,8 +53,6 @@ namespace hlasm_plugin::parser_library::checking
 
 		complex_operand();
 		complex_operand(std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params);
-
-		std::string to_string() const override;
 	};
 
 	enum class machine_operand_type : uint8_t { MASK, REG, REG_IMM, IMM, NONE, DISPLC, BASE, LENGTH, VEC_REG, DIS_REG };
@@ -92,11 +88,8 @@ namespace hlasm_plugin::parser_library::checking
 	public:
 		machine_operand();
 
-		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const;
+		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const = 0;
 
-		std::string to_string() const;
-
-		diagnostic_op get_address_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
 		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
 
 	protected:
@@ -150,16 +143,12 @@ namespace hlasm_plugin::parser_library::checking
 		one_operand(const one_operand& op);
 
 		bool check(diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range& stmt_range) const override;
-
-		virtual std::string to_string() const;
 	};
 
 	class empty_operand final : public machine_operand, public asm_operand
 	{
 	public:
 		empty_operand();
-
-		virtual std::unique_ptr<asm_operand> clone() const;
 
 		bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const override;
 	};

@@ -125,59 +125,6 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
 }*/
 
-TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
-{
-	std::string input(
-		R"( 
- ACONTROL NOAFPR,COMPAT(CASE,NOCASE),FLAG(USING0,AL),OPTABLE(ZS5,LIST)
- ACONTROL NOTYPECHECK,TYPECHECK(MAGNITUDE,NOREG),OPTABLE(DOS)
- ADATA -300,2*100,2,3,'test'
- AINSERT 'test',BACK
- AMODE ANY31
- CATTR RMODE(31),ALIGN(2)
- CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)
- CEJECT 10/2
- CNOP 6,8
- COM    
- CSECT
- END ,(MYCOMPIlER,0101,00273)
- EXITCTL LISTING,256,*+128,,-2
- EXITCTL SOURCE,,,
- EXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
- ICTL 1,71,16 
- ICTL 9,80
- ISEQ 10,50-4
-label LOCTR
- LTORG
- MNOTE 120,'message'
- OPSYN   
- ORG *-500   remark
- ORG 2+1,,4 
- PRINT ON,OFF,ON,DATA,MCALL,NOPRINT 
- PUNCH 'string'
- PUSH PRINT,NOPRINT
- REPRO
- RMODE 24
-label1 RSECT
- SPACE 4
- START 34
- TITLE 'string'   remark
- USING (3,3),12
- USING 1,3,15,0,0/0
- WXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
- XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
-)"
-);
-
-	analyzer a(input);
-	a.analyze();
-
-	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
-
-	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-
-	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
-}
 
 TEST(diagnostics, case_insensitivity)
 {
@@ -271,6 +218,63 @@ TEST(diagnostics, mnemonics)
   BROL 80000
   BRNOL 80000
   JLNOP 80000
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+
+	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+
+	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+}
+
+TEST(diagnostics, complex_operands) // to do - add machine, check CCW, EQU, OPSYN, other instructions with labels - org etc
+{
+	std::string input(
+		R"( 
+ ACONTROL NOAFPR,COMPAT(CASE,NOCASE),FLAG(USING0,AL),OPTABLE(ZS5,LIST)
+ ACONTROL NOTYPECHECK,TYPECHECK(MAGNITUDE,NOREG),OPTABLE(DOS)
+ ADATA -300,2*100,2,3,'test'
+ AINSERT 'test',BACK
+ AMODE ANY31
+ CATTR RMODE(31),ALIGN(2)
+ CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)
+ CEJECT 10/2
+ CNOP 6,8
+ COM    
+ CSECT
+ END ,(MYCOMPIlER,0101,00273)
+ EXITCTL LISTING,256,*+128,,-2
+ EXITCTL SOURCE,,,
+ EXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
+ ICTL 1,71,16 
+ ICTL 9,80
+ DROP ,
+ ISEQ 10,50-4
+label LOCTR
+ LTORG
+ MNOTE 120,'message'
+ OPSYN   
+ ORG *-500   remark
+ ORG 2+1,,4 
+ ORG ,
+ PRINT ON,OFF,ON,DATA,MCALL,NOPRINT 
+ PUNCH 'string'
+ PUSH PRINT,NOPRINT
+ REPRO
+ END ,
+ RMODE 24
+label1 RSECT
+ SPACE 4
+ START 34
+ TITLE 'string'   remark
+ USING (3,3),12
+ USING 1,3,15,0,0/0
+ WXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
+ XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
 )"
 );
 

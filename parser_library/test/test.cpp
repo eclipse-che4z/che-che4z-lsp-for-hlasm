@@ -27,7 +27,9 @@
 #include "utf_conv_test.h"
 #include "diagnosable_ctx_test.h"
 
-#include "diagnostics_check.h"
+#include "diagnostics_check_test.h"
+#include "asm_instr_diag_test.h"
+#include "mach_instr_diag_test.h"
 
 int main(int argc, char **argv)
 {
