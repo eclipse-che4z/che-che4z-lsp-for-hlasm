@@ -352,7 +352,7 @@ vscode.window.onDidChangeVisibleTextEditors((editors: vscode.TextEditor[]) => {
     {
         if (editors[i].document.languageId == 'hlasm')
         {
-            highlight.applyDecorations();
+            highlight.colorize();
             break;
         }
     };
@@ -377,8 +377,8 @@ function setHlasmLanguage(document: vscode.TextDocument) {
         var first = true;
         //iterate line by line
         document.getText().split('\n').forEach(line => {
-            // irrelevant line, remove from total count
-            if (line != "" && (line[0] != "*" || (line.length > 1 && line[0] == "." && line[1] == "*"))) {
+            // irrelevant line, remove from total count comments starting "*" and ".*"
+            if (line != "" && !line.startsWith("*") && !line.startsWith(".*")) {
                 lines++;
                 if (first)
                 {

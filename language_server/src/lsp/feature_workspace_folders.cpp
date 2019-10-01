@@ -10,6 +10,8 @@ void feature_workspace_folders::register_methods(std::map<std::string, method> &
 {
 	methods.emplace("workspace/didChangeWorkspaceFolders",
 		std::bind(&feature_workspace_folders::on_did_change_workspace_folders, this, std::placeholders::_1, std::placeholders::_2));
+	methods.emplace("workspace/didChangeWatchedFiles",
+		std::bind(&feature_workspace_folders::did_change_watched_files, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_workspace_folders::register_capabilities()
@@ -98,5 +100,16 @@ void feature_workspace_folders::remove_workspaces(const json & removed)
 void feature_workspace_folders::add_workspace(const std::string & name, const std::string & path)
 {
 	ws_mngr_.add_workspace(name.c_str(), path.c_str());
+}
+
+void feature_workspace_folders::did_change_watched_files(const json&, const json& params)
+{
+	std::vector<json> changes = params["changes"];
+	std::vector<std::string> paths;
+	for (auto& change : changes)
+		paths.push_back(uri_to_path(change["uri"].get<std::string>()));
+	std::vector<const char*> c_uris;
+	std::transform(paths.begin(), paths.end(), std::back_inserter(c_uris), [](std::string& s) {return s.c_str(); });
+	ws_mngr_.did_change_watched_files(c_uris.data(), c_uris.size());
 }
 }

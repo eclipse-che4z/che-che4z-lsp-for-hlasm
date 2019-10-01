@@ -48,6 +48,16 @@ void workspace_manager::remove_workspace(const char * uri)
 	impl_->remove_workspace(uri);
 }
 
+void workspace_manager::did_change_watched_files(const char** paths, size_t size)
+{
+	std::vector<std::string> paths_s;
+	for (size_t i = 0; i < size; ++i)
+	{
+		paths_s.push_back(paths[i]);
+	}
+	impl_->did_change_watched_files(std::move(paths_s));
+}
+
 void workspace_manager::did_open_file(const char * document_uri, version_t version, const char * text, size_t text_size)
 {
 	impl_->did_open_file(document_uri, version, std::string( text, text_size ));

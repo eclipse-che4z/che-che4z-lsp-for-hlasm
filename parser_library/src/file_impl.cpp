@@ -107,7 +107,14 @@ void file_impl::did_open(std::string new_text, version_t version)
 	find_newlines(text_, lines_ind_);
 	up_to_date_ = true;
 	bad_ = false;
+	editing_ = true;
 }
+
+bool file_impl::get_lsp_editing()
+{
+	return editing_;
+}
+
 
 //applies a change to the text and updates line begginings 
 void file_impl::did_change(range range, std::string new_text)
@@ -174,7 +181,9 @@ void file_impl::did_change(std::string new_text)
 }
 
 void file_impl::did_close()
-{}
+{
+	editing_ = false;
+}
 
 const std::string & file_impl::get_text_ref()
 {
@@ -263,11 +272,6 @@ size_t file_impl::index_from_location(position loc) const
 	}
 	return i;
 }
-
-/*bool (const std::string& text, size_t index, size_t to_check)
-{
-
-}*/
 
 std::string file_impl::replace_non_utf8_chars(const std::string & text)
 {

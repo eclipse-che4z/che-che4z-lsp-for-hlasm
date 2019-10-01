@@ -46,7 +46,7 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 {
 	while (!procs_.empty())
 	{
-		if (cancel != nullptr && *cancel)
+		if (cancel && *cancel)
 			break;
 
 		statement_processor& proc = *procs_.back();

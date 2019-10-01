@@ -39,12 +39,12 @@ private:
 
 	std::mutex mtx_;
 
+	std::atomic<bool>* cancel_;
 	std::thread worker_;
 	std::mutex q_mtx_;
 	std::condition_variable cond_;
 	std::deque<request> requests_;
 	std::string currently_running_file_;
-	std::atomic<bool>* cancel_;
 
 	void handle_request_();
 	std::string get_request_file_(json r);

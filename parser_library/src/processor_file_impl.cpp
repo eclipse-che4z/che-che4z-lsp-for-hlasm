@@ -29,7 +29,9 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 {
 	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider);
 
+	auto old_dep = std::move(dependencies_);
 	dependencies_.clear();
+	files_to_close_.clear();
 
 	auto res = parse_inner(*analyzer_);
 
@@ -37,6 +39,13 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 		if(file != get_file_name())
 			dependencies_.insert(file);
 	
+	// files that used to be dependencies but are not anymore should be closed internally
+	for (auto& file : old_dep)
+	{
+		if (dependencies_.find(file) == dependencies_.end())
+			files_to_close_.insert(file);
+	}
+
 	return res;
 }
 
@@ -68,6 +77,11 @@ const file_highlighting_info processor_file_impl::get_hl_info()
 const semantics::lsp_info_processor processor_file_impl::get_lsp_info()
 {
 	return analyzer_->lsp_processor();
+}
+
+const std::set<std::string>& processor_file_impl::files_to_close()
+{
+	return files_to_close_;
 }
 
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)

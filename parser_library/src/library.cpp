@@ -13,6 +13,12 @@ void library_local::collect_diags() const
 
 }
 
+void library_local::refresh()
+{
+	files_.clear();
+	load_files();
+}
+
 const std::string& library_local::get_lib_path() const
 {
 	return lib_path_;
@@ -37,30 +43,8 @@ processor* library_local::find_file(const std::string& file_name)
 
 void library_local::load_files()
 {
+	files_ = file_manager_.list_directory_files(lib_path_);
 	files_loaded_ = true;
-	std::filesystem::path lib_p(lib_path_);
-
-	try {
-		std::filesystem::directory_entry dir(lib_p);
-		if (!dir.is_directory())
-		{
-			add_diagnostic(diagnostic_s{ "",{},"L0001", "Unable to load library: " + lib_path_ + ". Error: The path does not point to directory." });
-			return;
-		}
-
-		std::filesystem::directory_iterator it(lib_p);
-
-		for (auto& p : it)
-		{
-			if (p.is_regular_file())
-				files_.insert(p.path().filename().string());
-		}
-
-	}
-	catch (std::filesystem::filesystem_error e)
-	{
-		add_diagnostic(diagnostic_s{ lib_path_ ,{},"L0001", "Unable to load library: " + lib_path_ + ". Error: " + e.what() });
-	}
 }
 
 }

@@ -73,7 +73,21 @@ public:
 
 	void did_close_file(const std::string document_uri)
 	{
-		file_manager_.did_close_file(document_uri);
+		workspace& ws = ws_path_match(document_uri);
+		ws.did_close_file(document_uri);
+		notify_highlighting_consumers();
+		notify_diagnostics_consumers();
+	}
+
+	void did_change_watched_files(std::vector<std::string> paths)
+	{
+		for (const auto& path : paths)
+		{
+			workspace& ws = ws_path_match(path);
+			ws.did_change_watched_files(path);
+		}
+		notify_highlighting_consumers();
+		notify_diagnostics_consumers();
 	}
 
 	void register_highlighting_consumer(highlighting_consumer * consumer)
@@ -202,8 +216,8 @@ private:
 
 	std::unordered_map<std::string, workspace> workspaces_;
 	file_manager_impl file_manager_;
-	std::atomic<bool> * cancel_;
 	workspace implicit_workspace_;
+	std::atomic<bool>* cancel_;
 
 	std::vector<highlighting_consumer *> hl_consumers_;
 	std::vector<diagnostics_consumer *> diag_consumers_;

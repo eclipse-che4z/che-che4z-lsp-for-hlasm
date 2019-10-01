@@ -30,8 +30,8 @@ export class ExtendedLanguageClient extends LanguageClient
 		this.semanticHighlighting = semanticHighlighting;
 	}
 
-	public applyDecorations(){
-		this.semanticHighlighting.applyDecorations();
+	public applyDecorations(params: SemanticHighlightingParams){
+		this.semanticHighlighting.applyDecorations(params);
 	}
 }
 
@@ -118,31 +118,33 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		return (editor: TextEditor) => editor.document.uri.toString() === predicateUri.toString();
 	}
 
-	public applyDecorations(params?: SemanticHighlightingParams): void {
+	public applyDecorations(params: SemanticHighlightingParams): void {
+		// find the decorations of current editor
+		var decors = this.definedEditors.get(params.textDocument.uri.toString());
+		// editor found, clear its decorations
+		if (decors == undefined) {
+			this.definedEditors.set(params.textDocument.uri, new Map<scope,Range[]>());
+			decors = this.definedEditors.get(params.textDocument.uri);
+		}
+		// clear ranges
+		Array.from(this.decorationTypes.keys()).forEach(scope => {
+			decors.set(scope,[]);
+		})
+		// add range for each token to its corresponding scope
+		params.tokens.forEach(token => {
+			decors.get(token.scope)!.push(new Range(new Position(token.lineStart, token.columnStart), new Position(token.lineEnd, token.columnEnd)));
+		});
+		this.colorize();
+	}
+
+	public colorize()
+	{
 		// update colors from config
 		this.updateColors();
-		// for each visible editor
 		window.visibleTextEditors.forEach(editor => {
 			// find the decorations of current editor
 			var decors = this.definedEditors.get(editor.document.uri.toString());
-			// check whether current editor matches editor from params
-			if (params && params.textDocument.uri == editor.document.uri.toString()) {
-				// editor found, clear its decorations
-				if (decors == undefined) {
-					this.definedEditors.set(params.textDocument.uri, new Map<scope,Range[]>());
-					decors = this.definedEditors.get(params.textDocument.uri);
-				}
-				// clear ranges
-				Array.from(this.decorationTypes.keys()).forEach(scope => {
-					decors.set(scope,[]);
-				})
-				// add range for each token to its corresponding scope
-				params.tokens.forEach(token => {
-					decors.get(token.scope)!.push(new Range(new Position(token.lineStart, token.columnStart), new Position(token.lineEnd, token.columnEnd)));
-				});
-			}
-			
-			// draw decorations of visible editor (whether it is in params or not)
+			// draw decorations of visible editor
 			if (decors !== undefined) {
 				// for each of its saved decorations, draw them
 				decors.forEach((ranges: Range[], scope: string) => {
@@ -152,7 +154,7 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		});
 	}
 
-    public updateColors() {
+    private updateColors() {
 		// get colors from config
 		var colors = workspace.getConfiguration().semanticHighlightingColors;
 		if (colors != null) {

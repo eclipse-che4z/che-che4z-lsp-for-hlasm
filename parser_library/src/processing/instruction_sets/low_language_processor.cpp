@@ -192,9 +192,15 @@ checking::check_op_ptr low_language_processor::get_check_op(
 
 	if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(ev_op))
 	{
-		auto type = context::instruction::machine_instructions
-			.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)->operands[op_position].identifier.type;
-		uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
+		if (context::instruction::machine_instructions
+			.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)->operands.size() > op_position)
+		{
+			auto type = context::instruction::machine_instructions
+				.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)->operands[op_position].identifier.type;
+			uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
+		}
+		else
+			uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
 	}
 	else
 	{

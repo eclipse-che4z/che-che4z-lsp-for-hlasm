@@ -32,6 +32,7 @@ public:
 	virtual const std::set<std::string> & dependencies() = 0;
 	virtual const file_highlighting_info get_hl_info() = 0;
 	virtual const semantics::lsp_info_processor get_lsp_info() = 0;
+	virtual const std::set<std::string>& files_to_close() = 0;
 };
 
 }

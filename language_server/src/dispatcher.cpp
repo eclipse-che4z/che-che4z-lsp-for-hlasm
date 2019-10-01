@@ -57,7 +57,8 @@ void dispatcher::handle_request_()
 		currently_running_file_ = get_request_file_(to_run.message);
 		// if the request is valid, do not cancel
 		// if not, cancel the parsing right away, only the file manager should update the data
-		*cancel_ = !to_run.valid;
+		if (cancel_)
+			*cancel_ = !to_run.valid;
 		//unlock the mutex, main thread may add new requests
 		lock.unlock();
 		//handle the request

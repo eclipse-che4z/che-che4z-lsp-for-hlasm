@@ -20,6 +20,7 @@ public:
 	
 private:
 	void on_did_change_workspace_folders(const json & id, const json & params);
+	void did_change_watched_files(const json&, const json& params);
 	void add_workspaces(const json & added);
 	void remove_workspaces(const json & removed);
 

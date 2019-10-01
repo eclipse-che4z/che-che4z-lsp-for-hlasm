@@ -54,6 +54,7 @@ public:
 	virtual void did_open_file(const char * document_uri, version_t version, const char * text, size_t text_size);
 	virtual void did_change_file(const char * document_uri, version_t version, const document_change * changes, size_t ch_size);
 	virtual void did_close_file(const char * document_uri);
+	virtual void did_change_watched_files(const char** paths, size_t size);
 
 	position_uri definition(const char * document_uri, const position pos);
 	position_uris references(const char * document_uri, const position pos);

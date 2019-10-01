@@ -26,6 +26,7 @@ public:
 	virtual const std::string & get_text() override;
 	virtual version_t get_version() override;
 	virtual bool update_and_get_bad() override;
+	virtual bool get_lsp_editing() override;
 
 	virtual void did_open(std::string new_text, version_t version) override;
 	virtual void did_change(std::string new_text) override;

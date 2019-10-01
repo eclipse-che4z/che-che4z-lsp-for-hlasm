@@ -24,8 +24,10 @@ public:
 	const std::set<std::string> & dependencies() override;
 
 	virtual ~processor_file_impl() = default;
-	virtual const file_highlighting_info get_hl_info();
-	virtual const semantics::lsp_info_processor get_lsp_info();
+	virtual const file_highlighting_info get_hl_info() override;
+	virtual const semantics::lsp_info_processor get_lsp_info() override;
+	virtual const std::set<std::string>& files_to_close() override;
+
 private:
 	std::unique_ptr<analyzer> analyzer_;
 
@@ -35,6 +37,7 @@ private:
 	std::atomic<bool>* cancel_;
 
 	std::set<std::string> dependencies_;
+	std::set<std::string> files_to_close_;
 };
 
 }

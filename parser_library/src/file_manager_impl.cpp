@@ -50,6 +50,16 @@ processor_file * file_manager_impl::add_processor_file(const file_uri & uri)
 	}
 }
 
+void file_manager_impl::remove_file(const file_uri& document_uri)
+{
+	auto file = files_.find(document_uri);
+	if (file == files_.end())
+		return;
+
+	//close the file internally
+	files_.erase(document_uri);
+}
+
 file * file_manager_impl::find(const std::string & key)
 {
 	auto ret = files_.find(key);
@@ -109,6 +119,34 @@ std::vector<processor_file *> file_manager_impl::list_updated_files()
 	return list;
 }
 
+std::unordered_set<std::string> file_manager_impl::list_directory_files(const std::string& path)
+{
+	std::filesystem::path lib_p(path);
+	std::unordered_set<std::string> found_files;
+	try {
+		std::filesystem::directory_entry dir(lib_p);
+		if (!dir.is_directory())
+		{
+			add_diagnostic(diagnostic_s{ "",{},"L0001", "Unable to load library: " + path + ". Error: The path does not point to directory." });
+			return found_files;
+		}
+
+		std::filesystem::directory_iterator it(lib_p);
+
+		for (auto& p : it)
+		{
+			if (p.is_regular_file())
+				found_files.insert(p.path().filename().string());
+		}
+
+	}
+	catch (const std::filesystem::filesystem_error & e)
+	{
+		add_diagnostic(diagnostic_s{ path ,{},"L0001", "Unable to load library: " + path + ". Error: " + e.what() });
+	}
+	return found_files;
+}
+
 void file_manager_impl::did_open_file(const std::string & document_uri, version_t version, std::string text)
 {
 	auto file = add_file(document_uri);
@@ -142,8 +180,9 @@ void file_manager_impl::did_close_file(const std::string & document_uri)
 	if (file == files_.end())
 		return;
 
+	//close the file externally
 	file->second->did_close();
-	
+
 	//if the file does not exist, no action is taken
 }
 

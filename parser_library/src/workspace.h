@@ -52,9 +52,12 @@ public:
 	const processor_group & get_proc_grp(const proc_grp_id & proc_grp) const;
 	const processor_group & get_proc_grp_by_program(const std::string & program) const;
 
+	void parse_file(const std::string& file_uri);
+	void refresh_libraries();
 	void did_open_file(const std::string & file_uri);
-
+	void did_close_file(const std::string& file_uri);
 	void did_change_file(const std::string document_uri, const document_change * changes, size_t ch_size);
+	void did_change_watched_files(const std::string& file_uri);
 
 	virtual parse_result parse_library(const std::string & library, context::hlasm_context& hlasm_ctx,const library_data data) override;
 
@@ -67,9 +70,6 @@ public:
 private:
 	constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
 	constexpr static char FILENAME_PGM_CONF[] = "pgm_conf.json";
-
-
-	void parse_file(const std::string & file_uri);
 
 	std::string name_;
 	ws_uri uri_;
@@ -94,6 +94,9 @@ private:
 	std::set<processor_file *> dependants_;
 
 	diagnostic_container config_diags_;
+
+	void filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file* file);
+	bool is_dependency_(const std::string & file_uri);
 };
 
 }
