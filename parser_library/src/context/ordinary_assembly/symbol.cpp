@@ -18,19 +18,19 @@ symbol_value::symbol_value() {}
 
 symbol_value symbol_value::operator+(const symbol_value& value) const
 {
-	if (value_kind() == symbol_kind::UNDEF || value.value_kind() == symbol_kind::UNDEF)
+	if (value_kind() == symbol_value_kind::UNDEF || value.value_kind() == symbol_value_kind::UNDEF)
 		return symbol_value();
 
-	if (value_kind() == symbol_kind::ABS)
+	if (value_kind() == symbol_value_kind::ABS)
 	{
-		if (value.value_kind() == symbol_kind::ABS)
+		if (value.value_kind() == symbol_value_kind::ABS)
 			return get_abs() + value.get_abs();
 		else
 			return value.get_reloc() + get_abs();
 	}
-	else if(value_kind() == symbol_kind::RELOC)
+	else if(value_kind() == symbol_value_kind::RELOC)
 	{
-		if (value.value_kind() == symbol_kind::ABS)
+		if (value.value_kind() == symbol_value_kind::ABS)
 			return get_reloc() + value.get_abs();
 		else
 		{
@@ -50,19 +50,19 @@ symbol_value symbol_value::operator+(const symbol_value& value) const
 
 symbol_value symbol_value::operator-(const symbol_value& value) const
 {
-	if (value_kind() == symbol_kind::UNDEF || value.value_kind() == symbol_kind::UNDEF)
+	if (value_kind() == symbol_value_kind::UNDEF || value.value_kind() == symbol_value_kind::UNDEF)
 		return symbol_value();
 
-	if (value_kind() == symbol_kind::ABS)
+	if (value_kind() == symbol_value_kind::ABS)
 	{
-		if (value.value_kind() == symbol_kind::ABS)
+		if (value.value_kind() == symbol_value_kind::ABS)
 			return get_abs() - value.get_abs();
 		else
 			return value.get_reloc() - get_abs();
 	}
-	else if (value_kind() == symbol_kind::RELOC)
+	else if (value_kind() == symbol_value_kind::RELOC)
 	{
-		if (value.value_kind() == symbol_kind::ABS)
+		if (value.value_kind() == symbol_value_kind::ABS)
 			return get_reloc() - value.get_abs();
 		else
 		{
@@ -82,7 +82,7 @@ symbol_value symbol_value::operator-(const symbol_value& value) const
 
 symbol_value symbol_value::operator*(const symbol_value& value) const
 {
-	if (value_kind() == symbol_kind::ABS && value.value_kind() == symbol_kind::ABS)
+	if (value_kind() == symbol_value_kind::ABS && value.value_kind() == symbol_value_kind::ABS)
 		return get_abs() * value.get_abs();
 
 	return symbol_value();
@@ -90,7 +90,7 @@ symbol_value symbol_value::operator*(const symbol_value& value) const
 
 symbol_value symbol_value::operator/(const symbol_value& value) const
 {
-	if (value_kind() == symbol_kind::ABS && value.value_kind() == symbol_kind::ABS)
+	if (value_kind() == symbol_value_kind::ABS && value.value_kind() == symbol_value_kind::ABS)
 		return value.get_abs() == 0 ? 0 : get_abs() / value.get_abs();
 
 	return symbol_value();
@@ -100,11 +100,11 @@ symbol_value symbol_value::operator-() const
 {
 	switch (value_kind())
 	{
-	case symbol_kind::ABS:
+	case symbol_value_kind::ABS:
 		return -get_abs();
-	case symbol_kind::RELOC:
+	case symbol_value_kind::RELOC:
 		return -get_reloc();
-	case symbol_kind::UNDEF:
+	case symbol_value_kind::UNDEF:
 		return symbol_value();
 	default:
 		assert(false);
@@ -114,7 +114,7 @@ symbol_value symbol_value::operator-() const
 
 symbol_value& symbol_value::operator=(const symbol_value& value)
 {
-	if (value_kind() != symbol_kind::UNDEF)
+	if (value_kind() != symbol_value_kind::UNDEF)
 		throw std::runtime_error("assigning to defined symbol");
 	
 	value_ = value.value_;
@@ -125,16 +125,13 @@ const symbol_value::abs_value_t& symbol_value::get_abs() const { return std::get
 
 const symbol_value::reloc_value_t& symbol_value::get_reloc() const { return std::get<reloc_value_t>(value_); }
 
-symbol_kind symbol_value::value_kind() const
+symbol_value_kind symbol_value::value_kind() const
 {
-	return static_cast<symbol_kind>(value_.index());
+	return static_cast<symbol_value_kind>(value_.index());
 }
 
 symbol::symbol(id_index name, symbol_value value, symbol_attributes attributes)
 	: name(name), value_(std::move(value)), attributes_(attributes) {}
-
-symbol::symbol() 
-	: name(id_storage::empty_id) {}
 
 const symbol_value& symbol::value() const { return value_; }
 
@@ -143,18 +140,28 @@ const symbol_attributes& symbol::attributes() const
 	return attributes_;
 }
 
-symbol_kind symbol::kind() const
+symbol_value_kind symbol::kind() const
 {
 	return value_.value_kind();
 }
 
 void symbol::set_value(symbol_value value)
 {
-	if (value.value_kind() == symbol_kind::UNDEF)
+	if (value.value_kind() == symbol_value_kind::UNDEF)
 		throw std::runtime_error("can not assign undefined value");
 
-	if(kind() != symbol_kind::UNDEF)
+	if(kind() != symbol_value_kind::UNDEF)
 		throw std::runtime_error("can not assign value to already defined symbol");
 
 	value_ = value;
+}
+
+void symbol::set_length(symbol_attributes::len_attr value)
+{
+	attributes_.length(value);
+}
+
+void symbol::set_scale(symbol_attributes::scale_attr value)
+{
+	attributes_.scale(value);
 }

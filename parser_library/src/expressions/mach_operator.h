@@ -30,6 +30,11 @@ public:
 		right_->fill_location_counter(std::move(addr));
 	}
 
+	virtual const mach_expression* leftmost_term() const override
+	{
+		return left_->leftmost_term();
+	}
+
 	void collect_diags() const override
 	{
 		collect_diags_from_child(*left_);
@@ -53,12 +58,17 @@ public:
 
 	context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
 
+	virtual value_t evaluate(mach_evaluate_info info) const override;
+
 	virtual void fill_location_counter(context::address addr) override
 	{
 		child_->fill_location_counter(std::move(addr));
 	}
 
-	virtual value_t evaluate(mach_evaluate_info info) const override;
+	virtual const mach_expression* leftmost_term() const override
+	{
+		return child_->leftmost_term();
+	}
 
 	void collect_diags() const override
 	{
@@ -147,8 +157,8 @@ inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_in
 	auto left_res = left_->evaluate(info);
 	auto right_res = right_->evaluate(info);
 
-	if (!(left_res.value_kind() == context::symbol_kind::ABS && right_res.value_kind() == context::symbol_kind::ABS) &&
-		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF)
+	if (!(left_res.value_kind() == context::symbol_value_kind::ABS && right_res.value_kind() == context::symbol_value_kind::ABS) &&
+		left_res.value_kind() != context::symbol_value_kind::UNDEF && right_res.value_kind() != context::symbol_value_kind::UNDEF)
 		add_diagnostic(diagnostic_op::error_ME002(get_range()));
 		
 		
@@ -161,8 +171,8 @@ inline mach_expression::value_t mach_expr_binary<div>::evaluate(mach_evaluate_in
 	auto left_res = left_->evaluate(info);
 	auto right_res = right_->evaluate(info);
 
-	if (!(left_res.value_kind() == context::symbol_kind::ABS && right_res.value_kind() == context::symbol_kind::ABS) &&
-		left_res.value_kind() != context::symbol_kind::UNDEF && right_res.value_kind() != context::symbol_kind::UNDEF) 
+	if (!(left_res.value_kind() == context::symbol_value_kind::ABS && right_res.value_kind() == context::symbol_value_kind::ABS) &&
+		left_res.value_kind() != context::symbol_value_kind::UNDEF && right_res.value_kind() != context::symbol_value_kind::UNDEF) 
 		add_diagnostic(diagnostic_op::error_ME002(get_range()));
 
 	return left_res / right_res;

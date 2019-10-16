@@ -126,8 +126,8 @@ Y LR 1,1
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Y")));
 
 	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("D"))->value().get_abs(), 2);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().value_kind(), symbol_kind::RELOC);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().value_kind(), symbol_kind::RELOC);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().value_kind(), symbol_value_kind::RELOC);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().value_kind(), symbol_value_kind::RELOC);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -147,9 +147,9 @@ C EQU A
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("B")));
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("C")));
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::ABS);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_kind::ABS);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_value_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_value_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_value_kind::ABS);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -185,7 +185,7 @@ A LR 1,1
 	a.analyze();
 
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_value_kind::RELOC);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -202,7 +202,7 @@ B LR A*2,1
 
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("B")));
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_value_kind::RELOC);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)2);
@@ -220,8 +220,8 @@ Y LR 1,1
 
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("X")));
 	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("Y")));
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -229,7 +229,7 @@ Y LR 1,1
 
 TEST(ordinary_symbols, complex_relocatable_address)
 {
-	auto input = R"(
+	std::string input = R"(
 A CSECT
 X1 LR 1,1
 Y1 LR 1,1
@@ -249,13 +249,13 @@ F EQU V-U
 	analyzer a(input);
 	a.analyze();
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X1"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y1"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X2"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y2"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("U"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("V"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("F"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X1"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y1"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X2"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y2"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("U"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("V"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("F"))->kind() == symbol_value_kind::ABS);
 
 	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("F"))->value().get_abs(),4);
 
@@ -265,7 +265,7 @@ F EQU V-U
 
 TEST(ordinary_symbols, relocatable_LOCTR)
 {
-	auto input = R"(
+	std::string input = R"(
 A CSECT
 X LR 1,1
 B LOCTR
@@ -285,9 +285,9 @@ Z EQU Y-X
 	analyzer a(input);
 	a.analyze();
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_value_kind::ABS);
 
 	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->value().get_abs(), 16);
 
@@ -297,7 +297,7 @@ Z EQU Y-X
 
 TEST(ordinary_symbols, location_counter_simple)
 {
-	auto input = R"(
+	std::string input = R"(
 A LR 1,1
 B EQU *-A
 C EQU *-*
@@ -317,9 +317,9 @@ X3 EQU F-E
 	analyzer a(input);
 	a.analyze();
 
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_kind::RELOC);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_kind::ABS);
-	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind() == symbol_value_kind::ABS);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->kind() == symbol_value_kind::ABS);
 	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->value().get_abs(),2);
 	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->value().get_abs(), 0);
 	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X1"))->value().get_abs(), 1);
@@ -330,9 +330,134 @@ X3 EQU F-E
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(ordinary_symbols, EQU_length_explicit)
+{
+	std::string input = R"(
+Y EQU X,12
+X EQU 5,2
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 5);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(), (symbol_attributes::len_attr) (symbol_attributes::len_attr)2);
+
+	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind(), symbol_value_kind::ABS);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 5);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(), (symbol_attributes::len_attr) 12);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, EQU_length_implicit)
+{
+	std::string input = R"(
+X EQU 5,2
+Y EQU X
+Z EQU 1+X
+ZZ EQU *+X
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(), (symbol_attributes::len_attr) 2);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->attributes().length(), (symbol_attributes::len_attr) 1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("ZZ"))->attributes().length(), (symbol_attributes::len_attr) 1);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, EQU_length_dep)
+{
+	std::string input = R"(
+LEN EQU 11
+X EQU UNKNOWN,LEN
+UNKNOWN EQU L'X
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 11);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, EQU_length_bounds)
+{
+	std::string input = R"(
+A EQU 1,12
+LEN EQU 1+A,-100
+LEM EQU A+1,100000
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().length(), (symbol_attributes::len_attr) 1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().length(), (symbol_attributes::len_attr) 12);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)2);
+}
+
+TEST(ordinary_symbols, EQU_type_explicit)
+{
+	std::string input = R"(
+LEN EQU 11,3,4
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), 4);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, EQU_type_implicit)
+{
+	std::string input = R"(
+LEN EQU 11,3
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), symbol_attributes::undef_type);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, EQU_type_bounds)
+{
+	std::string input = R"(
+LEN EQU 11,1,-1
+LEM EQU 11,1,300
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), symbol_attributes::undef_type);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().type(), symbol_attributes::undef_type);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)2);
+}
+
 TEST(ordinary_symbols, DC_not_defined_symbol_in_length)
 {
-	auto input = R"(
+	std::string input = R"(
 A DC CL(D-C)'1'
 B LR 1,1
 C LR 1,1
@@ -348,7 +473,7 @@ R EQU B-A
 
 TEST(ordinary_symbols, DC_non_previously_defined_length)
 {
-	auto input = R"(
+	std::string input = R"(
 A DC CL(C-B)'1'
 B LR 1,1
 C LR 1,1
@@ -367,7 +492,7 @@ R EQU B-A
 
 TEST(ordinary_symbols, DC_previously_defined_length)
 {
-	auto input = R"(
+	std::string input = R"(
 A LR 1,1
   LR 1,1
 B DC CL(B-A)'ABCD'
@@ -387,7 +512,7 @@ R EQU C-B
 
 TEST(ordinary_symbols, DC_implicit_length)
 {
-	auto input = R"(
+	std::string input = R"(
 A LR 1,1
 B DC S(1,1)
 C LR 1,1
@@ -406,7 +531,7 @@ R EQU C-B
 
 TEST(ordinary_symbols, DC_implicit_length_deferred_checking)
 {
-	auto input = R"(
+	std::string input = R"(
 B DC S(C,-1)
 C LR 1,1
 
@@ -422,7 +547,7 @@ R EQU C-B
 
 TEST(ordinary_symbols, DC_simple_cycle)
 {
-	auto input = R"(
+	std::string input = R"(
 A DC BL(B-A)'101'
 B LR 1,1
 
@@ -436,7 +561,7 @@ B LR 1,1
 
 TEST(ordinary_symbols, DC_space_cycle)
 {
-	auto input = R"(
+	std::string input = R"(
 A DC AL(D-C)(1,1,1)
 B LR 1,1
 C DC CL(B-A)'1'
@@ -449,5 +574,119 @@ D LR 1,1
 	EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
+TEST(ordinary_symbols, DC_len_attr)
+{
+	std::string input = R"(
+X EQU -12
+A DC CL(X+14)'A'
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("a"))->attributes().length(), (symbol_attributes::len_attr)2);
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, DC_scale_attr)
+{
+	std::string input = R"(
+X EQU 22
+A DC FS(X+14)'1'
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("a"))->attributes().scale(), (symbol_attributes::scale_attr)36);
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, DC_cyclic_len_non_forward)
+{
+	std::string input = R"(
+X DC CL(A+1)'X'
+A EQU L'X
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 0);
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, DC_cyclic_len_forward)
+{
+	std::string input = R"(
+A EQU L'X
+X DC CL(A+1)'X'
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, DC_valid_len_ref)
+{
+	std::string input = R"(
+A EQU L'X
+X DC CL(Y)'X'
+Y EQU L'A
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(), (symbol_attributes::len_attr)1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, DC_invalid_len_ref)
+{
+	std::string input = R"(
+A EQU L'X
+X DC CL(Y+1)'X'
+Y EQU A
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(), (symbol_attributes::len_attr)1);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 0);
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, DC_self_cycle)
+{
+	std::string input = R"(
+X DC CL(L'X)'X'
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
 
 #endif

@@ -9,8 +9,10 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-mach_processor::mach_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_fields_parser& parser)
-	:low_language_processor(hlasm_ctx, provider,parser) {}
+mach_processor::mach_processor(context::hlasm_context& hlasm_ctx,
+	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+	statement_fields_parser& parser)
+	: low_language_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser) {}
 
 void mach_processor::process(context::shared_stmt_ptr stmt)
 {
@@ -35,9 +37,10 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 
 	auto& [name, instr] = *tmp;
 
-	if (stmt.label_ref().type == semantics::label_si_type::ORD)
+	auto label_name = find_label_symbol(stmt);
+
+	if (label_name != context::id_storage::empty_id)
 	{
-		auto label_name = context_manager(hlasm_ctx).get_symbol_name(std::get<std::string>(stmt.label_ref().value));
 		if (hlasm_ctx.ord_ctx.symbol_defined(label_name))
 		{
 			add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -51,7 +54,7 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		}
 	}
 
-	std::vector<const context::resolvable*> dependencies;
+	bool has_dependencies = false;
 	for (auto& op : stmt.operands_ref().value)
 	{
 		auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
@@ -59,14 +62,14 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		{
 			if (evaluable->has_dependencies(hlasm_ctx.ord_ctx))
 			{
-				auto deps_tmp = evaluable->get_resolvables();
-				dependencies.insert(dependencies.end(), std::make_move_iterator(deps_tmp.begin()), std::make_move_iterator(deps_tmp.end()));
+				has_dependencies = true;
+				break;
 			}
 		}
 	}
 
-	if (!dependencies.empty())
-		hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()), dependencies);
+	if (has_dependencies)
+		hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
 	else
 		check(stmt, hlasm_ctx, checker, *this);
 

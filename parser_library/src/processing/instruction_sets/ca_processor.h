@@ -3,9 +3,7 @@
 
 #include "../context_manager.h"
 #include "instruction_processor.h"
-#include "../branching_provider.h"
 #include "../processing_state_listener.h"
-
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -18,16 +16,17 @@ class ca_processor : public instruction_processor
 
 	const process_table_t table_;
 	context_manager mngr_;
-	branching_provider& provider_;
 	processing_state_listener& listener_;
 public:
-	ca_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider,processing_state_listener& listener);
+	ca_processor(context::hlasm_context& hlasm_ctx, 
+		attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+		processing_state_listener& listener);
 
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 
 private:
-	template <typename T> 
+	template <typename T>
 	void process_(T stmt_ptr)
 	{
 		auto it = table_.find(stmt_ptr->access_resolved()->opcode_ref().value);
@@ -41,7 +40,8 @@ private:
 	void register_seq_sym(const semantics::complete_statement& stmt);
 
 	bool test_symbol_for_assignment(const semantics::var_sym* symbol, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name);
-	bool prepare_SET(const semantics::complete_statement& stmt, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name, std::vector<context::SET_t>& values);
+	bool prepare_SET_symbol(const semantics::complete_statement& stmt, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name);
+	bool prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values);
 
 	template<typename T>
 	void process_SET(const semantics::complete_statement& stmt)
@@ -50,13 +50,18 @@ private:
 		int index;
 		context::id_index name;
 		context::set_symbol_base* set_symbol;
-		bool ok = prepare_SET(stmt, context::object_traits<T>::type_enum, index, set_symbol, name, values);
+		bool ok = prepare_SET_symbol(stmt, context::object_traits<T>::type_enum, index, set_symbol, name);
 
 		if (!ok)
 			return;
 
 		if (!set_symbol)
 			set_symbol = mngr_.hlasm_ctx.create_local_variable<T>(name, index == -1).get();
+
+		ok = prepare_SET_operands(stmt, values);
+
+		if (!ok)
+			return;
 
 		for (size_t i = 0; i < values.size(); i++)
 			set_symbol->access_set_symbol<T>()->set_value(values[i].to<T>(), index - 1 + i);
@@ -103,7 +108,7 @@ private:
 	void process_ASPACE(const semantics::complete_statement& stmt);
 	void process_AREAD(const semantics::complete_statement& stmt);
 
-	void process_empty(const semantics::complete_statement& );
+	void process_empty(const semantics::complete_statement&);
 
 	virtual void collect_diags() const override;
 };

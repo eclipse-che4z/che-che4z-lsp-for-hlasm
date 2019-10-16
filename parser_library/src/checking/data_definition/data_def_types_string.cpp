@@ -25,6 +25,15 @@ uint64_t get_X_B_length(const std::string& s, uint64_t frac)
 	return length;
 }
 
+uint32_t get_X_B_length_attr(const std::string& s, uint64_t frac)
+{
+	size_t first_value_len = s.find(',');
+	if (first_value_len == std::string::npos)
+		first_value_len = s.size();
+	first_value_len = (first_value_len + frac - 1) / frac;
+	return (uint32_t) first_value_len;
+}
+
 //Checks comma separated values. is_valid_digit specifies whether the char is valid character of value.
 bool check_comma_separated(const std::string nom, std::function<bool(char c)> is_valid_digit)
 {
@@ -73,6 +82,19 @@ uint64_t data_def_type_B::get_nominal_length(const nominal_value_t& op) const
 		return get_X_B_length(std::get<std::string>(op.value), 8);
 }
 
+uint32_t data_def_type_B::get_nominal_length_attribute(const nominal_value_t& nom) const
+{
+	if (!nom.present)
+		return 1;
+	else
+	{
+		if (!std::holds_alternative<std::string>(nom.value))
+			return 0;
+		else
+			return get_X_B_length_attr(std::get<std::string>(nom.value), 8);
+	}	
+}
+
 //******************************   type C   ********************************//
 data_def_type_CA_CE::data_def_type_CA_CE(char extension) : data_def_type('C', extension, modifier_bound{ 1, 2048 },
 	modifier_bound{ 1, 256 }, 65535, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed()) {}
@@ -83,6 +105,19 @@ uint64_t data_def_type_CA_CE::get_nominal_length(const nominal_value_t& op) cons
 		return 1;
 	else
 		return std::get<std::string>(op.value).size();
+}
+
+uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const nominal_value_t& nom) const
+{
+	if (!nom.present)
+		return 1;
+	else
+	{
+		if (!std::holds_alternative<std::string>(nom.value))
+			return 0;
+		else
+			return (uint32_t) std::get<std::string>(nom.value).size();
+	}
 }
 
 data_def_type_C::data_def_type_C() : data_def_type_CA_CE('\0') {}
@@ -99,7 +134,20 @@ uint64_t data_def_type_CU::get_nominal_length(const nominal_value_t& op) const
 	if (!op.present)
 		return 2;
 	else
-		return 2 * std::get<std::string>(op.value).size();
+		return 2 * (uint64_t)std::get<std::string>(op.value).size();
+}
+
+uint32_t data_def_type_CU::get_nominal_length_attribute(const nominal_value_t& nom) const
+{
+	if (!nom.present)
+		return 2;
+	else
+	{
+		if (!std::holds_alternative<std::string>(nom.value))
+			return 0;
+		else
+			return 2 * (uint32_t)std::get<std::string>(nom.value).size();
+	}
 }
 
 bool data_def_type_CU::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
@@ -139,6 +187,22 @@ uint64_t data_def_type_G::get_nominal_length(const nominal_value_t& op) const
 	}
 }
 
+uint32_t data_def_type_G::get_nominal_length_attribute(const nominal_value_t& nom) const
+{
+	if (!nom.present)
+		return 2;
+	else
+	{
+		if (!std::holds_alternative<std::string>(nom.value))
+			return 0;
+		else
+		{
+			const std::string& s = std::get<std::string>(nom.value);
+			return (uint32_t) std::count_if(s.begin(), s.end(), [](char c) { return c != '<' && c != '>'; });
+		}
+	}
+}
+
 //******************************   type X   ********************************//
 
 
@@ -164,4 +228,17 @@ uint64_t data_def_type_X::get_nominal_length(const nominal_value_t& op) const
 		return 1;
 	else
 		return get_X_B_length(std::get<std::string>(op.value), 2);
+}
+
+uint32_t data_def_type_X::get_nominal_length_attribute(const nominal_value_t& nom) const
+{
+	if (!nom.present)
+		return 1;
+	else
+	{
+		if (!std::holds_alternative<std::string>(nom.value))
+			return 0;
+		else
+			return get_X_B_length_attr(std::get<std::string>(nom.value), 2);
+	}
 }

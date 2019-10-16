@@ -28,7 +28,7 @@ bool ordinary_assembly_context::create_symbol(id_index name, symbol_value value,
 
 	bool ok = symbol_dependencies.check_loctr_cycle();
 
-	symbol_dependencies.add_defined(name);
+	symbol_dependencies.add_defined();
 
 	return ok;
 }

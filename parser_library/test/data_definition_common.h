@@ -33,7 +33,7 @@ data_definition_operand setup_data_def_op(char type, char extension, int32_t len
 	data_definition_operand op = setup_data_def_op(type, extension);
 	op.length.present = true;
 	op.length.value = length;
-	op.length.len_type = data_def_length::BYTE;
+	op.length.len_type = data_def_length_t::BYTE;
 	return op;
 }
 
@@ -50,7 +50,7 @@ data_definition_operand setup_data_def_op(char type, char extension, std::varian
 	data_definition_operand op = setup_data_def_op(type, extension, nominal);
 	op.length.present = true;
 	op.length.value = length;
-	op.length.len_type = data_def_length::BYTE;
+	op.length.len_type = data_def_length_t::BYTE;
 	return op;
 }
 

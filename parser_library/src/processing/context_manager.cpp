@@ -1,5 +1,6 @@
 #include "context_manager.h"
-#include "../expressions/expression_visitor.h"
+#include "shared/lexer.h"
+#include "../expressions/visitors/expression_evaluator.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -7,65 +8,78 @@ using namespace hlasm_plugin::parser_library::processing;
 context_manager::context_manager(context::hlasm_context& hlasm_ctx)
 	: diagnosable_ctx(hlasm_ctx), hlasm_ctx(hlasm_ctx) {}
 
-
-context::id_index context_manager::concatenate(const semantics::concat_chain& chain) const
+expressions::expr_ptr context_manager::evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const
 {
-	return hlasm_ctx.ids().add(
-		concatenate_str(chain)
-	);
-}
+	expressions::expression_evaluator evaluator(eval_ctx);
 
-std::string context_manager::concatenate_str(const semantics::concat_chain& chain) const
-{
-	std::string result;
-	bool last_was_var = false;
+	auto result = evaluator.evaluate_expression(expr_context);
 
-	for (auto& point : chain)
-	{
-		if (!point) continue;
-		switch (point->type)
-		{
-		case semantics::concat_type::STR:
-			last_was_var = false;
-			result.append(concat(point->access_str()));
-			break;
-		case semantics::concat_type::DOT:
-			if (last_was_var) continue;
-			last_was_var = false;
-			result.append(concat(point->access_dot()));
-			break;
-		case semantics::concat_type::EQU:
-			last_was_var = false;
-			result.append(concat(point->access_equ()));
-			break;
-		case semantics::concat_type::VAR:
-			last_was_var = true;
-			result.append(concat(point->access_var()));
-			break;
-		case semantics::concat_type::SUB:
-			last_was_var = false;
-			result.append(concat(point->access_sub()));
-			break;
-		default:
-			break;
-		}
-	}
+	collect_diags_from_child(evaluator);
+
 	return result;
 }
 
-context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symbol) const
+context::id_index context_manager::concatenate(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const
+{
+	return hlasm_ctx.ids().add(
+		concatenate_str(chain,eval_ctx)
+	);
+}
+
+std::string context_manager::concatenate_str(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const
+{
+	expressions::expression_evaluator evaluator(eval_ctx);
+
+	auto result = evaluator.concatenate_chain(chain);
+
+	collect_diags_from_child(evaluator);
+
+	return result;
+}
+
+context::macro_data_ptr context_manager::create_macro_data(const semantics::concat_chain& chain) const
+{
+	auto tmp = semantics::concatenation_point::contains_var_sym(chain);
+	if (tmp)
+	{
+		add_diagnostic(diagnostic_op::error_E064(tmp->symbol_range));
+		return std::make_unique<context::macro_param_data_dummy>();
+	}
+
+	return create_macro_data(chain, semantics::concatenation_point::to_string);
+}
+
+context::macro_data_ptr context_manager::create_macro_data(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const
+{
+	expressions::expression_evaluator evaluator(eval_ctx);
+
+	auto data = create_macro_data(chain, [&](const auto& chain) {return evaluator.concatenate_chain(chain); });
+
+	collect_diags_from_child(evaluator);
+
+	return data;
+}
+
+context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symbol, expressions::evaluation_context eval_ctx) const
 {
 	auto id = symbol.created ?
-		concatenate(symbol.access_created()->created_name)
+		concatenate(symbol.access_created()->created_name,eval_ctx)
 		: symbol.access_basic()->name;
 
-	std::vector<expressions::expr_ptr> subscript;						//TODO check expr errors
-	for (auto tree : symbol.subscript)
-		subscript.push_back(evaluate_expression_tree(tree));
+	expressions::expression_evaluator evaluator(eval_ctx);
 
-	auto var = hlasm_ctx.get_var_sym(id);
+	auto subscript = evaluator.evaluate_expressions(symbol.subscript);
 
-	bool ok = test_var_sym(var, subscript, symbol.symbol_range);
+	collect_diags_from_child(evaluator);
+
+	return get_var_sym_value(id, subscript, symbol.symbol_range);
+}
+
+context::SET_t context_manager::get_var_sym_value(context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const
+{
+	auto var = hlasm_ctx.get_var_sym(name);
+
+	bool ok = test_symbol_for_read(var, subscript, symbol_range);
 
 	if (!ok)
 		return context::SET_t();
@@ -115,99 +129,46 @@ context::SET_t context_manager::get_var_sym_value(const semantics::var_sym& symb
 	}
 	else if (auto mac_par = var->access_macro_param_base())
 	{
-		std::vector<int> tmp;
+		std::vector<size_t> tmp;
 		for (auto& e : subscript)
 		{
-			tmp.push_back(e->get_numeric_value() - 1);
+			tmp.push_back((size_t)e->get_numeric_value());
 		}
 		return mac_par->get_value(tmp);
 	}
 	return context::SET_t();
 }
 
-context::id_index context_manager::get_symbol_name(const semantics::var_sym* symbol)
+context_manager::name_result context_manager::try_get_symbol_name(const semantics::var_sym* symbol, expressions::evaluation_context eval_ctx) const
 {
-	return symbol->created ?
-		concatenate(symbol->access_created()->created_name)
-		: symbol->access_basic()->name;
-	//TODO check
+	if (!symbol->created)
+		return make_pair(true, symbol->access_basic()->name);
+	else
+		return try_get_symbol_name(
+			concatenate_str(symbol->access_created()->created_name, eval_ctx),
+			symbol->symbol_range
+		);
 }
 
-context::id_index context_manager::get_symbol_name(const std::string& symbol)
+context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol, range symbol_range) const
 {
-	return hlasm_ctx.ids().add(symbol);
-	//TODO check
-}
-
-expressions::expr_ptr context_manager::evaluate_expression_tree(antlr4::ParserRuleContext* expr_context) const
-{
-	expressions::expression_visitor expression_evaluator(hlasm_ctx);
-
-	auto e = expression_evaluator.visit(expr_context).as<expressions::expr_ptr>();
-
-	if (e->diag)
-		add_diagnostic(
-			diagnostic_op{ 
-				e->diag->severity, std::move(e->diag->code), 
-				std::move(e->diag->message), semantics::range_provider(range()).get_range(expr_context)});
-
-	return e;
-}
-
-
-std::string context_manager::concat(semantics::char_str* str) const
-{
-	return str->value;
-}
-
-std::string context_manager::concat(semantics::var_sym* vs) const
-{
-	return get_var_sym_value(*vs).to<context::C_t>();
-}
-
-std::string context_manager::concat(semantics::dot*) const
-{
-	return ".";
-}
-
-std::string context_manager::concat(semantics::equals*) const
-{
-	return "=";
-}
-
-std::string context_manager::concat(semantics::sublist* sublist) const
-{
-	std::string ret("(");
-	for (size_t i = 0; i < sublist->list.size(); ++i)
+	if (symbol.empty() || symbol.size() > 63)
 	{
-		for (auto& point : sublist->list[i])
-		{
-			if (!point) continue;
-
-			switch (point->type)
-			{
-			case semantics::concat_type::STR:
-				ret.append(concat(point->access_str()));
-				break;
-			case semantics::concat_type::DOT:
-				ret.append(concat(point->access_dot()));
-				break;
-			case semantics::concat_type::VAR:
-				ret.append(concat(point->access_var()));
-				break;
-			case semantics::concat_type::SUB:
-				ret.append(concat(point->access_sub()));
-				break;
-			}
-		}
-		if (i != sublist->list.size() - 1) ret.append(",");
+		add_diagnostic(diagnostic_op::error_E065(symbol_range));
+		return std::make_pair(false, context::id_storage::empty_id);
 	}
-	ret.append(")");
 
-	return ret;
+	for (size_t i = 0; i < symbol.size(); ++i)
+		if (!lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
+		{
+			add_diagnostic(diagnostic_op::error_E065(symbol_range));
+			return std::make_pair(false, context::id_storage::empty_id);
+		}
+
+	return std::make_pair(true, hlasm_ctx.ids().add(symbol));
 }
 
-bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::expr_list& subscript, const range& symbol_range) const
+bool context_manager::test_symbol_for_read(context::var_sym_ptr var,const expressions::expr_list& subscript, const range& symbol_range) const
 {
 	if (!var)
 	{
@@ -237,11 +198,14 @@ bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::e
 	}
 	else if (auto mac_par = var->access_macro_param_base())
 	{
-		std::vector<size_t> tmp;
-		for (auto& e : subscript)
+		for (size_t i = 0; i < subscript.size(); ++i)
 		{
+			auto& e = subscript[i];
 			if (!e || e->get_numeric_value() < 1)
 			{
+				if (i == 0 && e && e->get_numeric_value() == 0 && dynamic_cast<context::syslist_param*>(mac_par)) // if syslist and subscript = 0, ok
+					continue;
+
 				add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1
 				return false;
 			}
@@ -252,3 +216,24 @@ bool context_manager::test_var_sym(context::var_sym_ptr var,const expressions::e
 }
 
 void context_manager::collect_diags() const {}
+
+context::macro_data_ptr context_manager::create_macro_data(const semantics::concat_chain& chain,
+	const std::function<std::string(const semantics::concat_chain& chain)>& to_string) const
+{
+	context_manager mngr(hlasm_ctx);
+
+	if (chain.size() == 0)
+		return std::make_unique<context::macro_param_data_dummy>();
+	else if (chain.size() > 1 || (chain.size() == 1 && chain[0]->type != semantics::concat_type::SUB))
+		return std::make_unique<context::macro_param_data_single>(to_string(chain));
+
+	const auto& inner_chains = chain[0]->access_sub()->list;
+
+	std::vector<context::macro_data_ptr> sublist;
+
+	for (auto& inner_chain : inner_chains)
+	{
+		sublist.push_back(create_macro_data(inner_chain, to_string));
+	}
+	return std::make_unique<context::macro_param_data_composite>(std::move(sublist));
+}

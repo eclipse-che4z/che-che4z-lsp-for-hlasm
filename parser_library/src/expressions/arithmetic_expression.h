@@ -2,6 +2,7 @@
 #define HLASMPLUGIN_PARSER_HLASMAEXPRESSION_H
 #include "expression.h"
 #include <string>
+#include <string_view>
 
 namespace hlasm_plugin {
 	namespace parser_library {
@@ -18,10 +19,11 @@ namespace hlasm_plugin {
 				arithmetic_expression(const arithmetic_expression& expr);
 				arithmetic_expression(arithmetic_expression&&) = default;
 				arithmetic_expression& operator=(arithmetic_expression&&) = default;
-				static expr_ptr from_string(const std::string& option, const std::string& value, bool dbcs);
+				static expr_ptr from_string(const std::string& option, const std::string_view& value, bool dbcs);
+				static expr_ptr from_string(const std::string_view& value, bool dbcs);
 
-				static expr_ptr c2arith(const std::string & value);
-				static expr_ptr g2arith(const std::string & value, bool dbcs = false);
+				static expr_ptr c2arith(const std::string& value);
+				static expr_ptr g2arith(const std::string& value, bool dbcs = false);
 
 				virtual expr_ptr operator+(expression_ref) const override;
 				virtual expr_ptr operator-(expression_ref) const override;
@@ -34,7 +36,7 @@ namespace hlasm_plugin {
 
 				virtual expr_ptr unary_operation(str_ref operation_name) const override;
 				expr_ptr binary_operation(str_ref o, expr_ref arg2) const;
-				static expr_ptr from_string(const std::string&, int base);
+				static expr_ptr from_string(const std::string_view&, int base);
 				context::SET_t get_set_value() const override;
 				int32_t get_value() const;
 				virtual std::string get_str_val() const override;

@@ -20,7 +20,7 @@ struct parser_holder;
 //class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl
 	: public antlr4::Parser, public diagnosable_impl, 
-	public processing::statement_provider , public processing::opencode_provider, public processing::statement_fields_parser
+	public processing::opencode_provider, public processing::statement_fields_parser
 {
 public:
 	parser_impl(antlr4::TokenStream* input);
@@ -30,9 +30,10 @@ public:
 		semantics::lsp_info_processor * lsp_prc);
 
 	bool is_last_line();
-	virtual void rewind_input(context::opencode_sequence_symbol::opencode_position loc) override;
-	virtual context::opencode_sequence_symbol::opencode_position statement_start() const override;
-	virtual context::opencode_sequence_symbol::opencode_position statement_end() const override;
+	virtual void rewind_input(context::source_position pos) override;
+	virtual void push_line_end() override;
+	context::source_position statement_start() const;
+	context::source_position statement_end() const;
 
 	virtual processing::statement_fields_parser::parse_result parse_operand_field(
 		context::hlasm_context* hlasm_ctx, 
@@ -70,6 +71,7 @@ protected:
 
 	bool deferred();
 	bool no_op();
+	bool ignored();
 	bool alt_format();
 	bool MACH();
 	bool ASM();
@@ -84,6 +86,7 @@ private:
 	std::vector<parser_holder> parsers_;
 
 	bool last_line_processed_;
+	bool line_end_pushed_;
 };
 
 

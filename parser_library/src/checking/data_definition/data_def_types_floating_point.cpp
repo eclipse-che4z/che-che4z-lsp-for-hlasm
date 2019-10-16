@@ -99,6 +99,17 @@ bool data_def_type_E_D_L::check(const data_definition_operand& op, const diagnos
 	return true;
 }
 
+int32_t data_def_type_E_D_L::get_integer_attribute_impl(uint32_t length, int32_t scale) const
+{
+	//Decimal and binary floating point constants have integer attribute 0
+	if (extension == 'D' || extension == 'B')
+		return 0;
+	else if (length > 8)
+		return 2 * (length - 1) - scale - 2;
+	else
+		return 2 * (length - 1) - scale;
+}
+
 data_def_type_E::data_def_type_E() : 
 	data_def_type_E_D_L('E', '\0', modifier_bound{ 1, 64 }, modifier_bound{ 1, 8 }, modifier_bound{ 0, 5 }, fullword, 4) {}
 

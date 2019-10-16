@@ -60,6 +60,97 @@ context::alignment data_definition::get_alignment() const
 		return context::no_align;
 }
 
+char hlasm_plugin::parser_library::expressions::data_definition::get_type_attribute() const
+{
+	switch (type)
+	{
+	case 'B':
+	case 'C':
+	case 'P':
+	case 'X':
+	case 'Z':
+		return type;
+	case 'G':
+		return '@';
+	default:
+		break;
+	}
+	if (length == nullptr)
+	{
+		switch (type)
+		{
+		case 'A':
+		case 'J':
+			return 'A';
+		case 'D':
+		case 'E':
+		case 'F':
+		case 'H':
+		case 'L':
+		case 'Q':
+		case 'S':
+		case 'V':
+		case 'Y':
+			return type;
+		case 'R':
+			return 'V';
+		default:
+			break;
+		}
+	}
+	else
+	{
+		switch (type)
+		{
+		case 'F':
+		case 'H':
+			return 'G';
+		case 'E':
+		case 'D':
+		case 'L':
+			return 'K';
+		case 'A':
+		case 'S':
+		case 'Q':
+		case 'J':
+		case 'R':
+		case 'V':
+		case 'Y':
+			return 'R';
+		default:
+			break;
+		}
+	}
+	return 'U';
+}
+
+int32_t data_definition::get_scale_attribute(expressions::mach_evaluate_info info) const
+{
+	auto def_type = access_data_def_type();
+	if (def_type)
+		return def_type->get_scale_attribute(evaluate_scale(info), evaluate_nominal_value(info));
+	else
+		return 0;
+}
+
+uint32_t data_definition::get_length_attribute(expressions::mach_evaluate_info info) const
+{
+	auto def_type = access_data_def_type();
+	if (def_type)
+		return def_type->get_length_attribute(evaluate_length(info), evaluate_nominal_value(info));
+	else
+		return 0;
+}
+
+int32_t data_definition::get_integer_attribute(expressions::mach_evaluate_info info) const
+{
+	auto def_type = access_data_def_type();
+	if (def_type)
+		return def_type->get_integer_attribute(evaluate_length(info), evaluate_scale(info), evaluate_nominal_value(info));
+	else
+		return 0;
+}
+
 bool data_definition::expects_single_symbol() const
 {
 	auto def_type = access_data_def_type();
@@ -138,6 +229,119 @@ void data_definition::assign_location_counter(context::address loctr_value)
 }
 
 void data_definition::collect_diags() const {}
+
+checking::data_def_field<int32_t> set_data_def_field(const expressions::mach_expression* e, expressions::mach_evaluate_info info)
+{
+	using namespace checking;
+	data_def_field<int32_t> field;
+	//if the expression cannot be evaluated, we return field as if it was not there
+	field.present = e != nullptr && !e->get_dependencies(info).contains_dependencies();
+	if (field.present)
+	{
+		field.rng = e->get_range();
+		//TODO get_reloc get_abs
+		auto ret(e->evaluate(info));
+		if (ret.value_kind() == context::symbol_value_kind::ABS)
+			field.value = e->evaluate(info).get_abs();
+	}
+	return field;
+}
+
+checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(expressions::mach_evaluate_info info) const
+{
+	return set_data_def_field(dupl_factor.get(), info);
+}
+
+checking::data_def_length_t data_definition::evaluate_length(expressions::mach_evaluate_info info) const
+{
+	checking::data_def_length_t len(set_data_def_field(length.get(), info));
+	len.len_type = length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length_t::BIT : checking::data_def_length_t::BYTE;
+	return len;
+}
+
+checking::scale_modifier_t data_definition::evaluate_scale(expressions::mach_evaluate_info info) const
+{
+	auto common = set_data_def_field(scale.get(), info);
+	return checking::scale_modifier_t(common.present, (int16_t)common.value, common.rng);
+}
+
+checking::exponent_modifier_t data_definition::evaluate_exponent(expressions::mach_evaluate_info info) const
+{
+	return set_data_def_field(exponent.get(), info);
+}
+
+checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::mach_evaluate_info info) const
+{
+	checking::nominal_value_t nom;
+	if (nominal_value)
+	{
+		nom.present = true;
+		if (nominal_value->access_string())
+		{
+			nom.value = nominal_value->access_string()->value;
+			nom.rng = nominal_value->access_string()->value_range;
+		}
+		else if (nominal_value->access_exprs())
+		{
+			checking::nominal_value_expressions values;
+			for (auto& e_or_a : nominal_value->access_exprs()->exprs)
+			{
+				if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
+				{
+
+					expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
+					bool ignored = e->get_dependencies(info).contains_dependencies(); //ignore values with dependencies
+					auto ev = e->evaluate(info);
+					auto kind = ev.value_kind();
+					if (kind == context::symbol_value_kind::ABS)
+						values.push_back(checking::data_def_expr{ ev.get_abs(), checking::expr_type::ABS, e->get_range(), ignored });
+
+					else if (kind == context::symbol_value_kind::RELOC)
+					{
+						checking::expr_type ex_type;
+						auto reloc = ev.get_reloc();
+						if (reloc.is_complex())
+							ex_type = checking::expr_type::COMPLEX;
+						else
+							ex_type = checking::expr_type::RELOC;
+						//TO DO value of the relocatable expression
+						//maybe push back data_def_addr?
+						values.push_back(checking::data_def_expr{ 0, ex_type, e->get_range(), ignored });
+					}
+					else if (kind == context::symbol_value_kind::UNDEF)
+					{
+						values.push_back(checking::data_def_expr{ 0, checking::expr_type::ABS, e->get_range(), true });
+					}
+					else
+					{
+						assert(false);
+						continue;
+					}
+
+
+				}
+				else //there is an address D(B)
+				{
+					auto& a = std::get<expressions::address_nominal>(e_or_a);
+					checking::data_def_address ch_adr;
+
+					ch_adr.base = set_data_def_field(a.base.get(), info);
+					ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
+					if (!ch_adr.base.present || !ch_adr.displacement.present)
+						ch_adr.ignored = true; //ignore values with dependencies
+					values.push_back(ch_adr);
+				}
+
+			}
+			nom.value = std::move(values);
+		}
+		else
+			assert(false);
+	}
+	else
+		nom.present = false;
+	return nom;
+}
 
 data_definition::parser::parser(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
 	: format_(std::move(format)), exprs_(std::move(exprs)), nominal_(std::move(nominal)), pos_(begin), p_(0), exprs_i_(0)

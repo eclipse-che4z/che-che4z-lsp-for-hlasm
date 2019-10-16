@@ -335,6 +335,19 @@ parse_result workspace::parse_library(const std::string & library, context::hlas
 	return false;
 }
 
+bool workspace::has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const
+{
+	auto& proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+	for (auto&& lib : proc_grp.libraries())
+	{
+		processor* found = lib->find_file(library);
+		if (found)
+			return true;
+	}
+
+	return false;
+}
+
 
 }
 }

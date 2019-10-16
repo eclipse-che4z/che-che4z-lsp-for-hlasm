@@ -1,11 +1,13 @@
 #include "hlasm_context.h"
 #include "instruction.h"
 #include "../diagnosable_impl.h"
+#include "../ebcdic_encoding.h"
+#include "../expressions/arithmetic_expression.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
-code_scope * hlasm_context::curr_scope()
+code_scope* hlasm_context::curr_scope()
 {
 	return &scope_stack_.back();
 }
@@ -58,35 +60,48 @@ void hlasm_context::add_system_vars_to_scope()
 		auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true);
 		val_ndx->set_value((A_t)SYSNDX_);
 		curr_scope()->variables.insert({ SYSNDX,val_ndx });
-		
+
 	}
 }
 
 hlasm_context::hlasm_context(std::string file_name)
-	: instruction_map_(init_instruction_map()),SYSNDX_(0), ord_ctx(ids_), lsp_ctx(std::make_shared<lsp_context>())
+	: instruction_map_(init_instruction_map()), SYSNDX_(0), ord_ctx(ids_), lsp_ctx(std::make_shared<lsp_context>())
 {
 	scope_stack_.emplace_back();
-	proc_stack_.push_back(file_processing_status{ file_processing_type::OPENCODE, location(position{}, file_name) });
+	source_stack_.emplace_back(std::move(file_name));
+	proc_stack_.emplace_back(processing::processing_kind::ORDINARY, true);
 }
 
-void hlasm_context::set_file_position(position pos)
+void hlasm_context::set_source_position(position pos)
 {
-	proc_stack_.back().processing_location.pos = pos;
+	source_stack_.back().source_status.pos = pos;
 }
 
-void hlasm_context::push_processing_file(std::string file_name, const file_processing_type type)
+void hlasm_context::set_source_indices(size_t begin_index, size_t end_index)
 {
-	proc_stack_.push_back(file_processing_status{ type,location(position{},std::move(file_name)) });
+	source_stack_.back().begin_index = begin_index;
+	source_stack_.back().end_index = end_index;
 }
 
-void hlasm_plugin::parser_library::context::hlasm_context::pop_processing_file()
+void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
+	assert(!proc_stack_.empty());
+	proc_stack_.emplace_back(kind, false);
+}
+
+void hlasm_context::push_statement_processing(const processing::processing_kind kind, std::string file_name)
+{
+	source_stack_.emplace_back(std::move(file_name));
+
+	proc_stack_.emplace_back(kind, true);
+}
+
+void hlasm_context::pop_statement_processing()
+{
+	if (proc_stack_.back().owns_source)
+		source_stack_.pop_back();
+
 	proc_stack_.pop_back();
-}
-
-file_processing_type hlasm_plugin::parser_library::context::hlasm_context::current_file_proc_type()
-{
-	return proc_stack_.back().type;
 }
 
 id_storage& hlasm_context::ids()
@@ -102,31 +117,20 @@ const hlasm_context::instruction_storage& hlasm_context::instruction_map() const
 const std::vector<location> hlasm_context::processing_stack() const
 {
 	std::vector<location> res;
-	res.push_back(proc_stack_[0].processing_location);
 
-	for (auto& member : copy_stack_)
+	for (size_t i = 0; i < source_stack_.size(); ++i)
 	{
-		auto& stmt = member.definition[member.current_statement];
-		res.emplace_back(stmt->statement_position(),member.definition_location.file);
-	}
+		source_stack_[i].append_processing_stack(res);
 
-	for (auto& scope : scope_stack_)
-	{
-		if (!scope.is_in_macro())
-			continue;
+		if (i == 0) // append macros immediately after ordinary processing
+		{
+			for (size_t j = 1; j < scope_stack_.size(); ++j)
+			{
+				auto& nest = scope_stack_[j].this_macro->copy_nests[scope_stack_[j].this_macro->current_statement];
 
-		auto offs = scope.this_macro->current_statement;
-
-		for (auto loc : scope.this_macro->copy_nests[offs])
-			res.push_back(loc);
-	}
-
-	for (auto& entry : proc_stack_)
-	{
-		if (entry.type == file_processing_type::OPENCODE)
-			continue;
-
-		res.push_back(entry.processing_location);
+				for (auto loc : nest) res.push_back(loc);
+			}
+		}
 	}
 
 	return res;
@@ -137,12 +141,27 @@ const std::deque<code_scope>& hlasm_context::scope_stack() const
 	return scope_stack_;
 }
 
-std::vector<copy_member_invocation>& hlasm_context::copy_stack()
+const source_context& hlasm_context::current_source() const
 {
-	return copy_stack_;
+	return source_stack_.back();
 }
 
-const code_scope::set_sym_storage & hlasm_context::globals() const
+std::vector<copy_member_invocation>& hlasm_context::current_copy_stack()
+{
+	return source_stack_.back().copy_stack;
+}
+
+std::vector<id_index> hlasm_context::whole_copy_stack() const
+{
+	std::vector<id_index> ret;
+
+	for (auto& entry : source_stack_)
+		for (auto& nest : entry.copy_stack) ret.push_back(nest.name);
+
+	return ret;
+}
+
+const code_scope::set_sym_storage& hlasm_context::globals() const
 {
 	return globals_;
 }
@@ -170,7 +189,6 @@ void hlasm_context::add_sequence_symbol(sequence_symbol_ptr seq_sym)
 	if (curr_scope()->sequence_symbols.find(seq_sym->name) == curr_scope()->sequence_symbols.end())
 		curr_scope()->sequence_symbols.emplace(seq_sym->name, std::move(seq_sym));
 }
-
 
 const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
 {
@@ -209,7 +227,7 @@ void hlasm_context::decrement_branch_counter()
 	--curr_scope()->branch_counter;
 }
 
-void hlasm_context::add_mnemonic(id_index mnemo,id_index op_code)
+void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
 {
 	auto tmp = opcode_mnemo_.find(op_code);
 	if (tmp != opcode_mnemo_.end())
@@ -222,8 +240,8 @@ void hlasm_context::add_mnemonic(id_index mnemo,id_index op_code)
 		{
 			opcode_mnemo_.insert_or_assign(mnemo, op_code);
 			return;
-		} 
-		else if (instruction_map_.find(op_code)!=instruction_map_.end())
+		}
+		else if (instruction_map_.find(op_code) != instruction_map_.end())
 		{
 			opcode_mnemo_.insert_or_assign(mnemo, op_code);
 			return;
@@ -251,12 +269,12 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
 {
 	switch (attribute)
 	{
-	case hlasm_plugin::parser_library::context::data_attr_kind::K:
+	case data_attr_kind::K:
 		return var_symbol ? var_symbol->count(offset) : 0;
-	case hlasm_plugin::parser_library::context::data_attr_kind::N:
+	case data_attr_kind::N:
 		return var_symbol ? var_symbol->number(offset) : 0;
 	case hlasm_plugin::parser_library::context::data_attr_kind::T:
-		return "";
+		return get_type_attr(var_symbol, std::move(offset));
 	default:
 		break;
 	}
@@ -264,32 +282,112 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
 	return SET_t();
 }
 
-SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbol)
+SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbol_name)
 {
 	switch (attribute)
 	{
 	case hlasm_plugin::parser_library::context::data_attr_kind::D:
-		return ord_ctx.symbol_defined(symbol);
+		return ord_ctx.symbol_defined(symbol_name) ? 1 : 0;
 	case hlasm_plugin::parser_library::context::data_attr_kind::T:
-		return "";
+		return std::string({
+			ord_ctx.symbol_defined(symbol_name) ? 
+			(char)ebcdic_encoding::e2a[
+				ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute)
+			] : 'U'
+			});
+	case hlasm_plugin::parser_library::context::data_attr_kind::O:
+		return get_opcode_attr(symbol_name);
 	default:
-		break;
+		return ord_ctx.symbol_defined(symbol_name) ?
+			ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute) :
+			symbol_attributes::default_value(attribute);
+	}
+}
+
+C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_t>& offset)
+{
+	if (!var_symbol)
+		return "U";
+
+	C_t value;
+
+	if (auto set_sym = var_symbol->access_set_symbol_base())
+	{
+		if (set_sym->type != SET_t_enum::C_TYPE)
+			return "N";
+
+		auto setc_sym = set_sym->access_set_symbol<C_t>();
+		if (offset.empty())
+			value = setc_sym->get_value();
+		else
+			value = setc_sym->get_value(offset.front());
+	}
+	else if (auto mac_par = var_symbol->access_macro_param_base())
+	{
+		auto data = mac_par->get_data(offset);
+
+		while (dynamic_cast<const context::macro_param_data_composite*>(data))
+			data = data->get_ith(0);
+
+		value = data->get_value();
 	}
 
-	return SET_t();
+	if (value.empty())
+		return "O";
+
+	auto res = expressions::arithmetic_expression::from_string(value, false);
+	if (!res->diag)
+		return "N";
+
+	id_index symbol_name = ids_.add(std::move(value));
+	auto tmp_symbol = ord_ctx.get_symbol(symbol_name);
+
+	if (tmp_symbol)
+		return { (char)ebcdic_encoding::e2a[tmp_symbol->attributes().type()] };
+
+	return "U";
+}
+
+C_t hlasm_context::get_opcode_attr(id_index symbol)
+{
+	auto it = instruction_map_.find(symbol);
+
+	auto mac_it = macros_.find(symbol);
+
+	if (mac_it != macros_.end())
+		return "M";
+
+	if (it != instruction_map_.end())
+	{
+		auto& [opcode, type] = *it;
+		switch (type)
+		{
+		case instruction::instruction_array::ASM:
+		case instruction::instruction_array::CA:
+			return "A";
+		case instruction::instruction_array::MNEM:
+			return "E";
+		case instruction::instruction_array::MACH:
+			return "O";
+		default:
+			break;
+		}
+	}
+
+	return "U";
 }
 
 const macro_definition& hlasm_context::add_macro(
 	id_index name,
-	id_index label_param_name, std::vector<macro_arg> params, 
+	id_index label_param_name, std::vector<macro_arg> params,
 	statement_block definition, copy_nest_storage copy_nests, label_storage labels,
 	location definition_location)
 {
 	return *macros_.insert_or_assign(
-		name, 
-		std::make_unique< macro_definition>(name, 
+		name,
+		std::make_unique< macro_definition>(name,
 			label_param_name, std::move(params),
-			std::move(definition),std::move(copy_nests),std::move(labels), 
+			std::move(definition), std::move(copy_nests), std::move(labels),
 			std::move(definition_location))
 	).first->second.get();
 }
@@ -311,7 +409,7 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
 
 	auto& [macro_name, macro_def] = *tmp;
 
-	auto invo((macro_def->call(std::move(label_param_data), std::move(params),ids().add("SYSLIST"))));
+	auto invo((macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"))));
 	scope_stack_.emplace_back(invo);
 	add_system_vars_to_scope();
 
@@ -333,14 +431,14 @@ macro_invo_ptr hlasm_context::this_macro() const
 	return macro_invo_ptr();
 }
 
-const std::string & hlasm_context::opencode_file_name() const
+const std::string& hlasm_context::opencode_file_name() const
 {
-	return proc_stack_[0].processing_location.file;
+	return source_stack_.front().source_status.file;
 }
 
-const std::set<std::string> & hlasm_context::get_visited_files()
-{ 
-	return visited_files_; 
+const std::set<std::string>& hlasm_context::get_visited_files()
+{
+	return visited_files_;
 }
 
 void hlasm_context::add_copy_member(id_index member, statement_block definition, location definition_location)
@@ -357,7 +455,7 @@ void hlasm_context::enter_copy_member(id_index member_name)
 
 	auto& [name, member] = *tmp;
 
-	copy_stack_.push_back(member.enter());
+	source_stack_.back().copy_stack.emplace_back(member.enter());
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members()
@@ -367,17 +465,23 @@ const hlasm_context::copy_member_storage& hlasm_context::copy_members()
 
 void hlasm_context::leave_copy_member()
 {
-	copy_stack_.pop_back();
+	source_stack_.back().copy_stack.pop_back();
 }
 
-void hlasm_context::apply_copy_frame_stack(std::vector<opencode_sequence_symbol::copy_frame> copy_frame_stack)
+void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
-	copy_stack_.clear();
+	assert(proc_stack_.size() == 1);
 
-	for (auto& frame : copy_frame_stack)
+	source_stack_.back().source_status.pos = position(snapshot.line, 0);
+	source_stack_.back().begin_index = snapshot.begin_index;
+	source_stack_.back().end_index = snapshot.end_index;
+
+	source_stack_.back().copy_stack.clear();
+
+	for (auto& frame : snapshot.copy_frames)
 	{
 		auto invo = copy_members_.at(frame.copy_member).enter();
 		invo.current_statement = (int)frame.statement_offset;
-		copy_stack_.push_back(std::move(invo));
+		source_stack_.back().copy_stack.push_back(std::move(invo));
 	}
 }

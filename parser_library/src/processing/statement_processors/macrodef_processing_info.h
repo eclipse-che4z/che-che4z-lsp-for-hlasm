@@ -32,6 +32,9 @@ struct macrodef_prototype
 //result of macrodef_processor
 struct macrodef_processing_result
 {
+	macrodef_processing_result()
+		:invalid(false) {}
+
 	macrodef_prototype prototype;
 
 	context::statement_block definition;
@@ -39,6 +42,8 @@ struct macrodef_processing_result
 	context::label_storage sequence_symbols;
 
 	location definition_location;
+
+	bool invalid;
 };
 
 }

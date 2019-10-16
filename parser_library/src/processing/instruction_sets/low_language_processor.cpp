@@ -7,8 +7,10 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, statement_fields_parser& parser)
-	:instruction_processor(hlasm_ctx), provider(provider),parser(parser)  {}
+low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx,
+	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+	statement_fields_parser& parser)
+	:instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider), parser(parser) {}
 
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
 {
@@ -24,10 +26,27 @@ rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr st
 	return rebuilt_statement(stmt, std::move(label), std::move(ops));
 }
 
-void low_language_processor::create_symbol(range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
+context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
 {
-	if (!hlasm_ctx.ord_ctx.create_symbol(symbol_name,std::move(value),std::move(attributes)))
+	if (stmt.label_ref().type == semantics::label_si_type::ORD)
+	{
+		context_manager mngr(hlasm_ctx);
+		auto ret = mngr.try_get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
+		collect_diags_from_child(mngr);
+		return ret.second;
+	}
+	else
+		return context::id_storage::empty_id;
+}
+
+bool low_language_processor::create_symbol(range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
+{
+	bool ok = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes));
+
+	if (!ok)
 		add_diagnostic(diagnostic_op::error_E033(err_range));
+
+	return ok;
 }
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
@@ -44,10 +63,10 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	case semantics::label_si_type::CONC:
 		label.emplace(
 			stmt.label_ref().field_range,
-			mngr.concatenate_str(std::get<semantics::concat_chain>(stmt.label_ref().value)));
+			mngr.concatenate_str(std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
 		break;
 	case semantics::label_si_type::VAR:
-		new_label = mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value)).template to<context::C_t>();
+		new_label = mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value),eval_ctx).template to<context::C_t>();
 		if (new_label.empty() || new_label[0]==' ')
 			label.emplace(stmt.label_ref().field_range);
 		else
@@ -57,7 +76,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 		add_diagnostic(diagnostic_op::error_E057(stmt.label_ref().field_range));
 		break;
 	case semantics::label_si_type::SEQ:
-		provider.register_sequence_symbol(std::get<semantics::seq_sym>(stmt.label_ref().value).name, std::get<semantics::seq_sym>(stmt.label_ref().value).symbol_range);
+		branch_provider.register_sequence_symbol(std::get<semantics::seq_sym>(stmt.label_ref().value).name, std::get<semantics::seq_sym>(stmt.label_ref().value).symbol_range);
 		break;
 	default:
 		break;
@@ -67,7 +86,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type == semantics::operand_type::MODEL)
 	{
 		assert(stmt.operands_ref().value.size() == 1);
-		std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain));
+		std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain,eval_ctx));
 		operands.emplace(parser.parse_operand_field(
 			&hlasm_ctx,
 			std::move(field),

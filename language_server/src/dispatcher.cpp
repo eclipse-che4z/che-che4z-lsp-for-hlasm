@@ -35,9 +35,6 @@ void dispatcher::write_message(const std::string & in)
 
 void dispatcher::reply(const json & message)
 {
-	// do not respond if the request was cancelled
-	if (cancel_ != nullptr  && *cancel_)
-		return;
 	write_message(message.dump());
 }
 

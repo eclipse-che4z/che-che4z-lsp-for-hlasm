@@ -18,6 +18,10 @@ range mach_expression::get_range() const
 
 context::symbol_value hlasm_plugin::parser_library::expressions::mach_expression::resolve(context::dependency_solver& solver) const
 {
-	return evaluate(solver);
+	auto tmp_val = evaluate(solver);
+	if (tmp_val.value_kind() == context::symbol_value_kind::UNDEF)
+		return 0;
+	else
+		return tmp_val;
 }
 

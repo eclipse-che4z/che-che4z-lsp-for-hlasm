@@ -12,8 +12,7 @@
 #include "macro.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "instruction.h"
-#include "file_processing_status.h"
-#include "copy_member.h"
+#include "processing_context.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -47,7 +46,10 @@ class hlasm_context
 	std::deque<code_scope> scope_stack_;
 	code_scope* curr_scope();
 	const code_scope* curr_scope() const;
-
+	//stack of statement processings
+	std::vector<processing_context> proc_stack_;
+	//stack of processed source files
+	std::vector<source_context> source_stack_;
 	//stack of nested copy member invocations
 	std::vector<copy_member_invocation> copy_stack_;
 
@@ -58,9 +60,6 @@ class hlasm_context
 	const instruction_storage instruction_map_;
 	instruction_storage init_instruction_map();
 
-	//stack of processed files
-	file_proc_stack proc_stack_;
-
 	//value of system variable SYSNDX
 	size_t SYSNDX_;
 	void add_system_vars_to_scope();
@@ -68,28 +67,35 @@ public:
 
 	hlasm_context(std::string file_name = "");
 
-
 	//gets name of file where is open-code located
 	const std::string& opencode_file_name() const;
-	//sets current file position
-	void set_file_position(position pos);
-	//pushes new file that is being processed
-	void push_processing_file(std::string file_name, const file_processing_type type);
-	//pops processed file
-	void pop_processing_file();
-	//type of currently processed file
-	file_processing_type current_file_proc_type();
 	//accesses visited files
 	const std::set<std::string>& get_visited_files();
+
+	//gets current source
+	const source_context& current_source() const;
+	//sets current scope according to the snapshot
+	void apply_source_snapshot(source_snapshot snapshot);
+	//sets current source position
+	void set_source_position(position pos);
+	//sets current source file indices
+	void set_source_indices(size_t begin_index, size_t end_index);
+
+	//pushes new kind of statement processing
+	void push_statement_processing(const processing::processing_kind kind);
+	//pushes new kind of statement processing as well as new source
+	void push_statement_processing(const processing::processing_kind kind, std::string file_name);
+	//pops statement processing
+	void pop_statement_processing();
 
 	//gets stack of locations of all currently processed files
 	const std::vector<location> processing_stack() const;
 	//gets macro nest
 	const std::deque<code_scope>& scope_stack() const;
-	//gets copy nest
-	std::vector<copy_member_invocation>& copy_stack();
-	//sets copy nest
-	void apply_copy_frame_stack(std::vector<opencode_sequence_symbol::copy_frame> copy_frame_stack);
+	//gets copy nest of current statement processing
+	std::vector<copy_member_invocation>& current_copy_stack();
+	//gets names of whole copy nest
+	std::vector<id_index> whole_copy_stack() const;
 
 	//index storage
 	id_storage& ids();
@@ -134,6 +140,9 @@ public:
 	SET_t get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset = {});
 	//get data attribute value of ordinary symbol
 	SET_t get_data_attribute(data_attr_kind attribute, id_index symbol);
+
+	C_t get_type_attr(var_sym_ptr var_symbol, const std::vector<size_t>& offset);
+	C_t get_opcode_attr(id_index symbol);
 
 	//gets macro storage
 	const macro_storage& macros() const;

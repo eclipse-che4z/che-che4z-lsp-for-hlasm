@@ -21,22 +21,22 @@ using label_si_value_t = std::variant<std::string, concat_chain, seq_sym, vs_ptr
 struct label_si
 {
 	struct mac_flag {};
-	label_si(const range field_range, std::string value)
+	label_si(range field_range, std::string value)
 		: type(label_si_type::ORD), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_si(const range field_range, std::string value, mac_flag)
+	label_si(range field_range, std::string value, mac_flag)
 		: type(label_si_type::MAC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_si(const range field_range, concat_chain value)
+	label_si(range field_range, concat_chain value)
 		: type(label_si_type::CONC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_si(const range field_range, seq_sym value)
+	label_si(range field_range, seq_sym value)
 		: type(label_si_type::SEQ), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_si(const range field_range, vs_ptr value)
+	label_si(range field_range, vs_ptr value)
 		: type(label_si_type::VAR), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	label_si(const range field_range)
+	label_si(range field_range)
 		: type(label_si_type::EMPTY), field_range(std::move(field_range)) {}
 
 	const label_si_type type;
@@ -55,13 +55,13 @@ using instruction_si_value_t = std::variant<context::id_index, concat_chain>;
 //struct holding semantic information (si) about instruction field
 struct instruction_si
 {
-	instruction_si(const range field_range, context::id_index value)
+	instruction_si(range field_range, context::id_index value)
 		: type(instruction_si_type::ORD), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	instruction_si(const range field_range, concat_chain value)
+	instruction_si(range field_range, concat_chain value)
 		: type(instruction_si_type::CONC), field_range(std::move(field_range)), value(std::move(value)) {}
 
-	instruction_si(const range field_range)
+	instruction_si(range field_range)
 		: type(instruction_si_type::EMPTY), field_range(std::move(field_range)), value(context::id_storage::empty_id) {}
 
 	const instruction_si_type type;
@@ -73,7 +73,7 @@ struct instruction_si
 //struct holding semantic information (si) about operand field
 struct operands_si
 {
-	operands_si(const range field_range, operand_list operands)
+	operands_si(range field_range, operand_list operands)
 		: field_range(std::move(field_range)),value(std::move(operands)) {}
 
 	const range field_range;
@@ -84,7 +84,7 @@ struct operands_si
 //struct holding semantic information (si) about remark field
 struct remarks_si
 {
-	remarks_si(const range field_range, std::vector<range> remarks)
+	remarks_si(range field_range, std::vector<range> remarks)
 		: field_range(std::move(field_range)), value(std::move(remarks)) {}
 
 	const range field_range;

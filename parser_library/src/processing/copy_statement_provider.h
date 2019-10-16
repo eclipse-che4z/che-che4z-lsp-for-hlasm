@@ -10,7 +10,6 @@ namespace processing {
 //statement provider providing statements of copy members
 class copy_statement_provider : public common_statement_provider
 {
-	size_t initial_nest_;
 public:
 	copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
 

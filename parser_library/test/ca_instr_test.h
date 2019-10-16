@@ -82,7 +82,7 @@ TEST(var_subs, set_to_var)
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	int tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_a();
+	int tmp = m.get_var_sym_value(it, {}, {}).access_a();
 	EXPECT_EQ(tmp, 3);
 
 }
@@ -90,9 +90,7 @@ TEST(var_subs, set_to_var)
 TEST(var_subs, set_to_var_idx)
 {
 	std::string input("&var(2) seta 3");
-	std::string input_s("2");
 	analyzer a(input);
-	analyzer s(input_s);
 	a.analyze();
 
 	auto& ctx = a.context();
@@ -101,9 +99,9 @@ TEST(var_subs, set_to_var_idx)
 	auto it = ctx.ids().find("var");
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
-	std::vector<antlr4::ParserRuleContext*> subscript1;
-	subscript1.push_back(s.parser().expr());
-	int tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript1), {})).access_a();
+	std::vector<expr_ptr> subscript1;
+	subscript1.push_back(make_arith(2));
+	int tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
 	EXPECT_EQ(tmp, 3);
 
 }
@@ -129,17 +127,17 @@ TEST(var_subs, set_to_var_idx_many)
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
 	int tmp;
-	std::vector<antlr4::ParserRuleContext*> subscript1;
-	subscript1.push_back(s1.parser().expr());
-	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript1), {})).access_a();
+	std::vector<expr_ptr> subscript1;
+	subscript1.push_back(make_arith(2));
+	tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
 	EXPECT_EQ(tmp, 3);
-	std::vector<antlr4::ParserRuleContext*> subscript2;
-	subscript2.push_back(s2.parser().expr());
-	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript2), {})).access_a();
+	std::vector<expr_ptr> subscript2;
+	subscript2.push_back(make_arith(3));
+	tmp = m.get_var_sym_value(it, std::move(subscript2), {}).access_a();
 	EXPECT_EQ(tmp, 4);
-	std::vector<antlr4::ParserRuleContext*> subscript3;
-	subscript3.push_back(s3.parser().expr());
-	tmp = m.get_var_sym_value(semantics::basic_var_sym(it, std::move(subscript3), {})).access_a();
+	std::vector<expr_ptr> subscript3;
+	subscript3.push_back(make_arith(4));
+	tmp = m.get_var_sym_value(it, std::move(subscript3), {}).access_a();
 	EXPECT_EQ(tmp, 5);
 
 }
@@ -157,7 +155,7 @@ TEST(var_subs, var_sym_reset)
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	std::string tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_c();
+	std::string tmp = m.get_var_sym_value(it, {}, {}).access_c();
 	EXPECT_EQ(tmp, "XXX");
 
 }
@@ -175,9 +173,43 @@ TEST(var_subs, created_set_sym)
 
 	ASSERT_TRUE(ctx.get_var_sym(it));
 
-	auto tmp = m.get_var_sym_value(semantics::basic_var_sym(it, {}, {})).access_a();
+	auto tmp = m.get_var_sym_value(it, {}, {}).access_a();
 	EXPECT_EQ(tmp, 11);
 
+}
+
+TEST(var_concatenation, concatenated_string_dot_last)
+{
+	std::string input("&var setc 'avc'   \n&var2 setc '&var.'");
+	analyzer a(input);
+	a.analyze();
+
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
+
+	auto it = ctx.ids().find("var2");
+
+	ASSERT_TRUE(ctx.get_var_sym(it));
+
+	auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+	EXPECT_EQ(tmp, "avc");
+}
+
+TEST(var_concatenation, concatenated_string_dot)
+{
+	std::string input("&var setc 'avc'   \n&var2 setc '&var.-get'");
+	analyzer a(input);
+	a.analyze();
+
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
+
+	auto it = ctx.ids().find("var2");
+
+	ASSERT_TRUE(ctx.get_var_sym(it));
+
+	auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+	EXPECT_EQ(tmp, "avc-get");
 }
 
 TEST(AGO, extended)
@@ -310,3 +342,25 @@ TEST(ACTR, infinite_ACTR)
 
 	ASSERT_EQ(a.diags().size(), (size_t)1);
 }
+
+/*
+TEST(CA_instructions, undefined_relocatable)
+{
+	std::string input(R"(
+A EQU B
+L1 LR 1,1
+L2 LR 1,1
+
+&V1 SETA L2-L1
+&V2 SETA A
+
+B EQU 1
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)2);
+}
+*/

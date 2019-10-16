@@ -14,13 +14,13 @@ namespace processing {
 class processing_state_listener
 {
 public:
-	virtual void start_macro_definition(const macrodef_start_data start) = 0;
+	virtual void start_macro_definition(macrodef_start_data start) = 0;
 	virtual void finish_macro_definition(macrodef_processing_result result) = 0;
 
-	virtual void start_lookahead(const lookahead_start_data start) = 0;
+	virtual void start_lookahead(lookahead_start_data start) = 0;
 	virtual void finish_lookahead(lookahead_processing_result result) = 0;
 
-	virtual void start_copy_member(const copy_start_data start) = 0;
+	virtual void start_copy_member(copy_start_data start) = 0;
 	virtual void finish_copy_member(copy_processing_result result) = 0;
 
 	virtual ~processing_state_listener() = default;

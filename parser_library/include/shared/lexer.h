@@ -77,11 +77,14 @@ namespace hlasm_plugin {
 			bool set_continue(size_t cont);
 			void set_continuation_enabled(bool);
 			void set_ictl();
+			void insert_EOLLN();
 
 			void ainsert_front(const std::string &);
 			void ainsert_back(const std::string &);
 			std::string aread();
 			std::unique_ptr<input_source>& get_ainsert_stream();
+
+			static bool ord_char(char_t c);
 
 			bool is_ord_char() const;
 			bool is_space() const;
@@ -138,7 +141,7 @@ namespace hlasm_plugin {
 
 			struct input_state
 			{
-				input_source* input;
+				input_source* input = nullptr;
 				char_t c = 0;
 				size_t line = 0;
 				size_t char_position = 0;
@@ -171,6 +174,7 @@ namespace hlasm_plugin {
 			void lex_tokens();
 			void consume_new_line();
 			void lex_process();
+			void set_last_line_pos();
 			static bool char_start_utf8(unsigned c);
 			static size_t length_utf16(const std::string & str);
 

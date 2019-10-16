@@ -7,6 +7,8 @@
 #include "../diagnostic_collector.h"
 #include "../context/id_storage.h"
 
+#include "../checking/data_definition/data_def_fields.h"
+
 namespace hlasm_plugin::parser_library::checking
 {
 class data_def_type;
@@ -44,6 +46,13 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
 	context::dependency_collector get_length_dependencies(context::dependency_solver& solver) const;
 	const checking::data_def_type* access_data_def_type() const;
 	context::alignment get_alignment() const;
+
+	char get_type_attribute() const;
+	//Expects, that scale does not have unresolved dependencies
+	int32_t get_scale_attribute(expressions::mach_evaluate_info info) const;
+	uint32_t get_length_attribute(expressions::mach_evaluate_info info) const;
+	int32_t get_integer_attribute(expressions::mach_evaluate_info info) const;
+
 	bool expects_single_symbol() const;
 	bool check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const;
 	//expects that check_single_symbol_ok returned true
@@ -52,6 +61,16 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
 	void assign_location_counter(context::address loctr_value);
 
 	void collect_diags() const override;
+
+	//When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set to false
+	checking::dupl_factor_modifier_t evaluate_dupl_factor(expressions::mach_evaluate_info info) const;
+	checking::data_def_length_t evaluate_length(expressions::mach_evaluate_info info) const;
+	checking::scale_modifier_t evaluate_scale(expressions::mach_evaluate_info info) const;
+	checking::exponent_modifier_t evaluate_exponent(expressions::mach_evaluate_info info) const;
+
+	//When any of the evaluated expressions have dependencies, resulting modifier will have
+	//data_def_expr::ignored or data_def_address::ignored set to false
+	checking::nominal_value_t evaluate_nominal_value(expressions::mach_evaluate_info info) const;
 private:
 	class parser;
 	

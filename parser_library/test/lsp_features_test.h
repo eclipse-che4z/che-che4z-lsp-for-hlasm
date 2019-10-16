@@ -13,12 +13,13 @@ using namespace hlasm_plugin::parser_library;
 class mock_parse_lib_provider : public parse_lib_provider
 {
 public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
 	{
 		analyzer a(macro_contents, MACRO_FILE, hlasm_ctx,*this, data);
 		a.analyze();
 		return true;
 	}
+	virtual bool has_library(const std::string& , context::hlasm_context& ) const override { return true; }
 private:
 	const std::string macro_contents =
 R"(   MACRO

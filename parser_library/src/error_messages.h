@@ -41,6 +41,12 @@ namespace hlasm_plugin {
 					(diagnostic_severity::error, "E004", "Use of undefined ordinary symbol identifier");
 			}
 
+			static inline diag_ptr e005()
+			{
+				return std::make_unique<diagnostic_op>
+					(diagnostic_severity::error, "E005", "Only absolute and defined symbols allowed");
+			}
+
 			static inline diag_ptr ec01()
 			{
 				return std::make_unique<diagnostic_op>

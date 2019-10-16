@@ -5,7 +5,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
 macro_statement_provider::macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
-	:common_statement_provider(statement_provider_kind::MACRO, hlasm_ctx, parser), initial_nest_(hlasm_ctx.scope_stack().size() - 1) {}
+	:common_statement_provider(statement_provider_kind::MACRO, hlasm_ctx, parser) {}
 
 void macro_statement_provider::process_next(statement_processor& processor)
 {
@@ -39,5 +39,5 @@ void macro_statement_provider::process_next(statement_processor& processor)
 
 bool macro_statement_provider::finished() const
 {
-	return hlasm_ctx.scope_stack().size() <= initial_nest_ + 1;
+	return hlasm_ctx.scope_stack().size() == 1;
 }

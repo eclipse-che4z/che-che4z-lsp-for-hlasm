@@ -4,37 +4,55 @@
 
 class copy_mock : public parse_lib_provider
 {
-public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	const std::string* find_content(const std::string& library) const
 	{
 		if (library == "COPYR")
-			current_content = &content_COPYR;
+			return &content_COPYR;
 		else if (library == "COPYF")
-			current_content = &content_COPYF;
+			return &content_COPYF;
 		else if (library == "COPYD")
-			current_content = &content_COPYD;
+			return &content_COPYD;
 		else if (library == "COPYREC")
-			current_content = &content_COPYREC;
+			return &content_COPYREC;
 		else if (library == "COPYU")
-			current_content = &content_COPYU;
+			return &content_COPYU;
 		else if (library == "COPYL")
-			current_content = &content_COPYL;
+			return &content_COPYL;
 		else if (library == "COPYN")
-			current_content = &content_COPYN;
+			return &content_COPYN;
 		else if (library == "MAC")
-			current_content = &content_MAC;
+			return &content_MAC;
 		else if (library == "COPYM")
-			current_content = &content_COPYM;
+			return &content_COPYM;
 		else if (library == "COPYJ")
-			current_content = &content_COPYJ;
+			return &content_COPYJ;
+		else if (library == "COPYJF")
+			return &content_COPYJF;
+		else if (library == "COPYND1")
+			return &content_COPYND1;
+		else if (library == "COPYND2")
+			return &content_COPYND2;
 		else
-			return false;
+			return nullptr;
+	}
+
+public:
+
+
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	{
+		current_content = find_content(library);
+		if (!current_content) return false;
 
 		holder.push_back(std::move(a));
 		a = std::make_unique<analyzer>(*current_content, library, hlasm_ctx,*this, data);
 		a->analyze();
 		a->collect_diags();
 		return true;
+	}
+	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const
+	{
+		return find_content(library);
 	}
 	std::vector<std::unique_ptr<analyzer>> holder;
 	std::unique_ptr<analyzer> a;
@@ -130,7 +148,23 @@ private:
  LR
 .X ANOP
 )";
-	
+	const std::string content_COPYJF =
+		R"(
+ AGO .X
+ LR
+)";
+
+	const std::string content_COPYND1 =
+		R"(
+ COPY COPYND2
+)";
+
+	const std::string content_COPYND2 =
+		R"(
+
+
+
+ LR 1,)";
 };
 
 TEST(copy, copy_enter_fail)
@@ -147,7 +181,7 @@ TEST(copy, copy_enter_fail)
 	a.collect_diags();
 
 	EXPECT_EQ(a.context().copy_members().size(), (size_t)0);
-	EXPECT_EQ(a.context().copy_stack().size(), (size_t)0);
+	EXPECT_EQ(a.context().whole_copy_stack().size(), (size_t)0);
 
 	EXPECT_EQ(a.diags().size(), (size_t)2);
 }
@@ -391,7 +425,99 @@ TEST(copy, inner_copy_jump)
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
+TEST(copy, jump_from_copy_fail)
+{
+	std::string input =
+		R"(
+ COPY COPYJF
+)";
+	copy_mock mock;
+	analyzer a(input, "start", mock);
+	a.analyze();
 
+	a.collect_diags();
 
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)2);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	EXPECT_EQ(a.diags()[1].diag_range.start.line, (position_t)2);
+	EXPECT_EQ(a.diags()[1].file_name, "COPYJF");
+	ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
+	EXPECT_EQ(a.diags()[1].related[0].location.rang.start.line, (position_t)1);
+	EXPECT_EQ(a.diags()[1].related[0].location.uri, "start");
+
+	EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)1);
+	EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
+	ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
+	EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)1);
+	EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+}
+
+TEST(copy, jump_in_macro_from_copy_fail)
+{
+	std::string input =
+		R"(
+ MACRO
+ m
+ copy copyJF
+ mend
+
+ m
+)";
+	copy_mock mock;
+	analyzer a(input, "start", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)2);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)1);
+	EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
+	ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
+	EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)3);
+	EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+	EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (position_t)6);
+	EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
+}
+
+TEST(copy, macro_nested_diagnostics)
+{
+	std::string input =
+		R"( MACRO
+ MAC
+
+ copy COPYND1
+
+ MEND
+ 
+ MAC  
+)";
+	copy_mock mock;
+	analyzer a(input, "start", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)2);
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+
+	EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)4);
+	EXPECT_EQ(a.diags()[0].file_name, "COPYND2");
+	ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
+	EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)1);
+	EXPECT_EQ(a.diags()[0].related[0].location.uri, "COPYND1");
+	EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (position_t)3);
+	EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
+	EXPECT_EQ(a.diags()[0].related[2].location.rang.start.line, (position_t)7);
+	EXPECT_EQ(a.diags()[0].related[2].location.uri, "start");
+}
 
 #endif

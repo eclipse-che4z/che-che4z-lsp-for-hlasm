@@ -3,8 +3,11 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-ca_processor::ca_processor(context::hlasm_context& hlasm_ctx, branching_provider& provider, processing_state_listener& listener)
-	:instruction_processor(hlasm_ctx), table_(create_table(hlasm_ctx)), mngr_(hlasm_ctx),provider_(provider),listener_(listener)  {}
+ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
+	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+	processing_state_listener& listener)
+	:instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider),
+	table_(create_table(hlasm_ctx)), mngr_(hlasm_ctx), listener_(listener) {}
 
 void ca_processor::process(context::shared_stmt_ptr stmt)
 {
@@ -26,7 +29,7 @@ ca_processor::process_table_t ca_processor::create_table(context::hlasm_context&
 	table.emplace(ctx.ids().add("SETC"),
 		std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("LCLA"),
-		std::bind(&ca_processor::process_GBL_LCL<context::A_t,false>, this, std::placeholders::_1));
+		std::bind(&ca_processor::process_GBL_LCL<context::A_t, false>, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("LCLB"),
 		std::bind(&ca_processor::process_GBL_LCL<context::B_t, false>, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("LCLC"),
@@ -68,7 +71,7 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
 	if (stmt.label_ref().type == semantics::label_si_type::SEQ)
 	{
 		auto symbol = std::get<semantics::seq_sym>(stmt.label_ref().value);
-		provider_.register_sequence_symbol(symbol.name, symbol.symbol_range);
+		branch_provider.register_sequence_symbol(symbol.name, symbol.symbol_range);
 	}
 	else if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
 	{
@@ -82,7 +85,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 	idx = -1;
 
 	name = symbol->created ?
-		mngr_.concatenate(symbol->access_created()->created_name) :
+		mngr_.concatenate(symbol->access_created()->created_name,eval_ctx) :
 		symbol->access_basic()->name;
 
 	auto var_symbol = mngr_.hlasm_ctx.get_var_sym(name);
@@ -100,7 +103,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 	}
 	else if (symbol->subscript.size() == 1)
 	{
-		auto e = mngr_.evaluate_expression_tree(symbol->subscript[0]);
+		auto e = mngr_.evaluate_expression(symbol->subscript[0], eval_ctx);
 
 		idx = e->get_numeric_value();
 
@@ -113,7 +116,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 
 	if (!var_symbol)
 		return true;
-	
+
 	auto set_sym = var_symbol->access_set_symbol_base();
 	assert(set_sym);
 	if (set_sym->type != type)
@@ -130,10 +133,10 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 
 	set_symbol = set_sym;
 	return true;
-	
+
 }
 
-bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name, std::vector<context::SET_t>& values)
+bool ca_processor::prepare_SET_symbol(const semantics::complete_statement& stmt, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name)
 {
 	if (stmt.label_ref().type != semantics::label_si_type::VAR)
 	{
@@ -143,11 +146,13 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 
 	auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
 
-	auto ok = test_symbol_for_assignment(symbol, type,idx,set_symbol,name);
+	auto ok = test_symbol_for_assignment(symbol, type, idx, set_symbol, name);
 
-	if (!ok)
-		return false;
+	return ok;
+}
 
+bool ca_processor::prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values)
+{
 	bool has_operand = false;
 	for (auto& op : stmt.operands_ref().value)
 	{
@@ -161,11 +166,11 @@ bool ca_processor::prepare_SET(const semantics::complete_statement& stmt, contex
 
 		if (ca_op->kind != semantics::ca_kind::VAR && ca_op->kind != semantics::ca_kind::EXPR)
 		{
-			add_diagnostic(diagnostic_op::error_E012("SET instruction",ca_op->operand_range));
+			add_diagnostic(diagnostic_op::error_E012("SET instruction", ca_op->operand_range));
 			return false;
 		}
 
-		auto e = mngr_.evaluate_expression_tree(ca_op->access_expr()->expression);
+		auto e = mngr_.evaluate_expression(ca_op->access_expr()->expression, eval_ctx);
 
 		context::SET_t value = e->get_set_value();
 
@@ -197,7 +202,9 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 		{
 			auto var = ca_op->access_var()->variable_symbol.get();
 
-			auto id = mngr_.get_symbol_name(var);
+			auto [valid, id] = mngr_.try_get_symbol_name(var, eval_ctx);
+			if (!valid)
+				continue;
 
 			if (auto var_sym = hlasm_ctx.get_var_sym(id))
 			{
@@ -214,7 +221,7 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 			}
 			else
 			{
-				ids.push_back(mngr_.get_symbol_name(var));
+				ids.push_back(id);
 				scalar_info.push_back(var->subscript.empty());
 			}
 
@@ -258,7 +265,7 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
 
 	if (ca_op->kind == semantics::ca_kind::EXPR || ca_op->kind == semantics::ca_kind::VAR)
 	{
-		ctr = mngr_.evaluate_expression_tree(ca_op->access_expr()->expression)->get_numeric_value(); //TODO check for conversions
+		ctr = mngr_.evaluate_expression(ca_op->access_expr()->expression, eval_ctx)->get_numeric_value(); //TODO check for conversions
 		return true;
 	}
 	else
@@ -308,7 +315,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 		}
 
 		auto& symbol = ca_op->access_seq()->sequence_symbol;
-		targets.emplace_back(symbol.name,symbol.symbol_range);
+		targets.emplace_back(symbol.name, symbol.symbol_range);
 		branch = 1;
 		return true;
 	}
@@ -316,7 +323,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 	if (ca_op->kind == semantics::ca_kind::BRANCH)
 	{
 		auto br_op = ca_op->access_branch();
-		branch = mngr_.evaluate_expression_tree(br_op->expression)->get_numeric_value(); //TODO
+		branch = mngr_.evaluate_expression(br_op->expression, eval_ctx)->get_numeric_value(); //TODO
 		targets.emplace_back(br_op->sequence_symbol.name, br_op->sequence_symbol.symbol_range);
 
 		for (size_t i = 1; i < stmt.operands_ref().value.size(); ++i)
@@ -344,13 +351,13 @@ void ca_processor::process_AGO(const semantics::complete_statement& stmt)
 	register_seq_sym(stmt);
 
 	context::A_t branch;
-	std::vector<std::pair<context::id_index,range>> targets;
+	std::vector<std::pair<context::id_index, range>> targets;
 	bool ok = prepare_AGO(stmt, branch, targets);
 	if (!ok)
 		return;
-	
+
 	if (branch > 0 && branch <= (context::A_t)targets.size())
-		provider_.jump_in_statements(targets[branch - 1].first, targets[branch - 1].second);
+		branch_provider.jump_in_statements(targets[branch - 1].first, targets[branch - 1].second);
 }
 
 bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, context::B_t& condition, context::id_index& target, range& target_range)
@@ -386,7 +393,7 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 			if (!condition)
 			{
 				auto br = ca_op->access_branch();
-				condition = (bool)mngr_.evaluate_expression_tree(br->expression)->get_numeric_value();
+				condition = (bool)mngr_.evaluate_expression(br->expression, eval_ctx)->get_numeric_value();
 
 				target = br->sequence_symbol.name;
 				target_range = br->sequence_symbol.symbol_range;
@@ -419,7 +426,7 @@ void ca_processor::process_AIF(const semantics::complete_statement& stmt)
 
 	if (!ok) return;
 
-	if (condition) provider_.jump_in_statements(target,target_range);
+	if (condition) branch_provider.jump_in_statements(target, target_range);
 }
 
 void ca_processor::process_MACRO(const semantics::complete_statement& stmt)
@@ -449,19 +456,19 @@ void ca_processor::process_AEJECT(const semantics::complete_statement&)
 
 void ca_processor::process_ASPACE(const semantics::complete_statement& stmt)
 {
-	(stmt);
 	//TODO
+	(void)stmt;
 }
 
 void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
 {
-	(stmt);
 	//TODO
+	(void)stmt;
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) {}
 
 void ca_processor::collect_diags() const
 {
-	//collect_diags_from_child(mngr_);
+	collect_diags_from_child(mngr_);
 }

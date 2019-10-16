@@ -31,32 +31,20 @@ void lexer::rewind_input(stream_position pos)
 	auto inp = file_input_state_.input;
 	inp->rewind_input(pos.offset);
 
-	if(!token_queue_.empty())
+	if (!token_queue_.empty())
 		delete_token(token_queue_.front()->getTokenIndex());
 
-	/* rewind input to line start 
-	ssize_t i = 0;
-	for (;
-		pos.offset - i != 0
-		&& static_cast<char_t>(inp->LA(-i)) != '\n'
-		&& static_cast<char_t>(inp->LA(-i)) != '\r';
-		++i);
-
-	pos.offset = pos.offset - i;
-	inp->rewind_input(pos.offset);
-	*/
 	file_input_state_.char_position = pos.offset;
 	file_input_state_.line = pos.line;
 	file_input_state_.char_position_in_line = 0;
 	file_input_state_.char_position_in_line_utf16 = 0;
-	last_lln_end_pos_ = { pos.line-1,pos.offset };
-	last_lln_begin_pos_ = { pos.line,pos.offset };
 
-	if (static_cast<char_t>(inp->LA(1)) == '\n' || static_cast<char_t>(inp->LA(1)) == '\r')
-	{
-		inp->rewind_input(pos.offset + 1);
-		++file_input_state_.char_position;
-	}
+	if (pos.line == 0)
+		last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
+	else
+		last_lln_end_pos_ = { pos.line - 1, pos.offset };
+
+	last_lln_begin_pos_ = { pos.line, pos.offset };
 
 	file_input_state_.c = static_cast<char_t>(inp->LA(1));
 }
@@ -69,7 +57,6 @@ bool lexer::is_last_line() const
 			return false;
 	}
 	return true;
-	//return ainsert_buffer_.empty();
 }
 
 lexer::stream_position lexer::last_lln_begin_position() const
@@ -171,15 +158,7 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 
 	//record begin of logical line
 	if (ttype == EOLLN)
-	{
-		if (!(last_lln_end_pos_.line == static_cast<size_t>(-1) && last_lln_end_pos_.offset == static_cast<size_t>(-1)))
-		{
-			last_lln_begin_pos_ = { last_lln_end_pos_.line + 1,last_lln_end_pos_.offset };
-		}
-		last_lln_end_pos_ = { input_state_->line - 1,input_state_->char_position };
-	}
-	else if (ttype == Token::EOF)
-		++last_lln_end_pos_.line;
+		set_last_line_pos();
 
 	last_token_id_++;
 
@@ -198,29 +177,29 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 
 	auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 1 : input_state_->char_position_in_line_utf16;
 
-	if(lsp_proc_)
+	if (lsp_proc_)
 		switch (ttype)
 		{
-			case CONTINUATION:
-				lsp_proc_->add_hl_symbol(
-					token_info(
-						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
-						semantics::hl_scopes::continuation));
-				break;
-			case IGNORED:
-				lsp_proc_->add_hl_symbol(
-					token_info(
-						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
-						semantics::hl_scopes::ignored));
-				break;
-			case COMMENT:
-				lsp_proc_->add_hl_symbol(
-					token_info(
-						range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
-						semantics::hl_scopes::comment));
-				break; 
+		case CONTINUATION:
+			lsp_proc_->add_hl_symbol(
+				token_info(
+					range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+					semantics::hl_scopes::continuation));
+			break;
+		case IGNORED:
+			lsp_proc_->add_hl_symbol(
+				token_info(
+					range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+					semantics::hl_scopes::ignored));
+			break;
+		case COMMENT:
+			lsp_proc_->add_hl_symbol(
+				token_info(
+					range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16), position(input_state_->line, stop_position_in_line)),
+					semantics::hl_scopes::comment));
+			break;
 		}
-		
+
 }
 
 void lexer::consume()
@@ -263,7 +242,7 @@ void lexer::consume()
 				{
 					last_char_utf16_long_ = false;
 					input_state_->char_position_in_line_utf16++;
-				}	
+				}
 		}
 
 	}
@@ -533,6 +512,8 @@ void lexer::lex_comment()
 		else
 		{
 			lex_end(false);
+			set_last_line_pos();
+
 			break;
 		}
 	}
@@ -606,12 +587,15 @@ bool lexer::before_end() const
 		);
 }
 
+bool lexer::ord_char(char_t c)
+{
+	return (c >= 0 && c <= 255) &&
+		(isalnum(c) || isalpha(c) || c == '_' || c == '@' || c == '$' || c == '#');
+}
+
 bool lexer::is_ord_char() const
 {
-	return (input_state_->c >=0 && input_state_->c <= 255)
-		&& (isalnum(input_state_->c) || isalpha(input_state_->c)
-		|| input_state_->c == '_' || input_state_->c == '@'
-		|| input_state_->c == '$' || input_state_->c == '#');
+	return ord_char(input_state_->c);
 }
 
 bool lexer::is_space() const
@@ -627,7 +611,7 @@ bool lexer::is_data_attribute() const
 
 void lexer::lex_word()
 {
-	bool last_char_data_attr=false;
+	bool last_char_data_attr = false;
 	bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
 
 	size_t w_len = 0;
@@ -637,7 +621,7 @@ void lexer::lex_word()
 		ord &= is_ord_char();
 		last_char_data_attr = is_data_attribute();
 
-		if (creating_var_symbol_ && !ord && w_len >0 &&  w_len <= 63)
+		if (creating_var_symbol_ && !ord && w_len > 0 && w_len <= 63)
 		{
 			create_token(ORDSYMBOL);
 			break;
@@ -710,6 +694,26 @@ bool lexer::is_process() const
 void lexer::set_ictl()
 {
 	ictl_ = true;
+}
+
+void lexer::insert_EOLLN()
+{
+	last_token_id_++;
+
+	token_queue_.push(factory_->create(
+		this,
+		token_start_state_.input,
+		EOLLN,
+		DEFAULT_CHANNEL,
+		token_start_state_.char_position,
+		input_state_->char_position - 1,
+		token_start_state_.line,
+		token_start_state_.char_position_in_line,
+		last_token_id_ - 1,
+		token_start_state_.char_position_in_line_utf16,
+		input_state_->char_position_in_line_utf16));
+
+	eof_generated_ = false;
 }
 
 void lexer::lex_process()
@@ -800,7 +804,7 @@ void lexer::ainsert_front(const std::string& back)
 	ainsert(back, false);
 }
 
-void lexer::ainsert(const std::string & inp, bool front)
+void lexer::ainsert(const std::string& inp, bool front)
 {
 	auto len = length_utf16(inp);
 	auto s = cvt_.from_bytes(inp);
@@ -819,4 +823,13 @@ void lexer::ainsert(const std::string & inp, bool front)
 	{
 		throw std::runtime_error("invalid insertion - empty string");
 	}
+}
+
+void lexer::set_last_line_pos()
+{
+	if (!(last_lln_end_pos_.line == static_cast<size_t>(-1) && last_lln_end_pos_.offset == static_cast<size_t>(-1)))
+	{
+		last_lln_begin_pos_ = { last_lln_end_pos_.line + 1,last_lln_end_pos_.offset };
+	}
+	last_lln_end_pos_ = { last_lln_begin_pos_.line ,input_state_->char_position };
 }

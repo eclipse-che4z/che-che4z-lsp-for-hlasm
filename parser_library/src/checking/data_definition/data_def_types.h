@@ -16,7 +16,8 @@ public:
 
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
 
-	virtual uint64_t get_nominal_length(const nominal_value_t & op) const override;
+	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t & op) const override;
 };
 
 class data_def_type_CA_CE : public data_def_type
@@ -25,6 +26,7 @@ public:
 	data_def_type_CA_CE(char extension);
 
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
 };
 
 class data_def_type_C final : public data_def_type_CA_CE
@@ -53,6 +55,7 @@ public:
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
 
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
 };
 
 class data_def_type_G final : public data_def_type
@@ -63,6 +66,7 @@ public:
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
 
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
 };
 
 class data_def_type_X final : public data_def_type
@@ -73,6 +77,7 @@ public:
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
 
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
 };
 
 //************* fixed point types *****************
@@ -84,6 +89,8 @@ public:
 	data_def_type_H_F_FD(char type, char extension, uint8_t word_length);
 
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
+protected:
+	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 private:
 	uint8_t word_length_;
 };
@@ -112,20 +119,33 @@ public:
 	data_def_type_P_Z(char type);
 
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
+	virtual int16_t get_implicit_scale(const nominal_value_t& op) const override;
 };
 
 class data_def_type_P final : public data_def_type_P_Z
 {
 public:
 	data_def_type_P();
+
+protected:
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
+
+
+	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
+
 };
 
 class data_def_type_Z final : public data_def_type_P_Z
 {
 public:
 	data_def_type_Z();
+
+protected:
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const override;
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const override;
+	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
+
 };
 
 //************* address types *****************
@@ -267,6 +287,8 @@ public:
 		modifier_spec scale_spec, context::alignment align, uint64_t implicit_length);
 
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
+protected:
+	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 };
 
 class data_def_type_E final : public data_def_type_E_D_L

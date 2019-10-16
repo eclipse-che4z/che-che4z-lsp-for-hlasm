@@ -2,12 +2,14 @@
 #include "gmock/gmock.h"
 #include <utility>
 #include "antlr4-runtime.h"
+#include "../src/ebcdic_encoding.h"
 #include "../include/shared/lexer.h"
 #include "../src/generated/hlasmparser.h"
 #include "shared/token_stream.h"
 #include "shared/input_source.h"
 #include "../src/analyzer.h"
 #include "../src/processing/context_manager.h"
+#include "../src/expressions/visitors/expression_analyzer.h"
 #include "../src/processing/instruction_sets/macro_processor.h"
 
 
@@ -19,6 +21,14 @@ using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
 
+class empty_attribute_provider : public attribute_provider
+{
+	virtual attribute_provider::resolved_reference_storage
+		lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
+	{
+		return {};
+	}
+};
 
 //returns contents of source file
 std::string get_content(std::string source)

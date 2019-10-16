@@ -330,7 +330,7 @@ TEST(data_def_checker, CU_bit_length_not_allowed)
 
 	data_definition_operand op = setup_data_def_op('C', 'U', "utf16");
 	op.length = data_def_field(true, 480, range());
-	op.length.len_type = data_def_length::BIT;
+	op.length.len_type = data_def_length_t::BIT;
 
 	diag_collector col;
 	EXPECT_FALSE(CU.check_DC(op, ADD_DIAG(col)));
@@ -612,7 +612,7 @@ TEST(data_def_checker, A_sym_bit_length)
 	data_def_type_A t;
 
 	data_definition_operand op = setup_data_def_expr_op_length('A', '\0', 10, 0, expr_type::RELOC, 0, expr_type::COMPLEX);
-	op.length.len_type = data_def_length::BIT;
+	op.length.len_type = data_def_length_t::BIT;
 
 	diag_collector col;
 	EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));

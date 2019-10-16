@@ -3,8 +3,7 @@
 
 #include "common_types.h"
 #include "macro_param_data.h"
-#include "id_storage.h"
-#include "../../include/shared/range.h"
+#include "source_snapshot.h"
 
 #include <memory>
 #include <map>
@@ -204,11 +203,14 @@ public:
 	const syslist_param* access_syslist_param() const;
 
 	//gets value of data where parameter is list of nested data offsets
-	virtual const C_t& get_value(std::vector<int> offset) const;
+	virtual const C_t& get_value(const std::vector<size_t>& offset) const;
 	//gets value of data where parameter is offset to data field
-	virtual const C_t& get_value(int idx) const;
+	virtual const C_t& get_value(size_t idx) const;
 	//gets value of whole macro parameter
 	virtual const C_t& get_value() const;
+
+	//gets param struct
+	virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;
 
 	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const override;
@@ -256,11 +258,14 @@ public:
 	syslist_param(id_index name, macro_data_ptr value);
 
 	//gets value of data where parameter is list of nested data offsets
-	virtual const C_t& get_value(std::vector<int> offset) const;
+	virtual const C_t& get_value(const std::vector<size_t>& offset) const;
 	//gets value of data where parameter is offset to data field
-	virtual const C_t& get_value(int idx) const;
+	virtual const C_t& get_value(size_t idx) const;
 	//gets value of whole macro parameter
 	virtual const C_t& get_value() const;
+
+	//gets param struct
+	virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;
 
 	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const override;
@@ -306,25 +311,12 @@ protected:
 //struct representing sequence symbol that is in open-code
 struct opencode_sequence_symbol : public sequence_symbol
 {
-	//represents position in opencode
-	struct opencode_position {
-		opencode_position(size_t file_line=0, size_t file_offset=0) :file_line(file_line), file_offset(file_offset) {}
-		size_t file_line; size_t file_offset; 
-		bool operator==(const opencode_position& oth) const { return file_line == oth.file_line && file_offset == oth.file_offset; }
-	};
-
-	//represents position in copy member invocation
-	struct copy_frame { 
-		id_index copy_member; size_t statement_offset;
-		bool operator==(const copy_frame& oth) const { return copy_member == oth.copy_member && statement_offset == oth.statement_offset; }
-	};
-
 	//position in opencode
-	opencode_position statement_position;
-	//position in copy member invocation stack
-	std::vector<copy_frame> copy_stack;
+	source_position statement_position;
+	//snapshot of source for recovery
+	source_snapshot snapshot;
 
-	opencode_sequence_symbol(id_index name, location symbol_location, opencode_position statement_position, std::vector<copy_frame> copy_stack = {});
+	opencode_sequence_symbol(id_index name, location symbol_location, source_position statement_position, source_snapshot snapshot);
 
 	bool operator==(const opencode_sequence_symbol& oth) const;
 };

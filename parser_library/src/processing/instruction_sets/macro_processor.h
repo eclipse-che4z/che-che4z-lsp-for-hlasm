@@ -18,7 +18,8 @@ struct macro_arguments
 class macro_processor : public instruction_processor
 {
 public:
-	macro_processor(context::hlasm_context& hlasm_ctx);
+	macro_processor(context::hlasm_context& hlasm_ctx,
+		attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider);
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 

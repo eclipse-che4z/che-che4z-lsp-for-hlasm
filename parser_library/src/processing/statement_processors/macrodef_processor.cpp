@@ -7,11 +7,10 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, processing_state_listener& listener, parse_lib_provider& provider, const macrodef_start_data start)
+macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, processing_state_listener& listener, parse_lib_provider& provider, macrodef_start_data start)
 	: statement_processor(processing_kind::MACRO, hlasm_context),
 	listener_(listener),provider_(provider), start_(std::move(start)), macro_nest_(1), curr_line_(0),
-	expecting_prototype_(true), expecting_MACRO_(start_.is_external), omit_next_(false),
-	initial_copy_nest_(hlasm_ctx.copy_stack().size()), finished_flag_(false)
+	expecting_prototype_(true), expecting_MACRO_(start_.is_external), omit_next_(false), finished_flag_(false)
 {
 	result_.definition_location = hlasm_ctx.processing_stack().back();
 	if (start_.is_external)
@@ -105,10 +104,9 @@ void macrodef_processor::end_processing()
 	if (!finished_flag_)
 		add_diagnostic(diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().pos, hlasm_ctx.processing_stack().back().pos)));
 
-	listener_.finish_macro_definition(std::move(result_));
+	hlasm_ctx.pop_statement_processing();
 
-	if (start_.is_external)
-		hlasm_ctx.pop_processing_file();
+	listener_.finish_macro_definition(std::move(result_));
 
 	finished_flag_ = true;
 }
@@ -177,6 +175,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 		{
 			range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
 			add_diagnostic(diagnostic_op::error_E059(*start_.external_name, r));
+			result_.invalid = true;
 			finished_flag_ = true;
 			return;
 		}
@@ -191,6 +190,9 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 	}
 	else
 	{
+		if (hlasm_ctx.current_copy_stack().empty())
+			curr_outer_position_ = statement.statement_position();
+
 		if (auto res_stmt = statement.access_resolved())
 		{
 			process_sequence_symbol(res_stmt->label_ref());
@@ -208,36 +210,14 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 		}
 		else assert(false);
 
-		if (initial_copy_nest_ == hlasm_ctx.copy_stack().size() || omit_next_)
-			curr_outer_position_ = statement.statement_position();
-
 		++curr_line_;
 	}
-}
-
-context::macro_data_ptr macrodef_processor::create_macro_data(const semantics::concat_chain& chain, context::hlasm_context& hlasm_ctx)
-{
-	context_manager mngr(hlasm_ctx);
-
-	if(chain.size() == 0)
-		return std::make_unique<context::macro_param_data_dummy>();
-	else if (chain.size() > 1 || (chain.size() == 1 && chain[0]->type != semantics::concat_type::SUB))
-		return std::make_unique<context::macro_param_data_single>(mngr.concatenate_str(chain));
-
-	const auto& inner_chains = chain[0]->access_sub()->list;
-
-	std::vector<context::macro_data_ptr> sublist;
-
-	for (auto& inner_chain : inner_chains)
-	{
-		sublist.push_back(create_macro_data(inner_chain, hlasm_ctx));
-	}
-	return std::make_unique<context::macro_param_data_composite>(std::move(sublist));
 }
 
 void macrodef_processor::process_prototype(const resolved_statement& statement)
 {
 	std::vector<context::id_index> param_names;
+	processing::context_manager mngr(hlasm_ctx);
 
 	//label processing
 	if (statement.label_ref().type == semantics::label_si_type::VAR)
@@ -259,6 +239,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 	if (start_.is_external && macro_name != start_.external_name)
 	{
 		add_diagnostic(diagnostic_op::error_E060(*start_.external_name, statement.instruction_ref().field_range));
+		result_.invalid = true;
 		finished_flag_ = true;
 		return;
 	}
@@ -332,7 +313,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 					tmp->chain.erase(tmp->chain.begin());
 					tmp->chain.erase(tmp->chain.begin());
 
-					result_.prototype.symbolic_params.emplace_back(create_macro_data(std::move(tmp->chain),hlasm_ctx), var_id);
+					result_.prototype.symbolic_params.emplace_back(mngr.create_macro_data(std::move(tmp->chain)), var_id);
 				}
 			}
 			else
@@ -340,6 +321,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 		}
 	}
 
+	collect_diags_from_child(mngr);
 }
 
 void macrodef_processor::process_MACRO() { ++macro_nest_; }
@@ -355,6 +337,23 @@ void macrodef_processor::process_MEND()
 
 void macrodef_processor::process_COPY(const resolved_statement& statement)
 {
+	//substitute copy for anop to not be processed again
+	result_.definition.push_back(
+		std::make_unique<resolved_statement_impl>(
+			semantics::statement_si(
+				statement.stmt_range_ref(),
+				semantics::label_si(statement.stmt_range_ref()),
+				semantics::instruction_si(statement.stmt_range_ref()),
+				semantics::operands_si(statement.stmt_range_ref(), {}),
+				semantics::remarks_si(statement.stmt_range_ref(), {})
+			),
+			op_code(
+				hlasm_ctx.ids().add("ANOP"),
+				context::instruction_type::CA
+			))
+	);
+	add_correct_copy_nest();
+
 	if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
 	{
 		asm_processor::process_copy(statement,hlasm_ctx,provider_,this);
@@ -363,7 +362,6 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 		add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
 
 	omit_next_ = true;
-	--curr_line_;
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
@@ -388,7 +386,11 @@ void macrodef_processor::add_correct_copy_nest()
 {
 	result_.nests.push_back({ location(curr_outer_position_,result_.definition_location.file) });
 
-	for (size_t i = initial_copy_nest_; i < hlasm_ctx.copy_stack().size(); i++)
-		result_.nests.back().push_back(hlasm_ctx.copy_stack()[i].definition_location);
+	for (auto& nest : hlasm_ctx.current_copy_stack())
+	{
+		auto pos = nest.definition[nest.current_statement]->statement_position();
+		auto loc = location(pos, nest.definition_location.file);
+		result_.nests.back().push_back(std::move(loc));
+	}
 }
 

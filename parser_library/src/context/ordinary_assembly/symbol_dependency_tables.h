@@ -5,11 +5,10 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
-#include <queue>
 
 #include "address.h"
+#include "dependant.h"
 #include "dependable.h"
-#include "../id_generator.h"
 #include "address_resolver.h"
 #include "postponed_statement.h"
 
@@ -19,32 +18,29 @@ namespace context {
 
 class ordinary_assembly_context;
 
-enum class dependant_kind { SYMBOL = 0, SPACE = 1 };
-struct dependant
+
+struct statement_ref
 {
-	dependant(id_index symbol_id);
-	dependant(space_ptr space_id);
+	using ref_t = std::unordered_set<post_stmt_ptr>::const_iterator;
+	statement_ref(ref_t stmt_ref, size_t ref_count = (size_t)1);
 
-	bool operator==(const dependant& oth) const;
-	dependant_kind kind() const;
-
-	std::variant<id_index, space_ptr> value;
+	std::unordered_set<post_stmt_ptr>::const_iterator stmt_ref;
+	size_t ref_count;
 };
 
-struct dependant_hash
-{
-	std::size_t operator()(const dependant& k) const;
-};
-
+class dependency_adder;
 //class holding data about dependencies between symbols
 class symbol_dependency_tables
 {
 	//actual dependecies of symbol or space
-	std::unordered_map<dependant, const resolvable*, dependant_hash> dependencies_;
+	std::unordered_map<dependant, const resolvable*> dependencies_;
+	//optional length dependency to dependency of symbol
+	std::unordered_map<id_index, const resolvable*> length_dependencies_;
+
 	//statement where dependencies are from
-	std::unordered_map<dependant, post_stmt_ptr, dependant_hash> dependency_sources_;
+	std::unordered_map<dependant, statement_ref> dependency_source_stmts_;
 	//list of statements containing dependencies that can not be checked yet
-	std::vector<std::pair<post_stmt_ptr, std::vector<const resolvable*>>> postponed_stmts_;
+	std::unordered_set<post_stmt_ptr> postponed_stmts_;
 
 	ordinary_assembly_context& sym_ctx_;
 
@@ -52,10 +48,14 @@ class symbol_dependency_tables
 
 	void resolve_dependant(dependant target, const resolvable* dep_src);
 	void resolve_dependant_default(dependant target);
-	void try_resolve(std::queue<dependant> newly_defined);
+	void resolve();
 
 	std::vector<dependant> extract_dependencies(const resolvable* dependency_source);
 	std::vector<dependant> extract_dependencies(const std::vector<const resolvable*>& dependency_sources);
+
+	void try_erase_source_statement(dependant index);
+
+	bool add_dependency(dependant target, const resolvable* dependency_source, bool check_cycle);
 public:
 
 	symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
@@ -64,22 +64,50 @@ public:
 	//returns false if cyclic dependency occured
 	[[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt);
 
-	//add statement dependency on its operands
-	void add_dependency(post_stmt_ptr target, std::vector<const resolvable*> dependency_sources);
+	//add symbol attribute dependency on statement
+	//returns false if cyclic dependency occured
+	[[nodiscard]] bool add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt);
 
 	//add space dependency
 	void add_dependency(space_ptr target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt);
 
-	//registers that a symbol has been defined
-	void add_defined(id_index target);
+	//add statement dependency on its operands
+	void add_dependency(post_stmt_ptr target);
+
+	//method for creating more than one dependency assigned to one statement
+	dependency_adder add_dependencies(post_stmt_ptr dependency_source_stmt);
+
+	//registers that some symbol has been defined
+	void add_defined();
 
 	bool check_loctr_cycle();
 
-	//registers that a list of symbols have been defined
-	void add_defined(const std::vector<id_index>& target);
-
 	//collect all postponed statements either if they still contain dependent objects
 	std::vector<post_stmt_ptr> collect_postponed();
+
+	friend dependency_adder;
+};
+
+class dependency_adder
+{
+	symbol_dependency_tables& owner_;
+	size_t ref_count_;
+
+	std::vector<dependant> dependants;
+public:
+	post_stmt_ptr source_stmt;
+
+	dependency_adder(symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt);
+
+	[[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);
+
+	[[nodiscard]] bool add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source);
+
+	void add_dependency(space_ptr target, const resolvable* dependency_source);
+
+	void add_dependency();
+
+	void finish();
 };
 
 }

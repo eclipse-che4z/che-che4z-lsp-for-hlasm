@@ -41,9 +41,9 @@ void copy_processor::end_processing()
 		result_.invalid_member = true;
 	}
 
-	listener_.finish_copy_member(std::move(result_));
+	hlasm_ctx.pop_statement_processing();
 
-	hlasm_ctx.pop_processing_file();
+	listener_.finish_copy_member(std::move(result_));
 }
 
 bool copy_processor::terminal_condition(const statement_provider_kind prov_kind) const

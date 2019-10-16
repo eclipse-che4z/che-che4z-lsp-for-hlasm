@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <assert.h>
 #include "keyword_expression.h"
-#include "expression_visitor.h"
+#include "visitors/expression_evaluator.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;

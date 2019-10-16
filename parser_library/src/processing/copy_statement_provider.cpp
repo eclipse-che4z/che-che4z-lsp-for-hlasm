@@ -4,14 +4,14 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
 copy_statement_provider::copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
-	:common_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser),initial_nest_(hlasm_ctx.copy_stack().size()) {}
+	:common_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser) {}
 
 void copy_statement_provider::process_next(statement_processor& processor)
 {
 	if (finished())
 		throw std::runtime_error("provider already finished");
 
-	auto& invo = hlasm_ctx.copy_stack().back();
+	auto& invo = hlasm_ctx.current_copy_stack().back();
 
 	++invo.current_statement;
 	if ((size_t)invo.current_statement == invo.definition.size())
@@ -37,5 +37,5 @@ void copy_statement_provider::process_next(statement_processor& processor)
 
 bool copy_statement_provider::finished() const
 {
-	return hlasm_ctx.copy_stack().size() <= initial_nest_;
+	return hlasm_ctx.current_copy_stack().empty();
 }

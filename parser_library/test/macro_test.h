@@ -337,7 +337,7 @@ R"( MACRO
 		auto b = a.context().ids().add("b");
 		EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
 		EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
-		EXPECT_EQ(invo->named_params.find(a.context().ids().add("SYSLIST"))->second->get_value(1), "2");
+		EXPECT_EQ(invo->named_params.find(a.context().ids().add("SYSLIST"))->second->get_value(1), "1");
 	}
 
 	{
@@ -415,6 +415,34 @@ TEST(macro, cyclic_call_finite)
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
+TEST(macro, arguments_concatenation)
+{
+	std::string input =
+		R"(
+ MACRO
+ M1 &X=
+ GBLC V
+&V SETC &X
+ MEND
+
+&X SETC 'A'
+ M1 X=(B-C)+(&X.-D)
+
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	auto it = a.context().globals().find(a.context().ids().add("V"));
+
+	ASSERT_NE(it,a.context().globals().end());
+
+	EXPECT_EQ(it->second->access_set_symbol<C_t>()->get_value(),"(B-C)+(A-D)");
+
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
 class bad_mock : public parse_lib_provider
 {
 public:
@@ -427,6 +455,7 @@ public:
 		a->collect_diags();
 		return true;
 	}
+	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return true; }
 	std::unique_ptr<analyzer> a;
 private:
 	const std::string* current_content;
@@ -459,7 +488,7 @@ TEST(external_macro, bad_library)
 	a1.analyze();
 	a1.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m1.a)->diags().size(), (size_t)1);
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&a1)->diags().size(), (size_t)0);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a1)->diags().size(), (size_t)2);
 	EXPECT_EQ(a1.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
 	bad_mock m2(false);
@@ -467,7 +496,7 @@ TEST(external_macro, bad_library)
 	a2.analyze();
 	a2.collect_diags();
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m2.a)->diags().size(), (size_t)1);
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&a2)->diags().size(), (size_t)0);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a2)->diags().size(), (size_t)2);
 	EXPECT_EQ(a2.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 

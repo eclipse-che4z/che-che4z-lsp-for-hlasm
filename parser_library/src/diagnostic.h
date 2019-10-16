@@ -88,10 +88,10 @@ struct diagnostic_op
 	range diag_range;
 	diagnostic_op() = default;
 
-	diagnostic_op(diagnostic_severity severity, const std::string& code, const std::string& message) :
+	diagnostic_op(diagnostic_severity severity, std::string code, std::string message) :
 		severity(severity), code(std::move(code)), message(std::move(message)) {};
 
-	diagnostic_op(diagnostic_severity severity, const std::string &  code, const std::string &  message, range range_) :
+	diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range range_) :
 		severity(severity), code(std::move(code)), message(std::move(message)), diag_range(std::move(range_)) {};
 
 	static diagnostic_op error_I999(const std::string& instr_name, const range& range);
@@ -516,9 +516,19 @@ struct diagnostic_op
 
 	static diagnostic_op error_E063(const range& range);
 
+	static diagnostic_op error_E064(const range& range);
+
+	static diagnostic_op error_E065(const range& range);
+
+	static diagnostic_op error_E066(const range& range);
+
 	static diagnostic_op warning_W010(const std::string& message, const range& range);
 
 	static diagnostic_op warning_W011(const range& range);
+
+	static diagnostic_op warning_W012(const range& range);
+
+	static diagnostic_op warning_W013(const range& range);
 		
 	static diagnostic_op error_EQU1(const range& range);
 
@@ -542,7 +552,7 @@ class diagnostic_related_info_s
 {
 public:
 	diagnostic_related_info_s() {}
-	diagnostic_related_info_s(range_uri_s location, const std::string &  message) : location(std::move(location)), message(std::move(message)) {}
+	diagnostic_related_info_s(range_uri_s location, std::string message) : location(std::move(location)), message(std::move(message)) {}
 	range_uri_s location;
 	std::string message;
 };
@@ -551,9 +561,9 @@ class diagnostic_s
 {
 public:
 	diagnostic_s() : severity(diagnostic_severity::unspecified) {}
-	diagnostic_s(std::string file_name, range range, const std::string &  code, const std::string &  message) :
+	diagnostic_s(std::string file_name, range range, std::string code, std::string message) :
 		file_name(std::move(file_name)), diag_range(range), severity(diagnostic_severity::unspecified), code(code), message(std::move(message)) {}
-	diagnostic_s(std::string file_name, range range, diagnostic_severity severity, const std::string &  code, const std::string &  message, std::vector<diagnostic_related_info_s> related) :
+	diagnostic_s(std::string file_name, range range, diagnostic_severity severity, std::string code, std::string message, std::vector<diagnostic_related_info_s> related) :
 		file_name(std::move(file_name)), diag_range(range), severity(severity), code(std::move(code)), source("HLASM Plugin"), message(std::move(message)), related(std::move(related)) {}
 	diagnostic_s(std::string file_name, diagnostic_op diag_op) : file_name(std::move(file_name)),
 		diag_range(std::move(diag_op.diag_range)), severity(diag_op.severity), code(std::move(diag_op.code)), source("HLASM Plugin"), message(std::move(diag_op.message)) {}
@@ -569,6 +579,7 @@ public:
 	std::vector<diagnostic_related_info_s> related;
 
 	static diagnostic_s error_S100(const std::string& filename, const std::string& message, const range& range);
+
 	static diagnostic_s error_S101(const std::string& filename, const std::string& message, const range& range);
 
 	static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);

@@ -6,8 +6,9 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-macro_processor::macro_processor(context::hlasm_context& hlasm_ctx)
-	:instruction_processor(hlasm_ctx) {}
+macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
+	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider)
+	:instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider) {}
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
 {
@@ -151,7 +152,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		break;
 	case semantics::label_si_type::CONC:
 		label_value = std::make_unique<context::macro_param_data_single>(
-			mngr.concatenate_str(std::get<semantics::concat_chain>(statement.label_ref().value))
+			mngr.concatenate_str(std::get<semantics::concat_chain>(statement.label_ref().value),eval_ctx)
 			);
 		break;
 	case semantics::label_si_type::ORD:
@@ -160,7 +161,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		break;
 	case semantics::label_si_type::VAR:
 		label_value = std::make_unique<context::macro_param_data_single>(
-			mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(statement.label_ref().value)).to<context::C_t>()
+			mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(statement.label_ref().value), eval_ctx).to<context::C_t>()
 			);
 		break;
 	default:
@@ -186,9 +187,11 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		semantics::concatenation_point::clear_concat_chain(tmp->chain);
 
 		if (tmp->chain.size() >= 2 &&
-			tmp->chain[0]->type == semantics::concat_type::STR && tmp->chain[1]->type == semantics::concat_type::EQU)
+			tmp->chain[0]->type == semantics::concat_type::STR && tmp->chain[1]->type == semantics::concat_type::EQU
+			&& context_manager(mngr).try_get_symbol_name(tmp->chain[0]->access_str()->value,range()).first)
 		{
-			auto id = mngr.get_symbol_name(tmp->chain[0]->access_str()->value);
+			auto [valid,id] = mngr.try_get_symbol_name(tmp->chain[0]->access_str()->value,op->operand_range);
+			assert(valid);
 			auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
 			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
 			{
@@ -217,15 +220,15 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 				tmp->chain.erase(tmp->chain.begin());
 
 				if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-					args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var()).to<context::C_t>()),id });
+					args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx).to<context::C_t>()),id });
 				else
-					args.symbolic_params.push_back({ macrodef_processor::create_macro_data(std::move(tmp->chain),hlasm_ctx),id });
+					args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx),id });
 			}
 		}
 		else if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-			args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var()).to<context::C_t>()),nullptr });
+			args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx).to<context::C_t>()),nullptr });
 		else
-			args.symbolic_params.push_back({ macrodef_processor::create_macro_data(std::move(tmp->chain),hlasm_ctx) ,nullptr });
+			args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx) ,nullptr });
 	}
 
 	return args;

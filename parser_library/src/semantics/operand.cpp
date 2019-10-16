@@ -5,7 +5,7 @@ using namespace hlasm_plugin::parser_library;
 
 //***************** operand *********************
 
-operand::operand(const operand_type type, const range operand_range) 
+operand::operand(const operand_type type, range operand_range) 
 	:type(type),operand_range(std::move(operand_range)) {}
 
 model_operand * operand::access_model() 
@@ -38,13 +38,13 @@ assembler_operand* operand::access_asm()
 	return dynamic_cast<assembler_operand*>(this);
 }
 
-empty_operand::empty_operand(const range operand_range)
+empty_operand::empty_operand(range operand_range)
 	:operand(operand_type::EMPTY,std::move(operand_range)) {}
 
-model_operand::model_operand(concat_chain chain, const range operand_range) 
+model_operand::model_operand(concat_chain chain, range operand_range) 
 	: operand(operand_type::MODEL,std::move(operand_range)), chain(std::move(chain)) {}
 
-evaluable_operand::evaluable_operand(const operand_type type, const range operand_range) 
+evaluable_operand::evaluable_operand(const operand_type type, range operand_range) 
 	: operand(type,std::move(operand_range)) {}
 
 machine_operand::machine_operand(const mach_kind kind)
@@ -63,7 +63,7 @@ address_machine_operand* machine_operand::access_address()
 std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info, expressions::mach_expression & expr, std::optional<checking::machine_operand_type> type_hint = std::nullopt)
 {
 	auto res = expr.evaluate(info);
-	if (res.value_kind() == context::symbol_kind::ABS)
+	if (res.value_kind() == context::symbol_value_kind::ABS)
 	{
 		return std::make_unique<checking::one_operand>(res.get_abs());
 	}
@@ -82,7 +82,7 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
 
 //***************** expr_machine_operand *********************
 
-expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range) 
+expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, range operand_range) 
 	:  evaluable_operand(operand_type::MACH, std::move(operand_range)), machine_operand(mach_kind::EXPR), simple_expr_operand(std::move(expression)) {}
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
@@ -106,7 +106,7 @@ address_machine_operand::address_machine_operand(
 	expressions::mach_expr_ptr displacement,
 	expressions::mach_expr_ptr first_par, 
 	expressions::mach_expr_ptr second_par, 
-	const range operand_range,
+	range operand_range,
 	checking::operand_state state)
 	: evaluable_operand(operand_type::MACH,std::move(operand_range)),
 	machine_operand(mach_kind::ADDR),
@@ -117,12 +117,30 @@ address_machine_operand::address_machine_operand(
 
 bool address_machine_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
 {
-	return first_par ?
-		(second_par ?
-			displacement->get_dependencies(info).contains_dependencies() || first_par->get_dependencies(info).contains_dependencies() || second_par->get_dependencies(info).contains_dependencies() //D(B1,B2)
-			: displacement->get_dependencies(info).contains_dependencies() ||  first_par->get_dependencies(info).contains_dependencies() //D(B)
-			)
-		: displacement->get_dependencies(info).contains_dependencies()|| second_par->get_dependencies(info).contains_dependencies(); //D(,B)
+	if (first_par)
+	{
+		if (second_par)
+			return displacement->get_dependencies(info).contains_dependencies() 
+			|| first_par->get_dependencies(info).contains_dependencies() 
+			|| second_par->get_dependencies(info).contains_dependencies(); //D(B1,B2)
+		else
+			return displacement->get_dependencies(info).contains_dependencies() || first_par->get_dependencies(info).contains_dependencies(); //D(B)
+	}
+	else
+		return displacement->get_dependencies(info).contains_dependencies() || second_par->get_dependencies(info).contains_dependencies(); //D(,B)
+}
+
+bool address_machine_operand::has_error(expressions::mach_evaluate_info info) const
+{
+	if (first_par)
+	{
+		if (second_par)
+			return displacement->get_dependencies(info).has_error || first_par->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; //D(B1,B2)
+		else
+			return displacement->get_dependencies(info).has_error || first_par->get_dependencies(info).has_error; //D(B)
+	}
+	else
+		return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; //D(,B)
 }
 
 std::vector<const context::resolvable*> address_machine_operand::get_resolvables() const
@@ -142,16 +160,16 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(ex
 	context::symbol_value::abs_value_t displ_v, first_v, second_v;
 
 	displ = displacement->evaluate(info);
-	displ_v = displ.value_kind() == context::symbol_kind::ABS ? displ.get_abs() : 0;
+	displ_v = displ.value_kind() == context::symbol_value_kind::ABS ? displ.get_abs() : 0;
 	if (first_par)
 	{
 		first = first_par->evaluate(info);
-		first_v = first.value_kind() == context::symbol_kind::ABS ? first.get_abs() : 0;
+		first_v = first.value_kind() == context::symbol_value_kind::ABS ? first.get_abs() : 0;
 	}
 	if (second_par)
 	{
 		second = second_par->evaluate(info);
-		second_v = second.value_kind() == context::symbol_kind::ABS ? second.get_abs() : 0;
+		second_v = second.value_kind() == context::symbol_value_kind::ABS ? second.get_abs() : 0;
 	}
 
 	if (first_par && second_par) // both defined
@@ -202,7 +220,7 @@ string_assembler_operand* assembler_operand::access_string()
 
 //***************** expr_assembler_operand *********************
 
-expr_assembler_operand::expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range)
+expr_assembler_operand::expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, range operand_range)
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::EXPR), simple_expr_operand(std::move(expression)),value_(std::move(string_value)) {}
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
@@ -210,11 +228,11 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(exp
 	auto res = expression->evaluate(info);
 	switch (res.value_kind())
 	{
-	case context::symbol_kind::UNDEF:
+	case context::symbol_value_kind::UNDEF:
 		return std::make_unique<checking::one_operand>(value_);
-	case context::symbol_kind::ABS:
+	case context::symbol_value_kind::ABS:
 		return std::make_unique<checking::one_operand>(value_, res.get_abs());
-	case context::symbol_kind::RELOC:
+	case context::symbol_value_kind::RELOC:
 		return std::make_unique<checking::one_operand>("0", 0);
 	default:
 		assert(false);
@@ -229,12 +247,17 @@ void expr_assembler_operand::collect_diags() const
 
 //***************** end_instr_machine_operand *********************
 
-using_instr_assembler_operand::using_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end,const range operand_range) 
+using_instr_assembler_operand::using_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, range operand_range) 
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::BASE_END),base(std::move(base)), end(std::move(end)) {}
 
 bool using_instr_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
 {
 	return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
+}
+
+bool using_instr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+{
+	return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
 std::vector<const context::resolvable*> using_instr_assembler_operand::get_resolvables() const
@@ -258,10 +281,15 @@ void using_instr_assembler_operand::collect_diags() const
 }
 
 //***************** complex_assempler_operand *********************
-complex_assembler_operand::complex_assembler_operand(std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range)
+complex_assembler_operand::complex_assembler_operand(std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, range operand_range)
 	:  evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::COMPLEX), value(identifier,std::move(values),operand_range) {}
 
 bool complex_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info) const
+{
+	return false;
+}
+
+bool complex_assembler_operand::has_error(expressions::mach_evaluate_info ) const
 {
 	return false;
 }
@@ -279,7 +307,7 @@ std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
 void complex_assembler_operand::collect_diags() const {}
 
 //***************** ca_operand *********************
-ca_operand::ca_operand(const ca_kind kind, const range operand_range)
+ca_operand::ca_operand(const ca_kind kind, range operand_range)
 	: operand(operand_type::CA,std::move(operand_range)), kind(kind) {}
 
 var_ca_operand* ca_operand::access_var()
@@ -330,31 +358,36 @@ bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info)
 	return expression->get_dependencies(info).contains_dependencies();
 }
 
+bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
+{
+	return expression->get_dependencies(info).has_error;
+}
+
 std::vector<const context::resolvable*> simple_expr_operand::get_resolvables() const
 {
 	return { &*expression };
 }
 
-var_ca_operand::var_ca_operand(vs_ptr variable_symbol, const range operand_range)
+var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
 	: ca_operand(ca_kind::VAR, std::move(operand_range)), variable_symbol(std::move(variable_symbol)) {}
 
-expr_ca_operand::expr_ca_operand(antlr4::ParserRuleContext* expression, const range operand_range)
+expr_ca_operand::expr_ca_operand(antlr4::ParserRuleContext* expression, range operand_range)
 	: ca_operand(ca_kind::EXPR, std::move(operand_range)), expression(expression) {}
 
-seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, const range operand_range)
+seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
 	: ca_operand(ca_kind::SEQ, std::move(operand_range)), sequence_symbol(std::move(sequence_symbol)) {}
 
-branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, const range operand_range)
+branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, range operand_range)
 	: ca_operand(ca_kind::BRANCH, std::move(operand_range)), sequence_symbol(std::move(sequence_symbol)), expression(expression) {}
 
 
 
-macro_operand::macro_operand(concat_chain chain, const range operand_range)
+macro_operand::macro_operand(concat_chain chain, range operand_range)
 	: operand(operand_type::MAC,std::move(operand_range)),chain(std::move(chain)) {}
 
 
 
-data_def_operand::data_def_operand(expressions::data_definition val, const range operand_range)
+data_def_operand::data_def_operand(expressions::data_definition val, range operand_range)
 	: evaluable_operand(operand_type::DAT,std::move(operand_range)), value(std::make_shared<expressions::data_definition>(std::move(val))) {}
 
 
@@ -371,6 +404,11 @@ context::dependency_collector data_def_operand::get_dependencies(expressions::ma
 bool data_def_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
 	return value->get_dependencies(info).contains_dependencies();
+}
+
+bool data_def_operand::has_error(expressions::mach_evaluate_info info) const
+{
+	return value->get_dependencies(info).has_error;
 }
 
 template<typename... args>
@@ -405,105 +443,21 @@ std::vector<const context::resolvable*> data_def_operand::get_resolvables() cons
 	return res;
 }
 
-checking::data_def_field<checking::data_definition_operand::num_t> set_data_def_field(const expressions::mach_expression * e, expressions::mach_evaluate_info info)
-{
-	using namespace checking;
-	data_def_field<data_definition_operand::num_t> field;
-	//if the expression cannot be evaluated, we return field as if it was not there
-	field.present = e != nullptr && !e->get_dependencies(info).contains_dependencies();
-	if (field.present)
-	{
-		field.rng = e->get_range();
-		//TODO get_reloc get_abs
-		auto ret(e->evaluate(info));
-		if(ret.value_kind() == context::symbol_kind::ABS)
-			field.value = e->evaluate(info).get_abs();
-	}
-	return field;
-}
-
 std::unique_ptr<checking::operand> data_def_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
 	auto op = std::make_unique<checking::data_definition_operand>();
 	
-	op->dupl_factor = set_data_def_field(value->dupl_factor.get(), info);
+	op->dupl_factor = value->evaluate_dupl_factor(info);
 	op->type.value = value->type;
 	op->type.rng = value->type_range;
 	op->extension.present = value->extension != '\0';
 	op->extension.value = value->extension;
 	op->extension.rng = value->extension_range;
-	op->length = set_data_def_field(value->length.get(), info);
-	op->length.len_type = value->length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length::BIT : checking::data_def_length::BYTE;
-	op->scale = set_data_def_field(value->scale.get(), info);
-	op->exponent = set_data_def_field(value->exponent.get(), info);
+	op->length = value->evaluate_length(info);
+	op->scale = value->evaluate_scale(info);
+	op->exponent = value->evaluate_exponent(info);
 
-	if (value->nominal_value)
-	{
-		op->nominal_value.present = true;
-		if (value->nominal_value->access_string())
-		{
-			op->nominal_value.value = value->nominal_value->access_string()->value;
-			op->nominal_value.rng = value->nominal_value->access_string()->value_range;
-		}
-		else if (value->nominal_value->access_exprs())
-		{
-			checking::nominal_value_expressions values;
-			for (auto& e_or_a : value->nominal_value->access_exprs()->exprs)
-			{
-				if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
-				{
-					
-					expressions::mach_expr_ptr & e = std::get<expressions::mach_expr_ptr>(e_or_a);
-					bool ignored = e->get_dependencies(info).contains_dependencies(); //ignore values with dependencies
-					auto ev = e->evaluate(info);
-					auto kind = ev.value_kind();
-					if (kind == context::symbol_kind::ABS)
-						values.push_back(checking::data_def_expr{ev.get_abs(), checking::expr_type::ABS, e->get_range(), ignored });
-					
-					else if (kind == context::symbol_kind::RELOC)
-					{
-						checking::expr_type ex_type;
-						auto reloc = ev.get_reloc();
-						if (reloc.is_complex())
-							ex_type = checking::expr_type::COMPLEX;
-						else
-							ex_type = checking::expr_type::RELOC;
-						//TO DO value of the relocatable expression
-						//maybe push back data_def_addr?
-						values.push_back(checking::data_def_expr{ 0, ex_type, e->get_range(), ignored });
-					}
-					else if (kind == context::symbol_kind::UNDEF)
-					{
-						values.push_back(checking::data_def_expr{ 0, checking::expr_type::ABS, e->get_range(), true });
-					}
-					else
-					{
-						assert(false);
-						continue;
-					}
-					
-					
-				}
-				else //there is an address D(B)
-				{
-					auto & a = std::get<expressions::address_nominal>(e_or_a);
-					checking::data_def_address ch_adr;
-
-					ch_adr.base = set_data_def_field(a.base.get(), info);
-					ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
-					if (!ch_adr.base.present || !ch_adr.displacement.present)
-						ch_adr.ignored = true; //ignore values with dependencies
-					values.push_back(ch_adr);
-				}
-				
-			}
-			op->nominal_value.value = std::move(values);
-		}
-		else
-			assert(false);
-	}
-	else
-		op->nominal_value.present = false;
+	op->nominal_value = value->evaluate_nominal_value(info);
 	return op;
 }
 
@@ -512,10 +466,15 @@ void data_def_operand::collect_diags() const
 	collect_diags_from_child(*value);
 }
 
-string_assembler_operand::string_assembler_operand(std::string value, const range operand_range)
+string_assembler_operand::string_assembler_operand(std::string value, range operand_range)
 	: evaluable_operand(operand_type::ASM, std::move(operand_range)), assembler_operand(asm_kind::STRING), value(std::move(value)) {}
 
 bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info ) const
+{
+	return false;
+}
+
+bool string_assembler_operand::has_error(expressions::mach_evaluate_info ) const
 {
 	return false;
 }

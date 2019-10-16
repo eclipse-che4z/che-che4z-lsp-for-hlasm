@@ -32,19 +32,25 @@ void mach_expr_constant::fill_location_counter(context::address)
 {
 }
 
+const mach_expression* mach_expr_constant::leftmost_term() const
+{
+	return this;
+}
+
 
 
 
 //***********  mach_expr_symbol ************
-mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng) : mach_expression(rng),value(value) {}
+mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng) 
+	: mach_expression(rng),value(value), len_expr(value,context::data_attr_kind::L, rng) {}
 
 context::dependency_collector mach_expr_symbol::get_dependencies(context::dependency_solver& solver) const
 {
 	auto symbol = solver.get_symbol(value);
 
-	if (symbol == nullptr || symbol->kind() == context::symbol_kind::UNDEF)
+	if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
 		return value;
-	else if (symbol->kind() == context::symbol_kind::RELOC)
+	else if (symbol->kind() == context::symbol_value_kind::RELOC)
 		return symbol->value().get_reloc();
 	else
 		return context::dependency_collector();
@@ -54,13 +60,17 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) 
 {
 	auto symbol = info.get_symbol(value);
 
-	if (symbol == nullptr || symbol->kind() == context::symbol_kind::UNDEF)
+	if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
 		return context::symbol_value();
 
 	return symbol->value();
 }
 void mach_expr_symbol::fill_location_counter(context::address )
 {
+}
+const mach_expression* mach_expr_symbol::leftmost_term() const
+{
+	return this;
 }
 //***********  mach_expr_self_def ************
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng) : mach_expression(rng)
@@ -84,6 +94,11 @@ void mach_expr_self_def::fill_location_counter(context::address addr)
 {
 }
 
+const mach_expression* mach_expr_self_def::leftmost_term() const
+{
+	return this;
+}
+
 mach_expr_location_counter::mach_expr_location_counter(range rng)
 	: mach_expression(rng) {}
 
@@ -105,6 +120,11 @@ void mach_expr_location_counter::fill_location_counter(context::address addr)
 	location_counter = std::move(addr);
 }
 
+const mach_expression* mach_expr_location_counter::leftmost_term() const
+{
+	return this;
+}
+
 mach_expr_default::mach_expr_default(range rng)
 	: mach_expression(rng) {}
 
@@ -122,6 +142,11 @@ void mach_expr_default::fill_location_counter(context::address addr)
 {
 }
 
+const mach_expression* mach_expr_default::leftmost_term() const
+{
+	return this;
+}
+
 void mach_expr_default::collect_diags() const
 {
 }
@@ -135,7 +160,7 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
 
 	if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
 	{
-		return context::dependency_collector();//TODO
+		return context::dependency_collector({ attribute,value });
 	}
 	else
 		return context::dependency_collector();
@@ -147,9 +172,10 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
 
 	if (symbol == nullptr)
 	{
-		return 0;
+		return context::symbol_attributes::default_value(attribute);
 	}
-	else if (symbol->kind() == context::symbol_kind::ABS && attribute != context::data_attr_kind::L)
+	else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+		&& !symbol->attributes().can_have_SI_attr())
 	{
 		add_diagnostic(diagnostic_op::warning_W011(get_range()));
 		return 0;
@@ -159,9 +185,14 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
 		return symbol->attributes().get_attribute_value(attribute);
 	}
 	else
-		return 0;
+		return context::symbol_attributes::default_value(attribute);
 }
 
 void mach_expr_data_attr::fill_location_counter(context::address addr)
 {
+}
+
+const mach_expression* mach_expr_data_attr::leftmost_term() const
+{
+	return this;
 }

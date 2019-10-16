@@ -78,6 +78,11 @@ bool data_def_type_H_F_FD::check(const data_definition_operand& op, const diagno
 
 }
 
+int32_t data_def_type_H_F_FD::get_integer_attribute_impl(uint32_t length, int32_t scale) const
+{
+	return 8 * length - scale - 1;
+}
+
 data_def_type_H::data_def_type_H() : data_def_type_H_F_FD('H', '\0', 2) {}
 
 data_def_type_F::data_def_type_F() : data_def_type_H_F_FD('F', '\0', 4) {}
@@ -135,6 +140,27 @@ bool data_def_type_P_Z::check(const data_definition_operand& op, const diagnosti
 	return true;
 }
 
+int16_t data_def_type_P_Z::get_implicit_scale(const nominal_value_t& op) const
+{
+	if (!op.present || !std::holds_alternative<std::string>(op.value))
+		return 0;
+	//Count number of characters between the first . and first ,
+
+	uint16_t count = 0;
+	bool do_count = false;
+	for (char c : std::get<std::string>(op.value))
+	{
+		if (c == ',')
+			break;
+			
+		if (c == '.')
+			do_count = true;
+		else if(do_count)
+			++count;
+	}
+	return count;
+}
+
 data_def_type_P::data_def_type_P() : data_def_type_P_Z('P') {}
 
 uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
@@ -163,6 +189,32 @@ uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
 	return bytes_count;
 }
 
+uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_length_attribute(const nominal_value_t& op) const
+{
+	if (!op.present)
+		return 1;
+
+	const std::string& s = std::get<std::string>(op.value);
+
+	//4 sign bits are added to each assembled number
+	uint32_t halfbytes_count = 1;
+	for (char c : s)
+	{
+		if (c == ',')
+			break;
+		else if (is_digit(c))
+			++halfbytes_count;
+	}
+	
+	return (halfbytes_count + 1) / 2;
+	//each digit is assembled as 4 bits, 4 more sign bits are assembled per each number
+}
+
+int32_t data_def_type_P::get_integer_attribute_impl(uint32_t length, int32_t scale) const
+{
+	return 2 * length - scale - 1;
+}
+
 data_def_type_Z::data_def_type_Z() : data_def_type_P_Z('Z') {}
 
 uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
@@ -175,4 +227,28 @@ uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
 	//each digit is assembled as one byte
 
 	return std::count_if(s.cbegin(), s.cend(), &is_digit);
+}
+
+uint32_t data_def_type_Z::get_nominal_length_attribute(const nominal_value_t& op) const
+{
+	if (!op.present)
+		return 1;
+
+	uint32_t first_value_len = 0;
+	for (char c : std::get<std::string>(op.value))
+	{
+		if (c == ',')
+			break;
+		if (is_digit(c))
+			++first_value_len;
+	}
+	
+	//each digit is assembled as one byte
+
+	return first_value_len;
+}
+
+int32_t data_def_type_Z::get_integer_attribute_impl(uint32_t length, int32_t scale) const
+{
+	return length - scale;
 }

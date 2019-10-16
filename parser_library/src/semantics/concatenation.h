@@ -6,7 +6,7 @@
 #include <vector>
 #include <iterator>
 #include "../include/shared/range.h"
-#include "../expressions/expression.h"
+#include "antlr4-runtime.h"
 #include "../context/id_storage.h"
 
 namespace hlasm_plugin {
@@ -34,7 +34,7 @@ struct concatenation_point
 
 	static std::string to_string(const concat_chain& chain);
 
-	static bool contains_var_sym(const concat_chain& chain);
+	static var_sym* contains_var_sym(const concat_chain& chain);
 
 	const concat_type type;
 

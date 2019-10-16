@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <functional>
+#include <cstdint>
 
 #include "../../context/ordinary_assembly/alignment.h"
 #include "../../diagnostic_collector.h"
@@ -74,7 +75,12 @@ public:
 	context::alignment get_alignment(bool length_present) const;
 	//returns length of the operand in bits
 	uint64_t get_length(const data_definition_operand & op) const;
-	
+	//returns the length attribute of operand with specified length modifier and nominal value
+	uint32_t get_length_attribute(const data_def_length_t & length, const nominal_value_t& nominal) const;
+	//returns scale attribute of operand with specified scale modifier and nominal value
+	int16_t get_scale_attribute(const scale_modifier_t & scale, const nominal_value_t & nominal) const;
+	//returns length of operand with specified scale modifier and nominal value
+	int32_t get_integer_attribute(const data_def_length_t& length, const scale_modifier_t& scale, const nominal_value_t& nominal) const;
 	//Returns type corresponding to specified type and extension.
 	static const data_def_type* access_data_def_type(char type, char extension);
 
@@ -90,7 +96,11 @@ protected:
 	//All types that have implicit length "as needed" must override this function.
 	virtual uint64_t get_nominal_length(const nominal_value_t& op) const;
 
+	virtual uint32_t get_nominal_length_attribute(const nominal_value_t& op) const;
+	//Gets the value of scale attribute when there is no scale modifier defined by user.
+	virtual int16_t get_implicit_scale(const nominal_value_t& op) const;
 	
+	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const;
 
 private:
 

@@ -35,7 +35,7 @@ struct data_def_expr
 	bool ignored = false;
 };
 //Represents the length modifier, adds length type.
-struct data_def_length : data_def_field<int32_t>
+struct data_def_length_t : data_def_field<int32_t>
 {
 	enum length_type
 	{
@@ -43,8 +43,8 @@ struct data_def_length : data_def_field<int32_t>
 		BIT
 	};
 
-	data_def_length() : len_type(length_type::BYTE) {}
-	data_def_length(data_def_field<int32_t> field) : data_def_field<int32_t>(std::move(field)), len_type(length_type::BYTE) {}
+	data_def_length_t() : len_type(length_type::BYTE) {}
+	data_def_length_t(data_def_field<int32_t> field) : data_def_field<int32_t>(std::move(field)), len_type(length_type::BYTE) {}
 
 	length_type len_type;
 };
@@ -59,6 +59,14 @@ struct data_def_address
 using expr_or_address = std::variant<data_def_expr, data_def_address>;
 using nominal_value_expressions = std::vector<expr_or_address>;
 using nominal_value_t = data_def_field < std::variant<std::string, nominal_value_expressions> >;
+using scale_modifier_t = data_def_field<int16_t>;
+using exponent_modifier_t = data_def_field<int32_t>;
+using dupl_factor_modifier_t = data_def_field<int32_t>;
+
+template<typename T>
+inline T round_up(T n, T m) {
+	return ((n + m - 1) / m) * m;
+}
 
 }
 

@@ -55,7 +55,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
     ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
     ${PROJECT_SOURCE_DIR}/src/context/id_storage.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/id_generator.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/processing_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/location_counter.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/ordinary_assembly_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol_dependency_tables.cpp
@@ -65,6 +65,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/address_resolver.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/dependency_collector.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/address.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/dependant.cpp
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/context_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/lookahead_processor.cpp
@@ -95,7 +96,8 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/semantics/concatenation.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/operand.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/range_provider.cpp
-    ${PROJECT_SOURCE_DIR}/src/expressions/expression_visitor.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/visitors/expression_analyzer.cpp
+    ${PROJECT_SOURCE_DIR}/src/expressions/visitors/expression_evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/lsp_info_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp

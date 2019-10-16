@@ -17,10 +17,10 @@ public:
 	data_def_field<num_t> dupl_factor;
 	data_def_field<char> type;
 	data_def_field<char> extension;
-	data_def_length length;
+	data_def_length_t length;
 
-	data_def_field<num_t> exponent;
-	data_def_field<num_t> scale;
+	exponent_modifier_t exponent;
+	scale_modifier_t scale;
 
 	nominal_value_t nominal_value;
 
@@ -31,17 +31,17 @@ public:
 
 	uint64_t get_length() const;
 	context::alignment get_alignment() const;
+	int16_t get_scale_attribute() const;
+	uint32_t get_length_attribute() const;
+	uint32_t get_integer_attribute() const;
 
 	template<data_instr_type instr_type>
 	static uint64_t get_operands_length(const std::vector<const data_definition_operand*>& operands);
+	
 
 private:
 	bool check_type_and_extension(const diagnostic_collector& add_diagnostic) const;
 
-	template<typename T>
-	static T round_up(T n, T m) {
-		return ((n + m - 1) / m) * m;
-	}
 };
 
 
@@ -56,7 +56,7 @@ uint64_t data_definition_operand::get_operands_length(const std::vector<const da
 		if (!op->check<instr_type>(diagnostic_collector()))
 			return 0;
 
-		if (op->length.len_type != checking::data_def_length::BIT)
+		if (op->length.len_type != checking::data_def_length_t::BIT)
 		{
 			//align to whole byte
 			operands_bit_length = round_up(operands_bit_length, (uint64_t)8);

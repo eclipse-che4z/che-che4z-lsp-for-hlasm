@@ -291,10 +291,10 @@ TEST(context_macro, call_and_leave_macro)
 	auto SYSLIST = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
 	ASSERT_TRUE(SYSLIST);
 	//testing syslist
-	EXPECT_EQ(SYSLIST->get_value(-1), "");
-	EXPECT_EQ(SYSLIST->get_value(0), "ada");
-	EXPECT_EQ(SYSLIST->get_value(1), "mko");
-	EXPECT_EQ(SYSLIST->get_value(2), "");
+	EXPECT_EQ(SYSLIST->get_value((size_t)0), "");
+	EXPECT_EQ(SYSLIST->get_value((size_t)1), "ada");
+	EXPECT_EQ(SYSLIST->get_value((size_t)2), "mko");
+	EXPECT_EQ(SYSLIST->get_value((size_t)3), "");
 
 	//testing named params
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
@@ -383,7 +383,7 @@ TEST(context_macro, repeat_call_same_macro)
 	auto SYSLIST = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
 	ASSERT_TRUE(SYSLIST);
 
-	for (int i = -1; i < 2; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
 		EXPECT_EQ(SYSLIST->get_value(i), "");
 	}
@@ -393,11 +393,11 @@ TEST(context_macro, repeat_call_same_macro)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(SYSLIST->get_value({ 1,2 }), "");
-	EXPECT_EQ(SYSLIST->get_value({ 2 }), "(first,second,third)");
-	EXPECT_EQ(SYSLIST->get_value({ 2,1 }), "second");
-	EXPECT_EQ(SYSLIST->get_value({ 2,1,0,0 }), "second");
-	EXPECT_EQ(SYSLIST->get_value({ 2,1,0,0,1 }), "");
+	EXPECT_EQ(SYSLIST->get_value({ 2,3 }), "");
+	EXPECT_EQ(SYSLIST->get_value({ 3 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST->get_value({ 3,2 }), "second");
+	EXPECT_EQ(SYSLIST->get_value({ 3,2,1,1 }), "second");
+	EXPECT_EQ(SYSLIST->get_value({ 3,2,1,1,2 }), "");
 }
 
 TEST(context_macro, recurr_call)
@@ -484,7 +484,7 @@ TEST(context_macro, recurr_call)
 	auto SYSLIST3 = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
 	ASSERT_TRUE(SYSLIST3);
 
-	for (int i = -1; i < 1; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		EXPECT_EQ(SYSLIST3->get_value(i), "");
 	}
@@ -495,18 +495,18 @@ TEST(context_macro, recurr_call)
 	EXPECT_EQ(m3->named_params.find(op3)->second->get_value(), "(first,second,third)");
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
-	EXPECT_EQ(SYSLIST3->get_value(-1), "");
-	EXPECT_EQ(SYSLIST3->get_value({ 1,2 }), "");
-	EXPECT_EQ(SYSLIST3->get_value({ 2 }), "(first,second,third)");
-	EXPECT_EQ(SYSLIST3->get_value({ 2,1 }), "second");
-	EXPECT_EQ(SYSLIST3->get_value({ 2,1,0,0 }), "second");
-	EXPECT_EQ(SYSLIST3->get_value({ 2,1,0,0,1 }), "");
+	EXPECT_EQ(SYSLIST3->get_value(0), "");
+	EXPECT_EQ(SYSLIST3->get_value({ 2,3 }), "");
+	EXPECT_EQ(SYSLIST3->get_value({ 3 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST3->get_value({ 3,2 }), "second");
+	EXPECT_EQ(SYSLIST3->get_value({ 3,2,1,1 }), "second");
+	EXPECT_EQ(SYSLIST3->get_value({ 3,2,1,1,2 }), "");
 
 	//testing outer macro
-	EXPECT_EQ(SYSLIST2->get_value(-1), "lbl");
-	EXPECT_EQ(SYSLIST2->get_value(0), "ada");
-	EXPECT_EQ(SYSLIST2->get_value(1), "mko");
-	EXPECT_EQ(SYSLIST2->get_value(2), "");
+	EXPECT_EQ(SYSLIST2->get_value((size_t)0), "lbl");
+	EXPECT_EQ(SYSLIST2->get_value((size_t)1), "ada");
+	EXPECT_EQ(SYSLIST2->get_value((size_t)2), "mko");
+	EXPECT_EQ(SYSLIST2->get_value((size_t)3), "");
 
 	EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
 	EXPECT_EQ(m2->named_params.find(op3)->second->get_value(), "");
@@ -520,4 +520,19 @@ TEST(context_macro, recurr_call)
 	ctx.leave_macro();
 	ASSERT_FALSE(ctx.is_in_macro());
 }
+
+TEST(context, id_check)
+{
+	hlasm_context ctx;
+	context_manager mngr(ctx);
+
+	EXPECT_TRUE(mngr.try_get_symbol_name("LIST",range()).first);
+	EXPECT_TRUE(mngr.try_get_symbol_name("T_A",range()).first);
+	EXPECT_TRUE(mngr.try_get_symbol_name("T1",range()).first);
+
+	EXPECT_FALSE(mngr.try_get_symbol_name("*1",range()).first);
+	EXPECT_FALSE(mngr.try_get_symbol_name("1av",range()).first);
+	EXPECT_FALSE(mngr.try_get_symbol_name("a1=",range()).first);
+}
+
 #endif

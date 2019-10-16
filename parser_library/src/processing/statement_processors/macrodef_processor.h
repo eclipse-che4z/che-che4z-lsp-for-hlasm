@@ -29,9 +29,7 @@ class macrodef_processor : public statement_processor
 	macrodef_processing_result result_;
 	bool finished_flag_;
 public:
-	macrodef_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, parse_lib_provider& provider, const macrodef_start_data start);
-
-	static context::macro_data_ptr create_macro_data(const semantics::concat_chain& chain, context::hlasm_context& hlasm_ctx);
+	macrodef_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, parse_lib_provider& provider, macrodef_start_data start);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;

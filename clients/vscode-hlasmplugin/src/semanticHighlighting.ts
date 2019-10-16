@@ -119,12 +119,13 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 	}
 
 	public applyDecorations(params: SemanticHighlightingParams): void {
+		var parsed = Uri.parse(params.textDocument.uri).toString();
 		// find the decorations of current editor
-		var decors = this.definedEditors.get(params.textDocument.uri.toString());
+		var decors = this.definedEditors.get(parsed);
 		// editor found, clear its decorations
 		if (decors == undefined) {
-			this.definedEditors.set(params.textDocument.uri, new Map<scope,Range[]>());
-			decors = this.definedEditors.get(params.textDocument.uri);
+			this.definedEditors.set(parsed, new Map<scope,Range[]>());
+			decors = this.definedEditors.get(parsed);
 		}
 		// clear ranges
 		Array.from(this.decorationTypes.keys()).forEach(scope => {

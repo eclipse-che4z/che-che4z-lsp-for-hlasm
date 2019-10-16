@@ -1,5 +1,7 @@
 #include "gmock/gmock.h"
 
+#include "data_definition_scale_test.h"
+#include "data_definition_integer_test.h"
 #include "data_definition_length_test.h"
 #include "data_definition_check_test.h"
 #include "data_definition_test.h"
@@ -10,7 +12,7 @@
 #include "macro_test.h"
 #include "copy_test.h"
 #include "ord_sym_test.h"
-#include "data_attributes.h"
+#include "data_attribute_test.h"
 
 #include "text_synchronization_test.h"
 #include "asm_instr_check_test.h"

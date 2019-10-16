@@ -39,25 +39,35 @@ const syslist_param* macro_param_base::access_syslist_param() const
 macro_param_base::macro_param_base(macro_param_type param_type, id_index name)
 	:variable_symbol(variable_kind::MACRO_VAR_KIND, name), param_type(param_type) {}
 
-const C_t & macro_param_base::get_value(std::vector<int> offset) const
+const C_t & macro_param_base::get_value(const std::vector<size_t>& offset) const
 {
 	const macro_param_data_component* tmp = real_data();
 
 	for (auto idx : offset)
 	{
-		tmp = tmp->get_ith(idx);
+		tmp = tmp->get_ith(idx - 1);
 	}
 	return tmp->get_value();
 }
 
-const C_t & macro_param_base::get_value(int idx) const
+const C_t & macro_param_base::get_value(size_t idx) const
 {
-	return real_data()->get_ith(idx)->get_value();
+	return real_data()->get_ith(idx - 1)->get_value();
 }
 
 const C_t & macro_param_base::get_value() const
 {
 	return real_data()->get_value();
+}
+
+const macro_param_data_component* macro_param_base::get_data(const std::vector<size_t>& offset) const
+{
+	auto data = real_data();
+	for (auto idx : offset)
+	{
+		data = data->get_ith(idx - 1);
+	}
+	return data;
 }
 
 A_t macro_param_base::number(std::vector<size_t> offset) const
@@ -111,21 +121,12 @@ const opencode_sequence_symbol* sequence_symbol::access_opencode_symbol() const
 sequence_symbol::sequence_symbol(id_index name, const sequence_symbol_kind kind, location symbol_location)
 	: name(name), symbol_location(std::move(symbol_location)), kind(kind) {}
 
-opencode_sequence_symbol::opencode_sequence_symbol(id_index name, location loc, opencode_position statement_position,std::vector<copy_frame> copy_stack)
-	: sequence_symbol(name, sequence_symbol_kind::OPENCODE, std::move(loc)), statement_position(statement_position), copy_stack(std::move(copy_stack)) {}
+opencode_sequence_symbol::opencode_sequence_symbol(id_index name, location loc, source_position statement_position, source_snapshot snapshot)
+	: sequence_symbol(name, sequence_symbol_kind::OPENCODE, std::move(loc)), statement_position(statement_position), snapshot(std::move(snapshot)) {}
 
 bool opencode_sequence_symbol::operator==(const opencode_sequence_symbol& oth) const
 {
-	if (!(statement_position == oth.statement_position && copy_stack.size() == oth.copy_stack.size()))
-		return false;
-
-	for (size_t i = 0; i < copy_stack.size(); i++)
-	{
-		if (!(copy_stack[i] == oth.copy_stack[i]))
-			return false;
-	}
-	
-	return true;
+	return snapshot == oth.snapshot;
 }
 
 macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t statement_offset)
@@ -135,21 +136,31 @@ macro_sequence_symbol::macro_sequence_symbol(id_index name, location loc, size_t
 syslist_param::syslist_param(id_index name, macro_data_ptr value)
 	: macro_param_base(macro_param_type::SYSLIST_TYPE, name), data_(std::move(value)) {}
 
-const C_t& syslist_param::get_value(std::vector<int> offset) const
+const C_t& syslist_param::get_value(const std::vector<size_t>& offset) const
 {
-	if (!offset.empty()) ++offset.front();
-
-	return macro_param_base::get_value(std::move(offset));
+	return get_data(offset)->get_value();
 }
 
-const C_t& syslist_param::get_value(int idx) const
+const C_t& syslist_param::get_value(size_t idx) const
 {
-	return macro_param_base::get_value(idx+1);
+	return macro_param_base::get_value(idx + 1);
 }
 
 const C_t& syslist_param::get_value() const
 {
 	return macro_param_base::get_value(1);
+}
+
+const macro_param_data_component* syslist_param::get_data(const std::vector<size_t>& offset) const
+{
+	const macro_param_data_component* tmp = data_.get();
+
+	for (size_t i = 0; i < offset.size(); ++i)
+	{
+		tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+	}
+
+	return tmp;
 }
 
 A_t syslist_param::number(std::vector<size_t> offset) const

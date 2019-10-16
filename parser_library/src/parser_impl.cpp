@@ -11,8 +11,9 @@
 using namespace hlasm_plugin::parser_library;
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
-	: Parser(input), processing::statement_provider(processing::statement_provider_kind::OPEN),
-	ctx(nullptr),lsp_proc(nullptr), processor(nullptr), finished_flag(false),provider(range()), last_line_processed_(false){}
+	: Parser(input),
+	ctx(nullptr), lsp_proc(nullptr), processor(nullptr), finished_flag(false), provider(range()),
+	last_line_processed_(false), line_end_pushed_(false) {}
 
 void parser_impl::initialize(
 	context::hlasm_context* hlasm_ctx,
@@ -28,20 +29,27 @@ bool parser_impl::is_last_line()
 	return dynamic_cast<lexer&>(*_input->getTokenSource()).is_last_line();
 }
 
-void parser_impl::rewind_input(context::opencode_sequence_symbol::opencode_position loc)
+void parser_impl::rewind_input(context::source_position pos)
 {
 	finished_flag = false;
 	last_line_processed_ = false;
-	dynamic_cast<token_stream&>(*_input).rewind_input(lexer::stream_position{ loc.file_line, loc.file_offset });
+	_matchedEOF = false;
+	dynamic_cast<token_stream&>(*_input).rewind_input(lexer::stream_position{ pos.file_line, pos.file_offset }, line_end_pushed_);
+	line_end_pushed_ = false;
 }
 
-context::opencode_sequence_symbol::opencode_position parser_impl::statement_start() const
+void parser_impl::push_line_end()
+{
+	line_end_pushed_ = dynamic_cast<token_stream&>(*_input).consume_EOLLN();
+}
+
+context::source_position parser_impl::statement_start() const
 {
 	auto pos = dynamic_cast<lexer&>(*_input->getTokenSource()).last_lln_begin_position();
 	return { pos.line,pos.offset };
 }
 
-context::opencode_sequence_symbol::opencode_position parser_impl::statement_end() const
+context::source_position parser_impl::statement_end() const
 {
 	auto pos = dynamic_cast<lexer&>(*_input->getTokenSource()).last_lln_end_position();
 	return { pos.line,pos.offset };
@@ -150,8 +158,9 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 	if (attr_data.size() == 1)
 	{
 		auto c = (char)std::toupper(attr_data[0]);
-		if (c == 'L' || c == 'I' || c == 'S' || c== 'T')
-			return context::symbol_attributes::transform_attr(c);
+		auto attr = context::symbol_attributes::transform_attr(c);
+		if (context::symbol_attributes::ordinary_allowed(attr))
+			return attr;
 	}
 
 	add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
@@ -171,12 +180,14 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
 
 void parser_impl::process_instruction()
 {
-	ctx->set_file_position(collector.current_instruction().field_range.start);
+	ctx->set_source_position(collector.current_instruction().field_range.start);
 	proc_status = processor->get_processing_status(collector.peek_instruction());
 }
 
 void parser_impl::process_statement()
 {
+	ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset);
+
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
 	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
 
@@ -192,11 +203,11 @@ void parser_impl::process_statement()
 		ptr = std::make_unique< semantics::statement_si_deferred>(std::move(std::get<semantics::statement_si_deferred>(stmt)));
 	}
 
-	processor->process_statement(std::move(ptr));
-
 	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
 	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
 	collector.prepare_for_next_statement();
+
+	processor->process_statement(std::move(ptr));
 }
 
 void parser_impl::process_next(processing::statement_processor& proc)
@@ -224,6 +235,12 @@ bool hlasm_plugin::parser_library::parser_impl::no_op()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.occurence == processing::operand_occurence::ABSENT;
+}
+
+bool hlasm_plugin::parser_library::parser_impl::ignored()
+{
+	auto& [format, opcode] = *proc_status;
+	return format.form == processing::processing_form::IGNORED;
 }
 
 bool hlasm_plugin::parser_library::parser_impl::alt_format()

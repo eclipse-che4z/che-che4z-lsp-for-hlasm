@@ -7,7 +7,7 @@ using namespace hlasm_plugin::parser_library::context;
 hlasm_plugin::parser_library::context::dependency_collector::dependency_collector()
 	:has_error(false) {}
 
-hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(const std::string* undefined_symbol)
+hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(id_index undefined_symbol)
 	: has_error(false)
 {
 	undefined_symbols.insert(undefined_symbol);
@@ -18,6 +18,12 @@ hlasm_plugin::parser_library::context::dependency_collector::dependency_collecto
 
 hlasm_plugin::parser_library::context::dependency_collector::dependency_collector(address&& unresolved_address)
 	: has_error(false), unresolved_address(std::move(unresolved_address)) {}
+
+dependency_collector::dependency_collector(attr_ref attribute_reference)
+	:has_error(false)
+{
+	undefined_attr_refs.push_back(std::move(attribute_reference));
+}
 
 dependency_collector& dependency_collector::operator+(const dependency_collector& holder)
 {
@@ -46,7 +52,7 @@ bool hlasm_plugin::parser_library::context::dependency_collector::is_address() c
 
 bool hlasm_plugin::parser_library::context::dependency_collector::contains_dependencies() const
 {
-	return !undefined_symbols.empty() || (unresolved_address && !unresolved_address->spaces.empty());
+	return !undefined_symbols.empty() || !undefined_attr_refs.empty() || (unresolved_address && !unresolved_address->spaces.empty());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)
@@ -57,6 +63,8 @@ bool dependency_collector::merge_undef(const dependency_collector& holder)
 		return true;
 
 	undefined_symbols.insert(holder.undefined_symbols.begin(), holder.undefined_symbols.end());
+
+	undefined_attr_refs.insert(undefined_attr_refs.end(), holder.undefined_attr_refs.begin(), holder.undefined_attr_refs.end());
 
 	return !undefined_symbols.empty();
 }

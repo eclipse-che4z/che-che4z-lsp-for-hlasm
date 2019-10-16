@@ -10,7 +10,7 @@ using parse_result = bool;
 
 struct library_data
 {
-	context::file_processing_type proc_type;
+	processing::processing_kind proc_kind;
 	context::id_index library_member;
 };
 
@@ -18,13 +18,17 @@ class parse_lib_provider
 {
 public:
 	virtual parse_result parse_library(const std::string & library, context::hlasm_context& hlasm_ctx, const library_data data) = 0;
+
+	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
 	
 };
 
 class empty_parse_lib_provider : public parse_lib_provider
 {
 public:
+
 	virtual parse_result parse_library(const std::string &, context::hlasm_context&, const library_data) override { return false; };
+	virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; };
 
 	static empty_parse_lib_provider instance;
 };

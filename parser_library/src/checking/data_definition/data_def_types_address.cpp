@@ -35,13 +35,13 @@ bool check_A_AD_Y_length(const std::string & type, const data_definition_operand
 	//For absolute expressions, it is possible to specify bit or byte length modifier with bounds specified in parameters.
 	if (all_absolute)
 	{
-		if (op.length.len_type == data_def_length::length_type::BIT && (op.length.value < min_bit || op.length.value > max_bit))
+		if (op.length.len_type == data_def_length_t::length_type::BIT && (op.length.value < min_bit || op.length.value > max_bit))
 		{
 			add_diagnostic(diagnostic_op::error_D008(op.length.rng, type , "bit length",
 				min_bit, max_bit));
 			return false;
 		}
-		else if (op.length.len_type == data_def_length::BYTE && (op.length.value < min_byte_abs || op.length.value > max_byte_abs))
+		else if (op.length.len_type == data_def_length_t::BYTE && (op.length.value < min_byte_abs || op.length.value > max_byte_abs))
 		{
 			add_diagnostic(diagnostic_op::error_D008(op.length.rng, type, "length",
 				min_byte_abs, max_byte_abs));
@@ -50,12 +50,12 @@ bool check_A_AD_Y_length(const std::string & type, const data_definition_operand
 	}
 	else
 	{//For relocatable expressions, bit length is not allowed and byte has specific bounds.
-		if (op.length.len_type == data_def_length::BIT)
+		if (op.length.len_type == data_def_length_t::BIT)
 		{
 			add_diagnostic(diagnostic_op::error_D007(op.length.rng, type + " with relocatable symbols"));
 			return false;
 		}
-		else if (op.length.len_type == data_def_length::BYTE && (op.length.value < min_byte_sym || op.length.value > max_byte_sym))
+		else if (op.length.len_type == data_def_length_t::BYTE && (op.length.value < min_byte_sym || op.length.value > max_byte_sym))
 		{
 			add_diagnostic(diagnostic_op::error_D008(op.length.rng, type + " with relocatable symbols", "length",
 				min_byte_sym, max_byte_sym));

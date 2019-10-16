@@ -7,6 +7,7 @@
 #include "../error_messages.h"
 #include "numeric_wrapper.h"
 #include <stdexcept>
+#include <charconv>
 
 using namespace hlasm_plugin;
 using namespace parser_library;
@@ -35,38 +36,34 @@ int32_t arithmetic_expression::get_value() const
 	return value_;
 }
 
-expr_ptr arithmetic_expression::from_string(const std::string &s, int base)
+expr_ptr arithmetic_expression::from_string(const std::string_view& s, int base)
 {
 	if (s.empty())
 		return make_arith(0);
 
-	int32_t val = 0;
-	size_t tt = 0;
-	try {
-		bool may_have_sign = base == 10;
-		constexpr auto max = static_cast<unsigned long>(INT32_MAX);
-		constexpr auto min = static_cast<unsigned long>(INT32_MIN);
-		constexpr auto umax = static_cast<unsigned long>(UINT32_MAX);
-		
-		auto ulval = std::stoul(s, &tt, base);
+	bool may_have_sign = base == 10;
+	constexpr auto max = static_cast<long long>(INT32_MAX);
+	constexpr auto min = static_cast<long long>(INT32_MIN);
+	constexpr auto umax = static_cast<long long>(UINT32_MAX);
+	
+	size_t sign_off = 0;
 
-		if ((may_have_sign && ulval > max && ulval < min) || !may_have_sign && ulval > umax)
-			throw std::out_of_range("");
-		val = static_cast<int32_t>(ulval);
-	}
-	catch (std::out_of_range)
-	{
+	if (*s.begin() == '+' && base == 10)
+		sign_off = 1;
+
+	long long lval;
+	auto conversion_result = std::from_chars(s.data() + sign_off, s.data() + sign_off + s.size(), lval, base);
+
+	if ((may_have_sign && lval > max && lval < min) || !may_have_sign && lval > umax 
+		|| conversion_result.ec == std::errc::result_out_of_range)
 		return default_expr_with_error<arithmetic_expression>
-			(error_messages::ea01());
-	}
-	catch (...) { tt = 0; }
+		(error_messages::ea01());
 
-	if (tt != s.length())
+	if (conversion_result.ec == std::errc::invalid_argument)
 		return default_expr_with_error<arithmetic_expression>
-		(error_messages::ea02(s));
+		(error_messages::ea02(std::string(s)));
 
-
-	return make_arith(val);
+	return make_arith(static_cast<int32_t>(lval));
 }
 
 std::string arithmetic_expression::get_str_val() const
@@ -74,7 +71,7 @@ std::string arithmetic_expression::get_str_val() const
 	return std::to_string(value_);
 }
 
-expr_ptr arithmetic_expression::from_string(const std::string &option, const std::string &value, bool dbcs)
+expr_ptr arithmetic_expression::from_string(const std::string &option, const std::string_view&value, bool dbcs)
 {
 	if (option.empty() || toupper(option[0]) == 'D')
 		return from_string(value, 10);
@@ -86,15 +83,29 @@ expr_ptr arithmetic_expression::from_string(const std::string &option, const std
 		return from_string(value, 16);
 
 	if (toupper(option[0]) == 'C')
-		return c2arith(value);
+		return c2arith(std::string(value));
 
 	if (toupper(option[0]) == 'G')
-		return g2arith(value, dbcs);
+		return g2arith(std::string(value), dbcs);
 
 	return default_expr_with_error<arithmetic_expression>(error_messages::ea03());
 }
 
-expr_ptr arithmetic_expression::c2arith(const std::string & value)
+expr_ptr arithmetic_expression::from_string(const std::string_view& value, bool dbcs)
+{
+	if(value.empty())
+		return default_expr_with_error<arithmetic_expression>(error_messages::ea03());
+
+	if (isdigit(value.front()))
+		return from_string("", value, dbcs);
+
+	if (value.size() >= 3 && value[1] == '\'' && value.back() == '\'')
+		return from_string({ value.front() }, value.substr(2, value.size() - 3), dbcs);
+	else
+		return default_expr_with_error<arithmetic_expression>(error_messages::ea03());
+}
+
+expr_ptr arithmetic_expression::c2arith(const std::string& value)
 {
 	/*
 		first escaping is enforced in grammar (for ampersands and apostrophes)
@@ -131,7 +142,7 @@ enum class G2C_STATES
 	INVALID
 };
 
-expr_ptr arithmetic_expression::g2arith(const std::string & value, bool dbcs)
+expr_ptr arithmetic_expression::g2arith(const std::string& value, bool dbcs)
 {
 	if (!dbcs)
 		return default_expr_with_error<arithmetic_expression>

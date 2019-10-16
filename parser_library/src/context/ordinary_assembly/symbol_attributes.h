@@ -10,6 +10,13 @@ namespace context {
 //enumeration of all data attributes
 enum class data_attr_kind { T, L, S, I, K, N, D, O, UNKNOWN };
 
+//tells how symbol is created 
+//whether it is section definition, machine label, equated or data definition symbol
+enum class symbol_origin
+{
+	SECT, MACH, EQU, DAT
+};
+
 //structure wrapping attributes of the symbol
 //the structure fields are to be constant except undefined fields, their value can be defined later
 struct symbol_attributes
@@ -17,7 +24,7 @@ struct symbol_attributes
 	using value_t = int32_t;
 	using type_attr = uint16_t;
 	using len_attr = uint32_t;
-	using scale_attr = uint16_t;
+	using scale_attr = int16_t;
 
 	//static field describing undefined states of attributes
 	static const type_attr undef_type;
@@ -30,30 +37,37 @@ struct symbol_attributes
 
 	//helper function to transform char to enum 
 	static data_attr_kind transform_attr(char c);
+
 	static bool needs_ordinary(data_attr_kind attribute);
+	static bool ordinary_allowed(data_attr_kind attribute);
+	static value_t default_value(data_attr_kind attribute);
 
-	symbol_attributes(type_attr type, len_attr length = undef_length, scale_attr scale = undef_scale);
-	symbol_attributes();
-
-	//sets whole attributes if undefined
-	void set_attributes(const symbol_attributes & attrs);
+	symbol_attributes(symbol_origin origin, type_attr type, len_attr length = undef_length, scale_attr scale = undef_scale, len_attr integer = undef_length);
+	symbol_attributes(symbol_origin origin);
 
 	type_attr type() const;
 	len_attr length() const;
 	scale_attr scale() const;
+	len_attr integer() const;
 
 	bool is_defined(data_attr_kind attribute) const;
+
+	bool can_have_SI_attr() const;
 
 	value_t get_attribute_value(data_attr_kind attribute) const;
 
 	//sets length if undefined
-	void length(len_attr new_length);
+	void length(len_attr value);
+	//sets scale if undefined
+	void scale(scale_attr value);
+
+	const symbol_origin origin;
 
 private:
 	type_attr type_;
 	len_attr length_;
 	scale_attr scale_;
-	bool undefined_;
+	len_attr integer_;
 };
 
 }

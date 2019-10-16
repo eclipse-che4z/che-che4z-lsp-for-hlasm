@@ -4,7 +4,11 @@ model_operands returns [op_rem line]													//rule for variable substitutio
 	: op_rem_body				{$line = std::move($op_rem_body.line);};
 
 operands_and_remarks
-	: { deferred() }? SPACE {enable_hidden();} deferred_op_rem					                 		
+	: { ignored()}? (~EOLLN)*
+	| {!ignored()}? operands_and_remarks_ni;
+
+operands_and_remarks_ni
+	: { deferred()}? SPACE {enable_hidden();} deferred_op_rem					                 		
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
 		collector.set_operand_remark_field(std::move($deferred_op_rem.ctx->getText()),std::move($deferred_op_rem.remarks),r);

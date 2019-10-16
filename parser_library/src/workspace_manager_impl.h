@@ -11,7 +11,7 @@ namespace hlasm_plugin::parser_library
 class workspace_manager::impl : public diagnosable_impl
 {
 public:
-	impl(std::atomic<bool>* cancel = nullptr) : file_manager_(cancel), cancel_(cancel), implicit_workspace_({ file_manager_ }) {}
+	impl(std::atomic<bool>* cancel = nullptr) : file_manager_(cancel), implicit_workspace_({ file_manager_ }), cancel_(cancel) {}
 	impl(const impl &) = delete;
 	impl & operator= (const impl &) = delete;
 
@@ -57,6 +57,9 @@ public:
 			return;
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_open_file(document_uri);
+		// do not respond if the request was cancelled
+		if (cancel_ != nullptr && *cancel_)
+			return;
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
 	}
@@ -67,6 +70,9 @@ public:
 			return;
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_change_file(document_uri, changes, ch_size);
+		// do not respond if the request was cancelled
+		if (cancel_ != nullptr && *cancel_)
+			return;
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
 	}

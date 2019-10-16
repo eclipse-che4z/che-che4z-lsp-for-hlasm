@@ -15,10 +15,10 @@ class asm_processor : public low_language_processor
 
 	const process_table_t table_;
 	checking::assembler_checker checker_;
-
-	parse_lib_provider& lib_provider_;
 public:
-	asm_processor(context::hlasm_context& hlasm_ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider, statement_fields_parser& parser);
+	asm_processor(context::hlasm_context& hlasm_ctx, 
+		attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+		statement_fields_parser& parser);
 
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
@@ -28,13 +28,11 @@ public:
 private:
 	process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
-	context::id_index find_label_symbol(const rebuilt_statement& stmt);
-
 	context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
 
 	void process(rebuilt_statement statement);
 
-	void process_sect(context::section_kind kind,const rebuilt_statement stmt);
+	void process_sect(const context::section_kind kind, rebuilt_statement stmt);
 	void process_LOCTR(rebuilt_statement stmt);
 	void process_EQU(rebuilt_statement stmt);
 	void process_DC(rebuilt_statement stmt);

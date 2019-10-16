@@ -18,7 +18,7 @@ class ordinary_processor : public statement_processor
 	static constexpr size_t NEST_LIMIT = 100;
 	static constexpr size_t ACTR_LIMIT = 100;
 
-	parse_lib_provider& lib_provider_;
+	expressions::evaluation_context eval_ctx;
 
 	ca_processor ca_proc_;
 	macro_processor mac_proc_;
@@ -28,9 +28,10 @@ class ordinary_processor : public statement_processor
 	bool finished_flag_;
 public:
 	ordinary_processor(
-		context::hlasm_context& hlasm_ctx, 
+		context::hlasm_context& hlasm_ctx,
+		attribute_provider& attr_provider,
+		branching_provider& branch_provider,
 		parse_lib_provider& lib_provider, 
-		branching_provider& branch_provider, 
 		processing_state_listener& state_listener,
 		statement_fields_parser& parser);
 
@@ -45,7 +46,7 @@ public:
 
 	virtual void collect_diags() const override;
 private:
-	std::pair<std::vector<context::id_index>, bool> check_layout();
+	bool check_layout();
 	void check_postponed_statements(std::vector<context::post_stmt_ptr> stmts);
 	bool check_fatals(range line_range);
 

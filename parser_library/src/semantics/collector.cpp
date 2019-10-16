@@ -55,7 +55,7 @@ void collector::set_label_field(context::id_index label, antlr4::ParserRuleConte
 	if (lbl_)
 		throw std::runtime_error("field already assigned");
 	//recognise, whether label consists only of ORDSYMBOL token
-	if (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL)
+	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL))
 	{
 		lbl_.emplace(symbol_range ,*label );
 	}

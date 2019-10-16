@@ -1137,6 +1137,21 @@ diagnostic_op diagnostic_op::error_E063(const range& range)
 	return diagnostic_op(diagnostic_severity::error, "E063", "Too many ACTR calls, exiting", range);
 }
 
+diagnostic_op diagnostic_op::error_E064(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E064", "Illegal use of ampersand", range);
+}
+
+diagnostic_op diagnostic_op::error_E065(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E065", "Invalid symbol name", range);
+}
+
+diagnostic_op diagnostic_op::error_E066(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E066", "Illegal attribute reference", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
@@ -1165,6 +1180,16 @@ diagnostic_op diagnostic_op::warning_W010(const std::string& message, const rang
 diagnostic_op diagnostic_op::warning_W011(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::warning, "W011", "Wrong type of constant for S or I attribute reference, default is 0", range);
+}
+
+diagnostic_op diagnostic_op::warning_W012(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::warning, "W012", "Length of EQUated symbol undefined, default is 1", range);
+}
+
+diagnostic_op diagnostic_op::warning_W013(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::warning, "W013", "Undefined symbol attribute, default used", range);
 }
 
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
@@ -1214,7 +1239,7 @@ diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::st
 	return diagnostic_s(filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
 }
 
-diagnostic_s diagnostic_s::error_S101(const std::string& filename, const std::string& message, const range & range)
+diagnostic_s diagnostic_s::error_S101(const std::string& filename, const std::string& message, const range& range)
 {
 	return diagnostic_s(filename, range, diagnostic_severity::error, "S101", "Illegal attribute reference - " + message, {});
 }

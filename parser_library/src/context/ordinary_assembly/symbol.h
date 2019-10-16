@@ -11,8 +11,8 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-//defines kind of symbol, absolute or relocatable or undefined
-enum class symbol_kind
+//defines kind of symbol value, absolute or relocatable or undefined
+enum class symbol_value_kind
 {
 	UNDEF = 0, ABS = 1, RELOC = 2
 };
@@ -38,7 +38,7 @@ struct symbol_value
 	const abs_value_t& get_abs() const;
 	const reloc_value_t& get_reloc() const;
 
-	symbol_kind value_kind() const;
+	symbol_value_kind value_kind() const;
 
 private:
 	std::variant<std::monostate, abs_value_t, reloc_value_t> value_;
@@ -49,15 +49,17 @@ private:
 class symbol
 {
 public:
-	symbol(id_index name, symbol_value value, symbol_attributes attributes = symbol_attributes());
-	symbol();
+	symbol(id_index name, symbol_value value, symbol_attributes attributes);
+	//symbol();
 
 	const symbol_value& value() const;
 	const symbol_attributes& attributes() const;
 
-	symbol_kind kind() const;
+	symbol_value_kind kind() const;
 
 	void set_value(symbol_value value);
+	void set_length(symbol_attributes::len_attr value);
+	void set_scale(symbol_attributes::scale_attr value);
 
 	const id_index name;
 private:

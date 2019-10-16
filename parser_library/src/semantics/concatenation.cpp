@@ -72,6 +72,9 @@ std::string concatenation_point::to_string(const concat_chain& chain)
 		case concat_type::DOT:
 			ret.push_back('.');
 			break;
+		case concat_type::EQU:
+			ret.push_back('=');
+			break;
 		case concat_type::STR:
 			ret.append(point->access_str()->value);
 			break;
@@ -82,6 +85,15 @@ std::string concatenation_point::to_string(const concat_chain& chain)
 			else
 				ret.append(*point->access_var()->access_basic()->name);
 			break;
+		case concat_type::SUB:
+			ret.push_back('(');
+			for (size_t i = 0; i < point->access_sub()->list.size(); ++i)
+			{
+				ret += to_string(point->access_sub()->list[i]);
+				if (i != point->access_sub()->list.size() - 1) ret.push_back(',');
+			}
+			ret.push_back(')');
+			break;
 		default:
 			break;
 		}
@@ -89,23 +101,26 @@ std::string concatenation_point::to_string(const concat_chain& chain)
 	return ret;
 }
 
-bool concatenation_point::contains_var_sym(const concat_chain& chain)
+var_sym* concatenation_point::contains_var_sym(const concat_chain& chain)
 {
 	for (const auto& point : chain)
 	{
 		if (point->type == concat_type::VAR)
 		{
-			return true;
+			return point->access_var();
 		}
 		else if (point->type == concat_type::SUB)
 		{
-			for(const auto& entry : point->access_sub()->list)
-				if (contains_var_sym(entry)) return true;
+			for (const auto& entry : point->access_sub()->list)
+			{
+				auto tmp = contains_var_sym(entry);
+				if (tmp) return tmp;
+			}
 		}
 		else
 			continue;
 	}
-	return false;
+	return nullptr;
 }
 
 basic_var_sym* var_sym::access_basic() 

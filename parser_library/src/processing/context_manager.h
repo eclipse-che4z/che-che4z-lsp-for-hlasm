@@ -4,7 +4,10 @@
 #include "../diagnosable_ctx.h"
 #include "../context/hlasm_context.h"
 #include "../parse_lib_provider.h"
+#include "../expressions/expression.h"
+#include "../expressions/evaluation_context.h"
 #include "processing_format.h"
+#include "antlr4-runtime.h"
 
 
 namespace hlasm_plugin {
@@ -15,30 +18,34 @@ namespace processing {
 class context_manager : public diagnosable_ctx
 {
 public:
+	using name_result = std::pair<bool, context::id_index>;
+
 	//wrapped context
 	context::hlasm_context& hlasm_ctx;
 
 	context_manager(context::hlasm_context& hlasm_ctx);
 
-	context::SET_t get_var_sym_value(const semantics::var_sym& symbol) const;
+	expressions::expr_ptr evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const;
 
-	context::id_index get_symbol_name(const semantics::var_sym* symbol);
-	context::id_index get_symbol_name(const std::string& symbol);
+	context::SET_t get_var_sym_value(const semantics::var_sym& symbol, expressions::evaluation_context eval_ctx) const;
+	context::SET_t get_var_sym_value(context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const;
 
-	context::id_index concatenate(const semantics::concat_chain& chain) const;
-	std::string concatenate_str(const semantics::concat_chain& chain) const;
+	name_result try_get_symbol_name(const semantics::var_sym* symbol, expressions::evaluation_context eval_ctx) const;
+	name_result try_get_symbol_name(const std::string& symbol,range symbol_range) const;
 
-	expressions::expr_ptr evaluate_expression_tree(antlr4::ParserRuleContext* expr_context) const;
+	context::id_index concatenate(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;
+	std::string concatenate_str(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;
+
+	context::macro_data_ptr create_macro_data(const semantics::concat_chain& chain) const;
+	context::macro_data_ptr create_macro_data(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;
+
+	bool test_symbol_for_read(context::var_sym_ptr var, const expressions::expr_list& subscript, const range& symbol_range) const;
 
 	virtual void collect_diags() const override;
-private:
-	std::string concat(semantics::char_str* str) const;
-	std::string concat(semantics::var_sym* vs) const;
-	std::string concat(semantics::dot*) const;
-	std::string concat(semantics::equals*) const;
-	std::string concat(semantics::sublist* sublist) const;
 
-	bool test_var_sym(context::var_sym_ptr var, const expressions::expr_list& subscript, const range& symbol_range) const;
+private:
+	context::macro_data_ptr create_macro_data(const semantics::concat_chain& chain, 
+		const std::function<std::string(const semantics::concat_chain& chain)>& to_string) const;
 };
 
 }

@@ -20,42 +20,7 @@ public:
 
 	virtual void fill_location_counter(context::address addr) override;
 
-	void collect_diags() const override {}
-};
-
-
-
-class mach_expr_symbol : public mach_expression
-{
-	
-public:
-	mach_expr_symbol(context::id_index value, range rng);
-
-	context::id_index value;
-
-	static mach_expr_ptr from_id(context::id_index id, range rng);
-
-	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-	virtual value_t evaluate(mach_evaluate_info info) const override;
-
-	virtual void fill_location_counter(context::address addr) override;
-
-	void collect_diags() const override {}
-};
-
-class mach_expr_location_counter : public mach_expression
-{
-public:
-	std::optional<context::address> location_counter;
-
-	mach_expr_location_counter(range rng);
-
-	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-	virtual value_t evaluate(mach_evaluate_info info) const override;
-
-	virtual void fill_location_counter(context::address addr) override;
+	virtual const mach_expression* leftmost_term() const override;
 
 	void collect_diags() const override {}
 };
@@ -74,9 +39,50 @@ public:
 
 	virtual void fill_location_counter(context::address addr) override;
 
+	virtual const mach_expression* leftmost_term() const override;
+
 	void collect_diags() const override {}
 };
 
+class mach_expr_symbol : public mach_expression
+{
+	
+public:
+	mach_expr_symbol(context::id_index value, range rng);
+
+	context::id_index value;
+	mach_expr_data_attr len_expr;
+
+	static mach_expr_ptr from_id(context::id_index id, range rng);
+
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+	virtual value_t evaluate(mach_evaluate_info info) const override;
+
+	virtual void fill_location_counter(context::address addr) override;
+
+	virtual const mach_expression* leftmost_term() const override;
+
+	void collect_diags() const override {}
+};
+
+class mach_expr_location_counter : public mach_expression
+{
+public:
+	std::optional<context::address> location_counter;
+
+	mach_expr_location_counter(range rng);
+
+	context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+	virtual value_t evaluate(mach_evaluate_info info) const override;
+
+	virtual void fill_location_counter(context::address addr) override;
+
+	virtual const mach_expression* leftmost_term() const override;
+
+	void collect_diags() const override {}
+};
 
 class mach_expr_self_def : public mach_expression
 {
@@ -89,6 +95,8 @@ public:
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
 	virtual void fill_location_counter(context::address addr) override;
+
+	virtual const mach_expression* leftmost_term() const override;
 
 	void collect_diags() const override {}
 };
@@ -103,6 +111,8 @@ public:
 	virtual value_t evaluate(mach_evaluate_info info) const override;
 
 	virtual void fill_location_counter(context::address addr) override;
+
+	virtual const mach_expression* leftmost_term() const override;
 
 	virtual void collect_diags() const override;
 };

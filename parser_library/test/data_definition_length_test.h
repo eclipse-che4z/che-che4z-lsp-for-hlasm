@@ -60,12 +60,36 @@ TEST(data_def_length, B_multiple)
 	EXPECT_EQ(t.get_length(op), (size_t) (4 * 8));
 }
 
+TEST(data_def_length_attribute, B_multiple)
+{
+	data_def_type_B t;
+
+	data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011");
+
+	diag_collector col;
+	ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+}
+
+TEST(data_def_length_attribute, B_explicit)
+{
+	data_def_type_B t;
+
+	data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011", 5);
+
+	diag_collector col;
+	ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 5U);
+}
+
 TEST(data_def_length, dupl_factor_bit_length)
 {
 	data_def_type_B t;
 
 	data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011", 4);
-	op.length.len_type = data_def_length::BIT;
+	op.length.len_type = data_def_length_t::BIT;
 	op.dupl_factor = 3;
 	diag_collector col;
 	ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
@@ -134,6 +158,33 @@ TEST(data_def_length, CA)
 	EXPECT_EQ(t.get_length(op), 5U * 8);
 }
 
+TEST(data_def_length_attribute, CA)
+{
+	data_def_type_CA t;
+
+	data_definition_operand op = setup_data_def_op('C', 'A', "ASCII");
+
+	diag_collector col;
+
+	ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 5U);
+}
+
+TEST(data_def_length_attribute, CA_bit_length)
+{
+	data_def_type_CA t;
+
+	data_definition_operand op = setup_data_def_op('C', 'A', "ASCII", 30);
+	op.length.len_type = data_def_length_t::BIT;
+	diag_collector col;
+
+	ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+}
+
+
 TEST(data_def_length, CA_no_nominal)
 {
 	data_def_type_CA t;
@@ -180,6 +231,18 @@ TEST(data_def_length, CU)
 	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
 	EXPECT_EQ(t.get_length(op), 5U * 2 * 8);
+}
+
+TEST(data_def_length_attribute, CU)
+{
+	data_def_type_CU t;
+
+	data_definition_operand op = setup_data_def_op('C', 'U', "utf,16");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 12U);
 }
 
 TEST(data_def_length, CU_no_nominal)
@@ -255,6 +318,18 @@ TEST(data_def_length, X_odd)
 	EXPECT_EQ(t.get_length(op), 2U * 8);
 }
 
+TEST(data_def_length_attribute, X_multiple)
+{
+	data_def_type_X t;
+
+	data_definition_operand op = setup_data_def_op('X', '\0', "ABC,CD,1234");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+}
+
 TEST(data_def_length, X_even)
 {
 	data_def_type_X t;
@@ -301,6 +376,18 @@ TEST(data_def_length, F)
 	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
 
 	EXPECT_EQ(t.get_length(op), 4U * 8);
+}
+
+TEST(data_def_length_attribute, F)
+{
+	data_def_type_F t;
+
+	data_definition_operand op = setup_data_def_op('F', '\0', "1.23E3,123");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
 }
 
 TEST(data_def_length, F_no_nominal)
@@ -363,6 +450,30 @@ TEST(data_def_length, P)
 	EXPECT_EQ(t.get_length(op), (size_t)(2+2+3) * 8);
 }
 
+TEST(data_def_length_attribute, P_multiple)
+{
+	data_def_type_P t;
+
+	data_definition_operand op = setup_data_def_op('P', '\0', "456.174,-12,4.587");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+}
+
+TEST(data_def_length_attribute, P_simple)
+{
+	data_def_type_P t;
+
+	data_definition_operand op = setup_data_def_op('P', '\0', "456");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+}
+
 TEST(data_def_length, Z)
 {
 	data_def_type_Z t;
@@ -375,6 +486,29 @@ TEST(data_def_length, Z)
 	EXPECT_EQ(t.get_length(op), (size_t)(3 + 2 + 4) * 8);
 }
 
+TEST(data_def_length_attribute, Z_multiple)
+{
+	data_def_type_Z t;
+
+	data_definition_operand op = setup_data_def_op('Z', '\0', "45.12,-12,4.587");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 4U);
+}
+
+TEST(data_def_length_attribute, Z_simple)
+{
+	data_def_type_Z t;
+
+	data_definition_operand op = setup_data_def_op('Z', '\0', "45");
+
+	diag_collector col;
+	EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+	EXPECT_EQ(t.get_length_attribute(op.length, op.nominal_value), 2U);
+}
 
 TEST(data_def_length, A)
 {

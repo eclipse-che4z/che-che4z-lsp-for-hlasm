@@ -15,13 +15,15 @@ void token_stream::enable_hidden() { enabled_hidden_ = true; }
 
 void token_stream::disable_hidden() { enabled_hidden_ = false; }
 
-void token_stream::rewind_input(lexer::stream_position pos)
+void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
 {
 	auto& lexer_tmp = dynamic_cast<lexer&>(*_tokenSource);
 	
-	if (lexer_tmp.last_lln_end_position().line == pos.line - 1 && 
-		lexer_tmp.last_lln_end_position().offset == pos.offset) // no rewind needed
-		return; 
+	if (lexer_tmp.last_lln_end_position().offset == pos.offset) // no rewind needed
+	{
+		assert(!insert_EOLLN);
+		return;
+	}
 
 	lexer_tmp.rewind_input(pos);
 
@@ -31,8 +33,22 @@ void token_stream::rewind_input(lexer::stream_position pos)
 		_tokens.pop_back();
 		lexer_tmp.delete_token(index_tmp);
 	}
+
+	if (insert_EOLLN)
+		lexer_tmp.insert_EOLLN();
+
 	_fetchedEOF = false;
 	sync(_p);
+}
+
+bool token_stream::consume_EOLLN()
+{
+	if (_tokens.back()->getType() == lexer::EOLLN)
+	{
+		consume();
+		return true;
+	}
+	return false;
 }
 
 antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)

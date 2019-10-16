@@ -2,7 +2,7 @@
 #define PROCESSING_STATEMENT_H
 
 #include "../semantics/statement.h"
-#include "processing_format.h"
+#include "op_code.h"
 
 #include <variant>
 #include <optional>

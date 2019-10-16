@@ -11,7 +11,10 @@ using namespace hlasm_plugin::parser_library::context;
 bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependant> dependencies)
 {
 	if (std::find(dependencies.begin(), dependencies.end(), target) != dependencies.end()) //dependencies contain target itself
+	{
+		resolve_dependant_default(target);
 		return false;
+	}
 
 	while (!dependencies.empty())
 	{
@@ -19,11 +22,11 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
 		dependencies.pop_back();
 
 		auto it = dependencies_.find(top_dep);
-		
+
 		if (it != dependencies_.end())
 		{
 			auto& [_, dep_src] = *it;
-			for (auto && dep : extract_dependencies(dep_src))
+			for (auto&& dep : extract_dependencies(dep_src))
 			{
 				if (dep == target)
 				{
@@ -44,12 +47,29 @@ void symbol_dependency_tables::resolve_dependant(dependant target, const resolva
 
 	if (target.kind() == dependant_kind::SPACE)
 	{
-		int32_t length = (val.value_kind() == symbol_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
+		int32_t length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
 		space::resolve(std::get<space_ptr>(target.value), length);
 	}
 	else if (target.kind() == dependant_kind::SYMBOL)
 	{
-		sym_ctx_.get_symbol(std::get<id_index>(target.value))->set_value(val);
+		auto symbol = std::get<id_index>(target.value);
+		sym_ctx_.get_symbol(symbol)->set_value(val);
+	}
+	else if (target.kind() == dependant_kind::SYMBOL_ATTR)
+	{
+		auto ref = std::get<attr_ref>(target.value);
+		assert(ref.attribute == data_attr_kind::L || ref.attribute == data_attr_kind::S);
+
+		auto tmp_sym = sym_ctx_.get_symbol(ref.symbol_id);
+		assert(!tmp_sym->attributes().is_defined(ref.attribute));
+
+		symbol_attributes::value_t value = (val.value_kind() == symbol_value_kind::ABS) ?
+			val.get_abs() : symbol_attributes::default_value(ref.attribute);
+
+		if (ref.attribute == data_attr_kind::L)
+			tmp_sym->set_length(value);
+		if (ref.attribute == data_attr_kind::S)
+			tmp_sym->set_scale(value);
 	}
 }
 
@@ -61,13 +81,25 @@ void symbol_dependency_tables::resolve_dependant_default(dependant target)
 	}
 	else if (target.kind() == dependant_kind::SYMBOL)
 	{
-		sym_ctx_.get_symbol(std::get<id_index>(target.value))->set_value(0);
+		auto tmp_sym = sym_ctx_.get_symbol(std::get<id_index>(target.value));
+		tmp_sym->set_value(0);
+	}
+	else if (target.kind() == dependant_kind::SYMBOL_ATTR)
+	{
+		auto ref = std::get<attr_ref>(target.value);
+		assert(ref.attribute == data_attr_kind::L || ref.attribute == data_attr_kind::S);
+		auto tmp_sym = sym_ctx_.get_symbol(ref.symbol_id);
+		assert(!tmp_sym->attributes().is_defined(ref.attribute));
+		if (ref.attribute == data_attr_kind::L)
+			tmp_sym->set_length(1);
+		if (ref.attribute == data_attr_kind::S)
+			tmp_sym->set_scale(0);
 	}
 }
 
-void symbol_dependency_tables::try_resolve(std::queue<dependant> newly_defined)
+void symbol_dependency_tables::resolve()
 {
-	bool defined = !newly_defined.empty();
+	bool defined = true;
 	std::vector<dependant> to_delete;
 
 	while (defined)
@@ -81,14 +113,14 @@ void symbol_dependency_tables::try_resolve(std::queue<dependant> newly_defined)
 
 				resolve_dependant(target, dep_src); //resolve target
 
-				defined = true; //push target to newly defined to
+				defined = true; //another defined target => iterate again
 			}
 		}
 
 		for (auto del : to_delete)
 		{
 			dependencies_.erase(del);
-			dependency_sources_.erase(del);
+			try_erase_source_statement(del);
 		}
 
 		to_delete.clear();
@@ -102,14 +134,19 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const reso
 
 	ret.insert(ret.end(), std::make_move_iterator(deps.undefined_symbols.begin()), std::make_move_iterator(deps.undefined_symbols.end()));
 
-	if (!ret.empty() || !deps.unresolved_address)
+	if (!ret.empty())
 		return ret;
 
-	for (auto& [space, count] : deps.unresolved_address->spaces)
-	{
-		assert(count != 0);
-		ret.push_back(space);
-	}
+	for (auto& attr_r : deps.undefined_attr_refs)
+		ret.push_back(attr_ref{ attr_r.first,attr_r.second });
+
+	if (deps.unresolved_address)
+		for (auto& [space_id, count] : deps.unresolved_address->spaces)
+		{
+			assert(count != 0);
+			ret.push_back(space_id);
+		}
+
 
 	return ret;
 }
@@ -126,71 +163,112 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const std:
 	return ret;
 }
 
+void symbol_dependency_tables::try_erase_source_statement(dependant index)
+{
+	auto it = dependency_source_stmts_.find(index);
+	if (it == dependency_source_stmts_.end())
+		return;
+
+	auto& [dep, ref] = *it;
+
+	assert(ref.ref_count >= 1);
+
+	if (--ref.ref_count == 0)
+		postponed_stmts_.erase(ref.stmt_ref);
+}
+
 symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sym_ctx)
 	: sym_ctx_(sym_ctx) {}
 
-bool symbol_dependency_tables::add_dependency(id_index target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
+bool symbol_dependency_tables::add_dependency(dependant target, const resolvable* dependency_source, bool check_for_cycle)
 {
 	if (dependencies_.find(target) != dependencies_.end())
 		throw std::invalid_argument("symbol dependency already present");
 
 	auto dependencies = extract_dependencies(dependency_source);
 
-	bool no_cycle = check_cycle(target, dependencies);
-
-	if (!no_cycle)
+	if (check_for_cycle)
 	{
-		add_defined(target);
-		return false;
+		bool no_cycle = check_cycle(target, dependencies);
+		if (!no_cycle)
+		{
+			resolve();
+			return false;
+		}
 	}
 
 	dependencies_.emplace(target, dependency_source);
-	dependency_sources_.emplace(target, std::move(dependency_source_stmt));
-
 	return true;
 }
 
-void symbol_dependency_tables::add_dependency(post_stmt_ptr target, std::vector<const resolvable*> dependencies)
+bool symbol_dependency_tables::add_dependency(id_index target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
 {
-	postponed_stmts_.emplace_back(std::move(target), std::move(dependencies));
+	dependency_adder adder(*this, std::move(dependency_source_stmt));
+	bool added = adder.add_dependency(target, dependency_source);
+	adder.finish();
+
+	return added;
+}
+
+bool symbol_dependency_tables::add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
+{
+	dependency_adder adder(*this, std::move(dependency_source_stmt));
+	bool added = adder.add_dependency(target, attr, dependency_source);
+	adder.finish();
+
+	return added;
 }
 
 void symbol_dependency_tables::add_dependency(space_ptr space, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
 {
-	auto [it,emplaced] = dependencies_.emplace(space, dependency_source);
-	dependency_sources_.emplace(space, std::move(dependency_source_stmt));
-
-	if(!emplaced)
-		throw std::invalid_argument("symbol dependency already present");
+	dependency_adder adder(*this, std::move(dependency_source_stmt));
+	adder.add_dependency(space, dependency_source);
+	adder.finish();
 }
 
-void symbol_dependency_tables::add_defined(id_index target)
+void symbol_dependency_tables::add_dependency(post_stmt_ptr target)
 {
-	std::queue<dependant> newly_defined;
-	newly_defined.push(target);
+	dependency_adder adder(*this, std::move(target));
+	adder.add_dependency();
+	adder.finish();
+}
 
-	try_resolve(std::move(newly_defined));
+dependency_adder symbol_dependency_tables::add_dependencies(post_stmt_ptr dependency_source_stmt)
+{
+	return dependency_adder(*this, std::move(dependency_source_stmt));
+}
+
+void symbol_dependency_tables::add_defined()
+{
+	resolve();
 }
 
 bool symbol_dependency_tables::check_loctr_cycle()
 {
-	using dep_map = std::unordered_map<dependant, std::vector<dependant>, dependant_hash>;
-	using dep_set = std::unordered_set<dependant, dependant_hash>;
+	using dep_map = std::unordered_map<dependant, std::vector<dependant>>;
+	using dep_set = std::unordered_set<dependant>;
 
 	dep_map dep_g;
 	dep_set cycled;
 	std::stack<std::vector<dependant>> path_stack;
-	std::unordered_map<dependant, dep_set, dependant_hash> visited;
+	std::unordered_map<dependant, dep_set> visited;
 
 	//create graph
-	for (auto& [target,dep_src] : dependencies_)
+	for (auto& [target, dep_src] : dependencies_)
 	{
 		if (target.kind() == dependant_kind::SPACE)
 		{
 			auto new_deps = extract_dependencies(dep_src);
-			if (!new_deps.empty() && new_deps.front().kind() == dependant_kind::SPACE)
+			if (!new_deps.empty() && new_deps.front().kind() == dependant_kind::SYMBOL)
+				continue;
+			else
 			{
-				dep_g.emplace(target, std::move(new_deps));
+				std::vector<dependant> space_deps;
+				for (auto& entry : new_deps)
+					if (entry.kind() == dependant_kind::SPACE) space_deps.push_back(std::move(entry));
+
+				if (!space_deps.empty())
+					dep_g.emplace(target, std::move(space_deps));
 			}
 		}
 	}
@@ -228,9 +306,9 @@ bool symbol_dependency_tables::check_loctr_cycle()
 			//register visited edge
 			if (path.size() > 1)
 				visited[*(path.end() - 2)].insert(target);
-			else 
+			else
 				visited[target];
-			
+
 			//add next paths
 			auto it = dep_g.find(target);
 			if (it != dep_g.end())
@@ -247,60 +325,88 @@ bool symbol_dependency_tables::check_loctr_cycle()
 	{
 		resolve_dependant_default(target);
 		dependencies_.erase(target);
-		dependency_sources_.erase(target);
+		try_erase_source_statement(target);
 	}
 
 	return cycled.empty();
-}
-
-void symbol_dependency_tables::add_defined(const std::vector<id_index>& target)
-{
-	std::queue<dependant> newly_defined;
-	for (auto id : target)
-		newly_defined.push(id);
-
-	try_resolve(std::move(newly_defined));
 }
 
 std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
 {
 	std::vector<post_stmt_ptr> res;
 
-	for (auto& [stmt, _] : postponed_stmts_)
+	res.reserve(postponed_stmts_.size());
+	for (auto it = postponed_stmts_.begin(); it != postponed_stmts_.end();)
 	{
-		res.push_back(std::move(stmt));
-	}
-
-	for (auto& [_, stmt] : dependency_sources_)
-	{
-		res.push_back(std::move(stmt));
+		auto node = postponed_stmts_.extract(it++);
+		res.push_back(std::move(node.value()));
 	}
 
 	postponed_stmts_.clear();
-	dependency_sources_.clear();
+	dependency_source_stmts_.clear();
 	dependencies_.clear();
 
 	return res;
 }
 
-dependant::dependant(id_index symbol)
-	:value(symbol) {}
+statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
+	:stmt_ref(std::move(stmt_ref)), ref_count(ref_count) {}
 
+dependency_adder::dependency_adder(symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt)
+	: owner_(owner), ref_count_(0), source_stmt(std::move(dependency_source_stmt)) {}
 
-dependant::dependant(space_ptr space_id)
-	: value(std::move(space_id)) {}
-
-bool dependant::operator==(const dependant& oth) const
+bool dependency_adder::add_dependency(id_index target, const resolvable* dependency_source)
 {
-	return value == oth.value;
+	bool added = owner_.add_dependency(dependant(target), dependency_source, true);
+
+	if (added)
+	{
+		++ref_count_;
+		dependants.push_back(target);
+	}
+
+	return added;
 }
 
-dependant_kind dependant::kind() const
+bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source)
 {
-	return static_cast<dependant_kind>(value.index());
+	bool added = owner_.add_dependency(dependant({ attr,target }), dependency_source, true);
+
+	if (added)
+	{
+		++ref_count_;
+		dependants.push_back(attr_ref{ attr,target });
+	}
+
+	return added;
 }
 
-std::size_t dependant_hash::operator()(const dependant& k) const
+void dependency_adder::add_dependency(space_ptr target, const resolvable* dependency_source)
 {
-	return std::hash<decltype(k.value)>{}(k.value);
+	owner_.add_dependency(dependant(target), dependency_source, false);
+	++ref_count_;
+	dependants.push_back(target);
+}
+
+void dependency_adder::add_dependency()
+{
+	++ref_count_;
+}
+
+void dependency_adder::finish()
+{
+	if (ref_count_ == 0)
+		return;
+
+	auto [it, inserted] = owner_.postponed_stmts_.emplace(std::move(source_stmt));
+
+	if (!inserted)
+		throw std::runtime_error("statement already registered");
+
+	statement_ref ref(it, ref_count_);
+
+	for (auto& dep : dependants)
+		owner_.dependency_source_stmts_.emplace(std::move(dep), ref);
+
+	dependants.clear();
 }

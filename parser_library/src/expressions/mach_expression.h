@@ -29,6 +29,8 @@ public:
 
 	virtual void fill_location_counter(context::address addr) = 0;
 
+	virtual const mach_expression* leftmost_term() const = 0;
+
 	range get_range() const;
 	virtual ~mach_expression() {}
 

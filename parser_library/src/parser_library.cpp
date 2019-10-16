@@ -7,6 +7,7 @@
 #include "generated/hlasmparser.h"
 #include "analyzer.h"
 #include "workspace.h"
+#include "sstream"
 
 
 
@@ -16,27 +17,16 @@ namespace parser_library {
 //testing output
 void parser_library::parse(const std::string & src)
 {
-	analyzer a(src,"");
-	/*
-	auto input(std::make_unique<input_source>(src));
-	auto lexer(std::make_unique<lexer>(input.get()));
-	auto tokens(std::make_unique<token_stream>(lexer.get()));
-
-	generated::hlasmparser parser(tokens.get());
-	//parser.initialize(std::make_shared<hlasm_plugin::parser_library::context::hlasm_context>(), lexer.get());
-	
-
-	*/
-	auto vocab = a.parser().getVocabulary();
-
+	analyzer a(src);
 
 	auto l = new antlr4::DiagnosticErrorListener();
 	a.parser().addErrorListener(l);
 	a.parser().getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL_EXACT_AMBIG_DETECTION);
 
-	
 	a.analyze();
+
 	auto tree = a.parser().tree;
+	auto vocab = a.parser().getVocabulary();
 	for (auto && token : dynamic_cast<antlr4::BufferedTokenStream*>(a.parser().getTokenStream())->getTokens())
 	{
 		auto type = token->getType();
@@ -46,15 +36,24 @@ void parser_library::parse(const std::string & src)
 	}
 	std::cout << l << std::endl;
 
-	hlasm_plugin::parser_tools::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
-	mytree.out_tree(std::cout);
+	try
+	{
+		std::stringstream ss;
+		hlasm_plugin::parser_tools::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
+		mytree.out_tree(ss);
+
+		std::cout << ss.str();
+	}
+	catch(...) 
+	{
+		std::cout << "tree could not be visualized" << std::endl;
+	}
 	
 	a.collect_diags();
 	for (auto& diag : a.diags())
 	{
-		std::cout << diag.message << "\n";
+		std::cout << diag.diag_range.start.line << ": " << diag.message << "\n";
 	}
-
 }
 }
 }

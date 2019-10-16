@@ -74,14 +74,14 @@ TEST_F(workspace_test, parse_lib_provider)
 
 	diags().clear();
 
-	ws.parse_library("MACRO1", ctx_1, library_data{ context::file_processing_type::MACRO,ctx_1.ids().add("MACRO1") });
+	ws.parse_library("MACRO1", ctx_1, library_data{ processing::processing_kind::MACRO,ctx_1.ids().add("MACRO1") });
 
 	//test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
 	collect_diags_from_child(ws);
 	EXPECT_EQ(diags().size(), (size_t) 0);
 
-	ws.parse_library("not_existing", ctx_2, library_data{ context::file_processing_type::MACRO,ctx_1.ids().add("not_existing") });
+	ws.parse_library("not_existing", ctx_2, library_data{ processing::processing_kind::MACRO,ctx_1.ids().add("not_existing") });
 
 }
 
