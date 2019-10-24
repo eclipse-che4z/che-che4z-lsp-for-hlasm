@@ -157,6 +157,16 @@ const std::map<const std::string, assembler_instruction> instruction::assembler_
 	{ "XATTR", assembler_instruction(1,-1, false, "attribute+") }
 }};
 
+
+bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_operand(size_t place, const checking::machine_operand* operand)
+{
+	diagnostic_op diag;
+	const range stmt_range = range();
+	if (operand->check(diag, operands[place], instr_name, stmt_range))
+		return true;
+	return false;
+}
+
 bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> to_check, const range& stmt_range,const diagnostic_collector& add_diagnostic)
 {
 	// check size of operands

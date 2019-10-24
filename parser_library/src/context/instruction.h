@@ -105,9 +105,11 @@ public:
 	machine_instruction(const std::string& name, mach_format format, std::vector<checking::machine_operand_format> operands, size_t size, size_t page_no)
 		:machine_instruction(name, format, operands, 0, size, page_no) {}
 
+	bool check_nth_operand(size_t place, const checking::machine_operand* operand);
+
 	virtual bool check(const std::string& name_of_instruction, const std::vector<const checking::machine_operand*> operands, const range& stmt_range, const diagnostic_collector& add_diagnostic); //input vector is the vector of the actual incoming values
 
-	//std::vector<diag_range> & get_diagnostics();
+	//std::vector<diag_range> & get_diagnostics()
 	void clear_diagnostics();
 	std::vector<diagnostic_op> diagnostics;
 	virtual ~machine_instruction() = default;
