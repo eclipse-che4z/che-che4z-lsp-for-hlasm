@@ -3,6 +3,7 @@
 #include "../statement.h"
 #include "../context_manager.h"
 #include "../instruction_sets/asm_processor.h"
+#include "../../semantics/statement.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -12,7 +13,7 @@ macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, pr
 	listener_(listener),provider_(provider), start_(std::move(start)), macro_nest_(1), curr_line_(0),
 	expecting_prototype_(true), expecting_MACRO_(start_.is_external), omit_next_(false), finished_flag_(false)
 {
-	result_.definition_location = hlasm_ctx.processing_stack().back();
+	result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
 	if (start_.is_external)
 		result_.prototype.macro_name = start_.external_name;
 }
@@ -102,7 +103,7 @@ void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
 void macrodef_processor::end_processing()
 {
 	if (!finished_flag_)
-		add_diagnostic(diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().pos, hlasm_ctx.processing_stack().back().pos)));
+		add_diagnostic(diagnostic_op::error_E046(*result_.prototype.macro_name, range(hlasm_ctx.processing_stack().back().proc_location.pos, hlasm_ctx.processing_stack().back().proc_location.pos)));
 
 	hlasm_ctx.pop_statement_processing();
 
@@ -167,7 +168,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 
 	if (expecting_MACRO_)
 	{
-		result_.definition_location = hlasm_ctx.processing_stack().back();
+		result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
 
 		auto res_stmt = statement.access_resolved();
 
@@ -376,7 +377,7 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 		}
 		else
 		{
-			result_.sequence_symbols.emplace(seq.name, std::make_unique<context::macro_sequence_symbol>(seq.name, hlasm_ctx.processing_stack().back(), curr_line_));
+			result_.sequence_symbols.emplace(seq.name, std::make_unique<context::macro_sequence_symbol>(seq.name, hlasm_ctx.processing_stack().back().proc_location, curr_line_));
 		}
 	}
 

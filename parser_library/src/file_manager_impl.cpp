@@ -14,44 +14,43 @@ void file_manager_impl::collect_diags() const
 	}
 }
 
-file * file_manager_impl::add_file(const file_uri & uri)
+file_ptr file_manager_impl::add_file(const file_uri & uri)
 {
-	auto ret = files_.emplace(uri, std::make_unique<file_impl>(uri));
-	return ret.first->second.get();
+	std::lock_guard guard(files_mutex);
+	auto ret = files_.emplace(uri, std::make_shared<file_impl>(uri));
+	return ret.first->second;
 }
 
-processor_file * file_manager_impl::change_into_processor_file_if_not_already_(std::unique_ptr<file_impl>& ret)
+processor_file_ptr file_manager_impl::change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& to_change)
 {
-	auto processor = dynamic_cast<processor_file *>(ret.get());
+	auto processor = std::dynamic_pointer_cast<processor_file>(to_change);
 	if (processor)
 		return processor;
 	else
 	{
-		auto processor_unique_ptr = std::make_unique<processor_file_impl>(std::move(*ret), cancel_);
-		auto processor_ptr = processor_unique_ptr.get();
-		ret = std::move(processor_unique_ptr);
-		return processor_ptr;
+		auto proc_file = std::make_shared<processor_file_impl>(std::move(*to_change), cancel_);
+		to_change = proc_file;
+		return proc_file;
 	}
 }
 
-processor_file * file_manager_impl::add_processor_file(const file_uri & uri)
+processor_file_ptr file_manager_impl::add_processor_file(const file_uri & uri)
 {
+	std::lock_guard guard(files_mutex);
 	auto ret = files_.find(uri);
 	if (ret == files_.end())
 	{
-		auto unique = std::make_unique<processor_file_impl>(uri, cancel_);
-		auto ptr = unique.get();
-		files_.emplace(uri, std::move(unique));
+		auto ptr = std::make_shared<processor_file_impl>(uri, cancel_);
+		files_.emplace(uri, ptr);
 		return ptr;
 	}
 	else
-	{
 		return change_into_processor_file_if_not_already_(ret->second);
-	}
 }
 
 void file_manager_impl::remove_file(const file_uri& document_uri)
 {
+	std::lock_guard guard(files_mutex);
 	auto file = files_.find(document_uri);
 	if (file == files_.end())
 		return;
@@ -60,48 +59,24 @@ void file_manager_impl::remove_file(const file_uri& document_uri)
 	files_.erase(document_uri);
 }
 
-file * file_manager_impl::find(const std::string & key)
+file_ptr file_manager_impl::find(const std::string & key)
 {
+	std::lock_guard guard(files_mutex);
 	auto ret = files_.find(key);
 	if (ret == files_.end())
 		return nullptr;
 
-	return ret->second.get();
+	return ret->second;
 }
 
-processor_file * file_manager_impl::find_processor_file(const std::string & key)
+processor_file_ptr file_manager_impl::find_processor_file(const std::string & key)
 {
+	std::lock_guard guard(files_mutex);
 	auto ret = files_.find(key);
 	if(ret == files_.end())
 		return nullptr;
 
 	return change_into_processor_file_if_not_already_(ret->second);
-}
-
-std::vector<file*> file_manager_impl::list_files()
-{
-	std::vector<file*> list;
-	for (auto & item : files_)
-	{
-		list.push_back(item.second.get());
-	}
-
-	return list;
-}
-
-std::vector<processor_file *> file_manager_impl::list_processor_files()
-{
-	std::vector<processor_file *> list;
-	for (auto & item : files_)
-	{
-		auto p = dynamic_cast<processor_file *>(item.second.get());
-		if (p == nullptr)
-			continue;
-		list.push_back(p);
-	}
-	auto p = files_.find("");
-
-	return list;
 }
 
 
@@ -110,12 +85,10 @@ std::vector<processor_file *> file_manager_impl::list_updated_files()
 	std::vector<processor_file *> list;
 	for (auto & item : files_)
 	{
-		processor_file * pf = dynamic_cast<processor_file *>(item.second.get());
-		if (pf && pf->parse_info_updated())
-			list.push_back(pf);
+		auto p = dynamic_cast<processor_file *>(item.second.get());
+		if (p && p->parse_info_updated())
+			list.push_back(p);
 	}
-	auto p = files_.find("");
-
 	return list;
 }
 
@@ -147,10 +120,25 @@ std::unordered_set<std::string> file_manager_impl::list_directory_files(const st
 	return found_files;
 }
 
+void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& file)
+{
+	if (file.unique())
+		return;
+	//another shared ptr to this file exists, we need to create a copy
+	auto proc_file = std::dynamic_pointer_cast<processor_file>(file);
+	if (proc_file)
+		file = std::make_shared<processor_file_impl>(*file, cancel_);
+	else
+		file = std::make_shared<file_impl>(*file);
+	
+}
+
 void file_manager_impl::did_open_file(const std::string & document_uri, version_t version, std::string text)
 {
-	auto file = add_file(document_uri);
-	file->did_open(std::move(text), version);
+	std::lock_guard guard(files_mutex);
+	auto ret = files_.emplace(document_uri, std::make_shared<file_impl>(document_uri));
+	prepare_file_for_change_(ret.first->second);
+	ret.first->second->did_open(std::move(text), version);
 }
 
 void file_manager_impl::did_change_file(const std::string & document_uri, version_t, const document_change * changes, size_t ch_size)
@@ -158,9 +146,14 @@ void file_manager_impl::did_change_file(const std::string & document_uri, versio
 	//the version is the version after the changes -> I dont see how is that useful
 	//should we just overwrite the version??
 	//on the other hand, the spec clearly specifies that each change increments version by one.
+
+	std::lock_guard guard(files_mutex);
+
 	auto file = files_.find(document_uri);
 	if (file == files_.end())
 		return; //if the file does not exist, no action is taken
+
+	prepare_file_for_change_(file->second);
 
 	for (size_t i = 0; i < ch_size; ++i)
 	{
@@ -170,16 +163,16 @@ void file_manager_impl::did_change_file(const std::string & document_uri, versio
 		else
 			file->second->did_change(changes[i].change_range, std::move(text_s));
 	}
-			
-		
 }
 
 void file_manager_impl::did_close_file(const std::string & document_uri)
 {
+	std::lock_guard guard(files_mutex);
 	auto file = files_.find(document_uri);
 	if (file == files_.end())
 		return;
 
+	prepare_file_for_change_(file->second);
 	//close the file externally
 	file->second->did_close();
 

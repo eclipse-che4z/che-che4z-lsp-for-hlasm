@@ -15,6 +15,7 @@ ExternalProject_ADD(
   PREFIX             ${CMAKE_BINARY_DIR}/externals/uri
   GIT_REPOSITORY     "https://github.com/cpp-netlib/uri.git"
   GIT_TAG            v1.1.0
+  GIT_SHALLOW        ON
   TIMEOUT            10
   LOG_DOWNLOAD       ON
   GIT_PROGRESS       1

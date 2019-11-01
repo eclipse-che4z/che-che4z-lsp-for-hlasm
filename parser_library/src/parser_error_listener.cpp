@@ -7,16 +7,6 @@ enum Tokens {
 
 namespace hlasm_plugin::parser_library {
 
-parser_error_listener::parser_error_listener(std::string file_name) : file_name_(std::move(file_name)) {}
-	
-
-
-
-void parser_error_listener::collect_diags() const
-{
-
-}
-
 bool is_comparative_sign(size_t input)
 {
 	return (input == LT || input == GT || input == EQUALS || input == EQ || input == OR
@@ -102,7 +92,7 @@ bool is_expected(int exp_token, antlr4::misc::IntervalSet expectedTokens)
 	return expectedTokens.contains(static_cast<size_t> (exp_token));
 }
 
-void parser_error_listener::syntaxError(antlr4::Recognizer *, antlr4::Token * , size_t line, size_t char_pos_in_line, const std::string & , std::exception_ptr e)
+void parser_error_listener_base::syntaxError(antlr4::Recognizer *, antlr4::Token * , size_t line, size_t char_pos_in_line, const std::string & , std::exception_ptr e)
 {
 	try
 	{	
@@ -135,7 +125,7 @@ void parser_error_listener::syntaxError(antlr4::Recognizer *, antlr4::Token * , 
 		if (end_index == -1)
 		{
 			end_index = (int)input_stream->size() - 1;
-			//add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004", "HLASM plugin", "NO EOLLN - TO DO", {}));
+			//add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004", "HLASM plugin", "NO EOLLN - TO DO");
 			//return;
 		}
 
@@ -153,60 +143,71 @@ void parser_error_listener::syntaxError(antlr4::Recognizer *, antlr4::Token * , 
 
 		// right paranthesis has no left match
 		if (right_prec)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0012","Right parenthesis has no left match", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0012","Right parenthesis has no left match");
 		// left paranthesis has no right match
 		else if (left_prec)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0011","Left parenthesis has no right match", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0011","Left parenthesis has no right match");
 		// nothing else but left and right parenthesis is present
 		else if (only_par)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0010","Only left and right paranthesis present", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0010","Only left and right paranthesis present");
 		// sign followed by a wrong token
 		else if (!sign_followed)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0009","A sign has to be followed by an expression", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0009","A sign has to be followed by an expression");
 		// ampersand not followed with a name of a variable symbol
 		else if (!ampersand_followed)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0008","Ampersand has to be followed by a name of a variable", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0008","Ampersand has to be followed by a name of a variable");
 		// expression starting with a sign
 		else if (!sign_preceding)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0007","A sign needs to be preceded by an expression", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0007","A sign needs to be preceded by an expression");
 		// unexpected sign in an expression - GT, LT etc
 		else if (unexpected_sign)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0006","Unexpected sign in an epxression", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0006","Unexpected sign in an epxression");
 		// apostrophe expected  
 		else if (odd_apostrophes && is_expected(APOSTROPHE, expected_tokens))
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0005","Expected an apostrophe", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0005","Expected an apostrophe");
 		// unfinished statement - solo label on line
 		else if (start_token->getCharPositionInLine() == 0)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004","Unfinished statement, the label cannot be alone on a line", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0004","Unfinished statement, the label cannot be alone on a line");
 		// other undeclared errors
 		else
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002","Syntax error", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002","Syntax error");
 	}
 	catch (antlr4::InputMismatchException & excp)
 	{
 		auto offender = excp.getOffendingToken();
 
 		if (offender->getType() == EOLLN)
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0003", "Unexpected end of statement", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0003", "Unexpected end of statement");
 		else
-			add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002", "Syntax error", {}));
+			add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0002", "Syntax error");
 	}
 	catch (...)
 	{
-		add_diagnostic(diagnostic_s(file_name_, range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0001", "C++ error", {}));
+		add_parser_diagnostic(range(position(line,char_pos_in_line)), diagnostic_severity::error, "S0001", "C++ error");
 	}
 }
 
-void parser_error_listener::reportAmbiguity(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, bool, const antlrcpp::BitSet &, antlr4::atn::ATNConfigSet *)
+void parser_error_listener_base::reportAmbiguity(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, bool, const antlrcpp::BitSet &, antlr4::atn::ATNConfigSet *)
 {
 }
 
-void parser_error_listener::reportAttemptingFullContext(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, const antlrcpp::BitSet &, antlr4::atn::ATNConfigSet *)
+void parser_error_listener_base::reportAttemptingFullContext(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, const antlrcpp::BitSet &, antlr4::atn::ATNConfigSet *)
 {
 }
 
-void parser_error_listener::reportContextSensitivity(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, size_t, antlr4::atn::ATNConfigSet *)
+void parser_error_listener_base::reportContextSensitivity(antlr4::Parser *, const antlr4::dfa::DFA &, size_t, size_t, size_t, antlr4::atn::ATNConfigSet *)
 {
+}
+
+
+parser_error_listener::parser_error_listener(std::string file_name)
+	:file_name_(std::move(file_name)) {}
+
+void parser_error_listener::collect_diags() const {}
+
+void parser_error_listener::add_parser_diagnostic(range diagnostic_range, diagnostic_severity severity, std::string code, std::string message)
+{
+	add_diagnostic(diagnostic_s(file_name_, diagnostic_range, severity, std::move(code), std::move(message), {}));
 }
 
 }

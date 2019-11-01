@@ -1,5 +1,7 @@
 #include <cctype>
 #include "parser_impl.h"
+#include "error_strategy.h"
+#include "parser_error_listener_ctx.h"
 #include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
 #include "generated/hlasmparser.h"
@@ -60,6 +62,12 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	context::hlasm_context* hlasm_ctx, std::string field, bool after_substitution, semantics::range_provider field_range, processing::processing_status status)
 {
 	parser_holder h;
+
+	std::optional<std::string> sub;
+	if (after_substitution)
+		sub = field;
+	parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
+
 	h.input = std::make_unique<input_source>(std::move(field));
 	h.lex = std::make_unique<lexer>(h.input.get(), nullptr);
 	h.stream = std::make_unique<token_stream>(h.lex.get());
@@ -67,10 +75,15 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 
 	h.lex->set_file_offset(field_range.original_range.start);
 	h.lex->set_unlimited_line(after_substitution);
+
 	h.parser->initialize(hlasm_ctx, field_range, status);
+	h.parser->setErrorHandler(std::make_shared<error_strategy>());
 	h.parser->removeErrorListeners();
+	h.parser->addErrorListener(&listener);
 
 	auto line = std::move(h.parser->model_operands()->line);
+
+	collect_diags_from_child(listener);
 
 	parsers_.emplace_back(std::move(h));
 

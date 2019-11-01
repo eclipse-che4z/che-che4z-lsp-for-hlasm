@@ -14,8 +14,8 @@ class file_impl : public virtual file, public virtual diagnosable_impl
 {
 public:
 	explicit file_impl(file_uri uri);
-	file_impl(const file_impl &) = delete;
-	file_impl & operator= (const file_impl &) = delete;
+	explicit file_impl(const file_impl &) = default;
+	file_impl & operator= (const file_impl &) = default;
 
 	file_impl(file_impl &&) = default;
 	file_impl & operator= (file_impl &&) = default;

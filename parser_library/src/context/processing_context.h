@@ -19,8 +19,6 @@ struct source_context
 	source_context(std::string source_name);
 
 	source_snapshot create_snapshot() const;
-
-	std::vector<location>& append_processing_stack(std::vector<location>& proc_stack) const;
 };
 
 struct processing_context
@@ -31,6 +29,21 @@ struct processing_context
 
 	processing_context(processing::processing_kind proc_kind, bool owns_source);
 };
+
+enum class file_processing_type { OPENCODE, COPY, MACRO };
+
+struct code_scope;
+
+struct processing_frame
+{
+	processing_frame(location proc_location, const code_scope& scope, file_processing_type proc_type);
+
+	location proc_location;
+	const code_scope& scope;
+	file_processing_type proc_type;
+};
+
+using processing_stack_t = std::vector<processing_frame>;
 
 }
 }

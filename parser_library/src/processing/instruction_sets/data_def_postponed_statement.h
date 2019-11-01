@@ -13,7 +13,7 @@ namespace processing {
 template<checking::data_instr_type instr_type>
 struct data_def_postponed_statement : public postponed_statement_impl, public context::resolvable
 {
-	data_def_postponed_statement(rebuilt_statement stmt, std::vector<location> stmt_location_stack) :
+	data_def_postponed_statement(rebuilt_statement stmt, context::processing_stack_t stmt_location_stack) :
 		postponed_statement_impl(std::move(stmt), std::move(stmt_location_stack)) {}
 
 

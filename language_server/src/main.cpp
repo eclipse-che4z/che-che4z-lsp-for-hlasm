@@ -1,4 +1,5 @@
 #include <thread>
+#include <chrono>
 
 #define ASIO_STANDALONE
 #include "asio.hpp"
@@ -6,6 +7,7 @@
 
 #include "dispatcher.h"
 #include "lsp/lsp_server.h"
+#include "dap/dap_server.h"
 #include "shared/workspace_manager.h"
 #include "logger.h"
 
@@ -19,18 +21,41 @@
 #endif
 //no need for binary on linux, because it does not change \n into \r\n
 
+uint16_t dap_port = 4745;
+
+using namespace hlasm_plugin::language_server;
+
 struct colon_is_space : std::ctype<char> {
 	colon_is_space() : std::ctype<char>(get_table()) {}
 	static mask const* get_table()
 	{
 		static mask rc[table_size];
-		rc['\n'] = std::ctype_base::space;
-		return &rc[0];
+		rc[(unsigned char)'\n'] = std::ctype_base::space;
+		return rc;
 	}
 };
 
-#include <chrono>
-#include <thread>
+void start_dap(hlasm_plugin::parser_library::workspace_manager * ws_mngr, request_manager * req_mngr)
+{	
+	asio::io_service io_service_;
+	asio::ip::tcp::acceptor acceptor(io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t)dap_port));
+	
+	for (;;)
+	{
+		asio::ip::tcp::iostream stream;
+
+		dap::server server(*ws_mngr);
+
+		acceptor.accept(stream.socket());
+		
+		stream.imbue(std::locale(stream.getloc(), new colon_is_space));
+
+		dispatcher dap_dispatcher(stream, stream, server, *req_mngr);
+		dap_dispatcher.run_server_loop();
+
+		stream.close();
+	}
+}
 
 int main(int argc, char ** argv) {
 	using namespace std;
@@ -41,9 +66,15 @@ int main(int argc, char ** argv) {
 	try {
 		SET_BINARY_MODE(stdin);
 		SET_BINARY_MODE(stdout);
-		
-		cin.imbue(locale(cin.getloc(), new colon_is_space));
+
 		hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
+		request_manager req_mngr(&cancel);
+
+		std::thread dap_th(start_dap, &ws_mngr, &req_mngr);
+
+
+		cin.imbue(locale(cin.getloc(), new colon_is_space));
+		
 		lsp::server server(ws_mngr);
 		int ret;
 
@@ -64,8 +95,7 @@ int main(int argc, char ** argv) {
 			acceptor_.accept(stream.socket());
 			
 			stream.imbue(locale(stream.getloc(), new colon_is_space));
-			dispatcher lsp_dispatcher(stream, stream, server, &cancel);
-			server.set_send_message_provider(&lsp_dispatcher);
+			dispatcher lsp_dispatcher(stream, stream, server, req_mngr, &cancel);
 			ret = lsp_dispatcher.run_server_loop();
 			stream.close();
 
@@ -73,10 +103,14 @@ int main(int argc, char ** argv) {
 		else
 		{
 			//communicate with standard IO
-			dispatcher lsp_dispatcher(std::cin, std::cout, server, &cancel);
-			server.set_send_message_provider(&lsp_dispatcher);
+			dispatcher lsp_dispatcher(std::cin, std::cout, server, req_mngr, &cancel);
 			ret = lsp_dispatcher.run_server_loop();
 		}
+		
+		
+		dap_th.join();
+
+		req_mngr.end_worker();
 
 		return ret;
 	}

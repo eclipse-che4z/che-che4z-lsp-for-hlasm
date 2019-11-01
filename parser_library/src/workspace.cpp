@@ -76,19 +76,31 @@ void workspace::parse_file(const std::string & file_uri)
 	{
 		if (load_config())
 		{
-			for (auto f : dependants_)
-				f->parse(*this);
-			for (auto f : dependants_)
-				filter_and_close_dependencies_(f->files_to_close(), f);
+			for (auto fname : dependants_)
+			{
+				auto found = file_manager_.find_processor_file(fname);
+				if(found)
+					found->parse(*this);
+			}
+				
+			for (auto fname : dependants_)
+			{
+				auto found = file_manager_.find_processor_file(fname);
+				if(found)
+					filter_and_close_dependencies_(found->files_to_close(), found);
+			}
 		}
 
 		return;
 	}
 	//what about removing files??? what if depentands_ points to not existing file?
-	std::vector<processor_file *> files_to_parse;
+	std::vector<processor_file_ptr> files_to_parse;
 
-	for (auto f : dependants_)
+	for (auto fname : dependants_)
 	{
+		auto f = file_manager_.find_processor_file(fname);
+		if (!f)
+			continue;
 		for (auto & name : f->dependencies())
 		{
 			if (name == file_uri)
@@ -110,7 +122,7 @@ void workspace::parse_file(const std::string & file_uri)
 	{
 		f->parse(*this);
 		if (!f->dependencies().empty())
-			dependants_.insert(f);
+			dependants_.insert(f->get_file_name());
 	}
 
 	//second check after all dependants are there to close all files that used to be dependencies
@@ -145,13 +157,14 @@ void workspace::did_close_file(const std::string& file_uri)
 	}
 
 	// find if the file is a dependant
-	auto file = std::find_if(dependants_.begin(), dependants_.end(), [&file_uri](processor_file * dep) {return dep->get_file_name() == file_uri; });
-	if (file != dependants_.end())
+	auto fname = dependants_.find(file_uri);
+	if (fname != dependants_.end())
 	{
+		auto file = file_manager_.find_processor_file(*fname);
 		//filter the dependencies that should not be closed
-		filter_and_close_dependencies_((*file)->dependencies(), *file);
+		filter_and_close_dependencies_(file->dependencies(), file);
 		// remove it from dependants
-		dependants_.erase(file);
+		dependants_.erase(fname);
 	}
 
 	//close the file itself
@@ -180,6 +193,11 @@ void hlasm_plugin::parser_library::workspace::close()
 	opened_ = false;
 }
 
+file_manager& workspace::get_file_manager()
+{
+	return file_manager_;
+}
+
 const processor_group & workspace::get_proc_grp(const proc_grp_id & proc_grp) const
 {
 	assert(opened_);
@@ -197,7 +215,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	using json = nlohmann::json;
 
 	//proc_grps.json parse
-	file * proc_grps_file = file_manager_.add_file((ws_path / FILENAME_PROC_GRPS).string());
+	file_ptr proc_grps_file = file_manager_.add_file((ws_path / FILENAME_PROC_GRPS).string());
 	
 	if (proc_grps_file->update_and_get_bad())
 		return false;
@@ -244,7 +262,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 
 
 	//pgm_conf.json parse
-	file * pgm_conf_file = file_manager_.add_file((ws_path / FILENAME_PGM_CONF).string());
+	file_ptr pgm_conf_file = file_manager_.add_file((ws_path / FILENAME_PGM_CONF).string());
 
 	if (pgm_conf_file->update_and_get_bad())
 		return false;
@@ -270,7 +288,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 
 		if (proc_grps_.find(pgroup) != proc_grps_.end())
 		{
-			pgm_conf_.emplace_back(std::move(program), std::move(pgroup));
+			pgm_conf_.emplace_back(program, pgroup);
 		}
 		else
 		{ 
@@ -280,7 +298,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	return true;
 }
 
-void workspace::filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file * file)
+void workspace::filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file_ptr file)
 {
 	std::set<std::string> filtered;
 	 // filters out externally open files
@@ -294,9 +312,12 @@ void workspace::filter_and_close_dependencies_(const std::set<std::string>& depe
 	// filters the files that are dependencies of other dependants and externally open files
 	for (auto dependant : dependants_)
 	{
-		for (auto& dependency : dependant->dependencies())
+		auto fdependant = file_manager_.find_processor_file(dependant);
+		if (!fdependant)
+			continue;
+		for (auto& dependency : fdependant->dependencies())
 		{
-			if (dependant->get_file_name() != file->get_file_name() && filtered.find(dependency) != filtered.end())
+			if (fdependant->get_file_name() != file->get_file_name() && filtered.find(dependency) != filtered.end())
 				filtered.erase(dependency);
 		}
 	}
@@ -313,7 +334,10 @@ bool workspace::is_dependency_(const std::string & file_uri)
 {
 	for (auto dependant : dependants_)
 	{
-		for (auto& dependency : dependant->dependencies())
+		auto fdependant = file_manager_.find_processor_file(dependant);
+		if (!fdependant)
+			continue;
+		for (auto& dependency : fdependant->dependencies())
 		{
 			if (dependency == file_uri)
 				return true;
@@ -327,9 +351,9 @@ parse_result workspace::parse_library(const std::string & library, context::hlas
 	auto & proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
 	for (auto && lib : proc_grp.libraries())
 	{
-		processor * found = lib->find_file(library);
+		std::shared_ptr<processor> found = lib->find_file(library);
 		if (found)
-			return found->parse(*this, hlasm_ctx, data);
+			return found->parse_macro(*this, hlasm_ctx, data);
 	}
 	
 	return false;
@@ -340,7 +364,7 @@ bool workspace::has_library(const std::string& library, context::hlasm_context& 
 	auto& proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
 	for (auto&& lib : proc_grp.libraries())
 	{
-		processor* found = lib->find_file(library);
+		std::shared_ptr<processor> found = lib->find_file(library);
 		if (found)
 			return true;
 	}

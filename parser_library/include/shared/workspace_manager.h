@@ -30,6 +30,16 @@ public:
 	virtual ~diagnostics_consumer() {};
 };
 
+class PARSER_LIBRARY_EXPORT debug_event_consumer
+{
+public:
+	virtual void stopped(const char* reason, const char* additional_info) = 0;
+	virtual void exited(int exit_code) = 0;
+	virtual void terminated() = 0;
+
+	virtual ~debug_event_consumer() {};
+};
+
 class PARSER_LIBRARY_EXPORT workspace_manager
 {
 	class impl;
@@ -63,7 +73,23 @@ public:
 	
 	virtual void register_highlighting_consumer(highlighting_consumer * consumer);
 	virtual void register_diagnostics_consumer(diagnostics_consumer * consumer);
+	
 
+	//debugger
+	virtual void register_debug_event_consumer(debug_event_consumer & consumer);
+	virtual void unregister_debug_event_consumer(debug_event_consumer & consumer);
+
+	virtual void launch(const char * file_name, bool stop_on_entry);
+	virtual void next();
+	virtual void step_in();
+	virtual void disconnect();
+	virtual void continue_debug();
+
+	virtual stack_frames get_stack_frames();
+	virtual scopes get_scopes(frame_id_t frame_id);
+	virtual variables get_variables(var_reference_t var_reference);
+
+	virtual void set_breakpoints(const char * source_path, breakpoint * breakpoints, size_t br_size);
 private:
 	impl * impl_;
 };

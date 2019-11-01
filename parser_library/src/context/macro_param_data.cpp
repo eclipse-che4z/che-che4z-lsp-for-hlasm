@@ -31,11 +31,21 @@ const macro_param_data_component * macro_param_data_dummy::get_ith(size_t) const
 	return this;
 }
 
+size_t macro_param_data_dummy::size() const
+{
+	return 0;
+}
+
 const macro_param_data_component * macro_param_data_single::get_ith(size_t idx) const
 {
 	if (idx == 0)
 		return this;
 	return macro_param_data_component::dummy.get();
+}
+
+size_t macro_param_data_single::size() const
+{
+	return 0;
 }
 
 macro_param_data_single::macro_param_data_single(C_t value) 
@@ -63,6 +73,11 @@ const macro_param_data_component * macro_param_data_composite::get_ith(size_t id
 	if (idx < data_.size())
 		return data_[idx].get();
 	return macro_param_data_component::dummy.get();
+}
+
+size_t macro_param_data_composite::size() const
+{
+	return data_.size();
 }
 
 

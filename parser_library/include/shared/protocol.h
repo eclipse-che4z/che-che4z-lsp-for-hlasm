@@ -6,6 +6,10 @@
 
 #include "parser_library_export.h"
 #include "range.h"
+#include "c_view_array.h"
+
+#pragma warning(push)
+#pragma warning(disable : 4661)
 
 namespace hlasm_plugin::parser_library {
 
@@ -206,6 +210,85 @@ private:
 
 };
 
+namespace debugging
+{
+
+struct stack_frame;
+struct source;
+struct scope;
+class variable;
 }
 
+struct PARSER_LIBRARY_EXPORT source
+{
+	source(const debugging::source & source);
+
+	const char * path();
+
+private:
+	const debugging::source & source_;
+};
+
+struct PARSER_LIBRARY_EXPORT stack_frame
+{
+	stack_frame(const debugging::stack_frame & frame);
+
+	const char * name();
+	uint32_t id();
+	//problem
+	range get_range();
+	//dalsi problem
+	source get_source();
+
+	const debugging::stack_frame & impl_;
+};
+
+template class PARSER_LIBRARY_EXPORT c_view_array<stack_frame, debugging::stack_frame>;
+using stack_frames = c_view_array<stack_frame, debugging::stack_frame>;
+
+using frame_id_t = size_t;
+using var_reference_t = size_t;
+
+enum class set_type
+{
+	A_TYPE, B_TYPE, C_TYPE, UNDEF_TYPE
+};
+
+struct PARSER_LIBRARY_EXPORT scope
+{
+	scope(const debugging::scope & impl);
+
+	const char * name() const;
+	var_reference_t variable_reference() const;
+	source get_source() const;
+private:
+	const debugging::scope & impl_;
+};
+
+using scopes = c_view_array<scope, debugging::scope>;
+template class PARSER_LIBRARY_EXPORT c_view_array<scope, debugging::scope>;
+
+struct PARSER_LIBRARY_EXPORT variable
+{
+	variable(const debugging::variable & impl);
+
+	const char * name() const;
+	set_type type() const;
+	const char * value() const;
+	var_reference_t variable_reference() const;
+private:
+	const debugging::variable & impl_;
+};
+
+using variables = c_view_array<variable, debugging::variable *>;
+template class PARSER_LIBRARY_EXPORT c_view_array<variable, debugging::variable *>;
+
+struct breakpoint
+{
+	breakpoint(size_t line) : line(line) {}
+	size_t line;
+};
+
+}
+#pragma warning(pop)
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H

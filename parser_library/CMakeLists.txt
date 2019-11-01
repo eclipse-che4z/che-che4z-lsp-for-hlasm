@@ -105,6 +105,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/library.cpp
 	${PROJECT_SOURCE_DIR}/src/processor_file_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_error_listener.cpp
+	${PROJECT_SOURCE_DIR}/src/parser_error_listener_ctx.cpp
 	${PROJECT_SOURCE_DIR}/src/parser_impl.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic.cpp
 	${PROJECT_SOURCE_DIR}/src/diagnostic_collector.cpp
@@ -122,6 +123,12 @@ set(LIB_SRC
 	${PROJECT_SOURCE_DIR}/src/analyzer.cpp
 	${PROJECT_SOURCE_DIR}/src/semantics/collector.cpp
 	${PROJECT_SOURCE_DIR}/src/parse_lib_provider.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/debugger.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/macro_param_variable.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/set_symbol_variable.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/ordinary_symbol_variable.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/variable.cpp
+	${PROJECT_SOURCE_DIR}/src/debugging/attribute_variable.cpp
 
 	${PROJECT_SOURCE_DIR}/src/parser_library.cpp
     ${PROJECT_SOURCE_DIR}/src/lexer.cpp

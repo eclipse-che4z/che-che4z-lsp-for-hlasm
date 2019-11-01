@@ -15,6 +15,11 @@ processor_file_impl::processor_file_impl(file_impl && f_impl, std::atomic<bool>*
 {
 }
 
+processor_file_impl::processor_file_impl(const file_impl& file, std::atomic<bool>* cancel) :
+	file_impl(file)
+{
+}
+
 void processor_file_impl::collect_diags() const
 {
 	file_impl::collect_diags();
@@ -29,16 +34,19 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 {
 	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider);
 
-	auto old_dep = std::move(dependencies_);
-	dependencies_.clear();
-	files_to_close_.clear();
+	auto old_dep = dependencies_;
 
 	auto res = parse_inner(*analyzer_);
 
-	for (auto& file : analyzer_->context().get_visited_files())
-		if(file != get_file_name())
-			dependencies_.insert(file);
+	if (!cancel_ || !*cancel_)
+	{
+		dependencies_.clear();
+		for (auto& file : analyzer_->context().get_visited_files())
+			if (file != get_file_name())
+				dependencies_.insert(file);
+	}
 	
+	files_to_close_.clear();
 	// files that used to be dependencies but are not anymore should be closed internally
 	for (auto& file : old_dep)
 	{
@@ -50,11 +58,18 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 }
 
 
-parse_result processor_file_impl::parse(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
+parse_result processor_file_impl::parse_macro(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
 	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data);
 
 	return parse_inner(*analyzer_);
+}
+
+parse_result processor_file_impl::parse_no_lsp_update(parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
+{
+	no_update_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data);
+	no_update_analyzer_->analyze();
+	return true;
 }
 
 bool processor_file_impl::parse_info_updated()

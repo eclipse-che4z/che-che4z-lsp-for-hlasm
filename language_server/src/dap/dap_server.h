@@ -1,0 +1,46 @@
+#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_DAP_SERVER_H
+#define HLASMPLUGIN_HLASMLANGUAGESERVER_DAP_SERVER_H
+
+#include <functional>
+#include <memory>
+#include <unordered_set>
+
+#include "json.hpp"
+
+#include "shared/workspace_manager.h"
+#include "../common_types.h"
+#include "../feature.h"
+#include "../server.h"
+
+namespace hlasm_plugin::language_server::dap {
+
+
+class server : public hlasm_plugin::language_server::server
+{
+
+public:
+	server(parser_library::workspace_manager & ws_mngr);
+
+	// Inherited via server
+	virtual void respond(const json & id, const std::string & requested_method, const json & args) override;
+
+	virtual void notify(const std::string & method, const json & args) override;
+
+	virtual void respond_error(const json & id, const std::string & requested_method, int err_code, const std::string & err_message, const json & error) override;
+
+	virtual void message_received(const json & message) override;
+
+	virtual void register_methods() override;
+
+	
+private:
+	uint64_t last_seq_ = 0;
+
+	void on_initialize(const json & requested_seq, const json & args);
+	void on_disconnect(const json & request_seq, const json & args);
+};
+
+}//namespace hlasm_plugin::language_server::lsp
+
+
+#endif

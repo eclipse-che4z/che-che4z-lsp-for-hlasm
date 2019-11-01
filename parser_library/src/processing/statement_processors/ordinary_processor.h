@@ -7,6 +7,7 @@
 #include "../instruction_sets/asm_processor.h"
 #include "../instruction_sets/mach_processor.h"
 #include "../../parse_lib_provider.h"
+#include "../processing_tracer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -26,6 +27,8 @@ class ordinary_processor : public statement_processor
 	mach_processor mach_proc_;
 
 	bool finished_flag_;
+
+	processing_tracer* tracer_;
 public:
 	ordinary_processor(
 		context::hlasm_context& hlasm_ctx,
@@ -33,7 +36,8 @@ public:
 		branching_provider& branch_provider,
 		parse_lib_provider& lib_provider, 
 		processing_state_listener& state_listener,
-		statement_fields_parser& parser);
+		statement_fields_parser& parser,
+		processing_tracer * tracer);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;
@@ -57,6 +61,12 @@ private:
 
 		bool fatal = check_fatals(range(statement->statement_position()));
 		if (fatal) return;
+		
+		if (tracer_)
+		{
+			if(statement->access_resolved()->opcode_ref().value != context::id_storage::empty_id)
+				tracer_->statement(statement->access_resolved()->stmt_range_ref());
+		}
 
 		switch (statement->access_resolved()->opcode_ref().type)
 		{

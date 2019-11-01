@@ -46,6 +46,82 @@
     "package": "vsce package"
   },
   "contributes": {
+    "breakpoints": [
+      {
+        "language": "hlasm"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "hlasm",
+        "label": "HLASM Debug",
+        "program": "bin/dummy.exe",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}/${command:AskForProgramName}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "hlasm",
+            "request": "launch",
+            "name": "Ask for file name",
+            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "stopOnEntry": true,
+            "debugServer": 4745
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "HLASM Macro tracer: Launch",
+            "description": "A new configuration for tracing a user selected HLASM file.",
+            "body": {
+              "type": "hlasm",
+              "request": "launch",
+              "name": "Macro tracer: Ask for file name",
+              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
+              "stopOnEntry": true,
+              "debugServer": 4745
+            }
+          },
+          {
+            "label": "HLASM Macro tracer: Launch current program",
+            "description": "A new configuration for tracing HLASM file that is currently open.",
+            "body": {
+              "type": "hlasm",
+              "request": "launch",
+              "name": "Macro tracer: current program",
+              "program": "^\"\\${command:CurrentProgramName}\"",
+              "stopOnEntry": true,
+              "debugServer": 4745
+            }
+          }
+        ],
+        "variables": {
+          "AskForProgramName": "extension.hlasm-plugin.getProgramName",
+          "CurrentProgramName": "extension.hlasm-plugin.getCurrentProgramName"
+        }
+      }
+    ],
     "languages": [
       {
         "id": "hlasm",

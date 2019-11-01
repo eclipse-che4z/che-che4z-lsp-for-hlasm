@@ -22,6 +22,7 @@ ExternalProject_ADD(
   PREFIX             ${ANTLR4CPP_EXTERNAL_ROOT}
   GIT_REPOSITORY     ${ANTLR4CPP_EXTERNAL_REPO}
   GIT_TAG            ${ANTLR4CPP_EXTERNAL_TAG}
+  GIT_SHALLOW        ON
   # the fix for https://github.com/antlr/antlr4/issues/2550
   PATCH_COMMAND      ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/no_viable_shared.diff
   TIMEOUT            10

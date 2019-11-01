@@ -77,6 +77,25 @@
     "queue": "cpp",
     "string_view": "cpp",
     "filesystem": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "*.ipp": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "strstream": "cpp",
+    "*.tcc": "cpp",
+    "cinttypes": "cpp",
+    "complex": "cpp",
+    "csignal": "cpp",
+    "cstdarg": "cpp",
+    "cwctype": "cpp",
+    "memory_resource": "cpp",
+    "optional": "cpp",
+    "random": "cpp",
+    "rope": "cpp",
+    "future": "cpp",
+    "cfenv": "cpp",
+    "typeindex": "cpp",
+    "variant": "cpp",
+    "charconv": "cpp"
   }
 }

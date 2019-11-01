@@ -13,7 +13,7 @@ namespace hlasm_plugin::parser_library {
 class library : public virtual diagnosable
 {
 public:
-	virtual processor * find_file(const std::string & file) = 0;
+	virtual std::shared_ptr<processor> find_file(const std::string & file) = 0;
 	virtual void refresh() = 0;
 private:
 };
@@ -38,7 +38,7 @@ public:
 
 	const std::string & get_lib_path() const;
 
-	virtual processor * find_file(const std::string & file) override;
+	virtual std::shared_ptr<processor> find_file(const std::string & file) override;
 
 	//this function should be called from workspace, once watchedFilesChanged request is implemented
 	virtual void refresh() override;

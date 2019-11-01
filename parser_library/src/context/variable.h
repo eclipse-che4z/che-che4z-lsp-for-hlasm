@@ -31,9 +31,10 @@ public:
 
 	//casts this to set_symbol_base
 	set_symbol_base* access_set_symbol_base();
-
+	const set_symbol_base* access_set_symbol_base() const;
 	//casts this to macro_param
 	macro_param_base* access_macro_param_base();
+	const macro_param_base* access_macro_param_base() const;
 
 	//N' attribute of the symbol
 	virtual A_t number(std::vector<size_t> offset = {}) const = 0;
@@ -65,6 +66,8 @@ public:
 	//when scalar, sublist notation is not allowed
 	const bool is_scalar;
 
+	const bool is_global;
+
 	//returns type of set symbol
 	const SET_t_enum type;
 
@@ -75,8 +78,16 @@ public:
 		return (type == object_traits<T>::type_enum) ? static_cast<set_symbol<T>*>(this) : nullptr;
 	}
 
+	template <typename T>
+	const set_symbol<T>* access_set_symbol() const
+	{
+		return (type == object_traits<T>::type_enum) ? static_cast<const set_symbol<T>*>(this) : nullptr;
+	}
+
+	virtual std::vector<size_t> keys() const = 0;
+	virtual size_t size() const = 0;
 protected:
-	set_symbol_base(id_index name, bool is_scalar, SET_t_enum type);
+	set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type);
 };
 
 //specialized set symbol holding data T (int = A_t, bool = B_t, std::string=C_t)
@@ -90,8 +101,8 @@ class set_symbol : public set_symbol_base
 	std::map<size_t, T> data;
 public:
 
-	set_symbol(id_index name, bool is_scalar) 
-		: set_symbol_base(name, is_scalar, object_traits<T>::type_enum) {}
+	set_symbol(id_index name, bool is_scalar, bool is_global) 
+		: set_symbol_base(name, is_scalar, is_global, object_traits<T>::type_enum) {}
 
 	//gets value from non scalar set symbol
 	//if data at idx is not set or it does not exists, default is returned
@@ -142,6 +153,20 @@ public:
 
 	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
+
+	virtual size_t size() const override
+	{
+		return data.size();
+	};
+
+	virtual std::vector<size_t> keys() const override
+	{
+		std::vector<size_t> keys;
+		keys.reserve(data.size());
+		for (auto& [key, value] : data)
+			keys.push_back(key);
+		return keys;
+	}
 
 private:
 	const T* get_data(std::vector<size_t> offset = {}) const
@@ -217,6 +242,7 @@ public:
 	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
 
+	virtual size_t size(std::vector<size_t> offset = {}) const;
 protected:
 	macro_param_base(macro_param_type param_type, id_index name);
 	virtual const macro_param_data_component* real_data() const = 0;
@@ -271,6 +297,8 @@ public:
 	virtual A_t number(std::vector<size_t> offset = {}) const override;
 	//K' attribute of the symbol
 	virtual A_t count(std::vector<size_t> offset = {}) const override;
+
+	virtual size_t size(std::vector<size_t> offset = {}) const override;
 
 protected:
 	virtual const macro_param_data_component* real_data() const override;

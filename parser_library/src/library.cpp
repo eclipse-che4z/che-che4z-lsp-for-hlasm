@@ -24,7 +24,7 @@ const std::string& library_local::get_lib_path() const
 	return lib_path_;
 }
 
-processor* library_local::find_file(const std::string& file_name)
+std::shared_ptr<processor> library_local::find_file(const std::string& file_name)
 {
 	if (!files_loaded_)
 		load_files();

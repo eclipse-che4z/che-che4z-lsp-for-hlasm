@@ -89,13 +89,15 @@ public:
 	void pop_statement_processing();
 
 	//gets stack of locations of all currently processed files
-	const std::vector<location> processing_stack() const;
+	processing_stack_t processing_stack() const;
 	//gets macro nest
 	const std::deque<code_scope>& scope_stack() const;
 	//gets copy nest of current statement processing
 	std::vector<copy_member_invocation>& current_copy_stack();
 	//gets names of whole copy nest
 	std::vector<id_index> whole_copy_stack() const;
+
+	const code_scope & current_scope() const;
 
 	//index storage
 	id_storage& ids();
@@ -192,7 +194,7 @@ public:
 			return glob->second;
 		}
 
-		set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar));
+		set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, true));
 
 		globals_.insert({ id,val });
 		curr_scope()->variables.insert({ id,val });
@@ -209,7 +211,7 @@ public:
 			return tmp->second;
 
 
-		set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar));
+		set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, false));
 
 		curr_scope()->variables.insert({ id,val });
 

@@ -23,6 +23,9 @@ export function activate(context: vscode.ExtensionContext) {
 			value: "pgm"
 		});
     }));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', config => {
+		return vscode.window.activeTextEditor.document.fileName;
+    }));
 
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     

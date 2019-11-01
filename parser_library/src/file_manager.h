@@ -13,18 +13,19 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
+using file_ptr = std::shared_ptr<file>;
+using processor_file_ptr = std::shared_ptr<processor_file>;
+
 class file_manager : public virtual diagnosable
 {
 public:
-	virtual file * add_file(const file_uri &) = 0;
-	virtual processor_file * add_processor_file(const file_uri &) = 0;
+	virtual file_ptr add_file(const file_uri &) = 0;
+	virtual processor_file_ptr add_processor_file(const file_uri &) = 0;
 	virtual void remove_file(const file_uri&) = 0;
 
-	virtual file * find(const std::string & key) = 0;
-	virtual processor_file * find_processor_file(const std::string & key) = 0;
+	virtual file_ptr find(const std::string & key) = 0;
+	virtual processor_file_ptr find_processor_file(const std::string & key) = 0;
 
-	virtual std::vector<file *> list_files() = 0;
-	virtual std::vector<processor_file *> list_updated_files() = 0;
 	virtual std::unordered_set<std::string> list_directory_files(const std::string & path) = 0;
 
 	virtual bool file_exists(const std::string & file_name) = 0;

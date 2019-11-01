@@ -10,20 +10,15 @@
 
 #include "json.hpp"
 #include "server.h"
+#include "request_manager.h"
 
 namespace hlasm_plugin {
 namespace language_server {
 
-struct request
-{
-	json message;
-	bool valid;
-};
-
 class dispatcher : public send_message_provider
 {
 public:
-	dispatcher(std::istream & in, std::ostream & out, server & server, std::atomic<bool> * cancel = nullptr);
+	dispatcher(std::istream & in, std::ostream & out, server & server, request_manager & req_mngr, std::atomic<bool> * cancel = nullptr);
 
 	int run_server_loop();
 	bool read_message(std::string & out);
@@ -40,14 +35,10 @@ private:
 	std::mutex mtx_;
 
 	std::atomic<bool>* cancel_;
-	std::thread worker_;
-	std::mutex q_mtx_;
-	std::condition_variable cond_;
-	std::deque<request> requests_;
-	std::string currently_running_file_;
 
-	void handle_request_();
-	std::string get_request_file_(json r);
+	request_manager& req_mngr_;
+
+	
 };
 
 }//namespace language_server

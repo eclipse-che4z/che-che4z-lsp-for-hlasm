@@ -6,12 +6,15 @@ include(GoogleTest)
 
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/feature.cpp
-	${PROJECT_SOURCE_DIR}/src/dispatcher.cpp
 	${PROJECT_SOURCE_DIR}/src/server.cpp
+	${PROJECT_SOURCE_DIR}/src/dispatcher.cpp
+	${PROJECT_SOURCE_DIR}/src/request_manager.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/lsp_server.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_workspace_folders.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_text_synchronization.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_language_features.cpp
+	${PROJECT_SOURCE_DIR}/src/dap/dap_server.cpp
+	${PROJECT_SOURCE_DIR}/src/dap/feature_launch.cpp
 	)
 
 # compile sources to the executable
@@ -46,7 +49,8 @@ if(BUILD_TESTING)
 	target_link_libraries(server_test gmock_main)
 	target_link_libraries(server_test network-uri)
 	target_link_libraries(server_test parser_library)
+
 	if(DISCOVER_TESTS)
-		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)	
 	endif()
 endif()

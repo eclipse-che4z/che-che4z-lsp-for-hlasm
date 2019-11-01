@@ -1,6 +1,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_IMPL_H
 #define HLASMPLUGIN_PARSERLIBRARY_FILE_MANAGER_IMPL_H
 
+#include <memory>
+
 #include "file_manager.h"
 #include "processor_file_impl.h"
 #include "diagnosable_impl.h"
@@ -22,17 +24,14 @@ public:
 
 	virtual void collect_diags() const override;
 
-	virtual file * add_file(const file_uri &) override;
-	virtual processor_file * add_processor_file(const file_uri &) override;
+	virtual file_ptr add_file(const file_uri &) override;
+	virtual processor_file_ptr add_processor_file(const file_uri &) override;
 	virtual void remove_file(const file_uri&) override;
 
-	virtual file * find(const std::string & key) override;
-	virtual processor_file * find_processor_file(const std::string & key) override;
+	virtual file_ptr find(const std::string & key) override;
+	virtual processor_file_ptr find_processor_file(const std::string & key) override;
 
-	virtual std::vector<file *> list_files() override;
-	virtual std::vector<processor_file *> list_processor_files();
-
-	virtual std::vector<processor_file *> list_updated_files() override;
+	virtual std::vector<processor_file *> list_updated_files();
 	virtual std::unordered_set<std::string> list_directory_files(const std::string& path) override;
 
 	virtual void did_open_file(const std::string & document_uri, version_t version, std::string text) override;
@@ -43,12 +42,15 @@ public:
 
 	virtual ~file_manager_impl() = default;
 protected:
-	std::unordered_map <std::string, std::unique_ptr<file_impl>> files_;
+	std::unordered_map <std::string, std::shared_ptr<file_impl>> files_;
 
 private:
+	std::mutex files_mutex;
+
 	std::atomic<bool>* cancel_;
 
-	processor_file* change_into_processor_file_if_not_already_(std::unique_ptr<file_impl>& ret);
+	processor_file_ptr change_into_processor_file_if_not_already_(std::shared_ptr<file_impl>& ret);
+	void prepare_file_for_change_(std::shared_ptr<file_impl>& file);
 };
 
 #pragma warning(pop)

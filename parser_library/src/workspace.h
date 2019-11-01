@@ -66,7 +66,9 @@ public:
 
 	void open();
 	void close();
+protected:
 
+	file_manager& get_file_manager();
 
 private:
 	constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
@@ -75,7 +77,6 @@ private:
 	std::string name_;
 	ws_uri uri_;
 	file_manager & file_manager_;
-	std::unordered_map<std::string, file *> files_;
 
 	std::unordered_map<proc_grp_id, processor_group> proc_grps_;
 	std::vector<program> pgm_conf_;
@@ -92,11 +93,11 @@ private:
 	bool load_config();
 	
 	//files, that depend on others (e.g. open code files that use macros)
-	std::set<processor_file *> dependants_;
+	std::set<std::string> dependants_;
 
 	diagnostic_container config_diags_;
 
-	void filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file* file);
+	void filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file_ptr file);
 	bool is_dependency_(const std::string & file_uri);
 };
 

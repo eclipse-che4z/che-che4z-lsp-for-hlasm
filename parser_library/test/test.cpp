@@ -2,12 +2,15 @@
 
 #include "data_definition_scale_test.h"
 #include "data_definition_integer_test.h"
+#include "debugger_test.h"
+
 #include "data_definition_length_test.h"
 #include "data_definition_check_test.h"
 #include "data_definition_test.h"
 
 #include "lsp_features_test.h"
 #include "workspace_test.h"
+
 
 #include "macro_test.h"
 #include "copy_test.h"

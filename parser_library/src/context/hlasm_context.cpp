@@ -50,14 +50,14 @@ void hlasm_context::add_system_vars_to_scope()
 	{
 		auto SYSECT = ids().add("SYSECT");
 
-		auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true);
+		auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
 		auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
 		val_sect->set_value(*sect_name);
 		curr_scope()->variables.insert({ SYSECT,val_sect });
 
 		auto SYSNDX = ids().add("SYSNDX");
 
-		auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true);
+		auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true, false);
 		val_ndx->set_value((A_t)SYSNDX_);
 		curr_scope()->variables.insert({ SYSNDX,val_ndx });
 
@@ -114,21 +114,28 @@ const hlasm_context::instruction_storage& hlasm_context::instruction_map() const
 	return instruction_map_;
 }
 
-const std::vector<location> hlasm_context::processing_stack() const
+processing_stack_t hlasm_context::processing_stack() const
 {
-	std::vector<location> res;
+	std::vector<processing_frame> res;
 
 	for (size_t i = 0; i < source_stack_.size(); ++i)
 	{
-		source_stack_[i].append_processing_stack(res);
+		res.emplace_back(source_stack_[i].source_status, scope_stack_.front(), file_processing_type::OPENCODE);
+		for (const auto& member : source_stack_[i].copy_stack)
+		{
+			location loc(member.definition[member.current_statement]->statement_position(), member.definition_location.file);
+			res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY);
+		}
 
 		if (i == 0) // append macros immediately after ordinary processing
 		{
 			for (size_t j = 1; j < scope_stack_.size(); ++j)
 			{
-				auto& nest = scope_stack_[j].this_macro->copy_nests[scope_stack_[j].this_macro->current_statement];
+				auto offs = scope_stack_[j].this_macro->current_statement;
 
-				for (auto loc : nest) res.push_back(loc);
+				const auto& nest = scope_stack_[j].this_macro->copy_nests[offs];
+				for (size_t k = 0; k < nest.size(); ++k)
+					res.emplace_back(nest[k], scope_stack_[j], k == 0 ? file_processing_type::MACRO : file_processing_type::COPY);
 			}
 		}
 	}
@@ -484,4 +491,9 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 		invo.current_statement = (int)frame.statement_offset;
 		source_stack_.back().copy_stack.push_back(std::move(invo));
 	}
+}
+
+const code_scope& hlasm_context::current_scope() const
+{
+	return *curr_scope();
 }

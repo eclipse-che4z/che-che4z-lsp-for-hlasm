@@ -7,3 +7,7 @@ add_executable(benchmark ${PROJECT_SOURCE_DIR}/benchmark.cpp)
 add_dependencies(benchmark json)
 
 target_link_libraries(benchmark parser_library)
+
+if(UNIX)
+	target_link_libraries(benchmark pthread)
+endif()

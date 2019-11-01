@@ -12,14 +12,16 @@ ordinary_processor::ordinary_processor(
 	branching_provider& branch_provider,
 	parse_lib_provider& lib_provider,
 	processing_state_listener& state_listener,
-	statement_fields_parser& parser)
+	statement_fields_parser& parser,
+	processing_tracer * tracer)
 	:statement_processor(processing_kind::ORDINARY, hlasm_ctx),
 	eval_ctx{ hlasm_ctx, attr_provider,lib_provider },
 	ca_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, state_listener),
 	mac_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider),
 	asm_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser),
 	mach_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser),
-	finished_flag_(false) {}
+	finished_flag_(false),
+	tracer_(tracer){}
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {

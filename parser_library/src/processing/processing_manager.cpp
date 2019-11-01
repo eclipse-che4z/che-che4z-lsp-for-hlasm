@@ -18,16 +18,18 @@ processing_manager::processing_manager(
 	context::hlasm_context& hlasm_ctx,
 	const library_data data,
 	parse_lib_provider& lib_provider, 
-	statement_fields_parser& parser)
-	: diagnosable_ctx(hlasm_ctx), hlasm_ctx_(hlasm_ctx), lib_provider_(lib_provider), 
-	opencode_prov_(*base_provider)
+	statement_fields_parser& parser,
+	processing_tracer* tracer)
+	: diagnosable_ctx(hlasm_ctx), hlasm_ctx_(hlasm_ctx), lib_provider_(lib_provider),
+	opencode_prov_(*base_provider), tracer_(tracer)
+	
 {
 
 	switch (data.proc_kind)
 	{
 	case processing_kind::ORDINARY:
 		provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser));
-		procs_.emplace_back(std::make_unique<ordinary_processor>(hlasm_ctx, *this, *this, lib_provider, *this, parser));
+		procs_.emplace_back(std::make_unique<ordinary_processor>(hlasm_ctx, *this, *this, lib_provider, *this, parser, tracer_));
 		break;
 	case processing_kind::COPY:
 		procs_.emplace_back(std::make_unique<copy_processor>(hlasm_ctx, *this, copy_start_data{ data.library_member }));
@@ -59,7 +61,7 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 			finish_processor();
 			continue;
 		}
-
+		
 		prov.process_next(proc);
 	}
 }
@@ -103,7 +105,7 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
 void processing_manager::start_lookahead(lookahead_start_data start)
 {
 	hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
-	procs_.emplace_back(std::make_unique < lookahead_processor>(hlasm_ctx_, *this, *this,lib_provider_, std::move(start)));
+	procs_.emplace_back(std::make_unique<lookahead_processor>(hlasm_ctx_, *this, *this, lib_provider_, std::move(start)));
 }
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
@@ -194,7 +196,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
 std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_opencode_sequence_symbol(context::id_index name, range symbol_range)
 {
 	auto symbol_pos = symbol_range.start;
-	location loc(symbol_pos, hlasm_ctx_.processing_stack().back().file);
+	location loc(symbol_pos, hlasm_ctx_.processing_stack().back().proc_location.file);
 
 	context::source_position statement_position((size_t)hlasm_ctx_.current_source().source_status.pos.line, 0);
 

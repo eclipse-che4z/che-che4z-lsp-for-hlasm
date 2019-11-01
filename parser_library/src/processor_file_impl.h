@@ -12,12 +12,15 @@ class processor_file_impl : public virtual file_impl, public virtual processor_f
 public:
 	processor_file_impl(std::string file_uri, std::atomic<bool>* cancel = nullptr);
 	processor_file_impl(file_impl &&, std::atomic<bool>* cancel = nullptr);
+	processor_file_impl(const file_impl & file, std::atomic<bool>* cancel = nullptr);
 	void collect_diags() const override;
 	bool is_once_only() const override;
 	//starts parser with new (empty) context
-	parse_result parse(parse_lib_provider &);
+	virtual parse_result parse(parse_lib_provider &) override;
 	//starts parser with in the context of parameter
-	parse_result parse(parse_lib_provider &, context::hlasm_context&, const library_data);
+	virtual parse_result parse_macro(parse_lib_provider &, context::hlasm_context&, const library_data) override;
+
+	virtual parse_result parse_no_lsp_update(parse_lib_provider&, context::hlasm_context&, const library_data) override;
 
 	bool parse_info_updated() override;
 
@@ -30,6 +33,8 @@ public:
 
 private:
 	std::unique_ptr<analyzer> analyzer_;
+	//This is here only because CA expressions need parser to be alive to evaluate
+	std::unique_ptr<analyzer> no_update_analyzer_;
 
 	bool parse_inner(analyzer&);
 

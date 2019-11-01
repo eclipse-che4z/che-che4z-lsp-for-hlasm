@@ -101,7 +101,7 @@ TEST(context_set_vars, set_scalar)
 
 	auto idx = ctx.ids().add("var");
 
-	set_symbol<int> var(idx, true);
+	set_symbol<int> var(idx, true, false);
 
 	EXPECT_EQ(var.get_value(1), 0);
 
@@ -114,7 +114,7 @@ TEST(context_set_vars, set_scalar)
 	EXPECT_EQ(var.get_value(1), 0);
 
 
-	set_symbol<string> str_var(idx, true);
+	set_symbol<string> str_var(idx, true, false);
 
 	EXPECT_EQ(str_var.get_value(), "");
 	EXPECT_EQ(str_var.get_value(1), "");
@@ -127,7 +127,7 @@ TEST(context_set_vars, set_non_scalar)
 
 	auto idx = ctx.ids().add("var");
 
-	set_symbol<string> var(idx, false);
+	set_symbol<string> var(idx, false, false);
 
 	EXPECT_EQ(var.get_value(), "");
 

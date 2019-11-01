@@ -1,12 +1,15 @@
 #ifndef PROCESSING_PROCESSING_MANAGER_H
 #define PROCESSING_PROCESSING_MANAGER_H
 
+#include <set>
+
 #include "../parse_lib_provider.h"
 #include "processing_state_listener.h"
 #include "opencode_provider.h"
 #include "branching_provider.h"
 #include "attribute_provider.h"
 #include "statement_fields_parser.h"
+#include "processing_tracer.h"
 
 #include <stack>
 
@@ -25,7 +28,8 @@ public:
 		context::hlasm_context& hlasm_ctx, 
 		const library_data data,
 		parse_lib_provider& lib_provider,
-		statement_fields_parser& parser);
+		statement_fields_parser& parser,
+		processing_tracer* tracer);
 
 	//method that starts the processing loop
 	void start_processing(std::atomic<bool>* cancel);
@@ -58,6 +62,8 @@ private:
 		lookup_forward_attribute_references(attribute_provider::forward_reference_storage references) override;
 		
 	void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
+
+	processing_tracer* tracer_ = nullptr;
 };
 
 }

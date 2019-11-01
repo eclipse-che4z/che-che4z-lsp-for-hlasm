@@ -20,15 +20,15 @@ protected:
 
 	virtual ~diagnosable_ctx() {};
 private:
-	void add_diagnostic_inner(diagnostic_op diagnostic, const std::vector<location>& stack) const
+	void add_diagnostic_inner(diagnostic_op diagnostic, const context::processing_stack_t& stack) const
 	{
-		diagnostic_s diag (stack.back().file, diagnostic);
+		diagnostic_s diag (stack.back().proc_location.file, diagnostic);
 
 		for (auto frame = ++stack.rbegin(); frame != stack.rend(); ++frame)
 		{
-			auto& file_name = frame->file;
-			range r = range(frame->pos, frame->pos);
-			diagnostic_related_info_s s = diagnostic_related_info_s(range_uri_s(file_name, r), "While compiling " + file_name + '(' + std::to_string(frame->pos.line + 1) + ")");
+			auto& file_name = frame->proc_location.file;
+			range r = range(frame->proc_location.pos, frame->proc_location.pos);
+			diagnostic_related_info_s s = diagnostic_related_info_s(range_uri_s(file_name, r), "While compiling " + file_name + '(' + std::to_string(frame->proc_location.pos.line + 1) + ")");
 			diag.related.push_back(std::move(s));
 		}
 		diagnosable_impl::add_diagnostic(std::move(diag));

@@ -3,6 +3,7 @@
 #include "semantics/highlighting_info.h"
 #include "semantics/lsp_info_processor.h"
 #include "processor.h"
+#include "debugging/debug_types.h"
 
 namespace hlasm_plugin::parser_library
 {
@@ -238,5 +239,103 @@ size_t position_uris::size()
 
 token_info::token_info(const range & token_range, semantics::hl_scopes scope) : token_range(token_range), scope(scope) {};
 token_info::token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope) : token_range({ {line_start, column_start}, {line_end, column_end} }), scope(scope) {};
+//*********************** stack_frame *************************
+stack_frame::stack_frame(const debugging::stack_frame & frame) : impl_(frame) {}
+
+const char * stack_frame::name()
+{
+	return impl_.name.c_str();
+}
+
+uint32_t stack_frame::id()
+{
+	return impl_.id;
+}
+
+range stack_frame::get_range()
+{
+	return { {impl_.begin_line, 0}, {impl_.end_line, 0} };
+}
+
+source stack_frame::get_source()
+{
+	return impl_.frame_source;
+}
+
+template<>
+stack_frame c_view_array<stack_frame, debugging::stack_frame>::item(size_t index)
+{
+	return data_[index];
+}
+
+//********************* source **********************
+
+source::source(const debugging::source & source) : source_(source) {}
+
+const char * source::path()
+{
+	return source_.path.c_str();
+}
+
+//*********************** scope *************************
+
+scope::scope(const debugging::scope & impl) :
+	impl_(impl) {}
+
+const char * scope::name() const
+{
+	return impl_.name.c_str();
+}
+
+var_reference_t scope::variable_reference() const
+{
+	return impl_.var_reference;
+}
+
+source scope::get_source() const
+{
+	return impl_.scope_source;
+}
+
+template<>
+scope c_view_array<scope, debugging::scope>::item(size_t index)
+{
+	return data_[index];
+}
+
+
+//********************** variable **********************
+
+variable::variable(const debugging::variable & impl) : impl_(impl) {}
+
+const char * variable::name() const
+{
+	return impl_.get_name().c_str();
+}
+
+set_type variable::type() const
+{
+	return impl_.type();
+}
+
+const char * variable::value() const
+{
+	return impl_.get_value().c_str();
+}
+
+var_reference_t variable::variable_reference() const
+{
+	return impl_.var_reference;
+}
+
+template<>
+variable c_view_array<variable, debugging::variable *>::item(size_t index)
+{
+	return *data_[index];
+}
+
+
+
+
 
 }

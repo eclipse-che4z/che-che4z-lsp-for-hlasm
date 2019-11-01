@@ -51,7 +51,7 @@ std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_l
 		// there is no need to try full LL(*)
 		return { true,tree };
 	}
-	catch (antlr4::RuntimeException ex) {
+	catch (antlr4::RuntimeException &) {
 		std::cout << "SLL FAILURE" << std::endl;
 
 		auto tokens = h_parser.getTokenStream();

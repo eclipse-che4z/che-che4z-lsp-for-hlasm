@@ -229,25 +229,22 @@ class file_manager_proc_grps_test : public file_manager_impl
 {
 
 public:
-	file * add_file(const file_uri & uri) override
+	file_ptr add_file(const file_uri & uri) override
 	{
 		if (uri.substr(uri.size() - 14) == "proc_grps.json")
-			return &proc_grps;
+			return proc_grps;
 		else
-			return &pgm_conf;
+			return pgm_conf;
 	}
 
-	file_proc_grps proc_grps;
-	file_pgm_conf pgm_conf;
+	std::shared_ptr <file_proc_grps> proc_grps = std::make_shared<file_proc_grps>();
+	std::shared_ptr <file_pgm_conf> pgm_conf = std::make_shared<file_pgm_conf>();
 
 
 	// Inherited via file_manager
 	virtual void did_open_file(const std::string &, version_t, std::string) override {}
 	virtual void did_change_file(const std::string &, version_t, const document_change *, size_t) override {}
 	virtual void did_close_file(const std::string &) override {}
-
-	// Inherited via file_manager
-	virtual std::vector<file*> list_files() override { return {}; }
 };
 
 TEST(workspace, load_config_synthetic)

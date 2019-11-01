@@ -70,6 +70,7 @@ public:
 	//creates layout of every section
 	void finish_module_layout();
 
+	const std::unordered_map<id_index, symbol> & get_all_symbols();
 private:
 	void create_private_section();
 };

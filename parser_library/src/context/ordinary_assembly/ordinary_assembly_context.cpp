@@ -135,3 +135,8 @@ void ordinary_assembly_context::finish_module_layout()
 	for (auto& sect : sections_)
 		sect->finish_layout();
 }
+
+const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols()
+{
+	return symbols_;
+}

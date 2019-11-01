@@ -17,6 +17,7 @@ ExternalProject_ADD(
   PREFIX             ${JSON_EXTERNAL_ROOT}
   GIT_REPOSITORY     ${JSON_EXTERNAL_REPO}
   GIT_TAG            ${JSON_EXTERNAL_TAG}
+  GIT_SHALLOW        ON
   TIMEOUT            10
   LOG_DOWNLOAD       ON
   GIT_PROGRESS       1

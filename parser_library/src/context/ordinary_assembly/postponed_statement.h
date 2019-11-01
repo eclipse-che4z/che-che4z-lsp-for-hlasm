@@ -3,6 +3,7 @@
 
 #include  "../../processing/statement.h"
 
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
@@ -11,7 +12,7 @@ namespace context {
 //contains stack of file positions from where was it postponed
 struct postponed_statement : public processing::resolved_statement
 {
-	virtual const std::vector<location>& location_stack() const = 0;
+	virtual const processing_stack_t& location_stack() const = 0;
 
 	virtual ~postponed_statement() = default;
 };

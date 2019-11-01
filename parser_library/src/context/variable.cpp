@@ -10,16 +10,26 @@ set_symbol_base * variable_symbol::access_set_symbol_base()
 	return dynamic_cast<set_symbol_base*>(this);
 }
 
+const set_symbol_base* variable_symbol::access_set_symbol_base() const
+{
+	return dynamic_cast<const set_symbol_base*>(this);
+}
+
 macro_param_base * variable_symbol::access_macro_param_base()
 {
 	return dynamic_cast<macro_param_base*>(this);
 }
 
+const macro_param_base* variable_symbol::access_macro_param_base() const
+{
+	return dynamic_cast<const macro_param_base*>(this);
+}
+
 variable_symbol::variable_symbol(variable_kind var_kind, id_index name)
 	:id(name), var_kind(var_kind) {}
 
-set_symbol_base::set_symbol_base(id_index name, bool is_scalar, SET_t_enum type)
-	: variable_symbol(variable_kind::SET_VAR_KIND, name), is_scalar(is_scalar),type(type) {}
+set_symbol_base::set_symbol_base(id_index name, bool is_scalar, bool is_global, SET_t_enum type)
+	: variable_symbol(variable_kind::SET_VAR_KIND, name), is_scalar(is_scalar), is_global(is_global), type(type) {}
 
 const keyword_param * macro_param_base::access_keyword_param() const
 {
@@ -90,6 +100,17 @@ A_t macro_param_base::count(std::vector<size_t> offset) const
 		tmp = tmp->get_ith(idx);
 	}
 	return (A_t)tmp->get_value().size();
+}
+
+size_t macro_param_base::size(std::vector<size_t> offset) const
+{
+	const macro_param_data_component* tmp = real_data();
+
+	for (auto idx : offset)
+	{
+		tmp = tmp->get_ith(idx - 1);
+	}
+	return tmp->size();
 }
 
 keyword_param::keyword_param(id_index name, macro_data_shared_ptr default_value, macro_data_ptr assigned_value)
@@ -177,6 +198,18 @@ A_t syslist_param::count(std::vector<size_t> offset) const
 		return (A_t)data_->get_ith(1)->get_value().size();
 	else
 		return (A_t)macro_param_base::count(std::move(offset));
+}
+
+size_t syslist_param::size(std::vector<size_t> offset) const
+{
+	const macro_param_data_component* tmp = real_data();
+
+	for (size_t i = 0; i < offset.size(); ++i)
+	{
+		tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+	}
+
+	return tmp->size();
 }
 
 const macro_param_data_component* syslist_param::real_data() const
