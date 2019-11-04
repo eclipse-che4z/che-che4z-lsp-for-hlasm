@@ -5,8 +5,9 @@
 #include "../src/analyzer.h"
 #include "../src/context/instruction.h"
 
-constexpr char* MACRO_FILE = "macro_file.hlasm";
-constexpr char* SOURCE_FILE = "source_file.hlasm";
+constexpr const char* MACRO_FILE = "MAC";
+constexpr const char* SOURCE_FILE = "OPEN";
+constexpr const char* COPY_FILE = "COPYFILE";
 
 using namespace hlasm_plugin::parser_library;
 
@@ -15,8 +16,17 @@ class mock_parse_lib_provider : public parse_lib_provider
 public:
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
 	{
-		analyzer a(macro_contents, MACRO_FILE, hlasm_ctx,*this, data);
-		a.analyze();
+		if (data.proc_kind == processing::processing_kind::MACRO)
+		{
+			analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);
+			a.analyze();
+		}
+		else
+		{
+			analyzer a(copy_contents, COPY_FILE, hlasm_ctx, *this, data);
+			a.analyze();
+		}
+
 		return true;
 	}
 	virtual bool has_library(const std::string& , context::hlasm_context& ) const override { return true; }
@@ -27,6 +37,10 @@ R"(   MACRO
        LR    &VAR,&VAR
        MEND
 )";
+
+	const std::string copy_contents =
+		R"(R2 EQU 2
+			LR R2,R2)";
 };
 
 class lsp_features_test : public testing::Test
@@ -54,7 +68,7 @@ R"(   MAC  1
 .HERE  ANOP
 
        MACRO
-&LABEL MAC2   &VAR
+&LABEL MAC   &VAR
 *THIS IS DOCUMENTATION
        LR     &VAR,&LABEL
        AGO    .HERE
@@ -63,7 +77,12 @@ R"(   MAC  1
 .HERE  ANOP 
        MEND
  
-1      MAC2   2
+1      MAC   2
+
+      COPY COPYFILE
+      LR R1,R2
+R1 EQU 1
+&VAR SETC 'some string'
 )";
 	std::string content;
 	mock_parse_lib_provider lib_provider;
@@ -79,6 +98,8 @@ TEST_F(lsp_features_test, go_to)
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(0, 8)), a.lsp_processor().go_to_definition(position(0, 8)));
 	// jump in source, open code, var symbol &VAR
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(1, 0)), a.lsp_processor().go_to_definition(position(2, 13)));
+	// jump in source, open code, var symbol &VAR, version 1 (var symbol redefinition)
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(22, 0)), a.lsp_processor().go_to_definition(position(22, 2)));
 	// jump in source, open code, seq symbol .HERE
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(5, 0)), a.lsp_processor().go_to_definition(position(3, 13)));
 	// jump in source, macro, seq symbol .HERE
@@ -86,7 +107,13 @@ TEST_F(lsp_features_test, go_to)
 	// jump in source, macro, var symbol &LABEL
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 0)), a.lsp_processor().go_to_definition(position(10, 20)));
 	// jump in source, macro, var symbol &VAR
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 14)), a.lsp_processor().go_to_definition(position(10, 15)));
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 13)), a.lsp_processor().go_to_definition(position(10, 15)));
+	// forward jump in source, open code, ord symbol R1
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(21, 0)), a.lsp_processor().go_to_definition(position(20, 10)));
+	// jump from source to copy file, ord symbol R2
+	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(20, 13)));
+	// jump from source to first instruction in copy file, COPY COPYFILE
+	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 3)), a.lsp_processor().go_to_definition(position(19, 14)));
 }
 
 TEST_F(lsp_features_test, refs)
@@ -111,26 +138,41 @@ TEST_F(lsp_features_test, refs)
 // 4 cases, instruction, sequence, variable and none
 TEST_F(lsp_features_test, hover)
 {
-	// hover for macro MAC2, contains description and user documentation
+	// hover for macro MAC, contains description and user documentation
 	auto result = a.lsp_processor().hover(position(17, 8));
 	ASSERT_EQ((size_t)2, result.size());
-	// probably not correct as the LABEL should be before MAC2
-	// however needs proper fix in completion as well, as it should replace whole line instead of inserting text
-	EXPECT_EQ("MAC2 LABEL VAR", result[0]);
-	EXPECT_EQ("THIS IS DOCUMENTATION\n", result[1]);
+	EXPECT_EQ("LABEL VAR (version 1)", result[0]);
+	EXPECT_EQ("THIS IS DOCUMENTATION", result[1]);
 
 	// hover for sequence symbol, defined even though it is skipped because of the macro parsing (wanted behaviour)
 	result = a.lsp_processor().hover(position(12, 15));
-	ASSERT_EQ((size_t)2, result.size());
-	EXPECT_EQ("HERE2 Defined at line 14", result[0]);
-	//empty documentation
-	EXPECT_EQ("", result[1]);
+	ASSERT_EQ((size_t)1, result.size());
+	EXPECT_EQ("Defined at line 14", result[0]);
 
-	// hover for variable symbol, name and type
+	// hover for variable symbol, name and type number
 	result = a.lsp_processor().hover(position(2, 13));
 	ASSERT_EQ((size_t)2, result.size());
-	EXPECT_EQ("VAR number", result[0]);
-	EXPECT_EQ("", result[1]);
+	EXPECT_EQ("number", result[0]);
+	EXPECT_EQ("version 0", result[1]);
+
+	// hover for variable symbol (version 1), name and type string
+	result = a.lsp_processor().hover(position(22, 1));
+	ASSERT_EQ((size_t)2, result.size());
+	EXPECT_EQ("string", result[0]);
+	EXPECT_EQ("version 1", result[1]);
+
+	// hover on ord symbol R1, its value
+	result = a.lsp_processor().hover(position(20, 10));
+	ASSERT_EQ((size_t)4, result.size());
+	EXPECT_EQ("1", result[0]);
+	EXPECT_EQ("Absolute Symbol", result[1]);
+	EXPECT_EQ("L: 1", result[2]);
+	EXPECT_EQ("T: U", result[3]);
+
+	// hover on COPYFILE, definition file
+	result = a.lsp_processor().hover(position(19, 14));
+	ASSERT_EQ((size_t)1, result.size());
+	EXPECT_EQ("Defined in file: COPYFILE", result[0]);
 
 	// no hover on remarks
 	result = a.lsp_processor().hover(position(2, 24));

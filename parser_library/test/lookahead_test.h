@@ -197,7 +197,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
 	auto expr = a.parser().expr();
 
 	//define symbol with undefined length
-	auto tmp = a.context().ord_ctx.create_symbol(a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200));
+	auto tmp = a.context().ord_ctx.create_symbol(a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
 	ASSERT_TRUE(tmp);
 
 	empty_attribute_provider prov;

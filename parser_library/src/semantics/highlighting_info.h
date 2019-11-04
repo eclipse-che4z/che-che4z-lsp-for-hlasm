@@ -25,8 +25,8 @@ using lines_info = std::vector<token_info>;
 struct continuation_info
 {
 	std::vector<position> continuation_positions;
-	size_t continue_column = 0;
-	size_t continuation_column = 0;
+	size_t continue_column = 15;
+	size_t continuation_column = 71;
 };
 
 struct highlighting_info

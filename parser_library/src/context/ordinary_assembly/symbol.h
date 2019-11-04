@@ -6,6 +6,7 @@
 
 #include "symbol_attributes.h"
 #include "address.h"
+#include "shared/range.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -49,8 +50,7 @@ private:
 class symbol
 {
 public:
-	symbol(id_index name, symbol_value value, symbol_attributes attributes);
-	//symbol();
+	symbol(id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
 
 	const symbol_value& value() const;
 	const symbol_attributes& attributes() const;
@@ -62,6 +62,7 @@ public:
 	void set_scale(symbol_attributes::scale_attr value);
 
 	const id_index name;
+	const location symbol_location;
 private:
 	symbol_value value_;
 	symbol_attributes attributes_;

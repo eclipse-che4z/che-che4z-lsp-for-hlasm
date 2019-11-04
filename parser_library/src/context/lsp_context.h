@@ -20,19 +20,20 @@ struct completion_item_s
 
 struct definition
 {
-	definition() : check_scopes(false) {}
-	definition(std::string name, std::string scope, std::string file_name, range definition_range, bool check_scopes = true) : name(std::move(name)), scope(std::move(scope)), file_name(std::move(file_name)), definition_range(definition_range), documentation(std::move(documentation)), check_scopes(check_scopes) {}
+	definition() {};
+	definition(std::string name, std::string scope, std::string file_name, range definition_range, std::vector<std::string> value = { "" }, bool check_scopes = true) : name(std::move(name)), scope(std::move(scope)), file_name(std::move(file_name)), definition_range(definition_range), value(value), check_scopes(check_scopes) {}
 
 	std::string name;
 	std::string scope;
 	std::string file_name;
 	range definition_range;
-	std::string value;
-	std::string documentation;
-	bool check_scopes;
+	std::vector<std::string> value;
+	bool check_scopes = false;
+	size_t version = 0;
 
 	bool operator<(const definition& other) const;
 	bool operator==(const definition& other) const;
+	bool operator!=(const definition& other) const;
 };
 
 struct occurence
@@ -49,6 +50,14 @@ struct lsp_context
 	definitions var_symbols;
 	definitions ord_symbols;
 	definitions instructions;
+
+	std::vector<definition> deferred_seqs;
+	std::vector<definition> deferred_ord_defs;
+	std::vector<definition> deferred_ord_occs;
+	std::stack<std::string> parser_macro_stack;
+	definition deferred_macro_statement;
+
+	bool copy = false;
 
 	bool initialized = false;
 	std::vector<completion_item_s> all_instructions;

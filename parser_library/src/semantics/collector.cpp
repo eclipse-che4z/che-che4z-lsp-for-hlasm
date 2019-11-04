@@ -58,6 +58,7 @@ void collector::set_label_field(context::id_index label, antlr4::ParserRuleConte
 	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL))
 	{
 		lbl_.emplace(symbol_range ,*label );
+		add_lsp_symbol({ *label, symbol_range, symbol_type::ord });
 	}
 	//recognise, whether label consists of DOT ORDSYMBOL tokens, so it is sequence symbol
 	else if (parser_ctx->children.size() == 2 && parser_ctx->getStart()->getType() == lexer::Tokens::DOT && parser_ctx->getStop()->getType() == lexer::Tokens::ORDSYMBOL)
@@ -69,6 +70,7 @@ void collector::set_label_field(context::id_index label, antlr4::ParserRuleConte
 	else
 	{
 		lbl_.emplace(symbol_range, *label, label_si::mac_flag());
+		add_lsp_symbol({ *label, symbol_range, symbol_type::ord });
 	}
 }
 

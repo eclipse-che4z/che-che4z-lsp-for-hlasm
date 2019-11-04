@@ -107,10 +107,6 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 
 	collect_diags_from_child(new_analyzer);
 
-	//TO DO ICTL
-	analyzer_->lsp_processor().get_hl_info().cont_info.continue_column = 15;
-	analyzer_->lsp_processor().get_hl_info().cont_info.continuation_column = 71;
-
 	//collect semantic info
 	parse_info_updated_ = true;
 

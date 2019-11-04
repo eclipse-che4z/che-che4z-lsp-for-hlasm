@@ -170,7 +170,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 		context::symbol_attributes(
 			context::symbol_origin::DAT,
 			t_attr, length_attr
-		)
+		), location()
 	);
 }
 
@@ -204,8 +204,8 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 		symbol_name, context::symbol_value(),
 		context::symbol_attributes(
 			context::symbol_origin::DAT,
-			type,len,scale
-		)
+			type, len, scale
+		), location()
 	);
 }
 
@@ -213,7 +213,8 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 {
 	result_.resolved_refs.emplace_back(
 		symbol_name, context::symbol_value(),
-		context::symbol_attributes::make_section_attrs()
+		context::symbol_attributes::make_section_attrs(), 
+		location()
 	);
 }
 
@@ -228,7 +229,8 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
 	result_.resolved_refs.emplace_back(
 		symbol_name,
 		context::symbol_value(),
-		context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8)
+		context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8),
+		location()
 	);
 }
 
@@ -247,7 +249,7 @@ void lookahead_processor::assign_assembler_attributes(context::id_index symbol_n
 			context::symbol_attributes(
 				context::symbol_origin::MACH,
 				'M'_ebcdic
-			)
+			), location()
 		);
 	}
 }
@@ -336,7 +338,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 			context::symbol_attributes(
 				context::symbol_origin::MACH,
 				statement.opcode_ref().type == context::instruction_type::CA ? 'U'_ebcdic : 'M'_ebcdic
-			)
+			), location()
 		);
 		break;
 	case context::instruction_type::MACH:

@@ -55,26 +55,24 @@ public:
 	void did_open_file(const std::string & document_uri, version_t version, std::string text)
 	{
 		file_manager_.did_open_file(document_uri, version, std::move(text));
-		if (cancel_ != nullptr && *cancel_)
-			return;
+		if (cancel_ && *cancel_) return;
+
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_open_file(document_uri);
-		// do not respond if the request was cancelled
-		if (cancel_ != nullptr && *cancel_)
-			return;
+		if (cancel_ && *cancel_) return;
+
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
 	}
 	void did_change_file(const std::string document_uri, version_t version, const document_change * changes, size_t ch_size)
 	{
 		file_manager_.did_change_file(document_uri, version, changes, ch_size);
-		if (cancel_ != nullptr && *cancel_)
-			return;
+		if (cancel_ && *cancel_) return;
+
 		workspace & ws = ws_path_match(document_uri);
 		ws.did_change_file(document_uri, changes, ch_size);
-		// do not respond if the request was cancelled
-		if (cancel_ != nullptr && *cancel_)
-			return;
+		if (cancel_ && *cancel_) return;
+
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
 	}

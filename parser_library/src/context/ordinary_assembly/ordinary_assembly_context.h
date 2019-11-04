@@ -37,7 +37,7 @@ public:
 
 	//creates symbol
 	//returns false if loctr cycle has occured
-	[[nodiscard]] bool create_symbol(id_index name, symbol_value value, symbol_attributes attributes);
+	[[nodiscard]] bool create_symbol(id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
 
 	//gets symbol by name
 	virtual symbol* get_symbol(id_index name) override;
@@ -46,10 +46,10 @@ public:
 	const section* current_section() const;
 
 	//sets current section
-	void set_section(id_index name, const section_kind kind);
+	void set_section(id_index name, const section_kind kind, location symbol_location);
 
 	//sets current location counter of current section
-	void set_location_counter(id_index name);
+	void set_location_counter(id_index name, location symbol_location);
 
 	//check whether symbol is already defined
 	bool symbol_defined(id_index name);

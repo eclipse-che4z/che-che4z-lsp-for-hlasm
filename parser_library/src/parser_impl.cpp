@@ -82,6 +82,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	h.parser->addErrorListener(&listener);
 
 	auto line = std::move(h.parser->model_operands()->line);
+	
+	// indicates that the reparse is done to resolve deferred ordinary symbols (and not to substitute)
+	if (!after_substitution)
+	{
+		lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(), ctx->processing_stack().back().proc_location.file);
+	}
+	
 
 	collect_diags_from_child(listener);
 
@@ -204,6 +211,9 @@ void parser_impl::process_statement()
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
 	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
 
+	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
+	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
+
 	context::unique_stmt_ptr ptr;
 
 	if (!hint)
@@ -215,9 +225,7 @@ void parser_impl::process_statement()
 		assert(std::holds_alternative<semantics::statement_si_deferred>(stmt));
 		ptr = std::make_unique< semantics::statement_si_deferred>(std::move(std::get<semantics::statement_si_deferred>(stmt)));
 	}
-
-	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
-	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
+	
 	collector.prepare_for_next_statement();
 
 	processor->process_statement(std::move(ptr));

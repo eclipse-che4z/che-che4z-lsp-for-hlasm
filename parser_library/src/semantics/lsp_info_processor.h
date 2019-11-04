@@ -31,9 +31,11 @@ namespace hlasm_plugin {
 		
 		struct lsp_symbol
 		{
+			lsp_symbol(std::string name, range symbol_range, symbol_type type) : name(std::move(name)), symbol_range(std::move(symbol_range)), type(type), value("") {}
 			std::string name;
-			range symbol_range;
+			file_range symbol_range;
 			symbol_type type;
+			std::string value;
 		};
 
 		class lsp_info_processor
@@ -44,7 +46,7 @@ namespace hlasm_plugin {
 			std::string file_name;
 
 			void process_hl_symbols(std::vector<token_info> symbols);
-			void process_lsp_symbols(std::vector<lsp_symbol> symbols);
+			void process_lsp_symbols(std::vector<lsp_symbol> symbols, const std::string& given_file = "");
 
 			position_uri_s go_to_definition(const position& pos) const;
 			std::vector<position_uri_s> references(const position& pos) const;
@@ -56,11 +58,9 @@ namespace hlasm_plugin {
 
 			semantics::highlighting_info& get_hl_info();
 		private:
-			std::vector<context::definition> deferred_seqs_;
 			std::vector<context::definition> deferred_vars_;
 			context::definition deferred_instruction_;
-			std::stack<std::string> parser_macro_stack_;
-			const std::string& text_;
+			std::vector<std::string> text_;
 			context::lsp_ctx_ptr ctx_;
 			semantics::highlighting_info hl_info_;
 			const std::regex instruction_regex;
@@ -69,13 +69,16 @@ namespace hlasm_plugin {
 			bool find_definition_(const position& pos, const context::definitions& symbols, position_uri_s& found) const;
 			bool find_references_(const position& pos, const context::definitions& symbols, std::vector<position_uri_s>& found) const;
 			bool get_text_(const position& pos, const context::definitions& symbols, std::vector<std::string>& found) const;
-			std::string get_line_(position_t line_no, size_t &start) const;
-			void process_ord_sym_(const context::definition & symbol);
 			void process_var_syms_();
 			void process_seq_sym_(context::definition & symbol);
+			void process_ord_sym_(context::definition & symbol);
 			void process_instruction_sym_();
 			completion_list_s complete_var_(const position& pos) const;
 			completion_list_s complete_seq_(const position& pos) const;
+			context::definition find_latest_version_(const context::definition& current, const context::definitions& to_check) const;
+
+			std::vector<std::string> split_(const std::string& text);
+			std::string implode_(const std::vector<std::string>::const_iterator& lines_begin, const std::vector<std::string>::const_iterator& lines_end) const;
 		};
 		}
 	}

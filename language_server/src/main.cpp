@@ -11,7 +11,6 @@
 #include "shared/workspace_manager.h"
 #include "logger.h"
 
-
 #ifdef _WIN32 //set binary mode for input on windows
 # include <io.h>
 # include <fcntl.h>
@@ -62,7 +61,6 @@ int main(int argc, char ** argv) {
 	using namespace hlasm_plugin::language_server;
 	
 	std::atomic<bool> cancel = false;
-
 	try {
 		SET_BINARY_MODE(stdin);
 		SET_BINARY_MODE(stdout);

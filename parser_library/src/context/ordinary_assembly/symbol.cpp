@@ -3,9 +3,7 @@
 #include <stdexcept>
 #include <assert.h>
 
-
-
-
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
 symbol_value::symbol_value(abs_value_t value)
@@ -130,8 +128,8 @@ symbol_value_kind symbol_value::value_kind() const
 	return static_cast<symbol_value_kind>(value_.index());
 }
 
-symbol::symbol(id_index name, symbol_value value, symbol_attributes attributes)
-	: name(name), value_(std::move(value)), attributes_(attributes) {}
+symbol::symbol(id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
+	: name(name), symbol_location(std::move(symbol_location)), value_(std::move(value)), attributes_(attributes) {}
 
 const symbol_value& symbol::value() const { return value_; }
 

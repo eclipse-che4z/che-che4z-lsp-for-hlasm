@@ -689,4 +689,43 @@ X DC CL(L'X)'X'
 	EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
+class loc_mock : public parse_lib_provider
+{
+	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	{
+		std::string lib_data("XXX EQU 1");
+		analyzer a(lib_data, library, hlasm_ctx, *this, data);
+		a.analyze();
+		return true;
+	}
+
+	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return true; }
+
+};
+
+TEST(ordinary_symbols, symbol_location)
+{
+	std::string input = R"(
+ MACRO
+ M
+XX EQU 1
+ MEND
+
+X EQU 1
+ M
+ COPY COPYF
+
+)";
+	loc_mock tmp;
+	analyzer a(input, "test", tmp);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->symbol_location, location({ 6, 0 }, "test"));
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("XX"))->symbol_location, location({ 3, 0 }, "test"));
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("XXX"))->symbol_location, location({ 0, 0 }, "COPYF"));
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
 #endif

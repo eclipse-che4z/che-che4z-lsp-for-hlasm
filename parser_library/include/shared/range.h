@@ -34,6 +34,19 @@ struct PARSER_LIBRARY_EXPORT range
 	position end;
 };
 
+struct PARSER_LIBRARY_EXPORT file_range
+{
+	file_range() {}
+	file_range(range r, std::string file) : r(r), file(std::move(file)) {}
+	file_range(range r) : r(r), file("") {}
+	bool operator==(const file_range& fr) const
+	{
+		return r == fr.r && file == fr.file;
+	}
+	range r;
+	std::string file;
+};
+
 struct PARSER_LIBRARY_EXPORT location
 {
 	location() {}

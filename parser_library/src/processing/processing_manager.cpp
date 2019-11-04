@@ -7,6 +7,7 @@
 #include "macro_statement_provider.h"
 #include "copy_statement_provider.h"
 #include "../parser_impl.h"
+#include "../ebcdic_encoding.h"
 
 #include <assert.h>
 
@@ -64,6 +65,8 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 		
 		prov.process_next(proc);
 	}
+	if (!cancel || !*cancel)
+		add_ord_sym_defs();
 }
 
 statement_provider& processing_manager::find_provider()
@@ -218,6 +221,74 @@ void processing_manager::perform_opencode_jump(context::source_position statemen
 	opencode_prov_.rewind_input(statement_position);
 
 	hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
+}
+
+void hlasm_plugin::parser_library::processing::processing_manager::add_ord_sym_defs()
+{
+	// for all collected ordinary symbol definitions
+	for (const auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_defs)
+	{
+		auto definition = occurence;
+		// symbol not in ordinary context, skip it
+		if (!create_sym_def(definition))
+			continue;
+
+		definition.definition_range = occurence.definition_range;
+		//add itself
+		hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { definition.definition_range,definition.file_name } });
+		// adds all its occurences
+		for (const auto& deferred_sym : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
+			if (deferred_sym == occurence)
+				hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { deferred_sym.definition_range,deferred_sym.file_name } });
+		hlasm_ctx_.lsp_ctx->deferred_ord_occs.erase(std::remove(hlasm_ctx_.lsp_ctx->deferred_ord_occs.begin(), hlasm_ctx_.lsp_ctx->deferred_ord_occs.end(), occurence), hlasm_ctx_.lsp_ctx->deferred_ord_occs.end());
+	}
+
+	// if there are still some symbols in occurences, check if they are defined in context
+	for (const auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
+	{
+		auto definition = occurence;
+		// symbol not in ordinary context, skip it
+		if (!create_sym_def(definition))
+			continue;
+		hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { occurence.definition_range,occurence.file_name } });
+	}
+}
+
+bool hlasm_plugin::parser_library::processing::processing_manager::create_sym_def(context::definition & definition)
+{
+	// get the symbol id
+	auto id = hlasm_ctx_.ids().find(definition.name);
+	// get the definition from the ordinary context
+	auto symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
+	if (symbol)
+	{
+		//set file range
+		definition.definition_range = { symbol->symbol_location.pos,symbol->symbol_location.pos };
+		definition.file_name = symbol->symbol_location.file;
+		// extract its value
+		auto val = symbol->value();
+		if (val.value_kind() == context::symbol_value_kind::ABS)
+		{
+			definition.value = { std::to_string(val.get_abs()) };
+			definition.value.push_back("Absolute Symbol");
+		}
+		else if (val.value_kind() == context::symbol_value_kind::RELOC)
+		{
+			definition.value = { val.get_reloc().to_string() };
+			definition.value.push_back("Relocatable Symbol");
+		}
+		//extract its attributes
+		if (symbol->attributes().is_defined(context::data_attr_kind::L))
+			definition.value.push_back("L: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::L)));
+		if (symbol->attributes().is_defined(context::data_attr_kind::I))
+			definition.value.push_back("I: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::I)));
+		if (symbol->attributes().is_defined(context::data_attr_kind::S))
+			definition.value.push_back("S: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::S)));
+		if (symbol->attributes().is_defined(context::data_attr_kind::T))
+			definition.value.push_back("T: " + ebcdic_encoding::to_ascii((unsigned char)symbol->attributes().get_attribute_value(context::data_attr_kind::T)));
+		return true;
+	}
+	return false;
 }
 
 attribute_provider::resolved_reference_storage processing_manager::lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)

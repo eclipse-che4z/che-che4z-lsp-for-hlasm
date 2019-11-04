@@ -52,6 +52,21 @@ void space::remove_listener(address* addr)
 	listeners_.erase(it);
 }
 
+std::string hlasm_plugin::parser_library::context::address::to_string() const
+{
+	std::stringstream ss;
+	for (const auto& b : bases)
+	{
+		if (*b.first.owner->name == "" || b.second == 0)
+			continue;
+		if (b.second > 1)
+			ss << b.second << "*";
+		ss << *b.first.owner->name << " + ";
+	}
+	ss << std::to_string(offset);
+	return ss.str();
+}
+
 address::address(base address_base, int offset, const space_storage& spaces)
 	: offset(offset)
 {

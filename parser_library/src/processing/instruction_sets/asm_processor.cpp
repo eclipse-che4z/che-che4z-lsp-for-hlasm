@@ -19,7 +19,9 @@ void asm_processor::process_sect(const context::section_kind kind,rebuilt_statem
 	}
 	else
 	{
-		hlasm_ctx.ord_ctx.set_section(sect_name, kind);
+		auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+		sym_loc.pos.column = 0;
+		hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc));
 	}
 	check(stmt,hlasm_ctx,checker_,*this);
 }
@@ -37,7 +39,9 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 	}
 	else
 	{
-		hlasm_ctx.ord_ctx.set_location_counter(loctr_name);
+		auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+		sym_loc.pos.column = 0;
+		hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc));
 	}
 	check(stmt, hlasm_ctx, checker_, *this);
 }

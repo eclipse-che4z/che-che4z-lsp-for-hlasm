@@ -6,6 +6,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <sstream>
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -51,6 +52,8 @@ struct address
 	{
 		const section* owner;
 	};
+
+	std::string to_string() const;
 
 	using space_entry = std::pair<space_ptr, int>;
 	using base_entry = std::pair<base, int>;
