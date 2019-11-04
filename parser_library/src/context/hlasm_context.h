@@ -109,7 +109,10 @@ public:
 	ordinary_assembly_context ord_ctx;
 	//field that accessed LSP context
 	lsp_ctx_ptr lsp_ctx;
+	//performance metrics
+	performance_metrics metrics;
 
+	void fill_metrics_files();
 	//return map of global set vars
 	const code_scope::set_sym_storage& globals() const;
 

@@ -34,7 +34,6 @@ public:
 	virtual void did_open_file(const std::string & document_uri, version_t version, std::string text) = 0;
 	virtual void did_change_file(const std::string & document_uri, version_t version, const document_change * changes, size_t ch_size) = 0;
 	virtual void did_close_file(const std::string & document_uri) = 0;
-
 };
 
 }

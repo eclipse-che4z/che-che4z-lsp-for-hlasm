@@ -63,6 +63,8 @@ public:
 
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
+		// only on open
+		notify_performance_consumers(document_uri);
 	}
 	void did_change_file(const std::string document_uri, version_t version, const document_change * changes, size_t ch_size)
 	{
@@ -105,7 +107,12 @@ public:
 	{
 		diag_consumers_.push_back(consumer);
 	}
-	
+
+	void register_performance_metrics_consumer(performance_metrics_consumer* consumer)
+	{
+		metrics_consumers_.push_back(consumer);
+	}
+
 	semantics::position_uri_s found_position;
 	position_uri definition(std::string document_uri, const position pos)
 	{
@@ -300,6 +307,20 @@ private:
 		}
 	}
 
+	void notify_performance_consumers(const std::string& document_uri)
+	{
+		auto file = file_manager_.find(document_uri);
+		auto proc_file = dynamic_cast<processor_file*>(file.get());
+		if (proc_file)
+		{
+			auto metrics = proc_file->get_metrics();
+			for (auto consumer : metrics_consumers_)
+			{
+				consumer->consume_performance_metrics(metrics);
+			}
+		}
+	}
+
 	size_t prefix_match(const std::string & first, const std::string & second)
 	{
 		size_t match = 0;
@@ -342,7 +363,7 @@ private:
 
 	std::vector<highlighting_consumer *> hl_consumers_;
 	std::vector<diagnostics_consumer *> diag_consumers_;
-
+	std::vector<performance_metrics_consumer*> metrics_consumers_;
 };
 }
 

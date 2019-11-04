@@ -30,6 +30,12 @@ public:
 	virtual ~diagnostics_consumer() {};
 };
 
+class PARSER_LIBRARY_EXPORT performance_metrics_consumer
+{
+public:
+	virtual void consume_performance_metrics(const performance_metrics& metrics) = 0;
+};
+
 class PARSER_LIBRARY_EXPORT debug_event_consumer
 {
 public:
@@ -73,6 +79,7 @@ public:
 	
 	virtual void register_highlighting_consumer(highlighting_consumer * consumer);
 	virtual void register_diagnostics_consumer(diagnostics_consumer * consumer);
+	virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
 	
 
 	//debugger

@@ -15,8 +15,8 @@ analyzer::analyzer(
 	hlasm_ctx_(own_ctx ? context::ctx_ptr(hlasm_ctx) : nullptr), hlasm_ctx_ref_(*hlasm_ctx),
 	listener_(file_name), 
 	lsp_proc_(file_name, text, hlasm_ctx_ref_.lsp_ctx),
-	input_(text), lexer_(&input_, &lsp_proc_), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
-	mngr_(std::unique_ptr<processing::opencode_provider>(parser_), hlasm_ctx_ref_, data, lib_provider,*parser_, tracer)
+	input_(text), lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
+	mngr_(std::unique_ptr<processing::opencode_provider>(parser_), hlasm_ctx_ref_, data, lib_provider,*parser_,tracer)
 {
 	parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_);
 	parser_->setErrorHandler(std::make_shared<error_strategy>());
@@ -64,5 +64,11 @@ void analyzer::collect_diags() const
 {
 	collect_diags_from_child(mngr_);
 	collect_diags_from_child(listener_);
+}
+
+const performance_metrics& analyzer::get_metrics()
+{
+	hlasm_ctx_ref_.fill_metrics_files();
+	return hlasm_ctx_ref_.metrics;
 }
 

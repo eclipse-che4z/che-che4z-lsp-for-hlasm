@@ -41,7 +41,6 @@ public:
 		processing::processing_status status) override;
 
 	void collect_diags() const override;
-
 	std::vector<antlr4::ParserRuleContext*> tree;
 protected:
 	void enable_continuation();

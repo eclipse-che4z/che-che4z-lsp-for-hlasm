@@ -43,7 +43,7 @@ public:
 	void analyze(std::atomic<bool>* cancel = nullptr);
 
 	void collect_diags() const override;
-
+	const performance_metrics& get_metrics();
 private:
 	analyzer(
 		const std::string& text, 

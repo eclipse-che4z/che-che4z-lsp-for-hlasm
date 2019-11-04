@@ -9,7 +9,6 @@
 #include "processing/statement.h"
 #include "processing/context_manager.h"
 
-
 using namespace hlasm_plugin::parser_library;
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
@@ -61,6 +60,7 @@ context::source_position parser_impl::statement_end() const
 std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
 	context::hlasm_context* hlasm_ctx, std::string field, bool after_substitution, semantics::range_provider field_range, processing::processing_status status)
 {
+	hlasm_ctx->metrics.reparsed_statements++;
 	parser_holder h;
 
 	std::optional<std::string> sub;
@@ -69,7 +69,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
 
 	h.input = std::make_unique<input_source>(std::move(field));
-	h.lex = std::make_unique<lexer>(h.input.get(), nullptr);
+	h.lex = std::make_unique<lexer>(h.input.get(), nullptr,&hlasm_ctx->metrics);
 	h.stream = std::make_unique<token_stream>(h.lex.get());
 	h.parser = std::make_unique<generated::hlasmparser>(h.stream.get());
 
@@ -210,22 +210,28 @@ void parser_impl::process_statement()
 
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
 	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
-
-	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
-	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
-
 	context::unique_stmt_ptr ptr;
 
+	range statement_range;
 	if (!hint)
 	{
 		ptr = std::make_unique< processing::resolved_statement_impl>(std::move(std::get<semantics::statement_si>(stmt)), proc_status.value().second);
+		statement_range = dynamic_cast<processing::resolved_statement_impl*>(ptr.get())->stmt_range_ref();
 	}
 	else
 	{
 		assert(std::holds_alternative<semantics::statement_si_deferred>(stmt));
 		ptr = std::make_unique< semantics::statement_si_deferred>(std::move(std::get<semantics::statement_si_deferred>(stmt)));
+		statement_range = dynamic_cast<semantics::statement_si_deferred*>(ptr.get())->deferred_range_ref();
 	}
+
+	if (statement_range.start.line < statement_range.end.line)
+		ctx->metrics.continued_statements++;
+	else
+		ctx->metrics.non_continued_statements++;
 	
+	lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
+	lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
 	collector.prepare_for_next_statement();
 
 	processor->process_statement(std::move(ptr));

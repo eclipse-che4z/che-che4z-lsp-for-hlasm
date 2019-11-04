@@ -7,8 +7,6 @@ import { ASMSemanticHighlightingFeature } from './ASMsemanticHighlighting'
 import * as fork from 'child_process'
 const useTcp = false;
 
-
-
 /**
  * ACTIVATION
  *  this method is called when your extension is activate
@@ -216,7 +214,6 @@ function insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, tex
     } 
 }
 
-
 // insert continuation to the current line
 vscode.commands.registerTextEditorCommand("insertContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
     if (!vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
@@ -245,6 +242,7 @@ vscode.commands.registerTextEditorCommand("insertContinuation", (editor: vscode.
 vscode.commands.registerTextEditorCommand("removeContinuation", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
     if (!vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
         return;
+
     var info = new LinePositionsInfo(editor,true);
     if (info.currentPosition.line > 0 && highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
         var continuationPosition = new vscode.Position(info.currentPosition.line - 1, info.continuationOffset);

@@ -62,7 +62,34 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 			finish_processor();
 			continue;
 		}
-		
+
+		switch (proc.kind)
+		{
+		case processing_kind::ORDINARY:
+			switch (prov.kind)
+			{
+			case statement_provider_kind::COPY:
+				hlasm_ctx_.metrics.copy_statements++;
+				break;
+			case statement_provider_kind::OPEN:
+				hlasm_ctx_.metrics.open_code_statements++;
+				break;
+			case statement_provider_kind::MACRO:
+				hlasm_ctx_.metrics.macro_statements++;
+				break;
+			}
+			break;
+		case processing_kind::LOOKAHEAD:
+			hlasm_ctx_.metrics.lookahead_statements++;
+			break;
+		case processing_kind::COPY:
+			hlasm_ctx_.metrics.copy_def_statements++;
+			break;
+		case processing_kind::MACRO:
+			hlasm_ctx_.metrics.macro_def_statements++;
+			break;
+		}
+
 		prov.process_next(proc);
 	}
 	if (!cancel || !*cancel)

@@ -1,5 +1,7 @@
 #include "gmock/gmock.h"
 
+#include "benchmark_test.h"
+
 #include "data_definition_scale_test.h"
 #include "data_definition_integer_test.h"
 #include "debugger_test.h"

@@ -3,6 +3,7 @@
 
 #include "processor_file_impl.h"
 #include "file.h"
+
 namespace hlasm_plugin::parser_library {
 
 processor_file_impl::processor_file_impl(std::string file_name, std::atomic<bool>* cancel) :
@@ -97,6 +98,11 @@ const semantics::lsp_info_processor processor_file_impl::get_lsp_info()
 const std::set<std::string>& processor_file_impl::files_to_close()
 {
 	return files_to_close_;
+}
+
+const performance_metrics& processor_file_impl::get_metrics()
+{
+	return analyzer_->get_metrics();
 }
 
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)

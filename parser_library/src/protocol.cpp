@@ -136,9 +136,6 @@ size_t diagnostic::related_info_size()
 	return impl_.related.size();
 }
 
-
-
-
 //*********************** file_higlighting_info *****************
 file_highlighting_info::file_highlighting_info(semantics::highlighting_info & info) :info(info) {}
 

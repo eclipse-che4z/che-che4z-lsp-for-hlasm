@@ -82,7 +82,10 @@ void workspace_manager::register_diagnostics_consumer(diagnostics_consumer * con
 	impl_->register_diagnostics_consumer(consumer);
 }
 
-
+void workspace_manager::register_performance_metrics_consumer(performance_metrics_consumer* consumer)
+{
+	impl_->register_performance_metrics_consumer(consumer);
+}
 position_uri workspace_manager::definition(const char * document_uri, const position pos)
 {
 	return impl_->definition(document_uri, pos);

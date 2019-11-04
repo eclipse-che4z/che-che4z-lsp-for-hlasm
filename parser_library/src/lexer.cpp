@@ -5,15 +5,14 @@
 #include <string>
 #include <assert.h>
 
-
 using namespace antlr4;
 using namespace std;
 
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc)
-	: input_(input), lsp_proc_(lsp_proc)
+lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc,performance_metrics* metrics)
+	: input_(input), lsp_proc_(lsp_proc),metrics_(metrics)
 {
 	factory_ = std::make_unique<token_factory>();
 	ainsert_stream_ = make_unique<input_source>("");
@@ -206,6 +205,8 @@ void lexer::consume()
 {
 	if (input_state_->c == '\n')
 	{
+		if (metrics_)
+			metrics_->lines++;
 		input_state_->line++;
 		input_state_->char_position_in_line = static_cast<size_t>(-1);
 		input_state_->char_position_in_line_utf16 = static_cast<size_t>(-1);

@@ -30,6 +30,7 @@ public:
 	virtual const file_highlighting_info get_hl_info() override;
 	virtual const semantics::lsp_info_processor get_lsp_info() override;
 	virtual const std::set<std::string>& files_to_close() override;
+	virtual const performance_metrics& get_metrics() override;
 
 private:
 	std::unique_ptr<analyzer> analyzer_;

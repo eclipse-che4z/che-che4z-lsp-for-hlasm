@@ -5,43 +5,7 @@
 #include "../src/analyzer.h"
 #include "../src/context/instruction.h"
 
-constexpr const char* MACRO_FILE = "MAC";
-constexpr const char* SOURCE_FILE = "OPEN";
-constexpr const char* COPY_FILE = "COPYFILE";
-
 using namespace hlasm_plugin::parser_library;
-
-class mock_parse_lib_provider : public parse_lib_provider
-{
-public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
-	{
-		if (data.proc_kind == processing::processing_kind::MACRO)
-		{
-			analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);
-			a.analyze();
-		}
-		else
-		{
-			analyzer a(copy_contents, COPY_FILE, hlasm_ctx, *this, data);
-			a.analyze();
-		}
-
-		return true;
-	}
-	virtual bool has_library(const std::string& , context::hlasm_context& ) const override { return true; }
-private:
-	const std::string macro_contents =
-R"(   MACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-
-	const std::string copy_contents =
-		R"(R2 EQU 2
-			LR R2,R2)";
-};
 
 class lsp_features_test : public testing::Test
 {

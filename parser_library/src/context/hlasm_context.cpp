@@ -68,6 +68,7 @@ hlasm_context::hlasm_context(std::string file_name)
 	: instruction_map_(init_instruction_map()), SYSNDX_(0), ord_ctx(ids_), lsp_ctx(std::make_shared<lsp_context>())
 {
 	scope_stack_.emplace_back();
+	visited_files_.insert(file_name);
 	source_stack_.emplace_back(std::move(file_name));
 	proc_stack_.emplace_back(processing::processing_kind::ORDINARY, true);
 }
@@ -166,6 +167,13 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 		for (auto& nest : entry.copy_stack) ret.push_back(nest.name);
 
 	return ret;
+}
+
+void hlasm_plugin::parser_library::context::hlasm_context::fill_metrics_files()
+{
+	metrics.files = visited_files_.size();
+	// for each line without '\n' at the end of the files
+	metrics.lines += metrics.files;
 }
 
 const code_scope::set_sym_storage& hlasm_context::globals() const
@@ -440,6 +448,9 @@ macro_invo_ptr hlasm_context::this_macro() const
 
 const std::string& hlasm_context::opencode_file_name() const
 {
+	if (source_stack_.empty())
+		return "";
+
 	return source_stack_.front().source_status.file;
 }
 

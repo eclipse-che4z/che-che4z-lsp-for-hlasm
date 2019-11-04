@@ -25,7 +25,7 @@ namespace hlasm_plugin {
 		{
 		public:
 			struct stream_position { size_t line; size_t offset; };
-			lexer(input_source*,semantics::lsp_info_processor * lsp_proc);
+			lexer(input_source*,semantics::lsp_info_processor * lsp_proc,performance_metrics* metrics = nullptr);
 
 			lexer(const lexer &) = delete;
 			lexer& operator=(const lexer&) = delete;
@@ -96,6 +96,7 @@ namespace hlasm_plugin {
 			bool eof_generated() const;
 			stream_position last_lln_begin_position() const;
 			stream_position last_lln_end_position() const;
+
 		protected:
 			void create_token(size_t ttype, size_t channel);
 			void consume();
@@ -138,6 +139,7 @@ namespace hlasm_plugin {
 			std::unique_ptr<token_factory> factory_;
 			antlr4::CharStream* input_;
 			semantics::lsp_info_processor* lsp_proc_;
+			performance_metrics* metrics_;
 
 			struct input_state
 			{

@@ -155,6 +155,20 @@ private:
 
 };
 
+struct PARSER_LIBRARY_EXPORT performance_metrics
+{
+	size_t lines = 0;
+	size_t macro_def_statements = 0;
+	size_t macro_statements = 0;
+	size_t open_code_statements = 0;
+	size_t copy_def_statements = 0;
+	size_t copy_statements = 0;
+	size_t reparsed_statements = 0;
+	size_t lookahead_statements = 0;
+	size_t continued_statements = 0;
+	size_t non_continued_statements = 0;
+	size_t files = 0;
+};
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list
 {
