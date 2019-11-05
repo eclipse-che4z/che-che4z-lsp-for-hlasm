@@ -377,11 +377,13 @@ public:
 };
 
 #ifdef _WIN32
-std::string faulty_macro_path = "lib\\ERROR";
-std::string correct_macro_path = "lib\\CORRECT";
+constexpr const char * faulty_macro_path = "lib\\ERROR";
+constexpr const char* correct_macro_path = "lib\\CORRECT";
+std::string hlasmplugin_folder = ".hlasmplugin\\";
 #else
-std::string faulty_macro_path = "lib/ERROR";
-std::string correct_macro_path = "lib/CORRECT";
+constexpr const char* faulty_macro_path = "lib/ERROR";
+constexpr const char* correct_macro_path = "lib/CORRECT";
+std::string hlasmplugin_folder = ".hlasmplugin/";
 #endif // _WIN32
 
 class file_manager_extended : public file_manager_impl
@@ -389,8 +391,8 @@ class file_manager_extended : public file_manager_impl
 public:
 	file_manager_extended()
 	{
-		files_.emplace("proc_grps.json", std::make_unique<file_with_text>("proc_grps.json", pgroups_file));
-		files_.emplace("pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
+		files_.emplace(hlasmplugin_folder + "proc_grps.json", std::make_unique<file_with_text>("proc_grps.json", pgroups_file));
+		files_.emplace(hlasmplugin_folder + "pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
 		files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file));
 		files_.emplace("source2", std::make_unique<file_with_text>("source2", source_using_macro_file));
 		files_.emplace("source3", std::make_unique<file_with_text>("source3", source_using_macro_file_no_error));

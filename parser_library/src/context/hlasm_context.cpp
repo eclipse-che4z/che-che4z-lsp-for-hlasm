@@ -448,8 +448,7 @@ macro_invo_ptr hlasm_context::this_macro() const
 
 const std::string& hlasm_context::opencode_file_name() const
 {
-	if (source_stack_.empty())
-		return "";
+	assert(!source_stack_.empty());
 
 	return source_stack_.front().source_status.file;
 }

@@ -14,8 +14,8 @@ namespace parser_library {
 workspace::workspace(ws_uri uri, std::string name, file_manager & file_manager)
 	: name_(name), uri_(uri), file_manager_(file_manager), implicit_proc_grp("pg_implicit"), ws_path_(uri)
 {
-	proc_grps_path_ = ws_path_ / FILENAME_PROC_GRPS;
-	pgm_conf_path_ = ws_path_ / FILENAME_PGM_CONF;
+	proc_grps_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS;
+	pgm_conf_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF;
 }
 
 workspace::workspace(ws_uri uri, file_manager & file_manager) : workspace(uri, uri, file_manager)
@@ -215,7 +215,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	using json = nlohmann::json;
 
 	//proc_grps.json parse
-	file_ptr proc_grps_file = file_manager_.add_file((ws_path / FILENAME_PROC_GRPS).string());
+	file_ptr proc_grps_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS).string());
 	
 	if (proc_grps_file->update_and_get_bad())
 		return false;
@@ -226,7 +226,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		proc_grps_json = nlohmann::json::parse(proc_grps_file->get_text());
 		proc_grps_.clear();
 	}
-	catch(nlohmann::json::exception e)
+	catch(const nlohmann::json::exception &)
 	{
 		//could not load proc_grps
 		config_diags_.push_back(diagnostic_s::error_W002(proc_grps_file->get_file_name(), name_));
@@ -262,7 +262,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 
 
 	//pgm_conf.json parse
-	file_ptr pgm_conf_file = file_manager_.add_file((ws_path / FILENAME_PGM_CONF).string());
+	file_ptr pgm_conf_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER /FILENAME_PGM_CONF).string());
 
 	if (pgm_conf_file->update_and_get_bad())
 		return false;
@@ -274,7 +274,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
 		pgm_conf_.clear();
 	}
-	catch (nlohmann::json::exception e)
+	catch (const nlohmann::json::exception &)
 	{
 		config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
 		return false;

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import * as path from 'path'
 import * as Net from 'net';
 import { ASMSemanticHighlightingFeature } from './ASMsemanticHighlighting'
 import * as fork from 'child_process'
+import * as fs from 'fs'
 const useTcp = false;
 
 /**
@@ -56,8 +56,8 @@ export function activate(context: vscode.ExtensionContext) {
         var serverOptions: vscodelc.ServerOptions = server;
     }
     const filePattern: string = '**/*'
-    const configPattern: string = '**/{' + ['proc_grps.json', 'pgm_conf.json'].join() + '}';
-    
+    const configPattern: string = '**/{' + [path.join('.hlasmplugin','proc_grps.json'), path.join('.hlasmplugin','pgm_conf.json')].join() + '}';
+
     const clientOptions: vscodelc.LanguageClientOptions = {
         documentSelector: [{ language:'hlasm'}, {pattern:configPattern}],
         synchronize: !syncFileEvents ? undefined : {
@@ -77,9 +77,13 @@ export function activate(context: vscode.ExtensionContext) {
     hlasmpluginClient.registerFeature(highlight);
     console.log('Hlasmplugin Language Server is now active!');
 
-    //first run, set the language if possible
-    if (vscode.window.activeTextEditor != undefined)
-        setHlasmLanguage(vscode.window.activeTextEditor.document);
+    // register highlight progress
+    context.subscriptions.push(highlight.progress);
+
+    //first run, set the language if possible and configs 
+    editorChanged(vscode.window.activeTextEditor);
+    if (vscode.window.activeTextEditor)
+        highlight.showProgress(vscode.window.activeTextEditor.document);
 
     // vscode/theia compatibility temporary fix
     // theia uses monaco commands
@@ -346,6 +350,15 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
     })
 }
 
+// when contents of a document change, show parse progress
+vscode.workspace.onDidChangeTextDocument(event => {
+    highlight.showProgress(event.document);
+})
+// when document opens, show parse progress
+vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
+    highlight.showProgress(document);
+})
+
 vscode.workspace.onDidChangeConfiguration(event =>
 {
     if (event.affectsConfiguration("hlasmplugin.continuationHandling"))
@@ -367,49 +380,118 @@ vscode.window.onDidChangeVisibleTextEditors((editors: vscode.TextEditor[]) => {
 const referenceInstructions =new RegExp("( |\\t)+(ICTL|\\*PROCESS|END|COND|IC|ICM|L|LA|LCR|LH|LHI|LM|LNR|LPR|LR|LTR|MVC|MVCL|MVI|ST|STC|STCM|STH|STM|A|AH|AHI|AL|ALR|AR|C|CH|CR|D|DR|M|MH|MHI|MR|S|SH|SL|SLR|SR|CL|CLC|CLCL|CLI|CLM|CLR|N|NC|NI|NR|O|OC|OI|OR|SLA|SLDA|SLDL|SLDA|SLL|SRA|SRDA|SRDL|SRL|TM|X|XC|XI|XR|BAL|BALR|BAS|BASR|BC|BCR|BCT|BCTR|BXH|BXLE|AP|CP|CVB|CVD|DP|ED|EDMK|MP|MVN|MVO|MVZ|PACK|SP|SRP|UNPK|ZAP|CDS|CS|EX|STCK|SVC|TR|TRT|TS|B|J|NOP|BE|BNE|BL|BNL|BH|BHL|BZ|BNZ|BM|BNM|AMODE|CSECT|DC|DS|DSECT|DROP|EJECT|END|EQU|LTORG|ORG|POP|PRINT|PUSH|RMODE|SPACE|USING|TITLE|BP|BNP|BO|BNO|ABEND|CALL|CLOSE|DCB|GET|OPEN|PUT|RETURN|SAVE|STORAGE|COPY|GBLC|GBLB|SETA|SETB|SETC)( |\\t)+");
 const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
 
+// should the configs be checked
+var configs = true;
+function editorChanged(editor: vscode.TextEditor)
+{
+    if (editor)
+    {
+        setHlasmLanguage(editor.document);
+        if (editor.document.languageId == 'hlasm' && vscode.workspace.workspaceFolders && configs)
+            checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    }
+}
+
 // when active editor changes, try to set a language for it
 vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
 {
-    if (editor != null)
-        setHlasmLanguage(editor.document);
+    editorChanged(editor);
 })
+
+function checkHlasmLanguage(text: string)
+{
+    if (text.length == 0)
+        return false;
+
+    var score = 0;
+    var lines = 0;
+    var lastContinued = false;
+    //iterate line by line
+    var split = text.split('\n');
+    //check whether the first line is MACRO and immediately set to hlasm
+    if (macroInstruction.test(split[0].toUpperCase()))
+        return true;
+    
+    split.forEach(line => {
+        // irrelevant line, remove from total count comments starting "*" and ".*"
+        if (line != "" && !line.startsWith("*") && !line.startsWith(".*")) {
+            lines++;
+            //test if line contains reference instruction
+            if ((referenceInstructions.test(line.toUpperCase()) || lastContinued) && line.length <= 80) {
+                score++;
+                // naive continuation check
+                if (line.length > 71 && line[71] != " ")
+                    lastContinued = true;
+                else
+                    lastContinued = false;
+            }
+        }
+    });
+    //final score is the ratio between instruction line and all document lines
+    return score/lines > 0.4;
+}
 
 //automatic detection function
 function setHlasmLanguage(document: vscode.TextDocument) {
     if (document.languageId == 'plaintext') {
-        var score = 0;
-        var lines = 0;
-        var lastContinued = false;
-        var first = true;
-        //iterate line by line
-        document.getText().split('\n').forEach(line => {
-            // irrelevant line, remove from total count comments starting "*" and ".*"
-            if (line != "" && !line.startsWith("*") && !line.startsWith(".*")) {
-                lines++;
-                if (first)
+        if (checkHlasmLanguage)
+            vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+    }
+}
+
+/**
+ * Checks whether both config files are present
+ * Creates them on demand if not
+ */
+function checkConfigs(folderUri: string)
+{
+    let folderPath = path.join(folderUri,'.hlasmplugin')
+    // create folder .hlasmplugin if does not exist
+    if (!fs.existsSync(folderPath))
+        fs.mkdirSync(folderPath);
+
+    let doNotShowAgain = 'Do not show again';
+    // give option to create proc_grps
+    let proc_grps_path = path.join(folderPath,'proc_grps.json');
+    if (!fs.existsSync(proc_grps_path))
+    {
+        vscode.window.showWarningMessage('proc_grps.json not found', ...['Create empty proc_grps.json',doNotShowAgain]).then((selection) => {
+            if (selection)
+            {
+                if (selection == doNotShowAgain)
                 {
-                    //check whether the first line is MACRO and immediately set to hlasm
-                    if (macroInstruction.test(line.toUpperCase()))
-                    {
-                        vscode.languages.setTextDocumentLanguage(document, 'hlasm');
-                        return;
-                    }
-                    else
-                        first = false;
+                    configs = false;
+                    return;
                 }
-                //test if line contains reference instruction
-                if ((referenceInstructions.test(line.toUpperCase()) || lastContinued) && line.length <= 80) {
-                    score++;
-                    // naive continuation check
-                    if (line.length > 71 && line[71] != " ")
-                        lastContinued = true;
-                    else
-                        lastContinued = false;
-                }
+
+                fs.writeFile(proc_grps_path,JSON.stringify(
+                    {"pgroups":[{"name": "","libs": [""]}]}
+                    ,null,2),()=> {});
+                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(proc_grps_path));
             }
         });
-        //final score is the ratio between instruction line and all document lines
-        if (score/lines > 0.4)
-            vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+    }
+
+    let pgm_conf_path = path.join(folderPath,'pgm_conf.json');
+    if (!fs.existsSync(pgm_conf_path))
+    {
+        vscode.window.showWarningMessage('pgm_conf.json not found', ...['Create empty pgm_conf.json','Create pgm_conf.json with this file',doNotShowAgain]).then((selection) => {
+            if (selection)
+            {
+                if (selection == doNotShowAgain)
+                {
+                    configs = false;
+                    return;
+                }
+
+                var program_name = "";
+                if (selection == "Create pgm_conf.json with this file")
+                    program_name = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
+                fs.writeFile(pgm_conf_path,JSON.stringify(
+                    {"pgms":[{"program": program_name,"pgroup": ""}]}
+                    ,null,2),()=> {});
+                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(pgm_conf_path));
+            }
+        });
     }
 }

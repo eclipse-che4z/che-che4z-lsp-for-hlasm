@@ -46,6 +46,16 @@
     "package": "vsce package"
   },
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "pgm_conf.json",
+        "url": "./pgm_conf_schema"
+      },
+      {
+        "fileMatch": "proc_grps.json",
+        "url": "./proc_grps_schema"
+      }
+    ],
     "breakpoints": [
       {
         "language": "hlasm"

@@ -3,18 +3,27 @@
 #include <cstdlib>
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <time.h>
-
+#include <filesystem>
 #include "logger.h"
 
 using namespace std;
 using namespace hlasm_plugin::language_server;
 
-const string logFileName = "hlasmplugin.log";
+
+constexpr const char* logFolder = ".hlasmplugin";
+#if _WIN32
+	constexpr const char* logFileName = ".hlasmplugin\\hlasmplugin.log";
+#else
+	constexpr const char* logFileName = ".hlasmplugin/hlasmplugin.log";
+#endif
+
 
 logger::logger()
 {
-   file_.open(logFileName.c_str(), ios::out);
-   
+	if (!std::filesystem::is_directory(logFolder) || !std::filesystem::exists(logFolder)) { // Check if src folder exists
+		std::filesystem::create_directory(logFolder); // create src folder
+	}
+   file_.open(logFileName, ios::out);
 }
 
 logger::~logger()
