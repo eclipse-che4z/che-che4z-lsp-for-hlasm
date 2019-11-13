@@ -4,7 +4,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
 source_context::source_context(std::string source_name)
-	: source_status(position(), std::move(source_name)), begin_index(0), end_index(0) {}
+	: current_instruction(position(), std::move(source_name)), begin_index(0), end_index(0), end_line(0) {}
 
 source_snapshot source_context::create_snapshot() const
 {
@@ -16,7 +16,7 @@ source_snapshot source_context::create_snapshot() const
 	if (!copy_frames.empty())
 		--copy_frames.back().statement_offset;
 
-	return source_snapshot{ (size_t)source_status.pos.line,begin_index,end_index,std::move(copy_frames) };
+	return source_snapshot{ current_instruction, begin_index, end_index, end_line, std::move(copy_frames) };
 }
 
 processing_context::processing_context(processing::processing_kind proc_kind, bool owns_source)

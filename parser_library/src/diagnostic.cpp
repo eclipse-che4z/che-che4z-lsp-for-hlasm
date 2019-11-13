@@ -1152,6 +1152,11 @@ diagnostic_op diagnostic_op::error_E066(const range& range)
 	return diagnostic_op(diagnostic_severity::error, "E066", "Illegal attribute reference", range);
 }
 
+diagnostic_op diagnostic_op::error_E067(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E067", "Bad symbol in instruction", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);

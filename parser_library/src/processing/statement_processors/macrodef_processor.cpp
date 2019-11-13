@@ -10,7 +10,8 @@ using namespace hlasm_plugin::parser_library::processing;
 
 macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, processing_state_listener& listener, parse_lib_provider& provider, macrodef_start_data start)
 	: statement_processor(processing_kind::MACRO, hlasm_context),
-	listener_(listener),provider_(provider), start_(std::move(start)), macro_nest_(1), curr_line_(0),
+	listener_(listener),provider_(provider), start_(std::move(start)), 
+	initial_copy_nest_(hlasm_ctx.current_copy_stack().size()), macro_nest_(1), curr_line_(0),
 	expecting_prototype_(true), expecting_MACRO_(start_.is_external), omit_next_(false), finished_flag_(false)
 {
 	result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
@@ -191,7 +192,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 	}
 	else
 	{
-		if (hlasm_ctx.current_copy_stack().empty())
+		if (hlasm_ctx.current_copy_stack().size() - initial_copy_nest_ == 0)
 			curr_outer_position_ = statement.statement_position();
 
 		if (auto res_stmt = statement.access_resolved())
@@ -387,8 +388,9 @@ void macrodef_processor::add_correct_copy_nest()
 {
 	result_.nests.push_back({ location(curr_outer_position_,result_.definition_location.file) });
 
-	for (auto& nest : hlasm_ctx.current_copy_stack())
+	for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
 	{
+		auto& nest = hlasm_ctx.current_copy_stack()[i];
 		auto pos = nest.definition[nest.current_statement]->statement_position();
 		auto loc = location(pos, nest.definition_location.file);
 		result_.nests.back().push_back(std::move(loc));

@@ -70,7 +70,16 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
 	if (!curr_section_)
 		create_private_section();
 
-	bool defined = curr_section_->counter_defined(name);
+	bool defined = false;
+
+	for (const auto& sect : sections_)
+	{
+		if (sect->counter_defined(name))
+		{
+			curr_section_ = sect.get();
+			defined = true;
+		}
+	}
 
 	curr_section_->set_location_counter(name);
 
@@ -98,8 +107,13 @@ bool ordinary_assembly_context::counter_defined(id_index name)
 {
 	if (!curr_section_)
 		create_private_section();
-	
-	return curr_section_->counter_defined(name);
+
+	for (const auto& sect : sections_)
+	{
+		if (sect->counter_defined(name))
+			return true;
+	}
+	return false;
 }
 
 //reserves storage area of specified length and alignment

@@ -18,7 +18,7 @@ lookahead_instruction_statement
 
 
 lookahead_operands_and_remarks
-	: {!ignored()}? SPACE+ lookahead_operand_list (COMMA lookahead_ignored_part)?
+	: {!ignored()}? SPACE+ lookahead_operand_list (COMMA lookahead_ignored_part)? (SPACE remark)?
 	{
 		collector.set_operand_remark_field(
 			std::move($lookahead_operand_list.operands),
@@ -45,7 +45,7 @@ lookahead_instruction
 	: ORDSYMBOL
 	{
 		collector.set_instruction_field(
-			parse_identifier(std::move($ORDSYMBOL->getText()),provider.get_range($ORDSYMBOL)),
+			parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL)),
 			provider.get_range($ORDSYMBOL));
 
 		process_instruction();
@@ -61,7 +61,7 @@ lookahead_label:
 	{
 		collector.set_label_field(provider.get_range($empty.ctx)); 
 	};
-	
+
 empty:;
 
 look_statement

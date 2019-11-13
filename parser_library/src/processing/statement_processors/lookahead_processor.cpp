@@ -165,7 +165,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 		}
 	}
 
-	result_.resolved_refs.emplace_back(
+	result_.resolved_refs.try_emplace(symbol_name,
 		symbol_name, context::symbol_value(),
 		context::symbol_attributes(
 			context::symbol_origin::DAT,
@@ -200,7 +200,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 		scale = value->get_scale_attribute();
 	}
 
-	result_.resolved_refs.emplace_back(
+	result_.resolved_refs.try_emplace(symbol_name,
 		symbol_name, context::symbol_value(),
 		context::symbol_attributes(
 			context::symbol_origin::DAT,
@@ -211,7 +211,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 
 void lookahead_processor::assign_section_attributes(context::id_index symbol_name, const resolved_statement& )
 {
-	result_.resolved_refs.emplace_back(
+	result_.resolved_refs.try_emplace(symbol_name,
 		symbol_name, context::symbol_value(),
 		context::symbol_attributes::make_section_attrs(), 
 		location()
@@ -226,7 +226,7 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
 		context::instruction::machine_instructions.find(mnem_tmp->second.instruction) :
 		context::instruction::machine_instructions.find(*statement.opcode_ref().value);
 
-	result_.resolved_refs.emplace_back(
+	result_.resolved_refs.try_emplace(symbol_name,
 		symbol_name,
 		context::symbol_value(),
 		context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8),
@@ -244,7 +244,7 @@ void lookahead_processor::assign_assembler_attributes(context::id_index symbol_n
 	}
 	else
 	{
-		result_.resolved_refs.emplace_back(
+		result_.resolved_refs.try_emplace(symbol_name,
 			symbol_name, context::symbol_value(),
 			context::symbol_attributes(
 				context::symbol_origin::MACH,
@@ -322,8 +322,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 	if (!valid)
 		return;
 
-	if (!to_find_.erase(id))
-		return;
+	to_find_.erase(id);
 
 	//find attributes
 	//if found ord symbol on CA, macro or undefined instruction, only type attribute is assigned
@@ -333,7 +332,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 	case context::instruction_type::CA:
 	case context::instruction_type::UNDEF:
 	case context::instruction_type::MAC:
-		result_.resolved_refs.emplace_back(
+		result_.resolved_refs.try_emplace(id,
 			id, context::symbol_value(),
 			context::symbol_attributes(
 				context::symbol_origin::MACH,

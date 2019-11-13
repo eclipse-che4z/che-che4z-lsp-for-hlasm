@@ -50,6 +50,12 @@ expr_ptr logic_expression::binary_operation(str_ref o, expr_ref arg2) const
 
 	copy_return_on_error_binary(arg2.get(), logic_expression);
 
+	if (operation_name == "EQ")
+		return make_logic(value_ == val);
+
+	if (operation_name == "NE")
+		return make_logic(value_ != val);
+
 	if (operation_name == "OR")
 		return make_logic(value_ || val);
 

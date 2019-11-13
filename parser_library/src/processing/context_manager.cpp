@@ -8,7 +8,7 @@ using namespace hlasm_plugin::parser_library::processing;
 context_manager::context_manager(context::hlasm_context& hlasm_ctx)
 	: diagnosable_ctx(hlasm_ctx), hlasm_ctx(hlasm_ctx) {}
 
-expressions::expr_ptr context_manager::evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const
+context::SET_t context_manager::evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const
 {
 	expressions::expression_evaluator evaluator(eval_ctx);
 
@@ -16,7 +16,65 @@ expressions::expr_ptr context_manager::evaluate_expression(antlr4::ParserRuleCon
 
 	collect_diags_from_child(evaluator);
 
-	return result;
+	return result->get_set_value();
+}
+
+context::SET_t context_manager::convert(context::SET_t source, context::SET_t_enum target_type, range value_range) const
+{
+	expressions::expr_ptr tmp_e;
+	using namespace context;
+	switch (target_type)
+	{
+	case SET_t_enum::A_TYPE:
+		switch (source.type)
+		{
+		case SET_t_enum::A_TYPE:
+			return source.access_a();
+		case SET_t_enum::B_TYPE:
+				return (int)source.access_b();
+		case SET_t_enum::C_TYPE:
+			tmp_e = expressions::arithmetic_expression::from_string(source.access_c(), false);
+			if (!tmp_e->diag)
+				return tmp_e->get_numeric_value();
+		default:
+			break;
+		}
+	case SET_t_enum::B_TYPE:
+		switch (source.type)
+		{
+		case SET_t_enum::A_TYPE:
+			return (bool)source.access_a();
+		case SET_t_enum::B_TYPE:
+			return source.access_b();
+		case SET_t_enum::C_TYPE:
+			tmp_e = expressions::arithmetic_expression::from_string(source.access_c(), false);
+			if (!tmp_e->diag)
+				return tmp_e->get_numeric_value();
+		default:
+			break;
+		}
+		break;
+	case context::SET_t_enum::C_TYPE:
+		switch (source.type)
+		{
+		case SET_t_enum::A_TYPE:
+			return std::to_string(std::abs(source.access_a()));
+		case SET_t_enum::B_TYPE:
+			return source.access_b() ? std::string("1") : std::string("0");
+		case SET_t_enum::C_TYPE:
+			return std::move(source.access_c());
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	auto diag = error_messages::e001();
+	diag->diag_range = value_range;
+	add_diagnostic(std::move(*diag));
+	return SET_t();
 }
 
 context::id_index context_manager::concatenate(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const
@@ -152,20 +210,18 @@ context_manager::name_result context_manager::try_get_symbol_name(const semantic
 
 context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol, range symbol_range) const
 {
-	if (symbol.empty() || symbol.size() > 63)
+	size_t i;
+	for (i = 0; i < symbol.size(); ++i)
+		if (!lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
+			break;
+
+	if (i==0 || i > 63)
 	{
 		add_diagnostic(diagnostic_op::error_E065(symbol_range));
 		return std::make_pair(false, context::id_storage::empty_id);
 	}
 
-	for (size_t i = 0; i < symbol.size(); ++i)
-		if (!lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
-		{
-			add_diagnostic(diagnostic_op::error_E065(symbol_range));
-			return std::make_pair(false, context::id_storage::empty_id);
-		}
-
-	return std::make_pair(true, hlasm_ctx.ids().add(symbol));
+	return std::make_pair(true, hlasm_ctx.ids().add(symbol.substr(0, i)));
 }
 
 bool context_manager::test_symbol_for_read(context::var_sym_ptr var,const expressions::expr_list& subscript, const range& symbol_range) const

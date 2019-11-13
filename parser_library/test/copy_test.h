@@ -32,6 +32,8 @@ class copy_mock : public parse_lib_provider
 			return &content_COPYND1;
 		else if (library == "COPYND2")
 			return &content_COPYND2;
+		else if (library == "COPYBM")
+			return &content_COPYBM;
 		else
 			return nullptr;
 	}
@@ -145,7 +147,7 @@ private:
 	const std::string content_COPYJ =
 		R"(
  AGO .X
- LR
+ ;%
 .X ANOP
 )";
 	const std::string content_COPYJF =
@@ -165,6 +167,14 @@ private:
 
 
  LR 1,)";
+
+	const std::string content_COPYBM =
+		R"( 
+ MACRO
+ M
+ LR 1
+ MEND
+)";
 };
 
 TEST(copy, copy_enter_fail)
@@ -405,6 +415,33 @@ TEST(copy, nested_macro_copy_call)
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(copy, macro_from_copy_call)
+{
+	std::string input =
+		R"(
+ COPY COPYBM
+ M
+ 
+)";
+	copy_mock mock;
+	analyzer a(input, "start", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
+	ASSERT_EQ(a.context().macros().size(), (size_t)1);
+	auto mac = a.context().macros().find(a.context().ids().add("M"));
+
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+
+	EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)3);
+	EXPECT_EQ(a.diags()[0].file_name, "COPYBM");
+	ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
+	EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)2);
+	EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
+}
+
 TEST(copy, inner_copy_jump)
 {
 	std::string input =
@@ -518,6 +555,26 @@ TEST(copy, macro_nested_diagnostics)
 	EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
 	EXPECT_EQ(a.diags()[0].related[2].location.rang.start.line, (position_t)7);
 	EXPECT_EQ(a.diags()[0].related[2].location.uri, "start");
+}
+
+TEST(copy, copy_call_with_jump_before_comment)
+{
+	std::string input =
+		R"( 
+ COPY COPYJ
+***
+ ANOP
+)";
+	copy_mock mock;
+	analyzer a(input, "start", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
 #endif

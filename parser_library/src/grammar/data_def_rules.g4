@@ -117,8 +117,9 @@ data_def returns [data_definition value]
 	};
 
 data_def_ch returns [std::string value]
-	: IDENTIFIER								{$value = std::move($IDENTIFIER->getText());} 
-	| ORDSYMBOL									{$value = std::move($ORDSYMBOL->getText());}
+	: IDENTIFIER								{$value = $IDENTIFIER->getText();} 
+	| NUM										{$value = $NUM->getText();}
+	| ORDSYMBOL									{$value = $ORDSYMBOL->getText();}
 	| minus										{$value = "-";}
 	| DOT										{$value = ".";};
 

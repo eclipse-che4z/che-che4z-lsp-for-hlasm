@@ -53,6 +53,7 @@ protected:
 	self_def_t parse_self_def_term(const std::string& option, const std::string& value,range term_range);
 	context::data_attr_kind get_attribute(std::string attr_data, range data_range);
 	context::id_index parse_identifier(std::string value, range id_range);
+	void parse_macro_operands(semantics::op_rem& line);
 
 	void process_instruction();
 	void process_statement();
@@ -81,6 +82,8 @@ protected:
 
 private:
 	void initialize(context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat);
+
+	semantics::operand_list parse_macro_operands(std::string operands, range field_range);
 
 	std::vector<parser_holder> parsers_;
 

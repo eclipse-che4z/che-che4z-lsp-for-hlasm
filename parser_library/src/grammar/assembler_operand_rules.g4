@@ -59,4 +59,5 @@ asm_op_comma_c returns [std::vector<std::unique_ptr<complex_assembler_operand::c
 
 end_instr_word returns [std::string value]
 	: ORDSYMBOL															{$value = $ORDSYMBOL->getText();}
-	| IDENTIFIER														{$value = $IDENTIFIER->getText();};
+	| IDENTIFIER														{$value = $IDENTIFIER->getText();}
+	| NUM																{$value = $NUM->getText();};

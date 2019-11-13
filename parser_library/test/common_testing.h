@@ -23,10 +23,10 @@ const size_t size_t_zero = static_cast<size_t>(0);
 
 class empty_attribute_provider : public attribute_provider
 {
-	virtual attribute_provider::resolved_reference_storage
+	virtual const attribute_provider::resolved_reference_storage&
 		lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
 	{
-		return {};
+		return resolved_symbols;
 	}
 };
 

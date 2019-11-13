@@ -490,3 +490,6 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
 }
 
 void string_assembler_operand::collect_diags() const { }
+
+macro_operand_string::macro_operand_string(std::string value, const range operand_range)
+	:operand(operand_type::MAC, operand_range), value(std::move(value)) {}

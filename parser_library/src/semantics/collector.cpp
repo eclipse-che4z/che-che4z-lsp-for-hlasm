@@ -147,6 +147,12 @@ void collector::add_hl_symbol(token_info symbol)
 		hl_symbols_.push_back(std::move(symbol));
 }
 
+void collector::clear_hl_lsp_symbols()
+{
+	lsp_symbols_.clear();
+	hl_symbols_.clear();
+}
+
 void collector::add_operands_hl_symbols()
 {
 	if (!op_)
@@ -168,6 +174,22 @@ void collector::add_remarks_hl_symbols()
 	}
 }
 
+void collector::append_reparsed_symbols(collector&& c)
+{
+	hl_symbols_ = std::move(c.hl_symbols_);
+	
+	size_t i;
+	for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != symbol_type::instruction; ++i);
+
+	if (i != lsp_symbols_.size())
+		while(lsp_symbols_.size() != i + 1)
+			lsp_symbols_.pop_back();
+
+	for (auto& s : c.lsp_symbols_)
+		lsp_symbols_.push_back(std::move(s));
+	
+}
+
 const instruction_si& collector::peek_instruction()
 {
 	return *instr_;
@@ -187,7 +209,7 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
 	if (deferred_hint)
 	{
 		if (!def_)
-			def_.emplace("", default_range);
+			def_.emplace("", instr_->field_range);
 		return statement_si_deferred(
 			range_provider::union_range(lbl_->field_range, def_->second),
 			std::move(*lbl_), std::move(*instr_), std::move(def_.value().first), def_.value().second);
@@ -195,13 +217,13 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
 	else
 	{
 		if (!op_)
-			op_.emplace(default_range, operand_list{});
+			op_.emplace(instr_->field_range, operand_list{});
 
 		//foreach operand substitute null with empty
 		for (size_t i = 0; i < op_->value.size(); i++)
 		{
 			if (!op_->value[i])
-				op_->value[i] = std::make_unique<empty_operand>(default_range);
+				op_->value[i] = std::make_unique<empty_operand>(instr_->field_range);
 		}
 
 		range r = range_provider::union_range(lbl_->field_range, op_->field_range);

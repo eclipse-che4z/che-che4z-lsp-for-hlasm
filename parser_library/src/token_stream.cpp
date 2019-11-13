@@ -68,7 +68,7 @@ antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)
 			i = next_token_on_channel(i + 1);
 	}
 
-	return get(i);
+	return get(next_token_on_channel(i));
 }
 
 std::string hlasm_plugin::parser_library::token_stream::getText(const antlr4::misc::Interval & interval)

@@ -378,6 +378,13 @@ struct macro_operand final : public operand
 	concat_chain chain;
 };
 
+struct macro_operand_string final : public operand
+{
+	macro_operand_string(std::string value, const range operand_range);
+
+	std::string value;
+};
+
 }
 }
 }

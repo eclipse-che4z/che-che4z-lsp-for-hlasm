@@ -29,7 +29,7 @@ TEST(diagnostics, string_substitution)
 {
 	std::string input(
 		R"( 
-&x setc 10
+&x setc '10'
  AINSERT '&x',BACK
 
 &a seta 31

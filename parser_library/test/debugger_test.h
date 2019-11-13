@@ -38,7 +38,7 @@ TEST(debugger, stopped_on_entry)
 	EXPECT_EQ(sc.at(1).name, "Locals");
 	EXPECT_EQ(sc.at(2).name, "Ordinary symbols");
 	auto & globs = d.variables(sc.at(0).var_reference);
-	EXPECT_EQ(globs.size(), 0U);
+	EXPECT_EQ(globs.size(), 4U);
 	auto & locs = d.variables(sc.at(1).var_reference);
 	EXPECT_EQ(locs.size(), 0U);
 	
@@ -66,18 +66,22 @@ using namespace context;
 class test_var_value
 {
 public:
-	test_var_value(std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec) {}
-	test_var_value(A_t str) : data_(std::to_string(str)) {}
-	test_var_value(B_t str) : data_(str ? "TRUE" : "FALSE") {}
-	test_var_value(std::string str) : data_(str) {}
-	test_var_value(std::string str, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), data_(str) {}
-	test_var_value(const char* cstr) : data_(std::string(cstr)) {}
-	test_var_value(const char* cstr, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), data_(std::string(cstr)) {}
+	test_var_value(std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), ignore_(false) {}
+	test_var_value(A_t str) : data_(std::to_string(str)), ignore_(false) {}
+	test_var_value(B_t str) : data_(str ? "TRUE" : "FALSE"), ignore_(false) {}
+	test_var_value(std::string str) : data_(str), ignore_(false) {}
+	test_var_value(std::string str, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), data_(str), ignore_(false) {}
+	test_var_value(const char* cstr) : data_(std::string(cstr)), ignore_(false) {}
+	test_var_value(const char* cstr, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), data_(std::string(cstr)), ignore_(false) {}
+	test_var_value() : ignore_(true) {}
 
 	test_var_value(std::string str, set_type type) : data_(str) {}
 
 	bool check(debugger& d, const debugging::variable & var) const
 	{
+		if (ignore_)
+			return true;
+
 		if(!children_.empty())
 		{
 			if (var.is_scalar())
@@ -109,12 +113,19 @@ public:
 private:
 	std::unordered_map<std::string, std::shared_ptr<test_var_value>> children_;
 	std::optional<std::string> data_;
+	bool ignore_;
 };
 
 struct frame_vars
 {
 	frame_vars(std::unordered_map<std::string, test_var_value> globals, std::unordered_map<std::string, test_var_value> locals, std::unordered_map<std::string, test_var_value> ords) :
-		globals(std::move(globals)), locals(std::move(locals)), ord_syms(std::move(ords)) {}
+		globals(std::move(globals)), locals(std::move(locals)), ord_syms(std::move(ords)) 
+	{
+		this->globals["SYSDATE"];
+		this->globals["SYSDATC"];
+		this->globals["SYSTIME"];
+		this->globals["SYSPARM"];
+	}
 	std::unordered_map<std::string, test_var_value> globals;
 	std::unordered_map<std::string, test_var_value> locals;
 	std::unordered_map<std::string, test_var_value> ord_syms;
@@ -254,6 +265,10 @@ TEST(debugger, test)
 			{ "SYSLIST", test_var_value("(10,13)", list{ { "0", std::make_shared<test_var_value>("10") }, {"1", std::make_shared<test_var_value>("13")}} )},
 			{ "SYSECT", "" },
 			{ "SYSNDX", 0 },
+			{ "SYSSTYP", "" },
+			{ "SYSLOC", "" },
+			{ "SYSNEST", 1 },
+			{ "SYSMAC", test_var_value() },
 			{ "VAR", "13" },
 			},
 		{}//empty ord symbols

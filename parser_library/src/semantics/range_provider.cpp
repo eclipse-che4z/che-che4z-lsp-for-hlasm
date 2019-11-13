@@ -19,8 +19,6 @@ range range_provider::union_range(const range& lhs, const range& rhs)
 
 range range_provider::get_range(const antlr4::Token* start, const antlr4::Token* stop)
 {
-	if (substitute_enabled) return original_range;
-
 	range ret;
 
 	ret.start.line = start->getLine();
@@ -35,8 +33,7 @@ range range_provider::get_range(const antlr4::Token* start, const antlr4::Token*
 	{
 		ret.end = ret.start;
 	}
-
-	return ret;
+	return adjust_range(ret);
 }
 
 range range_provider::get_range(const antlr4::Token* terminal)
@@ -51,15 +48,68 @@ range range_provider::get_range(antlr4::ParserRuleContext* non_terminal)
 
 range range_provider::get_empty_range(const antlr4::Token* start)
 {
-	if (substitute_enabled) return original_range;
-
 	range ret;
 	ret.start.line = start->getLine();
 	ret.start.column = start->getCharPositionInLine();
 	ret.end = ret.start;
-	return ret;
+	return adjust_range(ret);
 }
 
-range_provider::range_provider(range original_original_range, bool enable_substitute)
-	: original_range(original_original_range), substitute_enabled(enable_substitute) {}
+range range_provider::adjust_range(range r)
+{
+	if (state == adjusting_state::MACRO_REPARSE)
+	{
+		auto offset = r.start.column - original_range.start.column;
 
+		auto column_start = original_range.start.column;
+		auto line_start = original_range.start.line;
+
+		while (true)
+		{
+			auto rest = 71 - column_start;
+			if (offset > rest)
+			{
+				offset -= rest;
+				column_start = 15;
+				++line_start;
+			}
+			else
+			{
+				column_start += offset;
+				break;
+			}
+		}
+
+		offset = r.end.column - r.start.column;
+		auto column_end = column_start;
+		auto line_end = line_start;
+
+		while (true)
+		{
+			auto rest = 71 - column_end;
+			if (offset > rest)
+			{
+				offset -= rest;
+				column_end = 15;
+				++line_end;
+			}
+			else
+			{
+				column_end += offset;
+				break;
+			}
+		}
+
+		return range(position(line_start, column_start), position(line_end, column_end));
+	}
+	else if (state == adjusting_state::SUBSTITUTION)
+		return original_range;
+
+	return r;
+}
+
+range_provider::range_provider(range original_original_range, adjusting_state state)
+	: original_range(original_original_range), state(state) {}
+
+range_provider::range_provider()
+	: original_range(), state(adjusting_state::NONE) {}

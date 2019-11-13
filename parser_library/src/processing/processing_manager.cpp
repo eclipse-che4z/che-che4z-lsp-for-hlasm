@@ -18,14 +18,14 @@ processing_manager::processing_manager(
 	std::unique_ptr<opencode_provider> base_provider,
 	context::hlasm_context& hlasm_ctx,
 	const library_data data,
-	parse_lib_provider& lib_provider, 
+	std::string file_name,
+	parse_lib_provider& lib_provider,
 	statement_fields_parser& parser,
 	processing_tracer* tracer)
 	: diagnosable_ctx(hlasm_ctx), hlasm_ctx_(hlasm_ctx), lib_provider_(lib_provider),
 	opencode_prov_(*base_provider), tracer_(tracer)
-	
-{
 
+{
 	switch (data.proc_kind)
 	{
 	case processing_kind::ORDINARY:
@@ -33,10 +33,12 @@ processing_manager::processing_manager(
 		procs_.emplace_back(std::make_unique<ordinary_processor>(hlasm_ctx, *this, *this, lib_provider, *this, parser, tracer_));
 		break;
 	case processing_kind::COPY:
+		hlasm_ctx.push_statement_processing(processing_kind::COPY, std::move(file_name));
 		procs_.emplace_back(std::make_unique<copy_processor>(hlasm_ctx, *this, copy_start_data{ data.library_member }));
 		break;
 	case processing_kind::MACRO:
-		procs_.emplace_back(std::make_unique<macrodef_processor>(hlasm_ctx, *this,lib_provider, macrodef_start_data(data.library_member)));
+		hlasm_ctx.push_statement_processing(processing_kind::MACRO, std::move(file_name));
+		procs_.emplace_back(std::make_unique<macrodef_processor>(hlasm_ctx, *this, lib_provider, macrodef_start_data(data.library_member)));
 		break;
 	default:
 		break;
@@ -121,7 +123,7 @@ void processing_manager::start_macro_definition(const macrodef_start_data start)
 
 void processing_manager::finish_macro_definition(macrodef_processing_result result)
 {
-	if(!result.invalid)
+	if (!result.invalid)
 		hlasm_ctx_.add_macro(
 			result.prototype.macro_name,
 			result.prototype.name_param,
@@ -141,7 +143,7 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 void processing_manager::finish_lookahead(lookahead_processing_result result)
 {
 	if (result.success)
-		jump_in_statements(result.symbol_name,result.symbol_range);
+		jump_in_statements(result.symbol_name, result.symbol_range);
 	else
 	{
 		perform_opencode_jump(result.statement_position, std::move(result.snapshot));
@@ -161,7 +163,7 @@ void processing_manager::start_copy_member(copy_start_data start)
 void processing_manager::finish_copy_member(copy_processing_result result)
 {
 	hlasm_ctx_.add_copy_member(
-		result.member_name, 
+		result.member_name,
 		result.invalid_member ? context::statement_block() : std::move(result.definition),
 		std::move(result.definition_location));
 }
@@ -183,9 +185,9 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
 				symbol_range,
 				std::move(open_symbol->statement_position),
 				std::move(open_symbol->snapshot)
-				));
+			));
 		}
-			
+
 	}
 	else
 	{
@@ -198,7 +200,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
 		{
 			auto opencode_symbol = symbol->access_opencode_symbol();
 
-			perform_opencode_jump(opencode_symbol->statement_position,opencode_symbol->snapshot);
+			perform_opencode_jump(opencode_symbol->statement_position, opencode_symbol->snapshot);
 		}
 
 		hlasm_ctx_.decrement_branch_counter();
@@ -217,7 +219,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
 	{
 		hlasm_ctx_.add_sequence_symbol(std::move(new_symbol));
 	}
-	else if(!(*symbol->access_opencode_symbol() == *new_symbol))
+	else if (!(*symbol->access_opencode_symbol() == *new_symbol))
 	{
 		add_diagnostic(diagnostic_op::error_E045(*target, symbol_range));
 	}
@@ -228,14 +230,17 @@ std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_op
 	auto symbol_pos = symbol_range.start;
 	location loc(symbol_pos, hlasm_ctx_.processing_stack().back().proc_location.file);
 
-	context::source_position statement_position((size_t)hlasm_ctx_.current_source().source_status.pos.line, 0);
+	context::source_position statement_position;
 
 	if (hlasm_ctx_.current_source().copy_stack.empty())
+	{
 		statement_position.file_offset = hlasm_ctx_.current_source().begin_index;
+		statement_position.file_line = (size_t)hlasm_ctx_.current_source().current_instruction.pos.line;
+	}
 	else
 	{
 		statement_position.file_offset = hlasm_ctx_.current_source().end_index;
-		++statement_position.file_line;
+		statement_position.file_line = hlasm_ctx_.current_source().end_line + 1;
 	}
 
 	auto snapshot = hlasm_ctx_.current_source().create_snapshot();
@@ -318,10 +323,17 @@ bool hlasm_plugin::parser_library::processing::processing_manager::create_sym_de
 	return false;
 }
 
-attribute_provider::resolved_reference_storage processing_manager::lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
+const attribute_provider::resolved_reference_storage& processing_manager::lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
 {
 	if (references.empty())
-		return {};
+		return resolved_symbols;
+
+	bool all_resolved = true;
+	for (auto ref : references)
+		all_resolved &= resolved_symbols.find(ref) != resolved_symbols.end();
+
+	if (all_resolved)
+		return resolved_symbols;
 
 	lookahead_processor proc(hlasm_ctx_, *this, *this, lib_provider_, lookahead_start_data(std::move(references)));
 
@@ -330,10 +342,15 @@ attribute_provider::resolved_reference_storage processing_manager::lookup_forwar
 		++snapshot.copy_frames.back().statement_offset;
 
 	context::source_position statement_position(
-		(size_t)hlasm_ctx_.current_source().source_status.pos.line + 1, 
+		(size_t)hlasm_ctx_.current_source().end_line + 1,
 		hlasm_ctx_.current_source().end_index);
 
 	opencode_prov_.push_line_end();
+
+	if(attr_lookahead_stop_)
+		perform_opencode_jump(
+			context::source_position(attr_lookahead_stop_->end_line, attr_lookahead_stop_->end_index), 
+			*attr_lookahead_stop_);
 
 	while (true)
 	{
@@ -349,9 +366,16 @@ attribute_provider::resolved_reference_storage processing_manager::lookup_forwar
 		prov.process_next(proc);
 	}
 
+	attr_lookahead_stop_ = hlasm_ctx_.current_source().create_snapshot();
+
 	perform_opencode_jump(statement_position, std::move(snapshot));
 
-	return proc.collect_found_refereces();
+	auto ret = proc.collect_found_refereces();
+
+	for (auto& sym : ret)
+		resolved_symbols.insert(std::move(sym));
+
+	return resolved_symbols;
 }
 
 void processing_manager::collect_diags() const

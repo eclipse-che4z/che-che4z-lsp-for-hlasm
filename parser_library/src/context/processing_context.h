@@ -11,9 +11,11 @@ namespace context {
 
 struct source_context
 {
-	location source_status;
+	location current_instruction;
+
 	size_t begin_index;
 	size_t end_index;
+	size_t end_line;
 	std::vector<copy_member_invocation> copy_stack;
 
 	source_context(std::string source_name);

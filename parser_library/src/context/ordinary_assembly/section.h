@@ -11,7 +11,7 @@ namespace context {
 
 enum class section_kind
 {
-	DUMMY, COMMON, EXTERNAL, EXECUTABLE, READONLY
+	DUMMY, COMMON, EXECUTABLE, READONLY
 };
 
 

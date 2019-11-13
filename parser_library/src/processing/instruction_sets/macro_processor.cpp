@@ -31,7 +31,7 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
 
 	while (true)
 	{
-		start = data.find_first_of(",()", start);
+		start = data.find_first_of(",'()", start);
 
 		if (start == std::string::npos)
 			return nullptr;
@@ -48,6 +48,15 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
 				if (data[start] == '(') ++nest;
 				if (data[start] == ')') --nest;
 			}
+			++start;
+		}
+		else if (data[start] == '\'')
+		{
+			start = data.find_first_of('\'', start + 1);
+
+			if (start == std::string::npos)
+				return nullptr;
+			
 			++start;
 		}
 		else
@@ -161,7 +170,10 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		break;
 	case semantics::label_si_type::VAR:
 		label_value = std::make_unique<context::macro_param_data_single>(
-			mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(statement.label_ref().value), eval_ctx).to<context::C_t>()
+			mngr.convert_to<context::C_t>(
+				mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(statement.label_ref().value), eval_ctx),
+				std::get<semantics::vs_ptr>(statement.label_ref().value)->symbol_range
+				)
 			);
 		break;
 	default:
@@ -188,9 +200,9 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 
 		if (tmp->chain.size() >= 2 &&
 			tmp->chain[0]->type == semantics::concat_type::STR && tmp->chain[1]->type == semantics::concat_type::EQU
-			&& context_manager(mngr).try_get_symbol_name(tmp->chain[0]->access_str()->value,range()).first)
+			&& context_manager(mngr).try_get_symbol_name(tmp->chain[0]->access_str()->value, range()).first)
 		{
-			auto [valid,id] = mngr.try_get_symbol_name(tmp->chain[0]->access_str()->value,op->operand_range);
+			auto [valid, id] = mngr.try_get_symbol_name(tmp->chain[0]->access_str()->value, op->operand_range);
 			assert(valid);
 			auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
 			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
@@ -220,13 +232,21 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 				tmp->chain.erase(tmp->chain.begin());
 
 				if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-					args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx).to<context::C_t>()),id });
+					args.symbolic_params.push_back({
+						string_to_macrodata(mngr.convert_to<context::C_t>(
+								mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx),
+								tmp->chain.front()->access_var()->symbol_range)),
+						id });
 				else
 					args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx),id });
 			}
 		}
 		else if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-			args.symbolic_params.push_back({ string_to_macrodata(mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx).to<context::C_t>()),nullptr });
+			args.symbolic_params.push_back({
+				string_to_macrodata(mngr.convert_to<context::C_t>(
+						mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx),
+						tmp->chain.front()->access_var()->symbol_range)),
+				nullptr });
 		else
 			args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx) ,nullptr });
 	}

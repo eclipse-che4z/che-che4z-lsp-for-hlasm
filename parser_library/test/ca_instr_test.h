@@ -178,6 +178,30 @@ TEST(var_subs, created_set_sym)
 
 }
 
+TEST(var_subs, instruction_substitution_space_at_end)
+{
+	std::string input("&var setc 'LR '   \n &var 1,1");
+	analyzer a(input);
+	a.analyze();
+
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(var_subs, instruction_substitution_space_in_middle)
+{
+	std::string input("&var setc 'LR 1,1'   \n &var ");
+	analyzer a(input);
+	a.analyze();
+
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+}
+
 TEST(var_concatenation, concatenated_string_dot_last)
 {
 	std::string input("&var setc 'avc'   \n&var2 setc '&var.'");
@@ -343,7 +367,48 @@ TEST(ACTR, infinite_ACTR)
 	ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
-/*
+TEST(SET, conversions_valid)
+{
+	std::string input(R"(
+&A SETA 1
+&B SETB 0
+&C SETC '2'
+
+&A SETA &B
+&A SETA &C
+
+&C SETC '&A'
+&C SETC '&B'
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(SET, conversions_invalid)
+{
+	std::string input(R"(
+&A SETA 1
+&B SETB 0
+&C SETC '2'
+
+&A SETA '1'
+&B SETB '1'
+
+&C SETC &A
+&C SETC &B
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+
+	ASSERT_EQ(a.diags().size(), (size_t)4);
+}
+
 TEST(CA_instructions, undefined_relocatable)
 {
 	std::string input(R"(
@@ -363,4 +428,3 @@ B EQU 1
 
 	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
-*/

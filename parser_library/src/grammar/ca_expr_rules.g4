@@ -94,8 +94,9 @@ subscript returns [std::vector<ParserRuleContext*> value]
 
 
 created_set_body returns [concat_point_ptr point]
-	: ORDSYMBOL												{$point = std::make_unique<char_str>(std::move($ORDSYMBOL->getText()));}
-	| IDENTIFIER											{$point = std::make_unique<char_str>(std::move($IDENTIFIER->getText()));}
+	: ORDSYMBOL												{$point = std::make_unique<char_str>($ORDSYMBOL->getText());}
+	| IDENTIFIER											{$point = std::make_unique<char_str>($IDENTIFIER->getText());}
+	| NUM													{$point = std::make_unique<char_str>($NUM->getText());}
 	| var_symbol											{$point = std::move($var_symbol.vs);}
 	| dot_													{$point = std::make_unique<dot>();};
 
@@ -111,15 +112,27 @@ created_set_symbol returns [vs_ptr vs]
 	| ampersand lpar rpar subscript; 	//empty set symbol err;			
 
 var_symbol returns [vs_ptr vs]
-	: AMPERSAND id_no_dot tmp=subscript								
+	: AMPERSAND vs_id tmp=subscript								
 	{
-		auto id = $id_no_dot.name; 
+		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
 		$vs = std::make_unique<basic_var_sym>(id, std::move($tmp.value), r);
 		collector.add_lsp_symbol({*id,r,symbol_type::var});
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
+
+vs_id_ch_c
+	: (NUM|ORDSYMBOL)+;
+
+vs_id returns [id_index name = id_storage::empty_id]
+	: ORDSYMBOL vs_id_ch_c
+	{
+		std::string tmp($ORDSYMBOL->getText());
+		tmp.append($vs_id_ch_c.ctx->getText());
+		$name = parse_identifier(std::move(tmp),provider.get_range($ORDSYMBOL,$vs_id_ch_c.ctx->getStop()));
+	}
+	| ORDSYMBOL									{$name = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));};
 
 
 

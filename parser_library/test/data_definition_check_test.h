@@ -357,7 +357,7 @@ TEST(data_def_checker, X_correct)
 {
 	data_def_type_X t;
 
-	data_definition_operand op = setup_data_def_op('X', '\0', "ABCDEFabcdef1234567890");
+	data_definition_operand op = setup_data_def_op('X', '\0', " ABCDEFabc def1 234567890 ");
 	op.length = data_def_field(true, 35, range());
 
 	diag_collector col;

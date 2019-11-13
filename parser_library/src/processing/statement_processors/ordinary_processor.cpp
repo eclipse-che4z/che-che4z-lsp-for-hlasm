@@ -27,7 +27,7 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 {
 	context::id_index id;
 	if (instruction.type == semantics::instruction_si_type::CONC)
-		id = context_manager(hlasm_ctx).concatenate(std::get<semantics::concat_chain>(instruction.value),eval_ctx);
+		id = resolve_instruction(std::get<semantics::concat_chain>(instruction.value), instruction.field_range);
 	else
 		id = std::get<context::id_index>(instruction.value);
 
@@ -227,4 +227,26 @@ bool ordinary_processor::check_fatals(range line_range)
 	}
 
 	return false;
+}
+
+context::id_index ordinary_processor::resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const
+{
+	auto tmp = context_manager(hlasm_ctx).concatenate_str(chain, eval_ctx);
+
+	//trimright
+	while (tmp.size() && tmp.back() == ' ')
+		tmp.pop_back();
+
+	//trimleft
+	size_t i;
+	for (i = 0; i < tmp.size() && tmp[i] == ' '; i++);
+	tmp.erase(0U, i);
+
+	if (tmp.find(' ') != std::string::npos)
+	{
+		add_diagnostic(diagnostic_op::error_E067(instruction_range));
+		return context::id_storage::empty_id;
+	}
+
+	return hlasm_ctx.ids().add(std::move(tmp));
 }

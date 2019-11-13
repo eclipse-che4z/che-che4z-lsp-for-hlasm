@@ -10,7 +10,7 @@ namespace hlasm_plugin::parser_library::expressions {
 class expression_evaluator : public generated::hlasmparserBaseVisitor, public diagnosable_ctx
 {
 	evaluation_context eval_ctx_;
-	processing::attribute_provider::resolved_reference_storage resolved_refs_;
+	const processing::attribute_provider::resolved_reference_storage* resolved_refs_;
 public:
 	expression_evaluator(evaluation_context eval_ctx);
 
@@ -44,7 +44,7 @@ private:
 	virtual antlrcpp::Any visitData_attribute(generated::hlasmparser::Data_attributeContext* ctx) override;
 	virtual antlrcpp::Any visitNum(generated::hlasmparser::NumContext* ctx) override;
 
-	context::SET_t get_ord_attr_value(context::data_attr_kind attr, context::symbol* symbol, context::id_index symbol_name, range symbol_range);
+	context::SET_t get_ord_attr_value(context::data_attr_kind attr, const context::symbol* symbol, context::id_index symbol_name, range symbol_range);
 
 	std::string concat(semantics::char_str* str);
 	std::string concat(semantics::var_sym* vs);

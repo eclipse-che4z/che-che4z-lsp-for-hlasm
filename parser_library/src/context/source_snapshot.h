@@ -38,14 +38,15 @@ struct copy_frame
 
 struct source_snapshot
 {
-	size_t line;
+	location instruction;
 	size_t begin_index;
 	size_t end_index;
+	size_t end_line;
 	std::vector<copy_frame> copy_frames;
 
 	bool operator==(const source_snapshot& oth) const
 	{
-		if(!(line == oth.line && begin_index == oth.begin_index
+		if(!(end_line == oth.end_line && begin_index == oth.begin_index
 			&& end_index == oth.end_index && copy_frames.size() == oth.copy_frames.size()))
 			return false;
 

@@ -1,12 +1,9 @@
 parser grammar instruction_field_rules;
 
 instruction returns [id_index instr]
-	: ORDSYMBOL													
+	: l_string_v			/*model*/							
 	{
-		collector.add_lsp_symbol({$ORDSYMBOL->getText(),provider.get_range( $ORDSYMBOL),symbol_type::instruction});
-		collector.set_instruction_field(
-			parse_identifier(std::move($ORDSYMBOL->getText()),provider.get_range($ORDSYMBOL)),
-			provider.get_range($ORDSYMBOL));
+		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range( $l_string_v.ctx));
 		process_instruction();
 	}
 	| macro_name												
@@ -16,9 +13,20 @@ instruction returns [id_index instr]
 			provider.get_range( $macro_name.ctx));
 		process_instruction();
 	}
-	| l_string_v			/*model*/							
+	| ORDSYMBOL													
 	{
-		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range( $l_string_v.ctx));
+		collector.add_lsp_symbol({$ORDSYMBOL->getText(),provider.get_range( $ORDSYMBOL),symbol_type::instruction});
+		collector.set_instruction_field(
+			parse_identifier(std::move($ORDSYMBOL->getText()),provider.get_range($ORDSYMBOL)),
+			provider.get_range($ORDSYMBOL));
+		process_instruction();
+	}
+	| bad_instr
+	{
+		collector.add_lsp_symbol({$bad_instr.ctx->getText(),provider.get_range( $bad_instr.ctx),symbol_type::instruction});
+		collector.set_instruction_field(
+			ctx->ids().add($bad_instr.ctx->getText()),
+			provider.get_range($bad_instr.ctx));
 		process_instruction();
 	};
 
@@ -29,3 +37,5 @@ macro_name_b returns [std::string value]
 macro_name returns [std::string value]
 	: ORDSYMBOL macro_name_b								{$value = std::move($ORDSYMBOL->getText()); $value.append(std::move($macro_name_b.value));};
 
+bad_instr
+	: IDENTIFIER ~(SPACE|EOLLN)*;

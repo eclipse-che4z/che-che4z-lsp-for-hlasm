@@ -116,6 +116,7 @@ common_ch returns [std::string value]
 	| AMPERSAND AMPERSAND									{$value = "&&";}
 	| VERTICAL												{$value = "|";}
 	| IDENTIFIER											{$value = $IDENTIFIER->getText();}
+	| NUM													{$value = $NUM->getText();}
 	| ORDSYMBOL												{$value = $ORDSYMBOL->getText();}
 	| DOT													{$value = ".";};
 
@@ -136,8 +137,9 @@ common_ch_v returns [concat_point_ptr point]
 	| EQUALS												{$point = std::make_unique<equals>();}
 	| AMPERSAND AMPERSAND									{$point = std::make_unique<char_str>("&&");}
 	| VERTICAL												{$point = std::make_unique<char_str>("|");}
-	| IDENTIFIER											{$point = std::make_unique<char_str>(std::move($IDENTIFIER->getText()));}
-	| ORDSYMBOL												{$point = std::make_unique<char_str>(std::move($ORDSYMBOL->getText()));}
+	| IDENTIFIER											{$point = std::make_unique<char_str>($IDENTIFIER->getText());}
+	| NUM													{$point = std::make_unique<char_str>($NUM->getText());}
+	| ORDSYMBOL												{$point = std::make_unique<char_str>($ORDSYMBOL->getText());}
 	| DOT													{$point = std::make_unique<dot>();}											
 	| var_symbol											{$point = std::move($var_symbol.vs);};
 
@@ -233,10 +235,10 @@ l_string_v_apo returns [concat_chain chain]
 
 l_sp_ch returns [std::string value] //l_ch with SPACE
 	: l_ch															{$value = std::move($l_ch.value);}
-	| SPACE															{$value = " ";}; 					
+	| SPACE															{$value = $SPACE->getText();}; 					
 l_sp_ch_v returns [concat_point_ptr point]
 	: l_ch_v														{$point = std::move($l_ch_v.point);}
-	| SPACE															{$point = std::make_unique<char_str>(" ");};
+	| SPACE															{$point = std::make_unique<char_str>($SPACE->getText());};
 
 l_sp_str_v returns [concat_chain chain]
 	:		

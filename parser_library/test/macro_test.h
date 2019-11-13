@@ -422,7 +422,7 @@ TEST(macro, arguments_concatenation)
  MACRO
  M1 &X=
  GBLC V
-&V SETC &X
+&V SETC '&X'
  MEND
 
 &X SETC 'A'
@@ -440,6 +440,38 @@ TEST(macro, arguments_concatenation)
 	EXPECT_EQ(it->second->access_set_symbol<C_t>()->get_value(),"(B-C)+(A-D)");
 
 	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, arguments_continuation)
+{
+	std::string input =
+		R"(
+ MACRO
+ M1 &A
+ GBLC Q,W
+&Q SETC '&A(1)'
+&W SETC '&A(2)'
+ MEND
+
+ GBLC Q,W
+ M1  (X,                REMARK                                         X
+               Y)
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	auto Q = a.context().globals().find(a.context().ids().add("Q"));
+	auto W = a.context().globals().find(a.context().ids().add("W"));
+
+	ASSERT_NE(Q, a.context().globals().end());
+	ASSERT_NE(W, a.context().globals().end());
+
+	EXPECT_EQ(Q->second->access_set_symbol<C_t>()->get_value(), "X");
+	EXPECT_EQ(W->second->access_set_symbol<C_t>()->get_value(), "Y");
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
 	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -531,6 +563,19 @@ TEST(variable_argument_passing, positive_sublist)
 	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
 	EXPECT_EQ(data->get_ith(2)->get_value(), "()c()");
 	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
+
+	data = macro_processor::string_to_macrodata("(0(R2),E,C')',CLI)");
+
+	ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
+	ASSERT_EQ(data->number, (size_t)4);
+	EXPECT_EQ(data->get_ith(0)->get_value(), "0(R2)");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(0)));
+	EXPECT_EQ(data->get_ith(1)->get_value(), "E");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
+	EXPECT_EQ(data->get_ith(2)->get_value(), "C')'");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(2)));
+	EXPECT_EQ(data->get_ith(3)->get_value(), "CLI");
+	EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(3)));
 }
 
 TEST(variable_argument_passing, negative_sublist)
@@ -565,6 +610,25 @@ TEST(variable_argument_passing, negative_sublist)
 
 	ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
 	ASSERT_EQ(data->get_value(), "(a(1)))");
+}
+
+TEST(macro, parse_args)
+{
+	std::string input =
+		R"(
+ macro
+ if
+ mend
+
+         IF    PTRQRDS+L'PTRQRDS-1,O,X'01',TM
+		 if    =d'01'
+)";
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
 #endif

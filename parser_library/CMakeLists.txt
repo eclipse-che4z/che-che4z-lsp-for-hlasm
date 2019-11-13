@@ -32,6 +32,7 @@ endif()
 	 ${PROJECT_SOURCE_DIR}/src/grammar/model_operand_rules.g4
 	 ${PROJECT_SOURCE_DIR}/src/grammar/operand_field_rules.g4
 	 ${PROJECT_SOURCE_DIR}/src/grammar/data_def_rules.g4
+	 ${PROJECT_SOURCE_DIR}/src/grammar/deferred_operand_rules.g4
  )
 
 include(tag_generated_files.cmake)
@@ -183,6 +184,10 @@ if(BUILD_TESTING)
 	)
 	if(NOT BUILD_SHARED_LIBS)
 		set_target_properties(library_test PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+	endif()
+
+	if(MSVC)
+		target_compile_options(library_test PRIVATE /bigobj)
 	endif()
 
 	target_include_directories(library_test

@@ -134,6 +134,7 @@ program_line
 instruction_statement
 	: { processor->kind == processing_kind::LOOKAHEAD }? lookahead_instruction_statement										
 	{
+		collector.clear_hl_lsp_symbols();
 		process_statement();
 	}
 	| { processor->kind != processing_kind::LOOKAHEAD }? ordinary_instruction_statement										
@@ -161,12 +162,11 @@ ordinary_instruction_statement: label SPACE instruction operands_and_remarks
 
 
 
-num_ch returns [std::string value]
-	: IDENTIFIER								{$value = std::move($IDENTIFIER->getText());} 
-	| tmp=num_ch IDENTIFIER						{$tmp.value.append(std::move($IDENTIFIER->getText()));  $value = std::move($tmp.value);};
+num_ch
+	: NUM+;
 
 num returns [self_def_t value]
-	: num_ch									{$value = parse_self_def_term("",$num_ch.value,provider.get_range($num_ch.ctx));};
+	: num_ch									{$value = parse_self_def_term("",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
 
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
@@ -177,8 +177,9 @@ self_def_term returns [self_def_t value]
 
 
 id_ch returns [std::string value]
-	: IDENTIFIER								{$value = std::move($IDENTIFIER->getText());} 
-	| ORDSYMBOL									{$value = std::move($ORDSYMBOL->getText());};
+	: IDENTIFIER								{$value = $IDENTIFIER->getText();} 
+	| NUM										{$value = $NUM->getText();} 
+	| ORDSYMBOL									{$value = $ORDSYMBOL->getText();};
 
 id_ch_c returns [std::string value]
 	: id_ch										{$value = std::move($id_ch.value);}
@@ -210,7 +211,7 @@ id_comma_c: id
 
 
 
-remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|VERTICAL|ORDSYMBOL|SPACE|ATTR;
+remark_ch: DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR;
 
 remark
 	: remark_ch*;

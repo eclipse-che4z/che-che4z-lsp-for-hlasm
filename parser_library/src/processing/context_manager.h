@@ -8,6 +8,7 @@
 #include "../expressions/evaluation_context.h"
 #include "processing_format.h"
 #include "antlr4-runtime.h"
+#include "../semantics/range_provider.h"
 
 
 namespace hlasm_plugin {
@@ -25,7 +26,29 @@ public:
 
 	context_manager(context::hlasm_context& hlasm_ctx);
 
-	expressions::expr_ptr evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const;
+	context::SET_t evaluate_expression(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const;
+	template <typename T>
+	T evaluate_expression_to(antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const
+	{
+		return convert_to<T>(
+			evaluate_expression(expr_context, eval_ctx),
+			semantics::range_provider().get_range(expr_context)
+			);
+	}
+
+	context::SET_t convert(context::SET_t source, context::SET_t_enum target_type, range value_range) const;
+	template <typename T> 
+	T convert_to(context::SET_t source, range value_range) const
+	{
+		auto tmp = convert(std::move(source), context::object_traits<T>::type_enum, value_range);
+
+		if constexpr (std::is_same_v<T, context::A_t>)
+			return tmp.access_a();
+		if constexpr (std::is_same_v<T, context::B_t>)
+			return tmp.access_b();
+		if constexpr (std::is_same_v<T, context::C_t>)
+			return std::move(tmp.access_c());
+	}
 
 	context::SET_t get_var_sym_value(const semantics::var_sym& symbol, expressions::evaluation_context eval_ctx) const;
 	context::SET_t get_var_sym_value(context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const;

@@ -63,6 +63,7 @@ class hlasm_context
 	//value of system variable SYSNDX
 	size_t SYSNDX_;
 	void add_system_vars_to_scope();
+	void add_global_system_vars();
 public:
 
 	hlasm_context(std::string file_name = "");
@@ -79,7 +80,7 @@ public:
 	//sets current source position
 	void set_source_position(position pos);
 	//sets current source file indices
-	void set_source_indices(size_t begin_index, size_t end_index);
+	void set_source_indices(size_t begin_index, size_t end_index, size_t end_line);
 
 	//pushes new kind of statement processing
 	void push_statement_processing(const processing::processing_kind kind);

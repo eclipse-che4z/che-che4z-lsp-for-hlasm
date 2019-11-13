@@ -58,6 +58,7 @@ op_rem_body returns [op_rem line]
 	| { alt_format()}? op_rem_body_alt
 	{
 		$line = std::move($op_rem_body_alt.line);
+		parse_macro_operands($line);
 	}
 	| remark_o
 	{
@@ -65,19 +66,19 @@ op_rem_body returns [op_rem line]
 	};
 
 op_rem_body_alt returns [op_rem line]
-	: alt_op_list_comma_o alt_operand_not_empty remark_o
-	{
-		$alt_op_list_comma_o.operands.push_back(std::move($alt_operand_not_empty.op)); 
-		$line.operands = std::move($alt_op_list_comma_o.operands); 
-		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	}
-	| alt_op_list_comma cont												
+	: alt_op_list_comma cont												
 	{
 		$line.operands = std::move($alt_op_list_comma.operands);
 		$line.operands.insert($line.operands.end(), std::make_move_iterator($cont.line.operands.begin()), std::make_move_iterator($cont.line.operands.end()));
 		$line.remarks = std::move($cont.line.remarks);
+	}
+	| alt_op_list_comma_o alt_operand_not_empty remark_o
+	{
+		$alt_op_list_comma_o.operands.push_back(std::move($alt_operand_not_empty.op)); 
+		$line.operands = std::move($alt_op_list_comma_o.operands); 
+		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 	};
-
+	
 
 cont returns [op_rem line]
 	: {enable_continuation();} cont_body {disable_continuation();}						{$line = std::move($cont_body.line);};
@@ -162,7 +163,7 @@ last_operand_not_empty returns [operand_ptr op]
 	{
 		$op = std::move($asm_op.op);
 	}
-	| {ASM()}? string (ORDSYMBOL|IDENTIFIER)
+	| {ASM()}? string (ORDSYMBOL|IDENTIFIER|NUM)
 	{
 		$op = std::make_unique<string_assembler_operand>(std::move($string.value),provider.get_range($string.ctx));
 		auto diag = diagnostic_s{ diagnostic_op::warning_A300_op_apostrophes_missing("", provider.get_range($string.ctx)) };

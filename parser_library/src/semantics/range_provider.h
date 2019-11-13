@@ -8,13 +8,19 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
+enum class adjusting_state
+{
+	NONE, SUBSTITUTION, MACRO_REPARSE
+};
+
 struct range_provider
 {
 public:
 	range original_range;
-	bool substitute_enabled;
+	adjusting_state state;
 
-	range_provider(range original_field_range, bool enable_substitute = false);
+	range_provider(range original_field_range, adjusting_state state);
+	range_provider();
 
 	static range union_range(const range& lhs, const range& rhs);
 
@@ -23,6 +29,8 @@ public:
 	range get_range(antlr4::ParserRuleContext* non_terminal);
 
 	range get_empty_range(const antlr4::Token* start);
+
+	range adjust_range(range r);
 };
 
 }

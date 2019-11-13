@@ -27,7 +27,7 @@
 
 #include "workspace_manager_test.h"
 
-#include "parser_deferred_test.h"
+#include "parser_model_test.h"
 #include "ca_instr_test.h"
 #include "context_test.h"
 #include "lexer_test.h"

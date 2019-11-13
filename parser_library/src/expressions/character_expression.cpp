@@ -47,13 +47,14 @@ void character_expression::append(std::string v)
 	value_.append(v);
 }
 
-std::string ebcdic_string_transform(const std::string& str)
+int ebcdic_compare(const std::string& lhs, const std::string& rhs)
 {
-	std::string tmp;
-	tmp.reserve(str.size());
-	for (auto ch : str)
-		tmp.push_back(ebcdic_encoding::a2e[ch]);
-	return tmp;
+	int diff = lhs.size() - rhs.size();
+
+	if (diff != 0)
+		return diff;
+
+	return ebcdic_encoding::to_ebcdic(lhs).compare(ebcdic_encoding::to_ebcdic(rhs));
 }
 
 expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2) const
@@ -68,42 +69,38 @@ expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2
 	if (o == "EQ")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ == b);
+		return make_logic(ebcdic_compare(value_, b) == 0);
 	}
 
 	if (o == "NE")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(value_ != b);
+		return make_logic(ebcdic_compare(value_, b) != 0);
 	}
 
 	if (o == "LE")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-
-		return make_logic(ebcdic_string_transform(value_) <= ebcdic_string_transform(b));
+		return make_logic(ebcdic_compare(value_, b) <= 0);
 	}
 
 	if (o == "LT")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(ebcdic_string_transform(value_) < ebcdic_string_transform(b));
+		return make_logic(ebcdic_compare(value_, b) < 0);
 	}
 
 	if (o == "GT")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(ebcdic_string_transform(value_) > ebcdic_string_transform(b));
+		return make_logic(ebcdic_compare(value_, b) > 0);
 	}
 
 	if (o == "GE")
 	{
 		copy_return_on_error_binary(arg2.get(), logic_expression);
-		return make_logic(ebcdic_string_transform(value_) >= ebcdic_string_transform(b));
+		return make_logic(ebcdic_compare(value_, b) >= 0);
 	}
-
-	if (value_.empty() || b.empty())
-		return default_expr_with_error<character_expression>(error_messages::ec04());
 
 	copy_return_on_error_binary(arg2.get(), arithmetic_expression);
 

@@ -563,7 +563,7 @@ TEST(data_def_attribute_lookahead, correct_attribute_reference)
 &A SETA L'X
 &B SETC T'X
 &C SETA S'X
-X DC FS24'6'
+X DC FS24'6'       remark
 )"
 );
 

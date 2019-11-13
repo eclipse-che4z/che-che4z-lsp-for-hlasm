@@ -18,13 +18,13 @@ class macrodef_processor : public statement_processor
 	parse_lib_provider& provider_;
 	const macrodef_start_data start_;
 
+	size_t initial_copy_nest_;
 	size_t macro_nest_;
 	size_t curr_line_;
 	position curr_outer_position_;
 	bool expecting_prototype_;
 	bool expecting_MACRO_;
 	bool omit_next_;
-	size_t initial_copy_nest_;
 
 	macrodef_processing_result result_;
 	bool finished_flag_;

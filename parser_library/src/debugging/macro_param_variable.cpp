@@ -50,7 +50,7 @@ std::vector<variable_ptr> macro_param_variable::values() const
 	}
 	else
 	{
-		for (int i = 1; i <= size(); ++i)
+		for (size_t i = 1; i <= size(); ++i)
 		{
 			child_index.back() = i;
 			vals.push_back(std::make_unique<macro_param_variable>(macro_param_, child_index));

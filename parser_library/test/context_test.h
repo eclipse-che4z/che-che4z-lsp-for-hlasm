@@ -529,10 +529,49 @@ TEST(context, id_check)
 	EXPECT_TRUE(mngr.try_get_symbol_name("LIST",range()).first);
 	EXPECT_TRUE(mngr.try_get_symbol_name("T_A",range()).first);
 	EXPECT_TRUE(mngr.try_get_symbol_name("T1",range()).first);
+	EXPECT_TRUE(mngr.try_get_symbol_name("a1-", range()).first);
 
 	EXPECT_FALSE(mngr.try_get_symbol_name("*1",range()).first);
 	EXPECT_FALSE(mngr.try_get_symbol_name("1av",range()).first);
-	EXPECT_FALSE(mngr.try_get_symbol_name("a1=",range()).first);
+}
+
+TEST(context_system_variables, SYSNEST_SYSMAC)
+{
+	std::string input =
+		R"(
+ MACRO
+ M1
+ GBLA V1
+ GBLC V2,V3
+&V1 SETA &SYSNEST
+&V2 SETC '&SYSMAC(&SYSNEST)'
+&V3 SETC '&SYSMAC(1)'
+ MEND
+
+ MACRO
+ M2
+ GBLA V4
+&V4 SETA &SYSNEST
+ M1
+ MEND
+ 
+ GBLA V1,V4
+ GBLC V2,V3
+
+ M2
+)";
+	copy_mock mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v1"))->access_set_symbol_base()->access_set_symbol<context::A_t>()->get_value(), 2);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v2"))->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "OPEN CODE");
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v3"))->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "M2");
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v4"))->access_set_symbol_base()->access_set_symbol<context::A_t>()->get_value(), 1);
 }
 
 #endif

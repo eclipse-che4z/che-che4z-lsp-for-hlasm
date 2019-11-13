@@ -87,60 +87,7 @@ public:
 	A_t& access_a();
 	B_t& access_b();
 	C_t& access_c();
-
-	A_t C2A(const C_t& value) const;
-
-	template<typename T>
-	T to();
 };
-
-template<>
-inline A_t SET_t::to()
-{
-	switch (type)
-	{
-	case SET_t_enum::A_TYPE:
-		return a_value;
-	case SET_t_enum::B_TYPE:
-		return b_value;
-	case SET_t_enum::C_TYPE:
-		return C2A(c_value); //TODO
-	default:
-		return a_value;
-	}
-}
-
-template<>
-inline B_t SET_t::to()
-{
-	switch (type)
-	{
-	case SET_t_enum::A_TYPE:
-		return a_value;
-	case SET_t_enum::B_TYPE:
-		return b_value;
-	case SET_t_enum::C_TYPE:
-		return b_value; //TODO
-	default:
-		return b_value;
-	}
-}
-
-template<>
-inline C_t SET_t::to()
-{
-	switch (type)
-	{
-	case SET_t_enum::A_TYPE:
-		return std::to_string(std::abs(a_value));
-	case SET_t_enum::B_TYPE:
-		return b_value ? "1" : "0";
-	case SET_t_enum::C_TYPE:
-		return c_value;
-	default:
-		return c_value;
-	}
-}
 
 //just mock method for now, will be implemented later with respect to UTF/EBCDIC
 std::string& to_upper(std::string& s);

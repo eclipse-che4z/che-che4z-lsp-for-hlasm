@@ -27,6 +27,7 @@ public:
 		std::unique_ptr<opencode_provider> base_provider, 
 		context::hlasm_context& hlasm_ctx, 
 		const library_data data,
+		std::string file_name,
 		parse_lib_provider& lib_provider,
 		statement_fields_parser& parser,
 		processing_tracer* tracer);
@@ -58,7 +59,8 @@ private:
 	virtual void register_sequence_symbol(context::id_index target, range symbol_range) override;
 	std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(context::id_index name, range symbol_range);
 
-	virtual attribute_provider::resolved_reference_storage 
+	std::optional<context::source_snapshot> attr_lookahead_stop_;
+	virtual const attribute_provider::resolved_reference_storage& 
 		lookup_forward_attribute_references(attribute_provider::forward_reference_storage references) override;
 		
 	void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);

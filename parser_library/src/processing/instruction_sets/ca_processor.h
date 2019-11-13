@@ -41,12 +41,26 @@ private:
 
 	bool test_symbol_for_assignment(const semantics::var_sym* symbol, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name);
 	bool prepare_SET_symbol(const semantics::complete_statement& stmt, context::SET_t_enum type, int& idx, context::set_symbol_base*& set_symbol, context::id_index& name);
-	bool prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values);
+	bool prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values, std::vector<range>& ranges);
+	context::SET_t convert_SET_operand(context::SET_t& value, context::SET_t_enum type, range operand_range);
+	template <typename T>
+	T convert_SET_operand_to(context::SET_t& value, range operand_range)
+	{
+		auto tmp = convert_SET_operand(value, context::object_traits<T>::type_enum, operand_range);
+
+		if constexpr (std::is_same_v<T, context::A_t>)
+			return tmp.access_a();
+		if constexpr (std::is_same_v<T, context::B_t>)
+			return tmp.access_b();
+		if constexpr (std::is_same_v<T, context::C_t>)
+			return std::move(tmp.access_c());
+	}
 
 	template<typename T>
 	void process_SET(const semantics::complete_statement& stmt)
 	{
 		std::vector<context::SET_t> values;
+		std::vector<range> ranges;
 		int index;
 		context::id_index name;
 		context::set_symbol_base* set_symbol;
@@ -58,13 +72,13 @@ private:
 		if (!set_symbol)
 			set_symbol = mngr_.hlasm_ctx.create_local_variable<T>(name, index == -1).get();
 
-		ok = prepare_SET_operands(stmt, values);
+		ok = prepare_SET_operands(stmt, values, ranges);
 
 		if (!ok)
 			return;
 
 		for (size_t i = 0; i < values.size(); i++)
-			set_symbol->access_set_symbol<T>()->set_value(values[i].to<T>(), index - 1 + i);
+			set_symbol->access_set_symbol<T>()->set_value(convert_SET_operand_to<T>(values[i], ranges[i]), index - 1 + i);
 	}
 
 	bool prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info);

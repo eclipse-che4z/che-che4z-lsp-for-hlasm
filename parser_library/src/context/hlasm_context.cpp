@@ -3,6 +3,7 @@
 #include "../diagnosable_impl.h"
 #include "../ebcdic_encoding.h"
 #include "../expressions/arithmetic_expression.h"
+#include <ctime>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
@@ -48,20 +49,172 @@ void hlasm_context::add_system_vars_to_scope()
 {
 	if (curr_scope()->is_in_macro())
 	{
-		auto SYSECT = ids().add("SYSECT");
+		{
+			auto SYSECT = ids().add("SYSECT");
 
-		auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
-		auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
-		val_sect->set_value(*sect_name);
-		curr_scope()->variables.insert({ SYSECT,val_sect });
+			auto val_sect = std::make_shared<set_symbol<C_t>>(SYSECT, true, false);
+			auto sect_name = ord_ctx.current_section() ? ord_ctx.current_section()->name : id_storage::empty_id;
+			val_sect->set_value(*sect_name);
+			curr_scope()->variables.insert({ SYSECT,val_sect });
+		}
+		
+		{
+			auto SYSNDX = ids().add("SYSNDX");
 
-		auto SYSNDX = ids().add("SYSNDX");
+			auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true, false);
+			val_ndx->set_value((A_t)SYSNDX_);
+			curr_scope()->variables.insert({ SYSNDX,val_ndx });
+		}
 
-		auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true, false);
-		val_ndx->set_value((A_t)SYSNDX_);
-		curr_scope()->variables.insert({ SYSNDX,val_ndx });
+		{
+			auto SYSSTYP = ids().add("SYSSTYP");
 
+			auto val_styp = std::make_shared<set_symbol<C_t>>(SYSSTYP, true, false);
+			if (ord_ctx.current_section())
+			{
+				switch (ord_ctx.current_section()->kind)
+				{
+				case context::section_kind::COMMON:
+					val_styp->set_value("COM");
+					break;
+				case context::section_kind::DUMMY:
+					val_styp->set_value("DSECT");
+					break;
+				case context::section_kind::READONLY:
+					val_styp->set_value("RSECT");
+					break;
+				case context::section_kind::EXECUTABLE:
+					val_styp->set_value("CSECT");
+					break;
+				default:
+					break;
+				}
+			}
+			curr_scope()->variables.insert({ SYSSTYP,val_styp });
+		}
+
+		{
+			auto SYSLOC = ids().add("SYSLOC");
+
+			auto var = std::make_shared<set_symbol<C_t>>(SYSLOC, true, false);
+
+			if (ord_ctx.current_section())
+			{
+				var->set_value(*ord_ctx.current_section()->current_location_counter().name);
+			}
+			curr_scope()->variables.insert({ SYSLOC,var });
+		}
+
+		{
+			auto SYSNEST = ids().add("SYSNEST");
+
+			auto var = std::make_shared<set_symbol<A_t>>(SYSNEST, true, false);
+
+			var->set_value(scope_stack_.size() - 1);
+
+			curr_scope()->variables.insert({ SYSNEST,var });
+		}
+
+		{
+			auto SYSMAC = ids().add("SYSMAC");
+
+			auto var = std::make_shared<set_symbol<C_t>>(SYSMAC, false, false);
+
+			size_t i = 0;
+			for (auto it = scope_stack_.rbegin()+1; it != scope_stack_.rend(); ++it)
+			{
+				std::string tmp;
+				if (it->is_in_macro())
+					tmp = *it->this_macro->id;
+				else
+					tmp = "OPEN CODE";
+				var->set_value(tmp, i++);
+			}
+
+			curr_scope()->variables.insert({ SYSMAC,var });
+		}
 	}
+	add_global_system_vars();
+}
+
+void hlasm_context::add_global_system_vars()
+{
+	auto SYSDATC = ids().add("SYSDATC");
+	auto SYSDATE = ids().add("SYSDATE");
+	auto SYSTIME = ids().add("SYSTIME");
+	auto SYSPARM = ids().add("SYSPARM");
+
+	if(!is_in_macro())
+	{
+		auto datc = std::make_shared<set_symbol<C_t>>(SYSDATC, true, true);
+		auto date = std::make_shared<set_symbol<C_t>>(SYSDATE, true, true);
+		auto time = std::make_shared<set_symbol<C_t>>(SYSTIME, true, true);
+
+		auto tmp_now = std::time(0);
+		auto now = std::localtime(&tmp_now);
+
+		std::string datc_val;
+		std::string date_val;
+		datc_val.reserve(8);
+		date_val.reserve(8);
+		auto year = std::to_string(now->tm_year + 1900);
+		datc_val.append(year);
+
+		if (now->tm_mon + 1 < 10)
+		{
+			datc_val.push_back('0');
+			date_val.push_back('0');
+		}
+
+		datc_val.append(std::to_string(now->tm_mon + 1));
+
+		date_val.append(std::to_string(now->tm_mon + 1));
+		date_val.push_back('/');
+
+		if (now->tm_mday < 10)
+		{
+			datc_val.push_back('0');
+			date_val.push_back('0');
+		}
+
+		datc_val.append(std::to_string(now->tm_mday));
+
+		date_val.append(std::to_string(now->tm_mday));
+		date_val.push_back('/');
+
+		datc->set_value(std::move(datc_val));
+
+		date_val.append(year.c_str() + 2);
+		date->set_value(std::move(date_val));
+
+		globals_.insert({ SYSDATC,datc });
+		globals_.insert({ SYSDATE,date });
+
+		std::string time_val;
+		if (now->tm_hour < 10)
+			time_val.push_back('0');
+		time_val.append(std::to_string(now->tm_hour));
+		time_val.push_back(':');
+		if (now->tm_min < 10)
+			time_val.push_back('0');
+		time_val.append(std::to_string(now->tm_min));
+
+		time->set_value(std::move(time_val));
+		globals_.insert({ SYSTIME,time });
+	}
+	{
+		auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
+		globals_.insert({ SYSPARM,std::move(val) });
+	}
+
+	auto glob = globals_.find(SYSDATC);
+	curr_scope()->variables.insert({ glob->second->id,glob->second });
+	glob = globals_.find(SYSDATE);
+	curr_scope()->variables.insert({ glob->second->id,glob->second });
+	glob = globals_.find(SYSTIME);
+	curr_scope()->variables.insert({ glob->second->id,glob->second });
+	glob = globals_.find(SYSPARM);
+	curr_scope()->variables.insert({ glob->second->id,glob->second });
 }
 
 hlasm_context::hlasm_context(std::string file_name)
@@ -69,19 +222,20 @@ hlasm_context::hlasm_context(std::string file_name)
 {
 	scope_stack_.emplace_back();
 	visited_files_.insert(file_name);
-	source_stack_.emplace_back(std::move(file_name));
-	proc_stack_.emplace_back(processing::processing_kind::ORDINARY, true);
+	push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));
+	add_global_system_vars();
 }
 
 void hlasm_context::set_source_position(position pos)
 {
-	source_stack_.back().source_status.pos = pos;
+	source_stack_.back().current_instruction.pos = pos;
 }
 
-void hlasm_context::set_source_indices(size_t begin_index, size_t end_index)
+void hlasm_context::set_source_indices(size_t begin_index, size_t end_index, size_t end_line)
 {
 	source_stack_.back().begin_index = begin_index;
 	source_stack_.back().end_index = end_index;
+	source_stack_.back().end_line = end_line;
 }
 
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
@@ -121,7 +275,7 @@ processing_stack_t hlasm_context::processing_stack() const
 
 	for (size_t i = 0; i < source_stack_.size(); ++i)
 	{
-		res.emplace_back(source_stack_[i].source_status, scope_stack_.front(), file_processing_type::OPENCODE);
+		res.emplace_back(source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE);
 		for (const auto& member : source_stack_[i].copy_stack)
 		{
 			location loc(member.definition[member.current_statement]->statement_position(), member.definition_location.file);
@@ -448,9 +602,7 @@ macro_invo_ptr hlasm_context::this_macro() const
 
 const std::string& hlasm_context::opencode_file_name() const
 {
-	assert(!source_stack_.empty());
-
-	return source_stack_.front().source_status.file;
+	return source_stack_.front().current_instruction.file;
 }
 
 const std::set<std::string>& hlasm_context::get_visited_files()
@@ -489,9 +641,10 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
 	assert(proc_stack_.size() == 1);
 
-	source_stack_.back().source_status.pos = position(snapshot.line, 0);
+	source_stack_.back().current_instruction = std::move(snapshot.instruction);
 	source_stack_.back().begin_index = snapshot.begin_index;
 	source_stack_.back().end_index = snapshot.end_index;
+	source_stack_.back().end_line = snapshot.end_line;
 
 	source_stack_.back().copy_stack.clear();
 

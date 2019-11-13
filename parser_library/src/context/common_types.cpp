@@ -28,17 +28,4 @@ B_t& SET_t::access_b() { return b_value; }
 
 C_t& SET_t::access_c() { return c_value; }
 
-A_t SET_t::C2A(const context::C_t & value) const
-{
-	//TODO selfdefterm
-	if (value.empty())
-		return context::object_traits<A_t>::default_v();
-	try
-	{
-		return std::stoi(value);
-	}
-	catch (...) {}
-	return 0;
-}
-
 }

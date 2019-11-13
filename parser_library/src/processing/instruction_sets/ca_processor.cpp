@@ -1,4 +1,5 @@
 #include "ca_processor.h"
+#include "../../semantics/range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -103,9 +104,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol, 
 	}
 	else if (symbol->subscript.size() == 1)
 	{
-		auto e = mngr_.evaluate_expression(symbol->subscript[0], eval_ctx);
-
-		idx = e->get_numeric_value();
+		idx = mngr_.evaluate_expression_to<context::A_t>(symbol->subscript[0], eval_ctx);
 
 		if (idx < 1)
 		{
@@ -151,7 +150,7 @@ bool ca_processor::prepare_SET_symbol(const semantics::complete_statement& stmt,
 	return ok;
 }
 
-bool ca_processor::prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values)
+bool ca_processor::prepare_SET_operands(const semantics::complete_statement& stmt, std::vector<context::SET_t>& values, std::vector<range>& ranges)
 {
 	bool has_operand = false;
 	for (auto& op : stmt.operands_ref().value)
@@ -170,11 +169,11 @@ bool ca_processor::prepare_SET_operands(const semantics::complete_statement& stm
 			return false;
 		}
 
-		auto e = mngr_.evaluate_expression(ca_op->access_expr()->expression, eval_ctx);
+		context::SET_t value = mngr_.evaluate_expression(ca_op->access_expr()->expression, eval_ctx);
+		range value_range = semantics::range_provider().get_range(ca_op->access_expr()->expression);
 
-		context::SET_t value = e->get_set_value();
-
-		values.push_back(value);
+		values.push_back(std::move(value));
+		ranges.push_back(value_range);
 	}
 
 	if (!has_operand)
@@ -183,6 +182,21 @@ bool ca_processor::prepare_SET_operands(const semantics::complete_statement& stm
 		return false;
 	}
 	return true;
+}
+
+context::SET_t ca_processor::convert_SET_operand(context::SET_t& value, context::SET_t_enum type, range operand_range)
+{
+	if ((type == context::SET_t_enum::A_TYPE && value.type == context::SET_t_enum::C_TYPE)
+		|| (type == context::SET_t_enum::B_TYPE && value.type == context::SET_t_enum::C_TYPE)
+		|| (type == context::SET_t_enum::C_TYPE && value.type != context::SET_t_enum::C_TYPE))
+	{
+		auto diag = error_messages::e001();
+		diag->diag_range = operand_range;
+		mngr_.add_diagnostic(std::move(*diag));
+		return context::SET_t();
+	}
+
+	return mngr_.convert(value, type, operand_range);
 }
 
 bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info)
@@ -265,7 +279,7 @@ bool ca_processor::prepare_ACTR(const semantics::complete_statement& stmt, conte
 
 	if (ca_op->kind == semantics::ca_kind::EXPR || ca_op->kind == semantics::ca_kind::VAR)
 	{
-		ctr = mngr_.evaluate_expression(ca_op->access_expr()->expression, eval_ctx)->get_numeric_value(); //TODO check for conversions
+		ctr = mngr_.evaluate_expression_to<context::A_t>(ca_op->access_expr()->expression, eval_ctx);
 		return true;
 	}
 	else
@@ -323,7 +337,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt, contex
 	if (ca_op->kind == semantics::ca_kind::BRANCH)
 	{
 		auto br_op = ca_op->access_branch();
-		branch = mngr_.evaluate_expression(br_op->expression, eval_ctx)->get_numeric_value(); //TODO
+		branch = mngr_.evaluate_expression_to<context::A_t>(br_op->expression, eval_ctx);
 		targets.emplace_back(br_op->sequence_symbol.name, br_op->sequence_symbol.symbol_range);
 
 		for (size_t i = 1; i < stmt.operands_ref().value.size(); ++i)
@@ -393,7 +407,7 @@ bool ca_processor::prepare_AIF(const semantics::complete_statement& stmt, contex
 			if (!condition)
 			{
 				auto br = ca_op->access_branch();
-				condition = (bool)mngr_.evaluate_expression(br->expression, eval_ctx)->get_numeric_value();
+				condition = mngr_.evaluate_expression_to<context::B_t>(br->expression, eval_ctx);
 
 				target = br->sequence_symbol.name;
 				target_range = br->sequence_symbol.symbol_range;

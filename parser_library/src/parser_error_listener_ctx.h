@@ -3,13 +3,15 @@
 
 #include "parser_error_listener.h"
 #include "context/hlasm_context.h"
+#include "semantics/range_provider.h"
 
 namespace hlasm_plugin::parser_library {
 
 class parser_error_listener_ctx : public parser_error_listener_base, public diagnosable_ctx
 {
 public:
-	parser_error_listener_ctx(context::hlasm_context& hlasm_ctx, std::optional<std::string> substituted);
+	parser_error_listener_ctx
+	(context::hlasm_context& hlasm_ctx, std::optional<std::string> substituted, semantics::range_provider provider = semantics::range_provider());
 
 	virtual void collect_diags() const override;
 
@@ -18,6 +20,7 @@ protected:
 
 private:
 	std::optional<std::string> substituted_;
+	semantics::range_provider provider_;
 };
 
 }

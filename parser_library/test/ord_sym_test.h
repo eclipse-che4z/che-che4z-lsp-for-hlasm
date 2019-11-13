@@ -295,6 +295,34 @@ Z EQU Y-X
 	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
 
+TEST(ordinary_symbols, different_LOCTR)
+{
+	std::string input = R"(
+A CSECT
+  LR 1,1
+L LOCTR
+X LR 1,1
+B CSECT
+  LR 1,1
+L LOCTR
+Y LR 1,1
+
+Z EQU Y-X
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
+	EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_value_kind::ABS);
+
+	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->value().get_abs(), 2);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(ordinary_symbols, location_counter_simple)
 {
 	std::string input = R"(

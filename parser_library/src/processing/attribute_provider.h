@@ -12,9 +12,13 @@ class attribute_provider
 {
 public:
 	using forward_reference_storage = std::set<context::id_index>;
-	using resolved_reference_storage = std::vector<context::symbol>;
+	using resolved_reference_storage = std::unordered_map<context::id_index, context::symbol>;
 
-	virtual resolved_reference_storage lookup_forward_attribute_references(forward_reference_storage references) = 0;
+	virtual const resolved_reference_storage& lookup_forward_attribute_references(forward_reference_storage references) = 0;
+
+protected:
+	resolved_reference_storage resolved_symbols;
+
 };
 
 }

@@ -614,18 +614,20 @@ void lexer::lex_word()
 {
 	bool last_char_data_attr = false;
 	bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
+	bool num = (input_state_->c >= '0' && input_state_->c <= '9');
 
 	size_t w_len = 0;
 	while (!is_space() && !eof() && !identifier_divider()
 		&& before_end())
 	{
 		ord &= is_ord_char();
+		num &= (input_state_->c >= '0' && input_state_->c <= '9');
 		last_char_data_attr = is_data_attribute();
 
 		if (creating_var_symbol_ && !ord && w_len > 0 && w_len <= 63)
 		{
 			create_token(ORDSYMBOL);
-			break;
+			return;
 		}
 
 		consume();
@@ -634,6 +636,8 @@ void lexer::lex_word()
 
 	if (ord && w_len <= 63)
 		create_token(ORDSYMBOL);
+	else if (num)
+		create_token(NUM);
 	else
 		create_token(IDENTIFIER);
 
@@ -832,5 +836,5 @@ void lexer::set_last_line_pos()
 	{
 		last_lln_begin_pos_ = { last_lln_end_pos_.line + 1,last_lln_end_pos_.offset };
 	}
-	last_lln_end_pos_ = { last_lln_begin_pos_.line ,input_state_->char_position };
+	last_lln_end_pos_ = { input_state_->line - 1 ,input_state_->char_position };
 }

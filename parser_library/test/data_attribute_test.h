@@ -82,7 +82,7 @@ TEST(data_attributes, K)
 	EXPECT_EQ(keyword_param(idA, std::make_unique < macro_param_data_dummy>(), nullptr).count(), 0);
 	auto kp = keyword_param(idA, std::make_unique < macro_param_data_dummy>(), std::make_unique< macro_param_data_composite>(move(v)));
 	EXPECT_EQ(kp.count(), 20);
-	EXPECT_EQ(kp.count({ 1 }), 6);
+	EXPECT_EQ(kp.count({ 2 }), 6);
 	EXPECT_EQ(kp.count({ 4 }), 0);
 
 	auto varA = ctx.create_local_variable<A_t>(idA, true)->access_set_symbol<A_t>();
@@ -103,6 +103,86 @@ TEST(data_attributes, K)
 	varA->set_value(-10);
 	EXPECT_EQ(varA->count(), 3);
 
+}
+
+TEST(data_attributes, N_var_syms)
+{
+	std::string input = R"(
+&var(1) seta 1,2,3
+&var2 seta 1
+&N1 seta N'&var
+&N2 seta N'&var2
+&N3 seta N'&var(2)
+&N4 seta N'&var2(2)
+
+ macro
+ m  &a
+ gbla nn1,nn2
+&nn1 seta N'&a
+&nn2 seta N'&a(1)
+ mend
+
+ gbla nn1,nn2
+ m (1,2,3)
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 3);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 0);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N3"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 3);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N4"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 0);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 3);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(data_attributes, K_var_syms_good)
+{
+	std::string input = R"(
+&var(1) seta 1,2,3
+&var2 seta 1
+&N1 seta K'&var(1)
+&N2 seta K'&var2
+
+ macro
+ m  &a
+ gbla nn1,nn2
+&nn1 seta K'&a
+&nn2 seta K'&a(1)
+ mend
+
+ gbla nn1,nn2
+ m (1,2,3)
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 7);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(data_attributes, K_var_syms_bad)
+{
+	std::string input = R"(
+&var(1) seta 1,2,3
+&N1 seta K'&var
+)";
+
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(data_attributes, T_ord_syms)

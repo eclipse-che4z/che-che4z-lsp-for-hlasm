@@ -15,7 +15,7 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
 {
 	auto& stmt = dynamic_cast<resolved_statement_impl&>(*statement->access_resolved());
-	auto [label,ops] = preprocess_inner(stmt);
+	auto [label, ops] = preprocess_inner(stmt);
 	return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
 }
 
@@ -68,8 +68,10 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 			mngr.concatenate_str(std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
 		break;
 	case semantics::label_si_type::VAR:
-		new_label = mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value),eval_ctx).template to<context::C_t>();
-		if (new_label.empty() || new_label[0]==' ')
+		new_label = mngr.convert_to<context::C_t>(
+			mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value), eval_ctx),
+			std::get<semantics::vs_ptr>(stmt.label_ref().value)->symbol_range);
+		if (new_label.empty() || new_label[0] == ' ')
 			label.emplace(stmt.label_ref().field_range);
 		else
 			label.emplace(stmt.label_ref().field_range, std::move(new_label));
@@ -88,12 +90,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type == semantics::operand_type::MODEL)
 	{
 		assert(stmt.operands_ref().value.size() == 1);
-		std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain,eval_ctx));
+		std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
 		operands.emplace(parser.parse_operand_field(
 			&hlasm_ctx,
 			std::move(field),
 			true,
-			semantics::range_provider(stmt.operands_ref().value[0]->operand_range,true),
+			semantics::range_provider(stmt.operands_ref().value[0]->operand_range, semantics::adjusting_state::SUBSTITUTION),
 			*ordinary_processor::get_instruction_processing_status(stmt.opcode.value, hlasm_ctx)).first);
 	}
 
@@ -102,6 +104,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 		if (dynamic_cast<semantics::simple_expr_operand*>(op.get()))
 			dynamic_cast<semantics::simple_expr_operand*>(op.get())->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
 	}
+
+	collect_diags_from_child(mngr);
 
 	return std::make_pair(std::move(label), std::move(operands));
 }
@@ -125,7 +129,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 	int diff = (int)curr_instr->get()->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
 	if (std::abs(diff) > curr_instr->get()->no_optional)
 	{
-		auto curr_diag = 
+		auto curr_diag =
 			diagnostic_op::error_optional_number_of_operands(
 				instr_name, curr_instr->get()->no_optional, (int)curr_instr->get()->operands.size() - (int)mnemonic.replaced.size(), stmt.stmt_range_ref());
 
@@ -186,7 +190,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
 		auto uniq = get_check_op(op.get(), hlasm_ctx, add_diagnostic, stmt, operand_vector.size());
 
 		if (!uniq) return std::nullopt;//contains dependencies
-		
+
 		uniq->operand_range = op.get()->operand_range;
 		operand_vector.push_back(std::move(uniq));
 	}

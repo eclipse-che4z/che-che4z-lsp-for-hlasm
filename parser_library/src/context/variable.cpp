@@ -86,7 +86,7 @@ A_t macro_param_base::number(std::vector<size_t> offset) const
 
 	for (auto idx : offset)
 	{
-		tmp = tmp->get_ith(idx);
+		tmp = tmp->get_ith(idx - 1);
 	}
 	return (A_t)tmp->number;
 }
@@ -97,7 +97,7 @@ A_t macro_param_base::count(std::vector<size_t> offset) const
 
 	for (auto idx : offset)
 	{
-		tmp = tmp->get_ith(idx);
+		tmp = tmp->get_ith(idx - 1);
 	}
 	return (A_t)tmp->get_value().size();
 }

@@ -13,7 +13,7 @@ using namespace hlasm_plugin::parser_library;
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
 	: Parser(input),
-	ctx(nullptr), lsp_proc(nullptr), processor(nullptr), finished_flag(false), provider(range()),
+	ctx(nullptr), lsp_proc(nullptr), processor(nullptr), finished_flag(false), provider(),
 	last_line_processed_(false), line_end_pushed_(false) {}
 
 void parser_impl::initialize(
@@ -196,7 +196,31 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
 	return ctx->ids().add(std::move(value));
 }
 
+void parser_impl::parse_macro_operands(semantics::op_rem& line)
+{
+	if (line.operands.size() && MAC())
+	{
+		size_t string_size = line.operands.size();
 
+		for (auto& op : line.operands)
+			if(auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+				string_size += m_op->value.size();
+
+		std::string to_parse;
+		to_parse.reserve(string_size);
+
+		for (size_t i = 0; i < line.operands.size(); ++i)
+		{
+			if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(line.operands[i].get()))
+				to_parse.append(m_op->value);
+			if (i != line.operands.size() - 1)
+				to_parse.push_back(',');
+		}
+		auto r = semantics::range_provider::union_range(line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
+
+		line.operands = parse_macro_operands(std::move(to_parse), r);
+	}
+}
 
 void parser_impl::process_instruction()
 {
@@ -206,7 +230,7 @@ void parser_impl::process_instruction()
 
 void parser_impl::process_statement()
 {
-	ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset);
+	ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
 	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
@@ -313,11 +337,43 @@ bool hlasm_plugin::parser_library::parser_impl::UNKNOWN()
 	return format.form == processing::processing_form::UNKNOWN;
 }
 
-void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
+void parser_impl::initialize(
+	context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
 {
 	ctx = hlasm_ctx;
 	provider = range_prov;
 	proc_status = proc_stat;
+}
+
+semantics::operand_list parser_impl::parse_macro_operands(std::string operands, range field_range)
+{
+	parser_holder h;
+	semantics::range_provider tmp_provider(field_range, semantics::adjusting_state::MACRO_REPARSE);
+
+	parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
+
+	h.input = std::make_unique<input_source>(std::move(operands));
+	h.lex = std::make_unique<lexer>(h.input.get(), nullptr);
+	h.stream = std::make_unique<token_stream>(h.lex.get());
+	h.parser = std::make_unique<generated::hlasmparser>(h.stream.get());
+
+	h.lex->set_file_offset(field_range.start);
+	h.lex->set_unlimited_line(true);
+
+	h.parser->initialize(ctx, tmp_provider, *proc_status);
+	h.parser->setErrorHandler(std::make_shared<error_strategy>());
+	h.parser->removeErrorListeners();
+	h.parser->addErrorListener(&listener);
+
+	auto list = std::move(h.parser->macro_ops()->list);
+
+	collector.append_reparsed_symbols(std::move(h.parser->collector));
+
+	collect_diags_from_child(listener);
+
+	parsers_.emplace_back(std::move(h));
+
+	return list;
 }
 
 

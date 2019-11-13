@@ -15,9 +15,17 @@ expr_ptr expression_evaluator::evaluate_expression(antlr4::ParserRuleContext* ex
 
 	auto refs = analyzer.get_undefined_symbol_references(expr_context);
 
-	resolved_refs_ = eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(refs));
+	resolved_refs_ = &eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(refs));
 
-	return visit(expr_context).as<expr_ptr>();
+	auto result =  visit(expr_context).as<expr_ptr>();
+
+	if (result->diag)
+	{
+		result->diag->diag_range = semantics::range_provider().get_range(expr_context);
+		add_diagnostic(*result->diag);
+	}
+
+	return result;
 }
 
 std::vector<expr_ptr> expression_evaluator::evaluate_expressions(std::vector<antlr4::ParserRuleContext*> exprs_context)
@@ -34,12 +42,20 @@ std::vector<expr_ptr> expression_evaluator::evaluate_expressions(std::vector<ant
 			collected_refs.insert(ref);
 	}
 
-	resolved_refs_ = eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(collected_refs));
+	resolved_refs_ = &eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(collected_refs));
 
 	std::vector<expr_ptr> sublist;
 
 	for (auto expr_ctx : exprs_context)
-		sublist.push_back(visit(expr_ctx).as<expr_ptr>());
+	{
+		auto e = visit(expr_ctx).as<expr_ptr>();
+		if (e->diag)
+		{
+			e->diag->diag_range = semantics::range_provider().get_range(expr_ctx);
+			add_diagnostic(*e->diag);
+		}
+		sublist.push_back(std::move(e));
+	}
 
 	return sublist;
 }
@@ -50,7 +66,7 @@ std::string expression_evaluator::concatenate_chain(const semantics::concat_chai
 
 	auto tmp = analyzer.get_undefined_symbol_references(chain);
 
-	resolved_refs_ = eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(tmp));
+	resolved_refs_ = &eval_ctx_.attr_provider.lookup_forward_attribute_references(std::move(tmp));
 
 	return concatenate(chain);
 }
@@ -133,7 +149,7 @@ antlrcpp::Any expression_evaluator::visitTerm(generated::hlasmparser::TermContex
 		case context::SET_t_enum::B_TYPE:
 			return (expr_ptr)make_logic(value.access_b());
 		case context::SET_t_enum::C_TYPE:
-			return (expr_ptr)make_char(value.access_c());
+			return (expr_ptr)arithmetic_expression::from_string(value.access_c(), false);
 		default:
 			return (expr_ptr)make_arith(0);
 		}
@@ -279,19 +295,24 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		//get evaluated_subscript
 		std::vector<size_t> subscript;
 		for (auto tree : expr_subscript)
-			subscript.push_back((size_t)tree->get_set_value().to<context::A_t>());//TODO check expr errors
+		{
+			subscript.push_back(
+				(size_t)mngr.convert_to<context::A_t>(
+					tree->get_set_value(),
+					semantics::range_provider().get_range(ctx->var_symbol()->vs->subscript[subscript.size()])
+				)
+			);
+		}
 
 		//get symbol
 		auto symbol = eval_ctx_.hlasm_ctx.get_var_sym(name);
-
-		if(!mngr.test_symbol_for_read(symbol, expr_subscript, ctx->var_symbol()->vs->symbol_range))
-			return static_cast<expr_ptr>(make_char("U"));
 
 		//get value
 		if (context::symbol_attributes::needs_ordinary(attr))
 		{
 			//get substituted name
-			auto val = mngr.get_var_sym_value(name,expr_subscript,ctx->var_symbol()->vs->symbol_range).to<context::C_t>();
+			auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
+			auto val = mngr.convert_to<context::C_t>(tmp_val, ctx->var_symbol()->vs->symbol_range);
 			auto [valid,new_name] = mngr.try_get_symbol_name(val, ctx->var_symbol()->vs->symbol_range);
 
 			if (!valid)
@@ -309,11 +330,15 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		}
 		else if (attr == context::data_attr_kind::T)
 		{
+			if (!mngr.test_symbol_for_read(symbol, expr_subscript, ctx->var_symbol()->vs->symbol_range))
+				SET_val.emplace(std::string("U"));
+
 			auto t_attr_value = eval_ctx_.hlasm_ctx.get_data_attribute(attr, symbol, subscript).access_c();
 			if (t_attr_value == "U" && symbol)
 			{
-				auto val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range).to<context::C_t>();
-				auto [valid, new_name] = mngr.try_get_symbol_name(val, ctx->var_symbol()->vs->symbol_range);
+				auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
+				auto val = mngr.convert_to<context::C_t>(tmp_val, ctx->var_symbol()->vs->symbol_range);
+				auto [valid, new_name] = processing::context_manager(eval_ctx_.hlasm_ctx).try_get_symbol_name(val, ctx->var_symbol()->vs->symbol_range);
 
 				if (valid && !eval_ctx_.hlasm_ctx.ord_ctx.get_symbol(new_name)) // requires attribute lookahead
 					SET_val.emplace(lookup_variable_symbol_attribute(attr, new_name, ctx->var_symbol()->vs->symbol_range));
@@ -325,7 +350,10 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		}
 		else
 		{
-			SET_val.emplace(eval_ctx_.hlasm_ctx.get_data_attribute(attr, symbol, subscript));
+			if (attr == context::data_attr_kind::K && !mngr.test_symbol_for_read(symbol, expr_subscript, ctx->var_symbol()->vs->symbol_range))
+				SET_val.emplace(1);
+			else
+				SET_val.emplace(eval_ctx_.hlasm_ctx.get_data_attribute(attr, symbol, subscript));
 		}
 
 	}
@@ -336,7 +364,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		{
 			auto symbol = eval_ctx_.hlasm_ctx.ord_ctx.get_symbol(symbol_name);
 
-			SET_val.emplace(get_ord_attr_value(attr, symbol, symbol_name, semantics::range_provider(range()).get_range(ctx)));
+			SET_val.emplace(get_ord_attr_value(attr, symbol, symbol_name, semantics::range_provider().get_range(ctx)));
 		}
 		else if (attr == context::data_attr_kind::D || attr == context::data_attr_kind::O)
 		{
@@ -345,7 +373,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		else
 		{
 			SET_val.emplace(context::symbol_attributes::default_value(attr));
-			add_diagnostic(diagnostic_op::error_E066(semantics::range_provider(range()).get_range(ctx)));
+			add_diagnostic(diagnostic_op::error_E066(semantics::range_provider().get_range(ctx)));
 		}
 	}
 
@@ -354,6 +382,8 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 		std::string right_value = eval_ctx_.lib_provider.has_library(*symbol_name, eval_ctx_.hlasm_ctx) ? "S" : "U";
 		SET_val.emplace(right_value);
 	}
+
+	collect_diags_from_child(mngr);
 
 	if(SET_val)
 		switch (SET_val->type)
@@ -376,13 +406,13 @@ antlrcpp::Any expression_evaluator::visitNum(generated::hlasmparser::NumContext*
 	return (expr_ptr)make_arith(ctx->value);
 }
 
-context::SET_t expression_evaluator::get_ord_attr_value(context::data_attr_kind attr, context::symbol* symbol, context::id_index symbol_name, range symbol_range)
+context::SET_t expression_evaluator::get_ord_attr_value(context::data_attr_kind attr, const context::symbol* symbol, context::id_index symbol_name, range symbol_range)
 {
 	if (!symbol)
 	{
-		auto it = std::find_if(resolved_refs_.begin(), resolved_refs_.end(), [&](auto& sym) {return sym.name == symbol_name; });
-		if (it != resolved_refs_.end())
-			symbol = &*it;
+		auto it = resolved_refs_->find(symbol_name);
+		if (it != resolved_refs_->end())
+			symbol = &it->second;
 	}
 
 	if (!symbol)
@@ -464,7 +494,8 @@ std::string expression_evaluator::concat(semantics::char_str* str)
 
 std::string expression_evaluator::concat(semantics::var_sym* vs)
 {
-	return get_var_sym_value(vs).to<context::C_t>();
+	return processing::context_manager(eval_ctx_.hlasm_ctx).
+		convert_to<context::C_t>(get_var_sym_value(vs),vs->symbol_range);
 }
 
 std::string expression_evaluator::concat(semantics::dot*)
@@ -543,8 +574,9 @@ context::SET_t expression_evaluator::lookup_variable_symbol_attribute(context::d
 
 	context::symbol* symbol = nullptr;
 
-	if (!res.empty())
-		symbol = &res.front();
+	auto it = res.find(symbol_name);
+	if (it != res.end())
+		symbol = &it->second;
 
 	return get_ord_attr_value(attr, symbol, symbol_name, symbol_range);
 }

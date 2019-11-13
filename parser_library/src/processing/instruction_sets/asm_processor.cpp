@@ -356,8 +356,6 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
 		std::bind(&asm_processor::process_sect, this, context::section_kind::READONLY, std::placeholders::_1));
 	table.emplace(ctx.ids().add("COM"),
 		std::bind(&asm_processor::process_sect, this, context::section_kind::COMMON, std::placeholders::_1));
-	table.emplace(ctx.ids().add("DXD"),
-		std::bind(&asm_processor::process_sect, this, context::section_kind::EXTERNAL, std::placeholders::_1));
 	table.emplace(ctx.ids().add("LOCTR"),
 		std::bind(&asm_processor::process_LOCTR, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("EQU"),

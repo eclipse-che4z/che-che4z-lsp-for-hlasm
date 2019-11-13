@@ -18,7 +18,7 @@ uint64_t get_X_B_length(const std::string& s, uint64_t frac)
 			length += (one_length + frac - 1) / frac;
 			one_length = 0;
 		}
-		else
+		else if(c != ' ')
 			++one_length;
 	}
 	length += (one_length + frac - 1) / frac;
@@ -40,6 +40,8 @@ bool check_comma_separated(const std::string nom, std::function<bool(char c)> is
 	bool last_valid = false;
 	for (char c : nom)
 	{
+		if (c == ' ')
+			continue;
 		if (c == ',')
 		{
 			if (!last_valid)
