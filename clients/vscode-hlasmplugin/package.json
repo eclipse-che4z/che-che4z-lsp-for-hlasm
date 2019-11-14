@@ -1,11 +1,11 @@
 {
-  "name": "vscode-hlasmplugin",
-  "repository": {},
-  "displayName": "vscode-hlasmplugin",
-  "description": "HLASM Language Server",
-  "version": "0.0.1",
-  "publisher": "CA",
-  "homepage": "https://ca.com/",
+  "name": "hlasm-language-support",
+  "displayName": "HLASM Language Support",
+  "description": "The Language Server Protocol (LSP) for HLASM standardizes the communication between language tooling and your code editor.",
+  "version": "0.8.0",
+  "author": "Broadcom",
+  "publisher": "BroadcomMFD",
+  "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
   "categories": [
     "Programming Languages",
     "Linters",
@@ -13,16 +13,26 @@
   ],
   "keywords": [
     "HLASM",
-    "LSP"
+    "LSP",
+    "Assembler",
+    "Mainframe"
   ],
   "activationEvents": [
     "*"
   ],
+  "icon": "resources/logo.png",
   "main": "./lib/extension.js",
   "typings": "./lib/extension",
   "engines": {
     "vscode": "^1.32.3"
   },
+  "repository": {
+        "type": "git",
+        "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm.git"
+    },
+  "bugs": {
+        "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues"
+    },
   "devDependencies": {
     "vsce": "^1.52.0",
     "shelljs": "^0.8.2",
