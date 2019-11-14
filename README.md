@@ -104,16 +104,16 @@ If you have the two configuration files configured as above and invoke the MAC1 
 
 ### Syntax Highlighting
 
-The Assembler Language Support extension provides syntax highlighting for statements with different colours for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted. Code that is skipped by branching AIF or AGO is not colored.
+The Assembler Language Support extension provides syntax highlighting for statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted. Code that is skipped by branching AIF or AGO is not colored.
 
 ### Autocomplete
 
-Autocomplete for instruction field is also enabled. This gives user a list of instructions starting with typed characters. It completes instruction and inserts its operands default operands. Autocomplete is also done for variable and sequence symbols with respect to a scope in which the variables are.
+Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
 
 ### Go To and Find All References
 
-Plugin provides go to definition and find all references for variable symbols, sequence symbols and macro definitions.
+The Assembler Language Support extension provides go to definition and find all references for variable symbols, sequence symbols and macro definitions.
 
 ### Diagnostics
 
-Plugin checks for errors in all machine instructions and mentioned CA and assembler instructions and shows them in an IDE.
+The Assembler Language Support extension checks for errors in all machine instructions and supported CA and assembler instructions and displays them in the IDE.
