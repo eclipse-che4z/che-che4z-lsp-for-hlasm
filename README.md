@@ -53,53 +53,52 @@ DC and data attributes are not yet supported.
 
 #### External Macro Libraries and Copy Numbers
 
-Plugin is able to look for locally stored members (files) when evaluating macro or COPY instruction. Two configuration files are required at the root of opened workspace of VS Code: proc_grps.json and pgm_conf.json. proc_grps.json provides definition of processor groups, which is basically list of folders on computer to tell the plugin where to look for macro and copy files. pgm_conf.json provides mapping between source files (open code files) and processor groups. It tells which list of directories should be used with particular source file. The structure of this configurations was based on Endevor.
+The Assembler Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. Ensure that the two configuration files `proc_grps.json` and `pgm_conf.json` are present in the root folder of the current workspace.
 
-The Assembler Language Support extension can look for locally stored members when evaluating a macro or COPY instruction. Ensure that the two configuration files `proc_grps.json` and `pgm_conf.json` are present in the root folder of the opened workspace.
+**Example (`proc_grps.json`)**:
 
-`proc_grps.json` defines the processor groups, a list of folders which contains the location of the macro and copy files.
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files.
 
-*Example*:
 
-`{`+
-`  "pgroups": [`+
-`  {`+
-`    "name": "GROUP1",`+
-`    "libs": [`+
-`      "path/to/folder/with/GROUP1/macros",`+
-`      "second/path/to/folder/with/GROUP2/macros"`+
-`    ]`+
-`  },`+
-`  {`+
-`    "name": "GROUP2",`+
-`    "libs": [`+
-`      "path/to/folder/with/GROUP2/macros",`+
-`      "second/path/to/folder/with/GROUP2/macros"`+
-`    ]`+
-`  }`+
-`  ]`+
-`}`
+    {
+      "pgroups": [
+      {
+        "name": "GROUP1",
+        "libs": [
+          "path/to/folder/with/GROUP1/macros",
+          "second/path/to/folder/with/GROUP2/macros"
+        ]
+      },
+      {
+        "name": "GROUP2",
+        "libs": [
+          "path/to/folder/with/GROUP2/macros",
+          "second/path/to/folder/with/GROUP2/macros"
+        ]
+      }
+      ]
+    }
 
-`pgm_conf.json` provides mapping between source files (open code files) and processor groups. It tells which list of directories should be used with particular source file. The structure of this configurations was based on Endevor.
+`pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative path source file path is specified, it is relative to the current workspace (the directory in which the configuration files are in).
 
-*Example*:
+**Example (`pgm_conf.json`)**:
 
-`{`+
-`  "pgms": [`+
-`  {`+
-`    "program": "source_code.hlasm",`+
-`    "pgroup": "GROUP1"`+
-`  },`+
-`  {`+
-`    "program": "second_file.hlasm",`+
-`    "pgroup": "GROUP2"`+
-`  }`+
-`  ]`+
-`}`
+The following example specifies that GROUP1 is used when working with source_code.hlasm and GROUP2 is used when working with second_file.hlasm. 
 
-The proc_grps.json defines two processor groups: GROUP1 and GROUP1 and defines list of directories where to look for macros and COPY files. pgm_conf.json defines, that when working with source_code.hlasm, the plugin should use GROUP1 and when working with second_file.hlasm, GROUP2 will be used. If a path is a relative path, it is relative to the opened workspace (the directory in which the configuration files are in).
-
-So when you want to invoke macro MAC1 from source_code.hlasm, the plugin will search for file with name "MAC1" (the file must have the exact same name as the macro) first in folder "path/to/folder/with/GROUP1/macros" and if that is unsuccesful it will try folder "second/path/to/folder/with/GROUP2/macros". If that is unsuccessful too it will write diagnostic that the macro does not exist.
+    {
+      "pgms": [
+      {
+        "program": "source_code.hlasm",
+        "pgroup": "GROUP1"
+      },
+      {
+        "program": "second_file.hlasm",
+        "pgroup": "GROUP2"
+      }
+      ]
+    }
+    
+If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the path `path/to/folder/with/GROUP1/macros` is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `second/path/to/folder/with/GROUP2/macros` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
 ## Supported LSP Features
 
