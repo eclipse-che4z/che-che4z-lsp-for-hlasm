@@ -47,7 +47,9 @@ When evaluating a CSECT or DSECT instruction the plugin only distinguishes wheth
 
 #### Ordinary Symbols
 
-Using EQU you can define named constants and with labels in machine instructions you can define named addresses. DC is not supported yet, neither data attributes are so full experience of ordinary symbols is not provided.
+You can define named constants using EQU and named addresses using labels in machine instructions.
+
+DC and data attributes are not yet supported.
 
 #### External Macro Libraries and Copy Numbers
 
