@@ -76,3 +76,15 @@ The Assembler Language Support extension can look for locally stored members whe
 `  ]`
 `}`
 
+## Supported LSP features
+### Syntax Highlighting
+Plugin provides semantic highlighting for statements. It colors labels, instructions, operands, remarks and variables differently. It distinguishes whether instruction can have operands and highlights a statement accordingly. If code is skipped by branching AIF or AGO it will not be colored at all.
+
+### Autocomplete
+Autocomplete for instruction field is also enabled. This gives user a list of instructions starting with typed characters. It completes instruction and inserts its operands default operands. Autocomplete is also done for variable and sequence symbols with respect to a scope in which the variables are.
+
+### Go to and find all references
+Plugin provides go to definition and find all references for variable symbols, sequence symbols and macro definitions.
+
+### Diagnostics  
+Plugin checks for errors in all machine instructions and mentioned CA and assembler instructions and shows them in an IDE.
