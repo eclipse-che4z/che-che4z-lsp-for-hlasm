@@ -104,7 +104,7 @@ If you have the two configuration files configured as above and invoke the MAC1 
 
 ### Syntax Highlighting
 
-Plugin provides semantic highlighting for statements. It colors labels, instructions, operands, remarks and variables differently. It distinguishes whether instruction can have operands and highlights a statement accordingly. If code is skipped by branching AIF or AGO it will not be colored at all.
+The Assembler Language Support extension provides semantic highlighting for statements with different colours for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted. Code that is skipped by branching AIF or AGO is not colored.
 
 ### Autocomplete
 
