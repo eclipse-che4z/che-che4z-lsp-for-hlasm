@@ -43,7 +43,7 @@ The Assembler Language Support extension can handle the following assembler inst
 
 #### CSECT and DSECT
 
-When evaluating a CSECT or DSECT instruction the plugin only distinguishes whether a unique name is used.
+When evaluating a CSECT or DSECT instruction the extension only distinguishes whether a unique name is used.
 
 #### Ordinary Symbols
 
@@ -53,7 +53,7 @@ DC and data attributes are not yet supported.
 
 #### External Macro Libraries and Copy Numbers
 
-The Assembler Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. Ensure that the two configuration files `proc_grps.json` and `pgm_conf.json` are present in the root folder of the current workspace.
+The Assembler Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated, in paths specified in two configuration files in the root folder of the workspace, `proc_grps.json` and `pgm_conf.json`.
 
 **Example (`proc_grps.json`)**:
 
@@ -79,7 +79,7 @@ The following example defines two processor groups, GROUP1 and GROUP2, and a lis
       ]
     }
 
-`pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative path source file path is specified, it is relative to the current workspace (the directory in which the configuration files are in).
+`pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative path source file path is specified, it is relative to the current workspace (the directory in which the configuration files are stored.)
 
 **Example (`pgm_conf.json`)**:
 
