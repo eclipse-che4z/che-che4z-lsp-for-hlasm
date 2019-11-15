@@ -2,6 +2,7 @@
 #define HLASMPLUGIN_PARSERLIBARY_CONTEXTTEST_H
 
 #include "../src/context/hlasm_context.h"
+#include "../src/context/variables/system_variable.h"
 
 #include <string>
 
@@ -288,7 +289,7 @@ TEST(context_macro, call_and_leave_macro)
 	ASSERT_TRUE(ctx.is_in_macro());
 	ASSERT_TRUE(ctx.this_macro() == m2);
 
-	auto SYSLIST = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	auto SYSLIST = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
 	ASSERT_TRUE(SYSLIST);
 	//testing syslist
 	EXPECT_EQ(SYSLIST->get_value((size_t)0), "");
@@ -380,7 +381,7 @@ TEST(context_macro, repeat_call_same_macro)
 
 	ASSERT_TRUE(m2 != m3);
 
-	auto SYSLIST = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	auto SYSLIST = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
 	ASSERT_TRUE(SYSLIST);
 
 	for (size_t i = 0; i < 3; i++)
@@ -479,9 +480,9 @@ TEST(context_macro, recurr_call)
 	ASSERT_TRUE(ctx.is_in_macro());
 	ASSERT_FALSE(m2 == m3);
 
-	auto SYSLIST2 = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	auto SYSLIST2 = m2->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
 	ASSERT_TRUE(SYSLIST2);
-	auto SYSLIST3 = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_syslist_param();
+	auto SYSLIST3 = m3->named_params.find(ctx.ids().add("SYSLIST"))->second->access_system_variable();
 	ASSERT_TRUE(SYSLIST3);
 
 	for (size_t i = 0; i < 2; i++)
@@ -542,10 +543,11 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
  MACRO
  M1
  GBLA V1
- GBLC V2,V3
+ GBLC V2,V3,V5
 &V1 SETA &SYSNEST
 &V2 SETC '&SYSMAC(&SYSNEST)'
 &V3 SETC '&SYSMAC(1)'
+&V5 SETC '&SYSMAC(0)'
  MEND
 
  MACRO
@@ -556,7 +558,7 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
  MEND
  
  GBLA V1,V4
- GBLC V2,V3
+ GBLC V2,V3,V5
 
  M2
 )";
@@ -572,6 +574,7 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v2"))->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "OPEN CODE");
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v3"))->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "M2");
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v4"))->access_set_symbol_base()->access_set_symbol<context::A_t>()->get_value(), 1);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("v5"))->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "M1");
 }
 
 #endif

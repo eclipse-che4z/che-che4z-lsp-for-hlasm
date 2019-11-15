@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-#include "../context/variable.h"
+#include "../context/variables/variable.h"
 #include "shared/protocol.h"
 
 namespace hlasm_plugin::parser_library::debugging

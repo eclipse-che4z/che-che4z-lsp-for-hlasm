@@ -734,7 +734,10 @@ void lexer::lex_process()
 
 	apostrophes_ = 0;
 	end_++; /* including END column */
-	while (!eof() && before_end() && input_state_->c != '\n' && (apostrophes_ % 2 == 1 || (apostrophes_ % 2 == 0 && input_state_->c != ' '))) {
+	while (!eof() && before_end() && 
+		input_state_->c != '\n' && input_state_->c != '\r' && 
+		(apostrophes_ % 2 == 1 || (apostrophes_ % 2 == 0 && input_state_->c != ' '))) 
+	{
 		start_token();
 		lex_tokens();
 	}

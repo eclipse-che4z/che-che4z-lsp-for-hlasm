@@ -49,7 +49,7 @@ void character_expression::append(std::string v)
 
 int ebcdic_compare(const std::string& lhs, const std::string& rhs)
 {
-	int diff = lhs.size() - rhs.size();
+	int diff = (int)lhs.size() - (int)rhs.size();
 
 	if (diff != 0)
 		return diff;

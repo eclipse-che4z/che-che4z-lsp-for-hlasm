@@ -4,7 +4,6 @@
 #include "statement_processors/macrodef_processing_info.h"
 #include "statement_processors/lookahead_processing_info.h"
 #include "statement_processors/copy_processing_info.h"
-#include "../context/variable.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

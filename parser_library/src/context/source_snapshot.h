@@ -4,6 +4,8 @@
 #include "id_storage.h"
 #include "shared/range.h"
 
+#include <vector>
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {

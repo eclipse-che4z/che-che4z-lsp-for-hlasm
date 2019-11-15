@@ -176,7 +176,8 @@ void collector::add_remarks_hl_symbols()
 
 void collector::append_reparsed_symbols(collector&& c)
 {
-	hl_symbols_ = std::move(c.hl_symbols_);
+	for (auto& sym : c.hl_symbols_)
+		hl_symbols_.push_back(std::move(sym));
 	
 	size_t i;
 	for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != symbol_type::instruction; ++i);

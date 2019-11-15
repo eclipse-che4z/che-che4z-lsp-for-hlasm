@@ -29,7 +29,7 @@ enum class variable_kind
 //enum of macro symbolic parameters
 enum class macro_param_type
 {
-	POS_PAR_TYPE, KEY_PAR_TYPE, SYSLIST_TYPE
+	POS_PAR_TYPE, KEY_PAR_TYPE, SYSTEM_TYPE
 };
 
 //helper traits structure for SET types

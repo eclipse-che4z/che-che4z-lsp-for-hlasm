@@ -476,8 +476,25 @@ void ca_processor::process_ASPACE(const semantics::complete_statement& stmt)
 
 void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
 {
-	//TODO
-	(void)stmt;
+	if (stmt.label_ref().type != semantics::label_si_type::VAR)
+	{
+		add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
+		return;
+	}
+
+	int index;
+	context::id_index name;
+	context::set_symbol_base* set_symbol;
+	bool ok = prepare_SET_symbol(stmt, context::SET_t_enum::C_TYPE, index, set_symbol, name);
+	
+	if (!ok)
+		return;
+
+	if (!set_symbol)
+		set_symbol = mngr_.hlasm_ctx.create_local_variable<context::C_t>(name, index == -1).get();
+
+	set_symbol->access_set_symbol<context::C_t>()->
+		set_value("                                                                                ", index - 1);
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) {}

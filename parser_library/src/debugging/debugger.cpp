@@ -187,6 +187,14 @@ const std::vector<scope> & debugger::scopes(frame_id_t frame_id)
 			globals.push_back(std::make_unique<set_symbol_variable>(*it.second));
 		else
 			scope_vars.push_back(std::make_unique<set_symbol_variable>(*it.second));
+	}
+
+	for (auto it : proc_stack_[frame_id].scope.system_variables)
+	{
+		if (it.second->is_global)
+			globals.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t>{}));
+		else
+			scope_vars.push_back(std::make_unique<macro_param_variable>(*it.second, std::vector<size_t>{}));
 		//fetch all vars
 	}
 

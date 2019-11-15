@@ -13,6 +13,14 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
 	{
 		auto opcode = hlasm_ctx.get_mnemonic_opcode(std::get<context::id_index>(instruction.value));
 
+		if (hlasm_ctx.macros().find(opcode) != hlasm_ctx.macros().end())
+		{
+			return std::make_pair(
+				processing_format(processing_kind::LOOKAHEAD, processing_form::IGNORED),
+				op_code(opcode, context::instruction_type::MAC)
+			);
+		}
+
 		auto status = ordinary_processor::get_instruction_processing_status(opcode, hlasm_ctx);
 
 		if (status)

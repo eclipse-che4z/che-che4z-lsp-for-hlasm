@@ -150,4 +150,17 @@ TEST_F(library_test, long_macro)
 	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 
+TEST_F(library_test, process_statement)
+{
+	std::string tcase = "process";
+
+	SetUp(tcase);
+
+	//compare tokens with output file
+
+	holder->analyze();
+	//no errors found while parsing
+	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+}
+
 #endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H

@@ -201,9 +201,10 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
 	if (line.operands.size() && MAC())
 	{
 		size_t string_size = line.operands.size();
+		std::vector<range> ranges;
 
 		for (auto& op : line.operands)
-			if(auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+			if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
 				string_size += m_op->value.size();
 
 		std::string to_parse;
@@ -215,10 +216,11 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
 				to_parse.append(m_op->value);
 			if (i != line.operands.size() - 1)
 				to_parse.push_back(',');
+			ranges.push_back(line.operands[i]->operand_range);
 		}
 		auto r = semantics::range_provider::union_range(line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
 
-		line.operands = parse_macro_operands(std::move(to_parse), r);
+		line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges));
 	}
 }
 
@@ -345,10 +347,10 @@ void parser_impl::initialize(
 	proc_status = proc_stat;
 }
 
-semantics::operand_list parser_impl::parse_macro_operands(std::string operands, range field_range)
+semantics::operand_list parser_impl::parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges)
 {
 	parser_holder h;
-	semantics::range_provider tmp_provider(field_range, semantics::adjusting_state::MACRO_REPARSE);
+	semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
 	parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
 

@@ -152,14 +152,27 @@ instruction_statement
 	};
 
 
-ordinary_instruction_statement: label SPACE instruction operands_and_remarks
-{
-	collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
-	collector.add_operands_hl_symbols();
-	collector.add_remarks_hl_symbols();
-};
-
-
+ordinary_instruction_statement
+	: label SPACE instruction operands_and_remarks
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
+		collector.add_operands_hl_symbols();
+		collector.add_remarks_hl_symbols();
+	}
+	| PROCESS 
+	{
+		collector.set_label_field(provider.get_range($PROCESS));
+		collector.set_instruction_field(
+			parse_identifier($PROCESS->getText(),provider.get_range($PROCESS)),
+			provider.get_range( $PROCESS));
+		process_instruction();
+	}
+	operands_and_remarks
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
+		collector.add_operands_hl_symbols();
+		collector.add_remarks_hl_symbols();
+	};
 
 
 num_ch

@@ -11,7 +11,6 @@
 #include <string_view>
 #include "input_source.h"
 #include "../src/semantics/lsp_info_processor.h"
-#include "../src/context/variable.h"
 #include "range.h"
 
 

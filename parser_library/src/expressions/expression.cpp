@@ -83,11 +83,13 @@ expr_ptr expression::evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority
 	{
 		auto o = std::move(exprs.front());
 		exprs.pop_front();
+		/*
 		++operator_count;
-		/* maximum operator count, see reference */
+		//maximum operator count, see reference 
 		if (operator_count > 24)
 			return default_expr_with_error<arithmetic_expression>
 			(error_messages::e001());
+		*/
 		auto a2 = evaluate_term(exprs, priority, operator_count);
 		return a1->binary_operation(o->get_str_val(), a2);
 	}

@@ -53,7 +53,11 @@ set(LIB_SRC
 	${PROJECT_SOURCE_DIR}/src/context/lsp_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro.cpp
     ${PROJECT_SOURCE_DIR}/src/context/macro_param_data.cpp
-    ${PROJECT_SOURCE_DIR}/src/context/variable.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/sequence_symbol.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/variables/variable.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/variables/system_variable.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/variables/macro_param.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/variables/set_symbol.cpp
     ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
     ${PROJECT_SOURCE_DIR}/src/context/id_storage.cpp
     ${PROJECT_SOURCE_DIR}/src/context/processing_context.cpp

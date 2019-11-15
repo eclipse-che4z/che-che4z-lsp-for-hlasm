@@ -1,6 +1,7 @@
 #include "context_manager.h"
 #include "shared/lexer.h"
 #include "../expressions/visitors/expression_evaluator.h"
+#include "../context/variables/system_variable.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -259,7 +260,7 @@ bool context_manager::test_symbol_for_read(context::var_sym_ptr var,const expres
 			auto& e = subscript[i];
 			if (!e || e->get_numeric_value() < 1)
 			{
-				if (i == 0 && e && e->get_numeric_value() == 0 && dynamic_cast<context::syslist_param*>(mac_par)) // if syslist and subscript = 0, ok
+				if (i == 0 && e && e->get_numeric_value() == 0 && dynamic_cast<context::system_variable*>(mac_par)) // if syslist and subscript = 0, ok
 					continue;
 
 				add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol_range)); //error - subscript is less than 1

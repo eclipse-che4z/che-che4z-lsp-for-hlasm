@@ -2,6 +2,8 @@
 #define CONTEXT_CODE_SCOPE_H
 
 #include "macro.h"
+#include "variables/set_symbol.h"
+#include "variables/system_variable.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -12,9 +14,12 @@ namespace context {
 struct code_scope
 {
 	using set_sym_storage = std::unordered_map<id_index, set_sym_ptr>;
+	using sys_sym_storage = std::unordered_map<id_index, sys_sym_ptr>;
 
 	//local variables of scope
 	set_sym_storage variables;
+	//local system variables of scope
+	sys_sym_storage system_variables;
 	//local sequence symbols of scope
 	label_storage sequence_symbols;
 	//gets macro to which this scope belong (nullptr if in open code)

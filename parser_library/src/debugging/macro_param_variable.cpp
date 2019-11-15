@@ -40,7 +40,7 @@ std::vector<variable_ptr> macro_param_variable::values() const
 	std::vector<size_t> child_index = index_;
 	child_index.push_back(0);
 
-	if (macro_param_.access_syslist_param() && child_index.size() == 1)
+	if (macro_param_.access_system_variable() && child_index.size() == 1)
 	{
 		for (size_t i = 0; i < size(); ++i)
 		{

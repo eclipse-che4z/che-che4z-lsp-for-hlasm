@@ -27,12 +27,12 @@
     "vscode": "^1.32.3"
   },
   "repository": {
-        "type": "git",
-        "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm.git"
-    },
+    "type": "git",
+    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm.git"
+  },
   "bugs": {
-        "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues"
-    },
+    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues"
+  },
   "devDependencies": {
     "vsce": "^1.52.0",
     "shelljs": "^0.8.2",

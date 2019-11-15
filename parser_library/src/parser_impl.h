@@ -83,7 +83,7 @@ protected:
 private:
 	void initialize(context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat);
 
-	semantics::operand_list parse_macro_operands(std::string operands, range field_range);
+	semantics::operand_list parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges);
 
 	std::vector<parser_holder> parsers_;
 

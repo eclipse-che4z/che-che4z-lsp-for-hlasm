@@ -110,7 +110,7 @@ void hlasm_context::add_system_vars_to_scope()
 
 			auto var = std::make_shared<set_symbol<A_t>>(SYSNEST, true, false);
 
-			var->set_value(scope_stack_.size() - 1);
+			var->set_value((context::A_t)scope_stack_.size() - 1);
 
 			curr_scope()->variables.insert({ SYSNEST,var });
 		}
@@ -118,20 +118,23 @@ void hlasm_context::add_system_vars_to_scope()
 		{
 			auto SYSMAC = ids().add("SYSMAC");
 
-			auto var = std::make_shared<set_symbol<C_t>>(SYSMAC, false, false);
+			std::vector<macro_data_ptr> data;
 
-			size_t i = 0;
-			for (auto it = scope_stack_.rbegin()+1; it != scope_stack_.rend(); ++it)
+			for (auto it = scope_stack_.rbegin(); it != scope_stack_.rend(); ++it)
 			{
 				std::string tmp;
 				if (it->is_in_macro())
 					tmp = *it->this_macro->id;
 				else
 					tmp = "OPEN CODE";
-				var->set_value(tmp, i++);
+				data.push_back(std::make_unique<macro_param_data_single>(std::move(tmp)));
 			}
 
-			curr_scope()->variables.insert({ SYSMAC,var });
+			macro_data_ptr mac_data = std::make_unique<macro_param_data_composite>(std::move(data));
+
+			auto var = std::make_shared<system_variable>(SYSMAC, std::move(mac_data), false);
+
+			curr_scope()->system_variables.insert({ SYSMAC,var });
 		}
 	}
 	add_global_system_vars();
@@ -340,7 +343,12 @@ var_sym_ptr hlasm_context::get_var_sym(id_index name)
 	auto tmp = curr_scope()->variables.find(name);
 	if (tmp != curr_scope()->variables.end())
 		return tmp->second;
-	else if (curr_scope()->is_in_macro())
+
+	auto s_tmp = curr_scope()->system_variables.find(name);
+	if (s_tmp != curr_scope()->system_variables.end())
+		return s_tmp->second;
+
+	if (curr_scope()->is_in_macro())
 	{
 		auto m_tmp = curr_scope()->this_macro->named_params.find(name);
 		if (m_tmp != curr_scope()->this_macro->named_params.end())

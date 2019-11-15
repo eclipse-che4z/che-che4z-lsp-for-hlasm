@@ -17,9 +17,11 @@ struct range_provider
 {
 public:
 	range original_range;
+	std::vector<range> original_operand_ranges;
 	adjusting_state state;
 
 	range_provider(range original_field_range, adjusting_state state);
+	range_provider(range original_field_range, std::vector<range> original_operand_ranges, adjusting_state state);
 	range_provider();
 
 	static range union_range(const range& lhs, const range& rhs);
@@ -31,6 +33,9 @@ public:
 	range get_empty_range(const antlr4::Token* start);
 
 	range adjust_range(range r);
+
+private:
+	position adjust_position(position pos);
 };
 
 }

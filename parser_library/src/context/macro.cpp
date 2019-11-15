@@ -1,4 +1,5 @@
 #include "macro.h"
+#include "variables/system_variable.h"
 
 #include <stdexcept>
 #include <cassert>
@@ -117,7 +118,7 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, std::vect
 		}
 	}
 
-	named_cpy.emplace(syslist_name, std::make_unique <syslist_param>(syslist_name, std::make_unique<macro_param_data_composite>(std::move(syslist))));
+	named_cpy.emplace(syslist_name, std::make_unique<system_variable>(syslist_name, std::make_unique<macro_param_data_composite>(std::move(syslist)), false));
 
 	return std::make_shared<macro_invocation>(id, definition, copy_nests, labels, std::move(named_cpy), definition_location);
 }

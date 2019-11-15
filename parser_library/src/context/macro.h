@@ -1,7 +1,8 @@
 #ifndef CONTEXT_MACRO_H
 #define CONTEXT_MACRO_H
 
-#include "variable.h"
+#include "variables/macro_param.h"
+#include "sequence_symbol.h"
 #include "common_types.h"
 #include "hlasm_statement.h"
 
