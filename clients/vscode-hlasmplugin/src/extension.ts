@@ -434,7 +434,7 @@ function checkHlasmLanguage(text: string)
 //automatic detection function
 function setHlasmLanguage(document: vscode.TextDocument) {
     if (document.languageId == 'plaintext') {
-        if (checkHlasmLanguage)
+        if (checkHlasmLanguage(document.getText()))
             vscode.languages.setTextDocumentLanguage(document, 'hlasm');
     }
 }
