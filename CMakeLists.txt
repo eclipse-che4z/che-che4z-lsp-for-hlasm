@@ -1,3 +1,15 @@
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+
 cmake_minimum_required (VERSION 3.10)
 
 PROJECT(HlasmServer)
@@ -36,7 +48,6 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 #the option is here, but we are not able to build with clang and libstdc++
 option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: -DWITH_LIBCXX=On" On)
-option(BUILD_JNI_INTERFACE "Build java class that can be used to parse a file. To enable with: -DBUILD_JNI_INTERFACE=On" Off)
 option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids requiring users to install the redistribution package.
  To disable with: -DWITH_STATIC_CRT=Off" On)
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
@@ -44,16 +55,6 @@ option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cas
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
   message(WARNING "Building shared libraries with static CRT!")
-endif()
-
-if(BUILD_JNI_INTERFACE AND WITH_STATIC_CRT AND MSVC)
-  message(WARNING "Building JNI shared library with static CRT!")
-endif()
-
-if(BUILD_JNI_INTERFACE AND NOT BUILD_SHARED_LIBS AND NOT MSVC)
-  set(BUILD_SHARED_LIBS On)
-  message(WARNING "Overriding BUILD_SHARED_LIBS option with On: JNI_INTERFACE can be only built with shared libraries.")
-  #this is necessary, unless we pass -fPIC to all static third-party libraries that we link to jni_parser_library.so
 endif()
 
 if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -209,7 +210,6 @@ include_directories(parser_library/include)
 add_subdirectory(language_server)
 add_subdirectory(dummy)
 add_subdirectory(clients)
-add_subdirectory(private_test)
 add_subdirectory(benchmark)
 
 add_dependencies(vsix language_server parser_library)

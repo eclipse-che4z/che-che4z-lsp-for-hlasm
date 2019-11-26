@@ -1,3 +1,15 @@
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+
 cmake_minimum_required (VERSION 3.10)
 include(GenerateExportHeader)
 include(GoogleTest)
@@ -176,10 +188,6 @@ ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build ev
 
 add_dependencies(parser_library antlr4jar GenerateParser)
 add_dependencies(parser_library json)
-
-if(BUILD_JNI_INTERFACE)
-	add_subdirectory(jni)
-endif()
 
 if(BUILD_TESTING)
 	add_executable(library_test test/test.cpp
