@@ -52,7 +52,7 @@ TEST(debugger, stopped_on_entry)
 	EXPECT_EQ(sc.at(1).name, "Locals");
 	EXPECT_EQ(sc.at(2).name, "Ordinary symbols");
 	auto & globs = d.variables(sc.at(0).var_reference);
-	EXPECT_EQ(globs.size(), 4U);
+	EXPECT_EQ(globs.size(), 5U);
 	auto & locs = d.variables(sc.at(1).var_reference);
 	EXPECT_EQ(locs.size(), 0U);
 	
@@ -139,6 +139,7 @@ struct frame_vars
 		this->globals["SYSDATC"];
 		this->globals["SYSTIME"];
 		this->globals["SYSPARM"];
+		this->globals["SYSOPT_RENT"];
 	}
 	std::unordered_map<std::string, test_var_value> globals;
 	std::unordered_map<std::string, test_var_value> locals;

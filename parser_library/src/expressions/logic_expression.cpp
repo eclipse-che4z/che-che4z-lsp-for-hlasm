@@ -73,11 +73,20 @@ expr_ptr logic_expression::binary_operation(str_ref o, expr_ref arg2) const
 	if (operation_name == "OR")
 		return make_logic(value_ || val);
 
+	if (operation_name == "OR NOT")
+		return make_logic(value_ || !val);
+
 	if (operation_name == "AND")
 		return make_logic(value_ && val);
 
+	if (operation_name == "AND NOT")
+		return make_logic(value_ && !val);
+
 	if (operation_name == "XOR")
 		return make_logic(value_ ^ val);
+
+	if (operation_name == "XOR NOT")
+		return make_logic(value_ ^ !val);
 
 	return default_expr_with_error<logic_expression>
 		(error_messages::el02());

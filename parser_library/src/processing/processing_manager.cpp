@@ -361,9 +361,9 @@ const attribute_provider::resolved_reference_storage& processing_manager::lookup
 
 	opencode_prov_.push_line_end();
 
-	if(attr_lookahead_stop_)
+	if(attr_lookahead_stop_ && hlasm_ctx_.current_source().end_index < attr_lookahead_stop_->end_index)
 		perform_opencode_jump(
-			context::source_position(attr_lookahead_stop_->end_line, attr_lookahead_stop_->end_index), 
+			context::source_position(attr_lookahead_stop_->end_line + 1, attr_lookahead_stop_->end_index), 
 			*attr_lookahead_stop_);
 
 	while (true)

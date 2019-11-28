@@ -1,0 +1,34 @@
+*statements that procuced parsing errors
+ macro
+ m &v
+ DC FD'&V'
+ mend
+ m
+
+ macro
+ xxxxxxxx &p1=,&p2=,&p3=,&p4=,&p5=,&ppp6=,&p7=
+ mend
+
+         xxxxxxxx Xxx_Xxx,                 xxxxxx xxxxxx               +
+               P1==XX(XXX_X),              Xxxxxx                      +
+               P2==CL8'XXX_000',           Xxxxxxxxxx Xxxxxxx          +
+               P3==XD(XXXXDATA),           Xxxxxxx xx xxxxxxx          +
+               P4==CL8'Common',            Xxxxxxx Xxxxxxx             +
+               P5==FD'0',                  Xxxxxx                      +
+               PPP6=XXX_0000,              Xxxx'x Xxx xx               +
+               P7=(E,X_XXXXXXXX)           XXXXXXxx Xxxxx Xxxxxxx
+
+ macro
+ mm
+&XX1BIT setc ''
+&XX2BIT setc ''
+&XX3BIT setc ''
+&XXX4LLB setc ''
+&XXX5BIT setc ''
+&XXX6BIT setc ''
+&FIELDNAM(1) setc ''
+&i seta 1
+.XXXXX   DC    BL1'&XX1BIT&XX2BIT&XX3BIT.0&XXX4LLB.&XXX5BIT.0&XXX6BIT'&X
+               FIELDNAM(&I)                                        @x0x
+ mend
+  

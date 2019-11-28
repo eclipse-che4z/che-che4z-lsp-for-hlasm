@@ -52,7 +52,10 @@ A_t system_variable::number(std::vector<size_t> offset) const
 	if (offset.empty())
 		return (A_t)data_->number - 1;
 	else
+	{
+		++offset.front();
 		return (A_t)macro_param_base::number(std::move(offset));
+	}
 }
 
 A_t system_variable::count(std::vector<size_t> offset) const

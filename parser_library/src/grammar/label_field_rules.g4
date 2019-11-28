@@ -30,7 +30,7 @@ label
 		else
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::label));
-			collector.set_label_field(parse_identifier(std::move($l_char_string.value),r),$l_char_string.ctx,r); 
+			collector.set_label_field(std::move($l_char_string.value),$l_char_string.ctx,r); 
 		}
 
 														
