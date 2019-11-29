@@ -18,7 +18,7 @@
 #include "../include/shared/token_stream.h"
 #include "parser_tools.h"
 #include "context/hlasm_context.h"
-#include "generated/hlasmparser.h"
+#include "hlasmparser.h"
 #include "analyzer.h"
 #include "workspace.h"
 #include "sstream"
