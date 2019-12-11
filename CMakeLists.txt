@@ -52,6 +52,7 @@ option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids
  To disable with: -DWITH_STATIC_CRT=Off" On)
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
 option(FS_PATH "Provide path to libc++fs for installation on MacOS" "")
+option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not packaged into vsix." On)
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
   message(WARNING "Building shared libraries with static CRT!")
@@ -233,10 +234,13 @@ include_directories(parser_library/include)
 # Applications
 add_subdirectory(language_server)
 add_subdirectory(dummy)
-add_subdirectory(clients)
 add_subdirectory(benchmark)
 
-add_dependencies(vsix language_server parser_library)
+if(BUILD_VSIX)
+  add_subdirectory(clients)
+endif()
+
+
 
 # Installation
 

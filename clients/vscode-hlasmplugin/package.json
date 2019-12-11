@@ -1,8 +1,8 @@
 {
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
-  "description": "The Language Server Protocol (LSP) for HLASM standardizes the communication between language tooling and your code editor.",
-  "version": "0.8.0",
+  "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
+  "version": "0.8.1",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
   "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
