@@ -1,119 +1,127 @@
-# Assembler Language Support
+# HLASM Language Support
+HLASM Language Support is an extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, and lets you trace how the conditional assembly is evaluated with a modern debugging experience.
 
-The Assembler Language Support extension standardizes the communication between language tooling and your code editor. The LSP defines the protocol that is used between an editor or IDE and a language server. The Assembler Language Support extension supports various language features and LSP features.
+## Getting Started
 
-## Supported Language Features
+To start using the HLASM Language Support extension, **follow these steps**:
 
-### Conditional Assembly Instructions
+1. Install the extension.
+2. In **File** - **Open Folder...**, select the folder where your HLASM project is located.
+3. Open your HLASM source code (no file extension is needed) or create a new file.
+4. If the extension fails to auto-detect HLASM language, set it manually in the bottom-right corner of the VS Code window.  
+   The extension is now enabled on the opened file. If you have macro definitions in separate files or use the COPY instruction, proceed with the steps below to configure the extension to search for external files in the correct directories:
+5. After opening the HLASM file, two popups display. Select "Create pgm_conf.json with current program" and "Create empty proc_grps.json".  
+   The two configuration files are created in the `.hlasmplugin` subfolder.
+6. In the `proc_grps.json` file, fill the `libs` array with paths to folders with macro definitions and COPY files. For example, if you have your macro files in the `ASMMAC/` folder, type the string `"ASMMAC"` into the libs array.
 
-The Assembler Language Support extension can handle and evaluate most conditional assembly (CA) instructions. The extension supports conditional and unconditional branching, defining global and local variables and recognizing macro definitions. The only global variable symbols implemented are SYSNDX and SYSECT.
+For a full explanation of the configuration, see the [Configuration](#Configuration) section.
 
-The following CA instructions are supported:
+## Language Features
 
-* ACTR
-* AGO
-* AIF
-* ANOP
-* GBLA
-* GBLB
-* GBLC
-* LCLA
-* LCLB
-* LCLC
-* MACRO
-* MEND
-* MEXIT
-* SETA
-* SETB
-* SETC
+The HLASM Language Support extension parses and analyzes all parts of a HLASM program. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
 
-### Macro Instructions
+## LSP Features
+### Highlighting
+The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching AIF, AGO or conditional assembly is not colored.
 
-The Assembler Language Support extension fully supports the expansion of macros with passed parameters.
+### Autocomplete
+Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
 
-### Assembler Instructions
+### Go To Definition and Find All References
+The extension adds the 'go to definition' and 'find all references' functionalities. Use the 'go to definition' functionality to show definitions of variable symbols, ordinary symbols and macros, or open COPY files directly. Use the 'find all references' functionality to show all places where a symbol is used.
 
-The Assembler Language Support extension can handle the following assembler instructions:
+## Macro Tracer
 
-* COPY
-* CSECT
-* DSECT
-* EQU
-* LOCTR
+The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 
 
-#### CSECT and DSECT
+The macro tracer is not a debugger. It cannot debug running executables, only track the compilation process.
 
-When evaluating a CSECT or DSECT instruction the extension only distinguishes whether a unique name is used.
+### Configuring the Macro Tracer
 
-#### Ordinary Symbols
+1. Open your workspace.
+2. In the left sidebar, click the bug icon to open the debugging panel.
+3. Click the cog icon in the top left of the screen.  
+   A "select environment" prompt displays.
+4. Enter **HLASM Macro tracer**.  
+   Your workspace is now configured for macro tracing.
 
-You can define named constants using EQU and named addresses using labels in machine instructions.
+### Using the Macro Tracer
 
-DC and data attributes are not yet supported.
+To run the macro tracer, open the file that you want to trace. Then open the debugging panel, and press **F5** to start the debugging session.
 
-#### External Macro Libraries and Copy Numbers
+<!-- commenting out pending review // While the debugging session is running, it stops before macros or COPY instructions. You can select **step into** or **step over**. If you select **step into**, the macro or COPY file opens. If you select **step over**, the debugging session skips to the next line.
 
-The Assembler Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated, in paths specified in two configuration files in the root folder of the workspace, `proc_grps.json` and `pgm_conf.json`.
+Breakpoints can be set before or during the debugging session. -->
 
-**Example (`proc_grps.json`)**:
+## External Macro Libraries and COPY Members
+The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the .hlasmplugin folder of the currently open workspace. Ensure that you configure these files before using macros from separate files or the COPY instruction.
+
+When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
+
+The structure of the configuration is based on CA Endevor® SCM. `proc_grps.json` defines processor groups by assigning a group name to a list of directories which are searched in the order they are listed. `pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
+
+Example `proc_grps.json`:
 
 The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files.
 
-
+```
+{
+  "pgroups": [
     {
-      "pgroups": [
-      {
-        "name": "GROUP1",
-        "libs": [
-          "path/to/folder/with/GROUP1/macros",
-          "second/path/to/folder/with/GROUP2/macros"
-        ]
-      },
-      {
-        "name": "GROUP2",
-        "libs": [
-          "path/to/folder/with/GROUP2/macros",
-          "second/path/to/folder/with/GROUP2/macros"
-        ]
-      }
+      "name": "GROUP1",
+      "libs": [
+        "ASMMAC/",
+        "C:/SYS.ASMMAC"
+      ]
+    },
+    {
+      "name": "GROUP2",
+      "libs": [
+        "G2MAC/",
+        "C:/SYS.ASMMAC"
       ]
     }
+  ]
+}
+```
 
-`pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative path source file path is specified, it is relative to the current workspace (the directory in which the configuration files are stored.)
+Example `pgm_conf.json`:
 
-**Example (`pgm_conf.json`)**:
+The following example specifies that GROUP1 is used when working with `source_code.hlasm` and GROUP2 is used when working with `second_file.hlasm`.
 
-The following example specifies that GROUP1 is used when working with source_code.hlasm and GROUP2 is used when working with second_file.hlasm. 
-
+```
+{
+  "pgms": [
     {
-      "pgms": [
-      {
-        "program": "source_code.hlasm",
-        "pgroup": "GROUP1"
-      },
-      {
-        "program": "second_file.hlasm",
-        "pgroup": "GROUP2"
-      }
-      ]
+      "program": "source_code",
+      "pgroup": "GROUP1"
+    },
+    {
+      "program": "second_file",
+      "pgroup": "GROUP2"
+    },
+  ]
+}
+```
+If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
+
+The program field in `pgm_conf.json` supports regular expressions, for example:
+```
+{
+  "pgms": [
+    {
+      "program": ".*",
+      "pgroup": "GROUP1"
     }
-    
-If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the path `path/to/folder/with/GROUP1/macros` is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `second/path/to/folder/with/GROUP2/macros` is searched. If that search is unsuccessful an error displays that the macro does not exist.
+  ]
+}
+```
+In this example, GROUP1 is used for all open code programs.
 
-## Supported LSP Features
+<!-- Uncomment, once we have gone open source
 
-### Syntax Highlighting
-
-The Assembler Language Support extension provides syntax highlighting for statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted. Code that is skipped by branching AIF or AGO is not colored.
-
-### Autocomplete
-
-Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
-
-### Go To and Find All References
-
-The Assembler Language Support extension provides go to definition and find all references for variable symbols, sequence symbols and macro definitions.
-
-### Diagnostics
-
-The Assembler Language Support extension checks for errors in all machine instructions and supported CA and assembler instructions and displays them in the IDE.
+## Questions, issues, feature requests, and contributions
+- If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
+- Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
+- Any and all feedback is appreciated and welcome!
+-->
