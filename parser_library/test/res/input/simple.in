@@ -1,0 +1,3 @@
+LABEL INSTR    2,1
+      INSTR    2    REMARK
+      INSTR    2,1, TOTO JE REMARK
