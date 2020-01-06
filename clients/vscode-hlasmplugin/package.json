@@ -1,8 +1,8 @@
 {
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
-  "description": "The Language Server Protocol (LSP) for HLASM standardizes the communication between language tooling and your code editor.",
-  "version": "0.8.0",
+  "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
+  "version": "0.8.1",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
   "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
@@ -70,8 +70,7 @@
     "debuggers": [
       {
         "type": "hlasm",
-        "label": "HLASM Debug",
-        "program": "bin/dummy.exe",
+        "label": "HLASM Macro tracer",
         "configurationAttributes": {
           "launch": {
             "required": [
@@ -100,25 +99,13 @@
           {
             "type": "hlasm",
             "request": "launch",
-            "name": "Ask for file name",
-            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "name": "Macro tracer: current program",
+            "program": "${command:CurrentProgramName}",
             "stopOnEntry": true,
             "debugServer": 4745
           }
         ],
         "configurationSnippets": [
-          {
-            "label": "HLASM Macro tracer: Launch",
-            "description": "A new configuration for tracing a user selected HLASM file.",
-            "body": {
-              "type": "hlasm",
-              "request": "launch",
-              "name": "Macro tracer: Ask for file name",
-              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
-              "stopOnEntry": true,
-              "debugServer": 4745
-            }
-          },
           {
             "label": "HLASM Macro tracer: Launch current program",
             "description": "A new configuration for tracing HLASM file that is currently open.",
@@ -127,6 +114,18 @@
               "request": "launch",
               "name": "Macro tracer: current program",
               "program": "^\"\\${command:CurrentProgramName}\"",
+              "stopOnEntry": true,
+              "debugServer": 4745
+            }
+          },
+          {
+            "label": "HLASM Macro tracer: Ask for file name",
+            "description": "A new configuration for tracing a user selected HLASM file.",
+            "body": {
+              "type": "hlasm",
+              "request": "launch",
+              "name": "Macro tracer: Ask for file name",
+              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
               "stopOnEntry": true,
               "debugServer": 4745
             }

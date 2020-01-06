@@ -100,18 +100,29 @@ mac_ch_c returns [concat_chain chain]
 mac_entry returns [concat_chain chain]
 	: mac_ch										{$chain = std::move($mac_ch.chain);}
 	| literal										{$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));}
+	| ORDSYMBOL EQUALS literal					
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));
+		$chain.push_back(std::make_unique<char_str>($ORDSYMBOL->getText()));
+		$chain.push_back(std::make_unique<char_str>("="));
+		$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));
+	}
 	| tmp=mac_entry mac_ch							
 	{
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
 	};
 
+mac_sublist_b_c returns [concat_chain chain]
+	: mac_ch_c										{$chain = std::move($mac_ch_c.chain);}
+	| literal										{$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));};
+
 mac_sublist_b returns [std::vector<concat_chain> chains]
-	: mac_ch_c										{$chains.push_back(std::move($mac_ch_c.chain));}
-	| tmp=mac_sublist_b comma mac_ch_c			
+	: mac_sublist_b_c										{$chains.push_back(std::move($mac_sublist_b_c.chain));}
+	| tmp=mac_sublist_b comma mac_sublist_b_c			
 	{
 		$chains = std::move($tmp.chains);
-		$chains.push_back(std::move($mac_ch_c.chain));
+		$chains.push_back(std::move($mac_sublist_b_c.chain));
 	};
 
 mac_sublist returns [concat_point_ptr point]

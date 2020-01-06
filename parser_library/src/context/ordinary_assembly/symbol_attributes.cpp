@@ -31,6 +31,8 @@ symbol_attributes symbol_attributes::make_section_attrs()
 { return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('J'), 1); }
 symbol_attributes symbol_attributes::make_machine_attrs(symbol_attributes::len_attr length) 
 { return symbol_attributes(symbol_origin::MACH, ebcdic_encoding::to_ebcdic('I'), length); }
+symbol_attributes symbol_attributes::make_extrn_attrs()
+{ return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('T'), 1); }
 
 data_attr_kind symbol_attributes::transform_attr(char c)
 {

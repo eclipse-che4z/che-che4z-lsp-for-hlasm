@@ -32,7 +32,7 @@ namespace language_server {
 class dispatcher : public send_message_provider
 {
 public:
-	dispatcher(std::istream & in, std::ostream & out, server & server, request_manager & req_mngr, std::atomic<bool> * cancel = nullptr);
+	dispatcher(std::istream & in, std::ostream & out, server & server, request_manager & req_mngr);
 
 	int run_server_loop();
 	bool read_message(std::string & out);
@@ -47,8 +47,6 @@ private:
 	std::ostream & out_;
 
 	std::mutex mtx_;
-
-	std::atomic<bool>* cancel_;
 
 	request_manager& req_mngr_;
 

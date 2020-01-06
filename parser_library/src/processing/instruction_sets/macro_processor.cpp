@@ -39,6 +39,12 @@ void macro_processor::process(context::unique_stmt_ptr stmt)
 	hlasm_ctx.enter_macro(stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
+bool is_data_def(char c)
+{
+	c = toupper(c);
+	return c == 'L' || c == 'I' || c == 'S' || c == 'T' || c == 'D' || c == 'O' || c == 'N' || c == 'K';
+}
+
 std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const std::string& data, size_t& start)
 {
 	size_t begin = start;
@@ -66,6 +72,12 @@ std::unique_ptr<context::macro_param_data_single> find_single_macro_param(const 
 		}
 		else if (data[start] == '\'')
 		{
+			if (start > 0 && is_data_def(data[start - 1]))
+			{
+				++start;
+				continue;
+			}
+
 			start = data.find_first_of('\'', start + 1);
 
 			if (start == std::string::npos)

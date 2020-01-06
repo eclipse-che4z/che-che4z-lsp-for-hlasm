@@ -142,7 +142,8 @@ const std::vector<stack_frame> & debugger::stack_frames()
 {
 	std::lock_guard<std::mutex> guard(variable_mtx_);
 	stack_frames_.clear();
-	
+	if (debug_ended_)
+		return stack_frames_;
 	for(size_t i = proc_stack_.size()-1; i != -1; --i)
 	{
 		source source(proc_stack_[i].proc_location.file);
@@ -173,7 +174,10 @@ const std::vector<stack_frame> & debugger::stack_frames()
 const std::vector<scope> & debugger::scopes(frame_id_t frame_id)
 {
 	std::lock_guard<std::mutex> guard(variable_mtx_);
+	
 	scopes_.clear();
+	if (debug_ended_)
+		return scopes_;
 
 	if (frame_id >= proc_stack_.size())
 		return scopes_;
@@ -234,6 +238,8 @@ std::vector<variable_ptr> empty_variables;
 const std::vector<variable_ptr> & debugger::variables(var_reference_t var_ref)
 {
 	std::lock_guard<std::mutex> guard(variable_mtx_);
+	if (debug_ended_)
+		return empty_variables;
 	auto it = variables_.find(var_ref);
 	if (it == variables_.end())
 		return empty_variables;
@@ -270,6 +276,7 @@ void debugger::debug_start(processor_file_ptr open_code, parse_lib_provider * pr
 
 	if (!disconnected_)
 		event_.exited(0);
+	debug_ended_ = true;
 }
 
 }

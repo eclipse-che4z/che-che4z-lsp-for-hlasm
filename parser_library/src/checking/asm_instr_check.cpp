@@ -962,6 +962,9 @@ bool expression_instruction::check(const std::vector<const asm_operand*> & to_ch
 {
 	if (to_check.empty())
 		return true;
+	// an if for the specific "SPACE , " case which should return true 
+	if (to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]))
+		return true;
 	if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
 		return false;
 	auto first = get_simple_operand(to_check[0]);

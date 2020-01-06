@@ -108,7 +108,7 @@ expr_ptr arithmetic_expression::from_string(const std::string &option, const std
 expr_ptr arithmetic_expression::from_string(const std::string_view& value, bool dbcs)
 {
 	if(value.empty())
-		return default_expr_with_error<arithmetic_expression>(error_messages::ea03());
+		return make_arith(0);
 
 	if (isdigit(value.front()))
 		return from_string("", value, dbcs);

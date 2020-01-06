@@ -98,6 +98,7 @@ literal
 
 mach_data_attribute returns [std::string attribute, id_index data = nullptr]
 	: ORDSYMBOL ATTR literal	
+	| ORDSYMBOL ATTR ASTERISK
 	| ORDSYMBOL ATTR id				{$attribute = $ORDSYMBOL->getText(); $data = $id.name;};
 
 data_attribute

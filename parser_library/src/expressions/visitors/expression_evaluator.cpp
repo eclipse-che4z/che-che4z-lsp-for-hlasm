@@ -473,8 +473,11 @@ std::string expression_evaluator::concatenate(const semantics::concat_chain& cha
 			result.append(concat(point->access_str()));
 			break;
 		case semantics::concat_type::DOT:
-			if (last_was_var) continue;
-			last_was_var = false;
+			if (last_was_var)
+			{
+				last_was_var = false;
+				continue;
+			}
 			result.append(concat(point->access_dot()));
 			break;
 		case semantics::concat_type::EQU:

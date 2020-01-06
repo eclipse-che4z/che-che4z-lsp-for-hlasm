@@ -108,7 +108,7 @@ bool data_def_type_Y::check(const data_definition_operand& op, const diagnostic_
 
 data_def_type_S_SY::data_def_type_S_SY(char extension, int size) :
 	data_def_type('S', extension, n_a(), modifier_bound{size, size},
-		n_a(), n_a(), nominal_value_type::ADDRESS_OR_EXPRESSION, halfword, size) {}
+		n_a(), n_a(), nominal_value_type::ADDRESS_OR_EXPRESSION, halfword, (unsigned long long) size) {}
 
 data_def_type_S::data_def_type_S() : data_def_type_S_SY('\0', 2)
 {

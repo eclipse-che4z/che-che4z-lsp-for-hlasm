@@ -107,7 +107,7 @@ model_string_ch_c returns [std::string value]
 	| tmp=model_string_ch_c model_string_ch				{$value = std::move($tmp.value); $value.append($model_string_ch.value);};
 
 string_v_actual returns [concat_chain chain]
-	: ap1=APOSTROPHE model_string_ch_c var_symbol model_string_ch_v_c ap2=(APOSTROPHE|ATTR)	
+	: ap1=(APOSTROPHE|ATTR)	 model_string_ch_c var_symbol model_string_ch_v_c ap2=(APOSTROPHE|ATTR)	
 	{ 
 		$chain.push_back(std::make_unique<char_str>("'"));
 		$chain.push_back(std::make_unique<char_str>(std::move($model_string_ch_c.value)));

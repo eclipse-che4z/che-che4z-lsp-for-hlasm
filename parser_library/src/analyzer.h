@@ -16,7 +16,7 @@
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
 #include "context/hlasm_context.h"
-#include "generated/hlasmparser.h"
+#include "hlasmparser.h"
 #include "parser_error_listener.h"
 #include "shared/token_stream.h"
 #include "processing/processing_manager.h"

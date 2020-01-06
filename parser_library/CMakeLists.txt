@@ -17,17 +17,17 @@ project(parser_library)
 
 SET (CMAKE_CXX_STANDARD 17)
 
-
-# generated grammar source files
+set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
+#generated grammar source files
 set(GENERATED_SRC
-   ${PROJECT_SOURCE_DIR}/src/generated/hlasmparser.cpp
-   ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserBaseListener.cpp
-   ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserBaseVisitor.cpp
-   ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserListener.cpp
-   ${PROJECT_SOURCE_DIR}/src/generated/hlasmparserVisitor.cpp
+   ${GENERATED_FOLDER}/hlasmparser.cpp
+   ${GENERATED_FOLDER}/hlasmparserBaseListener.cpp
+   ${GENERATED_FOLDER}/hlasmparserBaseVisitor.cpp
+   ${GENERATED_FOLDER}/hlasmparserListener.cpp
+   ${GENERATED_FOLDER}/hlasmparserVisitor.cpp
  )
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "CLANG")
-	set_source_files_properties(${PROJECT_SOURCE_DIR}/src/generated/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 
  set(GRAMMAR_SRC
@@ -52,9 +52,9 @@ include(tag_generated_files.cmake)
 add_custom_target(GenerateParser DEPENDS ${GENERATED_SRC})
 add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
-   ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/src/generated/
+   ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/grammar/ -listener -visitor -o ${PROJECT_SOURCE_DIR}/src/generated/ -package hlasm_plugin::parser_library::generated hlasmparser.g4
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/grammar/ -listener -visitor -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::generated hlasmparser.g4
    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/grammar/"
    DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
    )
@@ -167,7 +167,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 generate_export_header(parser_library
-			EXPORT_FILE_NAME ${PROJECT_SOURCE_DIR}/src/generated/export/parser_library_export.h)
+			EXPORT_FILE_NAME ${GENERATED_FOLDER}/export/parser_library_export.h)
 
 target_link_libraries(parser_library ${ANTLR4_RUNTIME})
 if(FILESYSTEM_LINK)
@@ -177,8 +177,9 @@ endif()
 target_include_directories(parser_library
     PUBLIC 
         ${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/src/generated/
-		${PROJECT_SOURCE_DIR}/src/generated/export
+		${PROJECT_SOURCE_DIR}/src
+		${GENERATED_FOLDER}
+		${GENERATED_FOLDER}/export
 )
 
 ADD_CUSTOM_COMMAND (TARGET parser_library POST_BUILD      # Adds a post-build event to MyTest
@@ -203,10 +204,11 @@ if(BUILD_TESTING)
 	endif()
 
 	target_include_directories(library_test
-    PUBLIC 
-        "${PROJECT_SOURCE_DIR}/include"
-	PUBLIC 
-        "${PROJECT_SOURCE_DIR}/test/export"
+		PUBLIC
+			${PROJECT_SOURCE_DIR}/include
+			${PROJECT_SOURCE_DIR}/src
+			${GENERATED_FOLDER}
+			${GENERATED_FOLDER}/export
 	)
 
 	ADD_CUSTOM_COMMAND (TARGET library_test POST_BUILD

@@ -64,27 +64,21 @@ void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
 	lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
-void collector::set_label_field(context::id_index label, antlr4::ParserRuleContext * parser_ctx, range symbol_range)
+void collector::set_label_field(std::string label, antlr4::ParserRuleContext * parser_ctx, range symbol_range)
 {
 	if (lbl_)
 		throw std::runtime_error("field already assigned");
 	//recognise, whether label consists only of ORDSYMBOL token
 	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL))
 	{
-		lbl_.emplace(symbol_range ,*label );
-		add_lsp_symbol({ *label, symbol_range, symbol_type::ord });
-	}
-	//recognise, whether label consists of DOT ORDSYMBOL tokens, so it is sequence symbol
-	else if (parser_ctx->children.size() == 2 && parser_ctx->getStart()->getType() == lexer::Tokens::DOT && parser_ctx->getStop()->getType() == lexer::Tokens::ORDSYMBOL)
-	{
-		seq_sym ss = { label, symbol_range };
-		lbl_.emplace(symbol_range,ss );
+		lbl_.emplace(symbol_range , label);
+		add_lsp_symbol({ std::move(label), symbol_range, symbol_type::ord });
 	}
 	//otherwise it is macro label parameter
 	else
 	{
-		lbl_.emplace(symbol_range, *label, label_si::mac_flag());
-		add_lsp_symbol({ *label, symbol_range, symbol_type::ord });
+		lbl_.emplace(symbol_range, label, label_si::mac_flag());
+		add_lsp_symbol({ std::move(label), symbol_range, symbol_type::ord });
 	}
 }
 

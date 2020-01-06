@@ -1,63 +1,133 @@
-# HLASM Language support
+# HLASM Language Support
+HLASM Language Support is an extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, and lets you trace how the conditional assembly is evaluated with a modern debugging experience.
 
-The Language Server Protocol (LSP) for HLASM standardizes the communication between language tooling and your code editor. LSP defines the protocol that is used between an editor or IDE and a language server. It’s functionality can be separated into two major categories, supported language features and supported LSP features. Detailed description of both can be found below.
+## Getting Started
 
-## Supported HLASM language features
-### Conditional assembly instructions
-Plugin handles majority of conditional assembly (CA) instructions. It is also able to evaluate them. This means that plugin is fully capable of conditional or unconditional branching, defining global or local variable symbols and recognizing macro definitions. There are implemented only SYSNDX and SYSECT global variable symbols. 
+To start using the HLASM Language Support extension, **follow these steps**:
 
-Complete list of supported CA instructions:
+1. Install the extension.
+2. In **File** - **Open Folder...**, select the folder where your HLASM project is located.
+3. Open your HLASM source code (no file extension is needed) or create a new file.
+4. If the extension fails to auto-detect HLASM language, set it manually in the bottom-right corner of the VS Code window.  
+   The extension is now enabled on the opened file. If you have macro definitions in separate files or use the COPY instruction, proceed with the steps below to configure the extension to search for external files in the correct directories:
+5. After opening the HLASM file, two popups display. Select "Create pgm_conf.json with current program" and "Create empty proc_grps.json".  
+   The two configuration files are created in the `.hlasmplugin` subfolder.
+6. In the `proc_grps.json` file, fill the `libs` array with paths to folders with macro definitions and COPY files. For example, if you have your macro files in the `ASMMAC/` folder, type the string `"ASMMAC"` into the libs array.
 
-AIF
-AGO
-ACTR
-SETA
-SETB
-SETC
-ANOP
-LCLA
-LCLB
-LCLC
-GBLA
-GBLB
-GBLC
-MACRO
-MEND
-MEXIT
+For a full explanation of the configuration, see the [Configuration](#Configuration) section.
 
-### Macro instructions
-Expanding macros with passed parameters is fully supported.
+## Language Features
 
-### Assembler instructions
-Plugin is capable of handling some of the assembler instructions as well.
+The HLASM Language Support extension parses and analyzes all parts of a HLASM program. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
 
-CSECT
-DSECT
-LOCTR
-COPY
-EQU
+## LSP Features
+### Highlighting
+The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching AIF, AGO or conditional assembly is not colored.
 
-With CSECT/DSECT plugin only distinguishes whether unique name has been used. Continuation of section with LOCTR is supported.
-
-### Ordinary symbols
-Using EQU you can define named constants and with labels in machine instructions you can define named addresses. DC is not supported yet, neither data attributes are so full experience of ordinary symbols is not provided.
-
-### External macro libraries and copy members
-Plugin is able to look for locally stored members (files) when evaluating macro or COPY instruction. Two configuration files are required at the root of opened workspace of VS Code: proc_grps.json and pgm_conf.json. proc_grps.json provides definition of processor groups, which is basically list of folders on computer to tell the plugin where to look for macro and copy files. pgm_conf.json provides mapping between source files (open code files) and processor groups. It tells which list of directories should be used with particular source file. The structure of this configurations was based on Endevor.
-
-The proc_grps.json defines two processor groups: GROUP1 and GROUP1 and defines list of directories where to look for macros and COPY files. pgm_conf.json defines, that when working with source_code.hlasm, the plugin should use GROUP1 and when working with second_file.hlasm, GROUP2 will be used. If a path is a relative path, it is relative to the opened workspace (the directory in which the configuration files are in).
-
-So when you want to invoke macro MAC1 from source_code.hlasm, the plugin will search for file with name "MAC1" (the file must have the exact same name as the macro) first in folder "path/to/folder/with/GROUP1/macros" and if that is unsuccesful it will try folder "second/path/to/folder/with/GROUP2/macros". If that is unsuccessful too it will write diagnostic that the macro does not exist.
-
-## Supported LSP features
-### Syntax Highlighting
-Plugin provides semantic highlighting for statements. It colors labels, instructions, operands, remarks and variables differently. It distinguishes whether instruction can have operands and highlights a statement accordingly. If code is skipped by branching AIF or AGO it will not be colored at all.
+![](readme_res/highligting.png)
 
 ### Autocomplete
-Autocomplete for instruction field is also enabled. This gives user a list of instructions starting with typed characters. It completes instruction and inserts its operands default operands. Autocomplete is also done for variable and sequence symbols with respect to a scope in which the variables are.
+Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
 
-### Go to and find all references
-Plugin provides go to definition and find all references for variable symbols, sequence symbols and macro definitions.
+![](readme_res/autocomplete.gif)
 
-### Diagnostics  
-Plugin checks for errors in all machine instructions and mentioned CA and assembler instructions and shows them in an IDE.
+
+### Go To Definition and Find All References
+The extension adds the 'go to definition' and 'find all references' functionalities. Use the 'go to definition' functionality to show definitions of variable symbols, ordinary symbols and macros, or open COPY files directly. Use the 'find all references' functionality to show all places where a symbol is used.
+
+![](readme_res/go_to_def.gif)
+
+## Macro Tracer
+
+The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 
+
+The macro tracer is not a debugger. It cannot debug running executables, only track the compilation process.
+
+![](readme_res/tracer.gif)
+## Configuration
+
+### Macro Tracer Configuration
+
+To configure the macro tracer, **follow these steps**:
+
+1. Open your workspace.
+2. In the left sidebar, click the bug icon to open the debugging panel.
+3. Click the cog icon in the top left of the screen.  
+   A "select environment" prompt displays.
+4. Enter **HLASM Macro tracer**.  
+   Your workspace is now configured for macro tracing.
+5. Open the file that you want to trace.
+6. Return to the debugging panel and press **F5** to start the debugging session.
+
+### External Macro Libraries and COPY Members
+The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the .hlasmplugin folder of the currently open workspace. Ensure that you configure these files before using macros from separate files or the COPY instruction.
+
+When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
+
+The structure of the configuration is based on CA Endevor® SCM. `proc_grps.json` defines processor groups by assigning a group name to a list of directories which are searched in the order they are listed. `pgm_conf.json` provides mapping between source files (open code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
+
+Example `proc_grps.json`:
+
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files.
+
+```
+{
+  "pgroups": [
+    {
+      "name": "GROUP1",
+      "libs": [
+        "ASMMAC/",
+        "C:/SYS.ASMMAC"
+      ]
+    },
+    {
+      "name": "GROUP2",
+      "libs": [
+        "G2MAC/",
+        "C:/SYS.ASMMAC"
+      ]
+    }
+  ]
+}
+```
+
+Example `pgm_conf.json`:
+
+The following example specifies that GROUP1 is used when working with `source_code.hlasm` and GROUP2 is used when working with `second_file.hlasm`.
+
+```
+{
+  "pgms": [
+    {
+      "program": "source_code",
+      "pgroup": "GROUP1"
+    },
+    {
+      "program": "second_file",
+      "pgroup": "GROUP2"
+    },
+  ]
+}
+```
+If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
+
+The program field in `pgm_conf.json` supports regular expressions, for example:
+```
+{
+  "pgms": [
+    {
+      "program": ".*",
+      "pgroup": "GROUP1"
+    }
+  ]
+}
+```
+In this example, GROUP1 is used for all open code programs.
+
+<!-- Uncomment, once we have gone open source
+
+## Questions, issues, feature requests, and contributions
+- If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
+- Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
+- Any and all feedback is appreciated and welcome!
+-->

@@ -267,10 +267,6 @@ bool ca_processor::prepare_GBL_LCL(const semantics::complete_statement& stmt, st
 		return false;
 	}
 
-	if (stmt.label_ref().type != semantics::label_si_type::EMPTY)
-	{
-		add_diagnostic(diagnostic_op::warning_W010("Label field", stmt.label_ref().field_range));
-	}
 	return true;
 }
 
