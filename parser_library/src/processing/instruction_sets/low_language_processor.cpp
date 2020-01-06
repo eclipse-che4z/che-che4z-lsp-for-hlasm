@@ -115,8 +115,17 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 
 	for (auto& op : (operands ? operands->value : stmt.operands_ref().value))
 	{
-		if (dynamic_cast<semantics::simple_expr_operand*>(op.get()))
-			dynamic_cast<semantics::simple_expr_operand*>(op.get())->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+		if (auto simple_tmp = dynamic_cast<semantics::simple_expr_operand*>(op.get()))
+			simple_tmp->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+		if (auto addr_tmp = dynamic_cast<semantics::address_machine_operand*>(op.get()))
+		{
+			if (addr_tmp->displacement)
+				addr_tmp->displacement->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+			if (addr_tmp->first_par)
+				addr_tmp->first_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+			if (addr_tmp->second_par)
+				addr_tmp->second_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+		}
 	}
 
 	collect_diags_from_child(mngr);

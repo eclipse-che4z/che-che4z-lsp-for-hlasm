@@ -15,8 +15,8 @@
 #ifndef SEMANTICS_EXPRESSION_EVALUATOR_H
 #define SEMANTICS_EXPRESSION_EVALUATOR_H
 
-#include "../../generated/hlasmparser.h"
-#include "../../generated/hlasmparserBaseVisitor.h"
+#include "hlasmparser.h"
+#include "hlasmparserBaseVisitor.h"
 #include "../evaluation_context.h"
 #include "../../diagnosable_ctx.h"
 

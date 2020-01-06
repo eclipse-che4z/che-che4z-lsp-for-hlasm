@@ -250,6 +250,23 @@ TEST(var_concatenation, concatenated_string_dot)
 	EXPECT_EQ(tmp, "avc-get");
 }
 
+TEST(var_concatenation, concatenated_string_double_dot)
+{
+	std::string input("&var setc 'avc'   \n&var2 setc '&var..'");
+	analyzer a(input);
+	a.analyze();
+
+	auto& ctx = a.context();
+	processing::context_manager m(a.context());
+
+	auto it = ctx.ids().find("var2");
+
+	ASSERT_TRUE(ctx.get_var_sym(it));
+
+	auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+	EXPECT_EQ(tmp, "avc.");
+}
+
 TEST(AGO, extended)
 {
 	std::string input(R"(

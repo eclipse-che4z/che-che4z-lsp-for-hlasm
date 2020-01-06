@@ -79,6 +79,7 @@ private:
 	std::atomic<bool> continue_ = false;
 
 	std::mutex variable_mtx_;
+	bool debug_ended_ = false;
 
 	//Specifies whether the debugger stops on the next statement call.
 	std::atomic<bool> stop_on_next_stmt_ = false;

@@ -15,8 +15,8 @@
 #ifndef SEMANTICS_EXPRESSION_ANALYZER_H
 #define SEMANTICS_EXPRESSION_ANALYZER_H
 
-#include "../../generated/hlasmparser.h"
-#include "../../generated/hlasmparserBaseVisitor.h"
+#include "hlasmparser.h"
+#include "hlasmparserBaseVisitor.h"
 #include "../evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::expressions {

@@ -46,6 +46,7 @@ void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
 		auto index_tmp = _tokens.back()->getTokenIndex();
 		_tokens.pop_back();
 		lexer_tmp.delete_token(index_tmp);
+		_p = _tokens.size();
 	}
 
 	if (insert_EOLLN)

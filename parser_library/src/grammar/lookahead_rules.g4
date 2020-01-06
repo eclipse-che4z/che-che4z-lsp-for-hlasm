@@ -69,7 +69,7 @@ lookahead_label:
 	ORDSYMBOL
 	{
 		auto r = provider.get_range($ORDSYMBOL);
-		collector.set_label_field(parse_identifier($ORDSYMBOL->getText(),r),nullptr,r); 
+		collector.set_label_field($ORDSYMBOL->getText(),nullptr,r); 
 	}
 	| empty
 	{

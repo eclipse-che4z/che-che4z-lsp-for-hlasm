@@ -38,8 +38,11 @@ namespace hlasm_plugin
 
 #define KEYWORDS \
 					X(AND) \
+					X(AND_NOT) \
 					X(OR) \
+					X(OR_NOT) \
 					X(XOR) \
+					X(XOR_NOT) \
 					X(NOT) \
 					X(EQ) \
 					X(NE) \
@@ -70,6 +73,7 @@ namespace hlasm_plugin
 				bool is_unary() const;
 				uint8_t priority() const;
 				bool is_keyword() const override;
+				bool is_complex_keyword() const override;
 				std::string get_str_val() const override;
 			private:
 				struct upper_equal

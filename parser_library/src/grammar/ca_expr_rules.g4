@@ -16,7 +16,7 @@ parser grammar ca_expr_rules;
 
 
 expr // returns [expr_ptr e]
-	: SPACE? expr_p_space_c SPACE?;
+	: SPACE* expr_p_space_c SPACE*;
 
 expr_p returns [vs_ptr* vs_link = nullptr]
 	: expr_s
@@ -161,7 +161,7 @@ substring // returns [expr_ptr start, expr_ptr end]
 	|;
 
 ca_string_b // returns [std::unique_ptr<char_expr> e]
-	: ca_dupl_factor apostrophe string_ch_v_c (apostrophe|attr) substring;
+	: ca_dupl_factor (apostrophe|attr) string_ch_v_c (apostrophe|attr) substring;
 
 ca_string // returns [std::unique_ptr<char_expr> e]
 	: ca_string_b											//	{$e = std::move($ca_string_b.e);}
