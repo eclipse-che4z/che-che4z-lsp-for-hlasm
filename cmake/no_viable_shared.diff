@@ -1,0 +1,70 @@
+diff --git a/runtime/Cpp/runtime/src/NoViableAltException.cpp b/runtime/Cpp/runtime/src/NoViableAltException.cpp
+index ced7f827f..83fb78b3b 100755
+--- a/runtime/Cpp/runtime/src/NoViableAltException.cpp
++++ b/runtime/Cpp/runtime/src/NoViableAltException.cpp
+@@ -16,13 +16,16 @@ NoViableAltException::NoViableAltException(Parser *recognizer)
+ 
+ NoViableAltException::NoViableAltException(Parser *recognizer, TokenStream *input,Token *startToken,
+   Token *offendingToken, atn::ATNConfigSet *deadEndConfigs, ParserRuleContext *ctx, bool deleteConfigs)
+-  : RecognitionException("No viable alternative", recognizer, input, ctx, offendingToken),
+-    _deadEndConfigs(deadEndConfigs), _startToken(startToken), _deleteConfigs(deleteConfigs) {
++  : RecognitionException("No viable alternative", recognizer, input, ctx, offendingToken), _startToken(startToken) {
++  if (deadEndConfigs) {
++    if(deleteConfigs)
++      _deadEndConfigs = std::shared_ptr<atn::ATNConfigSet>(deadEndConfigs);
++    else
++      _deadEndConfigs = std::shared_ptr<atn::ATNConfigSet>(deadEndConfigs, [](atn::ATNConfigSet*){});
++  }
+ }
+ 
+ NoViableAltException::~NoViableAltException() {
+-  if (_deleteConfigs)
+-    delete _deadEndConfigs;
+ }
+ 
+ Token* NoViableAltException::getStartToken() const {
+@@ -30,5 +33,5 @@ Token* NoViableAltException::getStartToken() const {
+ }
+ 
+ atn::ATNConfigSet* NoViableAltException::getDeadEndConfigs() const {
+-  return _deadEndConfigs;
++  return _deadEndConfigs.get();
+ }
+diff --git a/runtime/Cpp/runtime/src/NoViableAltException.h b/runtime/Cpp/runtime/src/NoViableAltException.h
+index 94d43c54c..415a0d9db 100755
+--- a/runtime/Cpp/runtime/src/NoViableAltException.h
++++ b/runtime/Cpp/runtime/src/NoViableAltException.h
+@@ -27,10 +27,7 @@ namespace antlr4 {
+ 
+   private:
+     /// Which configurations did we try at input.index() that couldn't match input.LT(1)?
+-    atn::ATNConfigSet* _deadEndConfigs;
+-
+-    // Flag that indicates if we own the dead end config set and have to delete it on destruction.
+-    bool _deleteConfigs;
++    std::shared_ptr<atn::ATNConfigSet> _deadEndConfigs;
+ 
+     /// The token object at the start index; the input stream might
+     /// not be buffering tokens so get a reference to it. (At the
+diff --git a/runtime/Cpp/runtime/src/support/StringUtils.h b/runtime/Cpp/runtime/src/support/StringUtils.h
+index d0a0472a0..49715287e 100644
+--- a/runtime/Cpp/runtime/src/support/StringUtils.h
++++ b/runtime/Cpp/runtime/src/support/StringUtils.h
+@@ -22,7 +22,7 @@ namespace antlrcpp {
+   inline std::string utf32_to_utf8(T const& data)
+   {
+     // Don't make the converter static or we have to serialize access to it.
+-    UTF32Converter converter;
++    thread_local UTF32Converter converter;
+ 
+     #if defined(_MSC_VER) && _MSC_VER >= 1900 && _MSC_VER < 2000
+       auto p = reinterpret_cast<const int32_t *>(data.data());
+@@ -34,7 +34,7 @@ namespace antlrcpp {
+ 
+   inline UTF32String utf8_to_utf32(const char* first, const char* last)
+   {
+-    UTF32Converter converter;
++    thread_local UTF32Converter converter;
+ 
+     #if defined(_MSC_VER) && _MSC_VER >= 1900 && _MSC_VER < 2000
+       auto r = converter.from_bytes(first, last);

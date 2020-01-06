@@ -1,0 +1,23 @@
+*label model OK
+A'&V' LR
+''&v LR
+&v'' LR
+&V'' LR
+'&v' LR
+a&v'' LR
+ab&vcd'' LR
+a''&v LR
+' '&v LR
+' '&v LR
+a'&v' LR
+a'&v'a LR
+' '' '&v LR
+' '''&v LR
+' &v '&v LR
+' &v '' &v ' LR
+
+*label model ERROR
+*'&v LR
+*&V' LR
+*a' '&v'' LR
+*a'&v ' LR

@@ -1,0 +1,286 @@
+{
+  "name": "hlasm-language-support",
+  "displayName": "HLASM Language Support",
+  "description": "The Language Server Protocol (LSP) for HLASM standardizes the communication between language tooling and your code editor.",
+  "version": "0.8.0",
+  "author": "Broadcom",
+  "publisher": "BroadcomMFD",
+  "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "HLASM",
+    "LSP",
+    "Assembler",
+    "Mainframe"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "icon": "resources/logo.png",
+  "main": "./lib/extension.js",
+  "typings": "./lib/extension",
+  "engines": {
+    "vscode": "^1.32.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues"
+  },
+  "devDependencies": {
+    "vsce": "^1.52.0",
+    "shelljs": "^0.8.2",
+    "shx": "^0.3.2",
+    "typescript": "^3.1.5",
+    "vscode": "^1.1.33"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^5.2.1"
+  },
+  "scripts": {
+    "postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
+    "prepare": "npm run update-vscode",
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "compile": "tsc -p ./tsconfig.json",
+    "clean": "node ./build/bin/clean.js",
+    "package": "vsce package"
+  },
+  "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "pgm_conf.json",
+        "url": "./pgm_conf_schema"
+      },
+      {
+        "fileMatch": "proc_grps.json",
+        "url": "./proc_grps_schema"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "hlasm"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "hlasm",
+        "label": "HLASM Debug",
+        "program": "bin/dummy.exe",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}/${command:AskForProgramName}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "hlasm",
+            "request": "launch",
+            "name": "Ask for file name",
+            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "stopOnEntry": true,
+            "debugServer": 4745
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "HLASM Macro tracer: Launch",
+            "description": "A new configuration for tracing a user selected HLASM file.",
+            "body": {
+              "type": "hlasm",
+              "request": "launch",
+              "name": "Macro tracer: Ask for file name",
+              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
+              "stopOnEntry": true,
+              "debugServer": 4745
+            }
+          },
+          {
+            "label": "HLASM Macro tracer: Launch current program",
+            "description": "A new configuration for tracing HLASM file that is currently open.",
+            "body": {
+              "type": "hlasm",
+              "request": "launch",
+              "name": "Macro tracer: current program",
+              "program": "^\"\\${command:CurrentProgramName}\"",
+              "stopOnEntry": true,
+              "debugServer": 4745
+            }
+          }
+        ],
+        "variables": {
+          "AskForProgramName": "extension.hlasm-plugin.getProgramName",
+          "CurrentProgramName": "extension.hlasm-plugin.getCurrentProgramName"
+        }
+      }
+    ],
+    "languages": [
+      {
+        "id": "hlasm",
+        "extensions": [
+          ".hlasm"
+        ],
+        "aliases": [
+          "HLASM"
+        ],
+        "filenames": [],
+        "firstLine": " *MACRO *"
+      }
+    ],
+    "configurationDefaults": {
+      "[hlasm]": {
+        "editor.rulers": [
+          72
+        ],
+        "editor.wordBasedSuggestions": false
+      }
+    },
+    "commands": [
+      {
+        "command": "insertContinuation",
+        "category": "HLASM",
+        "title": "Insert Continuation"
+      },
+      {
+        "command": "removeContinuation",
+        "category": "HLASM",
+        "title": "Remove Continuation"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "insertContinuation",
+        "key": "shift+alt+enter",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "removeContinuation",
+        "key": "shift+alt+backspace",
+        "when": "editorLangId == hlasm && editorTextFocus && !editorReadonly"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "hlasmplugin configuration",
+      "properties": {
+        "semanticHighlightingColors": {
+          "type": "array",
+          "default": [
+            {
+              "id": "comment",
+              "description": "Color for comments",
+              "hex": "#4c9b3f"
+            },
+            {
+              "id": "ignored",
+              "description": "Color for ignored characters",
+              "hex": "#b0a6c9"
+            },
+            {
+              "id": "continuation",
+              "description": "Color for continuation characters",
+              "hex": "#5fffff"
+            },
+            {
+              "id": "data_def_type",
+              "description": "Color for data definition type character",
+              "hex": "#6699ff"
+            },
+            {
+              "id": "data_def_extension",
+              "description": "Color for data definition type extension character",
+              "hex": "#6699AA"
+            },
+            {
+              "id": "remark",
+              "description": "Color for remarks",
+              "hex": "#06aed8"
+            },
+            {
+              "id": "varSymbol",
+              "description": "Color for variable symbols",
+              "hex": "#ee4f7c"
+            },
+            {
+              "id": "string",
+              "description": "Color for strings",
+              "hex": "#ff6600"
+            },
+            {
+              "id": "number",
+              "description": "Color for numbers",
+              "hex": "#2a397a"
+            },
+            {
+              "id": "seqSymbol",
+              "description": "Color for sequence symbols",
+              "hex": "#8b7d6b"
+            },
+            {
+              "id": "label",
+              "description": "Color for labels",
+              "hex": "#ffff00"
+            },
+            {
+              "id": "operator",
+              "description": "Color for operators",
+              "hex": "#f5e5c2"
+            },
+            {
+              "id": "instruction",
+              "description": "Color for instructions",
+              "hex": "#ff0000"
+            },
+            {
+              "id": "operand",
+              "description": "Color for operands",
+              "hex": "#797979"
+            }
+          ]
+        },
+        "hlasmplugin.arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments for hlasmplugin server"
+        },
+        "hlasmplugin.syncFileEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
+        },
+        "hlasmplugin.continuationHandling": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable in case you experience lags when typing. Note: Extension will be restarted upon changing this option."
+        }
+      }
+    }
+  }
+}

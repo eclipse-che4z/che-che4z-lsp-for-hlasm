@@ -1,0 +1,422 @@
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
+
+#include "asm_processor.h"
+#include "postponed_statement_impl.h"
+#include "../context_manager.h"
+#include "../../expressions/mach_expr_term.h"
+#include "../../checking/instr_operand.h"
+#include "data_def_postponed_statement.h"
+#include "../../ebcdic_encoding.h"
+
+using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::processing;
+
+void asm_processor::process_sect(const context::section_kind kind,rebuilt_statement stmt)
+{
+	auto sect_name = find_label_symbol(stmt);
+
+	if (hlasm_ctx.ord_ctx.symbol_defined(sect_name) && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind))
+	{
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+	}
+	else
+	{
+		auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+		sym_loc.pos.column = 0;
+		hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc));
+	}
+	check(stmt,hlasm_ctx,checker_,*this);
+}
+
+void asm_processor::process_LOCTR(rebuilt_statement stmt)
+{
+	auto loctr_name = find_label_symbol(stmt);
+
+	if (loctr_name == context::id_storage::empty_id)
+		add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
+
+	if (hlasm_ctx.ord_ctx.symbol_defined(loctr_name) && !hlasm_ctx.ord_ctx.counter_defined(loctr_name))
+	{
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+	}
+	else
+	{
+		auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+		sym_loc.pos.column = 0;
+		hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc));
+	}
+	check(stmt, hlasm_ctx, checker_, *this);
+}
+
+void asm_processor::process_EQU(rebuilt_statement stmt)
+{
+	auto symbol_name = find_label_symbol(stmt);
+
+	if (symbol_name == context::id_storage::empty_id)
+	{
+		if(stmt.label_ref().type == semantics::label_si_type::EMPTY)
+			add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
+		return;
+	}
+
+	if (hlasm_ctx.ord_ctx.symbol_defined(symbol_name))
+	{
+		add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+		return;
+	}
+	//type attribute operand
+	context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
+	if (stmt.operands_ref().value.size() >= 3 && stmt.operands_ref().value[2]->type != semantics::operand_type::EMPTY)
+	{
+		auto asm_op = stmt.operands_ref().value[2]->access_asm();
+		auto expr_op = asm_op->access_expr();
+
+		if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+		{
+			auto t_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+			if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0 && t_value.get_abs() <= 255)
+				t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
+			else
+				add_diagnostic(diagnostic_op::error_A134_EQU_type_att_format(asm_op->operand_range));
+		}
+		else
+			add_diagnostic(diagnostic_op::error_A134_EQU_type_att_format(asm_op->operand_range));
+	}
+
+	//length attribute operand
+	context::symbol_attributes::len_attr length_attr = context::symbol_attributes::undef_length;
+	if (stmt.operands_ref().value.size() >= 2 && stmt.operands_ref().value[1]->type != semantics::operand_type::EMPTY) 
+	{
+		auto asm_op = stmt.operands_ref().value[1]->access_asm();
+		auto expr_op = asm_op->access_expr();
+
+		if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+		{
+			auto length_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+			if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0 && length_value.get_abs() <= 65535)
+				length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
+			else
+				add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format(asm_op->operand_range));
+		}
+		else
+			add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format(asm_op->operand_range));
+	}
+
+	//value operand
+	if (stmt.operands_ref().value.size() != 0 && stmt.operands_ref().value[0]->type != semantics::operand_type::EMPTY)
+	{
+		auto asm_op = stmt.operands_ref().value[0]->access_asm();
+		auto expr_op = asm_op->access_expr();
+
+		if (expr_op)
+		{
+			auto holder(expr_op->expression->get_dependencies(hlasm_ctx.ord_ctx));
+
+			if (length_attr == context::symbol_attributes::undef_length)
+			{
+				auto l_term = expr_op->expression->leftmost_term();
+				if (auto symbol_term = dynamic_cast<const expressions::mach_expr_symbol*>(l_term))
+				{
+					auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(symbol_term->value);
+
+					if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
+						length_attr = len_symbol->attributes().length();
+					else
+						length_attr = 1;
+				}
+				else
+					length_attr = 1;
+			}
+
+			context::symbol_attributes attrs(context::symbol_origin::EQU, t_attr, length_attr);
+
+			if (!holder.contains_dependencies())
+			{
+				create_symbol(stmt.stmt_range_ref(), symbol_name, expr_op->expression->resolve(hlasm_ctx.ord_ctx), attrs);
+			}
+			else
+			{
+				if (!holder.is_address())
+				{
+					bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
+
+					if (cycle_ok)
+					{
+						add_dependency(stmt.stmt_range_ref(), symbol_name, &*expr_op->expression,
+							std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+					}
+					
+				}
+				else
+					create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
+
+			}
+		}
+	}
+}
+
+template<checking::data_instr_type instr_type>
+void asm_processor::process_data_instruction(rebuilt_statement stmt)
+{
+	//enforce alignment of the first operand
+	context::alignment al = context::no_align;
+	if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type != semantics::operand_type::EMPTY)
+		al = stmt.operands_ref().value[0]->access_data_def()->value->get_alignment();
+
+	context::address adr = hlasm_ctx.ord_ctx.align(al);
+	
+	//dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
+	bool has_depdendencies = false;
+	//has_length_dependencies specifies whether the length of the data instruction can be resolved right now or must be postponed
+	bool has_length_dependencies = false;
+	for (const auto& op : stmt.operands_ref().value)
+	{
+		if (op->type == semantics::operand_type::EMPTY)
+			continue;
+		auto data_op = op->access_data_def();
+
+		data_op->value->assign_location_counter(adr);
+
+		has_depdendencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
+		
+		has_length_dependencies |= data_op->get_length_dependencies(hlasm_ctx.ord_ctx).contains_dependencies();
+
+		//some types require operands that consist only of one symbol
+		data_op->value->check_single_symbol_ok(diagnostic_collector(this));
+	}
+
+	//process label
+	auto label = find_label_symbol(stmt);
+
+	if (label != context::id_storage::empty_id)
+	{
+		if (!hlasm_ctx.ord_ctx.symbol_defined(label))
+		{
+			if (!stmt.operands_ref().value.empty())
+			{
+				auto data_op = stmt.operands_ref().value.front()->access_data_def();
+
+				context::symbol_attributes::type_attr type = ebcdic_encoding::a2e[data_op->value->get_type_attribute()];;
+				context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
+				context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
+
+				auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
+				auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+
+				if (!data_op->value->length || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+				{
+					len = value->get_length_attribute();
+				}
+				if (data_op->value->scale && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+				{
+					scale = value->get_scale_attribute();
+				}
+				create_symbol(stmt.stmt_range_ref(), label, std::move(adr), 
+					context::symbol_attributes(context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
+			}
+			else
+				create_symbol(stmt.stmt_range_ref(), label, std::move(adr),
+					context::symbol_attributes(context::symbol_origin::DAT, context::symbol_attributes::undef_type, 1, 0, 0));
+		}
+		else
+			add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+	}
+
+	//TODO issue warning when alignment is bigger than section's alignment
+	//hlasm_ctx.ord_ctx.current_section()->current_location_counter().
+
+
+	if (has_depdendencies)
+	{
+		auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
+			std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()));
+		if (has_length_dependencies)
+		{
+			auto sp = hlasm_ctx.ord_ctx.register_space();
+			adder.add_dependency(sp, dynamic_cast<const data_def_postponed_statement<instr_type>*>(&*adder.source_stmt));
+		}
+		else
+			hlasm_ctx.ord_ctx.reserve_storage_area(
+				data_def_postponed_statement<instr_type>::get_operands_length(adder.source_stmt->operands_ref().value, hlasm_ctx.ord_ctx), context::no_align);
+
+		bool cycle_ok = true;
+
+		if (label != context::id_storage::empty_id)
+		{
+			if (adder.source_stmt->operands_ref().value.empty()) return;
+
+			auto data_op = adder.source_stmt->operands_ref().value.front()->access_data_def();
+
+			if (data_op->value->length && data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+				cycle_ok = adder.add_dependency(label, context::data_attr_kind::L, data_op->value->length.get());
+
+			if (data_op->value->scale && data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+				cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, data_op->value->scale.get());
+		}
+
+		adder.add_dependency();
+
+		if(cycle_ok)
+			adder.finish();
+		else
+			add_diagnostic(diagnostic_op::error_E033(adder.source_stmt->operands_ref().value.front()->operand_range));
+	}
+	else
+	{
+		hlasm_ctx.ord_ctx.reserve_storage_area(
+			data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, hlasm_ctx.ord_ctx), context::no_align);
+		check(stmt, hlasm_ctx, checker_, *this);
+	}
+}
+
+void asm_processor::process_DC(rebuilt_statement stmt)
+{	
+	process_data_instruction<checking::data_instr_type::DC>(std::move(stmt));
+}
+
+void asm_processor::process_DS(rebuilt_statement stmt)
+{
+	process_data_instruction<checking::data_instr_type::DS>(std::move(stmt));
+}
+
+void asm_processor::process_COPY(rebuilt_statement stmt)
+{
+	find_sequence_symbol(stmt);
+
+	if (stmt.operands_ref().value.size() == 1 && stmt.operands_ref().value.front()->access_asm()->access_expr())
+	{
+		process_copy(stmt, hlasm_ctx, lib_provider, this);
+	}
+	else
+	{
+		check(stmt, hlasm_ctx, checker_, *this);
+	}
+}
+
+asm_processor::asm_processor(context::hlasm_context& hlasm_ctx,
+	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+	statement_fields_parser& parser)
+	:low_language_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser), table_(create_table(hlasm_ctx)) {}
+
+void asm_processor::process(context::shared_stmt_ptr stmt)
+{
+	process(preprocess(stmt));
+}
+
+void asm_processor::process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, diagnosable_ctx* diagnoser)
+{
+	auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
+	auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(expr.get());
+
+	if (!sym_expr)
+	{
+		if(diagnoser)
+			diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
+		return;
+	}
+
+	auto tmp = hlasm_ctx.copy_members().find(sym_expr->value);
+
+	if (tmp == hlasm_ctx.copy_members().end())
+	{
+		bool result = lib_provider.parse_library(*sym_expr->value, hlasm_ctx, library_data{ processing_kind::COPY, sym_expr->value });
+
+		if (!result)
+		{
+			if(diagnoser)
+				diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
+			return;
+		}
+	}
+	auto whole_copy_stack = hlasm_ctx.whole_copy_stack();
+
+	auto cycle_tmp = std::find(whole_copy_stack.begin(), whole_copy_stack.end(), sym_expr->value);
+
+	if (cycle_tmp != whole_copy_stack.end())
+	{
+		if (diagnoser)
+			diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
+		return;
+	}
+
+	hlasm_ctx.enter_copy_member(sym_expr->value);
+}
+
+void asm_processor::process(context::unique_stmt_ptr stmt)
+{
+	process(preprocess(std::move(stmt)));
+}
+
+asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& ctx)
+{
+	process_table_t table;
+	table.emplace(ctx.ids().add("CSECT"),
+		std::bind(&asm_processor::process_sect, this, context::section_kind::EXECUTABLE, std::placeholders::_1));
+	table.emplace(ctx.ids().add("DSECT"),
+		std::bind(&asm_processor::process_sect, this, context::section_kind::DUMMY, std::placeholders::_1));
+	table.emplace(ctx.ids().add("RSECT"),
+		std::bind(&asm_processor::process_sect, this, context::section_kind::READONLY, std::placeholders::_1));
+	table.emplace(ctx.ids().add("COM"),
+		std::bind(&asm_processor::process_sect, this, context::section_kind::COMMON, std::placeholders::_1));
+	table.emplace(ctx.ids().add("LOCTR"),
+		std::bind(&asm_processor::process_LOCTR, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("EQU"),
+		std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("DC"),
+		std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("DS"),
+		std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("COPY"),
+		std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
+
+	return table;
+}
+
+context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& stmt)
+{
+	semantics::seq_sym symbol;
+	switch (stmt.label_ref().type)
+	{
+	case semantics::label_si_type::SEQ:
+		symbol = std::get<semantics::seq_sym>(stmt.label_ref().value);
+		branch_provider.register_sequence_symbol(symbol.name,symbol.symbol_range);
+		return symbol.name;
+	default:
+		return context::id_storage::empty_id;
+	}
+}
+
+void asm_processor::process(rebuilt_statement statement)
+{
+	auto it = table_.find(statement.opcode_ref().value);
+	if (it != table_.end()) 
+	{
+		auto& [key, func] = *it;
+		func(std::move(statement));
+	}
+	else
+	{
+		//until implementation of all instructions, if has deps, ignore 
+		for (auto& op : statement.operands_ref().value)
+		{
+			auto tmp = context::instruction::assembler_instructions.find(*statement.opcode_ref().value);
+			bool can_have_ord_syms = tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+
+			if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms  && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
+				return;
+		}
+		check(statement, hlasm_ctx, checker_, *this);
+	}
+}

@@ -1,0 +1,25 @@
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+
+cmake_minimum_required (VERSION 3.10)
+
+project(benchmark)
+
+add_executable(benchmark ${PROJECT_SOURCE_DIR}/benchmark.cpp)
+
+add_dependencies(benchmark json)
+
+target_link_libraries(benchmark parser_library)
+
+if(UNIX)
+	target_link_libraries(benchmark pthread)
+endif()
