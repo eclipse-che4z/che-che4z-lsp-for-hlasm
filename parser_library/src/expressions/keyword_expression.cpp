@@ -58,10 +58,13 @@ uint8_t keyword_expression::priority() const
 	switch (value_)
 	{
 	case keyword_type::AND:
+	case keyword_type::AND_NOT:
 		return 2;
 	case keyword_type::OR:
+	case keyword_type::OR_NOT:
 		return 3;
 	case keyword_type::XOR:
+	case keyword_type::XOR_NOT:
 		return 4;
 	case keyword_type::SLA:
 	case keyword_type::SLL:
@@ -74,6 +77,11 @@ uint8_t keyword_expression::priority() const
 }
 
 bool keyword_expression::is_keyword() const { return true; }
+
+bool keyword_expression::is_complex_keyword() const 
+{ 
+	return value_ == keyword_type::AND || value_ == keyword_type::OR || value_ == keyword_type::XOR;
+}
 
 std::string keyword_expression::get_str_val() const { return s_val_; }
 

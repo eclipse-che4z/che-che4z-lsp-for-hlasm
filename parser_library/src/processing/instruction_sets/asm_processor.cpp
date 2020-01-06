@@ -305,6 +305,23 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
 	}
 }
 
+void asm_processor::process_EXTRN(rebuilt_statement stmt)
+{
+	if (stmt.operands_ref().value.size())
+	{
+		if (auto op = stmt.operands_ref().value.front()->access_asm())
+		{
+			if (auto expr = op->access_expr())
+			{
+				auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+				if (sym)
+					create_symbol(sym->get_range(), sym->value, hlasm_ctx.ord_ctx.align(context::no_align), context::symbol_attributes::make_extrn_attrs());
+			}
+		}
+	}
+	check(stmt, hlasm_ctx, checker_, *this);
+}
+
 asm_processor::asm_processor(context::hlasm_context& hlasm_ctx,
 	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
 	statement_fields_parser& parser)
@@ -380,6 +397,8 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
 		std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
 	table.emplace(ctx.ids().add("COPY"),
 		std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
+	table.emplace(ctx.ids().add("EXTRN"),
+		std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
 
 	return table;
 }

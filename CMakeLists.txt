@@ -51,7 +51,8 @@ option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: 
 option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids requiring users to install the redistribution package.
  To disable with: -DWITH_STATIC_CRT=Off" On)
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
-
+option(FS_PATH "Provide path to libc++fs for installation on MacOS" "")
+option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not packaged into vsix." On)
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
   message(WARNING "Building shared libraries with static CRT!")
@@ -61,19 +62,6 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(WITH_LIBCXX Off)
 endif()
 
-if(CMAKE_VERSION VERSION_EQUAL "3.0.0" OR
-   CMAKE_VERSION VERSION_GREATER "3.0.0")
-  CMAKE_POLICY(SET CMP0026 NEW)
-  CMAKE_POLICY(SET CMP0054 OLD)
-  CMAKE_POLICY(SET CMP0045 OLD)
-  CMAKE_POLICY(SET CMP0042 OLD)
-endif()
-
-if(CMAKE_VERSION VERSION_EQUAL "3.3.0" OR
-   CMAKE_VERSION VERSION_GREATER "3.3.0")
-  CMAKE_POLICY(SET CMP0059 OLD)
-  CMAKE_POLICY(SET CMP0054 OLD)
-endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   find_package(PkgConfig REQUIRED)
@@ -131,19 +119,56 @@ if(WITH_LIBCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
+if(APPLE)
+  if(WITH_STATIC_CRT)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++abi ${LLVM_PATH}/lib/libc++.a")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++abi ${LLVM_PATH}/lib/libc++.a")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdlib++")
+  endif()
+endif()
+
 if(BUILD_SHARED_LIBS)
   SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
   SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-  set(CMAKE_INSTALL_RPATH "$ORIGIN")
+  if(APPLE)
+    set(CMAKE_MACOSX_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH "@executable_path")
+  else()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+  endif()
 endif()
 
+set(CMAKE_FLAGS_PASS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS} -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS})
 #indicates whether we have to link filesystem library explicitly
-if(UNIX AND NOT APPLE)
-  set(FILESYSTEM_LINK On)
-  if(WITH_LIBCXX)
-    set(FILESYSTEM_LIBRARY c++fs)
-  else()
-    set(FILESYSTEM_LIBRARY stdc++fs)
+if(UNIX)
+  try_run(TRY_LINK_RUN_RESULT TRY_LINK_COMPILE_RESULT ${CMAKE_BINARY_DIR}/try_filesystem_link ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp
+  CMAKE_FLAGS ${CMAKE_FLAGS_PASS}
+  )
+
+  #if the program ended with non-zero or a compile error occured
+  if(NOT (TRY_LINK_RUN_RESULT EQUAL "0") OR NOT ${TRY_LINK_COMPILE_RESULT})
+    set(FILESYSTEM_LINK On)
+    if(APPLE)
+      set(FILESYSTEM_LIBRARY "${LLVM_PATH}/lib/libc++fs.a")
+    elseif(WITH_LIBCXX)
+      set(FILESYSTEM_LIBRARY c++fs)
+    else()
+      set(FILESYSTEM_LIBRARY stdc++fs)
+    endif()
+  endif()
+
+  #test filesystem setup
+  set(TEST_LINK_LIBS "")
+  if(FILESYSTEM_LINK)
+    set(TEST_LINK_LIBS "-DLINK_LIBRARIES=${FILESYSTEM_LIBRARY}")
+  endif()
+  
+  try_run(TEST_LINK_RUN_RESULT TEST_LINK_COMPILE_RESULT ${CMAKE_BINARY_DIR}/try_filesystem_link_test ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp
+    CMAKE_FLAGS ${CMAKE_FLAGS_PASS} ${TEST_LINK_LIBS}
+    )
+
+  if(NOT (TEST_LINK_RUN_RESULT EQUAL "0") OR NOT ${TEST_LINK_COMPILE_RESULT})
+    message(FATAL_ERROR "Filesystem link error: ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp could not be compiled.")
   endif()
 endif()
 
@@ -209,10 +234,13 @@ include_directories(parser_library/include)
 # Applications
 add_subdirectory(language_server)
 add_subdirectory(dummy)
-add_subdirectory(clients)
 add_subdirectory(benchmark)
 
-add_dependencies(vsix language_server parser_library)
+if(BUILD_VSIX)
+  add_subdirectory(clients)
+endif()
+
+
 
 # Installation
 

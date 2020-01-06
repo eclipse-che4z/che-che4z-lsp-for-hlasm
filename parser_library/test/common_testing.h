@@ -18,7 +18,7 @@
 #include "antlr4-runtime.h"
 #include "../src/ebcdic_encoding.h"
 #include "../include/shared/lexer.h"
-#include "../src/generated/hlasmparser.h"
+#include "hlasmparser.h"
 #include "shared/token_stream.h"
 #include "shared/input_source.h"
 #include "../src/analyzer.h"

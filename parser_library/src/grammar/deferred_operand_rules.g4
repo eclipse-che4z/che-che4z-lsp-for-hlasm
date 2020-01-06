@@ -18,6 +18,7 @@ deferred_entry
 	: mac_preproc_c
 	| apostrophe
 	| comma
+	| AMPERSAND
 	| IGNORED; 
 
 def_string_body

@@ -31,15 +31,15 @@ deferred_operand_rules;
 
 @header
 {
-	#include "../parser_impl.h"
-	#include "../expressions/expression.h"
-	#include "../expressions/arithmetic_expression.h"
-	#include "../expressions/logic_expression.h"
-	#include "../expressions/character_expression.h"
-	#include "../expressions/keyword_expression.h"
-	#include "../expressions/mach_expr_term.h"
-	#include "../expressions/mach_operator.h"
-	#include "../expressions/data_definition.h"
+	#include "parser_impl.h"
+	#include "expressions/expression.h"
+	#include "expressions/arithmetic_expression.h"
+	#include "expressions/logic_expression.h"
+	#include "expressions/character_expression.h"
+	#include "expressions/keyword_expression.h"
+	#include "expressions/mach_expr_term.h"
+	#include "expressions/mach_operator.h"
+	#include "expressions/data_definition.h"
 
 	namespace hlasm_plugin::parser_library::generated
 	{

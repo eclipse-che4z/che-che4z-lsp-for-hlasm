@@ -23,21 +23,14 @@
 using namespace std;
 using namespace hlasm_plugin::language_server;
 
-
-constexpr const char* logFolder = ".hlasmplugin";
-#if _WIN32
-	constexpr const char* logFileName = ".hlasmplugin\\hlasmplugin.log";
-#else
-	constexpr const char* logFileName = ".hlasmplugin/hlasmplugin.log";
-#endif
+constexpr const char* log_filename = "hlasmplugin.log";
 
 
 logger::logger()
 {
-	if (!std::filesystem::is_directory(logFolder) || !std::filesystem::exists(logFolder)) { // Check if src folder exists
-		std::filesystem::create_directory(logFolder); // create src folder
-	}
-   file_.open(logFileName, ios::out);
+   auto log_folder = std::filesystem::temp_directory_path();
+   auto log_path = log_folder / log_filename;
+   file_.open(log_path, ios::out);
 }
 
 logger::~logger()
@@ -58,7 +51,7 @@ void logger::log(const char * data)
 
 string logger::current_time()
 {
-   string currTime;
+   string curr_time;
    //Current date/time based on current time
    time_t now = time(0); 
    // Convert current time to string
@@ -66,13 +59,12 @@ string logger::current_time()
 #if __STDC_LIB_EXT1__ || _MSVC_LANG
    char cstr[50];
    ctime_s(cstr, sizeof cstr, &now);
-   currTime.assign(cstr);
+   curr_time.assign(cstr);
 #else
-   currTime.assign(ctime(&now));
+   curr_time.assign(ctime(&now));
 #endif
 
    // Last charactor of currentTime is "\n", so remove it
-   string currentTime = currTime.substr(0, currTime.size()-1);
-   return currentTime;
+   return curr_time.substr(0, curr_time.size()-1);
 }
 

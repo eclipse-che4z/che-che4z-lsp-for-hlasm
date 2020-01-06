@@ -18,7 +18,7 @@
 #include "parser_error_listener_ctx.h"
 #include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
-#include "generated/hlasmparser.h"
+#include "hlasmparser.h"
 #include "expressions/arithmetic_expression.h"
 #include "processing/statement.h"
 #include "processing/context_manager.h"

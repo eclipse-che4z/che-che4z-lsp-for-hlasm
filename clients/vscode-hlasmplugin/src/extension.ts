@@ -41,11 +41,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     
+    var lang_server_folder = process.platform;
+    
     if(useTcp)
     {
         const port = 4746;
         //spawn the server
-        fork.spawn(path.join(__dirname, '..', 'bin', 'language_server'), ["-p", port.toString()]);
+        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", port.toString()]);
 
         //set the tcp communication
         let connectionInfo = {
@@ -64,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
     else
     {
         const server: vscodelc.Executable = {
-            command: path.join(__dirname, '..', 'bin', 'language_server'),
+            command: path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'),
             args: getConfig<string[]>('arguments')
         };
         var serverOptions: vscodelc.ServerOptions = server;

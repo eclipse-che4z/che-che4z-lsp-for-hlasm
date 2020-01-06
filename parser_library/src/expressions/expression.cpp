@@ -97,6 +97,13 @@ expr_ptr expression::evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority
 	{
 		auto o = std::move(exprs.front());
 		exprs.pop_front();
+
+		std::string keyword(o->get_str_val());
+		if (dynamic_cast<logic_expression*>(a1.get()) && o->is_complex_keyword() && exprs.front()->is_keyword() && exprs.front()->get_str_val() == "NOT")
+		{
+			exprs.pop_front();
+			keyword.append(" NOT");
+		}
 		/*
 		++operator_count;
 		//maximum operator count, see reference 
@@ -105,7 +112,7 @@ expr_ptr expression::evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority
 			(error_messages::e001());
 		*/
 		auto a2 = evaluate_term(exprs, priority, operator_count);
-		return a1->binary_operation(o->get_str_val(), a2);
+		return a1->binary_operation(keyword, a2);
 	}
 	return a1;
 }

@@ -64,6 +64,7 @@ namespace hlasm_plugin
 				virtual context::SET_t get_set_value() const;
 				
 				virtual bool is_keyword() const { return false; }
+				virtual bool is_complex_keyword() const { return false; }
 				virtual std::string get_str_val() const = 0;
 
 				template <typename T>

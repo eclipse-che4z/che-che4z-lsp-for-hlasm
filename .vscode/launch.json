@@ -1,0 +1,70 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) Attach",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "/home/balmi06/HlasmPlugin/build/bin/language_server",
+      "processId": "${command:pickProcess}",
+      "MIMode": "gdb",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          }
+      ]
+  },
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/library_test",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build/bin",
+      "environment": [],
+      "externalConsole": true,
+      "MIMode": "gdb",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          }
+      ],
+      "preLaunchTask": "build"
+    },
+    {
+      "name": "Attach to proccess",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "${workspaceFolder}/build/bin/language_server",
+      "processId":"${command:pickProcess}",
+      "MIMode": "gdb",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          }
+      ]
+    },
+    {
+      "name": "(Windows) Launch",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceRoot}/build/bin/HlasmLanguageServer",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build/bin/",
+      "environment": [],
+      "externalConsole": true,
+      "preLaunchTask": "build"
+    }
+  ]
+}

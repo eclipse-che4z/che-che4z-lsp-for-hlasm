@@ -24,8 +24,8 @@
 namespace hlasm_plugin {
 namespace language_server {
 
-dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server, request_manager& req_mngr, std::atomic<bool> * cancel) :
-	server_(server), in_(in), out_(out), cancel_(cancel), req_mngr_(req_mngr)
+dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server, request_manager& req_mngr) :
+	server_(server), in_(in), out_(out), req_mngr_(req_mngr)
 {
 	server_.set_send_message_provider(this);
 }

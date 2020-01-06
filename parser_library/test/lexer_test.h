@@ -20,7 +20,7 @@
 #include "gmock/gmock.h"
 #include "../include/shared/lexer.h"
 #include "../include/shared/input_source.h"
-#include "../src/generated/hlasmparser.h"
+#include "hlasmparser.h"
 #include "antlr4-runtime.h"
 #include <iostream>
 
