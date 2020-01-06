@@ -1,0 +1,12 @@
+{
+  "pgms": [
+    {
+      "program": "correct",
+      "pgroup": "P1"
+    },
+    {
+      "program": "faulty",
+      "pgroup": "P1"
+    }
+  ]
+}
