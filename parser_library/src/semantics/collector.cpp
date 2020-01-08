@@ -28,9 +28,19 @@ const label_si& collector::current_label()
 	return *lbl_;
 }
 
+bool hlasm_plugin::parser_library::semantics::collector::has_label() const
+{
+	return lbl_.has_value();
+}
+
 const instruction_si& collector::current_instruction()
 {
 	return *instr_;
+}
+
+bool hlasm_plugin::parser_library::semantics::collector::has_instruction() const
+{
+	return instr_.has_value();
 }
 
 const operands_si& collector::current_operands()
@@ -141,6 +151,8 @@ void collector::set_operand_remark_field(std::vector<operand_ptr> operands, std:
 {
 	if (op_ || rem_ || def_)
 		throw std::runtime_error("field already assigned");
+	if (operands.size() == 1 && (!operands.front() || operands.front()->type == semantics::operand_type::EMPTY))
+		operands.clear();
 	op_.emplace(symbol_range, std::move(operands));
 	rem_.emplace(symbol_range,std::move(remarks));
 }
@@ -197,6 +209,21 @@ void collector::append_reparsed_symbols(collector&& c)
 	for (auto& s : c.lsp_symbols_)
 		lsp_symbols_.push_back(std::move(s));
 	
+}
+
+void collector::append_operand_field(collector&& c)
+{
+	if(c.op_)
+		op_.emplace(std::move(*c.op_));
+	if (c.rem_)
+		rem_.emplace(std::move(*c.rem_));
+	if (c.def_)
+		def_.emplace(std::move(*c.def_));
+
+	for (auto& symbol : c.hl_symbols_)
+		hl_symbols_.push_back(std::move(symbol));
+	for (auto& symbol : c.lsp_symbols_)
+		lsp_symbols_.push_back(std::move(symbol));
 }
 
 const instruction_si& collector::peek_instruction()

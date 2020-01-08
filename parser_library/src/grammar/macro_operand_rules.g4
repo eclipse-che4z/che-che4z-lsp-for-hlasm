@@ -31,7 +31,7 @@ mac_op_o returns [operand_ptr op]
 	};
 
 macro_ops returns [operand_list list] 
-	: mac_op_o  {$list.push_back(std::move($mac_op_o.op));} (comma mac_op_o {$list.push_back(std::move($mac_op_o.op));})*;
+	: mac_op_o  {$list.push_back(std::move($mac_op_o.op));} (comma mac_op_o {$list.push_back(std::move($mac_op_o.op));})* EOLLN EOF;
 
 
 

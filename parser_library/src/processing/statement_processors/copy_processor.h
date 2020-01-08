@@ -28,14 +28,14 @@ namespace processing {
 class copy_processor : public statement_processor
 {
 	processing_state_listener& listener_;
-	const copy_start_data start_;
+	copy_start_data start_;
 
 	int macro_nest_;
 
 	copy_processing_result result_;
 	bool first_statement_;
 public:
-	copy_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, const copy_start_data start);
+	copy_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, copy_start_data start);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;

@@ -128,9 +128,6 @@ mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info
 
 void mach_expr_location_counter::fill_location_counter(context::address addr)
 {
-	if (location_counter)
-		throw std::runtime_error("location counter already set");
-
 	location_counter = std::move(addr);
 }
 

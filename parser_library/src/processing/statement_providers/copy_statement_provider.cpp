@@ -28,21 +28,21 @@ void copy_statement_provider::process_next(statement_processor& processor)
 	auto& invo = hlasm_ctx.current_copy_stack().back();
 
 	++invo.current_statement;
-	if ((size_t)invo.current_statement == invo.definition.size())
+	if ((size_t)invo.current_statement == invo.cached_definition.size())
 	{
 		hlasm_ctx.leave_copy_member();
 		return;
 	}
 
-	const context::shared_stmt_ptr& stmt = invo.definition[invo.current_statement];
+	auto& cache = invo.cached_definition[invo.current_statement];
 
-	switch (stmt->kind)
+	switch (cache.get_base()->kind)
 	{
 	case context::statement_kind::RESOLVED:
-		processor.process_statement(stmt);
+		processor.process_statement(cache.get_base());
 		break;
 	case context::statement_kind::DEFERRED:
-		preprocess_deferred(processor, stmt);
+		preprocess_deferred(processor, cache);
 		break;
 	default:
 		break;

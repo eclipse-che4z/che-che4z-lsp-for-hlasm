@@ -14,38 +14,56 @@
 
 parser grammar lookahead_rules; 
 
-lookahead_instruction_statement
-	: lookahead_label SPACE lookahead_instruction lookahead_operands_and_remarks		//ord
-	| seq_symbol ~EOLLN*																//seq										
+look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
+	: seq_symbol ~EOLLN* 
 	{
 		collector.set_label_field(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));
 		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		process_instruction();
-	}
-	| look_statement																	//nothing interesting										
+		process_statement();
+	} EOLLN
+	| ORDSYMBOL? SPACE instruction operand_field_rest 
 	{
-		collector.set_instruction_field(provider.get_range($look_statement.ctx));
-		collector.set_operand_remark_field(provider.get_range($look_statement.ctx));
-		process_instruction();
-	};	
+		if ($ORDSYMBOL)
+		{
+			auto r = provider.get_range($ORDSYMBOL);
+			collector.set_label_field($ORDSYMBOL->getText(),nullptr,r);
+		}
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 
+		$op_text = $operand_field_rest.ctx->getText();
+		$op_range = provider.get_range($operand_field_rest.ctx);
+	} EOLLN
+	| bad_look
+	{
+		collector.set_label_field(provider.get_range(_localctx));
+		collector.set_instruction_field(provider.get_range(_localctx));
+		collector.set_operand_remark_field(provider.get_range(_localctx));
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		process_instruction();
+		process_statement();
+	} EOLLN
+	| EOF	{finished_flag=true;};
+
+bad_look
+	: ~(ORDSYMBOL|DOT|SPACE|EOLLN) ~EOLLN*
+	| DOT ~(ORDSYMBOL|EOLLN) ~EOLLN*
+	| ORDSYMBOL ~(SPACE|EOLLN) ~EOLLN*
+	| SPACE?;
 
 lookahead_operands_and_remarks
-	: {!ignored()}? SPACE+ lookahead_operand_list (COMMA lookahead_ignored_part)? (SPACE remark)?
+	: SPACE+ lookahead_operand_list remark_o
 	{
-		collector.set_operand_remark_field(
-			std::move($lookahead_operand_list.operands),
-			{},
-			provider.get_range($lookahead_operand_list.ctx));
-	}
-	| lookahead_ignored_part
+		op_rem line;
+		line.operands = std::move($lookahead_operand_list.operands);
+		process_statement(std::move(line), provider.get_range($lookahead_operand_list.ctx));
+	} EOLLN EOF
+	| SPACE?
 	{
-		collector.set_operand_remark_field(
-			operand_list{},
-			remark_list{},
-			provider.get_range($lookahead_ignored_part.ctx));
-	};
+		process_statement({}, provider.get_range(_localctx));
+	} EOLLN EOF;
 
 lookahead_operand_list returns [operand_list operands]
 	: operand											{$operands.push_back(std::move($operand.op));}
@@ -53,40 +71,3 @@ lookahead_operand_list returns [operand_list operands]
 
 lookahead_ignored_part
 	: ~EOLLN*;
-
-
-lookahead_instruction
-	: ORDSYMBOL
-	{
-		collector.set_instruction_field(
-			parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL)),
-			provider.get_range($ORDSYMBOL));
-
-		process_instruction();
-	};
-
-lookahead_label:
-	ORDSYMBOL
-	{
-		auto r = provider.get_range($ORDSYMBOL);
-		collector.set_label_field($ORDSYMBOL->getText(),nullptr,r); 
-	}
-	| empty
-	{
-		collector.set_label_field(provider.get_range($empty.ctx)); 
-	};
-
-empty:;
-
-look_statement
-	: ~EOLLN*;
-
-look_label
-	: ~(SPACE|EOLLN) ~(SPACE|EOLLN) ~(SPACE|EOLLN)+
-	| DOT ~(ORDSYMBOL|SPACE|EOLLN)
-	| ~(DOT|EOLLN|SPACE) ~(SPACE|EOLLN)
-	| ~(SPACE|EOLLN|ORDSYMBOL);
-
-look_label_o
-	: look_label
-	| ;

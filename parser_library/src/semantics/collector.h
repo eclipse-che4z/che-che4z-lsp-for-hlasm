@@ -32,7 +32,9 @@ class collector
 public:
 	collector();
 	const label_si& current_label();
+	bool has_label() const;
 	const instruction_si& current_instruction();
+	bool has_instruction() const;
 	const operands_si& current_operands();
 	const remarks_si& current_remarks();
 
@@ -57,6 +59,7 @@ public:
 	void add_remarks_hl_symbols();
 
 	void append_reparsed_symbols(collector&& c);
+	void append_operand_field(collector&& c);
 
 	const instruction_si& peek_instruction();
 	std::variant<statement_si,statement_si_deferred> extract_statement(bool deferred_hint,range default_range);

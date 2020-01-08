@@ -13,7 +13,7 @@
  */
 
 #include "macro_statement_provider.h"
-#include "processing_manager.h"
+#include "../processing_manager.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
@@ -30,21 +30,21 @@ void macro_statement_provider::process_next(statement_processor& processor)
 	assert(invo);
 
 	++invo->current_statement;
-	if ((size_t)invo->current_statement == invo->definition.size())
+	if ((size_t)invo->current_statement == invo->cached_definition.size())
 	{
 		hlasm_ctx.leave_macro();
 		return;
 	}
 
-	const context::shared_stmt_ptr& stmt = invo->definition[invo->current_statement];
+	auto& cache = invo->cached_definition[invo->current_statement];
 
-	switch (stmt->kind)
+	switch (cache.get_base()->kind)
 	{
 	case context::statement_kind::RESOLVED:
-		processor.process_statement(stmt);
+		processor.process_statement(cache.get_base());
 		break;
 	case context::statement_kind::DEFERRED:
-		preprocess_deferred(processor, stmt);
+		preprocess_deferred(processor, cache);
 		break;
 	default:
 		break;

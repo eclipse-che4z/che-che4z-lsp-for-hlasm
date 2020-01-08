@@ -18,8 +18,8 @@
 #include "statement_processors/ordinary_processor.h"
 #include "statement_processors/copy_processor.h"
 #include "statement_processors/empty_processor.h"
-#include "macro_statement_provider.h"
-#include "copy_statement_provider.h"
+#include "statement_providers/macro_statement_provider.h"
+#include "statement_providers/copy_statement_provider.h"
 #include "../parser_impl.h"
 #include "../ebcdic_encoding.h"
 
@@ -359,12 +359,12 @@ const attribute_provider::resolved_reference_storage& processing_manager::lookup
 		(size_t)hlasm_ctx_.current_source().end_line + 1,
 		hlasm_ctx_.current_source().end_index);
 
-	opencode_prov_.push_line_end();
-
 	if(attr_lookahead_stop_ && hlasm_ctx_.current_source().end_index < attr_lookahead_stop_->end_index)
 		perform_opencode_jump(
 			context::source_position(attr_lookahead_stop_->end_line + 1, attr_lookahead_stop_->end_index), 
 			*attr_lookahead_stop_);
+
+	opencode_prov_.push_line_end();
 
 	while (true)
 	{

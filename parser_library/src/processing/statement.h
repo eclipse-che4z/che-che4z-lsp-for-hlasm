@@ -25,7 +25,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-using complete_stmt_t = std::variant<semantics::statement_si, semantics::statement_si_defer_done>;
+using complete_stmt_t = std::variant<semantics::statement_si, semantics::statement_si_defer_done, std::shared_ptr<semantics::statement_si_defer_done>>;
 
 //statement that contains resolved operation code and also all semantic fields
 struct resolved_statement : public context::hlasm_statement, public semantics::complete_statement
@@ -44,6 +44,8 @@ struct resolved_statement_impl : public resolved_statement
 		: opcode(opcode), value(std::move(stmt)) {}
 	resolved_statement_impl(semantics::statement_si_defer_done stmt, op_code opcode)
 		: opcode(opcode), value(std::move(stmt)) {}
+	resolved_statement_impl(std::shared_ptr<semantics::statement_si_defer_done> stmt, op_code opcode)
+		: opcode(opcode), value(stmt) {}
 
 	op_code opcode;
 	complete_stmt_t value;
@@ -60,8 +62,10 @@ private:
 	{
 		if (std::holds_alternative<semantics::statement_si>(value))
 			return std::get<semantics::statement_si>(value);
-		else
+		else if (std::holds_alternative<semantics::statement_si_defer_done>(value))
 			return std::get<semantics::statement_si_defer_done>(value);
+		else
+			return *std::get<std::shared_ptr<semantics::statement_si_defer_done>>(value);
 	}
 };
 

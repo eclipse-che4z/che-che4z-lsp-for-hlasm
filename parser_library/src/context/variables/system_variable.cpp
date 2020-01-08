@@ -62,8 +62,13 @@ A_t system_variable::count(std::vector<size_t> offset) const
 {
 	if (offset.empty())
 		return (A_t)data_->get_ith(1)->get_value().size();
-	else
-		return (A_t)macro_param_base::count(std::move(offset));
+
+	const macro_param_data_component* tmp = real_data();
+	for (size_t i = 0; i < offset.size(); ++i)
+	{
+		tmp = tmp->get_ith(offset[i] - (i == 0 ? 0 : 1));
+	}
+	return tmp->get_value().size();
 }
 
 size_t system_variable::size(std::vector<size_t> offset) const

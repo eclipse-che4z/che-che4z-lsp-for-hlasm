@@ -511,6 +511,43 @@ X EQU 1,2
 	EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
+TEST(attribute_lookahead, lookup_from_macro_last_line)
+{
+	std::string input(
+		R"( macro
+ GETMAIN &b=,&l=
+ AIF   (T'&l NE 'O' AND T'&b NE 'O').ERR14      @L1A 
+ mend
+         GETMAIN   b=svc)"
+);
+
+	look_parse_lib_prov mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
+{
+	std::string input(
+		R"( macro
+ GETMAIN &b=,&l=
+ AIF   (T'&l NE 'O' AND T'&b NE 'O').ERR14      @L1A 
+ mend
+         GETMAIN   b=svc
+)"
+	);
+
+	look_parse_lib_prov mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(attribute_lookahead, lookup_of_two_refs_evaluation)
 {
 	std::string input(
