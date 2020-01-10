@@ -11,6 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: configure
+      shell: cmd
       run: mkdir build && cd build && cmake ../
     - name: make
+      shell: cmd
       run: cd build && cmake --build .
