@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: configure
       shell: cmd
-      run: mkdir build && cd build && cmake ../
+      run: pws && ls && mkdir build && cd build && cmake ../
     - name: make
       shell: cmd
-      run: cd build && cmake --build .
+      run: ls && cd build && cmake --build .
