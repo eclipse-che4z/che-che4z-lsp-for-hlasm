@@ -1,0 +1,18 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+    
+  build:
+
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: configure
+      shell: cmd
+      run: pwd && ls && mkdir build && cd build && cmake ../
+    - name: make
+      shell: cmd
+      run: pwd && ls && cd build && cmake --build .
