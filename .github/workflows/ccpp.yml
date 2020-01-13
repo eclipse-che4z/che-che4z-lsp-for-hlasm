@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
     
-  build:
+  build-win:
 
     runs-on: windows-latest
     
@@ -16,3 +16,13 @@ jobs:
     - name: make
       shell: cmd
       run: pwd && ls && cd build && cmake --build .
+
+  build-linux:
+      runs-on: ubuntu-latest
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: configure
+        run: pwd && ls && mkdir build && cd build && cmake ../
+      - name: make
+        run: pwd && ls && cd build && cmake --build .
