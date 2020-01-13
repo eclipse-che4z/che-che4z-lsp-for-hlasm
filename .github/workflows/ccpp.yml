@@ -32,4 +32,4 @@ jobs:
       - name: make
         run: pwd && ls && cd build && cmake --build .
       - name: test
-        run: cd build\bin && server_test.exe && library_test.exe
+        run: cd build/bin && server_test.exe && library_test.exe
