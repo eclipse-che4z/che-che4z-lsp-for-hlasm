@@ -40,7 +40,7 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: requirements
-        run: brew ninja
+        run: brew install ninja
       - name: configure
         run: pwd && ls && mkdir build && cd build && cmake -G Ninja ../
       - name: make
