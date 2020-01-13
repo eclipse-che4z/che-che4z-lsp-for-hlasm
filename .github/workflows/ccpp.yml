@@ -23,8 +23,8 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: requirements
-        run: sudo apt install uuid-dev
+        run: sudo apt install uuid-dev g++-8 ninja-build
       - name: configure
-        run: pwd && ls && mkdir build && cd build && cmake ../
+        run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
       - name: make
         run: pwd && ls && cd build && cmake --build .
