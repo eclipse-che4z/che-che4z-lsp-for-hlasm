@@ -22,6 +22,8 @@ jobs:
       
       steps:
       - uses: actions/checkout@v1
+      - name: requirements
+        run: sudo apt install uuid-dev
       - name: configure
         run: pwd && ls && mkdir build && cd build && cmake ../
       - name: make
