@@ -16,6 +16,9 @@ jobs:
     - name: make
       shell: cmd
       run: pwd && ls && cd build && cmake --build .
+    - name: test
+      shell: cmd
+      run: cd build\bin && server_test.exe && library_test.exe
 
   build-linux:
       runs-on: ubuntu-latest
@@ -28,3 +31,5 @@ jobs:
         run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
       - name: make
         run: pwd && ls && cd build && cmake --build .
+      - name: test
+        run: cd build\bin && server_test.exe && library_test.exe
