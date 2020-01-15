@@ -1,49 +1,9 @@
-name: C/C++ CI
-
+name: CI
 on: [push]
-
 jobs:
-    
-  build-win:
-
-    runs-on: windows-latest
-    
+  build:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: configure
-      shell: cmd
-      run: pwd && ls && mkdir build && cd build && cmake ../
-    - name: make
-      shell: cmd
-      run: pwd && ls && cd build && cmake --build .
-    - name: test
-      shell: cmd
-      run: cd build\bin && library_test.exe ## && server_test.exe commented until MSVC fix
-
-  build-linux:
-      runs-on: ubuntu-latest
-      
-      steps:
-      - uses: actions/checkout@v1
-      - name: requirements
-        run: sudo apt install uuid-dev g++-8 ninja-build
-      - name: configure
-        run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
-      - name: make
-        run: pwd && ls && cd build && cmake --build .
-      - name: test
-        run: cd build/bin && ./server_test && ./library_test
-
-  build-mac:
-      runs-on: [macos-latest]
-      
-      steps:
-      - uses: actions/checkout@v1
-      - name: requirements
-        run: brew install ninja
-      - name: configure
-        run: pwd && ls && mkdir build && cd build && cmake -G Ninja ../
-      - name: make
-        run: pwd && ls && cd build && cmake --build .
-      - name: test
-        run: cd build/bin && ./server_test && ./library_test
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v1
