@@ -1,9 +1,24 @@
 name: CI
 on: [push]
 jobs:
-  build:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v1
+  
+  build-mac:
+      runs-on: [macos-latest]
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: requirements
+        run: |
+          brew install ninja llvm@8
+          export PATH=~/usr/local/opt/llvm\@8/bin:$PATH
+      - name: configure
+        run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
+      - name: build
+        run: pwd && ls && cd build && cmake --build .
+      - name: test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: language_server_macos
+          path: build/bin/language_server
