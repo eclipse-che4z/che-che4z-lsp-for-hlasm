@@ -1,24 +1,104 @@
+#
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+#
+
 name: CI
 on: [push]
 jobs:
   
-  build-mac:
-      runs-on: [macos-latest]
+  Windows language server:
+
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Configure
+      shell: cmd
+      run: pwd && ls && mkdir build && cd build && cmake -DBUILD_VSIX=Off ../
+    - name: Build
+      shell: cmd
+      run: pwd && ls && cd build && cmake --build .
+    - name: Test
+      shell: cmd
+      run: cd build\bin && library_test.exe && server_test.exe
+    - name: Actions artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: language_server_win
+        path: build/bin/language_server.exe
+
+  Linux language server:
+      runs-on: ubuntu-latest
       
       steps:
       - uses: actions/checkout@v1
-      - name: requirements
+      - name: Requirements install
+        run: sudo apt install uuid-dev g++-8 ninja-build
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Actions artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: language_server_linux
+          path: build/bin/language_server
+  
+  MacOS language server:
+      runs-on: macos-latest
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
         run: |
           brew install ninja llvm@8
           export PATH=~/usr/local/opt/llvm\@8/bin:$PATH
-      - name: configure
-        run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
-      - name: build
-        run: pwd && ls && cd build && cmake --build .
-      - name: test
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Test
         run: cd build/bin && ./server_test && ./library_test
-      - name: Upload artifact
+      - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
           name: language_server_macos
           path: build/bin/language_server
+    
+  VSIX:
+    runs-on: ubuntu-latest
+    needs: [Windows language server, Linux language server, MacOS language server]
+    
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/download-artifact@v1
+        with:
+          name: language_server_win
+          path: clients/vscode-hlasmplugin/bin/win32/
+      - uses: actions/download-artifact@v1
+        with:
+          name: language_server_linux
+          path: clients/vscode-hlasmplugin/bin/linux/
+      - uses: actions/download-artifact@v1
+        with:
+          name: language_server_macos
+          path: clients/vscode-hlasmplugin/bin/darwin/
+      - name: Package VSIX
+        run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
+      - uses: actions/upload-artifact@v1
+        with:
+          name: hlasm-language-support.vsix
+          path: clients/vscode-hlasmplugin/bin/darwin/*.vsix
+      
