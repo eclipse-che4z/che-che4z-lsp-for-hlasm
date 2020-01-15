@@ -99,8 +99,10 @@ jobs:
           path: clients/vscode-hlasmplugin/bin/darwin/
       - name: Package VSIX
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
+      - name: Get VSIX filename
+        run: echo ::set-env name=VSIX_FILENAME::$(ls clients/vscode-hlasmplugin/*.vsix)
       - uses: actions/upload-artifact@v1
         with:
           name: hlasm-language-support.vsix
-          path: clients/vscode-hlasmplugin/bin/darwin/*.vsix
+          path: ${{ env.VSIX_FILENAME }}
       
