@@ -26,10 +26,10 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v1
     - name: Configure
       shell: cmd
-      run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
     - name: Build
       shell: cmd
-      run: pwd && ls && cd build && cmake --build .
+      run: cd build && cmake --build . --parallel --config Release
     - name: Test
       shell: cmd
       run: cd build\bin && library_test.exe # && server_test.exe until MSVC fix arrives
