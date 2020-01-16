@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Configure
       shell: cmd
-      run: pwd && ls && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
+      run: pwd && ls && mkdir build && cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
     - name: Build
       shell: cmd
       run: pwd && ls && cd build && cmake --build .
