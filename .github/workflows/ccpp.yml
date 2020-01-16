@@ -66,7 +66,7 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build clang++-8 libc++-dev libc++abi-dev
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build clang++-8 libc++-8-dev libc++abi-8-dev
       - name: Configure
         run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link" ../
       - name: Build
