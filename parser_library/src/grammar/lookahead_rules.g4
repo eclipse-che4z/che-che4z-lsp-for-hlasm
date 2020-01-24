@@ -17,7 +17,7 @@ parser grammar lookahead_rules;
 look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 	: seq_symbol ~EOLLN* 
 	{
-		collector.set_label_field(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
+		collector.set_label_field($seq_symbol.ss,provider.get_range($seq_symbol.ctx));
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));
 		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
@@ -29,7 +29,8 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		if ($ORDSYMBOL)
 		{
 			auto r = provider.get_range($ORDSYMBOL);
-			collector.set_label_field($ORDSYMBOL->getText(),nullptr,r);
+			auto id = ctx->ids().add($ORDSYMBOL->getText());
+			collector.set_label_field(id,nullptr,r); 
 		}
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 

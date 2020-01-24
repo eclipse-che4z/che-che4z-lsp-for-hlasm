@@ -12,10 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
+#define HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
+
 #include "../src/lsp/feature_text_synchronization.h"
 
-#include "ws_mngr_mock.h"
-#include "response_provider_mock.h"
 #ifdef _WIN32
 
 TEST(text_synchronization, did_open_file)
@@ -124,3 +125,4 @@ TEST(feature, path_to_uri)
 
 #endif // _WIN32
 
+#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H

@@ -22,15 +22,16 @@ label
 		if (label.size()>1 && label[0] == '.')
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::seq_symbol));
-			collector.add_lsp_symbol({label.substr(1),r,symbol_type::seq});
-
 			auto id = parse_identifier(label.substr(1),r);
+			collector.add_lsp_symbol(id,r,symbol_type::seq);
+
 			collector.set_label_field({id,r},r);
 		}
 		else
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::label));
-			collector.set_label_field(std::move($l_char_string.value),$l_char_string.ctx,r); 
+			auto id = ctx->ids().add($l_char_string.value);
+			collector.set_label_field(id,$l_char_string.ctx,r); 
 		}
 
 														

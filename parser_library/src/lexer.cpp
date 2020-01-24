@@ -330,7 +330,7 @@ token_ptr lexer::nextToken()
 		{
 			auto t = move(token_queue_.front());
 			if (t->getType() == EOLLN)
-				set_last_line_pos(t->getStartIndex() + 1,t->getLine());
+				set_last_line_pos(t->getStopIndex() + 1, t->getLine());
 			token_queue_.pop();
 			return t;
 		}

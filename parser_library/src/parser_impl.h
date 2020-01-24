@@ -23,6 +23,7 @@
 #include "processing/statement_providers/statement_provider.h"
 #include "processing/opencode_provider.h"
 #include "processing/statement_fields_parser.h"
+#include "../include/shared/lexer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

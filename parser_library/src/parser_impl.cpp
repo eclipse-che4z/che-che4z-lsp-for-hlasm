@@ -16,7 +16,6 @@
 #include "parser_impl.h"
 #include "error_strategy.h"
 #include "parser_error_listener_ctx.h"
-#include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
 #include "hlasmparser.h"
 #include "expressions/arithmetic_expression.h"
@@ -108,7 +107,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	// indicates that the reparse is done to resolve deferred ordinary symbols (and not to substitute)
 	if (!after_substitution)
 	{
-		lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(), ctx->processing_stack().back().proc_location.file);
+		lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(), ctx->ids().add(ctx->processing_stack().back().proc_location.file,true));
 	}
 	
 	//h.parser->append();

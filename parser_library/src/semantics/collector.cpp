@@ -74,21 +74,20 @@ void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
 	lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
-void collector::set_label_field(std::string label, antlr4::ParserRuleContext * parser_ctx, range symbol_range)
+void collector::set_label_field(const std::string* label, antlr4::ParserRuleContext * parser_ctx, range symbol_range)
 {
 	if (lbl_)
 		throw std::runtime_error("field already assigned");
 	//recognise, whether label consists only of ORDSYMBOL token
 	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL))
 	{
-		lbl_.emplace(symbol_range , label);
-		add_lsp_symbol({ std::move(label), symbol_range, symbol_type::ord });
+		add_lsp_symbol(label, symbol_range, context::symbol_type::ord);
+		lbl_.emplace(symbol_range , *label);
 	}
 	//otherwise it is macro label parameter
 	else
 	{
-		lbl_.emplace(symbol_range, label, label_si::mac_flag());
-		add_lsp_symbol({ std::move(label), symbol_range, symbol_type::ord });
+		lbl_.emplace(symbol_range, *label, label_si::mac_flag());
 	}
 }
 
@@ -157,14 +156,14 @@ void collector::set_operand_remark_field(std::vector<operand_ptr> operands, std:
 	rem_.emplace(symbol_range,std::move(remarks));
 }
 
-void collector::add_lsp_symbol(lsp_symbol symbol)
+void collector::add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type)
 {
-	lsp_symbols_.push_back(std::move(symbol));
+	lsp_symbols_.push_back({name,symbol_range,type });
 }
 
 void collector::add_hl_symbol(token_info symbol)
 {
-		hl_symbols_.push_back(std::move(symbol));
+	hl_symbols_.push_back(std::move(symbol));
 }
 
 void collector::clear_hl_lsp_symbols()
@@ -200,7 +199,7 @@ void collector::append_reparsed_symbols(collector&& c)
 		hl_symbols_.push_back(std::move(sym));
 	
 	size_t i;
-	for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != symbol_type::instruction; ++i);
+	for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != context::symbol_type::instruction; ++i);
 
 	if (i != lsp_symbols_.size())
 		while(lsp_symbols_.size() != i + 1)
@@ -267,7 +266,7 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
 	}
 }
 
-std::vector<lsp_symbol> collector::extract_lsp_symbols()
+std::vector<context::lsp_symbol> collector::extract_lsp_symbols()
 {
 	if (lsp_symbols_extracted_)
 		throw std::runtime_error("data already extracted");
