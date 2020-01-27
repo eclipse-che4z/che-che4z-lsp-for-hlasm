@@ -1,0 +1,86 @@
+#
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+#
+
+name: SonarCloud
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+
+jobs:
+  
+  sonar:
+      name: Sonar scan
+      runs-on: ubuntu-latest
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build clang++-8 libc++-8-dev libc++abi-8-dev
+      - name: Configure
+        run: >
+          mkdir build && cd build &&
+          cmake -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=clang-8
+          -DCMAKE_CXX_COMPILER=clang++-8
+          -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          ../
+      - name: Sonar build wrapper download
+        run: >
+          cd build &&
+          curl -LsS https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip > build-wrapper-linux-x86.zip &&
+          unzip build-wrapper-linux-x86.zip &&
+          cp build-wrapper-linux-x86/* .
+      - name: Build
+        run: cd build && ./build-wrapper-linux-x86-64 --out-dir bw-output make -j 4 clean all
+      - name: Test
+        run: |
+          cd build/bin
+          LLVM_PROFILE_FILE="library.rawprof" ./library_test 
+          LLVM_PROFILE_FILE="server.rawprof" ./server_test
+      - name: Merge raw profiles
+        run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
+      - name: Generate lcov coverage
+        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test server_test > coverage.txt
+      - name: Pull request setting
+        if: github.event_name == 'pull_request'
+        run: echo ::set-env name=PR_NUMBER::-Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+      - name: Sonar scan
+        run: >
+          export SONAR_SCANNER_VERSION=4.2.0.1873 &&
+          export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux &&
+          rm -rf $SONAR_SCANNER_HOME &&
+          mkdir -p $SONAR_SCANNER_HOME &&
+          curl -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip &&
+          unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/ &&
+          rm $HOME/.sonar/sonar-scanner.zip &&
+          export PATH=$SONAR_SCANNER_HOME/bin:$PATH &&
+          export SONAR_SCANNER_OPTS="-server" &&
+          sonar-scanner
+          -Dsonar.projectKey=michalbali256_che-che4z-lsp-for-hlasm
+          -Dsonar.organization=michalbali256
+          -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include
+          -Dsonar.tests=parser_library/test,language_server/test
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.login=1f690d37aeb32567131614b29f0d4a7b9d51f30b
+          -Dsonar.cfamily.build-wrapper-output=build/bw-output
+          -Dsonar.cfamily.threads=4
+          -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
+          -Dsonar.cfamily.cache.enabled=false
+          ${{ env.PR_NUMBER }}
+
