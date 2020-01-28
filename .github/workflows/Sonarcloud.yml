@@ -61,6 +61,8 @@ jobs:
         if: github.event_name == 'pull_request'
         run: echo ::set-env name=PR_NUMBER::-Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
       - name: Sonar scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           export SONAR_SCANNER_VERSION=4.2.0.1873 &&
           export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux &&
