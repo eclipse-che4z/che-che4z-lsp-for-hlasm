@@ -77,7 +77,7 @@ mach_term returns [mach_expr_ptr m_e]
 	| id
 	{
 		$m_e = std::make_unique<mach_expr_symbol>($id.name, provider.get_range( $id.ctx));
-		collector.add_lsp_symbol({*$id.name,provider.get_range($id.ctx),symbol_type::ord});
+		collector.add_lsp_symbol($id.name,provider.get_range($id.ctx),symbol_type::ord);
 	}
 	| num
 	{

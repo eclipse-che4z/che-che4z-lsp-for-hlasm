@@ -16,7 +16,6 @@
 #include "parser_impl.h"
 #include "error_strategy.h"
 #include "parser_error_listener_ctx.h"
-#include "../include/shared/lexer.h"
 #include "../include/shared/token_stream.h"
 #include "hlasmparser.h"
 #include "expressions/arithmetic_expression.h"
@@ -28,7 +27,7 @@ using namespace hlasm_plugin::parser_library;
 parser_impl::parser_impl(antlr4::TokenStream* input)
 	: Parser(input),
 	ctx(nullptr), lsp_proc(nullptr), processor(nullptr), finished_flag(false), provider(),
-	last_line_processed_(false), line_end_pushed_(false) {}
+	parent_(nullptr), last_line_processed_(false), line_end_pushed_(false) {}
 
 void parser_impl::initialize(
 	context::hlasm_context* hlasm_ctx,
@@ -55,7 +54,7 @@ void parser_impl::rewind_input(context::source_position pos)
 
 void parser_impl::push_line_end()
 {
-	line_end_pushed_ = dynamic_cast<token_stream&>(*_input).consume_EOLLN();
+	line_end_pushed_ = true;
 }
 
 context::source_position parser_impl::statement_start() const
@@ -74,45 +73,84 @@ context::source_position parser_impl::statement_end() const
 std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
 	context::hlasm_context* hlasm_ctx, std::string field, bool after_substitution, semantics::range_provider field_range, processing::processing_status status)
 {
+	if (!reparser_)
+	{
+		std::string s;
+		reparser_ = std::make_unique<parser_holder>();
+		reparser_->input = std::make_unique<input_source>(s);
+		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
+		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
+		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+	}
+
 	hlasm_ctx->metrics.reparsed_statements++;
-	parser_holder h;
+	parser_holder& h = *reparser_;
 
 	std::optional<std::string> sub;
 	if (after_substitution)
 		sub = field;
 	parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
 
-	h.input = std::make_unique<input_source>(std::move(field));
-	h.lex = std::make_unique<lexer>(h.input.get(), nullptr,&hlasm_ctx->metrics);
-	h.stream = std::make_unique<token_stream>(h.lex.get());
-	h.parser = std::make_unique<generated::hlasmparser>(h.stream.get());
+	h.input->append(field);
 
+	h.lex->append();
 	h.lex->set_file_offset(field_range.original_range.start);
 	h.lex->set_unlimited_line(after_substitution);
+
+	h.stream->append();
 
 	h.parser->initialize(hlasm_ctx, field_range, status);
 	h.parser->setErrorHandler(std::make_shared<error_strategy>());
 	h.parser->removeErrorListeners();
 	h.parser->addErrorListener(&listener);
 
-	auto line = std::move(h.parser->model_operands()->line);
-	
 	// indicates that the reparse is done to resolve deferred ordinary symbols (and not to substitute)
 	if (!after_substitution)
 	{
-		lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(), ctx->processing_stack().back().proc_location.file);
+		lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(), ctx->ids().add(ctx->processing_stack().back().proc_location.file,true));
 	}
 	
+	//h.parser->append();
+	h.parser->_matchedEOF = false;
+
+	h.parser->collector.prepare_for_next_statement();
+
+	semantics::op_rem line;
+	bool preserve = false;
+	auto& [format, opcode] = status;
+	if (format.occurence == processing::operand_occurence::ABSENT || format.form == processing::processing_form::UNKNOWN)
+		h.parser->op_rem_body_noop();
+	else
+	{
+		switch (format.form)
+		{
+		case processing::processing_form::MAC:
+			line = std::move(h.parser->op_rem_body_mac_r()->line);
+			preserve = true;
+			break;
+		case processing::processing_form::ASM:
+			line = std::move(h.parser->op_rem_body_asm_r()->line);
+			break;
+		case processing::processing_form::MACH:
+			line = std::move(h.parser->op_rem_body_mach_r()->line);
+			break;
+		case processing::processing_form::DAT:
+			line = std::move(h.parser->op_rem_body_dat_r()->line);
+		default:
+			break;
+		}
+	}
 
 	collect_diags_from_child(listener);
-
-	parsers_.emplace_back(std::move(h));
 
 	for (size_t i = 0; i < line.operands.size(); i++)
 	{
 		if (!line.operands[i])
 			line.operands[i] = std::make_unique<semantics::empty_operand>(field_range.original_range);
 	}
+
+	if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)
+		line.operands.clear();
 
 	range op_range = line.operands.empty() ?
 		field_range.original_range :
@@ -246,7 +284,14 @@ void parser_impl::process_instruction()
 
 void parser_impl::process_statement()
 {
-	ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+	if (parent_)
+	{
+		parent_->collector.append_operand_field(std::move(collector));
+		parent_->process_statement();
+		return;
+	}
+
+	//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 
 	bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
 	auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
@@ -277,13 +322,32 @@ void parser_impl::process_statement()
 	processor->process_statement(std::move(ptr));
 }
 
+void parser_impl::process_statement(semantics::op_rem line, range op_range)
+{
+	collector.set_operand_remark_field(std::move(line.operands), std::move(line.remarks), op_range);
+	collector.add_operands_hl_symbols();
+	collector.add_remarks_hl_symbols();
+	parent_->collector.append_operand_field(std::move(collector));
+	parent_->process_statement();
+}
+
 void parser_impl::process_next(processing::statement_processor& proc)
 {
-	finished_flag = last_line_processed_ && is_last_line();
-	last_line_processed_ = is_last_line();
 	processor = &proc;
-	tree.push_back(dynamic_cast<generated::hlasmparser&>(*this).program_line());
+	if (proc.kind == processing::processing_kind::LOOKAHEAD)
+	{
+		auto look_lab_instr = dynamic_cast<generated::hlasmparser&>(*this).look_lab_instr();
+		if (!finished_flag && look_lab_instr->op_text)
+			parse_lookahead(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
+	}
+	else
+	{
+		auto lab_instr = dynamic_cast<generated::hlasmparser&>(*this).lab_instr();
+		if (!finished_flag && lab_instr->op_text)
+			parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
+	}
 	processor = nullptr;
+	collector.prepare_for_next_statement();
 	proc_status.reset();
 }
 
@@ -361,41 +425,201 @@ void parser_impl::initialize(
 	proc_status = proc_stat;
 }
 
+void hlasm_plugin::parser_library::parser_impl::initialize(parser_impl* parent)
+{
+	ctx = parent->ctx;
+	provider = parent->provider;
+	proc_status = parent->proc_status;
+	parent_ = parent;
+}
+
 semantics::operand_list parser_impl::parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges)
 {
-	parser_holder h;
+	if (!reparser_)
+	{
+		std::string s;
+		reparser_ = std::make_unique<parser_holder>();
+		reparser_->input = std::make_unique<input_source>(s);
+		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
+		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
+		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+	}
+
+	parser_holder& h = *reparser_;
+
 	semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
 	parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
 
-	h.input = std::make_unique<input_source>(std::move(operands));
-	h.lex = std::make_unique<lexer>(h.input.get(), nullptr);
-	h.stream = std::make_unique<token_stream>(h.lex.get());
-	h.parser = std::make_unique<generated::hlasmparser>(h.stream.get());
+	h.input->append(operands);
 
+	h.lex->append();
 	h.lex->set_file_offset(field_range.start);
 	h.lex->set_unlimited_line(true);
+
+	h.stream->append();
 
 	h.parser->initialize(ctx, tmp_provider, *proc_status);
 	h.parser->setErrorHandler(std::make_shared<error_strategy>());
 	h.parser->removeErrorListeners();
 	h.parser->addErrorListener(&listener);
 
+//	h.parser->reset();
+	h.parser->_matchedEOF = false;
+
+	h.parser->collector.prepare_for_next_statement();
+
 	auto list = std::move(h.parser->macro_ops()->list);
 
+	if (parent_)
+		collector.prepare_for_next_statement();
 	collector.append_reparsed_symbols(std::move(h.parser->collector));
 
 	collect_diags_from_child(listener);
 
-	parsers_.emplace_back(std::move(h));
+	//parsers_.emplace_back(std::move(h));
 
 	return list;
 }
 
-
-parser_holder::parser_holder(parser_holder&& h) 
-	:input(std::move(h.input)), lex(std::move(h.lex)), stream(std::move(h.stream)), parser(std::move(h.parser))
+void hlasm_plugin::parser_library::parser_impl::parse_rest(std::string text, range text_range)
 {
+	if (!rest_parser_)
+	{
+		std::string s;
+		rest_parser_ = std::make_unique<parser_holder>();
+		rest_parser_->input = std::make_unique<input_source>(s);
+		rest_parser_->lex = std::make_unique<lexer>(rest_parser_->input.get(), nullptr);
+		rest_parser_->stream = std::make_unique<token_stream>(rest_parser_->lex.get());
+		rest_parser_->parser = std::make_unique<generated::hlasmparser>(rest_parser_->stream.get());
+	}
+
+	parser_holder& h = *rest_parser_;
+
+	parser_error_listener_ctx listener(*ctx, std::nullopt);
+
+	h.input->append(text);
+
+	h.lex->append();
+	h.lex->set_file_offset(text_range.start);
+
+	h.stream->append();
+
+	h.parser->initialize(this);
+	h.parser->setErrorHandler(std::make_shared<error_strategy>());
+	h.parser->removeErrorListeners();
+	h.parser->addErrorListener(&listener);
+
+	//h.parser->reset();
+	h.parser->_matchedEOF = false;
+
+	h.parser->collector.prepare_for_next_statement();
+
+	auto& [format, opcode] = *proc_status;
+	if (format.occurence == processing::operand_occurence::ABSENT || format.form == processing::processing_form::UNKNOWN)
+		h.parser->op_rem_body_noop();
+	else
+	{
+		switch (format.form)
+		{
+		case processing::processing_form::IGNORED:
+			h.parser->op_rem_body_ignored();
+			break;
+		case processing::processing_form::DEFERRED:
+			h.parser->op_rem_body_deferred();
+			break;
+		case processing::processing_form::CA:
+			h.parser->op_rem_body_ca();
+			break;
+		case processing::processing_form::MAC:
+			h.parser->op_rem_body_mac();
+			break;
+		case processing::processing_form::ASM:
+			h.parser->op_rem_body_asm();
+			break;
+		case processing::processing_form::MACH:
+			h.parser->op_rem_body_mach();
+			break;
+		case processing::processing_form::DAT:
+			h.parser->op_rem_body_dat();
+		default:
+			break;
+		}
+	}
+
+	collect_diags_from_child(listener);
+
+	collector.append_operand_field(std::move(h.parser->collector));
+
+	//parsers_.emplace_back(std::move(h));
+}
+
+void hlasm_plugin::parser_library::parser_impl::parse_lookahead(std::string text, range text_range)
+{
+	if (!reparser_)
+	{
+		std::string s;
+		reparser_ = std::make_unique<parser_holder>();
+		reparser_->input = std::make_unique<input_source>(s);
+		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
+		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
+		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+	}
+
+	if (proc_status->first.form == processing::processing_form::IGNORED)
+	{
+		process_statement();
+		return;
+	}
+
+	if (!collector.has_label())
+	{
+		if (collector.current_instruction().type == semantics::instruction_si_type::ORD)
+		{
+			context::id_index tmp;
+			tmp = std::get<context::id_index>(collector.current_instruction().value);
+			if (tmp != ctx->ids().add("COPY"))
+			{
+				process_statement();
+				return;
+			}
+		}
+	}
+
+	parser_holder& h = *reparser_;
+
+	parser_error_listener_ctx listener(*ctx, std::nullopt);
+
+	h.input->append(text);
+
+	h.lex->append();
+	h.lex->set_file_offset(text_range.start);
+	h.lex->set_unlimited_line(true);
+
+	h.stream->append();
+
+	h.parser->initialize(this);
+	h.parser->setErrorHandler(std::make_shared<error_strategy>());
+	h.parser->removeErrorListeners();
+	h.parser->addErrorListener(&listener);
+
+	//h.parser->append();
+	h.parser->_matchedEOF = false;
+
+	h.parser->collector.prepare_for_next_statement();
+
+	h.parser->lookahead_operands_and_remarks();
+
+	listener.diags().clear();
+	
+	collector.prepare_for_next_statement();
+}
+
+antlr4::misc::IntervalSet parser_impl::getExpectedTokens() {
+	if (proc_status->first.kind == processing::processing_kind::LOOKAHEAD)
+		return {};
+	else
+		return antlr4::Parser::getExpectedTokens();
 }
 
 parser_holder::~parser_holder() {}

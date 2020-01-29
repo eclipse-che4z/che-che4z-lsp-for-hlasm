@@ -20,16 +20,25 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::lsp_ctx_ptr ctx)
-: file_name(std::move(file)), ctx_(ctx), instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
+lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx)
+	: file_name(ctx ? ctx->ids().add(file,true) : nullptr)
+	, empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
+	, ctx_(ctx)
+	, instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
 {
 	// initialize text vector
-	text_ = split_(text);
+	std::string line;
+	std::stringstream text_ss(text);
+	while (std::getline(text_ss, line))
+		text_.push_back(line);
 
-	hl_info_.document = { file_name };
+	if (!ctx)
+		return;
+
+	hl_info_.document = { *file_name };
 
 	// initialize context
-	if (!ctx_->initialized)
+	if (!ctx_->lsp_ctx->initialized)
 	{
 		for (const auto& machine_instr : instruction::machine_instructions)
 		{
@@ -80,7 +89,7 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 				}
 			}
 			documentation << "Machine instruction " << std::endl << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.second->format);
-			ctx_->all_instructions.push_back({ machine_instr.first,1,"Operands: " + detail.str(),documentation.str(),false, machine_instr.first + "   " + autocomplete.str() } );
+			ctx_->lsp_ctx->all_instructions.push_back({ machine_instr.first,"Operands: " + detail.str(),machine_instr.first + "   " + autocomplete.str(),{documentation.str()} });
 		}
 
 		for (const auto& asm_instr : instruction::assembler_instructions)
@@ -92,10 +101,9 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 			//int max_op = asm_instr.second.max_operands;
 			std::string description = asm_instr.second.description;
 			
-			deferred_instruction_.value.push_back(description);
 			detail << asm_instr.first << "   " << description;
 			documentation << "Assembler instruction";
-			ctx_->all_instructions.push_back({ asm_instr.first,1,detail.str(),documentation.str(),false,asm_instr.first + "   " /*+ description*/ });
+			ctx_->lsp_ctx->all_instructions.push_back({ asm_instr.first,detail.str(),asm_instr.first + "   " /*+ description*/,{documentation.str()} });
 		}
 
 		for (const auto& mnemonic_instr : instruction::mnemonic_codes)
@@ -187,15 +195,15 @@ lsp_info_processor::lsp_info_processor(std::string file, const std::string& text
 			detail << "Operands: " + subs_ops_nomnems.str();
 			documentation << "Mnemonic code for " << instr_name << " instruction" << std::endl << "Substituted operands: " << subs_ops_mnems.str() << std::endl << "Instruction format: " << 
 				instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
-			ctx_->all_instructions.push_back({ mnemonic_instr.first,1,detail.str(),documentation.str(),false, mnemonic_instr.first + "   " + subs_ops_nomnems.str() });
+			ctx_->lsp_ctx->all_instructions.push_back({ mnemonic_instr.first,detail.str(),mnemonic_instr.first + "   " + subs_ops_nomnems.str(),{documentation.str()} });
 		}
 
 		for (const auto& ca_instr : instruction::ca_instructions)
 		{
-			ctx_->all_instructions.push_back({ ca_instr.name,1,"","Conditional Assembly",false,ca_instr.name });
+			ctx_->lsp_ctx->all_instructions.push_back({ ca_instr.name,"",ca_instr.name,{"Conditional Assembly"} });
 		}
 
-		ctx_->initialized = true;
+		ctx_->lsp_ctx->initialized = true;
 	}
 };
 
@@ -207,12 +215,15 @@ void lsp_info_processor::process_hl_symbols(std::vector<token_info> symbols)
 	}
 }
 
-void lsp_info_processor::process_lsp_symbols(std::vector<lsp_symbol> symbols,const std::string & given_file)
+void lsp_info_processor::process_lsp_symbols(std::vector<context::lsp_symbol> symbols,const std::string * given_file)
 {
+	if (!ctx_)
+		return;
+
 	bool only_ord = false;
 	auto symbol_file = file_name;
 	// if the file is given, process only ordinary symbols
-	if (given_file != "")
+	if (given_file != nullptr)
 	{
 		only_ord = true;
 		symbol_file = given_file;
@@ -224,37 +235,47 @@ void lsp_info_processor::process_lsp_symbols(std::vector<lsp_symbol> symbols,con
 		if (!only_ord || symbol.type == symbol_type::ord)
 			add_lsp_symbol(symbol);
 	}
-	if (!only_ord)
+	if (!only_ord && !symbols.empty())
 	{
 		process_instruction_sym_();
 		process_var_syms_();
 	}
 }
-
-bool lsp_info_processor::find_definition_(const position & pos,const definitions & symbols, position_uri_s & found) const
+template<typename T>
+bool lsp_info_processor::find_definition_(const position & pos,const definitions<T> & symbols, position_uri_s & found) const
 {
-	for (auto it = symbols.begin(); it != symbols.end(); ++it)
+	for (const auto& symbol : symbols)
 	{
-		if (is_in_range_(pos, it->second))
+		for (const auto& occ : symbol.second)
 		{
-			found = { it->first.file_name, it->first.definition_range.start };
-			return true;
+			if (is_in_range_(pos, occ))
+			{
+				found = { *symbol.first.file_name, symbol.first.definition_range.start };
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
-bool lsp_info_processor::find_references_(const position & pos, const definitions & symbols, std::vector<position_uri_s>& found) const
+template<typename T>
+bool lsp_info_processor::find_references_(const position & pos, const definitions<T> & symbols, std::vector<position_uri_s>& found) const
 {
-	for (auto it = symbols.begin(); it != symbols.end(); ++it)
+	// for each symbol
+	for (const auto& symbol : symbols)
 	{
-		if (is_in_range_(pos, it->second))
+		// for each of its occurences
+		for (const auto& occ : symbol.second)
 		{
-			auto range = symbols.equal_range(it->first);
-			for (auto i = range.first; i != range.second; ++i)
-				found.push_back({ i->second.file_name,i->second.definition_range.start });
+			// if at least one occurence is in range
+			if (is_in_range_(pos, occ))
+			{
+				// return all of them as result
+				for (const auto& found_occ : symbol.second)
+					found.push_back({ *found_occ.file_name, found_occ.definition_range.start });
 
-			return true;
+				return true;
+			}
 		}
 	}
 	return false;
@@ -271,8 +292,8 @@ completion_list_s lsp_info_processor::completion(const position& pos, const char
 		return complete_var_(pos);
 	else if (last_char == '.')
 		return complete_seq_(pos);
-	else if (std::regex_match(line_so_far, instruction_regex) && (line_before.size() <= hl_info_.cont_info.continuation_column || std::isspace(line_before[hl_info_.cont_info.continuation_column])))
-		return { false, ctx_->all_instructions };
+	else if ((line_before.size() <= hl_info_.cont_info.continuation_column || std::isspace(line_before[hl_info_.cont_info.continuation_column])) && std::regex_match(line_so_far, instruction_regex))
+		return { false, ctx_->lsp_ctx->all_instructions };
 
 	return { false, {} };
 }
@@ -280,48 +301,45 @@ completion_list_s lsp_info_processor::completion(const position& pos, const char
 position_uri_s lsp_info_processor::go_to_definition(const position & pos) const
 {
 	position_uri_s result;
-	if (find_definition_(pos, ctx_->seq_symbols, result) || find_definition_(pos, ctx_->var_symbols, result) || find_definition_(pos, ctx_->ord_symbols, result) || find_definition_(pos, ctx_->instructions, result))
+	if (find_definition_(pos, ctx_->lsp_ctx->seq_symbols, result) || find_definition_(pos, ctx_->lsp_ctx->var_symbols, result) || find_definition_(pos, ctx_->lsp_ctx->ord_symbols, result) || find_definition_(pos, ctx_->lsp_ctx->instructions, result))
 		return result;
-	return { file_name,pos };
+	return { *file_name,pos };
 }
 std::vector<position_uri_s> lsp_info_processor::references(const position & pos) const
 {
 	std::vector<position_uri_s> result;
-	if (find_references_(pos, ctx_->seq_symbols, result) || find_references_(pos, ctx_->var_symbols, result) || find_references_(pos, ctx_->ord_symbols, result) || find_references_(pos, ctx_->instructions, result))
+	if (find_references_(pos, ctx_->lsp_ctx->seq_symbols, result) || find_references_(pos, ctx_->lsp_ctx->var_symbols, result) || find_references_(pos, ctx_->lsp_ctx->ord_symbols, result) || find_references_(pos, ctx_->lsp_ctx->instructions, result))
 		return result;
-	return { { file_name,pos } };
+	return { { *file_name,pos } };
 }
 std::vector<std::string> lsp_info_processor::hover(const position & pos) const
 {
 	std::vector<std::string> result;
-	if (get_text_(pos, ctx_->seq_symbols,result) || get_text_(pos, ctx_->var_symbols, result) || get_text_(pos, ctx_->ord_symbols, result) || get_text_(pos, ctx_->instructions, result))
+	if (get_text_(pos, ctx_->lsp_ctx->seq_symbols,result) || get_text_(pos, ctx_->lsp_ctx->var_symbols, result) || get_text_(pos, ctx_->lsp_ctx->ord_symbols, result) || get_text_(pos, ctx_->lsp_ctx->instructions, result))
 		return result;
 	return result;
 }
-void lsp_info_processor::add_lsp_symbol(lsp_symbol symbol)
+void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 {
-	std::string scope;
-	if (ctx_->parser_macro_stack.size() > 0)
-		scope = ctx_->parser_macro_stack.top();
-	definition symbol_def(symbol.name, scope, symbol.symbol_range.file, symbol.symbol_range.r, { symbol.value });
+	symbol.scope = get_top_macro_stack_();
 	switch (symbol.type)
 	{
 	case symbol_type::ord:
-		process_ord_sym_(symbol_def);
+		process_ord_sym_(symbol);
 		break;
 	case symbol_type::var:
-		deferred_vars_.push_back(symbol_def);
+		deferred_vars_.push_back(symbol);
 		break;
 	case symbol_type::instruction:
-		deferred_instruction_ = { symbol.name,scope,symbol.symbol_range.file,symbol.symbol_range.r,{""},false };
+		deferred_instruction_.init(symbol.symbol_range.file,symbol.name,symbol.symbol_range.r);
 		break;
 	case symbol_type::seq:
-		process_seq_sym_(symbol_def);
+		process_seq_sym_(symbol);
 		break;
 	}
 }
 
-void hlasm_plugin::parser_library::semantics::lsp_info_processor::add_hl_symbol(token_info symbol)
+void lsp_info_processor::add_hl_symbol(token_info symbol)
 {
 	if (symbol.scope == hl_scopes::continuation)
 	{
@@ -330,7 +348,7 @@ void hlasm_plugin::parser_library::semantics::lsp_info_processor::add_hl_symbol(
 	hl_info_.lines.push_back(symbol);
 }
 
-semantics::highlighting_info & hlasm_plugin::parser_library::semantics::lsp_info_processor::get_hl_info()
+semantics::highlighting_info & lsp_info_processor::get_hl_info()
 {
 	return hl_info_;
 }
@@ -367,203 +385,182 @@ bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ)
 	return file_name == occ.file_name && pos.line == occ.definition_range.start.line && pos.line == occ.definition_range.end.line && pos.column >= occ.definition_range.start.column && pos.column <= occ.definition_range.end.column;
 }
 
-bool lsp_info_processor::get_text_(const position& pos, const definitions& symbols, std::vector<std::string>& found) const
+template<typename T>
+bool lsp_info_processor::get_text_(const position& pos, const definitions<T>& symbols, std::vector<std::string>& found) const
 {
-	for (auto it = symbols.begin(); it != symbols.end(); ++it)
+	for (const auto& symbol: symbols)
 	{
-		if (is_in_range_(pos, it->second))
+		// for each of its occurences
+		for (const auto& occ : symbol.second)
 		{
-			found = it->first.value;
-			return true;
+			if (is_in_range_(pos, occ))
+			{
+				found = symbol.first.get_value();
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
-void lsp_info_processor::process_ord_sym_(context::definition & symbol)
+void lsp_info_processor::process_ord_sym_(const context::ord_definition& symbol)
 {
-	if (deferred_instruction_.name == "COPY")
+	if (deferred_instruction_.name == ctx_->ids().well_known.COPY)
 	{
-		ctx_->deferred_ord_occs.push_back(symbol);
-		ctx_->copy = true;
+		ctx_->lsp_ctx->deferred_ord_occs.push_back({ symbol,false });
+		ctx_->lsp_ctx->copy = true;
 		return;
 	}
-	if (ctx_->parser_macro_stack.empty())
-		symbol.check_scopes = false;
 	// to be processed after parsing
 	if (symbol.definition_range.start.column == 0)
-		ctx_->deferred_ord_defs.push_back(symbol);
+		ctx_->lsp_ctx->deferred_ord_defs.push_back(symbol);
 	else
-		ctx_->deferred_ord_occs.push_back(symbol);
-
-	/*
-	// definition
-	if (symbol.definition_range.start.column == 0)
-	{
-		ctx_->ord_symbols.insert({ symbol, { symbol.definition_range,symbol.file_name } });
-		// check for deferred
-		for (const auto& deferred_sym : ctx_->deferred_ords)
-			if (deferred_sym == symbol)
-				ctx_->ord_symbols.insert({ symbol, { deferred_sym.definition_range,deferred_sym.file_name } });
-		ctx_->deferred_ords.erase(std::remove(ctx_->deferred_ords.begin(), ctx_->deferred_ords.end(), symbol), ctx_->deferred_ords.end());
-	}
-	else
-	{
-		// occurence
-		auto it = ctx_->ord_symbols.find(symbol);
-		if (it != ctx_->ord_symbols.end())
-			ctx_->ord_symbols.insert({ it->first, { symbol.definition_range,symbol.file_name } });
-		else
-			ctx_->deferred_ords.push_back(symbol);
-	}*/
+		ctx_->lsp_ctx->deferred_ord_occs.push_back({ symbol,false });
 }
 
 void lsp_info_processor::process_var_syms_()
 {
-	for (auto & symbol : deferred_vars_)
+	for (auto& symbol : deferred_vars_)
 	{
-		// no scopes in copy/open code
-		if (ctx_->parser_macro_stack.empty())
-			symbol.check_scopes = false;
-		
-		// latest version of the symbol
-		auto latest = find_latest_version_(symbol,ctx_->var_symbols);
-		//redefinition
-		if (latest.name != "")
-			symbol.version = latest.version + 1;
-		std::stringstream version_string;
-		version_string << "version " << symbol.version;
+		symbol.scope = get_top_macro_stack_();
+		auto definition = ctx_->lsp_ctx->var_symbols.find(symbol);
 
-		definition * def = &symbol;
-		// check if it is a definition
-		if (deferred_instruction_.name == "SETC" && symbol.definition_range.start.column == 0)
-			symbol.value = { "string", version_string.str() };
-		else if (deferred_instruction_.name == "SETB" && symbol.definition_range.start.column == 0)
-			symbol.value = { "bool", version_string.str() };
-		else if (deferred_instruction_.name == "SETA" && symbol.definition_range.start.column == 0)
-			symbol.value = { "number", version_string.str() };
-		else if (deferred_instruction_.name == "GBLC" && symbol.definition_range.start.column != 0)
+		// definition does not exist, add new one
+		if (definition == ctx_->lsp_ctx->var_symbols.end())
 		{
-			symbol.value = { "global string", version_string.str() };
-			symbol.check_scopes = false;
+			var_type type;
+			if (deferred_instruction_.name == ctx_->ids().well_known.SETC ||
+				deferred_instruction_.name == ctx_->ids().well_known.LCLC ||
+				deferred_instruction_.name == ctx_->ids().well_known.GBLC)
+				type = context::var_type::STRING;
+			else if (deferred_instruction_.name == ctx_->ids().well_known.SETA ||
+				deferred_instruction_.name == ctx_->ids().well_known.LCLA ||
+				deferred_instruction_.name == ctx_->ids().well_known.GBLA)
+				type = context::var_type::NUM;
+			else if (deferred_instruction_.name == ctx_->ids().well_known.SETB ||
+				deferred_instruction_.name == ctx_->ids().well_known.LCLB ||
+				deferred_instruction_.name == ctx_->ids().well_known.GBLB)
+				type = context::var_type::BOOL;
+			// macro params
+			else if (get_top_macro_stack_().name == deferred_instruction_.name)
+				type = context::var_type::MACRO;
+			// incorrectly defined first occurence, skip it
+			else
+				continue;
+
+			macro_id scope = {empty_string,0};
+			if (deferred_instruction_.name != ctx_->ids().well_known.GBLB &&
+				deferred_instruction_.name != ctx_->ids().well_known.GBLA &&
+				deferred_instruction_.name != ctx_->ids().well_known.GBLC)
+				scope = get_top_macro_stack_();
+			// add it
+			ctx_->lsp_ctx->var_symbols[var_definition(
+				symbol.name,
+				symbol.file_name,
+				symbol.definition_range,
+				type,
+				scope)].push_back({ symbol.definition_range ,symbol.file_name });
 		}
-		else if (deferred_instruction_.name == "GBLB" && symbol.definition_range.start.column != 0)
-		{
-			symbol.value = { "global bool", version_string.str() };
-			symbol.check_scopes = false;
-		}
-		else if (deferred_instruction_.name == "GBLA" && symbol.definition_range.start.column != 0)
-		{
-			symbol.value = { "global number", version_string.str() };
-			symbol.check_scopes = false;
-		}
-		else if (deferred_instruction_.name == "LCLC" && symbol.definition_range.start.column != 0)
-			symbol.value = { "local string", version_string.str() };
-		else if (deferred_instruction_.name == "LCLB" && symbol.definition_range.start.column != 0)
-			symbol.value = { "local bool", version_string.str() };
-		else if (deferred_instruction_.name == "LCLA" && symbol.definition_range.start.column != 0)
-			symbol.value = { "local number", version_string.str() };
-		// macro params
-		else if (!ctx_->parser_macro_stack.empty() && ctx_->parser_macro_stack.top() == deferred_instruction_.name)
-		{
-			symbol.scope = deferred_instruction_.name;
-			symbol.value = { "Macro Param" };
-		}
-		// not a definition, only occurence
 		else
-			def = &latest;
-
-		//add to the symbols
-		ctx_->var_symbols.insert({ *def, {symbol.definition_range,symbol.file_name} });
+		{
+			// add occurence to definition
+			definition->second.push_back({ symbol.definition_range, symbol.file_name });
+		}
 	}
-	//clean
+	// clean
 	deferred_vars_.clear();
-	deferred_instruction_ = definition();
+	deferred_instruction_.clear(empty_string);
 }
 			
-void lsp_info_processor::process_seq_sym_(definition & symbol)
+void lsp_info_processor::process_seq_sym_(const context::seq_definition & symbol)
 {
-	if (ctx_->parser_macro_stack.empty())
-		symbol.check_scopes = false;
-	auto it = ctx_->seq_symbols.find(symbol);
+	auto found = ctx_->lsp_ctx->seq_symbols.find(symbol);
 	//there is definition, add occurence
-	if (it != ctx_->seq_symbols.end())
+	if (found != ctx_->lsp_ctx->seq_symbols.end())
 	{
-		ctx_->seq_symbols.insert({ it->first,{symbol.definition_range,symbol.file_name} });
+		found->second.push_back({ 
+			symbol.definition_range,
+			symbol.file_name });
 	}
 	else
 	{
-		//is definition, create it
+		// definition, create it
 		if (symbol.definition_range.start.column == 0)
 		{
-			symbol.value = { "Defined at line " + std::to_string(symbol.definition_range.start.line + 1) };
-			//add deferred if its matching current definition
-			decltype(ctx_->deferred_seqs) temp_seqs;
-			for (auto& def_sym : ctx_->deferred_seqs)
+			// add
+			auto occurences = &ctx_->lsp_ctx->seq_symbols[context::seq_definition(
+				symbol.name,
+				symbol.file_name,
+				symbol.definition_range,
+				get_top_macro_stack_())];
+			occurences->push_back({ symbol.definition_range,symbol.file_name });
+
+			// add deferred if its matching current definition
+			decltype(ctx_->lsp_ctx->deferred_seqs) temp_seqs;
+			for (auto& deferred_sym : ctx_->lsp_ctx->deferred_seqs)
 			{
 				//there is definition, add occurence to it and remove it from deferred
-				if (def_sym == symbol)
-				{
-					ctx_->seq_symbols.insert({ symbol,{def_sym.definition_range,def_sym.file_name} });
-				}
+				if (deferred_sym.name == symbol.name)
+					occurences->push_back({ deferred_sym.definition_range, deferred_sym.file_name });
 				else
-				{
-					temp_seqs.push_back(std::move(def_sym));
-				}
+					temp_seqs.push_back(std::move(deferred_sym));
 			}
-			ctx_->deferred_seqs = std::move(temp_seqs);
-			ctx_->seq_symbols.insert({ symbol,{symbol.definition_range,symbol.file_name} });
+			ctx_->lsp_ctx->deferred_seqs = std::move(temp_seqs);
 		}
-		//not a definition, remember it
+		//not a definition, defer
 		else
-			ctx_->deferred_seqs.push_back(symbol);
+			ctx_->lsp_ctx->deferred_seqs.push_back(symbol);
 	}
 }
 void lsp_info_processor::process_instruction_sym_()
 {
-	if (ctx_->copy && deferred_instruction_.name != "COPY")
+	// COPY started
+	if (ctx_->lsp_ctx->copy && deferred_instruction_.name != ctx_->ids().well_known.COPY)
 	{
-		auto deferred_ord = ctx_->deferred_ord_occs.back();
-		auto copy_def = deferred_instruction_;
-		copy_def.value= {"Defined in file: " + copy_def.file_name};
-		ctx_->ord_symbols.insert({ copy_def,{deferred_ord.definition_range,deferred_ord.file_name} });
-		ctx_->deferred_ord_occs.pop_back();
-		ctx_->copy = false;
+		// check for last deferred ordinary symbol - defines copy file
+		auto deferred_ord = ctx_->lsp_ctx->deferred_ord_occs.back();
+		// add current instruction as its definition
+		ctx_->lsp_ctx->ord_symbols[context::ord_definition(
+			deferred_instruction_.name,
+			deferred_instruction_.file_name,
+			deferred_instruction_.definition_range)].push_back({ deferred_ord.first.definition_range,deferred_ord.first.file_name });
+		//remove it
+		ctx_->lsp_ctx->deferred_ord_occs.pop_back();
+		ctx_->lsp_ctx->copy = false;
 	}
 
-	if (deferred_instruction_.name == "MACRO")
+	if (deferred_instruction_.name == ctx_->ids().well_known.MACRO)
 	{
-		ctx_->parser_macro_stack.push("");
+		ctx_->lsp_ctx->parser_macro_stack.push({ empty_string,0 });
 		return;
 	}
-	else if (!ctx_->parser_macro_stack.empty() && deferred_instruction_.name == "MEND")
+	else if (!ctx_->lsp_ctx->parser_macro_stack.empty() && deferred_instruction_.name == ctx_->ids().well_known.MEND)
 	{
-		ctx_->parser_macro_stack.pop();
+		ctx_->lsp_ctx->parser_macro_stack.pop();
 		return;
 	}
 	//define macro
-	else if (!ctx_->parser_macro_stack.empty() && ctx_->parser_macro_stack.top() == "")
+	else if (!ctx_->lsp_ctx->parser_macro_stack.empty() && get_top_macro_stack_().name == empty_string)
 	{
-		if (deferred_instruction_.name == "")
+		if (deferred_instruction_.name == empty_string)
 		{
-			ctx_->parser_macro_stack.top() = "ASPACE";
+			ctx_->lsp_ctx->parser_macro_stack.top() = { ctx_->ids().well_known.ASPACE,0 };
 			return;
 		}
 
-		//find if the macro already exists
+		// find if the macro already exists
 		// create new version of it
-		auto latest = find_latest_version_(deferred_instruction_, ctx_->instructions);
-		if (latest.name != "")
-			deferred_instruction_.version = latest.version + 1;
+		auto latest = find_latest_version_(deferred_instruction_, ctx_->lsp_ctx->instructions);
+		size_t current_version = latest + 1;
 
-		std::stringstream ss;
-		ctx_->parser_macro_stack.top() = deferred_instruction_.name;
+		// parameters text
+		std::stringstream params_text;
+		ctx_->lsp_ctx->parser_macro_stack.top() = { deferred_instruction_.name, current_version };
 		size_t index = 0;
 		//before parameter
 		if (!deferred_vars_.empty() && deferred_vars_[0].definition_range.start.column == 0)
 		{
-			ss << deferred_vars_[0].name << " ";
-			deferred_vars_[0].scope = deferred_instruction_.name;
+			params_text << *deferred_vars_[0].name << " ";
 			index++;
 		}
 		//name
@@ -572,61 +569,66 @@ void lsp_info_processor::process_instruction_sym_()
 		for (size_t i = index; i < deferred_vars_.size(); ++i)
 		{
 			if (!first)
-				ss << ",";
+				params_text << ",";
 			else
 				first = false;
-			ss << deferred_vars_[i].name;
-			deferred_vars_[i].scope = deferred_instruction_.name;
-		}
-		ss << " (version " << deferred_instruction_.version << ")";
-		deferred_instruction_.value = { ss.str() };
-
-		for (size_t i = 1; i <= 10; i++)
-		{
-			if (text_.size() <= (const unsigned int)deferred_instruction_.definition_range.start.line + i)
-				break;
-			std::string_view line = text_[(const unsigned int)deferred_instruction_.definition_range.start.line + i];
-			if (line.size() < 2 || line.front() != '*')
-				break;
-			line.remove_prefix(1);
-			deferred_instruction_.value.push_back(line.data());
+			params_text << *deferred_vars_[i].name;
 		}
 
-		assert(!deferred_instruction_.value.empty());
-		ctx_->all_instructions.push_back({ deferred_instruction_.name,1,deferred_instruction_.value[0],implode_(deferred_instruction_.value.begin() +1, deferred_instruction_.value.end()),false,deferred_instruction_.name + "   " + deferred_instruction_.value[0] });
-		ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
+		// add it to list of completion items
+		ctx_->lsp_ctx->all_instructions.push_back(
+			{ *deferred_instruction_.name,params_text.str(),
+			*deferred_instruction_.name + "   " + params_text.str(),
+			doc_pos((const unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
-		if (ctx_->deferred_macro_statement.name == deferred_instruction_.name)
+		// add it to definitions
+		auto occurences = &ctx_->lsp_ctx->instructions[context::instr_definition(
+			deferred_instruction_.name,
+			deferred_instruction_.file_name,
+			deferred_instruction_.definition_range,
+			ctx_->lsp_ctx->all_instructions.back(),
+			current_version)];
+		occurences->push_back({ deferred_instruction_.definition_range, deferred_instruction_.file_name });
+		if (ctx_->lsp_ctx->deferred_macro_statement.name == deferred_instruction_.name)
 		{
-			ctx_->instructions.insert({ deferred_instruction_,{ctx_->deferred_macro_statement.definition_range,ctx_->deferred_macro_statement.file_name} });
-			ctx_->deferred_macro_statement = definition();
+			occurences->push_back({ ctx_->lsp_ctx->deferred_macro_statement.definition_range,
+				ctx_->lsp_ctx->deferred_macro_statement.file_name });
+
+			ctx_->lsp_ctx->deferred_macro_statement.clear(empty_string);
 		}
 	}
+	// not a macro, check for predefined instructions
 	else
 	{
-		//check for already defined instruction
-		// need to find the latest version
-		auto latest = find_latest_version_(deferred_instruction_,ctx_->instructions);
-		if (latest.name != "")
-			ctx_->instructions.insert({ latest,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
+		// check if it is defined
+		deferred_instruction_.version = find_latest_version_(deferred_instruction_, ctx_->lsp_ctx->instructions);
+		auto definition = ctx_->lsp_ctx->instructions.find(deferred_instruction_);
+		// it exists, add it as occurence
+		if (definition != ctx_->lsp_ctx->instructions.end())
+		{
+			definition->second.push_back({ deferred_instruction_.definition_range,
+				deferred_instruction_.file_name });
+		}
 		//define new instruction
 		else
 		{
-			auto instr = std::find_if(ctx_->all_instructions.begin(), ctx_->all_instructions.end(),
-				[this](const context::completion_item_s & instr) { return instr.label == deferred_instruction_.name; });
-			if (instr != ctx_->all_instructions.end())
+			auto instr = std::find_if(ctx_->lsp_ctx->all_instructions.begin(), ctx_->lsp_ctx->all_instructions.end(),
+				[&](const context::completion_item_s & instr) { return deferred_instruction_.name && instr.label == *deferred_instruction_.name; });
+			if (instr != ctx_->lsp_ctx->all_instructions.end())
 			{
-				deferred_instruction_.value = { instr->detail };
-				auto split_doc = split_(instr->documentation);
-				deferred_instruction_.value.insert(deferred_instruction_.value.end(),split_doc.begin(),split_doc.end());
-				ctx_->instructions.insert({ deferred_instruction_,{deferred_instruction_.definition_range,deferred_instruction_.file_name} });
+				ctx_->lsp_ctx->instructions[context::instr_definition(
+					deferred_instruction_.name,
+					deferred_instruction_.file_name,
+					deferred_instruction_.definition_range,
+					*instr,
+					(size_t)-1)].push_back({ 
+					deferred_instruction_.definition_range,
+					deferred_instruction_.file_name });
 			}
 			// undefined instruction, special case when macro name statement goes before macro parsing
 			// or an error
 			else
-			{
-				ctx_->deferred_macro_statement = deferred_instruction_;
-			}
+				ctx_->lsp_ctx->deferred_macro_statement.init(deferred_instruction_.file_name,deferred_instruction_.name,deferred_instruction_.definition_range);
 		}
 	}
 }
@@ -634,15 +636,13 @@ void lsp_info_processor::process_instruction_sym_()
 completion_list_s lsp_info_processor::complete_var_(const position& pos) const
 {
 	std::vector<context::completion_item_s> items;
-	for (auto it = ctx_->var_symbols.begin(), end = ctx_->var_symbols.end();
-		it != end;
-		it = ctx_->var_symbols.upper_bound(it->first)
-		)
+	for (const auto& symbol : ctx_->lsp_ctx->var_symbols)
 	{
-		if (it->first.definition_range.end.line < pos.line && it->first.file_name == file_name)
+		if (symbol.first.definition_range.start.line < pos.line && symbol.first.file_name == file_name)
 		{
-			assert(!it->first.value.empty());
-			items.push_back({ "&" + it->first.name,1,it->first.value[0],implode_(it->first.value.begin() + 1, it->first.value.end()),false,it->first.name });
+			auto value = symbol.first.get_value();
+			assert(value.size() == 1);
+			items.push_back({ "&" + *symbol.first.name,value[0],*symbol.first.name,{""} });
 		}
 	}
 	return { false,items };
@@ -651,44 +651,38 @@ completion_list_s lsp_info_processor::complete_var_(const position& pos) const
 completion_list_s lsp_info_processor::complete_seq_(const position& pos) const
 {
 	std::vector<context::completion_item_s> items;
-	for (auto it = ctx_->seq_symbols.begin(), end = ctx_->seq_symbols.end();
-		it != end;
-		it = ctx_->seq_symbols.upper_bound(it->first)
-		)
+	for (auto& symbol : ctx_->lsp_ctx->seq_symbols)
 	{
-		if (it->first.definition_range.end.line < pos.line && it->first.file_name == file_name)
-			items.push_back({ "." + it->first.name,1,it->first.value[0],"",false,it->first.name });
+		if (symbol.first.definition_range.start.line < pos.line && symbol.first.file_name == file_name)
+		{
+			auto value = symbol.first.get_value();
+			assert(value.size() == 1);
+			items.push_back({ "." + *symbol.first.name,value[0],*symbol.first.name,{""} });
+		}
 	}
-	return { false, items };
+	return { false,items };
 }
 
-context::definition hlasm_plugin::parser_library::semantics::lsp_info_processor::find_latest_version_(const context::definition& current, const context::definitions& to_check) const
+int lsp_info_processor::find_latest_version_(const context::instr_definition& current, const context::definitions<context::instr_definition>& to_check) const
 {
-	auto redefinition = current;
-	redefinition.version = std::numeric_limits<decltype(redefinition.version)>::max();
-	auto candidate = to_check.upper_bound(redefinition);
-	if (candidate == to_check.begin())
-		return definition();
-	--candidate;
-	if (candidate->first.name != current.name)
-		return definition();
-	return candidate->first;
+	auto definition = to_check.find(current);
+	if (definition == to_check.end())
+		return -1;
+
+	auto curr_copy = current;
+	auto version = curr_copy.version;
+	while (true)
+	{
+		if (to_check.find(curr_copy) == to_check.end())
+			return version;
+		version = curr_copy.version;
+		curr_copy.version++;
+	}
 }
 
-std::vector<std::string> hlasm_plugin::parser_library::semantics::lsp_info_processor::split_(const std::string& text)
+context::macro_id lsp_info_processor::get_top_macro_stack_()
 {
-	std::vector<std::string> result;
-	std::stringstream ss(text);
-	std::string line;
-	while (std::getline(ss, line))
-		result.push_back(line);
-	return result;
-}
-
-std::string hlasm_plugin::parser_library::semantics::lsp_info_processor::implode_(const std::vector<std::string>::const_iterator& lines_begin, const std::vector<std::string>::const_iterator& lines_end) const
-{
-	std::stringstream result;
-	for (auto it = lines_begin; it != lines_end; ++it)
-		result << *it << '\n';
-	return result.str();
+	if (!ctx_->lsp_ctx->parser_macro_stack.empty())
+		return ctx_->lsp_ctx->parser_macro_stack.top();
+	return { empty_string,0 };
 }

@@ -15,7 +15,7 @@
 #ifndef PROCESSING_STATEMENT_PROVIDER_H
 #define PROCESSING_STATEMENT_PROVIDER_H
 
-#include "statement_processors/statement_processor.h"
+#include "../statement_processors/statement_processor.h"
 #include "statement_provider_kind.h"
 
 

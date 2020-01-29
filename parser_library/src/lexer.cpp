@@ -25,6 +25,14 @@ using namespace std;
 using namespace hlasm_plugin;
 using namespace parser_library;
 
+
+/* UTF8 <-> UTF32 */
+#ifdef __GNUG__
+thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+#elif _MSC_VER
+thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> converter;
+#endif
+
 lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc,performance_metrics* metrics)
 	: input_(input), lsp_proc_(lsp_proc),metrics_(metrics)
 {
@@ -42,7 +50,12 @@ lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc,perfor
 void lexer::rewind_input(stream_position pos)
 {
 	auto inp = file_input_state_.input;
+
+	if (pos.offset >= input_->size()) //we are rewinding from the end, so limit offset by input size
+		pos.offset = input_->size() - 1;
+
 	inp->rewind_input(pos.offset);
+	eof_generated_ = false;
 
 	if (!token_queue_.empty())
 		delete_token(token_queue_.front()->getTokenIndex());
@@ -96,6 +109,21 @@ void lexer::set_file_offset(position file_offset)
 	input_state_->line = (size_t)file_offset.line;
 	input_state_->char_position_in_line = (size_t)file_offset.column;
 	input_state_->char_position_in_line_utf16 = (size_t)file_offset.column;
+}
+
+void lexer::reset()
+{
+	token_queue_ = {};
+	last_token_id_ = 0;
+	input_state_->char_position = 0;
+	file_input_state_.c = static_cast<char_t>(input_->LA(1));
+	eof_generated_ = false;
+}
+
+void lexer::append()
+{
+	file_input_state_.c = static_cast<char_t>(input_->LA(1));
+	eof_generated_ = false;
 }
 
 
@@ -168,10 +196,6 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
 		last_continuation_ = last_token_id_;
 
 	creating_var_symbol_ = ttype == AMPERSAND;
-
-	//record begin of logical line
-	if (ttype == EOLLN)
-		set_last_line_pos();
 
 	last_token_id_++;
 
@@ -305,6 +329,8 @@ token_ptr lexer::nextToken()
 		if (!token_queue_.empty())
 		{
 			auto t = move(token_queue_.front());
+			if (t->getType() == EOLLN)
+				set_last_line_pos(t->getStopIndex() + 1, t->getLine());
 			token_queue_.pop();
 			return t;
 		}
@@ -527,7 +553,7 @@ void lexer::lex_comment()
 		else
 		{
 			lex_end(false);
-			set_last_line_pos();
+			set_last_line_pos(input_state_->char_position, token_start_state_.line);
 
 			break;
 		}
@@ -803,7 +829,7 @@ std::string lexer::aread()
 
 	while (!eof() && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1) && str.length() < 80)
 	{
-		str.append(cvt_.to_bytes(input_state_->c));
+		str.append(converter.to_bytes(input_state_->c));
 		consume();
 	}
 	create_token(AREAD, HIDDEN_CHANNEL);
@@ -829,7 +855,7 @@ void lexer::ainsert_front(const std::string& back)
 void lexer::ainsert(const std::string& inp, bool front)
 {
 	auto len = length_utf16(inp);
-	auto s = cvt_.from_bytes(inp);
+	auto s = converter.from_bytes(inp);
 	UTF32String str(s.begin(), s.end());
 	if (len > 0)
 	{
@@ -847,11 +873,11 @@ void lexer::ainsert(const std::string& inp, bool front)
 	}
 }
 
-void lexer::set_last_line_pos()
+void lexer::set_last_line_pos(size_t idx, size_t line)
 {
 	if (!(last_lln_end_pos_.line == static_cast<size_t>(-1) && last_lln_end_pos_.offset == static_cast<size_t>(-1)))
 	{
-		last_lln_begin_pos_ = { last_lln_end_pos_.line + 1,last_lln_end_pos_.offset };
+		last_lln_begin_pos_ = { last_lln_end_pos_.line + 1, last_lln_end_pos_.offset };
 	}
-	last_lln_end_pos_ = { input_state_->line - 1 ,input_state_->char_position };
+	last_lln_end_pos_ = { line , idx };
 }

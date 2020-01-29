@@ -27,8 +27,11 @@ namespace context{
 //changes strings of identifiers to indexes of this storage class for easier and unified work
 class id_storage
 {
+private:
+	std::unordered_set<std::string> lit_;
 	static const std::string empty_string_;
 public:
+	id_storage();
 	using const_pointer = const std::string *;
 	using const_iterator = typename std::unordered_set<std::string>::const_iterator;
 
@@ -42,10 +45,27 @@ public:
 
 	const_pointer find(std::string val) const;
 
-	const_pointer add(std::string value);
+	const_pointer add(std::string value,bool is_uri = false);
 
-private:
-	std::unordered_set<std::string> lit_;
+	struct well_known_strings
+	{
+		const std::string* COPY;
+		const std::string* SETA;
+		const std::string* SETB;
+		const std::string* SETC;
+		const std::string* GBLA;
+		const std::string* GBLB;
+		const std::string* GBLC;
+		const std::string* LCLA;
+		const std::string* LCLB;
+		const std::string* LCLC;
+		const std::string* MACRO;
+		const std::string* MEND;
+		const std::string* ASPACE;
+		const std::string* empty;
+		well_known_strings(std::unordered_set<std::string>& ptr);
+
+	} const well_known;
 };
 
 using id_index = id_storage::const_pointer;

@@ -27,7 +27,7 @@ def_string_body
 	| CONTINUATION;
 
 def_string returns [concat_chain chain]
-	: ap1=(APOSTROPHE|ATTR) def_string_body* ap2=(APOSTROPHE|ATTR)	
+	: ap1=APOSTROPHE def_string_body* ap2=(APOSTROPHE|ATTR)	
 	{ 
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};

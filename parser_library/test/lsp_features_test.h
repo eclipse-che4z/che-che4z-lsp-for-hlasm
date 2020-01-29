@@ -44,23 +44,27 @@ R"(   MAC  1
        AGO  .HERE
        L    1,0(5)
 .HERE  ANOP
-
+* line 6
        MACRO
 &LABEL MAC   &VAR
 *THIS IS DOCUMENTATION
+* line 10
        LR     &VAR,&LABEL
        AGO    .HERE
        AGO    .HERE2
 .HERE2 ANOP
 .HERE  ANOP 
        MEND
- 
+* line 17
 1      MAC   2
-
+* line 19
       COPY COPYFILE
       LR R1,R2
 R1 EQU 1
-&VAR SETC 'some string'
+R1      MAC   R2
+   LCLC &SETC
+* line 25
+ 
 )";
 	std::string content;
 	mock_parse_lib_provider lib_provider;
@@ -76,22 +80,22 @@ TEST_F(lsp_features_test, go_to)
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(0, 8)), a.lsp_processor().go_to_definition(position(0, 8)));
 	// jump in source, open code, var symbol &VAR
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(1, 0)), a.lsp_processor().go_to_definition(position(2, 13)));
-	// jump in source, open code, var symbol &VAR, version 1 (var symbol redefinition)
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(22, 0)), a.lsp_processor().go_to_definition(position(22, 2)));
 	// jump in source, open code, seq symbol .HERE
 	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(5, 0)), a.lsp_processor().go_to_definition(position(3, 13)));
 	// jump in source, macro, seq symbol .HERE
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(14, 0)), a.lsp_processor().go_to_definition(position(11, 15)));
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(15, 0)), a.lsp_processor().go_to_definition(position(12, 15)));
 	// jump in source, macro, var symbol &LABEL
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 0)), a.lsp_processor().go_to_definition(position(10, 20)));
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 0)), a.lsp_processor().go_to_definition(position(11, 20)));
 	// jump in source, macro, var symbol &VAR
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 13)), a.lsp_processor().go_to_definition(position(10, 15)));
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(8, 13)), a.lsp_processor().go_to_definition(position(11, 15)));
 	// forward jump in source, open code, ord symbol R1
-	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(21, 0)), a.lsp_processor().go_to_definition(position(20, 10)));
-	// jump from source to copy file, ord symbol R2
-	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(20, 13)));
+	EXPECT_EQ(semantics::position_uri_s(SOURCE_FILE, position(22, 0)), a.lsp_processor().go_to_definition(position(21, 10)));
+	// jump from source to copy file, ord symbol R2 on machine instrution
+	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(21, 13)));
+	// jump from source to copy file, ord symbol R2 on macro MAC
+	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(23, 14)));
 	// jump from source to first instruction in copy file, COPY COPYFILE
-	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 3)), a.lsp_processor().go_to_definition(position(19, 14)));
+	EXPECT_EQ(semantics::position_uri_s(COPY_FILE, position(0, 3)), a.lsp_processor().go_to_definition(position(20, 14)));
 }
 
 TEST_F(lsp_features_test, refs)
@@ -106,41 +110,49 @@ TEST_F(lsp_features_test, refs)
 	// source code references for .HERE, appeared twice
 	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(3, 13)).size());
 	// references inside macro def, seq symbol .HERE
-	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(11, 15)).size());
+	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(12, 15)).size());
 	//  references inside macro def, var symbol &LABEL
-	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(10, 20)).size());
+	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(11, 20)).size());
 	//  references inside macro def, var symbol &VAR
-	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(10, 15)).size());
+	EXPECT_EQ((size_t)2, a.lsp_processor().references(position(11, 15)).size());
 }
 
 // 4 cases, instruction, sequence, variable and none
 TEST_F(lsp_features_test, hover)
 {
 	// hover for macro MAC, contains description and user documentation
-	auto result = a.lsp_processor().hover(position(17, 8));
-	ASSERT_EQ((size_t)2, result.size());
-	EXPECT_EQ("LABEL VAR (version 1)", result[0]);
-	EXPECT_EQ("THIS IS DOCUMENTATION", result[1]);
+	auto result = a.lsp_processor().hover(position(18, 8));
+	ASSERT_EQ((size_t)4, result.size());
+	EXPECT_EQ("LABEL VAR", result[0]);
+	EXPECT_EQ("version 1", result[1]);
+	EXPECT_EQ("THIS IS DOCUMENTATION", result[2]);
+	EXPECT_EQ(" line 10", result[3]);
 
 	// hover for sequence symbol, defined even though it is skipped because of the macro parsing (wanted behaviour)
-	result = a.lsp_processor().hover(position(12, 15));
+	result = a.lsp_processor().hover(position(13, 15));
 	ASSERT_EQ((size_t)1, result.size());
 	EXPECT_EQ("Defined at line 14", result[0]);
 
 	// hover for variable symbol, name and type number
 	result = a.lsp_processor().hover(position(2, 13));
-	ASSERT_EQ((size_t)2, result.size());
+	ASSERT_EQ((size_t)1, result.size());
 	EXPECT_EQ("number", result[0]);
-	EXPECT_EQ("version 0", result[1]);
 
-	// hover for variable symbol (version 1), name and type string
-	result = a.lsp_processor().hover(position(22, 1));
-	ASSERT_EQ((size_t)2, result.size());
+	// hover for variable symbol, name and type string
+	result = a.lsp_processor().hover(position(24, 10));
+	ASSERT_EQ((size_t)1, result.size());
 	EXPECT_EQ("string", result[0]);
-	EXPECT_EQ("version 1", result[1]);
 
 	// hover on ord symbol R1, its value
-	result = a.lsp_processor().hover(position(20, 10));
+	result = a.lsp_processor().hover(position(21, 10));
+	ASSERT_EQ((size_t)4, result.size());
+	EXPECT_EQ("1", result[0]);
+	EXPECT_EQ("Absolute Symbol", result[1]);
+	EXPECT_EQ("L: 1", result[2]);
+	EXPECT_EQ("T: U", result[3]);
+
+	// hover on ord symbol R1 definition
+	result = a.lsp_processor().hover(position(22, 1));
 	ASSERT_EQ((size_t)4, result.size());
 	EXPECT_EQ("1", result[0]);
 	EXPECT_EQ("Absolute Symbol", result[1]);
@@ -148,9 +160,9 @@ TEST_F(lsp_features_test, hover)
 	EXPECT_EQ("T: U", result[3]);
 
 	// hover on COPYFILE, definition file
-	result = a.lsp_processor().hover(position(19, 14));
+	result = a.lsp_processor().hover(position(20, 14));
 	ASSERT_EQ((size_t)1, result.size());
-	EXPECT_EQ("Defined in file: COPYFILE", result[0]);
+	EXPECT_EQ("Defined in file: " + std::string(COPY_FILE), result[0]);
 
 	// no hover on remarks
 	result = a.lsp_processor().hover(position(2, 24));
@@ -161,7 +173,7 @@ TEST_F(lsp_features_test, hover)
 TEST_F(lsp_features_test, completion)
 {
 	// all instructions + 2 newly defined macros
-	EXPECT_EQ(instruction_count + 2, a.lsp_processor().completion(position(16, 1), '\0', 1).items.size());
+	EXPECT_EQ(instruction_count + 2, a.lsp_processor().completion(position(26, 1), '\0', 1).items.size());
 	// current scope detection missing !
 	// seq symbols
 	EXPECT_EQ((size_t)1, a.lsp_processor().completion(position(6, 0), '.', 2).items.size());

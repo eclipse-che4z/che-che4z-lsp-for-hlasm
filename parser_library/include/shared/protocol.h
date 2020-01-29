@@ -38,7 +38,7 @@ struct PARSER_LIBRARY_EXPORT string_array
 using version_t = uint64_t;
 
 namespace context {
-	struct completion_item_s;
+	class completion_item_s;
 }
 
 namespace semantics {

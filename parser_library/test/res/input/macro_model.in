@@ -32,3 +32,9 @@
                FIELDNAM(&I)                                        @x0x
  mend
   
+ macro
+ jxxxxxx &axxx=,&lxxxxx=,&sxxx=,&pxx=
+ mend
+
+         JXXXXXX LXXX,AXXX=XXXXXXXX_X_X_XXX_XXXX,                      X
+               LXXXXX=L'XXXXXXXX_X_X_XXX_XXXX,SXXX=C'0',PXX=C' '

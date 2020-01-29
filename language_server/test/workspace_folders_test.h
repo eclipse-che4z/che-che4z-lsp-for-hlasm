@@ -14,7 +14,7 @@
 
 
 #include "../src/lsp/feature_workspace_folders.h"
-
+#include <string>
 #include "ws_mngr_mock.h"
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32

@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 
 #include "benchmark_test.h"
+#include "lsp_features_test.h"
 
 #include "data_definition_scale_test.h"
 #include "data_definition_integer_test.h"
@@ -24,7 +25,6 @@
 #include "data_definition_check_test.h"
 #include "data_definition_test.h"
 
-#include "lsp_features_test.h"
 #include "workspace_test.h"
 
 

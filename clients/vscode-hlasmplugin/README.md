@@ -24,7 +24,7 @@ The HLASM Language Support extension parses and analyzes all parts of a HLASM pr
 ### Highlighting
 The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching AIF, AGO or conditional assembly is not colored.
 
-![](readme_res/highligting.png)
+![](readme_res/highlighting.png)
 
 ### Autocomplete
 Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
@@ -43,12 +43,7 @@ The macro tracer functionality allows you to track the process of assembling HLA
 
 The macro tracer is not a debugger. It cannot debug running executables, only track the compilation process.
 
-![](readme_res/tracer.gif)
-## Configuration
-
-### Macro Tracer Configuration
-
-To configure the macro tracer, **follow these steps**:
+### Configuring the Macro Tracer
 
 1. Open your workspace.
 2. In the left sidebar, click the bug icon to open the debugging panel.
@@ -56,10 +51,18 @@ To configure the macro tracer, **follow these steps**:
    A "select environment" prompt displays.
 4. Enter **HLASM Macro tracer**.  
    Your workspace is now configured for macro tracing.
-5. Open the file that you want to trace.
-6. Return to the debugging panel and press **F5** to start the debugging session.
 
-### External Macro Libraries and COPY Members
+### Using the Macro Tracer
+
+To run the macro tracer, open the file that you want to trace. Then press **F5** to open the debugging panel and start the debugging session.
+
+When the tracer stops at a macro or COPY instruction, you can select **step into** to open the macro or COPY file, or **step over** to skip to the next line.
+
+Breakpoints can be set before or during the debugging session.
+
+![](readme_res/tracer.gif)
+
+## External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the .hlasmplugin folder of the currently open workspace. Ensure that you configure these files before using macros from separate files or the COPY instruction.
 
 When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.

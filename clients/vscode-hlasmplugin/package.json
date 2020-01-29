@@ -2,7 +2,8 @@
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
   "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
-  "version": "0.8.1",
+  "version": "0.8.2",
+  "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
   "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
@@ -15,7 +16,11 @@
     "HLASM",
     "LSP",
     "Assembler",
-    "Mainframe"
+    "Mainframe",
+    "z/OS",
+    "zos",
+    "zowe",
+    "ibm assembler"
   ],
   "activationEvents": [
     "*"

@@ -53,7 +53,7 @@ public:
 
 constexpr const char* MACRO_FILE = "MAC";
 constexpr const char* SOURCE_FILE = "OPEN";
-constexpr const char* COPY_FILE = "COPYFILE";
+constexpr const char* COPY_FILE = "path/COPYFILE";
 
 class mock_parse_lib_provider : public parse_lib_provider
 {

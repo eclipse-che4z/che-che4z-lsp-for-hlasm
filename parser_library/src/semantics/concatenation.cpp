@@ -137,6 +137,52 @@ var_sym* concatenation_point::contains_var_sym(const concat_chain& chain)
 	return nullptr;
 }
 
+concat_chain hlasm_plugin::parser_library::semantics::concatenation_point::clone(const concat_chain& chain)
+{
+	concat_chain res;
+	res.reserve(chain.size());
+
+	for (auto& point : chain)
+	{
+		switch (point->type)
+		{
+		case concat_type::DOT:
+			res.push_back(std::make_unique<dot>());
+			break;
+		case concat_type::EQU:
+			res.push_back(std::make_unique<equals>());
+			break;
+		case concat_type::STR:
+			res.push_back(std::make_unique<char_str>(point->access_str()->value));
+			break;
+		case concat_type::SUB:
+		{
+			std::vector<concat_chain> tmp;
+			for (auto& ch : point->access_sub()->list)
+				tmp.emplace_back(clone(ch));
+			res.push_back(std::make_unique<sublist>(std::move(tmp)));
+		}
+			break;
+		case concat_type::VAR:
+			if (!point->access_var()->created)
+			{
+				auto tmp = point->access_var()->access_basic();
+				res.push_back(std::make_unique<basic_var_sym>(tmp->name, tmp->subscript, tmp->symbol_range));
+			}
+			else
+			{
+				auto tmp = point->access_var()->access_created();
+				res.push_back(std::make_unique<created_var_sym>(clone(tmp->created_name), tmp->subscript, tmp->symbol_range));
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	return res;
+}
+
 basic_var_sym* var_sym::access_basic() 
 {
 	return created ? nullptr : static_cast<basic_var_sym*>(this);

@@ -18,16 +18,23 @@
 using namespace hlasm_plugin;
 using namespace parser_library;
 
-input_source::input_source(const std::string & input)
-	:ANTLRInputStream(input)
-{
-	
-}
-
+input_source::input_source(const std::string& input)
+	:ANTLRInputStream(input) {}
 
 void input_source::append(const UTF32String &str)
 {
 	_data.append(str);
+}
+
+void input_source::append(const std::string& str)
+{
+	p = _data.size();
+	_data.append(antlrcpp::utf8_to_utf32(str.data(), str.data() + str.size()));
+}
+
+void input_source::reset(const std::string& str)
+{
+	load(str);
 }
 
 std::string hlasm_plugin::parser_library::input_source::getText(const antlr4::misc::Interval & interval)

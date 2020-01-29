@@ -31,7 +31,7 @@ namespace language_server {
 #	define LOG_INFO(x)     hlasm_plugin::language_server::logger::get_instance().log(x)
 #else
 #	define LOG_ERROR(x)    hlasm_plugin::language_server::logger::get_instance().log(x)
-#	define LOG_WARNING(x)  hlasm_plugin::language_server::logger::get_instance().log(x)
+#	define LOG_WARNING(x)
 #	define LOG_INFO(x)
 #endif
 

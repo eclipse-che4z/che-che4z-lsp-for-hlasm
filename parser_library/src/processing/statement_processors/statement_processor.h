@@ -17,7 +17,7 @@
 
 #include "../../context/hlasm_context.h"
 #include "../../diagnosable_ctx.h"
-#include "../statement_provider_kind.h"
+#include "../statement_providers/statement_provider_kind.h"
 #include "../processing_format.h"
 
 namespace hlasm_plugin {

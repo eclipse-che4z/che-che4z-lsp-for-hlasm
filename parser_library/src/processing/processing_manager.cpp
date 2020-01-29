@@ -18,10 +18,9 @@
 #include "statement_processors/ordinary_processor.h"
 #include "statement_processors/copy_processor.h"
 #include "statement_processors/empty_processor.h"
-#include "macro_statement_provider.h"
-#include "copy_statement_provider.h"
+#include "statement_providers/macro_statement_provider.h"
+#include "statement_providers/copy_statement_provider.h"
 #include "../parser_impl.h"
-#include "../ebcdic_encoding.h"
 
 #include <assert.h>
 
@@ -272,69 +271,67 @@ void processing_manager::perform_opencode_jump(context::source_position statemen
 void hlasm_plugin::parser_library::processing::processing_manager::add_ord_sym_defs()
 {
 	// for all collected ordinary symbol definitions
-	for (const auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_defs)
+	for (const auto& symbol : hlasm_ctx_.lsp_ctx->deferred_ord_defs)
 	{
-		auto definition = occurence;
-		// symbol not in ordinary context, skip it
-		if (!create_sym_def(definition))
+		// get the symbol id
+		auto id = hlasm_ctx_.ids().find(*symbol.name);
+		// find symbol in ord context
+		auto ord_symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
+		// if not found, skip it
+		if (!ord_symbol)
 			continue;
 
-		definition.definition_range = occurence.definition_range;
-		//add itself
-		hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { definition.definition_range,definition.file_name } });
+		// add new definition
+		auto file = hlasm_ctx_.ids().add(ord_symbol->symbol_location.file, true);
+		auto occurences = &hlasm_ctx_.lsp_ctx->ord_symbols[context::ord_definition(
+			symbol.name,
+			file,
+			symbol.definition_range,
+			ord_symbol->value(),
+			ord_symbol->attributes())];
+		occurences->push_back({ symbol.definition_range,file });
+
 		// adds all its occurences
-		for (const auto& deferred_sym : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
-			if (deferred_sym == occurence)
-				hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { deferred_sym.definition_range,deferred_sym.file_name } });
-		hlasm_ctx_.lsp_ctx->deferred_ord_occs.erase(std::remove(hlasm_ctx_.lsp_ctx->deferred_ord_occs.begin(), hlasm_ctx_.lsp_ctx->deferred_ord_occs.end(), occurence), hlasm_ctx_.lsp_ctx->deferred_ord_occs.end());
+		for (auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
+		{
+			if (occurence.first.name == symbol.name)
+			{
+				occurences->push_back({ occurence.first.definition_range,
+					occurence.first.file_name });
+				occurence.second = true;
+			}
+
+		}
 	}
 
+	std::vector<std::pair<context::ord_definition,bool>> temp_occs;
 	// if there are still some symbols in occurences, check if they are defined in context
 	for (const auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
 	{
-		auto definition = occurence;
-		// symbol not in ordinary context, skip it
-		if (!create_sym_def(definition))
+		if (occurence.second)
 			continue;
-		hlasm_ctx_.lsp_ctx->ord_symbols.insert({ definition, { occurence.definition_range,occurence.file_name } });
-	}
-}
-
-bool hlasm_plugin::parser_library::processing::processing_manager::create_sym_def(context::definition & definition)
-{
-	// get the symbol id
-	auto id = hlasm_ctx_.ids().find(definition.name);
-	// get the definition from the ordinary context
-	auto symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
-	if (symbol)
-	{
-		//set file range
-		definition.definition_range = { symbol->symbol_location.pos,symbol->symbol_location.pos };
-		definition.file_name = symbol->symbol_location.file;
-		// extract its value
-		auto val = symbol->value();
-		if (val.value_kind() == context::symbol_value_kind::ABS)
+		// get the symbol id
+		auto id = hlasm_ctx_.ids().find(*occurence.first.name);
+		// find symbol in ord context
+		auto ord_symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
+		// if not found, skip it
+		if (!ord_symbol)
 		{
-			definition.value = { std::to_string(val.get_abs()) };
-			definition.value.push_back("Absolute Symbol");
+			temp_occs.push_back(occurence);
+			continue;
 		}
-		else if (val.value_kind() == context::symbol_value_kind::RELOC)
-		{
-			definition.value = { val.get_reloc().to_string() };
-			definition.value.push_back("Relocatable Symbol");
-		}
-		//extract its attributes
-		if (symbol->attributes().is_defined(context::data_attr_kind::L))
-			definition.value.push_back("L: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::L)));
-		if (symbol->attributes().is_defined(context::data_attr_kind::I))
-			definition.value.push_back("I: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::I)));
-		if (symbol->attributes().is_defined(context::data_attr_kind::S))
-			definition.value.push_back("S: " + std::to_string(symbol->attributes().get_attribute_value(context::data_attr_kind::S)));
-		if (symbol->attributes().is_defined(context::data_attr_kind::T))
-			definition.value.push_back("T: " + ebcdic_encoding::to_ascii((unsigned char)symbol->attributes().get_attribute_value(context::data_attr_kind::T)));
-		return true;
+		
+		// add
+		hlasm_ctx_.lsp_ctx->ord_symbols[context::ord_definition(
+			occurence.first.name,
+			hlasm_ctx_.ids().add(ord_symbol->symbol_location.file,true),
+			{ ord_symbol->symbol_location.pos,ord_symbol->symbol_location.pos },
+			ord_symbol->value(),
+			ord_symbol->attributes())].push_back(
+				{ occurence.first.definition_range,
+					occurence.first.file_name });
 	}
-	return false;
+	hlasm_ctx_.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
 }
 
 const attribute_provider::resolved_reference_storage& processing_manager::lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
@@ -359,12 +356,12 @@ const attribute_provider::resolved_reference_storage& processing_manager::lookup
 		(size_t)hlasm_ctx_.current_source().end_line + 1,
 		hlasm_ctx_.current_source().end_index);
 
-	opencode_prov_.push_line_end();
-
 	if(attr_lookahead_stop_ && hlasm_ctx_.current_source().end_index < attr_lookahead_stop_->end_index)
 		perform_opencode_jump(
 			context::source_position(attr_lookahead_stop_->end_line + 1, attr_lookahead_stop_->end_index), 
 			*attr_lookahead_stop_);
+
+	opencode_prov_.push_line_end();
 
 	while (true)
 	{
