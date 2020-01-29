@@ -154,7 +154,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
 					if (cycle_ok)
 					{
-						add_dependency(stmt.stmt_range_ref(), symbol_name, &*expr_op->expression,
+						auto r = stmt.stmt_range_ref();
+						add_dependency(r, symbol_name, &*expr_op->expression,
 							std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
 					}
 					
@@ -200,7 +201,8 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 	//process label
 	auto label = find_label_symbol(stmt);
 
-	if (label != context::id_storage::empty_id)
+	if (label != context::id_storage::empty_id && 
+		stmt.operands_ref().value.size() && stmt.operands_ref().value.front()->type != semantics::operand_type::EMPTY)
 	{
 		if (!hlasm_ctx.ord_ctx.symbol_defined(label))
 		{

@@ -27,6 +27,8 @@ const useTcp = false;
  *  your extension is activated the very first time the command is executed
  */
 var highlight: ASMSemanticHighlightingFeature;
+var hlasmpluginClient: vscodelc.LanguageClient;
+
 export function activate(context: vscode.ExtensionContext) {
     //debug setup
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', config => {
@@ -87,7 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     //client init
-    var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     //asm contribution 
     highlight = new ASMSemanticHighlightingFeature(hlasmpluginClient);
     hlasmpluginClient.registerFeature(highlight);
@@ -97,9 +99,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(highlight.progress);
 
     //first run, set the language if possible and configs 
-    editorChanged(vscode.window.activeTextEditor);
     if (vscode.window.activeTextEditor)
+    {
         highlight.showProgress(vscode.window.activeTextEditor.document);
+        editorChanged(vscode.window.activeTextEditor.document);
+    }
 
     // vscode/theia compatibility temporary fix
     // theia uses monaco commands
@@ -373,6 +377,7 @@ vscode.workspace.onDidChangeTextDocument(event => {
 // when document opens, show parse progress
 vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
     highlight.showProgress(document);
+    editorChanged(document);
 })
 
 vscode.workspace.onDidChangeConfiguration(event =>
@@ -398,20 +403,17 @@ const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
 
 // should the configs be checked
 var configs = true;
-function editorChanged(editor: vscode.TextEditor)
+function editorChanged(document: vscode.TextDocument)
 {
-    if (editor)
-    {
-        setHlasmLanguage(editor.document);
-        if (editor.document.languageId == 'hlasm' && vscode.workspace.workspaceFolders && configs)
-            checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
-    }
+    if (setHlasmLanguage(document) && vscode.workspace.workspaceFolders && configs)
+        checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
 }
 
 // when active editor changes, try to set a language for it
 vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
 {
-    editorChanged(editor);
+    if (editor)
+        editorChanged(editor.document);
 })
 
 function checkHlasmLanguage(text: string)
@@ -448,11 +450,15 @@ function checkHlasmLanguage(text: string)
 }
 
 //automatic detection function
-function setHlasmLanguage(document: vscode.TextDocument) {
+function setHlasmLanguage(document: vscode.TextDocument) : Boolean {
     if (document.languageId == 'plaintext') {
         if (checkHlasmLanguage(document.getText()))
+        {
             vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+            return true;
+        }
     }
+    return document.languageId == 'hlasm';
 }
 
 /**

@@ -19,7 +19,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace antlr4;
 
 token_stream::token_stream(antlr4::TokenSource* token_source) 
-	: antlr4::BufferedTokenStream(token_source), enabled_cont_(false),enabled_hidden_(false) {}
+	: antlr4::BufferedTokenStream(token_source), enabled_cont_(false),enabled_hidden_(false), needSetup_(true), seeked_(0) {}
 
 void token_stream::enable_continuation() { enabled_cont_ = true; }
 
@@ -34,14 +34,11 @@ void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
 	auto& lexer_tmp = dynamic_cast<lexer&>(*_tokenSource);
 	
 	if (lexer_tmp.last_lln_end_position().offset == pos.offset) // no rewind needed
-	{
-		assert(!insert_EOLLN);
 		return;
-	}
 
 	lexer_tmp.rewind_input(pos);
 
-	if (_tokens.back()->getType() != lexer::EOLLN)
+	if (_tokens.back()->getType() != lexer::EOLLN || (_tokens.size() > 1 && _tokens[_tokens.size() - 2]->getType() == lexer::EOLLN))
 	{
 		auto index_tmp = _tokens.back()->getTokenIndex();
 		_tokens.pop_back();
@@ -56,14 +53,26 @@ void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
 	sync(_p);
 }
 
-bool token_stream::consume_EOLLN()
+void token_stream::reset()
 {
-	if (_tokens.back()->getType() == lexer::EOLLN)
+	_tokens.clear();
+	_fetchedEOF = false;
+	_p = 0;
+	sync(0);
+}
+
+void token_stream::append()
+{
+	if (needSetup_)
+		setup();
+	else
 	{
-		consume();
-		return true;
+
+		_fetchedEOF = false;
+		++_p;
+		sync(_p);
 	}
-	return false;
+
 }
 
 antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)
@@ -113,7 +122,33 @@ std::string hlasm_plugin::parser_library::token_stream::getText(const antlr4::mi
 
 ssize_t hlasm_plugin::parser_library::token_stream::adjustSeekIndex(size_t i)
 {
-	return next_token_on_channel(i);
+	if (needSetup_)
+	{
+		sync(i);
+
+		if (i >= size())
+			return size() - 1;
+
+		auto token = get(i);
+
+		while (!is_on_channel(token))
+		{
+			++i;
+			sync(i);
+			token = get(i);
+		}
+		return i;
+	}
+
+	if (i == _p + 1)
+		return next_token_on_channel(i);
+	else
+		return i;
+}
+
+void hlasm_plugin::parser_library::token_stream::setup() {
+	BufferedTokenStream::setup();
+	needSetup_ = false;
 }
 
 antlr4::Token * hlasm_plugin::parser_library::token_stream::LB(size_t k)
@@ -147,38 +182,49 @@ size_t hlasm_plugin::parser_library::token_stream::next_token_on_channel(size_t 
 	if (i >= size())
 		return size() - 1;
 
-	auto token = get(i);
+	auto token = get(_p);
 
-	while (!is_on_channel(token))
+	size_t to_consume = i - _p;
+	i = _p;
+
+	while (!is_on_channel(token) || to_consume != 0)
 	{
+		to_consume -= is_on_channel(token) ? 1 : 0;
 		++i;
 		sync(i);
 		token = get(i);
 	}
+
 	return i;
 }
 
-antlr4::Token* hlasm_plugin::parser_library::token_stream::previous_token_on_channel(size_t i)
+size_t hlasm_plugin::parser_library::token_stream::previous_token_on_channel(size_t i)
 {
 	sync(i);
 
 	if (i >= size()) 
 	{
 		if (size() == 0)
-			return nullptr;
+			return 0;
 		else
-			return get(size() - 1);
+			return size() - 1;
 	}
+
+	auto to_skip = _p - i;
+	i = _p - 1;
 
 	while (true)
 	{
 		antlr4::Token* token = get(i);
 
 		if (is_on_channel(token))
-			return token;
+		{
+			if (--to_skip == 0)
+				return i;
+		}
 
 		if (i == 0)
-			return nullptr;
+			return 0;
 		else
 			--i;
 	}

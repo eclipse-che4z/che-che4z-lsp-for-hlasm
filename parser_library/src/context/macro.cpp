@@ -34,8 +34,11 @@ macro_definition::macro_definition(
 	statement_block definition, copy_nest_storage copy_nests, label_storage labels,
 	location definition_location)
 	: label_param_name_(label_param_name), 
-	id(name), definition(std::move(definition)),copy_nests(std::move(copy_nests)), labels(std::move(labels)), definition_location(std::move(definition_location))
+	id(name), copy_nests(std::move(copy_nests)), labels(std::move(labels)), definition_location(std::move(definition_location))
 {
+	for (auto&& stmt : definition)
+		cached_definition.emplace_back(std::move(stmt));
+
 	if (label_param_name_)
 	{
 		auto tmp = std::make_unique<positional_param>(label_param_name, 0, *macro_param_data_component::dummy);
@@ -76,7 +79,7 @@ macro_definition::macro_definition(
 	}
 }
 
-macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name) const
+macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name)
 {
 	std::vector<macro_data_ptr> syslist;
 	std::unordered_map<id_index, macro_param_ptr> named_cpy;
@@ -134,18 +137,18 @@ macro_invo_ptr macro_definition::call(macro_data_ptr label_param_data, std::vect
 
 	named_cpy.emplace(syslist_name, std::make_unique<system_variable>(syslist_name, std::make_unique<macro_param_data_composite>(std::move(syslist)), false));
 
-	return std::make_shared<macro_invocation>(id, definition, copy_nests, labels, std::move(named_cpy), definition_location);
+	return std::make_shared<macro_invocation>(id, cached_definition, copy_nests, labels, std::move(named_cpy), definition_location);
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
 macro_invocation::macro_invocation(
 	id_index name,
-	const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
+	cached_block& cached_definition, const copy_nest_storage& copy_nests, const label_storage& labels,
 	std::unordered_map<id_index, macro_param_ptr> named_params, 
 	const location& definition_location)
 	: id(name), named_params(std::move(named_params)),
-	definition(definition), copy_nests(copy_nests), labels(labels), definition_location(definition_location), current_statement(-1)
+	cached_definition(cached_definition), copy_nests(copy_nests), labels(labels), definition_location(definition_location), current_statement(-1)
 {
 }
 

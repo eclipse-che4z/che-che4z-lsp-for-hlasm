@@ -29,6 +29,8 @@ class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
 {
 	bool enabled_cont_;
 	bool enabled_hidden_;
+	bool needSetup_;
+	size_t seeked_;
 public:
 	token_stream(antlr4::TokenSource* token_source);
 
@@ -43,19 +45,25 @@ public:
 	std::string getText(const antlr4::misc::Interval &interval) override;
 
 	void rewind_input(lexer::stream_position pos, bool insert_EOLLN);
-	bool consume_EOLLN();
+
+	virtual void reset() override;
+	void append();
 
 protected:
 	virtual ssize_t adjustSeekIndex(size_t i) override;
 
 	virtual antlr4::Token* LB(size_t k) override;
 
+	virtual void setup() override;
 
 	bool is_on_channel(antlr4::Token* token);
 
 	size_t next_token_on_channel(size_t i);
 
-	antlr4::Token* previous_token_on_channel(size_t i);
+	size_t previous_token_on_channel(size_t i);
+
+private:
+	std::vector<decltype(_tokens)> tokens_;
 
 };
 

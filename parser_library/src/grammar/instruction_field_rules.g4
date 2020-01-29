@@ -29,15 +29,15 @@ instruction returns [id_index instr]
 	}
 	| ORDSYMBOL													
 	{
-		collector.add_lsp_symbol({$ORDSYMBOL->getText(),provider.get_range( $ORDSYMBOL),symbol_type::instruction});
+		auto instr_id = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
+		collector.add_lsp_symbol(instr_id,provider.get_range( $ORDSYMBOL),symbol_type::instruction);
 		collector.set_instruction_field(
-			parse_identifier(std::move($ORDSYMBOL->getText()),provider.get_range($ORDSYMBOL)),
+			instr_id,
 			provider.get_range($ORDSYMBOL));
 		process_instruction();
 	}
 	| bad_instr
 	{
-		collector.add_lsp_symbol({$bad_instr.ctx->getText(),provider.get_range( $bad_instr.ctx),symbol_type::instruction});
 		collector.set_instruction_field(
 			ctx->ids().add($bad_instr.ctx->getText()),
 			provider.get_range($bad_instr.ctx));

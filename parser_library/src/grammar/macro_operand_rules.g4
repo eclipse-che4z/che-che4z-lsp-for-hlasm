@@ -31,7 +31,7 @@ mac_op_o returns [operand_ptr op]
 	};
 
 macro_ops returns [operand_list list] 
-	: mac_op_o  {$list.push_back(std::move($mac_op_o.op));} (comma mac_op_o {$list.push_back(std::move($mac_op_o.op));})*;
+	: mac_op_o  {$list.push_back(std::move($mac_op_o.op));} (comma mac_op_o {$list.push_back(std::move($mac_op_o.op));})* EOLLN EOF;
 
 
 
@@ -53,7 +53,7 @@ mac_preproc_c
 	| AMPERSAND ORDSYMBOL									
 	{
 		auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
-		collector.add_lsp_symbol({$ORDSYMBOL->getText(),r,symbol_type::var});
+		collector.add_lsp_symbol(ctx->ids().add($ORDSYMBOL->getText()),r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
 	| AMPERSAND LPAR
@@ -84,7 +84,11 @@ mac_str returns [concat_chain chain]
 	};
 
 mac_ch returns [concat_chain chain]
-	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));}
+	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));
+													auto token = $common_ch_v.ctx->getStart();
+													if (token->getType() == lexer::Tokens::ORDSYMBOL && $common_ch_v.ctx->getStop()->getType() == lexer::Tokens::ORDSYMBOL)
+														collector.add_lsp_symbol(ctx->ids().add(token->getText()),provider.get_range(token),symbol_type::ord);
+													;}
 	| ATTR											{$chain.push_back(std::make_unique<char_str>("'"));}
 	| mac_str										{$chain = std::move($mac_str.chain);}
 	| mac_sublist									{$chain.push_back(std::move($mac_sublist.point));};

@@ -45,6 +45,9 @@ namespace hlasm_plugin {
 			lexer& operator=(lexer&&) = delete;
 			lexer(lexer &&) = delete;
 
+			void reset();
+			void append();
+
 			virtual ~lexer() = default;
 
 			token_ptr nextToken() override;
@@ -119,12 +122,6 @@ namespace hlasm_plugin {
 			bool last_char_utf16_long_ = false;
 			bool creating_var_symbol_ = false;
 			void ainsert(const std::string & inp, bool front);
-			/* UTF8 <-> UTF32 */
-			#ifdef __GNUG__
-				std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cvt_;
-			#elif _MSC_VER
-				std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> cvt_;
-			#endif
 			std::unique_ptr<input_source> ainsert_stream_;
 			std::deque<UTF32String> ainsert_buffer_;
 
@@ -189,7 +186,7 @@ namespace hlasm_plugin {
 			void lex_tokens();
 			void consume_new_line();
 			void lex_process();
-			void set_last_line_pos();
+			void set_last_line_pos(size_t idx, size_t line);
 			static bool char_start_utf8(unsigned c);
 			static size_t length_utf16(const std::string & str);
 

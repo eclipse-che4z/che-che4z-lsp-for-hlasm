@@ -26,6 +26,8 @@ namespace hlasm_plugin {
 			input_source(const std::string & input);
 
 			void append(const UTF32String &str);
+			void append(const std::string &str);
+			void reset(const std::string &str);
 			void rewind_input(size_t index);
 
 			input_source(const input_source &) = delete;

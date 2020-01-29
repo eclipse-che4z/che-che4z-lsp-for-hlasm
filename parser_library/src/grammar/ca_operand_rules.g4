@@ -19,13 +19,13 @@ ca_op returns [operand_ptr op]
 	: lpar expr rpar seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		collector.add_lsp_symbol({*$seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq});
+		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss),$expr.ctx,provider.get_range($lpar.ctx->getStart(),$seq_symbol.ctx->getStop()));
 	}
 	| seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		collector.add_lsp_symbol({*$seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq});
+		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 		$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
 	}
 	| expr_p
