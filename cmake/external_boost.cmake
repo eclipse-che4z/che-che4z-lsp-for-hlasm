@@ -20,7 +20,7 @@ FIND_PACKAGE(Git REQUIRED)
 ExternalProject_Add(boost_ext
   PREFIX            ${CMAKE_BINARY_DIR}/externals/boost
   GIT_REPOSITORY    https://github.com/chriskohlhoff/asio.git
-  GIT_TAG           asio-1-12-1
+  GIT_TAG           asio-1-12-2
   GIT_SHALLOW       ON
   CONFIGURE_COMMAND ""
   BUILD_COMMAND     ""
