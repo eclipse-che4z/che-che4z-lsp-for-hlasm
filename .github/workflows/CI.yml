@@ -123,6 +123,10 @@ jobs:
         with:
           name: language_server_macos
           path: clients/vscode-hlasmplugin/bin/darwin/
+      - name: Set executable flag
+        run: |
+          chmod +x clients/vscode-hlasmplugin/bin/darwin/language_server
+          chmod +x clients/vscode-hlasmplugin/bin/linux/language_server
       - name: Package VSIX
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
       - name: Get VSIX filename
