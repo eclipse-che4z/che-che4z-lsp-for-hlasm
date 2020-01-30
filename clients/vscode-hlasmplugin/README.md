@@ -1,5 +1,16 @@
+<div id="header" align="center">
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/eclipse/che-che4z-lsp-for-hlasm)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/enQtNzk0MzA4NDMzOTIwLWIzMjEwMjJlOGMxNmMyNzQ1NWZlMzkxNmQ3M2VkYWNjMmE0MGQ0MjIyZmY3MTdhZThkZDg3NGNhY2FmZTEwNzQ)
+
+</div>
+
 # HLASM Language Support
 HLASM Language Support is an extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, and lets you trace how the conditional assembly is evaluated with a modern debugging experience.
+
+This extension is a part of the Che4z open-source project. Feel free to contribute right here.
+
+HLASM Language Support is also part of Code4z, an all-round package that offers a modern experience for mainframe application developers, including COBOL Language Support, Explorer for Endevor, Zowe Explorer and Debugger for Mainframe extensions.
 
 ## Getting Started
 
