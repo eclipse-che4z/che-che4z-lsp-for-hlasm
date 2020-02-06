@@ -18,12 +18,14 @@
 #include <fstream>
 #include <string>
 
-namespace hlasm_plugin {
-namespace language_server {
+namespace hlasm_plugin::language_server {
 
+//LOG_INFO is disabled in release, because it writes vast amount of text
+//which takes significant time
 #ifdef _DEBUG
 #	define LOG_ON
 #endif
+
 
 #ifdef LOG_ON
 #	define LOG_ERROR(x)    hlasm_plugin::language_server::logger::get_instance().log(x)
@@ -39,26 +41,31 @@ class logger
 {
 public:
 
+	//Gets singleton instance of logger.
 	static logger & get_instance()
 	{
 		static logger instance;
 		return instance;
 	}
 
+	//Writes a message to log file.
 	void log(const std::string & data);
+	//Writes a message to log file.
 	void log(const char * data);
 
 protected:
 	std::string current_time();
 	
 private:
+	//Logger should only be accessed byt get_instance, thus the private constructor.
 	logger();
 	~logger();
+	
+	//File to write the log into.
 	std::ofstream file_;
 	
 };
 
-} //namespace language_server
 } //namespace hlasm_plugin
 #endif 
 

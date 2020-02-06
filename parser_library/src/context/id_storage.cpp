@@ -45,13 +45,13 @@ id_storage::const_pointer id_storage::find(std::string val) const
 	return tmp == lit_.end() ? nullptr : &*tmp;
 }
 
-id_storage::const_pointer id_storage::add(std::string value,bool is_uri)
+id_storage::const_pointer id_storage::add(std::string value, bool is_uri)
 {
     if (value.empty())
         return empty_id;
     if (!is_uri)
         to_upper(value);
-	return &*lit_.insert(std::move(value)).first;
+    return &*lit_.insert(std::move(value)).first;
 }
 
 hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_known_strings(std::unordered_set<std::string>& ptr) : 

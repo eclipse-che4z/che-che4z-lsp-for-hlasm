@@ -113,8 +113,9 @@ public:
 	}
 
 	//N' attribute of the symbol
-	virtual A_t number(std::vector<size_t> offset = {}) const override
+	virtual A_t number(std::vector<size_t> offset = { }) const override
 	{
+		(void)offset;
 		return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
 	}
 
@@ -160,6 +161,7 @@ inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
 template<>
 inline A_t set_symbol<B_t>::count(std::vector<size_t> offset) const
 {
+	(void)offset;
 	return (A_t)1;
 }
 template<>

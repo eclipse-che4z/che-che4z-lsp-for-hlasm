@@ -68,6 +68,7 @@ public:
 	}
 	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const
 	{
+		(void)hlasm_ctx;
 		return find_content(library);
 	}
 	std::vector<std::unique_ptr<analyzer>> holder;
@@ -446,6 +447,7 @@ TEST(copy, macro_from_copy_call)
 	EXPECT_EQ(a.context().copy_members().size(), (size_t)1);
 	ASSERT_EQ(a.context().macros().size(), (size_t)1);
 	auto mac = a.context().macros().find(a.context().ids().add("M"));
+	ASSERT_NE(a.context().macros().end(), mac);
 
 	ASSERT_EQ(a.diags().size(), (size_t)1);
 

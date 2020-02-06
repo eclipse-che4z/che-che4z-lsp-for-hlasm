@@ -35,6 +35,7 @@ public:
 
 	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
 	
+    virtual ~parse_lib_provider() = default;
 };
 
 class empty_parse_lib_provider : public parse_lib_provider

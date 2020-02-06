@@ -76,7 +76,7 @@ if (MSVC_VERSION)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4251 /wd4996")
   set(MY_CXX_WARNING_FLAGS "  /w35038")
 else()
-  set(MY_CXX_WARNING_FLAGS "  -Wall -Wextra -Wno-attributes")
+  set(MY_CXX_WARNING_FLAGS "  -Wall -Wextra -Wno-attributes -Wno-unknown-pragmas")
 endif()
 
 set(CMAKE_CXX_FLAGS                  "${CMAKE_CXX_FLAGS} ${MY_CXX_WARNING_FLAGS}")

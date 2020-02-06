@@ -49,7 +49,7 @@ namespace hlasm_plugin {
 				virtual int32_t get_numeric_value() const override;
 
 				virtual expr_ptr unary_operation(str_ref operation_name) const override;
-				expr_ptr binary_operation(str_ref o, expr_ref arg2) const;
+				virtual expr_ptr binary_operation(str_ref o, expr_ref arg2) const override;
 				static expr_ptr from_string(const std::string_view&, int base);
 				context::SET_t get_set_value() const override;
 				int32_t get_value() const;

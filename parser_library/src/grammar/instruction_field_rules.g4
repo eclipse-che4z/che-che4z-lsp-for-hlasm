@@ -49,7 +49,7 @@ macro_name_b returns [std::string value]
 	| tmp=macro_name_b l_ch									{$value = std::move($tmp.value); $value.append(std::move($l_ch.value));};
 
 macro_name returns [std::string value]
-	: ORDSYMBOL macro_name_b								{$value = std::move($ORDSYMBOL->getText()); $value.append(std::move($macro_name_b.value));};
+	: ORDSYMBOL macro_name_b								{$value = $ORDSYMBOL->getText(); $value.append(std::move($macro_name_b.value));};
 
 bad_instr
 	: IDENTIFIER ~(SPACE|EOLLN)*;

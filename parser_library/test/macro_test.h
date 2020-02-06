@@ -497,12 +497,14 @@ public:
 
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
 	{
+		(void)library;
+
 		a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", hlasm_ctx,*this, data);
 		a->analyze();
 		a->collect_diags();
 		return true;
 	}
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return true; }
+	virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
 	std::unique_ptr<analyzer> a;
 private:
 	const std::string* current_content;

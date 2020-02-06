@@ -283,9 +283,9 @@ bool lsp_info_processor::find_references_(const position & pos, const definition
 
 completion_list_s lsp_info_processor::completion(const position& pos, const char trigger_char, int trigger_kind) const
 {
-	std::string line_before = (pos.line > 0) ? text_[(const unsigned int)pos.line-1] : "";
-	auto line = text_[(const unsigned int)pos.line];
-	auto line_so_far = line.substr(0, (pos.column == 0) ? 1 : (const unsigned int)pos.column);
+	std::string line_before = (pos.line > 0) ? text_[(unsigned int)pos.line-1] : "";
+	auto line = text_[(unsigned int)pos.line];
+	auto line_so_far = line.substr(0, (pos.column == 0) ? 1 : (unsigned int)pos.column);
 	char last_char = (trigger_kind == 1 && line_so_far != "") ? line_so_far.back() : trigger_char;
 
 	if (last_char == '&')
@@ -579,7 +579,7 @@ void lsp_info_processor::process_instruction_sym_()
 		ctx_->lsp_ctx->all_instructions.push_back(
 			{ *deferred_instruction_.name,params_text.str(),
 			*deferred_instruction_.name + "   " + params_text.str(),
-			doc_pos((const unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
+			doc_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
 		// add it to definitions
 		auto occurences = &ctx_->lsp_ctx->instructions[context::instr_definition(

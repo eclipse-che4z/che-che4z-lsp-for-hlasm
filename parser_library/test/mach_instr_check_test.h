@@ -22,8 +22,6 @@ using namespace hlasm_plugin::parser_library::checking;
 class machine_instr_test : public testing::Test
 {
 public:
-	virtual void SetUp(std::string param) {}
-	virtual void TearDown() {}
 	machine_instr_test() {
 	
 		test_balr_true.push_back(&op_val_14);

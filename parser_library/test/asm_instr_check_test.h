@@ -20,10 +20,6 @@ using namespace hlasm_plugin::parser_library::checking;
 class instruction_test : public testing::Test
 {
 public:
-	virtual void SetUp(std::string param) {}
-	virtual void TearDown() 
-	{
-	}
 	instruction_test(){
 
 		for (auto i = 0; i < 66000; i++)

@@ -60,6 +60,8 @@ class mock_parse_lib_provider : public parse_lib_provider
 public:
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
 	{
+		(void)library;
+
 		if (data.proc_kind == processing::processing_kind::MACRO)
 		{
 			analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);

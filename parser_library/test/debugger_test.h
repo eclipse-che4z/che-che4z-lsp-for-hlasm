@@ -89,7 +89,7 @@ public:
 	test_var_value(const char* cstr, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec) : children_(vec), data_(std::string(cstr)), ignore_(false) {}
 	test_var_value() : ignore_(true) {}
 
-	test_var_value(std::string str, set_type type) : data_(str) {}
+	test_var_value(std::string str, set_type) : data_(str) {}
 
 	bool check(debugger& d, const debugging::variable & var) const
 	{
@@ -405,8 +405,6 @@ B EQU A
 
 TEST(debugger, concurrent_next_and_file_change)
 {
-	using list = std::unordered_map<std::string, test_var_value>;
-
 	std::string open_code = R"(
 		LR 1,1
     COPY COPY1

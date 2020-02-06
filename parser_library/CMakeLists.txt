@@ -26,7 +26,8 @@ set(GENERATED_SRC
    ${GENERATED_FOLDER}/hlasmparserListener.cpp
    ${GENERATED_FOLDER}/hlasmparserVisitor.cpp
  )
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "CLANG")
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 

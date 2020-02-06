@@ -58,7 +58,7 @@ public:
 	workspace & operator= (const workspace &) = delete;
 
 	workspace(workspace && ws) = default;
-	workspace & operator= (workspace &&) = default;
+	workspace & operator= (workspace &&) = delete;
 
 	void collect_diags() const override;
 
@@ -102,7 +102,6 @@ private:
 	std::filesystem::path proc_grps_path_;
 	std::filesystem::path pgm_conf_path_;
 
-	bool is_hlasm_ws_ = false;
 	bool opened_ = false;
 
 	bool load_config();
