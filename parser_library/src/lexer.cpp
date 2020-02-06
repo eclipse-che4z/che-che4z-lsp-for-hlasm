@@ -526,7 +526,7 @@ void lexer::lex_begin()
 void lexer::lex_end(bool eolln)
 {
 	start_token();
-	while (input_state_->c != '\n' && !eof() && input_state_->c != -1)
+	while (input_state_->c != '\n' && !eof() && input_state_->c != (char_t) -1)
 		consume();
 	if (!eof())
 	{
@@ -630,7 +630,7 @@ bool lexer::before_end() const
 
 bool lexer::ord_char(char_t c)
 {
-	return (c >= 0 && c <= 255) &&
+	return (c <= 255) &&
 		(isalnum(c) || isalpha(c) || c == '_' || c == '@' || c == '$' || c == '#');
 }
 
@@ -641,7 +641,7 @@ bool lexer::is_ord_char() const
 
 bool lexer::is_space() const
 {
-	return input_state_->c >= 0 && input_state_->c <= 255 && isspace(input_state_->c);
+	return input_state_->c <= 255 && isspace(input_state_->c);
 }
 
 bool lexer::is_data_attribute() const

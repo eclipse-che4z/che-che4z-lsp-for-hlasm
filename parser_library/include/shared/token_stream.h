@@ -30,7 +30,6 @@ class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
 	bool enabled_cont_;
 	bool enabled_hidden_;
 	bool needSetup_;
-	size_t seeked_;
 public:
 	token_stream(antlr4::TokenSource* token_source);
 

@@ -214,9 +214,9 @@ C LOCTR
 	analyzer a(input);
 	a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->attributes().type(), ebcdic_encoding::a2e['I']);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->attributes().type(), ebcdic_encoding::a2e['J']);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->attributes().type(), ebcdic_encoding::a2e['J']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->attributes().type(), ebcdic_encoding::a2e[U'I']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->attributes().type(), ebcdic_encoding::a2e[U'J']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->attributes().type(), ebcdic_encoding::a2e[U'J']);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);

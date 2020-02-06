@@ -144,7 +144,7 @@ const std::vector<stack_frame> & debugger::stack_frames()
 	stack_frames_.clear();
 	if (debug_ended_)
 		return stack_frames_;
-	for(size_t i = proc_stack_.size()-1; i != -1; --i)
+	for(size_t i = proc_stack_.size()-1; i != (size_t)-1; --i)
 	{
 		source source(proc_stack_[i].proc_location.file);
 		std::string name;

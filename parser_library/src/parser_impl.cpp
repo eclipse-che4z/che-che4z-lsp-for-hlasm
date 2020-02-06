@@ -116,7 +116,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	h.parser->collector.prepare_for_next_statement();
 
 	semantics::op_rem line;
-	bool preserve = false;
 	auto& [format, opcode] = status;
 	if (format.occurence == processing::operand_occurence::ABSENT || format.form == processing::processing_form::UNKNOWN)
 		h.parser->op_rem_body_noop();
@@ -126,7 +125,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 		{
 		case processing::processing_form::MAC:
 			line = std::move(h.parser->op_rem_body_mac_r()->line);
-			preserve = true;
 			break;
 		case processing::processing_form::ASM:
 			line = std::move(h.parser->op_rem_body_asm_r()->line);

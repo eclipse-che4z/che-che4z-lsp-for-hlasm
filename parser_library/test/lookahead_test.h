@@ -433,7 +433,7 @@ X EQU 1,2,C'X'
 		return true;
 	}
 
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return false; }
+	virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)

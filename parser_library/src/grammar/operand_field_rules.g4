@@ -289,7 +289,7 @@ op_rem_body_deferred
 	| SPACE {enable_hidden();} deferred_op_rem 
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
-		collector.set_operand_remark_field(std::move($deferred_op_rem.ctx->getText()),std::move($deferred_op_rem.remarks),r);
+		collector.set_operand_remark_field($deferred_op_rem.ctx->getText(),std::move($deferred_op_rem.remarks),r);
 						collector.add_operands_hl_symbols();
 						collector.add_remarks_hl_symbols();
 						process_statement();

@@ -40,8 +40,8 @@ namespace hlasm_plugin
 				char_ptr append(const char_ptr& arg) const;
 				char_ptr append(const character_expression* arg) const;
 
-				expr_ptr binary_operation(str_ref operation_name, expr_ref arg2) const;
-				expr_ptr unary_operation(str_ref operation_name) const;
+				virtual expr_ptr binary_operation(str_ref operation_name, expr_ref arg2) const override;
+				virtual expr_ptr unary_operation(str_ref operation_name) const override;
 
 				context::SET_t get_set_value() const override;
 

@@ -147,10 +147,6 @@ void server::on_initialize(json id, const json & param)
 	{
 		f->initialize_feature(param);
 	}
-
-	
-
-	//show_message("The capabilities of hlasm language server were sent!", message_type::MT_INFO);
 }
 
 void server::on_shutdown(json id, const json &)
@@ -162,7 +158,7 @@ void server::on_shutdown(json id, const json &)
 	respond(id, "", rep);
 }
 
-void server::on_exit(json id, const json &)
+void server::on_exit(json, const json &)
 {
 	exit_notification_received_ = true;
 }
@@ -195,6 +191,7 @@ json diagnostic_related_info_to_json(parser_library::diagnostic & diag)
 
 void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 {
+	//map of all diagnostics that came from the server
 	std::map<std::string, std::vector<parser_library::diagnostic>> diags;
 	
 	for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
@@ -203,8 +200,9 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 		diags[d.file_name()].push_back(d);
 	}
 
+	//set of all files for which diagnostics came from the server.
 	std::unordered_set<std::string> new_files;
-
+	//transform the diagnostics into json
 	for (auto & file_diags : diags)
 	{
 		json diags_array = json::array();
@@ -221,7 +219,6 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 			if (d.severity() != parser_library::diagnostic_severity::unspecified)
 			{
 				one_json["severity"] = (int)d.severity();
-				//one_json.insert(one_json.end(), { "severity", (int)d.severity() });
 			}
 			diags_array.push_back(std::move(one_json));
 		}
@@ -237,6 +234,9 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
 		notify("textDocument/publishDiagnostics", publish_diags_params);
 	}
 
+	//for each file that had at least one diagnostic in the previous call of this function,
+	//but does not have any diagnostics in this call, we send empty diagnostics array to
+	//remove the diags from UI
 	for (auto & it : last_diagnostics_files_)
 	{
 		json publish_diags_params

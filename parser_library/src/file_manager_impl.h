@@ -33,8 +33,8 @@ public:
 	file_manager_impl(const file_manager_impl &) = delete;
 	file_manager_impl & operator=(const file_manager_impl &) = delete;
 
-	file_manager_impl(file_manager_impl &&) = default;
-	file_manager_impl & operator=(file_manager_impl &&) = default;
+	file_manager_impl(file_manager_impl &&) = delete;
+	file_manager_impl & operator=(file_manager_impl &&) = delete;
 
 	virtual void collect_diags() const override;
 

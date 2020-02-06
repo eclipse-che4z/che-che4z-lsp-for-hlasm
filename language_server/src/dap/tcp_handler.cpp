@@ -19,7 +19,7 @@ using namespace hlasm_plugin::language_server;
 using namespace hlasm_plugin::language_server::dap;
 
 tcp_handler::tcp_handler(parser_library::workspace_manager& ws_mngr, request_manager& req_mngr, uint16_t dap_port)
-	: acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), dap_port)), ws_mngr_(ws_mngr), req_mngr_(req_mngr), port_(dap_port) {}
+	: acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), dap_port)), ws_mngr_(ws_mngr), req_mngr_(req_mngr) {}
 
 void tcp_handler::handle_accept(const asio::error_code& error)
 {

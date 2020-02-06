@@ -184,7 +184,7 @@ bool using_instr::check(const std::vector<const asm_operand*> & to_check, const 
 		}
 		// can also be address, maybe TO DO
 		return true;
-		/*
+		
 		if (!is_base_register(simple_op->operand_identifier) || !is_positive_value(simple_op->operand_identifier))
 		{
 			add_diagnostic(diagnostic_op::error_I020_format(name_of_instruction, true));
@@ -298,7 +298,9 @@ bool print::check(const std::vector<const asm_operand*> & to_check, const range 
 	for (const auto & operand : to_check)
 	{
 		auto simple = get_simple_operand(operand);
-		if (simple == nullptr || !is_param_in_vector(simple->operand_identifier, print_pair_operands) && !is_param_in_vector(simple->operand_identifier, print_other_operands))
+		if (simple == nullptr ||
+			(!is_param_in_vector(simple->operand_identifier, print_pair_operands)
+				&& !is_param_in_vector(simple->operand_identifier, print_other_operands)))
 		{
 			add_diagnostic(diagnostic_op::error_A109_PRINT_op_format(operand->operand_range));
 			return false;
@@ -397,7 +399,7 @@ bool org::check(const std::vector<const asm_operand*> & to_check, const range & 
 	if (to_check.empty())
 		return true;
 	const one_operand* second = nullptr;
-	const one_operand* third = nullptr;
+
 	for (size_t i = 0; i < to_check.size(); i++)
 	{
 		// boundary can be empty
@@ -423,7 +425,6 @@ bool org::check(const std::vector<const asm_operand*> & to_check, const range & 
 			second = simple_op;
 			break;
 		case 2:
-			third = simple_op;
 			break;
 		}
 	}
@@ -573,7 +574,7 @@ bool ictl::check(const std::vector<const asm_operand*> & to_check, const range &
 				add_diagnostic(diagnostic_op::error_A122_ICTL_op_format_first(to_check[0]->operand_range));
 			else
 				add_diagnostic(diagnostic_op::error_A242_ICTL_op_format_second_third(to_check[i]->operand_range));
-				return false;
+			return false;
 		}
 	}
 	// transform first operand
@@ -698,57 +699,6 @@ equ::equ(const std::vector<label_types>& allowed_types, const std::string& name_
 
 bool equ::check(const std::vector<const asm_operand*> &, const range& , const diagnostic_collector& ) const
 {
-	/*
-	if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
-		return false;
-	// check first obligatory value
-	auto first_op = get_simple_operand(to_check[0]);
-	if (first_op == nullptr)
-	{
-		add_diagnostic(diagnostic_op::error_A000_simple_op_expected(name_of_instruction));
-		return false;
-	}
-	if (first_op->is_default)
-	{
-		add_diagnostic(diagnostic_op::error_A132_EQU_value_format());
-		return false;
-	}
-	// all other operands must be either simple or empty
-	for (const auto& operand : to_check)
-	{
-		if (is_operand_complex(operand))
-		{
-			add_diagnostic(diagnostic_op::error_A020_simple_or_empty_expected(name_of_instruction));
-			return false;
-		}
-	}
-	// check second operand - length attribute value
-	if (to_check.size() > 1)
-	{
-		auto length_att = get_simple_operand(to_check[1]);
-		if (length_att != nullptr)
-		{
-			if (length_att->is_default || length_att->value > EQU_max_length_att_val || length_att->value < 0)
-			{
-				add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format());
-				return false;
-			}
-		}
-	}
-	// check fifth operand - assembler type value
-	if (to_check.size() > 4)
-	{
-		auto asm_type = get_simple_operand(to_check[4]);
-		if (asm_type != nullptr)
-		{
-			const static std::vector<std::string> assembler_type_operands = { "AR", "CR", "CR32", "CR64", "FPR", "GR", "VR", "GR32", "GR64" };
-			if (!is_param_in_vector(asm_type->operand_identifier, assembler_type_operands))
-			{
-				add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format());
-				return false;
-			}
-		}
-	}*/
 	return true;
 }
 
@@ -1173,7 +1123,9 @@ bool ainsert::check(const std::vector<const asm_operand*> & to_check, const rang
 		return false;
 	}
 	// check second operand
-	if (second == nullptr || second->operand_identifier != "BACK" && second->operand_identifier != "FRONT")
+	if (second == nullptr ||
+		(second->operand_identifier != "BACK"
+			&& second->operand_identifier != "FRONT"))
 	{
 		add_diagnostic(diagnostic_op::error_A156_AINSERT_second_op_format(to_check[1]->operand_range));
 		return false;

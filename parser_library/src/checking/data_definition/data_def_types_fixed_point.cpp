@@ -24,8 +24,8 @@ using namespace hlasm_plugin::parser_library;
 
 data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t word_length) :
 	data_def_type(type, extension, modifier_bound{ 1, 64 }, modifier_bound{ 1, 8 },
-		modifier_bound{ -187 , 346 }, modifier_bound{ -85 , 75 }, nominal_value_type::STRING, {0, word_length}, word_length),
-	word_length_(word_length) {}
+		modifier_bound{ -187 , 346 }, modifier_bound{ -85 , 75 }, nominal_value_type::STRING,
+		{0, word_length}, word_length) {}
 
 class H_F_FD_number_spec
 {

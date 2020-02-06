@@ -19,7 +19,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace antlr4;
 
 token_stream::token_stream(antlr4::TokenSource* token_source) 
-	: antlr4::BufferedTokenStream(token_source), enabled_cont_(false),enabled_hidden_(false), needSetup_(true), seeked_(0) {}
+	: antlr4::BufferedTokenStream(token_source), enabled_cont_(false),enabled_hidden_(false), needSetup_(true) {}
 
 void token_stream::enable_continuation() { enabled_cont_ = true; }
 

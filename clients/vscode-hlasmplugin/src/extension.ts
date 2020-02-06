@@ -28,9 +28,23 @@ const useTcp = false;
  */
 var highlight: ASMSemanticHighlightingFeature;
 var hlasmpluginClient: vscodelc.LanguageClient;
+var dapPort: number;
 
-export function activate(context: vscode.ExtensionContext) {
+// returns random free port
+const getPort = () => new Promise<number>((resolve,reject) => 
+{
+    var srv = Net.createServer();
+    srv.unref();
+    srv.listen(0, () => {
+        resolve((srv.address() as Net.AddressInfo).port);
+        srv.close();
+    });
+});
+
+export async function activate(context: vscode.ExtensionContext) {
     //debug setup
+    dapPort = await getPort();
+    
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', config => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the name of a program in the workspace folder",
@@ -44,16 +58,16 @@ export function activate(context: vscode.ExtensionContext) {
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     
     var lang_server_folder = process.platform;
-    
+
     if(useTcp)
     {
-        const port = 4746;
+        const lspPort = await getPort();
         //spawn the server
-        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", port.toString()]);
+        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", dapPort.toString(), lspPort.toString()]);
 
         //set the tcp communication
         let connectionInfo = {
-            port: port,
+            port: lspPort,
             host:'localhost'
         };
         var serverOptions: vscodelc.ServerOptions = () => {
@@ -69,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
     {
         const server: vscodelc.Executable = {
             command: path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'),
-            args: getConfig<string[]>('arguments')
+            args: getConfig<string[]>('arguments').concat(["-p", dapPort.toString()])
         };
         var serverOptions: vscodelc.ServerOptions = server;
     }
@@ -369,6 +383,48 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
         }
     })
 }
+
+class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
+{
+    protected dapPort: number;
+    constructor(dapPort: number)
+    {
+        this.dapPort = dapPort;
+    }
+
+    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+        // no launch.json, debug current
+        if (!config.type && !config.request && !config.name)
+        {
+            config.type = "hlasm";
+            config.request = "launch";
+            config.name = "Macro tracer: current program";
+            config.program = "${command:extension.hlasm-plugin.getCurrentProgramName}";
+            config.stopOnEntry = true;
+            config.configId = 0;
+        }
+        if (config.configId == 0)
+        {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && editor.document.languageId === 'hlasm')
+            {
+                config.debugServer = dapPort;
+            }
+        }
+        else if (config.configId == 1)
+            config.debugServer = dapPort;
+
+        if (!config.debugServer) {
+            return vscode.window.showInformationMessage("Wrong debug settings. Please make sure that you are debugging HLASM file or try setting the configurations to default state.").then(_ => {
+                return undefined;	// abort launch
+            });
+        }
+
+		return config;
+	}
+}
+
+vscode.debug.registerDebugConfigurationProvider('hlasm', new HlasmConfigurationProvider(dapPort));
 
 // when contents of a document change, show parse progress
 vscode.workspace.onDidChangeTextDocument(event => {

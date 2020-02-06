@@ -24,6 +24,7 @@ namespace hlasm_plugin::parser_library {
 class diagnosable_ctx : public diagnosable_impl
 {
 public:
+	using diagnosable_impl::add_diagnostic;
 	virtual void add_diagnostic(diagnostic_op diagnostic) const
 	{
 		add_diagnostic_inner(std::move(diagnostic), ctx_.processing_stack());

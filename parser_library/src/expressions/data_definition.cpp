@@ -462,7 +462,7 @@ mach_expr_ptr data_definition::parser::move_next_expression()
 	update_position(*res);
 	++p_;
 
-	return std::move(res);
+	return res;
 }
 
 mach_expr_ptr data_definition::parser::parse_modifier_num_or_expr()
@@ -485,8 +485,8 @@ mach_expr_ptr data_definition::parser::parse_modifier_num_or_expr()
 		auto exprs = nominal_->access_exprs();
 		if (exprs && exprs->exprs.size() == 1 && std::holds_alternative<mach_expr_ptr>(exprs->exprs[0]))
 		{
-			//it is possible, that a modifier has been parsed as nominal value,
-			//if nominal value is not present at all and duplication factor is 0
+			//it is possible that a modifier has been parsed as nominal value,
+			//if nominal value is not present at all and duplication factor is 0 or with DS instruction
 			mach_expr_ptr& modifier = std::get<mach_expr_ptr>(exprs->exprs[0]);
 			++p_;
 			update_position(*modifier);
@@ -540,6 +540,7 @@ void data_definition::parser::parse_modifier()
 
 	update_position_by_one();
 
+	//parse bit length
 	if (format_[p_] == '.')
 	{
 		++p_;
@@ -603,6 +604,7 @@ data_definition data_definition::parser::parse()
 		}
 		else
 		{
+			//consume all invalid characters and produce one diagnostic regarding all of them
 			auto begin_pos = pos_;
 			while (p_ < format_.size() && !is_modifier_or_prog(format_[p_]) && format_[p_] != nominal_placeholder[0])
 			{

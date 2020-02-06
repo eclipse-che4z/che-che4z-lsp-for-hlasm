@@ -65,7 +65,7 @@ bool dispatcher::read_message(std::string & out)
 	{
 		if (in_.eof() || in_.fail())
 			return false;
-
+		//Reads characters until the next newline '\n'
 		in_ >> line;
 
 		// Content-Length is a mandatory header, and the only one we handle.
@@ -115,8 +115,8 @@ bool dispatcher::read_message(std::string & out)
 		return false;
 	}
 
+	//LSP continues with message of length specified by Content-Length header.
 	std::streamsize pos = 0;
-
 	std::streamsize read;
 	out.resize((size_t)content_length);
 	for (; pos < content_length; pos += read) {
@@ -159,9 +159,11 @@ int dispatcher::run_server_loop()
 		if (read_message(message))
 		{
 				LOG_INFO(message);
+			LOG_INFO(message);
 
 			json message_json = 0;
-			try {
+			try
+			{
 				message_json = nlohmann::json::parse(message);
 			}
 			catch (const nlohmann::json::exception &)
@@ -173,7 +175,7 @@ int dispatcher::run_server_loop()
 			req_mngr_.add_request(&server_, message_json);
 		}
 
-		//if exit notification came without prior shutdown request, return error 1
+		//If exit notification came without prior shutdown request, return error 1.
 		if (server_.is_exit_notification_received())
 		{
 			if (server_.is_shutdown_request_received())

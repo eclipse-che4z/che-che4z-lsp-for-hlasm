@@ -93,24 +93,24 @@ std::string feature::path_to_uri(std::string path)
 
 parser_library::range feature::parse_range(const json & range_json)
 {
-	return { parse_location(range_json["start"]),
-		parse_location(range_json["end"]) };
+	return { parse_position(range_json["start"]),
+		parse_position(range_json["end"]) };
 }
 
-parser_library::position feature::parse_location(const json & location_json)
+parser_library::position feature::parse_position(const json & position_json)
 {
-	return { location_json["line"].get<nlohmann::json::number_unsigned_t>(),
-		location_json["character"].get<nlohmann::json::number_unsigned_t>() };
+	return { position_json["line"].get<nlohmann::json::number_unsigned_t>(),
+		position_json["character"].get<nlohmann::json::number_unsigned_t>() };
 }
 
 json feature::range_to_json(parser_library::range range)
 {
-	return json{ {"start", location_to_json(range.start)}, {"end", location_to_json(range.end)} };
+	return json{ {"start", position_to_json(range.start)}, {"end", position_to_json(range.end)} };
 }
 
-json feature::location_to_json(parser_library::position location)
+json feature::position_to_json(parser_library::position position)
 {
-	return json{ {"line", location.line}, {"character", location.column} };
+	return json{ {"line", position.line}, {"character", position.column} };
 }
 
 }

@@ -104,10 +104,10 @@
           {
             "type": "hlasm",
             "request": "launch",
+            "configId": 0,
             "name": "Macro tracer: current program",
-            "program": "${command:CurrentProgramName}",
-            "stopOnEntry": true,
-            "debugServer": 4745
+            "program": "${command:extension.hlasm-plugin.getCurrentProgramName}",
+            "stopOnEntry": true
           }
         ],
         "configurationSnippets": [
@@ -117,10 +117,10 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
+              "configId": 0,
               "name": "Macro tracer: current program",
-              "program": "^\"\\${command:CurrentProgramName}\"",
-              "stopOnEntry": true,
-              "debugServer": 4745
+              "program": "^\"\\${command:extension.hlasm-plugin.getCurrentProgramName}\"",
+              "stopOnEntry": true
             }
           },
           {
@@ -129,17 +129,13 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
+              "configId": 1,
               "name": "Macro tracer: Ask for file name",
-              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
-              "stopOnEntry": true,
-              "debugServer": 4745
+              "program": "^\"\\${workspaceFolder}/\\${command:extension.hlasm-plugin.getProgramName}\"",
+              "stopOnEntry": true
             }
           }
-        ],
-        "variables": {
-          "AskForProgramName": "extension.hlasm-plugin.getProgramName",
-          "CurrentProgramName": "extension.hlasm-plugin.getCurrentProgramName"
-        }
+        ]
       }
     ],
     "languages": [

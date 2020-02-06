@@ -31,8 +31,8 @@ public:
 	impl(const impl &) = delete;
 	impl & operator= (const impl &) = delete;
 
-	impl(impl &&) = default;
-	impl & operator= (impl &&) = default;
+	impl(impl &&) = delete;
+	impl & operator= (impl &&) = delete;
 
 	size_t get_workspaces(ws_id * workspaces, size_t max_size)
 	{
@@ -283,7 +283,7 @@ private:
 		}
 	}
 
-	virtual void exited(int exit_code)
+	virtual void exited(int exit_code) override
 	{
 		for (auto c : debug_event_consumers_)
 		{

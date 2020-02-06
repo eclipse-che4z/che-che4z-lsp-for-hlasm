@@ -37,24 +37,34 @@
 #endif
 //no need for binary on linux, because it does not change \n into \r\n
 
-uint16_t dap_port = 4745;
-
 using namespace hlasm_plugin::language_server;
 
 int main(int argc, char ** argv) {
 	using namespace std;
 	using namespace hlasm_plugin::language_server;
-	
+	// user must define at least one port for dap, e.g. "-p 4745"
+	if (argc < 3 || strcmp(argv[1], "-p") != 0)
+	{
+		std::cout << "Invalid arguments. Use language_server -p <debug port> <lsp port>";
+		return 1;
+	}
+
+	int dap_port, lsp_port;
+	dap_port = atoi(argv[2]);
+	if (dap_port <= 0 || dap_port > 65535)
+	{
+		std::cout << "Wrong port entered.";
+		return 1;
+	}
+
 	std::atomic<bool> cancel = false;
-	std::atomic<bool> dap_cancel = false;
 	try {
 		SET_BINARY_MODE(stdin);
 		SET_BINARY_MODE(stdout);
 
 		hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
 		request_manager req_mngr(&cancel);
-
-		dap::tcp_handler dap_handler(ws_mngr, req_mngr, dap_port);
+		dap::tcp_handler dap_handler(ws_mngr, req_mngr, (uint16_t)dap_port);
 		dap_handler.async_accept();
 		std::thread dap_thread([&dap_handler]() {dap_handler.run_dap(); });
 
@@ -63,18 +73,19 @@ int main(int argc, char ** argv) {
 		lsp::server server(ws_mngr);
 		int ret;
 
-		if (argc == 3 && strcmp(argv[1], "-p") == 0)
+		if (argc > 3)
 		{
-			//listen on tcp port for lsp client
-			int port = atoi(argv[2]);
-			if (port <= 0 || port > 65535)
+			// if second port is defined, it is used for tcp lsp communication
+			lsp_port = atoi(argv[3]);
+			if (lsp_port <= 0 || lsp_port > 65535)
 			{
 				std::cout << "Wrong port entered.";
 				return 1;
 			}
 
+			//setup tcp
 			asio::io_service io_service_;
-			asio::ip::tcp::acceptor acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t) port));
+			asio::ip::tcp::acceptor acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t)lsp_port));
 			asio::ip::tcp::socket socket_(io_service_);
 			asio::ip::tcp::iostream stream;
 			acceptor_.accept(stream.socket());

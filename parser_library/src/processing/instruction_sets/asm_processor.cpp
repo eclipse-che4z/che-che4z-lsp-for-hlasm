@@ -210,7 +210,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 			{
 				auto data_op = stmt.operands_ref().value.front()->access_data_def();
 
-				context::symbol_attributes::type_attr type = ebcdic_encoding::a2e[data_op->value->get_type_attribute()];;
+				context::symbol_attributes::type_attr type = ebcdic_encoding::a2e[(unsigned char) data_op->value->get_type_attribute()];;
 				context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
 				context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 

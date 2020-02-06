@@ -133,6 +133,7 @@ struct machine_operand : public virtual evaluable_operand
 	expr_machine_operand* access_expr();
 	address_machine_operand* access_address();
 	
+	using evaluable_operand::get_operand_value;
 	virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const = 0;
 
 	const mach_kind kind;

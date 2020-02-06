@@ -23,12 +23,11 @@
 class library_test : public testing::Test
 {
 public:
-	virtual void SetUp(std::string param)
+	virtual void setup(std::string param)
 	{
 		input = get_content("test/library/input/" + param + ".in");
 		holder = std::make_unique<analyzer>(input);
 	}
-	virtual void TearDown() {}
 protected:
 	std::unique_ptr<analyzer> holder;
 	std::string input;
@@ -38,7 +37,7 @@ TEST_F(library_test, expression_test)
 {
 	std::string tcase = "expression_test";
 
-	SetUp(tcase);
+	setup(tcase);
 	auto tree = holder->parser().expr_test();
 	context_manager m(holder->context());
 	empty_attribute_provider attr_mock;
@@ -60,7 +59,7 @@ TEST_F(library_test, simple)
 {
 	std::string tcase = "simple";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
@@ -74,7 +73,7 @@ TEST_F(library_test, operand)
 {
 	std::string tcase = "operand";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
@@ -89,7 +88,7 @@ TEST_F(library_test, continuation)
 {
 	std::string tcase = "continuation";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	holder->analyze();
 	//no errors found while parsing
@@ -102,7 +101,7 @@ TEST_F(library_test, correctness)
 {
 	std::string tcase = "correctness";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 	//ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
@@ -118,7 +117,7 @@ TEST_F(library_test, model_statement)
 {
 	std::string tcase = "model_statement";
 
-	SetUp(tcase);
+	setup(tcase);
 
 
 	holder->analyze();
@@ -131,7 +130,7 @@ TEST_F(library_test, comment)
 {
 	std::string tcase = "comment";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
@@ -155,7 +154,7 @@ TEST_F(library_test, long_macro)
 {
 	std::string tcase = "long_macro";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
@@ -168,7 +167,7 @@ TEST_F(library_test, process_statement)
 {
 	std::string tcase = "process";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
@@ -181,7 +180,7 @@ TEST_F(library_test, macro_model)
 {
 	std::string tcase = "macro_model";
 
-	SetUp(tcase);
+	setup(tcase);
 
 	//compare tokens with output file
 
