@@ -65,21 +65,6 @@ jobs:
           name: language_server_linux
           path: build/bin/language_server
   
-  clang:
-      name: Clang build - ASAN, UBSAN
-      runs-on: ubuntu-latest
-      
-      steps:
-      - uses: actions/checkout@v1
-      - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build clang++-8 libc++-8-dev libc++abi-8-dev
-      - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link" ../
-      - name: Build
-        run: cd build && cmake --build .
-      - name: Test
-        run: cd build/bin && ./server_test && ./library_test
-  
   macos-server:
       name: MacOS language server
       runs-on: macos-latest
