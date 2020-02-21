@@ -31,7 +31,7 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build clang++-8 libc++-8-dev libc++abi-8-dev
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
       - name: Configure
         run: >
           mkdir build && cd build &&
