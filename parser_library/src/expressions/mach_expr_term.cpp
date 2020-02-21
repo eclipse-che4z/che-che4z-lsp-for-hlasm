@@ -104,7 +104,7 @@ mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info ) co
 	return value_;
 }
 
-void mach_expr_self_def::fill_location_counter(context::address addr)
+void mach_expr_self_def::fill_location_counter(context::address)
 {
 }
 
@@ -128,9 +128,6 @@ mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info
 
 void mach_expr_location_counter::fill_location_counter(context::address addr)
 {
-	if (location_counter)
-		throw std::runtime_error("location counter already set");
-
 	location_counter = std::move(addr);
 }
 
@@ -152,7 +149,7 @@ mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info ) const
 	return value_t();
 }
 
-void mach_expr_default::fill_location_counter(context::address addr)
+void mach_expr_default::fill_location_counter(context::address)
 {
 }
 
@@ -202,7 +199,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
 		return context::symbol_attributes::default_value(attribute);
 }
 
-void mach_expr_data_attr::fill_location_counter(context::address addr)
+void mach_expr_data_attr::fill_location_counter(context::address)
 {
 }
 

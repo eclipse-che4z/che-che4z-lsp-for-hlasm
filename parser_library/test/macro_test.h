@@ -57,7 +57,7 @@ R"( MACRO
 
 	EXPECT_EQ(m->named_params().find(k2)->second->access_keyword_param()->get_value(), "(1,2,3)");
 
-	EXPECT_EQ(m->definition.size(), (size_t)4);
+	EXPECT_EQ(m->cached_definition.size(), (size_t)4);
 }
 
 TEST(macro, macro_def_count)
@@ -492,16 +492,19 @@ TEST(macro, arguments_continuation)
 class bad_mock : public parse_lib_provider
 {
 public:
-	bad_mock(bool bad_name) : current_content(bad_name ? &content_bad_name : &content_bad_begin) {}
+	bad_mock(int lib_code) 
+		: current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment) {}
 
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
 	{
+		(void)library;
+
 		a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", hlasm_ctx,*this, data);
 		a->analyze();
 		a->collect_diags();
 		return true;
 	}
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return true; }
+	virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
 	std::unique_ptr<analyzer> a;
 private:
 	const std::string* current_content;
@@ -518,6 +521,13 @@ private:
        LR    &VAR,&VAR
        MEND
 )";
+	const std::string content_comment =
+		R"(**********  
+       MACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
 
 
 };
@@ -529,21 +539,32 @@ TEST(external_macro, bad_library)
  MAC
  MAC
 )";
-	bad_mock m1(true);
-	analyzer a1(input,"",m1);
-	a1.analyze();
-	a1.collect_diags();
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m1.a)->diags().size(), (size_t)1);
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&a1)->diags().size(), (size_t)2);
-	EXPECT_EQ(a1.parser().getNumberOfSyntaxErrors(), (size_t)0);
+	for (int i = 0; i < 2; ++i)
+	{
+		bad_mock m(i);
+		analyzer a(input, "", m);
+		a.analyze();
+		a.collect_diags();
+		EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
+		EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)2);
+		EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+	}
+}
 
-	bad_mock m2(false);
-	analyzer a2(input, "", m2);
-	a2.analyze();
-	a2.collect_diags();
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m2.a)->diags().size(), (size_t)1);
-	EXPECT_EQ(dynamic_cast<diagnosable*>(&a2)->diags().size(), (size_t)2);
-	EXPECT_EQ(a2.parser().getNumberOfSyntaxErrors(), (size_t)0);
+TEST(external_macro, library_with_begin_comment)
+{
+	std::string input =
+		R"(
+ MAC 1
+ MAC 1
+)";
+	bad_mock m(2);
+	analyzer a(input, "", m);
+	a.analyze();
+	a.collect_diags();
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);
+	EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+	EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
 TEST(variable_argument_passing, positive_sublist)

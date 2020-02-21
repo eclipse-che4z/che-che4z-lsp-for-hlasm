@@ -247,10 +247,10 @@ bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_ch
 		switch (to_check.identifier.type)
 		{
 		case machine_operand_type::IMM:
-			diag = std::move(diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range));
+			diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
 			break;
 		case machine_operand_type::REG_IMM:
-			diag = std::move(diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range));
+			diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
 			break;
 		default:
 			assert(false);
@@ -263,16 +263,16 @@ bool one_operand::check(diagnostic_op & diag, const machine_operand_format to_ch
 		switch (to_check.identifier.type)
 		{
 		case machine_operand_type::REG:
-			diag = std::move(diagnostic_op::error_M120(instr_name, operand_range));
+			diag = diagnostic_op::error_M120(instr_name, operand_range);
 			break;
 		case machine_operand_type::MASK:
-			diag = std::move(diagnostic_op::error_M121(instr_name, operand_range));
+			diag = diagnostic_op::error_M121(instr_name, operand_range);
 			break;
 		case machine_operand_type::IMM:
-			diag = std::move(diagnostic_op::error_M122(instr_name, 0, boundary, operand_range));
+			diag =diagnostic_op::error_M122(instr_name, 0, boundary, operand_range);
 			break;
 		case machine_operand_type::VEC_REG:
-			diag = std::move(diagnostic_op::error_M124(instr_name, operand_range));
+			diag = diagnostic_op::error_M124(instr_name, operand_range);
 			break;
 		default:
 			assert(false);
@@ -288,7 +288,7 @@ empty_operand::empty_operand()
 
 bool empty_operand::check(diagnostic_op & diag, const machine_operand_format, const std::string & instr_name, const range& ) const
 {
-	diag = std::move(diagnostic_op::error_M003(instr_name, operand_range));
+	diag = diagnostic_op::error_M003(instr_name, operand_range);
 	return false;
 }
 

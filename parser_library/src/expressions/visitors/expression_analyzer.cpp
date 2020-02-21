@@ -179,6 +179,7 @@ std::set<context::id_index> expression_analyzer::get_undefined_symbol_references
 
 	for (auto& point : chain)
 	{
+		if (point == nullptr) continue;
 		if (point->type == semantics::concat_type::VAR)
 		{
 			result = get_undefined_symbol_references(*point->access_var());

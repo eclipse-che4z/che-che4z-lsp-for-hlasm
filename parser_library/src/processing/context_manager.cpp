@@ -46,14 +46,16 @@ context::SET_t context_manager::convert(context::SET_t source, context::SET_t_en
 		case SET_t_enum::A_TYPE:
 			return source.access_a();
 		case SET_t_enum::B_TYPE:
-				return (int)source.access_b();
+			return (int)source.access_b();
 		case SET_t_enum::C_TYPE:
 			tmp_e = expressions::arithmetic_expression::from_string(source.access_c(), false);
 			if (!tmp_e->diag)
 				return tmp_e->get_numeric_value();
+			break;
 		default:
 			break;
 		}
+		break;
 	case SET_t_enum::B_TYPE:
 		switch (source.type)
 		{
@@ -65,6 +67,7 @@ context::SET_t context_manager::convert(context::SET_t source, context::SET_t_en
 			tmp_e = expressions::arithmetic_expression::from_string(source.access_c(), false);
 			if (!tmp_e->diag)
 				return tmp_e->get_numeric_value();
+			break;
 		default:
 			break;
 		}

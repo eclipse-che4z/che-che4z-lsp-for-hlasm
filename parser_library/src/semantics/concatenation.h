@@ -50,6 +50,8 @@ struct concatenation_point
 
 	static var_sym* contains_var_sym(const concat_chain& chain);
 
+	static concat_chain clone(const concat_chain& chain);
+
 	const concat_type type;
 
 	concatenation_point(const concat_type type);

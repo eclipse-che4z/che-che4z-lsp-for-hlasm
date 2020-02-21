@@ -50,15 +50,14 @@ struct PARSER_LIBRARY_EXPORT range
 
 struct PARSER_LIBRARY_EXPORT file_range
 {
-	file_range() {}
-	file_range(range r, std::string file) : r(r), file(std::move(file)) {}
-	file_range(range r) : r(r), file("") {}
+	file_range(range r, const std::string* file) : r(r), file(file) {}
+	file_range(range r) : r(r), file(nullptr) {}
 	bool operator==(const file_range& fr) const
 	{
 		return r == fr.r && file == fr.file;
 	}
 	range r;
-	std::string file;
+	const std::string* file;
 };
 
 struct PARSER_LIBRARY_EXPORT location

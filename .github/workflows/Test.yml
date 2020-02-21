@@ -1,0 +1,38 @@
+#
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+#
+
+name: Clang build - ASAN, UBSAN
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  
+  clang:
+      name: Clang build - ASAN, UBSAN
+      runs-on: ubuntu-18.04
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link" ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Test
+        run: cd build/bin && ./server_test && ./library_test

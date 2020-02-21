@@ -16,7 +16,7 @@
 #define CONTEXT_COPY_MEMBER_H
 
 #include "shared/range.h"
-#include "hlasm_statement.h"
+#include "cached_statement.h"
 #include "id_storage.h"
 
 namespace hlasm_plugin {
@@ -27,12 +27,12 @@ namespace context {
 struct copy_member_invocation
 {
 	const id_index name;
-	const statement_block& definition;
+	cached_block& cached_definition;
 	const location& definition_location;
 	int current_statement;
 
-	copy_member_invocation(const id_index name, const statement_block& definition, const location& definition_location)
-		:name(name), definition(definition), definition_location(definition_location), current_statement(-1) {}
+	copy_member_invocation(const id_index name, cached_block& cached_definition, const location& definition_location)
+		:name(name), cached_definition(cached_definition), definition_location(definition_location), current_statement(-1) {}
 };
 
 //structure represents COPY member in HLASM macro library
@@ -41,14 +41,18 @@ struct copy_member
 	//member idenifier
 	const id_index name;
 	//block of statements defining the member
-	const statement_block definition;
+	cached_block cached_definition;
 	//location of the definition
 	const location definition_location;
 
 	copy_member(id_index name, statement_block definition, location definition_location)
-		:name(name), definition(std::move(definition)), definition_location(std::move(definition_location)) {}
+		:name(name), definition_location(std::move(definition_location))
+	{
+		for (auto&& stmt : definition)
+			cached_definition.emplace_back(std::move(stmt));
+	}
 
-	copy_member_invocation enter() { return copy_member_invocation(name, definition, definition_location); }
+	copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
 };
 
 }

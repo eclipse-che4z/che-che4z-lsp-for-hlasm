@@ -136,42 +136,16 @@ codepage: id VERTICAL id string;
 */
 
 
-program : program_line*;
-
-program_line
-	: instruction_statement EOLLN
-	| EOF	{finished_flag=true;};
+program : EOF;
 
 
-
-
-instruction_statement
-	: { processor->kind == processing_kind::LOOKAHEAD }? lookahead_instruction_statement										
-	{
-		collector.clear_hl_lsp_symbols();
-		process_statement();
-	}
-	| { processor->kind != processing_kind::LOOKAHEAD }? ordinary_instruction_statement										
-	{
-		process_statement();
-		//sem_info_.process_deferred_syms();
-	}
-	| SPACE*					
-	{
-		collector.set_label_field(provider.get_range( _localctx));
-		collector.set_instruction_field(provider.get_range( _localctx));
-		collector.set_operand_remark_field(provider.get_range( _localctx));
-		process_instruction();
-		process_statement();
-	};
-
-
-ordinary_instruction_statement
-	: label SPACE instruction operands_and_remarks
+first_part 
+	: label SPACE instruction 
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
-		collector.add_operands_hl_symbols();
-		collector.add_remarks_hl_symbols();
+		_localctx->exception = std::move($instruction.ctx->exception);
+		//collector.add_operands_hl_symbols();
+		//collector.add_remarks_hl_symbols();
 	}
 	| PROCESS 
 	{
@@ -180,14 +154,33 @@ ordinary_instruction_statement
 			parse_identifier($PROCESS->getText(),provider.get_range($PROCESS)),
 			provider.get_range( $PROCESS));
 		process_instruction();
-	}
-	operands_and_remarks
-	{
 		collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
-		collector.add_operands_hl_symbols();
-		collector.add_remarks_hl_symbols();
 	};
 
+operand_field_rest
+	: ~EOLLN*;
+
+lab_instr returns [std::optional<std::string> op_text, range op_range]
+	: first_part {enable_hidden();} operand_field_rest 
+	{
+		{disable_hidden();}
+		if (!$first_part.ctx->exception)
+		{
+			$op_text = $operand_field_rest.ctx->getText();
+			$op_range = provider.get_range($operand_field_rest.ctx);
+		}
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+	} EOLLN
+	| SPACE? 
+	{
+		collector.set_label_field(provider.get_range( _localctx));
+		collector.set_instruction_field(provider.get_range( _localctx));
+		collector.set_operand_remark_field(provider.get_range( _localctx));
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		process_instruction();
+		process_statement();
+	} EOLLN
+	| EOF	{finished_flag=true;};
 
 num_ch
 	: NUM+;

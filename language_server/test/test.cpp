@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "feature_language_features_test.h"
 #include "workspace_folders_test.h"
 #include "feature_text_synchronization_test.h"
 #include "server_test.h"

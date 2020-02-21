@@ -26,7 +26,8 @@ set(GENERATED_SRC
    ${GENERATED_FOLDER}/hlasmparserListener.cpp
    ${GENERATED_FOLDER}/hlasmparserVisitor.cpp
  )
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "CLANG")
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 
@@ -73,6 +74,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/instruction.cpp
     ${PROJECT_SOURCE_DIR}/src/context/id_storage.cpp
     ${PROJECT_SOURCE_DIR}/src/context/processing_context.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/cached_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/location_counter.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/ordinary_assembly_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol_dependency_tables.cpp
@@ -86,9 +88,9 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/hlasm_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/context_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/lookahead_processor.cpp
-    ${PROJECT_SOURCE_DIR}/src/processing/common_statement_provider.cpp
-    ${PROJECT_SOURCE_DIR}/src/processing/copy_statement_provider.cpp
-    ${PROJECT_SOURCE_DIR}/src/processing/macro_statement_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_providers/common_statement_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_providers/copy_statement_provider.cpp
+    ${PROJECT_SOURCE_DIR}/src/processing/statement_providers/macro_statement_provider.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/macrodef_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/ordinary_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/processing/statement_processors/copy_processor.cpp

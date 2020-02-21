@@ -105,23 +105,24 @@ parallel (
         }
         
         stage('[L] Archive artifacts') {
+          filename = "hlasm-language-support-${version}-" + env.CHANGE_ID + ".vsix"
           // Add version to file name
-          sh "cd ./build/alpine/bin && sudo mv vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
+          sh "cd ./build/alpine/bin && sudo mv vscode-hlasmplugin.vsix ${filename}"
           
           archiveArtifacts artifacts: 'build/*/bin/language_server,build/*/bin/*.vsix,build/clang/bin/coverage.*'
         }
         
         stage ('[L] Upload to Artifactory') {
+          
           // Create 'latest' artifact
-          sh 'sudo cp ./build/alpine/bin/vscode-hlasmplugin*.vsix ./build/alpine/bin/vscode-hlasmplugin-latest.vsix'
-
+          sh 'sudo cp ./build/alpine/bin/*.vsix ./build/alpine/bin/hlasm-language-support-latest.vsix'
           // Obtain an Artifactory server instance, defined in Jenkins --> Manage:
           server = Artifactory.server 'Test_Artifactory'
           // Configure upload of artifact
           def uploadSpec = """{
             "files": [
               {
-                "pattern": "./build/alpine/bin/vscode-hlasmplugin*.vsix",
+                "pattern": "./build/alpine/bin/hlasm-language-support*.vsix",
                 "target": "local-files/hlasm/alpine/"
               }
             ]
@@ -194,12 +195,12 @@ parallel (
 
       
       stage('[w] Archive artifacts') {
-        
+        filename = "hlasm-language-support-${version}-" + env.CHANGE_ID + ".vsix"
         // Add version to file name
         bat "move /Y \\${BLDX86} ${env.WORKSPACE}\\HlasmPlugin\\buildx86"
         //bat "cd ${env.WORKSPACE}\\HlasmPlugin\\buildx86\\bin && rename vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
         bat "move /Y \\${BLDX64} ${env.WORKSPACE}\\HlasmPlugin\\buildx64"
-        bat "cd ${env.WORKSPACE}\\HlasmPlugin\\buildx64\\bin && rename vscode-hlasmplugin.vsix vscode-hlasmplugin-${version}.vsix"
+        bat "cd ${env.WORKSPACE}\\HlasmPlugin\\buildx64\\bin && rename vscode-hlasmplugin.vsix ${filename}"
         
         dir('HlasmPlugin/buildx64/bin') {
           stash includes: "language_server.exe", name: 'lang_server_win'
@@ -214,6 +215,9 @@ Linux: {
   node('Frank') {    
     ws("workspace/Hlasm_Plugin/${env.JOB_BASE_NAME}") {
       stage('[L] Package multiplatform') {
+
+        version = readFile("./HlasmPlugin/clients/vscode-hlasmplugin/vscode-hlasmpluginVersion").trim()
+
         def BIN_PATH = 'HlasmPlugin/clients/vscode-hlasmplugin/bin'
 
         sh "sudo rm -rf ${BIN_PATH}"
@@ -229,7 +233,9 @@ Linux: {
         sh 'wget http://czprapd-jenkins.mcl.broadcom.net:8081/artifactory/local-files/hlasm/macos/language_server-0.8.1'
         sh "mkdir ${BIN_PATH}/darwin && chmod +x language_server-0.8.1 && mv language_server-0.8.1 ${BIN_PATH}/darwin/language_server"
         
-        sh 'cd HlasmPlugin/clients/vscode-hlasmplugin/ && sudo npm --unsafe-perm ci && npm run package && mv *.vsix ../../../'
+        filename = "hlasm-language-support-${version}-" + env.CHANGE_ID + ".vsix"
+
+        sh "cd HlasmPlugin/clients/vscode-hlasmplugin/ && sudo npm --unsafe-perm ci && npm run package && mv *.vsix ../../../${filename}"
 
         archiveArtifacts artifacts: '*.vsix'
 

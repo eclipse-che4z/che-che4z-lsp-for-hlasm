@@ -108,14 +108,14 @@ struct statement_si : public complete_statement
 struct statement_si_defer_done : public complete_statement
 {
 	statement_si_defer_done(
-		const statement_si_deferred& deferred_stmt,
+		std::shared_ptr<const statement_si_deferred> deferred_stmt,
 		operands_si operands,
 		remarks_si remarks)
-		: deferred_stmt(&deferred_stmt),
+		: deferred_stmt(deferred_stmt),
 		operands(std::move(operands)),
 		remarks(std::move(remarks)) {}
 
-	const statement_si_deferred* deferred_stmt;
+	std::shared_ptr<const statement_si_deferred> deferred_stmt;
 
 	operands_si operands;
 	remarks_si remarks;

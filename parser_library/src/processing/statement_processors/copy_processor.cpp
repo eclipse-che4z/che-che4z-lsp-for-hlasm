@@ -18,7 +18,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-copy_processor::copy_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, const copy_start_data start)
+copy_processor::copy_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, copy_start_data start)
 	:statement_processor(processing_kind::COPY, hlasm_ctx), listener_(listener), start_(std::move(start)), macro_nest_(0), first_statement_(true) 
 {
 	result_.member_name = start_.member_name;

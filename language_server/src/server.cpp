@@ -38,7 +38,9 @@ void server::register_methods()
 void server::call_method(const std::string & method, const json & id, const json & args)
 {
 	if (shutdown_request_received_)
+	{
 		LOG_WARNING("Request " + method + " was received after shutdown request.");
+	}
 
 	auto found = methods_.find(method);
 	if (found != methods_.end())
@@ -47,7 +49,7 @@ void server::call_method(const std::string & method, const json & id, const json
 		{
 			(*found).second(id, args);
 		}
-		catch (nlohmann::basic_json<>::exception e)
+		catch (const nlohmann::basic_json<>::exception & e)
 		{
 			LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
 		}

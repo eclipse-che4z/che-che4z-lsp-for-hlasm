@@ -40,7 +40,6 @@ class tcp_handler
 	std::unique_ptr<asio::ip::tcp::iostream> stream_;
 	hlasm_plugin::parser_library::workspace_manager& ws_mngr_;
 	request_manager& req_mngr_;
-	uint16_t port_;
 	std::atomic<bool> canceled_ = false;
 	std::mutex closing_mutex_;
 public:

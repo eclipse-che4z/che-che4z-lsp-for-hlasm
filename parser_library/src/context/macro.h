@@ -18,7 +18,7 @@
 #include "variables/macro_param.h"
 #include "sequence_symbol.h"
 #include "common_types.h"
-#include "hlasm_statement.h"
+#include "cached_statement.h"
 
 #include <unordered_map>
 #include <string>
@@ -61,7 +61,7 @@ public:
 	//params of macro
 	const std::unordered_map<id_index, const macro_param_base*>& named_params() const;
 	//vector of statements representing macro definition
-	const statement_block definition;
+	std::vector<cached_statement_storage> cached_definition;
 	//vector assigning each statement its copy nest
 	const copy_nest_storage copy_nests;
 	//storage of sequence symbols in the macro
@@ -76,7 +76,7 @@ public:
 		location definition_location);
 
 	//returns object with parameters' data set to actual parameters in macro call
-	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params,id_index syslist_name) const;
+	macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params,id_index syslist_name);
 
 	//satifying unordered_map needs 
 	bool operator=(const macro_definition& m);
@@ -93,7 +93,7 @@ public:
 	//params of macro
 	const std::unordered_map<id_index, macro_param_ptr> named_params;
 	//vector of statements representing macro definition
-	const statement_block& definition;
+	cached_block& cached_definition;
 	//vector assigning each statement its copy nest
 	const copy_nest_storage& copy_nests;
 	//storage of sequence symbols in the macro
@@ -104,7 +104,7 @@ public:
 	int current_statement;
 
 	macro_invocation(
-		id_index name, const statement_block& definition, const copy_nest_storage& copy_nests, const label_storage& labels,
+		id_index name, cached_block& cached_definition, const copy_nest_storage& copy_nests, const label_storage& labels,
 		std::unordered_map<id_index, macro_param_ptr> named_params, 
 		const location& definition_location);
 };

@@ -24,24 +24,36 @@
 namespace hlasm_plugin::language_server
 {
 
+//Interface that server uses to send messages to the LSP client.
 class send_message_provider
 {
 public:
+	//Serializes the json and sends it to the LSP client.
 	virtual void reply(const json & result) = 0;
+	virtual ~send_message_provider() = default;
 };
 
+//Abstract class that calls the correct serving method for registered notifications and requests
+//Can be implemented to fit LSP or DAP. Class implementing this class must also implement response
+//methods from response_provider
 class server : public response_provider
 {
 
 public:
+	//Constructs the server with workspace_manager.
+	//All the requests and notifications are passed to the workspace manager
 	server(parser_library::workspace_manager & ws_mngr);
 
+	//Tells the server that a massage was received. The server carries out the notification or request.
 	virtual void message_received(const json & message) = 0;
 
+	//Returns true, if LSP shutdown request has been received.
 	bool is_shutdown_request_received();
+	//Returns true, if LSP exit notification has been received.
 	bool is_exit_notification_received();
 
 	void set_send_message_provider(send_message_provider* provider);
+
 protected:
 	send_message_provider * send_message_ = nullptr;
 
@@ -56,7 +68,7 @@ protected:
 
 	virtual void register_methods();
 
-
+	//Calls a method that is registered in methods_ with the specified name with arguments and id of request.
 	void call_method(const std::string & method, const json & id, const json & args);
 };
 

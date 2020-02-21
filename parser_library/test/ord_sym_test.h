@@ -741,7 +741,7 @@ class loc_mock : public parse_lib_provider
 		return true;
 	}
 
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return true; }
+	virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
 
 };
 

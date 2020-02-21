@@ -21,7 +21,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;
 
 expression_evaluator::expression_evaluator(evaluation_context eval_ctx)
-	: diagnosable_ctx(eval_ctx.hlasm_ctx), eval_ctx_(eval_ctx) {}
+	: diagnosable_ctx(eval_ctx.hlasm_ctx), eval_ctx_(eval_ctx), resolved_refs_(nullptr) {}
 
 expr_ptr expression_evaluator::evaluate_expression(antlr4::ParserRuleContext* expr_context)
 {
