@@ -16,10 +16,10 @@ name: SonarCloud
 on:
   pull_request:
     branches:
-      - master
+      - development
   push:
     branches:
-      - master
+      - development
 
 
 jobs:
