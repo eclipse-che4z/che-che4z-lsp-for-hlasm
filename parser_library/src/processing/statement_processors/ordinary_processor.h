@@ -64,11 +64,12 @@ public:
 
 	virtual void collect_diags() const override;
 private:
-	bool check_layout();
 	void check_postponed_statements(std::vector<context::post_stmt_ptr> stmts);
 	bool check_fatals(range line_range);
 
 	context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;
+
+	void collect_ordinary_symbol_definitions();
 
 	template <typename T>
 	void process_statement_base(T statement)

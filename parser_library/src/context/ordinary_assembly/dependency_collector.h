@@ -39,8 +39,7 @@ struct dependency_collector
 
 	dependency_collector();
 	dependency_collector(id_index undefined_symbol);
-	dependency_collector(const address& unresolved_address);
-	dependency_collector(address&& unresolved_address);
+	dependency_collector(address unresolved_address);
 	dependency_collector(attr_ref attribute_reference);
 
 	dependency_collector& operator+(const dependency_collector& holder);
@@ -58,6 +57,8 @@ private:
 	dependency_collector& add_sub(const dependency_collector& holder, bool add);
 
 	dependency_collector& div_mul(const dependency_collector& holder);
+
+	static void adjust_address(address& addr);
 };
 
 }

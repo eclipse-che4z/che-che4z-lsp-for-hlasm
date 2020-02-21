@@ -61,8 +61,17 @@ void symbol_dependency_tables::resolve_dependant(dependant target, const resolva
 
 	if (target.kind() == dependant_kind::SPACE)
 	{
-		int32_t length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
-		space::resolve(std::get<space_ptr>(target.value), length);
+		int length = 0;
+		auto sp = std::get<space_ptr>(target.value);
+		if (sp->kind == space_kind::ORDINARY || sp->kind == space_kind::LOCTR_MAX || sp->kind == space_kind::LOCTR_SET)
+			length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
+		else if (sp->kind == space_kind::ALIGNMENT)
+			length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset : 0;
+
+		if (sp->kind == space_kind::LOCTR_UNKNOWN)
+			loctr_dependencies.emplace_back(sp, val.get_reloc());
+		else
+			space::resolve(sp, length);
 	}
 	else if (target.kind() == dependant_kind::SYMBOL)
 	{
@@ -179,6 +188,10 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const std:
 
 void symbol_dependency_tables::try_erase_source_statement(dependant index)
 {
+	auto ait = dependency_source_addrs_.find(index);
+	if (ait != dependency_source_addrs_.end())
+		dependency_source_addrs_.erase(ait);
+
 	auto it = dependency_source_stmts_.find(index);
 	if (it == dependency_source_stmts_.end())
 		return;
@@ -189,6 +202,8 @@ void symbol_dependency_tables::try_erase_source_statement(dependant index)
 
 	if (--ref.ref_count == 0)
 		postponed_stmts_.erase(ref.stmt_ref);
+
+	dependency_source_stmts_.erase(it);
 }
 
 symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sym_ctx)
@@ -238,6 +253,37 @@ void symbol_dependency_tables::add_dependency(space_ptr space, const resolvable*
 	dependency_adder adder(*this, std::move(dependency_source_stmt));
 	adder.add_dependency(space, dependency_source);
 	adder.finish();
+}
+
+void symbol_dependency_tables::add_dependency(space_ptr target, addr_res_ptr dependency_source, post_stmt_ptr dependency_source_stmt)
+{
+	auto [it, inserted] = dependency_source_addrs_.emplace(target, std::move(dependency_source));
+
+	add_dependency(dependant(target), &*it->second, false);
+
+	if (dependency_source_stmt)
+	{
+		auto [sit, sinserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
+
+		if (!sinserted)
+			throw std::runtime_error("statement already registered");
+
+		dependency_source_stmts_.emplace(dependant(std::move(target)), statement_ref(sit, 1));
+	}
+}
+
+bool symbol_dependency_tables::check_cycle(space_ptr target)
+{
+	auto dep_src = dependencies_.find(target);
+	if (dep_src == dependencies_.end())
+		return true;
+
+	bool no_cycle = check_cycle(target, extract_dependencies(dep_src->second));
+
+	if (!no_cycle)
+		resolve();
+
+	return no_cycle;
 }
 
 void symbol_dependency_tables::add_dependency(post_stmt_ptr target)
@@ -290,7 +336,7 @@ bool symbol_dependency_tables::check_loctr_cycle()
 	//find cycle
 	for (auto& [v, e] : dep_g)
 	{
-		//if graph has more than one component
+		//if graph has not been visited from this vertex
 		if (visited.find(v) == visited.end())
 			path_stack.push({ v });
 		else
@@ -310,11 +356,17 @@ bool symbol_dependency_tables::check_loctr_cycle()
 					continue;
 			}
 
-			//if cycle found, register to cycled
+			bool found_searched = false;
+			//vertex visited
 			if (visited.find(target) != visited.end())
 			{
 				auto cycle_start = std::find(path.begin(), path.end(), target);
-				cycled.insert(cycle_start, path.end());
+
+				//graph search found already searched subgraph
+				if (cycle_start == path.end() - 1)
+					found_searched = true;
+				else
+					cycled.insert(cycle_start, path.end());
 			}
 
 			//register visited edge
@@ -322,6 +374,10 @@ bool symbol_dependency_tables::check_loctr_cycle()
 				visited[*(path.end() - 2)].insert(target);
 			else
 				visited[target];
+
+			//finishing current path
+			if (found_searched)
+				continue;
 
 			//add next paths
 			auto it = dep_g.find(target);

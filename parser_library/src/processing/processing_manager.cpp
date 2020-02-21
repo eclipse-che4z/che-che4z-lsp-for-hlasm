@@ -61,6 +61,36 @@ processing_manager::processing_manager(
 	provs_.emplace_back(std::move(base_provider));
 }
 
+void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind, performance_metrics& metrics)
+{
+	switch (proc_kind)
+	{
+	case processing_kind::ORDINARY:
+		switch (prov_kind)
+		{
+		case statement_provider_kind::COPY:
+			metrics.copy_statements++;
+			break;
+		case statement_provider_kind::OPEN:
+			metrics.open_code_statements++;
+			break;
+		case statement_provider_kind::MACRO:
+			metrics.macro_statements++;
+			break;
+		}
+		break;
+	case processing_kind::LOOKAHEAD:
+		metrics.lookahead_statements++;
+		break;
+	case processing_kind::COPY:
+		metrics.copy_def_statements++;
+		break;
+	case processing_kind::MACRO:
+		metrics.macro_def_statements++;
+		break;
+	}
+}
+
 void processing_manager::start_processing(std::atomic<bool>* cancel)
 {
 	while (!procs_.empty())
@@ -78,37 +108,9 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 			continue;
 		}
 
-		switch (proc.kind)
-		{
-		case processing_kind::ORDINARY:
-			switch (prov.kind)
-			{
-			case statement_provider_kind::COPY:
-				hlasm_ctx_.metrics.copy_statements++;
-				break;
-			case statement_provider_kind::OPEN:
-				hlasm_ctx_.metrics.open_code_statements++;
-				break;
-			case statement_provider_kind::MACRO:
-				hlasm_ctx_.metrics.macro_statements++;
-				break;
-			}
-			break;
-		case processing_kind::LOOKAHEAD:
-			hlasm_ctx_.metrics.lookahead_statements++;
-			break;
-		case processing_kind::COPY:
-			hlasm_ctx_.metrics.copy_def_statements++;
-			break;
-		case processing_kind::MACRO:
-			hlasm_ctx_.metrics.macro_def_statements++;
-			break;
-		}
-
+		update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
 		prov.process_next(proc);
 	}
-	if (!cancel || !*cancel)
-		add_ord_sym_defs();
 }
 
 statement_provider& processing_manager::find_provider()
@@ -266,72 +268,6 @@ void processing_manager::perform_opencode_jump(context::source_position statemen
 	opencode_prov_.rewind_input(statement_position);
 
 	hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
-}
-
-void hlasm_plugin::parser_library::processing::processing_manager::add_ord_sym_defs()
-{
-	// for all collected ordinary symbol definitions
-	for (const auto& symbol : hlasm_ctx_.lsp_ctx->deferred_ord_defs)
-	{
-		// get the symbol id
-		auto id = hlasm_ctx_.ids().find(*symbol.name);
-		// find symbol in ord context
-		auto ord_symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
-		// if not found, skip it
-		if (!ord_symbol)
-			continue;
-
-		// add new definition
-		auto file = hlasm_ctx_.ids().add(ord_symbol->symbol_location.file, true);
-		auto occurences = &hlasm_ctx_.lsp_ctx->ord_symbols[context::ord_definition(
-			symbol.name,
-			file,
-			symbol.definition_range,
-			ord_symbol->value(),
-			ord_symbol->attributes())];
-		occurences->push_back({ symbol.definition_range,file });
-
-		// adds all its occurences
-		for (auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
-		{
-			if (occurence.first.name == symbol.name)
-			{
-				occurences->push_back({ occurence.first.definition_range,
-					occurence.first.file_name });
-				occurence.second = true;
-			}
-
-		}
-	}
-
-	std::vector<std::pair<context::ord_definition,bool>> temp_occs;
-	// if there are still some symbols in occurences, check if they are defined in context
-	for (const auto& occurence : hlasm_ctx_.lsp_ctx->deferred_ord_occs)
-	{
-		if (occurence.second)
-			continue;
-		// get the symbol id
-		auto id = hlasm_ctx_.ids().find(*occurence.first.name);
-		// find symbol in ord context
-		auto ord_symbol = hlasm_ctx_.ord_ctx.get_symbol(id);
-		// if not found, skip it
-		if (!ord_symbol)
-		{
-			temp_occs.push_back(occurence);
-			continue;
-		}
-		
-		// add
-		hlasm_ctx_.lsp_ctx->ord_symbols[context::ord_definition(
-			occurence.first.name,
-			hlasm_ctx_.ids().add(ord_symbol->symbol_location.file,true),
-			{ ord_symbol->symbol_location.pos,ord_symbol->symbol_location.pos },
-			ord_symbol->value(),
-			ord_symbol->attributes())].push_back(
-				{ occurence.first.definition_range,
-					occurence.first.file_name });
-	}
-	hlasm_ctx_.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
 }
 
 const attribute_provider::resolved_reference_storage& processing_manager::lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)

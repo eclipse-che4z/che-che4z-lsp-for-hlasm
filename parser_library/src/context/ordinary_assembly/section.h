@@ -55,9 +55,6 @@ public:
 
 	//access current location counter
 	location_counter& current_location_counter() const;
-
-	//creates layout of the section
-	void finish_layout();
 };
 
 }

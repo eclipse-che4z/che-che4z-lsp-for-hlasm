@@ -19,7 +19,7 @@ TEST(diagnostics, org_incorrect_second_op)
 {
 	std::string input(
 		R"( 
- ORG 2,complex(operand)
+ ORG *,complex(operand)
 )"
 );
 	analyzer a(input);
@@ -27,7 +27,7 @@ TEST(diagnostics, org_incorrect_second_op)
 	dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
 	ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A020");
+	ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A115");
 }
 
 TEST(diagnostics, exitctl_op_incorrect_format)

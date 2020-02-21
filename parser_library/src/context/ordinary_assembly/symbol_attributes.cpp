@@ -33,6 +33,8 @@ symbol_attributes symbol_attributes::make_machine_attrs(symbol_attributes::len_a
 { return symbol_attributes(symbol_origin::MACH, ebcdic_encoding::to_ebcdic('I'), length); }
 symbol_attributes symbol_attributes::make_extrn_attrs()
 { return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('T'), 1); }
+symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make_org_attrs()
+{ return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('U')); }
 
 data_attr_kind symbol_attributes::transform_attr(char c)
 {

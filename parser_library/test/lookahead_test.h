@@ -703,3 +703,27 @@ B EQU 2,22
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(attribute_lookahead, lookahead_from_macro_bad_following_statement)
+{
+	std::string input(
+		R"( 
+ MACRO
+ M
+&A SETA L'A
+ MEND
+
+ M
+ AGO .A
+F 
+A EQU 1,1,1
+.A ANOP
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}

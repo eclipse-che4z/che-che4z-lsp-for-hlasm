@@ -61,7 +61,7 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 		}
 		else
 		{
-			auto addr = hlasm_ctx.ord_ctx.align(context::no_align);
+			auto addr = hlasm_ctx.ord_ctx.align(context::halfword);
 
 			create_symbol(stmt.stmt_range_ref(), label_name, addr,
 				context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr->size_for_alloc / 8));
@@ -87,5 +87,5 @@ void mach_processor::process(rebuilt_statement stmt, const op_code& opcode)
 	else
 		check(stmt, hlasm_ctx, checker, *this);
 
-	hlasm_ctx.ord_ctx.reserve_storage_area(instr->size_for_alloc / 8, context::no_align);
+	(void)hlasm_ctx.ord_ctx.reserve_storage_area(instr->size_for_alloc / 8, context::halfword);
 }

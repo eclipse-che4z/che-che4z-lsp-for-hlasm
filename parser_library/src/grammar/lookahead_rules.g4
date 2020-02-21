@@ -52,6 +52,7 @@ bad_look
 	: ~(ORDSYMBOL|DOT|SPACE|EOLLN) ~EOLLN*
 	| DOT ~(ORDSYMBOL|EOLLN) ~EOLLN*
 	| ORDSYMBOL ~(SPACE|EOLLN) ~EOLLN*
+	| ORDSYMBOL SPACE
 	| SPACE?;
 
 lookahead_operands_and_remarks

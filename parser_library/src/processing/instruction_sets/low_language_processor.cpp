@@ -62,6 +62,8 @@ bool low_language_processor::create_symbol(range err_range, context::id_index sy
 	if (!ok)
 		add_diagnostic(diagnostic_op::error_E033(err_range));
 
+	check_loctr_dependencies(err_range);
+
 	return ok;
 }
 
@@ -131,6 +133,63 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 	collect_diags_from_child(mngr);
 
 	return std::make_pair(std::move(label), std::move(operands));
+}
+
+bool low_language_processor::check_address_for_ORG(range err_range, const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset)
+{
+	int al = boundary ? (int)((boundary - (addr_to_check.offset % boundary)) % boundary) : 0;
+
+	bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset + al + offset < 0;
+	if (!curr_addr.in_same_loctr(addr_to_check) || underflow)
+	{
+		add_diagnostic(diagnostic_op::error_E068(err_range));
+		return false;
+	}
+	if (!addr_to_check.is_simple())
+	{
+		add_diagnostic(diagnostic_op::error_A115_ORG_op_format(err_range));
+		return false;
+	}
+	return true;
+}
+
+void low_language_processor::check_loctr_dependencies(range err_range)
+{
+	if (hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.empty())
+		return;
+
+	bool ok = true;
+	auto tmp_sect = hlasm_ctx.ord_ctx.current_section();
+
+	for (auto&& [sp, dep] : hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies)
+	{
+		hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
+		hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
+
+		if (!check_address_for_ORG(err_range, dep, hlasm_ctx.ord_ctx.align(context::no_align), sp->boundary, sp->offset))
+		{
+			(void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+			continue;
+		}
+
+		auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(dep, sp->boundary, sp->offset, nullptr, nullptr);
+		auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+		context::space::resolve(sp, std::move(ret));
+		ok &= hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp);
+	}
+	hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
+	hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.clear();
+	hlasm_ctx.ord_ctx.symbol_dependencies.add_defined();
+	if (!ok)
+		add_diagnostic(diagnostic_op::error_E033(err_range));
+
+	ok = true;
+	for (auto& sect : hlasm_ctx.ord_ctx.sections())
+		for (auto& loctr : sect->location_counters())
+			ok &= loctr->check_underflow();
+
+	if (!ok)
+		add_diagnostic(diagnostic_op::error_E068(err_range));
 }
 
 
