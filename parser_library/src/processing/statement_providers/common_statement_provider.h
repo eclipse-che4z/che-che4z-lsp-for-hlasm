@@ -16,8 +16,8 @@
 #define PROCESSING_COMMON_STATEMENT_PROVIDER_H
 
 #include "statement_provider.h"
-#include "statement_fields_parser.h"
-#include "../context/hlasm_context.h"
+#include "../statement_fields_parser.h"
+#include "../../context/hlasm_context.h"
 
 
 namespace hlasm_plugin {
@@ -34,7 +34,7 @@ protected:
 	context::hlasm_context& hlasm_ctx;
 	statement_fields_parser& parser;
 
-	void preprocess_deferred(statement_processor& processor, context::shared_stmt_ptr stmt);
+	void preprocess_deferred(statement_processor& processor, context::cached_statement_storage& cache);
 };
 
 }

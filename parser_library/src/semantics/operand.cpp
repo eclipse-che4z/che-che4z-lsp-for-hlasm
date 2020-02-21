@@ -281,7 +281,7 @@ std::vector<const context::resolvable*> using_instr_assembler_operand::get_resol
 
 std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
-	(info);
+	(void)info;
 	std::vector<std::unique_ptr<checking::asm_operand>> pair;
 	//pair.push_back(make_check_operand(info, *base));
 	//pair.push_back(make_check_operand(info, *end));

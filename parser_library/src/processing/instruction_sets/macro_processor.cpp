@@ -41,7 +41,7 @@ void macro_processor::process(context::unique_stmt_ptr stmt)
 
 bool is_data_def(char c)
 {
-	c = toupper(c);
+	c = (char)toupper(c);
 	return c == 'L' || c == 'I' || c == 'S' || c == 'T' || c == 'D' || c == 'O' || c == 'N' || c == 'K';
 }
 
@@ -222,13 +222,16 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 		auto tmp = op->access_mac();
 		assert(tmp);
 
+		//auto tmp_chain = tmp->chain;
+
 		semantics::concatenation_point::clear_concat_chain(tmp->chain);
 
 		if (tmp->chain.size() >= 2 &&
 			tmp->chain[0]->type == semantics::concat_type::STR && tmp->chain[1]->type == semantics::concat_type::EQU
 			&& context_manager(mngr).try_get_symbol_name(tmp->chain[0]->access_str()->value, range()).first)
 		{
-			auto [valid, id] = mngr.try_get_symbol_name(tmp->chain[0]->access_str()->value, op->operand_range);
+			auto tmp_chain = semantics::concatenation_point::clone(tmp->chain);
+			auto [valid, id] = mngr.try_get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
 			assert(valid);
 			auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
 			if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end() || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
@@ -236,12 +239,12 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 				add_diagnostic(diagnostic_op::error_E010("keyword parameter", tmp->operand_range)); //error - unknown name of keyword parameter
 
 				//MACROCASE TODO
-				auto name = tmp->chain[0]->access_str()->value;
+				auto name = tmp_chain[0]->access_str()->value;
 
-				tmp->chain.erase(tmp->chain.begin());
-				tmp->chain.erase(tmp->chain.begin());
+				tmp_chain.erase(tmp_chain.begin());
+				tmp_chain.erase(tmp_chain.begin());
 
-				args.symbolic_params.push_back({ std::make_unique<context::macro_param_data_single>(name + "=" + semantics::concatenation_point::to_string(tmp->chain)),nullptr });
+				args.symbolic_params.push_back({ std::make_unique<context::macro_param_data_single>(name + "=" + semantics::concatenation_point::to_string(tmp_chain)),nullptr });
 			}
 			else
 			{
@@ -254,17 +257,15 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 					keyword_params.push_back(id);
 				}
 
-				tmp->chain.erase(tmp->chain.begin());
-				tmp->chain.erase(tmp->chain.begin());
+				tmp_chain.erase(tmp_chain.begin());
+				tmp_chain.erase(tmp_chain.begin());
 
-				if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-					args.symbolic_params.push_back({
-						string_to_macrodata(mngr.convert_to<context::C_t>(
-								mngr.get_var_sym_value(*tmp->chain.front()->access_var(),eval_ctx),
-								tmp->chain.front()->access_var()->symbol_range)),
-						id });
+				if (tmp_chain.size() == 1 && tmp_chain.front()->type == semantics::concat_type::SUB)
+					args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp_chain),eval_ctx),id });
 				else
-					args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx),id });
+					args.symbolic_params.push_back({
+						string_to_macrodata(mngr.concatenate_str(tmp_chain, eval_ctx)),
+						id });
 			}
 		}
 		else if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
@@ -274,7 +275,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 						tmp->chain.front()->access_var()->symbol_range)),
 				nullptr });
 		else
-			args.symbolic_params.push_back({ mngr.create_macro_data(std::move(tmp->chain),eval_ctx) ,nullptr });
+			args.symbolic_params.push_back({ mngr.create_macro_data(semantics::concatenation_point::clone(tmp->chain),eval_ctx) ,nullptr });
 	}
 
 	return args;

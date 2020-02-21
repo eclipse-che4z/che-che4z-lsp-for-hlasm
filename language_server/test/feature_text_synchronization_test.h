@@ -12,11 +12,18 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
+#define HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
+
 #include "../src/lsp/feature_text_synchronization.h"
 
-#include "ws_mngr_mock.h"
-#include "response_provider_mock.h"
 #ifdef _WIN32
+const std::string txt_file_uri = R"(file:///c%3A/test/one/blah.txt)";
+const std::string txt_file_path = R"(c:\test\one\blah.txt)";
+#else
+const std::string txt_file_uri = R"(file:///home/user/somefile)";
+const std::string txt_file_path = R"(/home/user/somefile)";
+#endif
 
 TEST(text_synchronization, did_open_file)
 {
@@ -27,9 +34,9 @@ TEST(text_synchronization, did_open_file)
 	std::map<std::string, method> notifs;
 	f.register_methods(notifs);
 
-	json params1 = R"({"textDocument":{"uri":"file:///c%3A/test/one/blah.txt","languageId":"plaintext","version":4,"text":"sad"}})"_json;
+	json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"(","languageId":"plaintext","version":4,"text":"sad"}})");
 
-	EXPECT_CALL(ws_mngr, did_open_file(StrEq("c:\\test\\one\\blah.txt"), 4, StrEq("sad"), 3));
+	EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_path), 4, StrEq("sad"), 3));
 
 	notifs["textDocument/didOpen"]("", params1);
 }
@@ -55,24 +62,24 @@ TEST(text_synchronization, did_change_file)
 	std::map<std::string, method> notifs;
 	f.register_methods(notifs);
 
-	json params1 = R"({"textDocument":{"uri":"file:///c%3A/test/one/blah.txt","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})"_json;
+	json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"(","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
 	document_change expected1[2]{ { { {0,0}, {0,8} }, "sad", 3 },  { { {1,12}, {1,14} }, "", 0 } };
 
-	EXPECT_CALL(ws_mngr, did_change_file(StrEq("c:\\test\\one\\blah.txt"), 7, _, 2)).With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
+	EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 2)).With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
 	notifs["textDocument/didChange"]("",params1);
 
 
 
 	document_change expected2[1]{ { "sad", 3 } };
-	json params2 = R"({"textDocument":{"uri":"file:///c%3A/test/one/blah.txt","version":7},"contentChanges":[{"text":"sad"}]})"_json;
-	EXPECT_CALL(ws_mngr, did_change_file(StrEq("c:\\test\\one\\blah.txt"), 7, _, 1)).With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
+	json params2 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"(","version":7},"contentChanges":[{"text":"sad"}]})");
+	EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 1)).With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
 
 	notifs["textDocument/didChange"]("",params2);
 
 
 
-	json params3 = R"({"textDocument":{"uri":"file:///c%3A/test/one/blah.txt"},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})"_json;
+	json params3 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
 	EXPECT_THROW(notifs["textDocument/didChange"]("",params3), nlohmann::basic_json<>::exception);
 
@@ -87,11 +94,13 @@ TEST(text_synchronization, did_close_file)
 	std::map<std::string, method> notifs;
 	f.register_methods(notifs);
 
-	json params1 = R"({"textDocument":{"uri":"file:///c%3A/test/one/blah.txt"}})"_json;
-	EXPECT_CALL(ws_mngr, did_close_file(StrEq("c:\\test\\one\\blah.txt"))),
+	json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("}})");
+	EXPECT_CALL(ws_mngr, did_close_file(StrEq(txt_file_path))),
 
 	notifs["textDocument/didClose"]("",params1);
 }
+
+#ifdef _WIN32
 
 TEST(feature, uri_to_path)
 {
@@ -124,3 +133,4 @@ TEST(feature, path_to_uri)
 
 #endif // _WIN32
 
+#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H

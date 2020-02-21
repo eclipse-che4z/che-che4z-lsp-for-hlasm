@@ -20,9 +20,10 @@
 #include "context/hlasm_context.h"
 #include "semantics/collector.h"
 #include "semantics/lsp_info_processor.h"
-#include "processing/statement_provider.h"
+#include "processing/statement_providers/statement_provider.h"
 #include "processing/opencode_provider.h"
 #include "processing/statement_fields_parser.h"
+#include "../include/shared/lexer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -71,6 +72,7 @@ protected:
 
 	void process_instruction();
 	void process_statement();
+	void process_statement(semantics::op_rem line, range op_range);
 
 	virtual void process_next(processing::statement_processor& processor) override;
 	virtual bool finished() const override;
@@ -96,10 +98,19 @@ protected:
 
 private:
 	void initialize(context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat);
+	parser_impl* parent_;
+	void initialize(parser_impl* parent);
 
 	semantics::operand_list parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges);
 
+	void parse_rest(std::string text, range text_range);
+	void parse_lookahead(std::string text, range text_range);
+
+	virtual antlr4::misc::IntervalSet getExpectedTokens() override;
+
 	std::vector<parser_holder> parsers_;
+	std::unique_ptr<parser_holder> reparser_;
+	std::unique_ptr<parser_holder> rest_parser_;
 
 	bool last_line_processed_;
 	bool line_end_pushed_;

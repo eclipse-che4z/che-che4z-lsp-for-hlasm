@@ -118,7 +118,7 @@ bool assembler_instruction::check_optable_operands(const std::vector<std::unique
 	return true;
 }
 
-bool assembler_instruction::check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input, const std::string& instr_name, const std::string op_name, const diagnostic_collector& add_diagnostic) const
+bool assembler_instruction::check_typecheck_operands(const std::vector<std::unique_ptr<asm_operand>>& input, const std::string& instr_name, const std::string, const diagnostic_collector& add_diagnostic) const
 {
 	const static std::vector<std::string> typecheck_operands = { "MAGNITUDE", "REGISTER", "MAG", "REG", "NOMAGNITUDE", "NOREGISTER", "NOMAG", "NOREG" };
 	for (const auto& operand : input)
@@ -207,8 +207,8 @@ bool assembler_instruction::check_fail_parameters(const std::vector<std::unique_
 		else if (is_operand_complex(operand.get()))
 		{
 			complex_operand* current_operand = (complex_operand*)operand.get();
-			if (current_operand->operand_identifier != "MNOTE" && current_operand->operand_identifier != "MSG" ||
-				current_operand->operand_identifier != "MAXERRS" && current_operand->operand_identifier != "NOMAXERRS")
+			if ((current_operand->operand_identifier != "MNOTE" && current_operand->operand_identifier != "MSG") ||
+				(current_operand->operand_identifier != "MAXERRS" && current_operand->operand_identifier != "NOMAXERRS"))
 			{
 				add_diagnostic(diagnostic_op::error_A233_FAIL_param_format(instr_name, operand->operand_range));
 				return false;
@@ -503,7 +503,8 @@ bool assembler_instruction::check_assembler_process_operand(const asm_operand* i
 			// check mxref option
 			else if (current_operand->operand_identifier == "MXREF" || current_operand->operand_identifier == "MX")
 			{
-				if (param == nullptr || param->operand_identifier != "FULL" && param->operand_identifier != "SOURCE" && param->operand_identifier != "XREF")
+				if (param == nullptr ||
+					(param->operand_identifier != "FULL" && param->operand_identifier != "SOURCE" && param->operand_identifier != "XREF"))
 				{
 					add_diagnostic(diagnostic_op::error_A218_MXREF_format(name_of_instruction, current_operand->operand_parameters[0]->operand_range));
 					return false;

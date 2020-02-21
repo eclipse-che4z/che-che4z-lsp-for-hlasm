@@ -131,7 +131,7 @@ var_symbol returns [vs_ptr vs]
 		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
 		$vs = std::make_unique<basic_var_sym>(id, std::move($tmp.value), r);
-		collector.add_lsp_symbol({*id,r,symbol_type::var});
+		collector.add_lsp_symbol(id,r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};

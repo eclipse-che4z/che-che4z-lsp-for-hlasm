@@ -326,10 +326,12 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 				{
 					param_names.push_back(var_id);
 
-					tmp->chain.erase(tmp->chain.begin());
-					tmp->chain.erase(tmp->chain.begin());
+					semantics::concat_chain tmp_chain = semantics::concatenation_point::clone(tmp->chain);
 
-					result_.prototype.symbolic_params.emplace_back(mngr.create_macro_data(std::move(tmp->chain)), var_id);
+					tmp_chain.erase(tmp_chain.begin());
+					tmp_chain.erase(tmp_chain.begin());
+
+					result_.prototype.symbolic_params.emplace_back(mngr.create_macro_data(std::move(tmp_chain)), var_id);
 				}
 			}
 			else
@@ -405,7 +407,7 @@ void macrodef_processor::add_correct_copy_nest()
 	for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
 	{
 		auto& nest = hlasm_ctx.current_copy_stack()[i];
-		auto pos = nest.definition[nest.current_statement]->statement_position();
+		auto pos = nest.cached_definition[nest.current_statement].get_base()->statement_position();
 		auto loc = location(pos, nest.definition_location.file);
 		result_.nests.back().push_back(std::move(loc));
 	}

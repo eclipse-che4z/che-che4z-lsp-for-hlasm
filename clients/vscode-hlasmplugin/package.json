@@ -2,7 +2,8 @@
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
   "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
-  "version": "0.8.1",
+  "version": "0.9.1",
+  "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
   "homepage": "https://github.com/eclipse/che-che4z-lsp-for-hlasm",
@@ -15,7 +16,11 @@
     "HLASM",
     "LSP",
     "Assembler",
-    "Mainframe"
+    "Mainframe",
+    "z/OS",
+    "zos",
+    "zowe",
+    "ibm assembler"
   ],
   "activationEvents": [
     "*"
@@ -99,10 +104,10 @@
           {
             "type": "hlasm",
             "request": "launch",
+            "configId": 0,
             "name": "Macro tracer: current program",
-            "program": "${command:CurrentProgramName}",
-            "stopOnEntry": true,
-            "debugServer": 4745
+            "program": "${command:extension.hlasm-plugin.getCurrentProgramName}",
+            "stopOnEntry": true
           }
         ],
         "configurationSnippets": [
@@ -112,10 +117,10 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
+              "configId": 0,
               "name": "Macro tracer: current program",
-              "program": "^\"\\${command:CurrentProgramName}\"",
-              "stopOnEntry": true,
-              "debugServer": 4745
+              "program": "^\"\\${command:extension.hlasm-plugin.getCurrentProgramName}\"",
+              "stopOnEntry": true
             }
           },
           {
@@ -124,17 +129,13 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
+              "configId": 1,
               "name": "Macro tracer: Ask for file name",
-              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
-              "stopOnEntry": true,
-              "debugServer": 4745
+              "program": "^\"\\${workspaceFolder}/\\${command:extension.hlasm-plugin.getProgramName}\"",
+              "stopOnEntry": true
             }
           }
-        ],
-        "variables": {
-          "AskForProgramName": "extension.hlasm-plugin.getProgramName",
-          "CurrentProgramName": "extension.hlasm-plugin.getCurrentProgramName"
-        }
+        ]
       }
     ],
     "languages": [

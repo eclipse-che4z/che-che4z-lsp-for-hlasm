@@ -15,36 +15,38 @@
 #ifndef PROCESSING_PROCESSING_FORMAT_H
 #define PROCESSING_PROCESSING_FORMAT_H
 
+#include <stdint.h>
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-enum class processing_kind
+enum class processing_kind : uint8_t
 {
 	ORDINARY, LOOKAHEAD, MACRO, COPY
 };
 
-enum class processing_form
+enum class processing_form : uint8_t
 {
 	MACH, ASM, MAC, CA, DAT, IGNORED, DEFERRED, UNKNOWN
 };
 
-enum class ordinary_proc_type
+enum class ordinary_proc_type : uint8_t
 {
 	MACH, ASM, MAC, CA, DAT, UNKNOWN
 };
 
-enum class lookahead_proc_type
+enum class lookahead_proc_type : uint8_t
 {
 	COPY, EQU, IGNORED
 };
 
-enum class macro_proc_type
+enum class macro_proc_type : uint8_t
 {
 	PROTO, COPY, CA, DEFERRED
 };
 
-enum class operand_occurence
+enum class operand_occurence : uint8_t
 {
 	PRESENT,ABSENT
 };
@@ -54,6 +56,11 @@ struct processing_format
 {
 	processing_format(processing_kind kind, processing_form form, operand_occurence occurence = operand_occurence::PRESENT)
 		: kind(kind), form(form), occurence(occurence) {}
+
+	bool operator==(const processing_format& oth) const
+	{
+		return kind == oth.kind && form == oth.form && occurence == oth.occurence;
+	}
 
 	processing_kind kind;
 	processing_form form;

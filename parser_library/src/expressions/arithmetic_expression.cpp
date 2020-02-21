@@ -34,7 +34,7 @@ arithmetic_expression::arithmetic_expression(int32_t val)
 {
 }
 
-arithmetic_expression::arithmetic_expression(const arithmetic_expression & expr):value_(expr.value_)
+arithmetic_expression::arithmetic_expression(const arithmetic_expression & expr): value_(expr.value_)
 {
 	if (expr.diag)
 		diag = std::make_unique<diagnostic_op>(*expr.diag);
@@ -68,14 +68,13 @@ expr_ptr arithmetic_expression::from_string(const std::string_view& s, int base)
 	long long lval;
 	auto conversion_result = std::from_chars(s.data() + sign_off, s.data() + sign_off + s.size(), lval, base);
 
-	if ((may_have_sign && lval > max && lval < min) || !may_have_sign && lval > umax 
-		|| conversion_result.ec == std::errc::result_out_of_range)
-		return default_expr_with_error<arithmetic_expression>
-		(error_messages::ea01());
+	if ((may_have_sign && lval > max && lval < min) ||
+		(!may_have_sign && lval > umax) ||
+		conversion_result.ec == std::errc::result_out_of_range)
+		return default_expr_with_error<arithmetic_expression> (error_messages::ea01());
 
 	if (conversion_result.ec == std::errc::invalid_argument)
-		return default_expr_with_error<arithmetic_expression>
-		(error_messages::ea02(std::string(s)));
+		return default_expr_with_error<arithmetic_expression> (error_messages::ea02(std::string(s)));
 
 	return make_arith(static_cast<int32_t>(lval));
 }

@@ -27,8 +27,24 @@ const useTcp = false;
  *  your extension is activated the very first time the command is executed
  */
 var highlight: ASMSemanticHighlightingFeature;
-export function activate(context: vscode.ExtensionContext) {
+var hlasmpluginClient: vscodelc.LanguageClient;
+var dapPort: number;
+
+// returns random free port
+const getPort = () => new Promise<number>((resolve,reject) => 
+{
+    var srv = Net.createServer();
+    srv.unref();
+    srv.listen(0, () => {
+        resolve((srv.address() as Net.AddressInfo).port);
+        srv.close();
+    });
+});
+
+export async function activate(context: vscode.ExtensionContext) {
     //debug setup
+    dapPort = await getPort();
+    
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', config => {
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the name of a program in the workspace folder",
@@ -42,16 +58,16 @@ export function activate(context: vscode.ExtensionContext) {
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     
     var lang_server_folder = process.platform;
-    
+
     if(useTcp)
     {
-        const port = 4746;
+        const lspPort = await getPort();
         //spawn the server
-        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", port.toString()]);
+        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", dapPort.toString(), lspPort.toString()]);
 
         //set the tcp communication
         let connectionInfo = {
-            port: port,
+            port: lspPort,
             host:'localhost'
         };
         var serverOptions: vscodelc.ServerOptions = () => {
@@ -67,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
     {
         const server: vscodelc.Executable = {
             command: path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'),
-            args: getConfig<string[]>('arguments')
+            args: getConfig<string[]>('arguments').concat(["-p", dapPort.toString()])
         };
         var serverOptions: vscodelc.ServerOptions = server;
     }
@@ -87,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     //client init
-    var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     //asm contribution 
     highlight = new ASMSemanticHighlightingFeature(hlasmpluginClient);
     hlasmpluginClient.registerFeature(highlight);
@@ -97,9 +113,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(highlight.progress);
 
     //first run, set the language if possible and configs 
-    editorChanged(vscode.window.activeTextEditor);
     if (vscode.window.activeTextEditor)
+    {
         highlight.showProgress(vscode.window.activeTextEditor.document);
+        editorChanged(vscode.window.activeTextEditor.document);
+    }
 
     // vscode/theia compatibility temporary fix
     // theia uses monaco commands
@@ -366,6 +384,48 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
     })
 }
 
+class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
+{
+    protected dapPort: number;
+    constructor(dapPort: number)
+    {
+        this.dapPort = dapPort;
+    }
+
+    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+        // no launch.json, debug current
+        if (!config.type && !config.request && !config.name)
+        {
+            config.type = "hlasm";
+            config.request = "launch";
+            config.name = "Macro tracer: current program";
+            config.program = "${command:extension.hlasm-plugin.getCurrentProgramName}";
+            config.stopOnEntry = true;
+            config.configId = 0;
+        }
+        if (config.configId == 0)
+        {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && editor.document.languageId === 'hlasm')
+            {
+                config.debugServer = dapPort;
+            }
+        }
+        else if (config.configId == 1)
+            config.debugServer = dapPort;
+
+        if (!config.debugServer) {
+            return vscode.window.showInformationMessage("Wrong debug settings. Please make sure that you are debugging HLASM file or try setting the configurations to default state.").then(_ => {
+                return undefined;	// abort launch
+            });
+        }
+
+		return config;
+	}
+}
+
+vscode.debug.registerDebugConfigurationProvider('hlasm', new HlasmConfigurationProvider(dapPort));
+
 // when contents of a document change, show parse progress
 vscode.workspace.onDidChangeTextDocument(event => {
     highlight.showProgress(event.document);
@@ -373,6 +433,7 @@ vscode.workspace.onDidChangeTextDocument(event => {
 // when document opens, show parse progress
 vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
     highlight.showProgress(document);
+    editorChanged(document);
 })
 
 vscode.workspace.onDidChangeConfiguration(event =>
@@ -398,20 +459,17 @@ const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
 
 // should the configs be checked
 var configs = true;
-function editorChanged(editor: vscode.TextEditor)
+function editorChanged(document: vscode.TextDocument)
 {
-    if (editor)
-    {
-        setHlasmLanguage(editor.document);
-        if (editor.document.languageId == 'hlasm' && vscode.workspace.workspaceFolders && configs)
-            checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
-    }
+    if (setHlasmLanguage(document) && vscode.workspace.workspaceFolders && configs)
+        checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
 }
 
 // when active editor changes, try to set a language for it
 vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => 
 {
-    editorChanged(editor);
+    if (editor)
+        editorChanged(editor.document);
 })
 
 function checkHlasmLanguage(text: string)
@@ -448,11 +506,15 @@ function checkHlasmLanguage(text: string)
 }
 
 //automatic detection function
-function setHlasmLanguage(document: vscode.TextDocument) {
+function setHlasmLanguage(document: vscode.TextDocument) : Boolean {
     if (document.languageId == 'plaintext') {
         if (checkHlasmLanguage(document.getText()))
+        {
             vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+            return true;
+        }
     }
+    return document.languageId == 'hlasm';
 }
 
 /**

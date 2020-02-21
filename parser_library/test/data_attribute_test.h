@@ -131,13 +131,14 @@ TEST(data_attributes, N_var_syms)
 
  macro
  m  &a
- gbla nn1,nn2
+ gbla nn1,nn2,nn3
 &nn1 seta N'&a
 &nn2 seta N'&a(1)
+&nn3 seta N'&syslist(2)
  mend
 
- gbla nn1,nn2
- m (1,2,3)
+ gbla nn1,nn2,nn3
+ m (1,2,3),4
 )";
 
 	analyzer a(input);
@@ -149,6 +150,7 @@ TEST(data_attributes, N_var_syms)
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N4"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 0);
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 3);
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN3"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -164,13 +166,14 @@ TEST(data_attributes, K_var_syms_good)
 
  macro
  m  &a
- gbla nn1,nn2
+ gbla nn1,nn2,nn3
 &nn1 seta K'&a
 &nn2 seta K'&a(1)
+&nn3 seta K'&syslist(2)
  mend
 
- gbla nn1,nn2
- m (1,2,3)
+ gbla nn1,nn2,nn3
+ m (1,2,3),three
 )";
 
 	analyzer a(input);
@@ -180,6 +183,7 @@ TEST(data_attributes, K_var_syms_good)
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("N2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN1"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 7);
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN2"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 1);
+	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("NN3"))->access_set_symbol_base()->access_set_symbol<A_t>()->get_value(), 5);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -210,9 +214,9 @@ C LOCTR
 	analyzer a(input);
 	a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->attributes().type(), ebcdic_encoding::a2e['I']);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->attributes().type(), ebcdic_encoding::a2e['J']);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->attributes().type(), ebcdic_encoding::a2e['J']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->attributes().type(), ebcdic_encoding::a2e[U'I']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->attributes().type(), ebcdic_encoding::a2e[U'J']);
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("C"))->attributes().type(), ebcdic_encoding::a2e[U'J']);
 
 	a.collect_diags();
 	ASSERT_EQ(a.diags().size(), (size_t)0);

@@ -32,13 +32,16 @@ public:
 
 	virtual void stopped(const std::string& reason, const std::string& addtl_info) override
 	{
+		(void)reason;
+		(void)addtl_info;
 		++stop_count;
 		while (stopped_);
 		stopped_ = true;
 	}
 
-	virtual void exited(int exit_code)
+	virtual void exited(int exit_code) override
 	{
+		(void)exit_code;
 		exited_ = true;
 	}
 

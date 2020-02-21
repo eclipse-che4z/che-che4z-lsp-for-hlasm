@@ -409,7 +409,7 @@ TEST(context_macro, repeat_call_same_macro)
 	EXPECT_EQ(m3->named_params.find(key)->second->get_value(), "cas");
 
 	EXPECT_EQ(SYSLIST->get_value({ 2,3 }), "");
-	EXPECT_EQ(SYSLIST->get_value({ 3 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST->get_value(3), "(first,second,third)");
 	EXPECT_EQ(SYSLIST->get_value({ 3,2 }), "second");
 	EXPECT_EQ(SYSLIST->get_value({ 3,2,1,1 }), "second");
 	EXPECT_EQ(SYSLIST->get_value({ 3,2,1,1,2 }), "");
@@ -512,7 +512,7 @@ TEST(context_macro, recurr_call)
 
 	EXPECT_EQ(SYSLIST3->get_value(0), "");
 	EXPECT_EQ(SYSLIST3->get_value({ 2,3 }), "");
-	EXPECT_EQ(SYSLIST3->get_value({ 3 }), "(first,second,third)");
+	EXPECT_EQ(SYSLIST3->get_value(3), "(first,second,third)");
 	EXPECT_EQ(SYSLIST3->get_value({ 3,2 }), "second");
 	EXPECT_EQ(SYSLIST3->get_value({ 3,2,1,1 }), "second");
 	EXPECT_EQ(SYSLIST3->get_value({ 3,2,1,1,2 }), "");

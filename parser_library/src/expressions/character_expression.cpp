@@ -360,7 +360,7 @@ expr_ptr character_expression::b2c() const
 		for (; i < e; ++i)
 		{
 			unsigned char num = i >= 0 ? value_[i] - '0' : 0;
-			if (num > 1 || num < 0)
+			if (num > 1)
 				return default_expr_with_error<character_expression>
 				(error_messages::ec06());
 			val = (val << 1) + num;

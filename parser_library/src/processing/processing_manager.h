@@ -79,7 +79,6 @@ private:
 		
 	void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
 	void add_ord_sym_defs();
-	bool create_sym_def(context::definition& definition);
 
 	processing_tracer* tracer_ = nullptr;
 };

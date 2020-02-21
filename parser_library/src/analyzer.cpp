@@ -28,7 +28,7 @@ analyzer::analyzer(
 	:diagnosable_ctx(*hlasm_ctx),
 	hlasm_ctx_(own_ctx ? context::ctx_ptr(hlasm_ctx) : nullptr), hlasm_ctx_ref_(*hlasm_ctx),
 	listener_(file_name),
-	lsp_proc_(file_name, text, hlasm_ctx_ref_.lsp_ctx),
+	lsp_proc_(file_name, text, hlasm_ctx),
 	input_(text), lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
 	mngr_(std::unique_ptr<processing::opencode_provider>(parser_), hlasm_ctx_ref_, data, file_name, lib_provider, *parser_, tracer)
 {

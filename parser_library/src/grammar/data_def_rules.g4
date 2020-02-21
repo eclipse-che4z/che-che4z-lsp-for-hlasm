@@ -14,6 +14,8 @@
 
 parser grammar data_def_rules;
 
+dat_op returns [operand_ptr op]
+	: data_def {$op = std::make_unique<data_def_operand>(std::move($data_def.value),provider.get_range($data_def.ctx));};
 
 mach_expr_pars returns [mach_expr_ptr e]
 	: lpar mach_expr rpar

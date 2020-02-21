@@ -105,8 +105,6 @@ public:
 	virtual bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const override;
 protected:
 	virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
-private:
-	uint8_t word_length_;
 };
 
 class data_def_type_H final : public data_def_type_H_F_FD

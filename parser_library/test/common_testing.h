@@ -40,6 +40,7 @@ class empty_attribute_provider : public attribute_provider
 	virtual const attribute_provider::resolved_reference_storage&
 		lookup_forward_attribute_references(attribute_provider::forward_reference_storage references)
 	{
+		(void)references;
 		return resolved_symbols;
 	}
 };

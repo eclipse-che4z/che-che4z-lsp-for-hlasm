@@ -433,7 +433,7 @@ X EQU 1,2,C'X'
 		return true;
 	}
 
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const { return false; }
+	virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)
@@ -509,6 +509,43 @@ X EQU 1,2
 	EXPECT_EQ(a.context().get_var_sym(a.context().ids().add("AFTER_MAC"))->access_set_symbol_base()->access_set_symbol<B_t>()->get_value(), true);
 
 	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(attribute_lookahead, lookup_from_macro_last_line)
+{
+	std::string input(
+		R"( macro
+ GETMAIN &b=,&l=
+ AIF   (T'&l NE 'O' AND T'&b NE 'O').ERR14      @L1A 
+ mend
+         GETMAIN   b=svc)"
+);
+
+	look_parse_lib_prov mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
+{
+	std::string input(
+		R"( macro
+ GETMAIN &b=,&l=
+ AIF   (T'&l NE 'O' AND T'&b NE 'O').ERR14      @L1A 
+ mend
+         GETMAIN   b=svc
+)"
+	);
+
+	look_parse_lib_prov mock;
+	analyzer a(input, "", mock);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(attribute_lookahead, lookup_of_two_refs_evaluation)

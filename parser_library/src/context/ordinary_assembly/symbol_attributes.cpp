@@ -129,9 +129,9 @@ bool symbol_attributes::is_defined(data_attr_kind attribute) const
 bool symbol_attributes::can_have_SI_attr() const
 {
 	return origin == symbol_origin::DAT &&
-		(type_ == ebcdic_encoding::a2e['D'] || type_ == ebcdic_encoding::a2e['E'] || type_ == ebcdic_encoding::a2e['F'] 
-			|| type_ == ebcdic_encoding::a2e['G'] || type_ == ebcdic_encoding::a2e['H'] || type_ == ebcdic_encoding::a2e['K'] 
-			|| type_ == ebcdic_encoding::a2e['L'] || type_ == ebcdic_encoding::a2e['P'] || type_ == ebcdic_encoding::a2e['Z']);
+		(type_ == ebcdic_encoding::a2e[U'D'] || type_ == ebcdic_encoding::a2e[U'E'] || type_ == ebcdic_encoding::a2e[U'F'] 
+			|| type_ == ebcdic_encoding::a2e[U'G'] || type_ == ebcdic_encoding::a2e[U'H'] || type_ == ebcdic_encoding::a2e[U'K'] 
+			|| type_ == ebcdic_encoding::a2e[U'L'] || type_ == ebcdic_encoding::a2e[U'P'] || type_ == ebcdic_encoding::a2e[U'Z']);
 }
 
 symbol_attributes::value_t symbol_attributes::get_attribute_value(data_attr_kind attribute) const

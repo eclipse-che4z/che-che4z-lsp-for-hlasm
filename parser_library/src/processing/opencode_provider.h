@@ -16,7 +16,7 @@
 #define PROCESSING_OPENCODE_PROVIDER_H
 
 #include "../context/source_snapshot.h"
-#include "statement_provider.h"
+#include "statement_providers/statement_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 		// configuration path
 		ws_folder = argv[1];
 
-	auto conf_path = ws_folder + "/pgm_conf.json";
+	auto conf_path = ws_folder + "/.hlasmplugin/pgm_conf.json";
 
 	std::ifstream in(conf_path);
 	if (in.fail())
