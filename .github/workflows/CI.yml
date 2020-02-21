@@ -24,7 +24,7 @@ jobs:
   
   win-server:
     name: Windows language server
-    runs-on: windows-latest
+    runs-on: windows-2019
     
     steps:
     - uses: actions/checkout@v1
@@ -47,7 +47,7 @@ jobs:
 
   linux-server:
       name: Linux language server
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-18.04
       
       steps:
       - uses: actions/checkout@v1
@@ -67,7 +67,7 @@ jobs:
   
   macos-server:
       name: MacOS language server
-      runs-on: macos-latest
+      runs-on: macos-10.15
       
       steps:
       - uses: actions/checkout@v1
@@ -88,7 +88,7 @@ jobs:
           path: build/bin/language_server
     
   VSIX:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: [win-server, linux-server, macos-server]
     
     steps:

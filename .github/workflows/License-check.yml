@@ -28,5 +28,7 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: Check license headers
-        run: bash cmake/check_license.sh
+        run: |
+          chmod +x cmake/check_license.sh
+          cmake/check_license.sh
 
