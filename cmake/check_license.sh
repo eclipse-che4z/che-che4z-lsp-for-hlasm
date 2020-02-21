@@ -11,8 +11,17 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
+#These are MIT-licensed third party sources
+EXCEPTIONS="semanticHighlighting.ts
+protocol.semanticHighlighting.ts"
 
-SOURCES=$(find -name *.cpp -or -name *.h -or -name *.js -or -name *.ts -or -name *.yml -or -name CMakeLists.txt)
+EXLIST=""
+for e in $EXCEPTIONS
+do
+  EXLIST="$EXLIST -and -not -name $e"
+done
+
+SOURCES=$(find "-(" -name *.cpp -or -name *.h -or -name *.js -or -name *.ts -or -name *.yml -or -name CMakeLists.txt "-)" $EXLIST)
 
 RET=0
 for f in $SOURCES
