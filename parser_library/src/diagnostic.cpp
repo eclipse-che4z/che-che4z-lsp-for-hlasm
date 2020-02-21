@@ -1171,6 +1171,11 @@ diagnostic_op diagnostic_op::error_E067(const range& range)
 	return diagnostic_op(diagnostic_severity::error, "E067", "Bad symbol in instruction", range);
 }
 
+diagnostic_op diagnostic_op::error_E068(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E068", "Operand value falls outside of current section/LOCTR", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);

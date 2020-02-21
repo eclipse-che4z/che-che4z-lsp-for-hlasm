@@ -2,6 +2,11 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
+## [0.10.0] - 2020-02-11
+
+#### Added
+- ORG instruction processing.
+
 ## [0.9.1] - 2020-02-06
 
 #### Fixed

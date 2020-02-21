@@ -53,19 +53,3 @@ location_counter& section::current_location_counter() const
 {
 	return *curr_loctr_;
 }
-
-void section::finish_layout()
-{
-	for (size_t i = 0; i < loctrs_.size(); i++)
-	{
-		if (i == 0)
-			loctrs_[0]->finish_layout(0);
-		else
-		{
-			if (!loctrs_[i - 1]->spaces().empty())
-				throw std::runtime_error("layout can not be created");
-
-			loctrs_[i]->finish_layout(loctrs_[i - 1]->storage());
-		}
-	}
-}

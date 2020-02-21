@@ -32,6 +32,7 @@ namespace context {
 
 class ordinary_assembly_context;
 
+using redefined_t = std::pair<space_ptr, address>;
 
 struct statement_ref
 {
@@ -48,11 +49,11 @@ class symbol_dependency_tables
 {
 	//actual dependecies of symbol or space
 	std::unordered_map<dependant, const resolvable*> dependencies_;
-	//optional length dependency to dependency of symbol
-	std::unordered_map<id_index, const resolvable*> length_dependencies_;
 
-	//statement where dependencies are from
+	//statements where dependencies are from
 	std::unordered_map<dependant, statement_ref> dependency_source_stmts_;
+	//addresses where dependencies are from
+	std::unordered_map<dependant, addr_res_ptr> dependency_source_addrs_;
 	//list of statements containing dependencies that can not be checked yet
 	std::unordered_set<post_stmt_ptr> postponed_stmts_;
 
@@ -71,6 +72,7 @@ class symbol_dependency_tables
 
 	bool add_dependency(dependant target, const resolvable* dependency_source, bool check_cycle);
 public:
+	std::vector<redefined_t> loctr_dependencies;
 
 	symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
 
@@ -84,6 +86,8 @@ public:
 
 	//add space dependency
 	void add_dependency(space_ptr target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt);
+	void add_dependency(space_ptr target, addr_res_ptr dependency_source, post_stmt_ptr dependency_source_stmt = nullptr);
+	bool check_cycle(space_ptr target);
 
 	//add statement dependency on its operands
 	void add_dependency(post_stmt_ptr target);

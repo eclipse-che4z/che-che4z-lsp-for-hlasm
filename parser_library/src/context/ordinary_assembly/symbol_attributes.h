@@ -49,6 +49,7 @@ struct symbol_attributes
 	static symbol_attributes make_section_attrs();
 	static symbol_attributes make_machine_attrs(len_attr);
 	static symbol_attributes make_extrn_attrs();
+	static symbol_attributes make_org_attrs();
 
 	//helper function to transform char to enum 
 	static data_attr_kind transform_attr(char c);
