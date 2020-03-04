@@ -30,6 +30,8 @@ jobs:
       
       steps:
       - uses: actions/checkout@v1
+      - name: Get version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
       - name: Configure
@@ -84,5 +86,6 @@ jobs:
           -Dsonar.cfamily.threads=4
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
+          -Dsonar.projectVersion=${{ env.VERSION }}
           ${{ env.PR_NUMBER }}
 
