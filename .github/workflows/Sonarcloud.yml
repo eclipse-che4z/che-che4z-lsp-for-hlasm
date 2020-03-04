@@ -74,12 +74,12 @@ jobs:
           export PATH=$SONAR_SCANNER_HOME/bin:$PATH &&
           export SONAR_SCANNER_OPTS="-server" &&
           sonar-scanner
-          -Dsonar.projectKey=michalbali256_che-che4z-lsp-for-hlasm
-          -Dsonar.organization=michalbali256
+          -Dsonar.projectKey=eclipse_che-che4z-lsp-for-hlasm
+          -Dsonar.organization=eclipse
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include
           -Dsonar.tests=parser_library/test,language_server/test
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.login=1f690d37aeb32567131614b29f0d4a7b9d51f30b
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.cfamily.build-wrapper-output=build/bw-output
           -Dsonar.cfamily.threads=4
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
