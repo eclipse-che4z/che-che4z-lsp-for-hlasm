@@ -39,7 +39,7 @@ struct sequence_symbol
 	//unique identifier
 	id_index name;
 	//location of the symbol in code
-	location symbol_location; //TODO for lsp
+	location symbol_location;
 	sequence_symbol_kind kind;
 
 	const macro_sequence_symbol* access_macro_symbol() const;

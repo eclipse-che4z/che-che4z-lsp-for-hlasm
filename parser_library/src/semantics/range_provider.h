@@ -22,11 +22,13 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
+//state of range adjusting
 enum class adjusting_state
 {
 	NONE, SUBSTITUTION, MACRO_REPARSE
 };
 
+//structure for computing range
 struct range_provider
 {
 public:

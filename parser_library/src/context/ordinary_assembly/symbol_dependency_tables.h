@@ -34,6 +34,7 @@ class ordinary_assembly_context;
 
 using redefined_t = std::pair<space_ptr, address>;
 
+//helper structure to count dependencies of a statement
 struct statement_ref
 {
 	using ref_t = std::unordered_set<post_stmt_ptr>::const_iterator;
@@ -72,6 +73,7 @@ class symbol_dependency_tables
 
 	bool add_dependency(dependant target, const resolvable* dependency_source, bool check_cycle);
 public:
+	//newly defined loctr values
 	std::vector<redefined_t> loctr_dependencies;
 
 	symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
@@ -98,6 +100,7 @@ public:
 	//registers that some symbol has been defined
 	void add_defined();
 
+	//checks for cycle in location counter value
 	bool check_loctr_cycle();
 
 	//collect all postponed statements either if they still contain dependent objects
@@ -106,6 +109,7 @@ public:
 	friend dependency_adder;
 };
 
+//helper class to add dependencies
 class dependency_adder
 {
 	symbol_dependency_tables& owner_;
@@ -117,14 +121,19 @@ public:
 
 	dependency_adder(symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt);
 
+	//add symbol dependency on statement
 	[[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);
 
+	//add symbol attribute dependency on statement
 	[[nodiscard]] bool add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source);
 
+	//add space dependency
 	void add_dependency(space_ptr target, const resolvable* dependency_source);
 
+	//add statement dependency on its operands
 	void add_dependency();
 
+	//finish adding dependencies
 	void finish();
 };
 

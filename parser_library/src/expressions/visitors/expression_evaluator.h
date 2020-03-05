@@ -21,9 +21,12 @@
 #include "../../diagnosable_ctx.h"
 
 namespace hlasm_plugin::parser_library::expressions {
+
+//visitor that evaluates expressions
 class expression_evaluator : public generated::hlasmparserBaseVisitor, public diagnosable_ctx
 {
 	evaluation_context eval_ctx_;
+	//storage of resolved symbol attribute references
 	const processing::attribute_provider::resolved_reference_storage* resolved_refs_;
 public:
 	expression_evaluator(evaluation_context eval_ctx);

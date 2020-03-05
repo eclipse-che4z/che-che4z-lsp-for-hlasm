@@ -25,6 +25,7 @@ struct statement_si_defer_done;
 }
 namespace context {
 
+//storage used to store one deferred statement in many parsed formats
 class cached_statement_storage
 {
 public:

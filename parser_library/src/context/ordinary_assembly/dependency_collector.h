@@ -35,6 +35,7 @@ struct dependency_collector
 	std::optional<address> unresolved_address;
 	//dependent symbol
 	std::set<id_index> undefined_symbols;
+	//dependent symbol dependencies
 	std::vector<attr_ref> undefined_attr_refs;
 
 	dependency_collector();

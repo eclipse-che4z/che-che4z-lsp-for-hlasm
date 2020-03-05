@@ -21,6 +21,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+//visitor for analyzing any undefined symbol attribute references
 class expression_analyzer : public generated::hlasmparserBaseVisitor
 {
 	evaluation_context eval_ctx_;

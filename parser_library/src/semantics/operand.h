@@ -44,12 +44,14 @@ using operand_ptr = std::unique_ptr<operand>;
 using operand_list = std::vector<operand_ptr>;
 using remark_list = std::vector<range>;
 
+//operand and remark holding structure
 struct op_rem
 {
 	std::vector<operand_ptr> operands;
 	std::vector<range> remarks;
 };
 
+//sequence symbol structure
 struct seq_sym
 {
 	context::id_index name;
@@ -76,6 +78,7 @@ struct operand
 
 
 
+//structure for empty operands
 struct empty_operand final : public operand
 {
 	empty_operand(const range operand_range);
@@ -93,6 +96,7 @@ struct model_operand final : public operand
 
 
 
+//operands that can return value and have dependencies
 struct evaluable_operand : public operand, public diagnosable_op_impl
 {
 	evaluable_operand(const operand_type type, const range operand_range);
@@ -108,6 +112,7 @@ struct evaluable_operand : public operand, public diagnosable_op_impl
 
 
 
+//operand representing simple expression
 struct simple_expr_operand : public virtual evaluable_operand
 {
 	simple_expr_operand(expressions::mach_expr_ptr expression);
@@ -126,6 +131,7 @@ enum class mach_kind {EXPR,ADDR};
 struct expr_machine_operand;
 struct address_machine_operand;
 
+//machine instruction operand
 struct machine_operand : public virtual evaluable_operand
 {
 	machine_operand(const mach_kind kind);
@@ -141,6 +147,7 @@ struct machine_operand : public virtual evaluable_operand
 
 
 
+//machine expression operand
 struct expr_machine_operand final : public machine_operand, public simple_expr_operand
 {
 	expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range);
@@ -152,7 +159,7 @@ struct expr_machine_operand final : public machine_operand, public simple_expr_o
 };
 
 
-
+//machine address operand
 struct address_machine_operand final : public machine_operand
 {
 	address_machine_operand(
@@ -186,6 +193,7 @@ struct using_instr_assembler_operand;
 struct complex_assembler_operand;
 struct string_assembler_operand;
 
+//assembler instruction operand
 struct assembler_operand : public virtual evaluable_operand
 {
 	assembler_operand(const asm_kind kind);
@@ -199,6 +207,7 @@ struct assembler_operand : public virtual evaluable_operand
 };
 
 
+//assembler expression operand
 struct expr_assembler_operand final : public assembler_operand, public simple_expr_operand
 {
 private:
@@ -213,6 +222,7 @@ public:
 
 
 
+//USING instruction operand
 struct using_instr_assembler_operand final : public assembler_operand
 {
 	using_instr_assembler_operand(expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
@@ -233,6 +243,7 @@ struct using_instr_assembler_operand final : public assembler_operand
 
 
 
+//complex assembler operand (i.e. 'OVERRIDE(A,B,C)')
 struct complex_assembler_operand final : public assembler_operand
 {
 	struct component_value_t 
@@ -292,6 +303,7 @@ struct complex_assembler_operand final : public assembler_operand
 
 
 
+//assembler string operand
 struct string_assembler_operand : public assembler_operand
 {
 
@@ -310,7 +322,7 @@ struct string_assembler_operand : public assembler_operand
 	virtual void collect_diags() const override;
 };
 
-//TODO operand_range*************
+//data definition operand
 struct data_def_operand final : public evaluable_operand
 {
 	data_def_operand(expressions::data_definition data_def, const range operand_range);
@@ -339,6 +351,7 @@ struct expr_ca_operand;
 struct seq_ca_operand;
 struct branch_ca_operand;
 
+//coditional assembly instruction operand
 struct ca_operand : public operand
 {
 	ca_operand(const ca_kind kind, const range operand_range);
@@ -355,6 +368,7 @@ struct ca_operand : public operand
 	const ca_kind kind;
 };
 
+//CA variable symbol operand
 struct var_ca_operand final : public ca_operand
 {
 	var_ca_operand(vs_ptr variable_symbol, const range operand_range);
@@ -362,6 +376,7 @@ struct var_ca_operand final : public ca_operand
 	vs_ptr variable_symbol;
 };
 
+//CA expression operand
 struct expr_ca_operand final : public ca_operand
 {
 	expr_ca_operand(antlr4::ParserRuleContext* expression, const range operand_range);
@@ -369,6 +384,7 @@ struct expr_ca_operand final : public ca_operand
 	antlr4::ParserRuleContext* expression;
 };
 
+//CA sequence symbol operand
 struct seq_ca_operand final : public ca_operand
 {
 	seq_ca_operand(seq_sym sequence_symbol, const range operand_range);
@@ -376,6 +392,7 @@ struct seq_ca_operand final : public ca_operand
 	seq_sym sequence_symbol;
 };
 
+//CA branching operand (i.e. (5).here)
 struct branch_ca_operand final : public ca_operand
 {
 	branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, const range operand_range);
@@ -386,6 +403,7 @@ struct branch_ca_operand final : public ca_operand
 
 
 
+//macro instruction operand
 struct macro_operand final : public operand
 {
 	macro_operand(concat_chain chain, const range operand_range);
@@ -393,6 +411,7 @@ struct macro_operand final : public operand
 	concat_chain chain;
 };
 
+//macro instruction operand
 struct macro_operand_string final : public operand
 {
 	macro_operand_string(std::string value, const range operand_range);

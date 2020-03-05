@@ -194,13 +194,6 @@ public:
 	template <typename T>
 	set_sym_ptr create_global_variable(id_index id,bool is_scalar)
 	{
-		//TODO error handling
-		//if there is symbolic param with same name
-		// add_diagnostic(diagnostic_s::error_E031("", "symbolic parameter", {})); //error - symbolic parameter with the same name
-		//if there is set symbol with same name
-		// add_diagnostic(diagnostic_s::error_E031("", "set symbol", {})); //error - set symbol with the same name
-
-
 		auto tmp = curr_scope()->variables.find(id);
 		if (tmp != curr_scope()->variables.end())
 			return tmp->second;
