@@ -24,9 +24,12 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
+//helper structure representing position in source file
 struct source_position
 {
+	//line in the file
 	size_t file_line;
+	//character offset in the file
 	size_t file_offset;
 
 	source_position(size_t file_line = 0, size_t file_offset = 0) 
@@ -38,6 +41,7 @@ struct source_position
 	}
 };
 
+//helper structure representing a copy member invocation
 struct copy_frame 
 {
 	id_index copy_member; 
@@ -52,6 +56,7 @@ struct copy_frame
 	}
 };
 
+//snapshot of a source_context structure
 struct source_snapshot
 {
 	location instruction;

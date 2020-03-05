@@ -90,12 +90,14 @@ enum class space_kind
 struct space
 {
 	const space_kind kind;
-	//alignment of last address of the space
+	//alignment of space end address
 	alignment align;
 
+	//previous address values
+	//for LOCTR_UNKNOWN space kind
 	address previous_loctr_value;
-	size_t boundary;
-	int offset;
+	size_t previous_boundary;
+	int previous_offset;
 
 	location_counter& owner;
 
@@ -110,11 +112,10 @@ struct space
 	static void resolve(space_ptr this_space, space_ptr value);
 	//fill space with the whole address
 	static void resolve(space_ptr this_space, address value);
-
+	//common resolver for 2 methods above
 	static void resolve(space_ptr this_space, std::variant<space_ptr, address> value);
 
 	void add_listener(address* addr);
-
 	void remove_listener(address* addr);
 
 private:

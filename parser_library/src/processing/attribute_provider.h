@@ -22,6 +22,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
+//interface for providing values of yet undefined symbol attributes
 class attribute_provider
 {
 public:
