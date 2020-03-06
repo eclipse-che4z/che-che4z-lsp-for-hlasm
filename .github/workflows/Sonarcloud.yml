@@ -61,7 +61,9 @@ jobs:
         run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test server_test > coverage.txt
       - name: Pull request setting
         if: github.event_name == 'pull_request'
-        run: echo ::set-env name=PR_NUMBER::-Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+        run: |
+          echo ::set-env name=PR_NUMBER::-Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo ::set-env name=HEAD_BRANCH::-Dsonar.pullrequest.branch=${{ github.head_ref }}
       - name: Sonar scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,5 +89,6 @@ jobs:
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
           -Dsonar.projectVersion=${{ env.VERSION }}
+          ${{ env.HEAD_BRANCH }}
           ${{ env.PR_NUMBER }}
 
