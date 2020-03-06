@@ -64,7 +64,6 @@ jobs:
         run: |
           echo ::set-env name=PR_NUMBER::-Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           echo ::set-env name=HEAD_BRANCH::-Dsonar.pullrequest.branch=${{ github.head_ref }}
-      - run: echo ${{ env.HEAD_BRANCH }}
       - name: Sonar scan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
