@@ -33,4 +33,3 @@ jobs:
         run: |
           chmod +x cmake/check_license.sh
           cmake/check_license.sh
-
