@@ -150,6 +150,9 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)
 		line.operands.clear();
 
+	if (after_substitution && line.operands.size() && line.operands.front()->type == semantics::operand_type::MODEL)
+		line.operands.clear();
+
 	range op_range = line.operands.empty() ?
 		field_range.original_range :
 		semantics::range_provider::union_range(line.operands.front()->operand_range, line.operands.back()->operand_range);
