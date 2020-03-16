@@ -102,9 +102,6 @@ private:
 	std::filesystem::path proc_grps_path_;
 	std::filesystem::path pgm_conf_path_;
 
-	// pair of extension string and its whole regex
-	extension_regex_map extensions_;
-
 	bool opened_ = false;
 
 	bool load_config();

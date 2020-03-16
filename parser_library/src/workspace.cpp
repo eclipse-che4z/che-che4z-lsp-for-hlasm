@@ -266,7 +266,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	}
 
 	// get extensions from pgm conf
-	extensions_.clear();
+	extension_regex_map extensions;
 	std::regex extension_regex("^(.*\\*)(\\.\\w+)$");
 	json wildcards = pgm_conf_json["alwaysRecognize"];
 	for (const auto& wildcard : wildcards)
@@ -274,12 +274,9 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		std::string wildcard_str = wildcard.get<std::string>();
 		// extension wildcard
 		if (std::regex_match(wildcard_str, extension_regex))
-		{
-			auto regex = wildcard2regex(wildcard_str);
-			extensions_[std::regex_replace(wildcard_str, extension_regex, "$2")] = regex;
-		}
+			extensions[std::regex_replace(wildcard_str, extension_regex, "$2")] = wildcard2regex(wildcard_str);
 	}
-
+	auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
 	// process processor groups
 	json pgs = proc_grps_json["pgroups"];
 	for (auto & pg : pgs)
@@ -297,9 +294,9 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 				const std::string p = lib_path_json.get<std::string>();
 				std::filesystem::path lib_path(p.empty() ? p : p + '/');
 				if (lib_path.is_absolute())
-					prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.lexically_normal().string(),extensions_));
+					prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.lexically_normal().string(), extensions_ptr));
 				else if (lib_path.is_relative())
-					prc_grp.add_library(std::make_unique<library_local>(file_manager_, (ws_path / lib_path).lexically_normal().string(), extensions_));
+					prc_grp.add_library(std::make_unique<library_local>(file_manager_, (ws_path / lib_path).lexically_normal().string(), extensions_ptr));
 				//else ignore, publish warning
 			}
 		}
