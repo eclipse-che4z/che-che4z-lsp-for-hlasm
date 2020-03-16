@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * Copyright (c) 2019 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
@@ -12,6 +13,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+=======
+>>>>>>> merged
 #ifndef HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
 #define HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
 #include "common_testing.h"

@@ -102,6 +102,9 @@ private:
 	std::filesystem::path proc_grps_path_;
 	std::filesystem::path pgm_conf_path_;
 
+	// pair of extension string and its whole regex
+	extension_regex_map extensions_;
+
 	bool opened_ = false;
 
 	bool load_config();
@@ -113,6 +116,8 @@ private:
 
 	void filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file_ptr file);
 	bool is_dependency_(const std::string & file_uri);
+
+	bool program_id_match(const std::string& filename, const program_id& program) const;
 };
 
 }

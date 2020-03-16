@@ -21,7 +21,7 @@
 #include "json.hpp"
 #include "parser_tools.h"
 #include "processor.h"
-
+#include "wildcard.h"
 namespace hlasm_plugin {
 namespace parser_library {
 
@@ -57,10 +57,9 @@ void workspace::add_proc_grp(processor_group pg)
 	proc_grps_.emplace(pg.name(), std::move(pg));
 }
 
-bool program_id_match(const std::string & filename, const program_id & program)
+bool workspace::program_id_match(const std::string & filename, const program_id & program) const
 {
-	//TODO: actual wildcard matching instead of regex
-	std::regex prg_regex(program);
+	std::regex prg_regex = wildcard2regex(program);
 	return std::regex_match(filename, prg_regex);
 }
 
@@ -247,8 +246,42 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		return false;
 	}
 
-	json pgs = proc_grps_json["pgroups"];
+	//pgm_conf.json parse
+	file_ptr pgm_conf_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF).string());
 
+	if (pgm_conf_file->update_and_get_bad())
+		return false;
+
+	json pgm_conf_json;
+
+	try
+	{
+		pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
+		pgm_conf_.clear();
+	}
+	catch (const nlohmann::json::exception&)
+	{
+		config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
+		return false;
+	}
+
+	// get extensions from pgm conf
+	extensions_.clear();
+	std::regex extension_regex("^(.*\\*)(\\.\\w+)$");
+	json wildcards = pgm_conf_json["alwaysRecognize"];
+	for (const auto& wildcard : wildcards)
+	{
+		std::string wildcard_str = wildcard.get<std::string>();
+		// extension wildcard
+		if (std::regex_match(wildcard_str, extension_regex))
+		{
+			auto regex = wildcard2regex(wildcard_str);
+			extensions_[std::regex_replace(wildcard_str, extension_regex, "$2")] = regex;
+		}
+	}
+
+	// process processor groups
+	json pgs = proc_grps_json["pgroups"];
 	for (auto & pg : pgs)
 	{
 		const std::string & name = pg["name"].get<std::string>();
@@ -263,38 +296,19 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 				//the added '/' will ensure the path always ends with directory separator
 				const std::string p = lib_path_json.get<std::string>();
 				std::filesystem::path lib_path(p.empty() ? p : p + '/');
-				if(lib_path.is_absolute())
-					prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.lexically_normal().string()));
+				if (lib_path.is_absolute())
+					prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.lexically_normal().string(),extensions_));
 				else if (lib_path.is_relative())
-					prc_grp.add_library(std::make_unique<library_local>(file_manager_, (ws_path / lib_path).lexically_normal().string()));
+					prc_grp.add_library(std::make_unique<library_local>(file_manager_, (ws_path / lib_path).lexically_normal().string(), extensions_));
 				//else ignore, publish warning
 			}
 		}
 
 		add_proc_grp(std::move(prc_grp));
 	}
-
-
-	//pgm_conf.json parse
-	file_ptr pgm_conf_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER /FILENAME_PGM_CONF).string());
-
-	if (pgm_conf_file->update_and_get_bad())
-		return false;
-
-	json pgm_conf_json;
-
-	try
-	{
-		pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
-		pgm_conf_.clear();
-	}
-	catch (const nlohmann::json::exception &)
-	{
-		config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
-		return false;
-	}
+	
+	// process programs
 	json pgms = pgm_conf_json["pgms"];
-
 	for (auto & pgm : pgms)
 	{
 		const std::string & program = pgm["program"].get<std::string>();
@@ -309,6 +323,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 			config_diags_.push_back(diagnostic_s::error_W004(pgm_conf_file->get_file_name(), name_));
 		}
 	}
+
 	return true;
 }
 

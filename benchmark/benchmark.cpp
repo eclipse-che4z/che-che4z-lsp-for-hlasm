@@ -44,7 +44,7 @@ public:
 class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
 {
 public:
-	virtual void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics & metrics) override
+	virtual void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
 	{
 		metrics_ = metrics;
 	}
@@ -54,13 +54,43 @@ public:
 
 int main(int argc, char** argv)
 {
-	std::string ws_folder;
-	// no arguments
-	if (argc < 2)
-		ws_folder = ".";
-	else
-		// configuration path
-		ws_folder = argv[1];
+	std::string ws_folder = ".";
+	size_t start_range = 0, end_range = 0;
+	for (size_t i = 1; i < argc - 1; i++)
+	{
+		std::string arg = argv[i];
+		if (arg == "-r")
+		{
+			std::string val = argv[i + 1];
+			auto pos = val.find('-');
+			if (pos == val.npos)
+			{
+				std::clog << "Range parameter should be in format Start-End" << '\n';
+				return 1;
+			}
+			try
+			{
+				start_range = std::stoi(val.substr(0, pos));
+				end_range = std::stoi(val.substr(pos + 1));
+			}
+			catch (...)
+			{
+				std::clog << "Range values must be integers" << '\n';
+				return 1;
+			}
+			i++;
+		}
+		else if (arg == "-p")
+		{
+			ws_folder = argv[i + 1];
+			i++;
+		}
+		else
+		{
+			std::clog << "Unknown parameter " << arg << '\n';
+			return 1;
+		}
+	}
 
 	auto conf_path = ws_folder + "/.hlasmplugin/pgm_conf.json";
 
@@ -88,9 +118,14 @@ int main(int argc, char** argv)
 		size_t all_files = 0;
 		long long whole_time = 0;
 		size_t program_count = 0;
-
+		size_t current_iter = 0;
 		for (auto program : programs)
 		{
+			if (current_iter < start_range)
+			{
+				current_iter++;
+				continue;
+			}
 			// program file
 			auto source_file = program["program"].get<std::string>();
 			auto source_path = ws_folder + "/" + source_file;
@@ -153,8 +188,8 @@ int main(int argc, char** argv)
 				<< "Continued Statements: " << collector.metrics_.continued_statements << '\n'
 				<< "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
 				<< "Lines: " << collector.metrics_.lines << '\n'
-				<< "Executed Statement/ms: " << exec_statements /(double)time << '\n'
-				<< "Line/ms: " << collector.metrics_.lines/(double)time << '\n'
+				<< "Executed Statement/ms: " << exec_statements / (double)time << '\n'
+				<< "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
 				<< "Files: " << collector.metrics_.files << "\n\n" << std::endl;
 
 			result.push_back(json(
@@ -180,14 +215,16 @@ int main(int argc, char** argv)
 					{"Files", collector.metrics_.files}
 				}
 			));
-
+			if (current_iter >= end_range)
+				break;
+			current_iter++;
 		}
 
 		std::clog << "Programs: " << program_count << '\n'
-					<< "Benchmarked files: " <<  all_files << '\n'
-					<< "Benchmark time: " << whole_time << " ms" << '\n'
-					<< "Average statement/ms: " << average_stmt_ms / (double)programs.size() << '\n'
-					<< "Average line/ms: " << average_line_ms / (double)programs.size() << "\n\n" << std::endl;
+			<< "Benchmarked files: " << all_files << '\n'
+			<< "Benchmark time: " << whole_time << " ms" << '\n'
+			<< "Average statement/ms: " << average_stmt_ms / (double)programs.size() << '\n'
+			<< "Average line/ms: " << average_line_ms / (double)programs.size() << "\n\n" << std::endl;
 
 		result.push_back(json(
 			{

@@ -22,6 +22,8 @@
 #include "file_manager.h"
 #include "diagnosable_impl.h"
 
+using extension_regex_map = std::unordered_map<std::string, std::regex>;
+
 namespace hlasm_plugin::parser_library {
 
 class library : public virtual diagnosable
@@ -41,7 +43,7 @@ class library_local : public library, public diagnosable_impl
 public:
 	//takes reference to file manager that provides access to the files
 	//and normalised path to directory that it wraps.
-	library_local(file_manager& file_manager, std::string lib_path);
+	library_local(file_manager& file_manager, std::string lib_path, const extension_regex_map& extensions);
 	
 	library_local(const library_local &) = delete;
 	library_local & operator= (const library_local &) = delete;
@@ -60,7 +62,8 @@ private:
 	file_manager & file_manager_;
 
 	std::string lib_path_;
-	std::unordered_set<std::string> files_;
+	std::unordered_map<std::string, std::string> files_;
+	const extension_regex_map& extensions_;
 	//indicates whether load_files function was called (not whether it was succesful)
 	bool files_loaded_ = false;
 	

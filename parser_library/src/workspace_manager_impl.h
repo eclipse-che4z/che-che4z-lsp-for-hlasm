@@ -52,7 +52,7 @@ public:
 
 	void add_workspace(std::string name, std::string uri)
 	{
-		auto ws = workspaces_.emplace(name, workspace { uri, name, file_manager_ });
+		auto ws = workspaces_.emplace(name, workspace(uri, name, file_manager_));
 		ws.first->second.open();
 
 		notify_diagnostics_consumers();
