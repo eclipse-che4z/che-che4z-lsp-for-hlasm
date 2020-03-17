@@ -250,6 +250,11 @@ if(BUILD_FUZZER)
 
     set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
 	set_target_properties(library_fuzzer PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+    
+	configure_file(
+                ${PROJECT_SOURCE_DIR}/fuzzer.dict
+                ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
+				COPYONLY)
 
     if(UNIX)
 	    target_link_libraries(library_fuzzer pthread)
