@@ -47,6 +47,7 @@
 #include "context_test.h"
 #include "lexer_test.h"
 #include "parser_test.h"
+#include "fuzzer_test.h"
 
 #include "utf_conv_test.h"
 #include "diagnosable_ctx_test.h"
