@@ -23,6 +23,8 @@
 #include "../checking/instr_operand.h"
 #include "../checking/data_definition/data_definition_operand.h"
 
+//the file contains structures representing operands in the operand field of statement
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
