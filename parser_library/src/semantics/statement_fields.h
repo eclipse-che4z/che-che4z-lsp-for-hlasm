@@ -20,6 +20,8 @@
 
 #include <variant>
 
+//this file contains structures representing each statement field
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {

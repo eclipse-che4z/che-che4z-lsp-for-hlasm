@@ -18,6 +18,8 @@
 #include "statement_fields.h"
 #include "../context/hlasm_statement.h"
 
+ //this file contains inherited structures from hlasm_statement that are used during the parsing
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
