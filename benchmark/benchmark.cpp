@@ -17,6 +17,7 @@
 #include <iostream>
 #include "json.hpp"
 #include <fstream>
+#include <filesystem>
 #include "shared/workspace_manager.h"
 #include "../parser_library/src/file_impl.h"
 
@@ -54,11 +55,13 @@ public:
 
 int main(int argc, char** argv)
 {
-	std::string ws_folder = ".";
+	std::string ws_folder = std::filesystem::current_path().string();
+	std::string single_file = "";
 	size_t start_range = 0, end_range = 0;
 	for (size_t i = 1; i < argc - 1; i++)
 	{
 		std::string arg = argv[i];
+		// range parameter, format start-end
 		if (arg == "-r")
 		{
 			std::string val = argv[i + 1];
@@ -80,9 +83,16 @@ int main(int argc, char** argv)
 			}
 			i++;
 		}
+		// path parameter, path to the folder containing .hlasmplugin
 		else if (arg == "-p")
 		{
 			ws_folder = argv[i + 1];
+			i++;
+		}
+		// cycle parameter, loop infinitely single file
+		else if (arg == "-c")
+		{
+			single_file = argv[i + 1];
 			i++;
 		}
 		else
@@ -128,94 +138,101 @@ int main(int argc, char** argv)
 			}
 			// program file
 			auto source_file = program["program"].get<std::string>();
-			auto source_path = ws_folder + "/" + source_file;
-			in = std::ifstream(source_path);
-			if (in.fail())
+			if (single_file != "" && source_file != single_file)
 				continue;
-			program_count++;
-			// program's contents
-			auto content = std::string((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
-			content = hlasm_plugin::parser_library::file_impl::replace_non_utf8_chars(content);
-
-			// new workspace manager
-			hlasm_plugin::parser_library::workspace_manager ws;
-			diagnostic_counter consumer;
-			ws.register_diagnostics_consumer(&consumer);
-			metrics_collector collector;
-			ws.register_performance_metrics_consumer(&collector);
-			// input folder as new workspace
-			ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
-
-			// start counting
-			auto c_start = std::clock();
-			auto start = std::chrono::high_resolution_clock::now();
-			std::clog << "Parsing file: " << source_file << std::endl;
-			// open file/parse
-			try
+			while (true)
 			{
-				ws.did_open_file(source_path.c_str(), 1, content.c_str(), content.length());
-			}
-			catch (...)
-			{
-				std::clog << "Parse failed\n\n" << std::endl;
+				auto source_path = ws_folder + "/" + source_file;
+				in = std::ifstream(source_path);
+				if (in.fail())
+					continue;
+				program_count++;
+				// program's contents
+				auto content = std::string((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
+				content = hlasm_plugin::parser_library::file_impl::replace_non_utf8_chars(content);
+
+				// new workspace manager
+				hlasm_plugin::parser_library::workspace_manager ws;
+				diagnostic_counter consumer;
+				ws.register_diagnostics_consumer(&consumer);
+				metrics_collector collector;
+				ws.register_performance_metrics_consumer(&collector);
+				// input folder as new workspace
+				ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
+
+				// start counting
+				auto c_start = std::clock();
+				auto start = std::chrono::high_resolution_clock::now();
+				std::clog << "Parsing file: " << source_file << std::endl;
+				// open file/parse
+				try
+				{
+					ws.did_open_file(source_path.c_str(), 1, content.c_str(), content.length());
+				}
+				catch (...)
+				{
+					std::clog << "Parse failed\n\n" << std::endl;
+					result.push_back(json(
+						{
+							{"File", source_file },
+							{"Success", false}
+						}
+					));
+					continue;
+				}
+				auto c_end = std::clock();
+				auto end = std::chrono::high_resolution_clock::now();
+				auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+				auto exec_statements = collector.metrics_.open_code_statements + collector.metrics_.copy_statements + collector.metrics_.macro_statements
+					+ collector.metrics_.lookahead_statements + collector.metrics_.reparsed_statements;
+				average_stmt_ms += (exec_statements / (double)time);
+				average_line_ms += collector.metrics_.lines / (double)time;
+				all_files += collector.metrics_.files;
+				whole_time += time;
+
+				std::clog << "Time: " << time << " ms" << '\n'
+					<< "Errors: " << consumer.error_count << '\n'
+					<< "Open Code Statements: " << collector.metrics_.open_code_statements << '\n'
+					<< "Copy Statements: " << collector.metrics_.copy_statements << '\n'
+					<< "Macro Statements: " << collector.metrics_.macro_statements << '\n'
+					<< "Copy Def Statements: " << collector.metrics_.copy_def_statements << '\n'
+					<< "Macro Def Statements: " << collector.metrics_.macro_def_statements << '\n'
+					<< "Lookahead Statements: " << collector.metrics_.lookahead_statements << '\n'
+					<< "Reparsed Statements: " << collector.metrics_.reparsed_statements << '\n'
+					<< "Continued Statements: " << collector.metrics_.continued_statements << '\n'
+					<< "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
+					<< "Lines: " << collector.metrics_.lines << '\n'
+					<< "Executed Statement/ms: " << exec_statements / (double)time << '\n'
+					<< "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
+					<< "Files: " << collector.metrics_.files << "\n\n" << std::endl;
+
 				result.push_back(json(
 					{
 						{"File", source_file },
-						{"Success", false}
+						{"Success", true},
+						{"Errors", consumer.error_count},
+						{"Warnings", consumer.warning_count },
+						{"Wall Time (ms)", time},
+						{"CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC},
+						{"Open Code Statements: " ,collector.metrics_.open_code_statements},
+						{"Copy Statements: " ,collector.metrics_.copy_statements},
+						{"Macro Statements: " , collector.metrics_.macro_statements},
+						{"Copy Def Statements: " , collector.metrics_.copy_def_statements},
+						{"Macro Def Statements: " , collector.metrics_.macro_def_statements },
+						{"Lookahead Statements: " ,collector.metrics_.lookahead_statements},
+						{"Reparsed Statements: " , collector.metrics_.reparsed_statements},
+						{"Continued Statements: ",collector.metrics_.continued_statements},
+						{"Non-continued Statements: ",collector.metrics_.non_continued_statements},
+						{"Lines", collector.metrics_.lines},
+						{"ExecStatement/ms", exec_statements / (double)time},
+						{"Line/ms", collector.metrics_.lines / (double)time},
+						{"Files", collector.metrics_.files}
 					}
 				));
-				continue;
+				if (single_file == "")
+					break;
 			}
-			auto c_end = std::clock();
-			auto end = std::chrono::high_resolution_clock::now();
-			auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-			auto exec_statements = collector.metrics_.open_code_statements + collector.metrics_.copy_statements + collector.metrics_.macro_statements
-				+ collector.metrics_.lookahead_statements + collector.metrics_.reparsed_statements;
-			average_stmt_ms += (exec_statements / (double)time);
-			average_line_ms += collector.metrics_.lines / (double)time;
-			all_files += collector.metrics_.files;
-			whole_time += time;
-
-			std::clog << "Time: " << time << " ms" << '\n'
-				<< "Errors: " << consumer.error_count << '\n'
-				<< "Open Code Statements: " << collector.metrics_.open_code_statements << '\n'
-				<< "Copy Statements: " << collector.metrics_.copy_statements << '\n'
-				<< "Macro Statements: " << collector.metrics_.macro_statements << '\n'
-				<< "Copy Def Statements: " << collector.metrics_.copy_def_statements << '\n'
-				<< "Macro Def Statements: " << collector.metrics_.macro_def_statements << '\n'
-				<< "Lookahead Statements: " << collector.metrics_.lookahead_statements << '\n'
-				<< "Reparsed Statements: " << collector.metrics_.reparsed_statements << '\n'
-				<< "Continued Statements: " << collector.metrics_.continued_statements << '\n'
-				<< "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
-				<< "Lines: " << collector.metrics_.lines << '\n'
-				<< "Executed Statement/ms: " << exec_statements / (double)time << '\n'
-				<< "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
-				<< "Files: " << collector.metrics_.files << "\n\n" << std::endl;
-
-			result.push_back(json(
-				{
-					{"File", source_file },
-					{"Success", true},
-					{"Errors", consumer.error_count},
-					{"Warnings", consumer.warning_count },
-					{"Wall Time (ms)", time},
-					{"CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC},
-					{"Open Code Statements: " ,collector.metrics_.open_code_statements},
-					{"Copy Statements: " ,collector.metrics_.copy_statements},
-					{"Macro Statements: " , collector.metrics_.macro_statements},
-					{"Copy Def Statements: " , collector.metrics_.copy_def_statements},
-					{"Macro Def Statements: " , collector.metrics_.macro_def_statements },
-					{"Lookahead Statements: " ,collector.metrics_.lookahead_statements},
-					{"Reparsed Statements: " , collector.metrics_.reparsed_statements},
-					{"Continued Statements: ",collector.metrics_.continued_statements},
-					{"Non-continued Statements: ",collector.metrics_.non_continued_statements},
-					{"Lines", collector.metrics_.lines},
-					{"ExecStatement/ms", exec_statements / (double)time},
-					{"Line/ms", collector.metrics_.lines / (double)time},
-					{"Files", collector.metrics_.files}
-				}
-			));
-			if (current_iter >= end_range)
+			if (current_iter >= end_range && end_range > 0)
 				break;
 			current_iter++;
 		}

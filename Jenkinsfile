@@ -230,7 +230,7 @@ Linux: {
         sh "mkdir ${BIN_PATH}/win32 && mv language_server.exe ${BIN_PATH}/win32/"
         
         //temporary download macos binary from artifactory, later unstash like win and linux
-        sh 'wget http://czprapd-jenkins.mcl.broadcom.net:8081/artifactory/local-files/hlasm/macos/language_server-0.8.1'
+        sh 'wget http://czprapd-jenkins.dhcp.broadcom.net:8081/artifactory/local-files/hlasm/macos/language_server-0.8.1'
         sh "mkdir ${BIN_PATH}/darwin && chmod +x language_server-0.8.1 && mv language_server-0.8.1 ${BIN_PATH}/darwin/language_server"
         
         filename = "hlasm-language-support-${version}-" + env.CHANGE_ID + ".vsix"

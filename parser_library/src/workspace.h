@@ -40,6 +40,7 @@ using ws_highlight_info = std::unordered_map< std::string, semantics::highlighti
 struct program
 {
 	program(program_id prog_id, proc_grp_id pgroup) : prog_id(prog_id), pgroup(pgroup) {}
+
 	program_id prog_id;
 	proc_grp_id pgroup;
 };
@@ -94,8 +95,8 @@ private:
 	file_manager & file_manager_;
 
 	std::unordered_map<proc_grp_id, processor_group> proc_grps_;
-	std::vector<program> pgm_conf_;
-
+	std::map<std::string,program> exact_pgm_conf_;
+	std::vector<std::pair<program, std::regex>> regex_pgm_conf_;
 	processor_group implicit_proc_grp;
 
 	std::filesystem::path ws_path_;
@@ -106,6 +107,8 @@ private:
 
 	bool load_config();
 	
+	bool is_wildcard(const std::string& str);
+
 	//files, that depend on others (e.g. open code files that use macros)
 	std::set<std::string> dependants_;
 

@@ -66,12 +66,19 @@ bool workspace::program_id_match(const std::string & filename, const program_id 
 const processor_group & workspace::get_proc_grp_by_program(const std::string & filename) const
 {
 	assert(opened_);
-	for (const auto & pgm : pgm_conf_)
+
+	std::filesystem::path fname_path(filename);
+	std::string file = fname_path.lexically_relative(uri_).lexically_normal().string();
+	
+	// direct match
+	auto program = exact_pgm_conf_.find(file);
+	if (program != exact_pgm_conf_.cend())
+		return  proc_grps_.at(program->second.pgroup);
+
+	for (const auto & pgm : regex_pgm_conf_)
 	{
-		std::filesystem::path fname_path(filename);
-		
-		if(program_id_match(fname_path.lexically_relative(uri_).lexically_normal().string(), pgm.prog_id))
-			return proc_grps_.at(pgm.pgroup);
+		if (std::regex_match(file,pgm.second))
+			return proc_grps_.at(pgm.first.pgroup);
 	}
 	return implicit_proc_grp;
 }
@@ -152,7 +159,7 @@ void workspace::refresh_libraries()
 			lib->refresh();
 		}
 	}
-}
+} 
 
 void workspace::did_open_file(const std::string & file_uri)
 {
@@ -257,7 +264,8 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	try
 	{
 		pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
-		pgm_conf_.clear();
+		exact_pgm_conf_.clear();
+		regex_pgm_conf_.clear();
 	}
 	catch (const nlohmann::json::exception&)
 	{
@@ -274,7 +282,7 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 		std::string wildcard_str = wildcard.get<std::string>();
 		// extension wildcard
 		if (std::regex_match(wildcard_str, extension_regex))
-			extensions[std::regex_replace(wildcard_str, extension_regex, "$2")] = wildcard2regex(wildcard_str);
+			extensions.insert({ std::regex_replace(wildcard_str, extension_regex, "$2"), wildcard2regex((ws_path / wildcard_str).string()) });
 	}
 	auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
 	// process processor groups
@@ -308,12 +316,19 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	json pgms = pgm_conf_json["pgms"];
 	for (auto & pgm : pgms)
 	{
-		const std::string & program = pgm["program"].get<std::string>();
+		std::string pgm_name = pgm["program"].get<std::string>();
 		const std::string & pgroup = pgm["pgroup"].get<std::string>();
 
 		if (proc_grps_.find(pgroup) != proc_grps_.end())
 		{
-			pgm_conf_.emplace_back(program, pgroup);
+#ifdef _WIN32
+			// change of forward slash to double backslash on windows
+			pgm_name = std::regex_replace(pgm_name, slash, "\\");
+#endif
+			if (!is_wildcard(pgm_name))
+				exact_pgm_conf_.emplace(pgm_name, program{ pgm_name, pgroup });
+			else
+				regex_pgm_conf_.push_back({ program{ pgm_name, pgroup }, wildcard2regex(pgm_name) });
 		}
 		else
 		{ 
@@ -322,6 +337,10 @@ bool hlasm_plugin::parser_library::workspace::load_config()
 	}
 
 	return true;
+}
+bool workspace::is_wildcard(const std::string& str)
+{
+	return str.find('*') != std::string::npos || str.find('?') != std::string::npos;
 }
 
 void workspace::filter_and_close_dependencies_(const std::set<std::string>& dependencies, processor_file_ptr file)

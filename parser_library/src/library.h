@@ -22,7 +22,7 @@
 #include "file_manager.h"
 #include "diagnosable_impl.h"
 
-using extension_regex_map = std::unordered_map<std::string, std::regex>;
+using extension_regex_map = std::unordered_multimap<std::string, std::regex>;
 
 namespace hlasm_plugin::parser_library {
 
