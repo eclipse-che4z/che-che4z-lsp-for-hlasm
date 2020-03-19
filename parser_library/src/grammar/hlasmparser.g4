@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //starting statement rules
+ //rules for identifier, number, remark
 parser grammar hlasmparser;
 
 import

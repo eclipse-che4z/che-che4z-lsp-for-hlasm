@@ -23,6 +23,9 @@
 #include "antlr4-runtime.h"
 #include "../context/id_storage.h"
 
+//this file is a composition of structures that create concat_chain
+//concat_chain is used to represent model statement fields
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {

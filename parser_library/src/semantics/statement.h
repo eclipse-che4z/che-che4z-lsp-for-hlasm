@@ -18,10 +18,13 @@
 #include "statement_fields.h"
 #include "../context/hlasm_statement.h"
 
+ //this file contains inherited structures from hlasm_statement that are used during the parsing
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
+//structure representing core fields of statmenent
 struct core_statement
 {
 	virtual const range& stmt_range_ref() const = 0;
@@ -31,12 +34,14 @@ struct core_statement
 	virtual ~core_statement() = default;
 };
 
+//statement with all fields
 struct complete_statement :public core_statement
 {
 	virtual const operands_si& operands_ref() const = 0;
 	virtual const remarks_si& remarks_ref() const = 0;
 };
 
+//statement with deferred operand and remark field
 struct deferred_statement : public context::hlasm_statement, public core_statement
 {
 	virtual const std::string& deferred_ref() const = 0;
@@ -48,6 +53,8 @@ struct deferred_statement : public context::hlasm_statement, public core_stateme
 		: hlasm_statement(context::statement_kind::DEFERRED) {}
 };
 
+//implementation of deferred statement
+//struct holding deferred semantic information (si) about whole instruction statement, whole logical line
 struct statement_si_deferred : public deferred_statement
 {
 	statement_si_deferred(
@@ -105,6 +112,7 @@ struct statement_si : public complete_statement
 	virtual const range& stmt_range_ref() const { return stmt_range; }
 };
 
+//structure holding deferred statement that is now complete
 struct statement_si_defer_done : public complete_statement
 {
 	statement_si_defer_done(

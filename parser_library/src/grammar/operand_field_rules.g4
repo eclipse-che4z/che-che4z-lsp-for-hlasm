@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for operand field
 parser grammar operand_field_rules;
 
 operand returns [operand_ptr op]

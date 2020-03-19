@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for lookahead statement
 parser grammar lookahead_rules; 
 
 look_lab_instr  returns [std::optional<std::string> op_text, range op_range]

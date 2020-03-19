@@ -21,12 +21,14 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+//visitor for analyzing any undefined symbol attribute references
 class expression_analyzer : public generated::hlasmparserBaseVisitor
 {
 	evaluation_context eval_ctx_;
 public:
 	expression_analyzer(evaluation_context eval_ctx);
 
+	//retrieves yet not defined symbols from the structures 
 	std::set<context::id_index> get_undefined_symbol_references(antlr4::ParserRuleContext* expr_context);
 	std::set<context::id_index> get_undefined_symbol_references(const semantics::concat_chain& chain);
 	std::set<context::id_index> get_undefined_symbol_references(const semantics::var_sym& symbol);

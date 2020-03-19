@@ -23,6 +23,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
 
+//structure holding required objects to correcly perform evaluation of expressions
 struct evaluation_context
 {
 	context::hlasm_context& hlasm_ctx;
