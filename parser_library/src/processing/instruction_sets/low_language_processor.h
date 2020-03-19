@@ -48,16 +48,20 @@ protected:
 			add_diagnostic(diagnostic_op::error_E033(err_range));
 	}
 
+	//finds symbol in the label field
 	context::id_index find_label_symbol(const rebuilt_statement& stmt) const;
 
+	//helper method to create symbol
 	bool create_symbol(range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes);
 
+	//helper method to check address for the ORG instruction
 	bool check_address_for_ORG(range err_range, const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset);
 
 private:
 	using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
 	preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
 
+	//check for newly added loctr dependencies
 	void check_loctr_dependencies(range err_range);
 
 	using transform_result = std::optional<std::vector<checking::check_op_ptr>>;

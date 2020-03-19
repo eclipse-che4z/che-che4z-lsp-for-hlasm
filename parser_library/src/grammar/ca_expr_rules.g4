@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for CA expresssions, variable symbol, CA string
 parser grammar ca_expr_rules; 
 
 

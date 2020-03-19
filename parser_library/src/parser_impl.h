@@ -108,7 +108,6 @@ private:
 
 	virtual antlr4::misc::IntervalSet getExpectedTokens() override;
 
-	std::vector<parser_holder> parsers_;
 	std::unique_ptr<parser_holder> reparser_;
 	std::unique_ptr<parser_holder> rest_parser_;
 
@@ -123,6 +122,7 @@ class token_stream;
 namespace generated {
 class hlasmparser;
 }
+//structure containing parer components
 struct parser_holder
 {
 	std::unique_ptr<input_source> input;

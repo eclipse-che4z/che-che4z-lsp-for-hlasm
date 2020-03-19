@@ -24,6 +24,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
+//structure representing symbol attribute reference
 struct attr_ref
 {
 	data_attr_kind attribute;
@@ -33,6 +34,8 @@ struct attr_ref
 };
 
 enum class dependant_kind { SYMBOL = 0, SYMBOL_ATTR = 1, SPACE = 2 };
+
+//structure representing objects with dependencies
 struct dependant
 {
 	using value_t = std::variant<id_index, attr_ref, space_ptr>;

@@ -31,21 +31,6 @@ enum class processing_form : uint8_t
 	MACH, ASM, MAC, CA, DAT, IGNORED, DEFERRED, UNKNOWN
 };
 
-enum class ordinary_proc_type : uint8_t
-{
-	MACH, ASM, MAC, CA, DAT, UNKNOWN
-};
-
-enum class lookahead_proc_type : uint8_t
-{
-	COPY, EQU, IGNORED
-};
-
-enum class macro_proc_type : uint8_t
-{
-	PROTO, COPY, CA, DEFERRED
-};
-
 enum class operand_occurence : uint8_t
 {
 	PRESENT,ABSENT

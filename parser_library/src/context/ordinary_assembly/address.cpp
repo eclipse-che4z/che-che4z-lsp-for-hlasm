@@ -28,7 +28,7 @@ space::space(location_counter& owner, alignment align, space_kind kind)
 
 space::space(location_counter& owner, alignment align, address previous_loctr_value, size_t boundary, int offset)
 	: kind(space_kind::LOCTR_UNKNOWN), align(std::move(align)),
-	previous_loctr_value(std::move(previous_loctr_value)), boundary(boundary), offset(offset),
+	previous_loctr_value(std::move(previous_loctr_value)), previous_boundary(boundary), previous_offset(offset),
 	owner(owner), resolved_(false)  {}
 
 void space::resolve(space_ptr this_space, int length)
