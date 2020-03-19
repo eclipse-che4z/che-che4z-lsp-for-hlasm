@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for assembler operand
 parser grammar assembler_operand_rules; 
 
 asm_op returns [operand_ptr op]

@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for deferred operand
 parser grammar deferred_operand_rules;
 
 deferred_entry 

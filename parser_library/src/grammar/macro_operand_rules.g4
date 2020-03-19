@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for macro operand
 parser grammar macro_operand_rules; 
 
 
