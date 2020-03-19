@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for machine operand
 parser grammar machine_operand_rules; 
 
 

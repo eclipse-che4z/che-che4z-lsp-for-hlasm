@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for label field
 parser grammar label_field_rules;
 
 label
