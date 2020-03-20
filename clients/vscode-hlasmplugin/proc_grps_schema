@@ -14,7 +14,7 @@
                     },
                     "libs": {
                         "type" : "array",
-                        "description" : "List of folders containing external files such as macros and copy",
+                        "description" : "List of folders containing external files such as macros and copy.\nAll files inside these folders are being automatically recognized as HLASM.\nIf you would like to use dependency files with a specific extension, create an extension wildcard in pgm_conf.json for it.\nExtension wildcards must follow the format: [anything]*.[1+ non-whitespace characters], e.g. libs/*.hlasm or *.asm",
                         "items" : {
                             "type" : "string"
                         }

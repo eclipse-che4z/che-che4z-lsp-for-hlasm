@@ -24,6 +24,12 @@ std::string & to_upper(std::string & s)
 	return s;
 }
 
+std::string to_upper_copy(std::string s)
+{
+    for (auto& c : s) c = static_cast<char>(std::toupper(c));
+    return std::move(s);
+}
+
 SET_t::SET_t(context::A_t value)
 	:a_value(value), b_value(object_traits<B_t>::default_v()), c_value(object_traits<C_t>::default_v()), type(SET_t_enum::A_TYPE) {}
 
