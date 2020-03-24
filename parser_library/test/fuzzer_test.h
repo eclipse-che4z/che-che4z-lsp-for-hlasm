@@ -43,4 +43,12 @@ N ORG (.(. ))C )");
 	a.analyze();
 }
 
+TEST(fuzzer_test, entry_2)
+{
+    std::string input(" ACTR LL'BTM 'M('SM''S(~''#S)((");
+
+    analyzer a(input);
+    a.analyze();
+}
+
 #endif
