@@ -297,10 +297,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 	std::optional<context::SET_t> SET_val;
 	context::id_index symbol_name = nullptr;
 
-	//get attr
-	auto attr_value = ctx->ORDSYMBOL()->getText();
-	assert(attr_value.size() == 1);
-	auto attr = context::symbol_attributes::transform_attr(attr_value[0]);
+	auto attr = ctx->attribute;
 
 	if (ctx->var_symbol())
 	{

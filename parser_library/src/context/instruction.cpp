@@ -959,7 +959,6 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("STSCH", std::make_unique<machine_instruction>("STSCH", mach_format::S, std::vector<machine_operand_format>{db_12_4_U }, 32, 1230)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TPI", std::make_unique<machine_instruction>("TPI", mach_format::S, std::vector<machine_operand_format>{db_12_4_U }, 32, 1231)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("TSCH", std::make_unique<machine_instruction>("TSCH", mach_format::S, std::vector<machine_operand_format>{db_12_4_U }, 32, 1232)));
-	// start of mnemonics
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AER", std::make_unique<machine_instruction>("AER", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 1412)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("ADR", std::make_unique<machine_instruction>("ADR", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 1412)));
 	result.insert(std::pair <const std::string, machine_instruction_ptr>("AXR", std::make_unique<machine_instruction>("AXR", mach_format::RR, std::vector<machine_operand_format>{reg_4_U, reg_4_U }, 16, 1412)));
