@@ -231,9 +231,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 	if (attr_data.size() == 1)
 	{
 		auto c = (char)std::toupper(attr_data[0]);
-		auto attr = context::symbol_attributes::transform_attr(c);
-		if (context::symbol_attributes::ordinary_allowed(attr))
-			return attr;
+		return context::symbol_attributes::transform_attr(c);
 	}
 
 	add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
