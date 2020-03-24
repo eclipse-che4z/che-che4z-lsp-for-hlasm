@@ -150,10 +150,7 @@ antlrcpp::Any expression_analyzer::visitData_attribute(generated::hlasmparser::D
 {
 	std::set<context::id_index> result;
 
-	//get attr
-	auto attr_value = ctx->ORDSYMBOL()->getText();
-	assert(attr_value.size() == 1);
-	auto attr = context::symbol_attributes::transform_attr(attr_value[0]);
+	auto attr = ctx->attribute;
 
 	if (!ctx->id() || attr == context::data_attr_kind::D || attr == context::data_attr_kind::O
 		|| attr == context::data_attr_kind::N || attr == context::data_attr_kind::K 
