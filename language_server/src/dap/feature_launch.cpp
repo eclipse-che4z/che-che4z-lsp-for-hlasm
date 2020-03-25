@@ -51,7 +51,7 @@ json feature_launch::register_capabilities()
 {
 	return json
 	{
-		{"supportsConfigurationDoneRequest", true}
+		{"supportsConfigurationDoneRequest", false}
 	};
 }
 
