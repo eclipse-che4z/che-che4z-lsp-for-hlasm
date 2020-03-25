@@ -168,12 +168,14 @@ bool seq_definition::operator==(const seq_definition& other) const
 completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, doc_pos documentation) :
 	doc_meta(documentation),
 	label(std::move(label)),
-	detail(std::move(detail)) {}
+	detail(std::move(detail)),
+	insert_text(std::move(insert_text)) {}
 
 completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, std::vector<std::string> documentation) :
 	documentation(std::move(documentation)),
 	label(std::move(label)),
-	detail(std::move(detail)) {}
+	detail(std::move(detail)),
+	insert_text(std::move(insert_text)) {}
 
 std::vector<std::string> completion_item_s::get_documentation() const
 {

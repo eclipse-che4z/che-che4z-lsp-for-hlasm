@@ -40,7 +40,7 @@ public:
 	virtual file_ptr find(const std::string & key) = 0;
 	virtual processor_file_ptr find_processor_file(const std::string & key) = 0;
 
-	virtual std::unordered_set<std::string> list_directory_files(const std::string & path) = 0;
+    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string & path) = 0;
 
 	virtual bool file_exists(const std::string & file_name) = 0;
 	virtual bool lib_file_exists(const std::string & lib_path, const std::string & file_name) = 0;

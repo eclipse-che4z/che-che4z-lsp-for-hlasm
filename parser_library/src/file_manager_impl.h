@@ -46,7 +46,7 @@ public:
 	virtual processor_file_ptr find_processor_file(const std::string & key) override;
 
 	virtual std::vector<processor_file *> list_updated_files();
-	virtual std::unordered_set<std::string> list_directory_files(const std::string& path) override;
+	virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string& path) override;
 
 	virtual void did_open_file(const std::string & document_uri, version_t version, std::string text) override;
 	virtual void did_change_file(const std::string & document_uri, version_t version, const document_change * changes, size_t ch_size) override;
