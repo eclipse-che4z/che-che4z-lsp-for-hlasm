@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "extension_handling_test.h"
 #include "benchmark_test.h"
 #include "lsp_features_test.h"
 

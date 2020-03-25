@@ -1257,7 +1257,6 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
 		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
 }
 
-
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {
 	return diagnostic_s(filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
