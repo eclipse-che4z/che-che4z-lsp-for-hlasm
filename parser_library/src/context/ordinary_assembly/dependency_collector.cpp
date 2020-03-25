@@ -124,7 +124,7 @@ void dependency_collector::adjust_address(address& addr)
 	auto unknown_space = std::find_if(addr.spaces.begin(), addr.spaces.end(), [](auto& entry) { return entry.first->kind == context::space_kind::LOCTR_UNKNOWN; });
 	if (unknown_space != addr.spaces.end())
 	{
-		for (int i = addr.spaces.size() - 1; i > 0; --i)
+		for (int i = addr.spaces.size() - 1; i >= 0; --i)
 		{
 			if (addr.spaces[i].first->kind != context::space_kind::LOCTR_UNKNOWN)
 			{
