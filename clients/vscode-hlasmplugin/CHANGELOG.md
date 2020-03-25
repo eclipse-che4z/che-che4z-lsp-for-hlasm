@@ -2,7 +2,7 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
-## [0.10.0] - 2020-03-16
+## [0.10.0] - 2020-03-25
 
 #### Added
 - ORG instruction processing.
@@ -11,6 +11,8 @@ All notable changes to the HLASM Language Support extension are documented in th
 
 #### Fixed
 - Wrong suggestions for macro names starting with non-alphabetic character.
+- Plugin crashing when using % in operands of DS or DC instruction.
+- Further improvements in stability.
 
 ## [0.9.1] - 2020-02-06
 
