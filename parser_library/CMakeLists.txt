@@ -120,6 +120,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/expressions/visitors/expression_evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/lsp_info_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
+    ${PROJECT_SOURCE_DIR}/src/wildcard.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/library.cpp
