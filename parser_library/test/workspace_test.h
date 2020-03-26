@@ -218,7 +218,7 @@ public:
       "pgroup": "P1"
     },
     {
-      "program": "pgms\\\\.*",
+      "program": "pgms\\*",
       "pgroup": "P2"
     }
   ]
@@ -231,7 +231,7 @@ public:
       "pgroup": "P1"
     },
     {
-      "program": "pgms/.*",
+      "program": "pgms/*",
       "pgroup": "P2"
     }
   ]
@@ -414,11 +414,11 @@ public:
 		files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
 	}
 
-	virtual std::unordered_set<std::string> list_directory_files(const std::string &) override
+	virtual std::unordered_map<std::string,std::string> list_directory_files(const std::string &) override
 	{	
 		if (insert_correct_macro)
-			return { "ERROR", "CORRECT" };
-		return { "ERROR" };
+			return { {"ERROR","ERROR"}, {"CORRECT","CORRECT"} };
+		return { {"ERROR","ERROR" } };
 	}
 
 	bool insert_correct_macro = true;
