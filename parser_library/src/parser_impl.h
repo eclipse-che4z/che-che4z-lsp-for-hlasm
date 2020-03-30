@@ -101,6 +101,11 @@ private:
 	parser_impl* parent_;
 	void initialize(parser_impl* parent);
 
+	void push_state();
+	void pop_state();
+	bool pushed_state_;
+	processing::statement_processor* processor_storage_;
+
 	semantics::operand_list parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges);
 
 	void parse_rest(std::string text, range text_range);
