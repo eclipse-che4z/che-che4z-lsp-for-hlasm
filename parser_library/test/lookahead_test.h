@@ -727,3 +727,27 @@ A EQU 1,1,1
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(attribute_lookahead, lookahead_from_instruction_field)
+{
+	std::string input(
+		R"( 
+ MACRO
+ M &A
+ &A(L'A) 
+ MEND
+
+ M (LR,SAM64,LR)
+ AGO .A
+F 
+A EQU 1,2,1
+.A ANOP
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
