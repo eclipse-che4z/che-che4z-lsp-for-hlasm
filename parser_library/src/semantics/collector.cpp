@@ -21,7 +21,7 @@ using namespace hlasm_plugin::parser_library::semantics;
 
 
 collector::collector()
-	: lsp_symbols_extracted_(false), hl_symbols_extracted_(false),lbl_(lbls_),instr_(instrs_) {}
+	: lbl_(lbls_), instr_(instrs_), lsp_symbols_extracted_(false), hl_symbols_extracted_(false) {}
 
 const label_si& collector::current_label()
 {
