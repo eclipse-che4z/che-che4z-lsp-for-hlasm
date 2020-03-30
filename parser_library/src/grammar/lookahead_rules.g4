@@ -33,6 +33,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			collector.set_label_field(id,nullptr,r); 
 		}
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		process_instruction();
 
 		$op_text = $operand_field_rest.ctx->getText();
 		$op_range = provider.get_range($operand_field_rest.ctx);
