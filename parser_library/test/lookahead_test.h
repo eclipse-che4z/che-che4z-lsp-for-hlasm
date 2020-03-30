@@ -732,16 +732,9 @@ TEST(attribute_lookahead, lookahead_from_instruction_field)
 {
 	std::string input(
 		R"( 
- MACRO
- M &A
+&A(1) SETC 'LR','SAM64','LR'
  &A(L'A) 
- MEND
-
- M (LR,SAM64,LR)
- AGO .A
-F 
 A EQU 1,2,1
-.A ANOP
 )"
 );
 

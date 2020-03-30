@@ -51,4 +51,12 @@ TEST(fuzzer_test, entry_2)
     a.analyze();
 }
 
+TEST(fuzzer_test, entry_3)
+{
+    std::string input(" (_=&LOCTRCEv(&ISEQ(--S'#)HUBP #' #&3#");
+
+    analyzer a(input);
+    a.analyze();
+}
+
 #endif
