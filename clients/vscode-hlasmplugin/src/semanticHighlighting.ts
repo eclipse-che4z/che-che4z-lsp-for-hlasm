@@ -134,8 +134,8 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		this.updateProgressTooltip();
 		this.progress.show();
 	}
-	
-	private hideProgress(filename: String)
+
+	public hideProgress(filename: String)
 	{
 		this.currentlyParsed.delete(filename);
 		this.updateProgressTooltip();

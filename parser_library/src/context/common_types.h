@@ -105,6 +105,7 @@ public:
 
 //just mock method for now, will be implemented later with respect to UTF/EBCDIC
 std::string& to_upper(std::string& s);
+std::string to_upper_copy(std::string s);
 
 }
 }
