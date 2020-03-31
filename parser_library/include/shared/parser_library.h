@@ -15,11 +15,15 @@
 #ifndef HLASMPLUGIN_PARSER_LIBRARY_H
 #define HLASMPLUGIN_PARSER_LIBRARY_H
 
+//Exports a method that parses a string and writes results to standard output.
+//Used for development purposes only.
+
 #include <string>
 
 #include "parser_library_export.h"
 #include "lexer.h"
 #include "antlr4-runtime.h"
+
 
 namespace hlasm_plugin {
 	namespace parser_library {

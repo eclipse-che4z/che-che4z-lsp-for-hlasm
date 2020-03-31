@@ -15,6 +15,11 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_H
 
+//This file contains class diagnostic, which represents LSP diagnostic.
+//It also contains definitions (static methods) of almost all diagnostics
+//reported by analyzer.
+
+
 #include <string>
 #include <vector>
 
@@ -566,6 +571,7 @@ struct range_uri_s
 	range rang;
 };
 
+//Represents related info (location with message) of LSP diagnostic.
 class diagnostic_related_info_s
 {
 public:
@@ -575,6 +581,7 @@ public:
 	std::string message;
 };
 
+//Represents a LSP diagnostic.
 class diagnostic_s
 {
 public:

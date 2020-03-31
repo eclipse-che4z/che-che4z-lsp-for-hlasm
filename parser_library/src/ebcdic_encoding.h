@@ -20,6 +20,7 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
+//Class that provides support for EBCDIC encoding.
 class ebcdic_encoding
 {
 public:
@@ -63,14 +64,20 @@ public:
 					48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 250, 251, 252, 253, 254, 255
 	};
 
+	//Converts a UTF-8 character to ASCII. Characters that do not
+	//have representation in ASCII are replaced with ebcdic_encoding::SUB
+	//Moves pointer forward by L-1 bytes, where L is length of character
+	//in UTF-8 encoding.
 	static unsigned char to_pseudoascii(const char*& c);
 
+	//Converts an ASCII character to EBCDIC character.
 	static unsigned char to_ebcdic(unsigned char c);
 
+	//Converts UTF-8 string to EBCDIC string.
 	static std::string to_ebcdic(const std::string& s);
-
+	//Converts EBCDIC character to UTF-8 character.
 	static std::string to_ascii(unsigned char c);
-
+	//Converts EBCDIC string to UTF-8 string.
 	static std::string to_ascii(const std::string& s);
 };
 
