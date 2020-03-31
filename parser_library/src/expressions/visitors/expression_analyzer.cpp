@@ -130,9 +130,9 @@ antlrcpp::Any expression_analyzer::visitCa_string_b(generated::hlasmparser::Ca_s
 {
 	auto result = get_undefined_symbol_references(ctx->string_ch_v_c()->chain);
 
-	if (ctx->substring()->e1 != nullptr)
+	if (ctx->substring() && ctx->substring()->e1 != nullptr)
 		result.merge(visit_ref(ctx->substring()->e1));
-	if (ctx->substring()->e2 != nullptr)
+	if (ctx->substring() && ctx->substring()->e2 != nullptr)
 		result.merge(visit_ref(ctx->substring()->e2));
 
 	return result;
