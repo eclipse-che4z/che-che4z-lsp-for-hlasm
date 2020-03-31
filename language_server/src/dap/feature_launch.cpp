@@ -36,6 +36,7 @@ void feature_launch::register_methods(std::map<std::string, method>& methods)
 {
 	methods.emplace("launch", std::bind(&feature_launch::on_launch, this, std::placeholders::_1, std::placeholders::_2));
 	methods.emplace("setBreakpoints", std::bind(&feature_launch::on_set_breakpoints, this, std::placeholders::_1, std::placeholders::_2));
+	methods.emplace("setExceptionBreakpoints", std::bind(&feature_launch::on_set_exception_breakpoints, this, std::placeholders::_1, std::placeholders::_2));
 	methods.emplace("configurationDone", std::bind(&feature_launch::on_configuration_done, this, std::placeholders::_1, std::placeholders::_2));
 	methods.emplace("threads", std::bind(&feature_launch::on_threads, this, std::placeholders::_1, std::placeholders::_2));
 	methods.emplace("stackTrace", std::bind(&feature_launch::on_stack_trace, this, std::placeholders::_1, std::placeholders::_2));
@@ -90,6 +91,11 @@ void feature_launch::on_set_breakpoints(const json & request_seq, const json & a
 
 
 	response_->respond(request_seq, "setBreakpoints", json{ {"breakpoints", breakpoints_verified} });
+}
+
+void feature_launch::on_set_exception_breakpoints(const json& request_seq, const json&)
+{
+	response_->respond(request_seq, "setExceptionBreakpoints", json());
 }
 
 void feature_launch::on_configuration_done(const json & request_seq, const json &)
