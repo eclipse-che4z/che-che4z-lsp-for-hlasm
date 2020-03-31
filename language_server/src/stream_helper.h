@@ -21,13 +21,18 @@
 namespace hlasm_plugin::language_server
 {
 
-struct newline_is_space : std::ctype<char> {
+//A struct that can be imbued into std::iostream, so it recognizes 
+//only newline and nothing else as a whitespace. The dispatcher
+//expects a stream like that in the constructor.
+struct newline_is_space : std::ctype<char>
+{
 	newline_is_space() : std::ctype<char>(get_table()) {}
 	static mask const* get_table()
 	{
 		static mask rc[table_size];
-		rc[(unsigned char)'\n'] = std::ctype_base::space;
+		rc[(unsigned char) '\n'] = std::ctype_base::space;
 		return rc;
+		int i = 1+2;
 	}
 
 	static void imbue_stream(std::ios& stream)

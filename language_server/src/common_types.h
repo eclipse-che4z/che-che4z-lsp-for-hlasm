@@ -13,7 +13,7 @@
  */
 
 #include "json.hpp"
-
+//Types that are used throughout the language server component
 namespace hlasm_plugin::language_server {
 
 	using json = nlohmann::json;
