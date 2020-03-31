@@ -27,10 +27,12 @@ struct library_data
 	processing::processing_kind proc_kind;
 	context::id_index library_member;
 };
-
+//Interface that the analyzer uses to parse macros and COPY files in separate files (libraries).
 class parse_lib_provider
 {
 public:
+    //Parses library with specified name and saves it into context.
+    //Library data passes information whether COPY or macro is going to be parsed.
 	virtual parse_result parse_library(const std::string & library, context::hlasm_context& hlasm_ctx, const library_data data) = 0;
 
 	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
@@ -38,6 +40,7 @@ public:
     virtual ~parse_lib_provider() = default;
 };
 
+//Parse lib provider that does not provide any libraries.
 class empty_parse_lib_provider : public parse_lib_provider
 {
 public:

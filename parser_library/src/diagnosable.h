@@ -21,8 +21,18 @@
 #include "shared/protocol.h"
 #include "diagnostic.h"
 
+//Interface that allows to collect objects (diagnostics)
+//from a tree structure of objects. Each class that implements
+//this interface must implement method collect_diags, that
+//moves diagnostics from its children to itself.
+//In the result, after collect_diags is called in the root,
+//all diagnostics from all the objects can be accessed by
+//calling diags()
+
 namespace hlasm_plugin::parser_library {
 
+//Interface that allows to collect objects (diagnostics)
+//from a tree structure of objects.
 template <typename T>
 class collectable
 {
@@ -32,6 +42,8 @@ public:
 	virtual void collect_diags() const = 0;
 	virtual diagnostic_container & diags() const = 0;
 	virtual void add_diagnostic(T diagnostic) const = 0;
+    //Specifies whether objects(diagnostics) should be moved
+    //when collecting from this object.
 	virtual bool is_once_only() const = 0;
 
 	virtual ~collectable() = 0;

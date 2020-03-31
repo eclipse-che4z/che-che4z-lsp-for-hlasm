@@ -20,7 +20,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-//represents set of libraries
+//Represents a named set of libraries (processor_group)
 class processor_group : public diagnosable_impl
 {
 public:

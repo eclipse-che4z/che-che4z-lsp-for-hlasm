@@ -46,11 +46,14 @@ struct program
 };
 
 
-
+//Represents a LSP workspace. It solves all dependencies between files -
+//implements parse lib provider and decides which files are to be parsed
+//when a particular file has been changed in the editor.
 class workspace : public diagnosable_impl, public parse_lib_provider
 {
 public:
-	//just a dummy workspace with no libraries
+	//Creates just a dummy workspace with no libraries - no dependencies
+	//between files.
 	workspace(file_manager & file_manager);
 	workspace(ws_uri uri, file_manager & file_manager);
 	workspace(ws_uri uri, std::string name, file_manager & file_manager);
