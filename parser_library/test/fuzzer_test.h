@@ -59,4 +59,14 @@ TEST(fuzzer_test, entry_3)
     a.analyze();
 }
 
+TEST(fuzzer_test, entry_4)
+{
+    std::string input(R"( @(PUSH@(&@(@+( ED'))D))))))))))9@(&@(@+( ED'BRXH))p(r
+R
+)");
+
+    analyzer a(input);
+    a.analyze();
+}
+
 #endif

@@ -267,9 +267,9 @@ antlrcpp::Any expression_evaluator::visitCa_string_b(generated::hlasmparser::Ca_
 	auto tmp = concatenate(ctx->string_ch_v_c()->chain);
 	auto ex = make_char(tmp);
 	expr_ptr s, e;
-	if(ctx->substring()->e1 != nullptr)
+	if(ctx->substring() && ctx->substring()->e1 != nullptr)
 		s = visit(ctx->substring()->e1);
-	if (ctx->substring()->e2 != nullptr)
+	if (ctx->substring() && ctx->substring()->e2 != nullptr)
 		e = visit(ctx->substring()->e2);
 	return ex->substring(visit(ctx->ca_dupl_factor()).as<int>(), s, e);
 }
