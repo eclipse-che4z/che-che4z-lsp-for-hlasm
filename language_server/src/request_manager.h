@@ -25,6 +25,7 @@
 namespace hlasm_plugin::language_server
 {
 
+//Represents one LSP or DAP message received by LSP/DAP server
 struct request
 {
 	request(json message, server* executing_server);
@@ -33,6 +34,10 @@ struct request
 	server* executing_server;
 };
 
+//Holds and orders income messages(requests) from DAP and LSP.
+//The requests are held in a queue.
+//Runs a worker thread, that uses respectable server to execute
+//requests
 class request_manager
 {
 public:
@@ -43,11 +48,17 @@ public:
 	void end_worker();
 private:
 
+	
 	std::atomic<bool> end_worker_;
 	std::thread worker_;
+
+	//request_manager uses conditional variable to put the
+	//worker thread asleep when the request queue is empty
 	std::mutex q_mtx_;
 	std::condition_variable cond_;
 
+	//the request manager invalidates older requests on the
+	//same file, when a new request to the same file comes
 	std::string currently_running_file_;
 	std::atomic<server *> currently_running_server_;
 	
@@ -55,8 +66,10 @@ private:
 	std::string get_request_file_(json r);
 
 	std::deque<request> requests_;
+
+	//cancellation token that is used to stop current parsing
+	//when it was obsoleted by a new request
 	std::atomic<bool>* cancel_;
-	
 };
 
 

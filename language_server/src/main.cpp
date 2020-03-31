@@ -22,11 +22,11 @@
 
 #include "dispatcher.h"
 #include "lsp/lsp_server.h"
-#include "dap/dap_server.h"
+#include "dap/tcp_handler.h"
 #include "shared/workspace_manager.h"
 #include "logger.h"
 #include "stream_helper.h"
-#include "dap/tcp_handler.h"
+
 
 #ifdef _WIN32 //set binary mode for input on windows
 # include <io.h>
@@ -64,6 +64,7 @@ int main(int argc, char ** argv) {
 
 		hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
 		request_manager req_mngr(&cancel);
+
 		dap::tcp_handler dap_handler(ws_mngr, req_mngr, (uint16_t)dap_port);
 		dap_handler.async_accept();
 		std::thread dap_thread([&dap_handler]() {dap_handler.run_dap(); });
