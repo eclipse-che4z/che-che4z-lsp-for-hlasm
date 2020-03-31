@@ -36,6 +36,7 @@ void parser_impl::initialize(
 	ctx = hlasm_ctx;
 	lsp_proc = lsp_prc;
 	finished_flag = false;
+	pushed_state_ = false;                                             
 }
 
 bool parser_impl::is_last_line()
