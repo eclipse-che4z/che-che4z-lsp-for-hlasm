@@ -298,14 +298,6 @@ void collector::prepare_for_next_statement()
 	hl_symbols_extracted_ = false;
 }
 
-template <typename T>
-void move_optional(std::optional<T>& from, std::optional<T>& to)
-{
-	if (from.has_value())
-		to.emplace(std::move(from.value()));
-	from.reset();
-}
-
 void collector::push_fields()
 {
 	if (instr_ == instrs_ + 1)
