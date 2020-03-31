@@ -19,8 +19,7 @@
 #include "antlr4-runtime.h"
 #include "lsp_info_processor.h"
 
-#include <variant>
-#include "optional"
+#include <optional>
 
 namespace hlasm_plugin {
 namespace parser_library {
