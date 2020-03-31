@@ -106,10 +106,10 @@ std::vector<processor_file *> file_manager_impl::list_updated_files()
 	return list;
 }
 
-std::unordered_set<std::string> file_manager_impl::list_directory_files(const std::string& path)
+std::unordered_map<std::string,std::string> file_manager_impl::list_directory_files(const std::string& path)
 {
 	std::filesystem::path lib_p(path);
-	std::unordered_set<std::string> found_files;
+	std::unordered_map<std::string, std::string> found_files;
 	try {
 		std::filesystem::directory_entry dir(lib_p);
 		if (!dir.is_directory())
@@ -123,7 +123,7 @@ std::unordered_set<std::string> file_manager_impl::list_directory_files(const st
 		for (auto& p : it)
 		{
 			if (p.is_regular_file())
-				found_files.insert(p.path().filename().string());
+				found_files[p.path().filename().string()] = p.path().string();
 		}
 
 	}

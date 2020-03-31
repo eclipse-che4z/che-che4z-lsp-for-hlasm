@@ -118,12 +118,12 @@ The following example specifies that GROUP1 is used when working with `source_co
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-The program field in `pgm_conf.json` supports regular expressions, for example:
+The program field in `pgm_conf.json` supports wildcards, for example:
 ```
 {
   "pgms": [
     {
-      "program": ".*",
+      "program": "*",
       "pgroup": "GROUP1"
     }
   ]
