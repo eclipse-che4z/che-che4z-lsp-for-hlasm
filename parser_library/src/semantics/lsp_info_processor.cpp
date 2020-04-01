@@ -272,7 +272,7 @@ bool lsp_info_processor::find_references_(const position & pos, const definition
 			{
 				// return all of them as result
 				for (const auto& found_occ : symbol.second)
-					found.push_back({ *found_occ.file_name, found_occ.definition_range.start });
+					found.push_back({ *found_occ.file_name, found_occ.symbol_range.start });
 
 				return true;
 			}
@@ -356,11 +356,11 @@ semantics::highlighting_info & lsp_info_processor::get_hl_info()
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {
 	//check for multi line
-	if (occ.definition_range.start.line != occ.definition_range.end.line)
+	if (occ.symbol_range.start.line != occ.symbol_range.end.line)
 	{
 		if (file_name != occ.file_name)
 			return false;
-		if (pos.line < occ.definition_range.start.line || pos.line > occ.definition_range.end.line)
+		if (pos.line < occ.symbol_range.start.line || pos.line > occ.symbol_range.end.line)
 			return false;
 		// find appropriate line
 		for (const auto& cont_pos : hl_info_.cont_info.continuation_positions)
@@ -369,10 +369,10 @@ bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ)
 			if (cont_pos.line == pos.line)
 			{
 				// occurences begin line, position cannot be smaller than occ begin column or bigger than continuation column
-				if (pos.line == occ.definition_range.start.line && (pos.column < occ.definition_range.start.column || pos.column > cont_pos.column))
+				if (pos.line == occ.symbol_range.start.line && (pos.column < occ.symbol_range.start.column || pos.column > cont_pos.column))
 					return false;
 				// occurences end line, position cannot be bigger than occ end column or smaller than continue column
-				if (pos.line == occ.definition_range.end.line && (pos.column > occ.definition_range.end.column || pos.column < hl_info_.cont_info.continue_column))
+				if (pos.line == occ.symbol_range.end.line && (pos.column > occ.symbol_range.end.column || pos.column < hl_info_.cont_info.continue_column))
 					return false;
 				// in between begin and end lines, only check for continue/continuation columns
 				if (pos.column < hl_info_.cont_info.continue_column || pos.column > cont_pos.column)
@@ -382,7 +382,7 @@ bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ)
 		}
 	}
 	// no continuation, symbol is single line 
-	return file_name == occ.file_name && pos.line == occ.definition_range.start.line && pos.line == occ.definition_range.end.line && pos.column >= occ.definition_range.start.column && pos.column <= occ.definition_range.end.column;
+	return file_name == occ.file_name && pos.line == occ.symbol_range.start.line && pos.line == occ.symbol_range.end.line && pos.column >= occ.symbol_range.start.column && pos.column <= occ.symbol_range.end.column;
 }
 
 template<typename T>
@@ -586,7 +586,7 @@ void lsp_info_processor::process_instruction_sym_()
 		ctx_->lsp_ctx->all_instructions.push_back(
 			{ *deferred_instruction_.name,params_text.str(),
 			trim_instr + "   " + params_text.str(),
-			doc_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
+			content_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
 		// add it to definitions
 		auto occurences = &ctx_->lsp_ctx->instructions[context::instr_definition(
