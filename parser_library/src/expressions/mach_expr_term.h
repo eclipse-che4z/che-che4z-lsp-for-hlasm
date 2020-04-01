@@ -21,6 +21,7 @@
 namespace hlasm_plugin::parser_library::expressions
 {
 
+//Represents a number written in a machine expression.
 class mach_expr_constant : public mach_expression
 {
 	value_t value_;
@@ -39,6 +40,7 @@ public:
 	void collect_diags() const override {}
 };
 
+//Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
 class mach_expr_data_attr : public mach_expression
 {
 public:
@@ -58,6 +60,7 @@ public:
 	void collect_diags() const override {}
 };
 
+//Represents an ordinary symbol in machine expressions.
 class mach_expr_symbol : public mach_expression
 {
 	
@@ -80,6 +83,7 @@ public:
 	void collect_diags() const override {}
 };
 
+//Represents a location counter written in a machine expression (the character *)
 class mach_expr_location_counter : public mach_expression
 {
 public:
@@ -98,6 +102,7 @@ public:
 	void collect_diags() const override {}
 };
 
+//Represents a self defining term (e.g. X'4A')
 class mach_expr_self_def : public mach_expression
 {
 	value_t value_;
@@ -115,6 +120,8 @@ public:
 	void collect_diags() const override {}
 };
 
+//Represents an "empty" term that is used when parsing of a machine expression fails
+//(the user writes invalid expression)
 class mach_expr_default : public mach_expression
 {
 public:

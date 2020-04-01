@@ -106,8 +106,8 @@ private:
 	
 };
 
-//Parses data definition from the form it comes from the grammar, takes format with expressions and nominal value
-//replaced with special characters. On one instance, parse may be called only once.
+//Parses data definition from the form it comes from the grammar, the input comes with expressions and nominal value
+//replaced by special characters. On one instance, parse may be called only once.
 //If there are errors, they are reported with diagnostics of data_definition. Only those checks needed for valid
 //parsing of the data definition are performed here (syntax errors). Checks regarding values of fields are
 //implemented in checking.
@@ -149,7 +149,7 @@ private:
 	size_t p_;
 	//Current position in expressions vector
 	size_t exprs_i_;
-	//Lists currently remaining valid modifiers.
+	//Lists currently remaining valid modifiers: (P)rogram type, (L)ength, (S)cale, (E)xponent
 	std::string remaining_modifiers_ = "PLSE";
 	bool nominal_parsed_ = false;
 

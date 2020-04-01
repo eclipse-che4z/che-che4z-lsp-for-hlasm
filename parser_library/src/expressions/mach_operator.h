@@ -12,6 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+//This file contains definitions of binary and unary operators
+//used in machine expressions. Implements mach_expression interface
+
 #ifndef HLASMPLUGIN_PARSERLIBRARY_MACH_OPERATOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_MACH_OPERATOR_H
 
@@ -20,6 +23,9 @@
 namespace hlasm_plugin::parser_library::expressions
 {
 
+//Represents a binary operator in machine expression. Holds its
+//left and right operand. Templated by actual operator, one of:
+//add, sub, mul, div
 template <typename T>
 class mach_expr_binary final : public mach_expression
 {
@@ -57,7 +63,9 @@ public:
 
 };
 
-
+//Represents a unart operator in machine expression. Holds its
+//operand. Templated by actual operator, either unary minus or
+//parentheses
 template <typename T>
 class mach_expr_unary final : public mach_expression
 {
