@@ -27,6 +27,8 @@ class variable;
 
 using variable_ptr = std::unique_ptr<variable>;
 
+//Interface that represents a variable to be shown to the user
+//through DAP.
 class variable
 {
 public:
