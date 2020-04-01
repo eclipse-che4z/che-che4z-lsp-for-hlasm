@@ -20,6 +20,8 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
+// used for wildcard to regex conversions
+
 static const std::regex escape("(\\(|\\[|\\{|\\\\|\\^|\\-|\\=|\\$|\\!|\\||\\]|\\}|\\)|\\.)");
 static const std::regex question("\\?");
 static const std::regex nongreedy("(\\*|\\+)");
