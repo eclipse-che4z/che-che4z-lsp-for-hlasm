@@ -15,6 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DEBUGGING_STACK_FRAME_H
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUGGING_STACK_FRAME_H
 
+//This file contains C++ representation of DAP types
+//used to present the context of HLASM analysis to
+//the user.
+
 #include <string>
 
 #include "shared/protocol.h"

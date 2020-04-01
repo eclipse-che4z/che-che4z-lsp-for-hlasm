@@ -15,6 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_RANGE_H
 #define HLASMPLUGIN_PARSERLIBRARY_RANGE_H
 
+//This file contains definitions of LSP representation of
+//positions in files and selection ranges.
+
 #include "parser_library_export.h"
 #include <string>
 

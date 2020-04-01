@@ -12,6 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+//Pimpl implementations of workspace manager. Also converts C-like parameters
+//into C++ ones.
+
 #include <set>
 #include <string>
 #include <vector>
@@ -23,7 +26,6 @@
 
 namespace hlasm_plugin {
 namespace parser_library {
-
 
 workspace_manager::workspace_manager(std::atomic<bool>* cancel) : impl_(new impl(cancel)) {}
 
