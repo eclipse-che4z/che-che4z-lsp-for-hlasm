@@ -24,6 +24,8 @@ namespace hlasm_plugin::parser_library {
 #pragma warning(push)
 #pragma warning(disable : 4250)
 
+//Implementation of the file interface. Implements LSP incremental changing
+//of contents of file as well as loading the file from disk.
 class file_impl : public virtual file, public virtual diagnosable_impl
 {
 public:
@@ -57,6 +59,7 @@ protected:
 private:
 	file_uri file_name_;
 	std::string text_;
+	//Array of "pointers" to text_ where lines start.
 	std::vector<size_t> lines_ind_;
 
 	bool up_to_date_ = false;
@@ -64,8 +67,6 @@ private:
 	bool bad_ = false;
 
 	version_t version_ = 0;
-
-	
 
 	void load_text();
 	

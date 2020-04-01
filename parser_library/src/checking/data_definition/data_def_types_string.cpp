@@ -12,6 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+//This file contains implementation of the data_def_type for
+//these types: B, C, G, X
+
 #include "data_def_types.h"
 
 #include "../checker_helper.h"

@@ -15,6 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_ERROR_MESSAGES_H
 #define HLASMPLUGIN_PARSERLIBRARY_ERROR_MESSAGES_H
 
+//This file contains definitions of diagnostics used in
+//CA expressions.
+
 #include "diagnostic.h"
 
 namespace hlasm_plugin {

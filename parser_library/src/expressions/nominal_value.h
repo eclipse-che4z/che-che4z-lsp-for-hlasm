@@ -22,8 +22,9 @@ namespace hlasm_plugin::parser_library::expressions
 struct nominal_value_string;
 struct nominal_value_exprs;
 
-//Class representing nominal value of data definition. Can be list of expressions
-//and addresses(address has the form of D(B), where D and B are expressions) or string.
+//Class representing nominal value of data definition as it was written int the source
+//code. Can be list of expressions and addresses(address has the form of D(B), where
+//D and B are expressions) or string.
 struct nominal_value_t : public context::dependable
 {
 	nominal_value_string* access_string();
@@ -43,6 +44,7 @@ struct nominal_value_string final : public nominal_value_t
 	range value_range;
 };
 
+//Represents address in the form D(B)
 struct address_nominal : public context::dependable
 {
 	virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;

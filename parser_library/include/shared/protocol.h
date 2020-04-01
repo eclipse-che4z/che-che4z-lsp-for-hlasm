@@ -15,6 +15,11 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 
+//This file contains definitions of types that the workspace
+//manager uses to pass data in and out of parser library.
+//Most of them use pimpl to hide their implementation somewhere
+//in the library.
+//Most of the types are C++ representation of LSP/DAP data types.
 #include <cstdint>
 #include <cstring>
 

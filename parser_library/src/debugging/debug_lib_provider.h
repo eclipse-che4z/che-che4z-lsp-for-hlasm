@@ -20,6 +20,9 @@
 namespace hlasm_plugin::parser_library::debugging
 {
 
+//Implements dependency (macro and COPY files) fetcher for macro tracer.
+//Takes the information from a workspace, but calls special methods for
+//parsing that do not collide with LSP.
 class debug_lib_provider : public parse_lib_provider
 {
 	const workspace& ws_;

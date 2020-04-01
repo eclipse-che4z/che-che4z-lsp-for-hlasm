@@ -15,6 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_FIELDS_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_FIELDS_H
 
+//This file contains definitions of classes that represent
+//parts that are used in checking::data_definition_operand
+
 namespace hlasm_plugin::parser_library::checking
 {
 
