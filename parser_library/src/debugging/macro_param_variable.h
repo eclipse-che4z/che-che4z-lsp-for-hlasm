@@ -21,6 +21,8 @@
 namespace hlasm_plugin::parser_library::debugging
 {
 
+//Implementation of variable interface that adapts macro parameters
+//representation from context to DAP variable.
 class macro_param_variable : public variable
 {
 public:

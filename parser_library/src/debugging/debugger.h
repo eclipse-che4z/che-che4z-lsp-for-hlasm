@@ -30,6 +30,7 @@
 namespace hlasm_plugin::parser_library::debugging
 {
 
+//Interface that a listener can implement to be notified about debugging events.
 class debug_event_consumer_s
 {
 public:
@@ -37,6 +38,9 @@ public:
 	virtual void exited(int exit_code) = 0;
 };
 
+//Represents configuration of breakpoints. Must be separated, because
+//breakpoints can be set even before debugger starts. Provides thread
+//safe access.
 class debug_config
 {
 public:
@@ -47,6 +51,9 @@ private:
 	std::mutex bpoints_mutex_;
 };
 
+//Implements DAP for macro tracing. Starts analyzer in a separate thread
+//then controls the flow of analyzer by implementing processing_tracer
+//interface.
 class debugger : public processing::processing_tracer
 {
 public:
@@ -56,11 +63,13 @@ public:
 
 	virtual void statement(range stmt_range) override;
 
+	//User controls of debugging.
 	void next();
 	void step_in();
 	void disconnect();
 	void continue_debug();
 
+	//Retrieval of current context.
 	const std::vector<stack_frame> & stack_frames();
 	const std::vector<scope> & scopes(frame_id_t frame_id);
 	const std::vector<variable_ptr> & variables(var_reference_t var_ref);
@@ -94,7 +103,7 @@ private:
 	//Cancellation token for parsing
 	std::atomic<bool> cancel_ = false;
 
-	//Provides way to inform outer world about debugger events
+	//Provides a way to inform outer world about debugger events
 	debug_event_consumer_s & event_;
 
 	//Debugging information retrieval
