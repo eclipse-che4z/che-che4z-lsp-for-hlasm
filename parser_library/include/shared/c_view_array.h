@@ -20,7 +20,7 @@ namespace hlasm_plugin::parser_library {
 //Provides pimpl for arrays. The returned item can be
 //converted to its exported representation in implementation
 //of item. c_type is the exported type, impl is its 
-//implementstion.
+//implementation.
 template<typename c_type, typename impl>
 class c_view_array
 {

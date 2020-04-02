@@ -19,7 +19,8 @@
 
 namespace hlasm_plugin::parser_library {
 
-
+//Abstract class that implements add_diagnostic and diags
+//collect_diags is still abstract.
 template<typename T>
 class collectable_impl : public virtual collectable<T>
 {
@@ -31,6 +32,8 @@ public:
 
 protected:
 
+	//Collects diagnostics from one collectable: calls its collect_diags
+	//and then moves or copies the diagnostics depending on is_once_only
 	virtual void collect_diags_from_child(const collectable<T> & child) const
 	{
 		child.collect_diags();
