@@ -32,6 +32,9 @@
 #include "macro_test.h"
 #include "copy_test.h"
 #include "ord_sym_test.h"
+#include "dc_test.h"
+#include "loctr_test.h"
+#include "equ_test.h"
 #include "org_test.h"
 #include "data_attribute_test.h"
 
