@@ -53,9 +53,18 @@ option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
 option(FS_PATH "Provide path to libc++fs for installation on MacOS" "")
 option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not packaged into vsix." On)
+option(BUILD_FUZZER "Enable building of the fuzzer. Tested with clang and libstdc++ (enable with -DWITH_LIBCXX=Off)" Off)
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
   message(WARNING "Building shared libraries with static CRT!")
+endif()
+
+if(BUILD_FUZZER AND WITH_LIBCXX)
+  message(WARNING "Building fuzzer with libc++, use of libstdc++ recommended.")
+endif()
+
+if(BUILD_FUZZER AND BUILD_SHARED_LIBS)
+  message(ERROR "Building fuzzer with dynamic libraries not supported.")
 endif()
 
 if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -117,6 +126,10 @@ endif()
 
 if(WITH_LIBCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
+if(BUILD_FUZZER)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer-no-link")
 endif()
 
 if(APPLE)

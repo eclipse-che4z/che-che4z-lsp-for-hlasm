@@ -2,6 +2,20 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
+## [0.10.0] - 2020-04-02
+
+#### Added
+- ORG instruction processing.
+- Configurable wildcards for automatic HLASM language detection [#7](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/7).
+- An option to use macros and copy files with custom extensions via wildcards [#4](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/4).
+
+#### Fixed
+- Wrong suggestions for macro names starting with non-alphabetic character.
+- Plugin crashing when using % in operands of DS or DC instruction.
+- Plugin crashing when referencing an attribute of not yet defined symbol in the instruction field.
+- Further improvements in stability.
+- VSCode freezing on large files.
+
 ## [0.9.1] - 2020-02-06
 
 #### Fixed

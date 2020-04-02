@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "extension_handling_test.h"
 #include "benchmark_test.h"
 #include "lsp_features_test.h"
 
@@ -31,6 +32,7 @@
 #include "macro_test.h"
 #include "copy_test.h"
 #include "ord_sym_test.h"
+#include "org_test.h"
 #include "data_attribute_test.h"
 
 #include "text_synchronization_test.h"
@@ -46,6 +48,7 @@
 #include "context_test.h"
 #include "lexer_test.h"
 #include "parser_test.h"
+#include "fuzzer_test.h"
 
 #include "utf_conv_test.h"
 #include "diagnosable_ctx_test.h"

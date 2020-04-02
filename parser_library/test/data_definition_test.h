@@ -81,6 +81,7 @@ TEST(data_definition_grammar, modifiers)
 	expect_errors(" DC 10FDP(123)L(2*3)S(2*4)E(-12*2)(34)'2.25'");
 	expect_errors(" DC 10FDP(123)(1)L(2*3)S(2*4)E(-12*2)'2.25'");
 	expect_errors(" DC (1*8)FDL1S(1+2)(3+1)E40'2.25'");
+	expect_errors(" DC %");
 }
 
 TEST(data_definition_grammar, address_nominal)

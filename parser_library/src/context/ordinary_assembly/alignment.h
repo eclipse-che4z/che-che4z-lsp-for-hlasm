@@ -26,6 +26,11 @@ struct alignment
 {
 	size_t byte;
 	size_t boundary;
+	
+	bool operator==(const alignment& oth) const
+	{
+		return boundary == oth.boundary && byte == oth.byte;
+	}
 };
 
 //enumeration of common alignments

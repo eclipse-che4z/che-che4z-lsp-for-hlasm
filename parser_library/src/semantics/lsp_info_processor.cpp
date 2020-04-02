@@ -20,10 +20,11 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx)
+lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool collect_hl_info)
 	: file_name(ctx ? ctx->ids().add(file,true) : nullptr)
 	, empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
 	, ctx_(ctx)
+	, collect_hl_info_(collect_hl_info)
 	, instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
 {
 	// initialize text vector
@@ -341,11 +342,15 @@ void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 
 void lsp_info_processor::add_hl_symbol(token_info symbol)
 {
-	if (symbol.scope == hl_scopes::continuation)
+	// file is open in IDE, get its highlighting
+	if (collect_hl_info_)
 	{
-		hl_info_.cont_info.continuation_positions.push_back({ symbol.token_range.start.line, symbol.token_range.start.column });
+		if (symbol.scope == hl_scopes::continuation)
+		{
+			hl_info_.cont_info.continuation_positions.push_back({ symbol.token_range.start.line, symbol.token_range.start.column });
+		}
+		hl_info_.lines.push_back(symbol);
 	}
-	hl_info_.lines.push_back(symbol);
 }
 
 semantics::highlighting_info & lsp_info_processor::get_hl_info()
@@ -575,10 +580,17 @@ void lsp_info_processor::process_instruction_sym_()
 			params_text << *deferred_vars_[i].name;
 		}
 
+		std::string trim_instr = *deferred_instruction_.name;
+		if (trim_instr.size() > 0)
+		{
+			auto c = trim_instr[0];
+			trim_instr = (c == '#' || c == '$' || c == '@' || c == '_' || c == '*') ? trim_instr.substr(1) : trim_instr;
+		}
+
 		// add it to list of completion items
 		ctx_->lsp_ctx->all_instructions.push_back(
 			{ *deferred_instruction_.name,params_text.str(),
-			*deferred_instruction_.name + "   " + params_text.str(),
+			trim_instr + "   " + params_text.str(),
 			doc_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
 		// add it to definitions
@@ -642,7 +654,7 @@ completion_list_s lsp_info_processor::complete_var_(const position& pos) const
 		{
 			auto value = symbol.first.get_value();
 			assert(value.size() == 1);
-			items.push_back({ "&" + *symbol.first.name,value[0],*symbol.first.name,{""} });
+			items.push_back({ *symbol.first.name,value[0],*symbol.first.name,{""} });
 		}
 	}
 	return { false,items };
@@ -657,7 +669,7 @@ completion_list_s lsp_info_processor::complete_seq_(const position& pos) const
 		{
 			auto value = symbol.first.get_value();
 			assert(value.size() == 1);
-			items.push_back({ "." + *symbol.first.name,value[0],*symbol.first.name,{""} });
+			items.push_back({ *symbol.first.name,value[0],*symbol.first.name,{""} });
 		}
 	}
 	return { false,items };

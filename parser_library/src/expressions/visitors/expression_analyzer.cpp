@@ -130,9 +130,9 @@ antlrcpp::Any expression_analyzer::visitCa_string_b(generated::hlasmparser::Ca_s
 {
 	auto result = get_undefined_symbol_references(ctx->string_ch_v_c()->chain);
 
-	if (ctx->substring()->e1 != nullptr)
+	if (ctx->substring() && ctx->substring()->e1 != nullptr)
 		result.merge(visit_ref(ctx->substring()->e1));
-	if (ctx->substring()->e2 != nullptr)
+	if (ctx->substring() && ctx->substring()->e2 != nullptr)
 		result.merge(visit_ref(ctx->substring()->e2));
 
 	return result;
@@ -150,10 +150,7 @@ antlrcpp::Any expression_analyzer::visitData_attribute(generated::hlasmparser::D
 {
 	std::set<context::id_index> result;
 
-	//get attr
-	auto attr_value = ctx->ORDSYMBOL()->getText();
-	assert(attr_value.size() == 1);
-	auto attr = context::symbol_attributes::transform_attr(attr_value[0]);
+	auto attr = ctx->attribute;
 
 	if (!ctx->id() || attr == context::data_attr_kind::D || attr == context::data_attr_kind::O
 		|| attr == context::data_attr_kind::N || attr == context::data_attr_kind::K 

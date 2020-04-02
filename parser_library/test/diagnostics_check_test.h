@@ -274,8 +274,8 @@ label LOCTR
  LTORG
  MNOTE 120,'message'
  OPSYN   
- ORG *-500   remark
- ORG 2+1,,4 
+ ORG *+500   remark
+ ORG *+1,,4 
  ORG ,
  PRINT ON,OFF,ON,DATA,MCALL,NOPRINT 
  PUNCH 'string'

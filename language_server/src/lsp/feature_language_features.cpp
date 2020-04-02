@@ -48,7 +48,7 @@ namespace hlasm_plugin::language_server::lsp {
 			{ "completionProvider",
 				{
 					{"resolveProvider", false},
-					{"triggerCharacters",{"&","."}}
+					{"triggerCharacters",{"&",".","_","$","#","@","*"}}
 				}
 			}
 		};
