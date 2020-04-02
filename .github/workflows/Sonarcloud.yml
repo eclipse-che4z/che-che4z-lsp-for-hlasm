@@ -80,7 +80,7 @@ jobs:
           sonar-scanner
           -Dsonar.projectKey=eclipse_che-che4z-lsp-for-hlasm
           -Dsonar.organization=eclipse
-          -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include
+          -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/
           -Dsonar.tests=parser_library/test,language_server/test
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}

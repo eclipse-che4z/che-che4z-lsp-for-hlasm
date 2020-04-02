@@ -101,10 +101,10 @@ mach_data_attribute returns [std::string attribute, id_index data = nullptr]
 	| ORDSYMBOL ATTR ASTERISK
 	| ORDSYMBOL ATTR id				{$attribute = $ORDSYMBOL->getText(); $data = $id.name;};
 
-data_attribute
-	: ORDSYMBOL ATTR literal
-	| ORDSYMBOL ATTR var_symbol
-	| ORDSYMBOL ATTR id;
+data_attribute returns [context::data_attr_kind attribute]
+	: ORDSYMBOL ATTR literal		{$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));}
+	| ORDSYMBOL ATTR var_symbol		{$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));}
+	| ORDSYMBOL ATTR id				{$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));};
 
 
 string_ch returns [std::string value]
