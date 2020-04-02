@@ -47,7 +47,7 @@ bool processor_file_impl::is_once_only() const
 
 parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 {
-	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider);
+	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, nullptr, get_lsp_editing());
 
 	auto old_dep = dependencies_;
 
@@ -75,14 +75,14 @@ parse_result processor_file_impl::parse(parse_lib_provider & lib_provider)
 
 parse_result processor_file_impl::parse_macro(parse_lib_provider & lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
-	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data);
+	analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
 
 	return parse_inner(*analyzer_);
 }
 
 parse_result processor_file_impl::parse_no_lsp_update(parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
-	no_update_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data);
+	no_update_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
 	no_update_analyzer_->analyze();
 	return true;
 }
@@ -127,8 +127,9 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 
 	collect_diags_from_child(new_analyzer);
 
-	//collect semantic info
-	parse_info_updated_ = true;
+	//collect semantic info if the file is open in IDE
+	if (get_lsp_editing())
+		parse_info_updated_ = true;
 
 	if (cancel_ && *cancel_)
 		return false;
