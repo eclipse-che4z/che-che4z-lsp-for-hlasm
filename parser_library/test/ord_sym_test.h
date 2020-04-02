@@ -14,7 +14,16 @@
 
 #ifndef HLASMPLUGIN_PARSERLIBARY_ORDSYMTEST_H
 #define HLASMPLUGIN_PARSERLIBARY_ORDSYMTEST_H
+
 #include "common_testing.h"
+
+//tests for ordinary symbols feature:
+//symbol value and attribute value 
+//relocatable values
+//ORG, DC, LOCTR
+//space creation
+//alignment
+//cyclic definition/location counter
 
 TEST(ordinary_symbols, machine_instruction_duplication)
 {

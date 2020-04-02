@@ -17,6 +17,9 @@
 
 #include "common_testing.h"
 
+//test for
+//symbol data attributes
+
 TEST(data_attributes, N)
 {
 	hlasm_context ctx;

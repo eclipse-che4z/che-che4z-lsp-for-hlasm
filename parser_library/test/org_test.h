@@ -14,7 +14,10 @@
 
 #ifndef HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
 #define HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
+
 #include "common_testing.h"
+
+//tests for ORG instruction
 
 TEST(org, symbol_non_prev_defined)
 {
