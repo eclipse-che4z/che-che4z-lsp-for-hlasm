@@ -38,18 +38,18 @@ The HLASM Language Support extension parses and analyzes all parts of a HLASM pr
 ### Highlighting
 The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching AIF, AGO or conditional assembly is not colored.
 
-![](readme_res/highlighting.png)
+![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/highlighting.png)
 
 ### Autocomplete
 Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
 
-![](readme_res/autocomplete.gif)
+![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/autocomplete.gif)
 
 
 ### Go To Definition and Find All References
 The extension adds the 'go to definition' and 'find all references' functionalities. Use the 'go to definition' functionality to show definitions of variable symbols, ordinary symbols and macros, or open COPY files directly. Use the 'find all references' functionality to show all places where a symbol is used.
 
-![](readme_res/go_to_def.gif)
+![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/go_to_def.gif)
 
 ## Macro Tracer
 
@@ -74,7 +74,7 @@ When the tracer stops at a macro or COPY instruction, you can select **step into
 
 Breakpoints can be set before or during the debugging session.
 
-![](readme_res/tracer.gif)
+![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/tracer.gif)
 
 ## External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the .hlasmplugin folder of the currently open workspace. Ensure that you configure these files before using macros from separate files or the COPY instruction.
@@ -123,17 +123,22 @@ The following example specifies that GROUP1 is used when working with `source_co
       "program": "second_file",
       "pgroup": "GROUP2"
     },
-  ]
+  ],
+  "alwaysRecognize" : ["*.hlasm", "libs/*.asm"]
 }
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-The program field in `pgm_conf.json` supports regular expressions, for example:
+There is also the option `alwaysRecognize` which takes an array of wildcards. It allows you to configure two things:
+- All files matching these wildcards will always be recognized as HLASM files. 
+- If an extension wildcard is defined, all macro and copy files with such extension may be used in the source code. For example, with the extension wildcard `*.hlasm`, a user may add macro `MAC` to his source code even if it is in a file called `Mac.hlasm`.
+
+The program field in `pgm_conf.json` supports wildcards, for example:
 ```
 {
   "pgms": [
     {
-      "program": ".*",
+      "program": "*",
       "pgroup": "GROUP1"
     }
   ]
