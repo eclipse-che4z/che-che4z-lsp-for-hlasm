@@ -78,4 +78,4 @@ TEST(extension_handling_test, extension_removal)
     EXPECT_EQ(lib4.find_file("MAC"), nullptr);
 }
 
-#endif HLASMPLUGIN_PARSERLIBRARY_EXTENSION_HANDLING_TEST_H
+#endif
