@@ -43,12 +43,13 @@ class analyzer : public diagnosable_ctx
 
 	processing::processing_manager mngr_;
 public:
-	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, const library_data data);
+	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, const library_data data, bool editing = false);
 
 	analyzer(const std::string& text,
 		std::string file_name = "",
 		parse_lib_provider& lib_provider = empty_parse_lib_provider::instance,
-		processing::processing_tracer * tracer = nullptr);
+		processing::processing_tracer * tracer = nullptr,
+		bool editing = false);
 
 	context::hlasm_context& context();
 	generated::hlasmparser& parser();
@@ -66,7 +67,8 @@ private:
 		context::hlasm_context* hlasm_ctx, 
 		const library_data data,
 		bool own_ctx,
-		processing::processing_tracer * tracer);
+		processing::processing_tracer * tracer,
+		bool editing);
 
 };
 
