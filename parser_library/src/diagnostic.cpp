@@ -1171,6 +1171,11 @@ diagnostic_op diagnostic_op::error_E067(const range& range)
 	return diagnostic_op(diagnostic_severity::error, "E067", "Bad symbol in instruction", range);
 }
 
+diagnostic_op diagnostic_op::error_E068(const range& range)
+{
+	return diagnostic_op(diagnostic_severity::error, "E068", "Operand value falls outside of current section/LOCTR", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
 	return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
@@ -1251,7 +1256,6 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
 		"W0004",
 		"The configuration file pgm_conf for workspace " + ws_name + " refers to a processor group, that is not defined in proc_grps", {});
 }
-
 
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {

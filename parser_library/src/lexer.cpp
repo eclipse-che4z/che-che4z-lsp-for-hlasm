@@ -34,7 +34,7 @@ thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> converter
 #endif
 
 lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc,performance_metrics* metrics)
-	: input_(input), lsp_proc_(lsp_proc),metrics_(metrics)
+	: input_(input), lsp_proc_(lsp_proc), metrics_(metrics)
 {
 	factory_ = std::make_unique<token_factory>();
 	ainsert_stream_ = make_unique<input_source>("");

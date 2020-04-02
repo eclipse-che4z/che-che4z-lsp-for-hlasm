@@ -36,6 +36,7 @@ void parser_impl::initialize(
 	ctx = hlasm_ctx;
 	lsp_proc = lsp_prc;
 	finished_flag = false;
+	pushed_state_ = false;                                             
 }
 
 bool parser_impl::is_last_line()
@@ -150,6 +151,9 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)
 		line.operands.clear();
 
+	if (after_substitution && line.operands.size() && line.operands.front()->type == semantics::operand_type::MODEL)
+		line.operands.clear();
+
 	range op_range = line.operands.empty() ?
 		field_range.original_range :
 		semantics::range_provider::union_range(line.operands.front()->operand_range, line.operands.back()->operand_range);
@@ -228,9 +232,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 	if (attr_data.size() == 1)
 	{
 		auto c = (char)std::toupper(attr_data[0]);
-		auto attr = context::symbol_attributes::transform_attr(c);
-		if (context::symbol_attributes::ordinary_allowed(attr))
-			return attr;
+		return context::symbol_attributes::transform_attr(c);
 	}
 
 	add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
@@ -331,6 +333,12 @@ void parser_impl::process_statement(semantics::op_rem line, range op_range)
 
 void parser_impl::process_next(processing::statement_processor& proc)
 {
+	if (collector.has_instruction())
+	{
+		//lookahead of attribute ref during instruction processing
+		assert(proc.kind == processing::processing_kind::LOOKAHEAD);
+		push_state();
+	}
 	processor = &proc;
 	if (proc.kind == processing::processing_kind::LOOKAHEAD)
 	{
@@ -340,7 +348,11 @@ void parser_impl::process_next(processing::statement_processor& proc)
 	}
 	else
 	{
+		bool state = pushed_state_;
 		auto lab_instr = dynamic_cast<generated::hlasmparser&>(*this).lab_instr();
+		if (state != pushed_state_)
+			pop_state();
+
 		if (!finished_flag && lab_instr->op_text)
 			parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
 	}
@@ -421,6 +433,7 @@ void parser_impl::initialize(
 	ctx = hlasm_ctx;
 	provider = range_prov;
 	proc_status = proc_stat;
+	pushed_state_ = false;
 }
 
 void hlasm_plugin::parser_library::parser_impl::initialize(parser_impl* parent)
@@ -429,6 +442,21 @@ void hlasm_plugin::parser_library::parser_impl::initialize(parser_impl* parent)
 	provider = parent->provider;
 	proc_status = parent->proc_status;
 	parent_ = parent;
+	pushed_state_ = false;
+}
+
+void parser_impl::push_state()
+{
+	collector.push_fields();
+	processor_storage_ = processor;
+	pushed_state_ = true;
+}
+
+void parser_impl::pop_state()
+{
+	collector.pop_fields();
+	processor = processor_storage_;
+	pushed_state_ = false;
 }
 
 semantics::operand_list parser_impl::parse_macro_operands(std::string operands, range field_range, std::vector<range> operand_ranges)

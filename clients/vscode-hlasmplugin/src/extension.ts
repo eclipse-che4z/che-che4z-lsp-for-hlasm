@@ -29,6 +29,9 @@ const useTcp = false;
 var highlight: ASMSemanticHighlightingFeature;
 var hlasmpluginClient: vscodelc.LanguageClient;
 var dapPort: number;
+var pgmConfPath: string = undefined;
+var procGrpsPath: string = undefined;
+var definedExpressions: RegExp[] = [];
 
 // returns random free port
 const getPort = () => new Promise<number>((resolve,reject) => 
@@ -63,7 +66,9 @@ export async function activate(context: vscode.ExtensionContext) {
     {
         const lspPort = await getPort();
         //spawn the server
-        fork.spawn(path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), ["-p", dapPort.toString(), lspPort.toString()]);
+        fork.spawn(
+            path.join(__dirname, '..', 'bin', lang_server_folder, 'language_server'), 
+            ["-p", dapPort.toString(), lspPort.toString()]);
 
         //set the tcp communication
         let connectionInfo = {
@@ -88,7 +93,10 @@ export async function activate(context: vscode.ExtensionContext) {
         var serverOptions: vscodelc.ServerOptions = server;
     }
     const filePattern: string = '**/*'
-    const configPattern: string = '**/{' + [path.join('.hlasmplugin','proc_grps.json'), path.join('.hlasmplugin','pgm_conf.json')].join() + '}';
+    const configPattern: string = 
+        '**/{' 
+        + [path.join('.hlasmplugin','proc_grps.json'), path.join('.hlasmplugin','pgm_conf.json')].join() 
+        + '}';
 
     const clientOptions: vscodelc.LanguageClientOptions = {
         documentSelector: [{ language:'hlasm'}, {pattern:configPattern}],
@@ -112,10 +120,11 @@ export async function activate(context: vscode.ExtensionContext) {
     // register highlight progress
     context.subscriptions.push(highlight.progress);
 
-    //first run, set the language if possible and configs 
+    //first run, check for assembler language and configurations
     if (vscode.window.activeTextEditor)
     {
         highlight.showProgress(vscode.window.activeTextEditor.document);
+        updateWildcards();
         editorChanged(vscode.window.activeTextEditor.document);
     }
 
@@ -160,7 +169,10 @@ class LinePositionsInfo
     constructor(editor: vscode.TextEditor, globalContinuationOffset: boolean = false)
     {
         this.currentPosition = editor.selection.active;
-        this.continuationOffset = highlight.getContinuation((globalContinuationOffset) ? -1 : this.currentPosition.line, editor.document.uri.toString());
+        this.continuationOffset = 
+            highlight.getContinuation((globalContinuationOffset) 
+                ? -1 
+                : this.currentPosition.line, editor.document.uri.toString());
     }
 }
 
@@ -180,7 +192,9 @@ function findSpace(textLine: vscode.TextLine, length: number, info: LinePosition
         length--;
         currentSymbol = textLine.text[spacePosition];
     }
-    return (length > 0) ? null : new vscode.Range(new vscode.Position(textLine.lineNumber, spacePosition), new vscode.Position(textLine.lineNumber, info.continuationOffset-1));
+    return (length > 0) 
+        ? null 
+        : new vscode.Range(textLine.lineNumber, spacePosition, textLine.lineNumber, info.continuationOffset-1);
 }
 
 function setCursor(editor: vscode.TextEditor, position: vscode.Position)
@@ -191,24 +205,44 @@ function setCursor(editor: vscode.TextEditor, position: vscode.Position)
 function deleteLeft(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, info: LinePositionsInfo)
 {
     // size of deleted selection
-    var selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? info.currentPosition.character - editor.selection.anchor.character : 1;
+    const selectionSize = 
+        (info.currentPosition.character - editor.selection.anchor.character != 0) 
+        ? info.currentPosition.character - editor.selection.anchor.character 
+        : 1;
+
     // position of cursor after delete
-    var newCursorPosition = new vscode.Position(info.currentPosition.line, info.currentPosition.character - ((selectionSize > 0 && info.currentPosition.character > 0) ? selectionSize : 0));
+    var newCursorPosition = 
+        new vscode.Position(
+            info.currentPosition.line, 
+            info.currentPosition.character - ((selectionSize > 0 && info.currentPosition.character > 0) ? selectionSize : 0));
+
     //end of selection
-    var endPos = (info.currentPosition.character < editor.selection.anchor.character) ? editor.selection.anchor.character : info.currentPosition.character;
+    const endPos = 
+        (info.currentPosition.character < editor.selection.anchor.character) 
+            ? editor.selection.anchor.character 
+            : info.currentPosition.character;
+            
     // there is a continuation and it is after our position, handle it
     if (info.continuationOffset != -1 && endPos < info.continuationOffset && info.currentPosition.character > 0 && editor.selection.isSingleLine) {
-        var beforeContinuationChars = new vscode.Range(info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), info.currentPosition.line, info.continuationOffset);
+        const beforeContinuationChars = new vscode.Range(
+            info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), 
+            info.currentPosition.line, info.continuationOffset);
+        
         edit.insert(beforeContinuationChars.end, " ".repeat(Math.abs(selectionSize)));
     }
     // special case for delete at the beginning of line
     else if (info.currentPosition.character == 0 && info.currentPosition.line > 0) {
-        newCursorPosition = new vscode.Position(info.currentPosition.line - 1, editor.document.lineAt(info.currentPosition.line - 1).text.length);
+        newCursorPosition = new vscode.Position(
+            info.currentPosition.line - 1, 
+            editor.document.lineAt(info.currentPosition.line - 1).text.length);
     }
     // delete as default
-    edit.delete(new vscode.Range(info.currentPosition, (editor.selection.anchor.character == info.currentPosition.character && editor.selection.anchor.line == info.currentPosition.line) ?
+    edit.delete(new vscode.Range(info.currentPosition, 
+        (editor.selection.anchor.character == info.currentPosition.character 
+            && editor.selection.anchor.line == info.currentPosition.line) ?
         newCursorPosition :
         new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
+
     return newCursorPosition;
 }
 
@@ -219,7 +253,7 @@ function deleteLeft(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, info
  */
 function insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, text: string)
 {
-    var info = new LinePositionsInfo(editor);
+    const info = new LinePositionsInfo(editor);
     // typing with multiple characters selected
     if (info.currentPosition.line != editor.selection.anchor.line || info.currentPosition.character != editor.selection.anchor.character)
     {
@@ -245,7 +279,7 @@ function insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, tex
     // there is a continuation, prepare space for new characters
     if (info.continuationOffset != -1 && info.currentPosition.character < info.continuationOffset) {
         // find free space in front of it
-        var spaceRange = findSpace(editor.document.lineAt(info.currentPosition),text.length, info);
+        const spaceRange = findSpace(editor.document.lineAt(info.currentPosition),text.length, info);
         // if there is, delete it
         if (spaceRange)
             edit.delete(spaceRange);
@@ -257,23 +291,36 @@ vscode.commands.registerTextEditorCommand("insertContinuation", (editor: vscode.
     if (!vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
         return;
 
-    var info = new LinePositionsInfo(editor,true);
-    var continueColumn = highlight.getContinueColumn(editor.document.uri.toString());
+    const info = new LinePositionsInfo(editor,true);
+    const continueColumn = highlight.getContinueColumn(editor.document.uri.toString());
     // not a continued line, create new continuation
     if (highlight.getContinuation(info.currentPosition.line, editor.document.uri.toString()) == -1) {
         var lastChar = info.currentPosition.character;
         if (info.currentPosition.character < info.continuationOffset) {
             lastChar = editor.document.lineAt(info.currentPosition).text.length;
             lastChar = (lastChar < info.continuationOffset) ? lastChar : info.continuationOffset;
-            edit.insert(new vscode.Position(info.currentPosition.line, lastChar), " ".repeat(info.continuationOffset - lastChar));
+            edit.insert(
+                new vscode.Position(info.currentPosition.line, lastChar), " ".repeat(info.continuationOffset - lastChar));
         }
-        var continuationPosition = new vscode.Position(info.currentPosition.line, info.continuationOffset);
-        edit.replace(new vscode.Range(continuationPosition, new vscode.Position(info.currentPosition.line, info.continuationOffset + 1)), "X");
-        edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(continueColumn)));
+        const continuationPosition = new vscode.Position(info.currentPosition.line, info.continuationOffset);
+        edit.replace(
+            new vscode.Range(
+                continuationPosition, 
+                new vscode.Position(info.currentPosition.line, info.continuationOffset + 1)), 
+            "X");
+
+        edit.insert(
+            new vscode.Position(
+                info.currentPosition.line, 
+                editor.document.lineAt(info.currentPosition).text.length), 
+            "\r\n".concat(" ".repeat(continueColumn)));
     }
     // add extra continuation on already continued line
     else
-        edit.insert(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), "\r\n".concat(" ".repeat(info.continuationOffset).concat("X")));
+        edit.insert(new vscode.Position(
+                info.currentPosition.line, 
+                editor.document.lineAt(info.currentPosition).text.length), 
+            "\r\n".concat(" ".repeat(info.continuationOffset).concat("X")));
 });
 
 // remove continuation from previous line
@@ -281,12 +328,24 @@ vscode.commands.registerTextEditorCommand("removeContinuation", (editor: vscode.
     if (!vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
         return;
 
-    var info = new LinePositionsInfo(editor,true);
-    if (info.currentPosition.line > 0 && highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
-        var continuationPosition = new vscode.Position(info.currentPosition.line - 1, info.continuationOffset);
-        edit.delete(new vscode.Range(new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), new vscode.Position(info.currentPosition.line - 1, editor.document.lineAt(info.currentPosition.line - 1).text.length)));
-        edit.replace(new vscode.Range(continuationPosition, new vscode.Position(continuationPosition.line, info.continuationOffset + 1)), " ");
-        setCursor(editor, continuationPosition);
+    const info = new LinePositionsInfo(editor,true);
+    if (info.currentPosition.line > 0 && 
+        highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
+            const continuationPosition = new vscode.Position(
+                info.currentPosition.line - 1, info.continuationOffset);
+            edit.delete(
+                new vscode.Range(
+                    new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length), 
+                    new vscode.Position(
+                        info.currentPosition.line - 1, 
+                        editor.document.lineAt(info.currentPosition.line - 1).text.length)));
+
+            edit.replace(new vscode.Range(
+                    continuationPosition, 
+                    new vscode.Position(continuationPosition.line, info.continuationOffset + 1)), 
+                " ");
+
+            setCursor(editor, continuationPosition);
     }
 });
 
@@ -314,11 +373,12 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
      * Works similarly to deleteLeft
      */
     vscode.commands.registerTextEditorCommand("cut", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-        var info = new LinePositionsInfo(editor);
+        const info = new LinePositionsInfo(editor);
         // do not cut 0 length sequences 
-        if (info.currentPosition.line == editor.selection.anchor.line && info.currentPosition.character == editor.selection.anchor.character)
+        if (info.currentPosition.line == editor.selection.anchor.line 
+            && info.currentPosition.character == editor.selection.anchor.character)
             return;
-        var cursorPos = deleteLeft(editor,edit,info);
+        const cursorPos = deleteLeft(editor,edit,info);
         // move the cursor if necessary
         if (info.currentPosition.character == info.continuationOffset)
             setCursor(editor,cursorPos);
@@ -330,8 +390,8 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
      * Works on single line deletions only
      */ 
     vscode.commands.registerTextEditorCommand("deleteLeft", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-        var info = new LinePositionsInfo(editor);
-        var cursorPos = deleteLeft(editor,edit,info);
+        const info = new LinePositionsInfo(editor);
+        const cursorPos = deleteLeft(editor,edit,info);
         // move the cursor if necessary
         if (info.currentPosition.character == info.continuationOffset)
             setCursor(editor,cursorPos);
@@ -343,21 +403,36 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
      * Works on single line deletions only
      */ 
     vscode.commands.registerTextEditorCommand("deleteRight", (editor: vscode.TextEditor, edit: vscode.TextEditorEdit) => {
-        var info = new LinePositionsInfo(editor);
+        const info = new LinePositionsInfo(editor);
         // size of deleted selection
-        var selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? info.currentPosition.character - editor.selection.anchor.character : -1;
+        const selectionSize = (info.currentPosition.character - editor.selection.anchor.character != 0) ? 
+            info.currentPosition.character - editor.selection.anchor.character : 
+            -1;
+
         // position of cursor after delete
-        var newCursorPosition = new vscode.Position(info.currentPosition.line, info.currentPosition.character - ((selectionSize >= -1) ? selectionSize : 0));
+        var newCursorPosition = new vscode.Position(
+            info.currentPosition.line, 
+            info.currentPosition.character - ((selectionSize >= -1) ? selectionSize : 0));
+
         // there is a continuation and it is after our position, handle it
         if (info.continuationOffset != -1 && info.currentPosition.character < info.continuationOffset && editor.selection.isSingleLine) {
-            var beforeContinuationChars = new vscode.Range(info.currentPosition.line, info.continuationOffset - Math.abs(selectionSize), info.currentPosition.line, info.continuationOffset);
+            const beforeContinuationChars = 
+                new vscode.Range(info.currentPosition.line, 
+                    info.continuationOffset - Math.abs(selectionSize), 
+                    info.currentPosition.line, 
+                    info.continuationOffset);
+
             edit.insert(beforeContinuationChars.end, " ".repeat(Math.abs(selectionSize)));
         }
+
         // change the cursor if needed
         if (editor.document.lineAt(info.currentPosition).text.substring(info.currentPosition.character) == "")
             newCursorPosition = new vscode.Position(info.currentPosition.line + 1, 0);
+
         // delete as default
-        edit.delete(new vscode.Range(info.currentPosition, (editor.selection.anchor.character == info.currentPosition.character && editor.selection.anchor.line == info.currentPosition.line) ?
+        edit.delete(new vscode.Range(info.currentPosition, 
+            (editor.selection.anchor.character == info.currentPosition.character && 
+                editor.selection.anchor.line == info.currentPosition.line) ?
             newCursorPosition :
             new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
     });
@@ -374,16 +449,29 @@ if (vscode.workspace.getConfiguration().get("hlasmplugin.continuationHandling"))
         const editor = vscode.window.activeTextEditor;
         if (event.contentChanges.length == 0 || editor.document.languageId != "hlasm")
             return;
+
         const change = event.contentChanges[0].text;
-        var info = new LinePositionsInfo(editor);
-        var currentLine = editor.document.getText(new vscode.Range(new vscode.Position(info.currentPosition.line, 0), info.currentPosition));
-        var notContinued = info.currentPosition.line == 0 || highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
-        if ((currentLine != "" && isTrigger.test(change) && isInstruction.test(currentLine) && notContinued && currentLine[0] != "*") || change == "." || change == "&") {
-            vscode.commands.executeCommand(completeCommand);
+        const info = new LinePositionsInfo(editor);
+        const currentLine = editor.document.getText(
+            new vscode.Range(
+                new vscode.Position(info.currentPosition.line, 0), 
+                info.currentPosition));
+
+        const notContinued = 
+        info.currentPosition.line == 0 || 
+        highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
+        
+        if ((currentLine != "" && 
+            isTrigger.test(change) && 
+            isInstruction.test(currentLine) && 
+            notContinued && 
+            currentLine[0] != "*") || change == "." || change == "&") {
+                vscode.commands.executeCommand(completeCommand);
         }
     })
 }
 
+// dubeg configuration provider, add port number dynamically
 class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
 {
     protected dapPort: number;
@@ -392,7 +480,10 @@ class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
         this.dapPort = dapPort;
     }
 
-    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, 
+        config: vscode.DebugConfiguration, 
+        token?: vscode.CancellationToken)
+        : vscode.ProviderResult<vscode.DebugConfiguration> {
         // no launch.json, debug current
         if (!config.type && !config.request && !config.name)
         {
@@ -401,9 +492,8 @@ class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
             config.name = "Macro tracer: current program";
             config.program = "${command:extension.hlasm-plugin.getCurrentProgramName}";
             config.stopOnEntry = true;
-            config.configId = 0;
         }
-        if (config.configId == 0)
+        if (config.name == 'Macro tracer: current program')
         {
             const editor = vscode.window.activeTextEditor;
             if (editor && editor.document.languageId === 'hlasm')
@@ -411,11 +501,12 @@ class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
                 config.debugServer = dapPort;
             }
         }
-        else if (config.configId == 1)
+        else if (config.name == 'Macro tracer: Ask for file name')
             config.debugServer = dapPort;
 
         if (!config.debugServer) {
-            return vscode.window.showInformationMessage("Wrong debug settings. Please make sure that you are debugging HLASM file or try setting the configurations to default state.").then(_ => {
+            return vscode.window.showInformationMessage("Wrong debug settings. Please make sure that you are debugging HLASM file or try setting the configurations to default state.")
+                .then(_ => {
                 return undefined;	// abort launch
             });
         }
@@ -424,12 +515,19 @@ class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
 	}
 }
 
+// register provider for all hlasm debug configurations
 vscode.debug.registerDebugConfigurationProvider('hlasm', new HlasmConfigurationProvider(dapPort));
 
 // when contents of a document change, show parse progress
 vscode.workspace.onDidChangeTextDocument(event => {
     highlight.showProgress(event.document);
 })
+
+// when files closes before it was succesfuly parsed, remove it from the parsing list
+vscode.workspace.onDidCloseTextDocument(document => {
+    highlight.hideProgress(document.uri.toString());
+})
+
 // when document opens, show parse progress
 vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
     highlight.showProgress(document);
@@ -461,8 +559,8 @@ const macroInstruction =new RegExp("( |\\t)+MACRO( |\\t)*");
 var configs = true;
 function editorChanged(document: vscode.TextDocument)
 {
-    if (setHlasmLanguage(document) && vscode.workspace.workspaceFolders && configs)
-        checkConfigs(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    if (setHlasmLanguage(document) && configs)
+        checkConfigs();
 }
 
 // when active editor changes, try to set a language for it
@@ -472,8 +570,73 @@ vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) =>
         editorChanged(editor.document);
 })
 
-function checkHlasmLanguage(text: string)
+// when pgm_conf changes, update wildcards
+vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) =>
 {
+    if (document.fileName == pgmConfPath || document.fileName == procGrpsPath)
+        updateWildcards();
+})
+
+
+// update wildcards when pgm conf changes (on save)
+function updateWildcards()
+{
+    // configs do not exist
+    if (!updateConfigPaths())
+        return;
+
+    //clear expressions
+    definedExpressions = [];
+    // get user-defined wildcards
+    var content = JSON.parse(fs.readFileSync(pgmConfPath,"utf8"));
+    
+    // convert each pgm to regex
+    if (content.pgms) {
+        (content.pgms as any[]).forEach(pgm => {
+            const regex = convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + pgm);
+            if (regex)
+                definedExpressions.push(regex);
+        });
+    }
+
+    // convert each wildcard to regex
+    if (content.alwaysRecognize) {
+        (content.alwaysRecognize as string[]).forEach(strExpr => {
+            const regex = convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + strExpr);
+            if (regex)
+                definedExpressions.push(regex);
+        });
+    }
+
+    content = JSON.parse(fs.readFileSync(procGrpsPath,"utf8"));
+    // convert each pgroup library path to regex
+    if (content.pgroups) {
+        (content.pgroups as any[]).forEach(pgroup => {
+            if (pgroup.libs)
+                (pgroup.libs as string[]).forEach(lib => {
+                    const regex = convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + lib + "/" + '*');
+                    if (regex)
+                        definedExpressions.push(regex);
+                })
+        });
+    }
+}
+
+function convertWildcardToRegex(wildcard: string)
+{
+    var regexStr = wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => {return "\\" + char});
+    regexStr = regexStr.replace(/\?/g, ".");
+    regexStr = regexStr.replace(/\*|\+/g, (char) => { return "." + char + "?"; });
+    return new RegExp(regexStr);
+}
+
+function checkHlasmLanguage(document: vscode.TextDocument)
+{
+    // check if the current active editor document matches any of the wildcards
+    if (definedExpressions.find(expr => expr.test(document.uri.path)))
+        return true;
+
+    const text = document.getText();
     if (text.length == 0)
         return false;
 
@@ -481,7 +644,7 @@ function checkHlasmLanguage(text: string)
     var lines = 0;
     var lastContinued = false;
     //iterate line by line
-    var split = text.split('\n');
+    const split = text.split('\n');
     //check whether the first line is MACRO and immediately set to hlasm
     if (macroInstruction.test(split[0].toUpperCase()))
         return true;
@@ -508,7 +671,7 @@ function checkHlasmLanguage(text: string)
 //automatic detection function
 function setHlasmLanguage(document: vscode.TextDocument) : Boolean {
     if (document.languageId == 'plaintext') {
-        if (checkHlasmLanguage(document.getText()))
+        if (checkHlasmLanguage(document))
         {
             vscode.languages.setTextDocumentLanguage(document, 'hlasm');
             return true;
@@ -517,23 +680,54 @@ function setHlasmLanguage(document: vscode.TextDocument) : Boolean {
     return document.languageId == 'hlasm';
 }
 
-/**
- * Checks whether both config files are present
- * Creates them on demand if not
- */
-function checkConfigs(folderUri: string)
+
+function updateConfigPaths() : boolean
 {
-    let folderPath = path.join(folderUri,'.hlasmplugin')
+    // paths are defined and existing
+    if (procGrpsPath && pgmConfPath && fs.existsSync(procGrpsPath) && fs.existsSync(pgmConfPath))
+        return true;
+    // no workspace
+    if (!vscode.workspace.workspaceFolders)
+        return false
+
+    const folder = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const folderPath = path.join(folder,'.hlasmplugin')
     // create folder .hlasmplugin if does not exist
     if (!fs.existsSync(folderPath))
         fs.mkdirSync(folderPath);
 
-    let doNotShowAgain = 'Do not show again';
-    // give option to create proc_grps
-    let proc_grps_path = path.join(folderPath,'proc_grps.json');
-    if (!fs.existsSync(proc_grps_path))
+    // paths where the configs are supposed to be
+    procGrpsPath = path.join(folderPath,'proc_grps.json');
+    pgmConfPath = path.join(folderPath,'pgm_conf.json');
+
+    if (!fs.existsSync(procGrpsPath))
+        return false;
+
+    if (!fs.existsSync(pgmConfPath))
     {
-        vscode.window.showWarningMessage('proc_grps.json not found', ...['Create empty proc_grps.json',doNotShowAgain]).then((selection) => {
+        // file might have been removed, clear the expressions
+        definedExpressions = [];
+        return false;
+    }
+
+    return true;
+}
+/**
+ * Checks whether both config files are present
+ * Creates them on demand if not
+ */
+function checkConfigs()
+{
+    // configs exist
+    if (updateConfigPaths())
+        return;
+
+    const doNotShowAgain = 'Do not track';
+    // give option to create proc_grps
+    if (!fs.existsSync(procGrpsPath))
+        vscode.window.showWarningMessage('proc_grps.json not found', 
+        ...['Create empty proc_grps.json',doNotShowAgain])
+        .then((selection) => {
             if (selection)
             {
                 if (selection == doNotShowAgain)
@@ -542,18 +736,17 @@ function checkConfigs(folderUri: string)
                     return;
                 }
 
-                fs.writeFile(proc_grps_path,JSON.stringify(
+                fs.writeFile(procGrpsPath,JSON.stringify(
                     {"pgroups":[{"name": "","libs": [""]}]}
                     ,null,2),()=> {});
-                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(proc_grps_path));
+                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(procGrpsPath));
             }
         });
-    }
-
-    let pgm_conf_path = path.join(folderPath,'pgm_conf.json');
-    if (!fs.existsSync(pgm_conf_path))
-    {
-        vscode.window.showWarningMessage('pgm_conf.json not found', ...['Create empty pgm_conf.json','Create pgm_conf.json with this file',doNotShowAgain]).then((selection) => {
+    
+    if (!fs.existsSync(pgmConfPath))
+        vscode.window.showWarningMessage('pgm_conf.json not found', 
+        ...['Create empty pgm_conf.json','Create pgm_conf.json with this file',doNotShowAgain])
+        .then((selection) => {
             if (selection)
             {
                 if (selection == doNotShowAgain)
@@ -565,11 +758,10 @@ function checkConfigs(folderUri: string)
                 var program_name = "";
                 if (selection == "Create pgm_conf.json with this file")
                     program_name = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
-                fs.writeFile(pgm_conf_path,JSON.stringify(
-                    {"pgms":[{"program": program_name,"pgroup": ""}]}
+                fs.writeFile(pgmConfPath,JSON.stringify(
+                    {"pgms":[{"program": program_name,"pgroup": ""}],"alwaysRecognize":[]}
                     ,null,2),()=> {});
-                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(pgm_conf_path));
+                vscode.commands.executeCommand("vscode.open",vscode.Uri.file(pgmConfPath));
             }
         });
-    }
 }

@@ -76,6 +76,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/context/processing_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/cached_statement.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/location_counter.cpp
+    ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/location_counter_data.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/ordinary_assembly_context.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/symbol_dependency_tables.cpp
     ${PROJECT_SOURCE_DIR}/src/context/ordinary_assembly/section.cpp
@@ -119,6 +120,7 @@ set(LIB_SRC
     ${PROJECT_SOURCE_DIR}/src/expressions/visitors/expression_evaluator.cpp
     ${PROJECT_SOURCE_DIR}/src/semantics/lsp_info_processor.cpp
     ${PROJECT_SOURCE_DIR}/src/workspace.cpp
+    ${PROJECT_SOURCE_DIR}/src/wildcard.cpp
     ${PROJECT_SOURCE_DIR}/src/file_manager_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/file_impl.cpp
     ${PROJECT_SOURCE_DIR}/src/library.cpp
@@ -193,11 +195,15 @@ add_dependencies(parser_library antlr4jar GenerateParser)
 add_dependencies(parser_library json)
 
 if(BUILD_TESTING)
-	add_executable(library_test test/test.cpp
-	${LIB_SRC}
-	${GENERATED_SRC}
-	)
-	if(NOT BUILD_SHARED_LIBS)
+    if(BUILD_SHARED_LIBS) #when building shared libary, we need to compile from source,
+                          #because not all classes are exported
+	    add_executable(library_test test/test.cpp
+	    	${LIB_SRC}
+			${GENERATED_SRC}
+	    )
+    else() #when building statically linked library, we can link already built parser_library.
+    	add_executable(library_test test/test.cpp)
+        target_link_libraries(library_test parser_library)
 		set_target_properties(library_test PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
 	endif()
 
@@ -235,4 +241,29 @@ if(BUILD_TESTING)
     if(DISCOVER_TESTS)
 	    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     endif()
+endif()
+
+if(BUILD_FUZZER)
+	add_executable(library_fuzzer fuzzer.cpp
+	)
+    target_link_libraries(library_fuzzer parser_library)
+
+
+    set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
+	set_target_properties(library_fuzzer PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+    
+	configure_file(
+                ${PROJECT_SOURCE_DIR}/fuzzer.dict
+                ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
+				COPYONLY)
+
+    if(UNIX)
+	    target_link_libraries(library_fuzzer pthread)
+    endif()
+	target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
+	if(FILESYSTEM_LINK)
+		target_link_libraries(library_fuzzer ${FILESYSTEM_LIBRARY})
+    endif()
+    
+	add_dependencies(library_fuzzer antlr4jar json)
 endif()

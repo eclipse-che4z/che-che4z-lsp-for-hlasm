@@ -17,9 +17,11 @@ on:
   push:
     branches:
       - master
+      - development
   pull_request:
     branches:
       - master
+      - development
 jobs:
   
   win-server:
@@ -116,9 +118,11 @@ jobs:
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls clients/vscode-hlasmplugin/*.vsix)
+      - name: Get version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
       - name: Upload VSIX
         uses: actions/upload-artifact@v1
         with:
-          name: hlasm-language-support.vsix
+          name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: ${{ env.VSIX_FILENAME }}
       

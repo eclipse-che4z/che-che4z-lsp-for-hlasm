@@ -703,3 +703,44 @@ B EQU 2,22
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(attribute_lookahead, lookahead_from_macro_bad_following_statement)
+{
+	std::string input(
+		R"( 
+ MACRO
+ M
+&A SETA L'A
+ MEND
+
+ M
+ AGO .A
+F 
+A EQU 1,1,1
+.A ANOP
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(attribute_lookahead, lookahead_from_instruction_field)
+{
+	std::string input(
+		R"( 
+&A(1) SETC 'LR','SAM64','LR'
+ &A(L'A) 
+A EQU 1,2,1
+)"
+);
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}

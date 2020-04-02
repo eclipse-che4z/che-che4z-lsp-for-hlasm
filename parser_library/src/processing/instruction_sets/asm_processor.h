@@ -53,9 +53,12 @@ private:
 	void process_DS(rebuilt_statement stmt);
 	void process_COPY(rebuilt_statement stmt);
 	void process_EXTRN(rebuilt_statement stmt);
+	void process_ORG(rebuilt_statement stmt);
 
 	template<checking::data_instr_type instr_type>
 	void process_data_instruction(rebuilt_statement stmt);
+
+	std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
 };
 
 }

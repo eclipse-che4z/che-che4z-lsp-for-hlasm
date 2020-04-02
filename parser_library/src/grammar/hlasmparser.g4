@@ -13,7 +13,7 @@
  */
 
 parser grammar hlasmparser;
-
+                                                 
 import
 label_field_rules,
 operand_field_rules,
@@ -144,8 +144,6 @@ first_part
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
 		_localctx->exception = std::move($instruction.ctx->exception);
-		//collector.add_operands_hl_symbols();
-		//collector.add_remarks_hl_symbols();
 	}
 	| PROCESS 
 	{
@@ -153,7 +151,6 @@ first_part
 		collector.set_instruction_field(
 			parse_identifier($PROCESS->getText(),provider.get_range($PROCESS)),
 			provider.get_range( $PROCESS));
-		process_instruction();
 		collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
 	};
 
@@ -161,15 +158,15 @@ operand_field_rest
 	: ~EOLLN*;
 
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part {enable_hidden();} operand_field_rest 
+	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} 
 	{
-		{disable_hidden();}
+		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		if (!$first_part.ctx->exception)
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
+			process_instruction();
 		}
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 	} EOLLN
 	| SPACE? 
 	{

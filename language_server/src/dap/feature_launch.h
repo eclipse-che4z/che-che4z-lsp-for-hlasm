@@ -34,6 +34,7 @@ private:
 
 	void on_launch(const json & request_seq, const json & args);
 	void on_set_breakpoints(const json & request_seq, const json & args);
+	void on_set_exception_breakpoints(const json& request_seq, const json& args);
 	void on_configuration_done(const json & request_seq, const json & args);
 	void on_threads(const json & request_seq, const json & args);
 	void on_stack_trace(const json & request_seq, const json & args);

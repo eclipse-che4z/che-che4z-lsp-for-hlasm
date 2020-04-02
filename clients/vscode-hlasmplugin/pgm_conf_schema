@@ -10,7 +10,7 @@
                 "properties" : {
                     "program": {
                         "type" : "string",
-                        "description" : "Name/Regex of file to be considered as main program (open code)"
+                        "description" : "Name/Wildcard of file to be considered as main program (open code)"
                     },
                     "pgroup": {
                         "type" : "string",
@@ -18,6 +18,15 @@
                     }
                 },
                 "required" : ["program", "pgroup"]
+            }
+        },
+        "alwaysRecognize":
+        {
+            "description":"Array of wildcards.\nIf a file path (relatively to the root of the workspace) matches any of the wildcards, it is automatically recognized as HLASM.\nFor example:\n ASMPGM/* matches files in folder ASMPGM \n *.asm matches files with the extension .asm.\nPlease note that you don't have to provide a wildcard for the program files and the files that are inside processor group folder as they are already being recognized by default.",
+            "type": "array",
+            "items": {
+                "type" : "string",
+                "description" : "Wildcard"
             }
         }
     },

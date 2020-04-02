@@ -65,6 +65,13 @@ public:
 	//sets current location counter of current section
 	void set_location_counter(id_index name, location symbol_location);
 
+	//sets value of the current location counter
+	void set_location_counter_value(const address& addr, size_t boundary, int offset, const resolvable* undefined_address, post_stmt_ptr dependency_source);
+	space_ptr set_location_counter_value_space(const address& addr, size_t boundary, int offset, const resolvable* undefined_address, post_stmt_ptr dependency_source);
+
+	//sets next available value for the current location counter
+	void set_available_location_counter_value(size_t boundary, int offset);
+
 	//check whether symbol is already defined
 	bool symbol_defined(id_index name);
 	//check whether section is already defined
@@ -79,7 +86,7 @@ public:
 	address align(alignment align);
 
 	//adds space to the current location counter
-	space_ptr register_space();
+	space_ptr register_ordinary_space(alignment align);
 
 	//creates layout of every section
 	void finish_module_layout();
@@ -87,6 +94,7 @@ public:
 	const std::unordered_map<id_index, symbol> & get_all_symbols();
 private:
 	void create_private_section();
+	std::pair<address, space_ptr> reserve_storage_area_space(size_t length, alignment align);
 };
 
 }

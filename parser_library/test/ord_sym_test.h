@@ -766,6 +766,96 @@ X EQU 1
 	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->symbol_location, location({ 6, 0 }, "test"));
 	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("XX"))->symbol_location, location({ 3, 0 }, "test"));
 	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("XXX"))->symbol_location, location({ 0, 0 }, "COPYF"));
+}
+
+TEST(ordinary_symbols, alignment_cycle)
+{
+	std::string input = R"(
+     DS   (X)B
+S1   EQU  *
+S2   DS   0F
+X    EQU  S2-S1
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, no_alignment_cycle)
+{
+	std::string input = R"(
+     DS   (X)F
+S1   EQU  *
+S2   DS   0F
+X    EQU  S2-S1
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, loctr_valid_alignment)
+{
+	std::string input = R"(
+A    CSECT
+X1   DS   0F
+B    LOCTR 
+X2   DS   0H
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, space_valid_alignment)
+{
+	std::string input = R"(
+A    CSECT
+     DS   3C
+     DS   (X)D
+B    EQU  *
+     DS   1F
+     DS   3X
+     DS   2D
+X    EQU  *-B
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 24);
+
+	EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(ordinary_symbols, valid_alignment_resolution)
+{
+	std::string input = R"(
+A    CSECT
+     DS     3C
+B    LOCTR
+     DS     2F
+C    LOCTR
+     DS     1D
+
+X    EQU    *-A
+)";
+
+	analyzer a(input);
+	a.analyze();
+	a.collect_diags();
+
+	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 24);
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
