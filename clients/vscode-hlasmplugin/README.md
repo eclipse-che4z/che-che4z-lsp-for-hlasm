@@ -131,7 +131,7 @@ If you have the two configuration files configured as above and invoke the MAC1 
 
 There is also option `alwaysRecognize` which takes array of wildcards. It allows you to configure two things:
 - All files matching these wildcards will be always recognized as HLASM files. 
-- Macros and copy files will be recognized even if their file names does not match the identifier written into source code. For example, macro `IF` would be found even if it was defined in file `IF.hlasm`.
+- Macro and copy files will be recognized even if their file names do not match the identifier used in a source code. For example, macro `IF` would be found even if it was defined in file `IF.hlasm`.
 
 The program field in `pgm_conf.json` supports wildcards, for example:
 ```
