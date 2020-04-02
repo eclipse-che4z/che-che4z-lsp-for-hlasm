@@ -64,6 +64,6 @@ if(BUILD_TESTING)
 	target_link_libraries(server_test parser_library)
 
 	if(DISCOVER_TESTS)
-		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)	
+		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 30)	
 	endif()
 endif()
