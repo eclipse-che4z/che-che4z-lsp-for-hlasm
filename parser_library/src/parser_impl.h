@@ -122,7 +122,7 @@ class token_stream;
 namespace generated {
 class hlasmparser;
 }
-//structure containing parer components
+//structure containing parser components
 struct parser_holder
 {
 	std::unique_ptr<input_source> input;

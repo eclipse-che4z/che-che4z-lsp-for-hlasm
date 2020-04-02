@@ -21,10 +21,15 @@
 
 namespace hlasm_plugin::parser_library {
 
+//abstract diagnosable class that enhances collected diagnostics
+//adds a stack of nested file positions that indicate where the diagnostic occured
 class diagnosable_ctx : public diagnosable_impl
 {
+	context::hlasm_context& ctx_;
+
 public:
 	using diagnosable_impl::add_diagnostic;
+
 	virtual void add_diagnostic(diagnostic_op diagnostic) const
 	{
 		add_diagnostic_inner(std::move(diagnostic), ctx_.processing_stack());
@@ -48,7 +53,6 @@ private:
 		}
 		diagnosable_impl::add_diagnostic(std::move(diag));
 	}
-	context::hlasm_context& ctx_;
 
 	friend diagnostic_collector;
 };

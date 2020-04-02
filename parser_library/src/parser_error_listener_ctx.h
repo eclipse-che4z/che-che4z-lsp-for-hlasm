@@ -19,6 +19,8 @@
 #include "context/hlasm_context.h"
 #include "semantics/range_provider.h"
 
+//implementation of parser error listener that provide additional error handling
+//used during recursed parsing when nested diagnostic is needed
 namespace hlasm_plugin::parser_library {
 
 class parser_error_listener_ctx : public parser_error_listener_base, public diagnosable_ctx
