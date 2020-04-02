@@ -129,8 +129,8 @@ The following example specifies that GROUP1 is used when working with `source_co
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-There is also option `alwaysRecognize` which takes array of wildcards. It allows you to configure two things:
-- All files matching these wildcards will be always recognized as HLASM files. 
+There is also the option `alwaysRecognize` which takes an array of wildcards. It allows you to configure two things:
+- All files matching these wildcards will always be recognized as HLASM files. 
 - If an extension wildcard is defined, all macro and copy files with such extension may be used in the source code. For example, with the extension wildcard `*.hlasm`, a user may add macro `MAC` to his source code even if it is in a file called `Mac.hlasm`.
 
 The program field in `pgm_conf.json` supports wildcards, for example:
