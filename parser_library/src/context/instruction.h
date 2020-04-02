@@ -104,6 +104,7 @@ const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_16_
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_24_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_24s, empty, empty);
 const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_32s, empty, empty);
 
+// machine instruction representation for checking
 class machine_instruction
 {
 public:
@@ -137,6 +138,7 @@ struct ca_instruction
 	bool operandless;
 };
 
+// representation of mnemonic codes for machine instructions
 struct mnemonic_code
 {
 public:
@@ -147,6 +149,7 @@ public:
 	std::vector<std::pair<size_t, size_t>> replaced;
 };
 
+// machine instruction common representation
 struct assembler_instruction
 {
 	int min_operands;
