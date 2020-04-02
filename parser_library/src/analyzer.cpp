@@ -25,11 +25,11 @@ analyzer::analyzer(
 	const library_data data,
 	bool own_ctx,
 	processing::processing_tracer* tracer,
-	bool editing)
+	bool collect_hl_info)
 	:diagnosable_ctx(*hlasm_ctx),
 	hlasm_ctx_(own_ctx ? context::ctx_ptr(hlasm_ctx) : nullptr), hlasm_ctx_ref_(*hlasm_ctx),
 	listener_(file_name),
-	lsp_proc_(file_name, text, hlasm_ctx, editing),
+	lsp_proc_(file_name, text, hlasm_ctx, collect_hl_info),
 	input_(text), lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
 	mngr_(std::unique_ptr<processing::opencode_provider>(parser_), hlasm_ctx_ref_, data, file_name, lib_provider, *parser_, tracer)
 {
@@ -39,10 +39,10 @@ analyzer::analyzer(
 	parser_->addErrorListener(&listener_);
 }
 
-analyzer::analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, const library_data data, bool editing)
-	: analyzer(text, file_name, lib_provider, &hlasm_ctx, data, false, nullptr,editing) {}
+analyzer::analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, const library_data data, bool collect_hl_info)
+	: analyzer(text, file_name, lib_provider, &hlasm_ctx, data, false, nullptr,collect_hl_info) {}
 
-analyzer::analyzer(const std::string& text, std::string file_name, parse_lib_provider& lib_provider, processing::processing_tracer* tracer, bool editing)
+analyzer::analyzer(const std::string& text, std::string file_name, parse_lib_provider& lib_provider, processing::processing_tracer* tracer, bool collect_hl_info)
 	: analyzer(
 		text,
 		file_name,
@@ -51,7 +51,7 @@ analyzer::analyzer(const std::string& text, std::string file_name, parse_lib_pro
 		library_data{ processing::processing_kind::ORDINARY,context::id_storage::empty_id },
 		true,
 		tracer,
-		editing) {}
+		collect_hl_info) {}
 
 context::hlasm_context& analyzer::context()
 {

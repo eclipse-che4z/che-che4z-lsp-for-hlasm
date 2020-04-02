@@ -20,11 +20,11 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool editing)
+lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool collect_hl_info)
 	: file_name(ctx ? ctx->ids().add(file,true) : nullptr)
 	, empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
 	, ctx_(ctx)
-	, editing_(editing)
+	, collect_hl_info_(collect_hl_info)
 	, instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
 {
 	// initialize text vector
@@ -343,7 +343,7 @@ void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 void lsp_info_processor::add_hl_symbol(token_info symbol)
 {
 	// file is open in IDE, get its highlighting
-	if (editing_)
+	if (collect_hl_info_)
 	{
 		if (symbol.scope == hl_scopes::continuation)
 		{
