@@ -46,7 +46,7 @@ namespace hlasm_plugin {
 		class lsp_info_processor
 		{
 		public:
-			lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx);
+			lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx,bool editing);
 
 			const std::string * file_name;
 			const std::string* empty_string;
@@ -69,6 +69,7 @@ namespace hlasm_plugin {
 			std::vector<std::string> text_;
 			context::hlasm_context* ctx_;
 			semantics::highlighting_info hl_info_;
+			bool editing_;
 			const std::regex instruction_regex;
 
 			bool is_in_range_(const position& pos, const context::occurence& occ) const;

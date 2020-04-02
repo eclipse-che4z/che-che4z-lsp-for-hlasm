@@ -20,10 +20,11 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx)
+lsp_info_processor::lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool editing)
 	: file_name(ctx ? ctx->ids().add(file,true) : nullptr)
 	, empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
 	, ctx_(ctx)
+	, editing_(editing)
 	, instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
 {
 	// initialize text vector
@@ -341,11 +342,15 @@ void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 
 void lsp_info_processor::add_hl_symbol(token_info symbol)
 {
-	if (symbol.scope == hl_scopes::continuation)
+	// file is open in IDE, get its highlighting
+	if (editing_)
 	{
-		hl_info_.cont_info.continuation_positions.push_back({ symbol.token_range.start.line, symbol.token_range.start.column });
+		if (symbol.scope == hl_scopes::continuation)
+		{
+			hl_info_.cont_info.continuation_positions.push_back({ symbol.token_range.start.line, symbol.token_range.start.column });
+		}
+		hl_info_.lines.push_back(symbol);
 	}
-	hl_info_.lines.push_back(symbol);
 }
 
 semantics::highlighting_info & lsp_info_processor::get_hl_info()
