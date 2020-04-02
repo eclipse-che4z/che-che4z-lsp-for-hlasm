@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	std::string ws_folder = std::filesystem::current_path().string();
 	std::string single_file = "";
 	size_t start_range = 0, end_range = 0;
-	for (size_t i = 1; i < argc - 1; i++)
+	for (int i = 1; i < argc - 1; i++)
 	{
 		std::string arg = argv[i];
 		// range parameter, format start-end
