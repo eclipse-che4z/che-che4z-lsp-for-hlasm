@@ -35,6 +35,8 @@ namespace checking
 // defining label types before instruction, used as parameter in assembler_instruction class
 enum label_types { SEQUENCE_SYMBOL, VAR_SYMBOL, ORD_SYMBOL, NAME, CLASS_NAME, NO_LABEL, OPTIONAL, OPERATION_CODE, STRING };
 
+// representation of assembler  instruction for checking purposes
+// serves as a ancestor class for specific assembler instructions
 class assembler_instruction
 {
 public:

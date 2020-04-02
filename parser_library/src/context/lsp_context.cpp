@@ -128,7 +128,7 @@ std::vector<std::string> instr_definition::get_value() const
 	std::vector<std::string> result = { item->detail };
 	if (version != -1)
 		result.push_back("version " + std::to_string(version));
-	auto doc = item->get_documentation();
+	auto doc = item->get_contents();
 	result.insert(result.end(), std::make_move_iterator(doc.begin()), std::make_move_iterator(doc.end()));
 	return result;
 }
@@ -165,28 +165,28 @@ bool seq_definition::operator==(const seq_definition& other) const
 	return name == other.name && scope == other.scope;
 }
 
-completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, doc_pos documentation) :
-	doc_meta(documentation),
+completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, content_pos contents) :
+	content_meta(contents),
 	label(std::move(label)),
 	detail(std::move(detail)),
 	insert_text(std::move(insert_text)) {}
 
-completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, std::vector<std::string> documentation) :
-	documentation(std::move(documentation)),
+completion_item_s::completion_item_s(std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents) :
+	content(std::move(contents)),
 	label(std::move(label)),
 	detail(std::move(detail)),
 	insert_text(std::move(insert_text)) {}
 
-std::vector<std::string> completion_item_s::get_documentation() const
+std::vector<std::string> completion_item_s::get_contents() const
 {
-	if (!doc_meta.defined)
+	if (!content_meta.defined)
 	{
 		std::vector<std::string> result;
 		for (size_t i = 1; i <= 10; i++)
 		{
-			if (doc_meta.text->size() <= doc_meta.line + i)
+			if (content_meta.text->size() <= content_meta.line + i)
 				break;
-			std::string_view line = doc_meta.text->at(doc_meta.line + i);
+			std::string_view line = content_meta.text->at(content_meta.line + i);
 			if (line.size() < 2 || line.front() != '*')
 				break;
 			line.remove_prefix(1);
@@ -194,21 +194,21 @@ std::vector<std::string> completion_item_s::get_documentation() const
 		}
 		return result;
 	}
-	return documentation;
+	return content;
 }
 
-void completion_item_s::implode_documentation()
+void completion_item_s::implode_contents()
 {
-	if (documentation_string == "")
+	if (content_string == "")
 	{
 		std::stringstream result;
-		if (!doc_meta.defined)
+		if (!content_meta.defined)
 		{
 			for (size_t i = 1; i <= 10; i++)
 			{
-				if (doc_meta.text->size() <= doc_meta.line + i)
+				if (content_meta.text->size() <= content_meta.line + i)
 					break;
-				std::string_view line = doc_meta.text->at(doc_meta.line + i);
+				std::string_view line = content_meta.text->at(content_meta.line + i);
 				if (line.size() < 2 || line.front() != '*')
 					break;
 				line.remove_prefix(1);
@@ -217,9 +217,9 @@ void completion_item_s::implode_documentation()
 		}
 		else
 		{
-			for (auto line : documentation)
+			for (auto line : content)
 				result << line << '\n';
 		}
-		documentation_string = result.str();
+		content_string = result.str();
 	}
 }

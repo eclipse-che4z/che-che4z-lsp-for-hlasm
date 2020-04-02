@@ -54,6 +54,7 @@ namespace hlasm_plugin::parser_library::checking
 
 	enum class machine_operand_type : uint8_t { MASK, REG, REG_IMM, IMM, NONE, DISPLC, BASE, LENGTH, VEC_REG, DIS_REG };
 
+	// parameter for machine instructions
 	struct parameter
 	{
 		bool is_signed;
@@ -65,6 +66,8 @@ namespace hlasm_plugin::parser_library::checking
 		std::string to_string() const;
 	};
 
+	// representation of machine operand formats
+	// serves as a template for the checker
 	struct machine_operand_format
 	{
 		parameter identifier; // used as displacement operand in address operand
@@ -80,11 +83,13 @@ namespace hlasm_plugin::parser_library::checking
 		std::string to_string() const;
 	};
 
+	// actual machine operand represation
 	class machine_operand : public virtual operand
 	{
 	public:
 		machine_operand();
 
+		// check whether the operand satisfies its format
 		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const = 0;
 
 		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
@@ -96,6 +101,7 @@ namespace hlasm_plugin::parser_library::checking
 
 	};
 
+	// derived representation of address operand
 	class address_operand final : public machine_operand
 	{
 	public:
