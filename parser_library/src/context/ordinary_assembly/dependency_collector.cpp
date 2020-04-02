@@ -121,14 +121,10 @@ dependency_collector& dependency_collector::div_mul(const dependency_collector& 
 
 void dependency_collector::adjust_address(address& addr)
 {
-	auto unknown_space = std::find_if(addr.spaces.begin(), addr.spaces.end(), [] (auto& entry) { return entry.first->kind == context::space_kind::LOCTR_UNKNOWN; });
-	if (unknown_space != addr.spaces.end())
+	auto known_spaces = std::partition(addr.spaces.begin(), addr.spaces.end(), [](auto& entry) { return entry.first->kind == context::space_kind::LOCTR_UNKNOWN; });
+	if (known_spaces != addr.spaces.begin())
 	{
-		for (auto it = addr.spaces.begin(); it != addr.spaces.end(); ++it)
-			if (it->first->kind != context::space_kind::LOCTR_UNKNOWN)
-				it->first->remove_listener(&addr);
-		auto entry = *unknown_space;
-		addr.spaces.clear();
-		addr.spaces.push_back(std::move(entry));
+		std::for_each(known_spaces, addr.spaces.end(), [&addr](auto& entry) { return entry.first->remove_listener(&addr); });
+		addr.spaces.erase(known_spaces, addr.spaces.end());
 	}
 }

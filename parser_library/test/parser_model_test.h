@@ -16,12 +16,12 @@
 #define HLASMPLUGIN_PARSER_PARSER_MODEL_TEST_H
 #include "common_testing.h"
 
-auto parse_model(std::string s,range r)
+auto parse_model(std::string s,range r, bool after_substitution = false)
 {
 	std::string input(" LR &var,1");
 	analyzer a(input);
 	return a.parser().parse_operand_field(
-		&a.context(), std::move(s), false, range_provider(r, adjusting_state::NONE),
+		&a.context(), std::move(s), after_substitution, range_provider(r, adjusting_state::NONE),
 		std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()));
 }
 
@@ -128,5 +128,13 @@ TEST(parser, parse_model_with_apostrophe_escaping)
 	EXPECT_TRUE(op.value[0]->access_model());
 }
 
+TEST(parser, parse_bad_model)
+{
+	range r(position(0, 4), position(0, 5));
+	auto [op, rem] = parse_model("'", r, true);
+
+	ASSERT_EQ(op.value.size(), (size_t)0);
+	ASSERT_EQ(rem.value.size(), (size_t)0);
+}
 
 #endif

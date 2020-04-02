@@ -343,8 +343,13 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 	auto label = find_label_symbol(stmt);
 
 	if (label != context::id_storage::empty_id)
-		create_symbol(stmt.stmt_range_ref(), label, hlasm_ctx.ord_ctx.align(context::no_align),
-			context::symbol_attributes::make_org_attrs());
+	{
+		if (hlasm_ctx.ord_ctx.symbol_defined(label))
+			add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+		else
+			create_symbol(stmt.stmt_range_ref(), label, hlasm_ctx.ord_ctx.align(context::no_align),
+				context::symbol_attributes::make_org_attrs());
+	}
 
 	const semantics::expr_assembler_operand* reloc_expr = nullptr;
 	bool undefined_absolute_part = false;

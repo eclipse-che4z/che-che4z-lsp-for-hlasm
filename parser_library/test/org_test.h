@@ -16,6 +16,19 @@
 #define HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
 #include "common_testing.h"
 
+TEST(org, duplicate_labels)
+{
+	std::string input(R"(
+A ORG ,
+A ORG ,
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+}
+
 TEST(org, symbol_non_prev_defined)
 {
 	std::string input(R"(

@@ -267,9 +267,9 @@ antlrcpp::Any expression_evaluator::visitCa_string_b(generated::hlasmparser::Ca_
 	auto tmp = concatenate(ctx->string_ch_v_c()->chain);
 	auto ex = make_char(tmp);
 	expr_ptr s, e;
-	if(ctx->substring()->e1 != nullptr)
+	if(ctx->substring() && ctx->substring()->e1 != nullptr)
 		s = visit(ctx->substring()->e1);
-	if (ctx->substring()->e2 != nullptr)
+	if (ctx->substring() && ctx->substring()->e2 != nullptr)
 		e = visit(ctx->substring()->e2);
 	return ex->substring(visit(ctx->ca_dupl_factor()).as<int>(), s, e);
 }
@@ -297,10 +297,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 	std::optional<context::SET_t> SET_val;
 	context::id_index symbol_name = nullptr;
 
-	//get attr
-	auto attr_value = ctx->ORDSYMBOL()->getText();
-	assert(attr_value.size() == 1);
-	auto attr = context::symbol_attributes::transform_attr(attr_value[0]);
+	auto attr = ctx->attribute;
 
 	if (ctx->var_symbol())
 	{
