@@ -129,7 +129,7 @@ The following example specifies that GROUP1 is used when working with `source_co
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code.hlasm`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-There is also option `alwaysRecognize` which takes array of wildcards. It allows you to configure two things:
+There is also the option `alwaysRecognize` which takes an array of wildcards. It allows you to configure two things:
 - All files matching these wildcards will be always recognized as HLASM files. 
 - Macro and copy files will be recognized even if their file names do not match the identifier used in a source code. For example, macro `IF` would be found even if it was defined in file `IF.hlasm`.
 
