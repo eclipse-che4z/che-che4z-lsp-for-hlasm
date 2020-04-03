@@ -21,6 +21,36 @@
 #include "shared/workspace_manager.h"
 #include "../parser_library/src/file_impl.h"
 
+/*
+ * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
+ * To collect the metrics, a performance_metrics_consumer observer must be implemented and registered within the parsing library.
+ * The user specifies a standard HLASM workspace folder and the benchmark calls did_open_file for each program file defined in the workspace's pgm_conf.json.
+ * After each parsed files, it retrieves the performance metrics and outputs them immediately to the console. After the whole benchmark is done, a json with the outputs is created.
+ * 
+ * Accepted parameters:
+ *	-r - range of files to be parsed in form start-end. By default, all defined files are parsed.
+ *  -c - single file to be parsed over and over again
+ *  -p - path to the folder with .hlasmplugin
+ * Collected metrics:
+ * - Errors                   - number of errors encountered during the parsing
+ * - Warnings                 - number of warnings encountered during the parsing
+ * - Wall Time                - parsing duration, wall time
+ * - CPU Time                 - parsing duration, CPU time
+ * - Open Code Statements     - number of statements parsed in open code
+ * - Copy Statements          - number of statements parsed in copy files (includes multiple uses of the same copy file)
+ * - Macro Statements         - number of statements parsed in macro files (includes multiple uses of the same macro)
+ * - Copy Def Statements      - number of statements defined in copy files (only the first occurence of the copy file)
+ * - Macro Def Statements     - number of statements defined in macro files (only the first occurence of the macro)
+ * - Lookahead Statements     - number of statements processed in lookahead mode
+ * - Reparsed Statements      - number of statements that were reparsed later (e.g. model statements)
+ * - Continued Statements     - number of statements that were continued (multiple continuations of one statement count as one continued statement)
+ * - Non-continued Statements - number of statements that were not continued
+ * - Lines                    - total number of lines
+ * - ExecStatement/ms         - ExecStatements includes open code, macro, copy, lookahead and reparsed statements
+ * - Line/ms
+ * - Files                    - total number of parsed files
+ */
+
 using json = nlohmann::json;
 
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
