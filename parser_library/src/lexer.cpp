@@ -37,11 +37,13 @@ lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc,perfor
 	: input_(input), lsp_proc_(lsp_proc), metrics_(metrics)
 {
 	factory_ = std::make_unique<token_factory>();
+	//create empty ainsert buffer
 	ainsert_stream_ = make_unique<input_source>("");
 
 	file_input_state_.input = input;
 	buffer_input_state_.input = ainsert_stream_.get();
 
+	//initialize IS with first character from input
 	input_state_->c = static_cast<char_t>(input_->LA(1));
 
 	dummy_factory = make_shared<antlr4::CommonTokenFactory>();
@@ -322,6 +324,11 @@ void lexer::switch_input_streams()
 		input_state_ = &file_input_state_;
 }
 
+/*
+main logic
+returns already lexed token from token queue
+or if empty, tries to lex next token from input
+*/
 token_ptr lexer::nextToken()
 {
 	while (true) {
@@ -335,9 +342,11 @@ token_ptr lexer::nextToken()
 			return t;
 		}
 
+		//switch to AINSERT buffer if not empty
 		switch_input_streams();
 
-
+		//capture lexer state befor the start of token lexing
+		//so that we know where the currently lexed token begins
 		start_token();
 
 		if (eof())
@@ -365,6 +374,7 @@ token_ptr lexer::nextToken()
 			lex_begin();
 
 		else
+			//lex non-special tokens
 			lex_tokens();
 	}
 }
@@ -562,6 +572,7 @@ void lexer::lex_comment()
 
 void lexer::consume_new_line()
 {
+	//we accept both separately and combine
 	if (input_state_->c == '\r')
 		consume();
 	if (input_state_->c == '\n')
