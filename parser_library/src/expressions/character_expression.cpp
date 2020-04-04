@@ -74,6 +74,7 @@ int ebcdic_compare(const std::string& lhs, const std::string& rhs)
 expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2) const
 {
 	std::string o = operation;
+	//we support lowercase too (HLASM does not)
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 	auto a2 = arg2->retype<character_expression>();
 	if (a2 == nullptr)
@@ -119,14 +120,17 @@ expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2
 	copy_return_on_error_binary(arg2.get(), arithmetic_expression);
 
 	if (o == "FIND")
+		//indices are 1-based
 		return make_arith(static_cast<int32_t>(value_.find_first_of(b)) + 1);
 
 	if (o == "INDEX")
 	{
 		auto i = value_.find(b);
 		if (i == std::string::npos)
+			//0 indicates not found
 			return make_arith(0);
 		else
+			//indices are 1-based
 			return make_arith(static_cast<int32_t>(i) + 1);
 	}
 
@@ -141,8 +145,10 @@ bool character_expression::isalpha_hlasm(char c)
 expr_ptr character_expression::unary_operation(str_ref operation) const
 {
 	std::string o = operation;
+	//again, we support lowercase operation names
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 
+	//binary string to arithmetic expr
 	if (o == "B2A")
 	{
 		copy_return_on_error(this, arithmetic_expression);
@@ -151,6 +157,7 @@ expr_ptr character_expression::unary_operation(str_ref operation) const
 		return arithmetic_expression::from_string(value_, 2);
 	}
 
+	//interpret string as arith value
 	if (o == "C2A")
 	{
 		copy_return_on_error(this, arithmetic_expression);
@@ -159,6 +166,7 @@ expr_ptr character_expression::unary_operation(str_ref operation) const
 		return arithmetic_expression::c2arith(value_);
 	}
 
+	//parse int (base 10)
 	if (o == "D2A")
 	{
 		copy_return_on_error(this, arithmetic_expression);
@@ -182,6 +190,7 @@ expr_ptr character_expression::unary_operation(str_ref operation) const
 	if (o == "ISSYM")
 		return issym();
 
+	//hexadecimal string to int
 	if (o == "X2A")
 	{
 		copy_return_on_error(this, arithmetic_expression);
@@ -273,6 +282,7 @@ expr_ptr character_expression::unary_operation(str_ref operation) const
 	return default_expr_with_error<character_expression>(error_messages::ec05());
 }
 
+//str len
 expr_ptr character_expression::dclen() const {
 	copy_return_on_error(this, arithmetic_expression);
 	int32_t v = 0;
@@ -345,6 +355,7 @@ expr_ptr character_expression::issym() const
 	);
 }
 
+//interpret binary string as EBCDIC string
 expr_ptr character_expression::b2c() const
 {
 	copy_return_on_error(this, character_expression);
@@ -371,6 +382,10 @@ expr_ptr character_expression::b2c() const
 	return make_char(std::move(res));
 }
 
+/**
+ * convert binary string to decimal 
+ * convert to string with sign 
+ * */
 expr_ptr character_expression::b2d() const
 {
 	copy_return_on_error(this, character_expression);
@@ -386,6 +401,10 @@ expr_ptr character_expression::b2d() const
 		return make_char("+" + rv);
 }
 
+/**
+ * convert binary string to  hexadecimal 
+ * convert to string with sign 
+ * */
 expr_ptr character_expression::b2x() const
 {
 	copy_return_on_error(this, character_expression);
@@ -413,6 +432,9 @@ expr_ptr character_expression::b2x() const
 	return make_char(std::move(v));
 }
 
+/**
+ * EBCDIC characters as binary
+ * */
 expr_ptr character_expression::c2b() const
 {
 	copy_return_on_error(this, character_expression);
@@ -432,6 +454,9 @@ expr_ptr character_expression::c2b() const
 	return make_char(std::move(rv));
 }
 
+/**
+ * EBCDIC characters as decimal string with sign
+ * */
 expr_ptr character_expression::c2d() const
 {
 	copy_return_on_error(this, character_expression);
@@ -447,6 +472,9 @@ expr_ptr character_expression::c2d() const
 		return make_char("+" + rv);
 }
 
+/**
+ * EBCDIC characters as hexadecimal string with sign
+ * */
 expr_ptr character_expression::c2x() const
 {
 	copy_return_on_error(this, character_expression);
@@ -464,6 +492,9 @@ expr_ptr character_expression::c2x() const
 	return make_char(std::move(rv));
 }
 
+/**
+ * decimal string to binary string
+ * */
 expr_ptr character_expression::d2b() const
 {
 	copy_return_on_error(this, character_expression);
@@ -484,6 +515,9 @@ expr_ptr character_expression::d2b() const
 	return make_char(std::bitset<32>(val).to_string());
 }
 
+/**
+ * decimal string to EBCDIC string
+ * */
 expr_ptr character_expression::d2c() const
 {
 	copy_return_on_error(this, character_expression);
@@ -505,6 +539,9 @@ expr_ptr character_expression::d2c() const
 	}
 }
 
+/**
+ * decimal string to headecimal string
+ * */
 expr_ptr character_expression::d2x() const
 {
 	copy_return_on_error(this, character_expression);
@@ -526,7 +563,9 @@ expr_ptr character_expression::d2x() const
 			(error_messages::ec08());
 	}
 }
-
+/**
+ * dequote double_quote() string
+ * */
 expr_ptr character_expression::dcval() const
 {
 	copy_return_on_error(this, character_expression);
@@ -542,6 +581,9 @@ expr_ptr character_expression::dcval() const
 	return make_char(v);
 }
 
+/**
+ * remove quotation of ' from ends
+ * */
 expr_ptr character_expression::dequote() const
 {
 	copy_return_on_error(this, character_expression);
@@ -559,6 +601,9 @@ expr_ptr character_expression::dequote() const
 		return make_char("");
 }
 
+/**
+ * double ' and & characters in string
+ * */
 expr_ptr character_expression::double_quote() const
 {
 	copy_return_on_error(this, character_expression);
@@ -572,6 +617,9 @@ expr_ptr character_expression::double_quote() const
 	return make_char(std::move(v));
 }
 
+/**
+ * hexadecimal string as binary string
+ * */
 expr_ptr character_expression::x2b() const
 {
 	copy_return_on_error(this, character_expression);
@@ -588,11 +636,16 @@ expr_ptr character_expression::x2b() const
 		(error_messages::ec09());
 
 	auto rv = std::bitset<32>(val).to_string();
+	//remove leading zeros
 	return make_char(
 		rv.substr(32 - value_.length() * 4, value_.length() * 4)
 	);
 }
 
+/**
+ * hexadecimal string to number
+ * number interpreted as EBCDIC string
+ * */
 expr_ptr character_expression::x2c() const
 {
 	copy_return_on_error(this, character_expression);
@@ -626,6 +679,9 @@ expr_ptr character_expression::x2c() const
 	return make_char(std::move(rv));
 }
 
+/**
+ * hexadecimal string as decimal string with sign
+ * */
 expr_ptr character_expression::x2d() const
 {
 	copy_return_on_error(this, character_expression);
