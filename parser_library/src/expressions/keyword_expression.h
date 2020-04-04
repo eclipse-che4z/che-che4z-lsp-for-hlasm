@@ -25,6 +25,10 @@ namespace hlasm_plugin
 	{
 		namespace expressions
 		{
+			/**
+			 * helper type, not an actual expression
+			 * represents unary and binary operators
+			 * */
 			class keyword_expression : public expression
 			{
 			public:
@@ -76,6 +80,10 @@ namespace hlasm_plugin
 				bool is_complex_keyword() const override;
 				std::string get_str_val() const override;
 			private:
+				/**
+				 * HLASM is by default in uppercase
+				 * but we accept lowercase too
+				 * */
 				struct upper_equal
 				{
 					bool operator()(const char l, const char r) const
@@ -90,6 +98,9 @@ namespace hlasm_plugin
 							upper_equal());
 					}
 				};
+				/**
+				 * mapping of string to keyword_type
+				 * */ 
 				static std::map<std::string, keyword_type, upper_equal> keywords_;
 				std::string s_val_;
 				keyword_type value_;

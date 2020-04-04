@@ -47,9 +47,12 @@ expr_ptr logic_expression::to_arith() const
 expr_ptr logic_expression::binary_operation(str_ref o, expr_ref arg2) const
 {
 	std::string operation_name = o;
+	//normalize operation name
+	//all text is in HLASM capitalized by default, but we expect lowercase too (for easier work on PC)
 	std::transform(operation_name.begin(), operation_name.end(), operation_name.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 
 	bool val = false;
+	//second operand can be either logical or arithmetic
 	auto e = arg2->retype<logic_expression>();
 	if (e == nullptr)
 	{
@@ -57,12 +60,19 @@ expr_ptr logic_expression::binary_operation(str_ref o, expr_ref arg2) const
 		if (ae == nullptr)
 			return default_expr_with_error<logic_expression>
 			(error_messages::el01());
+		//arithmetic value is converted into logical
 		val = ae->get_value() != 0;
 	}
 	else
 		val = e->get_value();
 
+	//check if the second operand contains error
+	//is so, copy it and return
 	copy_return_on_error_binary(arg2.get(), logic_expression);
+
+	/**
+	 * standard logical operations
+	 * */
 
 	if (operation_name == "EQ")
 		return make_logic(value_ == val);
