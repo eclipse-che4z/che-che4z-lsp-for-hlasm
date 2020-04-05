@@ -74,7 +74,7 @@ int ebcdic_compare(const std::string& lhs, const std::string& rhs)
 expr_ptr character_expression::binary_operation(str_ref operation, expr_ref arg2) const
 {
 	std::string o = operation;
-	//we support lowercase too (HLASM does not)
+	//case insensitive
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 	auto a2 = arg2->retype<character_expression>();
 	if (a2 == nullptr)
@@ -145,7 +145,7 @@ bool character_expression::isalpha_hlasm(char c)
 expr_ptr character_expression::unary_operation(str_ref operation) const
 {
 	std::string o = operation;
-	//again, we support lowercase operation names
+	//transformation to uppercase for case insensitivity
 	std::transform(o.begin(), o.end(), o.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 
 	//binary string to arithmetic expr

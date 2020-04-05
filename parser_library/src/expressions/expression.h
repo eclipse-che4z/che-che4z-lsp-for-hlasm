@@ -103,7 +103,7 @@ namespace hlasm_plugin
 
 				/**
 				 * all operations involving arguments check for errors
-				 * in all arguments immediately before eccessing their values
+				 * in all arguments immediately before accessing their values
 				 * 
 				 * if any argument contains an error, it is copied
 				 * and an erroneous expression (meaning with en error)

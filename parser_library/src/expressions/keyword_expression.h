@@ -81,8 +81,7 @@ namespace hlasm_plugin
 				std::string get_str_val() const override;
 			private:
 				/**
-				 * HLASM is by default in uppercase
-				 * but we accept lowercase too
+				 * HLASM is case insensitive
 				 * */
 				struct upper_equal
 				{
