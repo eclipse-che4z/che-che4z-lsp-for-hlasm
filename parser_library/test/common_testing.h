@@ -12,7 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#pragma once
+#ifndef HLASMPLUGIN_HLASMPARSERLIBARY_COMMON_TESTING_H
+#define HLASMPLUGIN_HLASMPARSERLIBARY_COMMON_TESTING_H
+
 #include "gmock/gmock.h"
 #include <utility>
 #include "antlr4-runtime.h"
@@ -35,6 +37,7 @@ using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
 
+//mock for attribute provider that has empty functionality
 class empty_attribute_provider : public attribute_provider
 {
 	virtual const attribute_provider::resolved_reference_storage&
@@ -83,3 +86,4 @@ std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_l
 		return { false,tree };
 	}
 }
+#endif

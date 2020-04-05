@@ -12,8 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#pragma once
+#ifndef HLASMPLUGIN_PARSER_PARSER_RANGE_TEST_H
+#define HLASMPLUGIN_PARSER_PARSER_RANGE_TEST_H
+
 #include "common_testing.h"
+
+//test for correctness of parsed operand and remark ranges
 
 TEST(parser_get_op_rem, one_op)
 {
@@ -175,3 +179,4 @@ TEST(parser_get_op_rem, cont_empty_op)
 	EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 44, 0, 71), op_rem.remarks[0]);
 
 }
+#endif
