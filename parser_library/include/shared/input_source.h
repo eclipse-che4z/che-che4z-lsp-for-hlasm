@@ -20,6 +20,10 @@
 
 namespace hlasm_plugin {
 	namespace parser_library {
+		/*
+			custom ANTLRInputStream
+			supports input rewinding, appending and resetting
+		*/
 		class PARSER_LIBRARY_EXPORT input_source : public antlr4::ANTLRInputStream
 		{
 		public:
