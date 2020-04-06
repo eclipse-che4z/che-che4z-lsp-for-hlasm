@@ -38,7 +38,7 @@ struct versioned_document
 // vector of tokens
 using lines_info = std::vector<token_info>;
 
-// represation about the changes in continuation
+// representation about the changes in continuation
 struct continuation_info
 {
 	// end of line position
@@ -49,7 +49,7 @@ struct continuation_info
 	size_t continuation_column = 71;
 };
 
-// representation of the information relation to the server-side highlighting
+// representation of the information related to the server-side highlighting
 struct highlighting_info
 {
 	highlighting_info() {};

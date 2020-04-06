@@ -46,30 +46,30 @@ enum class mach_format {
 	VRI_g, VRI_h, VRI_i, VRR_g, VRR_h, VRR_i, VRS_d, VSI
 };
 
-const checking::parameter empty = { false, 0, hlasm_plugin::parser_library::checking::machine_operand_type::NONE };
-const checking::parameter reg = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::REG };
-const checking::parameter dis_reg = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::DIS_REG };
-const checking::parameter dis_reg_r = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::REG };
-const checking::parameter mask = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::MASK };
-const checking::parameter dis_12u = { false, 12, hlasm_plugin::parser_library::checking::machine_operand_type::DISPLC };
-const checking::parameter dis_20s = { true, 12, hlasm_plugin::parser_library::checking::machine_operand_type::DISPLC };
-const checking::parameter base_ = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::BASE };
-const checking::parameter length_8 = { false, 8, hlasm_plugin::parser_library::checking::machine_operand_type::LENGTH };
-const checking::parameter length_4 = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::LENGTH };
-const checking::parameter imm_4u = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_8s = { true, 8, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_8u = { false, 8, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_12s = { true, 12, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_16s = { true, 16, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_16u = { false, 16, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_24s = { true, 24, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_32s = { true, 32, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter imm_32u = { false, 32, hlasm_plugin::parser_library::checking::machine_operand_type::IMM };
-const checking::parameter vec_reg = { false, 4, hlasm_plugin::parser_library::checking::machine_operand_type::VEC_REG };
-const checking::parameter reg_imm_12s = { true, 12, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
-const checking::parameter reg_imm_16s = { true, 16, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
-const checking::parameter reg_imm_24s = { true, 24, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
-const checking::parameter reg_imm_32s = { true, 32, hlasm_plugin::parser_library::checking::machine_operand_type::REG_IMM };
+const checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
+const checking::parameter reg = { false, 4, checking::machine_operand_type::REG };
+const checking::parameter dis_reg = { false, 4, checking::machine_operand_type::DIS_REG };
+const checking::parameter dis_reg_r = { false, 4, checking::machine_operand_type::REG };
+const checking::parameter mask = { false, 4, checking::machine_operand_type::MASK };
+const checking::parameter dis_12u = { false, 12, checking::machine_operand_type::DISPLC };
+const checking::parameter dis_20s = { true, 12, checking::machine_operand_type::DISPLC };
+const checking::parameter base_ = { false, 4, checking::machine_operand_type::BASE };
+const checking::parameter length_8 = { false, 8, checking::machine_operand_type::LENGTH };
+const checking::parameter length_4 = { false, 4, checking::machine_operand_type::LENGTH };
+const checking::parameter imm_4u = { false, 4, checking::machine_operand_type::IMM };
+const checking::parameter imm_8s = { true, 8, checking::machine_operand_type::IMM };
+const checking::parameter imm_8u = { false, 8, checking::machine_operand_type::IMM };
+const checking::parameter imm_12s = { true, 12, checking::machine_operand_type::IMM };
+const checking::parameter imm_16s = { true, 16, checking::machine_operand_type::IMM };
+const checking::parameter imm_16u = { false, 16, checking::machine_operand_type::IMM };
+const checking::parameter imm_24s = { true, 24, checking::machine_operand_type::IMM };
+const checking::parameter imm_32s = { true, 32, checking::machine_operand_type::IMM };
+const checking::parameter imm_32u = { false, 32, checking::machine_operand_type::IMM };
+const checking::parameter vec_reg = { false, 4, checking::machine_operand_type::VEC_REG };
+const checking::parameter reg_imm_12s = { true, 12, checking::machine_operand_type::REG_IMM };
+const checking::parameter reg_imm_16s = { true, 16, checking::machine_operand_type::REG_IMM };
+const checking::parameter reg_imm_24s = { true, 24, checking::machine_operand_type::REG_IMM };
+const checking::parameter reg_imm_32s = { true, 32, checking::machine_operand_type::REG_IMM };
 
 /*
 Rules for displacement operands:
@@ -80,29 +80,29 @@ With DXB Formats
 	- can be either D(X,B) or D(,B) - in this case, the X is replaced with 0
 	- parser returns this in (displacement, x, base, false) format
 */
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, empty, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_20_4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, empty, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format drb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg_r, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format dxb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, dis_reg, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format dxb_20_4x4_S = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, dis_reg, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format dvb_12_4x4_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_20s, vec_reg, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format reg_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(reg, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format mask_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(mask, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_4u, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_8_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_8s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_8_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_8u, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_16_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_16u, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_12_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_12s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_16s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(imm_32s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format imm_32_U = hlasm_plugin::parser_library::checking::machine_operand_format(imm_32u, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format vec_reg_4_U = hlasm_plugin::parser_library::checking::machine_operand_format(vec_reg, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_8x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_8, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format db_12_4x4L_U = hlasm_plugin::parser_library::checking::machine_operand_format(dis_12u, length_4, base_);
-const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_12_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_12s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_16_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_16s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_24_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_24s, empty, empty);
-const hlasm_plugin::parser_library::checking::machine_operand_format reg_imm_32_S = hlasm_plugin::parser_library::checking::machine_operand_format(reg_imm_32s, empty, empty);
+const checking::machine_operand_format db_12_4_U = checking::machine_operand_format(dis_12u, empty, base_);
+const checking::machine_operand_format db_20_4_S = checking::machine_operand_format(dis_20s, empty, base_);
+const checking::machine_operand_format drb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg_r, base_);
+const checking::machine_operand_format dxb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg, base_);
+const checking::machine_operand_format dxb_20_4x4_S = checking::machine_operand_format(dis_20s, dis_reg, base_);
+const checking::machine_operand_format dvb_12_4x4_U = checking::machine_operand_format(dis_20s, vec_reg, base_);
+const checking::machine_operand_format reg_4_U = checking::machine_operand_format(reg, empty, empty);
+const checking::machine_operand_format mask_4_U = checking::machine_operand_format(mask, empty, empty);
+const checking::machine_operand_format imm_4_U = checking::machine_operand_format(imm_4u, empty, empty);
+const checking::machine_operand_format imm_8_S = checking::machine_operand_format(imm_8s, empty, empty);
+const checking::machine_operand_format imm_8_U = checking::machine_operand_format(imm_8u, empty, empty);
+const checking::machine_operand_format imm_16_U = checking::machine_operand_format(imm_16u, empty, empty);
+const checking::machine_operand_format imm_12_S = checking::machine_operand_format(imm_12s, empty, empty);
+const checking::machine_operand_format imm_16_S = checking::machine_operand_format(imm_16s, empty, empty);
+const checking::machine_operand_format imm_32_S = checking::machine_operand_format(imm_32s, empty, empty);
+const checking::machine_operand_format imm_32_U = checking::machine_operand_format(imm_32u, empty, empty);
+const checking::machine_operand_format vec_reg_4_U = checking::machine_operand_format(vec_reg, empty, empty);
+const checking::machine_operand_format db_12_8x4L_U = checking::machine_operand_format(dis_12u, length_8, base_);
+const checking::machine_operand_format db_12_4x4L_U = checking::machine_operand_format(dis_12u, length_4, base_);
+const checking::machine_operand_format reg_imm_12_S = checking::machine_operand_format(reg_imm_12s, empty, empty);
+const checking::machine_operand_format reg_imm_16_S = checking::machine_operand_format(reg_imm_16s, empty, empty);
+const checking::machine_operand_format reg_imm_24_S = checking::machine_operand_format(reg_imm_24s, empty, empty);
+const checking::machine_operand_format reg_imm_32_S = checking::machine_operand_format(reg_imm_32s, empty, empty);
 
 // machine instruction representation for checking
 class machine_instruction

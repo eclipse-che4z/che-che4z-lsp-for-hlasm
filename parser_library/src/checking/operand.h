@@ -21,6 +21,7 @@
 namespace hlasm_plugin::parser_library::checking
 {
 
+//Abstract ancestor class for all operands that are prepared for checking.
 class operand
 {
 public:
@@ -33,6 +34,7 @@ public:
 
 using check_op_ptr = std::unique_ptr<operand>;
 
+//Abstract ancestor class for all assembler operands that are prepared for checking.
 class asm_operand : public virtual operand
 {
 public:
