@@ -24,6 +24,9 @@ namespace hlasm_plugin {
 			class logic_expression;
 			class arithmetic_expression;
 			using arith_ptr = std::unique_ptr<arithmetic_expression>;
+			/**
+			 * logic for arithmetic expression and operations on this type
+			 * */
 			class arithmetic_expression : public expression
 			{
 			public:
@@ -36,8 +39,21 @@ namespace hlasm_plugin {
 				static expr_ptr from_string(const std::string& option, const std::string_view& value, bool dbcs);
 				static expr_ptr from_string(const std::string_view& value, bool dbcs);
 
+				//EBCDIC string interpret as number (1 char = 1B)
 				static expr_ptr c2arith(const std::string& value);
+				//double byte interpret as number
 				static expr_ptr g2arith(const std::string& value, bool dbcs = false);
+
+				/**
+				 * all operations involving arguments check for errors
+				 * in all arguments immediately before accessing their values
+				 * 
+				 * if any argument contains an error, it is copied
+				 * and an erroneous expression (meaning with en error)
+				 * is returned
+				 * 
+				 * see: copy_return_on_error and copy_return_on_error_binary
+				 * */
 
 				virtual expr_ptr operator+(expression_ref) const override;
 				virtual expr_ptr operator-(expression_ref) const override;
