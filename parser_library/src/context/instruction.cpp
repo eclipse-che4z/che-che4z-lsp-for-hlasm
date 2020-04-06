@@ -245,7 +245,7 @@ public:
 
 //#define(instr_name, format, )
 
-void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result, std::string instruction_name, mach_format format, std::vector<machine_operand_format> op_format, size_t size, size_t page_no)
+void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result, const std::string & instruction_name, mach_format format, std::vector<machine_operand_format> op_format, size_t size, size_t page_no)
 {
 	result.insert(
 		std::pair<const std::string, machine_instruction_ptr>(
@@ -260,7 +260,7 @@ void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& res
 		)
 	);
 }
-void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result, std::string instruction_name, mach_format format, std::vector<machine_operand_format> op_format, int optional, size_t size, size_t page_no)
+void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result, const std::string & instruction_name, mach_format format, std::vector<machine_operand_format> op_format, int optional, size_t size, size_t page_no)
 {
 	result.insert(
 		std::pair<const std::string, machine_instruction_ptr>(
@@ -268,7 +268,7 @@ void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& res
 			std::make_unique<machine_instruction>(
 				instruction_name,
 				format,
-				op_format,
+				std::move(op_format),
 				optional,
 				size,
 				page_no

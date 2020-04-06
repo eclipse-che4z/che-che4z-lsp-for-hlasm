@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_CONTEXT_TEST_H
-#define HLASMPLUGIN_PARSERLIBARY_CONTEXT_TEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CONTEXT_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_CONTEXT_TEST_H
 
 #include "../src/context/hlasm_context.h"
 #include "../src/context/variables/system_variable.h"

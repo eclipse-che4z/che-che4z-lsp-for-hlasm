@@ -32,7 +32,6 @@ struct newline_is_space : std::ctype<char>
 		static mask rc[table_size];
 		rc[(unsigned char) '\n'] = std::ctype_base::space;
 		return rc;
-		int i = 1+2;
 	}
 
 	static void imbue_stream(std::ios& stream)

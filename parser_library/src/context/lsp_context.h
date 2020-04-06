@@ -145,6 +145,8 @@ struct definition
 	const std::string * file_name;
 	// the definition range of the symbol
 	range definition_range;
+
+	virtual ~definition() = default;
 };
 
 // derived representation of the ordinary symbol
