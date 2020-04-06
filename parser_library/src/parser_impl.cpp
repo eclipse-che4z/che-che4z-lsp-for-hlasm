@@ -167,7 +167,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 	);
 }
 
-void parser_impl::collect_diags() const {}
+void parser_impl::collect_diags() const 
+{
+	if (reparser_)
+		collect_diags_from_child(*reparser_->parser);
+	if (rest_parser_)
+		collect_diags_from_child(*rest_parser_->parser);
+}
 
 
 
