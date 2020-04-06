@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_DC_TEST_H
-#define HLASMPLUGIN_PARSERLIBARY_DC_TEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_DC_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_DC_TEST_H
 
 #include "common_testing.h"
 

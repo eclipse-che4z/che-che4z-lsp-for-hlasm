@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
-#define HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
+#ifndef HLASMPLUGIN_HLASMPARSERLIBRARY_PARSER_TEST_H
+#define HLASMPLUGIN_HLASMPARSERLIBRARY_PARSER_TEST_H
 
 #include "common_testing.h"
 #include "../src/expressions/visitors/expression_evaluator.h"
@@ -192,4 +192,4 @@ TEST_F(library_test, macro_model)
 	ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
 
-#endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
+#endif // !HLASMPLUGIN_HLASMPARSERLIBRARY_PARSER_TEST_H
