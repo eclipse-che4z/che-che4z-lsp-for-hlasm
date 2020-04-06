@@ -83,7 +83,7 @@ EOLLN
 EOF
 )";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "aread","",nullptr };
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "aread","",nullptr,false };
 	hlasm_plugin::parser_library::input_source input(in);
 	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
@@ -124,7 +124,7 @@ EOLLN
 EOF
 )";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rntest","",nullptr};
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rntest","",nullptr,false};
 	hlasm_plugin::parser_library::input_source input("TEST TEST \r\n TEST1 TEST2");
 	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
@@ -142,7 +142,7 @@ EOF
 
 TEST(lexer_test, new_line_in_ignored)
 {
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "new_line_in_ignored","",nullptr };
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "new_line_in_ignored","",nullptr,false };
 	//test case, when a newline is in the first 15 ignored characters after continuation
 	hlasm_plugin::parser_library::input_source input(
 		R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
@@ -218,7 +218,7 @@ EOLLN
 EOF
 )";
 
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "unlimited_line","",nullptr };
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "unlimited_line","",nullptr,false };
 	hlasm_plugin::parser_library::input_source input(in);
 	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
@@ -261,7 +261,7 @@ EOLLN
 EOF
 )";
 	hlasm_plugin::parser_library::input_source input(in);
-	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input","",nullptr };
+	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input","",nullptr,false };
 	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);

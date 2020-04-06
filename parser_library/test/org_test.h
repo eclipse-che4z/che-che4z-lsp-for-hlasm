@@ -18,6 +18,18 @@
 #include "common_testing.h"
 
 //tests for ORG instruction
+TEST(org, duplicate_labels)
+{
+	std::string input(R"(
+A ORG ,
+A ORG ,
+)");
+	analyzer a(input);
+	a.analyze();
+
+	a.collect_diags();
+	ASSERT_EQ(a.diags().size(), (size_t)1);
+}
 
 TEST(org, symbol_non_prev_defined)
 {

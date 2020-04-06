@@ -49,7 +49,7 @@ struct completion_list_s
 class lsp_info_processor
 {
     public:
-        lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx);
+        lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool collect_hl_info);
 
         // name of file this processor is currently used
         const std::string * file_name;
@@ -85,6 +85,8 @@ class lsp_info_processor
         semantics::highlighting_info hl_info_;
         // regex that represents a common position of instruction within a statement
         const std::regex instruction_regex;
+        // specifies whether to generate highlighting information
+        bool collect_hl_info_;
 
         // checks whether the given position is within occurence's range
         bool is_in_range_(const position& pos, const context::occurence& occ) const;
