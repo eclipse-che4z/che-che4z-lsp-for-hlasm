@@ -19,14 +19,12 @@ instruction returns [id_index instr]
 	: l_string_v			/*model*/							
 	{
 		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range( $l_string_v.ctx));
-		process_instruction();
 	}
 	| macro_name												
 	{
 		collector.set_instruction_field(
 			parse_identifier(std::move($macro_name.value),provider.get_range($macro_name.ctx)),
 			provider.get_range( $macro_name.ctx));
-		process_instruction();
 	}
 	| ORDSYMBOL													
 	{
@@ -35,14 +33,12 @@ instruction returns [id_index instr]
 		collector.set_instruction_field(
 			instr_id,
 			provider.get_range($ORDSYMBOL));
-		process_instruction();
 	}
 	| bad_instr
 	{
 		collector.set_instruction_field(
 			ctx->ids().add($bad_instr.ctx->getText()),
 			provider.get_range($bad_instr.ctx));
-		process_instruction();
 	};
 
 macro_name_b returns [std::string value]

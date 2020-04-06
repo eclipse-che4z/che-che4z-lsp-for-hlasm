@@ -55,11 +55,11 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
 
 	length_type length_type = length_type::BYTE;
 
-	inline static const char * expr_placeholder = "%";
+	inline static const char * expr_placeholder = "&";
 	inline static const char * nominal_placeholder = " ";
 	//Creates the data definition. format is the string representation of data definition as the user
-	//has written it, excapt all expressions are replaced with '%' and nominal value is replaced with " ".
-	//The expressions are passed separately as exprs in the same order as '%' appear in the format. begin is
+	//has written it, excapt all expressions are replaced with '&' and nominal value is replaced with " ".
+	//The expressions are passed separately as exprs in the same order as '&' appear in the format. begin is
 	//the position of first character of data definition.
 	static data_definition create(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
 

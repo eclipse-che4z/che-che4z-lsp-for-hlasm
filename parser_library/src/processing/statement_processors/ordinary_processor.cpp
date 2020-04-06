@@ -225,7 +225,9 @@ bool ordinary_processor::check_fatals(range line_range)
 
 context::id_index ordinary_processor::resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const
 {
-	auto tmp = context_manager(hlasm_ctx).concatenate_str(chain, eval_ctx);
+	context_manager ctx_mngr(hlasm_ctx);
+	auto tmp = ctx_mngr.concatenate_str(chain, eval_ctx);
+	collect_diags_from_child(ctx_mngr);
 
 	//trimright
 	while (tmp.size() && tmp.back() == ' ')

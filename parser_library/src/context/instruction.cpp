@@ -993,7 +993,7 @@ std::map<const std::string, machine_instruction_ptr> hlasm_plugin::parser_librar
 	add_machine_instr(result, "STSCH", mach_format::S, {db_12_4_U }, 32, 1230);
 	add_machine_instr(result, "TPI", mach_format::S, {db_12_4_U }, 32, 1231);
 	add_machine_instr(result, "TSCH", mach_format::S, {db_12_4_U }, 32, 1232);
-	// start of mnemonics
+
 	add_machine_instr(result, "AER", mach_format::RR, {reg_4_U, reg_4_U }, 16, 1412);
 	add_machine_instr(result, "ADR", mach_format::RR, {reg_4_U, reg_4_U }, 16, 1412);
 	add_machine_instr(result, "AXR", mach_format::RR, {reg_4_U, reg_4_U }, 16, 1412);

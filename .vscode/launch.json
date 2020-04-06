@@ -8,7 +8,7 @@
       "name": "(gdb) Attach",
       "type": "cppdbg",
       "request": "attach",
-      "program": "/home/balmi06/HlasmPlugin/build/bin/language_server",
+      "program": "${workspaceFolder}/build/bin/language_server",
       "processId": "${command:pickProcess}",
       "MIMode": "gdb",
       "setupCommands": [
