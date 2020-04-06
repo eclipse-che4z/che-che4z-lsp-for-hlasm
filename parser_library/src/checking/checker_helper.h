@@ -15,6 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRRY_CHECKER_HELPER_H
 #define HLASMPLUGIN_PARSERLIBRRY_CHECKER_HELPER_H
 
+//This file contains helper functions for checking that analyze operands,
+//check various number and data representations.
+
 #include <string>
 #include <cassert>
 #include <algorithm>
