@@ -17,11 +17,11 @@
 
 #include <optional>
 #include "nominal_value.h"
-#include "../context/ordinary_assembly/alignment.h"
-#include "../diagnostic_collector.h"
-#include "../context/id_storage.h"
+#include "context/ordinary_assembly/alignment.h"
+#include "checking/diagnostic_collector.h"
+#include "context/id_storage.h"
 
-#include "../checking/data_definition/data_def_fields.h"
+#include "checking/data_definition/data_def_fields.h"
 
 namespace hlasm_plugin::parser_library::checking
 {

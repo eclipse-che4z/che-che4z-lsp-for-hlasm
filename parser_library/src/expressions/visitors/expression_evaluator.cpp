@@ -14,8 +14,8 @@
 
 #include "expression_evaluator.h"
 #include "expression_analyzer.h"
-#include "../../processing/context_manager.h"
-#include "../../ebcdic_encoding.h"
+#include "processing/context_manager.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;

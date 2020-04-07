@@ -18,7 +18,7 @@
 #include "hlasmparser.h"
 #include "hlasmparserBaseVisitor.h"
 #include "../evaluation_context.h"
-#include "../../diagnosable_ctx.h"
+#include "diagnosable_ctx.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library::expressions {
  * matches grammar (for each grammar rule there is a visit...() function
  * that is called when a rule is matched in grammar)
  * */
-class expression_evaluator : public generated::hlasmparserBaseVisitor, public diagnosable_ctx
+class expression_evaluator : public parsing::generated::hlasmparserBaseVisitor, public diagnosable_ctx
 {
 	evaluation_context eval_ctx_;
 	//storage of resolved symbol attribute references

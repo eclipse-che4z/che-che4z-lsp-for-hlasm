@@ -13,8 +13,8 @@
  */
 
 #include "expression_analyzer.h"
-#include "../../processing/context_manager.h"
-#include "../../semantics/range_provider.h"
+#include "processing/context_manager.h"
+#include "semantics/range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;
