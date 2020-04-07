@@ -15,7 +15,7 @@
 #ifndef LSP_INFO_PROC_INFO
 #define LSP_INFO_PROC_INFO
 
-#include "../context/hlasm_context.h"
+#include "context/hlasm_context.h"
 #include <vector>
 #include <memory>
 #include <regex>
