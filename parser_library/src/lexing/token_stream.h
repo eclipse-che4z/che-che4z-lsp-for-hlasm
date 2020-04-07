@@ -24,6 +24,7 @@
 
 namespace hlasm_plugin {
 namespace parser_library {
+namespace lexing {
 
 //custom implementation of antlr token stream
 //helps to control the filtering of the token stream
@@ -34,12 +35,12 @@ class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
 	bool needSetup_;
 public:
 	token_stream(antlr4::TokenSource* token_source);
-	
+
 	//enable continuation token in the token stream
 	void enable_continuation();
 	//filter continuation token from the token stream
 	void disable_continuation();
-	
+
 	//enable hidden channel tokens in the token stream
 	void enable_hidden();
 	//disable hidden token channel
@@ -47,7 +48,7 @@ public:
 
 	antlr4::Token* LT(ssize_t k) override;
 
-	std::string getText(const antlr4::misc::Interval &interval) override;
+	std::string getText(const antlr4::misc::Interval& interval) override;
 
 	void rewind_input(lexer::stream_position pos, bool insert_EOLLN);
 
@@ -73,6 +74,7 @@ private:
 
 };
 
+}
 }
 }
 #endif
