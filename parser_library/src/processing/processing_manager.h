@@ -52,7 +52,7 @@ public:
 	virtual void collect_diags() const override;
 private:
 	context::hlasm_context& hlasm_ctx_;
-	parse_lib_provider& lib_provider_;
+	workspace::parse_lib_provider& lib_provider_;
 
 	std::vector<processor_ptr> procs_;
 	std::vector<provider_ptr> provs_;

@@ -15,10 +15,10 @@
 #ifndef PROCESSING_STATEMENT_PROCESSOR_H
 #define PROCESSING_STATEMENT_PROCESSOR_H
 
-#include "../../context/hlasm_context.h"
-#include "../../diagnosable_ctx.h"
-#include "../statement_providers/statement_provider_kind.h"
-#include "../processing_format.h"
+#include "context/hlasm_context.h"
+#include "diagnosable_ctx.h"
+#include "processing/statement_providers/statement_provider_kind.h"
+#include "processing/processing_format.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

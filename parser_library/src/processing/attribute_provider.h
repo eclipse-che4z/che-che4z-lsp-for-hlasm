@@ -15,8 +15,8 @@
 #ifndef PROCESSING_ATTRIBUTE_PROVIDER_H
 #define PROCESSING_ATTRIBUTE_PROVIDER_H
 
-#include "shared/range.h"
-#include "../context/ordinary_assembly/symbol_attributes.h"
+#include "range.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

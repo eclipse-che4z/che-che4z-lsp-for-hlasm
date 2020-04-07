@@ -15,8 +15,8 @@
 #ifndef PROCESSING_BRANCHING_PROVIDER_H
 #define PROCESSING_BRANCHING_PROVIDER_H
 
-#include "../context/id_storage.h"
-#include "../context/ordinary_assembly/dependant.h"
+#include "context/id_storage.h"
+#include "context/ordinary_assembly/dependant.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

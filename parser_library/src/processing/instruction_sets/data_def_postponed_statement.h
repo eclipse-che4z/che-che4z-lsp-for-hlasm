@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSING_DATA_DEF_POSTPONED_STATEMENT_H
 
 #include "postponed_statement_impl.h"
-#include "../../checking/data_definition/data_definition_operand.h"
+#include "checking/data_definition/data_definition_operand.h"
 
 #include <variant>
 
