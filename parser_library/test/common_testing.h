@@ -49,7 +49,7 @@ class empty_attribute_provider : public attribute_provider
 };
 
 //returns contents of source file
-std::string get_content(std::string source)
+inline std::string get_content(std::string source)
 {
 	std::ifstream ifs(source);
 	std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -57,7 +57,7 @@ std::string get_content(std::string source)
 	return content;
 }
 
-std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::generated::hlasmparser& h_parser)
+inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::generated::hlasmparser& h_parser)
 {
 	h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
 	// we don't want error messages or recovery during first try

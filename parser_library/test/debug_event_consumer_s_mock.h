@@ -15,8 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H
 #define HLASMPLUGIN_PARSERLIBRARY_TEST_DEBUG_EVENT_CONSUMER_S_MOCK_H
 
-#include "gmock/gmock.h"
-
 #include "../src/debugging/debugger.h"
 
 using namespace hlasm_plugin::parser_library::debugging;
