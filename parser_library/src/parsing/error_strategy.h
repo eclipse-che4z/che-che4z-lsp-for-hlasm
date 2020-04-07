@@ -18,7 +18,7 @@
 #include "DefaultErrorStrategy.h"
 #include "lexer.h"
 
-namespace hlasm_plugin::parser_library::lexing
+namespace hlasm_plugin::parser_library::parsing
 {
 
 enum tokens { 
@@ -61,7 +61,7 @@ class error_strategy : public antlr4::DefaultErrorStrategy
 	{
 		using namespace antlr4;
 
-		token * currentSymbol = dynamic_cast<token *>(recognizer->getCurrentToken());
+		lexing::token * currentSymbol = dynamic_cast<lexing::token *>(recognizer->getCurrentToken());
 		assert(currentSymbol);
 		
 		misc::IntervalSet expecting = getExpectedTokens(recognizer);
@@ -73,14 +73,14 @@ class error_strategy : public antlr4::DefaultErrorStrategy
 		else {
 			tokenText = "<missing " + recognizer->getVocabulary().getDisplayName(expectedTokenType) + ">";
 		}
-		token *current = currentSymbol;
+		lexing::token *current = currentSymbol;
 		//Get parser_library::token instead of antlr4::Token
-		token *lookback = dynamic_cast<token *>(recognizer->getTokenStream()->LT(-1));
+		lexing::token *lookback = dynamic_cast<lexing::token *>(recognizer->getTokenStream()->LT(-1));
 		if (current->getType() == Token::EOF && lookback != nullptr) {
 			current = lookback;
 		}
 
-		lexer * lex = dynamic_cast<lexer *>(recognizer->getTokenStream()->getTokenSource());
+		lexing::lexer * lex = dynamic_cast<lexing::lexer *>(recognizer->getTokenStream()->getTokenSource());
 		//return specialized tokens
 		_errorSymbols.push_back(lex->get_token_factory()->create(current->getTokenSource(), current->getInputStream(),
 			expectedTokenType, Token::DEFAULT_CHANNEL, INVALID_INDEX, INVALID_INDEX,

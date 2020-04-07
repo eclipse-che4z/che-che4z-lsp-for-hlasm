@@ -40,7 +40,7 @@ public:
 	processing_manager(
 		std::unique_ptr<opencode_provider> base_provider, 
 		context::hlasm_context& hlasm_ctx, 
-		const library_data data,
+		const workspace::library_data data,
 		std::string file_name,
 		workspace::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser,

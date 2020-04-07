@@ -31,8 +31,10 @@
 
 namespace hlasm_plugin {
 namespace parser_library {
+namespace workspace {
 class workspace;
-using ws_id = workspace *;
+}
+using ws_id = workspace::workspace *;
 
 //Interface that can be implemented to be able to get highligting info
 //from workspace manager whenever a file is parsed and highlighting changes
