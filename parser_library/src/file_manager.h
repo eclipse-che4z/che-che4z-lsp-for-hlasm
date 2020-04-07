@@ -53,7 +53,7 @@ public:
     //Returns nullptr if there is no such file.
 	virtual processor_file_ptr find_processor_file(const std::string & key) = 0;
 
-    //Returns list of all files in a directory. Returns asociative array with pairs file path - file name.
+    //Returns list of all files in a directory. Returns associative array with pairs file path - file name.
     virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string & path) = 0;
 
 	virtual bool file_exists(const std::string & file_name) = 0;

@@ -106,7 +106,7 @@ namespace hlasm_plugin
 				 * in all arguments immediately before accessing their values
 				 * 
 				 * if any argument contains an error, it is copied
-				 * and an erroneous expression (meaning with en error)
+				 * and an erroneous expression (meaning with an error)
 				 * is returned
 				 * 
 				 * see: copy_return_on_error and copy_return_on_error_binary

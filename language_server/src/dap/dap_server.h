@@ -29,7 +29,7 @@
 namespace hlasm_plugin::language_server::dap {
 
 //Implements DAP server (session-controlling methods like initialize and disconnect).
-//Integrates 1 featurees: feature launch.
+//Integrates 1 feature: feature launch.
 class server : public hlasm_plugin::language_server::server
 {
 
