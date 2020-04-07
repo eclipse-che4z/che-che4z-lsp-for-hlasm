@@ -14,9 +14,9 @@
 
 #include "gtest/gtest.h"
 
-#include "../include/shared/workspace_manager.h"
-#include "../src/parse_lib_provider.h"
-#include "../src/analyzer.h"
+#include "workspace_manager.h"
+#include "workspace/parse_lib_provider.h"
+#include "analyzer.h"
 #include "mock_parse_lib_provider.h"
 #include <memory>
 
