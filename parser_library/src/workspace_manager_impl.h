@@ -15,9 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 
-#include "shared/workspace_manager.h"
-#include "workspace.h"
-#include "file_manager_impl.h"
+#include "workspace_manager.h"
+#include "workspace/workspace.h"
+#include "workspace/file_manager_impl.h"
 #include "debugging/debugger.h"
 #include "debugging/debug_lib_provider.h"
 

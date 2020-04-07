@@ -27,8 +27,7 @@
 #include "processor_group.h"
 #include "processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 using ws_uri = std::string;
 using proc_grp_id = std::string;
@@ -123,7 +122,6 @@ private:
 	bool program_id_match(const std::string& filename, const program_id& program) const;
 };
 
-}
 }
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H

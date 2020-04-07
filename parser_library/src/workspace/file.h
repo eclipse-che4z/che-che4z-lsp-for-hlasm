@@ -19,11 +19,10 @@
 #include <istream>
 #include <filesystem>
 
-#include "shared/protocol.h"
+#include "protocol.h"
 #include "diagnosable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 using file_uri = std::string;
 
@@ -52,7 +51,6 @@ public:
 };
 
 
-}
 }
 
 #endif
