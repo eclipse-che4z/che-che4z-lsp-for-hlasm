@@ -12,8 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_HLASMPARSERLIBARY_LEXER_TEST_H
-#define HLASMPLUGIN_HLASMPARSERLIBARY_LEXER_TEST_H
+
+#ifndef HLASMPLUGIN_HLASMPARSERLIBRARY_LEXER_TEST_H
+#define HLASMPLUGIN_HLASMPARSERLIBRARY_LEXER_TEST_H
 
 #include <string>
 #include <sstream>
@@ -23,6 +24,9 @@
 #include "hlasmparser.h"
 #include "antlr4-runtime.h"
 #include <iostream>
+
+//tests lexer class:
+//AREAD, continuation statements, rewinding, token creation
 
 //returns contents of source file
 std::string get_content(std::string source);
@@ -308,4 +312,4 @@ EOF
 	ASSERT_EQ(token_string, out);
 }
 
-#endif // !HLASMPLUGIN_HLASMPARSERLIBARY_PARSER_TEST_H
+#endif // !HLASMPLUGIN_HLASMPARSERLIBRARY_PARSER_TEST_H

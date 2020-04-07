@@ -239,7 +239,7 @@ if(BUILD_TESTING)
 	add_dependencies(library_test json)
 
     if(DISCOVER_TESTS)
-	    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+	    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 30)
     endif()
 endif()
 

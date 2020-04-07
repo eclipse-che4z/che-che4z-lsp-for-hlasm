@@ -24,7 +24,7 @@
 namespace hlasm_plugin::language_server
 {
 
-//Interface that server uses to send messages to the LSP client.
+//Interface that the server uses to send messages to the LSP client.
 class send_message_provider
 {
 public:
@@ -33,7 +33,7 @@ public:
 	virtual ~send_message_provider() = default;
 };
 
-//Abstract class that calls the correct serving method for registered notifications and requests
+//Abstract class that calls the correct serving method for registered LSP and DAP notifications and requests
 //Can be implemented to fit LSP or DAP. Class implementing this class must also implement response
 //methods from response_provider
 class server : public response_provider

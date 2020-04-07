@@ -12,9 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_COPYTEST_H
-#define HLASMPLUGIN_PARSERLIBARY_COPYTEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_COPY_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_COPY_TEST_H
+
 #include "common_testing.h"
+
+//test for COPY instruction
+//various cases of instruction occurence in the source
 
 class copy_mock : public parse_lib_provider
 {

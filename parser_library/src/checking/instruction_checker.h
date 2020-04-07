@@ -31,17 +31,20 @@ public:
 	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range & stmt_range, const diagnostic_collector& add_diagnostic) const = 0;
 };
 
+// derived checker for assembler instructions
 class assembler_checker : public instruction_checker
 
 {
 public:
 	assembler_checker();
 	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range& stmt_range, const diagnostic_collector& add_diagnostic) const override;
-	static std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_instruction_map;
+	// map of all assembler instruction maes to their representations
+    static std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_instruction_map;
 protected:
 	void initialize_assembler_map();
 };
 
+// derived checker for machine instructions
 class machine_checker : public instruction_checker
 {
 public:

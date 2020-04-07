@@ -33,6 +33,9 @@
 namespace hlasm_plugin::language_server::dap
 {
 
+//Opens TCP port and accepts DAP clients. Creates a dispatcher
+//and a server for each client. Accepts the clients in an infinite
+//loop, until cancel is called.
 class tcp_handler
 {
 	asio::io_service io_service_;
@@ -45,13 +48,13 @@ class tcp_handler
 public:
 	tcp_handler(hlasm_plugin::parser_library::workspace_manager& ws_mngr, request_manager& req_mngr, uint16_t dap_port);
 
-	void handle_accept(const asio::error_code& error);
-
 	void run_dap();
 
 	void async_accept();
 
 	void cancel();
+private:
+	void handle_accept(const asio::error_code& error);
 
 };
 

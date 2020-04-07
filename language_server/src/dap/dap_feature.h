@@ -28,6 +28,8 @@ enum class path_format
 	URI
 };
 
+//Implements DAP-specific capabilities that are needed for all features:
+//path format (path vs URI) and zero-based vs 1-based line and column numbers
 class dap_feature : public feature
 {
 public:

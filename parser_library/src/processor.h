@@ -25,7 +25,8 @@
 
 namespace hlasm_plugin::parser_library {
 
-
+//Interface that represents an object that can be parsed.
+//The only implementor is processor_file
 class processor : public virtual diagnosable
 {
 public:
@@ -40,6 +41,7 @@ public:
 	
 };
 
+//Interface that represents a file that can be parsed.
 class processor_file : public virtual file, public processor
 {
 public:

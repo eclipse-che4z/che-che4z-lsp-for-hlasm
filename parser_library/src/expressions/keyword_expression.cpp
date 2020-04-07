@@ -30,6 +30,7 @@ std::map<std::string, keyword_expression::keyword_type, keyword_expression::uppe
 keyword_expression::keyword_expression(str_ref k)
 {
 	std::string kw = k;
+	//again, we accept lowercase keywords too
 	std::transform(kw.begin(), kw.end(), kw.begin(), [](char c) { return static_cast<char>(toupper(c)); });
 	auto f = keywords_.find(kw);
 	if (f != keywords_.cend())

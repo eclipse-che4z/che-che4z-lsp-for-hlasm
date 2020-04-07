@@ -20,7 +20,8 @@
 
 namespace hlasm_plugin::parser_library::debugging
 {
-
+//Implementation of variable interface that other variables use
+//to show symbol attributes to the user.
 class attribute_variable : public variable
 {
 public:

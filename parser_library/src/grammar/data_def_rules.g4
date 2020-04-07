@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for data definition operand
 parser grammar data_def_rules;
 
 dat_op returns [operand_ptr op]

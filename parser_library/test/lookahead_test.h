@@ -12,8 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#pragma once
+#ifndef HLASMPLUGIN_HLASMPARSERLIBRARY_LOOKAHEAD_TEST_H
+#define HLASMPLUGIN_HLASMPARSERLIBRARY_LOOKAHEAD_TEST_H
+
 #include "common_testing.h"
+
+//tests for lookahead feature:
+//forward/backward jums
+//copy/macro jumps
+//sequence symbol/attribute lookahead
 
 TEST(lookahead, forward_jump_success)
 {
@@ -744,3 +751,5 @@ A EQU 1,2,1
 
 	EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+#endif

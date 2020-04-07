@@ -12,9 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_DIAGNOSABLE_CTX_TEST_H
-#define HLASMPLUGIN_PARSERLIBARY_DIAGNOSABLE_CTX_TEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_TEST_H
+
 #include "common_testing.h"
+
+//test for
+//correctly outputed structure of nested diagnostic
 
 TEST(diagnosable_ctx, one_file_diag)
 {

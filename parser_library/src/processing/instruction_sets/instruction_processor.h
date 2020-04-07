@@ -31,7 +31,7 @@ namespace parser_library {
 namespace processing {
 
 //interface for processing instructions
-//processing is divided thrue classes for assembler, conditional assembly, machine, macro instrucion processing
+//processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
 class instruction_processor : public diagnosable_ctx
 {
 	virtual void process(context::unique_stmt_ptr stmt) = 0;

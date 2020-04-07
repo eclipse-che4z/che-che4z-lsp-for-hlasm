@@ -12,12 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#pragma once
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CA_INSTR_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_CA_INSTR_TEST_H
+
 #include "common_testing.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
+
+//tests for 
+//variable substitution for model statements
+//concatenation of multiple substitutions
+//CA instructions
 
 TEST(var_subs, gbl_instr_only)
 {
@@ -459,3 +466,4 @@ B EQU 1
 
 	ASSERT_EQ(a.diags().size(), (size_t)2);
 }
+#endif

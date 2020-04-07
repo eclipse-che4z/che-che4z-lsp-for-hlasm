@@ -54,6 +54,7 @@ namespace hlasm_plugin::parser_library::checking
 
 	enum class machine_operand_type : uint8_t { MASK, REG, REG_IMM, IMM, NONE, DISPLC, BASE, LENGTH, VEC_REG, DIS_REG };
 
+	// Describes a component of machine operand format. Specifies allowed values.
 	struct parameter
 	{
 		bool is_signed;
@@ -65,6 +66,8 @@ namespace hlasm_plugin::parser_library::checking
 		std::string to_string() const;
 	};
 
+	// Representation of machine operand formats and serves as a template for the checker.
+	// Consists of 1 parameter when only simple operand is allowed and of 3 parameters when address operand is allowed D(F,S)
 	struct machine_operand_format
 	{
 		parameter identifier; // used as displacement operand in address operand
@@ -80,11 +83,13 @@ namespace hlasm_plugin::parser_library::checking
 		std::string to_string() const;
 	};
 
+	// Abstract class that represents a machine operand suitable for checking.
 	class machine_operand : public virtual operand
 	{
 	public:
 		machine_operand();
 
+		// check whether the operand satisfies its format
 		virtual bool check(diagnostic_op & diag, const machine_operand_format to_check, const std::string & instr_name, const range& stmt_range) const = 0;
 
 		diagnostic_op get_simple_operand_expected(const machine_operand_format & op_format, const std::string & instr_name, const range& stmt_range) const;
@@ -96,6 +101,7 @@ namespace hlasm_plugin::parser_library::checking
 
 	};
 
+	// Represents address operand D(B) or D(F,B)
 	class address_operand final : public machine_operand
 	{
 	public:
@@ -115,7 +121,7 @@ namespace hlasm_plugin::parser_library::checking
 		bool is_length_corresponding(int param_value, int length_size) const;
 	};
 
-	// class that represents both one_operand and value operands
+	// class that represents both a simple operand both in assembler and machine instructions
 	class one_operand final : public asm_operand, public machine_operand
 	{
 	public:

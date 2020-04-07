@@ -39,8 +39,8 @@ const char* completion_item::detail()
 }
 const char* completion_item::documentation()
 {
-	impl_.implode_documentation();
-	return impl_.documentation_string.c_str();
+	impl_.implode_contents();
+	return impl_.content_string.c_str();
 }
 bool completion_item::deprecated()
 {

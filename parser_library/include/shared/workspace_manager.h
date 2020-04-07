@@ -15,6 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H
 
+//This file specifies the interface of parser library.
+//The pimpl (pointer to implementation) idiom is used to hide its implementation.
+//It implements LSP requests and notifications and is used by the language server.
+
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -30,6 +34,8 @@ namespace parser_library {
 class workspace;
 using ws_id = workspace *;
 
+//Interface that can be implemented to be able to get highligting info
+//from workspace manager whenever a file is parsed and highlighting changes
 class PARSER_LIBRARY_EXPORT highlighting_consumer
 {
 public:
@@ -37,6 +43,9 @@ public:
 	virtual ~highlighting_consumer() {};
 };
 
+//Interface that can be implemented to be able to get list of 
+//diagnostics from workspace manager whenever a file is parsed
+//Passes list of all diagnostics that are in all currently opened files.
 class PARSER_LIBRARY_EXPORT diagnostics_consumer
 {
 public:
@@ -44,12 +53,15 @@ public:
 	virtual ~diagnostics_consumer() {};
 };
 
+//Interface that can be implemented to be able to get performance metrics
+//(time that parsing took, number of parsed lines, etc)
 class PARSER_LIBRARY_EXPORT performance_metrics_consumer
 {
 public:
 	virtual void consume_performance_metrics(const performance_metrics& metrics) = 0;
 };
 
+//Interface that can be implemented to get DAP events from macro tracer.
 class PARSER_LIBRARY_EXPORT debug_event_consumer
 {
 public:
@@ -60,6 +72,8 @@ public:
 	virtual ~debug_event_consumer() {};
 };
 
+//The main class that encapsulates all functionality of parser library.
+//All the methods are C++ version of LSP and DAP methods.
 class PARSER_LIBRARY_EXPORT workspace_manager
 {
 	class impl;
@@ -91,6 +105,7 @@ public:
 	virtual const string_array hover(const char * document_uri, const position pos);
 	virtual completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
 	
+	//implementation of observer pattern - register consumer. Unregistering not implemented (yet).
 	virtual void register_highlighting_consumer(highlighting_consumer * consumer);
 	virtual void register_diagnostics_consumer(diagnostics_consumer * consumer);
 	virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
