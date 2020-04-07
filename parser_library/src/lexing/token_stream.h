@@ -28,7 +28,7 @@ namespace lexing {
 
 //custom implementation of antlr token stream
 //helps to control the filtering of the token stream
-class PARSER_LIBRARY_EXPORT token_stream : public antlr4::BufferedTokenStream
+class token_stream : public antlr4::BufferedTokenStream
 {
 	bool enabled_cont_;
 	bool enabled_hidden_;
