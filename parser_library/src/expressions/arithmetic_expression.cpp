@@ -13,12 +13,12 @@
  */
 
 #include "arithmetic_expression.h"
-#include "../ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 #include <algorithm>
 #include "expression.h"
 #include <bitset>
 #include "character_expression.h"
-#include "../error_messages.h"
+#include "error_messages.h"
 #include "numeric_wrapper.h"
 #include <stdexcept>
 #include <charconv>
