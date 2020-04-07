@@ -25,7 +25,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace lexing {
 
-class PARSER_LIBRARY_EXPORT token_factory
+class token_factory
 {
 public:
 	token_factory();
