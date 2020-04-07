@@ -19,7 +19,7 @@
 #include "file_impl.h"
 #include "analyzer.h"
 
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 //Implementation of the processor_file interface. Uses analyzer to parse the file
 //Then stores it until the next parsing so it is possible to retrieve parsing
