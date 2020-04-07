@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_MACH_EXPR_TERM_H
 
 #include "mach_expression.h"
-#include "../context/id_storage.h"
+#include "context/id_storage.h"
 
 namespace hlasm_plugin::parser_library::expressions
 {
