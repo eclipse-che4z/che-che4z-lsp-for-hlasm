@@ -13,7 +13,7 @@
  */
 
 #include "lsp_info_processor.h"
-#include "../context/instruction.h"
+#include "context/instruction.h"
 #include <string_view>
 
 using namespace hlasm_plugin::parser_library;
