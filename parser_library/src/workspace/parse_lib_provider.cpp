@@ -14,7 +14,7 @@
 
 #include "parse_lib_provider.h"
 
-namespace hlasm_plugin::parser_library
+namespace hlasm_plugin::parser_library::workspace
 {
 
 empty_parse_lib_provider empty_parse_lib_provider::instance;

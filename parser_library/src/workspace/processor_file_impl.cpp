@@ -18,7 +18,7 @@
 #include "processor_file_impl.h"
 #include "file.h"
 
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 processor_file_impl::processor_file_impl(std::string file_name, std::atomic<bool>* cancel) :
 	file_impl(std::move(file_name)), cancel_(cancel)

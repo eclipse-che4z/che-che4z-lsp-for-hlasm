@@ -17,7 +17,7 @@
 
 #include "context/hlasm_context.h"
 
-namespace hlasm_plugin::parser_library
+namespace hlasm_plugin::parser_library::workspace
 {
 
 using parse_result = bool;

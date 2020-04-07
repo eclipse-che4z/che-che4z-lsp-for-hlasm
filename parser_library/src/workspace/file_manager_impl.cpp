@@ -17,8 +17,7 @@
 #include "file_manager_impl.h"
 #include "processor_file_impl.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 void file_manager_impl::collect_diags() const
 {
@@ -207,6 +206,4 @@ bool file_manager_impl::lib_file_exists(const std::string & lib_path, const std:
 	return std::filesystem::exists(file_path);
 }
 
-
-}
 }

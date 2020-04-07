@@ -23,8 +23,7 @@
 #include "file_impl.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 file_impl::file_impl(file_uri uri) : file_name_(std::move(uri)), text_() {}
 
@@ -342,5 +341,4 @@ std::string file_impl::replace_non_utf8_chars(const std::string & text)
 	return ret;
 }
 
-}
 }

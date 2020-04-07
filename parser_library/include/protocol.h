@@ -227,8 +227,11 @@ private:
 	semantics::highlighting_info & info;
 };
 
-class processor_file;
-using file_id = processor_file * ;
+namespace workspace {
+	class processor_file;
+}
+
+using file_id = workspace::processor_file * ;
 
 struct PARSER_LIBRARY_EXPORT all_highlighting_info
 {

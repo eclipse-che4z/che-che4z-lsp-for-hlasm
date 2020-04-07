@@ -24,8 +24,7 @@
 #include "diagnosable.h"
 #include "processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 using file_ptr = std::shared_ptr<file>;
 using processor_file_ptr = std::shared_ptr<processor_file>;
@@ -65,5 +64,5 @@ public:
 };
 
 }
-}
+
 #endif // FILE_MANAGER_H

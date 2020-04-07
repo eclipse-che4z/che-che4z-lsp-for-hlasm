@@ -22,8 +22,8 @@
 #include "parser_tools.h"
 #include "processor.h"
 #include "wildcard.h"
-namespace hlasm_plugin {
-namespace parser_library {
+
+namespace hlasm_plugin::parser_library::workspace {
 
 workspace::workspace(ws_uri uri, std::string name, file_manager & file_manager)
 	: name_(name), uri_(uri), file_manager_(file_manager), implicit_proc_grp("pg_implicit"), ws_path_(uri)
@@ -417,6 +417,4 @@ bool workspace::has_library(const std::string& library, context::hlasm_context& 
 	return false;
 }
 
-
-}
 }
