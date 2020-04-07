@@ -23,7 +23,8 @@
 #include "workspace/workspace.h"
 #include "sstream"
 
-
+using namespace hlasm_plugin::parser_library::lexing;
+using namespace hlasm_plugin::parser_library::parsing;
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -54,7 +55,7 @@ void parser_library::parse(const std::string & src)
 	try
 	{
 		std::stringstream ss;
-		hlasm_plugin::parser_tools::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
+		parsing::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
 		mytree.out_tree(ss);
 
 		std::cout << ss.str();

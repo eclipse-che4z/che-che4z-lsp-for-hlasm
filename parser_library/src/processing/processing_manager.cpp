@@ -331,5 +331,5 @@ void processing_manager::collect_diags() const
 	for (auto& proc : procs_)
 		collect_diags_from_child(*proc);
 
-	collect_diags_from_child(dynamic_cast<parser_impl&>(*provs_.back()));
+	collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
 }

@@ -38,7 +38,7 @@ void input_source::reset(const std::string& str)
 	load(str);
 }
 
-std::string hlasm_plugin::parser_library::input_source::getText(const antlr4::misc::Interval& interval)
+std::string input_source::getText(const antlr4::misc::Interval& interval)
 {
 	std::string n;
 	for (auto i = interval.a; i <= interval.b; ++i)

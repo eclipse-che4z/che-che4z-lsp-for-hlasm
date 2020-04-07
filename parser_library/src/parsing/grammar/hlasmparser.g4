@@ -33,7 +33,7 @@ deferred_operand_rules;
 
 @header
 {
-	#include "parser/parser_impl.h"
+	#include "parsing/parser_impl.h"
 	#include "expressions/expression.h"
 	#include "expressions/arithmetic_expression.h"
 	#include "expressions/logic_expression.h"
@@ -43,7 +43,7 @@ deferred_operand_rules;
 	#include "expressions/mach_operator.h"
 	#include "expressions/data_definition.h"
 
-	namespace hlasm_plugin::parser_library::generated
+	namespace hlasm_plugin::parser_library::parsing
 	{
 		using namespace hlasm_plugin::parser_library;
 		using namespace hlasm_plugin::parser_library::semantics;

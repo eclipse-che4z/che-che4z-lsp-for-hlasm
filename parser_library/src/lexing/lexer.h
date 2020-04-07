@@ -24,7 +24,7 @@
 #include <set>
 #include <string_view>
 #include "input_source.h"
-#include "../src/semantics/lsp_info_processor.h"
+#include "semantics/lsp_info_processor.h"
 #include "range.h"
 
 
@@ -36,7 +36,7 @@ class input_source;
 
 using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
-class PARSER_LIBRARY_EXPORT lexer : public antlr4::TokenSource
+class lexer : public antlr4::TokenSource
 {
 public:
 	struct stream_position { size_t line; size_t offset; };
@@ -88,7 +88,7 @@ public:
 	bool continuation_before_token(size_t token_index);
 
 	enum Tokens {
-#include "../src/grammar/lex.tokens"
+#include "parsing/grammar/lex.tokens"
 	};
 
 	enum Channels {

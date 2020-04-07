@@ -55,7 +55,7 @@ public:
 
 	void add_workspace(std::string name, std::string uri)
 	{
-		auto ws = workspaces_.emplace(name, workspace(uri, name, file_manager_));
+		auto ws = workspaces_.emplace(name, workspace::workspace(uri, name, file_manager_));
 		ws.first->second.open();
 
 		notify_diagnostics_consumers();
@@ -74,7 +74,7 @@ public:
 		file_manager_.did_open_file(document_uri, version, std::move(text));
 		if (cancel_ && *cancel_) return;
 
-		workspace & ws = ws_path_match(document_uri);
+		workspace::workspace & ws = ws_path_match(document_uri);
 		ws.did_open_file(document_uri);
 		if (cancel_ && *cancel_) return;
 
@@ -88,7 +88,7 @@ public:
 		file_manager_.did_change_file(document_uri, version, changes, ch_size);
 		if (cancel_ && *cancel_) return;
 
-		workspace & ws = ws_path_match(document_uri);
+		workspace::workspace & ws = ws_path_match(document_uri);
 		ws.did_change_file(document_uri, changes, ch_size);
 		if (cancel_ && *cancel_) return;
 
@@ -98,7 +98,7 @@ public:
 
 	void did_close_file(const std::string document_uri)
 	{
-		workspace& ws = ws_path_match(document_uri);
+		workspace::workspace& ws = ws_path_match(document_uri);
 		ws.did_close_file(document_uri);
 		notify_highlighting_consumers();
 		notify_diagnostics_consumers();
@@ -108,7 +108,7 @@ public:
 	{
 		for (const auto& path : paths)
 		{
-			workspace& ws = ws_path_match(path);
+			workspace::workspace& ws = ws_path_match(path);
 			ws.did_change_watched_files(path);
 		}
 		notify_highlighting_consumers();
@@ -134,7 +134,7 @@ public:
 	position_uri definition(std::string document_uri, const position pos)
 	{
 		auto file = file_manager_.find(document_uri);
-		if (dynamic_cast<processor_file*>(file.get()) != nullptr)
+		if (dynamic_cast<workspace::processor_file*>(file.get()) != nullptr)
 			found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
 		else
 			found_position = { document_uri,pos };
@@ -145,7 +145,7 @@ public:
 	position_uris references(std::string document_uri, const position pos)
 	{
 		auto file = file_manager_.find(document_uri);
-		if (dynamic_cast<processor_file*>(file.get()) != nullptr)
+		if (dynamic_cast<workspace::processor_file*>(file.get()) != nullptr)
 			found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
 		else
 			found_refs.clear();
@@ -157,7 +157,7 @@ public:
 	const string_array hover(const char * document_uri, const position pos)
 	{
 		auto file = file_manager_.find(document_uri);
-		if (dynamic_cast<processor_file*>(file.get()) != nullptr)
+		if (dynamic_cast<workspace::processor_file*>(file.get()) != nullptr)
 			output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
 		else
 			output.clear();
@@ -172,7 +172,7 @@ public:
 	completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
 	{
 		auto file = file_manager_.find(document_uri);
-		if (dynamic_cast<processor_file*>(file.get()) != nullptr)
+		if (dynamic_cast<workspace::processor_file*>(file.get()) != nullptr)
 			completion_result = file_manager_.find_processor_file(document_uri)->get_lsp_info().completion(pos, trigger_char, trigger_kind);
 		else
 			completion_result = semantics::completion_list_s();
@@ -181,8 +181,8 @@ public:
 
 	void launch(std::string file_name, bool stop_on_entry)
 	{
-		workspace & ws = ws_path_match(file_name);
-		processor_file_ptr file = file_manager_.add_processor_file(file_name);
+		workspace::workspace & ws = ws_path_match(file_name);
+		workspace::processor_file_ptr file = file_manager_.add_processor_file(file_name);
 		debugger_ = std::make_unique<debugging::debugger>(*this, debug_cfg_);
 		debug_lib_provider_ = std::make_unique<debugging::debug_lib_provider>(ws);
 		debugger_->launch(file, *debug_lib_provider_, stop_on_entry);
@@ -327,7 +327,7 @@ private:
 	void notify_performance_consumers(const std::string& document_uri)
 	{
 		auto file = file_manager_.find(document_uri);
-		auto proc_file = dynamic_cast<processor_file*>(file.get());
+		auto proc_file = dynamic_cast<workspace::processor_file*>(file.get());
 		if (proc_file)
 		{
 			auto metrics = proc_file->get_metrics();
@@ -353,10 +353,10 @@ private:
 	}
 
 	//returns implicit workspace, if the file does not belong to any workspace
-	workspace & ws_path_match(const std::string & document_uri)
+	workspace::workspace & ws_path_match(const std::string & document_uri)
 	{
 		size_t max = 0;
-		workspace * max_ws = nullptr;
+		workspace::workspace * max_ws = nullptr;
 		for (auto & ws : workspaces_)
 		{
 			size_t match = prefix_match(document_uri, ws.second.uri());
@@ -373,9 +373,9 @@ private:
 	}
 	std::vector<debugging::variable *> temp_variables_;
 
-	std::unordered_map<std::string, workspace> workspaces_;
-	file_manager_impl file_manager_;
-	workspace implicit_workspace_;
+	std::unordered_map<std::string, workspace::workspace> workspaces_;
+	workspace::file_manager_impl file_manager_;
+	workspace::workspace implicit_workspace_;
 	std::atomic<bool>* cancel_;
 
 	std::vector<highlighting_consumer *> hl_consumers_;

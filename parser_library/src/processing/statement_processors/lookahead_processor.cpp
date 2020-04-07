@@ -91,7 +91,7 @@ void lookahead_processor::collect_diags() const {}
 
 lookahead_processor::lookahead_processor(
 	context::hlasm_context& hlasm_ctx,
-	branching_provider& branch_provider, processing_state_listener& listener, parse_lib_provider& lib_provider, lookahead_start_data start)
+	branching_provider& branch_provider, processing_state_listener& listener, workspace::parse_lib_provider& lib_provider, lookahead_start_data start)
 	: statement_processor(processing_kind::LOOKAHEAD, hlasm_ctx),
 	finished_flag_(start.action == lookahead_action::ORD && start.targets.empty()),
 	result_(std::move(start)),

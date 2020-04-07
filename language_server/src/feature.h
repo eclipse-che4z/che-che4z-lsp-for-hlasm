@@ -21,7 +21,7 @@
 #include "json.hpp"
 
 #include "common_types.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin {
 namespace language_server {
