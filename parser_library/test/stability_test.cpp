@@ -16,7 +16,7 @@
 
 #include "common_testing.h"
 
-TEST(fuzzer_test, entry_1)
+TEST(stability_test, entry_1)
 {
 	std::string input(R"(:'0:', A $sMNOP A
 T (.~A
@@ -43,7 +43,7 @@ N ORG (.(. ))C )");
 	a.analyze();
 }
 
-TEST(fuzzer_test, entry_2)
+TEST(stability_test, entry_2)
 {
     std::string input(" ACTR LL'BTM 'M('SM''S(~''#S)((");
 
@@ -51,7 +51,7 @@ TEST(fuzzer_test, entry_2)
     a.analyze();
 }
 
-TEST(fuzzer_test, entry_3)
+TEST(stability_test, entry_3)
 {
     std::string input(" (_=&LOCTRCEv(&ISEQ(--S'#)HUBP #' #&3#");
 
@@ -59,7 +59,7 @@ TEST(fuzzer_test, entry_3)
     a.analyze();
 }
 
-TEST(fuzzer_test, entry_4)
+TEST(stability_test, entry_4)
 {
     std::string input(R"( @(PUSH@(&@(@+( ED'))D))))))))))9@(&@(@+( ED'BRXH))p(r
 R
