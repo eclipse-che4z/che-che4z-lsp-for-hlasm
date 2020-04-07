@@ -19,10 +19,10 @@
 #include <utility>
 #include "antlr4-runtime.h"
 #include "../src/ebcdic_encoding.h"
-#include "../include/shared/lexer.h"
+#include "lexer.h"
 #include "hlasmparser.h"
-#include "shared/token_stream.h"
-#include "shared/input_source.h"
+#include "lexing/token_stream.h"
+#include "lexing/input_source.h"
 #include "../src/analyzer.h"
 #include "../src/processing/context_manager.h"
 #include "../src/expressions/visitors/expression_analyzer.h"
