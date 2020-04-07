@@ -104,7 +104,6 @@
           {
             "type": "hlasm",
             "request": "launch",
-            "configId": 0,
             "name": "Macro tracer: current program",
             "program": "${command:extension.hlasm-plugin.getCurrentProgramName}",
             "stopOnEntry": true
@@ -117,7 +116,6 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
-              "configId": 0,
               "name": "Macro tracer: current program",
               "program": "^\"\\${command:extension.hlasm-plugin.getCurrentProgramName}\"",
               "stopOnEntry": true
@@ -129,7 +127,6 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
-              "configId": 1,
               "name": "Macro tracer: Ask for file name",
               "program": "^\"\\${workspaceFolder}/\\${command:extension.hlasm-plugin.getProgramName}\"",
               "stopOnEntry": true
