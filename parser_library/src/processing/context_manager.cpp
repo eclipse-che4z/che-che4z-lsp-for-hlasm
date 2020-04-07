@@ -13,9 +13,9 @@
  */
 
 #include "context_manager.h"
-#include "shared/lexer.h"
-#include "../expressions/visitors/expression_evaluator.h"
-#include "../context/variables/system_variable.h"
+#include "lexing/lexer.h"
+#include "expressions/visitors/expression_evaluator.h"
+#include "context/variables/system_variable.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;

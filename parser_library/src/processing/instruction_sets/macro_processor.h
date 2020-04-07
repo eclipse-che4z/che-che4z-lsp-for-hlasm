@@ -16,7 +16,7 @@
 #define PROCESSING_MACRO_PROCESSOR_H
 
 #include "instruction_processor.h"
-#include "../../context/macro.h"
+#include "context/macro.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

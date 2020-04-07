@@ -15,8 +15,8 @@
 #ifndef PROCESSING_POSTPONED_STATEMENT_IMPL_H
 #define PROCESSING_POSTPONED_STATEMENT_IMPL_H
 
-#include "../statement.h"
-#include "../../context/ordinary_assembly/postponed_statement.h"
+#include "processing/statement.h"
+#include "context/ordinary_assembly/postponed_statement.h"
 
 #include <variant>
 

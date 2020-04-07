@@ -15,7 +15,7 @@
 #ifndef PROCESSING_OPENCODE_PROVIDER_H
 #define PROCESSING_OPENCODE_PROVIDER_H
 
-#include "../context/source_snapshot.h"
+#include "context/source_snapshot.h"
 #include "statement_providers/statement_provider.h"
 
 namespace hlasm_plugin {

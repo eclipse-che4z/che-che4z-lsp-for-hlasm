@@ -13,7 +13,7 @@
  */
 
 #include "parser_error_listener.h"
-#include "../include/shared/token_stream.h"
+#include "token_stream.h"
 
 enum Tokens {
 #include "grammar/lex.tokens"

@@ -15,8 +15,8 @@
 #ifndef PROCESSING_COPY_PROCESSING_INFO_H
 #define PROCESSING_COPY_PROCESSING_INFO_H
 
-#include "../../context/hlasm_statement.h"
-#include "../../context/id_storage.h"
+#include "context/hlasm_statement.h"
+#include "context/id_storage.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

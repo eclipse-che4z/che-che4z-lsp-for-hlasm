@@ -15,7 +15,7 @@
 #ifndef PROCESSING_STATEMENT_H
 #define PROCESSING_STATEMENT_H
 
-#include "../semantics/statement.h"
+#include "semantics/statement.h"
 #include "op_code.h"
 
 #include <variant>

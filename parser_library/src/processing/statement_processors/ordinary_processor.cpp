@@ -15,8 +15,8 @@
 #include "ordinary_processor.h"
 #include "../statement.h"
 
-#include "../../checking/instruction_checker.h"
-#include "../../ebcdic_encoding.h"
+#include "checking/instruction_checker.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;

@@ -14,14 +14,15 @@
 
 #include "asm_processor.h"
 #include "postponed_statement_impl.h"
-#include "../context_manager.h"
-#include "../../expressions/mach_expr_term.h"
-#include "../../checking/instr_operand.h"
+#include "processing/context_manager.h"
+#include "expressions/mach_expr_term.h"
+#include "checking/instr_operand.h"
 #include "data_def_postponed_statement.h"
-#include "../../ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+using namespace processing;
+using namespace workspace;
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
 {

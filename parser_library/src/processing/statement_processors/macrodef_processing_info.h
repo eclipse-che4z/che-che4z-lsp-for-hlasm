@@ -15,7 +15,7 @@
 #ifndef PROCESSING_MACRODEF_PROCESSING_INFO_H
 #define PROCESSING_MACRODEF_PROCESSING_INFO_H
 
-#include "../../context/macro.h"
+#include "context/macro.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

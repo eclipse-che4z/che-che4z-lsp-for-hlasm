@@ -21,7 +21,7 @@
 
 //implementation of parser error listener that provide additional error handling
 //used during recursed parsing when nested diagnostic is needed
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::parsing {
 
 class parser_error_listener_ctx : public parser_error_listener_base, public diagnosable_ctx
 {
