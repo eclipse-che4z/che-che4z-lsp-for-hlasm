@@ -33,7 +33,7 @@ declare class ContinuationPosition {
     continuationPosition: number;
 }
 
-export interface ASMSemanticHighlightingParams extends SemanticHighlightingParams
+export interface HLASMSemanticHighlightingParams extends SemanticHighlightingParams
 {
     /**
 	 * Information about continuation in current file
@@ -45,7 +45,7 @@ export interface ASMSemanticHighlightingParams extends SemanticHighlightingParam
 /**
  * Capability similar to Semantic Highlighting
  */
-export interface ASMSemanticHighlightingClientCapabilities {
+export interface HLASMSemanticHighlightingClientCapabilities {
 	textDocument?: {
 		ASMsemanticHighlightingCapabilities?: {
 			ASMsemanticHighlighting: boolean;
@@ -54,7 +54,7 @@ export interface ASMSemanticHighlightingClientCapabilities {
 }
 
 // export new client capabilities
-export type ASMExtendedClientCapabilities = ExtendedClientCapabilities & ASMSemanticHighlightingClientCapabilities;
+export type HLASMExtendedClientCapabilities = ExtendedClientCapabilities & HLASMSemanticHighlightingClientCapabilities;
 
 type line = number;
 type column = number;
@@ -69,7 +69,7 @@ class DocumentContinuation {
 /**
  * Feature itself adds new capabilities to highlighting
  */
-export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
+export class HLASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 {
 	protected documents: Map<string,DocumentContinuation>;
 	constructor(client: BaseLanguageClient) {
@@ -77,7 +77,7 @@ export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 		this.documents = new Map();
     }
 
-	fillClientCapabilities(capabilities: ASMExtendedClientCapabilities): void {
+	fillClientCapabilities(capabilities: HLASMExtendedClientCapabilities): void {
 		if (!!capabilities.textDocument) {
 			capabilities.textDocument = {};
 		}
@@ -91,9 +91,9 @@ export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 	 * Process continuations first and then apply decorations
 	 * @param params 
 	 */
-    public applyDecorations(params?: ASMSemanticHighlightingParams | SemanticHighlightingParams): void {
-		if (<ASMSemanticHighlightingParams>params !== undefined)
-        	this.processContInfo(<ASMSemanticHighlightingParams>params);
+    applyDecorations(params?: HLASMSemanticHighlightingParams | SemanticHighlightingParams): void {
+		if (<HLASMSemanticHighlightingParams>params !== undefined)
+        	this.processContInfo(<HLASMSemanticHighlightingParams>params);
         super.applyDecorations(params);
     }
 
@@ -101,7 +101,7 @@ export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 	 * Saves document-specific continuation information
 	 * @param params 
 	 */
-    private processContInfo(params: ASMSemanticHighlightingParams)
+    private processContInfo(params: HLASMSemanticHighlightingParams)
     {
 		if (params)
 		{
@@ -119,7 +119,7 @@ export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 	 * @param uri document to check
 	 * return continuation offset for document-line, -1 if there is none
 	 */
-    public getContinuation(line: number, uri: string) {
+    getContinuation(line: number, uri: string) {
 		var foundDoc = this.documents.get(uri);
 		//general case
 		if (line == -1)
@@ -131,7 +131,7 @@ export class ASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 	 * Returns continue column position for document
 	 * @param uri document
 	 */
-	public getContinueColumn(uri: string)
+	getContinueColumn(uri: string)
 	{
 		return this.documents.get(uri).continueColumn;
 	}
