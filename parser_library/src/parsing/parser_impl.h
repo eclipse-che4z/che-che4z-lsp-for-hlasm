@@ -138,7 +138,6 @@ struct parser_holder
 	std::unique_ptr<hlasmparser> parser;
 
 	parser_holder(const parser_holder&) = delete;
-	parser_holder(parser_holder&&);
 	parser_holder() = default;
 
 	~parser_holder();

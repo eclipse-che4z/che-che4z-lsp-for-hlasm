@@ -23,11 +23,11 @@ namespace hlasm_plugin::parser_library::workspaces {
 
 library_local::library_local(file_manager& file_manager, std::string lib_path, std::shared_ptr<const extension_regex_map> extensions) : file_manager_(file_manager), lib_path_(lib_path), extensions_(extensions) {}
 
-library_local::library_local(library_local&& l) : file_manager_(l.file_manager_), extensions_(l.extensions_) {}
+library_local::library_local(library_local&& l) noexcept : file_manager_(l.file_manager_), extensions_(l.extensions_) {}
 
 void library_local::collect_diags() const
 {
-
+	//does not have any diagnosable children
 }
 
 void library_local::refresh()

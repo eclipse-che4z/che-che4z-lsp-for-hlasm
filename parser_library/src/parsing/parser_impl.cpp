@@ -137,6 +137,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 			break;
 		case processing::processing_form::DAT:
 			line = std::move(h.parser->op_rem_body_dat_r()->line);
+			break;
 		default:
 			break;
 		}
@@ -570,6 +571,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
 			break;
 		case processing::processing_form::DAT:
 			h.parser->op_rem_body_dat();
+			break;
 		default:
 			break;
 		}

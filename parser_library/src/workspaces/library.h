@@ -48,7 +48,7 @@ public:
 	library_local(const library_local &) = delete;
 	library_local & operator= (const library_local &) = delete;
 
-	library_local(library_local && l);
+	library_local(library_local && l) noexcept;
 
 	void collect_diags() const override;
 
