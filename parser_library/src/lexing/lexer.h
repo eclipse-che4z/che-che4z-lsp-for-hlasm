@@ -16,8 +16,8 @@
 #define HLASMPLUGIN_PARSER_HLASMLEX_H
 
 #include "parser_library_export.h"
-#include "shared/token_factory.h"
-#include "shared/token.h"
+#include "token_factory.h"
+#include "token.h"
 #include "antlr4-runtime.h"
 #include <memory>
 #include <queue>

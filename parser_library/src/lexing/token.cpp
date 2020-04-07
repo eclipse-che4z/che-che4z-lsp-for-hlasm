@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "shared/token.h"
+#include "token.h"
 #include <Interval.h>
 #include <CharStream.h>
 

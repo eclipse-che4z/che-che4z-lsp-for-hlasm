@@ -15,7 +15,7 @@
 #ifndef CONTEXT_PROCESSING_CONTEXT_H
 #define CONTEXT_PROCESSING_CONTEXT_H
 
-#include  "../processing/processing_format.h"
+#include  "processing/processing_format.h"
 #include "copy_member.h"
 #include "source_snapshot.h"
 

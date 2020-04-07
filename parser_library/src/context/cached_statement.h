@@ -15,7 +15,7 @@
 #ifndef CONTEXT_PROCESSING_CACHED_STATEMENT_H
 #define CONTEXT_PROCESSING_CACHED_STATEMENT_H
 
-#include  "../processing/processing_format.h"
+#include  "processing/processing_format.h"
 #include "hlasm_statement.h"
 
 namespace hlasm_plugin {
