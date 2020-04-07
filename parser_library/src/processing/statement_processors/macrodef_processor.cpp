@@ -13,14 +13,15 @@
  */
 
 #include "macrodef_processor.h"
-#include "../../semantics/concatenation.h"
-#include "../statement.h"
-#include "../context_manager.h"
-#include "../instruction_sets/asm_processor.h"
-#include "../../semantics/statement.h"
+#include "semantics/concatenation.h"
+#include "processing/statement.h"
+#include "processing/context_manager.h"
+#include "processing/instruction_sets/asm_processor.h"
+#include "semantics/statement.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::workspace;
 
 macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context, processing_state_listener& listener, parse_lib_provider& provider, macrodef_start_data start)
 	: statement_processor(processing_kind::MACRO, hlasm_context),

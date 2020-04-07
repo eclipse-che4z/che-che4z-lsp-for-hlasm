@@ -14,13 +14,13 @@
 
 #include <iostream>
 
-#include "../include/shared/parser_library.h"
-#include "../include/shared/token_stream.h"
-#include "parser_tools.h"
+#include "parser_library.h"
+#include "lexing/token_stream.h"
+#include "parsing/parser_tools.h"
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
 #include "analyzer.h"
-#include "workspace.h"
+#include "workspace/workspace.h"
 #include "sstream"
 
 

@@ -13,12 +13,13 @@
  */
 
 #include "macro_processor.h"
-#include "../context_manager.h"
-#include "../statement_processors/macrodef_processor.h"
+#include "processing/context_manager.h"
+#include "processing/statement_processors/macrodef_processor.h"
 #include <memory>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::workspace;
 
 macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
 	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider)

@@ -15,14 +15,14 @@
 #ifndef PROCESSING_CONTEXT_MANAGER_H
 #define PROCESSING_CONTEXT_MANAGER_H
 
-#include "../diagnosable_ctx.h"
-#include "../context/hlasm_context.h"
-#include "../parse_lib_provider.h"
-#include "../expressions/expression.h"
-#include "../expressions/evaluation_context.h"
+#include "diagnosable_ctx.h"
+#include "context/hlasm_context.h"
+#include "workspace/parse_lib_provider.h"
+#include "expressions/expression.h"
+#include "expressions/evaluation_context.h"
 #include "processing_format.h"
 #include "antlr4-runtime.h"
-#include "../semantics/range_provider.h"
+#include "semantics/range_provider.h"
 
 
 namespace hlasm_plugin {

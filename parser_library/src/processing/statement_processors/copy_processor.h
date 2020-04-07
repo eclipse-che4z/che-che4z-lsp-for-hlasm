@@ -17,8 +17,8 @@
 
 #include "copy_processing_info.h"
 #include "statement_processor.h"
-#include "../processing_state_listener.h"
-#include "../../context/hlasm_context.h"
+#include "processing/processing_state_listener.h"
+#include "context/hlasm_context.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

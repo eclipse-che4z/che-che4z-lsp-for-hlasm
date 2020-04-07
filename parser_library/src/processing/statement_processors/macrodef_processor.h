@@ -17,9 +17,9 @@
 
 #include "macrodef_processing_info.h"
 #include "statement_processor.h"
-#include "../processing_state_listener.h"
-#include "../../context/hlasm_context.h"
-#include "../../parse_lib_provider.h"
+#include "processing/processing_state_listener.h"
+#include "context/hlasm_context.h"
+#include "workspace/parse_lib_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

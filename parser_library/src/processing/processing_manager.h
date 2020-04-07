@@ -17,7 +17,7 @@
 
 #include <set>
 
-#include "../parse_lib_provider.h"
+#include "workspace/parse_lib_provider.h"
 #include "processing_state_listener.h"
 #include "opencode_provider.h"
 #include "branching_provider.h"
@@ -42,7 +42,7 @@ public:
 		context::hlasm_context& hlasm_ctx, 
 		const library_data data,
 		std::string file_name,
-		parse_lib_provider& lib_provider,
+		workspace::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser,
 		processing_tracer* tracer);
 

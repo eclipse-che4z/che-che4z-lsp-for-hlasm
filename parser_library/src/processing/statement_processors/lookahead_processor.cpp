@@ -13,9 +13,9 @@
  */
 
 #include "lookahead_processor.h"
-#include "../instruction_sets/asm_processor.h"
-#include "../../expressions/mach_expr_term.h"
-#include "../../ebcdic_encoding.h"
+#include "processing/instruction_sets/asm_processor.h"
+#include "expressions/mach_expr_term.h"
+#include "ebcdic_encoding.h"
 #include "ordinary_processor.h"
 
 using namespace hlasm_plugin::parser_library;

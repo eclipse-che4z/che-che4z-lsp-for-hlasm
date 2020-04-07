@@ -15,8 +15,8 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
-#include "../../processing/attribute_provider.h"
-#include "../../context/source_snapshot.h"
+#include "processing/attribute_provider.h"
+#include "context/source_snapshot.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

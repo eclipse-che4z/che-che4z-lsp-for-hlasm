@@ -20,12 +20,13 @@
 #include "statement_processors/empty_processor.h"
 #include "statement_providers/macro_statement_provider.h"
 #include "statement_providers/copy_statement_provider.h"
-#include "../parser_impl.h"
+#include "parsing/parser_impl.h"
 
 #include <assert.h>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::workspace;
 
 processing_manager::processing_manager(
 	std::unique_ptr<opencode_provider> base_provider,
