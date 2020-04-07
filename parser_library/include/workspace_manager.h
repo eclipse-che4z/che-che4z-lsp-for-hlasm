@@ -85,8 +85,8 @@ public:
 	workspace_manager(const workspace_manager &) = delete;
 	workspace_manager& operator=(const workspace_manager &) = delete;
 
-	workspace_manager(workspace_manager &&);
-	workspace_manager& operator=(workspace_manager&&);
+	workspace_manager(workspace_manager &&) noexcept;
+	workspace_manager& operator=(workspace_manager&&) noexcept;
 
 	virtual ~workspace_manager();
 

@@ -28,11 +28,11 @@ namespace hlasm_plugin::parser_library {
 
 workspace_manager::workspace_manager(std::atomic<bool>* cancel) : impl_(new impl(cancel)) {}
 
-workspace_manager::workspace_manager(workspace_manager && ws_mngr) : impl_(ws_mngr.impl_)
+workspace_manager::workspace_manager(workspace_manager && ws_mngr) noexcept : impl_(ws_mngr.impl_)
 {
 	ws_mngr.impl_ = nullptr;
 }
-workspace_manager& workspace_manager::operator=(workspace_manager&& ws_mngr) 
+workspace_manager& workspace_manager::operator=(workspace_manager&& ws_mngr) noexcept
 {
 	std::swap(impl_, ws_mngr.impl_);
 	return *this;
