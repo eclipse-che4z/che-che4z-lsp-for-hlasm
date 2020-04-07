@@ -59,7 +59,7 @@ class debugger : public processing::processing_tracer
 public:
 	debugger(debug_event_consumer_s & event_consumer, debug_config & debug_cfg);
 
-	void launch(processor_file_ptr open_code, parse_lib_provider & provider, bool stop_on_entry);
+	void launch(workspace::processor_file_ptr open_code, workspace::parse_lib_provider & provider, bool stop_on_entry);
 
 	virtual void statement(range stmt_range) override;
 
@@ -77,7 +77,7 @@ public:
 	~debugger();
 private:
 	//Creates analyzer and starts parsing
-	void debug_start(processor_file_ptr open_code, parse_lib_provider * provider);
+	void debug_start(workspace::processor_file_ptr open_code, workspace::parse_lib_provider * provider);
 
 	std::unique_ptr<std::thread> thread_;
 
