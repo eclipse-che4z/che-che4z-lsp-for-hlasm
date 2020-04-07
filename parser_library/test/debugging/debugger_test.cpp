@@ -25,12 +25,13 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::debugging;
+using namespace hlasm_plugin::parser_library::workspace;
 
 
 TEST(debugger, stopped_on_entry)
 {
 	file_manager_impl file_manager;
-	workspace ws("test_workspace", file_manager);
+	hlasm_plugin::parser_library::workspace::workspace ws("test_workspace", file_manager);
 
 	debug_event_consumer_s_mock m;
 	debug_config cfg;
@@ -64,7 +65,7 @@ TEST(debugger, stopped_on_entry)
 TEST(debugger, disconnect)
 {
 	file_manager_impl file_manager;
-	workspace ws("test_workspace", file_manager);
+	hlasm_plugin::parser_library::workspace::workspace ws("test_workspace", file_manager);
 
 	debug_event_consumer_s_mock m;
 	debug_config cfg;

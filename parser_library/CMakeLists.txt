@@ -85,7 +85,7 @@ add_dependencies(parser_library antlr4jar GenerateParser)
 add_dependencies(parser_library json)
 
 if(BUILD_TESTING)
-    file(GLOB TEST_SRC
+    file(GLOB_RECURSE TEST_SRC
         "${PROJECT_SOURCE_DIR}/test/*.cpp"
     )
 

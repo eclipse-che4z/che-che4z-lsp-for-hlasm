@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
 #define HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_TEXT_SYNCHRONIZATION_TEST_H
 
-#include "../src/lsp/feature_text_synchronization.h"
+#include "lsp/feature_text_synchronization.h"
 
 #ifdef _WIN32
 const std::string txt_file_uri = R"(file:///c%3A/test/one/blah.txt)";

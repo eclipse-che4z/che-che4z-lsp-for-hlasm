@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common_testing.h"
+#include "../common_testing.h"
 
  //tests for LOCTR instruction
 

@@ -18,20 +18,21 @@
 #include "gmock/gmock.h"
 #include <utility>
 #include "antlr4-runtime.h"
-#include "../src/ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 #include "lexer.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "lexing/input_source.h"
-#include "../src/analyzer.h"
-#include "../src/processing/context_manager.h"
-#include "../src/expressions/visitors/expression_analyzer.h"
-#include "../src/processing/instruction_sets/macro_processor.h"
+#include "analyzer.h"
+#include "processing/context_manager.h"
+#include "expressions/visitors/expression_analyzer.h"
+#include "processing/instruction_sets/macro_processor.h"
 
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
+using namespace hlasm_plugin::parser_library::workspace;
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::expressions;
 
@@ -57,7 +58,7 @@ inline std::string get_content(std::string source)
 	return content;
 }
 
-inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::generated::hlasmparser& h_parser)
+inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)
 {
 	h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
 	// we don't want error messages or recovery during first try

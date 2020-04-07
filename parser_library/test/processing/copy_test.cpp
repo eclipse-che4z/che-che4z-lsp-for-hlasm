@@ -12,9 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "common_testing.h"
+#include "../common_testing.h"
 
-#include "copy_mock.h"
+#include "../copy_mock.h"
 
 //test for COPY instruction
 //various cases of instruction occurence in the source

@@ -29,7 +29,7 @@
 //returns contents of source file
 std::string get_content(std::string source);
 
-using parser = hlasm_plugin::parser_library::generated::hlasmparser;
+using parser = hlasm_plugin::parser_library::parsing::hlasmparser;
 
 TEST(lexer_test, aread)
 {
@@ -82,8 +82,8 @@ EOF
 )";
 
 	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "aread","",nullptr,false };
-	hlasm_plugin::parser_library::input_source input(in);
-	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
+	hlasm_plugin::parser_library::lexing::input_source input(in);
+	hlasm_plugin::parser_library::lexing::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -123,8 +123,8 @@ EOF
 )";
 
 	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rntest","",nullptr,false};
-	hlasm_plugin::parser_library::input_source input("TEST TEST \r\n TEST1 TEST2");
-	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
+	hlasm_plugin::parser_library::lexing::input_source input("TEST TEST \r\n TEST1 TEST2");
+	hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -142,11 +142,11 @@ TEST(lexer_test, new_line_in_ignored)
 {
 	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "new_line_in_ignored","",nullptr,false };
 	//test case, when a newline is in the first 15 ignored characters after continuation
-	hlasm_plugin::parser_library::input_source input(
+	hlasm_plugin::parser_library::lexing::input_source input(
 		R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
         
 label lr 1,1)");
-	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
+	hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
@@ -217,8 +217,8 @@ EOF
 )";
 
 	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "unlimited_line","",nullptr,false };
-	hlasm_plugin::parser_library::input_source input(in);
-	hlasm_plugin::parser_library::lexer l(&input, &lsp_proc);
+	hlasm_plugin::parser_library::lexing::input_source input(in);
+	hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 	l.set_unlimited_line(true);
@@ -258,14 +258,14 @@ ORDSYMBOL
 EOLLN
 EOF
 )";
-	hlasm_plugin::parser_library::input_source input(in);
+	hlasm_plugin::parser_library::lexing::input_source input(in);
 	hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input","",nullptr,false };
-	hlasm_plugin::parser_library::lexer l(&input,&lsp_proc);
+	hlasm_plugin::parser_library::lexing::lexer l(&input,&lsp_proc);
 	antlr4::CommonTokenStream tokens(&l);
 	parser parser(&tokens);
 
 	std::stringstream token_stream;
-	hlasm_plugin::parser_library::token_ptr token;
+	hlasm_plugin::parser_library::lexing::token_ptr token;
 	do
 	{
 		token = l.nextToken();

@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "workspace/parse_lib_provider.h"
-#include "/analyzer.h"
+#include "analyzer.h"
 #include "context/instruction.h"
 #include "../mock_parse_lib_provider.h"
 

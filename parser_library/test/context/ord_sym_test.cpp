@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common_testing.h"
+#include "../common_testing.h"
 
 //tests for ordinary symbols feature:
 //relocatable/absolute value and attribute value 
@@ -280,7 +280,7 @@ X3 EQU F-E
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class loc_mock : public parse_lib_provider
+class loc_mock : public workspace::parse_lib_provider
 {
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
 	{

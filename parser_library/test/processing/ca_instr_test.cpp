@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common_testing.h"
+#include "../common_testing.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;

@@ -22,13 +22,14 @@
 #include <algorithm>
 #include <fstream>
 
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library;
+using namespace workspace;
 
-class workspace_test : public::diagnosable_impl, public testing::Test
+class workspace_test : public diagnosable_impl, public testing::Test
 {
 public:
 	void collect_diags() const override {}
-	size_t collect_and_get_diags_size(workspace & ws, file_manager & file_mngr) 
+	size_t collect_and_get_diags_size(hlasm_plugin::parser_library::workspace::workspace & ws, file_manager & file_mngr)
 	{
 		diags().clear();
 		collect_diags_from_child(ws);
@@ -60,7 +61,7 @@ TEST_F(workspace_test, parse_lib_provider)
 	file_manager_impl file_mngr;
 
 #if _WIN32
-	workspace ws("test\\library\\test_wks", file_mngr);
+	hlasm_plugin::parser_library::workspace::workspace ws("test\\library\\test_wks", file_mngr);
 #else
 	workspace ws("test/library/test_wks", file_mngr);
 #endif
@@ -263,7 +264,7 @@ public:
 TEST(workspace, load_config_synthetic)
 {
 	file_manager_proc_grps_test file_manager;
-	workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager);
+	hlasm_plugin::parser_library::workspace::workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager);
 
 	ws.open();
 
@@ -428,7 +429,7 @@ public:
 TEST_F(workspace_test, did_close_file)
 {
 	file_manager_extended file_manager;
-	workspace ws("", "workspace_name", file_manager);
+	hlasm_plugin::parser_library::workspace::workspace ws("", "workspace_name", file_manager);
 	ws.open();
 	// 3 files are open
 	//	- open codes source1 and source2 with syntax errors using macro ERROR
@@ -467,7 +468,7 @@ TEST_F(workspace_test, did_close_file)
 TEST_F(workspace_test, did_change_watched_files)
 {
 	file_manager_extended file_manager;
-	workspace ws("", "workspace_name", file_manager);
+	hlasm_plugin::parser_library::workspace::workspace ws("", "workspace_name", file_manager);
 	ws.open();
 
 	// no diagnostics with no syntax errors
