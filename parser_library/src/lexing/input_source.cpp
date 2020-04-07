@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "shared/input_source.h"
+#include "input_source.h"
 #include <exception>
 
 namespace hlasm_plugin::parser_library::lexing

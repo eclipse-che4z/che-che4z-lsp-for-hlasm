@@ -13,7 +13,7 @@
  */
 
 #include "lsp_context.h"
-#include "../ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library::context;
 

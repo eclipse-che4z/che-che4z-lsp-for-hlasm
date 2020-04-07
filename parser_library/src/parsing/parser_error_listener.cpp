@@ -19,7 +19,7 @@ enum Tokens {
 #include "grammar/lex.tokens"
 };
 
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::parsing {
 
 bool is_comparative_sign(size_t input)
 {
