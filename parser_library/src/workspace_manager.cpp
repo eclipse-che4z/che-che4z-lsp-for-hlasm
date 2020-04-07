@@ -19,13 +19,12 @@
 #include <string>
 #include <vector>
 
-#include "shared/workspace_manager.h"
-#include "workspace.h"
-#include "file_manager_impl.h"
+#include "workspace_manager.h"
+#include "workspace/workspace.h"
+#include "workspace/file_manager_impl.h"
 #include "workspace_manager_impl.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 workspace_manager::workspace_manager(std::atomic<bool>* cancel) : impl_(new impl(cancel)) {}
 
@@ -178,5 +177,4 @@ void workspace_manager::unregister_debug_event_consumer(debug_event_consumer & c
 	impl_->unregister_debug_event_consumer(consumer);
 }
 
-}
 }

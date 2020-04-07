@@ -17,10 +17,10 @@
 
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
-#include "parser_error_listener.h"
-#include "shared/token_stream.h"
+#include "parser/parser_error_listener.h"
+#include "lexing/token_stream.h"
 #include "processing/processing_manager.h"
-#include "processor.h"
+#include "workspace/processor.h"
 #include "diagnosable_ctx.h"
 
 namespace hlasm_plugin {

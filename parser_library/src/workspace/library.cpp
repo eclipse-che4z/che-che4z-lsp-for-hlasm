@@ -18,7 +18,8 @@
 #include <filesystem>
 #include <locale>
 #include <regex>
-namespace hlasm_plugin::parser_library {
+
+namespace hlasm_plugin::parser_library::workspace {
 
 library_local::library_local(file_manager& file_manager, std::string lib_path, std::shared_ptr<const extension_regex_map> extensions) : file_manager_(file_manager), lib_path_(lib_path), extensions_(extensions) {}
 

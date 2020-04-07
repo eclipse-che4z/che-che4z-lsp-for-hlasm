@@ -21,7 +21,7 @@
 #include "processor_file_impl.h"
 #include "diagnosable_impl.h"
 
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::workspace {
 
 #pragma warning(push)
 #pragma warning(disable : 4250)

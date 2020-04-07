@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "shared/protocol.h"
+#include "protocol.h"
 
 namespace hlasm_plugin::parser_library
 {
