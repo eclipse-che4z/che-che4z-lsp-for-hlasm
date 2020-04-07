@@ -19,7 +19,7 @@
 #include <istream>
 #include <filesystem>
 
-#include "shared/protocol.h"
+#include "protocol.h"
 #include "diagnosable.h"
 
 namespace hlasm_plugin {
