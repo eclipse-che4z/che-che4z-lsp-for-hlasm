@@ -20,12 +20,12 @@
 #include <condition_variable>
 #include <atomic>
 
-#include "../processor.h"
-#include "../context/hlasm_context.h"
+#include "workspace/processor.h"
+#include "context/hlasm_context.h"
 #include "debug_types.h"
-#include "../processing/processing_tracer.h"
+#include "processing/processing_tracer.h"
 #include "debug_lib_provider.h"
-#include "../file_manager.h"
+#include "workspace/file_manager.h"
 
 namespace hlasm_plugin::parser_library::debugging
 {
