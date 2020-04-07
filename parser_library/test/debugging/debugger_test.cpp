@@ -14,9 +14,9 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/debugging/debugger.h"
-#include "../src/workspace.h"
-#include "../src/file_manager_impl.h"
+#include "debugging/debugger.h"
+#include "workspace/workspace.h"
+#include "workspace/file_manager_impl.h"
 #include "debug_event_consumer_s_mock.h"
 #include <variant>
 #include <unordered_map>

@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 
 using namespace hlasm_plugin::parser_library;
 

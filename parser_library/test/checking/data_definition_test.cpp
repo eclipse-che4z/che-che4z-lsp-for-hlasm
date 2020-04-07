@@ -13,7 +13,7 @@
  */
 #include "gtest/gtest.h"
 
-#include "../src/analyzer.h"
+#include "analyzer.h"
 
 void expect_no_errors(const std::string & text)
 {

@@ -15,8 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "common_testing.h"
-#include "../src/ebcdic_encoding.h"
-#include "../src/file_impl.h"
+#include "ebcdic_encoding.h"
+#include "workspace/file_impl.h"
 
 TEST(input_source, utf8conv)
 {
@@ -27,7 +27,7 @@ TEST(input_source, utf8conv)
 	u8.insert(u8.end(), (unsigned char)0x80);
 	u8.insert(u8.end(), (unsigned char)0x80);
 
-	hlasm_plugin::parser_library::input_source input1(u8);
+	hlasm_plugin::parser_library::lexing::input_source input1(u8);
 
 	EXPECT_EQ(u8, input1.getText({ (ssize_t)0,(ssize_t)0 }));
 
@@ -35,20 +35,20 @@ TEST(input_source, utf8conv)
 	u8.insert(u8.end(), (unsigned char)0x84);
 	u8.insert(u8.end(), (unsigned char)0xA3);
 
-	hlasm_plugin::parser_library::input_source input2(u8);
+	hlasm_plugin::parser_library::lexing::input_source input2(u8);
 
 	EXPECT_EQ(u8, input2.getText({ (ssize_t)0,(ssize_t)1 }));
 
 	u8.insert(u8.end(), (unsigned char)0xC5);
 	u8.insert(u8.end(), (unsigned char)0x80);
 
-	hlasm_plugin::parser_library::input_source input3(u8);
+	hlasm_plugin::parser_library::lexing::input_source input3(u8);
 
 	EXPECT_EQ(u8, input3.getText({ (ssize_t)0,(ssize_t)2 }));
 
 	u8.insert(u8.end(), (unsigned char)0x41);
 
-	hlasm_plugin::parser_library::input_source input4(u8);
+	hlasm_plugin::parser_library::lexing::input_source input4(u8);
 
 	EXPECT_EQ(u8, input4.getText({ (ssize_t)0,(ssize_t)3 }));
 }
@@ -120,7 +120,7 @@ TEST(replace_non_utf8_chars, no_change)
 
 	u8.push_back((unsigned char)0x41);
 
-	std::string res = file_impl::replace_non_utf8_chars(u8);
+	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_EQ(u8, res);
 }
@@ -131,7 +131,7 @@ TEST(replace_non_utf8_chars, last_char)
 	std::string u8 = common_str;
 	u8.push_back((uint8_t) 0xAF);
 
-	std::string res = file_impl::replace_non_utf8_chars(u8);
+	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_NE(u8, res);
 	EXPECT_EQ(res.size(), u8.size() + 2);
@@ -147,7 +147,7 @@ TEST(replace_non_utf8_chars, middle_char)
 	std::string end = "end";
 	std::string u8 = begin + '\xF0' + end;
 
-	std::string res = file_impl::replace_non_utf8_chars(u8);
+	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_NE(u8, res);
 	EXPECT_EQ(res.size(), u8.size() + 2);

@@ -12,16 +12,18 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "analyzer.h"
+
 constexpr const char* MACRO_FILE = "MAC";
 constexpr const char* SOURCE_FILE = "OPEN";
 constexpr const char* COPY_FILE = "path/COPYFILE";
 
 namespace hlasm_plugin::parser_library {
 
-class mock_parse_lib_provider : public parse_lib_provider
+class mock_parse_lib_provider : public workspace::parse_lib_provider
 {
 public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
+	virtual workspace::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspace::library_data data) override
 	{
 		(void)library;
 

@@ -14,15 +14,15 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/workspace.h"
-#include "../src/file_manager_impl.h"
-#include "../src/file_impl.h"
+#include "workspace/workspace.h"
+#include "workspace/file_manager_impl.h"
+#include "workspace/file_impl.h"
 
 #include <iterator>
 #include <algorithm>
 #include <fstream>
 
-using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::workspace;
 
 class workspace_test : public::diagnosable_impl, public testing::Test
 {

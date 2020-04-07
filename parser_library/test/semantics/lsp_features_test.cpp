@@ -14,10 +14,10 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/parse_lib_provider.h"
-#include "../src/analyzer.h"
-#include "../src/context/instruction.h"
-#include "mock_parse_lib_provider.h"
+#include "workspace/parse_lib_provider.h"
+#include "/analyzer.h"
+#include "context/instruction.h"
+#include "../mock_parse_lib_provider.h"
 
 
 using namespace hlasm_plugin::parser_library;

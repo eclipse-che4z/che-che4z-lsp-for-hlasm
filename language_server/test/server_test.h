@@ -20,7 +20,7 @@
 #include "gmock/gmock.h"
 
 #include "../src/lsp/lsp_server.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 #include "../src/lsp/feature_workspace_folders.h"
 #include "../src/lsp/feature_text_synchronization.h"
 #include "../src/feature.h"

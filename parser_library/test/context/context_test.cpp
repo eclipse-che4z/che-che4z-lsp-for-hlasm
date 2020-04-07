@@ -14,8 +14,8 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/context/hlasm_context.h"
-#include "../src/context/variables/system_variable.h"
+#include "context/hlasm_context.h"
+#include "context/variables/system_variable.h"
 #include "processing/context_manager.h"
 #include "analyzer.h"
 #include "copy_mock.h"
