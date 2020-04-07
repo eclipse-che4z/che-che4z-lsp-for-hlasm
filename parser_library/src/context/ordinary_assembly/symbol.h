@@ -20,7 +20,7 @@
 
 #include "symbol_attributes.h"
 #include "address.h"
-#include "shared/range.h"
+#include "range.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

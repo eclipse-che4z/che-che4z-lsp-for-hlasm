@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "../include/shared/lexer.h"
+#include "lexer.h"
 #include  <utility>
 #include <cctype>
 #include <algorithm>

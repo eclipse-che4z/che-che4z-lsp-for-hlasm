@@ -13,7 +13,7 @@
  */
 
 #include "cached_statement.h"
-#include "../semantics/statement.h"
+#include "semantics/statement.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;

@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "../include/shared/token_factory.h"
+#include "token_factory.h"
 
 #include <assert.h> 
 
