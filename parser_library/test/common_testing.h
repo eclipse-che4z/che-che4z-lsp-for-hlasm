@@ -31,7 +31,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::expressions;
 

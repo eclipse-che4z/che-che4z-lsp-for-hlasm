@@ -26,7 +26,7 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 processing_manager::processing_manager(
 	std::unique_ptr<opencode_provider> base_provider,

@@ -15,7 +15,7 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSOR_H
 #define PROCESSING_LOOKAHEAD_PROCESSOR_H
 
-#include "workspace/parse_lib_provider.h"
+#include "workspaces/parse_lib_provider.h"
 #include "processing/processing_state_listener.h"
 #include "processing/branching_provider.h"
 #include "lookahead_processing_info.h"
@@ -35,7 +35,7 @@ class lookahead_processor : public statement_processor
 	size_t macro_nest_;
 	branching_provider& branch_provider_;
 	processing_state_listener& listener_;
-	workspace::parse_lib_provider& lib_provider_;
+	workspaces::parse_lib_provider& lib_provider_;
 
 	processing::attribute_provider::forward_reference_storage to_find_;
 	context::id_index target_;
@@ -44,7 +44,7 @@ public:
 
 	lookahead_processor(
 		context::hlasm_context& hlasm_ctx,
-		branching_provider& branch_provider, processing_state_listener& listener, workspace::parse_lib_provider& lib_provider, lookahead_start_data start);
+		branching_provider& branch_provider, processing_state_listener& listener, workspaces::parse_lib_provider& lib_provider, lookahead_start_data start);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;

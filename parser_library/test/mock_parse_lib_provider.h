@@ -20,10 +20,10 @@ constexpr const char* COPY_FILE = "path/COPYFILE";
 
 namespace hlasm_plugin::parser_library {
 
-class mock_parse_lib_provider : public workspace::parse_lib_provider
+class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
 public:
-	virtual workspace::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspace::library_data data) override
+	virtual workspaces::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
 	{
 		(void)library;
 

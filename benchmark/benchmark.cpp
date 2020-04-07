@@ -19,7 +19,7 @@
 #include <fstream>
 #include <filesystem>
 #include "workspace_manager.h"
-#include "workspace/file_impl.h"
+#include "workspaces/file_impl.h"
 
 /*
  * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 				program_count++;
 				// program's contents
 				auto content = std::string((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
-				content = hlasm_plugin::parser_library::workspace::file_impl::replace_non_utf8_chars(content);
+				content = hlasm_plugin::parser_library::workspaces::file_impl::replace_non_utf8_chars(content);
 
 				// new workspace manager
 				hlasm_plugin::parser_library::workspace_manager ws;

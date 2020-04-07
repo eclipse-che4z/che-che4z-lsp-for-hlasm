@@ -52,6 +52,24 @@ namespace semantics {
 	struct highlighting_info;
 	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand, data_def_type, data_def_extension };
 }
+
+namespace debugging
+{
+
+	struct stack_frame;
+	struct source;
+	struct scope;
+	class variable;
+}
+
+namespace workspaces {
+class processor_file;
+}
+
+using file_id = workspaces::processor_file*;
+
+
+
 struct PARSER_LIBRARY_EXPORT completion_item
 {
 	completion_item(context::completion_item_s& info);
@@ -227,12 +245,6 @@ private:
 	semantics::highlighting_info & info;
 };
 
-namespace workspace {
-	class processor_file;
-}
-
-using file_id = workspace::processor_file * ;
-
 struct PARSER_LIBRARY_EXPORT all_highlighting_info
 {
 	all_highlighting_info(file_id * files, size_t files_count);
@@ -245,15 +257,6 @@ private:
 	size_t files_count_;
 
 };
-
-namespace debugging
-{
-
-struct stack_frame;
-struct source;
-struct scope;
-class variable;
-}
 
 struct PARSER_LIBRARY_EXPORT source
 {

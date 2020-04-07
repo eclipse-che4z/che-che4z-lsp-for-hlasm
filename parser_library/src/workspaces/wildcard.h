@@ -17,7 +17,7 @@
 
 #include <regex>
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 // used for wildcard to regex conversions
 

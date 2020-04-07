@@ -17,7 +17,7 @@
 #include "file_manager_impl.h"
 #include "processor_file_impl.h"
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 void file_manager_impl::collect_diags() const
 {

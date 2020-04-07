@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "workspace_manager.h"
-#include "workspace/workspace.h"
-#include "workspace/file_manager_impl.h"
+#include "workspaces/workspace.h"
+#include "workspaces/file_manager_impl.h"
 #include "workspace_manager_impl.h"
 
 namespace hlasm_plugin::parser_library {

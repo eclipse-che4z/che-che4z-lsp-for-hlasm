@@ -33,7 +33,7 @@ protected:
 	statement_fields_parser& parser;
 
 	low_language_processor(context::hlasm_context& hlasm_ctx, 
-		attribute_provider& attr_provider, branching_provider& branch_provider, workspace::parse_lib_provider& lib_provider,
+		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser);
 
 	rebuilt_statement preprocess(context::unique_stmt_ptr stmt);

@@ -23,7 +23,7 @@
 #include "file.h"
 #include "parse_lib_provider.h"
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 //Interface that represents an object that can be parsed.
 //The only implementor is processor_file

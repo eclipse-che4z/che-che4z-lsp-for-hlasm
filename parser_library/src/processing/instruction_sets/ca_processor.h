@@ -33,7 +33,7 @@ class ca_processor : public instruction_processor
 	processing_state_listener& listener_;
 public:
 	ca_processor(context::hlasm_context& hlasm_ctx, 
-		attribute_provider& attr_provider, branching_provider& branch_provider, workspace::parse_lib_provider& lib_provider,
+		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider,
 		processing_state_listener& listener);
 
 	virtual void process(context::unique_stmt_ptr stmt) override;

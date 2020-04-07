@@ -18,7 +18,7 @@
 #include "set_symbol_variable.h"
 #include "ordinary_symbol_variable.h"
 
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 namespace hlasm_plugin::parser_library::debugging
 {

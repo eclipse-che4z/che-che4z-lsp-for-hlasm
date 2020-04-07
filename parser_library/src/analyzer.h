@@ -20,7 +20,7 @@
 #include "parsing/parser_error_listener.h"
 #include "lexing/token_stream.h"
 #include "processing/processing_manager.h"
-#include "workspace/processor.h"
+#include "workspaces/parse_lib_provider.h"
 #include "diagnosable_ctx.h"
 
 namespace hlasm_plugin {
@@ -43,11 +43,11 @@ class analyzer : public diagnosable_ctx
 
 	processing::processing_manager mngr_;
 public:
-	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, workspace::parse_lib_provider& lib_provider, const workspace::library_data data, bool collect_hl_info = false);
+	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, workspaces::parse_lib_provider& lib_provider, const workspaces::library_data data, bool collect_hl_info = false);
 
 	analyzer(const std::string& text,
 		std::string file_name = "",
-		workspace::parse_lib_provider& lib_provider = workspace::empty_parse_lib_provider::instance,
+		workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
 		processing::processing_tracer * tracer = nullptr,
 		bool collect_hl_info = false);
 
@@ -63,9 +63,9 @@ private:
 	analyzer(
 		const std::string& text, 
 		std::string file_name, 
-		workspace::parse_lib_provider& lib_provider,
+		workspaces::parse_lib_provider& lib_provider,
 		context::hlasm_context* hlasm_ctx, 
-		const workspace::library_data data,
+		const workspaces::library_data data,
 		bool own_ctx,
 		processing::processing_tracer * tracer,
 		bool collect_hl_info);

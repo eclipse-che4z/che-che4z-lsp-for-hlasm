@@ -20,12 +20,12 @@
 #include <condition_variable>
 #include <atomic>
 
-#include "workspace/processor.h"
+#include "workspaces/processor.h"
 #include "context/hlasm_context.h"
 #include "debug_types.h"
 #include "processing/processing_tracer.h"
 #include "debug_lib_provider.h"
-#include "workspace/file_manager.h"
+#include "workspaces/file_manager.h"
 
 namespace hlasm_plugin::parser_library::debugging
 {
@@ -59,7 +59,7 @@ class debugger : public processing::processing_tracer
 public:
 	debugger(debug_event_consumer_s & event_consumer, debug_config & debug_cfg);
 
-	void launch(workspace::processor_file_ptr open_code, workspace::parse_lib_provider & provider, bool stop_on_entry);
+	void launch(workspaces::processor_file_ptr open_code, workspaces::parse_lib_provider & provider, bool stop_on_entry);
 
 	virtual void statement(range stmt_range) override;
 
@@ -77,7 +77,7 @@ public:
 	~debugger();
 private:
 	//Creates analyzer and starts parsing
-	void debug_start(workspace::processor_file_ptr open_code, workspace::parse_lib_provider * provider);
+	void debug_start(workspaces::processor_file_ptr open_code, workspaces::parse_lib_provider * provider);
 
 	std::unique_ptr<std::thread> thread_;
 
