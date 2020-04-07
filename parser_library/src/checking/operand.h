@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_OPERAND_H
 
 #include <memory>
-#include "shared/range.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library::checking
 {
