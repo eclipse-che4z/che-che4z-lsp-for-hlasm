@@ -12,9 +12,16 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_MACROTEST_H
-#define HLASMPLUGIN_PARSERLIBARY_MACROTEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_MACROTEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_MACROTEST_H
+
 #include "common_testing.h"
+
+//tests for macro feature:
+//definition parsing
+//instantiation
+//arguments passing
+//external macro libraries
 
 TEST(macro, macro_def)
 {

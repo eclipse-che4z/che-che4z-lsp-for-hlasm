@@ -21,6 +21,8 @@
 namespace hlasm_plugin::parser_library::debugging
 {
 
+//Implementation of variable interface that adapts ordinary symbols
+//representation from context to DAP variable.
 class ordinary_symbol_variable : public variable
 {
 public:

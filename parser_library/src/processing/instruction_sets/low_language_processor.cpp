@@ -166,13 +166,13 @@ void low_language_processor::check_loctr_dependencies(range err_range)
 		hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
 		hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
-		if (!check_address_for_ORG(err_range, dep, hlasm_ctx.ord_ctx.align(context::no_align), sp->boundary, sp->offset))
+		if (!check_address_for_ORG(err_range, dep, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
 		{
 			(void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
 			continue;
 		}
 
-		auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(dep, sp->boundary, sp->offset, nullptr, nullptr);
+		auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(dep, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
 		auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
 		context::space::resolve(sp, std::move(ret));
 		ok &= hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp);

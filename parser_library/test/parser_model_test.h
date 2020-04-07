@@ -14,7 +14,12 @@
 
 #ifndef HLASMPLUGIN_PARSER_PARSER_MODEL_TEST_H
 #define HLASMPLUGIN_PARSER_PARSER_MODEL_TEST_H
+
 #include "common_testing.h"
+
+//tests for parsing model statements:
+//various invalid statements parsing
+//checking correct ranges
 
 auto parse_model(std::string s,range r, bool after_substitution = false)
 {

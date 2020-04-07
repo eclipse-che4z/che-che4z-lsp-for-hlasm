@@ -24,6 +24,11 @@ namespace hlasm_plugin
 	{
 		namespace expressions
 		{
+			/**
+			 * Wrapper for logic and arithmetic expressions
+			 * HLASM supports expressions with mixed operand types
+			 * logic expression is then converted to arithmetic
+			 * */
 			template<typename T>
 			class arithmetic_logic_expr_wrapper {
 				typename std::enable_if_t<std::is_base_of_v<expression, typename std::remove_const_t<typename std::remove_reference_t<T>>>, T>&& ref;

@@ -145,6 +145,7 @@ expr_ptr arithmetic_expression::c2arith(const std::string& value)
 	return make_arith(val);
 }
 
+//states of FSM rewritting double-byte data
 enum class G2C_STATES
 {
 	EMPTY,
@@ -155,6 +156,7 @@ enum class G2C_STATES
 	INVALID
 };
 
+//double byte interpret as number
 expr_ptr arithmetic_expression::g2arith(const std::string& value, bool dbcs)
 {
 	if (!dbcs)

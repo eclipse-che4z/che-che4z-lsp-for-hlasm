@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for machine expression, literal, data attribute, string
 parser grammar machine_expr_rules; 
 
 mach_expr returns [mach_expr_ptr m_e]

@@ -47,6 +47,10 @@ namespace hlasm_plugin
 				virtual expr_ptr unary_operation(str_ref operation_name) const;
 
 				static expr_ptr resolve_ord_symbol(str_ref symbol);
+				/**
+				 * evaluates space separated expression
+				 * see visitos/expression_evaluator.h:visitExpr()
+				 * */
 				static expr_ptr evaluate(std::deque<expr_ptr> exprs);
 				static expr_ptr self_defining_term(str_ref type, str_ref val, bool dbcs);
 
@@ -97,6 +101,17 @@ namespace hlasm_plugin
 					return ex;
 				}
 
+				/**
+				 * all operations involving arguments check for errors
+				 * in all arguments immediately before accessing their values
+				 * 
+				 * if any argument contains an error, it is copied
+				 * and an erroneous expression (meaning with an error)
+				 * is returned
+				 * 
+				 * see: copy_return_on_error and copy_return_on_error_binary
+				 * */
+
 				template<typename T>
 				static typename std::shared_ptr<T> test_and_copy_error(const expression* e)
 				{
@@ -132,6 +147,11 @@ namespace hlasm_plugin
 #define make_logic(val) std::make_shared<logic_expression>(val)
 #define make_char(val) std::make_shared<character_expression>(val)
 
+/**
+ * helper macro
+ * so that we do not have to write 
+ * copy error, test & return 
+ * */
 #define copy_return_on_error(arg, type) \
 	do \
 	{ \
@@ -140,6 +160,10 @@ namespace hlasm_plugin
 	} \
 	while(0)
 
+/**
+ * same as previos
+ * plus checks self and second arg
+ * */
 #define copy_return_on_error_binary(arg2, type) \
 	do \
 	{ \

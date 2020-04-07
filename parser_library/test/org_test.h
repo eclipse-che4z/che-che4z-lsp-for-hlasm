@@ -12,10 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
-#define HLASMPLUGIN_PARSERLIBARY_ORGTEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_ORGTEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_ORGTEST_H
+
 #include "common_testing.h"
 
+//tests for ORG instruction
 TEST(org, duplicate_labels)
 {
 	std::string input(R"(

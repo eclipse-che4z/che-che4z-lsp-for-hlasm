@@ -15,6 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_ASSEMBLER_INSTRUCTION_H
 #define HLASMPLUGIN_PARSERLIBRARY_ASSEMBLER_INSTRUCTION_H
 
+//This file defines classes that implements checking for all
+//assembler instructions.
+
 #include "asm_instr_class.h"
 #include "data_definition/data_def_type_base.h"
 

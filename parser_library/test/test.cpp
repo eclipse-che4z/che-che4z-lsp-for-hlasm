@@ -32,6 +32,9 @@
 #include "macro_test.h"
 #include "copy_test.h"
 #include "ord_sym_test.h"
+#include "dc_test.h"
+#include "loctr_test.h"
+#include "equ_test.h"
 #include "org_test.h"
 #include "data_attribute_test.h"
 
@@ -39,7 +42,6 @@
 #include "asm_instr_check_test.h"
 #include "mach_instr_check_test.h"
 #include "lookahead_test.h"
-//#include "parser_range_test.h"
 
 #include "workspace_manager_test.h"
 

@@ -26,6 +26,7 @@ namespace hlasm_plugin::parser_library {
 #pragma warning(push)
 #pragma warning(disable : 4250)
 
+//Implementation of the file_manager interface.
 class file_manager_impl : public file_manager, public diagnosable_impl
 {
 public:
@@ -45,12 +46,14 @@ public:
 	virtual file_ptr find(const std::string & key) override;
 	virtual processor_file_ptr find_processor_file(const std::string & key) override;
 
+	//Returns array of files that were updated since this method was last called
 	virtual std::vector<processor_file *> list_updated_files();
 	virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string& path) override;
 
 	virtual void did_open_file(const std::string & document_uri, version_t version, std::string text) override;
 	virtual void did_change_file(const std::string & document_uri, version_t version, const document_change * changes, size_t ch_size) override;
 	virtual void did_close_file(const std::string & document_uri) override;
+
 	virtual bool file_exists(const std::string & file_name) override;
 	virtual bool lib_file_exists(const std::string & lib_path, const std::string & file_name) override;
 

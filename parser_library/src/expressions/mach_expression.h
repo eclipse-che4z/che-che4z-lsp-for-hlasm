@@ -31,6 +31,12 @@ class mach_expression;
 using mach_expr_ptr = std::unique_ptr<mach_expression>;
 using mach_expr_list = std::vector<mach_expr_ptr>;
 
+//Represents in machine expression written in source code.
+//This interface represents one node (operator or term) in
+//a machine expression, the root operator represents the
+//whole machine expression.
+//It can be evaluated using mach_evaluate_info that provides
+//information about values of ordinary symbols.
 class mach_expression : public diagnosable_op_impl, public context::resolvable
 {
 	
@@ -41,6 +47,7 @@ public:
 
 	virtual value_t evaluate(mach_evaluate_info info) const = 0;
 
+    //Sets location counter in the whole machine expression to specified address.
 	virtual void fill_location_counter(context::address addr) = 0;
 
 	virtual const mach_expression* leftmost_term() const = 0;

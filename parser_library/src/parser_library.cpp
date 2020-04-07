@@ -28,7 +28,8 @@
 namespace hlasm_plugin {
 namespace parser_library {
 
-//testing output
+//Parses specified string and outputs analysis to standard out.
+//Used for testing purposes.
 void parser_library::parse(const std::string & src)
 {
 	analyzer a(src);

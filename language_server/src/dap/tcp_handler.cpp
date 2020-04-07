@@ -29,7 +29,7 @@ void tcp_handler::handle_accept(const asio::error_code& error)
 		dispatcher dap_dispatcher(*stream_, *stream_, server, req_mngr_);
 		dap_dispatcher.run_server_loop();
 	}
-
+	//once the DAP communication is finished, accept next one
 	async_accept();
 }
 

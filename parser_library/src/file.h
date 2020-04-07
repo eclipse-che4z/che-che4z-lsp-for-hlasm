@@ -27,16 +27,24 @@ namespace parser_library {
 
 using file_uri = std::string;
 
+//Interface that represents both file opened in LSP
+//as well as a file opened by parser library from the disk.
 class file : public virtual diagnosable
 {
 public:
 	virtual const file_uri & get_file_name() = 0;
+    //Gets contents of file either by loading from disk or from LSP.
 	virtual const std::string & get_text() = 0;
+    //Returns whether file is bad - bad file cannot be loaded from disk.
+    //LSP files are never bad.
 	virtual bool update_and_get_bad() = 0;
+    //Returns whether file is open by LSP.
 	virtual bool get_lsp_editing() = 0;
 
+    //Gets LSP version of file.
 	virtual version_t get_version() = 0;
 
+    //LSP notifications
 	virtual void did_open(std::string new_text, version_t version) = 0;
 	virtual void did_change(std::string new_text) = 0;
 	virtual void did_change(range range, std::string new_text) = 0;

@@ -21,6 +21,8 @@
 #include <variant>
 #include <optional>
 
+//this file contains inherited structures from hlasm_statement that are used during the processing
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {

@@ -21,9 +21,16 @@
 #include "../../diagnosable_ctx.h"
 
 namespace hlasm_plugin::parser_library::expressions {
+
+/**
+ * visitor that evaluates expressions
+ * matches grammar (for each grammar rule there is a visit...() function
+ * that is called when a rule is matched in grammar)
+ * */
 class expression_evaluator : public generated::hlasmparserBaseVisitor, public diagnosable_ctx
 {
 	evaluation_context eval_ctx_;
+	//storage of resolved symbol attribute references
 	const processing::attribute_provider::resolved_reference_storage* resolved_refs_;
 public:
 	expression_evaluator(evaluation_context eval_ctx);
@@ -40,15 +47,31 @@ private:
 
 	expr_ptr visitE(antlr4::ParserRuleContext* ctx);
 
+	/**
+	 * entry expression rule
+	 * children are expr_p_space_c
+	 * expr_p_space_c are a space separated sub-expressions
+	 * this is needed as some tokens might represent a keyword (such as AND) or a variable name
+	 * this depends solely on the position of the token within a expr
+	 * and it is known after evaluation of the left-hand side of the expression
+	 * */
 	virtual antlrcpp::Any visitExpr(generated::hlasmparser::ExprContext* ctx) override;
+	/**
+	 * helper grammar rule used in unit tests
+	 * */
 	virtual antlrcpp::Any visitExpr_test(generated::hlasmparser::Expr_testContext* ctx) override;
 	virtual antlrcpp::Any visitExpr_statement(generated::hlasmparser::Expr_statementContext* ctx) override;
 	virtual antlrcpp::Any visitExpr_p(generated::hlasmparser::Expr_pContext* ctx) override;
 	virtual antlrcpp::Any visitExpr_s(generated::hlasmparser::Expr_sContext* ctx) override;
+	/**
+	 * generates space separated expressions
+	 * these are evaluated in visitExpr() 
+	 * */
 	virtual antlrcpp::Any visitExpr_p_space_c(generated::hlasmparser::Expr_p_space_cContext* ctx) override;
 	virtual antlrcpp::Any visitTerm_c(generated::hlasmparser::Term_cContext* ctx) override;
 	virtual antlrcpp::Any visitTerm(generated::hlasmparser::TermContext* ctx) override;
 	virtual antlrcpp::Any visitId_sub(generated::hlasmparser::Id_subContext* ctx) override;
+	
 	virtual antlrcpp::Any visitExpr_p_comma_c(generated::hlasmparser::Expr_p_comma_cContext* ctx) override;
 	virtual antlrcpp::Any visitSubscript(generated::hlasmparser::SubscriptContext* ctx) override;
 	virtual antlrcpp::Any visitString(generated::hlasmparser::StringContext* ctx) override;

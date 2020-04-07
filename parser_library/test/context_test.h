@@ -12,13 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBARY_CONTEXTTEST_H
-#define HLASMPLUGIN_PARSERLIBARY_CONTEXTTEST_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CONTEXT_TEST_H
+#define HLASMPLUGIN_PARSERLIBRARY_CONTEXT_TEST_H
 
 #include "../src/context/hlasm_context.h"
 #include "../src/context/variables/system_variable.h"
 
 #include <string>
+
+//tests for hlasm_ctx class:
+//id_storage
+//variable creation and assignment
+//mnemonics (OPSYN)
+//macro invocations
 
 using namespace hlasm_plugin::parser_library::context;
 using namespace std;

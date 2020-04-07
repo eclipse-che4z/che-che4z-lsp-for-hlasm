@@ -12,6 +12,10 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+//This file implements checking of data definition
+//asm instructions from the assembler checker:
+//DC, DS, DXD
+
 #include "../asm_instr_check.h"
 #include "../../diagnostic_collector.h"
 #include "data_def_types.h"
@@ -19,9 +23,9 @@
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
+
+
 data::data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction) : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {}
-
-
 
 template<data_instr_type instr_type>
 bool data::check_data(const std::vector<const asm_operand*>& to_check, const range& stmt_range, const diagnostic_collector& add_diagnostic) const

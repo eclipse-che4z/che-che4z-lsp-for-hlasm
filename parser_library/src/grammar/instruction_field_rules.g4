@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+ //rules for instruction field
 parser grammar instruction_field_rules;
 
 instruction returns [id_index instr]

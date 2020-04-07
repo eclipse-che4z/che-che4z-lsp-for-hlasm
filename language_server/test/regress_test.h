@@ -161,6 +161,7 @@ TEST(regress_test, behaviour_error)
 
 TEST(regress_test, stability)
 {
+	//test simulates an user typing. No results are expected, the server is just expected not to crash.
 	workspace_manager ws_mngr;
 	message_provider_mock mess_p;
 	lsp::server s(ws_mngr);
