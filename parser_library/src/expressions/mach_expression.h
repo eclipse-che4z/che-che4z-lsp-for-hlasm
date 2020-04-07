@@ -18,8 +18,8 @@
 #include <string>
 #include <memory>
 
-#include "../diagnosable_impl.h"
-#include "../context/ordinary_assembly/dependable.h"
+#include "diagnosable_impl.h"
+#include "context/ordinary_assembly/dependable.h"
 
 
 namespace hlasm_plugin::parser_library::expressions

@@ -14,7 +14,7 @@
 
 #include "data_definition.h"
 #include "mach_expr_term.h"
-#include "../checking/data_definition/data_def_type_base.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include <stdexcept>
 #include <set>
 

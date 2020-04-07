@@ -14,7 +14,7 @@
 
 #include "mach_expr_term.h"
 
-#include "../checking/checker_helper.h"
+#include "checking/checker_helper.h"
 #include "arithmetic_expression.h"
 
 using namespace hlasm_plugin::parser_library::expressions;

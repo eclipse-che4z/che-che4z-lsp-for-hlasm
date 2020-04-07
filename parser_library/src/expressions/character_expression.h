@@ -14,6 +14,7 @@
 
 #ifndef HLASMPLUGIN_PARSER_HLASMCEXPRESSION_H
 #define HLASMPLUGIN_PARSER_HLASMCEXPRESSION_H
+
 #include "expression.h"
 #include "logic_expression.h"
 #include <string>
