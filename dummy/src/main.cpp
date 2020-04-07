@@ -23,7 +23,7 @@
 #include <cstdio>
 #include <sstream>
 
-#include <shared/parser_library.h>
+#include <parser_library.h>
 
 int main(int argc, char *argv[])
 {

@@ -13,9 +13,13 @@
  */
 
 #include "analyzer.h"
-#include "error_strategy.h"
+#include "parsing/error_strategy.h"
 #include "processing/processing_tracer.h"
+
 using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::lexing;
+using namespace hlasm_plugin::parser_library::parsing;
+using namespace hlasm_plugin::parser_library::workspace;
 
 analyzer::analyzer(
 	const std::string& text,
@@ -26,11 +30,11 @@ analyzer::analyzer(
 	bool own_ctx,
 	processing::processing_tracer* tracer,
 	bool collect_hl_info)
-	:diagnosable_ctx(*hlasm_ctx),
+	: diagnosable_ctx(*hlasm_ctx),
 	hlasm_ctx_(own_ctx ? hlasm_ctx : nullptr), hlasm_ctx_ref_(*hlasm_ctx),
 	listener_(file_name),
 	lsp_proc_(file_name, text, hlasm_ctx, collect_hl_info),
-	input_(text), lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics), tokens_(&lexer_), parser_(new generated::hlasmparser(&tokens_)),
+	input_(text), lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics), tokens_(&lexer_), parser_(new parsing::hlasmparser(&tokens_)),
 	mngr_(std::unique_ptr<processing::opencode_provider>(parser_), hlasm_ctx_ref_, data, file_name, lib_provider, *parser_, tracer)
 {
 	parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_);
@@ -58,7 +62,7 @@ context::hlasm_context& analyzer::context()
 	return hlasm_ctx_ref_;
 }
 
-generated::hlasmparser& analyzer::parser()
+parsing::hlasmparser& analyzer::parser()
 {
 	return *parser_;
 }

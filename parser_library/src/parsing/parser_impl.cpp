@@ -16,12 +16,14 @@
 #include "parser_impl.h"
 #include "error_strategy.h"
 #include "parser_error_listener_ctx.h"
-#include "token_stream.h"
+#include "lexing/token_stream.h"
 #include "hlasmparser.h"
 #include "expressions/arithmetic_expression.h"
 #include "processing/statement.h"
 #include "processing/context_manager.h"
 
+using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
@@ -81,7 +83,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 		reparser_->input = std::make_unique<input_source>(s);
 		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
 		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+		reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
 	}
 
 	hlasm_ctx->metrics.reparsed_statements++;
@@ -342,14 +344,14 @@ void parser_impl::process_next(processing::statement_processor& proc)
 	processor = &proc;
 	if (proc.kind == processing::processing_kind::LOOKAHEAD)
 	{
-		auto look_lab_instr = dynamic_cast<generated::hlasmparser&>(*this).look_lab_instr();
+		auto look_lab_instr = dynamic_cast<hlasmparser&>(*this).look_lab_instr();
 		if (!finished_flag && look_lab_instr->op_text)
 			parse_lookahead(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
 	}
 	else
 	{
 		bool state = pushed_state_;
-		auto lab_instr = dynamic_cast<generated::hlasmparser&>(*this).lab_instr();
+		auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
 		if (state != pushed_state_)
 			pop_state();
 
@@ -468,7 +470,7 @@ semantics::operand_list parser_impl::parse_macro_operands(std::string operands, 
 		reparser_->input = std::make_unique<input_source>(s);
 		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
 		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+		reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
 	}
 
 	parser_holder& h = *reparser_;
@@ -517,7 +519,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
 		rest_parser_->input = std::make_unique<input_source>(s);
 		rest_parser_->lex = std::make_unique<lexer>(rest_parser_->input.get(), nullptr);
 		rest_parser_->stream = std::make_unique<token_stream>(rest_parser_->lex.get());
-		rest_parser_->parser = std::make_unique<generated::hlasmparser>(rest_parser_->stream.get());
+		rest_parser_->parser = std::make_unique<hlasmparser>(rest_parser_->stream.get());
 	}
 
 	parser_holder& h = *rest_parser_;
@@ -589,7 +591,7 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
 		reparser_->input = std::make_unique<input_source>(s);
 		reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
 		reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-		reparser_->parser = std::make_unique<generated::hlasmparser>(reparser_->stream.get());
+		reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
 	}
 
 	if (proc_status->first.form == processing::processing_form::IGNORED)

@@ -31,22 +31,9 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
 	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 endif()
 
- set(GRAMMAR_SRC
-	 ${PROJECT_SOURCE_DIR}/src/grammar/assembler_operand_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/ca_expr_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/ca_operand_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/hlasmparser.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/instruction_field_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/label_field_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/lookahead_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/machine_expr_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/machine_operand_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/macro_operand_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/model_operand_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/operand_field_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/data_def_rules.g4
-	 ${PROJECT_SOURCE_DIR}/src/grammar/deferred_operand_rules.g4
- )
+file(GLOB GRAMMAR_SRC
+    "${PROJECT_SOURCE_DIR}/src/parsing/grammar/*.g4"
+)
 
 include(tag_generated_files.cmake)
 
@@ -55,9 +42,9 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
    ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/grammar/ -listener -visitor -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::generated hlasmparser.g4
-   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/grammar/"
-   DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/grammar/lex.tokens
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -visitor -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
+   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
+   DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/parsing/grammar/lex.tokens
    )
 
 file(GLOB_RECURSE LIB_SRC
@@ -151,27 +138,4 @@ if(BUILD_TESTING)
     endif()
 endif()
 
-if(BUILD_FUZZER)
-	add_executable(library_fuzzer fuzzer/fuzzer.cpp
-	)
-    target_link_libraries(library_fuzzer parser_library)
-
-
-    set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
-	set_target_properties(library_fuzzer PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
-    
-	configure_file(
-                ${PROJECT_SOURCE_DIR}/fuzzer/fuzzer.dict
-                ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
-				COPYONLY)
-
-    if(UNIX)
-	    target_link_libraries(library_fuzzer pthread)
-    endif()
-	target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
-	if(FILESYSTEM_LINK)
-		target_link_libraries(library_fuzzer ${FILESYSTEM_LIBRARY})
-    endif()
-    
-	add_dependencies(library_fuzzer antlr4jar json)
-endif()
+add_subdirectory(fuzzer)
