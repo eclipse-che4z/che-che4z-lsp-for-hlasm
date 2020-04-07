@@ -13,9 +13,9 @@
  */
 
 #include "data_definition_common.h"
-#include "../src/processing/instruction_sets/data_def_postponed_statement.h"
-#include "../src/expressions/data_definition.h"
-#include "../src/semantics/operand.h"
+#include "processing/instruction_sets/data_def_postponed_statement.h"
+#include "expressions/data_definition.h"
+#include "semantics/operand.h"
 
 
 using namespace hlasm_plugin::parser_library::expressions;
