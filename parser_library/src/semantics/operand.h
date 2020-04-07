@@ -18,10 +18,10 @@
 #include <vector>
 
 #include "concatenation.h"
-#include "../expressions/mach_expression.h"
-#include "../expressions/data_definition.h"
-#include "../checking/instr_operand.h"
-#include "../checking/data_definition/data_definition_operand.h"
+#include "expressions/mach_expression.h"
+#include "expressions/data_definition.h"
+#include "checking/instr_operand.h"
+#include "checking/data_definition/data_definition_operand.h"
 
 //the file contains structures representing operands in the operand field of statement
 
