@@ -18,8 +18,8 @@
 #include <memory>
 #include <optional>
 
-#include "../context/variables/variable.h"
-#include "shared/protocol.h"
+#include "context/variables/variable.h"
+#include "protocol.h"
 
 namespace hlasm_plugin::parser_library::debugging
 {

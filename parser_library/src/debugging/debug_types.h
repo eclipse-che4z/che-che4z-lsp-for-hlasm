@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include "shared/protocol.h"
+#include "protocol.h"
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging

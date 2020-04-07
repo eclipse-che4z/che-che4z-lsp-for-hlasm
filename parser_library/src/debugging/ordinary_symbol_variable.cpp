@@ -17,7 +17,7 @@
 
 #include "ordinary_symbol_variable.h"
 #include "attribute_variable.h"
-#include "../ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace debugging;
