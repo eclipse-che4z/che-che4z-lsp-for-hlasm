@@ -16,8 +16,8 @@
 #define PROCESSING_COMMON_STATEMENT_PROVIDER_H
 
 #include "statement_provider.h"
-#include "../statement_fields_parser.h"
-#include "../../context/hlasm_context.h"
+#include "processing/statement_fields_parser.h"
+#include "context/hlasm_context.h"
 
 
 namespace hlasm_plugin {

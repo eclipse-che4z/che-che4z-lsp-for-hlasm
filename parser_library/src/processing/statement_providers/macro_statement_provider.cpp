@@ -13,7 +13,7 @@
  */
 
 #include "macro_statement_provider.h"
-#include "../processing_manager.h"
+#include "processing/processing_manager.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;

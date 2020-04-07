@@ -230,7 +230,7 @@ context_manager::name_result context_manager::try_get_symbol_name(const std::str
 {
 	size_t i;
 	for (i = 0; i < symbol.size(); ++i)
-		if (!lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
+		if (!lexing::lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
 			break;
 
 	if (i==0 || i > 63)
