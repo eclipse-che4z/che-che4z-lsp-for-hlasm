@@ -19,7 +19,6 @@
 #include <utility>
 #include "antlr4-runtime.h"
 #include "ebcdic_encoding.h"
-#include "lexer.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "lexing/input_source.h"

@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_ERROR_STRATEGY_H
 
 #include "DefaultErrorStrategy.h"
-#include "lexer.h"
 
 namespace hlasm_plugin::parser_library::parsing
 {
