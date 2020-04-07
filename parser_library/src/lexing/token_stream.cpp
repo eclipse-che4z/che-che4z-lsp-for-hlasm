@@ -15,7 +15,7 @@
 #include "../include/shared/token_stream.h"
 #include "../include/shared/lexer.h"
 
-using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::lexing;
 using namespace antlr4;
 
 token_stream::token_stream(antlr4::TokenSource* token_source) 
@@ -75,7 +75,7 @@ void token_stream::append()
 
 }
 
-antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)
+antlr4::Token * token_stream::LT(ssize_t k)
 {
 	lazyInit();
 	if (k == 0)
@@ -95,7 +95,7 @@ antlr4::Token * hlasm_plugin::parser_library::token_stream::LT(ssize_t k)
 	return get(next_token_on_channel(i));
 }
 
-std::string hlasm_plugin::parser_library::token_stream::getText(const antlr4::misc::Interval & interval)
+std::string token_stream::getText(const antlr4::misc::Interval & interval)
 {
 	lazyInit();
 	size_t start = interval.a;
@@ -120,7 +120,7 @@ std::string hlasm_plugin::parser_library::token_stream::getText(const antlr4::mi
 	return ss.str();
 }
 
-ssize_t hlasm_plugin::parser_library::token_stream::adjustSeekIndex(size_t i)
+ssize_t token_stream::adjustSeekIndex(size_t i)
 {
 	if (needSetup_)
 	{
@@ -146,12 +146,12 @@ ssize_t hlasm_plugin::parser_library::token_stream::adjustSeekIndex(size_t i)
 		return i;
 }
 
-void hlasm_plugin::parser_library::token_stream::setup() {
+void token_stream::setup() {
 	BufferedTokenStream::setup();
 	needSetup_ = false;
 }
 
-antlr4::Token * hlasm_plugin::parser_library::token_stream::LB(size_t k)
+antlr4::Token * token_stream::LB(size_t k)
 {
 	if (k == 0 || _p < k || size() == 0) 
 		return nullptr;
@@ -175,7 +175,7 @@ antlr4::Token * hlasm_plugin::parser_library::token_stream::LB(size_t k)
 	return get(i);
 }
 
-size_t hlasm_plugin::parser_library::token_stream::next_token_on_channel(size_t i)
+size_t token_stream::next_token_on_channel(size_t i)
 {
 	sync(i);
 
@@ -198,7 +198,7 @@ size_t hlasm_plugin::parser_library::token_stream::next_token_on_channel(size_t 
 	return i;
 }
 
-size_t hlasm_plugin::parser_library::token_stream::previous_token_on_channel(size_t i)
+size_t token_stream::previous_token_on_channel(size_t i)
 {
 	sync(i);
 
@@ -230,7 +230,7 @@ size_t hlasm_plugin::parser_library::token_stream::previous_token_on_channel(siz
 	}
 }
 
-bool hlasm_plugin::parser_library::token_stream::is_on_channel(antlr4::Token * token)
+bool token_stream::is_on_channel(antlr4::Token * token)
 {
 	return token->getChannel() == lexer::Channels::DEFAULT_CHANNEL 
 		|| (enabled_hidden_ && token->getChannel() == lexer::Channels::HIDDEN_CHANNEL)

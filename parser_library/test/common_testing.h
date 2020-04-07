@@ -19,7 +19,7 @@
 #include <utility>
 #include "antlr4-runtime.h"
 #include "../src/ebcdic_encoding.h"
-#include "../include/shared/lexer.h"
+#include "lexer.h"
 #include "hlasmparser.h"
 #include "shared/token_stream.h"
 #include "shared/input_source.h"
