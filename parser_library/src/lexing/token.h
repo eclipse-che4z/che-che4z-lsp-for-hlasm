@@ -24,7 +24,7 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace lexing {
 
-class PARSER_LIBRARY_EXPORT token : public antlr4::Token {
+class token : public antlr4::Token {
 public:
 	token(antlr4::TokenSource* source, antlr4::CharStream* input, size_t type,
 		size_t channel, size_t start, size_t stop, size_t line,

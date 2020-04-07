@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "../feature.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 #include "../logger.h"
 
 

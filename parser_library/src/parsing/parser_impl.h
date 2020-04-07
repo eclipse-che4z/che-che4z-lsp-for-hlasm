@@ -23,15 +23,23 @@
 #include "processing/statement_providers/statement_provider.h"
 #include "processing/opencode_provider.h"
 #include "processing/statement_fields_parser.h"
-#include "../include/shared/lexer.h"
+#include "lexing/lexer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
+
+namespace lexing{
+class input_source;
+class lexer;
+class token_stream;
+}
+
 namespace parsing {
 
 using self_def_t = std::int32_t;
 
 struct parser_holder;
+class hlasmparser;
 
 //class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl
@@ -121,20 +129,13 @@ private:
 	bool line_end_pushed_;
 };
 
-
-class input_source;
-class lexer;
-class token_stream;
-namespace generated {
-class hlasmparser;
-}
 //structure containing parser components
 struct parser_holder
 {
-	std::unique_ptr<input_source> input;
-	std::unique_ptr<lexer> lex;
-	std::unique_ptr<token_stream> stream;
-	std::unique_ptr<generated::hlasmparser> parser;
+	std::unique_ptr<lexing::input_source> input;
+	std::unique_ptr<lexing::lexer> lex;
+	std::unique_ptr<lexing::token_stream> stream;
+	std::unique_ptr<hlasmparser> parser;
 
 	parser_holder(const parser_holder&) = delete;
 	parser_holder(parser_holder&&);

@@ -18,7 +18,7 @@
 
 using namespace hlasm_plugin::parser_library::lexing;
 
-size_t ::token::get_end_of_token_in_line_utf16() const
+size_t token::get_end_of_token_in_line_utf16() const
 {
 	return end_of_token_in_line_utf16_;
 }
@@ -38,7 +38,7 @@ size_t ::token::get_end_of_token_in_line_utf16() const
 {
 }
 
-std::string ::token::getText() const
+std::string token::getText() const
 {
 	antlr4::CharStream *input = getInputStream();
 	if (input == nullptr) {
@@ -51,47 +51,47 @@ std::string ::token::getText() const
 	return "<EOF>";
 }
 
-size_t ::token::getType() const
+size_t token::getType() const
 {
 	return type_;
 }
 
-size_t ::token::getLine() const
+size_t token::getLine() const
 {
 	return line_;
 }
 
-size_t ::token::getCharPositionInLine() const
+size_t token::getCharPositionInLine() const
 {
 	return get_char_position_in_line_16();
 }
 
-size_t ::token::getChannel() const
+size_t token::getChannel() const
 {
 	return channel_;
 }
 
-size_t ::token::getTokenIndex() const
+size_t token::getTokenIndex() const
 {
 	return token_index_;
 }
 
-size_t ::token::getStartIndex() const
+size_t token::getStartIndex() const
 {
 	return start_;
 }
 
-size_t ::token::getStopIndex() const
+size_t token::getStopIndex() const
 {
 	return stop_;
 }
 
-antlr4::TokenSource * ::token::getTokenSource() const
+antlr4::TokenSource * token::getTokenSource() const
 {
 	return source_;
 }
 
-antlr4::CharStream * ::token::getInputStream() const
+antlr4::CharStream * token::getInputStream() const
 {
 	return input_;
 }
@@ -117,7 +117,7 @@ void replace_all(std::string& str, std::string const& from, std::string const& t
     str.swap(new_string);
 }
 
-std::string ::token::toString() const
+std::string token::toString() const
 {
 	std::stringstream ss;
 
@@ -144,7 +144,7 @@ std::string ::token::toString() const
 	return ss.str();
 }
 
-size_t ::token::get_char_position_in_line_16() const
+size_t token::get_char_position_in_line_16() const
 {
 	return char_position_in_line_16_;
 }

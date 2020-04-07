@@ -19,7 +19,6 @@
 
 #include "workspace.h"
 #include "json.hpp"
-#include "parser_tools.h"
 #include "processor.h"
 #include "wildcard.h"
 
@@ -203,12 +202,12 @@ void workspace::did_change_watched_files(const std::string& file_uri)
 	parse_file(file_uri);
 }
 
-void hlasm_plugin::parser_library::workspace::open()
+void workspace::open()
 {
 	load_config();
 }
 
-void hlasm_plugin::parser_library::workspace::close()
+void workspace::close()
 {
 	opened_ = false;
 }
@@ -225,7 +224,7 @@ const processor_group & workspace::get_proc_grp(const proc_grp_id & proc_grp) co
 }
 
 //open config files and parse them
-bool hlasm_plugin::parser_library::workspace::load_config()
+bool workspace::load_config()
 {
 	config_diags_.clear();
 

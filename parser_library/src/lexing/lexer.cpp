@@ -98,7 +98,7 @@ lexer::stream_position lexer::last_lln_end_position() const
 	return last_lln_end_pos_;
 }
 
-bool hlasm_plugin::parser_library::lexer::eof_generated() const
+bool lexer::eof_generated() const
 {
 	return eof_generated_;
 }

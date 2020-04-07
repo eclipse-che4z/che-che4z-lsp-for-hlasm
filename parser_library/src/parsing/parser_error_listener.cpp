@@ -13,11 +13,13 @@
  */
 
 #include "parser_error_listener.h"
-#include "token_stream.h"
+#include "lexing/token_stream.h"
 
 enum Tokens {
 #include "grammar/lex.tokens"
 };
+
+using namespace hlasm_plugin::parser_library::lexing;
 
 namespace hlasm_plugin::parser_library::parsing {
 

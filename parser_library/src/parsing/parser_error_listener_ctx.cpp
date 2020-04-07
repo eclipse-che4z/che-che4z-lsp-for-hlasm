@@ -14,6 +14,7 @@
 
 #include "parser_error_listener_ctx.h"
 
+using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::parsing;
 
 parser_error_listener_ctx::parser_error_listener_ctx

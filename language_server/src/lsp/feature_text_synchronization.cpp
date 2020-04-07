@@ -16,7 +16,7 @@
 #include "feature_text_synchronization.h"
 #include "../logger.h"
 
-#include "shared/protocol.h"
+#include "protocol.h"
 namespace hlasm_plugin::language_server::lsp {
 
 feature_text_synchronization::feature_text_synchronization(parser_library::workspace_manager & ws_mngr, response_provider & response_provider) : feature(ws_mngr, response_provider)

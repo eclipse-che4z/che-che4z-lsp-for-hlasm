@@ -19,7 +19,7 @@
 
 #include "feature.h"
 #include "common_types.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server
 {
