@@ -152,7 +152,7 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_FUZZER)
-	add_executable(library_fuzzer fuzzer.cpp
+	add_executable(library_fuzzer fuzzer/fuzzer.cpp
 	)
     target_link_libraries(library_fuzzer parser_library)
 
@@ -161,7 +161,7 @@ if(BUILD_FUZZER)
 	set_target_properties(library_fuzzer PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
     
 	configure_file(
-                ${PROJECT_SOURCE_DIR}/fuzzer.dict
+                ${PROJECT_SOURCE_DIR}/fuzzer/fuzzer.dict
                 ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
 				COPYONLY)
 
