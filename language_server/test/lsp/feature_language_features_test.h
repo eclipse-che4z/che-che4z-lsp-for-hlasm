@@ -15,10 +15,10 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_LANGUAGE_FEATURES_TEST_H
 #define HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_LANGUAGE_FEATURES_TEST_H
 
-#include "../src/lsp/feature_language_features.h"
-#include "../../parser_library/src/semantics/lsp_info_processor.h"
-#include "ws_mngr_mock.h"
-#include "response_provider_mock.h"
+#include "lsp/feature_language_features.h"
+#include "semantics/lsp_info_processor.h"
+#include "../ws_mngr_mock.h"
+#include "../response_provider_mock.h"
 
 #ifdef _WIN32
 constexpr const char * path = "c:\\test";

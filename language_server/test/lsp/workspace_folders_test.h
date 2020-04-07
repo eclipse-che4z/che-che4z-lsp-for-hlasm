@@ -13,9 +13,9 @@
  */
 
 
-#include "../src/lsp/feature_workspace_folders.h"
+#include "lsp/feature_workspace_folders.h"
 #include <string>
-#include "ws_mngr_mock.h"
+#include "../ws_mngr_mock.h"
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
 const std::string ws1_uri = "file:///c%3A/path/to/W%20S/OneDrive";

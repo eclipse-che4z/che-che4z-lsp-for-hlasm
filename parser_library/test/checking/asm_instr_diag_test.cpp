@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common_testing.h"
+#include "../common_testing.h"
 
 TEST(diagnostics, org_incorrect_second_op)
 {

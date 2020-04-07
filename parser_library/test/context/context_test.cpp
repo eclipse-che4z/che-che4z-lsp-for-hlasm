@@ -18,7 +18,7 @@
 #include "context/variables/system_variable.h"
 #include "processing/context_manager.h"
 #include "analyzer.h"
-#include "copy_mock.h"
+#include "../copy_mock.h"
 
 #include <string>
 
