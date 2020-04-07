@@ -18,6 +18,7 @@
 
 using namespace hlasm_plugin;
 using namespace parser_library;
+using namespace lexing;
 
 token_factory::token_factory()
 = default;

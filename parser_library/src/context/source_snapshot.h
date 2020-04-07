@@ -16,7 +16,7 @@
 #define CONTEXT_SOURCE_SNAPSHOT_H
 
 #include "id_storage.h"
-#include "shared/range.h"
+#include "range.h"
 
 #include <vector>
 

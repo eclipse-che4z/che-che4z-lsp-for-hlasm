@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <iterator>
-#include "../include/shared/range.h"
+#include "range.h"
 #include "antlr4-runtime.h"
 #include "../context/id_storage.h"
 

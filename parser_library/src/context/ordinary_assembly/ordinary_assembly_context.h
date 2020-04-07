@@ -12,7 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#pragma once
+#ifndef CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
+#define CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
+
 #include "symbol.h"
 #include "alignment.h"
 #include "location_counter.h"
@@ -100,3 +102,4 @@ private:
 }
 }
 }
+#endif

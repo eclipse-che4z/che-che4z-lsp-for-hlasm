@@ -15,8 +15,8 @@
 #ifndef CONTEXT_VARIABLE_H
 #define CONTEXT_VARIABLE_H
 
-#include "../common_types.h"
-#include "../id_storage.h"
+#include "context/common_types.h"
+#include "context/id_storage.h"
 
 #include <memory>
 #include <vector>

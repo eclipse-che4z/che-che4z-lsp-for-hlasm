@@ -21,9 +21,9 @@
 #include <memory>
 #include <functional>
 #include <assert.h>
-#include "../diagnostic.h"
-#include "../context/ordinary_assembly/alignment.h"
-#include "../diagnostic_collector.h"
+#include "diagnostic.h"
+#include "context/ordinary_assembly/alignment.h"
+#include "diagnostic_collector.h"
 #include "operand.h"
 
 namespace hlasm_plugin::parser_library::checking

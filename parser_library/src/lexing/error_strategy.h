@@ -18,7 +18,7 @@
 #include "DefaultErrorStrategy.h"
 #include "shared/lexer.h"
 
-namespace hlasm_plugin::parser_library
+namespace hlasm_plugin::parser_library::lexing
 {
 
 enum tokens { 
