@@ -195,14 +195,19 @@ add_dependencies(parser_library antlr4jar GenerateParser)
 add_dependencies(parser_library json)
 
 if(BUILD_TESTING)
+    file(GLOB TEST_SRC
+        "${PROJECT_SOURCE_DIR}/test/*.cpp"
+    )
+
     if(BUILD_SHARED_LIBS) #when building shared libary, we need to compile from source,
                           #because not all classes are exported
-	    add_executable(library_test test/test.cpp
+	    add_executable(library_test
+            ${TEST_SRC}
 	    	${LIB_SRC}
 			${GENERATED_SRC}
 	    )
     else() #when building statically linked library, we can link already built parser_library.
-    	add_executable(library_test test/test.cpp)
+    	add_executable(library_test ${TEST_SRC})
         target_link_libraries(library_test parser_library)
 		set_target_properties(library_test PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
 	endif()
@@ -228,7 +233,7 @@ if(BUILD_TESTING)
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                        ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
 
-	target_link_libraries(library_test gmock)
+	target_link_libraries(library_test gmock_main)
 	target_link_libraries(library_test ${ANTLR4_RUNTIME})
 	if(FILESYSTEM_LINK)
 		target_link_libraries(library_test ${FILESYSTEM_LIBRARY})
