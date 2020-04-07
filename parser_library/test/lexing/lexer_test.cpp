@@ -17,8 +17,8 @@
 
 #include "gtest/gtest.h"
 
-#include "../include/shared/lexer.h"
-#include "../include/shared/input_source.h"
+#include "lexing/lexer.h"
+#include "lexing/input_source.h"
 #include "hlasmparser.h"
 #include "antlr4-runtime.h"
 #include <iostream>

@@ -14,11 +14,11 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/file_manager_impl.h"
-#include "../src/wildcard.h"
-#include "../src/workspace.h"
+#include "workspace/file_manager_impl.h"
+#include "workspace/wildcard.h"
+#include "workspace/workspace.h"
 
-using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::workspace;
 
 #ifdef _WIN32
     const std::string lib_path = "lib\\";

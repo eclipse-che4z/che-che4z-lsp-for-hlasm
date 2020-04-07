@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/checking/instruction_checker.h"
+#include "checking/instruction_checker.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;

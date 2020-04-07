@@ -17,10 +17,10 @@
 
 #include "gtest/gtest.h"
 
-#include "../src/checking/data_definition/data_def_types.h"
-#include "../src/checking/asm_instr_check.h"
-#include "../src/analyzer.h"
-#include "../src/diagnostic_collector.h"
+#include "checking/data_definition/data_def_types.h"
+#include "checking/asm_instr_check.h"
+#include "analyzer.h"
+#include "checking/diagnostic_collector.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;

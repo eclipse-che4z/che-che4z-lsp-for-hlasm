@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-class copy_mock : public parse_lib_provider
+class copy_mock : public workspace::parse_lib_provider
 {
 	const std::string* find_content(const std::string& library) const
 	{
@@ -58,7 +58,7 @@ class copy_mock : public parse_lib_provider
 public:
 
 
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	virtual workspace::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspace::library_data data)
 	{
 		current_content = find_content(library);
 		if (!current_content) return false;
