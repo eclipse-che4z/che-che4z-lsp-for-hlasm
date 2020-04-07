@@ -20,7 +20,7 @@
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
 #include "analyzer.h"
-#include "workspace/workspace.h"
+#include "workspaces/workspace.h"
 #include "sstream"
 
 using namespace hlasm_plugin::parser_library::lexing;

@@ -18,7 +18,7 @@
 #include "library.h"
 #include "diagnosable_impl.h"
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 //Represents a named set of libraries (processor_group)
 class processor_group : public diagnosable_impl

@@ -16,7 +16,7 @@
 
 #include "common_testing.h"
 #include "ebcdic_encoding.h"
-#include "workspace/file_impl.h"
+#include "workspaces/file_impl.h"
 
 TEST(input_source, utf8conv)
 {
@@ -120,7 +120,7 @@ TEST(replace_non_utf8_chars, no_change)
 
 	u8.push_back((unsigned char)0x41);
 
-	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
+	std::string res = file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_EQ(u8, res);
 }
@@ -131,7 +131,7 @@ TEST(replace_non_utf8_chars, last_char)
 	std::string u8 = common_str;
 	u8.push_back((uint8_t) 0xAF);
 
-	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
+	std::string res = file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_NE(u8, res);
 	EXPECT_EQ(res.size(), u8.size() + 2);
@@ -147,7 +147,7 @@ TEST(replace_non_utf8_chars, middle_char)
 	std::string end = "end";
 	std::string u8 = begin + '\xF0' + end;
 
-	std::string res = workspace::file_impl::replace_non_utf8_chars(u8);
+	std::string res = file_impl::replace_non_utf8_chars(u8);
 
 	EXPECT_NE(u8, res);
 	EXPECT_EQ(res.size(), u8.size() + 2);

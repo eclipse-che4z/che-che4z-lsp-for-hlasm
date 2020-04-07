@@ -24,7 +24,7 @@
 
 using extension_regex_map = std::unordered_multimap<std::string, std::regex>;
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 class library : public virtual diagnosable
 {

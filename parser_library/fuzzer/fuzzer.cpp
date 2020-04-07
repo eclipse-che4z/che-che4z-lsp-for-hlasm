@@ -15,7 +15,7 @@
 #include <string>
 #include <cstring>
 #include "analyzer.h"
-#include "workspace/file_impl.h"
+#include "workspaces/file_impl.h"
 
 using namespace hlasm_plugin::parser_library;
 
@@ -34,7 +34,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t * data, size_t size)
         }
     }
 
-    workspace::file_impl::replace_non_utf8_chars(source);
+    workspaces::file_impl::replace_non_utf8_chars(source);
 
     try
     {

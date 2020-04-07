@@ -280,9 +280,9 @@ X3 EQU F-E
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class loc_mock : public workspace::parse_lib_provider
+class loc_mock : public workspaces::parse_lib_provider
 {
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+	virtual workspaces::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data)
 	{
 		std::string lib_data("XXX EQU 1");
 		analyzer a(lib_data, library, hlasm_ctx, *this, data);

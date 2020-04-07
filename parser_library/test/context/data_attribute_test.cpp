@@ -517,10 +517,10 @@ TEST(data_attributes, O_opencode_var)
 	ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class O_mock : public parse_lib_provider
+class O_mock : public workspaces::parse_lib_provider
 {
 public:
-	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
+	virtual workspaces::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
 	{
 		if (!has_library(library, hlasm_ctx)) return false;
 

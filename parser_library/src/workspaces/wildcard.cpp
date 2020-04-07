@@ -15,7 +15,7 @@
 #include "wildcard.h"
 #include <cassert>
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 std::regex wildcard2regex(const std::string& wildcard)
 {

@@ -17,7 +17,7 @@
 
 #include "diagnosable_ctx.h"
 #include "context/hlasm_context.h"
-#include "workspace/parse_lib_provider.h"
+#include "workspaces/parse_lib_provider.h"
 #include "expressions/expression.h"
 #include "expressions/evaluation_context.h"
 #include "processing_format.h"

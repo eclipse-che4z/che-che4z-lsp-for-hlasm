@@ -19,7 +19,7 @@
 #include "statement_processor.h"
 #include "processing/processing_state_listener.h"
 #include "context/hlasm_context.h"
-#include "workspace/parse_lib_provider.h"
+#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -29,7 +29,7 @@ namespace processing {
 class macrodef_processor : public statement_processor
 {
 	processing_state_listener& listener_;
-	workspace::parse_lib_provider& provider_;
+	workspaces::parse_lib_provider& provider_;
 	const macrodef_start_data start_;
 
 	size_t initial_copy_nest_;
@@ -43,7 +43,7 @@ class macrodef_processor : public statement_processor
 	macrodef_processing_result result_;
 	bool finished_flag_;
 public:
-	macrodef_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, workspace::parse_lib_provider& provider, macrodef_start_data start);
+	macrodef_processor(context::hlasm_context& hlasm_ctx, processing_state_listener& listener, workspaces::parse_lib_provider& provider, macrodef_start_data start);
 
 	virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
 	virtual void process_statement(context::unique_stmt_ptr statement) override;

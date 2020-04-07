@@ -16,7 +16,7 @@
 #include "diagnosable.h"
 #include "semantics/highlighting_info.h"
 #include "semantics/lsp_info_processor.h"
-#include "workspace/processor.h"
+#include "workspaces/processor.h"
 #include "debugging/debug_types.h"
 
 namespace hlasm_plugin::parser_library

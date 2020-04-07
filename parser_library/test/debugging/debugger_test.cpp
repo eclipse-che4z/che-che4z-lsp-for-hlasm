@@ -15,8 +15,8 @@
 #include "gtest/gtest.h"
 
 #include "debugging/debugger.h"
-#include "workspace/workspace.h"
-#include "workspace/file_manager_impl.h"
+#include "workspaces/workspace.h"
+#include "workspaces/file_manager_impl.h"
 #include "debug_event_consumer_s_mock.h"
 #include <variant>
 #include <unordered_map>
@@ -25,13 +25,13 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::debugging;
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 
 TEST(debugger, stopped_on_entry)
 {
 	file_manager_impl file_manager;
-	hlasm_plugin::parser_library::workspace::workspace ws("test_workspace", file_manager);
+	workspace ws("test_workspace", file_manager);
 
 	debug_event_consumer_s_mock m;
 	debug_config cfg;
@@ -65,7 +65,7 @@ TEST(debugger, stopped_on_entry)
 TEST(debugger, disconnect)
 {
 	file_manager_impl file_manager;
-	hlasm_plugin::parser_library::workspace::workspace ws("test_workspace", file_manager);
+	workspace ws("test_workspace", file_manager);
 
 	debug_event_consumer_s_mock m;
 	debug_config cfg;
@@ -188,11 +188,11 @@ bool check_step(debugger & d, const std::vector<debugging::stack_frame> & exp_fr
 	return true;
 }
 
-class workspace_mock : public hlasm_plugin::parser_library::workspace::workspace
+class workspace_mock : public workspace
 {
 public:
 	workspace_mock(file_manager& file_mngr) 
-		: hlasm_plugin::parser_library::workspace::workspace(file_mngr) {}
+		: workspace(file_mngr) {}
 
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
 	{

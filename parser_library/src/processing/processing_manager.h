@@ -17,7 +17,7 @@
 
 #include <set>
 
-#include "workspace/parse_lib_provider.h"
+#include "workspaces/parse_lib_provider.h"
 #include "processing_state_listener.h"
 #include "opencode_provider.h"
 #include "branching_provider.h"
@@ -40,9 +40,9 @@ public:
 	processing_manager(
 		std::unique_ptr<opencode_provider> base_provider, 
 		context::hlasm_context& hlasm_ctx, 
-		const workspace::library_data data,
+		const workspaces::library_data data,
 		std::string file_name,
-		workspace::parse_lib_provider& lib_provider,
+		workspaces::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser,
 		processing_tracer* tracer);
 
@@ -52,7 +52,7 @@ public:
 	virtual void collect_diags() const override;
 private:
 	context::hlasm_context& hlasm_ctx_;
-	workspace::parse_lib_provider& lib_provider_;
+	workspaces::parse_lib_provider& lib_provider_;
 
 	std::vector<processor_ptr> procs_;
 	std::vector<provider_ptr> provs_;

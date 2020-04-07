@@ -16,7 +16,7 @@
 #define PROCESSING_ASM_PROCESSOR_H
 
 #include "low_language_processor.h"
-#include "workspace/parse_lib_provider.h"
+#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -31,13 +31,13 @@ class asm_processor : public low_language_processor
 	checking::assembler_checker checker_;
 public:
 	asm_processor(context::hlasm_context& hlasm_ctx, 
-		attribute_provider& attr_provider, branching_provider& branch_provider, workspace::parse_lib_provider& lib_provider,
+		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser);
 
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 
-	static void process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, workspace::parse_lib_provider& lib_provider, diagnosable_ctx* diagnoser);
+	static void process_copy(const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, workspaces::parse_lib_provider& lib_provider, diagnosable_ctx* diagnoser);
 
 private:
 	process_table_t create_table(context::hlasm_context& hlasm_ctx);

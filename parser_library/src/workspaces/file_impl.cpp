@@ -23,7 +23,7 @@
 #include "file_impl.h"
 
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 file_impl::file_impl(file_uri uri) : file_name_(std::move(uri)), text_() {}
 

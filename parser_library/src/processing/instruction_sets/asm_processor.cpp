@@ -22,7 +22,7 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace processing;
-using namespace workspace;
+using namespace workspaces;
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
 {

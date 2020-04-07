@@ -19,7 +19,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
-using namespace hlasm_plugin::parser_library::workspace;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 analyzer::analyzer(
 	const std::string& text,

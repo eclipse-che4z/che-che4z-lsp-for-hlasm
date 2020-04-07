@@ -22,7 +22,7 @@
 #include "protocol.h"
 #include "diagnosable.h"
 
-namespace hlasm_plugin::parser_library::workspace {
+namespace hlasm_plugin::parser_library::workspaces {
 
 using file_uri = std::string;
 

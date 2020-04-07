@@ -17,7 +17,7 @@
 
 using namespace hlasm_plugin::parser_library;
 using namespace processing;
-using namespace workspace;
+using namespace workspaces;
 
 ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
 	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
