@@ -188,10 +188,11 @@ bool check_step(debugger & d, const std::vector<debugging::stack_frame> & exp_fr
 	return true;
 }
 
-class workspace_mock : public workspace
+class workspace_mock : public hlasm_plugin::parser_library::workspace::workspace
 {
 public:
-	workspace_mock(file_manager& file_mngr) :workspace(file_mngr) {}
+	workspace_mock(file_manager& file_mngr) 
+		: hlasm_plugin::parser_library::workspace::workspace(file_mngr) {}
 
 	virtual parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
 	{
