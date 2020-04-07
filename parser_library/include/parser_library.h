@@ -21,7 +21,6 @@
 #include <string>
 
 #include "parser_library_export.h"
-#include "lexer.h"
 #include "antlr4-runtime.h"
 
 

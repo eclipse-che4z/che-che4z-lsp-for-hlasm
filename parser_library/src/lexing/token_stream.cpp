@@ -13,7 +13,6 @@
  */
 
 #include "token_stream.h"
-#include "lexer.h"
 
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace antlr4;
