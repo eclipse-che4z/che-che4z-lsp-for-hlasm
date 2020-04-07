@@ -76,7 +76,6 @@ void analyzer::analyze(std::atomic<bool>* cancel)
 void analyzer::collect_diags() const
 {
 	collect_diags_from_child(mngr_);
-	collect_diags_from_child(*parser_);
 	collect_diags_from_child(listener_);
 }
 
