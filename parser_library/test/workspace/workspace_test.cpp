@@ -63,7 +63,7 @@ TEST_F(workspace_test, parse_lib_provider)
 #if _WIN32
 	hlasm_plugin::parser_library::workspace::workspace ws("test\\library\\test_wks", file_mngr);
 #else
-	workspace ws("test/library/test_wks", file_mngr);
+	hlasm_plugin::parser_library::workspace::workspace ws("test/library/test_wks", file_mngr);
 #endif
 	ws.open();
 
