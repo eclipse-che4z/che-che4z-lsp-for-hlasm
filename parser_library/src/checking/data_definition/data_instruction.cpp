@@ -16,8 +16,8 @@
 //asm instructions from the assembler checker:
 //DC, DS, DXD
 
-#include "../asm_instr_check.h"
-#include "../../diagnostic_collector.h"
+#include "checking/asm_instr_check.h"
+#include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
 
 using namespace hlasm_plugin::parser_library::checking;

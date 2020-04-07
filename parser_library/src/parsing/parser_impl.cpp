@@ -16,13 +16,13 @@
 #include "parser_impl.h"
 #include "error_strategy.h"
 #include "parser_error_listener_ctx.h"
-#include "../include/shared/token_stream.h"
+#include "token_stream.h"
 #include "hlasmparser.h"
 #include "expressions/arithmetic_expression.h"
 #include "processing/statement.h"
 #include "processing/context_manager.h"
 
-using namespace hlasm_plugin::parser_library;
+using namespace hlasm_plugin::parser_library::parsing;
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
 	: Parser(input),
@@ -206,7 +206,7 @@ bool parser_impl::is_data_attr()
 	return tmp == "D" || tmp == "O" || tmp == "N" || tmp == "S" || tmp == "K" || tmp == "I" || tmp == "L" || tmp == "T";
 }
 
-bool hlasm_plugin::parser_library::parser_impl::is_var_def()
+bool parser_impl::is_var_def()
 {
 	auto [_,opcode] = *proc_status;
 	return opcode.value == ctx->ids().add("GBLA") || opcode.value == ctx->ids().add("GBLB") || opcode.value == ctx->ids().add("GBLC") ||
@@ -366,62 +366,62 @@ bool parser_impl::finished() const
 	return finished_flag;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::deferred()
+bool parser_impl::deferred()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::DEFERRED;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::no_op()
+bool parser_impl::no_op()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.occurence == processing::operand_occurence::ABSENT;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::ignored()
+bool parser_impl::ignored()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::IGNORED;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::alt_format()
+bool parser_impl::alt_format()
 {
 	auto& [format, opcode] = *proc_status;
 
 	return format.form == processing::processing_form::CA || format.form == processing::processing_form::MAC;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::MACH()
+bool parser_impl::MACH()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::MACH;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::ASM()
+bool parser_impl::ASM()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::ASM;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::DAT()
+bool parser_impl::DAT()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::DAT;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::CA()
+bool parser_impl::CA()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::CA;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::MAC()
+bool parser_impl::MAC()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::MAC;
 }
 
-bool hlasm_plugin::parser_library::parser_impl::UNKNOWN()
+bool parser_impl::UNKNOWN()
 {
 	auto& [format, opcode] = *proc_status;
 	return format.form == processing::processing_form::UNKNOWN;
@@ -436,7 +436,7 @@ void parser_impl::initialize(
 	pushed_state_ = false;
 }
 
-void hlasm_plugin::parser_library::parser_impl::initialize(parser_impl* parent)
+void parser_impl::initialize(parser_impl* parent)
 {
 	ctx = parent->ctx;
 	provider = parent->provider;
@@ -508,7 +508,7 @@ semantics::operand_list parser_impl::parse_macro_operands(std::string operands, 
 	return list;
 }
 
-void hlasm_plugin::parser_library::parser_impl::parse_rest(std::string text, range text_range)
+void parser_impl::parse_rest(std::string text, range text_range)
 {
 	if (!rest_parser_)
 	{
@@ -580,7 +580,7 @@ void hlasm_plugin::parser_library::parser_impl::parse_rest(std::string text, ran
 	//parsers_.emplace_back(std::move(h));
 }
 
-void hlasm_plugin::parser_library::parser_impl::parse_lookahead(std::string text, range text_range)
+void parser_impl::parse_lookahead(std::string text, range text_range)
 {
 	if (!reparser_)
 	{

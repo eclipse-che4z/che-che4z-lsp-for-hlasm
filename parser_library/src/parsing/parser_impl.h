@@ -27,6 +27,7 @@
 
 namespace hlasm_plugin {
 namespace parser_library {
+namespace parsing {
 
 using self_def_t = std::int32_t;
 
@@ -34,15 +35,15 @@ struct parser_holder;
 
 //class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl
-	: public antlr4::Parser, public diagnosable_impl, 
+	: public antlr4::Parser, public diagnosable_impl,
 	public processing::opencode_provider, public processing::statement_fields_parser
 {
 public:
 	parser_impl(antlr4::TokenStream* input);
 
 	void initialize(
-		context::hlasm_context* hlasm_ctx, 
-		semantics::lsp_info_processor * lsp_prc);
+		context::hlasm_context* hlasm_ctx,
+		semantics::lsp_info_processor* lsp_prc);
 
 	bool is_last_line();
 	virtual void rewind_input(context::source_position pos) override;
@@ -51,7 +52,7 @@ public:
 	context::source_position statement_end() const;
 
 	virtual processing::statement_fields_parser::parse_result parse_operand_field(
-		context::hlasm_context* hlasm_ctx, 
+		context::hlasm_context* hlasm_ctx,
 		std::string field, bool after_substitution, semantics::range_provider field_range,
 		processing::processing_status status) override;
 
@@ -65,7 +66,7 @@ protected:
 	bool is_self_def();
 	bool is_data_attr();
 	bool is_var_def();
-	self_def_t parse_self_def_term(const std::string& option, const std::string& value,range term_range);
+	self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
 	context::data_attr_kind get_attribute(std::string attr_data, range data_range);
 	context::id_index parse_identifier(std::string value, range id_range);
 	void parse_macro_operands(semantics::op_rem& line);
@@ -137,12 +138,13 @@ struct parser_holder
 
 	parser_holder(const parser_holder&) = delete;
 	parser_holder(parser_holder&&);
-	parser_holder()=default;
+	parser_holder() = default;
 
 	~parser_holder();
 };
 
 
+}
 }
 }
 

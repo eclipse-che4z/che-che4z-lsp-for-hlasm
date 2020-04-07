@@ -21,7 +21,7 @@
 //Override antlr Error listener for more polished output
 //parser. Provides more readable syntax errors.
 
-namespace hlasm_plugin::parser_library {
+namespace hlasm_plugin::parser_library::parsing {
 
 class parser_error_listener_base : public antlr4::ANTLRErrorListener
 {

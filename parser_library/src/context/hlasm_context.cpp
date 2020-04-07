@@ -14,9 +14,9 @@
 
 #include "hlasm_context.h"
 #include "instruction.h"
-#include "../diagnosable_impl.h"
-#include "../ebcdic_encoding.h"
-#include "../expressions/arithmetic_expression.h"
+#include "diagnosable_impl.h"
+#include "ebcdic_encoding.h"
+#include "expressions/arithmetic_expression.h"
 #include <ctime>
 
 using namespace hlasm_plugin::parser_library;
