@@ -153,7 +153,8 @@ bool address_machine_operand::has_error(expressions::mach_evaluate_info info) co
             return displacement->get_dependencies(info).has_error || first_par->get_dependencies(info).has_error
                 || second_par->get_dependencies(info).has_error; // D(B1,B2)
         else
-            return displacement->get_dependencies(info).has_error || first_par->get_dependencies(info).has_error; // D(B)
+            return displacement->get_dependencies(info).has_error
+                || first_par->get_dependencies(info).has_error; // D(B)
     }
     else
         return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; // D(,B)

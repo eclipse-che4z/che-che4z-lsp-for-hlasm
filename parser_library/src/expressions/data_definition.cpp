@@ -18,6 +18,7 @@
 #include <set>
 #include <stdexcept>
 
+#include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "mach_expr_term.h"
 

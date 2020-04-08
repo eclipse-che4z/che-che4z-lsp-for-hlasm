@@ -17,7 +17,9 @@
 
 #include <memory>
 
-#include "server.h"
+#include "gmock/gmock.h"
+
+#include "lsp/lsp_server.h"
 
 using namespace hlasm_plugin;
 using namespace language_server;
@@ -41,7 +43,7 @@ json make_notification(std::string method_name, json parameter)
 
 TEST(regress_test, behaviour_correct)
 {
-    workspace_manager ws_mngr;
+    parser_library::workspace_manager ws_mngr;
     message_provider_mock mess_p;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&mess_p);
@@ -112,7 +114,7 @@ TEST(regress_test, behaviour_correct)
 
 TEST(regress_test, behaviour_error)
 {
-    workspace_manager ws_mngr;
+    parser_library::workspace_manager ws_mngr;
     message_provider_mock mess_p;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&mess_p);
@@ -158,7 +160,7 @@ TEST(regress_test, behaviour_error)
 TEST(regress_test, stability)
 {
     // test simulates an user typing. No results are expected, the server is just expected not to crash.
-    workspace_manager ws_mngr;
+    parser_library::workspace_manager ws_mngr;
     message_provider_mock mess_p;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&mess_p);

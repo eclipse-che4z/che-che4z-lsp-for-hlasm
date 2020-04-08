@@ -15,6 +15,11 @@
 #ifndef PROCESSING_ATTRIBUTE_PROVIDER_H
 #define PROCESSING_ATTRIBUTE_PROVIDER_H
 
+#include <set>
+#include <unordered_map>
+
+#include "context/id_storage.h"
+#include "context/ordinary_assembly/symbol.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "range.h"
 

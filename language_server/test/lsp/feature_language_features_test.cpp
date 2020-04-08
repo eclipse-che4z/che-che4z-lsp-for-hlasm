@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_LANGUAGE_FEATURES_TEST_H
 #define HLASMPLUGIN_LANGUAGESERVER_TEST_FEATURE_LANGUAGE_FEATURES_TEST_H
 
+#include "gmock/gmock.h"
+
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_language_features.h"
