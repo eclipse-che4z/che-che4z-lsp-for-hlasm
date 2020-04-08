@@ -14,7 +14,7 @@
 
 #include "data_def_type_base.h"
 #include "data_def_types.h"
-#include "../instr_operand.h"
+#include "checking/instr_operand.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;

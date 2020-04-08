@@ -19,7 +19,7 @@
 
 
 #include "variable.h"
-#include "../context/variables/set_symbol.h"
+#include "context/variables/set_symbol.h"
 
 
 namespace hlasm_plugin::parser_library::debugging

@@ -12,11 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "shared/protocol.h"
+#include "protocol.h"
 #include "diagnosable.h"
 #include "semantics/highlighting_info.h"
 #include "semantics/lsp_info_processor.h"
-#include "processor.h"
+#include "workspaces/processor.h"
 #include "debugging/debug_types.h"
 
 namespace hlasm_plugin::parser_library

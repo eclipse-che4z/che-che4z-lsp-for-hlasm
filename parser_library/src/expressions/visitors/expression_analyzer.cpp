@@ -13,18 +13,18 @@
  */
 
 #include "expression_analyzer.h"
-#include "../../processing/context_manager.h"
-#include "../../semantics/range_provider.h"
+#include "processing/context_manager.h"
+#include "semantics/range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;
 
-antlrcpp::Any expression_analyzer::visitExpr(generated::hlasmparser::ExprContext* ctx)
+antlrcpp::Any expression_analyzer::visitExpr(parsing::hlasmparser::ExprContext* ctx)
 {
 	return visit(ctx->expr_p_space_c());
 }
 
-antlrcpp::Any expression_analyzer::visitExpr_p(generated::hlasmparser::Expr_pContext* ctx)
+antlrcpp::Any expression_analyzer::visitExpr_p(parsing::hlasmparser::Expr_pContext* ctx)
 {
 	if (ctx->expr_sContext != nullptr)
 		return visit(ctx->expr_sContext);
@@ -32,7 +32,7 @@ antlrcpp::Any expression_analyzer::visitExpr_p(generated::hlasmparser::Expr_pCon
 		return visit(ctx->expr_p());
 }
 
-antlrcpp::Any expression_analyzer::visitExpr_s(generated::hlasmparser::Expr_sContext* ctx)
+antlrcpp::Any expression_analyzer::visitExpr_s(parsing::hlasmparser::Expr_sContext* ctx)
 {
 	if (ctx->t != nullptr)
 		return visit(ctx->t);
@@ -44,7 +44,7 @@ antlrcpp::Any expression_analyzer::visitExpr_s(generated::hlasmparser::Expr_sCon
 	return a;
 }
 
-antlrcpp::Any expression_analyzer::visitExpr_p_space_c(generated::hlasmparser::Expr_p_space_cContext* ctx)
+antlrcpp::Any expression_analyzer::visitExpr_p_space_c(parsing::hlasmparser::Expr_p_space_cContext* ctx)
 {
 	std::set<context::id_index> result;
 	if (ctx->exs != nullptr)
@@ -53,7 +53,7 @@ antlrcpp::Any expression_analyzer::visitExpr_p_space_c(generated::hlasmparser::E
 	return result;
 }
 
-antlrcpp::Any expression_analyzer::visitTerm_c(generated::hlasmparser::Term_cContext* ctx)
+antlrcpp::Any expression_analyzer::visitTerm_c(parsing::hlasmparser::Term_cContext* ctx)
 {
 	if (ctx->t != nullptr)
 		return visit(ctx->t);
@@ -65,7 +65,7 @@ antlrcpp::Any expression_analyzer::visitTerm_c(generated::hlasmparser::Term_cCon
 	return a;
 }
 
-antlrcpp::Any expression_analyzer::visitTerm(generated::hlasmparser::TermContext* ctx)
+antlrcpp::Any expression_analyzer::visitTerm(parsing::hlasmparser::TermContext* ctx)
 {
 	if (ctx->var_symbolContext != nullptr)
 	{
@@ -91,12 +91,12 @@ antlrcpp::Any expression_analyzer::visitTerm(generated::hlasmparser::TermContext
 	return std::set<context::id_index>{};
 }
 
-antlrcpp::Any expression_analyzer::visitId_sub(generated::hlasmparser::Id_subContext* ctx)
+antlrcpp::Any expression_analyzer::visitId_sub(parsing::hlasmparser::Id_subContext* ctx)
 {
 	return visit(ctx->subscriptContext);
 }
 
-antlrcpp::Any expression_analyzer::visitExpr_p_comma_c(generated::hlasmparser::Expr_p_comma_cContext* ctx)
+antlrcpp::Any expression_analyzer::visitExpr_p_comma_c(parsing::hlasmparser::Expr_p_comma_cContext* ctx)
 {
 	std::set<context::id_index> result;
 	if (ctx->exs != nullptr)
@@ -105,7 +105,7 @@ antlrcpp::Any expression_analyzer::visitExpr_p_comma_c(generated::hlasmparser::E
 	return result;
 }
 
-antlrcpp::Any expression_analyzer::visitSubscript(generated::hlasmparser::SubscriptContext* ctx)
+antlrcpp::Any expression_analyzer::visitSubscript(parsing::hlasmparser::SubscriptContext* ctx)
 {
 	if (ctx->children.size() >= 3)
 		return visit(ctx->expr_p_comma_cContext);
@@ -113,7 +113,7 @@ antlrcpp::Any expression_analyzer::visitSubscript(generated::hlasmparser::Subscr
 		return std::set<context::id_index>();
 }
 
-antlrcpp::Any expression_analyzer::visitCa_string(generated::hlasmparser::Ca_stringContext* ctx)
+antlrcpp::Any expression_analyzer::visitCa_string(parsing::hlasmparser::Ca_stringContext* ctx)
 {
 	std::set<context::id_index> result;
 	if (ctx->tmp != nullptr)
@@ -126,7 +126,7 @@ antlrcpp::Any expression_analyzer::visitCa_string(generated::hlasmparser::Ca_str
 	return result;
 }
 
-antlrcpp::Any expression_analyzer::visitCa_string_b(generated::hlasmparser::Ca_string_bContext* ctx)
+antlrcpp::Any expression_analyzer::visitCa_string_b(parsing::hlasmparser::Ca_string_bContext* ctx)
 {
 	auto result = get_undefined_symbol_references(ctx->string_ch_v_c()->chain);
 
@@ -138,7 +138,7 @@ antlrcpp::Any expression_analyzer::visitCa_string_b(generated::hlasmparser::Ca_s
 	return result;
 }
 
-antlrcpp::Any expression_analyzer::visitCa_dupl_factor(generated::hlasmparser::Ca_dupl_factorContext* ctx)
+antlrcpp::Any expression_analyzer::visitCa_dupl_factor(parsing::hlasmparser::Ca_dupl_factorContext* ctx)
 {
 	if (ctx->expr_p() != nullptr)
 		return visit(ctx->expr_p());
@@ -146,7 +146,7 @@ antlrcpp::Any expression_analyzer::visitCa_dupl_factor(generated::hlasmparser::C
 		return std::set<context::id_index>{};
 }
 
-antlrcpp::Any expression_analyzer::visitData_attribute(generated::hlasmparser::Data_attributeContext* ctx)
+antlrcpp::Any expression_analyzer::visitData_attribute(parsing::hlasmparser::Data_attributeContext* ctx)
 {
 	std::set<context::id_index> result;
 

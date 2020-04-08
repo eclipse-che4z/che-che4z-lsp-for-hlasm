@@ -16,12 +16,12 @@
 #define PROCESSING_ORDINARY_PROCESSOR_H
 
 #include "statement_processor.h"
-#include "../instruction_sets/ca_processor.h"
-#include "../instruction_sets/macro_processor.h"
-#include "../instruction_sets/asm_processor.h"
-#include "../instruction_sets/mach_processor.h"
-#include "../../parse_lib_provider.h"
-#include "../processing_tracer.h"
+#include "processing/instruction_sets/ca_processor.h"
+#include "processing/instruction_sets/macro_processor.h"
+#include "processing/instruction_sets/asm_processor.h"
+#include "processing/instruction_sets/mach_processor.h"
+#include "workspaces/parse_lib_provider.h"
+#include "processing/processing_tracer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -48,7 +48,7 @@ public:
 		context::hlasm_context& hlasm_ctx,
 		attribute_provider& attr_provider,
 		branching_provider& branch_provider,
-		parse_lib_provider& lib_provider, 
+		workspaces::parse_lib_provider& lib_provider, 
 		processing_state_listener& state_listener,
 		statement_fields_parser& parser,
 		processing_tracer * tracer);

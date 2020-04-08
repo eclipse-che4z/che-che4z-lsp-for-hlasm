@@ -18,7 +18,7 @@
 #include "hlasmparser.h"
 #include "hlasmparserBaseVisitor.h"
 #include "../evaluation_context.h"
-#include "../../diagnosable_ctx.h"
+#include "diagnosable_ctx.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library::expressions {
  * matches grammar (for each grammar rule there is a visit...() function
  * that is called when a rule is matched in grammar)
  * */
-class expression_evaluator : public generated::hlasmparserBaseVisitor, public diagnosable_ctx
+class expression_evaluator : public parsing::hlasmparserBaseVisitor, public diagnosable_ctx
 {
 	evaluation_context eval_ctx_;
 	//storage of resolved symbol attribute references
@@ -55,31 +55,31 @@ private:
 	 * this depends solely on the position of the token within a expr
 	 * and it is known after evaluation of the left-hand side of the expression
 	 * */
-	virtual antlrcpp::Any visitExpr(generated::hlasmparser::ExprContext* ctx) override;
+	virtual antlrcpp::Any visitExpr(parsing::hlasmparser::ExprContext* ctx) override;
 	/**
 	 * helper grammar rule used in unit tests
 	 * */
-	virtual antlrcpp::Any visitExpr_test(generated::hlasmparser::Expr_testContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_statement(generated::hlasmparser::Expr_statementContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_p(generated::hlasmparser::Expr_pContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_s(generated::hlasmparser::Expr_sContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_test(parsing::hlasmparser::Expr_testContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_statement(parsing::hlasmparser::Expr_statementContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p(parsing::hlasmparser::Expr_pContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_s(parsing::hlasmparser::Expr_sContext* ctx) override;
 	/**
 	 * generates space separated expressions
 	 * these are evaluated in visitExpr() 
 	 * */
-	virtual antlrcpp::Any visitExpr_p_space_c(generated::hlasmparser::Expr_p_space_cContext* ctx) override;
-	virtual antlrcpp::Any visitTerm_c(generated::hlasmparser::Term_cContext* ctx) override;
-	virtual antlrcpp::Any visitTerm(generated::hlasmparser::TermContext* ctx) override;
-	virtual antlrcpp::Any visitId_sub(generated::hlasmparser::Id_subContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p_space_c(parsing::hlasmparser::Expr_p_space_cContext* ctx) override;
+	virtual antlrcpp::Any visitTerm_c(parsing::hlasmparser::Term_cContext* ctx) override;
+	virtual antlrcpp::Any visitTerm(parsing::hlasmparser::TermContext* ctx) override;
+	virtual antlrcpp::Any visitId_sub(parsing::hlasmparser::Id_subContext* ctx) override;
 	
-	virtual antlrcpp::Any visitExpr_p_comma_c(generated::hlasmparser::Expr_p_comma_cContext* ctx) override;
-	virtual antlrcpp::Any visitSubscript(generated::hlasmparser::SubscriptContext* ctx) override;
-	virtual antlrcpp::Any visitString(generated::hlasmparser::StringContext* ctx) override;
-	virtual antlrcpp::Any visitCa_string(generated::hlasmparser::Ca_stringContext* ctx) override;
-	virtual antlrcpp::Any visitCa_string_b(generated::hlasmparser::Ca_string_bContext* ctx) override;
-	virtual antlrcpp::Any visitCa_dupl_factor(generated::hlasmparser::Ca_dupl_factorContext* ctx) override;
-	virtual antlrcpp::Any visitData_attribute(generated::hlasmparser::Data_attributeContext* ctx) override;
-	virtual antlrcpp::Any visitNum(generated::hlasmparser::NumContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p_comma_c(parsing::hlasmparser::Expr_p_comma_cContext* ctx) override;
+	virtual antlrcpp::Any visitSubscript(parsing::hlasmparser::SubscriptContext* ctx) override;
+	virtual antlrcpp::Any visitString(parsing::hlasmparser::StringContext* ctx) override;
+	virtual antlrcpp::Any visitCa_string(parsing::hlasmparser::Ca_stringContext* ctx) override;
+	virtual antlrcpp::Any visitCa_string_b(parsing::hlasmparser::Ca_string_bContext* ctx) override;
+	virtual antlrcpp::Any visitCa_dupl_factor(parsing::hlasmparser::Ca_dupl_factorContext* ctx) override;
+	virtual antlrcpp::Any visitData_attribute(parsing::hlasmparser::Data_attributeContext* ctx) override;
+	virtual antlrcpp::Any visitNum(parsing::hlasmparser::NumContext* ctx) override;
 
 	context::SET_t get_ord_attr_value(context::data_attr_kind attr, const context::symbol* symbol, context::id_index symbol_name, range symbol_range);
 

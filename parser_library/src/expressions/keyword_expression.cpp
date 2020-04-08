@@ -15,7 +15,7 @@
 #include "keyword_expression.h"
 #include "arithmetic_expression.h"
 #include <algorithm>
-#include "../error_messages.h"
+#include "error_messages.h"
 #include <stdexcept>
 
 using namespace hlasm_plugin::parser_library::expressions;

@@ -16,7 +16,7 @@
 #define CONTEXT_MACRO_PARAM_H
 
 #include "variable.h"
-#include "../macro_param_data.h"
+#include "context/macro_param_data.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

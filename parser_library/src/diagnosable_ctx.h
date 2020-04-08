@@ -17,7 +17,7 @@
 
 #include "diagnosable_impl.h"
 #include "context/hlasm_context.h"
-#include "diagnostic_collector.h"
+#include "checking/diagnostic_collector.h"
 
 namespace hlasm_plugin::parser_library {
 

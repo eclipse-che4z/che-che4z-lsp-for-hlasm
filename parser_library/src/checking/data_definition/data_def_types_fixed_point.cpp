@@ -17,7 +17,7 @@
 
 #include "data_def_types.h"
 
-#include "../checker_helper.h"
+#include "checking/checker_helper.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library::context;

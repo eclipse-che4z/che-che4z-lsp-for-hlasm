@@ -21,7 +21,7 @@
 #include <vector>
 #include <functional>
 
-#include "../diagnosable.h"
+#include "diagnosable.h"
 #include "checker_helper.h"
 #include "instr_operand.h"
 

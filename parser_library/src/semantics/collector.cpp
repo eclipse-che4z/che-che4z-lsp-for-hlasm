@@ -13,7 +13,7 @@
  */
 
 #include "collector.h"
-#include "shared/lexer.h"
+#include "lexing/lexer.h"
 #include "range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -79,7 +79,7 @@ void collector::set_label_field(const std::string* label, antlr4::ParserRuleCont
 	if (*lbl_)
 		throw std::runtime_error("field already assigned");
 	//recognise, whether label consists only of ORDSYMBOL token
-	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexer::Tokens::ORDSYMBOL))
+	if (!parser_ctx || (parser_ctx->getStart() == parser_ctx->getStop() && parser_ctx->getStart()->getType() == lexing::lexer::Tokens::ORDSYMBOL))
 	{
 		add_lsp_symbol(label, symbol_range, context::symbol_type::ord);
 		lbl_->emplace(symbol_range , *label);

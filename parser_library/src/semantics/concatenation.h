@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 #include <iterator>
-#include "../include/shared/range.h"
+#include "range.h"
 #include "antlr4-runtime.h"
-#include "../context/id_storage.h"
+#include "context/id_storage.h"
 
 //this file is a composition of structures that create concat_chain
 //concat_chain is used to represent model statement fields

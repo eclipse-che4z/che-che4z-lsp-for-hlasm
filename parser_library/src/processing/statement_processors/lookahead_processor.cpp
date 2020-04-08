@@ -13,9 +13,9 @@
  */
 
 #include "lookahead_processor.h"
-#include "../instruction_sets/asm_processor.h"
-#include "../../expressions/mach_expr_term.h"
-#include "../../ebcdic_encoding.h"
+#include "processing/instruction_sets/asm_processor.h"
+#include "expressions/mach_expr_term.h"
+#include "ebcdic_encoding.h"
 #include "ordinary_processor.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -91,7 +91,7 @@ void lookahead_processor::collect_diags() const {}
 
 lookahead_processor::lookahead_processor(
 	context::hlasm_context& hlasm_ctx,
-	branching_provider& branch_provider, processing_state_listener& listener, parse_lib_provider& lib_provider, lookahead_start_data start)
+	branching_provider& branch_provider, processing_state_listener& listener, workspaces::parse_lib_provider& lib_provider, lookahead_start_data start)
 	: statement_processor(processing_kind::LOOKAHEAD, hlasm_ctx),
 	finished_flag_(start.action == lookahead_action::ORD && start.targets.empty()),
 	result_(std::move(start)),

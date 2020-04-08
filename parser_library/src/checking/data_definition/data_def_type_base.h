@@ -21,8 +21,8 @@
 #include <functional>
 #include <cstdint>
 
-#include "../../context/ordinary_assembly/alignment.h"
-#include "../../diagnostic_collector.h"
+#include "context/ordinary_assembly/alignment.h"
+#include "checking/diagnostic_collector.h"
 #include "data_def_fields.h"
 namespace hlasm_plugin::parser_library::checking
 {

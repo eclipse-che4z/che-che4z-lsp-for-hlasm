@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "shared/protocol.h"
+#include "protocol.h"
 #include "operand.h"
 
 namespace hlasm_plugin {

@@ -16,7 +16,7 @@
 #define SEMANTICS_RANGE_PROVIDER_H
 
 #include "antlr4-runtime.h"
-#include "shared/range.h"
+#include "range.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

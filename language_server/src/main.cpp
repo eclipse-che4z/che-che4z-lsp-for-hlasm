@@ -23,7 +23,7 @@
 #include "dispatcher.h"
 #include "lsp/lsp_server.h"
 #include "dap/tcp_handler.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 #include "logger.h"
 #include "stream_helper.h"
 

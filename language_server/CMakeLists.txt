@@ -63,6 +63,11 @@ if(BUILD_TESTING)
 	target_link_libraries(server_test network-uri)
 	target_link_libraries(server_test parser_library)
 
+	target_include_directories(server_test
+    PUBLIC 
+		${PROJECT_SOURCE_DIR}/src
+	)
+
 	if(DISCOVER_TESTS)
 		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 30)	
 	endif()

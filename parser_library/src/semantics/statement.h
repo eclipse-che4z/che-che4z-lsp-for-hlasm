@@ -16,7 +16,7 @@
 #define SEMANTICS_STATEMENT_H
 
 #include "statement_fields.h"
-#include "../context/hlasm_statement.h"
+#include "context/hlasm_statement.h"
 
  //this file contains inherited structures from hlasm_statement that are used during the parsing
 

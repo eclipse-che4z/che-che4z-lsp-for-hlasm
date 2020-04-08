@@ -15,7 +15,7 @@
 #ifndef PROCESSING_OP_CODE_H
 #define PROCESSING_OP_CODE_H
 
-#include "../context/instruction.h"
+#include "context/instruction.h"
 #include "processing_format.h"
 
 #include <utility>

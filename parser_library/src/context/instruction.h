@@ -22,8 +22,8 @@
 
 #include <vector>
 #include "id_storage.h"
-#include "../checking/instr_operand.h"
-#include "../diagnostic.h"
+#include "checking/instr_operand.h"
+#include "diagnostic.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

@@ -16,8 +16,8 @@
 #define PROCESSING_LOW_LANGUAGE_PROCESSOR_H
 
 #include "instruction_processor.h"
-#include "../statement_fields_parser.h"
-#include "../../checking/instruction_checker.h"
+#include "processing/statement_fields_parser.h"
+#include "checking/instruction_checker.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -33,7 +33,7 @@ protected:
 	statement_fields_parser& parser;
 
 	low_language_processor(context::hlasm_context& hlasm_ctx, 
-		attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,
+		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider,
 		statement_fields_parser& parser);
 
 	rebuilt_statement preprocess(context::unique_stmt_ptr stmt);

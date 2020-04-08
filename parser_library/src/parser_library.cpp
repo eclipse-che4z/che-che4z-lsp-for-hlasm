@@ -14,16 +14,17 @@
 
 #include <iostream>
 
-#include "../include/shared/parser_library.h"
-#include "../include/shared/token_stream.h"
-#include "parser_tools.h"
+#include "parser_library.h"
+#include "lexing/token_stream.h"
+#include "parsing/parser_tools.h"
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
 #include "analyzer.h"
-#include "workspace.h"
+#include "workspaces/workspace.h"
 #include "sstream"
 
-
+using namespace hlasm_plugin::parser_library::lexing;
+using namespace hlasm_plugin::parser_library::parsing;
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -54,7 +55,7 @@ void parser_library::parse(const std::string & src)
 	try
 	{
 		std::stringstream ss;
-		hlasm_plugin::parser_tools::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
+		parsing::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
 		mytree.out_tree(ss);
 
 		std::cout << ss.str();

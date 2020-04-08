@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "../src/server.h"
+#include "server.h"
 
 using namespace hlasm_plugin;
 using namespace language_server;

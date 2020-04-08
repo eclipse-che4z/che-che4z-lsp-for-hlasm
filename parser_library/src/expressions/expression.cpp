@@ -18,7 +18,7 @@
 #include "arithmetic_expression.h"
 #include "character_expression.h"
 #include "logic_expression.h"
-#include "../diagnosable.h"
+#include "diagnosable.h"
 #include <algorithm>
 #include <assert.h>
 #include "keyword_expression.h"

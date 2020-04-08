@@ -18,20 +18,20 @@
 #include "gmock/gmock.h"
 #include <utility>
 #include "antlr4-runtime.h"
-#include "../src/ebcdic_encoding.h"
-#include "../include/shared/lexer.h"
+#include "ebcdic_encoding.h"
 #include "hlasmparser.h"
-#include "shared/token_stream.h"
-#include "shared/input_source.h"
-#include "../src/analyzer.h"
-#include "../src/processing/context_manager.h"
-#include "../src/expressions/visitors/expression_analyzer.h"
-#include "../src/processing/instruction_sets/macro_processor.h"
+#include "lexing/token_stream.h"
+#include "lexing/input_source.h"
+#include "analyzer.h"
+#include "processing/context_manager.h"
+#include "expressions/visitors/expression_analyzer.h"
+#include "processing/instruction_sets/macro_processor.h"
 
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::semantics;
+using namespace hlasm_plugin::parser_library::workspaces;
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::expressions;
 
@@ -49,7 +49,7 @@ class empty_attribute_provider : public attribute_provider
 };
 
 //returns contents of source file
-std::string get_content(std::string source)
+inline std::string get_content(std::string source)
 {
 	std::ifstream ifs(source);
 	std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -57,7 +57,7 @@ std::string get_content(std::string source)
 	return content;
 }
 
-std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::generated::hlasmparser& h_parser)
+inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)
 {
 	h_parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::SLL); // try with simpler/faster SLL(*)
 	// we don't want error messages or recovery during first try
