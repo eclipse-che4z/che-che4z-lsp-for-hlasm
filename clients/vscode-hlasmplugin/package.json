@@ -29,7 +29,7 @@
   "main": "./lib/extension.js",
   "typings": "./lib/extension",
   "engines": {
-    "vscode": "^1.32.3"
+    "vscode": "^1.43.0"
   },
   "repository": {
     "type": "git",
@@ -43,18 +43,22 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.5.3",
-    "vscode": "^1.1.33"
+    "mocha": "7.1.1",
+    "glob": "^7.1.6",
+    "vscode-test": "^1.3.0",
+    "@types/vscode": "^1.43.0",
+    "@types/mocha": "^7.0.2",
+    "@types/glob": "5.0.35"
   },
   "dependencies": {
     "vscode-languageclient": "^5.2.1"
   },
   "scripts": {
-    "postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
-    "prepare": "npm run update-vscode",
-    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "postinstall": "npm run compile",
     "compile": "tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
-    "package": "vsce package"
+    "package": "vsce package",
+    "test": "node ./lib/test/runTest.js"
   },
   "contributes": {
     "jsonValidation": [
