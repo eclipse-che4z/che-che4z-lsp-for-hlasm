@@ -63,7 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
     hlasmpluginClient.registerFeature(highlight);
 
     // register all commands and objects to context
-    registerToContext(context, factory.dapPort, highlight);
+    await registerToContext(context, factory.dapPort, highlight);
 
     //give the server some time to start listening when using TCP
     setTimeout(function () {
@@ -75,12 +75,12 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     // vscode/theia compatibility temporary fix
     // theia uses monaco commands
     var completeCommand: string;
-    await vscode.commands.getCommands().then((result) => {
-        if (result.find(command => command == "editor.action.triggerSuggest"))
-            completeCommand = "editor.action.triggerSuggest";
-        else if (result.find(command => command == "monaco.editor.action.triggerSuggest"))
-            completeCommand = "monaco.editor.action.triggerSuggest";
-    });
+    var commandList = await vscode.commands.getCommands();
+    if (commandList.find(command => command == "editor.action.triggerSuggest"))
+        completeCommand = "editor.action.triggerSuggest";
+    else if (commandList.find(command => command == "monaco.editor.action.triggerSuggest"))
+        completeCommand = "monaco.editor.action.triggerSuggest";
+
     // initialize helpers
     const contHandling = new ContinuationHandler(highlight);
     const commands = new CustomEditorCommands(highlight);
