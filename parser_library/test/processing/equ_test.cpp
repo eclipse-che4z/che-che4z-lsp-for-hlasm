@@ -16,166 +16,176 @@
 
 #include "../common_testing.h"
 
-//tests for EQU instruction
+// tests for EQU instruction
 
 TEST(EQU, simple)
 {
-	std::string input(R"(
+    std::string input(R"(
 A EQU 1
  LR A,A
 )");
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	auto id = a.context().ids().add("A");
+    auto id = a.context().ids().add("A");
 
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(id));
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(id)->value().get_abs(), 1);
+    EXPECT_TRUE(a.context().ord_ctx.symbol_defined(id));
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(id)->value().get_abs(), 1);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, complex)
 {
-	std::string input(R"(
+    std::string input(R"(
 A EQU 1
 B EQU A+A-10
  LR A,B
 )");
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
-	EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("B")));
+    EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("A")));
+    EXPECT_TRUE(a.context().ord_ctx.symbol_defined(a.context().ids().add("B")));
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->value().get_abs(), -8);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->value().get_abs(), -8);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)1);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(EQU, length_explicit)
 {
-	std::string input = R"(
+    std::string input = R"(
 Y EQU X,12
 X EQU 5,2
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 5);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(), (symbol_attributes::len_attr) (symbol_attributes::len_attr)2);
+    ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 5);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(),
+        (symbol_attributes::len_attr)(symbol_attributes::len_attr)2);
 
-	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind(), symbol_value_kind::ABS);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 5);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(), (symbol_attributes::len_attr) 12);
+    ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind(), symbol_value_kind::ABS);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 5);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(),
+        (symbol_attributes::len_attr)12);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, length_implicit)
 {
-	std::string input = R"(
+    std::string input = R"(
 X EQU 5,2
 Y EQU X
 Z EQU 1+X
 ZZ EQU *+X
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(), (symbol_attributes::len_attr) 2);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->attributes().length(), (symbol_attributes::len_attr) 1);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("ZZ"))->attributes().length(), (symbol_attributes::len_attr) 1);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->attributes().length(),
+        (symbol_attributes::len_attr)2);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->attributes().length(),
+        (symbol_attributes::len_attr)1);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("ZZ"))->attributes().length(),
+        (symbol_attributes::len_attr)1);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, length_dep)
 {
-	std::string input = R"(
+    std::string input = R"(
 LEN EQU 11
 X EQU UNKNOWN,LEN
 UNKNOWN EQU L'X
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 11);
+    ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind(), symbol_value_kind::ABS);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->value().get_abs(), 11);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, length_bounds)
 {
-	std::string input = R"(
+    std::string input = R"(
 A EQU 1,12
 LEN EQU 1+A,-100
 LEM EQU A+1,100000
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().length(), (symbol_attributes::len_attr) 1);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().length(), (symbol_attributes::len_attr) 12);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().length(),
+        (symbol_attributes::len_attr)1);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().length(),
+        (symbol_attributes::len_attr)12);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)2);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(EQU, type_explicit)
 {
-	std::string input = R"(
+    std::string input = R"(
 LEN EQU 11,3,4
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), 4);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), 4);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, type_implicit)
 {
-	std::string input = R"(
+    std::string input = R"(
 LEN EQU 11,3
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), symbol_attributes::undef_type);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(),
+        symbol_attributes::undef_type);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)0);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(EQU, type_bounds)
 {
-	std::string input = R"(
+    std::string input = R"(
 LEN EQU 11,1,-1
 LEM EQU 11,1,300
 )";
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(), symbol_attributes::undef_type);
-	EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().type(), symbol_attributes::undef_type);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEN"))->attributes().type(),
+        symbol_attributes::undef_type);
+    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("LEM"))->attributes().type(),
+        symbol_attributes::undef_type);
 
-	a.collect_diags();
-	ASSERT_EQ(a.diags().size(), (size_t)2);
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)2);
 }

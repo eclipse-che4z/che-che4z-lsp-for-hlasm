@@ -13,12 +13,12 @@
  */
 
 #include "json.hpp"
-//Types that are used throughout the language server component
+// Types that are used throughout the language server component
 namespace hlasm_plugin::language_server {
 
-	using json = nlohmann::json;
+using json = nlohmann::json;
 
-	using method = std::function<void(const json & id, const json & params)>;
+using method = std::function<void(const json& id, const json& params)>;
 
-	using send_message_callback = std::function<void(const json &)>;
-}
+using send_message_callback = std::function<void(const json&)>;
+} // namespace hlasm_plugin::language_server

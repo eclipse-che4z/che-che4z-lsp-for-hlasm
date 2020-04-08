@@ -12,14 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <string>
 #include <cstring>
+#include <string>
+
 #include "analyzer.h"
 #include "workspaces/file_impl.h"
 
 using namespace hlasm_plugin::parser_library;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t * data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     std::string source;
     source.resize(size);
@@ -29,7 +30,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t * data, size_t size)
     {
         if (c <= 8 || c == '\t' || c == 11 || c == 12 || (c >= 14 && c < 32) || c >= 127)
         {
-            //std::cout << "invalid char\n";
+            // std::cout << "invalid char\n";
             return 0;
         }
     }
@@ -42,14 +43,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t * data, size_t size)
     }
     catch (...)
     {
-        //std::cout << "invalid UTF8\n";
+        // std::cout << "invalid UTF8\n";
         return 0;
     }
-    
-    //std::cout << "BEGINBEGIN\n" << source << "ENDEND\n";
+
+    // std::cout << "BEGINBEGIN\n" << source << "ENDEND\n";
 
     analyzer a(source);
     a.analyze();
 
-    return 0;  // Non-zero return values are reserved for future use.
+    return 0; // Non-zero return values are reserved for future use.
 }

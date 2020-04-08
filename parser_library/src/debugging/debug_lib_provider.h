@@ -17,46 +17,48 @@
 
 #include "workspaces/workspace.h"
 
-namespace hlasm_plugin::parser_library::debugging
-{
+namespace hlasm_plugin::parser_library::debugging {
 
-//Implements dependency (macro and COPY files) fetcher for macro tracer.
-//Takes the information from a workspace, but calls special methods for
-//parsing that do not collide with LSP.
+// Implements dependency (macro and COPY files) fetcher for macro tracer.
+// Takes the information from a workspace, but calls special methods for
+// parsing that do not collide with LSP.
 class debug_lib_provider : public workspaces::parse_lib_provider
 {
-	const workspaces::workspace& ws_;
+    const workspaces::workspace& ws_;
+
 public:
-	debug_lib_provider(const workspaces::workspace& ws) : ws_(ws) {}
+    debug_lib_provider(const workspaces::workspace& ws)
+        : ws_(ws)
+    {}
 
-	virtual workspaces::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
-	{
-		auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
-		for (auto&& lib : proc_grp.libraries())
-		{
-			std::shared_ptr<workspaces::processor> found = lib->find_file(library);
-			if (found)
-				return found->parse_no_lsp_update(*this, hlasm_ctx, data);
-		}
+    virtual workspaces::parse_result parse_library(
+        const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
+    {
+        auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+        for (auto&& lib : proc_grp.libraries())
+        {
+            std::shared_ptr<workspaces::processor> found = lib->find_file(library);
+            if (found)
+                return found->parse_no_lsp_update(*this, hlasm_ctx, data);
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override
-	{
-		auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
-		for (auto&& lib : proc_grp.libraries())
-		{
-			std::shared_ptr<workspaces::processor> found = lib->find_file(library);
-			if (found)
-				return true;
-		}
+    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override
+    {
+        auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+        for (auto&& lib : proc_grp.libraries())
+        {
+            std::shared_ptr<workspaces::processor> found = lib->find_file(library);
+            if (found)
+                return true;
+        }
 
-		return false;
-	}
-
+        return false;
+    }
 };
 
-}
+} // namespace hlasm_plugin::parser_library::debugging
 
 #endif

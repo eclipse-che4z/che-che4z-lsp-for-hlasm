@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <vector>
+
 #include "common_types.h"
 
 namespace hlasm_plugin {
@@ -27,79 +28,82 @@ class macro_param_data_component;
 using macro_data_ptr = std::unique_ptr<macro_param_data_component>;
 using macro_data_shared_ptr = std::shared_ptr<macro_param_data_component>;
 
-//base class for data of macro parameters
-//data in macro parameters are immutable
+// base class for data of macro parameters
+// data in macro parameters are immutable
 class macro_param_data_component
 {
 public:
-	//gets value of current data, composite or simple
-	virtual const C_t& get_value() const = 0;
-	//gets value of the idx-th value, when exceeds size of data, returns default value
-	virtual const macro_param_data_component* get_ith(size_t idx) const = 0;
+    // gets value of current data, composite or simple
+    virtual const C_t& get_value() const = 0;
+    // gets value of the idx-th value, when exceeds size of data, returns default value
+    virtual const macro_param_data_component* get_ith(size_t idx) const = 0;
 
-	//dummy data returning default value everytime
-	static const macro_data_shared_ptr dummy;
+    // dummy data returning default value everytime
+    static const macro_data_shared_ptr dummy;
 
-	//number of components in the object
-	const size_t number;
+    // number of components in the object
+    const size_t number;
 
-	virtual size_t size() const = 0;
+    virtual size_t size() const = 0;
 
-	virtual ~macro_param_data_component();
+    virtual ~macro_param_data_component();
+
 protected:
-	macro_param_data_component(size_t number);
+    macro_param_data_component(size_t number);
 };
 
-//dummy macro data class returning default value everytime
+// dummy macro data class returning default value everytime
 class macro_param_data_dummy : public macro_param_data_component
 {
 public:
-	macro_param_data_dummy();
+    macro_param_data_dummy();
 
-	//gets default value ("")
-	const C_t& get_value() const override;
+    // gets default value ("")
+    const C_t& get_value() const override;
 
-	//gets this dummy
-	const macro_param_data_component* get_ith(size_t idx) const override;
+    // gets this dummy
+    const macro_param_data_component* get_ith(size_t idx) const override;
 
-	virtual size_t size() const override;
+    virtual size_t size() const override;
 };
 
-//class representing data of macro parameters holding only single string (=C_t)
+// class representing data of macro parameters holding only single string (=C_t)
 class macro_param_data_single : public macro_param_data_component
 {
-	const C_t data_;
+    const C_t data_;
+
 public:
-	//returns whole data, here the only string
-	virtual const C_t& get_value() const override;
+    // returns whole data, here the only string
+    virtual const C_t& get_value() const override;
 
-	//gets value of the idx-th value, when exceeds size of data, returns default value
-	//get_ith(0) returns this to mimic HLASM
-	virtual const macro_param_data_component* get_ith(size_t idx) const override;
+    // gets value of the idx-th value, when exceeds size of data, returns default value
+    // get_ith(0) returns this to mimic HLASM
+    virtual const macro_param_data_component* get_ith(size_t idx) const override;
 
-	virtual size_t size() const override;
+    virtual size_t size() const override;
 
-	macro_param_data_single(C_t value);
+    macro_param_data_single(C_t value);
 };
 
-//class representing data of macro parameters holding more nested data
+// class representing data of macro parameters holding more nested data
 class macro_param_data_composite : public macro_param_data_component
 {
-	const std::vector<macro_data_ptr> data_;
-	mutable C_t value_;
+    const std::vector<macro_data_ptr> data_;
+    mutable C_t value_;
+
 public:
-	//returns data of all nested classes in brackets separated by comma
-	virtual const C_t& get_value() const override;
+    // returns data of all nested classes in brackets separated by comma
+    virtual const C_t& get_value() const override;
 
-	//gets value of the idx-th value, when exceeds size of data, returns default value
-	virtual const macro_param_data_component* get_ith(size_t idx) const override;
+    // gets value of the idx-th value, when exceeds size of data, returns default value
+    virtual const macro_param_data_component* get_ith(size_t idx) const override;
 
-	virtual size_t size() const override;
+    virtual size_t size() const override;
 
-	macro_param_data_composite(std::vector<macro_data_ptr> value);
+    macro_param_data_composite(std::vector<macro_data_ptr> value);
 };
 
-}
-}
-}
+} // namespace context
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif

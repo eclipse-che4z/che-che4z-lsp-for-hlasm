@@ -26,84 +26,89 @@ class location_counter;
 
 using loctr_ptr = std::unique_ptr<location_counter>;
 
-//enum stating whether the location counter is the first in section or not
-enum class loctr_kind { STARTING, NONSTARTING };
+// enum stating whether the location counter is the first in section or not
+enum class loctr_kind
+{
+    STARTING,
+    NONSTARTING
+};
 
-//class representing section's location counter
+// class representing section's location counter
 class location_counter
 {
-	//active ORG data
-	std::vector<location_counter_data> org_data_;
-	//helper vector for switching to unresolved ORG data
-	std::vector<location_counter_data> switched_org_data_;
-	//identifier space of switched unresolved ORG data
-	space_ptr switched_;
+    // active ORG data
+    std::vector<location_counter_data> org_data_;
+    // helper vector for switching to unresolved ORG data
+    std::vector<location_counter_data> switched_org_data_;
+    // identifier space of switched unresolved ORG data
+    space_ptr switched_;
 
-	size_t last_space_;
-	id_storage& ids_;
+    size_t last_space_;
+    id_storage& ids_;
 
-	bool layuot_created_;
+    bool layuot_created_;
+
 public:
-	const id_index name;
-	const section& owner;
-	const loctr_kind kind;
+    const id_index name;
+    const section& owner;
+    const loctr_kind kind;
 
-	bool has_unresolved_spaces() const;
-	size_t storage() const;
+    bool has_unresolved_spaces() const;
+    size_t storage() const;
 
-	location_counter(id_index name, const section& owner,const loctr_kind kind, id_storage& ids);
+    location_counter(id_index name, const section& owner, const loctr_kind kind, id_storage& ids);
 
-	address current_address();
+    address current_address();
 
-	//reserves storage area of specified length and alignment
-	aligned_addr reserve_storage_area(size_t length, alignment a);
+    // reserves storage area of specified length and alignment
+    aligned_addr reserve_storage_area(size_t length, alignment a);
 
-	//aligns storage
-	aligned_addr align(alignment align);
+    // aligns storage
+    aligned_addr align(alignment align);
 
-	//adds space to the top of the storage
-	space_ptr register_ordinary_space(alignment align);
+    // adds space to the top of the storage
+    space_ptr register_ordinary_space(alignment align);
 
-	bool need_space_alignment(alignment align) const;
+    bool need_space_alignment(alignment align) const;
 
-	//sets value of the location counter to the specified address (ORG instruction)
-	space_ptr set_value(const address& addr, size_t boundary, int offset, bool has_undefined_part);
+    // sets value of the location counter to the specified address (ORG instruction)
+    space_ptr set_value(const address& addr, size_t boundary, int offset, bool has_undefined_part);
 
-	//sets the location counter to the next available location (ORG with empty first param)
-	std::pair<space_ptr, std::vector<address>> set_available_value();
+    // sets the location counter to the next available location (ORG with empty first param)
+    std::pair<space_ptr, std::vector<address>> set_available_value();
 
-	//creates layout
-	void finish_layout(size_t offset);
+    // creates layout
+    void finish_layout(size_t offset);
 
-	void resolve_space(space_ptr sp, int length);
+    void resolve_space(space_ptr sp, int length);
 
-	//switches to unresolved ORG identified by space
-	void switch_to_unresolved_value(space_ptr sp);
-	//restores to the current ORG data
-	std::variant<space_ptr, address> restore_from_unresolved_value(space_ptr sp);
+    // switches to unresolved ORG identified by space
+    void switch_to_unresolved_value(space_ptr sp);
+    // restores to the current ORG data
+    std::variant<space_ptr, address> restore_from_unresolved_value(space_ptr sp);
 
-	bool check_underflow();
+    bool check_underflow();
 
 private:
-	context::id_index create_space_name(char type);
+    context::id_index create_space_name(char type);
 
-	space_ptr register_space(alignment align, space_kind kind);
-	space_ptr register_space(alignment align, address addr, size_t boundary, int offset);
-	
-	bool has_alignment(alignment align) const;
+    space_ptr register_space(alignment align, space_kind kind);
+    space_ptr register_space(alignment align, address addr, size_t boundary, int offset);
 
-	//adds alignment requirement for the top of the storage
-	space_ptr register_align_space(alignment align);
+    bool has_alignment(alignment align) const;
 
-	location_counter_data& curr_data();
-	const location_counter_data& curr_data() const;
+    // adds alignment requirement for the top of the storage
+    space_ptr register_align_space(alignment align);
 
-	void check_available_value();
-	bool check_if_higher_value(size_t idx) const;
+    location_counter_data& curr_data();
+    const location_counter_data& curr_data() const;
+
+    void check_available_value();
+    bool check_if_higher_value(size_t idx) const;
 };
 
 
-}
-}
-}
+} // namespace context
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif

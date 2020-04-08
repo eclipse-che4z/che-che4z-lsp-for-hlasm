@@ -15,13 +15,13 @@
 #include "gmock/gmock.h"
 
 #include "lsp/feature_language_features_test.h"
-#include "lsp/workspace_folders_test.h"
 #include "lsp/feature_text_synchronization_test.h"
-#include "server_test.h"
+#include "lsp/workspace_folders_test.h"
 #include "regress_test.h"
+#include "server_test.h"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

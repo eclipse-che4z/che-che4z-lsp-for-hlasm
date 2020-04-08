@@ -21,41 +21,44 @@
 
 #include "json.hpp"
 
-#include "workspace_manager.h"
 #include "../common_types.h"
 #include "../feature.h"
 #include "../server.h"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::dap {
 
-//Implements DAP server (session-controlling methods like initialize and disconnect).
-//Integrates 1 feature: feature launch.
+// Implements DAP server (session-controlling methods like initialize and disconnect).
+// Integrates 1 feature: feature launch.
 class server : public hlasm_plugin::language_server::server
 {
-
 public:
-	server(parser_library::workspace_manager & ws_mngr);
+    server(parser_library::workspace_manager& ws_mngr);
 
-	// Inherited via server
-	virtual void respond(const json & id, const std::string & requested_method, const json & args) override;
+    // Inherited via server
+    virtual void respond(const json& id, const std::string& requested_method, const json& args) override;
 
-	virtual void notify(const std::string & method, const json & args) override;
+    virtual void notify(const std::string& method, const json& args) override;
 
-	virtual void respond_error(const json & id, const std::string & requested_method, int err_code, const std::string & err_message, const json & error) override;
+    virtual void respond_error(const json& id,
+        const std::string& requested_method,
+        int err_code,
+        const std::string& err_message,
+        const json& error) override;
 
-	virtual void message_received(const json & message) override;
+    virtual void message_received(const json& message) override;
 
-	virtual void register_methods() override;
+    virtual void register_methods() override;
 
-	
+
 private:
-	uint64_t last_seq_ = 0;
+    uint64_t last_seq_ = 0;
 
-	void on_initialize(const json & requested_seq, const json & args);
-	void on_disconnect(const json & request_seq, const json & args);
+    void on_initialize(const json& requested_seq, const json& args);
+    void on_disconnect(const json& request_seq, const json& args);
 };
 
-}//namespace hlasm_plugin::language_server::lsp
+} // namespace hlasm_plugin::language_server::dap
 
 
 #endif

@@ -21,23 +21,26 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-//processor of machine instructions
+// processor of machine instructions
 class mach_processor : public low_language_processor
 {
-	checking::machine_checker checker;
-public:
-	mach_processor(context::hlasm_context& hlasm_ctx, 
-		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider,
-		statement_fields_parser& parser);
+    checking::machine_checker checker;
 
-	virtual void process(context::unique_stmt_ptr stmt) override;
-	virtual void process(context::shared_stmt_ptr stmt) override;
+public:
+    mach_processor(context::hlasm_context& hlasm_ctx,
+        attribute_provider& attr_provider,
+        branching_provider& branch_provider,
+        workspaces::parse_lib_provider& lib_provider,
+        statement_fields_parser& parser);
+
+    virtual void process(context::unique_stmt_ptr stmt) override;
+    virtual void process(context::shared_stmt_ptr stmt) override;
 
 private:
-	void process(rebuilt_statement statement, const op_code& opcode);
+    void process(rebuilt_statement statement, const op_code& opcode);
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif

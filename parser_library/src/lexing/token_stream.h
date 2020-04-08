@@ -15,10 +15,11 @@
 #ifndef HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
 #define HLASMPLUGIN_PARSER_LIBRARY_TOKENSTREAM_H
 
-#include <utility>
 #include <memory>
+#include <utility>
 
 #include "antlr4-runtime.h"
+
 #include "lexer.h"
 
 
@@ -26,55 +27,55 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace lexing {
 
-//custom implementation of antlr token stream
-//helps to control the filtering of the token stream
+// custom implementation of antlr token stream
+// helps to control the filtering of the token stream
 class token_stream : public antlr4::BufferedTokenStream
 {
-	bool enabled_cont_;
-	bool enabled_hidden_;
-	bool needSetup_;
+    bool enabled_cont_;
+    bool enabled_hidden_;
+    bool needSetup_;
+
 public:
-	token_stream(antlr4::TokenSource* token_source);
+    token_stream(antlr4::TokenSource* token_source);
 
-	//enable continuation token in the token stream
-	void enable_continuation();
-	//filter continuation token from the token stream
-	void disable_continuation();
+    // enable continuation token in the token stream
+    void enable_continuation();
+    // filter continuation token from the token stream
+    void disable_continuation();
 
-	//enable hidden channel tokens in the token stream
-	void enable_hidden();
-	//disable hidden token channel
-	void disable_hidden();
+    // enable hidden channel tokens in the token stream
+    void enable_hidden();
+    // disable hidden token channel
+    void disable_hidden();
 
-	antlr4::Token* LT(ssize_t k) override;
+    antlr4::Token* LT(ssize_t k) override;
 
-	std::string getText(const antlr4::misc::Interval& interval) override;
+    std::string getText(const antlr4::misc::Interval& interval) override;
 
-	void rewind_input(lexer::stream_position pos, bool insert_EOLLN);
+    void rewind_input(lexer::stream_position pos, bool insert_EOLLN);
 
-	virtual void reset() override;
-	//prepares this object to append more tokens
-	void append();
+    virtual void reset() override;
+    // prepares this object to append more tokens
+    void append();
 
 protected:
-	virtual ssize_t adjustSeekIndex(size_t i) override;
+    virtual ssize_t adjustSeekIndex(size_t i) override;
 
-	virtual antlr4::Token* LB(size_t k) override;
+    virtual antlr4::Token* LB(size_t k) override;
 
-	virtual void setup() override;
+    virtual void setup() override;
 
-	bool is_on_channel(antlr4::Token* token);
+    bool is_on_channel(antlr4::Token* token);
 
-	size_t next_token_on_channel(size_t i);
+    size_t next_token_on_channel(size_t i);
 
-	size_t previous_token_on_channel(size_t i);
+    size_t previous_token_on_channel(size_t i);
 
 private:
-	std::vector<decltype(_tokens)> tokens_;
-
+    std::vector<decltype(_tokens)> tokens_;
 };
 
-}
-}
-}
+} // namespace lexing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif
