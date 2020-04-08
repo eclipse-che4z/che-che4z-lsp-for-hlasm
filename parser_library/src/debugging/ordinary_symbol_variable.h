@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUGGING_ORDINARY_SYMBOL_VARIABLE_H
 
 #include "variable.h"
-#include "../context/ordinary_assembly/symbol.h"
+#include "context/ordinary_assembly/symbol.h"
 
 namespace hlasm_plugin::parser_library::debugging
 {

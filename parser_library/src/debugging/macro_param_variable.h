@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_DEBUGGING_MACRO_PARAM_VARIABLE_H
 
 #include "variable.h"
-#include "../context/variables/macro_param.h"
+#include "context/variables/macro_param.h"
 
 namespace hlasm_plugin::parser_library::debugging
 {

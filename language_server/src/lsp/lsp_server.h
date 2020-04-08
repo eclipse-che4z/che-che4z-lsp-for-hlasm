@@ -21,7 +21,7 @@
 
 #include "json.hpp"
 
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 #include "../common_types.h"
 #include "../feature.h"
 #include "../server.h"

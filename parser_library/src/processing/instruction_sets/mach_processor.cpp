@@ -14,14 +14,15 @@
 
 #include "mach_processor.h"
 #include "postponed_statement_impl.h"
-#include "../context_manager.h"
-#include "../../context/instruction.h"
-#include "../../parser_impl.h"
+#include "processing/context_manager.h"
+#include "context/instruction.h"
+#include "parsing/parser_impl.h"
 
 #include <algorithm>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 mach_processor::mach_processor(context::hlasm_context& hlasm_ctx,
 	attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider,

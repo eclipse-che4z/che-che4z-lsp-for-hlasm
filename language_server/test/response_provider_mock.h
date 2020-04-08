@@ -14,7 +14,7 @@
 
 #include "gmock/gmock.h"
 
-#include "../src/feature.h"
+#include "feature.h"
 
 using namespace hlasm_plugin::language_server;
 

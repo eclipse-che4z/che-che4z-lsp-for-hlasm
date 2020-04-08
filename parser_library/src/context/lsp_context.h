@@ -15,7 +15,7 @@
 #ifndef CONTEXT_LSP_CONTEXT_H
 #define CONTEXT_LSP_CONTEXT_H
 
-#include "../semantics/highlighting_info.h"
+#include "semantics/highlighting_info.h"
 #include <stack>
 
 namespace hlasm_plugin {

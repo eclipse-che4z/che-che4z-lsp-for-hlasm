@@ -20,12 +20,13 @@
 #include "statement_processors/empty_processor.h"
 #include "statement_providers/macro_statement_provider.h"
 #include "statement_providers/copy_statement_provider.h"
-#include "../parser_impl.h"
+#include "parsing/parser_impl.h"
 
 #include <assert.h>
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
+using namespace hlasm_plugin::parser_library::workspaces;
 
 processing_manager::processing_manager(
 	std::unique_ptr<opencode_provider> base_provider,
@@ -330,5 +331,5 @@ void processing_manager::collect_diags() const
 	for (auto& proc : procs_)
 		collect_diags_from_child(*proc);
 
-	collect_diags_from_child(dynamic_cast<parser_impl&>(*provs_.back()));
+	collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
 }

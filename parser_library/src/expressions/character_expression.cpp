@@ -13,14 +13,12 @@
  */
 
 #include "character_expression.h"
-#include "character_expression.h"
-#include "character_expression.h"
-#include "../ebcdic_encoding.h"
+#include "ebcdic_encoding.h"
 #include <algorithm>
 #include <bitset>
 #include <locale>
 #include "arithmetic_expression.h"
-#include "../error_messages.h"
+#include "error_messages.h"
 
 using namespace hlasm_plugin;
 using namespace parser_library;

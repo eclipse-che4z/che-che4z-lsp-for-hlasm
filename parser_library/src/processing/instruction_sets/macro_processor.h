@@ -16,7 +16,7 @@
 #define PROCESSING_MACRO_PROCESSOR_H
 
 #include "instruction_processor.h"
-#include "../../context/macro.h"
+#include "context/macro.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -33,7 +33,7 @@ class macro_processor : public instruction_processor
 {
 public:
 	macro_processor(context::hlasm_context& hlasm_ctx,
-		attribute_provider& attr_provider, branching_provider& branch_provider, parse_lib_provider& lib_provider);
+		attribute_provider& attr_provider, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider);
 	virtual void process(context::unique_stmt_ptr stmt) override;
 	virtual void process(context::shared_stmt_ptr stmt) override;
 

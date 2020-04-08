@@ -17,7 +17,7 @@
 
 #include <memory>
 #include <vector>
-#include "../include/shared/range.h"
+#include "range.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

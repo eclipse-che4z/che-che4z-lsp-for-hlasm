@@ -18,9 +18,9 @@
 #include <string>
 #include <deque>
 #include "antlr4-runtime.h"
-#include "../context/common_types.h"
-#include "../diagnosable.h"
-#include "../error_messages.h"
+#include "context/common_types.h"
+#include "diagnosable.h"
+#include "error_messages.h"
 
 namespace hlasm_plugin
 {

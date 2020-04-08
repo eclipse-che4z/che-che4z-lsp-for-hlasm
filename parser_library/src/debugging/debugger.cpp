@@ -13,13 +13,17 @@
  */
 
 #include "debugger.h"
-#include "../analyzer.h"
+#include "analyzer.h"
 #include "macro_param_variable.h"
 #include "set_symbol_variable.h"
 #include "ordinary_symbol_variable.h"
 
+using namespace hlasm_plugin::parser_library::workspaces;
+
 namespace hlasm_plugin::parser_library::debugging
 {
+
+
 
 breakpoints debug_config::get_breakpoints(const std::string& source)
 {

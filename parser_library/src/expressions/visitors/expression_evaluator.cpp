@@ -14,8 +14,8 @@
 
 #include "expression_evaluator.h"
 #include "expression_analyzer.h"
-#include "../../processing/context_manager.h"
-#include "../../ebcdic_encoding.h"
+#include "processing/context_manager.h"
+#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::expressions;
@@ -89,17 +89,17 @@ void expression_evaluator::collect_diags() const
 {
 }
 
-antlrcpp::Any expression_evaluator::visitExpr(generated::hlasmparser::ExprContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr(parsing::hlasmparser::ExprContext * ctx)
 {
 	return antlrcpp::Any(expression::evaluate(visit(ctx->expr_p_space_c())));
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_test(generated::hlasmparser::Expr_testContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_test(parsing::hlasmparser::Expr_testContext * ctx)
 {
 	return visit(ctx->expr_statement());
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_statement(generated::hlasmparser::Expr_statementContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_statement(parsing::hlasmparser::Expr_statementContext * ctx)
 {
 	std::string res;
 	
@@ -112,7 +112,7 @@ antlrcpp::Any expression_evaluator::visitExpr_statement(generated::hlasmparser::
 	return res;
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_p(generated::hlasmparser::Expr_pContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_p(parsing::hlasmparser::Expr_pContext * ctx)
 {
 	if (ctx->expr_sContext != nullptr)
 		return visit(ctx->expr_sContext);
@@ -122,7 +122,7 @@ antlrcpp::Any expression_evaluator::visitExpr_p(generated::hlasmparser::Expr_pCo
 		return (-*visitE(ctx->expr_p()));
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_s(generated::hlasmparser::Expr_sContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_s(parsing::hlasmparser::Expr_sContext * ctx)
 {
 	if (ctx->t != nullptr)
 		return visit(ctx->t);
@@ -136,7 +136,7 @@ antlrcpp::Any expression_evaluator::visitExpr_s(generated::hlasmparser::Expr_sCo
 		return (*a - *b);
 }
 
-antlrcpp::Any expression_evaluator::visitTerm_c(generated::hlasmparser::Term_cContext * ctx)
+antlrcpp::Any expression_evaluator::visitTerm_c(parsing::hlasmparser::Term_cContext * ctx)
 {
 	if (ctx->t != nullptr)
 		return visit(ctx->t);
@@ -150,7 +150,7 @@ antlrcpp::Any expression_evaluator::visitTerm_c(generated::hlasmparser::Term_cCo
 		return (*a / *b);
 }
 
-antlrcpp::Any expression_evaluator::visitTerm(generated::hlasmparser::TermContext * ctx)
+antlrcpp::Any expression_evaluator::visitTerm(parsing::hlasmparser::TermContext * ctx)
 {
 
 	if (ctx->var_symbolContext != nullptr)
@@ -198,7 +198,7 @@ antlrcpp::Any expression_evaluator::visitTerm(generated::hlasmparser::TermContex
 	return (expr_ptr)make_arith(0);
 }
 
-antlrcpp::Any expression_evaluator::visitId_sub(generated::hlasmparser::Id_subContext* ctx)
+antlrcpp::Any expression_evaluator::visitId_sub(parsing::hlasmparser::Id_subContext* ctx)
 {
 	auto subscript = visit(ctx->subscriptContext).as <std::vector<expr_ptr>>();
 	if (subscript.empty())
@@ -228,7 +228,7 @@ antlrcpp::Any expression_evaluator::visitId_sub(generated::hlasmparser::Id_subCo
 	}
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_p_comma_c(generated::hlasmparser::Expr_p_comma_cContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_p_comma_c(parsing::hlasmparser::Expr_p_comma_cContext * ctx)
 {
 	std::vector<expr_ptr> exs;
 	if (ctx->exs != nullptr)
@@ -238,7 +238,7 @@ antlrcpp::Any expression_evaluator::visitExpr_p_comma_c(generated::hlasmparser::
 	return exs;
 }
 
-antlrcpp::Any expression_evaluator::visitSubscript(generated::hlasmparser::SubscriptContext * ctx)
+antlrcpp::Any expression_evaluator::visitSubscript(parsing::hlasmparser::SubscriptContext * ctx)
 {
 	if (ctx->children.size() >= 3)
 	{
@@ -248,12 +248,12 @@ antlrcpp::Any expression_evaluator::visitSubscript(generated::hlasmparser::Subsc
 	return std::vector<expr_ptr>();
 }
 
-antlrcpp::Any expression_evaluator::visitString(generated::hlasmparser::StringContext * ctx)
+antlrcpp::Any expression_evaluator::visitString(parsing::hlasmparser::StringContext * ctx)
 {
 	return ctx->string_ch_cContext->value;
 }
 
-antlrcpp::Any expression_evaluator::visitCa_string(generated::hlasmparser::Ca_stringContext * ctx)
+antlrcpp::Any expression_evaluator::visitCa_string(parsing::hlasmparser::Ca_stringContext * ctx)
 {
 	if (ctx->tmp != nullptr)
 		return visit(ctx->tmp).as<char_ptr>()
@@ -262,7 +262,7 @@ antlrcpp::Any expression_evaluator::visitCa_string(generated::hlasmparser::Ca_st
 		return visit(ctx->ca_string_b());
 }
 
-antlrcpp::Any expression_evaluator::visitCa_string_b(generated::hlasmparser::Ca_string_bContext * ctx)
+antlrcpp::Any expression_evaluator::visitCa_string_b(parsing::hlasmparser::Ca_string_bContext * ctx)
 {
 	auto tmp = concatenate(ctx->string_ch_v_c()->chain);
 	auto ex = make_char(tmp);
@@ -274,7 +274,7 @@ antlrcpp::Any expression_evaluator::visitCa_string_b(generated::hlasmparser::Ca_
 	return ex->substring(visit(ctx->ca_dupl_factor()).as<int>(), s, e);
 }
 
-antlrcpp::Any expression_evaluator::visitCa_dupl_factor(generated::hlasmparser::Ca_dupl_factorContext * ctx)
+antlrcpp::Any expression_evaluator::visitCa_dupl_factor(parsing::hlasmparser::Ca_dupl_factorContext * ctx)
 {
 	if (ctx->expr_p() != nullptr)
 		return visit(ctx->expr_p()).as<expr_ptr>()->get_numeric_value();
@@ -282,7 +282,7 @@ antlrcpp::Any expression_evaluator::visitCa_dupl_factor(generated::hlasmparser::
 		return 1;
 }
 
-antlrcpp::Any expression_evaluator::visitExpr_p_space_c(generated::hlasmparser::Expr_p_space_cContext * ctx)
+antlrcpp::Any expression_evaluator::visitExpr_p_space_c(parsing::hlasmparser::Expr_p_space_cContext * ctx)
 {
 	std::deque<expr_ptr> exs;
 	if (ctx->exs != nullptr)
@@ -291,7 +291,7 @@ antlrcpp::Any expression_evaluator::visitExpr_p_space_c(generated::hlasmparser::
 	return exs;
 }
 
-antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::Data_attributeContext * ctx)
+antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Data_attributeContext * ctx)
 {
 	processing::context_manager mngr(eval_ctx_.hlasm_ctx);
 	std::optional<context::SET_t> SET_val;
@@ -412,7 +412,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(generated::hlasmparser::
 	return static_cast<expr_ptr>(make_arith(0));
 }
 
-antlrcpp::Any expression_evaluator::visitNum(generated::hlasmparser::NumContext* ctx)
+antlrcpp::Any expression_evaluator::visitNum(parsing::hlasmparser::NumContext* ctx)
 {
 	return (expr_ptr)make_arith(ctx->value);
 }

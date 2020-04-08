@@ -26,7 +26,7 @@
 #include "../dispatcher.h"
 #include "../stream_helper.h"
 #include "dap_server.h"
-#include "shared/workspace_manager.h"
+#include "workspace_manager.h"
 #include "../logger.h"
 
 

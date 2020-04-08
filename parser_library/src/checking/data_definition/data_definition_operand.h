@@ -15,10 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEFINITION_OPERAND_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEFINITION_OPERAND_H
 
-#include "../operand.h"
+#include "checking/operand.h"
 #include "data_def_type_base.h"
 #include "data_def_fields.h"
-#include "../../diagnostic_collector.h"
+#include "checking/diagnostic_collector.h"
 
 namespace hlasm_plugin::parser_library::checking
 {

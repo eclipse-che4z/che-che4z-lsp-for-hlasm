@@ -17,10 +17,10 @@
 
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
-#include "parser_error_listener.h"
-#include "shared/token_stream.h"
+#include "parsing/parser_error_listener.h"
+#include "lexing/token_stream.h"
 #include "processing/processing_manager.h"
-#include "processor.h"
+#include "workspaces/parse_lib_provider.h"
 #include "diagnosable_ctx.h"
 
 namespace hlasm_plugin {
@@ -32,27 +32,27 @@ class analyzer : public diagnosable_ctx
 	context::ctx_ptr hlasm_ctx_;
 	context::hlasm_context& hlasm_ctx_ref_;
 
-	parser_error_listener listener_;
+	parsing::parser_error_listener listener_;
 
 	semantics::lsp_info_processor lsp_proc_;
 
-	input_source input_;
-	lexer lexer_;
-	token_stream tokens_;
-	generated::hlasmparser* parser_;
+	lexing::input_source input_;
+	lexing::lexer lexer_;
+	lexing::token_stream tokens_;
+	parsing::hlasmparser* parser_;
 
 	processing::processing_manager mngr_;
 public:
-	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, parse_lib_provider& lib_provider, const library_data data, bool collect_hl_info = false);
+	analyzer(const std::string& text, std::string file_name, context::hlasm_context& hlasm_ctx, workspaces::parse_lib_provider& lib_provider, const workspaces::library_data data, bool collect_hl_info = false);
 
 	analyzer(const std::string& text,
 		std::string file_name = "",
-		parse_lib_provider& lib_provider = empty_parse_lib_provider::instance,
+		workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
 		processing::processing_tracer * tracer = nullptr,
 		bool collect_hl_info = false);
 
 	context::hlasm_context& context();
-	generated::hlasmparser& parser();
+	parsing::hlasmparser& parser();
 	semantics::lsp_info_processor& lsp_processor();
 
 	void analyze(std::atomic<bool>* cancel = nullptr);
@@ -63,9 +63,9 @@ private:
 	analyzer(
 		const std::string& text, 
 		std::string file_name, 
-		parse_lib_provider& lib_provider, 
+		workspaces::parse_lib_provider& lib_provider,
 		context::hlasm_context* hlasm_ctx, 
-		const library_data data,
+		const workspaces::library_data data,
 		bool own_ctx,
 		processing::processing_tracer * tracer,
 		bool collect_hl_info);

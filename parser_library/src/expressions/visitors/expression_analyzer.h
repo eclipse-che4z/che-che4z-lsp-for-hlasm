@@ -22,7 +22,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 //visitor for analyzing any undefined symbol attribute references
-class expression_analyzer : public generated::hlasmparserBaseVisitor
+class expression_analyzer : public parsing::hlasmparserBaseVisitor
 {
 	evaluation_context eval_ctx_;
 public:
@@ -35,19 +35,19 @@ public:
 private:
 	std::set<context::id_index> visit_ref(antlr4::ParserRuleContext* expr_context);
 
-	virtual antlrcpp::Any visitExpr(generated::hlasmparser::ExprContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_p(generated::hlasmparser::Expr_pContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_s(generated::hlasmparser::Expr_sContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_p_space_c(generated::hlasmparser::Expr_p_space_cContext* ctx) override;
-	virtual antlrcpp::Any visitTerm_c(generated::hlasmparser::Term_cContext* ctx) override;
-	virtual antlrcpp::Any visitTerm(generated::hlasmparser::TermContext* ctx) override;
-	virtual antlrcpp::Any visitId_sub(generated::hlasmparser::Id_subContext* ctx) override;
-	virtual antlrcpp::Any visitExpr_p_comma_c(generated::hlasmparser::Expr_p_comma_cContext* ctx) override;
-	virtual antlrcpp::Any visitSubscript(generated::hlasmparser::SubscriptContext* ctx) override;
-	virtual antlrcpp::Any visitCa_string(generated::hlasmparser::Ca_stringContext* ctx) override;
-	virtual antlrcpp::Any visitCa_string_b(generated::hlasmparser::Ca_string_bContext* ctx) override;
-	virtual antlrcpp::Any visitCa_dupl_factor(generated::hlasmparser::Ca_dupl_factorContext* ctx) override;
-	virtual antlrcpp::Any visitData_attribute(generated::hlasmparser::Data_attributeContext* ctx) override;
+	virtual antlrcpp::Any visitExpr(parsing::hlasmparser::ExprContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p(parsing::hlasmparser::Expr_pContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_s(parsing::hlasmparser::Expr_sContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p_space_c(parsing::hlasmparser::Expr_p_space_cContext* ctx) override;
+	virtual antlrcpp::Any visitTerm_c(parsing::hlasmparser::Term_cContext* ctx) override;
+	virtual antlrcpp::Any visitTerm(parsing::hlasmparser::TermContext* ctx) override;
+	virtual antlrcpp::Any visitId_sub(parsing::hlasmparser::Id_subContext* ctx) override;
+	virtual antlrcpp::Any visitExpr_p_comma_c(parsing::hlasmparser::Expr_p_comma_cContext* ctx) override;
+	virtual antlrcpp::Any visitSubscript(parsing::hlasmparser::SubscriptContext* ctx) override;
+	virtual antlrcpp::Any visitCa_string(parsing::hlasmparser::Ca_stringContext* ctx) override;
+	virtual antlrcpp::Any visitCa_string_b(parsing::hlasmparser::Ca_string_bContext* ctx) override;
+	virtual antlrcpp::Any visitCa_dupl_factor(parsing::hlasmparser::Ca_dupl_factorContext* ctx) override;
+	virtual antlrcpp::Any visitData_attribute(parsing::hlasmparser::Data_attributeContext* ctx) override;
 };
 
 }
