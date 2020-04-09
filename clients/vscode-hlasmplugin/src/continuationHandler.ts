@@ -15,7 +15,7 @@
 import * as vscode from 'vscode';
 
 import { HLASMSemanticHighlightingFeature } from './hlasmSemanticHighlighting'
-import { LinePositionsInfo, setCursor } from './customEditorCommands'
+import { setCursor } from './customEditorCommands'
 import { getConfig } from './eventsHandler'
 
 /**
@@ -40,40 +40,37 @@ export class ContinuationHandler {
         if (!getConfig<boolean>('continuationHandling', false))
             return;
 
-        const info = new LinePositionsInfo(
-            editor.selection.active,
-            this.highlight.getContinuation(-1, editor.document.uri.toString())
-        );
-
+        const continuationOffset = this.highlight.getContinuation(-1, editor.document.uri.toString());
         const continueColumn = this.highlight.getContinueColumn(editor.document.uri.toString());
+
         // not a continued line, create new continuation
-        if (this.highlight.getContinuation(info.currentPosition.line, editor.document.uri.toString()) == -1) {
-            var lastChar = info.currentPosition.character;
-            if (info.currentPosition.character < info.continuationOffset) {
-                lastChar = editor.document.lineAt(info.currentPosition).text.length;
-                lastChar = (lastChar < info.continuationOffset) ? lastChar : info.continuationOffset;
+        if (this.highlight.getContinuation(editor.selection.active.line, editor.document.uri.toString()) == -1) {
+            var lastChar = editor.selection.active.character;
+            if (editor.selection.active.character < continuationOffset) {
+                lastChar = editor.document.lineAt(editor.selection.active).text.length;
+                lastChar = (lastChar < continuationOffset) ? lastChar : continuationOffset;
                 edit.insert(
-                    new vscode.Position(info.currentPosition.line, lastChar), " ".repeat(info.continuationOffset - lastChar));
+                    new vscode.Position(editor.selection.active.line, lastChar), " ".repeat(continuationOffset - lastChar));
             }
-            const continuationPosition = new vscode.Position(info.currentPosition.line, info.continuationOffset);
+            const continuationPosition = new vscode.Position(editor.selection.active.line, continuationOffset);
             edit.replace(
                 new vscode.Range(
                     continuationPosition,
-                    new vscode.Position(info.currentPosition.line, info.continuationOffset + 1)),
+                    new vscode.Position(editor.selection.active.line, continuationOffset + 1)),
                 "X");
 
             edit.insert(
                 new vscode.Position(
-                    info.currentPosition.line,
-                    editor.document.lineAt(info.currentPosition).text.length),
+                    editor.selection.active.line,
+                    editor.document.lineAt(editor.selection.active).text.length),
                 "\r\n".concat(" ".repeat(continueColumn)));
         }
         // add extra continuation on already continued line
         else
             edit.insert(new vscode.Position(
-                info.currentPosition.line,
-                editor.document.lineAt(info.currentPosition).text.length),
-                "\r\n".concat(" ".repeat(info.continuationOffset).concat("X")));
+                editor.selection.active.line,
+                editor.document.lineAt(editor.selection.active).text.length),
+                "\r\n".concat(" ".repeat(continuationOffset).concat("X")));
     }
 
     // remove continuation from previous line
@@ -81,25 +78,22 @@ export class ContinuationHandler {
         if (!getConfig<boolean>('continuationHandling', false))
             return;
 
-        const info = new LinePositionsInfo(
-            editor.selection.active,
-            this.highlight.getContinuation(-1, editor.document.uri.toString())
-        );
+        const continuationOffset = this.highlight.getContinuation(-1, editor.document.uri.toString());
 
-        if (info.currentPosition.line > 0 &&
-            this.highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) != -1) {
+        if (editor.selection.active.line > 0 &&
+            this.highlight.getContinuation(editor.selection.active.line - 1, editor.document.uri.toString()) != -1) {
             const continuationPosition = new vscode.Position(
-                info.currentPosition.line - 1, info.continuationOffset);
+                editor.selection.active.line - 1, continuationOffset);
             edit.delete(
                 new vscode.Range(
-                    new vscode.Position(info.currentPosition.line, editor.document.lineAt(info.currentPosition).text.length),
+                    new vscode.Position(editor.selection.active.line, editor.document.lineAt(editor.selection.active).text.length),
                     new vscode.Position(
-                        info.currentPosition.line - 1,
-                        editor.document.lineAt(info.currentPosition.line - 1).text.length)));
+                        editor.selection.active.line - 1,
+                        editor.document.lineAt(editor.selection.active.line - 1).text.length)));
 
             edit.replace(new vscode.Range(
                 continuationPosition,
-                new vscode.Position(continuationPosition.line, info.continuationOffset + 1)),
+                new vscode.Position(continuationPosition.line, continuationOffset + 1)),
                 " ");
 
             setCursor(editor, continuationPosition);

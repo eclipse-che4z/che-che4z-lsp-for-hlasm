@@ -8,12 +8,13 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
+              "${workspaceFolder}/lib/test/workspace/",
               "--disable-extensions",
               "--extensionDevelopmentPath=${workspaceFolder}",
               "--extensionTestsPath=${workspaceFolder}/lib/test/suite/index"
             ],
             "outFiles": ["${workspaceFolder}/lib/test/**/*.js"],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "prepareTest"
         },
         {
             "name": "Launch Extension",

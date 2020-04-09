@@ -14,14 +14,14 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
-import * as path from 'path'
+import * as path from 'path';
 
-import { HLASMSemanticHighlightingFeature } from './hlasmSemanticHighlighting'
-import { HlasmConfigurationProvider, getCurrentProgramName, getProgramName } from './debug'
-import { ContinuationHandler } from './continuationHandler'
-import { CustomEditorCommands } from './customEditorCommands'
-import { EventsHandler, getConfig } from './eventsHandler'
-import { ServerFactory } from './serverFactory'
+import { HLASMSemanticHighlightingFeature } from './hlasmSemanticHighlighting';
+import { HlasmConfigurationProvider, getCurrentProgramName, getProgramName } from './debug';
+import { ContinuationHandler } from './continuationHandler';
+import { CustomEditorCommands } from './customEditorCommands';
+import { EventsHandler, getConfig } from './eventsHandler';
+import { ServerFactory } from './serverFactory';
 const useTcp = false;
 
 /**
@@ -53,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // create server options
     var factory = new ServerFactory();
     const serverOptions = await factory.create(useTcp);
-
+    
     //client init
     const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     //asm contribution 
@@ -83,7 +83,7 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
 
     // initialize helpers
     const contHandling = new ContinuationHandler(highlight);
-    const commands = new CustomEditorCommands(highlight);
+    const commands = new CustomEditorCommands();
     const handler = new EventsHandler(completeCommand, highlight);
 
     // register them
@@ -103,15 +103,15 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
-            (editor, edit, args) => commands.type(editor, edit, args)));
+            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(editor,highlight))));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste", 
-            (editor, edit, args) => commands.paste(editor, edit, args)));
+            (editor, edit, args) => commands.insertChars(editor, edit, args,getOffset(editor,highlight))));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut", 
-            (editor, edit) => commands.cut(editor, edit)));
+            (editor, edit) => commands.cut(editor, edit,getOffset(editor,highlight))));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft", 
-            (editor, edit) => commands.deleteLeft(editor, edit)));
+            (editor, edit) => commands.deleteLeft(editor, edit,getOffset(editor,highlight))));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight", 
-            (editor, edit) => commands.deleteRight(editor, edit)));
+            (editor, edit) => commands.deleteRight(editor, edit,getOffset(editor,highlight))));
     }
 
     // register event handlers
@@ -129,4 +129,8 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
+}
+
+function getOffset(editor: vscode.TextEditor, highlight: HLASMSemanticHighlightingFeature): number {
+    return highlight.getContinuation(editor.selection.active.line, editor.document.uri.toString())
 }

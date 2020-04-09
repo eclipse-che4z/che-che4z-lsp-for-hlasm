@@ -35,7 +35,7 @@ export class HLASMLanguageDetection {
     }
 
     //automatic detection function
-    setHlasmLanguage(document: vscode.TextDocument): Boolean {
+    setHlasmLanguage(document: vscode.TextDocument): boolean {
         // check only plain text files
         if (document.languageId == 'plaintext') {
             if (this.checkHlasmLanguage(document)) {
@@ -48,7 +48,7 @@ export class HLASMLanguageDetection {
 
     private checkHlasmLanguage(document: vscode.TextDocument) {
         // check if the current active editor document matches any of the wildcards
-        if (this.configSetup.checkHlasmLanguage(document.uri.path))
+        if (this.configSetup.match(document.uri.path))
             return true;
 
         const text = document.getText();

@@ -41,22 +41,22 @@ export class ConfigurationsHandler {
      * Checks whether the given path matches any of the wildcards
      * If so, it is HLASM
      */
-    checkHlasmLanguage(path: string) {
-        return this.definedExpressions.find(expr => expr.test(path))
+    match(path: string): boolean {
+        return this.definedExpressions.find(expr => expr.test(path)) !== undefined;
     }
 
     /**
      * Checks whether both config files are present
      * Creates them on demand if not
      */
-    checkConfigs() {
+    checkConfigs(): [String, String] {
         // configs exist
         if (this.updateConfigPaths())
-            return;
+            return [this.pgmConfPath, this.procGrpsPath];
 
         const doNotShowAgain = 'Do not track';
         // give option to create proc_grps
-        if (!fs.existsSync(this.procGrpsPath))
+        if (!fs.existsSync(this.procGrpsPath)) {
             vscode.window.showWarningMessage('proc_grps.json not found',
                 ...['Create empty proc_grps.json', doNotShowAgain])
                 .then((selection) => {
@@ -65,15 +65,11 @@ export class ConfigurationsHandler {
                             this.shouldCheckConfigs = false;
                             return;
                         }
-
-                        fs.writeFile(this.procGrpsPath, JSON.stringify(
-                            { "pgroups": [{ "name": "", "libs": [""] }] }
-                            , null, 2), () => { });
-                        vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.procGrpsPath));
+                        this.createProcTemplate();
                     }
                 });
-
-        if (!fs.existsSync(this.pgmConfPath))
+        }
+        if (!fs.existsSync(this.pgmConfPath)) {
             vscode.window.showWarningMessage('pgm_conf.json not found',
                 ...['Create empty pgm_conf.json', 'Create pgm_conf.json with this file', doNotShowAgain])
                 .then((selection) => {
@@ -82,26 +78,21 @@ export class ConfigurationsHandler {
                             this.shouldCheckConfigs = false;
                             return;
                         }
-
-                        var program_name = "";
-                        if (selection == "Create pgm_conf.json with this file")
-                            program_name = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
-                        fs.writeFile(this.pgmConfPath, JSON.stringify(
-                            { "pgms": [{ "program": program_name, "pgroup": "" }], "alwaysRecognize": [] }
-                            , null, 2), () => { });
-                        vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.pgmConfPath));
+                        this.createPgmTemplate(selection == 'Create empty pgm_conf.json');
                     }
                 });
+        }
+        return [this.pgmConfPath, this.procGrpsPath];
     }
 
     // update wildcards when pgm conf changes (on save)
-    updateWildcards(reloadedFile: String = undefined) {
+    updateWildcards(reloadedFile: String = undefined): RegExp[] {
         // the reloaded file is not a config file
         if (reloadedFile && reloadedFile != this.pgmConfPath && reloadedFile != this.procGrpsPath)
-            return;
+            return this.definedExpressions;
         // configs do not exist
         if (!this.updateConfigPaths())
-            return;
+            return [];
 
         //clear expressions
         this.definedExpressions = [];
@@ -111,7 +102,7 @@ export class ConfigurationsHandler {
         // convert each pgm to regex
         if (content.pgms) {
             (content.pgms as any[]).forEach(pgm => {
-                const regex = this.convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + pgm);
+                const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pgm.program as string));
                 if (regex)
                     this.definedExpressions.push(regex);
             });
@@ -120,7 +111,7 @@ export class ConfigurationsHandler {
         // convert each wildcard to regex
         if (content.alwaysRecognize) {
             (content.alwaysRecognize as string[]).forEach(strExpr => {
-                const regex = this.convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + strExpr);
+                const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, strExpr));
                 if (regex)
                     this.definedExpressions.push(regex);
             });
@@ -132,16 +123,34 @@ export class ConfigurationsHandler {
             (content.pgroups as any[]).forEach(pgroup => {
                 if (pgroup.libs)
                     (pgroup.libs as string[]).forEach(lib => {
-                        const regex = this.convertWildcardToRegex(vscode.workspace.workspaceFolders[0].uri.path + "/" + lib + "/" + '*');
+                        const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, lib,  '*'));
                         if (regex)
                             this.definedExpressions.push(regex);
                     })
             });
         }
+        return this.definedExpressions;
+    }
+
+    private createPgmTemplate(empty: boolean) {
+        var programName = '';
+        if (!empty)
+            programName = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
+        fs.writeFileSync(this.pgmConfPath, JSON.stringify(
+            { "pgms": [{ "program": programName, "pgroup": "" }], "alwaysRecognize": [] }
+            , null, 2));
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.pgmConfPath));
+    }
+
+    private createProcTemplate() {
+        fs.writeFile(this.procGrpsPath, JSON.stringify(
+            { "pgroups": [{ "name": "", "libs": [""] }] }
+            , null, 2), () => { });
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.procGrpsPath));
     }
 
     // converts wildcards to regexes
-    private convertWildcardToRegex(wildcard: string) {
+    private convertWildcardToRegex(wildcard: string) : RegExp {
         var regexStr = wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => { return "\\" + char });
         regexStr = regexStr.replace(/\?/g, ".");
         regexStr = regexStr.replace(/\*|\+/g, (char) => { return "." + char + "?"; });

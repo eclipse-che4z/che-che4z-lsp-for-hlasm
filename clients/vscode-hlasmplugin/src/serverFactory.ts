@@ -13,7 +13,7 @@
  */
 
 import * as vscodelc from 'vscode-languageclient';
-import * as Net from 'net';
+import * as net from 'net';
 import * as fork from 'child_process'
 import * as path from 'path'
 
@@ -36,13 +36,9 @@ export class ServerFactory {
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
                 ["-p", this.dapPort.toString(), lspPort.toString()]);
     
-            //set the tcp communication
-            let connectionInfo = {
-                port: lspPort,
-                host: 'localhost'
-            };
             return () => {
-                let socket = Net.connect(connectionInfo);
+                let socket = net.connect(lspPort,'localhost');
+                socket.localPort
                 let result: vscodelc.StreamInfo = {
                     writer: socket,
                     reader: socket
@@ -61,10 +57,10 @@ export class ServerFactory {
 
     // returns random free port
     private getPort = () => new Promise<number>((resolve, reject) => {
-        var srv = Net.createServer();
+        var srv = net.createServer();
         srv.unref();
         srv.listen(0, () => {
-            resolve((srv.address() as Net.AddressInfo).port);
+            resolve((srv.address() as net.AddressInfo).port);
             srv.close();
         });
     });

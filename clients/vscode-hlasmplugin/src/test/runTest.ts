@@ -1,22 +1,37 @@
-import * as path from 'path';
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
 
+import * as path from 'path';
 import { runTests } from 'vscode-test';
+import { TestOptions } from 'vscode-test/out/runTest';
 
 async function main() {
 	try {
-		// The folder containing the Extension Manifest package.json
-		// Passed to `--extensionDevelopmentPath`
+		// prepare development and tests paths
 		const extensionDevelopmentPath = path.resolve(__dirname, '../../');
-
-		// The path to the extension test script
-		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
-		
-		// Download VS Code, unzip it and run the integration test
-		await runTests({ extensionDevelopmentPath, extensionTestsPath });
+		const launchArgs = [path.resolve(__dirname, './workspace/')];
+		const options: TestOptions = {
+			extensionDevelopmentPath,
+			extensionTestsPath,
+			launchArgs
+		}
+		// run tests
+		await runTests(options);
 	} catch (err) {
-		console.error('Failed to run tests');
-		process.exit(1);
+		console.error('Tests Failed');
+		process.exit(0);
 	}
 }
 

@@ -1,0 +1,46 @@
+import * as assert from 'assert';
+import * as vscodelc from 'vscode-languageclient';
+import * as glob from 'glob';
+import * as net from 'net';
+
+import { ServerFactory } from '../../serverFactory'
+
+suite('ServerFactory Test Suite', () => {
+    var factory = new ServerFactory();
+
+	test('TCP server options test', (done) => {
+        // create TCP server options
+        factory.create(true).then((options) => {;
+            (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
+                // retrieve one of the sockets
+                var socket = <net.Socket>(streamInfoOptions.writer);
+                // when the socket is connected, check its address and port
+                socket.on('connect', () => {
+                    assert.equal(socket.remoteAddress, '127.0.0.1');
+                    assert.notEqual(socket.remotePort, factory.dapPort);
+                    assert.ok(socket.remotePort > 1024 && socket.remotePort < 65535);
+                    done();
+                });
+            });
+        });
+	}).slow(2000);
+	
+	test('non TCP server options test', async () => {
+        // create standard server options
+        const options = await factory.create(false);
+        // retrieve executable
+        const execOptions = <vscodelc.Executable>(options);
+        // check command
+        glob(execOptions.command+'*',(err, matches) => {
+            assert.ok(matches.length > 0);
+        });
+        // check port arguments
+        assert.equal(execOptions.args.length,2);
+        assert.equal(execOptions.args[0], '-p');
+        assert.equal(execOptions.args[1], factory.dapPort.toString());
+    });
+    
+    test('DAP port test', () => {
+        assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
+    })
+});
