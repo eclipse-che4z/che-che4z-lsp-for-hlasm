@@ -15,7 +15,6 @@
 import * as vscode from 'vscode';
 
 import { HLASMSemanticHighlightingFeature } from './hlasmSemanticHighlighting'
-import { LinePositionsInfo } from './customEditorCommands'
 import { ConfigurationsHandler } from './configurationsHandler'
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
 
@@ -74,19 +73,14 @@ export class EventsHandler {
                 return;
 
             const change = event.contentChanges[0].text;
-            const info = new LinePositionsInfo(
-                editor.selection.active,
-                this.highlight.getContinuation(editor.selection.active.line, editor.document.uri.toString())
-            );
-
             const currentLine = editor.document.getText(
                 new vscode.Range(
-                    new vscode.Position(info.currentPosition.line, 0),
-                    info.currentPosition));
+                    new vscode.Position(editor.selection.active.line, 0),
+                    editor.selection.active));
 
             const notContinued =
-                info.currentPosition.line == 0 ||
-                this.highlight.getContinuation(info.currentPosition.line - 1, editor.document.uri.toString()) == -1;
+                editor.selection.active.line == 0 ||
+                this.highlight.getContinuation(editor.selection.active.line - 1, editor.document.uri.toString()) == -1;
 
             if ((currentLine != "" &&
                 this.isTrigger.test(change) &&

@@ -35,6 +35,19 @@
 
             // use the standard tsc in watch mode problem matcher to find compile problems in the output.
             "problemMatcher": "$tsc-watch"
+        },
+        {
+            "label": "prepareTest",
+            "dependsOn": [
+                "npm",
+                "copyWorkspace"
+            ]
+        },
+        {
+            "label": "copyWorkspace",
+            "command": "node",
+            "type": "shell",
+            "args": ["./build/bin/copyWorkspace.js"]
         }
     ]
 }
