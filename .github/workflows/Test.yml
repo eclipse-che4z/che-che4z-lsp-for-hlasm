@@ -12,7 +12,7 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Clang build - ASAN, UBSAN
+name: Check
 on:
   push:
     branches:
@@ -25,7 +25,7 @@ on:
 jobs:
   
   clang:
-      name: Clang build - ASAN, UBSAN
+      name: Clang ASAN, UBSAN
       runs-on: ubuntu-18.04
       
       steps:
@@ -38,3 +38,18 @@ jobs:
         run: cd build && cmake --build .
       - name: Test
         run: cd build/bin && ./server_test && ./library_test
+  
+  clang-format-check:
+      name: Code format
+      runs-on: ubuntu-18.04
+      
+      steps:
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install clang-format-9
+      - name: Format check
+        run:  clang-format-9 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+      - name: Upload clang-format-output.txt
+        uses: actions/upload-artifact@v1
+        with:
+          name: clang-format-output
+          path: clang-format-output.txt
