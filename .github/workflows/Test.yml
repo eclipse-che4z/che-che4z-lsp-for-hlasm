@@ -44,10 +44,18 @@ jobs:
       runs-on: ubuntu-18.04
       
       steps:
+      - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install clang-format-9
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
+          sudo apt-get update
+          sudo apt-get install -y clang-format-10
+      #Change the options in clang format that make clang-format-10 output different source than clang-format-9
+      - name: Clang format 10 compatiblity
+        run: echo "SpaceInEmptyBlock: false" >> .clang-format
       - name: Format check
-        run:  clang-format-9 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run:  clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
         uses: actions/upload-artifact@v1
         with:
