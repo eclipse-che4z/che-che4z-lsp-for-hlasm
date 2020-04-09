@@ -12,16 +12,17 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "parser_library.h"
+
 #include <iostream>
 
-#include "parser_library.h"
-#include "lexing/token_stream.h"
-#include "parsing/parser_tools.h"
+#include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
-#include "analyzer.h"
-#include "workspaces/workspace.h"
+#include "lexing/token_stream.h"
+#include "parsing/parser_tools.h"
 #include "sstream"
+#include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
@@ -29,47 +30,51 @@ using namespace hlasm_plugin::parser_library::parsing;
 namespace hlasm_plugin {
 namespace parser_library {
 
-//Parses specified string and outputs analysis to standard out.
-//Used for testing purposes.
-void parser_library::parse(const std::string & src)
+// Parses specified string and outputs analysis to standard out.
+// Used for testing purposes.
+void parser_library::parse(const std::string& src)
 {
-	analyzer a(src);
+    analyzer a(src);
 
-	auto l = new antlr4::DiagnosticErrorListener();
-	a.parser().addErrorListener(l);
-	a.parser().getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL_EXACT_AMBIG_DETECTION);
+    auto l = new antlr4::DiagnosticErrorListener();
+    a.parser().addErrorListener(l);
+    a.parser().getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(
+        antlr4::atn::PredictionMode::LL_EXACT_AMBIG_DETECTION);
 
-	a.analyze();
+    a.analyze();
 
-	auto tree = a.parser().tree;
-	auto vocab = a.parser().getVocabulary();
-	for (auto && token : dynamic_cast<antlr4::BufferedTokenStream*>(a.parser().getTokenStream())->getTokens())
-	{
-		auto type = token->getType();
-		std::cout << vocab.getSymbolicName(type);
-		if (type != lexer::Tokens::EOLLN && type != lexer::Tokens::SPACE && type != lexer::Tokens::CONTINUATION && type != lexer::Tokens::IGNORED) std::cout << "---" << "\"" << token->getText() << "\"";
-		std::cout << std::endl;
-	}
-	std::cout << l << std::endl;
+    auto tree = a.parser().tree;
+    auto vocab = a.parser().getVocabulary();
+    for (auto&& token : dynamic_cast<antlr4::BufferedTokenStream*>(a.parser().getTokenStream())->getTokens())
+    {
+        auto type = token->getType();
+        std::cout << vocab.getSymbolicName(type);
+        if (type != lexer::Tokens::EOLLN && type != lexer::Tokens::SPACE && type != lexer::Tokens::CONTINUATION
+            && type != lexer::Tokens::IGNORED)
+            std::cout << "---"
+                      << "\"" << token->getText() << "\"";
+        std::cout << std::endl;
+    }
+    std::cout << l << std::endl;
 
-	try
-	{
-		std::stringstream ss;
-		parsing::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
-		mytree.out_tree(ss);
+    try
+    {
+        std::stringstream ss;
+        parsing::useful_tree mytree(tree, vocab, a.parser().getRuleNames());
+        mytree.out_tree(ss);
 
-		std::cout << ss.str();
-	}
-	catch(...) 
-	{
-		std::cout << "tree could not be visualized" << std::endl;
-	}
-	
-	a.collect_diags();
-	for (auto& diag : a.diags())
-	{
-		std::cout << diag.diag_range.start.line << ": " << diag.message << "\n";
-	}
+        std::cout << ss.str();
+    }
+    catch (...)
+    {
+        std::cout << "tree could not be visualized" << std::endl;
+    }
+
+    a.collect_diags();
+    for (auto& diag : a.diags())
+    {
+        std::cout << diag.diag_range.start.line << ": " << diag.message << "\n";
+    }
 }
-}
-}
+} // namespace parser_library
+} // namespace hlasm_plugin

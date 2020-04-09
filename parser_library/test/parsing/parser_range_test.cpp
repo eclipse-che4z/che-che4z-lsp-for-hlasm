@@ -12,13 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-//Not available until parser can be tested for ranges.
+// Not available until parser can be tested for ranges.
 #if false
 
-#include "gtest/gtest.h"
+#    include "gtest/gtest.h"
 
-#include "common_testing.h"
-#include "parser_impl.h"
+#    include "common_testing.h"
+#    include "parser_impl.h"
 
 //test for correctness of parsed operand and remark ranges
 

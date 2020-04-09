@@ -18,7 +18,7 @@
 
 TEST(stability_test, entry_1)
 {
-	std::string input(R"(:'0:', A $sMNOP A
+    std::string input(R"(:'0:', A $sMNOP A
 T (.~A
 n N ICT
 M(A la s
@@ -39,8 +39,8 @@ A la s
 ;
 N ORG (.(. ))C )");
 
-	analyzer a(input);
-	a.analyze();
+    analyzer a(input);
+    a.analyze();
 }
 
 TEST(stability_test, entry_2)

@@ -23,33 +23,35 @@ namespace hlasm_plugin::parser_library {
 class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
 public:
-	virtual workspaces::parse_result parse_library(const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
-	{
-		(void)library;
+    virtual workspaces::parse_result parse_library(
+        const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
+    {
+        (void)library;
 
-		if (data.proc_kind == processing::processing_kind::MACRO)
-		{
-			analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);
-			a.analyze();
-		}
-		else
-		{
-			analyzer a(copy_contents, COPY_FILE, hlasm_ctx, *this, data);
-			a.analyze();
-		}
-		return true;
-	}
-	virtual bool has_library(const std::string&, context::hlasm_context&) const override { return true; }
+        if (data.proc_kind == processing::processing_kind::MACRO)
+        {
+            analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);
+            a.analyze();
+        }
+        else
+        {
+            analyzer a(copy_contents, COPY_FILE, hlasm_ctx, *this, data);
+            a.analyze();
+        }
+        return true;
+    }
+    virtual bool has_library(const std::string&, context::hlasm_context&) const override { return true; }
+
 private:
-	const std::string macro_contents =
-		R"(   MACRO
+    const std::string macro_contents =
+        R"(   MACRO
        MAC   &VAR
        LR    &VAR,&VAR
        MEND
 )";
-	const std::string copy_contents =
-		R"(R2 EQU 2
+    const std::string copy_contents =
+        R"(R2 EQU 2
 			LR R2,R2)";
 };
 
-}
+} // namespace hlasm_plugin::parser_library

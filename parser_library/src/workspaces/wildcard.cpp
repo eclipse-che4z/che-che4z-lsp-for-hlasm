@@ -13,6 +13,7 @@
  */
 
 #include "wildcard.h"
+
 #include <cassert>
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -27,7 +28,7 @@ std::regex wildcard2regex(const std::string& wildcard)
     regex_str = std::regex_replace(regex_str, escape, "\\$1");
     regex_str = std::regex_replace(regex_str, question, ".");
     regex_str = std::regex_replace(regex_str, nongreedy, ".$1?");
-    return	std::regex(regex_str);
+    return std::regex(regex_str);
 }
 
-}
+} // namespace hlasm_plugin::parser_library::workspaces

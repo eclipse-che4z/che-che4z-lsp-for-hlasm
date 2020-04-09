@@ -15,70 +15,73 @@
 #ifndef CONTEXT_ADDRESS_RESOLVER_H
 #define CONTEXT_ADDRESS_RESOLVER_H
 
-#include "dependable.h"
 #include "address.h"
+#include "dependable.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-struct address_resolver_base : public resolvable {};
+struct address_resolver_base : public resolvable
+{};
 
 using addr_res_ptr = std::unique_ptr<address_resolver_base>;
 
-//structure wrapping address providing resolvable interface to it
+// structure wrapping address providing resolvable interface to it
 struct address_resolver : public address_resolver_base
 {
-	explicit address_resolver(address dependency_address);
+    explicit address_resolver(address dependency_address);
 
-	dependency_collector get_dependencies(dependency_solver& solver) const override;
+    dependency_collector get_dependencies(dependency_solver& solver) const override;
 
-	symbol_value resolve(dependency_solver& solver) const override;
+    symbol_value resolve(dependency_solver& solver) const override;
 
 protected:
-	address dependency_address;
-	dependency_collector cached_deps_;
-	static address extract_dep_address(const address& addr);
+    address dependency_address;
+    dependency_collector cached_deps_;
+    static address extract_dep_address(const address& addr);
 };
 
-//provides resolvable interface for address that require certain alignment
+// provides resolvable interface for address that require certain alignment
 struct alignable_address_resolver : public address_resolver
 {
-	alignable_address_resolver(address dependency_address, std::vector<address> base_addrs, size_t boundary, int offset);
+    alignable_address_resolver(
+        address dependency_address, std::vector<address> base_addrs, size_t boundary, int offset);
 
-	symbol_value resolve(dependency_solver& solver) const override;
+    symbol_value resolve(dependency_solver& solver) const override;
 
 protected:
-	std::vector<address> base_addrs;
-	size_t boundary;
-	int offset;
-	symbol_value resolve(const address& addr) const;
-	alignable_address_resolver(address dependency_address, std::vector<address>& base_addrs, size_t boundary, int offset, bool);
+    std::vector<address> base_addrs;
+    size_t boundary;
+    int offset;
+    symbol_value resolve(const address& addr) const;
+    alignable_address_resolver(
+        address dependency_address, std::vector<address>& base_addrs, size_t boundary, int offset, bool);
 };
 
-//provides resolvable interface for the agregate of addresses
+// provides resolvable interface for the agregate of addresses
 struct aggregate_address_resolver : public alignable_address_resolver
 {
-	aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset);
+    aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset);
 
-	symbol_value resolve(dependency_solver& solver) const override;
+    symbol_value resolve(dependency_solver& solver) const override;
 };
 
-//provides resolvable interface for absolute part of the address
+// provides resolvable interface for absolute part of the address
 struct alignable_address_abs_part_resolver : public address_resolver_base
 {
-	alignable_address_abs_part_resolver(const resolvable* dependency_source);
+    alignable_address_abs_part_resolver(const resolvable* dependency_source);
 
-	dependency_collector get_dependencies(dependency_solver& solver) const override;
+    dependency_collector get_dependencies(dependency_solver& solver) const override;
 
-	symbol_value resolve(dependency_solver& solver) const override;
+    symbol_value resolve(dependency_solver& solver) const override;
 
 private:
-	const resolvable* dependency_source_;
+    const resolvable* dependency_source_;
 };
 
-}
-}
-}
+} // namespace context
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

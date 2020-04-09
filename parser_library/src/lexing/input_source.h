@@ -15,38 +15,39 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMINPUTSOURCE_H
 #define HLASMPLUGIN_PARSER_HLASMINPUTSOURCE_H
 
-#include "parser_library_export.h"
 #include "antlr4-runtime.h"
+
+#include "parser_library_export.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace lexing {
 /*
-	custom ANTLRInputStream
-	supports input rewinding, appending and resetting
+        custom ANTLRInputStream
+        supports input rewinding, appending and resetting
 */
 class input_source : public antlr4::ANTLRInputStream
 {
 public:
-	input_source(const std::string& input);
+    input_source(const std::string& input);
 
-	void append(const UTF32String& str);
-	void append(const std::string& str);
-	using antlr4::ANTLRInputStream::reset;
-	void reset(const std::string& str);
-	void rewind_input(size_t index);
+    void append(const UTF32String& str);
+    void append(const std::string& str);
+    using antlr4::ANTLRInputStream::reset;
+    void reset(const std::string& str);
+    void rewind_input(size_t index);
 
-	input_source(const input_source&) = delete;
-	input_source& operator=(const input_source&) = delete;
-	input_source& operator=(input_source&&) = delete;
-	input_source(input_source&&) = delete;
+    input_source(const input_source&) = delete;
+    input_source& operator=(const input_source&) = delete;
+    input_source& operator=(input_source&&) = delete;
+    input_source(input_source&&) = delete;
 
-	virtual std::string getText(const antlr4::misc::Interval& interval) override;
+    virtual std::string getText(const antlr4::misc::Interval& interval) override;
 
-	virtual ~input_source() = default;
+    virtual ~input_source() = default;
 };
-}
-}
-}
+} // namespace lexing
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

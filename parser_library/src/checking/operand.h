@@ -16,33 +16,35 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_OPERAND_H
 
 #include <memory>
+
 #include "range.h"
 
-namespace hlasm_plugin::parser_library::checking
-{
+namespace hlasm_plugin::parser_library::checking {
 
-//Abstract ancestor class for all operands that are prepared for checking.
+// Abstract ancestor class for all operands that are prepared for checking.
 class operand
 {
 public:
-	operand() = default;
-	operand(range operand_range) : operand_range(operand_range) {}
-	range operand_range;
+    operand() = default;
+    operand(range operand_range)
+        : operand_range(operand_range)
+    {}
+    range operand_range;
 
-	virtual ~operand() = default;
+    virtual ~operand() = default;
 };
 
 using check_op_ptr = std::unique_ptr<operand>;
 
-//Abstract ancestor class for all assembler operands that are prepared for checking.
+// Abstract ancestor class for all assembler operands that are prepared for checking.
 class asm_operand : public virtual operand
 {
 public:
-	asm_operand() = default;
-	virtual ~asm_operand() = default;
+    asm_operand() = default;
+    virtual ~asm_operand() = default;
 };
 
 
-}
+} // namespace hlasm_plugin::parser_library::checking
 
 #endif

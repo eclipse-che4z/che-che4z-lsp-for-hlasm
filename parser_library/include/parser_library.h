@@ -15,26 +15,27 @@
 #ifndef HLASMPLUGIN_PARSER_LIBRARY_H
 #define HLASMPLUGIN_PARSER_LIBRARY_H
 
-//Exports a method that parses a string and writes results to standard output.
-//Used for development purposes only.
+// Exports a method that parses a string and writes results to standard output.
+// Used for development purposes only.
 
 #include <string>
 
-#include "parser_library_export.h"
 #include "antlr4-runtime.h"
+
+#include "parser_library_export.h"
 
 
 namespace hlasm_plugin {
-	namespace parser_library {
+namespace parser_library {
 
-		class PARSER_LIBRARY_EXPORT parser_library
-		{
-		public:
-			parser_library() {};
-			void parse(const std::string &);
-		};
-	} //namespace parser_library
-} //namespace hlasm_plugin
+class PARSER_LIBRARY_EXPORT parser_library
+{
+public:
+    parser_library() {};
+    void parse(const std::string&);
+};
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 
 #endif

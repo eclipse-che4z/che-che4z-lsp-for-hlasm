@@ -23,36 +23,51 @@ namespace processing {
 
 enum class processing_kind : uint8_t
 {
-	ORDINARY, LOOKAHEAD, MACRO, COPY
+    ORDINARY,
+    LOOKAHEAD,
+    MACRO,
+    COPY
 };
 
 enum class processing_form : uint8_t
 {
-	MACH, ASM, MAC, CA, DAT, IGNORED, DEFERRED, UNKNOWN
+    MACH,
+    ASM,
+    MAC,
+    CA,
+    DAT,
+    IGNORED,
+    DEFERRED,
+    UNKNOWN
 };
 
 enum class operand_occurence : uint8_t
 {
-	PRESENT,ABSENT
+    PRESENT,
+    ABSENT
 };
 
-//structure respresenting in which fashion should be statement processed
+// structure respresenting in which fashion should be statement processed
 struct processing_format
 {
-	processing_format(processing_kind kind, processing_form form, operand_occurence occurence = operand_occurence::PRESENT)
-		: kind(kind), form(form), occurence(occurence) {}
+    processing_format(
+        processing_kind kind, processing_form form, operand_occurence occurence = operand_occurence::PRESENT)
+        : kind(kind)
+        , form(form)
+        , occurence(occurence)
+    {}
 
-	bool operator==(const processing_format& oth) const
-	{
-		return kind == oth.kind && form == oth.form && occurence == oth.occurence;
-	}
+    bool operator==(const processing_format& oth) const
+    {
+        return kind == oth.kind && form == oth.form && occurence == oth.occurence;
+    }
 
-	processing_kind kind;
-	processing_form form;
-	operand_occurence occurence;
+    processing_kind kind;
+    processing_form form;
+    operand_occurence occurence;
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif

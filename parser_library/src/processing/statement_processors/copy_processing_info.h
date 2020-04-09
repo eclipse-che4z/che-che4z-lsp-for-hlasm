@@ -22,23 +22,23 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-//data to start copy_processor
+// data to start copy_processor
 struct copy_start_data
 {
-	context::id_index member_name;
+    context::id_index member_name;
 };
 
-//result of copy_processor
+// result of copy_processor
 struct copy_processing_result
 {
-	context::statement_block definition;
-	location definition_location;
-	context::id_index member_name;
+    context::statement_block definition;
+    location definition_location;
+    context::id_index member_name;
 
-	bool invalid_member;
+    bool invalid_member;
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif
