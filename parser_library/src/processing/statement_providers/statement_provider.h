@@ -26,25 +26,27 @@ namespace processing {
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
 
-//interface for statement providers
-//till they are finished they provide statements to statement processors
+// interface for statement providers
+// till they are finished they provide statements to statement processors
 class statement_provider
 {
 public:
-	const statement_provider_kind kind;
+    const statement_provider_kind kind;
 
-	statement_provider(const statement_provider_kind kind) : kind(kind) {}
+    statement_provider(const statement_provider_kind kind)
+        : kind(kind)
+    {}
 
-	//processes next statement with help of a processor
-	virtual void process_next(statement_processor& processor) = 0;
+    // processes next statement with help of a processor
+    virtual void process_next(statement_processor& processor) = 0;
 
-	//checks whether provider has finished
-	virtual bool finished() const = 0;
+    // checks whether provider has finished
+    virtual bool finished() const = 0;
 
-	virtual ~statement_provider() = default;
+    virtual ~statement_provider() = default;
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif

@@ -15,17 +15,17 @@
 #ifndef HLASMPLUGIN_PARSER_HLASMEBCDIC_H
 #define HLASMPLUGIN_PARSER_HLASMEBCDIC_H
 
-#include  <string>
+#include <string>
 
 namespace hlasm_plugin {
 namespace parser_library {
 
-//Class that provides support for EBCDIC encoding.
+// Class that provides support for EBCDIC encoding.
 class ebcdic_encoding
 {
 public:
-	static constexpr unsigned char SUB = 26;
-
+    static constexpr unsigned char SUB = 26;
+    // clang-format off
 	static constexpr unsigned char a2e[256] = {
 					0, 1, 2, 3, 55, 45, 46, 47, 22, 5, 37, 11, 12, 13, 14, 15,
 					16, 17, 18, 19, 60, 61, 50, 38, 24, 25, 63, 39, 28, 29, 30, 31,
@@ -63,30 +63,26 @@ public:
 					92, 159, 83, 84, 85, 86, 87, 88, 89, 90, 244, 245, 246, 247, 248, 249,
 					48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 250, 251, 252, 253, 254, 255
 	};
+    // clang-format on
 
-	//Converts a UTF-8 character to ASCII. Characters that do not
-	//have representation in ASCII are replaced with ebcdic_encoding::SUB
-	//Moves pointer forward by L-1 bytes, where L is length of character
-	//in UTF-8 encoding.
-	static unsigned char to_pseudoascii(const char*& c);
+    // Converts a UTF-8 character to ASCII. Characters that do not have representation in ASCII are replaced with
+    // ebcdic_encoding::SUB Moves pointer forward by L-1 bytes, where L is length of character in UTF-8 encoding.
+    static unsigned char to_pseudoascii(const char*& c);
 
-	//Converts an ASCII character to EBCDIC character.
-	static unsigned char to_ebcdic(unsigned char c);
+    // Converts an ASCII character to EBCDIC character.
+    static unsigned char to_ebcdic(unsigned char c);
 
-	//Converts UTF-8 string to EBCDIC string.
-	static std::string to_ebcdic(const std::string& s);
-	//Converts EBCDIC character to UTF-8 character.
-	static std::string to_ascii(unsigned char c);
-	//Converts EBCDIC string to UTF-8 string.
-	static std::string to_ascii(const std::string& s);
+    // Converts UTF-8 string to EBCDIC string.
+    static std::string to_ebcdic(const std::string& s);
+    // Converts EBCDIC character to UTF-8 character.
+    static std::string to_ascii(unsigned char c);
+    // Converts EBCDIC string to UTF-8 string.
+    static std::string to_ascii(const std::string& s);
 };
 
-inline unsigned char operator ""_ebcdic(char c)
-{
-	return ebcdic_encoding::a2e[static_cast<unsigned char>(c)];
-}
+inline unsigned char operator""_ebcdic(char c) { return ebcdic_encoding::a2e[static_cast<unsigned char>(c)]; }
 
-}
-}
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

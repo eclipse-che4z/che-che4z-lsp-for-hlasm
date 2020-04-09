@@ -15,52 +15,67 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H
 
-//This file contains definitions of types that the workspace
-//manager uses to pass data in and out of parser library.
-//Most of them use pimpl to hide their implementation somewhere
-//in the library.
-//Most of the types are C++ representation of LSP/DAP data types.
+// This file contains definitions of types that the workspace
+// manager uses to pass data in and out of parser library.
+// Most of them use pimpl to hide their implementation somewhere
+// in the library.
+// Most of the types are C++ representation of LSP/DAP data types.
 #include <cstdint>
 #include <cstring>
 
+#include "c_view_array.h"
 #include "parser_library_export.h"
 #include "range.h"
-#include "c_view_array.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4661)
 
 namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT string_array 
+struct PARSER_LIBRARY_EXPORT string_array
 {
-	string_array(const char** arr, size_t size);
+    string_array(const char** arr, size_t size);
 
-	const char** arr;
-	size_t size;
+    const char** arr;
+    size_t size;
 };
 
 using version_t = uint64_t;
 
 namespace context {
-	class completion_item_s;
+class completion_item_s;
 }
 
 namespace semantics {
-	struct position_uri_s;
-	struct completion_list_s;
-	struct highlighting_info;
-	enum class PARSER_LIBRARY_EXPORT hl_scopes { label, instruction, remark, ignored, comment, continuation, seq_symbol, var_symbol, operator_symbol, string, number, operand, data_def_type, data_def_extension };
-}
-
-namespace debugging
+struct position_uri_s;
+struct completion_list_s;
+struct highlighting_info;
+enum class PARSER_LIBRARY_EXPORT hl_scopes
 {
+    label,
+    instruction,
+    remark,
+    ignored,
+    comment,
+    continuation,
+    seq_symbol,
+    var_symbol,
+    operator_symbol,
+    string,
+    number,
+    operand,
+    data_def_type,
+    data_def_extension
+};
+} // namespace semantics
 
-	struct stack_frame;
-	struct source;
-	struct scope;
-	class variable;
-}
+namespace debugging {
+
+struct stack_frame;
+struct source;
+struct scope;
+class variable;
+} // namespace debugging
 
 namespace workspaces {
 class processor_file;
@@ -72,93 +87,104 @@ using file_id = workspaces::processor_file*;
 
 struct PARSER_LIBRARY_EXPORT completion_item
 {
-	completion_item(context::completion_item_s& info);
+    completion_item(context::completion_item_s& info);
 
-	const char * label();
-	size_t kind();
-	const char * detail();
-	const char* documentation();
-	bool deprecated();
-	const char* insert_text();
+    const char* label();
+    size_t kind();
+    const char* detail();
+    const char* documentation();
+    bool deprecated();
+    const char* insert_text();
+
 private:
-	context::completion_item_s& impl_;
+    context::completion_item_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT completion_list
 {
-	completion_list(semantics::completion_list_s& info);
-	bool is_incomplete();
-	completion_item item(size_t index);
-	size_t count();
+    completion_list(semantics::completion_list_s& info);
+    bool is_incomplete();
+    completion_item item(size_t index);
+    size_t count();
+
 private:
-	semantics::completion_list_s & impl_;
+    semantics::completion_list_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
-	position_uri(semantics::position_uri_s &);
-	position pos();
-	const char * uri();
+    position_uri(semantics::position_uri_s&);
+    position pos();
+    const char* uri();
+
 private:
-	semantics::position_uri_s & impl_;
+    semantics::position_uri_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT position_uris
 {
-	position_uris(semantics::position_uri_s * data, size_t size);
+    position_uris(semantics::position_uri_s* data, size_t size);
 
-	position_uri get_position_uri(size_t index);
-	size_t size();
+    position_uri get_position_uri(size_t index);
+    size_t size();
 
 private:
-	semantics::position_uri_s * data_;
-	size_t size_;
+    semantics::position_uri_s* data_;
+    size_t size_;
 };
 
 struct range_uri_s;
 
 struct PARSER_LIBRARY_EXPORT range_uri
 {
-	range_uri(range_uri_s & range);
-	range get_range();
-	const char * uri();
+    range_uri(range_uri_s& range);
+    range get_range();
+    const char* uri();
+
 private:
-	range_uri_s & impl_;
+    range_uri_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT document_change
 {
-	document_change(const char * new_text, size_t text_length) : 
-		whole(true), text(new_text), text_length(text_length) {}
-	document_change(range change_range, const char * new_text, size_t text_length) :
-		whole(false), change_range(change_range), text(new_text), text_length(text_length) {}
+    document_change(const char* new_text, size_t text_length)
+        : whole(true)
+        , text(new_text)
+        , text_length(text_length)
+    {}
+    document_change(range change_range, const char* new_text, size_t text_length)
+        : whole(false)
+        , change_range(change_range)
+        , text(new_text)
+        , text_length(text_length)
+    {}
 
-	bool operator==(const document_change & ch) const
-	{
-		return whole == ch.whole && change_range == ch.change_range &&
-			text_length == ch.text_length && std::memcmp(text, ch.text, text_length) == 0;
-	}
+    bool operator==(const document_change& ch) const
+    {
+        return whole == ch.whole && change_range == ch.change_range && text_length == ch.text_length
+            && std::memcmp(text, ch.text, text_length) == 0;
+    }
 
-	const bool whole;
-	const range change_range;
-	const char * const text;
-	const size_t text_length;
+    const bool whole;
+    const range change_range;
+    const char* const text;
+    const size_t text_length;
 };
 
 struct PARSER_LIBRARY_EXPORT text_document_item
 {
-	char * document_uri;
-	version_t version;
-	char * text;
+    char* document_uri;
+    version_t version;
+    char* text;
 };
 
 enum class PARSER_LIBRARY_EXPORT diagnostic_severity
 {
-	error = 1,
-	warning = 2,
-	info = 3,
-	hint = 4,
-	unspecified = 5
+    error = 1,
+    warning = 2,
+    info = 3,
+    hint = 4,
+    unspecified = 5
 };
 
 class diagnostic_s;
@@ -166,120 +192,120 @@ class diagnostic_related_info_s;
 
 struct PARSER_LIBRARY_EXPORT diagnostic_related_info
 {
-	diagnostic_related_info(diagnostic_related_info_s &);
+    diagnostic_related_info(diagnostic_related_info_s&);
 
-	range_uri location() const;
-	const char * message() const;
+    range_uri location() const;
+    const char* message() const;
+
 private:
-	diagnostic_related_info_s & impl_;
+    diagnostic_related_info_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT diagnostic
 {
-	diagnostic(diagnostic_s &);
+    diagnostic(diagnostic_s&);
 
-	const char * file_name();
-	range get_range();
-	diagnostic_severity severity();
-	const char * code();
-	const char * source();
-	const char * message();
-	const diagnostic_related_info related_info(size_t index) const;
-	size_t related_info_size();
+    const char* file_name();
+    range get_range();
+    diagnostic_severity severity();
+    const char* code();
+    const char* source();
+    const char* message();
+    const diagnostic_related_info related_info(size_t index) const;
+    size_t related_info_size();
 
 private:
-	diagnostic_s & impl_;
-
+    diagnostic_s& impl_;
 };
 
 struct PARSER_LIBRARY_EXPORT performance_metrics
 {
-	size_t lines = 0;
-	size_t macro_def_statements = 0;
-	size_t macro_statements = 0;
-	size_t open_code_statements = 0;
-	size_t copy_def_statements = 0;
-	size_t copy_statements = 0;
-	size_t reparsed_statements = 0;
-	size_t lookahead_statements = 0;
-	size_t continued_statements = 0;
-	size_t non_continued_statements = 0;
-	size_t files = 0;
+    size_t lines = 0;
+    size_t macro_def_statements = 0;
+    size_t macro_statements = 0;
+    size_t open_code_statements = 0;
+    size_t copy_def_statements = 0;
+    size_t copy_statements = 0;
+    size_t reparsed_statements = 0;
+    size_t lookahead_statements = 0;
+    size_t continued_statements = 0;
+    size_t non_continued_statements = 0;
+    size_t files = 0;
 };
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list
 {
-	diagnostic_list();
-	diagnostic_list(diagnostic_s * begin, size_t size);
+    diagnostic_list();
+    diagnostic_list(diagnostic_s* begin, size_t size);
 
-	diagnostic diagnostics(size_t index);
-	size_t diagnostics_size();
+    diagnostic diagnostics(size_t index);
+    size_t diagnostics_size();
 
 private:
-	diagnostic_s * begin_;
-	size_t size_;
+    diagnostic_s* begin_;
+    size_t size_;
 };
 
 struct PARSER_LIBRARY_EXPORT token_info
 {
-	token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope);
-	token_info(const range& token_range, semantics::hl_scopes scope);
-	range token_range;
-	semantics::hl_scopes scope;
+    token_info(size_t line_start, size_t column_start, size_t line_end, size_t column_end, semantics::hl_scopes scope);
+    token_info(const range& token_range, semantics::hl_scopes scope);
+    range token_range;
+    semantics::hl_scopes scope;
 };
 
 struct PARSER_LIBRARY_EXPORT file_highlighting_info
 {
-	file_highlighting_info(semantics::highlighting_info & info);
+    file_highlighting_info(semantics::highlighting_info& info);
 
-	const char * document_uri();
-	version_t document_version();
-	size_t continuation_count();
-	position continuation(size_t index);
-	token_info token(size_t index);
-	size_t token_count();
-	size_t continuation_column();
-	size_t continue_column();
+    const char* document_uri();
+    version_t document_version();
+    size_t continuation_count();
+    position continuation(size_t index);
+    token_info token(size_t index);
+    size_t token_count();
+    size_t continuation_column();
+    size_t continue_column();
 
 private:
-	semantics::highlighting_info & info;
+    semantics::highlighting_info& info;
 };
 
 struct PARSER_LIBRARY_EXPORT all_highlighting_info
 {
-	all_highlighting_info(file_id * files, size_t files_count);
+    all_highlighting_info(file_id* files, size_t files_count);
 
-	file_id * files();
-	size_t files_count();
-	file_highlighting_info file_info(file_id);
+    file_id* files();
+    size_t files_count();
+    file_highlighting_info file_info(file_id);
+
 private:
-	file_id * files_;
-	size_t files_count_;
-
+    file_id* files_;
+    size_t files_count_;
 };
 
 struct PARSER_LIBRARY_EXPORT source
 {
-	source(const debugging::source & source);
+    source(const debugging::source& source);
 
-	const char * path();
+    const char* path();
 
 private:
-	const debugging::source & source_;
+    const debugging::source& source_;
 };
 
 struct PARSER_LIBRARY_EXPORT stack_frame
 {
-	stack_frame(const debugging::stack_frame & frame);
+    stack_frame(const debugging::stack_frame& frame);
 
-	const char * name();
-	uint32_t id();
-	//problem
-	range get_range();
-	//dalsi problem
-	source get_source();
+    const char* name();
+    uint32_t id();
+    // problem
+    range get_range();
+    // dalsi problem
+    source get_source();
 
-	const debugging::stack_frame & impl_;
+    const debugging::stack_frame& impl_;
 };
 
 template class PARSER_LIBRARY_EXPORT c_view_array<stack_frame, debugging::stack_frame>;
@@ -290,18 +316,22 @@ using var_reference_t = size_t;
 
 enum class set_type
 {
-	A_TYPE, B_TYPE, C_TYPE, UNDEF_TYPE
+    A_TYPE,
+    B_TYPE,
+    C_TYPE,
+    UNDEF_TYPE
 };
 
 struct PARSER_LIBRARY_EXPORT scope
 {
-	scope(const debugging::scope & impl);
+    scope(const debugging::scope& impl);
 
-	const char * name() const;
-	var_reference_t variable_reference() const;
-	source get_source() const;
+    const char* name() const;
+    var_reference_t variable_reference() const;
+    source get_source() const;
+
 private:
-	const debugging::scope & impl_;
+    const debugging::scope& impl_;
 };
 
 using scopes = c_view_array<scope, debugging::scope>;
@@ -309,25 +339,28 @@ template class PARSER_LIBRARY_EXPORT c_view_array<scope, debugging::scope>;
 
 struct PARSER_LIBRARY_EXPORT variable
 {
-	variable(const debugging::variable & impl);
+    variable(const debugging::variable& impl);
 
-	const char * name() const;
-	set_type type() const;
-	const char * value() const;
-	var_reference_t variable_reference() const;
+    const char* name() const;
+    set_type type() const;
+    const char* value() const;
+    var_reference_t variable_reference() const;
+
 private:
-	const debugging::variable & impl_;
+    const debugging::variable& impl_;
 };
 
-using variables = c_view_array<variable, debugging::variable *>;
-template class PARSER_LIBRARY_EXPORT c_view_array<variable, debugging::variable *>;
+using variables = c_view_array<variable, debugging::variable*>;
+template class PARSER_LIBRARY_EXPORT c_view_array<variable, debugging::variable*>;
 
 struct breakpoint
 {
-	breakpoint(size_t line) : line(line) {}
-	size_t line;
+    breakpoint(size_t line)
+        : line(line)
+    {}
+    size_t line;
 };
 
-}
+} // namespace hlasm_plugin::parser_library
 #pragma warning(pop)
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H

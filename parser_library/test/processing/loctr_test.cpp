@@ -16,7 +16,7 @@
 
 #include "../common_testing.h"
 
- //tests for LOCTR instruction
+// tests for LOCTR instruction
 
 TEST(LOCTR, relocatable_values)
 {
@@ -93,4 +93,3 @@ X2   DS   0H
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
-

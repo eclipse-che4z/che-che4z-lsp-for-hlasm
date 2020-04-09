@@ -52,7 +52,12 @@ if(UNIX)
 	target_link_libraries(language_server pthread)
 endif()
 if(BUILD_TESTING)
-	add_executable(server_test test/test.cpp
+	file(GLOB_RECURSE SERVER_TEST_SRC
+        "${PROJECT_SOURCE_DIR}/test/*.cpp"
+    )
+
+	add_executable(server_test
+		${SERVER_TEST_SRC}
 		${SOURCES}
 	)
 	add_dependencies(server_test json)

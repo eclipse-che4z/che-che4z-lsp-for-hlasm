@@ -13,6 +13,7 @@
  */
 
 #include "id_storage.h"
+
 #include "common_types.h"
 
 using namespace hlasm_plugin::parser_library::context;
@@ -21,9 +22,9 @@ const std::string id_storage::empty_string_("");
 
 const id_storage::const_pointer id_storage::empty_id = &id_storage::empty_string_;
 
-hlasm_plugin::parser_library::context::id_storage::id_storage() : well_known(lit_)
-{
-}
+hlasm_plugin::parser_library::context::id_storage::id_storage()
+    : well_known(lit_)
+{}
 
 size_t id_storage::size() const { return lit_.size(); }
 
@@ -35,14 +36,14 @@ bool id_storage::empty() const { return lit_.empty(); }
 
 id_storage::const_pointer id_storage::find(std::string val) const
 {
-	to_upper(val);
+    to_upper(val);
 
-	if (val.empty())
-		return empty_id;
+    if (val.empty())
+        return empty_id;
 
-	const_iterator tmp = lit_.find(val);
+    const_iterator tmp = lit_.find(val);
 
-	return tmp == lit_.end() ? nullptr : &*tmp;
+    return tmp == lit_.end() ? nullptr : &*tmp;
 }
 
 id_storage::const_pointer id_storage::add(std::string value, bool is_uri)
@@ -54,19 +55,20 @@ id_storage::const_pointer id_storage::add(std::string value, bool is_uri)
     return &*lit_.insert(std::move(value)).first;
 }
 
-hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_known_strings(std::unordered_set<std::string>& ptr) : 
-    COPY(&*ptr.emplace("COPY").first)
-, SETA(&*ptr.emplace("SETA").first)
-, SETB(&*ptr.emplace("SETB").first)
-, SETC(&*ptr.emplace("SETC").first)
-, GBLA(&*ptr.emplace("GBLA").first)
-, GBLB(&*ptr.emplace("GBLB").first)
-, GBLC(&*ptr.emplace("GBLC").first)
-, LCLA(&*ptr.emplace("LCLA").first)
-, LCLB(&*ptr.emplace("LCLB").first)
-, LCLC(&*ptr.emplace("LCLC").first)
-, MACRO(&*ptr.emplace("MACRO").first)
-, MEND(&*ptr.emplace("MEND").first)
-, ASPACE(&*ptr.emplace("ASPACE").first)
-, empty(&*ptr.emplace("").first)
+hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_known_strings(
+    std::unordered_set<std::string>& ptr)
+    : COPY(&*ptr.emplace("COPY").first)
+    , SETA(&*ptr.emplace("SETA").first)
+    , SETB(&*ptr.emplace("SETB").first)
+    , SETC(&*ptr.emplace("SETC").first)
+    , GBLA(&*ptr.emplace("GBLA").first)
+    , GBLB(&*ptr.emplace("GBLB").first)
+    , GBLC(&*ptr.emplace("GBLC").first)
+    , LCLA(&*ptr.emplace("LCLA").first)
+    , LCLB(&*ptr.emplace("LCLB").first)
+    , LCLC(&*ptr.emplace("LCLC").first)
+    , MACRO(&*ptr.emplace("MACRO").first)
+    , MEND(&*ptr.emplace("MEND").first)
+    , ASPACE(&*ptr.emplace("ASPACE").first)
+    , empty(&*ptr.emplace("").first)
 {}

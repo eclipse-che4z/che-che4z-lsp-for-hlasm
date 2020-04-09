@@ -15,12 +15,18 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
 #define HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
 
+#include "gmock/gmock.h"
+
 #include "server.h"
 
-class send_message_provider_mock : public hlasm_plugin::language_server::send_message_provider
+namespace hlasm_plugin::language_server {
+
+class send_message_provider_mock : public send_message_provider
 {
 public:
-	MOCK_METHOD1(reply, void(const json &));
+    MOCK_METHOD1(reply, void(const json&));
 };
+
+} // namespace hlasm_plugin::language_server
 
 #endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_SEND_MESSAGE_PROVIDER_MOCK_H
