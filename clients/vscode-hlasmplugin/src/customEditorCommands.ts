@@ -64,7 +64,7 @@ export class CustomEditorCommands {
             editor.selection.active.character - ((selectionSize >= -1) ? selectionSize : 0));
 
         // there is a continuation and it is after our position, handle it
-        if (continuationOffset != -1 && editor.selection.active.character < continuationOffset && editor.selection.isSingleLine) {
+        if (continuationOffset && editor.selection.active.character < continuationOffset && editor.selection.isSingleLine) {
             const beforeContinuationChars =
                 new vscode.Range(editor.selection.active.line,
                     continuationOffset - Math.abs(selectionSize),
@@ -85,36 +85,37 @@ export class CustomEditorCommands {
                 newCursorPosition :
                 new vscode.Position(editor.selection.anchor.line, editor.selection.anchor.character)));
     }
+
     /**
      * Common logic for both type and paste
      * Removes space in front of the continuation character to compensate for the newly added
      * @param editor 
      * @param edit 
      */
-    insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, text: string, continuationOffset: number) {
+    insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}, continuationOffset: number) {
         // typing with multiple characters selected
         if (editor.selection.active.line != editor.selection.anchor.line || editor.selection.active.character != editor.selection.anchor.character) {
             //simulate delete function for the selected characters
             this.removeLeft(editor, edit, continuationOffset);
             // different cases of insert, depending on the anchor/active positions
             if (editor.selection.anchor.line > editor.selection.active.line)
-                edit.insert(editor.selection.active, text);
+                edit.insert(editor.selection.active, args.text);
             else if (editor.selection.anchor.line < editor.selection.active.line)
-                edit.insert(editor.selection.anchor, text);
+                edit.insert(editor.selection.anchor, args.text);
             else {
                 if (editor.selection.anchor.character < editor.selection.active.character)
-                    edit.insert(editor.selection.anchor, text);
+                    edit.insert(editor.selection.anchor, args.text);
                 else
-                    edit.insert(editor.selection.active, text);
+                    edit.insert(editor.selection.active, args.text);
             }
         }
         // simple single character insert
         else
-            edit.insert(editor.selection.active, text);
+            edit.insert(editor.selection.active, args.text);
         // there is a continuation, prepare space for new characters
-        if (continuationOffset != -1 && editor.selection.active.character < continuationOffset) {
+        if (continuationOffset && editor.selection.active.character < continuationOffset) {
             // find free space in front of it
-            const spaceRange = this.findSpace(editor.document.lineAt(editor.selection.active), text.length, editor,continuationOffset);
+            const spaceRange = this.findSpace(editor.document.lineAt(editor.selection.active), args.text.length, editor,continuationOffset);
             // if there is, delete it
             if (spaceRange)
                 edit.delete(spaceRange);
@@ -141,7 +142,7 @@ export class CustomEditorCommands {
                 : editor.selection.active.character;
 
         // there is a continuation and it is after our position, handle it
-        if (continuationOffset != -1 && endPos < continuationOffset && editor.selection.active.character > 0 && editor.selection.isSingleLine) {
+        if (continuationOffset && endPos < continuationOffset && (editor.selection.active.character > 0 || selectionSize > 0) && editor.selection.isSingleLine) {
             const beforeContinuationChars = new vscode.Range(
                 editor.selection.active.line, continuationOffset - Math.abs(selectionSize),
                 editor.selection.active.line, continuationOffset);

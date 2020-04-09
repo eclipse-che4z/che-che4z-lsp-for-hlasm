@@ -19,9 +19,9 @@ import { TestOptions } from 'vscode-test/out/runTest';
 async function main() {
 	try {
 		// prepare development and tests paths
-		const extensionDevelopmentPath = path.resolve(__dirname, '../../');
-		const extensionTestsPath = path.resolve(__dirname, './suite/index');
-		const launchArgs = [path.resolve(__dirname, './workspace/')];
+		const extensionDevelopmentPath = path.join(__dirname, '../../');
+		const extensionTestsPath = path.join(__dirname, './suite/index');
+		const launchArgs = [path.join(__dirname, './workspace/')];
 		const options: TestOptions = {
 			extensionDevelopmentPath,
 			extensionTestsPath,
@@ -29,7 +29,7 @@ async function main() {
 		}
 		// run tests
 		await runTests(options);
-	} catch (err) {
+	} catch (error) {
 		console.error('Tests Failed');
 		process.exit(0);
 	}

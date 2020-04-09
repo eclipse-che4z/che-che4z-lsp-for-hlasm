@@ -26,8 +26,8 @@ suite('Language Detection Test Suite', () => {
 
 	// set HLASM file as HLASM
 	test('HLASM files test', async () => {
-		const existingDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath,'open')));
-		var document = new TextDocumentMock();
+		const existingDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'open'));
+		const document = new TextDocumentMock();
 
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';

@@ -17,10 +17,10 @@
  * On top of the Semantic Highlighting, this provides continuation information retrieved from the server as part of the semantic highlighting request
  */
 
-import { SemanticHighlightingFeature, ExtendedClientCapabilities, SemanticHighlightingParams } from './semanticHighlighting'
+import { SemanticHighlightingFeature, ExtendedClientCapabilities, SemanticHighlightingParams, EditorColorsMap } from './semanticHighlighting'
 import { BaseLanguageClient } from 'vscode-languageclient';
 
-declare class ContinuationInfo {
+export class ContinuationInfo {
     continuationPositions: ContinuationPosition[];
     global: {
         continueColumn: number,
@@ -28,7 +28,7 @@ declare class ContinuationInfo {
     }
 }
 
-declare class ContinuationPosition {
+export class ContinuationPosition {
     line: number;
     continuationPosition: number;
 }
@@ -60,7 +60,15 @@ type line = number;
 type column = number;
 
 
-class DocumentContinuation {
+
+export type ContinuationDocumentsInfo = Map<string,DocumentContinuation>;
+
+export class DocumentContinuation {
+	constructor() {
+		this.lineContinuations = new Map();
+		this.continuationColumn = -1;
+		this.continueColumn = -1;
+	}
 	lineContinuations: Map<line,column>;
 	continueColumn: column;
 	continuationColumn: column;
@@ -71,11 +79,17 @@ class DocumentContinuation {
  */
 export class HLASMSemanticHighlightingFeature extends SemanticHighlightingFeature
 {
-	protected documents: Map<string,DocumentContinuation>;
-	constructor(client: BaseLanguageClient) {
+	protected documents: ContinuationDocumentsInfo;
+	private parseFinishedCallback: (parsedFile: string) => void;
+	constructor(client: BaseLanguageClient, parseFinishedCallback?: (parsedFile: string) => void) {
         super(client);
 		this.documents = new Map();
+		this.parseFinishedCallback = parseFinishedCallback;
     }
+
+	registerParseFinishedCallback(parseFinishedCallback: (parsedFile: string) => void) {
+		this.parseFinishedCallback = parseFinishedCallback;
+	}
 
 	fillClientCapabilities(capabilities: HLASMExtendedClientCapabilities): void {
 		if (!!capabilities.textDocument) {
@@ -91,10 +105,13 @@ export class HLASMSemanticHighlightingFeature extends SemanticHighlightingFeatur
 	 * Process continuations first and then apply decorations
 	 * @param params 
 	 */
-    applyDecorations(params?: HLASMSemanticHighlightingParams | SemanticHighlightingParams): void {
-		if (<HLASMSemanticHighlightingParams>params !== undefined)
-        	this.processContInfo(<HLASMSemanticHighlightingParams>params);
-        super.applyDecorations(params);
+    applyDecorations(params?: HLASMSemanticHighlightingParams | SemanticHighlightingParams): EditorColorsMap {
+		if (this.parseFinishedCallback)
+			this.parseFinishedCallback(params.textDocument.uri);
+
+		if ((params as HLASMSemanticHighlightingParams).continuation !== undefined)
+        	this.processContInfo(params as HLASMSemanticHighlightingParams);
+		return super.applyDecorations(params);
     }
 
 	/**
@@ -109,30 +126,11 @@ export class HLASMSemanticHighlightingFeature extends SemanticHighlightingFeatur
 				lineContinuations: new Map<line, column>(params.continuation.continuationPositions.map(x => [x.line, x.continuationPosition] as [line, column])),
 				continueColumn: params.continuation.global.continueColumn,
 				continuationColumn: params.continuation.global.continuationColumn
-				});
+			});
 		}
     }
 
-	/**
-	 * Returns continuation position for issued document/line
-	 * @param line line to check continuation for, if -1 check general case
-	 * @param uri document to check
-	 * return continuation offset for document-line, -1 if there is none
-	 */
-    getContinuation(line: number, uri: string) {
-		var foundDoc = this.documents.get(uri);
-		//general case
-		if (line == -1)
-			return foundDoc.continuationColumn;
-		return (foundDoc  && foundDoc.lineContinuations.get(line)) ? foundDoc.lineContinuations.get(line) : -1;
-	}
-
-	/**
-	 * Returns continue column position for document
-	 * @param uri document
-	 */
-	getContinueColumn(uri: string)
-	{
-		return this.documents.get(uri).continueColumn;
+	getContinuationInfo(): ContinuationDocumentsInfo {
+		return this.documents;
 	}
 }

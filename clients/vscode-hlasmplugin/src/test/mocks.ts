@@ -13,6 +13,56 @@
  */
 
 import * as vscode from 'vscode';
+import * as vscodelc from 'vscode-languageclient';
+import { SemanticHighlightingFeature } from '../semanticHighlighting';
+
+/**
+ * A collection of mocked interfaces needed for unit testing
+ */
+
+export class SemanticHighlightingFeatureMock extends SemanticHighlightingFeature {
+    didColorize = false;
+    colorize() {
+        this.didColorize = true;
+    }
+}
+
+export class LanguageClientOptionsMock implements vscodelc.LanguageClientOptions {
+}
+
+export class LanguageClientMock extends vscodelc.BaseLanguageClient {
+    protected createMessageTransports(encoding: string): Thenable<vscodelc.MessageTransports> {
+        throw new Error("Method not implemented.");
+    }
+}
+
+export class TextDocumentChangeEventMock implements vscode.TextDocumentChangeEvent {
+    constructor(changes: vscode.TextDocumentContentChangeEvent[]) {
+        this.contentChanges = changes;
+    }
+    document: vscode.TextDocument;
+    contentChanges: readonly vscode.TextDocumentContentChangeEvent[];
+}
+
+export class TextDocumentContentChangeEventMock implements vscode.TextDocumentContentChangeEvent {
+    range: vscode.Range;
+    rangeOffset: number;
+    rangeLength: number;
+    text: string;
+}
+
+export class ConfigurationChangeEventMock implements vscode.ConfigurationChangeEvent {
+    affectsConfiguration(section: string, scope?: vscode.ConfigurationScope): boolean {
+        return false;
+    }
+}
+
+export class DebugConfigurationMock implements vscode.DebugConfiguration {
+    [key: string]: any;
+    type: string;
+    name: string;
+    request: string;
+}
 
 export class TextEditorMock implements vscode.TextEditor {
     constructor(document: vscode.TextDocument) {
@@ -51,16 +101,18 @@ export class TextEditorEditMock implements vscode.TextEditorEdit {
         this.text = text;
     }
     replace(location: vscode.Range | vscode.Position | vscode.Selection, value: string): void {
-        throw new Error("Method not implemented.");
+        this.delete(location as vscode.Range);
+        this.insert((location as vscode.Range).start, value);
     }
     insert(location: vscode.Position, value: string): void {
-        var before = this.text.slice(0,location.character);
+        var before = this.text.slice(0, location.character);
         var after = this.text.slice(location.character);
         this.text = before + value + after;
     }
     delete(location: vscode.Range | vscode.Selection): void {
-        var before = this.text.slice(0,location.start.character);
-        var after = this.text.slice(location.end.character);
+        var lines = this.text.split('\r\n');
+        var before = lines[location.start.line].slice(0, location.start.character);
+        var after = lines[location.end.line].slice(location.end.character);
         this.text = before + after;
     }
     setEndOfLine(endOfLine: vscode.EndOfLine): void {
@@ -80,43 +132,46 @@ class TextLineMock implements vscode.TextLine {
 
 export class TextDocumentMock implements vscode.TextDocument {
     text: string;
-	uri: vscode.Uri;
-	fileName: string;
-	isUntitled: boolean;
-	languageId: string;
-	version: number;
-	isDirty: boolean;
-	isClosed: boolean;
-	save(): Thenable<boolean> {
-		throw new Error("Method not implemented.");
-	}
-	eol: vscode.EndOfLine;
-	lineCount: number;
-	lineAt(line: number): vscode.TextLine;
-	lineAt(position: vscode.Position): vscode.TextLine;
-	lineAt(position: any) {
+    uri: vscode.Uri;
+    fileName: string;
+    isUntitled: boolean;
+    languageId: string;
+    version: number;
+    isDirty: boolean;
+    isClosed: boolean;
+    save(): Thenable<boolean> {
+        throw new Error("Method not implemented.");
+    }
+    eol: vscode.EndOfLine;
+    lineCount: number;
+    lineAt(line: number): vscode.TextLine;
+    lineAt(position: vscode.Position): vscode.TextLine;
+    lineAt(position: any) {
         var line = new TextLineMock();
-        line.text = this.text;
-        line.lineNumber = (<vscode.Position>position).line;
-		return line;
-	}
-	offsetAt(position: vscode.Position): number {
-		throw new Error("Method not implemented.");
-	}
-	positionAt(offset: number): vscode.Position {
-		throw new Error("Method not implemented.");
-	}
-	getText(range?: vscode.Range): string {
-		return this.text;
-	}
-	getWordRangeAtPosition(position: vscode.Position, regex?: RegExp): vscode.Range {
-		throw new Error("Method not implemented.");
-	}
-	validateRange(range: vscode.Range): vscode.Range {
-		throw new Error("Method not implemented.");
-	}
-	validatePosition(position: vscode.Position): vscode.Position {
-		throw new Error("Method not implemented.");
-	}
-
+        var lines = this.text.split('\r\n');
+        if ((position as vscode.Position).line !== undefined)
+            line.lineNumber = (position as vscode.Position).line;
+        else
+            line.lineNumber = position as number;
+        line.text = lines[line.lineNumber];
+        return line;
+    }
+    offsetAt(position: vscode.Position): number {
+        throw new Error("Method not implemented.");
+    }
+    positionAt(offset: number): vscode.Position {
+        throw new Error("Method not implemented.");
+    }
+    getText(range?: vscode.Range): string {
+        return this.text;
+    }
+    getWordRangeAtPosition(position: vscode.Position, regex?: RegExp): vscode.Range {
+        throw new Error("Method not implemented.");
+    }
+    validateRange(range: vscode.Range): vscode.Range {
+        throw new Error("Method not implemented.");
+    }
+    validatePosition(position: vscode.Position): vscode.Position {
+        throw new Error("Method not implemented.");
+    }
 }

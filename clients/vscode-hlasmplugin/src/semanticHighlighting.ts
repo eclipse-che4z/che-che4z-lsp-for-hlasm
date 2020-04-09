@@ -6,10 +6,10 @@
 
 import * as vscode from 'vscode';
 import {
-	TextDocumentRegistrationOptions, ClientCapabilities, ServerCapabilities, DocumentSelector, NotificationHandler, VersionedTextDocumentIdentifier, TextDocument,
+	TextDocumentRegistrationOptions, ClientCapabilities, ServerCapabilities, DocumentSelector, NotificationHandler,
 } from 'vscode-languageserver-protocol';
 
-import {SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingInformation, SemanticHighlightingClientCapabilities} from './protocol.semanticHighlighting'
+import { SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingClientCapabilities } from './protocol.semanticHighlighting'
 
 import * as UUID from '../node_modules/vscode-languageclient/lib/utils/uuid';
 import { TextDocumentFeature, BaseLanguageClient, LanguageClient } from 'vscode-languageclient';
@@ -19,18 +19,16 @@ export declare type ExtendedClientCapabilities = ClientCapabilities & SemanticHi
 /**
  * Client extended by Semantic Highlighting feature
  */
-export class ExtendedLanguageClient extends LanguageClient
-{
+export class ExtendedLanguageClient extends LanguageClient {
 	semanticHighlighting: SemanticHighlightingFeature;
-	protected registerBuiltinFeatures() : void
-	{
+	protected registerBuiltinFeatures(): void {
 		var semanticHighlighting = new SemanticHighlightingFeature(this);
 		super.registerBuiltinFeatures();
 		this.registerFeature(semanticHighlighting);
 		this.semanticHighlighting = semanticHighlighting;
 	}
 
-	public applyDecorations(params: SemanticHighlightingParams){
+	public applyDecorations(params: SemanticHighlightingParams) {
 		this.semanticHighlighting.applyDecorations(params);
 	}
 }
@@ -42,24 +40,23 @@ export * from 'vscode-languageclient'
 type scope = string;
 type uri = string;
 
+export type ScopeRangeMap = Map<scope, vscode.Range[]>;
+export type EditorColorsMap = Map<uri, ScopeRangeMap>;
+
 export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	protected readonly toDispose: vscode.Disposable[];
 	protected readonly handlers: NotificationHandler<SemanticHighlightingParams>[];
 	// map of possible decoration types: scope of symbol -> color of scope
-	protected decorationTypes: Map<scope,DecorationType>;
+	protected decorationTypes: Map<scope, DecorationType>;
 	// map: document -> its decorations (map: scope of symbol -> ranges of scope)
-	protected definedEditors: Map<uri,Map<scope,vscode.Range[]>>;
-	protected currentlyParsed: Set<String>;
-	// parse in progress indicator
-	public progress: vscode.StatusBarItem;
+	protected definedEditors: EditorColorsMap;
 	constructor(client: BaseLanguageClient) {
 		super(client, SemanticHighlightingNotification.type);
 		this.toDispose = [];
 		this.handlers = [];
 		this.decorationTypes = new Map();
 		this.definedEditors = new Map();
-		this.currentlyParsed = new Set();
 		this.toDispose.push({ dispose: () => this.definedEditors.clear() });
 		this.toDispose.push(vscode.workspace.onDidCloseTextDocument(e => {
 			const uri = e.uri.toString();
@@ -67,9 +64,6 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 				this.definedEditors.delete(uri);
 			}
 		}));
-		this.progress = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-		this.progress.text = "Parsing";
-		this.progress.color = "red";
 	}
 
 	dispose(): void {
@@ -99,7 +93,7 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
 	}
-	
+
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): vscode.Disposable {
 		if (options.documentSelector === null) {
 			return new vscode.Disposable(() => { });
@@ -116,8 +110,8 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 
 	protected newNotificationHandler(): NotificationHandler<SemanticHighlightingParams> {
 		return (params) => {
-            this.applyDecorations(params);
-        };
+			this.applyDecorations(params);
+		};
 	}
 
 	protected editorPredicate(uri: string): (editor: vscode.TextEditor) => boolean {
@@ -125,55 +119,28 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		return (editor: vscode.TextEditor) => editor.document.uri.toString() === predicateUri.toString();
 	}
 
-	public showProgress(document: vscode.TextDocument)
-	{
-		if (document.languageId != 'hlasm')
-			return;
-
-		this.currentlyParsed.add(document.uri.toString());
-		this.updateProgressTooltip();
-		this.progress.show();
-	}
-
-	public hideProgress(filename: String)
-	{
-		this.currentlyParsed.delete(filename);
-		this.updateProgressTooltip();
-		if (this.currentlyParsed.size == 0)
-			this.progress.hide();
-	}
-
-	private updateProgressTooltip()
-	{
-		this.progress.tooltip = '';
-		this.currentlyParsed.forEach((file)=> {
-			this.progress.tooltip += file + '\n';
-		})
-	}
-
-	public applyDecorations(params: SemanticHighlightingParams): void {
-		var parsed = vscode.Uri.parse(params.textDocument.uri).toString();
+	applyDecorations(params: SemanticHighlightingParams): EditorColorsMap {
+		const parsed = vscode.Uri.parse(params.textDocument.uri).toString();
 		// find the decorations of current editor
 		var decors = this.definedEditors.get(parsed);
 		// editor found, clear its decorations
 		if (decors == undefined) {
-			this.definedEditors.set(parsed, new Map<scope,vscode.Range[]>());
+			this.definedEditors.set(parsed, new Map<scope, vscode.Range[]>());
 			decors = this.definedEditors.get(parsed);
 		}
 		// clear ranges
 		Array.from(this.decorationTypes.keys()).forEach(scope => {
-			decors.set(scope,[]);
+			decors.set(scope, []);
 		})
 		// add range for each token to its corresponding scope
 		params.tokens.forEach(token => {
 			decors.get(token.scope)!.push(new vscode.Range(new vscode.Position(token.lineStart, token.columnStart), new vscode.Position(token.lineEnd, token.columnEnd)));
 		});
 		this.colorize();
-		this.hideProgress(parsed);
+		return this.definedEditors;
 	}
 
-	public colorize()
-	{
+	colorize() {
 		// update colors from config
 		this.updateColors();
 		vscode.window.visibleTextEditors.forEach(editor => {
@@ -183,15 +150,18 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 			if (decors !== undefined) {
 				// for each of its saved decorations, draw them
 				decors.forEach((ranges: vscode.Range[], scope: string) => {
-					editor.setDecorations(this.decorationTypes.get(scope).type,ranges);
+					editor.setDecorations(this.decorationTypes.get(scope).type, ranges);
 				});
 			}
 		});
 	}
 
-    private updateColors() {
+	updateColors() {
 		// get colors from config
-		var colors = vscode.workspace.getConfiguration().semanticHighlightingColors;
+		const config = vscode.workspace.getConfiguration('hlasmplugin');
+		if (!config)
+			return;
+		const colors = config.get<{ id: string, hex: string }[]>('semanticHighlightingColors');
 		if (colors != null) {
 			// wipe all the decorations (clean)
 			this.decorationTypes.forEach(type => {
@@ -199,18 +169,17 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 			});
 			// for each color, create its decoration
 			for (let color of colors) {
-				this.decorationTypes.set(color.id,new DecorationType(color.hex));
+				this.decorationTypes.set(color.id, new DecorationType(color.hex));
 			}
 		}
-    }
+	}
 }
 
 class DecorationType {
 	public type: vscode.TextEditorDecorationType;
 	public hex: string;
-    constructor(hex:string)
-    {
-		this.type = vscode.window.createTextEditorDecorationType({color:hex});
+	constructor(hex: string) {
+		this.type = vscode.window.createTextEditorDecorationType({ color: hex });
 		this.hex = hex;
 	}
 }

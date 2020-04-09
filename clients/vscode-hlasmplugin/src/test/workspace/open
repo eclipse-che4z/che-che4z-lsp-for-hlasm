@@ -1,6 +1,6 @@
  LR 1,1
  MAC 1,1
 &VAR SETA 5        these are my remarks                                X
-               here it continues                                       
+               
 * THIS IS COMMENT
  MAC   &VAR,&VAR

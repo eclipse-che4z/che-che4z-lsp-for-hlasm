@@ -123,7 +123,7 @@ export class ConfigurationsHandler {
             (content.pgroups as any[]).forEach(pgroup => {
                 if (pgroup.libs)
                     (pgroup.libs as string[]).forEach(lib => {
-                        const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, lib,  '*'));
+                        const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, lib, '*'));
                         if (regex)
                             this.definedExpressions.push(regex);
                     })
@@ -150,7 +150,7 @@ export class ConfigurationsHandler {
     }
 
     // converts wildcards to regexes
-    private convertWildcardToRegex(wildcard: string) : RegExp {
+    private convertWildcardToRegex(wildcard: string): RegExp {
         var regexStr = wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => { return "\\" + char });
         regexStr = regexStr.replace(/\?/g, ".");
         regexStr = regexStr.replace(/\*|\+/g, (char) => { return "." + char + "?"; });

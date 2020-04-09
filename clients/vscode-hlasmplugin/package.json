@@ -188,7 +188,7 @@
       "type": "object",
       "title": "hlasmplugin configuration",
       "properties": {
-        "semanticHighlightingColors": {
+        "hlasmplugin.semanticHighlightingColors": {
           "type": "array",
           "default": [
             {

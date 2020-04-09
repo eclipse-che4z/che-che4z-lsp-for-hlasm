@@ -21,33 +21,115 @@ import { TextEditorEditMock, TextEditorMock, TextDocumentMock } from '../mocks';
 suite('Language Detection Test Suite', () => {
     const commands = new CustomEditorCommands();
 
-	test('Insert chars test', () => {
+    test('Insert chars test', () => {
+        // prepare document and editor
         const document = new TextDocumentMock();
         const editor = new TextEditorMock(document);
-        const cursorPosition = new vscode.Position(0,0);
-        editor.selection = new vscode.Selection(cursorPosition,cursorPosition);
+        const cursorPosition = new vscode.Position(0, 0);
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
         const edit = new TextEditorEditMock('this is some text    X');
-        // add 'a' at the beginning of text without continuation
-        commands.insertChars(editor,edit,'a', -1);
         document.text = edit.text;
-        assert.equal(edit.text,'athis is some text    X');
+
+        // add 'a' at the beginning of text without continuation
+        commands.insertChars(editor, edit, { text: 'a' }, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 'athis is some text    X');
 
         // replace 'at' for 'bc' without continuation
-        const movedCursorPosition = new vscode.Position(0,2);
-        editor.selection = new vscode.Selection(cursorPosition,movedCursorPosition);
-        commands.insertChars(editor,edit,'bc', -1);
+        const movedCursorPosition = new vscode.Position(0, 2);
+        editor.selection = new vscode.Selection(cursorPosition, movedCursorPosition);
+        commands.insertChars(editor, edit, { text: 'bc' }, -1);
         document.text = edit.text;
-        assert.equal(edit.text,'bchis is some text    X');
+        assert.equal(document.text, 'bchis is some text    X');
 
         // simulate continuation on column 22
         // add 'd' at the beginning
-        editor.selection = new vscode.Selection(cursorPosition,cursorPosition);
-        commands.insertChars(editor,edit,'d', 22);
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        commands.insertChars(editor, edit, { text: 'd' }, 22);
         document.text = edit.text;
-        assert.equal(edit.text,'dbchis is some text   X');
+        assert.equal(document.text, 'dbchis is some text   X');
     });
-    
-    test('Delete chars test', () => {
 
-	});
+    test('Delete Left chars test', () => {
+        // prepare document and editor
+        const document = new TextDocumentMock();
+        const editor = new TextEditorMock(document);
+        const cursorPosition = new vscode.Position(0, 2);
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        const edit = new TextEditorEditMock('this is some text    X');
+        document.text = edit.text;
+
+        // remove second character 'h' without continuation
+        commands.deleteLeft(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 'tis is some text    X');
+
+        // remove first 2 characters 'ti' without continuation
+        const movedCursorPosition = new vscode.Position(0, 0);
+        editor.selection = new vscode.Selection(cursorPosition, movedCursorPosition);
+        commands.deleteLeft(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 's is some text    X');
+
+        // remove second character ' ' with continuation on column 18
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        commands.deleteLeft(editor, edit, 18);
+        document.text = edit.text;
+        assert.equal(document.text, 'sis some text     X');
+    });
+
+    test('Delete Right chars test', () => {
+        // prepare document and editor
+        const document = new TextDocumentMock();
+        const editor = new TextEditorMock(document);
+        const cursorPosition = new vscode.Position(0, 0);
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        const edit = new TextEditorEditMock('this is some text    X');
+        document.text = edit.text;
+
+        // remove first character 't' without continuation
+        commands.deleteRight(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 'his is some text    X');
+
+        // remove first 2 characters 'hi' without continuation
+        const movedCursorPosition = new vscode.Position(0, 2);
+        editor.selection = new vscode.Selection(cursorPosition, movedCursorPosition);
+        commands.deleteRight(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 's is some text    X');
+
+        // remove second character 's' with continuation on column 18
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        commands.deleteRight(editor, edit, 18);
+        document.text = edit.text;
+        assert.equal(document.text, ' is some text     X');
+    });
+
+    test('Cut chars test', () => {
+        // prepare document and editor
+        const document = new TextDocumentMock();
+        const editor = new TextEditorMock(document);
+        const cursorPosition = new vscode.Position(0, 0);
+        editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
+        const edit = new TextEditorEditMock('this is some text    X');
+        document.text = edit.text;
+
+        // cutting without selection does nothing
+        commands.cut(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 'this is some text    X');
+
+        // remove first 2 characters 'th' without continuation
+        const movedCursorPosition = new vscode.Position(0, 2);
+        editor.selection = new vscode.Selection(cursorPosition, movedCursorPosition);
+        commands.cut(editor, edit, -1);
+        document.text = edit.text;
+        assert.equal(document.text, 'is is some text    X');
+
+        // remove first 2 characters characters 'is' with continuation on column 19
+        commands.cut(editor, edit, 19);
+        document.text = edit.text;
+        assert.equal(document.text, ' is some text      X');
+    });
 });
