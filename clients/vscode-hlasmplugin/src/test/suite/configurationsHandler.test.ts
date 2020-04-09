@@ -23,21 +23,21 @@ suite('Configurations Handler Test Suite', () => {
     const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
     // configuration files paths
-	test('Check configs test', () => {
+    test('Check configs test', () => {
         const configPaths = handler.checkConfigs();
-        assert.equal(configPaths[0],path.join(workspacePath,'.hlasmplugin','pgm_conf.json'));
-        assert.equal(configPaths[1],path.join(workspacePath,'.hlasmplugin','proc_grps.json'));
-	});
-    
+        assert.equal(configPaths[0], path.join(workspacePath, '.hlasmplugin', 'pgm_conf.json'));
+        assert.equal(configPaths[1], path.join(workspacePath, '.hlasmplugin', 'proc_grps.json'));
+    });
+
     // 4 expressions - 2 for always recognize, 1 open code and 1 library file
     test('Update wildcards test', () => {
         const wildcards = handler.updateWildcards();
-        assert.equal(wildcards.length,4);
+        assert.equal(wildcards.length, 4);
     });
-    
+
     // 2 files matching the wildcards
     test('Check language test', () => {
-        assert.ok(handler.match(path.join(workspacePath,'file.asm')));
-        assert.ok(handler.match(path.join(workspacePath,'pgms/file')));
+        assert.ok(handler.match(path.join(workspacePath, 'file.asm')));
+        assert.ok(handler.match(path.join(workspacePath, 'pgms/file')));
     });
 });

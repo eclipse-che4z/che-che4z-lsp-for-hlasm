@@ -16,8 +16,8 @@ import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 import * as path from 'path';
 
-import { HLASMSemanticHighlightingFeature } from './hlasmSemanticHighlighting';
-import { HlasmConfigurationProvider, getCurrentProgramName, getProgramName } from './debug';
+import { HLASMSemanticHighlightingFeature, ContinuationDocumentsInfo } from './hlasmSemanticHighlighting';
+import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } from './debugProvider';
 import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
@@ -35,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
         '**/{'
         + [path.join('.hlasmplugin', 'proc_grps.json'), path.join('.hlasmplugin', 'pgm_conf.json')].join()
         + '}';
-    
+
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
@@ -49,19 +49,17 @@ export async function activate(context: vscode.ExtensionContext) {
                 vscode.Uri.file((vscode.Uri.parse(value).fsPath))
         }
     };
-    
+
     // create server options
     var factory = new ServerFactory();
     const serverOptions = await factory.create(useTcp);
-    
+
     //client init
     const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     //asm contribution 
     var highlight = new HLASMSemanticHighlightingFeature(hlasmpluginClient);
-
     // register highlighting as features
     hlasmpluginClient.registerFeature(highlight);
-
     // register all commands and objects to context
     await registerToContext(context, factory.dapPort, highlight);
 
@@ -81,10 +79,13 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     else if (commandList.find(command => command == "monaco.editor.action.triggerSuggest"))
         completeCommand = "monaco.editor.action.triggerSuggest";
 
+    // check whether the continuation commands have already been registered
+    var commandsRegistered = commandList.find(command => command == 'insertContinuation' || command == 'removeContinuation');
+
     // initialize helpers
-    const contHandling = new ContinuationHandler(highlight);
+    const handler = new EventsHandler(completeCommand);
+    const contHandling = new ContinuationHandler();
     const commands = new CustomEditorCommands();
-    const handler = new EventsHandler(completeCommand, highlight);
 
     // register them
     context.subscriptions.push(contHandling);
@@ -92,45 +93,49 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(handler);
 
     // register provider for all hlasm debug configurations
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HlasmConfigurationProvider(dapPort)));
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider(dapPort)));
 
     // register continuation handlers
-    context.subscriptions.push(vscode.commands.registerTextEditorCommand("insertContinuation", 
-        (editor, edit) => contHandling.insertContinuation(editor, edit)));
-    context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation", 
-        (editor, edit) => contHandling.removeContinuation(editor, edit)));
-
+    if (!commandsRegistered) {
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("insertContinuation",
+            (editor, edit) => contHandling.insertContinuation(editor, edit,highlight.getContinuationInfo())));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
+            (editor, edit) => contHandling.removeContinuation(editor, edit,highlight.getContinuationInfo())));
+    }
+        
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
-            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(editor,highlight))));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste", 
-            (editor, edit, args) => commands.insertChars(editor, edit, args,getOffset(editor,highlight))));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut", 
-            (editor, edit) => commands.cut(editor, edit,getOffset(editor,highlight))));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft", 
-            (editor, edit) => commands.deleteLeft(editor, edit,getOffset(editor,highlight))));
-        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight", 
-            (editor, edit) => commands.deleteRight(editor, edit,getOffset(editor,highlight))));
+            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(highlight.getContinuationInfo(),editor))));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste",
+            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(highlight.getContinuationInfo(),editor))));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut",
+            (editor, edit) => commands.cut(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft",
+            (editor, edit) => commands.deleteLeft(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight",
+            (editor, edit) => commands.deleteRight(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
     }
 
     // register event handlers
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e)));
-    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(e => handler.onDidCloseTextDocument(e)));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e,highlight.getContinuationInfo())));
+    //context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(e => handler.onDidCloseTextDocument(e)));
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
-    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e)));
+    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e,highlight)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
-
-    // register highlight progress
-    context.subscriptions.push(highlight.progress);
 
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
+
+    return handler;
 }
 
-function getOffset(editor: vscode.TextEditor, highlight: HLASMSemanticHighlightingFeature): number {
-    return highlight.getContinuation(editor.selection.active.line, editor.document.uri.toString())
+function getOffset(info: ContinuationDocumentsInfo, editor: vscode.TextEditor): number {
+    const foundDoc = info.get(editor.document.uri.toString());
+    if (!foundDoc)
+        return undefined;
+    return foundDoc.lineContinuations.get(editor.selection.active.line);
 }

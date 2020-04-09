@@ -15,20 +15,17 @@
 import * as vscode from 'vscode';
 
 // debug configuration provider, adds port number dynamically
-export class HlasmConfigurationProvider implements vscode.DebugConfigurationProvider
-{
+export class HLASMConfigurationProvider implements vscode.DebugConfigurationProvider {
     private dapPort: number;
-    constructor(dapPort: number)
-    {
+    constructor(dapPort: number) {
         this.dapPort = dapPort;
     }
 
-    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, 
+    resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined,
         config: vscode.DebugConfiguration)
         : vscode.ProviderResult<vscode.DebugConfiguration> {
         // no launch.json, debug current
-        if (!config.type && !config.request && !config.name)
-        {
+        if (!config.type && !config.request && !config.name) {
             config.type = "hlasm";
             config.request = "launch";
             config.name = "Macro tracer: current program";
@@ -36,8 +33,8 @@ export class HlasmConfigurationProvider implements vscode.DebugConfigurationProv
             config.stopOnEntry = true;
         }
         config.debugServer = this.dapPort;
-		return config;
-	}
+        return config;
+    }
 }
 
 // show an input box to select the program to trace
@@ -50,11 +47,14 @@ export function getProgramName() {
 
 // checks whether the currently open file is hlasm and starts tracing if so
 export function getCurrentProgramName() {
-    const currentFile = vscode.window.activeTextEditor.document;
-    if (currentFile.languageId != 'hlasm')
-    {
-        vscode.window.showErrorMessage(currentFile.fileName + ' is not a HLASM file.');
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No file open.');
         return undefined;
     }
-    return currentFile.fileName;
+    if (editor.document.languageId != 'hlasm') {
+        vscode.window.showErrorMessage(editor.document.fileName + ' is not a HLASM file.');
+        return undefined;
+    }
+    return editor.document.fileName;
 }
