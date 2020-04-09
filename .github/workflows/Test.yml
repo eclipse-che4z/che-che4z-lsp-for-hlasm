@@ -53,7 +53,8 @@ jobs:
           sudo apt-get install -y clang-format-10
       #Change the options in clang format that make clang-format-10 output different source than clang-format-9
       - name: Clang format 10 compatiblity
-        run: echo "SpaceInEmptyBlock: false" >> .clang-format
+        run: |
+          echo "SpaceInEmptyBlock: false" >> .clang-format
       - name: Format check
         run:  clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
