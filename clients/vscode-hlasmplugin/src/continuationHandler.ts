@@ -38,10 +38,12 @@ export class ContinuationHandler {
         const isContinued = foundDoc.lineContinuations.get(editor.selection.active.line);
 
         if (!isContinued) {
-            var lastChar = editor.selection.active.character;
             if (editor.selection.active.character < continuationOffset) {
-                lastChar = editor.document.lineAt(editor.selection.active).text.length;
-                lastChar = (lastChar < continuationOffset) ? lastChar : continuationOffset;
+                const lastChar =
+                    (editor.selection.active.character < continuationOffset)
+                        ? editor.document.lineAt(editor.selection.active).text.length
+                        : continuationOffset;
+
                 edit.insert(
                     new vscode.Position(editor.selection.active.line, lastChar),
                     " ".repeat(continuationOffset - lastChar));

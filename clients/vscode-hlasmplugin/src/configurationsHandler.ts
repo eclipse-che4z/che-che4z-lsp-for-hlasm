@@ -41,15 +41,15 @@ export class ConfigurationsHandler {
      * Checks whether the given path matches any of the wildcards
      * If so, it is HLASM
      */
-    match(path: string): boolean {
-        return this.definedExpressions.find(expr => expr.test(path)) !== undefined;
+    match(file: string): boolean {
+        return this.definedExpressions.find(expr => expr.test(file)) !== undefined;
     }
 
     /**
      * Checks whether both config files are present
      * Creates them on demand if not
      */
-    checkConfigs(): [String, String] {
+    checkConfigs(): [string, string] {
         // configs exist
         if (this.updateConfigPaths())
             return [this.pgmConfPath, this.procGrpsPath];
@@ -86,7 +86,7 @@ export class ConfigurationsHandler {
     }
 
     // update wildcards when pgm conf changes (on save)
-    updateWildcards(reloadedFile: String = undefined): RegExp[] {
+    updateWildcards(reloadedFile: string = undefined): RegExp[] {
         // the reloaded file is not a config file
         if (reloadedFile && reloadedFile != this.pgmConfPath && reloadedFile != this.procGrpsPath)
             return this.definedExpressions;

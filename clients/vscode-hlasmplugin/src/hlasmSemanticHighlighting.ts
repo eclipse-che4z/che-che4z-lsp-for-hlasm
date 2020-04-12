@@ -96,7 +96,7 @@ export class HLASMSemanticHighlightingFeature extends SemanticHighlightingFeatur
 			capabilities.textDocument = {};
 		}
 		
-		capabilities.textDocument!.ASMsemanticHighlightingCapabilities = {
+		capabilities.textDocument.ASMsemanticHighlightingCapabilities = {
 			ASMsemanticHighlighting: true
 		};
 	}
