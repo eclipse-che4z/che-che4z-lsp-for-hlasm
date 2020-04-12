@@ -38,7 +38,6 @@ export class ServerFactory {
     
             return () => {
                 let socket = net.connect(lspPort,'localhost');
-                socket.localPort
                 let result: vscodelc.StreamInfo = {
                     writer: socket,
                     reader: socket

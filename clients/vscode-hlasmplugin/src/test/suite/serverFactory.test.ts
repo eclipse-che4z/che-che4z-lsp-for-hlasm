@@ -25,7 +25,6 @@ suite('ServerFactory Test Suite', () => {
     test('TCP server options test', (done) => {
         // create TCP server options
         factory.create(true).then((options) => {
-            ;
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
                 // retrieve one of the sockets
                 var socket = <net.Socket>(streamInfoOptions.writer);
