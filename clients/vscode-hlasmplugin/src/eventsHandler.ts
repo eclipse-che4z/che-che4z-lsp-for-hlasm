@@ -14,7 +14,7 @@
 
 import * as vscode from 'vscode';
 
-import { HLASMSemanticHighlightingFeature, ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
+import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
 import { ConfigurationsHandler } from './configurationsHandler'
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
 import { SemanticHighlightingFeature } from './semanticHighlighting';
@@ -31,8 +31,6 @@ export class EventsHandler {
     // newly open files are detected for HLASM
     private langDetect: HLASMLanguageDetection;
     // parse in progress indicator
-    //private progress: vscode.StatusBarItem;
-    //protected currentlyParsed: Set<String>;
     /**
      * 
      * @param completeCommand Used to invoke complete manually in continuationHandling mode
@@ -45,10 +43,6 @@ export class EventsHandler {
         this.completeCommand = completeCommand;
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
-        //this.progress = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-		//this.progress.text = "Parsing";
-        //this.progress.color = "red";
-        //this.currentlyParsed = new Set();
         this.initialize();
     }
 
@@ -61,7 +55,6 @@ export class EventsHandler {
         this.configSetup.updateWildcards();
         // first run, check for assembler language and configurations
         if (vscode.window.activeTextEditor) {
-            //this.showProgress(vscode.window.activeTextEditor.document);
             this.editorChanged(vscode.window.activeTextEditor.document);
         }
     }
@@ -77,11 +70,6 @@ export class EventsHandler {
                 return false;
 
             const change = event.contentChanges[0];
-            /*
-            const currentLine = event.document.getText(
-                new vscode.Range(
-                    new vscode.Position(editor.selection.active.line, 0),
-                    editor.selection.active));*/
             const currentLine = event.document.getText(
                 new vscode.Range(
                     new vscode.Position(
@@ -104,7 +92,6 @@ export class EventsHandler {
             }
         }
         return false;
-        //this.showProgress(event.document);
     }
 
     // when any visible text editor changes, apply decorations for it
@@ -114,15 +101,9 @@ export class EventsHandler {
                 highlight.colorize();
                 break;
             }
-        };
+        }
     }
 
-    /*
-    // when files closes before it was succesfuly parsed, remove it from the parsing list
-    onDidCloseTextDocument(document: vscode.TextDocument) {
-        this.hideProgress(document.uri.toString());
-    }
-    */
     // when document opens, show parse progress
     onDidOpenTextDocument(document: vscode.TextDocument) {
         //this.showProgress(document);
@@ -150,32 +131,6 @@ export class EventsHandler {
         if (this.configSetup.shouldCheckConfigs && this.langDetect.setHlasmLanguage(document))
             this.configSetup.checkConfigs();
     }
-    /*
-    private showProgress(document: vscode.TextDocument)
-	{
-		if (document.languageId != 'hlasm')
-			return;
-
-		this.currentlyParsed.add(document.uri.toString());
-		this.updateProgressTooltip();
-		this.progress.show();
-	}
-
-	hideProgress(filename: String)
-	{
-		this.currentlyParsed.delete(filename);
-		this.updateProgressTooltip();
-		if (this.currentlyParsed.size == 0)
-			this.progress.hide();
-	}
-
-	private updateProgressTooltip()
-	{
-		this.progress.tooltip = '';
-		this.currentlyParsed.forEach((file)=> {
-			this.progress.tooltip += file + '\n';
-		})
-    }*/
 }
 
 /**
