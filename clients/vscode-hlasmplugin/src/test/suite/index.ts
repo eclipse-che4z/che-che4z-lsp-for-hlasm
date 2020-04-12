@@ -1,16 +1,7 @@
-/*
- * Copyright (c) 2019 Broadcom.
- * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
- *
- * This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License 2.0
- * which is available at https://www.eclipse.org/legal/epl-2.0/
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Contributors:
- *   Broadcom, Inc. - initial API and implementation
- */
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) TypeFox. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
 import * as Mocha from 'mocha';
