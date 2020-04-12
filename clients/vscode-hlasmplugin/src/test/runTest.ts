@@ -15,13 +15,20 @@
 import * as path from 'path';
 import { runTests } from 'vscode-test';
 import { TestOptions } from 'vscode-test/out/runTest';
+import * as fs from 'fs';
 
 async function main() {
 	try {
+		// copy test workspace from src to lib
+		const destWorkspacePath = path.join(__dirname, './workspace/');
+		const originWorkspacePath = path.join(__dirname, '../../src/test/workspace/');
+		recursiveRemoveSync(destWorkspacePath);
+		recursiveCopySync(originWorkspacePath,destWorkspacePath);
+
 		// prepare development and tests paths
 		const extensionDevelopmentPath = path.join(__dirname, '../../');
 		const extensionTestsPath = path.join(__dirname, './suite/index');
-		const launchArgs = [path.join(__dirname, './workspace/')];
+		const launchArgs = [destWorkspacePath];
 		const options: TestOptions = {
 			extensionDevelopmentPath,
 			extensionTestsPath,
@@ -30,9 +37,41 @@ async function main() {
 		// run tests
 		await runTests(options);
 	} catch (error) {
+		console.log(error);
 		console.error('Tests Failed');
 		process.exit(0);
 	}
 }
+
+function recursiveCopySync(origin: string, dest: string) {
+	if (fs.existsSync(origin)) {
+		if (fs.statSync(origin).isDirectory()) {
+			fs.mkdirSync(dest);
+			fs.readdirSync(origin).forEach(file => 
+				recursiveCopySync(path.join(origin, file), path.join(dest, file)));
+		}
+		else {
+			fs.copyFileSync(origin, dest);
+		}
+	}
+	else {
+		console.log(origin);
+	}
+};
+
+function recursiveRemoveSync(dest: string) {
+	if (fs.existsSync(dest)) {
+		fs.readdirSync(dest).forEach(file => {
+		const currPath = path.join(dest, file);
+		if (fs.statSync(currPath).isDirectory()) {
+			recursiveRemoveSync(currPath);
+		} 
+		else { 
+			fs.unlinkSync(currPath);
+		}
+		});
+		fs.rmdirSync(dest);
+	}
+};
 
 main();

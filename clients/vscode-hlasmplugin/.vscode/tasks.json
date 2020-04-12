@@ -45,9 +45,16 @@
         },
         {
             "label": "copyWorkspace",
-            "command": "node",
+            "command": "cp",
             "type": "shell",
-            "args": ["./build/bin/copyWorkspace.js"]
+            "args": ["-r","${workspaceFolder}/src/test/workspace/","${workspaceFolder}/lib/test/workspace/"],
+            "dependsOn" :[ "removeWorkspace" ]
+        },
+        {
+            "label": "removeWorkspace",
+            "command": "rm",
+            "type": "shell",
+            "args": ["-r","${workspaceFolder}/lib/test/workspace/"]
         }
     ]
 }
