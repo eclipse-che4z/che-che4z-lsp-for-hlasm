@@ -66,7 +66,8 @@ jobs:
         run: cd build/bin && ./server_test && ./library_test
       - name: gabrielbb/xvfb-action
         uses: GabrielBB/xvfb-action@v1.0
-          with: cd clients/vscode-hlasmplugin && npm run test
+        with: 
+          run: cd clients/vscode-hlasmplugin && npm run test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
