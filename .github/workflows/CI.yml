@@ -34,7 +34,7 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v1
     - name: Configure
       shell: cmd
-      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_VSIX=Off ../
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ../
     - name: Build
       shell: cmd
       run: cd build && cmake --build . --parallel --config Release
@@ -56,7 +56,7 @@ jobs:
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev g++-8 ninja-build
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
+        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
       - name: Build
         run: cd build && cmake --build .
       - name: Test
@@ -78,7 +78,7 @@ jobs:
           brew install ninja llvm@8
           export PATH=~/usr/local/opt/llvm\@8/bin:$PATH
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
+        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
       - name: Build
         run: cd build && cmake --build . -- -v
       - name: Test
