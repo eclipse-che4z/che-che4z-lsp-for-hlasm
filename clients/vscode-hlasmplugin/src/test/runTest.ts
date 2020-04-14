@@ -37,9 +37,8 @@ async function main() {
 		// run tests
 		await runTests(options);
 	} catch (error) {
-		console.log(error);
 		console.error('Tests Failed');
-		process.exit(0);
+		process.exit(1);
 	}
 }
 

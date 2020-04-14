@@ -37,8 +37,10 @@ jobs:
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build
         run: cd build && cmake --build .
-      - name: Test
+      - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
+      - name: Extension Test
+        run: cd clients/vscode-hlasmplugin && npm run test
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
       - name: Get version

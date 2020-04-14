@@ -43,12 +43,12 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.5.3",
-    "mocha": "7.1.1",
+    "mocha": "^7.1.1",
     "glob": "^7.1.6",
     "vscode-test": "^1.3.0",
     "@types/vscode": "^1.32.3",
     "@types/mocha": "^7.0.2",
-    "@types/glob": "5.0.35"
+    "@types/glob": "^5.0.35"
   },
   "dependencies": {
     "vscode-languageclient": "^5.2.1"
