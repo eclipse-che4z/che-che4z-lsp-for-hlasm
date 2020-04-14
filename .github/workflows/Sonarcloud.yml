@@ -17,9 +17,11 @@ on:
   pull_request:
     branches:
       - development
+      - master
   push:
     branches:
       - development
+      - master
 
 
 jobs:
@@ -89,6 +91,7 @@ jobs:
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
           -Dsonar.projectVersion=${{ env.VERSION }}
+          -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
           ${{ env.HEAD_BRANCH }}
           ${{ env.PR_NUMBER }}
 

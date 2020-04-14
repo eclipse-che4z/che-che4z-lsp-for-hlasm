@@ -21,18 +21,18 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-//statement provider providing statements of copy members
+// statement provider providing statements of copy members
 class copy_statement_provider : public common_statement_provider
 {
 public:
-	copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
+    copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
 
-	virtual void process_next(statement_processor& processor) override;
+    virtual void process_next(statement_processor& processor) override;
 
-	virtual bool finished() const override;
+    virtual bool finished() const override;
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif
