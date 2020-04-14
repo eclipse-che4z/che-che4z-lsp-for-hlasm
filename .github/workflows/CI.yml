@@ -43,7 +43,7 @@ jobs:
       run: cd build\bin && library_test.exe && server_test.exe
     - name: Extension Test
       shell: cmd
-      run: cd clients\vscode-hlasmplugin && npm run test
+      run: cd clients\vscode-hlasmplugin && npm test
     - name: Actions artifact
       uses: actions/upload-artifact@v1
       with:
@@ -64,10 +64,11 @@ jobs:
         run: cd build && cmake --build .
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
-      - name: gabrielbb/xvfb-action
+      - name: Extension Test
+        run: cd client/vscode-hlasmplugin
         uses: GabrielBB/xvfb-action@v1.0
-        with: 
-          run: cd clients/vscode-hlasmplugin && npm run test
+        with:
+          run: npm test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -91,7 +92,10 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        run: cd clients/vscode-hlasmplugin && npm run test
+        run: cd client/vscode-hlasmplugin
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
