@@ -65,7 +65,6 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        shell: cmd
         run: cd clients/vscode-hlasmplugin && npm run test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
@@ -90,7 +89,6 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        shell: cmd
         run: cd clients/vscode-hlasmplugin && npm run test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
