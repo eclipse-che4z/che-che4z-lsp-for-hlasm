@@ -38,9 +38,12 @@ jobs:
     - name: Build
       shell: cmd
       run: cd build && cmake --build . --parallel --config Release
-    - name: Test
+    - name: Server Test
       shell: cmd
-      run: cd build\bin && library_test.exe && server_test.exe && cd ..\..\clients\vscode-hlasmplugin && npm run test
+      run: cd build\bin && library_test.exe && server_test.exe
+    - name: Extension Test
+      shell: cmd
+      run: cd clients\vscode-hlasmplugin && npm run test
     - name: Actions artifact
       uses: actions/upload-artifact@v1
       with:
@@ -59,8 +62,11 @@ jobs:
         run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
       - name: Build
         run: cd build && cmake --build .
-      - name: Test
-        run: cd build/bin && ./server_test && ./library_test && cd ../../clients/vscode-hlasmplugin && npm run test
+      - name: Server Test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Extension Test
+        shell: cmd
+        run: cd clients/vscode-hlasmplugin && npm run test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -81,8 +87,11 @@ jobs:
         run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
       - name: Build
         run: cd build && cmake --build . -- -v
-      - name: Test
-        run: cd build/bin && ./server_test && ./library_test && cd ../../clients/vscode-hlasmplugin && npm run test
+      - name: Server Test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Extension Test
+        shell: cmd
+        run: cd clients/vscode-hlasmplugin && npm run test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
