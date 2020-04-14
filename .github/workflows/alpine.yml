@@ -40,10 +40,9 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        run: cd client/vscode-hlasmplugin
         uses: GabrielBB/xvfb-action@v1.0
         with:
-          run: npm test
+          run: npm --prefix clients/vscode-hlasmplugin test
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
       - name: Get version
