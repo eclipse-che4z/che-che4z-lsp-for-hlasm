@@ -48,7 +48,7 @@ function recursiveReadDirSync(dest: string) {
 		if (fs.statSync(dest).isDirectory()) {
 			fs.readdirSync(dest).forEach(file => {
 				if (file == 'code') {
-					console.log(fs.statSync(file).mode);
+					console.log(fs.statSync(path.join(dest,file)).mode);
 					return;
 				}
 				recursiveReadDirSync(path.join(dest,file));
