@@ -24,23 +24,11 @@ suite('ServerFactory Test Suite', () => {
      
     test('TCP server options test', async () => {
         // create TCP server options
-        await factory.create(true);/*.then((options) => {
-            (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
-                // retrieve one of the sockets
-                var socket = <net.Socket>(streamInfoOptions.writer);
-                // when the socket is connected, check its address and port
-                socket.on('connect', () => {
-                    assert.equal(socket.remoteAddress, '127.0.0.1');
-                    assert.notEqual(socket.remotePort, factory.dapPort);
-                    assert.ok(socket.remotePort > 1024 && socket.remotePort < 65535);
-                    done();
-                });
-            });
-        });*/
-        console.log(factory.lspPort);
-        console.log(factory.dapPort);
+        await factory.create(true);
+        assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
+        assert.ok(factory.lspPort > 1024 && factory.lspPort < 65535)
         assert.notEqual(factory.lspPort,factory.dapPort);
-    }).slow(2000);
+    });
 
     test('non TCP server options test', async () => {
         // create standard server options
@@ -55,9 +43,6 @@ suite('ServerFactory Test Suite', () => {
         assert.equal(execOptions.args.length, 2);
         assert.equal(execOptions.args[0], '-p');
         assert.equal(execOptions.args[1], factory.dapPort.toString());
-    });
-
-    test('DAP port test', () => {
         assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
-    })
+    });
 });
