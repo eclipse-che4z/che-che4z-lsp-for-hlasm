@@ -23,6 +23,7 @@ suite('ServerFactory Test Suite', () => {
     var factory = new ServerFactory();
     
     test('TCP server options test', (done) => {
+        /*
         // create TCP server options
         factory.create(true).then((options) => {
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
@@ -37,7 +38,7 @@ suite('ServerFactory Test Suite', () => {
                 });
             });
         });
-    }).slow(2000);
+    }).slow(2000);*/
 
     test('non TCP server options test', async () => {
         // create standard server options
