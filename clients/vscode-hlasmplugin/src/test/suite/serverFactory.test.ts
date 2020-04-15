@@ -21,11 +21,10 @@ import { ServerFactory } from '../../serverFactory'
 
 suite('ServerFactory Test Suite', () => {
     var factory = new ServerFactory();
-     /*
+     
     test('TCP server options test', (done) => {
-       
         // create TCP server options
-        factory.create(true).then((options) => {
+        factory.create(true).then((options) => {/*
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
                 // retrieve one of the sockets
                 var socket = <net.Socket>(streamInfoOptions.writer);
@@ -37,8 +36,8 @@ suite('ServerFactory Test Suite', () => {
                     done();
                 });
             });
-        });
-    }).slow(2000);*/
+        */});
+    }).slow(2000);
 
     test('non TCP server options test', async () => {
         // create standard server options
