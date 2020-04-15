@@ -26,12 +26,10 @@ suite('ServerFactory Test Suite', () => {
         // create TCP server options
         factory.create(true).then((options) => {
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
-                console.log('created');
                 // retrieve one of the sockets
                 var socket = <net.Socket>(streamInfoOptions.writer);
                 // when the socket is connected, check its address and port
                 socket.on('connect', () => {
-                    console.log('connected');
                     assert.equal(socket.remoteAddress, '127.0.0.1');
                     assert.notEqual(socket.remotePort, factory.dapPort);
                     assert.ok(socket.remotePort > 1024 && socket.remotePort < 65535);

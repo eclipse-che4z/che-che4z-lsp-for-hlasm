@@ -38,14 +38,21 @@ async function main() {
 		await runTests(options);
 	} catch (error) {
 		console.error('Tests Failed');
-		if (fs.existsSync(path.join(__dirname, 'clients/vscode-hlasmplugin/.vscode-test/vscode-1.44.1/VSCode-linux-x64'))) {
-			fs.readdirSync(path.join(__dirname, 'clients/vscode-hlasmplugin/.vscode-test/vscode-1.44.1/VSCode-linux-x64')).forEach(file => {
-				console.log(file);
-			});
-		}
-		else 
-			console.log('no such directory');
+		recursiveReadDirSync(path.join(__dirname, './.vscode-test/'));
 		process.exit(1);
+	}
+}
+
+function recursiveReadDirSync(dest: string) {
+	if (fs.existsSync(dest)) {
+		console.log(dest);
+		if (fs.statSync(dest).isDirectory()) {
+			fs.readdirSync(dest).forEach(file => {
+				recursiveReadDirSync(path.join(dest,file));
+			})
+		}
+	} else {
+		console.log('no dest');
 	}
 }
 
@@ -59,9 +66,6 @@ function recursiveCopySync(origin: string, dest: string) {
 		else {
 			fs.copyFileSync(origin, dest);
 		}
-	}
-	else {
-		console.log(origin);
 	}
 };
 
