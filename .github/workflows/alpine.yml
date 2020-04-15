@@ -43,6 +43,8 @@ jobs:
         uses: marcel1hruska/xvfb-action@master
         with:
           run: npm --prefix clients/vscode-hlasmplugin test
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v2
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
       - name: Get version
