@@ -40,7 +40,7 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: marcel1hruska/xvfb-action@master
         with:
           run: npm --prefix clients/vscode-hlasmplugin test
       - name: Get VSIX filename
