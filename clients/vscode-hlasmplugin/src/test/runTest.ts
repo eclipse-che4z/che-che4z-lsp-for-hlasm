@@ -38,6 +38,13 @@ async function main() {
 		await runTests(options);
 	} catch (error) {
 		console.error('Tests Failed');
+		if (fs.existsSync(path.join(__dirname, 'clients/vscode-hlasmplugin/.vscode-test/vscode-1.44.1/VSCode-linux-x64'))) {
+			fs.readdirSync(path.join(__dirname, 'clients/vscode-hlasmplugin/.vscode-test/vscode-1.44.1/VSCode-linux-x64')).forEach(file => {
+				console.log(file);
+			});
+		}
+		else 
+			console.log('no such directory');
 		process.exit(1);
 	}
 }
