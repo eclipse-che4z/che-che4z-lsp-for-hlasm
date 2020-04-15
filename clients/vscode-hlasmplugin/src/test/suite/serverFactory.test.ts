@@ -21,9 +21,9 @@ import { ServerFactory } from '../../serverFactory'
 
 suite('ServerFactory Test Suite', () => {
     var factory = new ServerFactory();
-    
+     /*
     test('TCP server options test', (done) => {
-        /*
+       
         // create TCP server options
         factory.create(true).then((options) => {
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
