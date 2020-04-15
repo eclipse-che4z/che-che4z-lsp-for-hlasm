@@ -91,9 +91,7 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        uses: GabrielBB/xvfb-action@v1.0
-        with:
-          run: npm --prefix clients/vscode-hlasmplugin test
+        run: npm --prefix clients/vscode-hlasmplugin test
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:

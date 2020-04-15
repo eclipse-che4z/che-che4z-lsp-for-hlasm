@@ -21,7 +21,7 @@ import { ServerFactory } from '../../serverFactory'
 
 suite('ServerFactory Test Suite', () => {
     var factory = new ServerFactory();
-
+    /*
     test('TCP server options test', (done) => {
         // create TCP server options
         factory.create(true).then((options) => {
@@ -56,5 +56,5 @@ suite('ServerFactory Test Suite', () => {
 
     test('DAP port test', () => {
         assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
-    })
+    })*/
 });
