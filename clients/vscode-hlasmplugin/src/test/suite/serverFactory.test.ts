@@ -22,21 +22,24 @@ import { ServerFactory } from '../../serverFactory'
 suite('ServerFactory Test Suite', () => {
     var factory = new ServerFactory();
      
-    test('TCP server options test', () => {
+    test('TCP server options test', async () => {
         // create TCP server options
-        factory.create(true).then((options) => {
+        await factory.create(true);/*.then((options) => {
             (<(() => Thenable<vscodelc.StreamInfo>)>(options))().then((streamInfoOptions) => {
                 // retrieve one of the sockets
                 var socket = <net.Socket>(streamInfoOptions.writer);
                 // when the socket is connected, check its address and port
-                /*socket.on('connect', () => {
+                socket.on('connect', () => {
                     assert.equal(socket.remoteAddress, '127.0.0.1');
                     assert.notEqual(socket.remotePort, factory.dapPort);
                     assert.ok(socket.remotePort > 1024 && socket.remotePort < 65535);
                     done();
-                });*/
+                });
             });
-        });
+        });*/
+        console.log(factory.lspPort);
+        console.log(factory.dapPort);
+        assert.notEqual(factory.lspPort,factory.dapPort);
     }).slow(2000);
 
     test('non TCP server options test', async () => {
