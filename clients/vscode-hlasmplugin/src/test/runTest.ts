@@ -38,16 +38,19 @@ async function main() {
 		await runTests(options);
 	} catch (error) {
 		console.error('Tests Failed');
-		recursiveReadDirSync(path.join(__dirname,'../../.vscode-test'));
+		recursiveReadDirSync(path.join(__dirname,'../../.vscode-test/vscode-1.44.1/VSCode-linux-x64'));
 		process.exit(1);
 	}
 }
 
 function recursiveReadDirSync(dest: string) {
 	if (fs.existsSync(dest)) {
-		console.log(dest);
 		if (fs.statSync(dest).isDirectory()) {
 			fs.readdirSync(dest).forEach(file => {
+				if (file == 'code') {
+					console.log(fs.statSync(file).mode);
+					return;
+				}
 				recursiveReadDirSync(path.join(dest,file));
 			})
 		}
