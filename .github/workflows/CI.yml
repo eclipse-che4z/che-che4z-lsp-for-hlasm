@@ -90,8 +90,6 @@ jobs:
         run: cd build && cmake --build . -- -v
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v2
       - name: Extension Test
         run: npm --prefix clients/vscode-hlasmplugin test
       - name: Actions artifact
