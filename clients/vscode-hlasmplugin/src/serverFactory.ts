@@ -29,13 +29,17 @@ export class ServerFactory {
     async create(useTcp: boolean) : Promise<vscodelc.ServerOptions> {
         const langServerFolder = process.platform;
         this.dapPort = await this.getPort();
+        console.log('got dap port');
         if (useTcp) {
             const lspPort = await this.getPort();
+            console.log('got lsp port');
+
             //spawn the server
             fork.spawn(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
                 ["-p", this.dapPort.toString(), lspPort.toString()]);
-    
+            console.log('spawned');
+
             return () => {
                 let socket = net.connect(lspPort,'localhost');
                 let result: vscodelc.StreamInfo = {
