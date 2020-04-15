@@ -24,7 +24,12 @@ import { getConfig } from './eventsHandler'
  * also stores port used for DAP
  */
 export class ServerFactory {
+    private usedPorts: Set<number>;
     dapPort: number;
+
+    constructor() {
+        this.usedPorts = new Set();
+    }
     
     async create(useTcp: boolean) : Promise<vscodelc.ServerOptions> {
         const langServerFolder = process.platform;
@@ -55,14 +60,23 @@ export class ServerFactory {
         }
     }
 
+    private async getPort() : Promise<number> {
+        while (true) {
+            const port = await this.getRandomPort();
+            if (!this.usedPorts.has(port))
+                return port;
+            else
+                this.usedPorts.add(port);
+        }
+    }
     // returns random free port
-    private getPort = () => new Promise<number>((resolve, reject) => {
+    private getRandomPort = () => new Promise<number>((resolve, reject) => {
         var srv = net.createServer();
         srv.unref();
         srv.listen(0, () => {
-            const port = (srv.address() as net.AddressInfo).port
+            const address = srv.address();
             srv.close(() => {
-                resolve(port);
+                resolve((address as net.AddressInfo).port);
             });
         });
     });

@@ -38,7 +38,7 @@ async function main() {
 		await runTests(options);
 	} catch (error) {
 		console.error('Tests Failed');
-		recursiveReadDirSync(path.join(__dirname, './.vscode-test/'));
+		recursiveReadDirSync(__dirname);
 		process.exit(1);
 	}
 }
