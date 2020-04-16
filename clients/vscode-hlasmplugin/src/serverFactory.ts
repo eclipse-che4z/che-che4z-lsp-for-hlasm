@@ -39,9 +39,10 @@ export class ServerFactory {
             this.lspPort = await this.getPort();
 
             //spawn the server
+            /*
             fork.spawn(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                ["-p", this.dapPort.toString(), this.lspPort.toString()]);
+                ["-p", this.dapPort.toString(), this.lspPort.toString()]);*/
 
             return () => {
                 let socket = net.connect(this.lspPort,'localhost');
