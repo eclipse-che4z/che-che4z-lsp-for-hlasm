@@ -106,6 +106,8 @@ class error_strategy : public antlr4::DefaultErrorStrategy
 
     virtual antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
 
+    virtual bool singleTokenInsertion(antlr4::Parser* recognizer) override { return false; }
+
     std::vector<std::unique_ptr<antlr4::Token>> _errorSymbols;
 };
 
