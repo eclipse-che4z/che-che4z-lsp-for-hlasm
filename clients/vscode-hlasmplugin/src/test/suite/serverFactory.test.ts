@@ -27,7 +27,7 @@ suite('ServerFactory Test Suite', () => {
         await factory.create(true);
         assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
         assert.ok(factory.lspPort > 1024 && factory.lspPort < 65535)
-        assert.notEqual(factory.lspPort,factory.dapPort);
+        assert.equal(factory.lspPort,factory.dapPort);
     });
 
     test('non TCP server options test', async () => {
