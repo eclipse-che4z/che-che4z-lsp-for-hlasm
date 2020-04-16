@@ -295,3 +295,20 @@ label1 RSECT
 
     ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
 }
+
+TEST(diagnostics, parser_diagnostics_passing)
+{
+    std::string input(
+        R"( 
+ MACRO
+ M 
+ MEND
+ M (ABC,(DEF,GHI),JKL
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+}
