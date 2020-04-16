@@ -24,11 +24,10 @@ suite('ServerFactory Test Suite', () => {
      
     test('TCP server options test', async () => {
         // create TCP server options
-        /*
         await factory.create(true);
         assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
         assert.ok(factory.lspPort > 1024 && factory.lspPort < 65535)
-        assert.notEqual(factory.lspPort,factory.dapPort);*/
+        assert.notEqual(factory.lspPort,factory.dapPort);
     });
 
     test('non TCP server options test', async () => {

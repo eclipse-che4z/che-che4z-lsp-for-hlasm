@@ -64,10 +64,10 @@ export class ServerFactory {
     private async getPort() : Promise<number> {
         while (true) {
             const port = await this.getRandomPort();
-            if (!this.usedPorts.has(port))
-                return port;
-            else
+            if (!this.usedPorts.has(port)) {
                 this.usedPorts.add(port);
+                return port;
+            }
         }
     }
     // returns random free port
