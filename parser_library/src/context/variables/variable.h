@@ -15,11 +15,11 @@
 #ifndef CONTEXT_VARIABLE_H
 #define CONTEXT_VARIABLE_H
 
-#include "../common_types.h"
-#include "../id_storage.h"
-
 #include <memory>
 #include <vector>
+
+#include "context/common_types.h"
+#include "context/id_storage.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -31,37 +31,38 @@ class variable_symbol;
 
 using var_sym_ptr = std::shared_ptr<variable_symbol>;
 
-//base for variable symbols
+// base for variable symbols
 class variable_symbol
 {
 public:
-	//name of the symbol
-	const id_index id;
-	//flag if symbol has global scope
-	const bool is_global;
+    // name of the symbol
+    const id_index id;
+    // flag if symbol has global scope
+    const bool is_global;
 
-	//returns kind of variable symbol
-	const variable_kind var_kind;
+    // returns kind of variable symbol
+    const variable_kind var_kind;
 
-	//casts this to set_symbol_base
-	set_symbol_base* access_set_symbol_base();
-	const set_symbol_base* access_set_symbol_base() const;
-	//casts this to macro_param
-	macro_param_base* access_macro_param_base();
-	const macro_param_base* access_macro_param_base() const;
+    // casts this to set_symbol_base
+    set_symbol_base* access_set_symbol_base();
+    const set_symbol_base* access_set_symbol_base() const;
+    // casts this to macro_param
+    macro_param_base* access_macro_param_base();
+    const macro_param_base* access_macro_param_base() const;
 
-	//N' attribute of the symbol
-	virtual A_t number(std::vector<size_t> offset = {}) const = 0;
-	//K' attribute of the symbol
-	virtual A_t count(std::vector<size_t> offset = {}) const = 0;
+    // N' attribute of the symbol
+    virtual A_t number(std::vector<size_t> offset = {}) const = 0;
+    // K' attribute of the symbol
+    virtual A_t count(std::vector<size_t> offset = {}) const = 0;
 
-	virtual ~variable_symbol() = default;
+    virtual ~variable_symbol() = default;
+
 protected:
-	variable_symbol(variable_kind var_kind, id_index name, bool is_global);
+    variable_symbol(variable_kind var_kind, id_index name, bool is_global);
 };
 
-}
-}
-}
+} // namespace context
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

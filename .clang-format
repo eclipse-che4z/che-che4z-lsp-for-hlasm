@@ -1,0 +1,49 @@
+BasedOnStyle: WebKit
+
+AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     true
+  AfterUnion:      true
+  AfterExternBlock: true
+  BeforeCatch:     true
+  BeforeElse:      true
+  IndentBraces:    false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+BreakBeforeBinaryOperators: NonAssignment
+FixNamespaceComments: true
+
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '<[[:alnum:]._]+>'
+    Priority:        1
+  - Regex:           '^(<|"(gtest|gmock|json|asio|network/uri|antlr))'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
+
+IndentCaseLabels: true
+NamespaceIndentation: None
+IndentPPDirectives: AfterHash
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 3
+
+SpaceAfterTemplateKeyword: false
+Standard: Cpp11
+
+ColumnLimit: 120
+
+BinPackArguments: false
+BinPackParameters: false

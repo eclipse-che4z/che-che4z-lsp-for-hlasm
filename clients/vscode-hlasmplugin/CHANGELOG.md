@@ -2,6 +2,11 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
+## [0.10.1] - 2020-04-14
+
+#### Fixed
+- Plugin crashing when writing macro instructions with operands not properly enclosed in parentheses.
+
 ## [0.10.0] - 2020-04-02
 
 #### Added

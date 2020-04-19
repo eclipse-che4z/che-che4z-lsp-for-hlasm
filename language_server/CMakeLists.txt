@@ -52,7 +52,12 @@ if(UNIX)
 	target_link_libraries(language_server pthread)
 endif()
 if(BUILD_TESTING)
-	add_executable(server_test test/test.cpp
+	file(GLOB_RECURSE SERVER_TEST_SRC
+        "${PROJECT_SOURCE_DIR}/test/*.cpp"
+    )
+
+	add_executable(server_test
+		${SERVER_TEST_SRC}
 		${SOURCES}
 	)
 	add_dependencies(server_test json)
@@ -63,7 +68,12 @@ if(BUILD_TESTING)
 	target_link_libraries(server_test network-uri)
 	target_link_libraries(server_test parser_library)
 
+	target_include_directories(server_test
+    PUBLIC 
+		${PROJECT_SOURCE_DIR}/src
+	)
+
 	if(DISCOVER_TESTS)
-		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)	
+		gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 30)	
 	endif()
 endif()
