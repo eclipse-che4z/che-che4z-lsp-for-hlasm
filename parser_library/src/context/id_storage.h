@@ -15,64 +15,65 @@
 #ifndef CONTEXT_LITERAL_STORAGE_H
 #define CONTEXT_LITERAL_STORAGE_H
 
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
 
-namespace hlasm_plugin{
-namespace parser_library{
-namespace context{
+namespace hlasm_plugin {
+namespace parser_library {
+namespace context {
 
 
-//storage for identifiers 
-//changes strings of identifiers to indexes of this storage class for easier and unified work
+// storage for identifiers
+// changes strings of identifiers to indexes of this storage class for easier and unified work
 class id_storage
 {
 private:
-	std::unordered_set<std::string> lit_;
-	static const std::string empty_string_;
+    std::unordered_set<std::string> lit_;
+    static const std::string empty_string_;
+
 public:
-	id_storage();
-	using const_pointer = const std::string *;
-	using const_iterator = typename std::unordered_set<std::string>::const_iterator;
+    id_storage();
+    using const_pointer = const std::string*;
+    using const_iterator = typename std::unordered_set<std::string>::const_iterator;
 
-	//represents value of empty identifier
-	static const const_pointer empty_id;
+    // represents value of empty identifier
+    static const const_pointer empty_id;
 
-	size_t size() const;
-	const_iterator begin() const;
-	const_iterator end() const;
-	bool empty() const;
+    size_t size() const;
+    const_iterator begin() const;
+    const_iterator end() const;
+    bool empty() const;
 
-	const_pointer find(std::string val) const;
+    const_pointer find(std::string val) const;
 
-	const_pointer add(std::string value,bool is_uri = false);
+    const_pointer add(std::string value, bool is_uri = false);
 
-	struct well_known_strings
-	{
-		const std::string* COPY;
-		const std::string* SETA;
-		const std::string* SETB;
-		const std::string* SETC;
-		const std::string* GBLA;
-		const std::string* GBLB;
-		const std::string* GBLC;
-		const std::string* LCLA;
-		const std::string* LCLB;
-		const std::string* LCLC;
-		const std::string* MACRO;
-		const std::string* MEND;
-		const std::string* ASPACE;
-		const std::string* empty;
-		well_known_strings(std::unordered_set<std::string>& ptr);
+    struct well_known_strings
+    {
+        const std::string* COPY;
+        const std::string* SETA;
+        const std::string* SETB;
+        const std::string* SETC;
+        const std::string* GBLA;
+        const std::string* GBLB;
+        const std::string* GBLC;
+        const std::string* LCLA;
+        const std::string* LCLB;
+        const std::string* LCLC;
+        const std::string* MACRO;
+        const std::string* MEND;
+        const std::string* ASPACE;
+        const std::string* empty;
+        well_known_strings(std::unordered_set<std::string>& ptr);
 
-	} const well_known;
+    } const well_known;
 };
 
 using id_index = id_storage::const_pointer;
 
-}
-}
-}
+} // namespace context
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 
 #endif

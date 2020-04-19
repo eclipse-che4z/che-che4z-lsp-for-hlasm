@@ -18,23 +18,32 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
 source_context::source_context(std::string source_name)
-	: current_instruction(position(), std::move(source_name)), begin_index(0), end_index(0), end_line(0) {}
+    : current_instruction(position(), std::move(source_name))
+    , begin_index(0)
+    , end_index(0)
+    , end_line(0)
+{}
 
 source_snapshot source_context::create_snapshot() const
 {
-	std::vector<copy_frame> copy_frames;
+    std::vector<copy_frame> copy_frames;
 
-	for (auto& member : copy_stack)
-		copy_frames.emplace_back(member.name, member.current_statement);
+    for (auto& member : copy_stack)
+        copy_frames.emplace_back(member.name, member.current_statement);
 
-	if (!copy_frames.empty())
-		--copy_frames.back().statement_offset;
+    if (!copy_frames.empty())
+        --copy_frames.back().statement_offset;
 
-	return source_snapshot{ current_instruction, begin_index, end_index, end_line, std::move(copy_frames) };
+    return source_snapshot { current_instruction, begin_index, end_index, end_line, std::move(copy_frames) };
 }
 
 processing_context::processing_context(processing::processing_kind proc_kind, bool owns_source)
-	: proc_kind(proc_kind), owns_source(owns_source) {}
+    : proc_kind(proc_kind)
+    , owns_source(owns_source)
+{}
 
 processing_frame::processing_frame(location proc_location, const code_scope& scope, file_processing_type proc_type)
-	: proc_location(std::move(proc_location)), scope(scope), proc_type(std::move(proc_type)) {}
+    : proc_location(std::move(proc_location))
+    , scope(scope)
+    , proc_type(std::move(proc_type))
+{}

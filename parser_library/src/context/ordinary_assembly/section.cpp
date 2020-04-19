@@ -19,37 +19,34 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-const std::vector<loctr_ptr>& section::location_counters() const
-{
-	return loctrs_;
-}
+const std::vector<loctr_ptr>& section::location_counters() const { return loctrs_; }
 
 section::section(id_index name, const section_kind kind, id_storage& ids)
-	: ids_(ids), name(name), kind(kind)
+    : ids_(ids)
+    , name(name)
+    , kind(kind)
 {
-	loctrs_.emplace_back(std::make_unique<location_counter>(name, *this, loctr_kind::STARTING, ids_));
-	curr_loctr_ = loctrs_.back().get();
+    loctrs_.emplace_back(std::make_unique<location_counter>(name, *this, loctr_kind::STARTING, ids_));
+    curr_loctr_ = loctrs_.back().get();
 }
 
 void section::set_location_counter(id_index loctr_name)
 {
-	auto tmp = std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto & loctr) {return loctr->name == loctr_name; });
+    auto tmp = std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto& loctr) { return loctr->name == loctr_name; });
 
-	if (tmp != loctrs_.end())
-		curr_loctr_ = &**tmp;
-	else
-	{
-		loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING, ids_));
-		curr_loctr_ = loctrs_.back().get();
-	}
+    if (tmp != loctrs_.end())
+        curr_loctr_ = &**tmp;
+    else
+    {
+        loctrs_.emplace_back(std::make_unique<location_counter>(loctr_name, *this, loctr_kind::NONSTARTING, ids_));
+        curr_loctr_ = loctrs_.back().get();
+    }
 }
 
 bool section::counter_defined(id_index loctr_name)
 {
-	return std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto & loctr) {return loctr->name == loctr_name; }) != loctrs_.end();
+    return std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto& loctr) { return loctr->name == loctr_name; })
+        != loctrs_.end();
 }
 
-location_counter& section::current_location_counter() const
-{
-	return *curr_loctr_;
-}
+location_counter& section::current_location_counter() const { return *curr_loctr_; }

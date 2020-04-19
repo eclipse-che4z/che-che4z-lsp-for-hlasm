@@ -18,38 +18,52 @@
 #include <map>
 
 #include "asm_instr_check.h"
-#include "../context/instruction.h"
+#include "context/instruction.h"
 
-namespace hlasm_plugin{
-namespace parser_library{
-namespace checking{
+namespace hlasm_plugin {
+namespace parser_library {
+namespace checking {
 
-//interface for unified checking
+// interface for unified checking
 class instruction_checker
 {
 public:
-	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range & stmt_range, const diagnostic_collector& add_diagnostic) const = 0;
+    virtual bool check(const std::string& instruction_name,
+        const std::vector<const operand*>& operand_vector,
+        const range& stmt_range,
+        const diagnostic_collector& add_diagnostic) const = 0;
 };
 
+// derived checker for assembler instructions
 class assembler_checker : public instruction_checker
 
 {
 public:
-	assembler_checker();
-	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range& stmt_range, const diagnostic_collector& add_diagnostic) const override;
-	static std::map <std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>> assembler_instruction_map;
+    assembler_checker();
+    virtual bool check(const std::string& instruction_name,
+        const std::vector<const operand*>& operand_vector,
+        const range& stmt_range,
+        const diagnostic_collector& add_diagnostic) const override;
+    // map of all assembler instruction maes to their representations
+    static std::map<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
+        assembler_instruction_map;
+
 protected:
-	void initialize_assembler_map();
+    void initialize_assembler_map();
 };
 
+// derived checker for machine instructions
 class machine_checker : public instruction_checker
 {
 public:
-	virtual bool check(const std::string& instruction_name, const std::vector<const operand*>& operand_vector, const range& stmt_range, const diagnostic_collector& add_diagnostic) const override;
+    virtual bool check(const std::string& instruction_name,
+        const std::vector<const operand*>& operand_vector,
+        const range& stmt_range,
+        const diagnostic_collector& add_diagnostic) const override;
 };
 
-}
-}
-}
+} // namespace checking
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

@@ -20,51 +20,49 @@
 
 namespace hlasm_plugin::language_server {
 
-//LOG_INFO is disabled in release, because it writes vast amount of text
-//which takes significant time
+// LOG_INFO is disabled in release, because it writes vast amount of text
+// which takes significant time
 #ifdef _DEBUG
-#	define LOG_ON
+#    define LOG_ON
 #endif
 
 
 #ifdef LOG_ON
-#	define LOG_ERROR(x)    hlasm_plugin::language_server::logger::get_instance().log(x)
-#	define LOG_WARNING(x)  hlasm_plugin::language_server::logger::get_instance().log(x)
-#	define LOG_INFO(x)     hlasm_plugin::language_server::logger::get_instance().log(x)
+#    define LOG_ERROR(x) hlasm_plugin::language_server::logger::get_instance().log(x)
+#    define LOG_WARNING(x) hlasm_plugin::language_server::logger::get_instance().log(x)
+#    define LOG_INFO(x) hlasm_plugin::language_server::logger::get_instance().log(x)
 #else
-#	define LOG_ERROR(x)    hlasm_plugin::language_server::logger::get_instance().log(x)
-#	define LOG_WARNING(x)
-#	define LOG_INFO(x)
+#    define LOG_ERROR(x) hlasm_plugin::language_server::logger::get_instance().log(x)
+#    define LOG_WARNING(x)
+#    define LOG_INFO(x)
 #endif
 
 class logger
 {
 public:
+    // Gets singleton instance of logger.
+    static logger& get_instance()
+    {
+        static logger instance;
+        return instance;
+    }
 
-	//Gets singleton instance of logger.
-	static logger & get_instance()
-	{
-		static logger instance;
-		return instance;
-	}
-
-	//Writes a message to log file.
-	void log(const std::string & data);
-	//Writes a message to log file.
-	void log(const char * data);
+    // Writes a message to log file.
+    void log(const std::string& data);
+    // Writes a message to log file.
+    void log(const char* data);
 
 protected:
-	std::string current_time();
-	
+    std::string current_time();
+
 private:
-	//Logger should only be accessed byt get_instance, thus the private constructor.
-	logger();
-	~logger();
-	
-	//File to write the log into.
-	std::ofstream file_;
-	
+    // Logger should only be accessed byt get_instance, thus the private constructor.
+    logger();
+    ~logger();
+
+    // File to write the log into.
+    std::ofstream file_;
 };
 
-} //namespace hlasm_plugin
-#endif 
+} // namespace hlasm_plugin::language_server
+#endif

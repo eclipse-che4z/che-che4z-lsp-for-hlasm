@@ -15,23 +15,24 @@
 #ifndef HLASMPLUGIN_PARSER_HLASM_EVALUATION_CONTEXT_H
 #define HLASMPLUGIN_PARSER_HLASM_EVALUATION_CONTEXT_H
 
-#include "../processing/attribute_provider.h"
-#include "../context/hlasm_context.h"
-#include "../parse_lib_provider.h"
+#include "context/hlasm_context.h"
+#include "processing/attribute_provider.h"
+#include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
 
+// structure holding required objects to correcly perform evaluation of expressions
 struct evaluation_context
 {
-	context::hlasm_context& hlasm_ctx;
-	processing::attribute_provider& attr_provider;
-	parse_lib_provider& lib_provider;
+    context::hlasm_context& hlasm_ctx;
+    processing::attribute_provider& attr_provider;
+    workspaces::parse_lib_provider& lib_provider;
 };
 
-}
-}
-}
+} // namespace expressions
+} // namespace parser_library
+} // namespace hlasm_plugin
 
 #endif

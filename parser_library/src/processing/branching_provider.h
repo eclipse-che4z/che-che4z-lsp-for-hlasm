@@ -15,24 +15,24 @@
 #ifndef PROCESSING_BRANCHING_PROVIDER_H
 #define PROCESSING_BRANCHING_PROVIDER_H
 
-#include "../context/id_storage.h"
-#include "../context/ordinary_assembly/dependant.h"
+#include "context/id_storage.h"
+#include "context/ordinary_assembly/dependant.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-//interface for registering and using sequence symbols
+// interface for registering and using sequence symbols
 class branching_provider
 {
 public:
-	virtual void jump_in_statements(context::id_index target, range symbol_range) = 0;
-	virtual void register_sequence_symbol(context::id_index target, range symbol_range) = 0;
+    virtual void jump_in_statements(context::id_index target, range symbol_range) = 0;
+    virtual void register_sequence_symbol(context::id_index target, range symbol_range) = 0;
 
-	virtual ~branching_provider() = default;
+    virtual ~branching_provider() = default;
 };
 
-}
-}
-}
+} // namespace processing
+} // namespace parser_library
+} // namespace hlasm_plugin
 #endif
