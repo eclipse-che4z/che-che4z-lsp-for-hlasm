@@ -26,7 +26,6 @@ import { getConfig } from './eventsHandler'
 export class ServerFactory {
     private usedPorts: Set<number>;
     dapPort: number;
-    lspPort: number;
 
     constructor() {
         this.usedPorts = new Set();
@@ -36,15 +35,15 @@ export class ServerFactory {
         const langServerFolder = process.platform;
         this.dapPort = await this.getPort();
         if (useTcp) {
-            this.lspPort = await this.getPort();
+            const lspPort = await this.getPort();
 
             //spawn the server
             fork.execFile(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                ["-p", this.dapPort.toString(), this.lspPort.toString()]);
+                ["-p", this.dapPort.toString(), lspPort.toString()]);
 
             return () => {
-                let socket = net.connect(this.lspPort,'localhost');
+                let socket = net.connect(lspPort,'localhost');
                 let result: vscodelc.StreamInfo = {
                     writer: socket,
                     reader: socket
