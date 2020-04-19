@@ -85,7 +85,7 @@ int main(int argc, char ** argv) {
 
 			//setup tcp
 			asio::io_service io_service_;
-			asio::ip::tcp::acceptor acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t)lsp_port));
+			asio::ip::tcp::acceptor acceptor_(io_service_, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), (uint16_t)lsp_port));
 			asio::ip::tcp::socket socket_(io_service_);
 			asio::ip::tcp::iostream stream;
 			acceptor_.accept(stream.socket());
