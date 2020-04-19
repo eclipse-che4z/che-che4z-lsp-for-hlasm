@@ -74,7 +74,7 @@ export class ServerFactory {
     private getRandomPort = () => new Promise<number>((resolve, reject) => {
         var srv = net.createServer();
         srv.unref();
-        srv.listen(0, () => {
+        srv.listen(0, "127.0.0.1", () => {
             const address = srv.address();
             srv.close(() => {
                 resolve((address as net.AddressInfo).port);
