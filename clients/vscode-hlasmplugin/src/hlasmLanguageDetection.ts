@@ -48,7 +48,7 @@ export class HLASMLanguageDetection {
 
     private checkHlasmLanguage(document: vscode.TextDocument) {
         // check if the current active editor document matches any of the wildcards
-        if (this.configSetup.match(document.uri.path))
+        if (this.configSetup.match(document.uri.fsPath))
             return true;
 
         const text = document.getText();
