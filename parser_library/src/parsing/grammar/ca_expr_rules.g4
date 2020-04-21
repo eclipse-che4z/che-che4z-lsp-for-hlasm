@@ -20,28 +20,28 @@ expr // returns [expr_ptr e]
 	: SPACE* expr_p_space_c SPACE*;
 
 expr_p returns [vs_ptr* vs_link = nullptr]
-	: expr_s
+	: t=expr_s											
 	{
 		$vs_link = std::move($expr_s.vs_link);
 	}
-	| plus tmp=expr_p
-	| minus tmp=expr_p;
+	| tmp=expr_p minus expr_s
+	| tmp=expr_p plus expr_s;
 
 expr_s returns [vs_ptr* vs_link = nullptr]
-	: t=term_c											
+	: t=term_c												
 	{
 		$vs_link = std::move($term_c.vs_link);
 	}
-	| tmp=expr_s minus term_c
-	| tmp=expr_s plus term_c;
+	| tmp=expr_s slash term_c
+	| tmp=expr_s asterisk term_c;
 
 term_c returns [vs_ptr* vs_link = nullptr]
-	: t=term												
+	: t=term
 	{
 		$vs_link = std::move($term.vs_link);
 	}
-	| tmp=term_c slash term	
-	| tmp=term_c asterisk term;
+	| plus tmp=term_c
+	| minus tmp=term_c;
 
 term returns [vs_ptr* vs_link = nullptr]
 	: lpar expr rpar									

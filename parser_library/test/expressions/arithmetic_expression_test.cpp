@@ -19,6 +19,14 @@
 // test for
 // arithmetic SETA instructions
 
+#define SETAEQ(X, Y)                                                                                                   \
+    EXPECT_EQ(a.context()                                                                                              \
+                  .get_var_sym(a.context().ids().add(X))                                                               \
+                  ->access_set_symbol_base()                                                                           \
+                  ->access_set_symbol<A_t>()                                                                           \
+                  ->get_value(),                                                                                       \
+        Y)
+
 TEST(arithmetic_expressions, valid_self_defining_term)
 {
     std::string input =
@@ -35,30 +43,10 @@ TEST(arithmetic_expressions, valid_self_defining_term)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        196);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        386);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
+    SETAEQ("A1", 1);
+    SETAEQ("A2", 196);
+    SETAEQ("A3", 386);
+    SETAEQ("A4", 0);
 }
 
 TEST(arithmetic_expressions, invalid_self_defining_term)
@@ -109,22 +97,14 @@ TEST(arithmetic_expressions, subscript_use)
 {
     std::string input =
         R"(
-&A SETA 10
 &A1(10) SETA 10
-&A2 SETA &A1(&A OR 2)
+&A2 SETA &A1(10 OR 2)
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
-
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(arithmetic_expressions, unary_operators)
@@ -141,12 +121,7 @@ TEST(arithmetic_expressions, unary_operators)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        -24);
+    SETAEQ("C", -24);
 }
 
 TEST(arithmetic_expressions, binary_space_separated_operator)
@@ -161,12 +136,7 @@ TEST(arithmetic_expressions, binary_space_separated_operator)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
+    SETAEQ("A", 2);
 }
 
 TEST(arithmetic_expressions, limits)
@@ -203,30 +173,10 @@ TEST(arithmetic_expressions, division)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("B1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("B2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("B3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("B4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
+    SETAEQ("B1", 0);
+    SETAEQ("B2", 0);
+    SETAEQ("B3", 1);
+    SETAEQ("B4", 0);
 }
 
 TEST(arithmetic_expressions, operator_priorities)
@@ -237,6 +187,7 @@ TEST(arithmetic_expressions, operator_priorities)
 &B SETA 3+4*2
 &C SETA (10 OR 1+1)
 &D SETA (10 SLL 10 AND 2)
+&E SETA 4-2+5
 )";
     analyzer a(input);
     a.analyze();
@@ -244,28 +195,9 @@ TEST(arithmetic_expressions, operator_priorities)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        -1);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("B"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        11);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("D"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        40);
+    SETAEQ("A", -1);
+    SETAEQ("B", 11);
+    SETAEQ("C", 10);
+    SETAEQ("D", 40);
+    SETAEQ("E",  7);
 }

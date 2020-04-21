@@ -27,10 +27,14 @@ antlrcpp::Any expression_analyzer::visitExpr(parsing::hlasmparser::ExprContext* 
 
 antlrcpp::Any expression_analyzer::visitExpr_p(parsing::hlasmparser::Expr_pContext* ctx)
 {
-    if (ctx->expr_sContext != nullptr)
-        return visit(ctx->expr_sContext);
-    else
-        return visit(ctx->expr_p());
+    if (ctx->t != nullptr)
+        return visit(ctx->t);
+
+    auto a = visit_ref(ctx->tmp);
+    auto b = visit_ref(ctx->expr_s());
+
+    a.merge(std::move(b));
+    return a;
 }
 
 antlrcpp::Any expression_analyzer::visitExpr_s(parsing::hlasmparser::Expr_sContext* ctx)
@@ -58,12 +62,8 @@ antlrcpp::Any expression_analyzer::visitTerm_c(parsing::hlasmparser::Term_cConte
 {
     if (ctx->t != nullptr)
         return visit(ctx->t);
-
-    auto a = visit_ref(ctx->tmp);
-    auto b = visit_ref(ctx->term());
-
-    a.merge(std::move(b));
-    return a;
+    else
+        return visit(ctx->term_c());
 }
 
 antlrcpp::Any expression_analyzer::visitTerm(parsing::hlasmparser::TermContext* ctx)

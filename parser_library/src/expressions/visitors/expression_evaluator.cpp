@@ -116,12 +116,16 @@ antlrcpp::Any expression_evaluator::visitExpr_statement(parsing::hlasmparser::Ex
 
 antlrcpp::Any expression_evaluator::visitExpr_p(parsing::hlasmparser::Expr_pContext* ctx)
 {
-    if (ctx->expr_sContext != nullptr)
-        return visit(ctx->expr_sContext);
-    else if (ctx->children.at(0)->getText() == "+")
-        return visit(ctx->expr_p());
+    if (ctx->t != nullptr)
+        return visit(ctx->t);
+
+    auto a = visitE(ctx->tmp);
+    auto b = visitE(ctx->expr_s());
+
+    if (ctx->children.at(1)->getText() == "+")
+        return (*a + *b);
     else
-        return (-*visitE(ctx->expr_p()));
+        return (*a - *b);
 }
 
 antlrcpp::Any expression_evaluator::visitExpr_s(parsing::hlasmparser::Expr_sContext* ctx)
@@ -132,24 +136,20 @@ antlrcpp::Any expression_evaluator::visitExpr_s(parsing::hlasmparser::Expr_sCont
     auto a = visitE(ctx->tmp);
     auto b = visitE(ctx->term_c());
 
-    if (ctx->children.at(1)->getText() == "+")
-        return (*a + *b);
+    if (ctx->children.at(1)->getText() == "*")
+        return (*a * *b);
     else
-        return (*a - *b);
+        return (*a / *b);
 }
 
 antlrcpp::Any expression_evaluator::visitTerm_c(parsing::hlasmparser::Term_cContext* ctx)
 {
     if (ctx->t != nullptr)
         return visit(ctx->t);
-
-    auto a = visitE(ctx->tmp);
-    auto b = visitE(ctx->term());
-
-    if (ctx->children.at(1)->getText() == "*")
-        return (*a * *b);
+    else if (ctx->children.at(0)->getText() == "+")
+        return visit(ctx->term_c());
     else
-        return (*a / *b);
+        return (-*visitE(ctx->term_c()));
 }
 
 antlrcpp::Any expression_evaluator::visitTerm(parsing::hlasmparser::TermContext* ctx)
