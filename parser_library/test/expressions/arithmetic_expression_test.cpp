@@ -17,7 +17,7 @@
 #include "../common_testing.h"
 
 // test for
-// arithmetic SETA instructions
+// arithmetic SETA expressions
 
 #define SETAEQ(X, Y)                                                                                                   \
     EXPECT_EQ(a.context()                                                                                              \
@@ -200,4 +200,17 @@ TEST(arithmetic_expressions, operator_priorities)
     SETAEQ("C", 10);
     SETAEQ("D", 40);
     SETAEQ("E",  7);
+}
+
+TEST(arithmetic_expressions, invalid_operator)
+{
+    std::string input =
+        R"(
+&A SETA (1 AND 1 EQ 2)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
 }
