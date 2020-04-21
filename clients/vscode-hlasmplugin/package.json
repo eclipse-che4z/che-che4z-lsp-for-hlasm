@@ -58,7 +58,7 @@
     "compile": "tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
-    "test": "node ./lib/test/runTest.js"
+    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js"
   },
   "contributes": {
     "jsonValidation": [
