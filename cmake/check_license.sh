@@ -13,8 +13,7 @@
 
 #These are MIT-licensed third party sources
 EXCEPTIONS="semanticHighlighting.ts
-protocol.semanticHighlighting.ts
-index.ts"
+protocol.semanticHighlighting.ts"
 
 EXLIST=""
 for e in $EXCEPTIONS
