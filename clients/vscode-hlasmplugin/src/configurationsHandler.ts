@@ -154,6 +154,7 @@ export class ConfigurationsHandler {
         var regexStr = wildcard.replace(/\(|\[|\{|\\|\^|\-|\=|\$|\!|\||\]|\}|\)|\./g, (char) => { return "\\" + char });
         regexStr = regexStr.replace(/\?/g, ".");
         regexStr = regexStr.replace(/\*|\+/g, (char) => { return "." + char + "?"; });
+        regexStr = '^' + regexStr + '$';
         return new RegExp(regexStr);
     }
 
