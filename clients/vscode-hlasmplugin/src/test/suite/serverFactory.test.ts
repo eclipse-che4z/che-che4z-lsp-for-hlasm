@@ -15,7 +15,6 @@
 import * as assert from 'assert';
 import * as vscodelc from 'vscode-languageclient';
 import * as glob from 'glob';
-import * as net from 'net';
 
 import { ServerFactory } from '../../serverFactory'
 

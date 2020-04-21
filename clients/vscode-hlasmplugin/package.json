@@ -45,6 +45,9 @@
     "typescript": "^3.5.3",
     "mocha": "^7.1.1",
     "glob": "^7.1.6",
+    "nyc": "^15.0.1",
+    "source-map-support": "^0.5.16",
+    "ts-node": "8.8.2",
     "vscode-test": "^1.3.0",
     "@types/vscode": "^1.32.3",
     "@types/mocha": "^7.0.2",
@@ -58,7 +61,7 @@
     "compile": "tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
-    "test": "node ./lib/test/runTest.js"
+    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js"
   },
   "contributes": {
     "jsonValidation": [
