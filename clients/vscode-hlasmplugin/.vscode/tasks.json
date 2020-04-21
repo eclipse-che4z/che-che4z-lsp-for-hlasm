@@ -38,23 +38,12 @@
         },
         {
             "label": "prepareTest",
-            "dependsOn": [
-                "npm",
-                "copyWorkspace"
+            "command": "node",
+            "type": "shell",
+            "args" : ["${workspaceFolder}/build/bin/prepareWorkspace.js"],
+            "dependsOn":[
+                "npm"
             ]
-        },
-        {
-            "label": "copyWorkspace",
-            "command": "cp",
-            "type": "shell",
-            "args": ["-r","${workspaceFolder}/src/test/workspace/","${workspaceFolder}/lib/test/workspace/"],
-            "dependsOn" :[ "removeWorkspace" ]
-        },
-        {
-            "label": "removeWorkspace",
-            "command": "rm",
-            "type": "shell",
-            "args": ["-r","${workspaceFolder}/lib/test/workspace/"]
         }
     ]
 }
