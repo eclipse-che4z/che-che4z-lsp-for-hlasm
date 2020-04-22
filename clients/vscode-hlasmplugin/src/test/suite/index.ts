@@ -29,7 +29,7 @@ export function run(): Promise<void> {
 					mocha.addFile(path.resolve(testsPath, file)));
 	
 				try {
-					vscode.workspace.getConfiguration('hlasmplugin').update('continuationHandling',true).then(() => {
+					vscode.workspace.getConfiguration('hlasm').update('continuationHandling',true).then(() => {
 						// Run the mocha test
 						mocha.run(failures => {
 							if (failures > 0) {

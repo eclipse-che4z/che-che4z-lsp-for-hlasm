@@ -111,7 +111,7 @@ export class EventsHandler {
     }
 
     onDidChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
-        if (event.affectsConfiguration("hlasmplugin.continuationHandling"))
+        if (event.affectsConfiguration("hlasm.continuationHandling"))
             vscode.commands.executeCommand("workbench.action.reloadWindow");
     }
 
@@ -139,6 +139,6 @@ export class EventsHandler {
  * @param defaultValue default value to return if option is not set
  */
 export function getConfig<T>(option: string, defaultValue?: any): T {
-    const config = vscode.workspace.getConfiguration('hlasmplugin');
+    const config = vscode.workspace.getConfiguration('hlasm');
     return config.get<T>(option, defaultValue);
 }

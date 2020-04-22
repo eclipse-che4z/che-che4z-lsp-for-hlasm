@@ -17,7 +17,9 @@ import * as vscode from 'vscode';
 
 import { EventsHandler } from '../../eventsHandler';
 import { ContinuationDocumentsInfo } from '../../hlasmSemanticHighlighting'
-import { LanguageClientMock, LanguageClientOptionsMock, TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock, TextDocumentChangeEventMock, TextDocumentContentChangeEventMock, SemanticHighlightingFeatureMock } from '../mocks';
+import { LanguageClientMock, LanguageClientOptionsMock, 
+    TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock, 
+    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock, SemanticHighlightingFeatureMock } from '../mocks';
 
 suite('Events Handler Test Suite', () => {
     const handler = new EventsHandler('editor.action.triggerSuggest');
@@ -35,7 +37,7 @@ suite('Events Handler Test Suite', () => {
     });
 
     test('Text Document Change test', () => {
-        assert.ok(vscode.workspace.getConfiguration('hlasmplugin').get('continuationHandling'));
+        assert.ok(vscode.workspace.getConfiguration('hlasm').get('continuationHandling'));
         // prepare document
         const document = new TextDocumentMock();
         document.languageId = 'hlasm';
