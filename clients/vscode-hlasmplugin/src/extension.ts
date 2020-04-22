@@ -39,7 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
-        documentSelector: [{ language: 'hlasm' }, { pattern: configPattern }],
+        documentSelector: [{ language: 'hlasm' }],
         synchronize: !syncFileEvents ? undefined : {
             fileEvents: vscode.workspace.createFileSystemWatcher(filePattern)
         },
