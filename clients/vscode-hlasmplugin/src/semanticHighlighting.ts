@@ -160,7 +160,7 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 
 	updateColors() {
 		// get colors from config
-		const config = vscode.workspace.getConfiguration('hlasmplugin');
+		const config = vscode.workspace.getConfiguration('hlasm');
 		if (!config)
 			return;
 		const colors = config.get<{ id: string, hex: string }[]>('semanticHighlightingColors');

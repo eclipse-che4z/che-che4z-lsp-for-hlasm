@@ -21,7 +21,7 @@ import { TextDocumentMock, TextEditorEditMock, TextEditorMock } from '../mocks';
 
 suite('Continuation Handler Test Suite', () => {
     const handler = new ContinuationHandler();
-    const config = vscode.workspace.getConfiguration('hlasmplugin');
+    const config = vscode.workspace.getConfiguration('hlasm');
 
     test('Insert Continuation Test', () => {
         assert.ok(config.get('continuationHandling'));
