@@ -2,3 +2,4 @@ node_modules
 lib
 hlasmplugin.log
 .vscode-test
+/bin

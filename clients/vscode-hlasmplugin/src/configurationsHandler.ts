@@ -27,6 +27,7 @@ export class ConfigurationsHandler {
     // paths to the configurations
     private pgmConfPath: string;
     private procGrpsPath: string;
+    private folderPath: string;
     // whether to create warning prompts on missing configs
     shouldCheckConfigs: boolean;
 
@@ -34,6 +35,7 @@ export class ConfigurationsHandler {
         this.definedExpressions = [];
         this.pgmConfPath = undefined;
         this.procGrpsPath = undefined;
+        this.folderPath = undefined;
         this.shouldCheckConfigs = true;
     }
 
@@ -53,6 +55,10 @@ export class ConfigurationsHandler {
         // configs exist
         if (this.updateConfigPaths())
             return [this.pgmConfPath, this.procGrpsPath];
+
+        // no workspace
+        if (!vscode.workspace.workspaceFolders)
+            return ['',''];
 
         const doNotShowAgain = 'Do not track';
         // give option to create proc_grps
@@ -133,6 +139,9 @@ export class ConfigurationsHandler {
     }
 
     private createPgmTemplate(empty: boolean) {
+        if (!fs.existsSync(this.folderPath))
+            fs.mkdirSync(this.folderPath);
+            
         var programName = '';
         if (!empty)
             programName = vscode.window.activeTextEditor.document.fileName.split('\\').pop().split('/').pop();
@@ -143,6 +152,9 @@ export class ConfigurationsHandler {
     }
 
     private createProcTemplate() {
+        if (!fs.existsSync(this.folderPath))
+            fs.mkdirSync(this.folderPath);
+
         fs.writeFile(this.procGrpsPath, JSON.stringify(
             { "pgroups": [{ "name": "", "libs": [""] }] }
             , null, 2), () => { });
@@ -166,19 +178,17 @@ export class ConfigurationsHandler {
         // paths are defined and existing
         if (this.procGrpsPath && this.pgmConfPath && fs.existsSync(this.procGrpsPath) && fs.existsSync(this.pgmConfPath))
             return true;
-        // no workspace
+        // no workspace, no configs
         if (!vscode.workspace.workspaceFolders)
-            return false
+            return false;
 
+        // update .hlasmplugin folder
         const folder = vscode.workspace.workspaceFolders[0].uri.fsPath;
-        const folderPath = path.join(folder, '.hlasmplugin')
-        // create folder .hlasmplugin if does not exist
-        if (!fs.existsSync(folderPath))
-            fs.mkdirSync(folderPath);
+        this.folderPath = path.join(folder, '.hlasmplugin');
 
         // paths where the configs are supposed to be
-        this.procGrpsPath = path.join(folderPath, 'proc_grps.json');
-        this.pgmConfPath = path.join(folderPath, 'pgm_conf.json');
+        this.procGrpsPath = path.join(this.folderPath, 'proc_grps.json');
+        this.pgmConfPath = path.join(this.folderPath, 'pgm_conf.json');
 
         if (!fs.existsSync(this.procGrpsPath))
             return false;
