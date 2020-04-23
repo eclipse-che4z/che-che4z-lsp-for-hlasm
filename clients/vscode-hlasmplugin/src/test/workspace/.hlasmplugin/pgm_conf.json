@@ -1,0 +1,9 @@
+{
+  "pgms": [
+    {
+      "program": "open",
+      "pgroup": "P1"
+    }
+  ],
+  "alwaysRecognize": ["*.asm","pgms/*"]
+}
