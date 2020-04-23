@@ -38,7 +38,7 @@ struct dependency_collector
     // dependent symbol dependencies
     std::vector<attr_ref> undefined_attr_refs;
 
-    dependency_collector();
+    explicit dependency_collector(bool has_error = false);
     dependency_collector(id_index undefined_symbol);
     dependency_collector(address unresolved_address);
     dependency_collector(attr_ref attribute_reference);
