@@ -111,10 +111,19 @@ mach_expr_location_counter::mach_expr_location_counter(range rng)
 
 context::dependency_collector mach_expr_location_counter::get_dependencies(context::dependency_solver&) const
 {
-    return context::dependency_collector(*location_counter);
+    if (!location_counter.has_value())
+        return context::dependency_collector(true);
+    else
+        return context::dependency_collector(*location_counter);
 }
 
-mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info) const { return *location_counter; }
+mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info) const
+{
+    if (!location_counter.has_value())
+        return context::address({ nullptr }, 0, {});
+    else
+        return *location_counter;
+}
 
 void mach_expr_location_counter::fill_location_counter(context::address addr) { location_counter = std::move(addr); }
 

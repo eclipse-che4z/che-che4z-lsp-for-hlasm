@@ -18,8 +18,8 @@
 
 using namespace hlasm_plugin::parser_library::context;
 
-dependency_collector::dependency_collector()
-    : has_error(false)
+dependency_collector::dependency_collector(bool has_error)
+    : has_error(has_error)
 {}
 
 dependency_collector::dependency_collector(id_index undefined_symbol)
