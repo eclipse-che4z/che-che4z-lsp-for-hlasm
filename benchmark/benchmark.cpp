@@ -98,7 +98,7 @@ struct all_file_stats
     size_t failed_file_opens = 0;
 };
 
-void one_file(const std::string & source_file, json& result, const std::string ws_folder, all_file_stats& s)
+void parse_one_file(const std::string& source_file, json& result, const std::string& ws_folder, all_file_stats& s)
 {
     auto source_path = ws_folder + "/" + source_file;
     std::ifstream in(source_path);
@@ -132,7 +132,7 @@ void one_file(const std::string & source_file, json& result, const std::string w
     {
         ws.did_open_file(source_path.c_str(), 1, content.c_str(), content.length());
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
         ++s.parsing_crashes;
         std::clog << "Error: " << e.what() << std::endl;
@@ -278,7 +278,7 @@ int main(int argc, char** argv)
         if (end_range == 0)
             end_range = LLONG_MAX;
         for (size_t i = 0; i < end_range; ++i)
-            one_file(single_file, result, ws_folder, s);
+            parse_one_file(single_file, result, ws_folder, s);
     }
     else
     {
@@ -300,7 +300,7 @@ int main(int argc, char** argv)
                 std::clog << "Malformed json" << std::endl;
                 continue;
             }
-            one_file(source_file, result, ws_folder, s);
+            parse_one_file(source_file, result, ws_folder, s);
 
             if (current_iter >= end_range && end_range > 0)
                 break;
