@@ -80,7 +80,6 @@ if(APPLE)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation)
 endif()
 
-find_package(Java REQUIRED)
 #Check whether maven is installed and in path
 execute_process(COMMAND mvn --version RESULT_VARIABLE MVN_RETURN)
 if(!MVN_RETURN)
