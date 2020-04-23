@@ -30,11 +30,7 @@ const useTcp = false;
  */
 export async function activate(context: vscode.ExtensionContext) {
     // patterns for files and configs
-    const filePattern: string = '**/*'
-    const configPattern: string =
-        '**/{'
-        + [path.join('.hlasmplugin', 'proc_grps.json'), path.join('.hlasmplugin', 'pgm_conf.json')].join()
-        + '}';
+    const filePattern: string = '**/*';
 
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
