@@ -81,14 +81,14 @@ if(APPLE)
 endif()
 
 #Check whether maven is installed and in path
-execute_process(COMMAND mvn --version RESULT_VARIABLE MVN_RETURN)
-if(!MVN_RETURN)
-    message(FATAL_ERROR "Cannot execute 'mvn --version'. Are you sure maven is installed and in the path?" )
+find_program(MVN_RETURN mvn)
+if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
 endif()
 #Check whether npm is installed and in path
-execute_process(COMMAND npm --version RESULT_VARIABLE NPM_RETURN)
-if(!NPM_RETURN)
-    message(FATAL_ERROR "Cannot execute 'npm --version'. Are you sure npm is installed and in the path?" )
+find_program(NPM_RETURN npm)
+if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find npm. Are you sure npm is installed and in the path?" )
 endif()
 
 if (MSVC_VERSION)
