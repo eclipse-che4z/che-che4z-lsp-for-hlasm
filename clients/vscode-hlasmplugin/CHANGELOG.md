@@ -6,7 +6,7 @@ All notable changes to the HLASM Language Support extension are documented in th
 
 #### Fixed
 - Plugin crashing when writing macro instructions with operands not properly enclosed in parentheses.
-- Instructions that take signed 20 bit displacement are now correctly validated.
+- Instructions that take signed 20 bit displacement are now correctly validated. [#38](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/38)
 - The VGEF, VGEG, VSCEF, VSCEG instructions were validated with incorrect 20 bit displacement. Unsigned 12 bit displacement is correct.
 
 ## [0.10.0] - 2020-04-02
