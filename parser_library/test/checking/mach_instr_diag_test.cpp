@@ -54,6 +54,19 @@ TEST(diagnostics, displ_signed_size)
     a.analyze();
     dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+}
+
+TEST(diagnostics, displ_signed_err)
+{
+    std::string input(
+        R"( 
+  ALG 1,524288(2,2) 
+)");
+    analyzer a(input);
+    a.analyze();
+    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
     ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "M130");
 }
@@ -170,11 +183,24 @@ TEST(diagnostics, displ_as_simple_unsigned)
     ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "M130");
 }
 
-TEST(diagnostics, displ_as_simple_signed)
+TEST(diagnostics, displ_as_simple_signed_correct)
 {
     std::string input(
         R"( 
  BCTG 1,11111 
+)");
+    analyzer a(input);
+    a.analyze();
+    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+}
+
+TEST(diagnostics, displ_as_simple_signed_err)
+{
+    std::string input(
+        R"( 
+ BCTG 1,524288 
 )");
     analyzer a(input);
     a.analyze();
