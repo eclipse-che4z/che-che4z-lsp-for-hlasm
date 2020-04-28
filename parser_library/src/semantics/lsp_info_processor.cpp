@@ -27,8 +27,8 @@ lsp_info_processor::lsp_info_processor(
     : file_name(ctx ? ctx->ids().add(file, true) : nullptr)
     , empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
     , ctx_(ctx)
-    , collect_hl_info_(collect_hl_info)
     , instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
+    , collect_hl_info_(collect_hl_info)
 {
     // initialize text vector
     std::string line;
@@ -301,6 +301,9 @@ bool lsp_info_processor::find_references_(
 
 completion_list_s lsp_info_processor::completion(const position& pos, const char trigger_char, int trigger_kind) const
 {
+    if (!ctx_->lsp_ctx || ctx_->lsp_ctx.use_count() == 0)
+		return { false, {} };
+        
     std::string line_before = (pos.line > 0) ? text_[(unsigned int)pos.line - 1] : "";
     auto line = text_[(unsigned int)pos.line];
     auto line_so_far = line.substr(0, (pos.column == 0) ? 1 : (unsigned int)pos.column);

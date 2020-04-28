@@ -315,7 +315,8 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::m
                 if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
                 {
                     expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
-                    bool ignored = e->get_dependencies(info).contains_dependencies(); // ignore values with dependencies
+                    bool ignored = e->get_dependencies(info).has_error
+                        || e->get_dependencies(info).contains_dependencies(); // ignore values with dependencies
                     auto ev = e->evaluate(info);
                     auto kind = ev.value_kind();
                     if (kind == context::symbol_value_kind::ABS)

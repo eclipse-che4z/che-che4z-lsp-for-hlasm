@@ -4,3 +4,5 @@ src/**
 tsconfig.json
 CMakeLists.txt
 hlasmplugin.log
+build/bin/**
+lib/test/**
