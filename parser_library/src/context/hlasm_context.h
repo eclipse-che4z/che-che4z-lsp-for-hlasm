@@ -21,10 +21,8 @@
 #include <vector>
 
 #include "code_scope.h"
-#include "id_storage.h"
-#include "instruction.h"
 #include "lsp_context.h"
-#include "macro.h"
+#include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
@@ -41,10 +39,10 @@ using ctx_ptr = std::unique_ptr<hlasm_context>;
 // code
 class hlasm_context
 {
-    using macro_storage = std::unordered_map<id_index, std::unique_ptr<macro_definition>>;
-    using literal_map = std::unordered_map<id_index, id_index>;
+    using macro_storage = std::unordered_map<id_index, macro_def_ptr>;
     using copy_member_storage = std::unordered_map<id_index, copy_member>;
     using instruction_storage = std::unordered_map<id_index, instruction::instruction_array>;
+    using opcode_map = std::unordered_map<id_index, opcode_t>;
 
     // storage of global variables
     code_scope::set_sym_storage globals_;
@@ -53,7 +51,7 @@ class hlasm_context
     // storage of copy members
     copy_member_storage copy_members_;
     // map of OPSYN mnemonics
-    literal_map opcode_mnemo_;
+    opcode_map opcode_mnemo_;
     // storage of identifiers
     id_storage ids_;
 
@@ -79,6 +77,8 @@ class hlasm_context
     size_t SYSNDX_;
     void add_system_vars_to_scope();
     void add_global_system_vars();
+
+    bool is_opcode(id_index symbol) const;
 
 public:
     hlasm_context(std::string file_name = "");
@@ -151,11 +151,8 @@ public:
     // removes opsyn mnemonic
     void remove_mnemonic(id_index mnemo);
 
-    // gets target of possible mnemonic changed by opsyn
-    // returns nullptr if there is no mnemonic
-    // returns index to default string ("") if opcode was deleted by opsyn
-    // returns anything else if opcode was changed by opsyn
-    id_index get_mnemonic_opcode(id_index mnemo) const;
+    // checks wheter the symbol is an operation code (is a valid instruction or a mnemonic)
+    opcode_t get_operation_code(id_index symbol) const;
 
     // get data attribute value of variable symbol
     SET_t get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset = {});
@@ -167,6 +164,7 @@ public:
 
     // gets macro storage
     const macro_storage& macros() const;
+    const macro_def_ptr get_macro_definition(id_index name) const;
     // checks whether processing is currently in macro
     bool is_in_macro() const;
     // returns macro we are currently in or empty shared_ptr if in open code
