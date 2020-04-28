@@ -98,7 +98,7 @@ struct all_file_stats
     size_t failed_file_opens = 0;
 };
 
-void parse_one_file(const std::string& source_file, json& result, const std::string& ws_folder, all_file_stats& s)
+void parse_one_file(const std::string& source_file, const std::string& ws_folder, all_file_stats& s)
 {
     auto source_path = ws_folder + "/" + source_file;
     std::ifstream in(source_path);
@@ -106,7 +106,7 @@ void parse_one_file(const std::string& source_file, json& result, const std::str
     {
         ++s.failed_file_opens;
         std::clog << "File read error: " << source_path << std::endl;
-        result.push_back(json({ { "File", source_file }, { "Success", false } }));
+        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
         return;
     }
     s.program_count++;
@@ -136,14 +136,14 @@ void parse_one_file(const std::string& source_file, json& result, const std::str
     {
         ++s.parsing_crashes;
         std::clog << "Error: " << e.what() << std::endl;
-        result.push_back(json({ { "File", source_file }, { "Success", false } }));
+        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
         return;
     }
     catch (...)
     {
         ++s.parsing_crashes;
         std::clog << "Parse failed\n\n" << std::endl;
-        result.push_back(json({ { "File", source_file }, { "Success", false } }));
+        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
         return;
     }
 
@@ -175,7 +175,7 @@ void parse_one_file(const std::string& source_file, json& result, const std::str
               << "Files: " << collector.metrics_.files << "\n\n"
               << std::endl;
 
-    result.push_back(json({ { "File", source_file },
+    std::cout << json({ { "File", source_file },
         { "Success", true },
         { "Errors", consumer.error_count },
         { "Warnings", consumer.warning_count },
@@ -193,7 +193,7 @@ void parse_one_file(const std::string& source_file, json& result, const std::str
         { "Lines", collector.metrics_.lines },
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files } }));
+        { "Files", collector.metrics_.files } }).dump(2);
 }
 
 int main(int argc, char** argv)
@@ -270,21 +270,23 @@ int main(int argc, char** argv)
         std::clog << "Malformed json" << std::endl;
         return 1;
     }
-    // results
-    json result = json::array();
+    
     all_file_stats s;
     if (single_file != "")
     {
         if (end_range == 0)
             end_range = LLONG_MAX;
         for (size_t i = 0; i < end_range; ++i)
-            parse_one_file(single_file, result, ws_folder, s);
+            parse_one_file(single_file, ws_folder, s);
     }
     else
     {
+        std::cout << "{\n\"pgms\" : [";
         size_t current_iter = 0;
         for (auto program : programs)
         {
+            if (current_iter >= end_range && end_range > 0)
+                break;
             if (current_iter < start_range)
             {
                 current_iter++;
@@ -300,34 +302,33 @@ int main(int argc, char** argv)
                 std::clog << "Malformed json" << std::endl;
                 continue;
             }
-            parse_one_file(source_file, result, ws_folder, s);
+            if (current_iter != 0)
+                std::cout << ",\n";
+            parse_one_file(source_file, ws_folder, s);
 
-            if (current_iter >= end_range && end_range > 0)
-                break;
+            
             current_iter++;
         }
+        std::cout << "],\n\"total\" : ";
+
+        std::clog << "Programs: " << s.program_count << '\n'
+            << "Benchmarked files: " << s.all_files << '\n'
+            << "Analyzer crashes: " << s.parsing_crashes << '\n'
+            << "Failed program opens: " << s.failed_file_opens << '\n'
+            << "Benchmark time: " << s.whole_time << " ms" << '\n'
+            << "Average statement/ms: " << s.average_stmt_ms / (double)programs.size() << '\n'
+            << "Average line/ms: " << s.average_line_ms / (double)programs.size() << "\n\n"
+            << std::endl;
+
+        std::cout << json({ { "Programs", s.program_count },
+            { "Benchmarked files", s.all_files },
+            { "Benchmark time(ms)", s.whole_time },
+            { "Analyzer crashes", s.parsing_crashes },
+            { "Failed program opens", s.failed_file_opens },
+            { "Average statement/ms", s.average_stmt_ms / (double)programs.size() },
+            { "Average line/ms", s.average_line_ms / (double)programs.size() } }).dump(2);
+        std::cout << "}\n";
+        std::clog << "Parse finished\n\n" << std::endl;
     }
-
-    std::clog << "Programs: " << s.program_count << '\n'
-              << "Benchmarked files: " << s.all_files << '\n'
-              << "Analyzer crashes: " << s.parsing_crashes << '\n'
-              << "Failed program opens: " << s.failed_file_opens << '\n'
-              << "Benchmark time: " << s.whole_time << " ms" << '\n'
-              << "Average statement/ms: " << s.average_stmt_ms / (double)programs.size() << '\n'
-              << "Average line/ms: " << s.average_line_ms / (double)programs.size() << "\n\n"
-              << std::endl;
-
-    result.push_back(json({ { "Programs", s.program_count },
-        { "Benchmarked files", s.all_files },
-        { "Benchmark time(ms)", s.whole_time },
-        { "Analyzer crashes", s.parsing_crashes },
-        { "Failed program opens", s.failed_file_opens },
-        { "Average statement/ms", s.average_stmt_ms / (double)programs.size() },
-        { "Average line/ms", s.average_line_ms / (double)programs.size() } }));
-
-    std::clog << "Parse finished\n\n" << std::endl;
-
-    std::cout << result.dump(2) << std::endl;
-
     return 0;
 }
