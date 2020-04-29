@@ -90,7 +90,7 @@ jobs:
           -Dsonar.cfamily.threads=4
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
-          -Dsonar.javascript.lcov.reportPaths=test/unit/coverage/lcov.info
+          -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
           -Dsonar.projectVersion=${{ env.VERSION }}
           -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
           ${{ env.HEAD_BRANCH }}

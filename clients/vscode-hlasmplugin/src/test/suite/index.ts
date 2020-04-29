@@ -18,15 +18,22 @@ import * as glob from 'glob';
 import * as vscode from 'vscode';
 
 export async function run(): Promise<void> {
+	const sourceRoot = path.join(__dirname, '..', '..');
+
+	// decache files on windows to be hookable by nyc
+	let decache = require("decache");
+	glob.sync("**/**.js", {
+		cwd: sourceRoot
+	}).forEach(file => {
+		decache(path.join(sourceRoot, file));
+	});
+		
+	// initialize nyc code coverage
 	const NYC = require('nyc');
 	const nyc = new NYC({ 
-		cwd: path.join(__dirname, '..', '..','..'),
-		exclude: ['.vscode-test/**'],
+		cwd: path.join(sourceRoot, '..'),
 		reporter: ['lcov'],
-		hookRequire: true,
-		extension: [".ts"],
-		instrument: true,
-		cache: false
+		hookRequire: true
 	});
 
 	nyc.createTempDirectory();
@@ -60,6 +67,7 @@ export async function run(): Promise<void> {
 		});
 	});
 
+	// report code coverage
 	nyc.writeCoverageFile();
 	nyc.report();
 	console.log('Report created');
