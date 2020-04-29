@@ -83,14 +83,14 @@ jobs:
           -Dsonar.projectKey=eclipse_che-che4z-lsp-for-hlasm
           -Dsonar.organization=eclipse
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/
-          -Dsonar.tests=parser_library/test,language_server/test
+          -Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.cfamily.build-wrapper-output=build/bw-output
           -Dsonar.cfamily.threads=4
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
-          -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
+          -Dsonar.typescript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
           -Dsonar.projectVersion=${{ env.VERSION }}
           -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
           ${{ env.HEAD_BRANCH }}
