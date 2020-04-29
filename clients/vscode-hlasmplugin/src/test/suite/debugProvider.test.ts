@@ -46,7 +46,7 @@ suite('Debug Test Suite', () => {
         assert.equal(getCurrentProgramName(), undefined);
 
         // non HLASM file active
-        const textDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'readme.txt'));
+        const textDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'plain.txt'));
         await vscode.window.showTextDocument(textDocument);
         assert.equal(getCurrentProgramName(), undefined);
 

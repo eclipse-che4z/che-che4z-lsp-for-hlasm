@@ -4,4 +4,4 @@ hlasmplugin.log
 .vscode-test/
 .nyc_output/
 coverage/
-./bin/
+/bin

@@ -144,21 +144,23 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		// update colors from config
 		this.updateColors();
 		vscode.window.visibleTextEditors.forEach(editor => {
-			// find the decorations of current editor
-			var decors = this.definedEditors.get(editor.document.uri.toString());
-			// draw decorations of visible editor
-			if (decors !== undefined) {
-				// for each of its saved decorations, draw them
-				decors.forEach((ranges: vscode.Range[], scope: string) => {
-					editor.setDecorations(this.decorationTypes.get(scope).type, ranges);
-				});
+			if (editor.document.languageId == 'hlasm') {
+				// find the decorations of current editor
+				var decors = this.definedEditors.get(editor.document.uri.toString());
+				// draw decorations of visible editor
+				if (decors !== undefined) {
+					// for each of its saved decorations, draw them
+					decors.forEach((ranges: vscode.Range[], scope: string) => {
+						editor.setDecorations(this.decorationTypes.get(scope).type, ranges);
+					});
+				}
 			}
 		});
 	}
 
 	updateColors() {
 		// get colors from config
-		const config = vscode.workspace.getConfiguration('hlasmplugin');
+		const config = vscode.workspace.getConfiguration('hlasm');
 		if (!config)
 			return;
 		const colors = config.get<{ id: string, hex: string }[]>('semanticHighlightingColors');

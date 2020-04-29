@@ -14,7 +14,6 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
-import * as path from 'path';
 
 import { HLASMSemanticHighlightingFeature, ContinuationDocumentsInfo } from './hlasmSemanticHighlighting';
 import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } from './debugProvider';
@@ -30,16 +29,12 @@ const useTcp = false;
  */
 export async function activate(context: vscode.ExtensionContext) {
     // patterns for files and configs
-    const filePattern: string = '**/*'
-    const configPattern: string =
-        '**/{'
-        + [path.join('.hlasmplugin', 'proc_grps.json'), path.join('.hlasmplugin', 'pgm_conf.json')].join()
-        + '}';
+    const filePattern: string = '**/*';
 
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
-        documentSelector: [{ language: 'hlasm' }, { pattern: configPattern }],
+        documentSelector: [{ language: 'hlasm' }],
         synchronize: !syncFileEvents ? undefined : {
             fileEvents: vscode.workspace.createFileSystemWatcher(filePattern)
         },
@@ -125,7 +120,7 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
     context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e,highlight)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
-
+    
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));

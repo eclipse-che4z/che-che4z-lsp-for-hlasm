@@ -877,3 +877,24 @@ A EQU 1,2,1
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(EQU_attribute_lookahead, location_counter_use)
+{
+    std::string input(
+        R"( 
+  AIF (L'X EQ 2).NO
+Y LR 1,1
+X EQU 1,*-Y
+
+  AIF (L'A EQ 4).NO
+B LR 1,1
+A DC AL(*-B)(*)
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
+}

@@ -33,7 +33,8 @@ export async function run(): Promise<void> {
 	const nyc = new NYC({ 
 		cwd: path.join(sourceRoot, '..'),
 		reporter: ['lcov'],
-		hookRequire: true
+		hookRequire: true,
+		exclude: ['**/test/**','.vscode-test/**']
 	});
 
 	nyc.createTempDirectory();
@@ -50,7 +51,7 @@ export async function run(): Promise<void> {
 					mocha.addFile(path.resolve(testsPath, file)));
 	
 				try {
-					vscode.workspace.getConfiguration('hlasmplugin').update('continuationHandling',true).then(() => {
+					vscode.workspace.getConfiguration('hlasm').update('continuationHandling',true).then(() => {
 						// Run the mocha test
 						mocha.run(failures => {
 							if (failures > 0) {
