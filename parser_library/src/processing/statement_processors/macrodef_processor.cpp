@@ -353,7 +353,8 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
                                                       semantics::instruction_si(statement.stmt_range_ref()),
                                                       semantics::operands_si(statement.stmt_range_ref(), {}),
                                                       semantics::remarks_si(statement.stmt_range_ref(), {})),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA),
+            processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT)));
     add_correct_copy_nest();
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())

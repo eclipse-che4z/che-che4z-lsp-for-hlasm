@@ -202,6 +202,24 @@ M_ OPSYN M
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(OPSYN, macro_mach_redefinition)
+{
+    std::string input(R"(
+LR_ OPSYN LR
+
+ MACRO
+ LR &VAR
+ LR_ 1,&VAR
+ MEND
+
+ LR 1
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(OPSYN, late_macro_definition)
 {
     std::string input(R"(

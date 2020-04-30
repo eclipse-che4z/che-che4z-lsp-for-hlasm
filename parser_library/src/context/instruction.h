@@ -29,15 +29,6 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-enum class instruction_type
-{
-    MACH,
-    ASM,
-    MAC,
-    CA,
-    UNDEF
-};
-
 // all mach_format types for operands of machine instructions:
 enum class mach_format
 {
