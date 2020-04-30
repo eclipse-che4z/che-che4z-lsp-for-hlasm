@@ -35,6 +35,7 @@ struct opcode_t
     opcode_t()
         : macro_opcode(nullptr)
         , machine_opcode(nullptr)
+        , machine_source(instruction::instruction_array::CA)
     {}
 
     operator bool() const { return macro_opcode || machine_opcode; }
