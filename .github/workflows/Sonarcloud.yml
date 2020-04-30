@@ -52,11 +52,15 @@ jobs:
           cp build-wrapper-linux-x86/* .
       - name: Build
         run: cd build && ./build-wrapper-linux-x86-64 --out-dir bw-output make -j 4 clean all
-      - name: Test
+      - name: Server Test
         run: |
           cd build/bin
           LLVM_PROFILE_FILE="library.rawprof" ./library_test 
           LLVM_PROFILE_FILE="server.rawprof" ./server_test
+      - name: Extension Test
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin test
       - name: Merge raw profiles
         run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
       - name: Generate lcov coverage
