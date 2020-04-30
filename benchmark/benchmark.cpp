@@ -98,7 +98,7 @@ struct all_file_stats
     size_t failed_file_opens = 0;
 };
 
-void parse_one_file(const std::string& source_file, const std::string& ws_folder, all_file_stats& s)
+void parse_one_file(const std::string& source_file, const std::string& ws_folder, all_file_stats& s, bool write_details)
 {
     auto source_path = ws_folder + "/" + source_file;
     std::ifstream in(source_path);
@@ -106,7 +106,7 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     {
         ++s.failed_file_opens;
         std::clog << "File read error: " << source_path << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
+        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Read error"} }).dump(2);
         return;
     }
     s.program_count++;
@@ -136,14 +136,14 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     {
         ++s.parsing_crashes;
         std::clog << "Error: " << e.what() << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
+        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} }).dump(2);
         return;
     }
     catch (...)
     {
         ++s.parsing_crashes;
         std::clog << "Parse failed\n\n" << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false } }).dump(2);
+        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} }).dump(2);
         return;
     }
 
@@ -158,42 +158,46 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     s.all_files += collector.metrics_.files;
     s.whole_time += time;
 
-    std::clog << "Time: " << time << " ms" << '\n'
-              << "Errors: " << consumer.error_count << '\n'
-              << "Open Code Statements: " << collector.metrics_.open_code_statements << '\n'
-              << "Copy Statements: " << collector.metrics_.copy_statements << '\n'
-              << "Macro Statements: " << collector.metrics_.macro_statements << '\n'
-              << "Copy Def Statements: " << collector.metrics_.copy_def_statements << '\n'
-              << "Macro Def Statements: " << collector.metrics_.macro_def_statements << '\n'
-              << "Lookahead Statements: " << collector.metrics_.lookahead_statements << '\n'
-              << "Reparsed Statements: " << collector.metrics_.reparsed_statements << '\n'
-              << "Continued Statements: " << collector.metrics_.continued_statements << '\n'
-              << "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
-              << "Lines: " << collector.metrics_.lines << '\n'
-              << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
-              << "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
-              << "Files: " << collector.metrics_.files << "\n\n"
-              << std::endl;
-
+    if (write_details)
+        std::clog << "Time: " << time << " ms" << '\n'
+                  << "Errors: " << consumer.error_count << '\n'
+                  << "Open Code Statements: " << collector.metrics_.open_code_statements << '\n'
+                  << "Copy Statements: " << collector.metrics_.copy_statements << '\n'
+                  << "Macro Statements: " << collector.metrics_.macro_statements << '\n'
+                  << "Copy Def Statements: " << collector.metrics_.copy_def_statements << '\n'
+                  << "Macro Def Statements: " << collector.metrics_.macro_def_statements << '\n'
+                  << "Lookahead Statements: " << collector.metrics_.lookahead_statements << '\n'
+                  << "Reparsed Statements: " << collector.metrics_.reparsed_statements << '\n'
+                  << "Continued Statements: " << collector.metrics_.continued_statements << '\n'
+                  << "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
+                  << "Lines: " << collector.metrics_.lines << '\n'
+                  << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
+                  << "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
+                  << "Files: " << collector.metrics_.files << "\n\n"
+                  << std::endl;
+    
     std::cout << json({ { "File", source_file },
-        { "Success", true },
-        { "Errors", consumer.error_count },
-        { "Warnings", consumer.warning_count },
-        { "Wall Time (ms)", time },
-        { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
-        { "Open Code Statements: ", collector.metrics_.open_code_statements },
-        { "Copy Statements: ", collector.metrics_.copy_statements },
-        { "Macro Statements: ", collector.metrics_.macro_statements },
-        { "Copy Def Statements: ", collector.metrics_.copy_def_statements },
-        { "Macro Def Statements: ", collector.metrics_.macro_def_statements },
-        { "Lookahead Statements: ", collector.metrics_.lookahead_statements },
-        { "Reparsed Statements: ", collector.metrics_.reparsed_statements },
-        { "Continued Statements: ", collector.metrics_.continued_statements },
-        { "Non-continued Statements: ", collector.metrics_.non_continued_statements },
-        { "Lines", collector.metrics_.lines },
-        { "ExecStatement/ms", exec_statements / (double)time },
-        { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files } }).dump(2);
+                          { "Success", true },
+                          { "Errors", consumer.error_count },
+                          { "Warnings", consumer.warning_count },
+                          { "Wall Time (ms)", time },
+                          { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
+                          { "Open Code Statements", collector.metrics_.open_code_statements },
+                          { "Copy Statements", collector.metrics_.copy_statements },
+                          { "Macro Statements", collector.metrics_.macro_statements },
+                          { "Copy Def Statements", collector.metrics_.copy_def_statements },
+                          { "Macro Def Statements", collector.metrics_.macro_def_statements },
+                          { "Lookahead Statements", collector.metrics_.lookahead_statements },
+                          { "Reparsed Statements", collector.metrics_.reparsed_statements },
+                          { "Continued Statements", collector.metrics_.continued_statements },
+                          { "Non-continued Statements", collector.metrics_.non_continued_statements },
+                          { "Executed Statements", exec_statements },
+                          { "Lines", collector.metrics_.lines },
+                          { "ExecStatement/ms", exec_statements / (double)time },
+                          { "Line/ms", collector.metrics_.lines / (double)time },
+                          { "Files", collector.metrics_.files } })
+                     .dump(2);
+    std::cout.flush();
 }
 
 int main(int argc, char** argv)
@@ -201,6 +205,7 @@ int main(int argc, char** argv)
     std::string ws_folder = std::filesystem::current_path().string();
     std::string single_file = "";
     size_t start_range = 0, end_range = 0;
+    bool write_details = true;
     for (int i = 1; i < argc - 1; i++)
     {
         std::string arg = argv[i];
@@ -238,6 +243,11 @@ int main(int argc, char** argv)
             single_file = argv[i + 1];
             i++;
         }
+        // details switch, when specified, details are not outputted to stderr
+        else if (arg == "-d")
+        {
+            write_details = false;
+        }
         else
         {
             std::clog << "Unknown parameter " << arg << '\n';
@@ -270,19 +280,20 @@ int main(int argc, char** argv)
         std::clog << "Malformed json" << std::endl;
         return 1;
     }
-    
+
     all_file_stats s;
     if (single_file != "")
     {
         if (end_range == 0)
             end_range = LLONG_MAX;
         for (size_t i = 0; i < end_range; ++i)
-            parse_one_file(single_file, ws_folder, s);
+            parse_one_file(single_file, ws_folder, s, write_details);
     }
     else
     {
         std::cout << "{\n\"pgms\" : [";
         size_t current_iter = 0;
+        bool not_first = false;
         for (auto program : programs)
         {
             if (current_iter >= end_range && end_range > 0)
@@ -302,31 +313,34 @@ int main(int argc, char** argv)
                 std::clog << "Malformed json" << std::endl;
                 continue;
             }
-            if (current_iter != 0)
+            if (not_first)
                 std::cout << ",\n";
-            parse_one_file(source_file, ws_folder, s);
+            else
+                not_first = true;
+            parse_one_file(source_file, ws_folder, s, write_details);
 
-            
+
             current_iter++;
         }
         std::cout << "],\n\"total\" : ";
 
         std::clog << "Programs: " << s.program_count << '\n'
-            << "Benchmarked files: " << s.all_files << '\n'
-            << "Analyzer crashes: " << s.parsing_crashes << '\n'
-            << "Failed program opens: " << s.failed_file_opens << '\n'
-            << "Benchmark time: " << s.whole_time << " ms" << '\n'
-            << "Average statement/ms: " << s.average_stmt_ms / (double)programs.size() << '\n'
-            << "Average line/ms: " << s.average_line_ms / (double)programs.size() << "\n\n"
-            << std::endl;
+                  << "Benchmarked files: " << s.all_files << '\n'
+                  << "Analyzer crashes: " << s.parsing_crashes << '\n'
+                  << "Failed program opens: " << s.failed_file_opens << '\n'
+                  << "Benchmark time: " << s.whole_time << " ms" << '\n'
+                  << "Average statement/ms: " << s.average_stmt_ms / (double)programs.size() << '\n'
+                  << "Average line/ms: " << s.average_line_ms / (double)programs.size() << "\n\n"
+                  << std::endl;
 
         std::cout << json({ { "Programs", s.program_count },
-            { "Benchmarked files", s.all_files },
-            { "Benchmark time(ms)", s.whole_time },
-            { "Analyzer crashes", s.parsing_crashes },
-            { "Failed program opens", s.failed_file_opens },
-            { "Average statement/ms", s.average_stmt_ms / (double)programs.size() },
-            { "Average line/ms", s.average_line_ms / (double)programs.size() } }).dump(2);
+                              { "Benchmarked files", s.all_files },
+                              { "Benchmark time(ms)", s.whole_time },
+                              { "Analyzer crashes", s.parsing_crashes },
+                              { "Failed program opens", s.failed_file_opens },
+                              { "Average statement/ms", s.average_stmt_ms / (double)programs.size() },
+                              { "Average line/ms", s.average_line_ms / (double)programs.size() } })
+                         .dump(2);
         std::cout << "}\n";
         std::clog << "Parse finished\n\n" << std::endl;
     }
