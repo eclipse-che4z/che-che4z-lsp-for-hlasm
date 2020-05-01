@@ -98,7 +98,7 @@ struct all_file_stats
     size_t failed_file_opens = 0;
 };
 
-void parse_one_file(const std::string& source_file, const std::string& ws_folder, all_file_stats& s, bool write_details)
+json parse_one_file(const std::string& source_file, const std::string& ws_folder, all_file_stats& s, bool write_details, const std::string& message)
 {
     auto source_path = ws_folder + "/" + source_file;
     std::ifstream in(source_path);
@@ -106,8 +106,7 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     {
         ++s.failed_file_opens;
         std::clog << "File read error: " << source_path << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Read error"} }).dump(2);
-        return;
+        return json({ { "File", source_file }, { "Success", false }, {"Reason", "Read error"} });
     }
     s.program_count++;
     // program's contents
@@ -126,7 +125,7 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     // start counting
     auto c_start = std::clock();
     auto start = std::chrono::high_resolution_clock::now();
-    std::clog << "Parsing file: " << source_file << std::endl;
+    std::clog << message << "Parsing file: " << source_file << std::endl;
     // open file/parse
     try
     {
@@ -135,16 +134,14 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
     catch (const std::exception& e)
     {
         ++s.parsing_crashes;
-        std::clog << "Error: " << e.what() << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} }).dump(2);
-        return;
+        std::clog << message << "Error: " << e.what() << std::endl;
+        return json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} });
     }
     catch (...)
     {
         ++s.parsing_crashes;
-        std::clog << "Parse failed\n\n" << std::endl;
-        std::cout << json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} }).dump(2);
-        return;
+        std::clog << message << "Parse failed\n\n" << std::endl;
+        return json({ { "File", source_file }, { "Success", false }, {"Reason", "Crash"} });
     }
 
     auto c_end = std::clock();
@@ -176,7 +173,7 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
                   << "Files: " << collector.metrics_.files << "\n\n"
                   << std::endl;
     
-    std::cout << json({ { "File", source_file },
+    return json({ { "File", source_file },
                           { "Success", true },
                           { "Errors", consumer.error_count },
                           { "Warnings", consumer.warning_count },
@@ -195,9 +192,16 @@ void parse_one_file(const std::string& source_file, const std::string& ws_folder
                           { "Lines", collector.metrics_.lines },
                           { "ExecStatement/ms", exec_statements / (double)time },
                           { "Line/ms", collector.metrics_.lines / (double)time },
-                          { "Files", collector.metrics_.files } })
-                     .dump(2);
-    std::cout.flush();
+                          { "Files", collector.metrics_.files } });
+}
+
+std::string get_file_message(size_t iter, size_t begin, size_t end, const std::string& base_message)
+{
+    if (base_message == "")
+        return "";
+    std::stringstream s;
+    s << "[" << base_message << " " << iter << "/(" << begin << "-" << end << ")] ";
+    return s.str();
 }
 
 int main(int argc, char** argv)
@@ -206,6 +210,7 @@ int main(int argc, char** argv)
     std::string single_file = "";
     size_t start_range = 0, end_range = 0;
     bool write_details = true;
+    std::string message;
     for (int i = 1; i < argc - 1; i++)
     {
         std::string arg = argv[i];
@@ -248,6 +253,11 @@ int main(int argc, char** argv)
         {
             write_details = false;
         }
+        else if (arg == "-m")
+        {
+            message = argv[i + 1];
+            i++;
+        }
         else
         {
             std::clog << "Unknown parameter " << arg << '\n';
@@ -287,7 +297,11 @@ int main(int argc, char** argv)
         if (end_range == 0)
             end_range = LLONG_MAX;
         for (size_t i = 0; i < end_range; ++i)
-            parse_one_file(single_file, ws_folder, s, write_details);
+        {
+            json j = parse_one_file(single_file, ws_folder, s, write_details, get_file_message(i, start_range, end_range, message));
+            std::cout << j.dump(2);
+            std::cout.flush();
+        }
     }
     else
     {
@@ -313,13 +327,15 @@ int main(int argc, char** argv)
                 std::clog << "Malformed json" << std::endl;
                 continue;
             }
+            
+            json j = parse_one_file(source_file, ws_folder, s, write_details, get_file_message(current_iter, start_range, end_range, message));
+
             if (not_first)
                 std::cout << ",\n";
             else
                 not_first = true;
-            parse_one_file(source_file, ws_folder, s, write_details);
-
-
+            std::cout << j.dump(2);
+            std::cout.flush();
             current_iter++;
         }
         std::cout << "],\n\"total\" : ";
