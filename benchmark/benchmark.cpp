@@ -306,6 +306,7 @@ int main(int argc, char** argv)
     else
     {
         std::cout << "{\n\"pgms\" : [";
+        std::cout.flush();
         size_t current_iter = 0;
         bool not_first = false;
         for (auto program : programs)
