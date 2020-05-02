@@ -132,6 +132,9 @@ public:
     semantics::position_uri_s found_position;
     position_uri definition(std::string document_uri, const position pos)
     {
+        if (cancel_ && *cancel_)
+            return semantics::position_uri_s(document_uri, pos );
+        ;
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
@@ -143,11 +146,14 @@ public:
     std::vector<semantics::position_uri_s> found_refs;
     position_uris references(std::string document_uri, const position pos)
     {
+        found_refs.clear();
+        if (cancel_ && *cancel_)
+            return { found_refs.data(), found_refs.size() };
+
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
-        else
-            found_refs.clear();
+
         return { found_refs.data(), found_refs.size() };
     }
 
@@ -155,12 +161,15 @@ public:
     std::vector<const char*> coutput;
     const string_array hover(const char* document_uri, const position pos)
     {
+        coutput.clear();
+        if (cancel_ && *cancel_)
+            return { coutput.data(), coutput.size() };
+
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
         else
             output.clear();
-        coutput.clear();
         for (const auto& str : output)
             coutput.push_back(str.c_str());
 
@@ -170,6 +179,9 @@ public:
     semantics::completion_list_s completion_result;
     completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
     {
+        if (cancel_ && *cancel_)
+            return semantics::completion_list_s();
+
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             completion_result = file_manager_.find_processor_file(document_uri)
