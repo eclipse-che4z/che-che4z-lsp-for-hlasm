@@ -135,7 +135,7 @@ public:
         found_position = { document_uri, pos };
         if (cancel_ && *cancel_)
             return found_position;
-        ;
+        
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
