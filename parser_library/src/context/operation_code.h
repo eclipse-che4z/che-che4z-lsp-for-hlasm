@@ -38,7 +38,7 @@ struct opcode_t
         , machine_source(instruction::instruction_array::CA)
     {}
 
-    operator bool() const { return macro_opcode || machine_opcode; }
+    explicit operator bool() const { return macro_opcode || machine_opcode; }
 };
 
 } // namespace context
