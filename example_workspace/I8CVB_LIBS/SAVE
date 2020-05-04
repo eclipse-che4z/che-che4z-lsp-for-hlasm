@@ -1,0 +1,10 @@
+ MACRO
+ SAVE
+ 
+* This macro satifies the dependency of I8CVB.
+* Here would be implementation of IBM standard SAVE macro.
+*https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.ieaa900/iea3a9_SAVE_____Save_register_contents.htm
+
+* Cannot provide it here because of legal reasons.
+ 
+ MEND

@@ -1,0 +1,17 @@
+{
+  "pgms": [
+    {
+      "program": "tutorial.hlasm",
+      "pgroup": "P1"
+    },
+    {
+      "program": "empty.hlasm",
+      "pgroup": "P1"
+    },
+    {
+      "program": "I8CVB.hlasm",
+      "pgroup": "I8CVB_PG"
+    }
+  ],
+  "alwaysRecognize": ["*.hlasm"]
+}

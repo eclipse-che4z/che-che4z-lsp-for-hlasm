@@ -1,0 +1,16 @@
+{
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        "libs","libs2"
+      ]
+    },
+    {
+      "name": "I8CVB_PG",
+      "libs": [
+        "I8CVB_LIBS"
+      ]
+    }
+  ]
+}

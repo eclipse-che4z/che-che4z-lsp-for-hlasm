@@ -1,0 +1,35 @@
+
+
+
+***************************  FACTORIAL  ******************************
+* The following recursive macro computes factorial of its parameter
+* during compile time. The result will be in variable symbol res.
+           MACRO
+           FACT &a
+        
+           GBLA res We create global variable symbol res
+* It is created with default value 0, so initialize it to 1 if this is
+* the topmost call of this macro.
+           AIF (&SYSNEST NE 1).INITEND
+&res       SETA 1
+.INITEND   AIF (&a EQ 0).SKIP   Nothing to do if computing fact of 0.
+&res       SETA &res*&a         Do the actual multiplication
+* The 'next' variable is local to the scope of current macro execution.
+&next      SETA &a-1            
+           FACT &next           Do the factorial of a-1
+.SKIP      ANOP
+           MEND
+    
+           GBLA res  We have to unhide the global variable res,        X
+                     otherwise, it would not be visible to this scope.
+           FACT 5    Now we 'call' the macro, and it will assign 5! to X
+                     &res
+
+* We can now hover over the FACTLEN symbol to see that its length is
+* indeed 120.
+LEN120   DS CL(&res)
+
+* Unfortunately the macro cannot compute factorial of numbers greater
+* than 12 because it does not fit into 32 bit variable.
+          FACT 6
+LEN720   DS CL(&res)

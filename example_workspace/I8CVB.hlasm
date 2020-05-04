@@ -1,0 +1,181 @@
+* Downloaded from http://www.bixoft.nl/goodies/i8cvb.htm
+*                                                                       00000100
+* This program is free software; you can redistribute it and/or modify  00000200
+* it under the terms of the GNU General Public License as published by  00000300
+* the Free Software Foundation; either version 2 of the License         00000400
+* or (at your option) any later version.                                00000500
+* The license text is available at the following internet addresses:    00000600
+* - http://www.bixoft.com/english/gpl.htm                               00000700
+* - http://fsf.org                                                      00000800
+* - http://opensource.org                                               00000900
+*                                                                       00001000
+* This program is distributed in the hope that it will be useful,       00001100
+* but WITHOUT ANY WARRANTY; without even the implied warranty of        00001200
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  00001300
+* See the GNU General Public License for more details.                  00001400
+*                                                                       00001500
+* You should have received a copy of the GNU General Public License     00001600
+* along with this program; if not, write to either of the following:    00001700
+* the Free Software Foundation, Inc.      B.V. Bixoft                   00001800
+* 59 Temple Place, Suite 330              Rogge 9                       00001900
+* Boston, MA 02111-1307                   7261 JA Ruurlo                00002000
+* United States of America                The Netherlands               00002100
+*                                                                       00002200
+*                                         e-mail: bixoft@bixoft.nl      00002300
+*                                         phone : +31-6-22755401        00002400
+*                                                                       00002500
+         TITLE 'INTEGER*8 Arithmetic: Input'                            00010000
+*                                                                       00020000
+*        Calling Sequences:                                             00030000
+*                                                                       00040000
+*        CALL I8CVB(s1, l1, n1, m)                                      00050000
+*             s1 is a string of decimal EBCDIC characters, with no      00060000
+*                  blanks, optionally preceded by a + or - sign,        00070000
+*                  converted to a 64-bit integer at n1                  00080000
+*             l1 is a 32-bit fullword integer, the length of s1         00090000
+*             n1 is a 64-bit integer, the result                        00100000
+*             m is a fullword integer (also returned in GR0)            00110000
+*                  m = 0 if no overflow, or other error conditions      00120000
+*                  m = 1 if overflow (answer returned modulo 2**63)     00130000
+*                  m = 2 if invalid leading sign character              00140000
+*                  m = 4 if null digit string                           00150000
+*             bad data gives a data exception interruption; no checks   00160000
+*                  of the numeric characters are made                   00170000
+*                                                                       00180000
+I8CVB    RSECT ,                                                        00190000
+         SAVE  (14,9),,*          Save registers                        00200000
+         USING I8CVB,R15                                                00210000
+         USING I8CVBSAV,R13       Save area used for work temps         00220000
+         LM    R1,R4,0(R1)        Get parameter addresses               00230000
+         XC    0(4,R4),0(R4)      Set m = 0                             00240000
+         XC    0(8,R3),0(R3)      Set result n3 to zero                 00250000
+         LR    R5,R3              Result address in R5                  00260000
+         L     R2,0(,R2)          String length l1 in R2                00270000
+         MVI   I8CVBFLG,0         Initialize flag byte                  00280000
+*                                                                       00290000
+         CLI   0(R1),C'0'         Check for leading digit               00300000
+         BNL   I8CVBB             Branch if it's a digit                00310000
+         CLI   0(R1),C'+'         Check for + sign                      00320000
+         BE    I8CVBA             Branch if yes                         00330000
+         CLI   0(R1),C'-'         Check for - sign                      00340000
+         BNE   I8CVBBS            Bad sign character                    00350000
+         OI    I8CVBFLG,I8CVB$MS  Set flag to indicate - sign           00360000
+I8CVBA   DS    0H                                                       00370000
+         AL    R1,I8CVBONE        Bump scan pointer to step over sign   00380000
+         BCTR  R2,0               Decrement input character count by 1  00390000
+I8CVBB   DS    0H                                                       00400000
+         LTR   R2,R2              Check character count                 00410000
+         BNP   I8CVBND            If not positive, no digits there.     00420000
+         SR    R6,R6              Clear working accumulator for answer  00430000
+         SR    R7,R7              Use (R6,R7)                           00440000
+         SRDL  R2,3               Shift digit count right by 3          00450000
+         SRL   R3,29              Split into multiples of 8 + leftover  00460000
+         LTR   R3,R3              Is leftover piece null?               00470000
+         BNP   I8CVBC             Branch if yes, go do big chunks       00480000
+         BCTR  R3,0               Decrement by 1 for execute            00490000
+         EX    R3,I8CVBPK         Pack leftover (high-order) digits     00500000
+         CVB   R7,I8CVBTMP        Convert to binary                     00510000
+         LA    R1,1(R3,R1)        Step over the piece just completed    00520000
+I8CVBC   DS    0H                                                       00530000
+         LTR   R2,R2              Any more groups of 8 left to do?      00540000
+         BZ    I8CVBI             Branch if not                         00550000
+I8CVBC1  DS    0H                 Multiply working value by 10**8       00560000
+         LTR   R9,R7              Set up for multiply                   00570000
+         M     R8,I8CVB108        Multiply low-order piece              00580000
+         BNM   I8CVBD             Branch if no correction required      00590000
+         AL    R8,I8CVB108        Add correction term                   00600000
+I8CVBD   DS    0H                                                       00610000
+         LR    R7,R6              Set up multiply of high-order term    00620000
+         M     R6,I8CVB108        Multiply high-order term by 10**8     00630000
+*        Note that this product is not strictly correct if there has    00640000
+*        been any previous overflow, but since the high-order word      00650000
+*        (which is where the incorrectness lies) will be shifted left   00660000
+*        by 32 bits, there is no need to do the correction.             00670000
+         ALR   R7,R8              Now, accumulate low-order product     00680000
+         BC    NCY,I8CVBE         Branch if no carry                    00690000
+         AL    R6,I8CVBONE        Add carry bit                         00700000
+         BNO   I8CVBE             Branch if no overflow                 00710000
+         OI    3(R4),I8CVB$OF     Indicate overflow in m                00720000
+I8CVBE   DS    0H                                                       00730000
+         LR    R0,R7              Save unadulterated R7 (with sign)     00740000
+         SLDA  R6,32              Prepare to accumulate lowest piece    00750000
+         BNO   I8CVBF             Branch if no overflow                 00760000
+         LR    R6,R0              Restore overflowed piece with sign    00770000
+         OI    3(R4),I8CVB$OF     Indicate overflow in m                00780000
+I8CVBF   DS    0H                 Get value of next 8 digits            00790000
+         LR    R7,R9              (Working value)*10**8 now in (R6,R7)  00800000
+         PACK  I8CVBTMP,0(8,R1)   Pack 8 digits into working temp       00810000
+         LA    R1,8(,R1)          Step over the 8 digits in input       00820000
+         CVB   R0,I8CVBTMP        Convert to binary                     00830000
+         ALR   R7,R0              Add to working value                  00840000
+         BC    NCY,I8CVBH         Branch if no carry                    00850000
+         AL    R6,I8CVBONE        Add the carry bit                     00860000
+         BNO   I8CVBH             Proceed if no overflow occurred       00870000
+*        Must now test carefully for maximum negative number: it's OK   00880000
+         CL    R2,I8CVBONE        Was this the last set of digits?      00890000
+         BH    I8CVBG             If not, have an overflow              00900000
+         C     R6,I8CVBMNN        Check if it really is the max neg     00910000
+         BNE   I8CVBG             If not, have an overflow              00920000
+         LTR   R7,R7              Low-order piece must be zero also     00930000
+         BNZ   I8CVBG             If not, have an overflow              00940000
+         TM    I8CVBFLG,I8CVB$MS  Check if user gave a - sign           00950000
+         BO    I8CVBH             If yes, the value is O.K.             00960000
+I8CVBG   DS    0H                                                       00970000
+         OI    3(R4),I8CVB$OF     Indicate overflow                     00980000
+I8CVBH   DS    0H                                                       00990000
+*                                 Decrement digit block count by 1, and 01000000
+         BCT   R2,I8CVBC1         Branch if there's more to do          01010000
+I8CVBI   DS    0H                                                       01020000
+         TM    I8CVBFLG,I8CVB$MS  Check for - sign                      01030000
+         BZ    I8CVBJ             Branch if +                           01040000
+         LCR   R6,R6              Complement high-order half            01050000
+         LCR   R7,R7              And low-order half                    01060000
+         BZ    I8CVBJ             Skip if no spurious carry             01070000
+         BCTR  R6,0               Remove the spurious carry             01080000
+I8CVBJ   DS    0H                                                       01090000
+         STM   R6,R7,0(R5)        Store the answer for the caller       01100000
+I8CVBX   DS    0H                                                       01110000
+         L     R0,0(,R4)          Return m in R0 also                   01120000
+         RETURN (2,9)             Restore registers and return          01130000
+*                                                                       01140000
+I8CVBBS  DS    0H                                                       01150000
+         OI    3(R4),I8CVB$BS     Indicate bad sign character           01160000
+         B     I8CVBX             And exit                              01170000
+I8CVBND  DS    0H                                                       01180000
+         OI    3(R4),I8CVB$ND     Indicate no numeric digits            01190000
+         B     I8CVBX             And exit                              01200000
+*                                                                       01210000
+I8CVBPK  PACK  I8CVBTMP,0(*-*,R1) Pack some initial input digits        01220000
+I8CVBONE DC    F'1'               Constant 1                            01230000
+I8CVB108 DC    F'1E8'             Constant 10**8                        01240000
+I8CVBMNN DC    X'8000000000000000' Max neg 64-bit number is -2**63      01250000
+         DROP  R15                                                      01260000
+I8CVB$MS EQU   X'80'              Flag: Minus sign for result           01270000
+I8CVB$OF EQU   1                  Return Code: Overflowed result        01280000
+I8CVB$BS EQU   2                  Return Code: Bad sign character       01290000
+I8CVB$ND EQU   4                  Return Code: No numeric digits        01300000
+*                                                                       01310000
+*        General Purpose Registers                                      01320000
+*                                                                       01330000
+R0       EQU   0                                                        01340000
+R1       EQU   1                                                        01350000
+R2       EQU   2                                                        01360000
+R3       EQU   3                                                        01370000
+R4       EQU   4                                                        01380000
+R5       EQU   5                                                        01390000
+R6       EQU   6                                                        01400000
+R7       EQU   7                                                        01410000
+R8       EQU   8                                                        01420000
+R9       EQU   9                                                        01430000
+R13      EQU   13                                                       01440000
+R15      EQU   15                                                       01450000
+*                                                                       01460000
+*        Condition Mask Equates                                         01470000
+*                                                                       01480000
+NCY      EQU   12                 No carry following Logical Add        01490000
+*                                                                       01500000
+I8CVBSAV DSect ,             Save Area Mapping                          01510000
+         DC  15F'0'          Reserved (head;chanins;R14-R9)             01520000
+I8CVBFLG DC    4X'0'         Flag byte and three extra bytes            01530000
+I8CVBTMP DC    D'0'          Work area for CVB instructions             01540000
+         END                                                            01550000

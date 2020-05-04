@@ -1,0 +1,19 @@
+
+* MACRO CYCLES
+* it is possible to recursively call macro from itself
+* the number of calls is limited in HLASM 
+    MACRO
+    MAC
+    MAC
+    MEND 
+
+    MAC
+    
+
+    AGO .SKIPRUBBISH
+    Anything in here is just skipped.
+    And it is still valid hlasm source code.
+.SKIPRUBBISH ANOP
+
+
+

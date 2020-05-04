@@ -1,0 +1,95 @@
+* This is an example HLASM workspace
+
+* STATEMENTS
+* Source code is divided into statements
+* Each statement constists of:
+* - label/name (optional, yellow)
+* - instruction (mandatory, red)
+* - parameters of instruction (gray)
+* - remarks (optional, blue)
+LABEL LR 1,1 HERE COME REMARKS
+
+* LSP FEATURES
+* You can use 4 different editor commands on instructions, variable,
+* sequence and ordinary symbols:
+* - go to definition - jumps to the definition of the symbol
+* - references - shows all references of the symbol
+* - hover - shows information about the symbol
+* - complete - suggests symbols that can be used (not ordinary)
+
+* ERROR MESSAGES
+* If there is a mistake, the incorrect part of statement is underlined
+* You can view the error message in the Problems window
+* LR needs 2 operands, registers from 0 to 15
+    LR 1,16
+
+* MACHINE INSTRUCTIONS
+* Basic operations - load register, multiply, etc...
+* M needs register operand and address operand
+    M   2,0(10)
+
+* ASSEMBLER INSTRUCTIONS
+* Change code layout - define symbol, reserve space...
+
+* DC (Data Constant) defines symbol SPACE with given parameters
+* Attributes of SPACE are:
+* - L (Length) attribute is equal to 9 (length of word 'something')
+* - T (Type) attribute is equal to 'C' (character)
+SPACE DC   C'SOMETHING'
+* EQU defines an ordinary symbol with given value
+* R1 has value 1 and is absolute (does not depend on its position)
+R1    EQU 1
+
+* CONDITIONAL ASSEMBLY INSTRUCTIONS
+* Generates code/instructions, language on top of the previous two
+* Capable of creating conditional jumps, substitutions, etc...
+
+* SETA defines a variable symbol (pink) with given value
+&VAR SETA 1
+* Whenever the symbol &VAR is enountered, it is substituted
+    LR &VAR,&VAR
+* Also, parts of symbols may be substituted
+* Here, R&VAR is processed as R1 because &VAR is substituted by 1
+    LR R&VAR,5
+* AIF jump/skips code generation on fullifiling a condition
+* &VAR equals 1, code generations jumps to the sequence symbol .THERE
+* Therefore LR statement is not generated (white)
+    AIF (&VAR EQ 1).THERE
+    LR  1,1
+.THERE ANOP
+* CA instructions may also use ordinary symbols
+* Length of symbol SPACE is indeed 9, the code generation jumps
+    AIF (L'SPACE EQ 9).THERE2
+    LR 1,1
+.THERE2 ANOP
+
+* DEPENDENCIES
+* In HLASM, you can use multiple files
+* For dependency resolution, there are 2 configs in .hlasmplugin folder
+* - proc_grps.json - names of processor groups with their libraries
+* - pgm_conf.json - lists main/open code files and assigns proc groups
+* processor group P1 is assigned to this file (tutorial)
+* P1 has 2 library folders - libs and libs2 - their files may be used
+
+* MAC2 is defined in libs/mac2 and is invoked by inserting its name
+* It accepts and uses 2 parameters, try 'go to defition' on MAC2
+    MAC2  R1,&VAR
+* copy file REGISTERS is defined in libs2/registers and is invoked by
+* COPY instruction with its name, try 'go to definition' on REGISTERS
+    COPY REGISTERS
+* All symbols defined in REGISTERS file are defined in this file too
+* An error message is issued as symbol R1 is redeclared
+
+* CONTINUATIONS
+* Longer statements may need more than one line
+* A continuation character is inserted on column 72 to indicate that
+    MAC1 OPERAND1,OPERAND2,OPERAND3, MACROS ACCEPT LOTS OF OPERANDS    X
+               OPERAND4,OPERAND5 AND THAT IS WHY WE NEED THIS
+* In Settings, you may enable option 'Continuation Handling'
+* It helps adjusting parameters/remarks without moving the continuation
+
+* END
+* Look at the plugin description to find more information
+* Some interesting examples of HLASM usage are in the 'crazy' file
+* An empty open code file is prepared in the 'empty' file
+* Feel free to create files/folders, set configurations and edit code
