@@ -66,6 +66,17 @@ TEST(OPSYN, missing_name)
     ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
+TEST(OPSYN, incorrect_operands)
+{
+    std::string input(R"(
+LR OPSYN A,B
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+}
+
 TEST(OPSYN, delete_opcode)
 {
     std::string input(R"(

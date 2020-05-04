@@ -2,7 +2,7 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
-## [0.11.0] - 2020-04-30
+## [0.10.1] - 2020-05-04
 
 #### Added
 - OPSYN instruction processing.
