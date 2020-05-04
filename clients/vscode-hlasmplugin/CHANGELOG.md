@@ -2,12 +2,10 @@
 
 All notable changes to the HLASM Language Support extension are documented in this file.
 
-## [0.10.2] - 2020-05-04
+## [0.10.1] - 2020-05-04
 
 #### Added
 - OPSYN instruction processing.
-
-## [0.10.1] - 2020-04-14
 
 #### Fixed
 - Plugin crashing when writing macro instructions with operands not properly enclosed in parentheses.
