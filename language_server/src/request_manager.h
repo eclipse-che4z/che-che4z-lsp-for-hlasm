@@ -41,11 +41,11 @@ class request_manager
 {
 public:
     request_manager(std::atomic<bool>* cancel);
-
+    ~request_manager();
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
-
+    bool is_running();
 private:
     std::atomic<bool> end_worker_;
     std::thread worker_;
