@@ -31,9 +31,9 @@ LABEL LR 1,1 HERE COME REMARKS
 * ASSEMBLER INSTRUCTIONS
 * Change code layout - define symbol, reserve space...
 
-* DC (Data Constant) defines symbol SPACE with given parameters
+* DC (Define Constant) defines symbol SPACE with given attributes
 * Attributes of SPACE are:
-* - L (Length) attribute is equal to 9 (length of word 'something')
+* - L (Length) attribute is equal to 9 (length of word 'SOMETHING')
 * - T (Type) attribute is equal to 'C' (character)
 SPACE DC   C'SOMETHING'
 * EQU defines an ordinary symbol with given value
@@ -46,7 +46,7 @@ R1    EQU 1
 
 * SETA defines a variable symbol (pink) with given value
 &VAR SETA 1
-* Whenever the symbol &VAR is enountered, it is substituted
+* Whenever the symbol &VAR is encountered, it is substituted
     LR &VAR,&VAR
 * Also, parts of symbols may be substituted
 * Here, R&VAR is processed as R1 because &VAR is substituted by 1
