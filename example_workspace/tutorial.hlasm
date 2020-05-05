@@ -3,10 +3,10 @@
 * STATEMENTS
 * Source code is divided into statements
 * Each statement constists of:
-* - label/name (optional, yellow)
-* - instruction (mandatory, red)
+* - label/name (yellow)
+* - instruction (red)
 * - parameters of instruction (gray)
-* - remarks (optional, blue)
+* - remarks (blue)
 LABEL LR 1,1 HERE COME REMARKS
 
 * LSP FEATURES
@@ -71,7 +71,7 @@ R1    EQU 1
 * processor group P1 is assigned to this file (tutorial)
 * P1 has 2 library folders - libs and libs2 - their files may be used
 
-* MAC2 is defined in libs/mac2 and is invoked by inserting its name
+* MAC2 is defined in libs/mac2 and is invoked by writing its name
 * It accepts and uses 2 parameters, try 'go to defition' on MAC2
     MAC2  R1,&VAR
 * copy file REGISTERS is defined in libs2/registers and is invoked by

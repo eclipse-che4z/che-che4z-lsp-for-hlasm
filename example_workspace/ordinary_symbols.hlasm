@@ -11,5 +11,3 @@ HERE DS 0C     HERE is defined, instruction is resolved
 LEN EQU HERE-ADDR Depends on length of ADDR, ADDR is not yet resolved  X
                   intruction cannot be resolved
 SIZE EQU 5 SIZE is defined -> ADDR is resolved -> LEN is resolved
-
-
