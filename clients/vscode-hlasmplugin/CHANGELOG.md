@@ -4,6 +4,9 @@ All notable changes to the HLASM Language Support extension are documented in th
 
 ## [0.10.1] - 2020-05-xx
 
+#### Added
+- OPSYN instruction processing.
+
 #### Fixed
 - Plugin crashing when writing macro instructions with operands not properly enclosed in parentheses.
 - Instructions that take signed 20 bit displacement are now correctly validated. [#38](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/38)

@@ -266,7 +266,7 @@ TEST(diagnostics,
 label LOCTR
  LTORG
  MNOTE 120,'message'
- OPSYN   
+lr OPSYN   
  ORG *+500   remark
  ORG *+1,,4 
  ORG ,

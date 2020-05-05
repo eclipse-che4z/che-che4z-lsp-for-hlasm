@@ -238,6 +238,11 @@ void hlasm_context::add_global_system_vars()
     curr_scope()->variables.insert({ glob->second->id, glob->second });
 }
 
+bool hlasm_context::is_opcode(id_index symbol) const
+{
+    return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
+}
+
 hlasm_context::hlasm_context(std::string file_name)
     : instruction_map_(init_instruction_map())
     , SYSNDX_(0)
@@ -406,34 +411,54 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
     auto tmp = opcode_mnemo_.find(op_code);
     if (tmp != opcode_mnemo_.end())
     {
+        if (!tmp->second) // mnemonic was removed
+            throw std::invalid_argument("undefined operation code");
+
         opcode_mnemo_.insert_or_assign(mnemo, tmp->second);
     }
     else
     {
-        if (macros_.find(op_code) != macros_.end())
+        opcode_t value;
+
+        if (auto it = instruction_map_.find(op_code); it != instruction_map_.end())
         {
-            opcode_mnemo_.insert_or_assign(mnemo, op_code);
-            return;
+            value.machine_opcode = it->first;
+            value.machine_source = it->second;
         }
-        else if (instruction_map_.find(op_code) != instruction_map_.end())
-        {
-            opcode_mnemo_.insert_or_assign(mnemo, op_code);
-            return;
-        }
-        else
+        if (auto it = macros_.find(op_code); it != macros_.end())
+            value.macro_opcode = it->second;
+
+        if (!value)
             throw std::invalid_argument("undefined operation code");
+
+        opcode_mnemo_.insert_or_assign(mnemo, std::move(value));
     }
 }
 
-void hlasm_context::remove_mnemonic(id_index mnemo) { opcode_mnemo_.insert_or_assign(mnemo, id_storage::empty_id); }
-
-id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
+void hlasm_context::remove_mnemonic(id_index mnemo)
 {
-    auto tmp = opcode_mnemo_.find(mnemo);
-    if (tmp != opcode_mnemo_.end())
-        return tmp->second;
+    if (opcode_mnemo_.find(mnemo) != opcode_mnemo_.end() || is_opcode(mnemo))
+        opcode_mnemo_.insert_or_assign(mnemo, opcode_t());
     else
-        return mnemo;
+        throw std::invalid_argument("undefined operation code");
+}
+
+opcode_t hlasm_context::get_operation_code(id_index symbol) const
+{
+    if (auto it = opcode_mnemo_.find(symbol); it != opcode_mnemo_.end())
+        return it->second;
+
+    opcode_t value;
+
+    if (auto it = instruction_map_.find(symbol); it != instruction_map_.end())
+    {
+        value.machine_opcode = it->first;
+        value.machine_source = it->second;
+    }
+    if (auto it = macros_.find(symbol); it != macros_.end())
+        value.macro_opcode = it->second;
+
+    return value;
 }
 
 SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
@@ -555,7 +580,7 @@ const macro_definition& hlasm_context::add_macro(id_index name,
 {
     return *macros_
                 .insert_or_assign(name,
-                    std::make_unique<macro_definition>(name,
+                    std::make_shared<macro_definition>(name,
                         label_param_name,
                         std::move(params),
                         std::move(definition),
@@ -567,14 +592,27 @@ const macro_definition& hlasm_context::add_macro(id_index name,
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
 
+const macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
+{
+    macro_def_ptr macro_def;
+
+    if (auto mnem = opcode_mnemo_.find(name); mnem != opcode_mnemo_.end() && mnem->second.macro_opcode)
+        macro_def = mnem->second.macro_opcode;
+    else
+    {
+        auto tmp = macros_.find(name);
+        macro_def = tmp == macros_.end() ? nullptr : tmp->second;
+    }
+
+    return macro_def;
+}
+
 bool hlasm_context::is_in_macro() const { return scope_stack_.back().is_in_macro(); }
 
 macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
 {
-    auto tmp = macros_.find(name);
-    assert(tmp != macros_.end());
-
-    auto& [macro_name, macro_def] = *tmp;
+    macro_def_ptr macro_def = get_macro_definition(name);
+    assert(macro_def);
 
     auto invo((macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"))));
     scope_stack_.emplace_back(invo);

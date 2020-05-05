@@ -306,7 +306,7 @@ void parser_impl::process_statement()
     if (!hint)
     {
         ptr = std::make_unique<processing::resolved_statement_impl>(
-            std::move(std::get<semantics::statement_si>(stmt)), proc_status.value().second);
+            std::move(std::get<semantics::statement_si>(stmt)), proc_status.value().second, proc_status.value().first);
         statement_range = dynamic_cast<processing::resolved_statement_impl*>(ptr.get())->stmt_range_ref();
     }
     else
