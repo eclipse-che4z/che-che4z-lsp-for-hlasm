@@ -24,8 +24,8 @@ request::request(json message, server* executing_server)
 
 request_manager::request_manager(std::atomic<bool>* cancel)
     : end_worker_(false)
-    , worker_(&request_manager::handle_request_, this, &end_worker_)
     , cancel_(cancel)
+    , worker_(&request_manager::handle_request_, this, &end_worker_)
 {}
 
 void request_manager::add_request(server* server, json message)
@@ -64,8 +64,12 @@ void request_manager::end_worker()
 
 bool hlasm_plugin::language_server::request_manager::is_running() 
 {
-    std::unique_lock<std::mutex> lock(q_mtx_);
-    return !requests_.empty();
+    bool result = false;
+    {
+        std::unique_lock<std::mutex> lock(q_mtx_);
+        result = !requests_.empty();
+    }
+    return result;
 }
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
@@ -77,8 +81,9 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
         // wait for work to come
         if (requests_.empty())
             cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
-        if (*end_loop)
+        if (*end_loop) 
             return;
+
         // get first request
         auto to_run = std::move(requests_.front());
         requests_.pop_front();
