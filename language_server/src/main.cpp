@@ -110,6 +110,7 @@ int main(int argc, char** argv)
 
         dap_handler.cancel();
         dap_thread.join();
+        req_mngr.end_worker();
 
         return ret;
     }

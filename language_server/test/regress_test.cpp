@@ -655,7 +655,9 @@ TEST(regress_test, stability_async)
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
     EXPECT_TRUE(!req_mngr.is_running());
+    req_mngr.end_worker();
 }
+
 // slow typing (sync, no cancellation)
 TEST(regress_test, stability_sync)
 {

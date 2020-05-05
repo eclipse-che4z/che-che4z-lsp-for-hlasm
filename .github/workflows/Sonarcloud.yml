@@ -60,7 +60,7 @@ jobs:
       - name: Merge raw profiles
         run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test server_test > coverage.txt
+        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test -object server_test > coverage.txt
       - name: Pull request setting
         if: github.event_name == 'pull_request'
         run: |
