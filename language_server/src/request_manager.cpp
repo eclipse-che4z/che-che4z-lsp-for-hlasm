@@ -82,10 +82,8 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
         if (requests_.empty())
             cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
         if (*end_loop) 
-        {
-            lock.unlock();
             return;
-        }
+
         // get first request
         auto to_run = std::move(requests_.front());
         requests_.pop_front();
