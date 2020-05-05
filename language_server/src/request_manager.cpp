@@ -24,8 +24,8 @@ request::request(json message, server* executing_server)
 
 request_manager::request_manager(std::atomic<bool>* cancel)
     : end_worker_(false)
-    , worker_(&request_manager::handle_request_, this, &end_worker_)
     , cancel_(cancel)
+    , worker_(&request_manager::handle_request_, this, &end_worker_)
 {}
 
 void request_manager::add_request(server* server, json message)
