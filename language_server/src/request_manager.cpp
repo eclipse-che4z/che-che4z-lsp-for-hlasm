@@ -28,6 +28,8 @@ request_manager::request_manager(std::atomic<bool>* cancel)
     , cancel_(cancel)
 {}
 
+hlasm_plugin::language_server::request_manager::~request_manager() { end_worker(); }
+
 void request_manager::add_request(server* server, json message)
 {
     // add request to q
@@ -60,6 +62,16 @@ void request_manager::end_worker()
     end_worker_ = true;
     cond_.notify_one();
     worker_.join();
+}
+
+bool hlasm_plugin::language_server::request_manager::is_running() 
+{
+    bool result;
+    {
+        std::unique_lock<std::mutex> lock(q_mtx_);
+        result = !requests_.empty();
+    }
+    return result;
 }
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
