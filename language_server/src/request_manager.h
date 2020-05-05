@@ -47,7 +47,6 @@ public:
     bool is_running();
 private:
     std::atomic<bool> end_worker_;
-    std::thread worker_;
 
     // request_manager uses conditional variable to put the
     // worker thread asleep when the request queue is empty
@@ -67,6 +66,8 @@ private:
     // cancellation token that is used to stop current parsing
     // when it was obsoleted by a new request
     std::atomic<bool>* cancel_;
+
+    std::thread worker_;
 };
 
 
