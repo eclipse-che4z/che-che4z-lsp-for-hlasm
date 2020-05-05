@@ -68,41 +68,7 @@ processing_status macrodef_processor::get_processing_status(const semantics::ins
     }
     else
     {
-        if (instruction.type == semantics::instruction_si_type::ORD)
-        {
-            auto id = std::get<context::id_index>(instruction.value);
-            auto it = hlasm_ctx.instruction_map().find(id);
-            if (it != hlasm_ctx.instruction_map().end() && it->second == context::instruction::instruction_array::CA)
-            {
-                auto operandless = std::find_if(context::instruction::ca_instructions.begin(),
-                    context::instruction::ca_instructions.end(),
-                    [&](auto& instr) {
-                        return instr.name == *id;
-                    })->operandless;
-
-                processing_format format(processing_kind::MACRO,
-                    processing_form::CA,
-                    operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
-
-                return std::make_pair(format, op_code(id, context::instruction_type::CA));
-            }
-            else if (id == copy_id)
-            {
-                processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
-
-                return std::make_pair(format, op_code(id, context::instruction_type::ASM));
-            }
-        }
-
-        if (instruction.type == semantics::instruction_si_type::EMPTY)
-        {
-            processing_format format(processing_kind::MACRO, processing_form::CA, operand_occurence::ABSENT);
-
-            return std::make_pair(format, op_code(context::id_storage::empty_id, context::instruction_type::CA));
-        }
-
-        processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
-        return std::make_pair(format, op_code());
+        return get_macro_processing_status(instruction, hlasm_ctx);
     }
 }
 
@@ -159,9 +125,10 @@ processing_status macrodef_processor::get_macro_processing_status(
     if (instruction.type == semantics::instruction_si_type::ORD)
     {
         auto id = std::get<context::id_index>(instruction.value);
-        auto it = hlasm_ctx.instruction_map().find(id);
-        if (it != hlasm_ctx.instruction_map().end() && it->second == context::instruction::instruction_array::CA)
+        auto code = hlasm_ctx.get_operation_code(id);
+        if (code.machine_opcode && code.machine_source == context::instruction::instruction_array::CA)
         {
+            id = code.machine_opcode;
             auto operandless = std::find_if(context::instruction::ca_instructions.begin(),
                 context::instruction::ca_instructions.end(),
                 [&](auto& instr) {
@@ -174,11 +141,11 @@ processing_status macrodef_processor::get_macro_processing_status(
 
             return std::make_pair(format, op_code(id, context::instruction_type::CA));
         }
-        else if (id == hlasm_ctx.ids().add("COPY"))
+        else if (code.machine_opcode == hlasm_ctx.ids().add("COPY"))
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
 
-            return std::make_pair(format, op_code(id, context::instruction_type::ASM));
+            return std::make_pair(format, op_code(code.machine_opcode, context::instruction_type::ASM));
         }
     }
 
@@ -386,7 +353,8 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
                                                       semantics::instruction_si(statement.stmt_range_ref()),
                                                       semantics::operands_si(statement.stmt_range_ref(), {}),
                                                       semantics::remarks_si(statement.stmt_range_ref(), {})),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA),
+            processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT)));
     add_correct_copy_nest();
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())

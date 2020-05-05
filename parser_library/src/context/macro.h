@@ -43,8 +43,10 @@ struct macro_arg
     {}
 };
 
+class macro_definition;
 struct macro_invocation;
 using macro_invo_ptr = std::shared_ptr<macro_invocation>;
+using macro_def_ptr = std::shared_ptr<macro_definition>;
 using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
 using copy_nest_storage = std::vector<std::vector<location>>;
 

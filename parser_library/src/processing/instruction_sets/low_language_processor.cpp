@@ -121,7 +121,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
                                  true,
                                  semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
                                      semantics::adjusting_state::SUBSTITUTION),
-                                 *ordinary_processor::get_instruction_processing_status(stmt.opcode.value, hlasm_ctx))
+                                 processing_status(stmt.format, stmt.opcode))
                              .first);
     }
 

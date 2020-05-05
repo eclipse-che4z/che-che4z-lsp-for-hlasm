@@ -47,12 +47,6 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
     else
         id = std::get<context::id_index>(instruction.value);
 
-    if (hlasm_ctx.macros().find(id) != hlasm_ctx.macros().end())
-    {
-        return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
-            op_code(id, context::instruction_type::MAC));
-    }
-
     auto status = get_instruction_processing_status(id, hlasm_ctx);
 
     if (!status)
@@ -105,27 +99,33 @@ bool ordinary_processor::finished() { return finished_flag_; }
 std::optional<processing_status> ordinary_processor::get_instruction_processing_status(
     context::id_index instruction, context::hlasm_context& hlasm_ctx)
 {
-    auto iter = hlasm_ctx.instruction_map().find(instruction);
+    auto code = hlasm_ctx.get_operation_code(instruction);
 
-    if (iter == hlasm_ctx.instruction_map().end())
+    if (code.macro_opcode)
+    {
+        return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
+            op_code(instruction, context::instruction_type::MAC));
+    }
+
+    if (!code.machine_opcode)
     {
         if (instruction == context::id_storage::empty_id)
             return std::make_pair(
                 processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
-                op_code(instruction, context::instruction_type::CA));
+                op_code(context::id_storage::empty_id, context::instruction_type::CA));
         else
             return std::nullopt;
     }
 
-    auto id = iter->first;
-    auto arr = iter->second;
+    auto id = code.machine_opcode;
+    auto arr = code.machine_source;
     processing_form f = processing_form::UNKNOWN;
     operand_occurence o = operand_occurence::PRESENT;
     context::instruction_type t = context::instruction_type::UNDEF;
     switch (arr)
     {
         case context::instruction::instruction_array::ASM:
-            if (instruction == hlasm_ctx.ids().add("DC") || instruction == hlasm_ctx.ids().add("DS"))
+            if (id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS"))
                 f = processing_form::DAT;
             else
                 f = processing_form::ASM;
@@ -170,7 +170,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             break;
     }
 
-    return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(instruction, t));
+    return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
 }
 
 void ordinary_processor::collect_diags() const

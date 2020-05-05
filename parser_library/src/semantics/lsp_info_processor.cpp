@@ -714,7 +714,7 @@ int lsp_info_processor::find_latest_version_(
     while (true)
     {
         if (to_check.find(curr_copy) == to_check.end())
-            return version;
+            return (int)version;
         version = curr_copy.version;
         curr_copy.version++;
     }
