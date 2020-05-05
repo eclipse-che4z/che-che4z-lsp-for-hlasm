@@ -6,6 +6,12 @@ All notable changes to the HLASM Language Support extension are documented in th
 
 #### Fixed
 - Plugin crashing when writing macro instructions with operands not properly enclosed in parentheses.
+- Plugin crashing on instruction completion in macros.
+- .hlasmplugin folder is now created only if requested via configuration prompt.
+- Configuration files are no longer highlighted as HLASM.
+- Configuration files contents are no longer reloaded after each change but upon save.
+- Files similar to defined programs are no longer being detected.
+- Improved automatic HLASM detection accuracy.
 
 ## [0.10.0] - 2020-04-02
 

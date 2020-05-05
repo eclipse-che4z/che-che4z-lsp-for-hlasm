@@ -33,17 +33,21 @@ void request_manager::add_request(server* server, json message)
     // add request to q
     {
         std::unique_lock<std::mutex> lock(q_mtx_);
+        bool is_parsing_required = false;
         // get new file
-        auto file = get_request_file_(message);
+        auto file = get_request_file_(message,&is_parsing_required);
         // if the new file is the same as the currently running one, cancel the old one
-        if (currently_running_file_ == file && currently_running_file_ != "")
-            *cancel_ = true;
-        // mark redundant requests as non valid
-        for (auto& req : requests_)
+        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required) 
         {
-            if (get_request_file_(req.message) == file)
-                req.valid = false;
+            *cancel_ = true;
+            // mark redundant requests as non valid
+            for (auto& req : requests_)
+            {
+                if (get_request_file_(req.message) == file)
+                    req.valid = false;
+            }
         }
+
         // finally add it to the q
         requests_.push_back(request(message, server));
     }
@@ -56,6 +60,12 @@ void request_manager::end_worker()
     end_worker_ = true;
     cond_.notify_one();
     worker_.join();
+}
+
+bool hlasm_plugin::language_server::request_manager::is_running() 
+{
+    std::unique_lock<std::mutex> lock(q_mtx_);
+    return !requests_.empty();
 }
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
@@ -117,7 +127,7 @@ void request_manager::finish_server_requests(server* to_finish)
 }
 
 
-std::string request_manager::get_request_file_(json r)
+std::string request_manager::get_request_file_(json r, bool* is_parsing_required)
 {
     constexpr const char* didOpen = "textDocument/didOpen";
     constexpr const char* didChange = "textDocument/didChange";
@@ -126,7 +136,16 @@ std::string request_manager::get_request_file_(json r)
     if (found == r.end())
         return "";
     auto method = r["method"].get<std::string>();
-    if (method == didOpen || method == didChange)
+    if (method.substr(0, 12) == "textDocument") 
+    {
+        if (is_parsing_required) 
+        {
+            if (method == didOpen || method == didChange)
+                *is_parsing_required = true;
+            else
+                *is_parsing_required = false;
+        }
         return r["params"]["textDocument"]["uri"].get<std::string>();
+    }
     return std::string();
 }
