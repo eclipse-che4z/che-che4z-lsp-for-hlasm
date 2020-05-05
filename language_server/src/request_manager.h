@@ -41,14 +41,12 @@ class request_manager
 {
 public:
     request_manager(std::atomic<bool>* cancel);
-
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
-
+    bool is_running();
 private:
     std::atomic<bool> end_worker_;
-    std::thread worker_;
 
     // request_manager uses conditional variable to put the
     // worker thread asleep when the request queue is empty
@@ -61,13 +59,15 @@ private:
     std::atomic<server*> currently_running_server_;
 
     void handle_request_(const std::atomic<bool>* end_loop);
-    std::string get_request_file_(json r);
+    std::string get_request_file_(json r, bool* is_parsing_required = nullptr);
 
     std::deque<request> requests_;
 
     // cancellation token that is used to stop current parsing
     // when it was obsoleted by a new request
     std::atomic<bool>* cancel_;
+
+    std::thread worker_;
 };
 
 
