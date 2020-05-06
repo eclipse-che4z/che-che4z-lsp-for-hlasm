@@ -17,12 +17,34 @@ import * as Mocha from 'mocha';
 import * as glob from 'glob';
 import * as vscode from 'vscode';
 
-export function run(): Promise<void> {
+export async function run(): Promise<void> {
+	const sourceRoot = path.join(__dirname, '..', '..');
+
+	// decache files on windows to be hookable by nyc
+	let decache = require("decache");
+	glob.sync("**/**.js", {
+		cwd: sourceRoot
+	}).forEach(file => {
+		decache(path.join(sourceRoot, file));
+	});
+		
+	// initialize nyc code coverage
+	const NYC = require('nyc');
+	const nyc = new NYC({ 
+		cwd: path.join(sourceRoot, '..'),
+		reporter: ['lcov'],
+		hookRequire: true,
+		exclude: ['**/test/**','.vscode-test/**']
+	});
+
+	nyc.createTempDirectory();
+	nyc.wrap();
+
 	// Create the mocha test
 	const mocha = new Mocha({ ui: 'tdd', color: true });
 	const testsPath = path.join(__dirname, '..');
 
-	return new Promise((resolve, reject) => {
+	await new Promise((resolve, reject) => {
 		glob('**/**.test.js', { cwd: testsPath }, (_, files) => {
 				// Add files to the test suite
 				files.forEach(file => 
@@ -45,4 +67,9 @@ export function run(): Promise<void> {
 				}
 		});
 	});
+
+	// report code coverage
+	nyc.writeCoverageFile();
+	nyc.report();
+	console.log('Report created');
 }
