@@ -15,15 +15,33 @@
 
 
 let path  = require('path');
-let shell = require('shelljs');
+let fs = require('fs')
 
 //clean built files
-let root = path.dirname(path.dirname(__dirname));
-shell.rm('-rf',path.join(root,'node_modules'));
+let root = path.join(__dirname,'..','..');
+recursiveRemoveSync(path.join(root,'node_modules'));
 console.log("node_modules removed");
-shell.rm('-rf',path.join(root,'lib'));
+recursiveRemoveSync(path.join(root,'lib'));
 console.log("lib files removed");
-shell.rm('-rf',path.join(root,'language_server.exe'));
-shell.rm('-rf',path.join(root,'parser_library.dll'));
-shell.rm('-rf',path.join(root,'antlr4-runtime.dll'));
+recursiveRemoveSync(path.join(root,'bin'));
 console.log("built files removed");
+recursiveRemoveSync(path.join(root,'coverage'));
+console.log("coverage files removed");
+recursiveRemoveSync(path.join(root,'.nyc_output'));
+console.log("nyc temp files removed");
+
+function recursiveRemoveSync(dest) {
+	if (fs.existsSync(dest)) {
+		fs.readdirSync(dest).forEach(file => {
+		const currPath = path.join(dest, file);
+		if (fs.statSync(currPath).isDirectory()) {
+			recursiveRemoveSync(currPath);
+		} 
+		else { 
+			fs.unlinkSync(currPath);
+		}
+		});
+		fs.rmdirSync(dest);
+	}
+};
+

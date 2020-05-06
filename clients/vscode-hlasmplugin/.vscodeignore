@@ -1,4 +1,6 @@
 .vscode/**
+coverage/**
+.nyc_output/**
 src/**
 .gitignore
 tsconfig.json
