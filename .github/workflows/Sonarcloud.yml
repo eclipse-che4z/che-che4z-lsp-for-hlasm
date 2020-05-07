@@ -52,15 +52,19 @@ jobs:
           cp build-wrapper-linux-x86/* .
       - name: Build
         run: cd build && ./build-wrapper-linux-x86-64 --out-dir bw-output make -j 4 clean all
-      - name: Test
+      - name: Server Test
         run: |
           cd build/bin
           LLVM_PROFILE_FILE="library.rawprof" ./library_test 
           LLVM_PROFILE_FILE="server.rawprof" ./server_test
+      - name: Extension Test
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin test
       - name: Merge raw profiles
         run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
       - name: Generate lcov coverage
-        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test server_test > coverage.txt
+        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test -object server_test > coverage.txt
       - name: Pull request setting
         if: github.event_name == 'pull_request'
         run: |
@@ -83,14 +87,19 @@ jobs:
           -Dsonar.projectKey=eclipse_che-che4z-lsp-for-hlasm
           -Dsonar.organization=eclipse
           -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,build/generated_parser/
-          -Dsonar.tests=parser_library/test,language_server/test
+          -Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.cfamily.build-wrapper-output=build/bw-output
           -Dsonar.cfamily.threads=4
           -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
+          -Dsonar.typescript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
           -Dsonar.projectVersion=${{ env.VERSION }}
+          -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
+          -Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**
+          -Dsonar.test.inclusions=clients/vscode-hlasmplugin/src/test/**
+          -Dsonar.coverage.exclusions=benchmark/benchmark.cpp
           ${{ env.HEAD_BRANCH }}
           ${{ env.PR_NUMBER }}
 

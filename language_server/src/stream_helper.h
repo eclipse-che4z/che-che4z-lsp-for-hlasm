@@ -15,27 +15,29 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_STREAM_HELPER_H
 #define HLASMPLUGIN_LANGUAGESERVER_STREAM_HELPER_H
 
-#include <locale>
 #include <iostream>
+#include <locale>
 
-namespace hlasm_plugin::language_server
+namespace hlasm_plugin::language_server {
+
+// A struct that can be imbued into std::iostream, so it recognizes
+// only newline and nothing else as a whitespace. The dispatcher
+// expects a stream like that in the constructor.
+struct newline_is_space : std::ctype<char>
 {
+    newline_is_space()
+        : std::ctype<char>(get_table())
+    {}
+    static mask const* get_table()
+    {
+        static mask rc[table_size];
+        rc[(unsigned char)'\n'] = std::ctype_base::space;
+        return rc;
+    }
 
-struct newline_is_space : std::ctype<char> {
-	newline_is_space() : std::ctype<char>(get_table()) {}
-	static mask const* get_table()
-	{
-		static mask rc[table_size];
-		rc[(unsigned char)'\n'] = std::ctype_base::space;
-		return rc;
-	}
-
-	static void imbue_stream(std::ios& stream)
-	{
-		stream.imbue(std::locale(stream.getloc(), new newline_is_space));
-	}
+    static void imbue_stream(std::ios& stream) { stream.imbue(std::locale(stream.getloc(), new newline_is_space)); }
 };
 
-}
+} // namespace hlasm_plugin::language_server
 
 #endif

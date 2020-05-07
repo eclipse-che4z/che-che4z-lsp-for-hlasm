@@ -80,6 +80,17 @@ if(APPLE)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation)
 endif()
 
+#Check whether maven is installed and in path
+find_program(MVN_RETURN mvn)
+if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
+endif()
+#Check whether npm is installed and in path
+find_program(NPM_RETURN npm)
+if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find npm. Are you sure npm is installed and in the path?" )
+endif()
+
 if (MSVC_VERSION)
   string(REGEX REPLACE " /W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4251 /wd4996")
