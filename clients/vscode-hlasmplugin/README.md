@@ -22,7 +22,7 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 Follow these steps to open a HLASM project:
 
 1. In menu _File_ -> _Open Folder..._, select the folder with the HLASM sources.
-		(An example workspace is provided in the folder `example_workspace`.)
+		<!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to setup the workspace.
