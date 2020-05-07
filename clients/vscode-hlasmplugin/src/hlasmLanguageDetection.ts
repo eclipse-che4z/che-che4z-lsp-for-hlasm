@@ -35,11 +35,11 @@ export class HLASMLanguageDetection {
     }
 
     //automatic detection function
-    setHlasmLanguage(document: vscode.TextDocument): boolean {
+    async setHlasmLanguage(document: vscode.TextDocument): Promise<boolean> {
         // check only plain text files
         if (document.languageId == 'plaintext') {
             if (this.checkHlasmLanguage(document)) {
-                vscode.languages.setTextDocumentLanguage(document, 'hlasm');
+                await vscode.languages.setTextDocumentLanguage(document, 'hlasm');
                 return true;
             }
         }
