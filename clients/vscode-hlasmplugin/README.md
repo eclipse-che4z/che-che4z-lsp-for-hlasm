@@ -11,8 +11,6 @@
 # HLASM Language Support
 HLASM Language Support is an extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, and lets you trace how the conditional assembly is evaluated with a modern debugging experience.
 
-This extension is a part of the [Che4z](https://github.com/eclipse/che-che4z) open-source project.
-
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including [COBOL Language Support](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.cobol-language-support), [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor), [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) and [Debugger for Mainframe](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.debugger-for-mainframe) extensions.
 
 ## Getting Started
@@ -35,7 +33,7 @@ This is done by setting up two configuration files — `proc_grps.json` and `pgm
 1. After opening a HLASM file for the first time, two pop-ups are displayed. Select _Create pgm_conf.json with current program_ and _Create empty proc_grps.json_. The two configuration files are then created with default values. They are written into the `.hlasmplugin` subfolder.
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. To do this, simply fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow [Configuration](#External-Macro-Libraries-and-COPY-Members) for more detailed instructions for configuring the environment.
+Follow the section *External Macro Libraries and COPY Members* below for more detailed instructions for configuring the environment.
 
 ## Language Features
 
@@ -67,10 +65,10 @@ The macro tracer is not a debugger. It cannot debug running executables, only tr
 ### Configuring the Macro Tracer
 
 1. Open your workspace.
-2. In the left sidebar, click the bug icon to open the debugging panel.
-3. Click the cog icon in the top left of the screen.  
+2. In the left sidebar, click the bug icon to open the debugging panel (Ctrl + Shift + D).
+3. Select `create a launch.json file`.  
    A "select environment" prompt displays.
-4. Enter **HLASM Macro tracer**.  
+4. Enter *HLASM Macro tracer*.  
    Your workspace is now configured for macro tracing.
 
 ### Using the Macro Tracer
