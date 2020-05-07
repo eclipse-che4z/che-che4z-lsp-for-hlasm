@@ -2,7 +2,7 @@
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
   "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
@@ -43,18 +43,24 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.5.3",
-    "vscode": "^1.1.33"
+    "mocha": "^7.1.1",
+    "glob": "^7.1.6",
+    "nyc": "^15.0.1",
+    "vscode-test": "^1.3.0",
+    "@types/vscode": "^1.32.3",
+    "@types/mocha": "^7.0.2",
+    "@types/glob": "^5.0.35",
+    "decache": "^4.5.1"
   },
   "dependencies": {
     "vscode-languageclient": "^5.2.1"
   },
   "scripts": {
-    "postinstall": "node ./node_modules/vscode/bin/install && npm run compile",
-    "prepare": "npm run update-vscode",
-    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "postinstall": "npm run compile",
     "compile": "tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
-    "package": "vsce package"
+    "package": "vsce package",
+    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js"
   },
   "contributes": {
     "jsonValidation": [
@@ -104,7 +110,6 @@
           {
             "type": "hlasm",
             "request": "launch",
-            "configId": 0,
             "name": "Macro tracer: current program",
             "program": "${command:extension.hlasm-plugin.getCurrentProgramName}",
             "stopOnEntry": true
@@ -117,7 +122,6 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
-              "configId": 0,
               "name": "Macro tracer: current program",
               "program": "^\"\\${command:extension.hlasm-plugin.getCurrentProgramName}\"",
               "stopOnEntry": true
@@ -129,7 +133,6 @@
             "body": {
               "type": "hlasm",
               "request": "launch",
-              "configId": 1,
               "name": "Macro tracer: Ask for file name",
               "program": "^\"\\${workspaceFolder}/\\${command:extension.hlasm-plugin.getProgramName}\"",
               "stopOnEntry": true
@@ -187,7 +190,7 @@
       "type": "object",
       "title": "hlasmplugin configuration",
       "properties": {
-        "semanticHighlightingColors": {
+        "hlasm.semanticHighlightingColors": {
           "type": "array",
           "default": [
             {
@@ -262,7 +265,7 @@
             }
           ]
         },
-        "hlasmplugin.arguments": {
+        "hlasm.arguments": {
           "type": "array",
           "default": [],
           "items": {
@@ -270,12 +273,12 @@
           },
           "description": "Arguments for hlasmplugin server"
         },
-        "hlasmplugin.syncFileEvents": {
+        "hlasm.syncFileEvents": {
           "type": "boolean",
           "default": true,
           "description": "Whether or not to send file events to hlasmplugin (File created, changed or deleted). This can be disabled for performance consideration."
         },
-        "hlasmplugin.continuationHandling": {
+        "hlasm.continuationHandling": {
           "type": "boolean",
           "default": false,
           "description": "Disable in case you experience lags when typing. Note: Extension will be restarted upon changing this option."
