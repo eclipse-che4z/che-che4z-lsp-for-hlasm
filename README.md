@@ -16,7 +16,7 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 
 ## Useful information
-- If you have a question about how to accomplish something with the extension, or come across a problem [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).
+- If you have a question about the functionalities of the extension, or come across a problem [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).
 - Contributions are always welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for more information
 - See the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/) for project documentation 
 - For instructions how to build and install the project from source, see the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Build-instructions)
