@@ -113,6 +113,7 @@ void collector::set_instruction_field(concat_chain instr, range symbol_range)
 {
     if (*instr_)
         throw std::runtime_error("field already assigned");
+    concatenation_point::clear_concat_chain(instr);
     instr_->emplace(symbol_range, std::move(instr));
 }
 

@@ -54,9 +54,9 @@ void concatenation_point::clear_concat_chain(concat_chain& chain)
     size_t offset = 0;
     for (size_t i = 0; i < chain.size(); ++i)
     {
-        if (chain[i]
-            && !(chain[i]->type == concat_type::STR
-                && chain[i]->access_str()->value.empty())) // if not empty ptr and not empty string
+        // if not empty ptr and not empty string and not empty var
+        if (chain[i] && !(chain[i]->type == concat_type::STR && chain[i]->access_str()->value.empty())
+            && !(chain[i]->type == concat_type::VAR && !chain[i]->access_var()->symbol))
             chain[offset++] = std::move(chain[i]);
     }
 
