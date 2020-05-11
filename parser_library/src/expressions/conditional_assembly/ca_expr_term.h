@@ -18,11 +18,13 @@
 #include <vector>
 
 #include "ca_expresssion.h"
+#include "context/id_storage.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
+#include "context/common_types.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
-
 
 class ca_expr_list : public ca_expression
 {
@@ -36,10 +38,26 @@ class ca_string : public ca_expression
 {};
 
 class variable_symbol : public ca_expression
-{};
+{
+
+};
 
 class ca_constant : public ca_expression
-{};
+{
+    context::A_t constant;
+};
+
+class ca_symbol : public ca_expression
+{
+public:
+    context::id_index symbol;
+};
+
+class ca_symbol_attribute : public ca_symbol
+{
+public:
+    context::data_attr_kind attribute;
+};
 
 } // namespace expressions
 } // namespace parser_library

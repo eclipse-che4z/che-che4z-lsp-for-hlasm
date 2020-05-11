@@ -22,7 +22,7 @@ namespace parser_library {
 namespace expressions {
 
 class ca_expression;
-using ca_expr_ptr = std::unique_ptr<ca_expresssion>;
+using ca_expr_ptr = std::unique_ptr<ca_expression>;
 
 class ca_expression
 {};
