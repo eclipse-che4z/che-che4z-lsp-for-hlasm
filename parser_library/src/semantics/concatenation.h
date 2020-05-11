@@ -15,15 +15,9 @@
 #ifndef SEMANTICS_CONCATENATION_H
 #define SEMANTICS_CONCATENATION_H
 
-#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "antlr4-runtime.h"
-
-#include "context/id_storage.h"
-#include "range.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields

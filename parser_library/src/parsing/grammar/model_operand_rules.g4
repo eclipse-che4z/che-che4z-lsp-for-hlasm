@@ -54,7 +54,7 @@ before_var_sym_model returns [std::string value]
 	| tmp=before_var_sym_model before_var_sym_model_b	{$tmp.value.append(std::move($before_var_sym_model_b.value)); $value = std::move($tmp.value);};
 
 var_sym_model returns [concat_chain chain]
-	: var_symbol										{$chain.push_back(std::move($var_symbol.vs));}
+	: var_symbol										{$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));}
 	| string_v_actual									{$chain = std::move($string_v_actual.chain);};
 
 after_var_sym_model_b returns [concat_chain chain]
@@ -112,7 +112,7 @@ string_v_actual returns [concat_chain chain]
 	{ 
 		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.push_back(std::make_unique<char_str_conc>(std::move($model_string_ch_c.value)));
-		$chain.push_back(std::move($var_symbol.vs));
+		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), 
 			std::make_move_iterator($model_string_ch_v_c.chain.begin()), 
 			std::make_move_iterator($model_string_ch_v_c.chain.end())

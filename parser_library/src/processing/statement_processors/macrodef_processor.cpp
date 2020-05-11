@@ -299,7 +299,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 
         if (tmp->chain.size() == 1 && tmp->chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
         {
-            auto var = tmp->chain[0]->access_var();
+            auto var = tmp->chain[0]->access_var()->symbol.get();
 
             if (var->created || !var->subscript.empty())
             {
@@ -330,7 +330,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
             if (tmp->chain[0]->type == semantics::concat_type::VAR
                 && tmp->chain[1]->type == semantics::concat_type::EQU) // if operand is in form of key param
             {
-                auto var = tmp->chain[0]->access_var();
+                auto var = tmp->chain[0]->access_var()->symbol.get();
 
                 if (var->created || !var->subscript.empty())
                 {

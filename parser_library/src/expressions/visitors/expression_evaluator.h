@@ -92,8 +92,8 @@ private:
     std::string concat(semantics::equals_conc*);
     std::string concat(semantics::sublist_conc* sublist);
 
-    context::SET_t get_var_sym_value(semantics::var_sym_conc* vs);
-    std::pair<context::id_index, std::vector<expr_ptr>> evaluate_var_sym(semantics::var_sym_conc* vs);
+    context::SET_t get_var_sym_value(semantics::variable_symbol* vs);
+    std::pair<context::id_index, std::vector<expr_ptr>> evaluate_var_sym(semantics::variable_symbol* vs);
 
     context::SET_t lookup_variable_symbol_attribute(
         context::data_attr_kind attr, context::id_index symbol_name, range symbol_range);

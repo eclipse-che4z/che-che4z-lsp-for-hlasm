@@ -15,12 +15,15 @@
 #ifndef SEMANTICS_VARIABLE_SYMBOL_H
 #define SEMANTICS_VARIABLE_SYMBOL_H
 
+#include <memory>
 #include <vector>
 
-#include "context/id_storage.h"
-#include "range.h"
+#include "antlr4-runtime.h"
+
 #include "concatenation.h"
+#include "context/id_storage.h"
 #include "expressions/conditional_assembly/ca_expresssion.h"
+#include "range.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
@@ -29,14 +32,17 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
+struct variable_symbol;
 struct basic_variable_symbol;
 struct created_variable_symbol;
+
+using vs_ptr = std::unique_ptr<variable_symbol>;
 
 struct variable_symbol
 {
     const bool created;
 
-    std::vector<expressions::ca_expr_ptr> subscript;
+    std::vector<antlr4::ParserRuleContext*> subscript;
 
     const range symbol_range;
 
@@ -46,12 +52,13 @@ struct variable_symbol
     const created_variable_symbol* access_created() const;
 
 protected:
-    variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, const range symbol_range);
+    variable_symbol(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
 };
 
 struct basic_variable_symbol : public variable_symbol
 {
-    basic_variable_symbol(context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
+    basic_variable_symbol(
+        context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const context::id_index name;
 };
@@ -59,7 +66,7 @@ struct basic_variable_symbol : public variable_symbol
 struct created_variable_symbol : public variable_symbol
 {
     created_variable_symbol(
-        concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
+        concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const concat_chain created_name;
 };

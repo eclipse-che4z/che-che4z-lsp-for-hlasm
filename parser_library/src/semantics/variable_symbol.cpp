@@ -19,14 +19,14 @@ using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library;
 
 basic_variable_symbol::basic_variable_symbol(
-    id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
+    id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range)
     : variable_symbol(false, std::move(subscript), std::move(symbol_range))
     , name(name)
 {}
 
 
 created_variable_symbol::created_variable_symbol(
-    concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
+    concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range)
     : variable_symbol(true, std::move(subscript), std::move(symbol_range))
     , created_name(std::move(created_name))
 {}
@@ -53,7 +53,7 @@ const created_variable_symbol* variable_symbol::access_created() const
 }
 
 variable_symbol::variable_symbol(
-    const bool created, std::vector<expressions::ca_expr_ptr> subscript, const range symbol_range)
+    const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range)
     : created(created)
     , subscript(std::move(subscript))
     , symbol_range(std::move(symbol_range))

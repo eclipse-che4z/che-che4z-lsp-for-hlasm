@@ -64,7 +64,7 @@ term returns [vs_ptr* vs_link = nullptr]
 id_sub returns [vs_ptr vs]
 	: id_no_dot subscript
 	{ 
-		$vs = std::make_unique<basic_var_sym_conc>($id_no_dot.name,std::move($subscript.value),provider.get_range( $id_no_dot.ctx->getStart(),$subscript.ctx->getStop()));
+		$vs = std::make_unique<basic_variable_symbol>($id_no_dot.name,std::move($subscript.value),provider.get_range( $id_no_dot.ctx->getStart(),$subscript.ctx->getStop()));
 	};
 
 expr_p_comma_c returns [std::vector<ParserRuleContext*> ext]
@@ -112,7 +112,7 @@ created_set_body returns [concat_point_ptr point]
 	: ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
 	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());}
 	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
-	| var_symbol											{$point = std::move($var_symbol.vs);}
+	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));}
 	| dot													{$point = std::make_unique<dot_conc>();};
 
 created_set_body_c returns [concat_chain concat_list]
@@ -122,7 +122,7 @@ created_set_body_c returns [concat_chain concat_list]
 created_set_symbol returns [vs_ptr vs]
 	: AMPERSAND lpar clc=created_set_body_c rpar subscript 	
 	{
-		$vs = std::make_unique<created_var_sym_conc>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range( $AMPERSAND,$subscript.ctx->getStop()));
+		$vs = std::make_unique<created_variable_symbol>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range( $AMPERSAND,$subscript.ctx->getStop()));
 	}
 	| ampersand lpar rpar subscript; 	//empty set symbol err;			
 
@@ -131,7 +131,7 @@ var_symbol returns [vs_ptr vs]
 	{
 		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
-		$vs = std::make_unique<basic_var_sym_conc>(id, std::move($tmp.value), r);
+		$vs = std::make_unique<basic_variable_symbol>(id, std::move($tmp.value), r);
 		collector.add_lsp_symbol(id,r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}

@@ -13,6 +13,7 @@
  */
 
 #include "concatenation.h"
+
 #include "concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
@@ -28,13 +29,25 @@ char_str_conc* concatenation_point::access_str()
     return type == concat_type::STR ? static_cast<char_str_conc*>(this) : nullptr;
 }
 
-var_sym_conc* concatenation_point::access_var() { return type == concat_type::VAR ? static_cast<var_sym_conc*>(this) : nullptr; }
+var_sym_conc* concatenation_point::access_var()
+{
+    return type == concat_type::VAR ? static_cast<var_sym_conc*>(this) : nullptr;
+}
 
-dot_conc* concatenation_point::access_dot() { return type == concat_type::DOT ? static_cast<dot_conc*>(this) : nullptr; }
+dot_conc* concatenation_point::access_dot()
+{
+    return type == concat_type::DOT ? static_cast<dot_conc*>(this) : nullptr;
+}
 
-equals_conc* concatenation_point::access_equ() { return type == concat_type::EQU ? static_cast<equals_conc*>(this) : nullptr; }
+equals_conc* concatenation_point::access_equ()
+{
+    return type == concat_type::EQU ? static_cast<equals_conc*>(this) : nullptr;
+}
 
-sublist_conc* concatenation_point::access_sub() { return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr; }
+sublist_conc* concatenation_point::access_sub()
+{
+    return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr;
+}
 
 void concatenation_point::clear_concat_chain(concat_chain& chain)
 {
@@ -68,10 +81,10 @@ std::string concatenation_point::to_string(const concat_chain& chain)
                 break;
             case concat_type::VAR:
                 ret.push_back('&');
-                if (point->access_var()->created)
-                    ret.append(to_string(point->access_var()->access_created()->created_name));
+                if (point->access_var()->symbol->created)
+                    ret.append(to_string(point->access_var()->symbol->access_created()->created_name));
                 else
-                    ret.append(*point->access_var()->access_basic()->name);
+                    ret.append(*point->access_var()->symbol->access_basic()->name);
                 break;
             case concat_type::SUB:
                 ret.push_back('(');
@@ -139,16 +152,18 @@ concat_chain concatenation_point::clone(const concat_chain& chain)
             }
             break;
             case concat_type::VAR:
-                if (!point->access_var()->created)
+                if (!point->access_var()->symbol->created)
                 {
-                    auto tmp = point->access_var()->access_basic();
-                    res.push_back(std::make_unique<basic_var_sym_conc>(tmp->name, tmp->subscript, tmp->symbol_range));
+                    auto tmp = point->access_var()->symbol->access_basic();
+                    auto symbol = std::make_unique<basic_variable_symbol>(tmp->name, tmp->subscript, tmp->symbol_range);
+                    res.push_back(std::make_unique<var_sym_conc>(std::move(symbol)));
                 }
                 else
                 {
-                    auto tmp = point->access_var()->access_created();
-                    res.push_back(
-                        std::make_unique<created_var_sym_conc>(clone(tmp->created_name), tmp->subscript, tmp->symbol_range));
+                    auto tmp = point->access_var()->symbol->access_created();
+                    auto symbol = std::make_unique<created_variable_symbol>(
+                        clone(tmp->created_name), tmp->subscript, tmp->symbol_range);
+                    res.push_back(std::make_unique<var_sym_conc>(std::move(symbol)));
                 }
                 break;
             default:

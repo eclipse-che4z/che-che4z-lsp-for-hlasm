@@ -157,7 +157,7 @@ common_ch_v returns [concat_point_ptr point]
 	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
 	| ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
 	| DOT													{$point = std::make_unique<dot_conc>();}											
-	| var_symbol											{$point = std::move($var_symbol.vs);};
+	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));};
 
 l_ch_v returns [concat_point_ptr point]
 	: common_ch_v											{$point = std::move($common_ch_v.point);}
@@ -178,7 +178,7 @@ l_string_v returns [concat_chain chain]
 	: l_string_o var_symbol l_str_v							
 	{
 		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_o.value))); 
-		$chain.push_back(std::move($var_symbol.vs));
+		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_str_v.chain.begin()), std::make_move_iterator($l_str_v.chain.end()));
 	};
 
@@ -268,7 +268,7 @@ l_sp_string_v returns [concat_chain chain]
 	: l_sp_string var_symbol l_sp_str_v
 	{
 		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_sp_string.value))); 
-		$chain.push_back(std::move($var_symbol.vs));
+		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_sp_str_v.chain.begin()), std::make_move_iterator($l_sp_str_v.chain.end()));
 	};
 

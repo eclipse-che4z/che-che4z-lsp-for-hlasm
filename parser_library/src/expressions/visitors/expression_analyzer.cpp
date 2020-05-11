@@ -183,7 +183,7 @@ std::set<context::id_index> expression_analyzer::get_undefined_symbol_references
             continue;
         if (point->type == semantics::concat_type::VAR)
         {
-            result = get_undefined_symbol_references(*point->access_var());
+            result = get_undefined_symbol_references(*point->access_var()->symbol);
         }
         if (point->type == semantics::concat_type::SUB)
         {
@@ -197,7 +197,8 @@ std::set<context::id_index> expression_analyzer::get_undefined_symbol_references
     return result;
 }
 
-std::set<context::id_index> expression_analyzer::get_undefined_symbol_references(const semantics::var_sym_conc& symbol)
+std::set<context::id_index> expression_analyzer::get_undefined_symbol_references(
+    const semantics::variable_symbol& symbol)
 {
     std::set<context::id_index> result;
 

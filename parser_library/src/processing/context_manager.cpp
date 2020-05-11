@@ -122,7 +122,7 @@ context::macro_data_ptr context_manager::create_macro_data(const semantics::conc
     auto tmp = semantics::concatenation_point::contains_var_sym(chain);
     if (tmp)
     {
-        add_diagnostic(diagnostic_op::error_E064(tmp->symbol_range));
+        add_diagnostic(diagnostic_op::error_E064(tmp->symbol->symbol_range));
         return std::make_unique<context::macro_param_data_dummy>();
     }
 
@@ -142,7 +142,7 @@ context::macro_data_ptr context_manager::create_macro_data(
 }
 
 context::SET_t context_manager::get_var_sym_value(
-    const semantics::var_sym_conc& symbol, expressions::evaluation_context eval_ctx) const
+    const semantics::variable_symbol& symbol, expressions::evaluation_context eval_ctx) const
 {
     auto id =
         symbol.created ? concatenate(symbol.access_created()->created_name, eval_ctx) : symbol.access_basic()->name;
@@ -222,7 +222,7 @@ context::SET_t context_manager::get_var_sym_value(
 }
 
 context_manager::name_result context_manager::try_get_symbol_name(
-    const semantics::var_sym_conc* symbol, expressions::evaluation_context eval_ctx) const
+    const semantics::variable_symbol* symbol, expressions::evaluation_context eval_ctx) const
 {
     if (!symbol->created)
         return make_pair(true, symbol->access_basic()->name);

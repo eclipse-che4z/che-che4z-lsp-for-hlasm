@@ -280,10 +280,11 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
             }
         }
         else if (tmp->chain.size() == 1 && tmp->chain.front()->type == semantics::concat_type::VAR)
-            args.symbolic_params.push_back({ string_to_macrodata(mngr.convert_to<context::C_t>(
-                                                 mngr.get_var_sym_value(*tmp->chain.front()->access_var(), eval_ctx),
-                                                 tmp->chain.front()->access_var()->symbol_range)),
-                nullptr });
+            args.symbolic_params.push_back(
+                { string_to_macrodata(mngr.convert_to<context::C_t>(
+                      mngr.get_var_sym_value(*tmp->chain.front()->access_var()->symbol, eval_ctx),
+                      tmp->chain.front()->access_var()->symbol->symbol_range)),
+                    nullptr });
         else
             args.symbolic_params.push_back(
                 { mngr.create_macro_data(semantics::concatenation_point::clone(tmp->chain), eval_ctx), nullptr });

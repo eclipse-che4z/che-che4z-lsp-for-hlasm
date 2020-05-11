@@ -15,16 +15,8 @@
 #ifndef SEMANTICS_CONCATENATION_TERM_H
 #define SEMANTICS_CONCATENATION_TERM_H
 
-#include <iterator>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "antlr4-runtime.h"
-
-#include "context/id_storage.h"
-#include "range.h"
 #include "concatenation.h"
+#include "variable_symbol.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
@@ -41,42 +33,11 @@ struct char_str_conc : public concatenation_point
     std::string value;
 };
 
-struct basic_var_sym_conc;
-struct created_var_sym_conc;
-
 struct var_sym_conc : public concatenation_point
 {
-    const bool created;
+    var_sym_conc(vs_ptr);
 
-    std::vector<antlr4::ParserRuleContext*> subscript;
-
-    const range symbol_range;
-
-    basic_var_sym_conc* access_basic();
-    const basic_var_sym_conc* access_basic() const;
-    created_var_sym_conc* access_created();
-    const created_var_sym_conc* access_created() const;
-
-protected:
-    var_sym_conc(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
-};
-
-using vs_ptr = std::unique_ptr<var_sym_conc>;
-
-// concatenation point representing variable symbol
-struct basic_var_sym_conc : public var_sym_conc
-{
-    basic_var_sym_conc(context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
-
-    const context::id_index name;
-};
-
-// concatenation point representing created variable symbol
-struct created_var_sym_conc : public var_sym_conc
-{
-    created_var_sym_conc(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
-
-    const concat_chain created_name;
+    vs_ptr symbol;
 };
 
 // concatenation point representing dot

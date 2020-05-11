@@ -505,7 +505,7 @@ std::string expression_evaluator::concat(semantics::char_str_conc* str) { return
 std::string expression_evaluator::concat(semantics::var_sym_conc* vs)
 {
     return processing::context_manager(eval_ctx_.hlasm_ctx)
-        .convert_to<context::C_t>(get_var_sym_value(vs), vs->symbol_range);
+        .convert_to<context::C_t>(get_var_sym_value(vs->symbol.get()), vs->symbol->symbol_range);
 }
 
 std::string expression_evaluator::concat(semantics::dot_conc*) { return "."; }
@@ -526,7 +526,7 @@ std::string expression_evaluator::concat(semantics::sublist_conc* sublist)
     return ret;
 }
 
-context::SET_t expression_evaluator::get_var_sym_value(semantics::var_sym_conc* vs)
+context::SET_t expression_evaluator::get_var_sym_value(semantics::variable_symbol* vs)
 {
     processing::context_manager mngr(eval_ctx_.hlasm_ctx);
 
@@ -554,7 +554,8 @@ context::SET_t expression_evaluator::get_var_sym_value(semantics::var_sym_conc* 
     return value;
 }
 
-std::pair<context::id_index, std::vector<expr_ptr>> expression_evaluator::evaluate_var_sym(semantics::var_sym_conc* vs)
+std::pair<context::id_index, std::vector<expr_ptr>> expression_evaluator::evaluate_var_sym(
+    semantics::variable_symbol* vs)
 {
     expression_evaluator evaluator(eval_ctx_);
 

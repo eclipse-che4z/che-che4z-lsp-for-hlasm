@@ -32,7 +32,7 @@ public:
     // retrieves yet not defined symbols from the structures
     std::set<context::id_index> get_undefined_symbol_references(antlr4::ParserRuleContext* expr_context);
     std::set<context::id_index> get_undefined_symbol_references(const semantics::concat_chain& chain);
-    std::set<context::id_index> get_undefined_symbol_references(const semantics::var_sym_conc& symbol);
+    std::set<context::id_index> get_undefined_symbol_references(const semantics::variable_symbol& symbol);
 
 private:
     std::set<context::id_index> visit_ref(antlr4::ParserRuleContext* expr_context);
