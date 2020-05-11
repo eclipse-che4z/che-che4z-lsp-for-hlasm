@@ -56,7 +56,7 @@ private:
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 
-    bool test_symbol_for_assignment(const semantics::var_sym* symbol,
+    bool test_symbol_for_assignment(const semantics::var_sym_conc* symbol,
         context::SET_t_enum type,
         int& idx,
         context::set_symbol_base*& set_symbol,

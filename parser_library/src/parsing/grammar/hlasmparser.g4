@@ -207,7 +207,7 @@ id_ch_c returns [std::string value]
 
 id returns [id_index name, id_index using_qualifier]
 	: id_no_dot									{$name = $id_no_dot.name;}
-	| q=id_no_dot dot_ n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
+	| q=id_no_dot dot n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
 
 id_no_dot returns [id_index name = id_storage::empty_id]
 	: ORDSYMBOL id_ch_c
@@ -222,7 +222,7 @@ id_no_dot returns [id_index name = id_storage::empty_id]
 
 
 opt_dot returns [std::string value]
-	: dot_ id_ch_c								{$value = std::move($id_ch_c.value); }
+	: dot id_ch_c								{$value = std::move($id_ch_c.value); }
 	| ;
 
 id_comma_c: id
@@ -246,7 +246,7 @@ remark_o returns [std::optional<range> value]
 	//***** highlighting rules
 comma 
 	: COMMA {collector.add_hl_symbol(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol)); };
-dot_ 
+dot 
 	: DOT {collector.add_hl_symbol(token_info(provider.get_range( $DOT),hl_scopes::operator_symbol)); };
 apostrophe 
 	: APOSTROPHE {collector.add_hl_symbol(token_info(provider.get_range( $APOSTROPHE),hl_scopes::operator_symbol)); };
@@ -258,7 +258,7 @@ rpar
 	: RPAR {collector.add_hl_symbol(token_info(provider.get_range( $RPAR),hl_scopes::operator_symbol)); };
 ampersand 
 	: AMPERSAND { collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND),hl_scopes::operator_symbol)); };
-equals_ 
+equals 
 	: EQUALS { collector.add_hl_symbol(token_info(provider.get_range( $EQUALS),hl_scopes::operator_symbol)); };
 asterisk 
 	: ASTERISK {collector.add_hl_symbol(token_info(provider.get_range( $ASTERISK),hl_scopes::operator_symbol)); };

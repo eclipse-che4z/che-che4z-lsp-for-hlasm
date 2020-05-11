@@ -41,11 +41,11 @@ enum class concat_type
     EQU
 };
 
-struct char_str;
-struct var_sym;
-struct dot;
-struct equals;
-struct sublist;
+struct char_str_conc;
+struct var_sym_conc;
+struct dot_conc;
+struct equals_conc;
+struct sublist_conc;
 
 struct concatenation_point;
 using concat_point_ptr = std::unique_ptr<concatenation_point>;
@@ -61,7 +61,7 @@ struct concatenation_point
 
     static std::string to_string(const concat_chain& chain);
 
-    static var_sym* contains_var_sym(const concat_chain& chain);
+    static var_sym_conc* contains_var_sym(const concat_chain& chain);
 
     static concat_chain clone(const concat_chain& chain);
 
@@ -69,11 +69,11 @@ struct concatenation_point
 
     concatenation_point(const concat_type type);
 
-    char_str* access_str();
-    var_sym* access_var();
-    dot* access_dot();
-    equals* access_equ();
-    sublist* access_sub();
+    char_str_conc* access_str();
+    var_sym_conc* access_var();
+    dot_conc* access_dot();
+    equals_conc* access_equ();
+    sublist_conc* access_sub();
 
     virtual ~concatenation_point() = default;
 };

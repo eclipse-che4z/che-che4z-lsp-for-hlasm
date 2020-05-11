@@ -64,7 +64,7 @@ term returns [vs_ptr* vs_link = nullptr]
 id_sub returns [vs_ptr vs]
 	: id_no_dot subscript
 	{ 
-		$vs = std::make_unique<basic_var_sym>($id_no_dot.name,std::move($subscript.value),provider.get_range( $id_no_dot.ctx->getStart(),$subscript.ctx->getStop()));
+		$vs = std::make_unique<basic_var_sym_conc>($id_no_dot.name,std::move($subscript.value),provider.get_range( $id_no_dot.ctx->getStart(),$subscript.ctx->getStop()));
 	};
 
 expr_p_comma_c returns [std::vector<ParserRuleContext*> ext]
@@ -92,9 +92,9 @@ expr_p_space_c returns [std::deque<ParserRuleContext*> ext]
 
 
 seq_symbol returns [seq_sym ss]
-	: dot_ id_no_dot		
+	: dot id_no_dot		
 	{	
-		$ss = seq_sym{$id_no_dot.name,provider.get_range( $dot_.ctx->getStart(),$id_no_dot.ctx->getStop())};
+		$ss = seq_sym{$id_no_dot.name,provider.get_range( $dot.ctx->getStart(),$id_no_dot.ctx->getStop())};
 	};
 
 
@@ -109,11 +109,11 @@ subscript returns [std::vector<ParserRuleContext*> value]
 
 
 created_set_body returns [concat_point_ptr point]
-	: ORDSYMBOL												{$point = std::make_unique<char_str>($ORDSYMBOL->getText());}
-	| IDENTIFIER											{$point = std::make_unique<char_str>($IDENTIFIER->getText());}
-	| NUM													{$point = std::make_unique<char_str>($NUM->getText());}
+	: ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
+	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());}
+	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
 	| var_symbol											{$point = std::move($var_symbol.vs);}
-	| dot_													{$point = std::make_unique<dot>();};
+	| dot													{$point = std::make_unique<dot_conc>();};
 
 created_set_body_c returns [concat_chain concat_list]
 	: cl=created_set_body									{$concat_list.push_back(std::move($cl.point));}
@@ -122,7 +122,7 @@ created_set_body_c returns [concat_chain concat_list]
 created_set_symbol returns [vs_ptr vs]
 	: AMPERSAND lpar clc=created_set_body_c rpar subscript 	
 	{
-		$vs = std::make_unique<created_var_sym>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range( $AMPERSAND,$subscript.ctx->getStop()));
+		$vs = std::make_unique<created_var_sym_conc>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range( $AMPERSAND,$subscript.ctx->getStop()));
 	}
 	| ampersand lpar rpar subscript; 	//empty set symbol err;			
 
@@ -131,7 +131,7 @@ var_symbol returns [vs_ptr vs]
 	{
 		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
-		$vs = std::make_unique<basic_var_sym>(id, std::move($tmp.value), r);
+		$vs = std::make_unique<basic_var_sym_conc>(id, std::move($tmp.value), r);
 		collector.add_lsp_symbol(id,r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
@@ -166,11 +166,11 @@ ca_string_b // returns [std::unique_ptr<char_expr> e]
 
 ca_string // returns [std::unique_ptr<char_expr> e]
 	: ca_string_b											//	{$e = std::move($ca_string_b.e);}
-	| tmp=ca_string dot_ ca_string_b;
+	| tmp=ca_string dot ca_string_b;
 
 string_ch_v returns [concat_point_ptr point]
 	: l_sp_ch_v								{$point = std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str>("'");};
+	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'");};
 
 string_ch_v_c returns [concat_chain chain]
 	:

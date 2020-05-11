@@ -23,18 +23,18 @@ concatenation_point::concatenation_point(const concat_type type)
     : type(type)
 {}
 
-char_str* concatenation_point::access_str()
+char_str_conc* concatenation_point::access_str()
 {
-    return type == concat_type::STR ? static_cast<char_str*>(this) : nullptr;
+    return type == concat_type::STR ? static_cast<char_str_conc*>(this) : nullptr;
 }
 
-var_sym* concatenation_point::access_var() { return type == concat_type::VAR ? static_cast<var_sym*>(this) : nullptr; }
+var_sym_conc* concatenation_point::access_var() { return type == concat_type::VAR ? static_cast<var_sym_conc*>(this) : nullptr; }
 
-dot* concatenation_point::access_dot() { return type == concat_type::DOT ? static_cast<dot*>(this) : nullptr; }
+dot_conc* concatenation_point::access_dot() { return type == concat_type::DOT ? static_cast<dot_conc*>(this) : nullptr; }
 
-equals* concatenation_point::access_equ() { return type == concat_type::EQU ? static_cast<equals*>(this) : nullptr; }
+equals_conc* concatenation_point::access_equ() { return type == concat_type::EQU ? static_cast<equals_conc*>(this) : nullptr; }
 
-sublist* concatenation_point::access_sub() { return type == concat_type::SUB ? static_cast<sublist*>(this) : nullptr; }
+sublist_conc* concatenation_point::access_sub() { return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr; }
 
 void concatenation_point::clear_concat_chain(concat_chain& chain)
 {
@@ -90,7 +90,7 @@ std::string concatenation_point::to_string(const concat_chain& chain)
     return ret;
 }
 
-var_sym* concatenation_point::contains_var_sym(const concat_chain& chain)
+var_sym_conc* concatenation_point::contains_var_sym(const concat_chain& chain)
 {
     for (const auto& point : chain)
     {
@@ -123,32 +123,32 @@ concat_chain concatenation_point::clone(const concat_chain& chain)
         switch (point->type)
         {
             case concat_type::DOT:
-                res.push_back(std::make_unique<dot>());
+                res.push_back(std::make_unique<dot_conc>());
                 break;
             case concat_type::EQU:
-                res.push_back(std::make_unique<equals>());
+                res.push_back(std::make_unique<equals_conc>());
                 break;
             case concat_type::STR:
-                res.push_back(std::make_unique<char_str>(point->access_str()->value));
+                res.push_back(std::make_unique<char_str_conc>(point->access_str()->value));
                 break;
             case concat_type::SUB: {
                 std::vector<concat_chain> tmp;
                 for (auto& ch : point->access_sub()->list)
                     tmp.emplace_back(clone(ch));
-                res.push_back(std::make_unique<sublist>(std::move(tmp)));
+                res.push_back(std::make_unique<sublist_conc>(std::move(tmp)));
             }
             break;
             case concat_type::VAR:
                 if (!point->access_var()->created)
                 {
                     auto tmp = point->access_var()->access_basic();
-                    res.push_back(std::make_unique<basic_var_sym>(tmp->name, tmp->subscript, tmp->symbol_range));
+                    res.push_back(std::make_unique<basic_var_sym_conc>(tmp->name, tmp->subscript, tmp->symbol_range));
                 }
                 else
                 {
                     auto tmp = point->access_var()->access_created();
                     res.push_back(
-                        std::make_unique<created_var_sym>(clone(tmp->created_name), tmp->subscript, tmp->symbol_range));
+                        std::make_unique<created_var_sym_conc>(clone(tmp->created_name), tmp->subscript, tmp->symbol_range));
                 }
                 break;
             default:

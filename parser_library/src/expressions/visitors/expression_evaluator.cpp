@@ -500,19 +500,19 @@ std::string expression_evaluator::concatenate(const semantics::concat_chain& cha
 
 expr_ptr expression_evaluator::visitE(antlr4::ParserRuleContext* ctx) { return visit(ctx).as<expr_ptr>(); }
 
-std::string expression_evaluator::concat(semantics::char_str* str) { return str->value; }
+std::string expression_evaluator::concat(semantics::char_str_conc* str) { return str->value; }
 
-std::string expression_evaluator::concat(semantics::var_sym* vs)
+std::string expression_evaluator::concat(semantics::var_sym_conc* vs)
 {
     return processing::context_manager(eval_ctx_.hlasm_ctx)
         .convert_to<context::C_t>(get_var_sym_value(vs), vs->symbol_range);
 }
 
-std::string expression_evaluator::concat(semantics::dot*) { return "."; }
+std::string expression_evaluator::concat(semantics::dot_conc*) { return "."; }
 
-std::string expression_evaluator::concat(semantics::equals*) { return "="; }
+std::string expression_evaluator::concat(semantics::equals_conc*) { return "="; }
 
-std::string expression_evaluator::concat(semantics::sublist* sublist)
+std::string expression_evaluator::concat(semantics::sublist_conc* sublist)
 {
     std::string ret("(");
     for (size_t i = 0; i < sublist->list.size(); ++i)
@@ -526,7 +526,7 @@ std::string expression_evaluator::concat(semantics::sublist* sublist)
     return ret;
 }
 
-context::SET_t expression_evaluator::get_var_sym_value(semantics::var_sym* vs)
+context::SET_t expression_evaluator::get_var_sym_value(semantics::var_sym_conc* vs)
 {
     processing::context_manager mngr(eval_ctx_.hlasm_ctx);
 
@@ -554,7 +554,7 @@ context::SET_t expression_evaluator::get_var_sym_value(semantics::var_sym* vs)
     return value;
 }
 
-std::pair<context::id_index, std::vector<expr_ptr>> expression_evaluator::evaluate_var_sym(semantics::var_sym* vs)
+std::pair<context::id_index, std::vector<expr_ptr>> expression_evaluator::evaluate_var_sym(semantics::var_sym_conc* vs)
 {
     expression_evaluator evaluator(eval_ctx_);
 

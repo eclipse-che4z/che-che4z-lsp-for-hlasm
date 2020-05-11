@@ -84,7 +84,7 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
     }
 }
 
-bool ca_processor::test_symbol_for_assignment(const semantics::var_sym* symbol,
+bool ca_processor::test_symbol_for_assignment(const semantics::var_sym_conc* symbol,
     context::SET_t_enum type,
     int& idx,
     context::set_symbol_base*& set_symbol,

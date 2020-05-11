@@ -34,17 +34,17 @@ namespace parser_library {
 namespace semantics {
 
 // concatenation point representing character string
-struct char_str : public concatenation_point
+struct char_str_conc : public concatenation_point
 {
-    char_str(std::string value);
+    char_str_conc(std::string value);
 
     std::string value;
 };
 
-struct basic_var_sym;
-struct created_var_sym;
+struct basic_var_sym_conc;
+struct created_var_sym_conc;
 
-struct var_sym : public concatenation_point
+struct var_sym_conc : public concatenation_point
 {
     const bool created;
 
@@ -52,49 +52,49 @@ struct var_sym : public concatenation_point
 
     const range symbol_range;
 
-    basic_var_sym* access_basic();
-    const basic_var_sym* access_basic() const;
-    created_var_sym* access_created();
-    const created_var_sym* access_created() const;
+    basic_var_sym_conc* access_basic();
+    const basic_var_sym_conc* access_basic() const;
+    created_var_sym_conc* access_created();
+    const created_var_sym_conc* access_created() const;
 
 protected:
-    var_sym(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
+    var_sym_conc(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
 };
 
-using vs_ptr = std::unique_ptr<var_sym>;
+using vs_ptr = std::unique_ptr<var_sym_conc>;
 
 // concatenation point representing variable symbol
-struct basic_var_sym : public var_sym
+struct basic_var_sym_conc : public var_sym_conc
 {
-    basic_var_sym(context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+    basic_var_sym_conc(context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const context::id_index name;
 };
 
 // concatenation point representing created variable symbol
-struct created_var_sym : public var_sym
+struct created_var_sym_conc : public var_sym_conc
 {
-    created_var_sym(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+    created_var_sym_conc(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const concat_chain created_name;
 };
 
 // concatenation point representing dot
-struct dot : public concatenation_point
+struct dot_conc : public concatenation_point
 {
-    dot();
+    dot_conc();
 };
 
 // concatenation point representing equals sign
-struct equals : public concatenation_point
+struct equals_conc : public concatenation_point
 {
-    equals();
+    equals_conc();
 };
 
 // concatenation point representing macro operand sublist
-struct sublist : public concatenation_point
+struct sublist_conc : public concatenation_point
 {
-    sublist(std::vector<concat_chain> list);
+    sublist_conc(std::vector<concat_chain> list);
 
     std::vector<concat_chain> list;
 };

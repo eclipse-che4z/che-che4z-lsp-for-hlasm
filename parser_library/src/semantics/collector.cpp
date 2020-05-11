@@ -87,7 +87,7 @@ void collector::set_label_field(concat_chain label, range symbol_range)
     concatenation_point::clear_concat_chain(label);
     if (label.size() == 1 && label[0]->type == concat_type::VAR) // label is variable symbol
     {
-        auto vs = std::unique_ptr<var_sym>(label[0]->access_var());
+        auto vs = std::unique_ptr<var_sym_conc>(label[0]->access_var());
         label[0].release();
         lbl_->emplace(symbol_range, std::move(vs));
     }

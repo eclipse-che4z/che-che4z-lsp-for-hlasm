@@ -197,7 +197,7 @@ std::set<context::id_index> expression_analyzer::get_undefined_symbol_references
     return result;
 }
 
-std::set<context::id_index> expression_analyzer::get_undefined_symbol_references(const semantics::var_sym& symbol)
+std::set<context::id_index> expression_analyzer::get_undefined_symbol_references(const semantics::var_sym_conc& symbol)
 {
     std::set<context::id_index> result;
 

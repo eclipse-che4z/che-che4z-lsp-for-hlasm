@@ -63,11 +63,11 @@ public:
             return std::move(tmp.access_c());
     }
 
-    context::SET_t get_var_sym_value(const semantics::var_sym& symbol, expressions::evaluation_context eval_ctx) const;
+    context::SET_t get_var_sym_value(const semantics::var_sym_conc& symbol, expressions::evaluation_context eval_ctx) const;
     context::SET_t get_var_sym_value(
         context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const;
 
-    name_result try_get_symbol_name(const semantics::var_sym* symbol, expressions::evaluation_context eval_ctx) const;
+    name_result try_get_symbol_name(const semantics::var_sym_conc* symbol, expressions::evaluation_context eval_ctx) const;
     name_result try_get_symbol_name(const std::string& symbol, range symbol_range) const;
 
     context::id_index concatenate(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;

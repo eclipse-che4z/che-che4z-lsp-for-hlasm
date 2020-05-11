@@ -95,7 +95,7 @@ mach_term returns [mach_expr_ptr m_e]
 
 
 literal
-	: equals_ data_def;
+	: equals data_def;
 
 mach_data_attribute returns [std::string attribute, id_index data = nullptr]
 	: ORDSYMBOL ATTR literal	
@@ -114,7 +114,7 @@ string_ch returns [std::string value]
 
 string_ch_v returns [concat_point_ptr point]
 	: l_sp_ch_v								{$point=std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str>("'");};
+	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'");};
 
 string_ch_c returns [std::string value]
 	:
@@ -136,11 +136,11 @@ string returns [std::string value]
 string_v returns [concat_chain chain]
 	: ap1=APOSTROPHE string_ch_v_c ap2=(APOSTROPHE|ATTR)	
 	{ 
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), 
 			std::make_move_iterator($string_ch_v_c.chain.begin()), 
 			std::make_move_iterator($string_ch_v_c.chain.end())
 		);
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
