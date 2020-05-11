@@ -13,6 +13,7 @@
  */
 
 #include "concatenation.h"
+#include "concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
@@ -34,38 +35,6 @@ dot* concatenation_point::access_dot() { return type == concat_type::DOT ? stati
 equals* concatenation_point::access_equ() { return type == concat_type::EQU ? static_cast<equals*>(this) : nullptr; }
 
 sublist* concatenation_point::access_sub() { return type == concat_type::SUB ? static_cast<sublist*>(this) : nullptr; }
-
-char_str::char_str(std::string value)
-    : concatenation_point(concat_type::STR)
-    , value(std::move(value))
-{}
-
-basic_var_sym::basic_var_sym(
-    id_index name, std::vector<antlr4::ParserRuleContext*> subscript, hlasm_plugin::parser_library::range symbol_range)
-    : var_sym(false, std::move(subscript), std::move(symbol_range))
-    , name(name)
-{}
-
-
-created_var_sym::created_var_sym(concat_chain created_name,
-    std::vector<antlr4::ParserRuleContext*> subscript,
-    hlasm_plugin::parser_library::range symbol_range)
-    : var_sym(true, std::move(subscript), std::move(symbol_range))
-    , created_name(std::move(created_name))
-{}
-
-dot::dot()
-    : concatenation_point(concat_type::DOT)
-{}
-
-equals::equals()
-    : concatenation_point(concat_type::EQU)
-{}
-
-sublist::sublist(std::vector<concat_chain> list)
-    : concatenation_point(concat_type::SUB)
-    , list(std::move(list))
-{}
 
 void concatenation_point::clear_concat_chain(concat_chain& chain)
 {
@@ -144,7 +113,7 @@ var_sym* concatenation_point::contains_var_sym(const concat_chain& chain)
     return nullptr;
 }
 
-concat_chain hlasm_plugin::parser_library::semantics::concatenation_point::clone(const concat_chain& chain)
+concat_chain concatenation_point::clone(const concat_chain& chain)
 {
     concat_chain res;
     res.reserve(chain.size());
@@ -189,24 +158,3 @@ concat_chain hlasm_plugin::parser_library::semantics::concatenation_point::clone
 
     return res;
 }
-
-basic_var_sym* var_sym::access_basic() { return created ? nullptr : static_cast<basic_var_sym*>(this); }
-
-const basic_var_sym* var_sym::access_basic() const
-{
-    return created ? nullptr : static_cast<const basic_var_sym*>(this);
-}
-
-created_var_sym* var_sym::access_created() { return created ? static_cast<created_var_sym*>(this) : nullptr; }
-
-const created_var_sym* var_sym::access_created() const
-{
-    return created ? static_cast<const created_var_sym*>(this) : nullptr;
-}
-
-var_sym::var_sym(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range)
-    : concatenation_point(concat_type::VAR)
-    , created(created)
-    , subscript(std::move(subscript))
-    , symbol_range(std::move(symbol_range))
-{}

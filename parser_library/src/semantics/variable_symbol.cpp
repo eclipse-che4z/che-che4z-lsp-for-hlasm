@@ -14,9 +14,6 @@
 
 #include "variable_symbol.h"
 
-#include "concatenation.h"
-#include "expressions/conditional_assembly/ca_expression.h"
-
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library;
@@ -57,8 +54,7 @@ const created_variable_symbol* variable_symbol::access_created() const
 
 variable_symbol::variable_symbol(
     const bool created, std::vector<expressions::ca_expr_ptr> subscript, const range symbol_range)
-    : concatenation_point(concat_type::VAR)
-    , created(created)
+    : created(created)
     , subscript(std::move(subscript))
     , symbol_range(std::move(symbol_range))
 {}

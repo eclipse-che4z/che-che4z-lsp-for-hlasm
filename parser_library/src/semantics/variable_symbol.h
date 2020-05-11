@@ -19,18 +19,16 @@
 
 #include "context/id_storage.h"
 #include "range.h"
+#include "concatenation.h"
+#include "expressions/conditional_assembly/ca_expresssion.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
 namespace hlasm_plugin {
 namespace parser_library {
-namespace expressions {
-class ca_expr_ptr;
-}
 namespace semantics {
 
-class concat_chain;
 struct basic_variable_symbol;
 struct created_variable_symbol;
 

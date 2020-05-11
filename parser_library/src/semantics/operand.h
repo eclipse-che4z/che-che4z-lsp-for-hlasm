@@ -19,7 +19,7 @@
 
 #include "checking/data_definition/data_definition_operand.h"
 #include "checking/instr_operand.h"
-#include "concatenation.h"
+#include "concatenation_term.h"
 #include "expressions/data_definition.h"
 #include "expressions/mach_expression.h"
 
