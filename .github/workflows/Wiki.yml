@@ -18,7 +18,8 @@ on:
   push:
     branches:
       - development
-    pull_request:
+  pull_request:
+    branches:
       - development
 
 jobs:
