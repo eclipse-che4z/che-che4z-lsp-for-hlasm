@@ -1,6 +1,3 @@
-Introduction
-============
-
 The IBM High Level Assembler Language (HLASM) is still actively used commercially, even though it is a relatively old language. Its roots go back to the 1970s, when IBM made their first mainframes. Since then, the IBM assembler has been revised several times — the last version (which is the concern of this project) was released in 1992. Although it is hard to believe, a lot of the software that has been written in the language over the years is still actively used and maintained, mainly because of the conservative mainframe users and IBM’s vendor lock-in.
 
 Today, HLASM developers are forced to code in archaic terminals directly on the mainframe. Therefore, they spend a lot of time navigating around the code and the environment. For example, solely due to the fact that the user needs to navigate through plenty of terminal screens it takes around a minute just to get to a screen where it is possible to make a change in a file and recompile. For developers, it would be extremely useful to have an IDE plugin that would minimize contact with the mainframe terminal, could analyze the HLASM program, check its validity and make the code clearer by syntax highlighting.
@@ -11,8 +8,8 @@ The most significant properties and features of the plugin are:
 
 -   It is capable of interpreting and tracing a large subset of HLASM code-generating instructions.
 -   It contains a list of all built-in instructions that is used to validate the generated code.
--   *Macro tracer* gives a possibility to trace the compilation of a HLASM source code step-by-step in a way similar to common debugging.
--   It implements DAP and LSP protocols, providing interface that can be easily connected to numerous modern code editors.
+-   *[[Macro tracer]]* gives a possibility to trace the compilation of a HLASM source code step-by-step in a way similar to common debugging.
+-   It implements [[LSP and DAP]] protocols, providing interface that can be easily connected to numerous modern code editors.
 -   It was successfully used on a production HLASM codebase with over 15 million lines of code.
 
 The plugin is available on the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.hlasm-language-support).
