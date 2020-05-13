@@ -12,18 +12,18 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Documentation
+name: Wiki
 
 on:
   push:
     branches:
       - development
-  pull_request:
+    pull_request:
       - development
 
 jobs:
-  move-docs:
-    name: Publish docs
+  docs-to-wiki:
+    name: Publish documentation to wiki
     runs-on: ubuntu-latest
 
     steps:
