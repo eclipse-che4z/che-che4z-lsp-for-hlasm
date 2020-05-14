@@ -25,12 +25,24 @@ class ca_unary_operator : public ca_expression
 {
 public:
     const ca_expr_ptr expr;
+
+    ca_unary_operator(ca_expr_ptr expr);
+
+    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind);
 };
 
 class ca_binary_operator : public ca_expression
 {
 public:
     const ca_expr_ptr left_expr, right_expr;
+
+    ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr);
+
+    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind);
 };
 
 

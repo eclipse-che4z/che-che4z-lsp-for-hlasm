@@ -16,6 +16,10 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPRESSION_H
 
 #include <memory>
+#include <set>
+
+#include "context/common_types.h"
+#include "context/ordinary_assembly/dependable.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -24,8 +28,16 @@ namespace expressions {
 class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
 
+using undef_sym_set = std::set<context::id_index>;
 class ca_expression
-{};
+{
+public:
+    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const = 0;
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
+
+    virtual ~ca_expression() = default;
+};
 
 
 
