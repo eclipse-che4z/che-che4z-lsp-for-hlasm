@@ -20,8 +20,9 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
 
-ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list)
-    : expr_list(std::move(expr_list))
+ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , expr_list(std::move(expr_list))
 {}
 
 undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
@@ -32,7 +33,41 @@ undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::depe
     return tmp;
 }
 
-void ca_expr_list::resolve_expression_tree(context::SET_t_enum ) {}
+bool is_symbol(const ca_expression* expr) { return static_cast<const ca_symbol*>(expr) != nullptr; }
+
+context::id_index get_symbol(const ca_expression* expr) { return static_cast<const ca_symbol*>(expr)->symbol; }
+
+void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
+{
+    bool need_term = true;
+    int priority = 0;
+    size_t it = 0;
+
+    auto curr_expr = expr_list[it].get();
+    ca_expr_ptr built_expr = nullptr;
+
+    if (is_symbol(curr_expr) && *get_symbol(curr_expr) == "NOT")
+    {
+        // create_unary_op()
+        // recurse
+        // attach
+    }
+    else
+    {
+        // attach ++it
+        // get binary operator
+        // check if not lower prio
+        // recurse
+    }
+}
+
+ca_expr_ptr ca_expr_list::resolve(context::SET_t_enum kind, size_t it, int priority)
+{
+    assert(it < expr_list.size());
+
+    if (it + 1 == expr_list.size())
+        return std::move(expr_list[it]);
+}
 
 ca_string::substring_t::substring_t()
     : start(nullptr)
@@ -40,8 +75,10 @@ ca_string::substring_t::substring_t()
     , to_end(false)
 {}
 
-ca_string::ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring)
-    : value(std::move(value))
+ca_string::ca_string(
+    semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , value(std::move(value))
     , duplication_factor(std::move(duplication_factor))
     , substring(std::move(substring))
 {}
@@ -58,10 +95,11 @@ undef_sym_set ca_string::get_undefined_attributed_symbols(const context::depende
     return tmp;
 }
 
-void ca_string::resolve_expression_tree(context::SET_t_enum ) {}
+void ca_string::resolve_expression_tree(context::SET_t_enum) {}
 
-ca_var_sym::ca_var_sym(semantics::vs_ptr symbol)
-    : symbol(std::move(symbol))
+ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , symbol(std::move(symbol))
 {}
 
 undef_sym_set get_undefined_attributed_symbols_vs(
@@ -86,10 +124,11 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::depend
     return get_undefined_attributed_symbols_vs(symbol, solver);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum ) {}
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum) {}
 
-ca_constant::ca_constant(context::A_t value)
-    : value(value)
+ca_constant::ca_constant(context::A_t value, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , value(value)
 {}
 
 undef_sym_set ca_constant::get_undefined_attributed_symbols(const context::dependency_solver&) const
@@ -97,10 +136,11 @@ undef_sym_set ca_constant::get_undefined_attributed_symbols(const context::depen
     return undef_sym_set();
 }
 
-void ca_constant::resolve_expression_tree(context::SET_t_enum ) {}
+void ca_constant::resolve_expression_tree(context::SET_t_enum) {}
 
-ca_symbol::ca_symbol(context::id_index symbol)
-    : symbol(symbol)
+ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , symbol(symbol)
 {}
 
 undef_sym_set ca_symbol::get_undefined_attributed_symbols(const context::dependency_solver&) const
@@ -108,16 +148,18 @@ undef_sym_set ca_symbol::get_undefined_attributed_symbols(const context::depende
     return undef_sym_set();
 }
 
-void ca_symbol::resolve_expression_tree(context::SET_t_enum ) {}
+void ca_symbol::resolve_expression_tree(context::SET_t_enum) {}
 
-ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute)
-    : attribute(attribute)
+ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , attribute(attribute)
     , symbol(symbol)
 
 {}
 
-ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute)
-    : attribute(attribute)
+ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , attribute(attribute)
     , symbol(std::move(symbol))
 {}
 
@@ -137,7 +179,7 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const contex
     }
 }
 
-void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum ) {}
+void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum) {}
 
 } // namespace expressions
 } // namespace parser_library

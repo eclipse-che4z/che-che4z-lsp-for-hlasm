@@ -18,8 +18,9 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
 
-ca_unary_operator::ca_unary_operator(ca_expr_ptr expr)
-    : expr(std::move(expr))
+ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , expr(std::move(expr))
 {}
 
 undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
@@ -29,8 +30,9 @@ undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const context:
 
 void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind) { expr->resolve_expression_tree(kind); }
 
-ca_binary_operator::ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr)
-    : left_expr(std::move(left_expr))
+ca_binary_operator::ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_expression(std::move(expr_range))
+    , left_expr(std::move(left_expr))
     , right_expr(std::move(right_expr))
 {}
 

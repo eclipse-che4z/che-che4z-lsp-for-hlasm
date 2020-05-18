@@ -31,13 +31,16 @@ namespace expressions {
 class ca_expr_list : public ca_expression
 {
 public:
-    const std::vector<ca_expr_ptr> expr_list;
+    std::vector<ca_expr_ptr> expr_list;
 
-    ca_expr_list(std::vector<ca_expr_ptr> expr_list);
+    ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind);
+
+private:
+    ca_expr_ptr resolve(context::SET_t_enum kind, size_t it, int priority);
 };
 
 class ca_string : public ca_expression
@@ -54,8 +57,7 @@ public:
     const ca_expr_ptr duplication_factor;
     const substring_t substring;
 
-    ca_string(
-        semantics::concat_chain value, ca_expr_ptr duplication_factor = nullptr, substring_t substring = substring_t());
+    ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
@@ -67,7 +69,7 @@ class ca_var_sym : public ca_expression
 public:
     const semantics::vs_ptr symbol;
 
-    ca_var_sym(semantics::vs_ptr symbol);
+    ca_var_sym(semantics::vs_ptr symbol, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
@@ -79,7 +81,7 @@ class ca_constant : public ca_expression
 public:
     const context::A_t value;
 
-    ca_constant(context::A_t value);
+    ca_constant(context::A_t value, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
@@ -91,7 +93,7 @@ class ca_symbol : public ca_expression
 public:
     const context::id_index symbol;
 
-    ca_symbol(context::id_index symbol);
+    ca_symbol(context::id_index symbol, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
@@ -107,8 +109,8 @@ public:
     const context::data_attr_kind attribute;
     ca_attr_variant_t symbol;
 
-    ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute);
-    ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute);
+    ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range);
+    ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 

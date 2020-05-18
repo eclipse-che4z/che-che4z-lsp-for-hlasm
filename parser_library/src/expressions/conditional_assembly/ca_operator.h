@@ -26,7 +26,7 @@ class ca_unary_operator : public ca_expression
 public:
     const ca_expr_ptr expr;
 
-    ca_unary_operator(ca_expr_ptr expr);
+    ca_unary_operator(ca_expr_ptr expr, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
@@ -38,7 +38,7 @@ class ca_binary_operator : public ca_expression
 public:
     const ca_expr_ptr left_expr, right_expr;
 
-    ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr);
+    ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
