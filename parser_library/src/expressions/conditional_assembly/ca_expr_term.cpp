@@ -37,7 +37,7 @@ undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::depe
 
 bool is_symbol(const ca_expr_ptr& expr) { return static_cast<const ca_symbol*>(expr.get()) != nullptr; }
 
-context::id_index get_symbol(const ca_expr_ptr& expr) { return static_cast<const ca_symbol*>(expr.get())->symbol; }
+const std::string& get_symbol(const ca_expr_ptr& expr) { return *static_cast<const ca_symbol*>(expr.get())->symbol; }
 
 void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
 {
@@ -48,23 +48,28 @@ void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
     }
 
     size_t it = 0;
-    int priority = 0;
+    bool err = false;
 
-    ca_expr_ptr final_expr = resolve<ca_arithmetic_policy>(it, priority);
+    ca_expr_ptr final_expr = resolve<ca_arithmetic_policy>(it, 0);
+    err |= final_expr == nullptr;
 
-    while (it == expr_list.size())
+    while (it == expr_list.size() && !err)
     {
-        auto&& op = expr_list[it];
+        auto op_range = expr_list[it]->expr_range;
 
-        if (!is_symbol(op))
-        {
-            add_diagnostic(diagnostic_op::error_CE001(expr_range));
-            return;
-        }
-        priority = ca_arithmetic_policy::get_priority(get_symbol(op));
-        auto r_expr = resolve<ca_arithmetic_policy>(++it, priority);
+        auto [prio, op_type] = retrieve_binary_operator<ca_arithmetic_policy>(it, err);
 
-        final_expr = std::make_unique<ca_binary_operator>(std::move(final_expr), std::move(r_expr), op->expr_range);
+        auto r_expr = resolve<ca_arithmetic_policy>(++it, prio);
+        err |= r_expr == nullptr;
+
+        final_expr = std::make_unique<ca_function_binary_operator>(
+            std::move(final_expr), std::move(r_expr), op_type, kind, op_range);
+    }
+
+    if (err)
+    {
+        expr_list.clear();
+        expr_list.emplace_back(std::make_unique<ca_constant>(0, expr_range));
     }
 
     // resolve created tree
@@ -100,32 +105,61 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::resolve(size_t& it, int
     if (is_symbol(curr_expr) && EXPR_POLICY::is_unary(get_symbol(curr_expr)))
     {
         auto new_expr = resolve<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(get_symbol(curr_expr)));
-        return std::make_unique<ca_unary_operator>(std::move(new_expr), curr_expr->expr_range);
+        return std::make_unique<ca_function_unary_operator>(std::move(new_expr),
+            EXPR_POLICY::get_operator(get_symbol(curr_expr)),
+            EXPR_POLICY::set_type,
+            curr_expr->expr_range);
     }
 
     // is only term
     if (it + 1 == expr_list.size())
         return std::move(expr_list[it++]);
 
-    // is binary op
-    auto& op = expr_list[it + 1];
+    //tries to get binary operator
+    auto op_it = it + 1;
+    auto op_range = expr_list[op_it]->expr_range;
+    bool err = false;
+
+    auto [op_prio, op_type] = retrieve_binary_operator<EXPR_POLICY>(op_it, err);
+    if (err)
+        return nullptr;
+
+    //if operator is of lower priority than the calling operator, finish
+    if (op_prio >= priority)
+        return std::move(curr_expr);
+    else
+        it = op_it;
+
+    auto right_expr = resolve<EXPR_POLICY>(++it, op_prio);
+
+    return std::make_unique<ca_function_binary_operator>(
+        std::move(curr_expr), std::move(right_expr), op_type, EXPR_POLICY::set_type, op_range);
+}
+
+template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err)
+{
+    auto& op = expr_list[it];
 
     if (!is_symbol(op) || !EXPR_POLICY::is_operator(get_symbol(op)))
     {
         add_diagnostic(diagnostic_op::error_CE001(expr_range));
-        return nullptr;
+        err = true;
+    }
+
+    ca_expr_ops op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]));
+
+    if (EXPR_POLICY::multiple_words(get_symbol(op)))
+    {
+        if (is_symbol(expr_list[it + 1]) && get_symbol(expr_list[it + 1]) == "NOT")
+        {
+            op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it + 1]) + " NOT");
+            ++it;
+        }
     }
 
     auto op_prio = EXPR_POLICY::get_priority(get_symbol(op));
 
-    if (op_prio >= priority)
-        return std::move(curr_expr);
-    else
-        ++it;
-
-    auto right_expr = resolve<EXPR_POLICY>(++it, op_prio);
-
-    return std::make_unique<ca_binary_operator>(std::move(curr_expr), std::move(right_expr), op->expr_range);
+    return std::make_pair(op_prio, op_type);
 }
 
 ca_string::substring_t::substring_t()
@@ -264,7 +298,7 @@ void ca_symbol_attribute::collect_diags() const
 {
     if (std::holds_alternative<semantics::vs_ptr>(symbol))
     {
-        //auto&& sym = std::get<semantics::vs_ptr>(symbol);
+        // auto&& sym = std::get<semantics::vs_ptr>(symbol);
         // for (auto&& expr : sym->subscript)
         //    collect_diags_from_child(*expr);
     }

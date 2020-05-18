@@ -23,6 +23,7 @@
 #include "context/id_storage.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "semantics/variable_symbol.h"
+#include "ca_expr_policy.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -43,6 +44,7 @@ public:
 
 private:
     template<typename EXPR_POLICY> ca_expr_ptr resolve(size_t& it, int priority);
+    template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
 };
 
 class ca_string : public ca_expression
