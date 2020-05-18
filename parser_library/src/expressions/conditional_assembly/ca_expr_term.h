@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_CA_OPERATOR_H
-#define HLASMPLUGIN_PARSERLIBRARY_CA_OPERATOR_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_TERM_H
+#define HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_TERM_H
 
 #include <variant>
 #include <vector>
@@ -37,10 +37,12 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 
 private:
-    ca_expr_ptr resolve(context::SET_t_enum kind, size_t it, int priority);
+    template<typename EXPR_POLICY> ca_expr_ptr resolve(size_t& it, int priority);
 };
 
 class ca_string : public ca_expression
@@ -61,7 +63,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 class ca_var_sym : public ca_expression
@@ -73,7 +77,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 class ca_constant : public ca_expression
@@ -85,7 +91,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 class ca_symbol : public ca_expression
@@ -97,7 +105,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 class ca_symbol_attribute : public ca_expression
@@ -114,7 +124,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 } // namespace expressions

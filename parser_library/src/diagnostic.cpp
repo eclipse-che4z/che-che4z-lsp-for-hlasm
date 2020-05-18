@@ -1837,6 +1837,21 @@ diagnostic_op diagnostic_op::error_ME002(const range& range)
     return diagnostic_op(diagnostic_severity::error, "ME002", "multiplication or division of address", range);
 }
 
+diagnostic_op diagnostic_op::error_CE001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);
+}
+
+diagnostic_op diagnostic_op::error_CE002(const std::string& message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE001", "Undefined operator - " + message, range);
+}
+
+diagnostic_op diagnostic_op::error_CE003(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE001", "Operand expected", range);
+}
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,

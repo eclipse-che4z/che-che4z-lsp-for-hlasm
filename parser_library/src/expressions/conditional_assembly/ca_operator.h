@@ -30,7 +30,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 class ca_binary_operator : public ca_expression
@@ -42,7 +44,9 @@ public:
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind);
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
 };
 
 

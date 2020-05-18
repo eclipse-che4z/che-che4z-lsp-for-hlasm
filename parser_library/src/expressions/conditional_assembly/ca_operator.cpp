@@ -30,6 +30,8 @@ undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const context:
 
 void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind) { expr->resolve_expression_tree(kind); }
 
+void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr); }
+
 ca_binary_operator::ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
     : ca_expression(std::move(expr_range))
     , left_expr(std::move(left_expr))
@@ -47,6 +49,12 @@ void ca_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
 {
     left_expr->resolve_expression_tree(kind);
     right_expr->resolve_expression_tree(kind);
+}
+
+void ca_binary_operator::collect_diags() const
+{
+    collect_diags_from_child(*left_expr);
+    collect_diags_from_child(*right_expr);
 }
 
 } // namespace expressions

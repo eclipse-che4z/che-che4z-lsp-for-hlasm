@@ -584,6 +584,12 @@ struct diagnostic_op
     static diagnostic_op error_ME001(const range& range);
 
     static diagnostic_op error_ME002(const range& range);
+
+    static diagnostic_op error_CE001(const range& range);
+
+    static diagnostic_op error_CE002(const std::string& message, const range& range);
+
+    static diagnostic_op error_CE003(const range& range);
 };
 
 struct range_uri_s
