@@ -34,6 +34,7 @@ class ca_expression : public diagnosable_op_impl
 {
 public:
     range expr_range;
+    context::SET_t_enum expr_kind;
 
     ca_expression(range expr_range)
         : expr_range(std::move(expr_range))

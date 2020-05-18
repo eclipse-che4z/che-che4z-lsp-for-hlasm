@@ -35,6 +35,38 @@ public:
     virtual void collect_diags() const override;
 };
 
+// +, -
+template<typename OP> class ca_arithmetic_unary_operator : public ca_unary_operator
+{
+public:
+    ca_arithmetic_unary_operator(ca_expr_ptr expr, range expr_range)
+        : ca_unary_operator(std::move(expr), std::move(expr_range))
+    {
+        expr_kind = context::SET_t_enum::A_TYPE;
+    }
+};
+
+class ca_parentheses_operator : public ca_unary_operator
+{
+public:
+    ca_parentheses_operator(ca_expr_ptr expr, range expr_range)
+        : ca_unary_operator(std::move(expr), std::move(expr_range))
+    {}
+};
+
+class ca_function_unary_operator : public ca_unary_operator
+{
+public:
+    context::id_index function;
+
+    ca_function_unary_operator(ca_expr_ptr expr, context::id_index function, context::SET_t_enum kind, range expr_range)
+        : ca_unary_operator(std::move(expr), std::move(expr_range))
+        , function(function)
+    {
+        expr_kind = kind;
+    }
+};
+
 class ca_binary_operator : public ca_expression
 {
 public:
@@ -49,6 +81,34 @@ public:
     virtual void collect_diags() const override;
 };
 
+// basic add, sub, div, mul
+template<typename OP> class ca_arithmetic_binary_operator : public ca_binary_operator
+{
+public:
+    ca_arithmetic_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+        : ca_binary_operator(std::move(left_expr), std::move(right_expr), std::move(expr_range))
+    {
+        expr_kind = context::SET_t_enum::A_TYPE;
+    }
+};
+
+// AND, SLL, OR ...
+class ca_function_binary_operator : public ca_binary_operator
+{
+public:
+    context::id_index function;
+
+    ca_function_binary_operator(ca_expr_ptr left_expr,
+        ca_expr_ptr right_expr,
+        context::id_index function,
+        context::SET_t_enum kind,
+        range expr_range)
+        : ca_binary_operator(std::move(left_expr), std::move(right_expr), std::move(expr_range))
+        , function(function)
+    {
+        expr_kind = kind;
+    }
+};
 
 
 } // namespace expressions
