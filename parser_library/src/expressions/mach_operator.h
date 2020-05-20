@@ -42,15 +42,15 @@ public:
 
     context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override
+    void fill_location_counter(context::address addr) override
     {
         left_->fill_location_counter(addr);
         right_->fill_location_counter(std::move(addr));
     }
 
-    virtual const mach_expression* leftmost_term() const override { return left_->leftmost_term(); }
+    const mach_expression* leftmost_term() const override { return left_->leftmost_term(); }
 
     void collect_diags() const override
     {
