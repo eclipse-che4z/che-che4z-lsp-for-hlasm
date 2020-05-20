@@ -51,14 +51,17 @@ jobs:
           sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
           sudo apt-get update
           sudo apt-get install -y clang-format-10
-      #Change the options in clang format that make clang-format-10 output different source than clang-format-9
-      - name: Clang format 10 compatiblity
-        run: |
-          echo "SpaceInEmptyBlock: false" >> .clang-format
-      - name: Format check
+      - name: Run clang-format
         run:  clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
         uses: actions/upload-artifact@v1
         with:
           name: clang-format-output
           path: clang-format-output.txt
+      - name: Check format
+        run: |
+          if [ -s clang-format-output.txt ]
+          then
+            exit 1
+          fi
+

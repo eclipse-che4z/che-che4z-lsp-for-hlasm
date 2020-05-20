@@ -74,7 +74,8 @@ std::vector<variable_ptr> set_symbol_variable::values() const
 
 size_t set_symbol_variable::size() const { return set_symbol_.size(); }
 
-template<typename T> inline const T& set_symbol_variable::get_value() const
+template<typename T>
+inline const T& set_symbol_variable::get_value() const
 {
     if (set_symbol_.is_scalar)
         return set_symbol_.access_set_symbol<T>()->get_value();

@@ -235,8 +235,13 @@ enum class op
     SUB
 };
 
-template<typename T> bool compare(const T& lhs, const T& rhs) { return lhs == rhs; }
-template<> bool compare<address::base>(const address::base& lhs, const address::base& rhs)
+template<typename T>
+bool compare(const T& lhs, const T& rhs)
+{
+    return lhs == rhs;
+}
+template<>
+bool compare<address::base>(const address::base& lhs, const address::base& rhs)
 {
     return lhs.owner == rhs.owner;
 }

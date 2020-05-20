@@ -152,7 +152,8 @@ inline bool is_decimal_number_ch(char c) { return is_digit(c) || is_sign(c) || c
 // number_spec must implement two static functions:
 // bool is_end_char(char c) specifies whether char is valid character that delimits number.
 // bool is_sign_char(char c) specifies whether char is valid beginning character
-template<class number_spec> inline bool check_number(const std::string& nominal, size_t& i)
+template<class number_spec>
+inline bool check_number(const std::string& nominal, size_t& i)
 {
     if (nominal[i] == ',')
         return false;

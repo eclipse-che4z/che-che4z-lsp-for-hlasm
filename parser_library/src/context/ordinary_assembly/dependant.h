@@ -60,7 +60,8 @@ struct dependant
 } // namespace hlasm_plugin
 
 namespace std {
-template<> struct hash<hlasm_plugin::parser_library::context::attr_ref>
+template<>
+struct hash<hlasm_plugin::parser_library::context::attr_ref>
 {
     std::size_t operator()(const hlasm_plugin::parser_library::context::attr_ref& k) const
     {
@@ -68,7 +69,8 @@ template<> struct hash<hlasm_plugin::parser_library::context::attr_ref>
     }
 };
 
-template<> struct hash<hlasm_plugin::parser_library::context::dependant>
+template<>
+struct hash<hlasm_plugin::parser_library::context::dependant>
 {
     std::size_t operator()(const hlasm_plugin::parser_library::context::dependant& k) const
     {

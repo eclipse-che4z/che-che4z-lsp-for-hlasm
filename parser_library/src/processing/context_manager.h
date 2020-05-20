@@ -51,7 +51,8 @@ public:
     }
 
     context::SET_t convert(context::SET_t source, context::SET_t_enum target_type, range value_range) const;
-    template<typename T> T convert_to(context::SET_t source, range value_range) const
+    template<typename T>
+    T convert_to(context::SET_t source, range value_range) const
     {
         auto tmp = convert(std::move(source), context::object_traits<T>::type_enum, value_range);
 

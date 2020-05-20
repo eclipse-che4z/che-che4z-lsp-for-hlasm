@@ -33,7 +33,7 @@ public:
         : file_manager_(cancel)
         , implicit_workspace_({ file_manager_ })
         , cancel_(cancel)
-    { }
+    {}
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
 

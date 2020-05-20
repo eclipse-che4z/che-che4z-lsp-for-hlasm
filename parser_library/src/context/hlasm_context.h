@@ -192,7 +192,8 @@ public:
     void leave_copy_member();
 
     // creates specified global set symbol
-    template<typename T> set_sym_ptr create_global_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_global_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())
@@ -214,7 +215,8 @@ public:
     }
 
     // creates specified local set symbol
-    template<typename T> set_sym_ptr create_local_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_local_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())

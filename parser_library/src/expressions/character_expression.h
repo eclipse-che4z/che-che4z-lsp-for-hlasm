@@ -61,7 +61,8 @@ public:
     /**
      * special HLASM CA substring
      * */
-    template<typename T> char_ptr substring(int32_t dupl, const T& s, const T& e) const
+    template<typename T>
+    char_ptr substring(int32_t dupl, const T& s, const T& e) const
     {
         if (dupl < 0)
             return default_expr_with_error<character_expression>(error_messages::ec01());

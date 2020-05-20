@@ -73,7 +73,8 @@ private:
 
     void collect_ordinary_symbol_definitions();
 
-    template<typename T> void process_statement_base(T statement)
+    template<typename T>
+    void process_statement_base(T statement)
     {
         assert(statement->kind == context::statement_kind::RESOLVED);
 

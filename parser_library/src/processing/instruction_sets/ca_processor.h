@@ -44,7 +44,8 @@ public:
     virtual void process(context::shared_stmt_ptr stmt) override;
 
 private:
-    template<typename T> void process_(T stmt_ptr)
+    template<typename T>
+    void process_(T stmt_ptr)
     {
         auto it = table_.find(stmt_ptr->access_resolved()->opcode_ref().value);
         assert(it != table_.end());
@@ -69,7 +70,8 @@ private:
     bool prepare_SET_operands(
         const semantics::complete_statement& stmt, std::vector<context::SET_t>& values, std::vector<range>& ranges);
     context::SET_t convert_SET_operand(context::SET_t& value, context::SET_t_enum type, range operand_range);
-    template<typename T> T convert_SET_operand_to(context::SET_t& value, range operand_range)
+    template<typename T>
+    T convert_SET_operand_to(context::SET_t& value, range operand_range)
     {
         auto tmp = convert_SET_operand(value, context::object_traits<T>::type_enum, operand_range);
 
@@ -81,7 +83,8 @@ private:
             return std::move(tmp.access_c());
     }
 
-    template<typename T> void process_SET(const semantics::complete_statement& stmt)
+    template<typename T>
+    void process_SET(const semantics::complete_statement& stmt)
     {
         std::vector<context::SET_t> values;
         std::vector<range> ranges;
@@ -109,7 +112,8 @@ private:
     bool prepare_GBL_LCL(
         const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info);
 
-    template<typename T, bool global> void process_GBL_LCL(const semantics::complete_statement& stmt)
+    template<typename T, bool global>
+    void process_GBL_LCL(const semantics::complete_statement& stmt)
     {
         register_seq_sym(stmt);
 
