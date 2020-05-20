@@ -51,9 +51,9 @@ suite('Debug Test Suite', () => {
         assert.equal(getCurrentProgramName(), undefined);
 
         // HLASM file active
-        const hlasmDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'open'));
+        const hlasmDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
         await vscode.languages.setTextDocumentLanguage(hlasmDocument, 'hlasm');
         await vscode.window.showTextDocument(hlasmDocument);
-        assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'open'));
+        assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
     }).slow(2000);
 });
