@@ -126,7 +126,7 @@ suite('Integration Test Suite', () => {
 		assert.equal(vscode.window.activeTextEditor, openFileEditor);
 
 		// when the debug session starts
-		vscode.debug.onDidStartDebugSession(() => {
+		const disposable = vscode.debug.onDidStartDebugSession(session => {
 			// step over once
 			// wait a second to let the debug session complete
 			setTimeout(() => {
@@ -134,9 +134,11 @@ suite('Integration Test Suite', () => {
 				// wait 1 more second to let step over take place
 				// then check for VAR2 variable
 				setTimeout(() => {
-					vscode.debug.activeDebugSession.customRequest('scopes',{frameId:0}).then((scopesResult: {scopes: {name: string, variablesReference: number}[]}) => {
+					session.customRequest('scopes',{frameId:0}).then((scopesResult: {scopes: {name: string, variablesReference: number}[]}) => {
 					const reference = scopesResult.scopes.find(scope => scope.name == 'Locals').variablesReference;
-					vscode.debug.activeDebugSession.customRequest('variables',{variablesReference: reference}).then(variablesResult => {
+					session.customRequest('variables',{variablesReference: reference}).then(variablesResult => {
+						disposable.dispose();
+						vscode.commands.executeCommand('workbench.action.debug.stop');
 						if (variablesResult.variables.length == 1 && variablesResult.variables[0].value == 'SOMETHING' && variablesResult.variables[0].name == 'VAR2')
 							done();
 						else
