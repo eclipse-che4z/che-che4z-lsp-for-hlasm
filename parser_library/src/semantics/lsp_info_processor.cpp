@@ -27,8 +27,8 @@ lsp_info_processor::lsp_info_processor(
     : file_name(ctx ? ctx->ids().add(file, true) : nullptr)
     , empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
     , ctx_(ctx)
-    , instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
     , collect_hl_info_(collect_hl_info)
+    , instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)")
 {
     // initialize text vector
     std::string line;
@@ -714,7 +714,7 @@ int lsp_info_processor::find_latest_version_(
     while (true)
     {
         if (to_check.find(curr_copy) == to_check.end())
-            return version;
+            return (int)version;
         version = curr_copy.version;
         curr_copy.version++;
     }

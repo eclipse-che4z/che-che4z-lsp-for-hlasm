@@ -240,8 +240,8 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
             auto tmp_chain = semantics::concatenation_point::clone(tmp->chain);
             auto [valid, id] = mngr.try_get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
             assert(valid);
-            auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
-            if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end()
+            auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
+            if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
                 || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
             {
                 add_diagnostic(diagnostic_op::error_E010(

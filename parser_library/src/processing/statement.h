@@ -45,20 +45,25 @@ struct resolved_statement : public context::hlasm_statement, public semantics::c
 
 struct resolved_statement_impl : public resolved_statement
 {
-    resolved_statement_impl(semantics::statement_si stmt, op_code opcode)
+    resolved_statement_impl(semantics::statement_si stmt, op_code opcode, processing_format format)
         : opcode(opcode)
+        , format(format)
         , value(std::move(stmt))
     {}
-    resolved_statement_impl(semantics::statement_si_defer_done stmt, op_code opcode)
+    resolved_statement_impl(semantics::statement_si_defer_done stmt, op_code opcode, processing_format format)
         : opcode(opcode)
+        , format(format)
         , value(std::move(stmt))
     {}
-    resolved_statement_impl(std::shared_ptr<semantics::statement_si_defer_done> stmt, op_code opcode)
+    resolved_statement_impl(
+        std::shared_ptr<semantics::statement_si_defer_done> stmt, op_code opcode, processing_format format)
         : opcode(opcode)
+        , format(format)
         , value(stmt)
     {}
 
     op_code opcode;
+    processing_format format;
     complete_stmt_t value;
 
     virtual const semantics::label_si& label_ref() const { return get_stmt().label_ref(); }

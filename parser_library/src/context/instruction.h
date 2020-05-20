@@ -29,15 +29,6 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
 
-enum class instruction_type
-{
-    MACH,
-    ASM,
-    MAC,
-    CA,
-    UNDEF
-};
-
 // all mach_format types for operands of machine instructions:
 enum class mach_format
 {
@@ -127,7 +118,7 @@ const checking::parameter dis_reg = { false, 4, checking::machine_operand_type::
 const checking::parameter dis_reg_r = { false, 4, checking::machine_operand_type::REG };
 const checking::parameter mask = { false, 4, checking::machine_operand_type::MASK };
 const checking::parameter dis_12u = { false, 12, checking::machine_operand_type::DISPLC };
-const checking::parameter dis_20s = { true, 12, checking::machine_operand_type::DISPLC };
+const checking::parameter dis_20s = { true, 20, checking::machine_operand_type::DISPLC };
 const checking::parameter base_ = { false, 4, checking::machine_operand_type::BASE };
 const checking::parameter length_8 = { false, 8, checking::machine_operand_type::LENGTH };
 const checking::parameter length_4 = { false, 4, checking::machine_operand_type::LENGTH };
@@ -160,7 +151,7 @@ const checking::machine_operand_format db_20_4_S = checking::machine_operand_for
 const checking::machine_operand_format drb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg_r, base_);
 const checking::machine_operand_format dxb_12_4x4_U = checking::machine_operand_format(dis_12u, dis_reg, base_);
 const checking::machine_operand_format dxb_20_4x4_S = checking::machine_operand_format(dis_20s, dis_reg, base_);
-const checking::machine_operand_format dvb_12_4x4_U = checking::machine_operand_format(dis_20s, vec_reg, base_);
+const checking::machine_operand_format dvb_12_4x4_U = checking::machine_operand_format(dis_12u, vec_reg, base_);
 const checking::machine_operand_format reg_4_U = checking::machine_operand_format(reg, empty, empty);
 const checking::machine_operand_format mask_4_U = checking::machine_operand_format(mask, empty, empty);
 const checking::machine_operand_format imm_4_U = checking::machine_operand_format(imm_4u, empty, empty);

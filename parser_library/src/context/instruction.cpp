@@ -155,7 +155,7 @@ const std::map<const std::string, assembler_instruction> instruction::assembler_
         { "LOCTR", assembler_instruction(0, 0, false, "") },
         { "LTORG", assembler_instruction(0, 0, false, "") },
         { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
-        { "OPSYN", assembler_instruction(0, 1, true, "?operation_code_2") },
+        { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
         { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
         { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
         { "PRINT", assembler_instruction(1, -1, false, "operand+") },
