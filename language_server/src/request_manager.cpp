@@ -20,13 +20,13 @@ request::request(json message, server* executing_server)
     : message(std::move(message))
     , valid(true)
     , executing_server(executing_server)
-{}
+{ }
 
 request_manager::request_manager(std::atomic<bool>* cancel)
     : end_worker_(false)
     , cancel_(cancel)
     , worker_(&request_manager::handle_request_, this, &end_worker_)
-{}
+{ }
 
 void request_manager::add_request(server* server, json message)
 {
@@ -35,9 +35,9 @@ void request_manager::add_request(server* server, json message)
         std::unique_lock<std::mutex> lock(q_mtx_);
         bool is_parsing_required = false;
         // get new file
-        auto file = get_request_file_(message,&is_parsing_required);
+        auto file = get_request_file_(message, &is_parsing_required);
         // if the new file is the same as the currently running one, cancel the old one
-        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required) 
+        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required)
         {
             *cancel_ = true;
             // mark redundant requests as non valid
@@ -62,7 +62,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool hlasm_plugin::language_server::request_manager::is_running() 
+bool hlasm_plugin::language_server::request_manager::is_running()
 {
     bool result = false;
     {
@@ -81,7 +81,7 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
         // wait for work to come
         if (requests_.empty())
             cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
-        if (*end_loop) 
+        if (*end_loop)
             return;
 
         // get first request
@@ -141,9 +141,9 @@ std::string request_manager::get_request_file_(json r, bool* is_parsing_required
     if (found == r.end())
         return "";
     auto method = r["method"].get<std::string>();
-    if (method.substr(0, 12) == "textDocument") 
+    if (method.substr(0, 12) == "textDocument")
     {
-        if (is_parsing_required) 
+        if (is_parsing_required)
         {
             if (method == didOpen || method == didChange)
                 *is_parsing_required = true;

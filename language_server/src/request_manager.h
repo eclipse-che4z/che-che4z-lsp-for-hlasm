@@ -45,6 +45,7 @@ public:
     void finish_server_requests(server* server);
     void end_worker();
     bool is_running();
+
 private:
     std::atomic<bool> end_worker_;
 

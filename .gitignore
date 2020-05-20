@@ -49,10 +49,10 @@ parser_library/test/res/input/correctness.in
 parser_library/test/res/output/tokens/correctness.output
 
 #vscode ignore
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+/.vscode/
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
 
 parser_library/jni/generated/
