@@ -7,9 +7,9 @@
       ]
     },
     {
-      "name": "I8CVB_PG",
+      "name": "JULSUB_PG",
       "libs": [
-        "I8CVB_LIBS"
+        "JULSUB_MACRO"
       ]
     }
   ]
