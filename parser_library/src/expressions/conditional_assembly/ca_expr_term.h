@@ -43,7 +43,8 @@ public:
     virtual void collect_diags() const override;
 
 private:
-    template<typename EXPR_POLICY> ca_expr_ptr resolve(size_t& it, int priority);
+    template<typename T> void resolve();
+    template<typename EXPR_POLICY> ca_expr_ptr retrieve_term(size_t& it, int priority);
     template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
 };
 

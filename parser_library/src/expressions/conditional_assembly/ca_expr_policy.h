@@ -15,8 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_POLICY_H
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPR_POLICY_H
 
-#include "context/id_storage.h"
 #include "context/common_types.h"
+#include "context/id_storage.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -24,7 +24,7 @@ namespace expressions {
 
 enum class ca_expr_ops
 {
-    //arithmetic
+    // arithmetic
     SLA,
     SLL,
     SRA,
@@ -32,7 +32,7 @@ enum class ca_expr_ops
     FIND,
     INDEX,
 
-    //logical
+    // logical
     AND_NOT,
     OR_NOT,
     XOR_NOT,
@@ -43,13 +43,13 @@ enum class ca_expr_ops
     GE,
     GT,
 
-    //arithmetic & logical
+    // arithmetic & logical
     AND,
     OR,
     XOR,
     NOT,
 
-    //character
+    // character
     BYTE,
     DOUBLE,
     LOWER,
@@ -59,7 +59,7 @@ enum class ca_expr_ops
 
 enum class ca_expr_funcs
 {
-    //arithmetic
+    // arithmetic
     B2A,
     C2A,
     D2A,
@@ -71,7 +71,7 @@ enum class ca_expr_funcs
     ISHEX,
     ISSYM,
 
-    //character
+    // character
     A2B,
     A2C,
     A2D,
@@ -152,6 +152,24 @@ public:
     static int get_priority(const std::string& symbol);
 
     static ca_expr_ops get_operator(const std::string& symbol);
+};
+
+template<typename T> struct ca_expr_traits
+{};
+
+template<> struct ca_expr_traits<context::A_t>
+{
+    using policy_t = ca_arithmetic_policy;
+};
+
+template<> struct ca_expr_traits<context::B_t>
+{
+    using policy_t = ca_binary_policy;
+};
+
+template<> struct ca_expr_traits<context::C_t>
+{
+    using policy_t = ca_character_policy;
 };
 
 } // namespace expressions

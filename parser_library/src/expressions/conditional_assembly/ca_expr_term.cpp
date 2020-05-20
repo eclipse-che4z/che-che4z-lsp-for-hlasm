@@ -41,6 +41,24 @@ const std::string& get_symbol(const ca_expr_ptr& expr) { return *static_cast<con
 
 void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
 {
+    if (kind == context::SET_t_enum::A_TYPE)
+        resolve<context::A_t>();
+    else if (kind == context::SET_t_enum::B_TYPE)
+        resolve<context::B_t>();
+    else if (kind == context::SET_t_enum::C_TYPE)
+        resolve<context::C_t>();
+    else
+        assert(false);
+}
+
+void ca_expr_list::collect_diags() const
+{
+    for (auto&& expr : expr_list)
+        collect_diags_from_child(*expr);
+}
+
+template<typename T> void ca_expr_list::resolve()
+{
     if (expr_list.empty())
     {
         add_diagnostic(diagnostic_op::error_CE003(expr_range));
@@ -50,20 +68,20 @@ void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
     size_t it = 0;
     bool err = false;
 
-    ca_expr_ptr final_expr = resolve<ca_arithmetic_policy>(it, 0);
+    ca_expr_ptr final_expr = retrieve_term<ca_expr_traits<T>::policy_t>(it, 0);
     err |= final_expr == nullptr;
 
     while (it == expr_list.size() && !err)
     {
         auto op_range = expr_list[it]->expr_range;
 
-        auto [prio, op_type] = retrieve_binary_operator<ca_arithmetic_policy>(it, err);
+        auto [prio, op_type] = retrieve_binary_operator<ca_expr_traits<T>::policy_t>(it, err);
 
-        auto r_expr = resolve<ca_arithmetic_policy>(++it, prio);
+        auto r_expr = retrieve_term<ca_expr_traits<T>::policy_t>(++it, prio);
         err |= r_expr == nullptr;
 
         final_expr = std::make_unique<ca_function_binary_operator>(
-            std::move(final_expr), std::move(r_expr), op_type, kind, op_range);
+            std::move(final_expr), std::move(r_expr), op_type, context::object_traits<T>::type_enum, op_range);
     }
 
     if (err)
@@ -73,20 +91,14 @@ void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
     }
 
     // resolve created tree
-    final_expr->resolve_expression_tree(kind);
+    final_expr->resolve_expression_tree(context::object_traits<T>::type_enum);
 
     // move resolved tree to the front of the array
     expr_list.clear();
     expr_list.emplace_back(std::move(final_expr));
 }
 
-void ca_expr_list::collect_diags() const
-{
-    for (auto&& expr : expr_list)
-        collect_diags_from_child(*expr);
-}
-
-template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::resolve(size_t& it, int priority)
+template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
 {
     // list is exhausted
     if (it == expr_list.size())
@@ -104,7 +116,7 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::resolve(size_t& it, int
     // is unary op
     if (is_symbol(curr_expr) && EXPR_POLICY::is_unary(get_symbol(curr_expr)))
     {
-        auto new_expr = resolve<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(get_symbol(curr_expr)));
+        auto new_expr = retrieve_term<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(get_symbol(curr_expr)));
         return std::make_unique<ca_function_unary_operator>(std::move(new_expr),
             EXPR_POLICY::get_operator(get_symbol(curr_expr)),
             EXPR_POLICY::set_type,
@@ -115,7 +127,7 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::resolve(size_t& it, int
     if (it + 1 == expr_list.size())
         return std::move(expr_list[it++]);
 
-    //tries to get binary operator
+    // tries to get binary operator
     auto op_it = it + 1;
     auto op_range = expr_list[op_it]->expr_range;
     bool err = false;
@@ -124,13 +136,13 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::resolve(size_t& it, int
     if (err)
         return nullptr;
 
-    //if operator is of lower priority than the calling operator, finish
+    // if operator is of lower priority than the calling operator, finish
     if (op_prio >= priority)
         return std::move(curr_expr);
     else
         it = op_it;
 
-    auto right_expr = resolve<EXPR_POLICY>(++it, op_prio);
+    auto right_expr = retrieve_term<EXPR_POLICY>(++it, op_prio);
 
     return std::make_unique<ca_function_binary_operator>(
         std::move(curr_expr), std::move(right_expr), op_type, EXPR_POLICY::set_type, op_range);
