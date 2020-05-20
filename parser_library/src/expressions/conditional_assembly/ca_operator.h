@@ -27,45 +27,35 @@ class ca_unary_operator : public ca_expression
 public:
     const ca_expr_ptr expr;
 
-    ca_unary_operator(ca_expr_ptr expr, range expr_range);
+    ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_kind, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
-// +, -
+// +, -, ()
 template<typename OP> class ca_arithmetic_unary_operator : public ca_unary_operator
 {
 public:
     ca_arithmetic_unary_operator(ca_expr_ptr expr, range expr_range)
-        : ca_unary_operator(std::move(expr), std::move(expr_range))
-    {
-        expr_kind = context::SET_t_enum::A_TYPE;
-    }
-};
-
-class ca_parentheses_operator : public ca_unary_operator
-{
-public:
-    ca_parentheses_operator(ca_expr_ptr expr, range expr_range)
-        : ca_unary_operator(std::move(expr), std::move(expr_range))
+        : ca_unary_operator(std::move(expr), OP::expr_kind, std::move(expr_range))
     {}
 };
 
+// NOT, BYTE, ...
 class ca_function_unary_operator : public ca_unary_operator
 {
 public:
     ca_expr_ops function;
 
-    ca_function_unary_operator(ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum kind, range expr_range)
-        : ca_unary_operator(std::move(expr), std::move(expr_range))
-        , function(function)
-    {
-        expr_kind = kind;
-    }
+    ca_function_unary_operator(ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum expr_kind, range expr_range);
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 };
 
 class ca_binary_operator : public ca_expression
@@ -73,39 +63,45 @@ class ca_binary_operator : public ca_expression
 public:
     const ca_expr_ptr left_expr, right_expr;
 
-    ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
+    ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
-// basic add, sub, div, mul
+// +, -, *, /, .
 template<typename OP> class ca_arithmetic_binary_operator : public ca_binary_operator
 {
 public:
     ca_arithmetic_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-        : ca_binary_operator(std::move(left_expr), std::move(right_expr), std::move(expr_range))
-    {
-        expr_kind = context::SET_t_enum::A_TYPE;
-    }
+        : ca_binary_operator(std::move(left_expr), std::move(right_expr), OP::expr_kind, std::move(expr_range))
+    {}
 };
 
-// AND, SLL, OR ...
+// AND, SLL, OR, ...
 class ca_function_binary_operator : public ca_binary_operator
 {
 public:
     ca_expr_ops function;
 
-    ca_function_binary_operator(
-        ca_expr_ptr left_expr, ca_expr_ptr right_expr, ca_expr_ops function, context::SET_t_enum kind, range expr_range)
-        : ca_binary_operator(std::move(left_expr), std::move(right_expr), std::move(expr_range))
+    ca_function_binary_operator(ca_expr_ptr left_expr,
+        ca_expr_ptr right_expr,
+        ca_expr_ops function,
+        context::SET_t_enum expr_kind,
+        range expr_range)
+        : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
         , function(function)
-    {
-        expr_kind = kind;
-    }
+    {}
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+private:
+    bool is_relational() const;
 };
 
 

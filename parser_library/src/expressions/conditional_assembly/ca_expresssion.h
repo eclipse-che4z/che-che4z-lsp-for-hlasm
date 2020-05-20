@@ -36,8 +36,9 @@ public:
     range expr_range;
     context::SET_t_enum expr_kind;
 
-    ca_expression(range expr_range)
+    ca_expression(context::SET_t_enum expr_kind, range expr_range)
         : expr_range(std::move(expr_range))
+        , expr_kind(expr_kind)
     {}
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const = 0;
@@ -45,6 +46,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
 
     virtual ~ca_expression() = default;
+
+    virtual bool is_character_expression() const = 0;
 };
 
 

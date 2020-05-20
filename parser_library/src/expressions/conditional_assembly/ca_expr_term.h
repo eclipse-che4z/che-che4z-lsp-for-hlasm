@@ -18,12 +18,12 @@
 #include <variant>
 #include <vector>
 
+#include "ca_expr_policy.h"
 #include "ca_expresssion.h"
 #include "context/common_types.h"
 #include "context/id_storage.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "semantics/variable_symbol.h"
-#include "ca_expr_policy.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -42,6 +42,8 @@ public:
 
     virtual void collect_diags() const override;
 
+    virtual bool is_character_expression() const override;
+
 private:
     template<typename T> void resolve();
     template<typename EXPR_POLICY> ca_expr_ptr retrieve_term(size_t& it, int priority);
@@ -59,8 +61,8 @@ public:
     };
 
     const semantics::concat_chain value;
-    const ca_expr_ptr duplication_factor;
-    const substring_t substring;
+    ca_expr_ptr duplication_factor;
+    substring_t substring;
 
     ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range);
 
@@ -69,6 +71,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
 class ca_var_sym : public ca_expression
@@ -83,6 +87,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
 class ca_constant : public ca_expression
@@ -97,6 +103,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
 class ca_symbol : public ca_expression
@@ -111,6 +119,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
 class ca_symbol_attribute : public ca_expression
@@ -130,6 +140,28 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
+};
+
+class ca_function : public ca_expression
+{
+public:
+    const ca_expr_funcs function;
+    std::vector<ca_expr_ptr> parameters;
+    ca_expr_ptr duplication_factor;
+
+
+    ca_function(
+        ca_expr_funcs function, std::vector<ca_expr_ptr> parameters, ca_expr_ptr duplication_factor, range expr_range);
+
+    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual void collect_diags() const override;
+
+    virtual bool is_character_expression() const override;
 };
 
 } // namespace expressions

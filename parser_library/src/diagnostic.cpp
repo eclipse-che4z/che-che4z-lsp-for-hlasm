@@ -1844,12 +1844,27 @@ diagnostic_op diagnostic_op::error_CE001(const range& range)
 
 diagnostic_op diagnostic_op::error_CE002(const std::string& message, const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "CE001", "Undefined operator - " + message, range);
+    return diagnostic_op(diagnostic_severity::error, "CE002", "Undefined operator - " + message, range);
 }
 
 diagnostic_op diagnostic_op::error_CE003(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "CE001", "Operand expected", range);
+    return diagnostic_op(diagnostic_severity::error, "CE003", "Operand expected", range);
+}
+
+diagnostic_op diagnostic_op::error_CE004(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE004", "Bad operator type", range);
+}
+
+diagnostic_op diagnostic_op::error_CE005(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE005", "Illegal duplication factor", range);
+}
+
+diagnostic_op diagnostic_op::error_CE006(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE006", "Bad number of operands", range);
 }
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)

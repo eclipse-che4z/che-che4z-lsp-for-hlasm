@@ -54,7 +54,9 @@ enum class ca_expr_ops
     DOUBLE,
     LOWER,
     SIGNED,
-    UPPER
+    UPPER,
+
+    UNKNOWN
 };
 
 enum class ca_expr_funcs
@@ -75,7 +77,7 @@ enum class ca_expr_funcs
     A2B,
     A2C,
     A2D,
-    AX2,
+    A2X,
     B2C,
     B2D,
     B2X,
@@ -97,7 +99,9 @@ enum class ca_expr_funcs
     UPPER,
     X2B,
     X2C,
-    X2D
+    X2D,
+
+    UNKNOWN
 };
 
 class ca_arithmetic_policy
@@ -105,17 +109,25 @@ class ca_arithmetic_policy
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::A_TYPE;
 
-    static bool is_unary(const std::string& symbol);
+    static bool is_unary(ca_expr_ops op);
 
-    static bool is_binary(const std::string& symbol);
+    static bool is_binary(ca_expr_ops op);
 
-    static bool multiple_words(const std::string& symbol);
+    static bool multiple_words(ca_expr_ops op);
 
-    static bool is_operator(const std::string& symbol);
+    static int get_priority(ca_expr_ops op);
 
-    static int get_priority(const std::string& symbol);
+    static bool is_operator(ca_expr_ops op);
+
+    static bool is_function(ca_expr_funcs func);
 
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static ca_expr_funcs get_function(const std::string& symbol);
+
+    static std::pair<size_t, context::SET_t> get_function_param_info(ca_expr_funcs func);
+
+    static context::SET_t get_operands_type(ca_expr_ops op);
 };
 
 class ca_binary_policy
@@ -123,17 +135,25 @@ class ca_binary_policy
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::B_TYPE;
 
-    static bool is_unary(const std::string& symbol);
+    static bool is_unary(ca_expr_ops op);
 
-    static bool is_binary(const std::string& symbol);
+    static bool is_binary(ca_expr_ops op);
 
-    static bool multiple_words(const std::string& symbol);
+    static bool multiple_words(ca_expr_ops op);
 
-    static bool is_operator(const std::string& symbol);
+    static int get_priority(ca_expr_ops op);
 
-    static int get_priority(const std::string& symbol);
+    static bool is_operator(ca_expr_ops op);
+
+    static bool is_function(ca_expr_funcs func);
 
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static ca_expr_funcs get_function(const std::string& symbol);
+
+    static std::pair<size_t, context::SET_t> get_function_param_info(ca_expr_funcs func);
+
+    static context::SET_t get_operands_type(ca_expr_ops op);
 };
 
 class ca_character_policy
@@ -141,17 +161,36 @@ class ca_character_policy
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::C_TYPE;
 
-    static bool is_unary(const std::string& symbol);
+    static bool is_unary(ca_expr_ops op);
 
-    static bool is_binary(const std::string& symbol);
+    static bool is_binary(ca_expr_ops op);
 
-    static bool multiple_words(const std::string& symbol);
+    static bool multiple_words(ca_expr_ops op);
 
-    static bool is_operator(const std::string& symbol);
+    static int get_priority(ca_expr_ops op);
 
-    static int get_priority(const std::string& symbol);
+    static bool is_operator(ca_expr_ops op);
+
+    static bool is_function(ca_expr_funcs func);
 
     static ca_expr_ops get_operator(const std::string& symbol);
+
+    static ca_expr_funcs get_function(const std::string& symbol);
+
+    static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
+
+    static context::SET_t_enum get_operands_type(ca_expr_ops op);
+};
+
+class ca_common_expr_policy
+{
+public:
+    static std::pair<size_t, context::SET_t_enum> get_function_param_info(
+        ca_expr_funcs func, context::SET_t_enum expr_kind);
+
+    static context::SET_t_enum get_function_type(ca_expr_funcs func);
+
+    static context::SET_t_enum get_operands_type(ca_expr_ops op, context::SET_t_enum expr_kind);
 };
 
 template<typename T> struct ca_expr_traits
