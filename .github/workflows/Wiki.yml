@@ -12,25 +12,23 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Check license headers
+name: Wiki
+
 on:
   push:
     branches:
-      - master
       - development
-  pull_request:
-    branches:
-      - master
-      - development
-jobs:
-  
-  clang:
-      name: Check license headers
-      runs-on: ubuntu-18.04
-      steps:
-      - uses: actions/checkout@v1
-      - name: Check license headers
-        run: |
-          chmod +x cmake/check_license.sh
-          cmake/check_license.sh
 
+jobs:
+  docs-to-wiki:
+    name: Publish documentation to wiki
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Upload Documentation to Wiki
+        uses: michalbali256/github-wiki-publish-action@v1
+        with:
+          path: "docs"
+        env:
+          GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.WIKI_TOKEN }}
