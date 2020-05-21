@@ -125,9 +125,9 @@ public:
 
     static ca_expr_funcs get_function(const std::string& symbol);
 
-    static std::pair<size_t, context::SET_t> get_function_param_info(ca_expr_funcs func);
+    static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
 
-    static context::SET_t get_operands_type(ca_expr_ops op);
+    static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
 class ca_binary_policy
@@ -151,9 +151,9 @@ public:
 
     static ca_expr_funcs get_function(const std::string& symbol);
 
-    static std::pair<size_t, context::SET_t> get_function_param_info(ca_expr_funcs func);
+    static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
 
-    static context::SET_t get_operands_type(ca_expr_ops op);
+    static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
 class ca_character_policy

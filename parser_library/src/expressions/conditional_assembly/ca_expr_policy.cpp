@@ -52,9 +52,9 @@ bool ca_binary_policy::is_binary(ca_expr_ops op)
 
 bool ca_character_policy::is_binary(ca_expr_ops) { return false; }
 
-bool ca_arithmetic_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op) };
-bool ca_binary_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op) };
-bool ca_character_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op) };
+bool ca_arithmetic_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op); };
+bool ca_binary_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op); };
+bool ca_character_policy::is_operator(ca_expr_ops op) { return is_unary(op) || is_binary(op); };
 
 bool ca_arithmetic_policy::is_function(ca_expr_funcs func)
 {
@@ -264,7 +264,7 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
     if (op == "X")                                                                                                     \
     return ca_expr_ops::X
 
-ca_expr_ops get_expr_operator(const std::string& symbol)
+ca_expr_ops get_expr_operator(const std::string& op)
 {
     S2O(SLA);
     S2O(SLL);
@@ -307,44 +307,44 @@ ca_expr_ops ca_character_policy::get_operator(const std::string& symbol) { retur
     if (op == "X")                                                                                                     \
     return ca_expr_funcs::X
 
-ca_expr_funcs get_expr_function(const std::string& symbol)
+ca_expr_funcs get_expr_function(const std::string& op)
 {
-    S2F(B2A)
-    S2F(C2A)
-    S2F(D2A)
-    S2F(DCLEN)
-    S2F(FIND)
-    S2F(INDEX)
-    S2F(ISBIN)
-    S2F(ISDEC)
-    S2F(ISHEX)
-    S2F(ISSYM)
-    S2F(A2B)
-    S2F(A2C)
-    S2F(A2D)
-    S2F(A2X)
-    S2F(B2C)
-    S2F(B2D)
-    S2F(B2X)
-    S2F(BYTE)
-    S2F(C2B)
-    S2F(C2D)
-    S2F(C2X)
-    S2F(D2B)
-    S2F(D2C)
-    S2F(D2X)
-    S2F(DCVAL)
-    S2F(DEQUOTE)
-    S2F(DOUBLE)
-    S2F(ESYM)
-    S2F(LOWER)
-    S2F(SIGNED)
-    S2F(SYSATTRA)
-    S2F(SYSATTRP)
-    S2F(UPPER)
-    S2F(X2B)
-    S2F(X2C)
-    S2F(X2D)
+    S2F(B2A);
+    S2F(C2A);
+    S2F(D2A);
+    S2F(DCLEN);
+    S2F(FIND);
+    S2F(INDEX);
+    S2F(ISBIN);
+    S2F(ISDEC);
+    S2F(ISHEX);
+    S2F(ISSYM);
+    S2F(A2B);
+    S2F(A2C);
+    S2F(A2D);
+    S2F(A2X);
+    S2F(B2C);
+    S2F(B2D);
+    S2F(B2X);
+    S2F(BYTE);
+    S2F(C2B);
+    S2F(C2D);
+    S2F(C2X);
+    S2F(D2B);
+    S2F(D2C);
+    S2F(D2X);
+    S2F(DCVAL);
+    S2F(DEQUOTE);
+    S2F(DOUBLE);
+    S2F(ESYM);
+    S2F(LOWER);
+    S2F(SIGNED);
+    S2F(SYSATTRA);
+    S2F(SYSATTRP);
+    S2F(UPPER);
+    S2F(X2B);
+    S2F(X2C);
+    S2F(X2D);
 
     return ca_expr_funcs::UNKNOWN;
 }
@@ -399,6 +399,3 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
 } // namespace expressions
 } // namespace parser_library
 } // namespace hlasm_plugin
-
-
-#endif

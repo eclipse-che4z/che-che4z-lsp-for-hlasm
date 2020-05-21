@@ -15,7 +15,8 @@
 #include "ca_expr_term.h"
 
 #include "ca_expr_policy.h"
-#include "ca_operator.h"
+#include "ca_operator_binary.h"
+#include "ca_operator_unary.h"
 #include "semantics/concatenation_term.h"
 
 namespace hlasm_plugin {
