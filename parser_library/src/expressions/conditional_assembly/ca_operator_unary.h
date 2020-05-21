@@ -38,13 +38,24 @@ public:
     virtual bool is_character_expression() const override;
 };
 
-// +, -, ()
-template<typename OP> class ca_arithmetic_unary_operator : public ca_unary_operator
+class ca_plus_operator : public ca_unary_operator
 {
 public:
-    ca_arithmetic_unary_operator(ca_expr_ptr expr, range expr_range)
-        : ca_unary_operator(std::move(expr), OP::expr_kind, std::move(expr_range))
-    {}
+    ca_plus_operator(ca_expr_ptr expr, range expr_range);
+};
+
+class ca_minus_operator : public ca_unary_operator
+{
+public:
+    ca_minus_operator(ca_expr_ptr expr, range expr_range);
+};
+
+class ca_par_operator : public ca_unary_operator
+{
+public:
+    ca_par_operator(ca_expr_ptr expr, range expr_range);
+
+    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 };
 
 // NOT, BYTE, ...

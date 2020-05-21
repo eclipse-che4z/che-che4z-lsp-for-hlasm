@@ -54,6 +54,26 @@ void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kin
         expr->resolve_expression_tree(ca_common_expr_policy::get_operands_type(function, kind));
 }
 
+ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)
+    : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_minus_operator::ca_minus_operator(ca_expr_ptr expr, range expr_range)
+    : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_par_operator::ca_par_operator(ca_expr_ptr expr, range expr_range)
+    : ca_unary_operator(std::move(expr), context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
+{}
+
+void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
+{
+    expr->resolve_expression_tree(kind);
+    expr_kind = expr->expr_kind;
+    if (expr_kind != kind)
+        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+}
+
 } // namespace expressions
 } // namespace parser_library
 } // namespace hlasm_plugin

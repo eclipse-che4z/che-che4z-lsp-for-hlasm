@@ -51,6 +51,15 @@ void ca_binary_operator::collect_diags() const
 
 bool ca_binary_operator::is_character_expression() const { return left_expr->is_character_expression(); }
 
+ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
+    ca_expr_ptr right_expr,
+    ca_expr_ops function,
+    context::SET_t_enum expr_kind,
+    range expr_range)
+    : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
+    , function(function)
+{}
+
 void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
 {
     if (expr_kind != kind)
@@ -89,6 +98,31 @@ bool ca_function_binary_operator::is_relational() const
             return false;
     }
 }
+
+ca_add_operator::ca_add_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_binary_operator(
+        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_sub_operator::ca_sub_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_binary_operator(
+        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_div_operator::ca_div_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_binary_operator(
+        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_mul_operator::ca_mul_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_binary_operator(
+        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
+{}
+
+ca_conc_operator::ca_conc_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+    : ca_binary_operator(
+        std::move(left_expr), std::move(right_expr), context::SET_t_enum::C_TYPE, std::move(expr_range))
+{}
 
 } // namespace expressions
 } // namespace parser_library
