@@ -14,6 +14,8 @@
 
 #include "lsp_context.h"
 
+#include <sstream>
+
 #include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library::context;

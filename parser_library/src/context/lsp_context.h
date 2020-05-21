@@ -15,8 +15,11 @@
 #ifndef CONTEXT_LSP_CONTEXT_H
 #define CONTEXT_LSP_CONTEXT_H
 
+#include <optional>
 #include <stack>
+#include <unordered_map>
 
+#include "context/ordinary_assembly/symbol.h"
 #include "semantics/highlighting_info.h"
 
 namespace hlasm_plugin {
