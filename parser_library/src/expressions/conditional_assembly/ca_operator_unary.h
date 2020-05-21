@@ -36,18 +36,26 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+
+    virtual context::SET_t operation(context::SET_t operand) const = 0;
 };
 
 class ca_plus_operator : public ca_unary_operator
 {
 public:
     ca_plus_operator(ca_expr_ptr expr, range expr_range);
+
+    virtual context::SET_t operation(context::SET_t operand) const override;
 };
 
 class ca_minus_operator : public ca_unary_operator
 {
 public:
     ca_minus_operator(ca_expr_ptr expr, range expr_range);
+
+    virtual context::SET_t operation(context::SET_t operand) const override;
 };
 
 class ca_par_operator : public ca_unary_operator
@@ -56,6 +64,8 @@ public:
     ca_par_operator(ca_expr_ptr expr, range expr_range);
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual context::SET_t operation(context::SET_t operand) const override;
 };
 
 // NOT, BYTE, ...
@@ -67,6 +77,8 @@ public:
     ca_function_unary_operator(ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum expr_kind, range expr_range);
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+
+    virtual context::SET_t operation(context::SET_t operand) const override;
 };
 
 

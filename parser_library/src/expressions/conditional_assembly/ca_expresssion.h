@@ -49,23 +49,7 @@ public:
 
     virtual bool is_character_expression() const = 0;
 
-    template <typename T> T evaluate(evaluation_context& eval_ctx) const
-    {
-        static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
-        auto ret = evaluate(eval_ctx);
-        
-        if (context::object_traits<T>::type_enum != ret.type)
-        {
-            add_diagnostic(diagnostic_op::error_CE004(expr_range));
-            return context::object_traits<T>::default_v();
-        }
-        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
-            return ret.access_a();
-        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::B_TYPE)
-            return ret.access_b();
-        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::C_TYPE)
-            return std::move(ret.access_c());
-    }
+    template<typename T> T evaluate(evaluation_context& eval_ctx) const;
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const = 0;
 
@@ -73,6 +57,23 @@ public:
 };
 
 
+template<typename T> inline T ca_expression::evaluate(evaluation_context& eval_ctx) const
+{
+    static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
+    auto ret = evaluate(eval_ctx);
+
+    if (context::object_traits<T>::type_enum != ret.type)
+    {
+        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        return context::object_traits<T>::default_v();
+    }
+    if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
+        return ret.access_a();
+    if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::B_TYPE)
+        return ret.access_b();
+    if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::C_TYPE)
+        return std::move(ret.access_c());
+}
 
 } // namespace expressions
 } // namespace parser_library

@@ -14,6 +14,10 @@
 
 #include "ca_operator_unary.h"
 
+#include <algorithm>
+
+#include "ebcdic_encoding.h"
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
@@ -40,6 +44,11 @@ void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr);
 
 bool ca_unary_operator::is_character_expression() const { return false; }
 
+context::SET_t ca_unary_operator::evaluate(evaluation_context& eval_ctx) const
+{
+    return operation(expr->evaluate(eval_ctx));
+}
+
 ca_function_unary_operator::ca_function_unary_operator(
     ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum kind, range expr_range)
     : ca_unary_operator(std::move(expr), kind, std::move(expr_range))
@@ -54,13 +63,74 @@ void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kin
         expr->resolve_expression_tree(ca_common_expr_policy::get_operands_type(function, kind));
 }
 
+context::SET_t ca_function_unary_operator::operation(context::SET_t operand) const
+{
+    if (expr_kind == context::SET_t_enum::A_TYPE)
+    {
+        if (function == ca_expr_ops::NOT)
+            return ~operand.access_a();
+    }
+    else if (expr_kind == context::SET_t_enum::B_TYPE)
+    {
+        if (function == ca_expr_ops::NOT)
+            return !operand.access_b();
+    }
+    else if (expr_kind == context::SET_t_enum::C_TYPE)
+    {
+        switch (function)
+        {
+            case hlasm_plugin::parser_library::expressions::ca_expr_ops::BYTE: {
+                auto value = operand.access_a();
+                if (value > 255 || value < 0)
+                {
+                    add_diagnostic(diagnostic_op::error_CE007(expr_range));
+                    break;
+                }
+                else
+                    return ebcdic_encoding::to_ascii(static_cast<unsigned char>(value));
+            }
+            case hlasm_plugin::parser_library::expressions::ca_expr_ops::DOUBLE: {
+                std::string ret;
+                for (char c : operand.access_c())
+                {
+                    ret.push_back(c);
+                    if (c == '\'' || c == '&')
+                        ret.push_back(c);
+                }
+                return ret;
+            }
+            case hlasm_plugin::parser_library::expressions::ca_expr_ops::LOWER: {
+                auto value = operand.access_c();
+                std::transform(
+                    value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(tolower(c)); });
+                return std::move(value);
+            }
+            case hlasm_plugin::parser_library::expressions::ca_expr_ops::SIGNED:
+                return std::to_string(operand.access_a());
+            case hlasm_plugin::parser_library::expressions::ca_expr_ops::UPPER: {
+                auto value = operand.access_c();
+                std::transform(
+                    value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(toupper(c)); });
+                return std::move(value);
+            }
+            default:
+                break;
+        }
+    }
+    return context::SET_t();
+}
+
 ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
 {}
 
+context::SET_t ca_plus_operator::operation(context::SET_t operand) const { return operand.access_a(); }
+
 ca_minus_operator::ca_minus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
 {}
+
+context::SET_t ca_minus_operator::operation(context::SET_t operand) const { return -operand.access_a(); }
 
 ca_par_operator::ca_par_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
@@ -73,6 +143,8 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
     if (expr_kind != kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
+
+context::SET_t ca_par_operator::operation(context::SET_t operand) const { return std::move(operand); }
 
 } // namespace expressions
 } // namespace parser_library

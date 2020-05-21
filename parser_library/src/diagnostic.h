@@ -596,6 +596,8 @@ struct diagnostic_op
     static diagnostic_op error_CE005(const range& range);
 
     static diagnostic_op error_CE006(const range& range);
+
+    static diagnostic_op error_CE007(const range& range);
 };
 
 struct range_uri_s
