@@ -36,36 +36,23 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+
+    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const = 0;
 };
 
-class ca_add_operator : public ca_binary_operator
+template<typename OP> class ca_basic_binary_operator : public ca_binary_operator
 {
 public:
-    ca_add_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
-};
+    ca_basic_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
+        : ca_binary_operator(std::move(left_expr), std::move(right_expr), OP::type, std::move(expr_range))
+    {}
 
-class ca_sub_operator : public ca_binary_operator
-{
-public:
-    ca_sub_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
-};
-
-class ca_div_operator : public ca_binary_operator
-{
-public:
-    ca_div_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
-};
-
-class ca_mul_operator : public ca_binary_operator
-{
-public:
-    ca_mul_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
-};
-
-class ca_conc_operator : public ca_binary_operator
-{
-public:
-    ca_conc_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range);
+    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const override
+    {
+        return OP::operation(std::move(lhs), std::move(rhs));
+    }
 };
 
 // AND, SLL, OR, ...
@@ -82,10 +69,46 @@ public:
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
+    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const override;
+
 private:
     bool is_relational() const;
 };
 
+struct ca_add
+{
+    static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
+
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+};
+
+struct ca_sub
+{
+    static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
+
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+};
+
+struct ca_mul
+{
+    static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
+
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+};
+
+struct ca_div
+{
+    static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
+
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+};
+
+struct ca_conc
+{
+    static constexpr context::SET_t_enum type = context::SET_t_enum::C_TYPE;
+
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+};
 
 } // namespace expressions
 } // namespace parser_library

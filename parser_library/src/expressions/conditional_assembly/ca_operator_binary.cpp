@@ -51,6 +51,11 @@ void ca_binary_operator::collect_diags() const
 
 bool ca_binary_operator::is_character_expression() const { return left_expr->is_character_expression(); }
 
+context::SET_t ca_binary_operator::evaluate(evaluation_context& eval_ctx) const
+{
+    return operation(left_expr->evaluate(eval_ctx), right_expr->evaluate(eval_ctx));
+}
+
 ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     ca_expr_ptr right_expr,
     ca_expr_ops function,
@@ -83,6 +88,11 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
     }
 }
 
+context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs) const
+{
+    return context::SET_t();
+}
+
 bool ca_function_binary_operator::is_relational() const
 {
     switch (function)
@@ -99,30 +109,21 @@ bool ca_function_binary_operator::is_relational() const
     }
 }
 
-ca_add_operator::ca_add_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-    : ca_binary_operator(
-        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{}
+context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() + rhs.access_a(); }
 
-ca_sub_operator::ca_sub_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-    : ca_binary_operator(
-        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{}
+context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() - rhs.access_a(); }
 
-ca_div_operator::ca_div_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-    : ca_binary_operator(
-        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{}
+context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() * rhs.access_a(); }
 
-ca_mul_operator::ca_mul_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-    : ca_binary_operator(
-        std::move(left_expr), std::move(right_expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{}
+context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() / rhs.access_a(); }
 
-ca_conc_operator::ca_conc_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
-    : ca_binary_operator(
-        std::move(left_expr), std::move(right_expr), context::SET_t_enum::C_TYPE, std::move(expr_range))
-{}
+context::SET_t ca_conc::operation(context::SET_t lhs, context::SET_t rhs)
+{
+    auto ret = lhs.access_c();
+    ret.reserve(ret.size() + rhs.access_c().size());
+    ret.append(rhs.access_c().begin(), rhs.access_c().end());
+    return ret;
+}
 
 } // namespace expressions
 } // namespace parser_library
