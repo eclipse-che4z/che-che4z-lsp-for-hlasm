@@ -30,6 +30,8 @@ class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
 using undef_sym_set = std::set<context::id_index>;
 
+struct evaluation_context;
+
 class ca_expression : public diagnosable_op_impl
 {
 public:
@@ -45,9 +47,29 @@ public:
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
 
-    virtual ~ca_expression() = default;
-
     virtual bool is_character_expression() const = 0;
+
+    template <typename T> T evaluate(evaluation_context& eval_ctx) const
+    {
+        static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
+        auto ret = evaluate(eval_ctx);
+        
+        if (context::object_traits<T>::type_enum != ret.type)
+        {
+            add_diagnostic(diagnostic_op::error_CE004(expr_range));
+            return context::object_traits<T>::default_v();
+        }
+        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
+            return ret.access_a();
+        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::B_TYPE)
+            return ret.access_b();
+        if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::C_TYPE)
+            return std::move(ret.access_c());
+    }
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const = 0;
+
+    virtual ~ca_expression() = default;
 };
 
 
