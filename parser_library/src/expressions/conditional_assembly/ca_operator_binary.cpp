@@ -88,9 +88,53 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
     }
 }
 
+context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shift)
+{
+    auto sign_bit = lhs & (1U << 31);
+    auto unsigned_lhs = lhs & ~(1U << 31);
+    auto shift_part = rhs & 0x3f; // first 6 bits
+}
+
 context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs) const
 {
-    return context::SET_t();
+
+    if (expr_kind == context::SET_t_enum::A_TYPE)
+    {
+        switch (function)
+        {
+            case ca_expr_ops::SLA:
+            case ca_expr_ops::SLL:
+            case ca_expr_ops::SRA:
+            case ca_expr_ops::SRL:
+            case ca_expr_ops::FIND:
+            case ca_expr_ops::INDEX:
+            case ca_expr_ops::AND:
+                return lhs.access_a() & rhs.access_a();
+            case ca_expr_ops::OR:
+                return lhs.access_a() | rhs.access_a();
+            case ca_expr_ops::XOR:
+                return lhs.access_a() ^ rhs.access_a();
+                break;
+            default:
+                break;
+        }
+    }
+    bool ca_arithmetic_policy::is_binary(ca_expr_ops op)
+    {
+        return op == ca_expr_ops::SLA || op == ca_expr_ops::SLL || op == ca_expr_ops::SRA || op == ca_expr_ops::SRL
+            || op == ca_expr_ops::FIND || op == ca_expr_ops::INDEX || op == ca_expr_ops::AND || op == ca_expr_ops::OR
+            || op == ca_expr_ops::XOR;
+    }
+
+    bool ca_binary_policy::is_binary(ca_expr_ops op)
+    {
+        return op == ca_expr_ops::EQ || op == ca_expr_ops::NE || op == ca_expr_ops::LE || op == ca_expr_ops::LT
+            || op == ca_expr_ops::GE || op == ca_expr_ops::GT || op == ca_expr_ops::AND || op == ca_expr_ops::OR
+            || op == ca_expr_ops::XOR || op == ca_expr_ops::AND_NOT || op == ca_expr_ops::OR_NOT
+            || op == ca_expr_ops::XOR_NOT;
+    }
+
+    bool ca_character_policy::is_binary(ca_expr_ops) { return false; }
 }
 
 bool ca_function_binary_operator::is_relational() const

@@ -79,7 +79,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand) con
     {
         switch (function)
         {
-            case hlasm_plugin::parser_library::expressions::ca_expr_ops::BYTE: {
+            case ca_expr_ops::BYTE: {
                 auto value = operand.access_a();
                 if (value > 255 || value < 0)
                 {
@@ -89,7 +89,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand) con
                 else
                     return ebcdic_encoding::to_ascii(static_cast<unsigned char>(value));
             }
-            case hlasm_plugin::parser_library::expressions::ca_expr_ops::DOUBLE: {
+            case ca_expr_ops::DOUBLE: {
                 std::string ret;
                 for (char c : operand.access_c())
                 {
@@ -98,16 +98,17 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand) con
                         ret.push_back(c);
                 }
                 return ret;
+                //TODO too long string
             }
-            case hlasm_plugin::parser_library::expressions::ca_expr_ops::LOWER: {
+            case ca_expr_ops::LOWER: {
                 auto value = operand.access_c();
                 std::transform(
                     value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(tolower(c)); });
                 return std::move(value);
             }
-            case hlasm_plugin::parser_library::expressions::ca_expr_ops::SIGNED:
+            case ca_expr_ops::SIGNED:
                 return std::to_string(operand.access_a());
-            case hlasm_plugin::parser_library::expressions::ca_expr_ops::UPPER: {
+            case ca_expr_ops::UPPER: {
                 auto value = operand.access_c();
                 std::transform(
                     value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(toupper(c)); });
