@@ -38,6 +38,8 @@ All the activity on the project should begin with defining a new issue that desc
 
 ## Contribution acceptance
 
+We follow the [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. Each pull request has to be named according to the specification so it can be squash merged. Allowed commit types are: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `ci`, `chore`.
+
 Each pull request is automatically verified in the following environments (in a GitHub Actions pipeline):
 
 - Windows build with the MSVC compiler
