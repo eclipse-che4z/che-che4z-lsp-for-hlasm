@@ -18,6 +18,7 @@ on:
     branches:
       - development
       - master
+      - release-*
   push:
     branches:
       - development

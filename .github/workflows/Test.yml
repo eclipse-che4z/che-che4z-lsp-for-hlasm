@@ -18,6 +18,7 @@ on:
     branches:
       - master
       - development
+      - release-*
   pull_request:
     branches:
       - master
@@ -73,3 +74,13 @@ jobs:
         run: |
           chmod +x cmake/check_license.sh
           cmake/check_license.sh
+
+  pr-base-check:
+      name: Check head branch
+      runs-on: ubuntu-18.04
+      if: github.event_name == 'pull_request'
+      steps:
+      - name: Fail, if PR base is master
+        if: contains(github.base_ref, 'master') && !contains(github.head_ref, 'development')
+        run: exit 1
+        
