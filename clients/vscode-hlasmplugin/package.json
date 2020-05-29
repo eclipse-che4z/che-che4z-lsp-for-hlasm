@@ -57,10 +57,10 @@
   },
   "scripts": {
     "postinstall": "npm run compile",
-    "compile": "tsc -p ./tsconfig.json",
+    "compile": "tsc -p ./tsconfig.json && node ./build/bin/prepareWorkspace.js",
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
-    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js"
+    "test": "npm run compile && node ./lib/test/runTest.js"
   },
   "contributes": {
     "jsonValidation": [

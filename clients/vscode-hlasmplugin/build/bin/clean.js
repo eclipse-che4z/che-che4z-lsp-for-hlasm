@@ -23,8 +23,6 @@ recursiveRemoveSync(path.join(root,'node_modules'));
 console.log("node_modules removed");
 recursiveRemoveSync(path.join(root,'lib'));
 console.log("lib files removed");
-recursiveRemoveSync(path.join(root,'bin'));
-console.log("built files removed");
 recursiveRemoveSync(path.join(root,'coverage'));
 console.log("coverage files removed");
 recursiveRemoveSync(path.join(root,'.nyc_output'));
