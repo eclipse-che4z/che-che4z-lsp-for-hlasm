@@ -41,9 +41,12 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 3
 
 SpaceAfterTemplateKeyword: false
-Standard: Cpp11
+Standard: c++17
 
 ColumnLimit: 120
 
 BinPackArguments: false
 BinPackParameters: false
+
+SpaceInEmptyBlock: false
+AlwaysBreakTemplateDeclarations: Yes

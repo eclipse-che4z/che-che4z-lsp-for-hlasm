@@ -70,9 +70,17 @@ public:
     virtual bool is_complex_keyword() const { return false; }
     virtual std::string get_str_val() const = 0;
 
-    template<typename T> T* retype() { return dynamic_cast<T*>(this); }
+    template<typename T>
+    T* retype()
+    {
+        return dynamic_cast<T*>(this);
+    }
 
-    template<typename T> const T* retype() const { return dynamic_cast<const T*>(this); }
+    template<typename T>
+    const T* retype() const
+    {
+        return dynamic_cast<const T*>(this);
+    }
 
 
     expression(expression&&) = default;
@@ -84,7 +92,8 @@ protected:
     void copy_diag(const expression* o);
     void copy_diag(const expression& o);
 
-    template<typename T> static typename std::shared_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
+    template<typename T>
+    static typename std::shared_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
     {
         auto ex = std::make_shared<T>();
         ex->diag = std::move(diag);
@@ -102,7 +111,8 @@ protected:
      * see: copy_return_on_error and copy_return_on_error_binary
      * */
 
-    template<typename T> static typename std::shared_ptr<T> test_and_copy_error(const expression* e)
+    template<typename T>
+    static typename std::shared_ptr<T> test_and_copy_error(const expression* e)
     {
         if (e->has_error())
         {
@@ -113,7 +123,8 @@ protected:
         return std::unique_ptr<T>();
     }
 
-    template<typename T> static typename std::shared_ptr<T> test_and_copy_error(const expression& e)
+    template<typename T>
+    static typename std::shared_ptr<T> test_and_copy_error(const expression& e)
     {
         if (e.has_error())
         {

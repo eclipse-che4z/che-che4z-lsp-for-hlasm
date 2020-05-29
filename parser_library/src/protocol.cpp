@@ -177,7 +177,11 @@ range stack_frame::get_range() { return { { impl_.begin_line, 0 }, { impl_.end_l
 
 source stack_frame::get_source() { return impl_.frame_source; }
 
-template<> stack_frame c_view_array<stack_frame, debugging::stack_frame>::item(size_t index) { return data_[index]; }
+template<>
+stack_frame c_view_array<stack_frame, debugging::stack_frame>::item(size_t index)
+{
+    return data_[index];
+}
 
 //********************* source **********************
 
@@ -199,7 +203,11 @@ var_reference_t scope::variable_reference() const { return impl_.var_reference; 
 
 source scope::get_source() const { return impl_.scope_source; }
 
-template<> scope c_view_array<scope, debugging::scope>::item(size_t index) { return data_[index]; }
+template<>
+scope c_view_array<scope, debugging::scope>::item(size_t index)
+{
+    return data_[index];
+}
 
 
 //********************** variable **********************
@@ -216,7 +224,11 @@ const char* variable::value() const { return impl_.get_value().c_str(); }
 
 var_reference_t variable::variable_reference() const { return impl_.var_reference; }
 
-template<> variable c_view_array<variable, debugging::variable*>::item(size_t index) { return *data_[index]; }
+template<>
+variable c_view_array<variable, debugging::variable*>::item(size_t index)
+{
+    return *data_[index];
+}
 
 
 

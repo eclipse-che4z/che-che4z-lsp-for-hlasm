@@ -21,7 +21,8 @@ namespace hlasm_plugin::parser_library {
 
 // Abstract class that implements add_diagnostic and diags
 // collect_diags is still abstract.
-template<typename T> class collectable_impl : public virtual collectable<T>
+template<typename T>
+class collectable_impl : public virtual collectable<T>
 {
 public:
     virtual typename collectable<T>::diagnostic_container& diags() const override { return container; }

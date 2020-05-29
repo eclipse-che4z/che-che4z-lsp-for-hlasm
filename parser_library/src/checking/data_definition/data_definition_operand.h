@@ -39,7 +39,8 @@ public:
 
     const data_def_type* access_data_def_type() const;
 
-    template<data_instr_type instr_type> bool check(const diagnostic_collector& add_diagnostic) const;
+    template<data_instr_type instr_type>
+    bool check(const diagnostic_collector& add_diagnostic) const;
 
     uint64_t get_length() const;
     context::alignment get_alignment() const;

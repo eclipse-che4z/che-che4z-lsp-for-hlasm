@@ -53,12 +53,14 @@ enum class macro_param_type
 };
 
 // helper traits structure for SET types
-template<typename T> struct object_traits
+template<typename T>
+struct object_traits
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::UNDEF_TYPE;
 };
 
-template<> struct object_traits<A_t>
+template<>
+struct object_traits<A_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::A_TYPE;
     static const A_t& default_v()
@@ -68,7 +70,8 @@ template<> struct object_traits<A_t>
     }
 };
 
-template<> struct object_traits<B_t>
+template<>
+struct object_traits<B_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::B_TYPE;
     static const B_t& default_v()
@@ -78,7 +81,8 @@ template<> struct object_traits<B_t>
     }
 };
 
-template<> struct object_traits<C_t>
+template<>
+struct object_traits<C_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::C_TYPE;
     static const C_t& default_v()

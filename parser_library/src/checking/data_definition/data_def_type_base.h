@@ -174,9 +174,11 @@ private:
 
     size_t get_number_of_values_in_nominal(const nominal_value_t& nom) const;
 
-    template<data_instr_type type> modifier_spec get_length_spec() const;
+    template<data_instr_type type>
+    modifier_spec get_length_spec() const;
 
-    template<data_instr_type type> modifier_spec get_bit_length_spec() const;
+    template<data_instr_type type>
+    modifier_spec get_bit_length_spec() const;
 
     nominal_value_type nominal_type;
 

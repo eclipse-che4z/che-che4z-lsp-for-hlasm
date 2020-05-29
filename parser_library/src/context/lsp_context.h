@@ -317,13 +317,15 @@ struct instr_definition : public definition
 };
 
 // ustom has function used for working with symbol definition classes
-template<typename T> struct hash_function
+template<typename T>
+struct hash_function
 {
     size_t operator()(const T& symbol) const { return symbol.hash(); }
 };
 
 // map of definitions to the vector of their occurences
-template<class T> using definitions = std::unordered_map<T, std::vector<occurence>, hash_function<T>>;
+template<class T>
+using definitions = std::unordered_map<T, std::vector<occurence>, hash_function<T>>;
 
 // lsp context included in hlasm context
 struct lsp_context

@@ -42,7 +42,8 @@ protected:
     virtual const std::string& get_string_name() const override;
 
 private:
-    template<typename T> const T& get_value() const;
+    template<typename T>
+    const T& get_value() const;
 
     void fill_string_value();
 
