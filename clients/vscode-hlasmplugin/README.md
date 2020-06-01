@@ -37,7 +37,7 @@ To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.js
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
 3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow [Configuration](#External-Macro-Libraries-and-COPY-Members) for more detailed instructions on configuring the environment.
+Follow [Configuration](#Configuration) for more detailed instructions on configuring the environment.
 
 ## Language Features
 
@@ -85,16 +85,20 @@ Breakpoints can be set before or during the debugging session.
 
 ![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/tracer.gif)
 
-## External Macro Libraries and COPY Members
+## Configuration
+
+### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
 - `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories.
 
 - `pgm_conf.json` provides a mapping between _programs_ (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
 
-Therefore, to use a predefined set of macro and copy members, do the following steps: 
-1. Enumerate the library directories in `proc_grps.json` and name them with an identifier; thus, create a new processor group.
-2. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
+To use a predefined set of macro and copy members, follow these steps: 
+1. Specify any number of library directories to search for macros and COPY files in `proc_grps.json`. These directories are searched in order they are listed. 
+2. Name the group of directories with an identifier.
+   You have created a new processor group.
+3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
 
 The structure of the configuration is based on CA Endevor® SCM. Ensure that you configure these files before using macros from separate files or the COPY instruction.
 When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
@@ -144,15 +148,29 @@ The following example specifies that GROUP1 is used when working with `source_co
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-Note that the macro `MAC1` is searched in directories in order as they are listed in the configuration. 
+The program name in `pgm_conf.json` can be wildcarded, as in the following example:
 
-There is also the option `alwaysRecognize` which takes an array of wildcards. It allows you to configure two things:
-- All files matching these wildcards will always be recognized as HLASM files. 
-- If an extension wildcard is defined, all macro and copy files with such extension may be used in the source code. For example, with the extension wildcard `*.hlasm`, a user may add macro `MAC` to his source code even if it is in a file called `Mac.hlasm`.
+```
+{
+  "pgms": [
+    {
+      "program": "*",
+      "pgroup": "GROUP1"
+    }
+  ]
+}
+```
+In this example, GROUP1 is used for all open code programs.
 
-Example of `alwaysRecognize`:
+### File Extensions
 
-With the following configuration file, processor group `GROUP1` will be assigned to `source_code` and `source_code.hlasm` file as well. Also, macro and copy files in the `lib` directory can be referenced and correctly recognized in the program without the `.asm` extension.
+`pgm_conf.json` includes the optional parameter `alwaysRecognize` in which you can specify an array of wildcards. 
+- All files matching these wildcards are automatically recognized as HLASM files.
+- If an extension wildcard is defined, all macro and copy files with this extension can be used in the source code. 
+
+For example, with the extension wildcard `*.hlasm`, a user can add the macro `MAC` to his source code even if it is in a file called `MAC.hlasm`. Additionally, all files with the extension `.hlasm` are automatically recognised as HLASM files.
+
+The following example of `pgm_conf.json` specifies that the processor group `GROUP1` is assigned to both `source_code` and `source_code.hlasm`. Also, macro and copy files in the `lib` directory are referenced and correctly recognized in the program without the `.asm` extension.
 
 ```
 {
@@ -165,21 +183,6 @@ With the following configuration file, processor group `GROUP1` will be assigned
   "alwaysRecognize" : ["*.hlasm", "libs/*.asm"]
 }
 ```
-
-Example of wildcards:
-
-The program field in `pgm_conf.json` supports wildcards, for example:
-```
-{
-  "pgms": [
-    {
-      "program": "*",
-      "pgroup": "GROUP1"
-    }
-  ]
-}
-```
-In this example, GROUP1 is used for all open code programs.
 
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
