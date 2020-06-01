@@ -71,6 +71,10 @@ public:
 
     virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const override;
 
+    static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
+
+    static int compare_relational(context::SET_t& lhs, context::SET_t& rhs, context::SET_t_enum type);
+
 private:
     bool is_relational() const;
 };

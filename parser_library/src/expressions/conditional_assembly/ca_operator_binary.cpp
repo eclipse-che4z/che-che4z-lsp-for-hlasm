@@ -14,6 +14,10 @@
 
 #include "ca_operator_binary.h"
 
+#include <assert.h>
+
+#include "ebcdic_encoding.h"
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
@@ -23,7 +27,7 @@ ca_binary_operator::ca_binary_operator(
     : ca_expression(expr_kind, std::move(expr_range))
     , left_expr(std::move(left_expr))
     , right_expr(std::move(right_expr))
-{}
+{ }
 
 undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -63,7 +67,7 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     range expr_range)
     : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
     , function(function)
-{}
+{ }
 
 void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
 {
@@ -90,14 +94,30 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
 
 context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shift)
 {
+    auto shift_part = rhs & 0x3f; // first 6 bits
+    if (shift_part == 0)
+        return rhs;
+
     auto sign_bit = lhs & (1U << 31);
     auto unsigned_lhs = lhs & ~(1U << 31);
-    auto shift_part = rhs & 0x3f; // first 6 bits
+
+    switch (shift)
+    {
+        case ca_expr_ops::SLA:
+            return (context::A_t)((unsigned_lhs << shift_part) | sign_bit);
+        case ca_expr_ops::SLL:
+            return (context::A_t)(unsigned_lhs << shift_part);
+        case ca_expr_ops::SRA:
+            return (context::A_t)((unsigned_lhs >> shift_part) | sign_bit);
+        case ca_expr_ops::SRL:
+            return (context::A_t)(unsigned_lhs >> shift_part);
+        default:
+            return 0;
+    }
 }
 
 context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs) const
 {
-
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {
         switch (function)
@@ -106,35 +126,86 @@ context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, contex
             case ca_expr_ops::SLL:
             case ca_expr_ops::SRA:
             case ca_expr_ops::SRL:
+                return shift_operands(lhs.access_a(), rhs.access_a(), function);
             case ca_expr_ops::FIND:
-            case ca_expr_ops::INDEX:
+                return (context::A_t)lhs.access_c().find_first_of(rhs.access_c()) + 1;
+            case ca_expr_ops::INDEX: {
+                auto idx = lhs.access_c().find(rhs.access_c());
+                return idx == std::string::npos ? 0 : (context::A_t)idx + 1;
+            }
             case ca_expr_ops::AND:
                 return lhs.access_a() & rhs.access_a();
             case ca_expr_ops::OR:
                 return lhs.access_a() | rhs.access_a();
             case ca_expr_ops::XOR:
                 return lhs.access_a() ^ rhs.access_a();
-                break;
             default:
                 break;
         }
     }
-    bool ca_arithmetic_policy::is_binary(ca_expr_ops op)
+    else if (expr_kind == context::SET_t_enum::B_TYPE)
     {
-        return op == ca_expr_ops::SLA || op == ca_expr_ops::SLL || op == ca_expr_ops::SRA || op == ca_expr_ops::SRL
-            || op == ca_expr_ops::FIND || op == ca_expr_ops::INDEX || op == ca_expr_ops::AND || op == ca_expr_ops::OR
-            || op == ca_expr_ops::XOR;
-    }
+        int comp = 0;
+        if (is_relational())
+            comp = compare_relational(lhs, rhs, left_expr->expr_kind);
 
-    bool ca_binary_policy::is_binary(ca_expr_ops op)
+        switch (function)
+        {
+            case ca_expr_ops::EQ:
+                return comp == 0;
+            case ca_expr_ops::NE:
+                return comp != 0;
+            case ca_expr_ops::LE:
+                return comp <= 0;
+            case ca_expr_ops::LT:
+                return comp < 0;
+            case ca_expr_ops::GE:
+                return comp >= 0;
+            case ca_expr_ops::GT:
+                return comp > 0;
+            case ca_expr_ops::AND:
+                return lhs.access_b() && rhs.access_b();
+            case ca_expr_ops::OR:
+                return lhs.access_b() || rhs.access_b();
+            case ca_expr_ops::XOR:
+                return lhs.access_b() != rhs.access_b();
+            case ca_expr_ops::AND_NOT:
+                return lhs.access_b() && !rhs.access_b();
+            case ca_expr_ops::OR_NOT:
+                return lhs.access_b() || !rhs.access_b();
+            case ca_expr_ops::XOR_NOT:
+                return lhs.access_b() != !rhs.access_b();
+            default:
+                break;
+        }
+    }
+    return context::SET_t();
+}
+
+int ca_function_binary_operator::compare_string(const context::C_t& lhs, const context::C_t& rhs)
+{
+    int diff = (int)lhs.size() - (int)rhs.size();
+
+    if (diff != 0)
+        return diff;
+
+    return ebcdic_encoding::to_ebcdic(lhs).compare(ebcdic_encoding::to_ebcdic(rhs));
+}
+
+int ca_function_binary_operator::compare_relational(context::SET_t& lhs, context::SET_t& rhs, context::SET_t_enum type)
+{
+    switch (type)
     {
-        return op == ca_expr_ops::EQ || op == ca_expr_ops::NE || op == ca_expr_ops::LE || op == ca_expr_ops::LT
-            || op == ca_expr_ops::GE || op == ca_expr_ops::GT || op == ca_expr_ops::AND || op == ca_expr_ops::OR
-            || op == ca_expr_ops::XOR || op == ca_expr_ops::AND_NOT || op == ca_expr_ops::OR_NOT
-            || op == ca_expr_ops::XOR_NOT;
+        case context::SET_t_enum::A_TYPE:
+            return lhs.access_a() - rhs.access_a();
+        case context::SET_t_enum::C_TYPE:
+            return compare_string(lhs.access_c(), rhs.access_c());
+        case context::SET_t_enum::B_TYPE:
+        case context::SET_t_enum::UNDEF_TYPE:
+        default:
+            assert(false);
+            return 0;
     }
-
-    bool ca_character_policy::is_binary(ca_expr_ops) { return false; }
 }
 
 bool ca_function_binary_operator::is_relational() const
