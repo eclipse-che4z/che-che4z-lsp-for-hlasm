@@ -43,6 +43,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+    
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 
 private:
     template<typename T> void resolve();
@@ -57,12 +59,14 @@ public:
     {
         ca_expr_ptr start, count;
         bool to_end;
+        range substring_range;
         substring_t();
     };
 
     const semantics::concat_chain value;
     ca_expr_ptr duplication_factor;
     substring_t substring;
+    static constexpr size_t MAX_STR_SIZE = 4064;
 
     ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range);
 
@@ -73,6 +77,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 class ca_var_sym : public ca_expression
@@ -89,6 +95,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 class ca_constant : public ca_expression
@@ -105,6 +113,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 class ca_symbol : public ca_expression
@@ -121,6 +131,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 class ca_symbol_attribute : public ca_expression
@@ -142,6 +154,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 class ca_function : public ca_expression
@@ -162,6 +176,8 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
+
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 };
 
 } // namespace expressions

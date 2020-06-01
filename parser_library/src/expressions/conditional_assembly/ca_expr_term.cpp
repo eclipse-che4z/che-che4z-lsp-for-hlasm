@@ -17,6 +17,7 @@
 #include "ca_expr_policy.h"
 #include "ca_operator_binary.h"
 #include "ca_operator_unary.h"
+#include "processing/context_manager.h"
 #include "semantics/concatenation_term.h"
 
 namespace hlasm_plugin {
@@ -26,7 +27,7 @@ namespace expressions {
 ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
     : ca_expression(context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
     , expr_list(std::move(expr_list))
-{}
+{ }
 
 undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -62,6 +63,12 @@ void ca_expr_list::collect_diags() const
 
 bool ca_expr_list::is_character_expression() const { return false; }
 
+context::SET_t ca_expr_list::evaluate(evaluation_context& eval_ctx) const
+{
+    assert(false);
+    return context::SET_t();
+}
+
 template<typename T> void ca_expr_list::resolve()
 {
     if (expr_list.empty())
@@ -92,7 +99,7 @@ template<typename T> void ca_expr_list::resolve()
     if (err)
     {
         expr_list.clear();
-        expr_list.emplace_back(std::make_unique<ca_constant>(0, expr_range));
+        return;
     }
 
     // resolve created tree
@@ -184,7 +191,8 @@ ca_string::substring_t::substring_t()
     : start(nullptr)
     , count(nullptr)
     , to_end(false)
-{}
+    , substring_range()
+{ }
 
 ca_string::ca_string(
     semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range)
@@ -192,7 +200,7 @@ ca_string::ca_string(
     , value(std::move(value))
     , duplication_factor(std::move(duplication_factor))
     , substring(std::move(substring))
-{}
+{ }
 
 undef_sym_set ca_string::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -233,10 +241,70 @@ void ca_string::collect_diags() const
 
 bool ca_string::is_character_expression() const { return duplication_factor == nullptr; }
 
+context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
+{
+    context::C_t str = ""; // evaluate concat chain
+
+    if (str.size() > MAX_STR_SIZE)
+    {
+        add_diagnostic(diagnostic_op::error_CE011(expr_range));
+        return context::SET_t();
+    }
+
+    if (substring.start)
+    {
+        auto start = substring.start->evaluate(eval_ctx).access_a();
+        auto count = substring.count ? substring.count->evaluate(eval_ctx).access_a() : str.size();
+
+        if (start < 0 || count < 0 || (start == 0 && count > 0))
+        {
+            add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
+            return context::SET_t();
+        }
+        if (start > str.size())
+        {
+            add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
+            return context::SET_t();
+        }
+
+        str = str.substr(start - 1, count);
+    }
+
+    if (duplication_factor)
+    {
+        auto dupl = duplication_factor->evaluate(eval_ctx).access_a();
+
+        if (dupl < 0)
+        {
+            add_diagnostic(diagnostic_op::error_CE010(duplication_factor->expr_range));
+            return context::SET_t();
+        }
+
+        if (str.size() * dupl > MAX_STR_SIZE)
+        {
+            add_diagnostic(diagnostic_op::error_CE011(expr_range));
+            return context::SET_t();
+        }
+
+        if (dupl == 0 || str.empty())
+            str = "";
+        else
+        {
+            str.reserve(str.size() * dupl);
+            auto begin = str.begin();
+            auto end = str.end();
+            for (auto i = 1; i < dupl; ++i)
+                str.append(begin, end);
+        }
+    }
+
+    return str;
+}
+
 ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
     , symbol(std::move(symbol))
-{}
+{ }
 
 undef_sym_set get_undefined_attributed_symbols_vs(
     const semantics::vs_ptr& symbol, const context::dependency_solver& solver)
@@ -275,10 +343,41 @@ void ca_var_sym::collect_diags() const
 
 bool ca_var_sym::is_character_expression() const { return false; }
 
+context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const
+{
+    processing::context_manager mngr(eval_ctx.hlasm_ctx);
+
+    context::id_index id;
+    if (!symbol->created)
+        id = symbol->access_basic()->name;
+    else
+    {
+        auto str_name = ""; // concatenate(symbol->access_created()->created_name)
+        auto [valid, name] = mngr.try_get_symbol_name(str_name, symbol->symbol_range);
+        if (!valid)
+            return context::SET_t();
+        id = name;
+    }
+
+    std::vector<context::A_t> subscript;
+
+    // for (const auto& expr : symbol->subscript)
+    //    subscript.push_back(expr->evaluate(eval_ctx).access_a());
+
+    context::SET_t value; // = mngr.get_var_sym_value(id, subscript, symbol->symbol_range);
+
+    // collect_diags_from_child(mngr);
+
+    // if (value.type == context::SET_t_enum::C_TYPE)
+    //     return (expr_ptr)arithmetic_expression::from_string(value.access_c(), false);
+    // else
+    return value;
+}
+
 ca_constant::ca_constant(context::A_t value, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
     , value(value)
-{}
+{ }
 
 undef_sym_set ca_constant::get_undefined_attributed_symbols(const context::dependency_solver&) const
 {
@@ -291,14 +390,16 @@ void ca_constant::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-void ca_constant::collect_diags() const {}
+void ca_constant::collect_diags() const { }
 
 bool ca_constant::is_character_expression() const { return false; }
+
+context::SET_t ca_constant::evaluate(evaluation_context& eval_ctx) const { return value; }
 
 ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
     , symbol(symbol)
-{}
+{ }
 
 undef_sym_set ca_symbol::get_undefined_attributed_symbols(const context::dependency_solver&) const
 {
@@ -311,9 +412,22 @@ void ca_symbol::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-void ca_symbol::collect_diags() const {}
+void ca_symbol::collect_diags() const { }
 
 bool ca_symbol::is_character_expression() const { return false; }
+
+context::SET_t ca_symbol::evaluate(evaluation_context& eval_ctx) const
+{
+    auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol);
+
+    if (tmp_symbol && tmp_symbol->kind() == context::symbol_value_kind::ABS)
+        return tmp_symbol->value().get_abs();
+    else
+    {
+        add_diagnostic(diagnostic_op::error_CE012(expr_range));
+        return context::SET_t();
+    }
+}
 
 ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range)
     : ca_expression(attribute == context::data_attr_kind::T ? context::SET_t_enum::C_TYPE : context::SET_t_enum::A_TYPE,
@@ -321,14 +435,14 @@ ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data
     , attribute(attribute)
     , symbol(symbol)
 
-{}
+{ }
 
 ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range)
     : ca_expression(attribute == context::data_attr_kind::T ? context::SET_t_enum::C_TYPE : context::SET_t_enum::A_TYPE,
         std::move(expr_range))
     , attribute(attribute)
     , symbol(std::move(symbol))
-{}
+{ }
 
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -370,13 +484,15 @@ void ca_symbol_attribute::collect_diags() const
 
 bool ca_symbol_attribute::is_character_expression() const { return false; }
 
+context::SET_t ca_symbol_attribute::evaluate(evaluation_context& eval_ctx) const { return context::SET_t(); }
+
 ca_function::ca_function(
     ca_expr_funcs function, std::vector<ca_expr_ptr> parameters, ca_expr_ptr duplication_factor, range expr_range)
     : ca_expression(ca_common_expr_policy::get_function_type(function), std::move(expr_range))
     , function(function)
     , parameters(std::move(parameters))
     , duplication_factor(std::move(duplication_factor))
-{}
+{ }
 
 undef_sym_set ca_function::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -407,9 +523,11 @@ void ca_function::resolve_expression_tree(context::SET_t_enum kind)
     }
 }
 
-void ca_function::collect_diags() const {}
+void ca_function::collect_diags() const { }
 
 bool ca_function::is_character_expression() const { return false; }
+
+context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const { return context::SET_t(); }
 
 } // namespace expressions
 } // namespace parser_library

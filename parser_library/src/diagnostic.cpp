@@ -1872,6 +1872,31 @@ diagnostic_op diagnostic_op::error_CE007(const range& range)
     return diagnostic_op(diagnostic_severity::error, "CE007", "Bad operand value", range);
 }
 
+diagnostic_op diagnostic_op::error_CE008(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE008", "Bad substring expression", range);
+}
+
+diagnostic_op diagnostic_op::error_CE009(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE009", "Substring past string end", range);
+}
+
+diagnostic_op diagnostic_op::error_CE010(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE010", "Negative duplication factor", range);
+}
+
+diagnostic_op diagnostic_op::error_CE011(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE011", "Maximum string size exceeded", range);
+}
+
+diagnostic_op diagnostic_op::error_CE012(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE012", " Only absolute and defined symbols allowed", range);
+}
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,
