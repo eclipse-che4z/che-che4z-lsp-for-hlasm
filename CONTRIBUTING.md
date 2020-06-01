@@ -19,7 +19,7 @@ Make sure that the user email you specified on your local git is the same as on 
 For more information, please see the Eclipse Committer Handbook:
 https://www.eclipse.org/projects/handbook/#resources-commit
 
-Such signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
+The signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
 ```
 git commit --signoff
 ```
@@ -32,7 +32,7 @@ The project uses CMake targeting all major platforms (Windows, Linux, MacOS). Th
 
 Before contributing to the project, fork the repository and clone it, or add it as a new remote if you have already cloned the original repository. All the commits should be pushed to the fork in order to open pull requests from it.
 
-We encourage every potential contributor to read the project documetation available on the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). It describes the architecture of the project, decomposes it into software components and explains their relationships.
+We encourage every potential contributor to read the project documetation available on the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/). It describes the architecture of the project, separates it into software components and explains their relationships.
 
 All the activity on the project should begin with defining a new issue that describes the required changes.
 
