@@ -5,7 +5,7 @@ The result of a build is the Visual Studio Code extension packed into a VSIX fil
 Prerequisites
 -------------
 
-In order to build the project on any platform, following software needs to be installed:
+In order to build the project on any platform, the following software needs to be installed:
 
 -   CMake 3.10 or higher
 
@@ -15,16 +15,16 @@ In order to build the project on any platform, following software needs to be in
 
 -   Maven (the build system of ANTLR)
 
--   Git (needed to download sources of the third party software)
+-   Git (to download sources of the third party software)
 
--   npm (for compiling the typescript parts of the VS Code extension)
+-   npm (to compile the typescript parts of the VS Code extension)
 
 Windows
 -------
 
-On windows, we use Visual Studio Community 2019. We also have VS configurations for building and testing the project in WSL.
+On Windows, we use Visual Studio Community 2019. We also have VS configurations for building and testing the project in WSL.
 
-It is also possible to build the project from command line:
+It is also possible to build the project from the command line:
 
     mkdir build && cd build
     cmake ../
@@ -32,18 +32,17 @@ It is also possible to build the project from command line:
 
 Linux
 -----
-
-In addition to the prerequisites listed in \[prereq\], linux build has two more prerequisites:
+In addition to the prerequisites listed in \[prereq\], the Linux build has two more prerequisites:
 
 -   pkg-config
 
 -   UUID library
 
-We build the project for Ubuntu 18.04 and for the Alpine linux.
+We build the project for Ubuntu 18.04 and for the Alpine Linux.
 
 ### Ubuntu
 
-On Ubuntu 18.04 the following commands install all prerequisites and then build the project into `build` folder:
+On Ubuntu 18.04 the following commands install all prerequisites and then build the project into the `build` folder:
 
     apt update && sudo apt install cmake g++-8 uuid-dev npm default-jdk
                            pkg-config maven
@@ -53,7 +52,7 @@ On Ubuntu 18.04 the following commands install all prerequisites and then build 
 
 ### Alpine linux
 
-The build works on Alpine linux version 3.10. The following commands install all prerequisites and then build the project into `build` folder:
+The build works on Alpine linux version 3.10. The following commands install all prerequisites and then build the project into the `build` folder:
 
     apk update && apk add linux-headers git g++ cmake util-linux-dev npm ninja
                           pkgconfig openjdk8 maven
@@ -64,7 +63,7 @@ The build works on Alpine linux version 3.10. The following commands install all
 Mac OS
 ------
 
-We have only built the project on MacOS 10.14. In order to successfully build, we require LLVM 8 (it can be installed by using homebrew).
+We have only built the project on MacOS 10.14. In order to successfully build, first install LLVM 8 using homebrew.
 
 The project can be built with a snippet like this:
 
@@ -78,7 +77,7 @@ For instance, a possible path to LLVM is `/usr/local/opt/llvm8`
 Running tests
 -------------
 
-Once the project is built, there are two test executables in the `bin/` subdirectory of the build folder: `library_test` and `server_test`. Just run both of them to verify the build.
+Once the project is built, there are two test executables in the `bin/` subdirectory of the build folder: `library_test` and `server_test`. Run both of them to verify the build.
 
 Installation
 ------------
