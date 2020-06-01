@@ -17,7 +17,7 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 ## Getting Started
 
-### Usage
+### Enabling the Extension
 
 Follow these steps to open a HLASM project:
 
@@ -26,7 +26,7 @@ Follow these steps to open a HLASM project:
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
 4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to set up a workspace.
 
-### Setting up a multi-file project environment
+### Setting Up a Multi-File Project Environment
 
 The HLASM COPY instruction copies the source code from various external files, as driven by HLASM evaluation. The source code interpreter in the HLASM Extension needs to be set up correctly to be able to find the same files as the HLASM assembler program. 
 
