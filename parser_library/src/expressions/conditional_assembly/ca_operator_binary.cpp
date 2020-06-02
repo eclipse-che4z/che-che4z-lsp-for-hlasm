@@ -127,13 +127,10 @@ context::SET_t ca_function_binary_operator::operation(
             case ca_expr_ops::SLL:
             case ca_expr_ops::SRA:
             case ca_expr_ops::SRL:
-                return shift_operands(lhs.access_a(), rhs.access_a(), function);
+                return FIND(std::move(lhs), std::move(rhs));
             case ca_expr_ops::FIND:
-                return (context::A_t)lhs.access_c().find_first_of(rhs.access_c()) + 1;
-            case ca_expr_ops::INDEX: {
-                auto idx = lhs.access_c().find(rhs.access_c());
-                return idx == std::string::npos ? 0 : (context::A_t)idx + 1;
-            }
+            case ca_expr_ops::INDEX:
+                return INDEX(std::move(lhs), std::move(rhs));
             case ca_expr_ops::AND:
                 return lhs.access_a() & rhs.access_a();
             case ca_expr_ops::OR:
@@ -207,6 +204,17 @@ int ca_function_binary_operator::compare_relational(context::SET_t& lhs, context
             assert(false);
             return 0;
     }
+}
+
+context::SET_t ca_function_binary_operator::FIND(context::SET_t lhs, context::SET_t rhs)
+{
+    return (context::A_t)lhs.access_c().find_first_of(rhs.access_c()) + 1;
+}
+
+context::SET_t ca_function_binary_operator::INDEX(context::SET_t lhs, context::SET_t rhs)
+{
+    auto idx = lhs.access_c().find(rhs.access_c());
+    return idx == std::string::npos ? 0 : (context::A_t)idx + 1;
 }
 
 bool ca_function_binary_operator::is_relational() const

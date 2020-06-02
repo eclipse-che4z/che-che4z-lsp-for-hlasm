@@ -82,15 +82,15 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
         switch (function)
         {
             case ca_expr_ops::BYTE:
-                return BYTE(operand, expr_range, eval_ctx);
+                return BYTE(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::DOUBLE:
-                return DOUBLE(operand, expr_range, eval_ctx);
+                return DOUBLE(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::LOWER:
-                return LOWER(operand, expr_range, eval_ctx);
+                return LOWER(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::SIGNED:
-                return SIGNED(operand, expr_range, eval_ctx);
+                return SIGNED(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::UPPER:
-                return UPPER(operand, expr_range, eval_ctx);
+                return UPPER(std::move(operand), expr_range, eval_ctx);
             default:
                 break;
         }

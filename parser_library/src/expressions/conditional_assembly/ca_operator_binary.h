@@ -74,8 +74,10 @@ public:
         context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override;
 
     static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
-
     static int compare_relational(context::SET_t& lhs, context::SET_t& rhs, context::SET_t_enum type);
+
+    static context::SET_t FIND(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t INDEX(context::SET_t lhs, context::SET_t rhs);
 
 private:
     bool is_relational() const;
