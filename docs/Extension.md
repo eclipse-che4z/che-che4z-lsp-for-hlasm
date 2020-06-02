@@ -18,7 +18,7 @@ DAP Extension
 
 The [*Macro Tracer*](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Macro-tracer)  is implemented using DAP, which is also supported out-of-the-box by VSCode. Similarly to LSP TCP support, we dynamically assign a random free port for DAP communication during  activation.
 
-Additional implemented features
+Additional Implemented Features
 -------------------------------
 
 To simplify the work with HLASM in modern editors, several features are added to the extension. These additions are specific to Visual Studio Code (and Theia) and are not a part of the LSP specification.
