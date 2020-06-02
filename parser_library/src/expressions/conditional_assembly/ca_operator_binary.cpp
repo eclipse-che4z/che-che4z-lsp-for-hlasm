@@ -57,7 +57,7 @@ bool ca_binary_operator::is_character_expression() const { return left_expr->is_
 
 context::SET_t ca_binary_operator::evaluate(evaluation_context& eval_ctx) const
 {
-    return operation(left_expr->evaluate(eval_ctx), right_expr->evaluate(eval_ctx));
+    return operation(left_expr->evaluate(eval_ctx), right_expr->evaluate(eval_ctx), eval_ctx);
 }
 
 ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
@@ -116,7 +116,8 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     }
 }
 
-context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs) const
+context::SET_t ca_function_binary_operator::operation(
+    context::SET_t lhs, context::SET_t rhs, evaluation_context& ) const
 {
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {
@@ -224,16 +225,29 @@ bool ca_function_binary_operator::is_relational() const
     }
 }
 
-context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() + rhs.access_a(); }
-
-context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() - rhs.access_a(); }
-
-context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() * rhs.access_a(); }
-
-context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs) { return lhs.access_a() / rhs.access_a(); }
-
-context::SET_t ca_conc::operation(context::SET_t lhs, context::SET_t rhs)
+context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
 {
+    return lhs.access_a() + rhs.access_a();
+}
+
+context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+{
+    return lhs.access_a() - rhs.access_a();
+}
+
+context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+{
+    return lhs.access_a() * rhs.access_a();
+}
+
+context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+{
+    return lhs.access_a() / rhs.access_a();
+}
+
+context::SET_t ca_conc::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx)
+{
+    //todo long string
     auto ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());
     ret.append(rhs.access_c().begin(), rhs.access_c().end());

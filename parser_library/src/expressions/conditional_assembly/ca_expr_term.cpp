@@ -17,6 +17,7 @@
 #include "ca_expr_policy.h"
 #include "ca_operator_binary.h"
 #include "ca_operator_unary.h"
+#include "ebcdic_encoding.h"
 #include "processing/context_manager.h"
 #include "semantics/concatenation_term.h"
 
@@ -63,7 +64,7 @@ void ca_expr_list::collect_diags() const
 
 bool ca_expr_list::is_character_expression() const { return false; }
 
-context::SET_t ca_expr_list::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_expr_list::evaluate(evaluation_context& ) const
 {
     assert(false);
     return context::SET_t();
@@ -247,7 +248,7 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
 
     if (str.size() > MAX_STR_SIZE)
     {
-        add_diagnostic(diagnostic_op::error_CE011(expr_range));
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
         return context::SET_t();
     }
 
@@ -258,12 +259,12 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
 
         if (start < 0 || count < 0 || (start == 0 && count > 0))
         {
-            add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
+            eval_ctx.add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
             return context::SET_t();
         }
         if (start > str.size())
         {
-            add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
+            eval_ctx.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
             return context::SET_t();
         }
 
@@ -276,13 +277,13 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
 
         if (dupl < 0)
         {
-            add_diagnostic(diagnostic_op::error_CE010(duplication_factor->expr_range));
+            eval_ctx.add_diagnostic(diagnostic_op::error_CE010(duplication_factor->expr_range));
             return context::SET_t();
         }
 
         if (str.size() * dupl > MAX_STR_SIZE)
         {
-            add_diagnostic(diagnostic_op::error_CE011(expr_range));
+            eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
             return context::SET_t();
         }
 
@@ -394,7 +395,7 @@ void ca_constant::collect_diags() const { }
 
 bool ca_constant::is_character_expression() const { return false; }
 
-context::SET_t ca_constant::evaluate(evaluation_context& eval_ctx) const { return value; }
+context::SET_t ca_constant::evaluate(evaluation_context& ) const { return value; }
 
 ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
@@ -424,7 +425,7 @@ context::SET_t ca_symbol::evaluate(evaluation_context& eval_ctx) const
         return tmp_symbol->value().get_abs();
     else
     {
-        add_diagnostic(diagnostic_op::error_CE012(expr_range));
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE012(expr_range));
         return context::SET_t();
     }
 }
@@ -527,7 +528,75 @@ void ca_function::collect_diags() const { }
 
 bool ca_function::is_character_expression() const { return false; }
 
-context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const { return context::SET_t(); }
+context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const
+{
+    switch (function)
+    {
+        case ca_expr_funcs::B2A:
+        case ca_expr_funcs::C2A:
+        case ca_expr_funcs::D2A:
+        case ca_expr_funcs::DCLEN:
+        case ca_expr_funcs::FIND:
+        case ca_expr_funcs::INDEX:
+        case ca_expr_funcs::ISBIN:
+        case ca_expr_funcs::ISDEC:
+        case ca_expr_funcs::ISHEX:
+        case ca_expr_funcs::ISSYM:
+
+        case ca_expr_funcs::A2B:
+            return std::bitset<32>(get_ith_param(0, eval_ctx).access_a()).to_string();
+        case ca_expr_funcs::A2C:
+            // return character_expression::num_to_ebcdic(get_value());
+        case ca_expr_funcs::A2D: {
+            auto val = std::to_string(get_ith_param(0, eval_ctx).access_a());
+            if (val.front() == '-')
+                return val;
+            else
+                return "+" + val;
+        }
+        case ca_expr_funcs::A2X:
+            // return make_char(character_expression::num_to_hex(value_));
+        case ca_expr_funcs::B2C:
+        case ca_expr_funcs::B2D:
+        case ca_expr_funcs::B2X:
+        case ca_expr_funcs::BYTE: {
+            auto param = get_ith_param(0, eval_ctx).access_a();
+            // if (param > 255 || param < 0)
+            //    return default_expr_with_error<character_expression>(error_messages::ea11());
+            return ebcdic_encoding::to_ascii(static_cast<unsigned char>(param));
+        }
+        case ca_expr_funcs::C2B:
+        case ca_expr_funcs::C2D:
+        case ca_expr_funcs::C2X:
+        case ca_expr_funcs::D2B:
+        case ca_expr_funcs::D2C:
+        case ca_expr_funcs::D2X:
+        case ca_expr_funcs::DCVAL:
+        case ca_expr_funcs::DEQUOTE:
+        case ca_expr_funcs::DOUBLE:
+        case ca_expr_funcs::ESYM:
+        case ca_expr_funcs::LOWER:
+        case ca_expr_funcs::SIGNED:
+            return std::to_string(get_ith_param(0, eval_ctx).access_a());
+        case ca_expr_funcs::SYSATTRA:
+        case ca_expr_funcs::SYSATTRP:
+        case ca_expr_funcs::UPPER:
+        case ca_expr_funcs::X2B:
+        case ca_expr_funcs::X2C:
+        case ca_expr_funcs::X2D:
+            return true;
+        default:
+            return false;
+    }
+}
+
+context::SET_t ca_function::get_ith_param(size_t idx, evaluation_context& eval_ctx) const
+{
+    if (idx < parameters.size())
+        return parameters[idx]->evaluate(eval_ctx);
+    else
+        return context::SET_t();
+}
 
 } // namespace expressions
 } // namespace parser_library

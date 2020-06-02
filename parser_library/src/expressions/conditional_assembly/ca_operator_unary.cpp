@@ -13,6 +13,7 @@
  */
 
 #include "ca_operator_unary.h"
+#include "expressions/evaluation_context.h"
 
 #include <algorithm>
 
@@ -46,7 +47,7 @@ bool ca_unary_operator::is_character_expression() const { return false; }
 
 context::SET_t ca_unary_operator::evaluate(evaluation_context& eval_ctx) const
 {
-    return operation(expr->evaluate(eval_ctx));
+    return operation(expr->evaluate(eval_ctx), eval_ctx);
 }
 
 ca_function_unary_operator::ca_function_unary_operator(
@@ -63,7 +64,7 @@ void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kin
         expr->resolve_expression_tree(ca_common_expr_policy::get_operands_type(function, kind));
 }
 
-context::SET_t ca_function_unary_operator::operation(context::SET_t operand) const
+context::SET_t ca_function_unary_operator::operation(context::SET_t operand, evaluation_context& eval_ctx) const
 {
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {
@@ -83,7 +84,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand) con
                 auto value = operand.access_a();
                 if (value > 255 || value < 0)
                 {
-                    add_diagnostic(diagnostic_op::error_CE007(expr_range));
+                    eval_ctx.add_diagnostic(diagnostic_op::error_CE007(expr_range));
                     break;
                 }
                 else
@@ -121,17 +122,43 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand) con
     return context::SET_t();
 }
 
+context::SET_t ca_function_unary_operator::BYTE(context::SET_t param, ca_expr_ptr owner)
+{
+    auto value = param.access_a();
+    if (value > 255 || value < 0)
+    {
+        //owner->add_diagnostic(diagnostic_op::error_CE007(owner->expr_range));
+        //break;
+    }
+    else
+        return ebcdic_encoding::to_ascii(static_cast<unsigned char>(value));
+}
+
+context::SET_t ca_function_unary_operator::DOUBLE(context::SET_t param) { return context::SET_t(); }
+
+context::SET_t ca_function_unary_operator::LOWER(context::SET_t param) { return context::SET_t(); }
+
+context::SET_t ca_function_unary_operator::SIGNED(context::SET_t param) { return context::SET_t(); }
+
+context::SET_t ca_function_unary_operator::UPPER(context::SET_t param) { return context::SET_t(); }
+
 ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
 {}
 
-context::SET_t ca_plus_operator::operation(context::SET_t operand) const { return operand.access_a(); }
+context::SET_t ca_plus_operator::operation(context::SET_t operand, evaluation_context& ) const
+{
+    return operand.access_a();
+}
 
 ca_minus_operator::ca_minus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
 {}
 
-context::SET_t ca_minus_operator::operation(context::SET_t operand) const { return -operand.access_a(); }
+context::SET_t ca_minus_operator::operation(context::SET_t operand, evaluation_context& ) const
+{
+    return -operand.access_a();
+}
 
 ca_par_operator::ca_par_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
@@ -145,7 +172,10 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-context::SET_t ca_par_operator::operation(context::SET_t operand) const { return std::move(operand); }
+context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context& ) const
+{
+    return std::move(operand);
+}
 
 } // namespace expressions
 } // namespace parser_library

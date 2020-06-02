@@ -39,7 +39,7 @@ public:
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
-    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const = 0;
+    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const = 0;
 };
 
 template<typename OP> class ca_basic_binary_operator : public ca_binary_operator
@@ -49,9 +49,10 @@ public:
         : ca_binary_operator(std::move(left_expr), std::move(right_expr), OP::type, std::move(expr_range))
     {}
 
-    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const override
+    virtual context::SET_t operation(
+        context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override
     {
-        return OP::operation(std::move(lhs), std::move(rhs));
+        return OP::operation(std::move(lhs), std::move(rhs), eval_ctx);
     }
 };
 
@@ -69,7 +70,8 @@ public:
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs) const override;
+    virtual context::SET_t operation(
+        context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override;
 
     static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
 
@@ -83,35 +85,35 @@ struct ca_add
 {
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
-    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx);
 };
 
 struct ca_sub
 {
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
-    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx);
 };
 
 struct ca_mul
 {
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
-    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx);
 };
 
 struct ca_div
 {
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
-    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx);
 };
 
 struct ca_conc
 {
     static constexpr context::SET_t_enum type = context::SET_t_enum::C_TYPE;
 
-    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx);
 };
 
 } // namespace expressions

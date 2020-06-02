@@ -43,7 +43,7 @@ public:
     virtual void collect_diags() const override;
 
     virtual bool is_character_expression() const override;
-    
+
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 
 private:
@@ -178,6 +178,9 @@ public:
     virtual bool is_character_expression() const override;
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+
+private:
+    context::SET_t get_ith_param(size_t idx, evaluation_context& eval_ctx) const;
 };
 
 } // namespace expressions

@@ -64,7 +64,7 @@ template<typename T> inline T ca_expression::evaluate(evaluation_context& eval_c
 
     if (context::object_traits<T>::type_enum != ret.type)
     {
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
         return context::object_traits<T>::default_v();
     }
     if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
