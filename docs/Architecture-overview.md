@@ -10,7 +10,7 @@ In this chapter, we further decompose the project into smaller components and de
 
 <img src="img/hlasm_architecture.svg" alt="Architecture of the HLASM Plugin" />
 
-Language server component
+Language Server Component
 -------------------------
 
 The responsibility of the language server component is to maintain the LSP session, convert incoming JSON messages and use the parser library to execute them. The functionality includes:
@@ -23,12 +23,12 @@ The responsibility of the language server component is to maintain the LSP sessi
 
 -   asynchronous request handling: when a user makes several consecutive changes to a source code, parsing on every change is not needed
 
-Parser library component
+Parser Library Component
 ------------------------
 
 Parser library is the core of the project — it encapsulates the analyzer, which provides all parsing capabilities, and workspace manager, which keeps track of open files in the editor and manages their dependencies. It has to keep the representation of workspaces and files in the parser library exactly the same as the user sees in the editor. It also starts the analyzer when needed, manages workspace configuration and provides external macro and copy libraries to analyzer.
 
-### Parser library API
+### Parser Library API
 
 The parser library API is based on LSP — every relevant request and notification has a corresponding method in the parsing library.
 
@@ -68,7 +68,7 @@ The analysis of HLASM code includes:
 
 HLASM source files have dependencies — other files that define macros or files brought in by the COPY instruction. Dependencies are only discovered when files are processed, so it is not possible to provide the files with macro definitions beforehand. The analyzer gets a callback that finds a file with a specified name, parses its contents and returns it as a list of parsed statements.
 
-Client-side VS Code extension
+Client-Side VS Code Extension
 -----------------------------
 
 The VS Code extension component ensures seamless integration with the editor. Its functions are:
@@ -79,7 +79,7 @@ The VS Code extension component ensures seamless integration with the editor. It
 
 -   to implement support for editing lines with continuations — when the user types something in front of the continuation character, it remains in place.
 
-Macro tracer
+Macro Tracer
 ------------
 
 The macro tracer allows you to trace the compilation of HLASM source code in a way similar to common debugging. This is why we chose to implement support for the [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/) (DAP). It is very similar to LSP, so most of the code implementing LSP in the language server component can be reused for both protocols.
