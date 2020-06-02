@@ -50,7 +50,7 @@ On Ubuntu 18.04 the following commands install all prerequisites and then build 
     cmake -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
     cmake --build .
 
-### Alpine linux
+### Alpine Linux
 
 The build works on Alpine linux version 3.10. The following commands install all prerequisites and then build the project into the `build` folder:
 
@@ -74,7 +74,7 @@ The project can be built with a snippet like this:
 
 For instance, a possible path to LLVM is `/usr/local/opt/llvm8`
 
-Running tests
+Running Tests
 -------------
 
 Once the project is built, there are two test executables in the `bin/` subdirectory of the build folder: `library_test` and `server_test`. Run both of them to verify the build.
