@@ -37,6 +37,7 @@ public:
         int err_code,
         const std::string& err_message,
         const json& error) = 0;
+    ~response_provider() = default;
 };
 
 // Abstract class for group of methods that add functionality to server.
@@ -45,7 +46,7 @@ class feature
 public:
     // Constructs the feature with workspace_manager.
     // All the requests and notification are passed to the workspace manager
-    feature(parser_library::workspace_manager& ws_mngr)
+    explicit feature(parser_library::workspace_manager& ws_mngr)
         : ws_mngr_(ws_mngr)
     {}
     // Constructs the feature with workspace_manager and response_provider through which the feature can send messages.

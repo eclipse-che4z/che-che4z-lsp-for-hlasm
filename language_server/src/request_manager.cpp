@@ -117,12 +117,12 @@ void request_manager::finish_server_requests(server* to_finish)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // executes all remaining requests for a server
-    for (auto it = requests_.begin(); it != requests_.end(); ++it)
+    for(auto& req : requests_)
     {
-        if (it->executing_server != to_finish)
+        if (req.executing_server != to_finish)
             continue;
 
-        it->executing_server->message_received(it->message);
+        req.executing_server->message_received(req.message);
     }
     // remove the executed requests
     requests_.erase(

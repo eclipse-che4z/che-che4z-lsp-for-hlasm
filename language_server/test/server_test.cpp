@@ -12,9 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
-#define HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
-
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -36,7 +33,7 @@ inline void PrintTo(json const& json, std::ostream* os) { *os << json.dump(); }
 using namespace hlasm_plugin;
 using namespace language_server;
 
-TEST(lsp_server_test, initialize)
+TEST(lsp_server, initialize)
 {
     // this is json params actually sent by vscode LSP client
     json j =
@@ -66,4 +63,15 @@ TEST(lsp_server_test, initialize)
     EXPECT_NE(server_capab["result"].find("capabilities"), server_capab["result"].end());
 }
 
-#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
+TEST(lsp_server, not_implemented_method)
+{
+    json j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
+    ws_mngr_mock ws_mngr;
+    send_message_provider_mock smpm;
+    lsp::server s(ws_mngr);
+    s.set_send_message_provider(&smpm);
+
+    s.message_received(j);
+    //No result is tested, server should ignore unknown LSP method
+}
+

@@ -40,7 +40,7 @@ class server : public response_provider
 public:
     // Constructs the server with workspace_manager.
     // All the requests and notifications are passed to the workspace manager
-    server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr);
 
     // Tells the server that a massage was received. The server carries out the notification or request.
     virtual void message_received(const json& message) = 0;
