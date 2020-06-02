@@ -60,13 +60,13 @@ This implementation makes it possible for the `debugger` to stop the analysis us
 
 There are three important structures in the DAP:
 
-- **Stack Frame** 
+- **Stack Frame**  
 The stack frame represents one item in the call stack. Each frame has a name that is shown to the user and points to a line in the source code. In the macro tracer, each frame points either to the next instruction, to a macro call or to a COPY instruction.
 
-- **Scope** 
+- **Scope**  
 Each stack frame can have scopes. A scope is a group of organized variables. The macro tracer uses three scopes: local variables, global variables and ordinary symbols.
 
-- **Variable** 
+- **Variable**  
 Each scope contains an arbitrary number of variables. Each variable has a name and a value. They can be further structured and can have additional child variables. Therefore, the DAP can be used to present the arbitrary tree of variables to the user. 
 
 The following example demonstrates nested macro parameters.
