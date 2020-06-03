@@ -2,5 +2,5 @@ The workspace manager encapsulates all functionality of the parser library. It i
 
 The workspace manager is further described in the following sections:
 1. [[Parser library API]]
-2. [[Libraries configuration]]
+2. [[Configuration of libraries]]
 3. [[Workspace manager overview]]

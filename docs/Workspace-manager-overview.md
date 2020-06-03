@@ -68,7 +68,7 @@ The *parse\_lib\_provider* interface exists for this purpose. Whenever a compone
 
 The name of the needed file, the current context tables and the library data (the currently used type of processing) are passed to the `parse_library` method of the *parse_lib_provider* interface. The method finds the library file (i.e. a macro or COPY file) with the specified name and parses it with the given context.
 
-The workspace is the most important implementation of the `parse_lib_provider` interface. It provides libraries based on the processor groups configuration described in [[libraries configuration]].
+The workspace is the most important implementation of the `parse_lib_provider` interface. It provides libraries based on the processor groups configuration described in [[configuration of libraries]].
 
 Diagnostics
 -----------
