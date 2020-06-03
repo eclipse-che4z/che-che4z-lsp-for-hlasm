@@ -41,6 +41,8 @@ struct evaluation_context : public diagnosable_ctx
     { }
 
     virtual void collect_diags() const override { }
+
+    using diagnosable_ctx::collect_diags_from_child;
 };
 
 } // namespace expressions

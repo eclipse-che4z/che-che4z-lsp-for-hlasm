@@ -19,6 +19,7 @@
 #include "ca_expr_term.h"
 #include "ebcdic_encoding.h"
 #include "expressions/evaluation_context.h"
+#include "ca_expr_term.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -82,70 +83,20 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
         switch (function)
         {
             case ca_expr_ops::BYTE:
-                return BYTE(std::move(operand), expr_range, eval_ctx);
+                return ca_function::BYTE(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::DOUBLE:
-                return DOUBLE(std::move(operand), expr_range, eval_ctx);
+                return ca_function::DOUBLE(std::move(operand), expr_range, eval_ctx);
             case ca_expr_ops::LOWER:
-                return LOWER(std::move(operand), expr_range, eval_ctx);
+                return ca_function::LOWER(std::move(operand));
             case ca_expr_ops::SIGNED:
-                return SIGNED(std::move(operand), expr_range, eval_ctx);
+                return ca_function::SIGNED(std::move(operand));
             case ca_expr_ops::UPPER:
-                return UPPER(std::move(operand), expr_range, eval_ctx);
+                return ca_function::UPPER(std::move(operand));
             default:
                 break;
         }
     }
     return context::SET_t();
-}
-
-context::SET_t ca_function_unary_operator::BYTE(context::SET_t param, range param_range, evaluation_context& eval_ctx)
-{
-    auto value = param.access_a();
-    if (value > 255 || value < 0)
-    {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE007(param_range));
-        return context::SET_t();
-    }
-    else
-        return ebcdic_encoding::to_ascii(static_cast<unsigned char>(value));
-}
-
-context::SET_t ca_function_unary_operator::DOUBLE(context::SET_t param, range param_range, evaluation_context& eval_ctx)
-{
-    std::string ret;
-    for (char c : param.access_c())
-    {
-        ret.push_back(c);
-        if (c == '\'' || c == '&')
-            ret.push_back(c);
-    }
-
-    if (ret.size() > ca_string::MAX_STR_SIZE)
-    {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE011(param_range));
-        return context::SET_t();
-    }
-
-    return ret;
-}
-
-context::SET_t ca_function_unary_operator::LOWER(context::SET_t param, range param_range, evaluation_context& eval_ctx)
-{
-    auto value = param.access_c();
-    std::transform(value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(tolower(c)); });
-    return std::move(value);
-}
-
-context::SET_t ca_function_unary_operator::SIGNED(context::SET_t param, range param_range, evaluation_context& eval_ctx)
-{
-    return std::to_string(param.access_a());
-}
-
-context::SET_t ca_function_unary_operator::UPPER(context::SET_t param, range param_range, evaluation_context& eval_ctx)
-{
-    auto value = param.access_c();
-    std::transform(value.begin(), value.end(), value.begin(), [](char c) { return static_cast<char>(toupper(c)); });
-    return std::move(value);
 }
 
 ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)

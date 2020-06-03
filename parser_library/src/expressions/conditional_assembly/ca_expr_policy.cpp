@@ -70,6 +70,7 @@ bool ca_arithmetic_policy::is_function(ca_expr_funcs func)
         case ca_expr_funcs::ISDEC:
         case ca_expr_funcs::ISHEX:
         case ca_expr_funcs::ISSYM:
+        case ca_expr_funcs::X2A:
             return true;
         default:
             return false;
@@ -205,6 +206,7 @@ std::pair<size_t, context::SET_t_enum> ca_character_policy::get_function_param_i
         case ca_expr_funcs::SYSATTRA:
         case ca_expr_funcs::SYSATTRP:
         case ca_expr_funcs::UPPER:
+        case ca_expr_funcs::X2A:
         case ca_expr_funcs::X2B:
         case ca_expr_funcs::X2C:
         case ca_expr_funcs::X2D:
@@ -247,12 +249,12 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
 {
     switch (op)
     {
-        case hlasm_plugin::parser_library::expressions::ca_expr_ops::BYTE:
-        case hlasm_plugin::parser_library::expressions::ca_expr_ops::SIGNED:
+        case ca_expr_ops::BYTE:
+        case ca_expr_ops::SIGNED:
             return context::SET_t_enum::A_TYPE;
-        case hlasm_plugin::parser_library::expressions::ca_expr_ops::DOUBLE:
-        case hlasm_plugin::parser_library::expressions::ca_expr_ops::LOWER:
-        case hlasm_plugin::parser_library::expressions::ca_expr_ops::UPPER:
+        case ca_expr_ops::DOUBLE:
+        case ca_expr_ops::LOWER:
+        case ca_expr_ops::UPPER:
             return context::SET_t_enum::C_TYPE;
         default:
             break;
@@ -319,6 +321,7 @@ ca_expr_funcs get_expr_function(const std::string& op)
     S2F(ISDEC);
     S2F(ISHEX);
     S2F(ISSYM);
+    S2F(X2A);
     S2F(A2B);
     S2F(A2C);
     S2F(A2D);

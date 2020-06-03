@@ -79,12 +79,6 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const override;
-
-    static context::SET_t BYTE(context::SET_t param, range param_range, evaluation_context& eval_ctx);
-    static context::SET_t DOUBLE(context::SET_t param, range param_range, evaluation_context& eval_ctx);
-    static context::SET_t LOWER(context::SET_t param, range param_range, evaluation_context& eval_ctx);
-    static context::SET_t SIGNED(context::SET_t param, range param_range, evaluation_context& eval_ctx);
-    static context::SET_t UPPER(context::SET_t param, range param_range, evaluation_context& eval_ctx);
 };
 
 

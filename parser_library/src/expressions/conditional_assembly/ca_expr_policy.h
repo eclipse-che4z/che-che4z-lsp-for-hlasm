@@ -72,6 +72,7 @@ enum class ca_expr_funcs
     ISDEC,
     ISHEX,
     ISSYM,
+    X2A,
 
     // character
     A2B,

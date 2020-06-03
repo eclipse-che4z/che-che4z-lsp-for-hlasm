@@ -179,6 +179,44 @@ public:
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 
+    static context::SET_t B2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t C2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t D2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t DCLEN(context::SET_t param);
+    static context::SET_t FIND(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t INDEX(context::SET_t lhs, context::SET_t rhs);
+    static context::SET_t ISBIN(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t ISDEC(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t ISHEX(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t ISSYM(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t X2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t A2B(context::SET_t param);
+    static context::SET_t A2C(context::SET_t param);
+    static context::SET_t A2D(context::SET_t param);
+    static context::SET_t A2X(context::SET_t param);
+    static context::SET_t B2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t B2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t B2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t BYTE(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t C2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t C2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t C2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t D2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t D2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t D2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t DCVAL(context::SET_t param);
+    static context::SET_t DEQUOTE(context::SET_t param);
+    static context::SET_t DOUBLE(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t ESYM(context::SET_t param);
+    static context::SET_t LOWER(context::SET_t param);
+    static context::SET_t SIGNED(context::SET_t param);
+    static context::SET_t SYSATTRA(context::SET_t param);
+    static context::SET_t SYSATTRP(context::SET_t param);
+    static context::SET_t UPPER(context::SET_t param);
+    static context::SET_t X2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t X2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t X2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+
 private:
     context::SET_t get_ith_param(size_t idx, evaluation_context& eval_ctx) const;
 };
