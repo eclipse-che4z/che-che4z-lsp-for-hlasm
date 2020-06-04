@@ -103,35 +103,40 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
         str = str.substr(start - 1, count);
     }
 
-    if (duplication_factor)
+    return duplicate(duplication_factor, std::move(str), expr_range, eval_ctx);
+}
+
+std::string ca_string::duplicate(
+    const ca_expr_ptr& dupl_factor, std::string value, range expr_range, evaluation_context& eval_ctx)
+{
+    if (dupl_factor)
     {
-        auto dupl = duplication_factor->evaluate(eval_ctx).access_a();
+        auto dupl = dupl_factor->evaluate(eval_ctx).access_a();
 
         if (dupl < 0)
         {
-            eval_ctx.add_diagnostic(diagnostic_op::error_CE010(duplication_factor->expr_range));
-            return context::SET_t();
+            eval_ctx.add_diagnostic(diagnostic_op::error_CE010(dupl_factor->expr_range));
+            return "";
         }
 
-        if (str.size() * dupl > MAX_STR_SIZE)
+        if (value.size() * dupl > MAX_STR_SIZE)
         {
             eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
-            return context::SET_t();
+            return "";
         }
 
-        if (dupl == 0 || str.empty())
-            str = "";
+        if (dupl == 0 || value.empty())
+            value = "";
         else
         {
-            str.reserve(str.size() * dupl);
-            auto begin = str.begin();
-            auto end = str.end();
+            value.reserve(value.size() * dupl);
+            auto begin = value.begin();
+            auto end = value.end();
             for (auto i = 1; i < dupl; ++i)
-                str.append(begin, end);
+                value.append(begin, end);
         }
     }
-
-    return str;
+    return value;
 }
 
 } // namespace expressions

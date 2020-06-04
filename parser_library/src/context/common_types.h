@@ -102,7 +102,7 @@ public:
     SET_t(C_t value);
     SET_t();
 
-    const SET_t_enum type;
+    SET_t_enum type;
 
     A_t& access_a();
     B_t& access_b();

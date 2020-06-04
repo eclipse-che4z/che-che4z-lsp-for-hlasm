@@ -78,6 +78,8 @@ bool ca_function::is_character_expression() const { return false; }
 
 context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const
 {
+    context::SET_t str_ret;
+
     switch (function)
     {
         case ca_expr_funcs::B2A:
@@ -104,61 +106,63 @@ context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const
             return X2A(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
 
         case ca_expr_funcs::A2B:
-            return A2B(get_ith_param(0, eval_ctx));
+            str_ret = A2B(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::A2C:
-            return A2C(get_ith_param(0, eval_ctx));
+            str_ret = A2C(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::A2D:
-            return A2D(get_ith_param(0, eval_ctx));
+            str_ret = A2D(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::A2X:
-            return A2X(get_ith_param(0, eval_ctx));
+            str_ret = A2X(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::B2C:
-            return B2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = B2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::B2D:
-            return B2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = B2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::B2X:
-            return B2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = B2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::BYTE:
-            return BYTE(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = BYTE(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::C2B:
-            return C2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = C2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::C2D:
-            return C2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = C2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::C2X:
-            return C2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = C2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::D2B:
-            return D2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = D2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::D2C:
-            return D2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = D2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::D2X:
-            return D2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = D2X(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::DCVAL:
-            return DCVAL(get_ith_param(0, eval_ctx));
+            str_ret = DCVAL(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::DEQUOTE:
-            return DEQUOTE(get_ith_param(0, eval_ctx));
+            str_ret = DEQUOTE(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::DOUBLE:
-            return DOUBLE(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = DOUBLE(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::ESYM:
-            return ESYM(get_ith_param(0, eval_ctx));
+            str_ret = ESYM(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::LOWER:
-            return LOWER(get_ith_param(0, eval_ctx));
+            str_ret = LOWER(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::SIGNED:
-            return SIGNED(get_ith_param(0, eval_ctx));
+            str_ret = SIGNED(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::SYSATTRA:
-            return SYSATTRA(get_ith_param(0, eval_ctx));
+            str_ret = SYSATTRA(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::SYSATTRP:
-            return SYSATTRP(get_ith_param(0, eval_ctx));
+            str_ret = SYSATTRP(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::UPPER:
-            return UPPER(get_ith_param(0, eval_ctx));
+            str_ret = UPPER(get_ith_param(0, eval_ctx));
         case ca_expr_funcs::X2B:
-            return X2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = X2B(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::X2C:
-            return X2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = X2C(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         case ca_expr_funcs::X2D:
-            return X2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
+            str_ret = X2D(get_ith_param(0, eval_ctx), expr_range, eval_ctx);
         default:
             assert(false);
             return context::SET_t();
     }
+
+    return ca_string::duplicate(duplication_factor, std::move(str_ret.access_c()), expr_range, eval_ctx);
 }
 
 context::SET_t ca_function::B2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx)
