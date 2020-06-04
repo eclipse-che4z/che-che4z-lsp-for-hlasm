@@ -15,9 +15,12 @@
 #include "ca_operator_binary.h"
 
 #include <assert.h>
+#include <limits>
 
 #include "ebcdic_encoding.h"
+#include "expressions/evaluation_context.h"
 #include "terms/ca_function.h"
+#include "terms/ca_string.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -222,29 +225,52 @@ bool ca_function_binary_operator::is_relational() const
     }
 }
 
-context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
+context::A_t overflow_transform(std::int64_t val, range expr_range, evaluation_context& eval_ctx)
 {
-    return lhs.access_a() + rhs.access_a();
+    if (val > std::numeric_limits<context::A_t>::max())
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE013(expr_range));
+        return 0;
+    }
+    else if (val < std::numeric_limits<context::A_t>::min())
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE014(expr_range));
+        return 0;
+    }
+    else
+        return (context::A_t)val;
 }
 
-context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
+context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
 {
-    return lhs.access_a() - rhs.access_a();
+    return overflow_transform((std::int64_t)lhs.access_a() + (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
+context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
 {
-    return lhs.access_a() * rhs.access_a();
+    return overflow_transform((std::int64_t)lhs.access_a() - (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
+context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
 {
-    return lhs.access_a() / rhs.access_a();
+    return overflow_transform((std::int64_t)lhs.access_a() * (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_conc::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx)
+context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
 {
-    // todo long string
+    if (rhs.access_a() == 0)
+        return (context::A_t)0;
+    return overflow_transform((std::int64_t)lhs.access_a() / (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
+}
+
+context::SET_t ca_conc::operation(
+    context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+{
+    if (lhs.access_c().size() + rhs.access_c().size() > ca_string::MAX_STR_SIZE)
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
+        return context::SET_t();
+    }
     auto ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());
     ret.append(rhs.access_c().begin(), rhs.access_c().end());

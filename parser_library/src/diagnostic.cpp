@@ -1894,7 +1894,17 @@ diagnostic_op diagnostic_op::error_CE011(const range& range)
 
 diagnostic_op diagnostic_op::error_CE012(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "CE012", " Only absolute and defined symbols allowed", range);
+    return diagnostic_op(diagnostic_severity::error, "CE012", "Only absolute and defined symbols allowed", range);
+}
+
+diagnostic_op diagnostic_op::error_CE013(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE013", "Arithmetic overflow", range);
+}
+
+diagnostic_op diagnostic_op::error_CE014(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE014", "Arithmetic underflow", range);
 }
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
