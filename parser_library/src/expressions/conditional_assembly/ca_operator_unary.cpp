@@ -16,10 +16,9 @@
 
 #include <algorithm>
 
-#include "ca_expr_term.h"
 #include "ebcdic_encoding.h"
 #include "expressions/evaluation_context.h"
-#include "ca_expr_term.h"
+#include "terms/ca_function.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

@@ -22,7 +22,7 @@
 
 #include "concatenation.h"
 #include "context/id_storage.h"
-#include "expressions/conditional_assembly/ca_expresssion.h"
+#include "expressions/conditional_assembly/ca_expression.h"
 #include "range.h"
 
 // this file is a composition of structures that create concat_chain

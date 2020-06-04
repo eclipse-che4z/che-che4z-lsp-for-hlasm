@@ -76,7 +76,7 @@ bool ca_arithmetic_policy::is_function(ca_expr_funcs func)
             return false;
     }
 };
-bool ca_binary_policy::is_function(ca_expr_funcs func) { return false; };
+bool ca_binary_policy::is_function(ca_expr_funcs) { return false; };
 bool ca_character_policy::is_function(ca_expr_funcs func)
 {
     switch (func)
@@ -163,7 +163,7 @@ int ca_binary_policy::get_priority(ca_expr_ops op)
     }
 }
 
-int ca_character_policy::get_priority(ca_expr_ops op) { return 0; }
+int ca_character_policy::get_priority(ca_expr_ops) { return 0; }
 
 std::pair<size_t, context::SET_t_enum> ca_arithmetic_policy::get_function_param_info(ca_expr_funcs func)
 {
@@ -174,7 +174,7 @@ std::pair<size_t, context::SET_t_enum> ca_arithmetic_policy::get_function_param_
     else
         return std::make_pair(0, context::SET_t_enum::UNDEF_TYPE);
 }
-std::pair<size_t, context::SET_t_enum> ca_binary_policy::get_function_param_info(ca_expr_funcs func)
+std::pair<size_t, context::SET_t_enum> ca_binary_policy::get_function_param_info(ca_expr_funcs)
 {
     return std::make_pair(0, context::SET_t_enum::UNDEF_TYPE);
 }
@@ -257,7 +257,7 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
         case ca_expr_ops::UPPER:
             return context::SET_t_enum::C_TYPE;
         default:
-            break;
+            return context::SET_t_enum::UNDEF_TYPE;
     }
 }
 

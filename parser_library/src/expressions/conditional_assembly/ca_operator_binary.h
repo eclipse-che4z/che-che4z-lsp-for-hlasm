@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CA_OPERATOR_BINARY_H
 
 #include "ca_expr_policy.h"
-#include "ca_expresssion.h"
+#include "ca_expression.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

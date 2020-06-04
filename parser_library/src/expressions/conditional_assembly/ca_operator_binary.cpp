@@ -13,10 +13,11 @@
  */
 
 #include "ca_operator_binary.h"
-#include "ca_expr_term.h"
+
 #include <assert.h>
 
 #include "ebcdic_encoding.h"
+#include "terms/ca_function.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -116,8 +117,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     }
 }
 
-context::SET_t ca_function_binary_operator::operation(
-    context::SET_t lhs, context::SET_t rhs, evaluation_context& ) const
+context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&) const
 {
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {
@@ -222,29 +222,29 @@ bool ca_function_binary_operator::is_relational() const
     }
 }
 
-context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
 {
     return lhs.access_a() + rhs.access_a();
 }
 
-context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
 {
     return lhs.access_a() - rhs.access_a();
 }
 
-context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
 {
     return lhs.access_a() * rhs.access_a();
 }
 
-context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& )
+context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&)
 {
     return lhs.access_a() / rhs.access_a();
 }
 
 context::SET_t ca_conc::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx)
 {
-    //todo long string
+    // todo long string
     auto ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());
     ret.append(rhs.access_c().begin(), rhs.access_c().end());

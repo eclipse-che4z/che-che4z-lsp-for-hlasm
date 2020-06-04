@@ -38,10 +38,7 @@ public:
     range expr_range;
     context::SET_t_enum expr_kind;
 
-    ca_expression(context::SET_t_enum expr_kind, range expr_range)
-        : expr_range(std::move(expr_range))
-        , expr_kind(expr_kind)
-    {}
+    ca_expression(context::SET_t_enum expr_kind, range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const = 0;
 
@@ -54,6 +51,9 @@ public:
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const = 0;
 
     virtual ~ca_expression() = default;
+
+private:
+    bool test_return_types(const context::SET_t& retval, context::SET_t_enum type, evaluation_context& eval_ctx) const;
 };
 
 
@@ -62,11 +62,9 @@ template<typename T> inline T ca_expression::evaluate(evaluation_context& eval_c
     static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
     auto ret = evaluate(eval_ctx);
 
-    if (context::object_traits<T>::type_enum != ret.type)
-    {
-        eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+    if (!test_return_types(ret, context::object_traits<T>::type_enum, eval_ctx))
         return context::object_traits<T>::default_v();
-    }
+
     if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
         return ret.access_a();
     if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::B_TYPE)
@@ -74,6 +72,7 @@ template<typename T> inline T ca_expression::evaluate(evaluation_context& eval_c
     if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::C_TYPE)
         return std::move(ret.access_c());
 }
+
 
 } // namespace expressions
 } // namespace parser_library
