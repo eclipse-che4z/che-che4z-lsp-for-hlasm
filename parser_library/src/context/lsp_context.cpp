@@ -139,7 +139,7 @@ size_t seq_definition::hash() const
 
 std::vector<std::string> seq_definition::get_value() const
 {
-    return { "Defined at line " + std::to_string(definition_range.start.line) };
+    return { "Defined at line " + std::to_string(definition_range.start.line + 1) };
 }
 
 bool seq_definition::operator==(const seq_definition& other) const

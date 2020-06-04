@@ -64,32 +64,55 @@ suite('Integration Test Suite', () => {
 	// test completion for instructions
 	test('Completion Instructions test', (done) => {
 		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-
-		vscode.commands.executeCommand('vscode.executeCompletionItemProvider',openFileEditor.document.uri,new vscode.Position(7,1))
-			.then((result: vscode.CompletionList) => {
-				if (result.items.length == 2046)
-					done();
-				else
-					done('Incorrect number of suggested items ' + result.items.length);
+		openFileEditor.edit(edit => {
+			edit.insert(new vscode.Position(7,1),'L');
+		}).then(_ => {
+			const movePosition = new vscode.Position(7,2);
+			openFileEditor.selection = new vscode.Selection(movePosition,movePosition);
+			vscode.commands.executeCommand('editor.action.triggerSuggest')
+			.then(() => {
+				setTimeout(() => {
+					vscode.commands.executeCommand('acceptSelectedSuggestion').then(result => {
+						setTimeout(() => {
+							const text = openFileEditor.document.getText();
+							const acceptedLine = text.split('\n')[7];
+							if (acceptedLine.includes('L   R,D12U(X,B)'))
+								done();
+							else
+								done('Wrong suggestion result' + acceptedLine)
+						}, 1000)
+					})
+				},1000);
 			});
-	}).timeout(10000).slow(1000);
+		})
+	}).timeout(10000).slow(4000);
 
 	// test completion for variable symbols
 	test('Completion Variable symbol test', (done) => {
 		assert.equal(vscode.window.activeTextEditor, openFileEditor);
 		// add '&' to simulate start of a variable symbol
 		openFileEditor.edit(edit => {
-			edit.insert(new vscode.Position(7,0),'&');
+			edit.insert(new vscode.Position(8,0),'&');
 		}).then(_ => {
-			vscode.commands.executeCommand('vscode.executeCompletionItemProvider',openFileEditor.document.uri,new vscode.Position(7,1))
-			.then((result: vscode.CompletionList) => {
-				if (result.items.length == 2)
-					done();
-				else
-					done('Incorrect number of suggested items ' + result.items.length);
+			const movePosition = new vscode.Position(8,1);
+			openFileEditor.selection = new vscode.Selection(movePosition,movePosition);
+			vscode.commands.executeCommand('editor.action.triggerSuggest')
+			.then(() => {
+				setTimeout(() => {
+					vscode.commands.executeCommand('acceptSelectedSuggestion').then(result => {
+						setTimeout(() => {
+							const text = openFileEditor.document.getText();
+							const acceptedLine = text.split('\n')[8];
+							if (acceptedLine.includes('&VAR'))
+								done();
+							else
+								done('Wrong suggestion result' + acceptedLine)
+						}, 1000)
+					})
+				},1000);
 			});
 		})
-	}).timeout(10000).slow(1000);
+	}).timeout(10000).slow(4000);
 
 	// go to definition for ordinary symbol
 	test('Definition Ordinary symbol test', (done) => {
@@ -98,7 +121,7 @@ suite('Integration Test Suite', () => {
 			.then((result: vscode.Location[]) => {
 				if (result.length == 1 
 					&& result[0].uri.fsPath == openFileEditor.document.fileName
-					&& result[0].range.start.line == 8
+					&& result[0].range.start.line == 9
 					&& result[0].range.start.character == 0)
 					done();
 				else
@@ -119,6 +142,21 @@ suite('Integration Test Suite', () => {
 					done('Wrong variable symbol hover contents');
 			});
 	}).timeout(10000).slow(1000);
+
+	// go to definition for macros
+	test('Definition Macro test', (done) => {
+		assert.equal(vscode.window.activeTextEditor, openFileEditor);
+		vscode.commands.executeCommand('vscode.executeDefinitionProvider',openFileEditor.document.uri,new vscode.Position(6,2))
+			.then((result: vscode.Location[]) => {
+				if (result.length == 1 
+					&& result[0].uri.fsPath == path.join(workspacePath, 'libs','mac.asm')
+					&& result[0].range.start.line == 1
+					&& result[0].range.start.character == 4)
+					done();
+				else
+					done('Wrong macro definition location');
+			});
+	}).timeout(10000).slow(1000);	
 
 	// debug open code test
 	test('Debug test', (done) => {
@@ -149,20 +187,5 @@ suite('Integration Test Suite', () => {
 		});
 		// start debugging
 		vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0],'Macro tracer: current program');
-	}).timeout(10000).slow(3000);
-
-	// go to definition for macros
-	test('Definition Macro test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-		vscode.commands.executeCommand('vscode.executeDefinitionProvider',openFileEditor.document.uri,new vscode.Position(6,2))
-			.then((result: vscode.Location[]) => {
-				if (result.length == 1 
-					&& result[0].uri.fsPath == path.join(workspacePath, 'libs','mac.asm')
-					&& result[0].range.start.line == 1
-					&& result[0].range.start.character == 4)
-					done();
-				else
-					done('Wrong macro definition location');
-			});
-	}).timeout(10000).slow(1000);	
+	}).timeout(10000).slow(4000);
 });
