@@ -218,5 +218,5 @@ The primary storage of dependencies. It has *dependants* as keys and *resolvable
 
     The source objects are statements. As one statement can be a source for more distinct resolvables, this source map only stores pointers to the *postponed statements storage*.
 
-- **Postponed statements storage**  
+- **Postponed Statements Storage**  
 Holds statements that are sources of resolvables in dependency map. The reason they are stored is that they cannot be checked yet as they contain dependencies. Therefore, they are postponed in the storage until all of the dependencies are resolved. Then they are passed to the respective checker.
