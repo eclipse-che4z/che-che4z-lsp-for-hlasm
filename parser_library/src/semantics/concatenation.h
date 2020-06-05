@@ -24,6 +24,9 @@
 
 namespace hlasm_plugin {
 namespace parser_library {
+namespace expressions {
+struct evaluation_context;
+}
 namespace semantics {
 
 enum class concat_type
@@ -68,6 +71,10 @@ struct concatenation_point
     dot_conc* access_dot();
     equals_conc* access_equ();
     sublist_conc* access_sub();
+
+    static std::string evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx);
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const = 0;
 
     virtual ~concatenation_point() = default;
 };

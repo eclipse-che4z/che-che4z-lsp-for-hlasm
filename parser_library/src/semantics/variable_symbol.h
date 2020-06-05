@@ -16,6 +16,7 @@
 #define SEMANTICS_VARIABLE_SYMBOL_H
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "antlr4-runtime.h"
@@ -37,6 +38,7 @@ struct basic_variable_symbol;
 struct created_variable_symbol;
 
 using vs_ptr = std::unique_ptr<variable_symbol>;
+using vs_eval = std::pair<context::id_index, std::vector<context::A_t>>;
 
 struct variable_symbol
 {
@@ -51,8 +53,15 @@ struct variable_symbol
     created_variable_symbol* access_created();
     const created_variable_symbol* access_created() const;
 
+    vs_eval evaluate_symbol(expressions::evaluation_context& eval_ctx) const;
+    context::SET_t evaluate(expressions::evaluation_context& eval_ctx) const;
+
+    virtual ~variable_symbol() = default;
+
 protected:
-    variable_symbol(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
+    variable_symbol(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+
+    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const = 0;
 };
 
 struct basic_variable_symbol : public variable_symbol
@@ -61,6 +70,8 @@ struct basic_variable_symbol : public variable_symbol
         context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const context::id_index name;
+
+    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
 };
 
 struct created_variable_symbol : public variable_symbol
@@ -69,6 +80,8 @@ struct created_variable_symbol : public variable_symbol
         concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
 
     const concat_chain created_name;
+
+    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
 };
 
 

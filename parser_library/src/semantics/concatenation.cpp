@@ -22,7 +22,7 @@ using namespace hlasm_plugin::parser_library;
 
 concatenation_point::concatenation_point(const concat_type type)
     : type(type)
-{}
+{ }
 
 char_str_conc* concatenation_point::access_str()
 {
@@ -47,6 +47,14 @@ equals_conc* concatenation_point::access_equ()
 sublist_conc* concatenation_point::access_sub()
 {
     return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr;
+}
+
+std::string concatenation_point::evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx)
+{
+    std::string ret;
+    for (auto& point : chain)
+        ret.append(point->evaluate(eval_ctx));
+    return ret;
 }
 
 void concatenation_point::clear_concat_chain(concat_chain& chain)

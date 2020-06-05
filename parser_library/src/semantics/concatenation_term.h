@@ -31,25 +31,34 @@ struct char_str_conc : public concatenation_point
     char_str_conc(std::string value);
 
     std::string value;
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
+// concatenation point representing variable symbol
 struct var_sym_conc : public concatenation_point
 {
     var_sym_conc(vs_ptr);
 
     vs_ptr symbol;
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing dot
 struct dot_conc : public concatenation_point
 {
     dot_conc();
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing equals sign
 struct equals_conc : public concatenation_point
 {
     equals_conc();
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing macro operand sublist
@@ -58,6 +67,8 @@ struct sublist_conc : public concatenation_point
     sublist_conc(std::vector<concat_chain> list);
 
     std::vector<concat_chain> list;
+
+    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
 } // namespace semantics
