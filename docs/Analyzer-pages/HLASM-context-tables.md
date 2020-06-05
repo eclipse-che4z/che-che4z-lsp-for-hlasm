@@ -53,7 +53,7 @@ The macro invocation is stored in the context’s *scope stack*.
 
 ### Scope Stack
 
-This stack (stack of `code_scope` objects) holds information about the scope of variable symbols. The scope changes when macro is visited. The initial scope is the open-code.
+This stack (the stack of `code_scope` objects) holds information about the scope of variable symbols. The scope changes when a macro is visited. The initial scope is the open-code.
 
 The stack elements contain:
 
@@ -67,63 +67,63 @@ The stack elements contain:
 
 ### COPY
 
-HLASM context stores visited COPY members in the *copy strorage*.
+HLASM context stores visited COPY members in the *copy storage*.
 
-COPY member definition is much more simple than the macro definition as it does not hold any more semantic information than the sequence of statements (the definition itself).
+The COPY member definition is much more simple than the macro definition as it does not hold any more semantic information than the sequence of statements (the definition itself).
 
-When copy is visited, copy member invocation is created and pushed in the copy stack of last entry of the *source stack*.
+When a copy is visited, a copy member invocation is created and pushed in the copy stack of the last entry of the *source stack*.
 
-### Source stack and Processing stack
+### Source Stack and Processing Stack
 
-This stacks are responsible for the nests of opened files (source stack) and what they are opened for (processing stack). As the relation of source entry and processing entry is one-to-many, the information is stored in two arrays rather than one.
+These stacks are responsible for the nests of opened files (source stack) and what they are opened for (processing stack). As the relation of source entry and processing entry is one-to-many, the information is stored in two arrays rather than one.
 
-When [[statement processor|statement processors]] is changed (e.g. macro or copy definition is processed, lookahead is needed, ...), this information is stored in the processing stack. If a new file is opened during this change then source stack is updated as well.
+When [[statement processor]]s are changed (e.g. when a macro or copy definition is processed, or a lookahead is needed), this information is stored in the processing stack. If a new file is opened during this change then source stack is updated as well.
 
-Source stack contains:
+The source stack contains the following:
 
 -   *Source file identifier*
 
 -   *Copy stack* – the nest of copy calls active for the source file.
 
--   *Processed statement location* – data that locates last processed statement in the source file.
+-   *Processed statement location* – data that locates the last processed statement in the source file.
 
-Processing stack contains *processing kind*.
+The processing stack contains the *processing kind*.
 
-The reasoning of organizing this two stacks in such a way is:
+The reason behind organizing these two stacks in such a way is:
 
-1.  Context has enough information to fully reconstruct the statement.
+1.  The context has enough information to fully reconstruct the statement.
 
-2.  Easy retrieval of the correct copy stack for copy statement provider.
+2.  Ease of retrieval of the correct copy stack for a copy statement provider.
 
-### ID storage
+### ID Storage
 
 ID storage holds the string identifiers that are used by the open-code. It stores the string and retrieves a pointer. It is guaranteed that if two different strings with the same value are passed to the storage, the resulting pointers are equal.
 
 It simplifies work with IDs and saves space.
 
-### Variable symbols
+### Variable Symbols
 
-In HLASM language, variable symbol is general term for symbols beginning with ampersand. However, they can be separated into several structures that capture a common behavior:
+In HLASM language, a variable symbol is a general term for symbols beginning with an ampersand. However, they can be separated into several structures that capture a common behavior:
 
--   *SET symbols* – represent HLASM SET symbols.
+-   *SET symbols* 
 
--   *System variables* – represent HLASM system variables.
+-   *System variables*
 
--   *Macro parameters* – represent HLASM macro parameters.
+-   *Macro parameters*
 
-They inherit common abstract ancestor *variable symbol*. SET symbols are further divided into *SETA*, *SETB* and *SETC* symbols. Macro parameters are divided into *keyword* and *positional* parameters (see the picture below). They are stored in respective storage (global storage, scope stack, macro definition) that determines their scope.
+They inherit the *variable symbol* as a common abstract ancestor. SET symbols are further divided into *SETA*, *SETB* and *SETC* symbols. Macro parameters are divided into *keyword* and *positional* parameters (see the picture below). They are stored in whichever storage determines their scope (global storage, scope stack, macro definition).
 
 <img src="img/variable_arch.svg" alt="The inheritance of variable symbols." />
 
-### LSP context
+### LSP Context
 
-The LSP context serves as the collection point for the data needed to answer the LSP requests. It is a part of the HLASM context to be able to pass on the LSP data between different parsed files.
+The LSP context serves as the collection point for the data needed to answer LSP requests. It is part of the HLASM context to be able to pass on LSP data between different parsed files.
 
 The [[LSP data collector]] stores its values inside the LSP context tables.
 
-### Ordinary assembly context
+### Ordinary Assembly Context
 
-The above described structures aimed to describe the high-level part of the language (code generation). As we move closer to the resulting object code of the source file, the describing structures get complicated. Therefore, HLASM context contains object storing just this part of the processing.
+The above described structures aimed to describe the high-level part of the language (code generation). As we move closer to the resulting object code of the source file, the describing structures get complicated. Therefore, HLASM context contains an object storing just this part of the processing.
 
 <img src="img/ord_ctx_arch.svg" alt="The composition of ordinary assembly context" />
 
@@ -131,97 +131,92 @@ Ordinary assembly context consists of three main components (see the picture abo
 
 1.  *Symbol storage*. Stores ordinary symbols.
 
-2.  *Section storage*. Has notion of all generated sections, each section containing its location counters.
+2.  *Section storage*. Has the notion of all generated sections, each section containing its location counters.
 
 3.  *Symbol dependency tables*. Contains yet unresolved dependencies between symbols prior to the currently processed instruction.
 
 #### Symbol
 
-This class represents HLASM ordinary symbol. Besides its identifier and location, symbol contains *value* and *attributes* components.
+This class represents HLASM ordinary symbols. Besides its identifier and location, the symbol contains the components *value* and *attributes*.
 
 Value  
-can be assigned *absolute* or *relocatable* values. With addition to that, it can also be assigned an empty value stating that symbol is not yet defined.
+*Absolute* or *relocatable* values can be assigned. In addition, it can also be assigned an empty value stating that symbol is not yet defined.
 
 Attributes  
-structure holds symbol attributes like type, length, scale and integer.
+Holds symbol attributes like type, length, scale and integer.
 
 #### Section
 
-Section is a structure representing HLASM section (created by CSECT, DSECT, ...). It contains enumeration *section kind* describing type of the section prior to the used instruction. The structure also holds *location counter storage* with defined location counters.
+This class is a structure representing a HLASM section (created by CSECT, DSECT, ...). It contains the *section kind*, which describes the type of the section prior to the used instruction. The structure also holds the *location counter storage* with defined location counters.
 
-#### Location counter
+#### Location Counter
 
-This structure contains data and operations for one location counter. The data is stored in helper sub-structure *location counter data*.
+This structure contains data and operations for one location counter. The data is stored in the helper sub-structure *location counter data*.
 
-Location counter data  
-is a structure defining current value of the location counter. It consists of:
+The location counter data is a structure defining the current value of the location counter. It consists of:
 
--   *Storage* stating total number of bytes occupied by the location counter.
+-   *Storage*, stating the total number of bytes occupied by the location counter.
 
--   Vector of *spaces*, blocks of bytes with yet not known length.
+-   A vector of *spaces*, blocks of bytes with unknown length.
 
--   Vector of *storage* between each space.
+-   A vector of *storage* between each space.
 
--   Currently valid *alignment* (used when data contain spaces).
+-   The currently valid *alignment* (used when data contains spaces).
 
-The location counter value is transformable into a relocatable value. It is represented by structure *address*.
+The location counter value is transformable into a relocatable value. It is represented by the structure *address*.
 
-Address  
-consists of:
+The address consists of:
 
--   Array of *bases*. A base is a beginning of a corresponding section. They serve as points of reference for the address.
+-   An array of *bases*. A base is the beginning of a corresponding section. They serve as points of reference for the address.
 
--   Array of *spaces* that are present in the address.
+-   An array of *spaces* that are present in the address.
 
--   *Offset* from the bases.
+-   The *offset* from the bases.
 
-The common composition of an address is one base section (as the start of the address) and value of storage (as the offset from it).
+The common composition of an address is one base section (as the start of the address) and the value of storage (as the offset from it).
 
-The need for the whole array of bases to be present is because addresses from different sections can be arbitrarily added or subtracted. This information is needed as the correct sequence of arithmetic operations can reduce number of bases (even spaces) to zero and create absolute value. This value can be later used in places where a relocatable value would be forbidden.
+The need for the whole array of bases to be present is because addresses from different sections can be arbitrarily added or subtracted. This information is needed as the correct sequence of arithmetic operations can reduce the number of bases (even spaces) to zero and create an absolute value. This value can be later used in places where a relocatable value is forbidden.
 
-Space  
-is block of bytes with yet not known length. It is created in the active location counter when execution of counter’s operation can not be performed due to non previously defined ordinary symbols. See the different kind of spaces and the reason of creation in the table below.
+A space is a block of bytes with an unknown length. It is created in the active location counter when execution of the counter’s operation cannot be performed due to undefined ordinary symbols. The table below lists the different kind of spaces and the reason for their creation.
 
-| **Space Kind** |                                                **Creation**|
-|:---------------|-----------------------------------------------------------:|
-| Ordinary       |             when instruction outputs data of unknown length|
-| LOCTR begin    |   when defining more than one location counter in a section|
-| Alignment      |    when current alignment is unknown due to previous spaces|
-| LOCTR set      |      when moving counter’s value to the address with spaces|
-| LOCTR max      |  when moving counter’s value to the next available location|
-| LOCTR unknown  |      when moving counter’s value to the yet unknown address|
+| **Space Kind** |                                                  **Creation**|
+|:---------------|-------------------------------------------------------------:|
+| Ordinary       |            when an instruction outputs data of unknown length|
+| LOCTR begin    |     when defining more than one location counter in a section|
+| Alignment      |  when the current alignment is unknown due to previous spaces|
+| LOCTR set      |    when moving the counter’s value to the address with spaces|
+| LOCTR max      |when moving the counter’s value to the next available location|
+| LOCTR unknown  |         when moving the counter’s value to an unknown address|
 
-When a space length becomes known, all addresses containing the spaces need to be updated (remove the space and append offset). Therefore, space structure contains an array of address listeners. Hence, when an address is assigned a relocatable value that contains the space, the address is added to its array. This serves as an easy point of space resolving.
+When a space length becomes known, all addresses containing the spaces need to be updated (remove the space and append the offset). Therefore, space structure contains an array of address listeners. When an address is assigned a relocatable value that contains the space, the address is added to its array. This serves as an easy point of space resolving.
 
+The ORG instruction can arbitrarily move the location counter’s value forward and backward. In addition to that, ORG can also order the location counter to set its value to the next available value (the lowest untouched address, see [[HLASM overview#Location_Counter|HLASM overview]]). Combining this with the possible spaces creation, the location counter holds an array of location counter data to properly set the next available value.
 
+#### Symbol Dependency Tables
 
-ORG instruction can arbitrarily move location counter’s value forward and backward. With addition to that, ORG can also order location counter to set it’s value to the next available value (the lowest untouched address, see location counter in [[HLASM overview]]). Combining this with the possible spaces creation, location counter holds an array of the location counter data to properly set the next available value.
-
-#### Symbol dependency tables
-
-HLASM forbids cyclic symbol definition. This component maintains dependencies between symbols and detects possible cycles. Let us describe the main components of dependency resolving.
+HLASM forbids cyclic symbol definition. This component maintains dependencies between symbols and detects possible cycles. This section describes the main components of dependency resolution.
 
 - **Dependant**  
-is a structure used in the symbol dependency tables. It encapsulates objects that can be dependent on another. Dependant object can be a *symbol*, *symbol attribute* and *space*.
+A structure used in the symbol dependency tables. It encapsulates objects that can be dependent on another. A dependant object can be a *symbol*, *symbol attribute* or a *space*.
 
 - **Dependable**  
-interface is implemented by a class if its instance can contain dependencies. The interface has a method to retrieve a structure holding the respective *dependants*.
+An interface that is implemented by a class if its instance can contain dependencies. The interface has a method to retrieve a structure holding the respective *dependants*.
 
 - **Resolvable**  
-interface adds up to the dependable interface. It is implemented by objects that serve as values assignable to *depednants*. It provides methods to return *symbol value* with help of the dependency solver.
+An interface that adds up to the dependable interface. It is implemented by objects that serve as values assignable to *dependants*. It provides methods to return a *symbol value* with the help of the dependency solver.
 
-- **Dependency solver**  
-is an interface that can return value of the symbol providing its identifier. It is implemented by Ordinary assembly context.
+- **Dependency Solver**  
+An interface that can return the value of a symbol providing its identifier. It is implemented by ordinary assembly context.
 
-Having described building blocks, we can move to the symbol dependency tables composition.
+Having described the building blocks, we can move to the symbol dependency tables composition.
 
 - **Dependency map**  
-is the primary storage of dependencies. It has *dependants* as keys and *resolvables* as values. The semantics for pair *(D,R)* is that D is dependent on the dependencies from R. Each time new dependency is added, this map is searched for cycle.
+The primary storage of dependencies. It has *dependants* as keys and *resolvables* as values. The semantics for pair *(D,R)* is that D is dependent on the dependencies from R. Each time a new dependency is added, this map is searched for cycles.
 
-- **Dependency sources map**  
-    serves as a source objects storage of a resolvable in the dependency map. Hence for the pair *(D,R)* from dependency map, source object of *R* is in the dependency source map under the key *D*.
+- **Dependency Sources Map**  
+    Serves as a source object storage of a resolvable in the dependency map. Hence for the pair *(D,R)* from the dependency map, the source object of *R* is in the dependency source map under the key *D*.
 
-    The source objects are statements. To be more specific, as one statement can be a source for more distinct resolvables, this source map only stores pointers to the *postponed statements storage*.
+    The source objects are statements. As one statement can be a source for more distinct resolvables, this source map only stores pointers to the *postponed statements storage*.
 
 - **Postponed statements storage**  
-holds statements that are sources of resolvables in dependency map. The reason they are stored is that they can not be checked yet as they contain dependencies. Therefore, they are postponed in the storage until all of the dependencies are resolved. Then they are passed to the respective checker.
+Holds statements that are sources of resolvables in dependency map. The reason they are stored is that they cannot be checked yet as they contain dependencies. Therefore, they are postponed in the storage until all of the dependencies are resolved. Then they are passed to the respective checker.
