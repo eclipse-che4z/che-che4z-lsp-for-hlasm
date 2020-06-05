@@ -1,44 +1,57 @@
-HLASM context tables (in code referred simply as `hlasm_context`) are composition of tables and stacks that describe the state of the currently processed open-code. This structure is persistent between source files within an open-code. It is created in an analyzer and has the same lifespan.
+HLASM context tables (in code referred to as `hlasm_context`) are composed of tables and stacks that describe the state of the currently processed open-code. This structure is persistent between source files within an open-code. It is created in an analyzer and has the same lifespan.
 
-It is composed of:
+The structure is composed of:
 
--   *Macro & Copy storage* – stores macro and copy definition definitions.
+-   *Macro & Copy storage*  
+Stores macro and copy definitions.
 
--   *ID storage* – stores symbol identifiers.
+-   *ID storage*  
+Stores symbol identifiers.
 
--   *Scope stack* – stores nested macro invocations and local variable symbols.
+-   *Scope stack*  
+Stores nested macro invocations and local variable symbols.
 
--   *Global variable symbol storage* – stores global variable symbols.
+-   *Global variable symbol storage*  
+Stores global variable symbols.
 
--   *Source stack* – stores nested source files.
+-   *Source stack*   
+Stores nested source files.
 
--   *Processing stack* – stores stack of processings in a source file.
+-   *Processing stack*  
+Stores processing stacks in a source file.
 
--   *LSP context* – stores structures for LSP requests.
+-   *LSP context*  
+Stores structures for LSP requests.
 
--   *Ordinary assembly context* – encapsulates structures describing Ordinary assembly.
+-   *Ordinary assembly context*  
+Encapsulates structures describing ordinary assembly.
 
-### Macro definition
+### Macro Definition
 
 HLASM context stores visited macro definitions in the *macro strorage*.
 
-Macro definition is represented by:
+A macro definition is represented by:
 
--   *Macro identifier*. It identifies the macro.
+-   *Macro identifier*  
+Identifies the macro.
 
--   *Calling parameters*. They are assigned real value when the macro is called.
+-   *Calling parameters*.  
+These parameters are assigned a real value when the macro is called.
 
--   *Block of statement*. It represents the body of the macro.
+-   *Block of statements*. 
+Represents the body of the macro.
 
--   *Block of copy nestings*. It is an array with one-to-one relation with block of statements. Each entry is a list of in-file locations that represents how much is the statement nested in COPY calls.
+-   *Block of copy nestings*. 
+An array with a one-to-one relation with a block of statements. Each entry is a list of in-file locations that represents how often the statement is nested in COPY calls.
 
--   *Label storage*. The storage of sequence symbols that occur in the macro definition.
+-   *Label storage*. 
+The storage of sequence symbols that occur in the macro definition.
 
-When macro is called, *macro invocation* object is created. It shares the content of a respective macro definition with an exception of calling parameters as they are assigned real value passed with the call. Also, it contains index to the top statement of the invocation.
+When a macro is called, a *macro invocation* object is created. It shares the content of the respective macro definition with an exception of calling parameters as they are assigned real values when passed with the call. Also, it contains an index to the top statement of the invocation.
 
 The macro invocation is stored in the context’s *scope stack*.
 
-### Scope stack
+### Scope Stack
 
 This stack (stack of `code_scope` objects) holds information about the scope of variable symbols. The scope changes when macro is visited. The initial scope is the open-code.
 
