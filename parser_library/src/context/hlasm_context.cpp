@@ -442,9 +442,9 @@ SET_t hlasm_context::get_attribute_value_ca(
     switch (attribute)
     {
         case data_attr_kind::K:
-            return var_symbol ? var_symbol->count(offset) : 0;
+            return var_symbol ? var_symbol->count(std::move(offset)) : 0;
         case data_attr_kind::N:
-            return var_symbol ? var_symbol->number(offset) : 0;
+            return var_symbol ? var_symbol->number(std::move(offset)) : 0;
         case data_attr_kind::T:
             return get_type_attr(var_symbol, std::move(offset));
         default:

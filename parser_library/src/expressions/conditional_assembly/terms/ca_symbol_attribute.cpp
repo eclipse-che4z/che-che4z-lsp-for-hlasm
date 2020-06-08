@@ -105,6 +105,8 @@ context::SET_t ca_symbol_attribute::evaluate(evaluation_context& eval_ctx) const
     {
         return evaluate_varsym(std::get<semantics::vs_ptr>(symbol), eval_ctx);
     }
+
+    return context::SET_t();
 }
 
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const
@@ -136,7 +138,7 @@ context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name
     else if (!ord_symbol->attributes().is_defined(attribute))
         add_diagnostic(diagnostic_op::warning_W013(expr_range));
 
-    eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
+    return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
 }
 
 context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, evaluation_context& eval_ctx) const

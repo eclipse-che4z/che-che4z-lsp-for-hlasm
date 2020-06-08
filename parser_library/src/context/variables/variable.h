@@ -51,9 +51,9 @@ public:
     const macro_param_base* access_macro_param_base() const;
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t> offset = {}) const = 0;
+    virtual A_t number(std::vector<size_t> offset) const = 0;
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset = {}) const = 0;
+    virtual A_t count(std::vector<size_t> offset) const = 0;
 
     virtual ~variable_symbol() = default;
 
