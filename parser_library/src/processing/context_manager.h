@@ -33,6 +33,7 @@ namespace processing {
 // class wrapping context providing ranges, checks and diagnostics to hlasm_context
 class context_manager : public diagnosable_ctx
 {
+    expressions::evaluation_context* eval_ctx_;
 public:
     using name_result = std::pair<bool, context::id_index>;
 
@@ -40,6 +41,7 @@ public:
     context::hlasm_context& hlasm_ctx;
 
     context_manager(context::hlasm_context& hlasm_ctx);
+    context_manager(expressions::evaluation_context* eval_ctx);
 
     context::SET_t evaluate_expression(
         antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const;
@@ -87,6 +89,8 @@ public:
         const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
     virtual void collect_diags() const override;
+
+    ~context_manager();
 
 private:
     context::macro_data_ptr create_macro_data(const semantics::concat_chain& chain,

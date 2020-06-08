@@ -165,18 +165,6 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, eval
     }
 }
 
-struct ctx_manager
-{
-    processing::context_manager mngr;
-    expressions::evaluation_context& eval_ctx;
-    ctx_manager(expressions::evaluation_context& eval_ctx)
-        : mngr(eval_ctx.hlasm_ctx)
-        , eval_ctx(eval_ctx)
-    { }
-    processing::context_manager& operator()() { return mngr; }
-    ~ctx_manager() { eval_ctx.collect_diags_from_child(mngr); }
-};
-
 std::vector<size_t> transform(const std::vector<context::A_t>& v)
 {
     std::vector<size_t> ret;
@@ -187,7 +175,8 @@ std::vector<size_t> transform(const std::vector<context::A_t>& v)
 
 context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs, evaluation_context& eval_ctx) const
 {
-    ctx_manager mngr(eval_ctx);
+    processing::context_manager mngr(&eval_ctx);
+
     auto [var_name, expr_subscript] = vs->evaluate_symbol(eval_ctx);
 
     // get symbol
@@ -204,7 +193,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
     {
         if (attribute == context::data_attr_kind::T)
         {
-            if (!mngr().test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
+            if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
                 return "U";
 
             context::SET_t value =
@@ -214,7 +203,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
         }
 
         // get substituted name
-        context::SET_t substituted_name = mngr().get_var_sym_value(var_name, expr_subscript, vs->symbol_range);
+        context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, vs->symbol_range);
         if (substituted_name.type != context::SET_t_enum::C_TYPE)
         {
             if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
@@ -222,7 +211,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
             return context::symbol_attributes::default_ca_value(attribute);
         }
 
-        auto [valid, ord_name] = mngr().try_get_symbol_name(substituted_name.access_c());
+        auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
 
         if (!valid)
         {
@@ -236,7 +225,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
     else
     {
         if (attribute == context::data_attr_kind::K
-            && !mngr().test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
+            && !mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
             return context::symbol_attributes::default_ca_value(attribute);
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript));
     }

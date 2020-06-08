@@ -23,7 +23,14 @@ using namespace hlasm_plugin::parser_library::processing;
 
 context_manager::context_manager(context::hlasm_context& hlasm_ctx)
     : diagnosable_ctx(hlasm_ctx)
+    , eval_ctx_(nullptr)
     , hlasm_ctx(hlasm_ctx)
+{ }
+
+context_manager::context_manager(expressions::evaluation_context* eval_ctx)
+    : diagnosable_ctx(hlasm_ctx)
+    , eval_ctx_(eval_ctx)
+    , hlasm_ctx(eval_ctx->hlasm_ctx)
 { }
 
 context::SET_t context_manager::evaluate_expression(
@@ -421,6 +428,12 @@ bool context_manager::test_symbol_for_read(
 }
 
 void context_manager::collect_diags() const { }
+
+hlasm_plugin::parser_library::processing::context_manager::~context_manager()
+{
+    if (eval_ctx_)
+        eval_ctx_->collect_diags_from_child(*this);
+}
 
 context::macro_data_ptr context_manager::create_macro_data(const semantics::concat_chain& chain,
     const std::function<std::string(const semantics::concat_chain& chain)>& to_string) const
