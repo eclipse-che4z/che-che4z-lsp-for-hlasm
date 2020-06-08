@@ -81,8 +81,10 @@ context::SET_t variable_symbol::evaluate(expressions::evaluation_context& eval_c
 
     processing::context_manager mngr(eval_ctx.hlasm_ctx);
 
-    return context::SET_t();
-    // return mngr.get_var_sym_value(name, std::move(evaluated_subscript), symbol_range);
+    auto val = mngr.get_var_sym_value(name, evaluated_subscript, symbol_range);
+    eval_ctx.collect_diags_from_child(mngr);
+
+    return val;
 }
 
 variable_symbol::variable_symbol(

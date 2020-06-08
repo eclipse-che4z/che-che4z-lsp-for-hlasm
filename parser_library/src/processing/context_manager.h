@@ -67,6 +67,8 @@ public:
         const semantics::variable_symbol& symbol, expressions::evaluation_context eval_ctx) const;
     context::SET_t get_var_sym_value(
         context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const;
+    context::SET_t get_var_sym_value(
+        context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
     context::id_index get_symbol_name(const semantics::vs_ptr& symbol, expressions::evaluation_context eval_ctx) const;
     context::id_index get_symbol_name(const std::string& symbol, range symbol_range) const;
@@ -81,6 +83,8 @@ public:
 
     bool test_symbol_for_read(
         context::var_sym_ptr var, const expressions::expr_list& subscript, const range& symbol_range) const;
+    bool test_symbol_for_read(
+        const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
     virtual void collect_diags() const override;
 

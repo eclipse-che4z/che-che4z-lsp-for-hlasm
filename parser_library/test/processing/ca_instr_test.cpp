@@ -98,7 +98,7 @@ TEST(var_subs, set_to_var)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    int tmp = m.get_var_sym_value(it, {}, {}).access_a();
+    int tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_a();
     EXPECT_EQ(tmp, 3);
 }
 
@@ -168,7 +168,7 @@ TEST(var_subs, var_sym_reset)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    std::string tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    std::string tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "XXX");
 }
 
@@ -185,7 +185,7 @@ TEST(var_subs, created_set_sym)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_a();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_a();
     EXPECT_EQ(tmp, 11);
 }
 
@@ -226,7 +226,7 @@ TEST(var_concatenation, concatenated_string_dot_last)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc");
 }
 
@@ -243,7 +243,7 @@ TEST(var_concatenation, concatenated_string_dot)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc-get");
 }
 
@@ -260,7 +260,7 @@ TEST(var_concatenation, concatenated_string_double_dot)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc.");
 }
 
