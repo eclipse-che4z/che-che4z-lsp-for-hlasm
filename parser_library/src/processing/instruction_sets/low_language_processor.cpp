@@ -30,7 +30,7 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
     statement_fields_parser& parser)
     : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
     , parser(parser)
-{}
+{ }
 
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
 {
@@ -51,10 +51,9 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (stmt.label_ref().type == semantics::label_si_type::ORD)
     {
         context_manager mngr(hlasm_ctx);
-        auto ret =
-            mngr.try_get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
+        auto ret = mngr.get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
         collect_diags_from_child(mngr);
-        return ret.second;
+        return ret;
     }
     else
         return context::id_storage::empty_id;

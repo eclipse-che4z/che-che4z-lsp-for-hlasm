@@ -226,10 +226,10 @@ bool ca_processor::prepare_GBL_LCL(
 
         if (ca_op->kind == semantics::ca_kind::VAR)
         {
-            auto var = ca_op->access_var()->variable_symbol.get();
+            const auto& var = ca_op->access_var()->variable_symbol;
 
-            auto [valid, id] = mngr_.try_get_symbol_name(var, eval_ctx);
-            if (!valid)
+            auto id = mngr_.get_symbol_name(var, eval_ctx);
+            if (id == context::id_storage::empty_id)
                 continue;
 
             if (auto var_sym = hlasm_ctx.get_var_sym(id))

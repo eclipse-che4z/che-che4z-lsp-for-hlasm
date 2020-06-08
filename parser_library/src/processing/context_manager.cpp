@@ -24,7 +24,7 @@ using namespace hlasm_plugin::parser_library::processing;
 context_manager::context_manager(context::hlasm_context& hlasm_ctx)
     : diagnosable_ctx(hlasm_ctx)
     , hlasm_ctx(hlasm_ctx)
-{}
+{ }
 
 context::SET_t context_manager::evaluate_expression(
     antlr4::ParserRuleContext* expr_context, expressions::evaluation_context eval_ctx) const
@@ -221,34 +221,24 @@ context::SET_t context_manager::get_var_sym_value(
     return context::SET_t();
 }
 
-context_manager::name_result context_manager::try_get_symbol_name(
-    const semantics::variable_symbol* symbol, expressions::evaluation_context eval_ctx) const
+context::id_index context_manager::get_symbol_name(
+    const semantics::vs_ptr& symbol, expressions::evaluation_context eval_ctx) const
 {
     if (!symbol->created)
-        return make_pair(true, symbol->access_basic()->name);
+        return symbol->access_basic()->name;
     else
-        return try_get_symbol_name(
-            concatenate_str(symbol->access_created()->created_name, eval_ctx), symbol->symbol_range);
+        return get_symbol_name(concatenate_str(symbol->access_created()->created_name, eval_ctx), symbol->symbol_range);
 }
 
-context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol, range symbol_range) const
+context::id_index context_manager::get_symbol_name(const std::string& symbol, range symbol_range) const
 {
-    size_t i;
-    for (i = 0; i < symbol.size(); ++i)
-        if (!lexing::lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
-            break;
-
-    if (i == 0 || i > 63)
-    {
+    auto tmp = try_get_symbol_name(symbol);
+    if (!tmp.first)
         add_diagnostic(diagnostic_op::error_E065(symbol_range));
-        return std::make_pair(false, context::id_storage::empty_id);
-    }
-
-    return std::make_pair(true, hlasm_ctx.ids().add(symbol.substr(0, i)));
+    return tmp.second;
 }
 
-context_manager::name_result context_manager::try_get_symbol_name_e(
-    const std::string& symbol, range symbol_range) const
+context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol) const
 {
     size_t i;
     for (i = 0; i < symbol.size(); ++i)
@@ -256,10 +246,7 @@ context_manager::name_result context_manager::try_get_symbol_name_e(
             break;
 
     if (i == 0 || i > 63)
-    {
         return std::make_pair(false, context::id_storage::empty_id);
-    }
-
     return std::make_pair(true, hlasm_ctx.ids().add(symbol.substr(0, i)));
 }
 
@@ -316,7 +303,7 @@ bool context_manager::test_symbol_for_read(
     return true;
 }
 
-void context_manager::collect_diags() const {}
+void context_manager::collect_diags() const { }
 
 context::macro_data_ptr context_manager::create_macro_data(const semantics::concat_chain& chain,
     const std::function<std::string(const semantics::concat_chain& chain)>& to_string) const

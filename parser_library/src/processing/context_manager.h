@@ -68,10 +68,9 @@ public:
     context::SET_t get_var_sym_value(
         context::id_index name, const expressions::expr_list& subscript, const range& symbol_range) const;
 
-    name_result try_get_symbol_name(
-        const semantics::variable_symbol* symbol, expressions::evaluation_context eval_ctx) const;
-    name_result try_get_symbol_name(const std::string& symbol, range symbol_range) const;
-    name_result try_get_symbol_name_e(const std::string& symbol, range symbol_range) const;
+    context::id_index get_symbol_name(const semantics::vs_ptr& symbol, expressions::evaluation_context eval_ctx) const;
+    context::id_index get_symbol_name(const std::string& symbol, range symbol_range) const;
+    name_result try_get_symbol_name(const std::string& symbol) const;
 
     context::id_index concatenate(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;
     std::string concatenate_str(const semantics::concat_chain& chain, expressions::evaluation_context eval_ctx) const;

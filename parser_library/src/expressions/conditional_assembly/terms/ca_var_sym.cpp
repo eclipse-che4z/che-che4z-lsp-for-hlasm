@@ -63,36 +63,7 @@ void ca_var_sym::collect_diags() const
 
 bool ca_var_sym::is_character_expression() const { return false; }
 
-context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const
-{
-    processing::context_manager mngr(eval_ctx.hlasm_ctx);
-
-    context::id_index id;
-    if (!symbol->created)
-        id = symbol->access_basic()->name;
-    else
-    {
-        auto str_name = ""; // concatenate(symbol->access_created()->created_name)
-        auto [valid, name] = mngr.try_get_symbol_name(str_name, symbol->symbol_range);
-        if (!valid)
-            return context::SET_t();
-        id = name;
-    }
-
-    std::vector<context::A_t> subscript;
-
-    // for (const auto& expr : symbol->subscript)
-    //    subscript.push_back(expr->evaluate(eval_ctx).access_a());
-
-    context::SET_t value; // = mngr.get_var_sym_value(id, subscript, symbol->symbol_range);
-
-    eval_ctx.collect_diags_from_child(mngr);
-
-    // if (value.type == context::SET_t_enum::C_TYPE)
-    //     return (expr_ptr)arithmetic_expression::from_string(value.access_c(), false);
-    // else
-    return value;
-}
+context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const { return symbol->evaluate(eval_ctx); }
 
 } // namespace expressions
 } // namespace parser_library

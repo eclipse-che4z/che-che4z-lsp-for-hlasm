@@ -25,7 +25,7 @@ expression_evaluator::expression_evaluator(evaluation_context eval_ctx)
     : diagnosable_ctx(eval_ctx.hlasm_ctx)
     , eval_ctx_(eval_ctx)
     , resolved_refs_(nullptr)
-{}
+{ }
 
 expr_ptr expression_evaluator::evaluate_expression(antlr4::ParserRuleContext* expr_context)
 {
@@ -89,7 +89,7 @@ std::string expression_evaluator::concatenate_chain(const semantics::concat_chai
     return concatenate(chain);
 }
 
-void expression_evaluator::collect_diags() const {}
+void expression_evaluator::collect_diags() const { }
 
 antlrcpp::Any expression_evaluator::visitExpr(parsing::hlasmparser::ExprContext* ctx)
 {
@@ -318,7 +318,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
             // get substituted name
             auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
             auto val = mngr.convert_to<context::C_t>(tmp_val, ctx->var_symbol()->vs->symbol_range);
-            auto [valid, new_name] = mngr.try_get_symbol_name(val, ctx->var_symbol()->vs->symbol_range);
+            auto [valid, new_name] = mngr.try_get_symbol_name(val);
 
             if (!valid)
             {
@@ -345,8 +345,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
             {
                 auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
                 auto val = mngr.convert_to<context::C_t>(tmp_val, ctx->var_symbol()->vs->symbol_range);
-                auto [valid, new_name] = processing::context_manager(eval_ctx_.hlasm_ctx)
-                                             .try_get_symbol_name(val, ctx->var_symbol()->vs->symbol_range);
+                auto [valid, new_name] = processing::context_manager(eval_ctx_.hlasm_ctx).try_get_symbol_name(val);
 
                 if (valid && !eval_ctx_.hlasm_ctx.ord_ctx.get_symbol(new_name)) // requires attribute lookahead
                     SET_val.emplace(
@@ -535,9 +534,8 @@ context::SET_t expression_evaluator::get_var_sym_value(semantics::variable_symbo
         id = vs->access_basic()->name;
     else
     {
-        auto [valid, name] =
-            mngr.try_get_symbol_name(concatenate(vs->access_created()->created_name), vs->symbol_range);
-        if (!valid)
+        auto name = mngr.get_symbol_name(concatenate(vs->access_created()->created_name), vs->symbol_range);
+        if (name == context::id_storage::empty_id)
             return context::SET_t();
         id = name;
     }

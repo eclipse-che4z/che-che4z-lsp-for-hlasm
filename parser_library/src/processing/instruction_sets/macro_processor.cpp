@@ -235,11 +235,11 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 
         if (tmp->chain.size() >= 2 && tmp->chain[0]->type == semantics::concat_type::STR
             && tmp->chain[1]->type == semantics::concat_type::EQU
-            && context_manager(mngr).try_get_symbol_name(tmp->chain[0]->access_str()->value, range()).first)
+            && mngr.try_get_symbol_name(tmp->chain[0]->access_str()->value).first)
         {
             auto tmp_chain = semantics::concatenation_point::clone(tmp->chain);
-            auto [valid, id] = mngr.try_get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
-            assert(valid);
+            auto id = mngr.get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
+            assert(id != context::id_storage::empty_id);
             auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
             if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end()
                 || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)

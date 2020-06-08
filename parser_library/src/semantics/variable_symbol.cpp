@@ -39,7 +39,7 @@ context::id_index created_variable_symbol::evaluate_name(expressions::evaluation
     auto str_name = concatenation_point::evaluate(created_name, eval_ctx);
 
     auto mngr = processing::context_manager(eval_ctx.hlasm_ctx);
-    auto name = mngr.try_get_symbol_name(str_name, symbol_range).second;
+    auto name = mngr.get_symbol_name(str_name, symbol_range);
     eval_ctx.collect_diags_from_child(mngr);
 
     return name;

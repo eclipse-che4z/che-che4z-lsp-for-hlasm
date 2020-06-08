@@ -215,7 +215,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
             return context::symbol_attributes::default_ca_value(attribute);
         }
 
-        auto [valid, ord_name] = mngr().try_get_symbol_name_e(substituted_name.access_c(), vs->symbol_range);
+        auto [valid, ord_name] = mngr().try_get_symbol_name(substituted_name.access_c());
 
         if (!valid)
         {
