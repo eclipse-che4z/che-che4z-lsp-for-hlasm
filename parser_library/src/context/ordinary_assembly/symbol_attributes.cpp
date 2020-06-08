@@ -71,13 +71,13 @@ data_attr_kind symbol_attributes::transform_attr(char c)
     }
 }
 
-bool symbol_attributes::needs_ordinary(data_attr_kind attribute)
+bool symbol_attributes::requires_ordinary_symbol(data_attr_kind attribute)
 {
     return attribute == data_attr_kind::D || attribute == data_attr_kind::L || attribute == data_attr_kind::O
         || attribute == data_attr_kind::S || attribute == data_attr_kind::I;
 }
 
-bool symbol_attributes::ordinary_allowed(data_attr_kind attribute)
+bool symbol_attributes::is_ordinary_attribute(data_attr_kind attribute)
 {
     return attribute == data_attr_kind::L || attribute == data_attr_kind::I || attribute == data_attr_kind::S
         || attribute == data_attr_kind::T;
@@ -93,6 +93,20 @@ symbol_attributes::value_t symbol_attributes::default_value(data_attr_kind attri
             return 1;
         default:
             return 0;
+    }
+}
+
+SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
+{
+    switch (attribute)
+    {
+        case data_attr_kind::T:
+        case data_attr_kind::O:
+            return "U";
+        case data_attr_kind::L:
+            return (A_t)1;
+        default:
+            return (A_t)0;
     }
 }
 

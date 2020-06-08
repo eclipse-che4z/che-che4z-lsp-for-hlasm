@@ -332,7 +332,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
     return ret;
 }
 
-void hlasm_plugin::parser_library::context::hlasm_context::fill_metrics_files()
+void hlasm_context::fill_metrics_files()
 {
     metrics.files = visited_files_.size();
     // for each line without '\n' at the end of the files
@@ -436,7 +436,8 @@ id_index hlasm_context::get_mnemonic_opcode(id_index mnemo) const
         return mnemo;
 }
 
-SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
+SET_t hlasm_context::get_attribute_value_ca(
+    data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
 {
     switch (attribute)
     {
@@ -444,7 +445,7 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
             return var_symbol ? var_symbol->count(offset) : 0;
         case data_attr_kind::N:
             return var_symbol ? var_symbol->number(offset) : 0;
-        case hlasm_plugin::parser_library::context::data_attr_kind::T:
+        case data_attr_kind::T:
             return get_type_attr(var_symbol, std::move(offset));
         default:
             break;
@@ -453,22 +454,27 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
     return SET_t();
 }
 
-SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbol_name)
+SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, id_index symbol_name)
 {
     switch (attribute)
     {
-        case hlasm_plugin::parser_library::context::data_attr_kind::D:
-            return ord_ctx.symbol_defined(symbol_name) ? 1 : 0;
-        case hlasm_plugin::parser_library::context::data_attr_kind::T:
-            return std::string({ ord_ctx.symbol_defined(symbol_name) ? (char)ebcdic_encoding::e2a
-                                     [ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute)]
-                                                                     : 'U' });
-        case hlasm_plugin::parser_library::context::data_attr_kind::O:
+        case data_attr_kind::D:
+            if (ord_ctx.symbol_defined(symbol_name))
+                return (A_t)1;
+            return (A_t)0;
+        case data_attr_kind::T:
+            if (ord_ctx.symbol_defined(symbol_name))
+            {
+                auto attr_val = ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute);
+                return { (char)ebcdic_encoding::e2a[attr_val] };
+            }
+            return "U";
+        case data_attr_kind::O:
             return get_opcode_attr(symbol_name);
         default:
-            return ord_ctx.symbol_defined(symbol_name)
-                ? ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute)
-                : symbol_attributes::default_value(attribute);
+            if (ord_ctx.symbol_defined(symbol_name))
+                return ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute);
+            return symbol_attributes::default_value(attribute);
     }
 }
 

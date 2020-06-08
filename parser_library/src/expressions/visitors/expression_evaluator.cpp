@@ -313,7 +313,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
         auto symbol = eval_ctx_.hlasm_ctx.get_var_sym(name);
 
         // get value
-        if (context::symbol_attributes::needs_ordinary(attr))
+        if (context::symbol_attributes::requires_ordinary_symbol(attr))
         {
             // get substituted name
             auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
@@ -328,11 +328,11 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
             else
             {
                 if (!eval_ctx_.hlasm_ctx.ord_ctx.get_symbol(new_name)
-                    && context::symbol_attributes::ordinary_allowed(attr)) // requires attribute lookahead
+                    && context::symbol_attributes::is_ordinary_attribute(attr)) // requires attribute lookahead
                     SET_val.emplace(
                         lookup_variable_symbol_attribute(attr, new_name, ctx->var_symbol()->vs->symbol_range));
                 else
-                    SET_val.emplace(eval_ctx_.hlasm_ctx.get_data_attribute(attr, new_name));
+                    SET_val.emplace(eval_ctx_.hlasm_ctx.get_attribute_value_ca(attr, new_name));
             }
         }
         else if (attr == context::data_attr_kind::T)
@@ -340,7 +340,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
             if (!mngr.test_symbol_for_read(symbol, expr_subscript, ctx->var_symbol()->vs->symbol_range))
                 SET_val.emplace(std::string("U"));
 
-            auto t_attr_value = eval_ctx_.hlasm_ctx.get_data_attribute(attr, symbol, subscript).access_c();
+            auto t_attr_value = eval_ctx_.hlasm_ctx.get_attribute_value_ca(attr, symbol, subscript).access_c();
             if (t_attr_value == "U" && symbol)
             {
                 auto tmp_val = mngr.get_var_sym_value(name, expr_subscript, ctx->var_symbol()->vs->symbol_range);
@@ -363,13 +363,13 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
                 && !mngr.test_symbol_for_read(symbol, expr_subscript, ctx->var_symbol()->vs->symbol_range))
                 SET_val.emplace(1);
             else
-                SET_val.emplace(eval_ctx_.hlasm_ctx.get_data_attribute(attr, symbol, subscript));
+                SET_val.emplace(eval_ctx_.hlasm_ctx.get_attribute_value_ca(attr, symbol, subscript));
         }
     }
     else if (ctx->id())
     {
         symbol_name = ctx->id()->name;
-        if (context::symbol_attributes::ordinary_allowed(attr))
+        if (context::symbol_attributes::is_ordinary_attribute(attr))
         {
             auto symbol = eval_ctx_.hlasm_ctx.ord_ctx.get_symbol(symbol_name);
 
@@ -377,7 +377,7 @@ antlrcpp::Any expression_evaluator::visitData_attribute(parsing::hlasmparser::Da
         }
         else if (attr == context::data_attr_kind::D || attr == context::data_attr_kind::O)
         {
-            SET_val.emplace(eval_ctx_.hlasm_ctx.get_data_attribute(attr, ctx->id()->name));
+            SET_val.emplace(eval_ctx_.hlasm_ctx.get_attribute_value_ca(attr, ctx->id()->name));
         }
         else
         {

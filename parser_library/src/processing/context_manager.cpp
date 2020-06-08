@@ -247,6 +247,22 @@ context_manager::name_result context_manager::try_get_symbol_name(const std::str
     return std::make_pair(true, hlasm_ctx.ids().add(symbol.substr(0, i)));
 }
 
+context_manager::name_result context_manager::try_get_symbol_name_e(
+    const std::string& symbol, range symbol_range) const
+{
+    size_t i;
+    for (i = 0; i < symbol.size(); ++i)
+        if (!lexing::lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
+            break;
+
+    if (i == 0 || i > 63)
+    {
+        return std::make_pair(false, context::id_storage::empty_id);
+    }
+
+    return std::make_pair(true, hlasm_ctx.ids().add(symbol.substr(0, i)));
+}
+
 bool context_manager::test_symbol_for_read(
     context::var_sym_ptr var, const expressions::expr_list& subscript, const range& symbol_range) const
 {

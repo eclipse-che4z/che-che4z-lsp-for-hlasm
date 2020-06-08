@@ -45,6 +45,12 @@ public:
     virtual bool is_character_expression() const override;
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+
+private:
+    context::SET_t get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const;
+
+    context::SET_t evaluate_ordsym(context::id_index symbol, evaluation_context& eval_ctx) const;
+    context::SET_t evaluate_varsym(const semantics::vs_ptr& symbol, evaluation_context& eval_ctx) const;
 };
 
 
