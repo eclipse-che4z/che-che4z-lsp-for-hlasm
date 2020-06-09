@@ -612,6 +612,8 @@ struct diagnostic_op
     static diagnostic_op error_CE013(const range& range);
 
     static diagnostic_op error_CE014(const range& range);
+
+    static diagnostic_op error_CE015(const range& range);
 };
 
 struct range_uri_s

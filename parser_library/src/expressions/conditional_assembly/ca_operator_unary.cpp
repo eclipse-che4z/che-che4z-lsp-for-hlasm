@@ -79,18 +79,19 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
     }
     else if (expr_kind == context::SET_t_enum::C_TYPE)
     {
+        diagnostic_collector add_diagnostic(&eval_ctx, expr_range);
         switch (function)
         {
             case ca_expr_ops::BYTE:
-                return ca_function::BYTE(std::move(operand), expr_range, eval_ctx);
+                return ca_function::BYTE(operand.access_a(), add_diagnostic);
             case ca_expr_ops::DOUBLE:
-                return ca_function::DOUBLE(std::move(operand), expr_range, eval_ctx);
+                return ca_function::DOUBLE(operand.access_c(), add_diagnostic);
             case ca_expr_ops::LOWER:
-                return ca_function::LOWER(std::move(operand));
+                return ca_function::LOWER(std::move(operand.access_c()));
             case ca_expr_ops::SIGNED:
-                return ca_function::SIGNED(std::move(operand));
+                return ca_function::SIGNED(operand.access_a());
             case ca_expr_ops::UPPER:
-                return ca_function::UPPER(std::move(operand));
+                return ca_function::UPPER(std::move(operand.access_c()));
             default:
                 break;
         }

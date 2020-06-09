@@ -1907,6 +1907,11 @@ diagnostic_op diagnostic_op::error_CE014(const range& range)
     return diagnostic_op(diagnostic_severity::error, "CE014", "Arithmetic underflow", range);
 }
 
+diagnostic_op diagnostic_op::error_CE015(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE015", "Invalid self-defining term", range);
+}
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,

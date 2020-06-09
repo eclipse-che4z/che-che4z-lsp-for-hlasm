@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 
+#include <functional>
 #include <vector>
 
 #include "context/processing_context.h"
@@ -29,22 +30,32 @@ class diagnosable_ctx;
 // used to unify diagnostics collecting for checking objects
 class diagnostic_collector
 {
-    diagnosable_ctx* diagnoser_;
+    const diagnosable_ctx* diagnoser_;
     context::processing_stack_t location_stack_;
+    range diag_range_;
 
 public:
     // constructor with explicit location stack
     // used for outputing diagnostic of postponed statements
-    diagnostic_collector(diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
+    diagnostic_collector(const diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
 
     // constructor with implicit location stack (aquired from the diagnoser)
     // used for default statement checking
-    diagnostic_collector(diagnosable_ctx* diagnoser);
+    diagnostic_collector(const diagnosable_ctx* diagnoser);
+
+    // constructor with implicit location stack (aquired from the diagnoser) and implicit range for diagnostic
+    // used with combination with add() method to easily add multiple diagnostics without need to specify range
+    diagnostic_collector(const diagnosable_ctx* diagnoser, range diag_range);
 
     // constructor for collector that silences diagnostics
     diagnostic_collector();
 
     void operator()(diagnostic_op diagnostic) const;
+
+    void operator()(const std::function<diagnostic_op(range)>& f) const;
+
+private:
+    context::processing_stack_t get_location_stack() const;
 };
 
 } // namespace hlasm_plugin::parser_library

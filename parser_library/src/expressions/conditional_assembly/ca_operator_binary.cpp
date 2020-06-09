@@ -130,10 +130,10 @@ context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, contex
             case ca_expr_ops::SLL:
             case ca_expr_ops::SRA:
             case ca_expr_ops::SRL:
-                return ca_function::FIND(std::move(lhs), std::move(rhs));
+                return ca_function::FIND(lhs.access_c(), rhs.access_c());
             case ca_expr_ops::FIND:
             case ca_expr_ops::INDEX:
-                return ca_function::INDEX(std::move(lhs), std::move(rhs));
+                return ca_function::INDEX(lhs.access_c(), rhs.access_c());
             case ca_expr_ops::AND:
                 return lhs.access_a() & rhs.access_a();
             case ca_expr_ops::OR:

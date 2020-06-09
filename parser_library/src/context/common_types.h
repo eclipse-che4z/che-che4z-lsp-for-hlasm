@@ -107,6 +107,10 @@ public:
     A_t& access_a();
     B_t& access_b();
     C_t& access_c();
+
+    const A_t& access_a() const;
+    const B_t& access_b() const;
+    const C_t& access_c() const;
 };
 
 // just mock method for now, will be implemented later with respect to UTF/EBCDIC

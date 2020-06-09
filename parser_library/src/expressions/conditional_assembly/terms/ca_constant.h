@@ -15,7 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CA_CONSTANT_H
 #define HLASMPLUGIN_PARSERLIBRARY_CA_CONSTANT_H
 
+#include <string_view>
+
 #include "../ca_expression.h"
+#include "diagnosable_ctx.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -37,6 +40,12 @@ public:
     virtual bool is_character_expression() const override;
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+
+    static context::A_t self_defining_term(
+        char type, std::string_view value, range term_range, const diagnosable_ctx& diagnoser);
+
+    static context::A_t self_defining_term(
+        const std::string& value, range term_range, const diagnosable_ctx& diagnoser);
 };
 
 

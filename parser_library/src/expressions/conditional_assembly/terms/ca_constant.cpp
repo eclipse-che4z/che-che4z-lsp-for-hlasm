@@ -14,6 +14,8 @@
 
 #include "ca_constant.h"
 
+#include "ca_function.h"
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
@@ -39,6 +41,42 @@ void ca_constant::collect_diags() const { }
 bool ca_constant::is_character_expression() const { return false; }
 
 context::SET_t ca_constant::evaluate(evaluation_context&) const { return value; }
+
+context::A_t ca_constant::self_defining_term(
+    char type, std::string_view value, range term_range, const diagnosable_ctx& diagnoser)
+{
+    diagnostic_collector add_diagnostic(&diagnoser, term_range);
+
+    if (value.empty())
+        add_diagnostic(diagnostic_op::error_CE015);
+
+    switch (type)
+    {
+        case 'B':
+            return ca_function::B2A(value, add_diagnostic).access_a();
+        case 'C':
+            return ca_function::C2A(value, add_diagnostic).access_a();
+        case 'D':
+            return ca_function::D2A(value, add_diagnostic).access_a();
+        case 'X':
+            return ca_function::X2A(value, add_diagnostic).access_a();
+        default:
+            return context::object_traits<context::A_t>::default_v();
+    }
+}
+
+context::A_t ca_constant::self_defining_term(
+    const std::string& value, range term_range, const diagnosable_ctx& diagnoser)
+{
+    if (value.size() < 3)
+        return self_defining_term('D', value, term_range, diagnoser);
+    else if (value[1] == '\'' && value.back() == '\'')
+        return self_defining_term(
+            value.front(), std::string_view(value.c_str() + 1, value.size() - 3), term_range, diagnoser);
+    else
+        diagnoser.add_diagnostic(diagnostic_op::error_CE015(term_range));
+    return context::object_traits<context::A_t>::default_v();
+}
 
 } // namespace expressions
 } // namespace parser_library

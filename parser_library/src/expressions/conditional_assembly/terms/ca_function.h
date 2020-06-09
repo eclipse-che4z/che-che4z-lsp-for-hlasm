@@ -15,10 +15,12 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CA_FUNCTION_H
 #define HLASMPLUGIN_PARSERLIBRARY_CA_FUNCTION_H
 
+#include <string_view>
 #include <vector>
 
 #include "../ca_expr_policy.h"
 #include "../ca_expression.h"
+#include "checking/diagnostic_collector.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -45,43 +47,43 @@ public:
 
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 
-    static context::SET_t B2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t C2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t D2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t DCLEN(context::SET_t param);
-    static context::SET_t FIND(context::SET_t lhs, context::SET_t rhs);
-    static context::SET_t INDEX(context::SET_t lhs, context::SET_t rhs);
-    static context::SET_t ISBIN(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t ISDEC(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t ISHEX(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t ISSYM(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t X2A(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t A2B(context::SET_t param);
-    static context::SET_t A2C(context::SET_t param);
-    static context::SET_t A2D(context::SET_t param);
-    static context::SET_t A2X(context::SET_t param);
-    static context::SET_t B2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t B2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t B2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t BYTE(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t C2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t C2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t C2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t D2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t D2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t D2X(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t DCVAL(context::SET_t param);
-    static context::SET_t DEQUOTE(context::SET_t param);
-    static context::SET_t DOUBLE(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t ESYM(context::SET_t param);
-    static context::SET_t LOWER(context::SET_t param);
-    static context::SET_t SIGNED(context::SET_t param);
-    static context::SET_t SYSATTRA(context::SET_t param);
-    static context::SET_t SYSATTRP(context::SET_t param);
-    static context::SET_t UPPER(context::SET_t param);
-    static context::SET_t X2B(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t X2C(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
-    static context::SET_t X2D(context::SET_t param, range expr_range, evaluation_context& eval_ctx);
+    static context::SET_t B2A(std::string_view param, diagnostic_collector add_diagnostic);
+    static context::SET_t C2A(std::string_view param, diagnostic_collector add_diagnostic);
+    static context::SET_t D2A(std::string_view param, diagnostic_collector add_diagnostic);
+    static context::SET_t DCLEN(const context::C_t& param);
+    static context::SET_t FIND(const context::C_t& lhs, const context::C_t& rhs);
+    static context::SET_t INDEX(const context::C_t& lhs, const context::C_t& rhs);
+    static context::SET_t ISBIN(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t ISDEC(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t ISHEX(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t ISSYM(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t X2A(std::string_view param, diagnostic_collector add_diagnostic);
+    static context::SET_t A2B(context::A_t param);
+    static context::SET_t A2C(context::A_t param);
+    static context::SET_t A2D(context::A_t param);
+    static context::SET_t A2X(context::A_t param);
+    static context::SET_t B2C(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t B2D(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t B2X(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t BYTE(context::A_t param, diagnostic_collector add_diagnostic);
+    static context::SET_t C2B(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t C2D(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t C2X(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t D2B(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t D2C(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t D2X(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t DCVAL(const context::C_t& param);
+    static context::SET_t DEQUOTE(context::C_t param);
+    static context::SET_t DOUBLE(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t ESYM(const context::C_t& param);
+    static context::SET_t LOWER(context::C_t param);
+    static context::SET_t SIGNED(context::A_t param);
+    static context::SET_t SYSATTRA(const context::C_t& param);
+    static context::SET_t SYSATTRP(const context::C_t& param);
+    static context::SET_t UPPER(context::C_t param);
+    static context::SET_t X2B(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t X2C(const context::C_t& param, diagnostic_collector add_diagnostic);
+    static context::SET_t X2D(const context::C_t& param, diagnostic_collector add_diagnostic);
 
 private:
     context::SET_t get_ith_param(size_t idx, evaluation_context& eval_ctx) const;
