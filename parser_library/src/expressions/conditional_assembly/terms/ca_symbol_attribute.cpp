@@ -75,20 +75,16 @@ void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind)
     if (kind == context::SET_t_enum::C_TYPE && kind != expr_kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
-    {
-        // auto&& sym = std::get<semantics::vs_ptr>(symbol);
-        // for (auto&& expr : sym->subscript)
-        //    expr->resolve_expression_tree(context::SET_t_enum::SETA_type);
-    }
+        ca_var_sym::resolve_expression_tree_vs(std::get<semantics::vs_ptr>(symbol));
 }
 
 void ca_symbol_attribute::collect_diags() const
 {
     if (std::holds_alternative<semantics::vs_ptr>(symbol))
     {
-        // auto&& sym = std::get<semantics::vs_ptr>(symbol);
-        // for (auto&& expr : sym->subscript)
-        //    collect_diags_from_child(*expr);
+        auto&& sym = std::get<semantics::vs_ptr>(symbol);
+        for (auto&& expr : sym->subscript)
+            collect_diags_from_child(*expr);
     }
 }
 

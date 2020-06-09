@@ -14,6 +14,7 @@
 
 #include "variable_symbol.h"
 
+#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "processing/context_manager.h"
 
 namespace hlasm_plugin {
@@ -21,7 +22,7 @@ namespace parser_library {
 namespace semantics {
 
 basic_variable_symbol::basic_variable_symbol(
-    context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range)
+    context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(false, std::move(subscript), std::move(symbol_range))
     , name(name)
 { }
@@ -29,7 +30,7 @@ basic_variable_symbol::basic_variable_symbol(
 context::id_index basic_variable_symbol::evaluate_name(expressions::evaluation_context&) const { return name; }
 
 created_variable_symbol::created_variable_symbol(
-    concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range)
+    concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(true, std::move(subscript), std::move(symbol_range))
     , created_name(std::move(created_name))
 { }
@@ -67,8 +68,26 @@ vs_eval variable_symbol::evaluate_symbol(expressions::evaluation_context& eval_c
 {
     auto name = evaluate_name(eval_ctx);
     std::vector<context::A_t> eval_subscript;
-    // for (const auto& expr : subscript)
-    // eval_subscript.push_back(expr->evaluate(eval_ctx));
+    for (const auto& expr : subscript)
+    {
+        auto val = expr->evaluate(eval_ctx);
+        switch (val.type)
+        {
+            case context::SET_t_enum::A_TYPE:
+                eval_subscript.push_back(val.access_a());
+                break;
+            case context::SET_t_enum::B_TYPE:
+                eval_subscript.push_back(val.access_b() ? 1 : 0);
+                break;
+            case context::SET_t_enum::C_TYPE:
+                eval_subscript.push_back(
+                    expressions::ca_constant::self_defining_term(val.access_c(), expr->expr_range, eval_ctx));
+                break;
+            default:
+                eval_subscript.push_back(1);
+                break;
+        }
+    }
 
     return vs_eval(name, std::move(eval_subscript));
 }
@@ -85,7 +104,7 @@ context::SET_t variable_symbol::evaluate(expressions::evaluation_context& eval_c
 }
 
 variable_symbol::variable_symbol(
-    const bool created, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range)
+    const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : created(created)
     , subscript(std::move(subscript))
     , symbol_range(std::move(symbol_range))

@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "antlr4-runtime.h"
-
 #include "concatenation.h"
 #include "context/id_storage.h"
 #include "expressions/conditional_assembly/ca_expression.h"
@@ -44,7 +42,7 @@ struct variable_symbol
 {
     const bool created;
 
-    std::vector<antlr4::ParserRuleContext*> subscript;
+    std::vector<expressions::ca_expr_ptr> subscript;
 
     const range symbol_range;
 
@@ -59,15 +57,14 @@ struct variable_symbol
     virtual ~variable_symbol() = default;
 
 protected:
-    variable_symbol(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+    variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
     virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const = 0;
 };
 
 struct basic_variable_symbol : public variable_symbol
 {
-    basic_variable_symbol(
-        context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+    basic_variable_symbol(context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
     const context::id_index name;
 
@@ -77,7 +74,7 @@ struct basic_variable_symbol : public variable_symbol
 struct created_variable_symbol : public variable_symbol
 {
     created_variable_symbol(
-        concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
+        concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
     const concat_chain created_name;
 
@@ -88,4 +85,5 @@ struct created_variable_symbol : public variable_symbol
 } // namespace semantics
 } // namespace parser_library
 } // namespace hlasm_plugin
+
 #endif

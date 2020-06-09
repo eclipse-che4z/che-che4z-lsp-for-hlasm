@@ -30,8 +30,8 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     const semantics::vs_ptr& symbol, const context::dependency_solver& solver)
 {
     undef_sym_set tmp;
-    // for (auto&& expr : symbol->subscript)
-    //    tmp.merge(expr->get_undefined_attributed_symbols_vs(solver));
+    for (auto&& expr : symbol->subscript)
+        tmp.merge(expr->get_undefined_attributed_symbols(solver));
 
     if (symbol->created)
     {
@@ -43,22 +43,23 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     return tmp;
 }
 
+undef_sym_set ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr& symbol)
+{
+    for (auto&& expr : symbol->subscript)
+        expr->resolve_expression_tree(context::SET_t_enum::A_TYPE);
+}
+
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
     return get_undefined_attributed_symbols_vs(symbol, solver);
 }
 
-void ca_var_sym::resolve_expression_tree(context::SET_t_enum)
-{
-    // auto&& sym = std::get<semantics::vs_ptr>(symbol);
-    // for (auto&& expr : sym->subscript)
-    //    expr->resolve_expression_tree(context::SET_t_enum::SETA_type);
-}
+void ca_var_sym::resolve_expression_tree(context::SET_t_enum) { resolve_expression_tree_vs(symbol); }
 
 void ca_var_sym::collect_diags() const
 {
-    // for (auto&& expr : symbol->subscript)
-    //    collect_diags_from_child(*expr);
+    for (auto&& expr : symbol->subscript)
+        collect_diags_from_child(*expr);
 }
 
 bool ca_var_sym::is_character_expression() const { return false; }

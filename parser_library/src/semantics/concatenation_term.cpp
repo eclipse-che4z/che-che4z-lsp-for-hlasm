@@ -14,6 +14,8 @@
 
 #include "concatenation_term.h"
 
+#include <cassert>
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
