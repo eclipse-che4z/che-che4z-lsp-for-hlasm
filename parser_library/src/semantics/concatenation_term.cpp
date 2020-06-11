@@ -36,16 +36,20 @@ std::string var_sym_conc::evaluate(expressions::evaluation_context& eval_ctx) co
 {
     auto value = symbol->evaluate(eval_ctx);
 
-    switch (value.type)
+    return evaluate(std::move(value));
+}
+
+std::string var_sym_conc::evaluate(context::SET_t varsym_value)
+{
+    switch (varsym_value.type)
     {
         case context::SET_t_enum::A_TYPE:
-            return std::to_string(std::abs(value.access_a()));
+            return std::to_string(std::abs(varsym_value.access_a()));
         case context::SET_t_enum::B_TYPE:
-            return value.access_b() ? "1" : "0";
+            return varsym_value.access_b() ? "1" : "0";
         case context::SET_t_enum::C_TYPE:
-            return std::move(value.access_c());
+            return std::move(varsym_value.access_c());
         default:
-            assert(false);
             return "";
     }
 }

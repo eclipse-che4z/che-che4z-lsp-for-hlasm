@@ -16,6 +16,7 @@
 
 #include "processing/context_manager.h"
 #include "processing/instruction_sets/asm_processor.h"
+#include "processing/instruction_sets/macro_processor.h"
 #include "processing/statement.h"
 #include "semantics/concatenation.h"
 #include "semantics/statement.h"
@@ -193,7 +194,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     return std::make_pair(format, op_code());
 }
 
-void macrodef_processor::collect_diags() const {}
+void macrodef_processor::collect_diags() const { }
 
 void macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {
@@ -295,11 +296,13 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
         auto tmp = op->access_mac();
         assert(tmp);
 
-        semantics::concatenation_point::clear_concat_chain(tmp->chain);
+        auto& tmp_chain = tmp->chain;
 
-        if (tmp->chain.size() == 1 && tmp->chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
+        semantics::concatenation_point::clear_concat_chain(tmp_chain);
+
+        if (tmp_chain.size() == 1 && tmp_chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
         {
-            auto var = tmp->chain[0]->access_var()->symbol.get();
+            auto var = tmp_chain[0]->access_var()->symbol.get();
 
             if (var->created || !var->subscript.empty())
             {
@@ -321,16 +324,16 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
             }
         }
-        else if (tmp->chain.size() == 0) // if operand is empty
+        else if (tmp_chain.size() == 0) // if operand is empty
         {
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
         }
-        else if (tmp->chain.size() > 1)
+        else if (tmp_chain.size() > 1)
         {
-            if (tmp->chain[0]->type == semantics::concat_type::VAR
-                && tmp->chain[1]->type == semantics::concat_type::EQU) // if operand is in form of key param
+            if (tmp_chain[0]->type == semantics::concat_type::VAR
+                && tmp_chain[1]->type == semantics::concat_type::EQU) // if operand is in form of key param
             {
-                auto var = tmp->chain[0]->access_var()->symbol.get();
+                auto var = tmp_chain[0]->access_var()->symbol.get();
 
                 if (var->created || !var->subscript.empty())
                 {
@@ -349,13 +352,11 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
                 {
                     param_names.push_back(var_id);
 
-                    semantics::concat_chain tmp_chain = semantics::concatenation_point::clone(tmp->chain);
-
-                    tmp_chain.erase(tmp_chain.begin());
-                    tmp_chain.erase(tmp_chain.begin());
-
                     result_.prototype.symbolic_params.emplace_back(
-                        mngr.create_macro_data(std::move(tmp_chain)), var_id);
+                        macro_processor::create_macro_data(tmp_chain.begin() + 2,
+                            tmp_chain.end(),
+                            ranged_diagnostic_collector(this, op->operand_range)),
+                        var_id);
                 }
             }
             else

@@ -67,67 +67,14 @@ private:
         context::set_symbol_base*& set_symbol,
         context::id_index& name);
     bool prepare_SET_operands(
-        const semantics::complete_statement& stmt, std::vector<context::SET_t>& values, std::vector<range>& ranges);
-    context::SET_t convert_SET_operand(context::SET_t& value, context::SET_t_enum type, range operand_range);
-    template<typename T> T convert_SET_operand_to(context::SET_t& value, range operand_range)
-    {
-        auto tmp = convert_SET_operand(value, context::object_traits<T>::type_enum, operand_range);
+        const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values);
 
-        if constexpr (std::is_same_v<T, context::A_t>)
-            return tmp.access_a();
-        if constexpr (std::is_same_v<T, context::B_t>)
-            return tmp.access_b();
-        if constexpr (std::is_same_v<T, context::C_t>)
-            return std::move(tmp.access_c());
-    }
-
-    template<typename T> void process_SET(const semantics::complete_statement& stmt)
-    {
-        std::vector<context::SET_t> values;
-        std::vector<range> ranges;
-        int index;
-        context::id_index name;
-        context::set_symbol_base* set_symbol;
-        bool ok = prepare_SET_symbol(stmt, context::object_traits<T>::type_enum, index, set_symbol, name);
-
-        if (!ok)
-            return;
-
-        if (!set_symbol)
-            set_symbol = mngr_.hlasm_ctx.create_local_variable<T>(name, index == -1).get();
-
-        ok = prepare_SET_operands(stmt, values, ranges);
-
-        if (!ok)
-            return;
-
-        for (size_t i = 0; i < values.size(); i++)
-            set_symbol->access_set_symbol<T>()->set_value(
-                convert_SET_operand_to<T>(values[i], ranges[i]), index - 1 + i);
-    }
+    template<typename T> void process_SET(const semantics::complete_statement& stmt);
 
     bool prepare_GBL_LCL(
         const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info);
 
-    template<typename T, bool global> void process_GBL_LCL(const semantics::complete_statement& stmt)
-    {
-        register_seq_sym(stmt);
-
-        std::vector<context::id_index> ids;
-        std::vector<bool> scalar_info;
-        bool ok = prepare_GBL_LCL(stmt, ids, scalar_info);
-
-        if (!ok)
-            return;
-
-        for (size_t i = 0; i < ids.size(); ++i)
-        {
-            if (global)
-                hlasm_ctx.create_global_variable<T>(ids[i], scalar_info[i]);
-            else
-                hlasm_ctx.create_local_variable<T>(ids[i], scalar_info[i]);
-        }
-    }
+    template<typename T, bool global> void process_GBL_LCL(const semantics::complete_statement& stmt);
 
     void process_ANOP(const semantics::complete_statement& stmt);
 
@@ -156,6 +103,49 @@ private:
 
     virtual void collect_diags() const override;
 };
+
+template<typename T> inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
+{
+    std::vector<expressions::ca_expression*> expr_values;
+    int index;
+    context::id_index name;
+    context::set_symbol_base* set_symbol;
+    bool ok = prepare_SET_symbol(stmt, context::object_traits<T>::type_enum, index, set_symbol, name);
+
+    if (!ok)
+        return;
+
+    if (!set_symbol)
+        set_symbol = mngr_.hlasm_ctx.create_local_variable<T>(name, index == -1).get();
+
+    ok = prepare_SET_operands(stmt, expr_values);
+
+    if (!ok)
+        return;
+
+    for (size_t i = 0; i < expr_values.size(); i++)
+        set_symbol->access_set_symbol<T>()->set_value(expr_values[i]->evaluate<T>(eval_ctx), index - 1 + i);
+}
+
+template<typename T, bool global> inline void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
+{
+    register_seq_sym(stmt);
+
+    std::vector<context::id_index> ids;
+    std::vector<bool> scalar_info;
+    bool ok = prepare_GBL_LCL(stmt, ids, scalar_info);
+
+    if (!ok)
+        return;
+
+    for (size_t i = 0; i < ids.size(); ++i)
+    {
+        if (global)
+            hlasm_ctx.create_global_variable<T>(ids[i], scalar_info[i]);
+        else
+            hlasm_ctx.create_local_variable<T>(ids[i], scalar_info[i]);
+    }
+}
 
 } // namespace processing
 } // namespace parser_library

@@ -53,7 +53,8 @@ public:
     virtual ~ca_expression() = default;
 
 private:
-    bool test_return_types(const context::SET_t& retval, context::SET_t_enum type, evaluation_context& eval_ctx) const;
+    context::SET_t convert_return_types(
+        context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const;
 };
 
 
@@ -62,8 +63,7 @@ template<typename T> inline T ca_expression::evaluate(evaluation_context& eval_c
     static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
     auto ret = evaluate(eval_ctx);
 
-    if (!test_return_types(ret, context::object_traits<T>::type_enum, eval_ctx))
-        return context::object_traits<T>::default_v();
+    ret = convert_return_types(std::move(ret), context::object_traits<T>::type_enum, eval_ctx);
 
     if constexpr (context::object_traits<T>::type_enum == context::SET_t_enum::A_TYPE)
         return ret.access_a();

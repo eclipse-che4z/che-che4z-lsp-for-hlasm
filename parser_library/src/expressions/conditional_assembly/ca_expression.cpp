@@ -15,6 +15,7 @@
 #include "ca_expression.h"
 
 #include "expressions/evaluation_context.h"
+#include "terms/ca_constant.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -25,15 +26,31 @@ ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
     , expr_kind(expr_kind)
 { }
 
-bool ca_expression::test_return_types(
-    const context::SET_t& retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
+context::SET_t ca_expression::convert_return_types(
+    context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
 {
-    if (type != retval.type)
+    if (type == context::SET_t_enum::A_TYPE)
+    {
+        switch (retval.type)
+        {
+            case context::SET_t_enum::A_TYPE:
+                return retval;
+            case context::SET_t_enum::B_TYPE:
+                return retval.access_b() ? 1 : 0;
+            case context::SET_t_enum::C_TYPE:
+                return expressions::ca_constant::self_defining_term(
+                    retval.access_c(), ranged_diagnostic_collector(&eval_ctx, expr_range));
+            default:
+                eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+                return context::SET_t();
+        }
+    }
+    else if (type != retval.type)
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-        return false;
+        return context::SET_t();
     }
-    return true;
+    return std::move(retval);
 }
 
 } // namespace expressions

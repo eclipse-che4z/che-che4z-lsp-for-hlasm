@@ -43,14 +43,12 @@ bool ca_constant::is_character_expression() const { return false; }
 context::SET_t ca_constant::evaluate(evaluation_context&) const { return value; }
 
 context::A_t ca_constant::self_defining_term(
-    char type, std::string_view value, range term_range, const diagnosable_ctx& diagnoser)
+    std::string_view type, std::string_view value, ranged_diagnostic_collector add_diagnostic)
 {
-    diagnostic_collector add_diagnostic(&diagnoser, term_range);
-
-    if (value.empty())
+    if (value.empty() || type.size() != 1)
         add_diagnostic(diagnostic_op::error_CE015);
 
-    switch (type)
+    switch (type.front())
     {
         case 'B':
             return ca_function::B2A(value, add_diagnostic).access_a();
@@ -61,21 +59,31 @@ context::A_t ca_constant::self_defining_term(
         case 'X':
             return ca_function::X2A(value, add_diagnostic).access_a();
         default:
+            add_diagnostic(diagnostic_op::error_CE015);
             return context::object_traits<context::A_t>::default_v();
     }
 }
 
-context::A_t ca_constant::self_defining_term(
-    const std::string& value, range term_range, const diagnosable_ctx& diagnoser)
+context::A_t ca_constant::self_defining_term(const std::string& value, ranged_diagnostic_collector add_diagnostic)
 {
     if (value.size() < 3)
-        return self_defining_term('D', value, term_range, diagnoser);
+        return self_defining_term("D", value, add_diagnostic);
     else if (value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
-            value.front(), std::string_view(value.c_str() + 1, value.size() - 3), term_range, diagnoser);
+            std::string_view(value.c_str(), 1), std::string_view(value.c_str() + 1, value.size() - 3), add_diagnostic);
     else
-        diagnoser.add_diagnostic(diagnostic_op::error_CE015(term_range));
+        add_diagnostic(diagnostic_op::error_CE015);
     return context::object_traits<context::A_t>::default_v();
+}
+
+std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)
+{
+    auto empty_add = ranged_diagnostic_collector();
+    auto ret = self_defining_term(value, empty_add);
+    if (empty_add.diagnostics_present)
+        return std::nullopt;
+    else
+        return ret;
 }
 
 } // namespace expressions

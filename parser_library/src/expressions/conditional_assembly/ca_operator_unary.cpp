@@ -79,7 +79,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
     }
     else if (expr_kind == context::SET_t_enum::C_TYPE)
     {
-        diagnostic_collector add_diagnostic(&eval_ctx, expr_range);
+        ranged_diagnostic_collector add_diagnostic(&eval_ctx, expr_range);
         switch (function)
         {
             case ca_expr_ops::BYTE:

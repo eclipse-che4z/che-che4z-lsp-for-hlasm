@@ -15,6 +15,7 @@
 #ifndef PROCESSING_MACRO_PROCESSOR_H
 #define PROCESSING_MACRO_PROCESSOR_H
 
+#include "checking/ranged_diagnostic_collector.h"
 #include "context/macro.h"
 #include "instruction_processor.h"
 
@@ -40,6 +41,14 @@ public:
     virtual void process(context::shared_stmt_ptr stmt) override;
 
     static context::macro_data_ptr string_to_macrodata(std::string data);
+
+    static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
+        semantics::concat_chain::const_iterator end,
+        ranged_diagnostic_collector add_diagnostic);
+
+    static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
+        semantics::concat_chain::const_iterator end,
+        expressions::evaluation_context& eval_ctx);
 
 private:
     macro_arguments get_args(const resolved_statement& statement) const;

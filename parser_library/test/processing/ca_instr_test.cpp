@@ -114,8 +114,8 @@ TEST(var_subs, set_to_var_idx)
     auto it = ctx.ids().find("var");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
-    std::vector<expr_ptr> subscript1;
-    subscript1.push_back(make_arith(2));
+    std::vector<A_t> subscript1;
+    subscript1.push_back(2);
     int tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
     EXPECT_EQ(tmp, 3);
 }
@@ -141,16 +141,16 @@ TEST(var_subs, set_to_var_idx_many)
     ASSERT_TRUE(ctx.get_var_sym(it));
 
     int tmp;
-    std::vector<expr_ptr> subscript1;
-    subscript1.push_back(make_arith(2));
+    std::vector<A_t> subscript1;
+    subscript1.push_back(2);
     tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
     EXPECT_EQ(tmp, 3);
-    std::vector<expr_ptr> subscript2;
-    subscript2.push_back(make_arith(3));
+    std::vector<A_t> subscript2;
+    subscript2.push_back(3);
     tmp = m.get_var_sym_value(it, std::move(subscript2), {}).access_a();
     EXPECT_EQ(tmp, 4);
-    std::vector<expr_ptr> subscript3;
-    subscript3.push_back(make_arith(4));
+    std::vector<A_t> subscript3;
+    subscript3.push_back(4);
     tmp = m.get_var_sym_value(it, std::move(subscript3), {}).access_a();
     EXPECT_EQ(tmp, 5);
 }

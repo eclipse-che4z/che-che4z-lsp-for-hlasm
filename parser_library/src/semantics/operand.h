@@ -426,9 +426,9 @@ struct var_ca_operand final : public ca_operand
 // CA expression operand
 struct expr_ca_operand final : public ca_operand
 {
-    expr_ca_operand(antlr4::ParserRuleContext* expression, const range operand_range);
+    expr_ca_operand(expressions::ca_expr_ptr expression, const range operand_range);
 
-    antlr4::ParserRuleContext* expression;
+    expressions::ca_expr_ptr expression;
 };
 
 // CA sequence symbol operand
@@ -442,10 +442,10 @@ struct seq_ca_operand final : public ca_operand
 // CA branching operand (i.e. (5).here)
 struct branch_ca_operand final : public ca_operand
 {
-    branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, const range operand_range);
+    branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, const range operand_range);
 
     seq_sym sequence_symbol;
-    antlr4::ParserRuleContext* expression;
+    expressions::ca_expr_ptr expression;
 };
 
 

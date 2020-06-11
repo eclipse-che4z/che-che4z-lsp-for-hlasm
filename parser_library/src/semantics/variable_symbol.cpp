@@ -70,23 +70,8 @@ vs_eval variable_symbol::evaluate_symbol(expressions::evaluation_context& eval_c
     std::vector<context::A_t> eval_subscript;
     for (const auto& expr : subscript)
     {
-        auto val = expr->evaluate(eval_ctx);
-        switch (val.type)
-        {
-            case context::SET_t_enum::A_TYPE:
-                eval_subscript.push_back(val.access_a());
-                break;
-            case context::SET_t_enum::B_TYPE:
-                eval_subscript.push_back(val.access_b() ? 1 : 0);
-                break;
-            case context::SET_t_enum::C_TYPE:
-                eval_subscript.push_back(
-                    expressions::ca_constant::self_defining_term(val.access_c(), expr->expr_range, eval_ctx));
-                break;
-            default:
-                eval_subscript.push_back(1);
-                break;
-        }
+        auto val = expr->evaluate<context::A_t>(eval_ctx);
+        eval_subscript.push_back(val);
     }
 
     return vs_eval(name, std::move(eval_subscript));

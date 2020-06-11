@@ -16,9 +16,9 @@
 
 #include "concatenation_term.h"
 
-using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin {
+namespace parser_library {
+namespace semantics {
 
 concatenation_point::concatenation_point(const concat_type type)
     : type(type)
@@ -51,9 +51,15 @@ sublist_conc* concatenation_point::access_sub()
 
 std::string concatenation_point::evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx)
 {
+    return evaluate(chain.begin(), chain.end(), eval_ctx);
+}
+
+std::string concatenation_point::evaluate(
+    concat_chain::const_iterator begin, concat_chain::const_iterator end, expressions::evaluation_context& eval_ctx)
+{
     std::string ret;
-    for (auto& point : chain)
-        ret.append(point->evaluate(eval_ctx));
+    for (auto it = begin; it != end; ++it)
+        ret.append((*it)->evaluate(eval_ctx));
     return ret;
 }
 
@@ -71,11 +77,14 @@ void concatenation_point::clear_concat_chain(concat_chain& chain)
     chain.resize(offset);
 }
 
-std::string concatenation_point::to_string(const concat_chain& chain)
+std::string concatenation_point::to_string(const concat_chain& chain) { return to_string(chain.begin(), chain.end()); }
+
+std::string concatenation_point::to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end)
 {
     std::string ret;
-    for (auto& point : chain)
+    for (auto it = begin; it != end; ++it)
     {
+        auto&& point = *it;
         switch (point->type)
         {
             case concat_type::DOT:
@@ -111,10 +120,12 @@ std::string concatenation_point::to_string(const concat_chain& chain)
     return ret;
 }
 
-var_sym_conc* concatenation_point::contains_var_sym(const concat_chain& chain)
+var_sym_conc* concatenation_point::contains_var_sym(
+    concat_chain::const_iterator begin, concat_chain::const_iterator end)
 {
-    for (const auto& point : chain)
+    for (auto it = begin; it != end; ++it)
     {
+        auto&& point = *it;
         if (point->type == concat_type::VAR)
         {
             return point->access_var();
@@ -123,7 +134,7 @@ var_sym_conc* concatenation_point::contains_var_sym(const concat_chain& chain)
         {
             for (const auto& entry : point->access_sub()->list)
             {
-                auto tmp = contains_var_sym(entry);
+                auto tmp = contains_var_sym(entry.begin(), entry.end());
                 if (tmp)
                     return tmp;
             }
@@ -134,50 +145,6 @@ var_sym_conc* concatenation_point::contains_var_sym(const concat_chain& chain)
     return nullptr;
 }
 
-concat_chain concatenation_point::clone(const concat_chain& chain)
-{
-    concat_chain res;
-    res.reserve(chain.size());
-
-    for (auto& point : chain)
-    {
-        switch (point->type)
-        {
-            case concat_type::DOT:
-                res.push_back(std::make_unique<dot_conc>());
-                break;
-            case concat_type::EQU:
-                res.push_back(std::make_unique<equals_conc>());
-                break;
-            case concat_type::STR:
-                res.push_back(std::make_unique<char_str_conc>(point->access_str()->value));
-                break;
-            case concat_type::SUB: {
-                std::vector<concat_chain> tmp;
-                for (auto& ch : point->access_sub()->list)
-                    tmp.emplace_back(clone(ch));
-                res.push_back(std::make_unique<sublist_conc>(std::move(tmp)));
-            }
-            break;
-            case concat_type::VAR:
-                if (!point->access_var()->symbol->created)
-                {
-                    auto tmp = point->access_var()->symbol->access_basic();
-                    auto symbol = std::make_unique<basic_variable_symbol>(tmp->name, tmp->subscript, tmp->symbol_range);
-                    res.push_back(std::make_unique<var_sym_conc>(std::move(symbol)));
-                }
-                else
-                {
-                    auto tmp = point->access_var()->symbol->access_created();
-                    auto symbol = std::make_unique<created_variable_symbol>(
-                        clone(tmp->created_name), tmp->subscript, tmp->symbol_range);
-                    res.push_back(std::make_unique<var_sym_conc>(std::move(symbol)));
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    return res;
-}
+} // namespace semantics
+} // namespace parser_library
+} // namespace hlasm_plugin

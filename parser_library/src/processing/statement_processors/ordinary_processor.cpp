@@ -179,6 +179,7 @@ void ordinary_processor::collect_diags() const
     collect_diags_from_child(asm_proc_);
     collect_diags_from_child(mac_proc_);
     collect_diags_from_child(mach_proc_);
+    collect_diags_from_child(eval_ctx);
 }
 
 void ordinary_processor::check_postponed_statements(std::vector<context::post_stmt_ptr> stmts)
@@ -236,9 +237,7 @@ bool ordinary_processor::check_fatals(range line_range)
 context::id_index ordinary_processor::resolve_instruction(
     const semantics::concat_chain& chain, range instruction_range) const
 {
-    context_manager ctx_mngr(hlasm_ctx);
-    auto tmp = ctx_mngr.concatenate_str(chain, eval_ctx);
-    collect_diags_from_child(ctx_mngr);
+    auto tmp = semantics::concatenation_point::evaluate(chain, eval_ctx);
 
     // trimright
     while (tmp.size() && tmp.back() == ' ')

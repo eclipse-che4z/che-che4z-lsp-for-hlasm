@@ -41,7 +41,7 @@ public:
 
     static undef_sym_set get_undefined_attributed_symbols_vs(
         const semantics::vs_ptr& symbol, const context::dependency_solver& solver);
-    static undef_sym_set resolve_expression_tree_vs(const semantics::vs_ptr& symbol);
+    static void resolve_expression_tree_vs(const semantics::vs_ptr& symbol);
 };
 
 

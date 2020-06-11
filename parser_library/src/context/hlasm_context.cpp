@@ -15,19 +15,17 @@
 #include "hlasm_context.h"
 
 #include <ctime>
+#include <stdexcept>
 
-#include "diagnosable_impl.h"
 #include "ebcdic_encoding.h"
-#include "expressions/arithmetic_expression.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "instruction.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 code_scope* hlasm_context::curr_scope() { return &scope_stack_.back(); }
 
 const code_scope* hlasm_context::curr_scope() const { return &scope_stack_.back(); }
-
 
 hlasm_context::instruction_storage hlasm_context::init_instruction_map()
 {
@@ -509,8 +507,8 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     if (value.empty())
         return "O";
 
-    auto res = expressions::arithmetic_expression::from_string(value, false);
-    if (!res->diag)
+    auto res = expressions::ca_constant::try_self_defining_term(value);
+    if (!res)
         return "N";
 
     id_index symbol_name = ids_.add(std::move(value));
@@ -646,3 +644,5 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 }
 
 const code_scope& hlasm_context::current_scope() const { return *curr_scope(); }
+
+} // namespace hlasm_plugin::parser_library::context

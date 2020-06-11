@@ -17,7 +17,7 @@
 #include <cctype>
 
 #include "error_strategy.h"
-#include "expressions/arithmetic_expression.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parser_error_listener_ctx.h"
@@ -38,7 +38,7 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , parent_(nullptr)
     , last_line_processed_(false)
     , line_end_pushed_(false)
-{}
+{ }
 
 void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc)
 {
@@ -177,7 +177,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         semantics::remarks_si(rem_range, std::move(line.remarks)));
 }
 
-void parser_impl::collect_diags() const {}
+void parser_impl::collect_diags() const { }
 
 
 
@@ -213,16 +213,12 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    auto ae = expressions::arithmetic_expression::from_string(option, value, false); // could generate diagnostic + DBCS
-    if (ae->has_error())
-    {
-        ae->diag->diag_range = term_range;
-        add_diagnostic(diagnostic_s(ctx->opencode_file_name(), *ae->diag));
-    }
-    else
-        return ae->get_numeric_value();
+    ranged_diagnostic_collector add_diagnostic(this, term_range);
+    auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
-    return 0;
+    if (add_diagnostic.diagnostics_present)
+        diags().back().file_name = ctx->opencode_file_name();
+    return val;
 }
 
 context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range data_range)
@@ -650,4 +646,4 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return antlr4::Parser::getExpectedTokens();
 }
 
-parser_holder::~parser_holder() {}
+parser_holder::~parser_holder() { }

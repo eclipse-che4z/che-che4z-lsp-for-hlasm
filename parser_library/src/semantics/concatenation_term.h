@@ -43,6 +43,8 @@ struct var_sym_conc : public concatenation_point
     vs_ptr symbol;
 
     virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
+
+    static std::string evaluate(context::SET_t varsym_value);
 };
 
 // concatenation point representing dot

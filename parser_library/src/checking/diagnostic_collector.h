@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 
-#include <functional>
 #include <vector>
 
 #include "context/processing_context.h"
@@ -43,16 +42,10 @@ public:
     // used for default statement checking
     diagnostic_collector(const diagnosable_ctx* diagnoser);
 
-    // constructor with implicit location stack (aquired from the diagnoser) and implicit range for diagnostic
-    // used with combination with add() method to easily add multiple diagnostics without need to specify range
-    diagnostic_collector(const diagnosable_ctx* diagnoser, range diag_range);
-
     // constructor for collector that silences diagnostics
     diagnostic_collector();
 
     void operator()(diagnostic_op diagnostic) const;
-
-    void operator()(const std::function<diagnostic_op(range)>& f) const;
 
 private:
     context::processing_stack_t get_location_stack() const;

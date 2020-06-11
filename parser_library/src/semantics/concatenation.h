@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "context/common_types.h"
+
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
@@ -57,10 +59,9 @@ struct concatenation_point
     static void clear_concat_chain(concat_chain& conc_list);
 
     static std::string to_string(const concat_chain& chain);
+    static std::string to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static var_sym_conc* contains_var_sym(const concat_chain& chain);
-
-    static concat_chain clone(const concat_chain& chain);
+    static var_sym_conc* contains_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
     const concat_type type;
 
@@ -73,6 +74,9 @@ struct concatenation_point
     sublist_conc* access_sub();
 
     static std::string evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx);
+    static std::string evaluate(concat_chain::const_iterator begin,
+        concat_chain::const_iterator end,
+        expressions::evaluation_context& eval_ctx);
 
     virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const = 0;
 

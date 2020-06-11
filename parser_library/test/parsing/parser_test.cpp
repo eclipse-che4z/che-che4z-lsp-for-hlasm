@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-#include "expressions/visitors/expression_evaluator.h"
 #include "parsing/parser_tools.h"
 
 // tests for
