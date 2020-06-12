@@ -39,22 +39,7 @@ TEST_F(library_test, expression_test)
 {
     std::string tcase = "expression_test";
 
-    setup(tcase);
-    auto tree = holder->parser().expr_test();
-    context_manager m(holder->context());
-    empty_attribute_provider attr_mock;
-    auto v = std::make_unique<expression_evaluator>(
-        evaluation_context { holder->context(), attr_mock, empty_parse_lib_provider::instance });
-    auto id = holder->context().ids().add("TEST_VAR");
-    holder->context().create_local_variable<int>(id, true);
-    holder->context().get_var_sym(id)->access_set_symbol_base()->access_set_symbol<A_t>()->set_value(11);
-
-    auto res = v->visit(tree).as<std::string>();
-    res.erase(std::remove(res.begin(), res.end(), '\r'), res.end());
-    ASSERT_EQ(res, get_content("test/library/output/" + tcase + ".output"));
-
-    // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
+    ASSERT_TRUE(false);
 }
 
 // 3 instruction statements and 3 EOLLN
