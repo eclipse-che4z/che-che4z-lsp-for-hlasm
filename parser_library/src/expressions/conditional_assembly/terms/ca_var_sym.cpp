@@ -43,11 +43,7 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     return tmp;
 }
 
-void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr& symbol)
-{
-    for (auto&& expr : symbol->subscript)
-        expr->resolve_expression_tree(context::SET_t_enum::A_TYPE);
-}
+void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr& symbol) { }
 
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {

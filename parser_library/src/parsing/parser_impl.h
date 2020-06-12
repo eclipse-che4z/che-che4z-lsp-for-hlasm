@@ -81,6 +81,10 @@ protected:
     context::id_index parse_identifier(std::string value, range id_range);
     void parse_macro_operands(semantics::op_rem& line);
 
+    void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type);
+    void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type);
+    void resolve_expression(expressions::ca_expr_ptr& expr);
+
     void process_instruction();
     void process_statement();
     void process_statement(semantics::op_rem line, range op_range);

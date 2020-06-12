@@ -136,6 +136,7 @@ subscript returns [std::vector<ca_expr_ptr> value]
 	: lpar expr_comma_c rpar
 	{
 		$value = std::move($expr_comma_c.ca_exprs);
+		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
 	| ;
 
@@ -224,7 +225,11 @@ var_def_substr returns [std::vector<ca_expr_ptr> value]
 
 
 ca_dupl_factor returns [ca_expr_ptr value]
-	: lpar expr rpar							{$value =std::move($expr.ca_expr);}										
+	: lpar expr rpar							
+	{
+		$value =std::move($expr.ca_expr);
+		resolve_expression($value, context::SET_t_enum::A_TYPE);
+	}										
 	|;
 
 substring returns [expressions::ca_string::substring_t value]
@@ -233,11 +238,14 @@ substring returns [expressions::ca_string::substring_t value]
 		$value.start = std::move($e1.ca_expr);
 		$value.count = std::move($e2.ca_expr);
 		$value.substring_range = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());
+		resolve_expression($value.start, context::SET_t_enum::A_TYPE);
+		resolve_expression($value.count, context::SET_t_enum::A_TYPE);
 	}
 	| lpar expr comma ASTERISK rpar
 	{
 		$value.start = std::move($expr.ca_expr);
 		$value.substring_range = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());
+		resolve_expression($value.start, context::SET_t_enum::A_TYPE);
 	}
 	|;
 

@@ -50,15 +50,6 @@ void ca_string::resolve_expression_tree(context::SET_t_enum kind)
 {
     if (expr_kind != kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
-    else
-    {
-        if (duplication_factor)
-            duplication_factor->resolve_expression_tree(context::SET_t_enum::A_TYPE);
-        if (substring.start)
-            substring.start->resolve_expression_tree(context::SET_t_enum::A_TYPE);
-        if (substring.count)
-            substring.count->resolve_expression_tree(context::SET_t_enum::A_TYPE);
-    }
 }
 
 void ca_string::collect_diags() const

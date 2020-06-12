@@ -22,6 +22,7 @@ ca_op returns [operand_ptr op]
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
 		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 
+		resolve_expression($expr_list.ca_expr);
 		auto r = provider.get_range($expr_list.ctx->getStart(),$seq_symbol.ctx->getStop());
 		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss), std::move($expr_list.ca_expr), r);
 	}
@@ -33,6 +34,7 @@ ca_op returns [operand_ptr op]
 	}
 	| {!is_var_def()}? expr
 	{
+		resolve_expression($expr.ca_expr);
 		$op = std::make_unique<expr_ca_operand>(std::move($expr.ca_expr), provider.get_range($expr.ctx));
 	}
 	| { is_var_def()}? var_def
