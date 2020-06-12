@@ -23,7 +23,6 @@ namespace expressions {
 ca_string::substring_t::substring_t()
     : start(nullptr)
     , count(nullptr)
-    , to_end(false)
     , substring_range()
 { }
 

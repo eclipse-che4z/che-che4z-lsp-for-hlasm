@@ -192,6 +192,8 @@ public:
     static context::SET_t_enum get_function_type(ca_expr_funcs func);
 
     static context::SET_t_enum get_operands_type(ca_expr_ops op, context::SET_t_enum expr_kind);
+
+    static ca_expr_funcs get_function(const std::string& symbol);
 };
 
 template<typename T> struct ca_expr_traits

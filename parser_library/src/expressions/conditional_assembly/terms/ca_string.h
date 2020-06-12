@@ -28,7 +28,6 @@ public:
     struct substring_t
     {
         ca_expr_ptr start, count;
-        bool to_end;
         range substring_range;
         substring_t();
     };

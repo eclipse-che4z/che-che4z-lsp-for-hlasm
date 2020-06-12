@@ -277,8 +277,8 @@ plus
 
 
 expr_statement
-	: expr_p
-	| tmp=expr_statement EOLLN expr_p
+	: expr
+	| tmp=expr_statement EOLLN expr
 	;
 
 expr_test

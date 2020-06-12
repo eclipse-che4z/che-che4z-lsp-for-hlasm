@@ -299,62 +299,22 @@ ca_expr_ops get_expr_operator(const std::string& op)
     return ca_expr_ops::UNKNOWN;
 }
 
-
 ca_expr_ops ca_arithmetic_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
 ca_expr_ops ca_binary_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
 ca_expr_ops ca_character_policy::get_operator(const std::string& symbol) { return get_expr_operator(symbol); }
 
-// string to func
-#define S2F(X)                                                                                                         \
-    if (op == "X")                                                                                                     \
-    return ca_expr_funcs::X
-
-ca_expr_funcs get_expr_function(const std::string& op)
+ca_expr_funcs ca_arithmetic_policy::get_function(const std::string& symbol)
 {
-    S2F(B2A);
-    S2F(C2A);
-    S2F(D2A);
-    S2F(DCLEN);
-    S2F(FIND);
-    S2F(INDEX);
-    S2F(ISBIN);
-    S2F(ISDEC);
-    S2F(ISHEX);
-    S2F(ISSYM);
-    S2F(X2A);
-    S2F(A2B);
-    S2F(A2C);
-    S2F(A2D);
-    S2F(A2X);
-    S2F(B2C);
-    S2F(B2D);
-    S2F(B2X);
-    S2F(BYTE);
-    S2F(C2B);
-    S2F(C2D);
-    S2F(C2X);
-    S2F(D2B);
-    S2F(D2C);
-    S2F(D2X);
-    S2F(DCVAL);
-    S2F(DEQUOTE);
-    S2F(DOUBLE);
-    S2F(ESYM);
-    S2F(LOWER);
-    S2F(SIGNED);
-    S2F(SYSATTRA);
-    S2F(SYSATTRP);
-    S2F(UPPER);
-    S2F(X2B);
-    S2F(X2C);
-    S2F(X2D);
-
-    return ca_expr_funcs::UNKNOWN;
+    return ca_common_expr_policy::get_function(symbol);
 }
-
-ca_expr_funcs ca_arithmetic_policy::get_function(const std::string& symbol) { return get_expr_function(symbol); }
-ca_expr_funcs ca_binary_policy::get_function(const std::string& symbol) { return get_expr_function(symbol); }
-ca_expr_funcs ca_character_policy::get_function(const std::string& symbol) { return get_expr_function(symbol); }
+ca_expr_funcs ca_binary_policy::get_function(const std::string& symbol)
+{
+    return ca_common_expr_policy::get_function(symbol);
+}
+ca_expr_funcs ca_character_policy::get_function(const std::string& symbol)
+{
+    return ca_common_expr_policy::get_function(symbol);
+}
 
 std::pair<size_t, context::SET_t_enum> ca_common_expr_policy::get_function_param_info(
     ca_expr_funcs func, context::SET_t_enum expr_kind)
@@ -396,6 +356,54 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
         default:
             return context::SET_t_enum::UNDEF_TYPE;
     }
+}
+
+// string to func
+#define S2F(X)                                                                                                         \
+    if (op == "X")                                                                                                     \
+    return ca_expr_funcs::X
+
+ca_expr_funcs ca_common_expr_policy::get_function(const std::string& op)
+{
+    S2F(B2A);
+    S2F(C2A);
+    S2F(D2A);
+    S2F(DCLEN);
+    S2F(FIND);
+    S2F(INDEX);
+    S2F(ISBIN);
+    S2F(ISDEC);
+    S2F(ISHEX);
+    S2F(ISSYM);
+    S2F(X2A);
+    S2F(A2B);
+    S2F(A2C);
+    S2F(A2D);
+    S2F(A2X);
+    S2F(B2C);
+    S2F(B2D);
+    S2F(B2X);
+    S2F(BYTE);
+    S2F(C2B);
+    S2F(C2D);
+    S2F(C2X);
+    S2F(D2B);
+    S2F(D2C);
+    S2F(D2X);
+    S2F(DCVAL);
+    S2F(DEQUOTE);
+    S2F(DOUBLE);
+    S2F(ESYM);
+    S2F(LOWER);
+    S2F(SIGNED);
+    S2F(SYSATTRA);
+    S2F(SYSATTRP);
+    S2F(UPPER);
+    S2F(X2B);
+    S2F(X2C);
+    S2F(X2D);
+
+    return ca_expr_funcs::UNKNOWN;
 }
 
 
