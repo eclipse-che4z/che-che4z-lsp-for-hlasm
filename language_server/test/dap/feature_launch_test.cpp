@@ -119,7 +119,7 @@ struct feature_launch_test : public testing::Test
         feat.initialize_feature(R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
 
         file_name = std::filesystem::absolute("to_trace").string();
-        file_name[0] = std::tolower((char)file_name[0]);
+        file_name[0] = (char) std::tolower((char)file_name[0]);
     }
 
     void check_simple_stack_trace(json id, size_t expected_line)

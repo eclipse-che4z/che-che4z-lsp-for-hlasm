@@ -46,9 +46,9 @@ public:
     virtual void message_received(const json& message) = 0;
 
     // Returns true, if LSP shutdown request has been received.
-    bool is_shutdown_request_received();
+    bool is_shutdown_request_received() const;
     // Returns true, if LSP exit notification has been received.
-    bool is_exit_notification_received();
+    bool is_exit_notification_received() const;
 
     void set_send_message_provider(send_message_provider* provider);
 

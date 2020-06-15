@@ -45,7 +45,7 @@ protected:
         : feature(ws_mngr, response_provider)
     {}
 
-    std::string convert_path(const std::string& path)
+    std::string convert_path(const std::string& path) const
     {
         if (path_format_ == path_format::URI)
             return uri_to_path(path);

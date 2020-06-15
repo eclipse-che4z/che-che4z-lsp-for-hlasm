@@ -46,15 +46,15 @@ public:
     explicit server(parser_library::workspace_manager& ws_mngr);
 
     // Parses LSP (JSON RPC) message and calls corresponding method.
-    virtual void message_received(const json& message) override;
+    void message_received(const json& message) override;
 
 protected:
     // Sends respond to request to LSP client using send_message_provider.
-    virtual void respond(const json& id, const std::string& requested_method, const json& args) override;
+    void respond(const json& id, const std::string& requested_method, const json& args) override;
     // Sends notification to LSP client using send_message_provider.
-    virtual void notify(const std::string& method, const json& args) override;
+    void notify(const std::string& method, const json& args) override;
     // Sends errorous respond to LSP client using send_message_provider.
-    virtual void respond_error(const json& id,
+    void respond_error(const json& id,
         const std::string& requested_method,
         int err_code,
         const std::string& err_message,
@@ -85,7 +85,7 @@ private:
     std::unordered_set<std::string> last_diagnostics_files_;
     // Implements parser_library::diagnostics_consumer: wraps the diagnostics in json and
     // sends them to client.
-    virtual void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
+    void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();
