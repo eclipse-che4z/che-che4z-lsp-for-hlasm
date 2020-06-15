@@ -22,14 +22,20 @@ request::request(json message, server* executing_server)
     , executing_server(executing_server)
 {}
 
-request_manager::request_manager(std::atomic<bool>* cancel)
+request_manager::request_manager(std::atomic<bool>* cancel, async_policy async_pol)
     : end_worker_(false)
     , cancel_(cancel)
     , worker_(&request_manager::handle_request_, this, &end_worker_)
+    , async_policy_(async_pol)
 {}
 
 void request_manager::add_request(server* server, json message)
 {
+    if (async_policy_ == async_policy::SYNC)
+    {
+        server->message_received(message);
+        return;
+    }
     // add request to q
     {
         std::unique_lock<std::mutex> lock(q_mtx_);

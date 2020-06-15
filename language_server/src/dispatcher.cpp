@@ -160,7 +160,6 @@ int dispatcher::run_server_loop()
         if (read_message(message))
         {
             LOG_INFO(message);
-            LOG_INFO(message);
 
             json message_json = 0;
             try

@@ -40,7 +40,13 @@ struct request
 class request_manager
 {
 public:
-    request_manager(std::atomic<bool>* cancel);
+    enum class async_policy
+    {
+        ASYNC,
+        SYNC
+    };
+
+    request_manager(std::atomic<bool>* cancel, async_policy async_pol = async_policy::ASYNC);
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
@@ -68,6 +74,8 @@ private:
     std::atomic<bool>* cancel_;
 
     std::thread worker_;
+
+    async_policy async_policy_;
 };
 
 
