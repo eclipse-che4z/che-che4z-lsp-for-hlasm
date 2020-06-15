@@ -39,7 +39,7 @@ enum class message_type
 // Implements LSP server (session-controlling methods like initialize and shutdown).
 // Integrates 3 features: language features, text synchronization and workspace folders.
 // Consumes diagnostics that come from the parser library and sends them to LSP client.
-class server : public hlasm_plugin::language_server::server, public parser_library::diagnostics_consumer
+class server final : public hlasm_plugin::language_server::server, public parser_library::diagnostics_consumer
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -59,10 +59,6 @@ protected:
         int err_code,
         const std::string& err_message,
         const json& error) override;
-
-    // Registers LSP methods implemented by this server (not by features).
-    virtual void register_methods() override;
-
 private:
     // requests
 
@@ -90,6 +86,9 @@ private:
     // Implements parser_library::diagnostics_consumer: wraps the diagnostics in json and
     // sends them to client.
     virtual void consume_diagnostics(parser_library::diagnostic_list diagnostics) override;
+
+    // Registers LSP methods implemented by this server (not by features).
+    void register_methods();
 };
 
 } // namespace hlasm_plugin::language_server::lsp

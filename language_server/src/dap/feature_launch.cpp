@@ -192,7 +192,6 @@ void feature_launch::on_variables(const json& request_seq, const json& args)
                 type = "B_TYPE";
                 break;
             case parser_library::set_type::C_TYPE:
-
                 type = "C_TYPE";
                 break;
             default:

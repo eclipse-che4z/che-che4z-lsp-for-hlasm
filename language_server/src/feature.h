@@ -23,8 +23,7 @@
 #include "common_types.h"
 #include "workspace_manager.h"
 
-namespace hlasm_plugin {
-namespace language_server {
+namespace hlasm_plugin::language_server {
 
 // Provides methods to send notification, respond to request and respond with error respond
 class response_provider
@@ -37,7 +36,7 @@ public:
         int err_code,
         const std::string& err_message,
         const json& error) = 0;
-    ~response_provider() = default;
+    virtual ~response_provider() = default;
 };
 
 // Abstract class for group of methods that add functionality to server.
@@ -48,12 +47,12 @@ public:
     // All the requests and notification are passed to the workspace manager
     explicit feature(parser_library::workspace_manager& ws_mngr)
         : ws_mngr_(ws_mngr)
-    {}
+    { }
     // Constructs the feature with workspace_manager and response_provider through which the feature can send messages.
     feature(parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
         : ws_mngr_(ws_mngr)
         , response_(&response_provider)
-    {}
+    { }
 
     // Implement to add methods to server.
     void virtual register_methods(std::map<std::string, method>& methods) = 0;
@@ -86,7 +85,6 @@ protected:
     response_provider* response_ = nullptr;
 };
 
-} // namespace language_server
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::language_server
 
 #endif // !HLASMPLUGIN_LANGUAGESERVER_FEATURE_H

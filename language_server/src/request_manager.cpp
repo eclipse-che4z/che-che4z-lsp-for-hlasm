@@ -138,7 +138,7 @@ void request_manager::finish_server_requests(server* to_finish)
 }
 
 
-std::string request_manager::get_request_file_(json r, bool* is_parsing_required)
+std::string request_manager::get_request_file_(json r, bool* is_parsing_required) const
 {
     constexpr const char* didOpen = "textDocument/didOpen";
     constexpr const char* didChange = "textDocument/didChange";

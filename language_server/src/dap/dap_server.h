@@ -48,7 +48,7 @@ public:
 
     virtual void message_received(const json& message) override;
 
-    virtual void register_methods() override;
+    
 
 
 private:
@@ -56,6 +56,8 @@ private:
 
     void on_initialize(const json& requested_seq, const json& args);
     void on_disconnect(const json& request_seq, const json& args);
+
+    void register_methods();
 };
 
 } // namespace hlasm_plugin::language_server::dap

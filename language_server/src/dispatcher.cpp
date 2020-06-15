@@ -23,8 +23,7 @@
 
 #include "logger.h"
 
-namespace hlasm_plugin {
-namespace language_server {
+namespace hlasm_plugin::language_server {
 
 dispatcher::dispatcher(std::istream& in, std::ostream& out, server& server, request_manager& req_mngr)
     : server_(server)
@@ -192,5 +191,4 @@ int dispatcher::run_server_loop()
     return ret;
 }
 
-} // namespace language_server
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::language_server

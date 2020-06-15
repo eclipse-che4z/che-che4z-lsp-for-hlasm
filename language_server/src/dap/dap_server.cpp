@@ -27,6 +27,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(ws_mngr)
 {
     features_.push_back(std::make_unique<feature_launch>(ws_mngr_, *this));
+    register_feature_methods();
     register_methods();
 }
 
@@ -74,14 +75,13 @@ void server::message_received(const json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
+        (void)e;
         LOG_WARNING(std::string("There was an error with received request:") + e.what());
     }
 }
 
 void server::register_methods()
 {
-    language_server::server::register_methods();
-
     methods_.emplace(
         "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
     methods_.emplace(

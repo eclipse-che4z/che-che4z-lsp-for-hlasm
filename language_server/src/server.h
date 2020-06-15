@@ -64,7 +64,7 @@ protected:
 
     parser_library::workspace_manager& ws_mngr_;
 
-    virtual void register_methods();
+    void register_feature_methods();
 
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
     void call_method(const std::string& method, const json& id, const json& args);
