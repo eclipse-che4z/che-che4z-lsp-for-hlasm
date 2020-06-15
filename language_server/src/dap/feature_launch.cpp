@@ -76,7 +76,6 @@ void feature_launch::on_set_breakpoints(const json& request_seq, const json& arg
     {
         for (auto& bp_json : bpoints_found.value())
         {
-            // parser_library::breakpoint bp();
             breakpoints.emplace_back((size_t)(bp_json["line"].get<json::number_unsigned_t>() - line_1_based_));
             breakpoints_verified.push_back(json { { "verified", true } });
         }

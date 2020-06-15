@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::language_server::dap {
 // Implements all the events and requests from DAP protocol.
-class feature_launch : public dap_feature, parser_library::debug_event_consumer
+class feature_launch : public dap_feature, public parser_library::debug_event_consumer
 {
 public:
     feature_launch(parser_library::workspace_manager& ws_mngr, response_provider& response_provider);

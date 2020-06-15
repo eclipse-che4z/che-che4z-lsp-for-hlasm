@@ -28,7 +28,7 @@ namespace hlasm_plugin::language_server::lsp {
 class feature_workspace_folders : public feature
 {
 public:
-    feature_workspace_folders(parser_library::workspace_manager& ws_mngr);
+    explicit feature_workspace_folders(parser_library::workspace_manager& ws_mngr);
 
     // Adds workspace/didChangeWorkspaceFolders method to the map.
     void register_methods(std::map<std::string, method>&) override;

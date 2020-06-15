@@ -33,7 +33,7 @@ namespace hlasm_plugin::language_server::dap {
 class server : public hlasm_plugin::language_server::server
 {
 public:
-    server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr);
 
     // Inherited via server
     virtual void respond(const json& id, const std::string& requested_method, const json& args) override;

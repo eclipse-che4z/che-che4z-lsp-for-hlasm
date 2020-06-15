@@ -43,7 +43,7 @@ class server final : public hlasm_plugin::language_server::server, public parser
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
-    server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr);
 
     // Parses LSP (JSON RPC) message and calls corresponding method.
     virtual void message_received(const json& message) override;

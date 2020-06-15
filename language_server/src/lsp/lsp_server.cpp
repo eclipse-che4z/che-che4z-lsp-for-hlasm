@@ -169,7 +169,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // set of all files for which diagnostics came from the server.
     std::unordered_set<std::string> new_files;
     // transform the diagnostics into json
-    for (auto& file_diags : diags)
+    for (const auto& file_diags : diags)
     {
         json diags_array = json::array();
         for (auto d : file_diags.second)

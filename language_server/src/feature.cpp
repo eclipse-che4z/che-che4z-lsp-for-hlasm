@@ -105,12 +105,12 @@ parser_library::position feature::parse_position(const json& position_json)
         position_json["character"].get<nlohmann::json::number_unsigned_t>() };
 }
 
-json feature::range_to_json(parser_library::range range)
+json feature::range_to_json(const parser_library::range & range)
 {
     return json { { "start", position_to_json(range.start) }, { "end", position_to_json(range.end) } };
 }
 
-json feature::position_to_json(parser_library::position position)
+json feature::position_to_json(const parser_library::position & position)
 {
     return json { { "line", position.line }, { "character", position.column } };
 }

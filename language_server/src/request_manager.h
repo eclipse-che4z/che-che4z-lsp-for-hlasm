@@ -46,11 +46,12 @@ public:
         SYNC
     };
 
-    request_manager(std::atomic<bool>* cancel, async_policy async_pol = async_policy::ASYNC);
+    explicit request_manager(std::atomic<bool>* cancel, async_policy async_pol = async_policy::ASYNC);
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
     bool is_running();
+
 private:
     std::atomic<bool> end_worker_;
 

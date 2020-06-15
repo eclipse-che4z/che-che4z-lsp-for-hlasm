@@ -74,8 +74,8 @@ public:
     // Converts LSP json representation of position into parse_library::position.
     static parser_library::position parse_position(const json& position_json);
 
-    static json range_to_json(parser_library::range range);
-    static json position_to_json(parser_library::position position);
+    static json range_to_json(const parser_library::range & range);
+    static json position_to_json(const parser_library::position & position);
 
     virtual ~feature() = default;
 
