@@ -79,6 +79,18 @@ INSTANTIATE_TEST_SUITE_P(dispatcher,
             { "\"A json message 1\""_json },
             false,
             "unexpected_header_entry" },
+        test_param{ 1,
+            0,
+            { "Content-Length: 30\r\nContent-Length: 18\r\n\r\n" },
+            { "\"A json message 1\""_json },
+            true,
+            "two_content_length_headers" },
+        test_param{ 1,
+            0,
+            { "Content-Length: 0\r\nContent-Length: 18\r\n\r\n" },
+            { "\"A json message 1\""_json },
+            true,
+            "content_length_zero" },
         test_param { 1,
             1,
             { "Content-Length: 3000000000000000000\r\n\r\n\"A json message 1\"" },
@@ -125,5 +137,21 @@ TEST_P(dispatcher_fixture, basic)
 
     EXPECT_EQ(ret, GetParam().return_value);
     EXPECT_EQ(dummy_server.messages, GetParam().messages);
+    rm.end_worker();
+}
+
+TEST(dispatcher, write_message)
+{
+    std::stringstream ss;
+    server_mock dummy_server(1);
+    std::atomic<bool> cancel;
+    request_manager rm(&cancel, request_manager::async_policy::SYNC);
+    dispatcher d(ss, ss, dummy_server, rm);
+
+    json message = R"("A json message")"_json;
+    d.reply(message);
+
+    EXPECT_EQ(ss.str(), "Content-Length: 16\r\n\r\n" + message.dump());
+    
     rm.end_worker();
 }

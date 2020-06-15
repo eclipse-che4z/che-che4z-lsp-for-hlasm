@@ -21,9 +21,9 @@
 #include "lsp/feature_text_synchronization.h"
 #include "lsp/feature_workspace_folders.h"
 #include "lsp/lsp_server.h"
-#include "send_message_provider_mock.h"
+#include "../send_message_provider_mock.h"
 #include "workspace_manager.h"
-#include "ws_mngr_mock.h"
+#include "../ws_mngr_mock.h"
 
 namespace nlohmann {
 // needed in order to have mock methods with json arguments
@@ -61,6 +61,20 @@ TEST(lsp_server, initialize)
     EXPECT_EQ(server_capab["id"].get<json::number_unsigned_t>(), 47);
     ASSERT_NE(server_capab.find("result"), server_capab.end());
     EXPECT_NE(server_capab["result"].find("capabilities"), server_capab["result"].end());
+
+    json shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
+    json shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
+    json exit_notification = R"({"jsonrpc":"2.0","method":"exit","params":null})"_json;
+    EXPECT_CALL(smpm, reply(shutdown_response)).Times(1);
+    EXPECT_FALSE(s.is_exit_notification_received());
+    EXPECT_FALSE(s.is_shutdown_request_received());
+    s.message_received(shutdown_request);
+    EXPECT_FALSE(s.is_exit_notification_received());
+    EXPECT_TRUE(s.is_shutdown_request_received());
+    s.message_received(exit_notification);
+    EXPECT_TRUE(s.is_exit_notification_received());
+    EXPECT_TRUE(s.is_shutdown_request_received());
+
 }
 
 TEST(lsp_server, not_implemented_method)
