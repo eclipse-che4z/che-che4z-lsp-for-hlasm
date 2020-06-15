@@ -65,13 +65,13 @@ void server::message_received(const json& message)
 {
     try
     {
-        assert(message["type"] == "request");
-        last_seq_ = message["seq"].get<json::number_unsigned_t>();
+        assert(message.at("type") == "request");
+        last_seq_ = message.at("seq").get<json::number_unsigned_t>();
         auto arguments = message.find("arguments");
         if (arguments == message.end())
-            call_method(message["command"].get<std::string>(), message["seq"], json());
+            call_method(message.at("command").get<std::string>(), message.at("seq"), json());
         else
-            call_method(message["command"].get<std::string>(), message["seq"], arguments.value());
+            call_method(message.at("command").get<std::string>(), message.at("seq"), arguments.value());
     }
     catch (const nlohmann::json::exception& e)
     {
