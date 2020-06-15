@@ -28,6 +28,8 @@ constexpr const char* path = "c:\\test";
 constexpr const char* path = "/home/test";
 #endif
 
+using namespace hlasm_plugin::language_server;
+
 TEST(language_features, completion)
 {
     using namespace ::testing;
