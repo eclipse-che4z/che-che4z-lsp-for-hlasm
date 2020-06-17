@@ -133,7 +133,6 @@ TEST_P(dispatcher_fixture, basic)
     dispatcher disp(ss_in, ss_out, dummy_server, rm);
 
     int ret = disp.run_server_loop();
-    rm.finish_server_requests(&dummy_server);
 
     EXPECT_EQ(ret, GetParam().return_value);
     EXPECT_EQ(dummy_server.messages, GetParam().messages);
