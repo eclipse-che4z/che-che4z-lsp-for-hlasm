@@ -22,6 +22,7 @@ on:
     branches:
       - master
       - development
+
 jobs:
   
   win-server:
@@ -134,4 +135,31 @@ jobs:
         with:
           name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: ${{ env.VSIX_FILENAME }}
+        
+  alpine-VSIX:
+      name: Alpine VSIX
+      runs-on: ubuntu-18.04
+      container:
+        image: alpine:3.10
       
+      steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Server Test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Get VSIX filename
+        run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
+      - name: Get version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+      - name: Rename VSIX
+        run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v1
+        with:
+          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          path: hlasm-language-support-alpine-${{ env.VERSION }}.vsix

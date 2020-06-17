@@ -1,0 +1,553 @@
+* Downloaded from http://www.cbttape.org/cbtdowns.htm 
+* Part of FILE022
+
+         TITLE '   J U L S U B   '
+************************************************************
+*                                                          *
+*        'JULSUB'                                          *
+*                                                          *
+************************************************************
+         SPACE
+*        WRITTEN BY. BILL GODFREY,  PLANNING RESEARCH CORPORATION.
+*        INSTALLATION. PRC COMPUTER CENTER, MCLEAN VA.
+*        DATE WRITTEN. JUNE 4 1976.
+*        DATE UPDATED. APRIL 23 1980.
+*        ATTRIBUTES. RE-ENTRANT.
+*        REMARKS.
+*            THIS SUBPROGRAM CONVERTS A DATE FROM ONE FORMAT
+*            TO ANOTHER. THE DIFFERENT FORMATS ARE:
+*
+*            INPUT
+*               1   JULIAN       BINARY    F'YYYYDDD'
+*               2   STANDARD     BINARY    F'YYYYMMDD'
+*               3   JULIAN       PACKED    PL4'YYYYDDDF'
+*
+*            OUTPUT
+*               1   JULIAN       BINARY    F'YYYYDDD'
+*               2   STANDARD     BINARY    F'YYYYMMDD'
+*               4   STANDARD     8-CHAR    CL8'MM/DD/YY'
+*               8   ALPHA        8-CHAR    CL8'03JUN76 '
+*              16   PROSE        20-CHAR   CL20'JUNE 3 1976'
+*              32   FRSTLAST     BINARY    F'0' 1 - FIRST OF MONTH
+*                                               2 - LAST OF MONTH
+*              64   WEEKDAYCODE  BINARY    F'0' (SATURDAY)
+*             128   WEEKDAY      12-CHAR   CL12'SATURDAY'
+*             256   TIME         BINARY    F'100THS SEC SINCE MIDNITE'
+*             512   TIME         8-CHAR    CL8'HH:MM:SS'
+*
+*            INPUT MUST BE EITHER JULIAN OR STANDARD.
+*
+*            PASS THE FOLLOWING PARAMETERS VIA A LIST OF ADDRESSES
+*            POINTED TO BY REGISTER 1
+*               1   THE INPUT DATE
+*               2   A FULLWORD CONTAINING THE NUMERIC CODE
+*                   WHICH DEFINES THE INPUT FORMAT
+*               3   THE RECEIVING FIELD FOR OUTPUT
+*               4   A FULLWORD CONTAINING THE NUMERIC CODE
+*                   WHICH DEFINES THE OUTPUT FORMAT
+*               5   A 256 BYTE WORKAREA (ON DOUBLEWORD BOUNDARY)
+*            NOTES.
+*               1) MAKE OUTPUT 00YY IF INPUT IS 00YY.
+*               2) FOR CURRENT DATE, USE TYPE 1 DATE ZERO.
+         SPACE
+         MACRO
+         STAMP
+         LCLC  &ASMTIME
+&ASMTIME SETC  '&SYSTIME'(1,5)
+         DC    CL16' &SYSDATE &ASMTIME '
+         MEND
+         SPACE
+         
+         
+JULSUB CSECT
+         USING *,R12
+         B     @PROLOG-*(,15)
+         DC    AL1(11),CL11'JULSUB   '
+         STAMP
+@PROLOG  STM   14,12,12(13)
+         LR    R12,15
+         LR    R2,R1
+*        GETMAIN R,LV=@DATAL       GET SAVEAREA ADDRESS
+         L     R1,16(,R1)          GET SAVEAREA ADDRESS
+         ST    13,4(,1)
+         ST    1,8(,13)
+         LR    13,1
+         LR    R1,R2
+         USING @DATA,13
+         SPACE
+         LM    R2,R3,0(R1)         GET INPUT AND DESCRIPTOR
+         LM    R4,R5,8(R1)         GET OUTPUT AND DESCRIPTOR
+         MVC   INPUT(4),0(R2)      COPY INPUT
+         XC    DOUBLE,DOUBLE
+         SLR   R14,R14             ZERO R14
+         ST    R14,FRSTLAST
+         ST    R14,TIMEB
+         CLI   3(R3),INP003        INPUT JULIAN PACKED?
+         BNE   INP01               NO - BRANCH
+         SPACE
+*              INPUT IS JULIAN PACKED
+         SPACE
+         MVC   DOUBLE+4(4),INPUT   MOVE INPUT
+         CVB   R1,DOUBLE
+         ST    R1,JB
+JULCOMM  L     R14,DOUBLE+4        SAVE 00YYDDDF
+         LH    R1,DOUBLE+4         GET 00YY
+         SLL   R1,16               GET 00YY0000
+         SRL   R1,12               GET 00000YY0
+         ST    R1,DOUBLE+4         STORE BACK 00000YY0
+         OI    DOUBLE+7,X'0F'      SET SIGN
+         CVB   R1,DOUBLE
+         ST    R1,YYYYB
+         CH    R1,=H'99'
+         BH    *+8
+         AH    R1,=H'1900'
+         ST    R1,CENTB
+         UNPK  YYYYC,DOUBLE+5(3)     SAVE YYYY CHAR
+         MVC   YYC,YYYYC+2
+*
+         ST    R14,DOUBLE+4        RESTORE 00YYDDDF
+         XC    DOUBLE(6),DOUBLE      00YYDDDF TO 0000DDDF
+         OI    DOUBLE+7,X'0F'      SET SIGN
+         UNPK  DDDC,DOUBLE+4(4)    SAVE DDD CHAR
+         CVB   R1,DOUBLE           CONVERT DDD TO BINARY
+         ST    R1,DDDB             SAVE DDD BINARY
+         SPACE
+         BAL   R9,TODD
+         BAL   R9,TOSB
+         BAL   R9,TOMON
+         BAL   R9,TOPROSE
+         BAL   R9,TOWEEK
+         BAL   R9,TOTIME
+         BAL   R9,OUTPUT
+         B     EXIT0
+         SPACE
+INP01    CLI   3(R3),INP001        INPUT JULIAN BINARY?
+         BNE   INP02               NO - BRANCH
+         L     R1,INPUT            GET BINARY YYYYDDD
+         LTR   R1,R1               ZERO?
+         BNZ   INP01A              NO - BRANCH
+         TIME  BIN
+         ST    R0,TIMEB            SAVE TIME
+         SLR   R0,R0
+         STM   R0,R1,DOUBLE
+         CVB   R1,DOUBLE
+         B     INP01B
+INP01A   CVD   R1,DOUBLE           TO DECIMAL
+INP01B   ST    R1,JB
+         B     JULCOMM             PROCEED AS IF INP003
+         SPACE
+*              CONVERT JULIAN DATE TO MONTH-DAY-YEAR
+*
+*                 INPUT  - YYYYB AND DDDB   (ALSO YYC)
+*
+*                 OUTPUT - MMB AND DDB, MMC AND DDC, FRSTLAST
+         SPACE
+TODD     MVC   DPM(26),DAYSPMON
+         TM    YYYYB+3,B'00000011' IS YEAR A MULTIPLE OF 4?
+         BNZ   DPM365              NO - BRANCH
+         CLC   YYC,=C'00'          DIVISIBLE BY 100?
+         BNE   DPM366              NO - BRANCH
+         L     R15,CENTB
+         SLR   R14,R14
+         D     R14,=F'400'
+         LTR   R14,R14             EVENLY DIVISIBLE BY 400?
+         BNZ   DPM365              NO - NOT A LEAP YEAR
+DPM366   MVI   DPM+3,29            CHANGE FEB TO 29 DAYS
+DPM365   EQU   *
+         LA    R14,2               INDEX FOR DPM
+         LR    R0,R14              INDEX INCREMENT
+         L     R1,DDDB             DAY OF YEAR
+DPMLOOP  CH    R1,DPM-2(R14)       DAY LESS THAN OR EQ ENTRY?
+         BE    DPMEND              EQUAL - BRANCH
+         BL    DPMWIN              LESS - BRANCH
+         SH    R1,DPM-2(R14)       NO, SUBTRACT ENTRY FROM DAY
+         ALR   R14,R0              ADD 2 TO INDEX
+         B     DPMLOOP             LOOP
+DPMEND   MVI   FRSTLAST+3,2        LAST DAY OF MONTH
+         B     DPMCOMM
+DPMWIN   CH    R1,=H'1'            FIRST OF MONTH?
+         BNE   DPMCOMM             NO - BRANCH
+         MVI   FRSTLAST+3,1        FIRST DAY OF MONTH
+DPMCOMM  SRL   R14,1               HALVE INDEX TO GET MM
+         ST    R1,DDB              SAVE DD BINARY
+         CVD   R1,DOUBLE           CONVERT TO PACKED
+         OI    DOUBLE+7,X'0F'      SET SIGN
+         UNPK  DDC,DOUBLE+6(2)     SAVE DD CHAR
+         ST    R14,MMB             SAVE MM BINARY
+         CVD   R14,DOUBLE          CONVERT TO PACKED
+         OI    DOUBLE+7,X'0F'      SET SIGN
+         UNPK  MMC,DOUBLE+6(2)     SAVE MM CHAR
+         MVI   SLASH1,C'/'
+         MVI   SLASH2,C'/'
+         BR    R9
+         SPACE
+*              CONVERT MONTH NUMBER TO MONTH NAME
+*
+*                 INPUT  - MMB     (ALSO DDC AND YYC FOR MOVE)
+*
+*                 OUTPUT - MONTH AND ALPHA
+         SPACE
+TOMON    L     R15,MMB
+         MH    R15,=H'9'           MULT BY 9
+         LA    R15,ALPHAMON-9(R15) ADDRESS OF ENTRY
+         MVC   MONTH,0(R15)        SAVE PROSE MONTH
+         MVC   ALPHA+2(3),0(R15)   SAVE ALPHA MONTH
+         MVC   ALPHA(2),DDC
+         MVC   ALPHA+5(2),YYC
+         MVI   ALPHA+7,C' '
+         BR    R9
+         SPACE
+*              BUILD PROSE DATE
+*
+*                 INPUT  - MONTH, DDC, YYYYC
+         SPACE
+TOPROSE  TM    3(R5),OUT016
+         BZR   R9
+         MVI   PROSE,C' '
+         MVC   PROSE+1(L'PROSE-1),PROSE
+         MVC   PROSE(9),MONTH
+         LA    R1,PROSE+9
+PROSE01  CLI   0(R1),C' '          BLANK?
+         BNE   PROSE02             NO - FOUND LAST LETTER
+         BCT   R1,PROSE01          BACK UP AND BRANCH
+PROSE02  MVC   2(2,R1),DDC
+         CLI   2(R1),C'0'          LEADING ZERO?
+         BNE   PROSE03             NO - BRANCH
+         MVC   2(1,R1),3(R1)       YES - SHIFT
+         MVI   3(R1),C' '
+         BCTR  R1,0
+PROSE03  EQU   *
+*        MVI   4(R1),C','          COMMA AFTER DAY
+*        LA    R1,1(,R1)           ADD 1 FOR COMMA
+         MVC   5(4,R1),YYYYC
+         CLC   5(2,R1),=C'00'
+         BNE   *+10
+         MVC   5(2,R1),=C'19'
+         BR    R9
+         SPACE
+*              INPUT IS YYYY/MM/DD BINARY
+         SPACE
+INP02    L     R1,INPUT
+         CVD   R1,DOUBLE           GET 0000000Y YYYMMDDF
+         LM    R14,R15,DOUBLE
+         NC    DOUBLE,=X'0000000000000FFF' ISOLATE 00000DDF
+         CVB   R1,DOUBLE
+         ST    R1,DDB
+         OI    DOUBLE+7,X'0F'
+         UNPK  DDC,DOUBLE+6(2)
+*
+         STM   R14,R15,DOUBLE
+         NC    DOUBLE,=X'00000000000FF00F' ISOLATE 000MM00F
+         L     R1,DOUBLE+4
+         SRL   R1,8
+         ST    R1,DOUBLE+4
+         OI    DOUBLE+7,X'0F'
+         CVB   R1,DOUBLE
+         CH    R1,=H'12'
+         BNH   *+8
+         LA    R1,13               SET ALL BAD MONTHS TO 13
+         ST    R1,MMB
+         UNPK  MMC,DOUBLE+6(2)
+*
+         SRDL  R14,4               GET YYYYMMDD
+         SLR   R14,R14             GET 00000000 IN R14
+         SRL   R15,12              GET 000YYYYM IN R15
+         STM   R14,R15,DOUBLE
+         OI    DOUBLE+7,X'0F'
+         CVB   R1,DOUBLE
+         ST    R1,YYYYB
+         CH    R1,=H'99'
+         BH    *+8
+         AH    R1,=H'1900'
+         ST    R1,CENTB
+         UNPK  YYYYC,DOUBLE+5(3)
+         MVC   YYC,YYYYC+2
+         MVI   SLASH1,C'/'
+         MVI   SLASH2,C'/'
+*
+         BAL   R9,TOSB
+         BAL   R9,TOJUL
+         BAL   R9,TOMON
+         BAL   R9,TOPROSE
+         BAL   R9,TOWEEK
+         BAL   R9,TOTIME
+         BAL   R9,OUTPUT
+         B     EXIT0
+         SPACE
+*              CONVERT M/D/Y TO JULIAN
+*
+*                 INPUT  - MMB, DDB, YYYYB
+*
+*                 OUTPUT - DDDB, DDDC, JB
+         SPACE
+TOJUL    MVC   DPM(26),DAYSPMON
+         TM    YYYYB+3,B'00000011' IS YEAR A MULTIPLE OF 4?
+         BNZ   JUL365              NO - BRANCH
+         CLC   YYC,=C'00'          DIVISIBLE BY 100?
+         BNE   JUL366              NO - BRANCH
+         L     R15,CENTB
+         SLR   R14,R14
+         D     R14,=F'400'
+         LTR   R14,R14             EVENLY DIVISIBLE BY 400?
+         BNZ   JUL365              NO - NOT A LEAP YEAR
+JUL366   MVI   DPM+3,29             CHANGE FEB TO 29 DAYS
+JUL365   EQU   *
+         L     R15,DDB              GET DAYS IN CURRENT MONTH
+         LR    R0,R15               SAVE IT TO COMPARE FOR LAST DAY
+         L     R14,MMB              GET CURRENT MONTH
+         BCTR  R14,0                GET NO. OF COMPLETED MONTHS
+         LA    R1,DPM
+         LTR   R14,R14              JANUARY?
+         BNP   JULEND               YES - BRANCH
+         B     *+8
+JULOOP   LA    R1,2(,R1)            POINT TO NEXT MONTH
+         AH    R15,0(,R1)           ADD DAYS IN MONTH TO TOTAL
+         BCT   R14,JULOOP
+JULEND   CH    R0,0(,R1)            LAST DAY OF MONTH?
+         BNE   *+8                  NO
+         MVI   FRSTLAST+3,2         YES
+         CH    R0,=H'1'             FIRST DAY OF MONTH?
+         BNE   *+8                  NO
+         MVI   FRSTLAST+3,1         YES
+         ST    R15,DDDB             SAVE DDD
+         CVD   R15,DOUBLE
+         OI    DOUBLE+7,X'0F'       SET SIGN
+         UNPK  DDDC,DOUBLE+4(4)     SAVE DDD CHAR
+         MVC   JC(2),YYC
+         PACK  DOUBLE,JC
+         CVB   R1,DOUBLE
+         ST    R1,JB
+         BR    R9
+         SPACE
+*
+*
+*
+         SPACE
+TOSB     MVC   WORK(4),YYYYC
+         MVC   WORK+4(2),MMC
+         MVC   WORK+6(2),DDC
+         PACK  DOUBLE,WORK(8)
+         CVB   R1,DOUBLE
+         ST    R1,SB
+         BR    R9
+         SPACE
+*              GET DAY OF WEEK
+*
+*                 INPUT  - MMB, DDB, YYYYB
+*
+*                 OUTPUT - WEEKB, WEEKC
+*
+*              N = D + 2M + 3(M+1)/5 + Y + Y/4 - Y/100 + Y/400 + 2
+*
+*                 WHERE M = 3-14 (JAN,FEB ARE 13,14 OF Y-1)
+*
+*                 N/7 LEAVES REMAINDER 0-6, 0 INDICATING SATURDAY
+*
+TOWEEK   TM    3(R5),OUT064+OUT128
+         BZR   R9
+         L     R1,DDB              SET N = D
+         L     R15,CENTB
+         L     R14,MMB
+         CH    R14,=H'2'           JAN OR FEB?
+         BH    WEEKMMOK
+         BE    WEEKFEB
+         LA    R14,13              SET M=13
+         B     WEEKYMIN
+WEEKFEB  LA    R14,14              SET M=14
+WEEKYMIN BCTR  R15,0               SET Y = Y-1
+WEEKMMOK LR    R0,R14              COPY M
+         ALR   R0,R0               GET 2M
+         ALR   R1,R0               SET N = N + 2M
+         LR    R0,R15              SAVE REDEFINED Y
+         SPACE
+         LA    R14,1(,R14)         GET M+1
+         MH    R14,=H'3'           GET 3(M+1)
+         SRDL  R14,32              SHIFT INTO R15, ZERO R14
+         D     R14,=F'5'           GET 3(M+1)/5 IN R15
+         ALR   R1,R15              SET N = N + 3(M+1)/5
+         SPACE
+         LR    R15,R0              GET Y
+         ALR   R1,R15              SET N = N + Y
+         SLR   R14,R14             ZERO R14
+         D     R14,=F'4'           GET Y/4
+         ALR   R1,R15              SET N = N + Y/4
+         SPACE
+         LR    R15,R0              GET Y
+         SLR   R14,R14             ZERO R14
+         D     R14,=F'100'         GET Y/100
+         SLR   R1,R15              SET N = N - Y/100
+         SPACE
+         LR    R15,R0              GET Y
+         SLR   R14,R14             ZERO R14
+         D     R14,=F'400'         GET Y/400
+         ALR   R1,R15              SET N = N + Y/400
+         LA    R15,2               GET 2
+         ALR   R1,R15              SET N = N + 2
+         SLR   R0,R0               ZERO R0
+         D     R0,=F'7'            SET N = N/7
+         ST    R0,WEEKB            SAVE REMAINDER
+         LR    R1,R0
+         MH    R1,=H'9'
+         LA    R14,WEEKDAYS(R1)    POINT TO NAME
+         MVC   WEEKC(9),0(R14)     MOVE NAME
+         MVC   WEEKC+9(3),WEEKBLNK PLUS 3 BLANKS
+         BR    R9
+         SPACE
+*
+*              CONVERT TIMEB TO TIMEC
+*
+*                 DIVIDE BY 10,10,10,6,10,6,10,6
+*
+TOTIME   TM    2(R5),OUT512
+         BNOR  R9
+         L     R15,TIMEB
+         LA    R6,10               INITIAL DIVISOR
+         LA    R7,12               SET DIVISOR MASK
+         LA    R8,32               SHIFT COUNT
+DECLOOP  SR    R14,R14
+         DR    R14,R6
+         LR    R0,R14              SAVE REMAINDER
+         SRDL  R0,4                SHIFT INTO R1
+         SH    R8,=H'4'            DECREMENT SHIFT COUNT
+         LTR   R15,R15             QUOTIENT ZERO?
+         BZ    TOTIMX              YES - BRANCH
+         CL    R8,=F'24'           IF COUNT LT 24
+         BNL   DECLOOP             NO - BRANCH
+         XR    R6,R7               10 TO 6 TO 10 ETC
+         B     DECLOOP
+TOTIMX   SRL   R1,0(R8)            SHIFT REMAINING BITS
+         SRL   R1,4                GET 0HHMMSST
+         ST    R1,DOUBLE
+         OI    DOUBLE+3,X'0F'
+         MVC   DOUBLE+6(10),=X'402120204B20204B2020'
+         ED    DOUBLE+6(10),DOUBLE
+         MVC   TIMEC,DOUBLE+8
+         BR    R9
+         SPACE
+OUTPUT   LR    R1,R4
+         TM    3(R5),OUT001
+         BZ    *+14
+         MVC   0(4,R1),JB
+         LA    R1,4(,R1)
+         TM    3(R5),OUT002
+         BZ    *+14
+         MVC   0(4,R1),SB
+         LA    R1,4(,R1)
+         TM    3(R5),OUT004
+         BZ    *+14
+         MVC   0(8,R1),SC
+         LA    R1,8(,R1)
+         TM    3(R5),OUT008
+         BZ    *+14
+         MVC   0(8,R1),ALPHA
+         LA    R1,8(,R1)
+         TM    3(R5),OUT016
+         BZ    *+14
+         MVC   0(L'PROSE,R1),PROSE
+         LA    R1,L'PROSE(,R1)
+         TM    3(R5),OUT032
+         BZ    *+14
+         MVC   0(4,R1),FRSTLAST
+         LA    R1,4(,R1)
+         TM    3(R5),OUT064
+         BZ    *+14
+         MVC   0(4,R1),WEEKB
+         LA    R1,4(,R1)
+         TM    3(R5),OUT128
+         BZ    *+14
+         MVC   0(12,R1),WEEKC
+         LA    R1,12(,R1)
+         TM    2(R5),OUT256
+         BZ    *+14
+         MVC   0(4,R1),TIMEB
+         LA    R1,4(,R1)
+         TM    2(R5),OUT512
+         BZ    *+14
+         MVC   0(8,R1),TIMEC
+         LA    R1,8(,R1)
+         BR    R9
+         SPACE
+EXIT0    SR    15,15
+EXIT     LR    1,13
+         L     13,4(,13)
+         ST    15,16(,13)
+*        FREEMAIN R,A=(1),LV=@DATAL  (COMMENT)
+         LM    14,12,12(13)
+         BR    14
+         SPACE
+************************************************************
+*                                                          *
+*        CONSTANTS                                         *
+*                                                          *
+************************************************************
+         SPACE
+DAYSPMON DC    H'31,28,31,30,31,30,31,31,30,31,30,31,999'
+ALPHAMON DC    CL36'JANUARY  FEBRUARY MARCH    APRIL    '
+         DC    CL36'MAY      JUNE     JULY     AUGUST   '
+         DC    CL36'SEPTEMBEROCTOBER  NOVEMBER DECEMBER '
+         DC    CL09'UNKNOWN  '
+WEEKDAYS DC    CL36'SATURDAY SUNDAY   MONDAY   TUESDAY  '
+         DC    CL27'WEDNESDAYTHURSDAY FRIDAY   '
+WEEKBLNK EQU   WEEKDAYS+15         3 BLANKS
+         LTORG
+         SPACE
+************************************************************
+*                                                          *
+*        DSECTS                                            *
+*                                                          *
+************************************************************
+         SPACE
+@DATA    DSECT
+         DS    18F
+INPUT    DS    CL8
+DOUBLE   DS    D
+WORK     DS    8C
+SC       DS    0CL8
+MMC      DS    CL2
+SLASH1   DS    C
+DDC      DS    CL2
+SLASH2   DS    C
+YYC      DS    CL2
+YYYYC    DS    CL4
+DDB      DS    F
+MMB      DS    F
+YYYYB    DS    F
+CENTB    DS    F
+DDDB     DS    F
+JB       DS    F
+SB       DS    F
+WEEKB    DS    F
+FRSTLAST DS    F
+TIMEB    DS    F
+TIMEC    DS    CL8
+JC       DS    0CL5
+         DS    CL2
+DDDC     DS    CL3
+MONTH    DS    CL9
+ALPHA    DS    0CL8
+         DS    CL2
+MON      DS    CL3
+         DS    CL2
+         DS    CL1                 BLANK FILLER LAST BYTE OF ALPHA
+WEEKC    DS    CL12
+PROSE    DS    CL20
+DPM      DS    13H
+@DATAL   EQU   *-@DATA
+         SPACE
+INP001   EQU   1
+INP002   EQU   2
+INP003   EQU   3
+OUT001   EQU   1
+OUT002   EQU   2
+OUT004   EQU   4
+OUT008   EQU   8
+OUT016   EQU   16
+OUT032   EQU   32
+OUT064   EQU   64
+OUT128   EQU   128
+OUT256   EQU   1
+OUT512   EQU   2
+         SPACE
+         REGS
+         SPACE 3
+         END

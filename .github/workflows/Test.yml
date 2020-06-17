@@ -22,6 +22,7 @@ on:
     branches:
       - master
       - development
+
 jobs:
   
   clang:
@@ -65,3 +66,13 @@ jobs:
             exit 1
           fi
 
+  
+  license-headers:
+      name: Check license headers
+      runs-on: ubuntu-18.04
+      steps:
+      - uses: actions/checkout@v1
+      - name: Check license headers
+        run: |
+          chmod +x cmake/check_license.sh
+          cmake/check_license.sh
