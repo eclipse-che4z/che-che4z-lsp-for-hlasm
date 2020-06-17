@@ -10,6 +10,7 @@ git pull
 
 sed -i '3s/^/  - development\n/' .releaserc.yaml
 
+npm install
 npx semantic-release --dry-run
 
 
