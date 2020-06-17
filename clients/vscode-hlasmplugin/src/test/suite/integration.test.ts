@@ -15,6 +15,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as process from 'process';
 
 suite('Integration Test Suite', () => {
 	var openFileEditor: vscode.TextEditor = null;
@@ -172,12 +173,23 @@ suite('Integration Test Suite', () => {
 				// wait 1 more second to let step over take place
 				// then check for VAR2 variable
 				setTimeout(() => {
-					session.customRequest('scopes',{frameId:0}).then((scopesResult: {scopes: {name: string, variablesReference: number}[]}) => {
-					const reference = scopesResult.scopes.find(scope => scope.name == 'Locals').variablesReference;
+					session.customRequest('scopes',{frameId:0}).then(scopesResult => {
+					const dap_poorly_implemented = scopesResult.body == undefined;
+					var scopes;
+					if (dap_poorly_implemented)
+						scopes = scopesResult.scopes;
+					else
+						scopes = scopesResult.body.scopes;
+					const reference = scopes.find((scope : {name:string}) => scope.name == 'Locals').variablesReference;
 					session.customRequest('variables',{variablesReference: reference}).then(variablesResult => {
 						disposable.dispose();
 						vscode.commands.executeCommand('workbench.action.debug.stop');
-						if (variablesResult.variables.length == 1 && variablesResult.variables[0].value == 'SOMETHING' && variablesResult.variables[0].name == 'VAR2')
+						var variables;
+						if (dap_poorly_implemented)
+							variables = variablesResult.variables;
+						else
+							variables = variablesResult.body.variables;
+						if (variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == 'VAR2')
 							done();
 						else
 							done('Wrong debug variable VAR2');
