@@ -81,8 +81,7 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
     {
         std::unique_lock<std::mutex> lock(q_mtx_);
         // wait for work to come
-        if (requests_.empty())
-            cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
+        cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
         if (*end_loop) 
             return;
 
