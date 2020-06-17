@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [0.11.1](https://github.com/michalbali256/che-che4z-lsp-for-hlasm/compare/0.11.0...0.11.1) (2020-06-17)
 
 ## [0.11.0] - 2020-05-07
 
