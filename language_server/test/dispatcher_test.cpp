@@ -124,7 +124,7 @@ TEST_P(dispatcher_fixture, basic)
 
     newline_is_space::imbue_stream(ss_in);
 
-    std::atomic<bool> cancel;
+    std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
 
     server_mock dummy_server(GetParam().messages_limit);
@@ -144,7 +144,7 @@ TEST(dispatcher, write_message)
 {
     std::stringstream ss;
     server_mock dummy_server(1);
-    std::atomic<bool> cancel;
+    std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
     dispatcher d(ss, ss, dummy_server, rm);
 
