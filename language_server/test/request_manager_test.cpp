@@ -61,9 +61,9 @@ TEST(request_manager, finish_requests)
     server_mock_rm s(&cancel);
     server_mock_rm s2(&cancel);
 
-    rm.add_request(&s, ""_json);
-    rm.add_request(&s, ""_json);
-    rm.add_request(&s, ""_json);
+    rm.add_request(&s, "0"_json);
+    rm.add_request(&s, "0"_json);
+    rm.add_request(&s, "0"_json);
 
     std::this_thread::sleep_for(100ms);
 
@@ -79,4 +79,6 @@ TEST(request_manager, finish_requests)
 
     EXPECT_FALSE(rm.is_running());
     EXPECT_EQ(s.messages_received, 3);
+
+    rm.end_worker();
 }
