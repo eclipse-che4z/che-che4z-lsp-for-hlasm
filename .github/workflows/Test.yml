@@ -81,6 +81,6 @@ jobs:
       if: github.event_name == 'pull_request'
       steps:
       - name: Fail, if PR base is master
-        if: contains(github.base_ref, 'master') && !contains(github.head_ref, 'development')
+        if: contains(github.base_ref, 'master') && !contains(github.head_ref, 'release')
         run: exit 1
         
