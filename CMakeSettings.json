@@ -94,6 +94,21 @@
       "variables": []
     },
     {
+      "name": "WSL-Clang-Release-ASAN",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeExecutable": "/usr/bin/cmake",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined,fuzzer-no-link\"",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "linux_x64" ],
+      "wslPath": "${defaultWSLPath}",
+      "addressSanitizerRuntimeFlags": "detect_leaks=0",
+      "variables": []
+    },
+    {
       "name": "WSL-Clang-Fuzzer",
       "generator": "Ninja",
       "configurationType": "Debug",

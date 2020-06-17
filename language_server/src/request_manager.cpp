@@ -111,6 +111,9 @@ void request_manager::finish_server_requests(server* to_finish)
 {
     std::lock_guard guard(q_mtx_);
 
+    if (requests_.empty())
+        return;
+
     if (cancel_)
         *cancel_ = true;
 
