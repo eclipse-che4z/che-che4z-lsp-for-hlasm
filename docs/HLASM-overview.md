@@ -145,7 +145,7 @@ Following are examples of assembler instructions:
 
 #### Resolution of Ordinary Symbols
 
-All the assembler instructions and ordinary symbols must be resolved before the assembler creates the final object file. However, as the HLASM language supports forward declaration of ordinary symbols, the assembly might be quite complicated. Consider an example in \[lst:ordinary\_assembly\]. When the instruction on line 1 is seen for the first time, it is impossible to determine its length, because the symbol `LEN` is not defined yet (the character L with an expression in parentheses in the operand DS of type C specifies how many bytes are reserved in the program). The same applies to the length of the instruction on the second line. It is also impossible to determine the exact value of relocatable symbols `ADDR` and `HERE` because of the unknown length of the preceding instructions.
+All the assembler instructions and ordinary symbols must be resolved before the assembler creates the final object file. However, as the HLASM language supports forward declaration of ordinary symbols, the assembly might be quite complicated. Consider the example below. When the instruction on line 1 is seen for the first time, it is impossible to determine its length, because the symbol `LEN` is not defined yet (the character L with an expression in parentheses in the operand DS of type C specifies how many bytes are reserved in the program). The same applies to the length of the instruction on the second line. It is also impossible to determine the exact value of relocatable symbols `ADDR` and `HERE` because of the unknown length of the preceding instructions.
 
 ```
            DS    CL(LEN)
