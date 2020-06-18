@@ -20,7 +20,7 @@ const theiaDir = process.argv[2];
 
 async function main() {
     // prepare plugin for theia
-    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./plugin';
+    process.env.THEIA_DEFAULT_PLUGINS='local-dir:/home/runner/work/che-che4z-lsp-for-hlasm/che-che4z-lsp-for-hlasm/plugin/';
 
     // run integration tests as plugin for theia
     const child = spawn('node', [
