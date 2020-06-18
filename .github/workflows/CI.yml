@@ -183,5 +183,7 @@ jobs:
         with:
           name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
           path: plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+      - name: Copy VSIX
+        run: mkdir ./clients/vscode-hlasmplugin/plugin/ && cp /home/runner/work/che-che4z-lsp-for-hlasm/che-che4z-lsp-for-hlasm/plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix ./clients/vscode-hlasmplugin/plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
       - name: Run Tests
         run: cd clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/
