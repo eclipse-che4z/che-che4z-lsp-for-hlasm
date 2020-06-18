@@ -177,7 +177,7 @@ jobs:
       - name: Install Chromium
         run: apk add --no-cache chromium
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") s
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
       - name: Download VSIX
         uses: actions/download-artifact@v1
         with:
