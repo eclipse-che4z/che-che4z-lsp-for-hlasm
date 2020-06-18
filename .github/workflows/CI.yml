@@ -164,7 +164,7 @@ jobs:
           name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
           path: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
 
-    theia-test:
+  theia-test:
       name: Theia Integration Test
       runs-on: ubuntu-18.04
       container:
