@@ -15,7 +15,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as process from 'process';
 
 suite('Integration Test Suite', () => {
 	var openFileEditor: vscode.TextEditor = null;

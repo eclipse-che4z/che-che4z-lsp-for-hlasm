@@ -163,3 +163,23 @@ jobs:
         with:
           name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
           path: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+
+    theia-test:
+      name: Theia Integration Test
+      runs-on: ubuntu-18.04
+      container:
+        image: theiaide/theia
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: apk update && apk add --no-cache npm
+      - name: Get version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+      - name: Download VSIX
+        uses: actions/download-artifact@v1
+        with:
+          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          path: plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+      - name: Run Tests
+        run: cd ./clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/

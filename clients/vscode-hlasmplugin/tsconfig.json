@@ -6,7 +6,7 @@
     "sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es2016", "DOM" ],
+		"lib": [ "es2016" ],
 		"outDir": "lib",
 		"rootDir": "src",
     "alwaysStrict": true,

@@ -140,7 +140,7 @@ TEST_F(lsp_features_test, hover)
     // hover for sequence symbol, defined even though it is skipped because of the macro parsing (wanted behaviour)
     result = a.lsp_processor().hover(position(13, 15));
     ASSERT_EQ((size_t)1, result.size());
-    EXPECT_EQ("Defined at line 14", result[0]);
+    EXPECT_EQ("Defined at line 15", result[0]);
 
     // hover for variable symbol, name and type number
     result = a.lsp_processor().hover(position(2, 13));

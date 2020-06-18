@@ -51,7 +51,7 @@
     "@types/mocha": "^7.0.2",
     "@types/glob": "^5.0.35",
     "decache": "^4.5.1",
-    "puppeteer": "4.0.0"
+    "puppeteer": "^4.0.0"
   },
   "dependencies": {
     "vscode-languageclient": "^5.2.1"

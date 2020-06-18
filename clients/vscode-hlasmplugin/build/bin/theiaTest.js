@@ -1,19 +1,32 @@
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
+
 const process = require('process');
-const { execFile, spawn } = require('child_process');
+const { spawn } = require('child_process');
 const puppeteer = require('puppeteer');
 
-const hlasmpluginDir = process.argv[2];
-const theiaDir = process.argv[3];
+const theiaDir = process.argv[2];
 
 async function main() {
     // prepare plugin for theia
-    process.env.THEIA_DEFAULT_PLUGINS='local-dir:'+hlasmpluginDir+'/build/bin';
+    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./plugin';
 
     // run integration tests as plugin for theia
     const child = spawn('node', [
         theiaDir+'/examples/browser/src-gen/backend/main.js',
-        hlasmpluginDir+'/lib/test/workspace/',
-        '--extensionTestsPath='+hlasmpluginDir+'/lib/test/suite', 
+        './lib/test/workspace/',
+        '--extensionTestsPath='+process.cwd()+'/lib/test/suite', 
         '--hostname', '0.0.0.0',
         '--port','3000' 
     ]);
