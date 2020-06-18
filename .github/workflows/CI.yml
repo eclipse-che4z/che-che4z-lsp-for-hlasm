@@ -144,6 +144,8 @@ jobs:
       
       steps:
       - uses: actions/checkout@v1
+      - name: OS version
+        run: cat /etc/issue
       - name: Requirements install
         run: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
       - name: Configure
@@ -172,6 +174,8 @@ jobs:
       
       steps:
       - uses: actions/checkout@v1
+      - name: OS version
+        run: cat /etc/issue
       - name: Get version
         run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") s
       - name: Download VSIX
