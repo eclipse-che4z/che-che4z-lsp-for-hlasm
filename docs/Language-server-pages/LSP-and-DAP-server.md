@@ -1,5 +1,3 @@
-LSP and DAP Server
-------------------
 
 The servers are able to process incoming LSP and DAP requests. They get the messages in the form of already parsed JSONs. Then they extract the name of the requested method with its parameters from the message and call the corresponding method with the parameters encoded in JSON format.
 
