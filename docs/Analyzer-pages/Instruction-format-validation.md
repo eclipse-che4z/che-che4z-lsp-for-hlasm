@@ -1,5 +1,3 @@
-Instruction Format Validation
------------------------------
 
 One of the essential ways to provide results of parsing to the user is through error messages. Many of these messages are created in the *Instruction checker* which validates the usage of different kinds of instructions.
 
