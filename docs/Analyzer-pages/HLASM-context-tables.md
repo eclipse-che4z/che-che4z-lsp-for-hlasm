@@ -77,7 +77,7 @@ When a copy is visited, a copy member invocation is created and pushed in the co
 
 These stacks are responsible for the nests of opened files (source stack) and what they are opened for (processing stack). As the relation of source entry and processing entry is one-to-many, the information is stored in two arrays rather than one.
 
-When [[statement processor]]s are changed (e.g. when a macro or copy definition is processed, or a lookahead is needed), this information is stored in the processing stack. If a new file is opened during this change then source stack is updated as well.
+When [[statement processors]] are changed (e.g. when a macro or copy definition is processed, or a lookahead is needed), this information is stored in the processing stack. If a new file is opened during this change then source stack is updated as well.
 
 The source stack contains the following:
 
