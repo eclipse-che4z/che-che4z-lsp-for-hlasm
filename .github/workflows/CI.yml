@@ -175,6 +175,6 @@ jobs:
       - name: Get version
         run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") s
       - name: Download VSIX
-        run: wget -P ./clients/vscode-hlasmplugin/plugin/ https://github.com/eclipse/che-che4z-lsp-for-hlasm/releases/download/0.11.0/hlasm-language-support-0.11.0-alpine.vsix
+        run: mkdir ./clients/vscode-hlasmplugin/plugin/ && wget -P ./clients/vscode-hlasmplugin/plugin/ https://github.com/eclipse/che-che4z-lsp-for-hlasm/releases/download/0.11.0/hlasm-language-support-0.11.0-alpine.vsix
       - name: Run Tests
         run: cd clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/
