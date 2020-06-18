@@ -182,6 +182,6 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
-          path: clients/vscode-hlasmplugin/plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          path: /__w/che-che4z-lsp-for-hlasm/che-che4z-lsp-for-hlasm/clients/vscode-hlasmplugin/plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
       - name: Run Tests
         run: cd clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/
