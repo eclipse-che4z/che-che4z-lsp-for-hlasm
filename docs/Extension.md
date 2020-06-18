@@ -73,7 +73,7 @@ If a workspace contains a HLASM file, but does not have the configuration files 
 
 To highlight HLASM code, a semantic (server-side) approach is desired. Due to the multi-layered nature of the language, specific parts of the code commonly cannot be properly highlighted unless a previous part was completely processed (parameters for instructions, skipped code thanks to code generation, defined macros, continuations, etc.)
 
-Based on the open [pull request to the VSCode Language Server](https://github.com/microsoft/vscode-languageserver-node/pull/367/files), we added *semanticHighlighting* as an extra feature of LSP. This feature works in a very similar manner, implementing the LSP interfaces that VSCode provides. It works as a notification from the server to the client, containing ranges inside the document and their respective tokens (e.g. instruction, label, parameter, comment.)
+Based on the open [pull request to the VSCode Language Server](https://github.com/microsoft/vscode-languageserver-node/pull/367/files), we added *semanticHighlighting* as an extra feature of LSP. This feature works in a very similar manner, implementing the LSP interfaces that VSCode provides. It works as a notification from the server to the client, containing ranges inside the document and their respective tokens (e.g. instruction, label, parameter, comment).
 
 We also extended *semanticHighlighting* to *ASMsemanticHighlighting*, which adds the ability to notify the client about a new code layout, specifically the *begin*, *continuation* and *continue* columns. These fields can be set in the HLASM code (via an ICTL instruction) and are required for the *Continuation Handling* feature to work properly. Our client-server communication is shown in the figure below.
 
