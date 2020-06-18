@@ -1,5 +1,3 @@
-Request Manager
----------------
 
 `request_manager` encapsulates a queue of requests with a worker thread that processes them. There can be up to two [`dispatcher`](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/IO-handling) instances in the language server: one for the LSP and one for the DAP. Both of them add the requests they parse into one `request_manager`. It is necessary to process the requests one by one, because the parser library cannot process more requests at the same time.
 
