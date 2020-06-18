@@ -20,7 +20,7 @@ const theiaDir = process.argv[2];
 
 async function main() {
     // prepare plugin for theia
-    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./plugin';
+    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./build/bin';
 
     // run integration tests as plugin for theia
     const child = spawn('node', [
