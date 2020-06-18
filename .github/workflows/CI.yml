@@ -144,8 +144,6 @@ jobs:
       
       steps:
       - uses: actions/checkout@v1
-      - name: OS version
-        run: cat /etc/issue
       - name: Requirements install
         run: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
       - name: Configure
@@ -169,16 +167,21 @@ jobs:
   theia-test:
       name: Theia Integration Test
       runs-on: ubuntu-18.04
+      needs: alpine-VSIX
       container:
-        image: theiaide/theia-full
+        image: theiaide/theia
+        options: --user root
       
       steps:
       - uses: actions/checkout@v1
-      - name: OS version
-        run: cat /etc/issue
+      - name: Install Chromium
+        run: apk add --no-cache chromium
       - name: Get version
         run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") s
       - name: Download VSIX
-        run: wget -P ./clients/vscode-hlasmplugin/build/bin/ https://github.com/eclipse/che-che4z-lsp-for-hlasm/releases/download/0.11.0/hlasm-language-support-0.11.0-alpine.vsix
+        uses: actions/download-artifact@v1
+        with:
+          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          path: plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
       - name: Run Tests
         run: cd clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/

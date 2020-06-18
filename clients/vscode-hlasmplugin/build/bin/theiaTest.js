@@ -20,11 +20,11 @@ const theiaDir = process.argv[2];
 
 async function main() {
     // prepare plugin for theia
-    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./build/bin';
+    process.env.THEIA_DEFAULT_PLUGINS='local-dir:./plugin';
 
     // run integration tests as plugin for theia
     const child = spawn('node', [
-        theiaDir+'/examples/browser/src-gen/backend/main.js',
+        theiaDir+'/src-gen/backend/main.js',
         './lib/test/workspace/',
         '--extensionTestsPath='+process.cwd()+'/lib/test/suite', 
         '--hostname', '0.0.0.0',
@@ -33,7 +33,7 @@ async function main() {
 
     // give theia 5 seconds to start, then connect
     setTimeout(async function() {
-        const browser = await puppeteer.launch({headless: true});
+        const browser = await puppeteer.launch({executablePath: '/usr/lib/chromium/chrome', headless:true,args: ['--no-sandbox', '--disable-gpu']});
         const page = await browser.newPage();
         try {
             await page.goto('http://localhost:3000');
