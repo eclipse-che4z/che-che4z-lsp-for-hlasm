@@ -57,6 +57,10 @@ async function main() {
             process.exit(2);
         }
     })
+
+    child.on('close', function() {
+        process.exit(2);
+    })
 }
 
 main();

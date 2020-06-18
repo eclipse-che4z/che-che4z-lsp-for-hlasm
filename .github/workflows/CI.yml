@@ -167,18 +167,14 @@ jobs:
   theia-test:
       name: Theia Integration Test
       runs-on: ubuntu-18.04
-      needs: alpine-VSIX
       container:
-        image: theiaide/theia
+        image: theiaide/theia-full
       
       steps:
       - uses: actions/checkout@v1
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") s
       - name: Download VSIX
-        uses: actions/download-artifact@v1
-        with:
-          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
-          path: plugin/hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+        run: wget -P ./clients/vscode-hlasmplugin/plugin/ https://github.com/eclipse/che-che4z-lsp-for-hlasm/releases/download/0.11.0/hlasm-language-support-0.11.0-alpine.vsix
       - name: Run Tests
-        run: cd ./clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/
+        run: cd clients/vscode-hlasmplugin && npm install && node ./build/bin/theiaTest.js /home/theia/
