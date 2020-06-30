@@ -32,7 +32,7 @@ public:
 
     // needs to be specialized for every use
     c_type item(size_t index);
-    size_t size() { return size_; }
+    size_t size() const { return size_; }
 
 private:
     const impl* data_;

@@ -19,9 +19,7 @@
 #include "instruction_processor.h"
 #include "processing/statement_fields_parser.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // common ancestor for ASM and MACH processing containing useful methods
 class low_language_processor : public instruction_processor
@@ -92,7 +90,5 @@ private:
         const std::string* mnemonic = nullptr);
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

@@ -19,9 +19,7 @@
 
 #include "semantics/highlighting_info.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // type of symbols that come from the parser
 // sequence symbol, variable symbol, ordinary symbol, instruction symbol and highlighting symbol
@@ -357,7 +355,5 @@ struct lsp_context
 };
 
 using lsp_ctx_ptr = std::shared_ptr<lsp_context>;
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

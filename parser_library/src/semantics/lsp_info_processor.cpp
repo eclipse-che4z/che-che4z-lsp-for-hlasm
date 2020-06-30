@@ -720,7 +720,7 @@ int lsp_info_processor::find_latest_version_(
     }
 }
 
-context::macro_id lsp_info_processor::get_top_macro_stack_()
+context::macro_id lsp_info_processor::get_top_macro_stack_() const
 {
     if (!ctx_->lsp_ctx->parser_macro_stack.empty())
         return ctx_->lsp_ctx->parser_macro_stack.top();

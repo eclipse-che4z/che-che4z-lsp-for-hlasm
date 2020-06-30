@@ -24,9 +24,8 @@
 #include "diagnosable.h"
 #include "error_messages.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 class expression;
 using expr_ptr = std::shared_ptr<expression>;
 using expr_list = std::vector<expr_ptr>;
@@ -138,9 +137,8 @@ protected:
     static expr_ptr evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority, size_t& operator_count);
     static expr_ptr evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operator_count);
 };
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #define make_arith(val) std::make_shared<arithmetic_expression>(val)
 #define make_logic(val) std::make_shared<logic_expression>(val)

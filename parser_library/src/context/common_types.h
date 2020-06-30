@@ -17,9 +17,7 @@
 
 #include <string>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // type for SETA symbol
 using A_t = int32_t;
@@ -117,7 +115,5 @@ public:
 std::string& to_upper(std::string& s);
 std::string to_upper_copy(std::string s);
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

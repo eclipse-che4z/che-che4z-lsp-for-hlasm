@@ -51,7 +51,7 @@ public:
         return size;
     }
 
-    size_t get_workspaces_count() { return workspaces_.size(); }
+    size_t get_workspaces_count() const { return workspaces_.size(); }
 
     void add_workspace(std::string name, std::string uri)
     {
@@ -205,7 +205,7 @@ public:
 
     void unregister_debug_event_consumer(debug_event_consumer& consumer) { debug_event_consumers_.erase(&consumer); }
 
-    void next()
+    void next() const
     {
         if (!debugger_)
             return;
@@ -213,7 +213,7 @@ public:
         debugger_->next();
     }
 
-    void step_in()
+    void step_in() const
     {
         if (!debugger_)
             return;
@@ -231,7 +231,7 @@ public:
         debugger_ = nullptr;
     }
 
-    stack_frames get_stack_frames()
+    stack_frames get_stack_frames() const
     {
         if (!debugger_)
             return { nullptr, 0 };
@@ -241,7 +241,7 @@ public:
         return { res.data(), res.size() };
     }
 
-    scopes get_scopes(frame_id_t frame_id)
+    scopes get_scopes(frame_id_t frame_id) const
     {
         if (!debugger_)
             return { nullptr, 0 };
@@ -271,7 +271,7 @@ public:
             debugging::breakpoints { debugging::source(std::move(source_path)), std::move(brs) });
     }
 
-    void continue_debug()
+    void continue_debug() const
     {
         if (!debugger_)
             return;
@@ -321,7 +321,7 @@ private:
         }
     }
 
-    void notify_diagnostics_consumers()
+    void notify_diagnostics_consumers() const
     {
         diags().clear();
         collect_diags();
@@ -346,7 +346,7 @@ private:
         }
     }
 
-    size_t prefix_match(const std::string& first, const std::string& second)
+    size_t prefix_match(const std::string& first, const std::string& second) const
     {
         size_t match = 0;
         size_t i1 = 0;

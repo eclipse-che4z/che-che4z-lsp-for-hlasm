@@ -26,9 +26,7 @@
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class hlasm_context;
 using ctx_ptr = std::unique_ptr<hlasm_context>;
@@ -231,7 +229,5 @@ public:
     }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

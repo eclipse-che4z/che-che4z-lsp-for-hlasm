@@ -19,9 +19,7 @@
 #include "processing/context_manager.h"
 #include "processing/processing_state_listener.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor of conditional assembly instructions
 class ca_processor : public instruction_processor
@@ -161,7 +159,5 @@ private:
     virtual void collect_diags() const override;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

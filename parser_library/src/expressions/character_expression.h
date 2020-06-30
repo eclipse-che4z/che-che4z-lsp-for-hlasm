@@ -20,9 +20,8 @@
 #include "expression.h"
 #include "logic_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 class expression;
 class character_expression;
 using char_ptr = std::shared_ptr<character_expression>;
@@ -178,8 +177,7 @@ private:
 
     std::string value_ = "";
 };
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

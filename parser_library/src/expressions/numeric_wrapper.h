@@ -18,9 +18,8 @@
 #include "expression.h"
 #include "logic_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 /**
  * Wrapper for logic and arithmetic expressions
  * HLASM supports expressions with mixed operand types
@@ -70,8 +69,7 @@ static arithmetic_logic_expr_wrapper<U&&> al_wrap(U&& u)
 {
     return arithmetic_logic_expr_wrapper<U&&>::wrap(std::forward<U>(u));
 }
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

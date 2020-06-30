@@ -20,9 +20,7 @@
 
 #include "variable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 template<typename T>
 class set_symbol;
@@ -168,8 +166,6 @@ inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
     return tmp ? (A_t)tmp->size() : (A_t)0;
 }
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

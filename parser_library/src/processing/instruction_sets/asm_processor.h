@@ -18,9 +18,7 @@
 #include "low_language_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor of assembler instructions
 class asm_processor : public low_language_processor
@@ -68,7 +66,5 @@ private:
     std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif
