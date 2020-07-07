@@ -62,9 +62,9 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const contex
 
     if (std::holds_alternative<context::id_index>(symbol))
     {
-        auto sym = solver.get_symbol(std::get<context::id_index>(symbol));
-        if (sym && !sym->attributes().is_defined(attribute))
+        if (!solver.get_symbol(std::get<context::id_index>(symbol)))
             return { std::get<context::id_index>(symbol) };
+        return undef_sym_set();
     }
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
         return ca_var_sym::get_undefined_attributed_symbols_vs(std::get<semantics::vs_ptr>(symbol), solver);
@@ -119,27 +119,36 @@ context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name
         auto found = eval_ctx.attr_provider.lookup_forward_attribute_references({ name });
 
         if (auto it = found.find(name); it != found.end())
-            ord_symbol = &it->second;
+            return retrieve_value(&it->second, eval_ctx);
     }
+    return retrieve_value(ord_symbol, eval_ctx);
+}
+
+context::SET_t ca_symbol_attribute::retrieve_value(context::symbol* ord_symbol, evaluation_context& eval_ctx) const
+{
+    if (attribute == context::data_attr_kind::T)
+        return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
 
     if (!ord_symbol)
     {
-        if (attribute == context::data_attr_kind::T)
-            return "U";
-        else
-        {
-            add_diagnostic(diagnostic_op::warning_W013(expr_range));
-            return context::symbol_attributes::default_value(attribute);
-        }
+        eval_ctx.add_diagnostic(diagnostic_op::warning_W013(expr_range));
+        return context::symbol_attributes::default_value(attribute);
     }
 
-    if (!ord_symbol->attributes().can_have_SI_attr()
-        && (attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I))
-        add_diagnostic(diagnostic_op::error_E066(expr_range));
-    else if (!ord_symbol->attributes().is_defined(attribute))
-        add_diagnostic(diagnostic_op::warning_W013(expr_range));
+    if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+        && !ord_symbol->attributes().can_have_SI_attr())
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        return context::symbol_attributes::default_value(attribute);
+    }
 
-    return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
+    if (!ord_symbol->attributes().is_defined(attribute))
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::warning_W013(expr_range));
+        return context::symbol_attributes::default_value(attribute);
+    }
+
+    return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
 }
 
 context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, evaluation_context& eval_ctx) const

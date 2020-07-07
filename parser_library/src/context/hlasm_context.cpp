@@ -454,24 +454,33 @@ SET_t hlasm_context::get_attribute_value_ca(
 
 SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, id_index symbol_name)
 {
+    if (attribute == data_attr_kind::O)
+        return get_opcode_attr(symbol_name);
+    return get_attribute_value_ca(attribute, ord_ctx.get_symbol(symbol_name));
+}
+
+SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, const symbol* symbol)
+{
     switch (attribute)
     {
         case data_attr_kind::D:
-            if (ord_ctx.symbol_defined(symbol_name))
+            if (symbol)
                 return (A_t)1;
             return (A_t)0;
         case data_attr_kind::T:
-            if (ord_ctx.symbol_defined(symbol_name))
+            if (symbol)
             {
-                auto attr_val = ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute);
-                return { (char)ebcdic_encoding::e2a[attr_val] };
+                auto attr_val = symbol->attributes().get_attribute_value(attribute);
+                return std::string { (char)ebcdic_encoding::e2a[attr_val] };
             }
             return std::string("U");
         case data_attr_kind::O:
-            return get_opcode_attr(symbol_name);
+            if (symbol)
+                return get_opcode_attr(symbol->name);
+            return std::string("U");
         default:
-            if (ord_ctx.symbol_defined(symbol_name))
-                return ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute);
+            if (symbol)
+                return symbol->attributes().get_attribute_value(attribute);
             return symbol_attributes::default_value(attribute);
     }
 }
