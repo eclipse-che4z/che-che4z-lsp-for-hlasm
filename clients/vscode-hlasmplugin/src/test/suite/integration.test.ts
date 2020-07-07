@@ -50,7 +50,7 @@ suite('Integration Test Suite', () => {
 		const listener = vscode.languages.onDidChangeDiagnostics(_ => {
 			const diags = vscode.languages.getDiagnostics();
 			listener.dispose();
-			if (diags.length, 1 && diags[0][1][0].code == 'M003')
+			if (diags.length == 1 && diags[0][1][0].code == 'M003')
 				done();
 			else
 				done('Wrong diagnostic'); 
@@ -173,9 +173,9 @@ suite('Integration Test Suite', () => {
 				// then check for VAR2 variable
 				setTimeout(() => {
 					session.customRequest('scopes',{frameId:0}).then(scopesResult => {
-					const dap_poorly_implemented = scopesResult.body == undefined;
+					const noBody = scopesResult.body == undefined;
 					var scopes;
-					if (dap_poorly_implemented)
+					if (noBody)
 						scopes = scopesResult.scopes;
 					else
 						scopes = scopesResult.body.scopes;
@@ -184,7 +184,7 @@ suite('Integration Test Suite', () => {
 						disposable.dispose();
 						vscode.commands.executeCommand('workbench.action.debug.stop');
 						var variables;
-						if (dap_poorly_implemented)
+						if (noBody)
 							variables = variablesResult.variables;
 						else
 							variables = variablesResult.body.variables;
