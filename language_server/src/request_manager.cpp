@@ -68,7 +68,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool request_manager::is_running() 
+bool request_manager::is_running() const
 {
     return !requests_.empty();
 }

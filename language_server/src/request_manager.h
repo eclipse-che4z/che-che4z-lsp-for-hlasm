@@ -50,7 +50,7 @@ public:
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
-    bool is_running();
+    bool is_running() const;
 
 private:
     std::atomic<bool> end_worker_;
