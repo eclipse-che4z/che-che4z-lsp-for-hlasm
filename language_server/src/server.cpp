@@ -26,9 +26,9 @@ namespace hlasm_plugin::language_server {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : ws_mngr_(ws_mngr)
-{}
+{ }
 
-void server::register_methods()
+void server::register_feature_methods()
 {
     for (auto& f : features_)
     {
@@ -52,6 +52,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         }
         catch (const nlohmann::basic_json<>::exception& e)
         {
+            (void)e;
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
         }
     }
@@ -63,10 +64,10 @@ void server::call_method(const std::string& method, const json& id, const json& 
     }
 }
 
-bool server::is_exit_notification_received() { return exit_notification_received_; }
+bool server::is_exit_notification_received() const { return exit_notification_received_; }
 
 void server::set_send_message_provider(send_message_provider* provider) { send_message_ = provider; }
 
-bool server::is_shutdown_request_received() { return shutdown_request_received_; }
+bool server::is_shutdown_request_received() const { return shutdown_request_received_; }
 
 } // namespace hlasm_plugin::language_server

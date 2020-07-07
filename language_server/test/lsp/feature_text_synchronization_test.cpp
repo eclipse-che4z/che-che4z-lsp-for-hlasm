@@ -29,6 +29,8 @@ const std::string txt_file_uri = R"(file:///home/user/somefile)";
 const std::string txt_file_path = R"(/home/user/somefile)";
 #endif
 
+using namespace hlasm_plugin::language_server;
+
 TEST(text_synchronization, did_open_file)
 {
     using namespace ::testing;
