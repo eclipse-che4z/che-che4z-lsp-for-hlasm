@@ -26,7 +26,7 @@ namespace context {
 class dependency_solver
 {
 public:
-    virtual symbol* get_symbol(id_index name) = 0;
+    virtual const symbol* get_symbol(id_index name) const = 0;
 };
 
 // interface of an object that depends on another objects (addresses or symbols)

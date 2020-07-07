@@ -34,7 +34,7 @@ ordinary_assembly_context::ordinary_assembly_context(id_storage& storage)
     : curr_section_(nullptr)
     , ids(storage)
     , symbol_dependencies(*this)
-{}
+{ }
 
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
@@ -53,6 +53,13 @@ bool ordinary_assembly_context::create_symbol(
         symbol_dependencies.add_defined();
 
     return ok;
+}
+
+const symbol* ordinary_assembly_context::get_symbol(id_index name) const
+{
+    auto tmp = symbols_.find(name);
+
+    return tmp == symbols_.end() ? nullptr : &tmp->second;
 }
 
 symbol* ordinary_assembly_context::get_symbol(id_index name)

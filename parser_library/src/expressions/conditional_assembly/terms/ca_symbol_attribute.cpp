@@ -15,6 +15,7 @@
 #include "ca_symbol_attribute.h"
 
 #include "ca_var_sym.h"
+#include "context/ordinary_assembly/dependable.h"
 #include "expressions/evaluation_context.h"
 #include "processing/context_manager.h"
 
@@ -60,7 +61,11 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const contex
         return undef_sym_set();
 
     if (std::holds_alternative<context::id_index>(symbol))
-        return { std::get<context::id_index>(symbol) };
+    {
+        auto sym = solver.get_symbol(std::get<context::id_index>(symbol));
+        if (sym && !sym->attributes().is_defined(attribute))
+            return { std::get<context::id_index>(symbol) };
+    }
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
         return ca_var_sym::get_undefined_attributed_symbols_vs(std::get<semantics::vs_ptr>(symbol), solver);
     else

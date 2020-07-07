@@ -58,7 +58,8 @@ public:
         id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
 
     // gets symbol by name
-    virtual symbol* get_symbol(id_index name) override;
+    virtual const symbol* get_symbol(id_index name) const override;
+    symbol* get_symbol(id_index name);
 
     // access current section
     const section* current_section() const;
