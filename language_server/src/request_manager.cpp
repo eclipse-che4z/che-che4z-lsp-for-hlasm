@@ -68,7 +68,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool hlasm_plugin::language_server::request_manager::is_running() 
+bool request_manager::is_running() 
 {
     return !requests_.empty();
 }
