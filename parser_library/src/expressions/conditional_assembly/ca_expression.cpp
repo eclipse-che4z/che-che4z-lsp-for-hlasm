@@ -45,7 +45,21 @@ context::SET_t ca_expression::convert_return_types(
                 return context::SET_t();
         }
     }
-    else if (type != retval.type)
+    else if (type != retval.type
+        && (retval.type != context::SET_t_enum::A_TYPE && type != context::SET_t_enum::B_TYPE)) // A->B
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
+        return context::SET_t();
+    }
+    return std::move(retval);
+}
+
+context::SET_t ca_expression::convert_return_types2(
+    context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
+{
+    if (type != retval.type
+        && !(retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE
+            && (retval.access_a() == 0 || retval.access_a() == 1)))
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
         return context::SET_t();

@@ -189,7 +189,7 @@ num_ch
 	: NUM+;
 
 num returns [self_def_t value]
-	: num_ch									{$value = parse_self_def_term("",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
+	: num_ch									{$value = parse_self_def_term("D",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
 
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							

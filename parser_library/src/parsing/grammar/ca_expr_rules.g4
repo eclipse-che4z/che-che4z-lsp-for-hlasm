@@ -97,11 +97,16 @@ term returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($num.ctx);
 		$ca_expr = std::make_unique<ca_constant>($num.value, r);
 	}
-	| ca_dupl_factor id_no_dot subscript
+	| ca_dupl_factor id_no_dot subscript_ne
 	{ 
-		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript.ctx->getStop());
+		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
 		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
-		$ca_expr = std::make_unique<ca_function>(func, std::move($subscript.value), std::move($ca_dupl_factor.value), r);
+		$ca_expr = std::make_unique<ca_function>(func, std::move($subscript_ne.value), std::move($ca_dupl_factor.value), r);
+	}
+	| id_no_dot
+	{
+		auto r = provider.get_range($id_no_dot.ctx);
+		$ca_expr = std::make_unique<ca_symbol>($id_no_dot.name, r);
 	};
 
 expr_list returns [ca_expr_ptr ca_expr]
@@ -130,13 +135,17 @@ seq_symbol returns [seq_sym ss]
 		$ss = seq_sym{$id_no_dot.name,provider.get_range( $dot.ctx->getStart(),$id_no_dot.ctx->getStop())};
 	};
 
-
-
-subscript returns [std::vector<ca_expr_ptr> value]
+subscript_ne returns [std::vector<ca_expr_ptr> value]
 	: lpar expr_comma_c rpar
 	{
 		$value = std::move($expr_comma_c.ca_exprs);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
+	};
+
+subscript returns [std::vector<ca_expr_ptr> value]
+	: subscript_ne
+	{
+		$value = std::move($subscript_ne.value);
 	}
 	| ;
 

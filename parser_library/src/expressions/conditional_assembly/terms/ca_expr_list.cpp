@@ -37,9 +37,9 @@ undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::depe
     return tmp;
 }
 
-bool is_symbol(const ca_expr_ptr& expr) { return static_cast<const ca_symbol*>(expr.get()) != nullptr; }
+bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(expr.get()) != nullptr; }
 
-const std::string& get_symbol(const ca_expr_ptr& expr) { return *static_cast<const ca_symbol*>(expr.get())->symbol; }
+const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol*>(expr.get())->symbol; }
 
 void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
 {
@@ -63,10 +63,13 @@ void ca_expr_list::collect_diags() const
 
 bool ca_expr_list::is_character_expression() const { return false; }
 
-context::SET_t ca_expr_list::evaluate(evaluation_context&) const
+context::SET_t ca_expr_list::evaluate(evaluation_context& eval_ctx) const
 {
-    assert(false);
-    return context::SET_t();
+    assert(expr_list.size() <= 1);
+
+    if (expr_list.empty())
+        return context::SET_t();
+    return expr_list.front()->evaluate(eval_ctx);
 }
 
 template<typename T> void ca_expr_list::resolve()
@@ -83,7 +86,7 @@ template<typename T> void ca_expr_list::resolve()
     ca_expr_ptr final_expr = retrieve_term<typename ca_expr_traits<T>::policy_t>(it, 0);
     err |= final_expr == nullptr;
 
-    while (it == expr_list.size() && !err)
+    while (it != expr_list.size() && !err)
     {
         auto op_range = expr_list[it]->expr_range;
 
@@ -141,7 +144,7 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::retrieve_term(size_t& i
         return std::move(expr_list[it++]);
 
     // tries to get binary operator
-    auto op_it = it + 1;
+    auto op_it = ++it;
     auto op_range = expr_list[op_it]->expr_range;
     bool err = false;
 
@@ -169,6 +172,7 @@ template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> ca_expr_list::retriev
     {
         add_diagnostic(diagnostic_op::error_CE001(expr_range));
         err = true;
+        return std::make_pair(0, ca_expr_ops::UNKNOWN);
     }
 
     ca_expr_ops op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]));

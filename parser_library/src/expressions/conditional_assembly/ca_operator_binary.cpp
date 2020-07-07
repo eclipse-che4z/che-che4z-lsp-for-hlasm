@@ -14,7 +14,6 @@
 
 #include "ca_operator_binary.h"
 
-#include <assert.h>
 #include <limits>
 
 #include "ebcdic_encoding.h"
@@ -204,7 +203,6 @@ int ca_function_binary_operator::compare_relational(context::SET_t& lhs, context
         case context::SET_t_enum::B_TYPE:
         case context::SET_t_enum::UNDEF_TYPE:
         default:
-            assert(false);
             return 0;
     }
 }

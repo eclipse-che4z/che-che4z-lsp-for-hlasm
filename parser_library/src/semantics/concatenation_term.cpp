@@ -74,8 +74,10 @@ sublist_conc::sublist_conc(std::vector<concat_chain> list)
 std::string sublist_conc::evaluate(expressions::evaluation_context& eval_ctx) const
 {
     std::string ret;
+    ret.push_back('(');
     for (const auto& chain : list)
         ret.append(concatenation_point::evaluate(chain, eval_ctx));
+    ret.push_back(')');
     return ret;
 }
 

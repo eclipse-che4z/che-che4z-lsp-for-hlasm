@@ -263,7 +263,7 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
 
 // string to op
 #define S2O(X)                                                                                                         \
-    if (op == "X")                                                                                                     \
+    if (op == #X)                                                                                                     \
     return ca_expr_ops::X
 
 ca_expr_ops get_expr_operator(const std::string& op)
@@ -360,7 +360,7 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
 
 // string to func
 #define S2F(X)                                                                                                         \
-    if (op == "X")                                                                                                     \
+    if (op == #X)                                                                                                     \
     return ca_expr_funcs::X
 
 ca_expr_funcs ca_common_expr_policy::get_function(const std::string& op)

@@ -40,6 +40,8 @@ struct evaluation_context : public diagnosable_ctx
         , lib_provider(lib_provider)
     { }
 
+    evaluation_context(const evaluation_context&) = delete;
+
     virtual void collect_diags() const override { }
 
     using diagnosable_ctx::collect_diags_from_child;

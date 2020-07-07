@@ -58,8 +58,31 @@ std::string concatenation_point::evaluate(
     concat_chain::const_iterator begin, concat_chain::const_iterator end, expressions::evaluation_context& eval_ctx)
 {
     std::string ret;
+    bool was_var = false;
     for (auto it = begin; it != end; ++it)
-        ret.append((*it)->evaluate(eval_ctx));
+    {
+        auto&& point = *it;
+        switch (point->type)
+        {
+            case concat_type::DOT:
+                if (!was_var)
+                    ret.append(point->evaluate(eval_ctx));
+                was_var = false;
+                break;
+            case concat_type::EQU:
+            case concat_type::STR:
+            case concat_type::SUB:
+                ret.append(point->evaluate(eval_ctx));
+                was_var = false;
+                break;
+            case concat_type::VAR:
+                ret.append(point->evaluate(eval_ctx));
+                was_var = true;
+                break;
+            default:
+                break;
+        }
+    }
     return ret;
 }
 

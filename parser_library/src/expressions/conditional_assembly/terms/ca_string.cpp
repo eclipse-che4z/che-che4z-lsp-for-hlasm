@@ -66,7 +66,7 @@ bool ca_string::is_character_expression() const { return duplication_factor == n
 
 context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
 {
-    context::C_t str = ""; // evaluate concat chain
+    context::C_t str = semantics::concatenation_point::evaluate(value, eval_ctx);
 
     if (str.size() > MAX_STR_SIZE)
     {

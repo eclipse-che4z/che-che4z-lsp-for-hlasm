@@ -289,7 +289,8 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr)
     if (opcode.value == ctx->ids().add("SETA") || opcode.value == ctx->ids().add("ACTR")
         || opcode.value == ctx->ids().add("ASPACE"))
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == ctx->ids().add("SETB") || opcode.value == ctx->ids().add("AIF"))
+    else if (opcode.value == ctx->ids().add("SETB") || opcode.value == ctx->ids().add("AIF")
+        || opcode.value == ctx->ids().add("AGO"))
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     else if (opcode.value == ctx->ids().add("SETC"))
         resolve_expression(expr, context::SET_t_enum::C_TYPE);

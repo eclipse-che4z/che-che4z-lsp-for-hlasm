@@ -43,12 +43,15 @@ bool ca_constant::is_character_expression() const { return false; }
 context::SET_t ca_constant::evaluate(evaluation_context&) const { return value; }
 
 context::A_t ca_constant::self_defining_term(
-    std::string_view type, std::string_view value, ranged_diagnostic_collector add_diagnostic)
+    std::string_view type, std::string_view value, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (value.empty() || type.size() != 1)
+    {
         add_diagnostic(diagnostic_op::error_CE015);
+        return context::object_traits<context::A_t>::default_v();
+    }
 
-    switch (type.front())
+    switch (std::toupper(type.front()))
     {
         case 'B':
             return ca_function::B2A(value, add_diagnostic).access_a();
@@ -64,13 +67,14 @@ context::A_t ca_constant::self_defining_term(
     }
 }
 
-context::A_t ca_constant::self_defining_term(const std::string& value, ranged_diagnostic_collector add_diagnostic)
+context::A_t ca_constant::self_defining_term(
+    const std::string& value, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (value.size() < 3)
         return self_defining_term("D", value, add_diagnostic);
     else if (value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
-            std::string_view(value.c_str(), 1), std::string_view(value.c_str() + 1, value.size() - 3), add_diagnostic);
+            std::string_view(value.c_str(), 1), std::string_view(value.c_str() + 2, value.size() - 3), add_diagnostic);
     else
         add_diagnostic(diagnostic_op::error_CE015);
     return context::object_traits<context::A_t>::default_v();

@@ -102,7 +102,7 @@ SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
     {
         case data_attr_kind::T:
         case data_attr_kind::O:
-            return "U";
+            return std::string("U");
         case data_attr_kind::L:
             return (A_t)1;
         default:

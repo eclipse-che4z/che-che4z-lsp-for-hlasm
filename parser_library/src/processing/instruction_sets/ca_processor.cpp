@@ -27,7 +27,6 @@ ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
     processing_state_listener& listener)
     : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
     , table_(create_table(hlasm_ctx))
-    , mngr_(hlasm_ctx)
     , listener_(listener)
 { }
 
@@ -96,7 +95,7 @@ bool ca_processor::test_symbol_for_assignment(const semantics::variable_symbol* 
     auto [tmp_name, subscript] = symbol->evaluate_symbol(eval_ctx);
     name = tmp_name;
 
-    auto var_symbol = mngr_.hlasm_ctx.get_var_sym(name);
+    auto var_symbol = hlasm_ctx.get_var_sym(name);
 
     if (var_symbol && var_symbol->access_macro_param_base())
     {
@@ -111,6 +110,8 @@ bool ca_processor::test_symbol_for_assignment(const semantics::variable_symbol* 
     }
     else if (subscript.size() == 1)
     {
+        idx = symbol->subscript.front()->evaluate<context::A_t>(eval_ctx);
+
         if (subscript.front() < 1)
         {
             add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol->symbol_range));
@@ -344,6 +345,7 @@ bool ca_processor::prepare_AGO(const semantics::complete_statement& stmt,
                 return false;
             }
         }
+        return true;
     }
     return false;
 }
@@ -482,12 +484,10 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         return;
 
     if (!set_symbol)
-        set_symbol = mngr_.hlasm_ctx.create_local_variable<context::C_t>(name, index == -1).get();
+        set_symbol = hlasm_ctx.create_local_variable<context::C_t>(name, index == -1).get();
 
     set_symbol->access_set_symbol<context::C_t>()->set_value(
         "                                                                                ", index - 1);
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) { }
-
-void ca_processor::collect_diags() const { collect_diags_from_child(mngr_); }

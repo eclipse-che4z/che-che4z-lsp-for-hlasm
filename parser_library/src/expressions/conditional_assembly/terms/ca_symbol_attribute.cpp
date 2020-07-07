@@ -151,7 +151,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, eval
     {
         auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
         if (tmp.access_c() == "U" && eval_ctx.lib_provider.has_library(*name, eval_ctx.hlasm_ctx))
-            return "S";
+            return std::string("S");
         return tmp;
     }
     else
@@ -190,7 +190,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
         if (attribute == context::data_attr_kind::T)
         {
             if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
-                return "U";
+                return std::string("U");
 
             context::SET_t value =
                 eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript)).access_c();

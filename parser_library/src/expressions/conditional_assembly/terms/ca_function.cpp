@@ -185,14 +185,13 @@ context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const
             str_ret = X2D(get_ith_param(0, eval_ctx).access_c(), add_diagnostic);
             break;
         default:
-            assert(false);
             return context::SET_t();
     }
 
     return ca_string::duplicate(duplication_factor, std::move(str_ret.access_c()), expr_range, eval_ctx);
 }
 
-context::SET_t ca_function::B2A(std::string_view param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::B2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return 0;
@@ -203,13 +202,13 @@ context::SET_t ca_function::B2A(std::string_view param, ranged_diagnostic_collec
     context::A_t res;
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 2);
 
-    if (conv.ec == std::errc() || conv.ptr != param.data() + param.size())
+    if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
     return res;
 }
 
-context::SET_t ca_function::C2A(std::string_view param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::C2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return 0;
@@ -227,7 +226,7 @@ context::SET_t ca_function::C2A(std::string_view param, ranged_diagnostic_collec
     return ret;
 }
 
-context::SET_t ca_function::D2A(std::string_view param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::D2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return 0;
@@ -246,7 +245,7 @@ context::SET_t ca_function::D2A(std::string_view param, ranged_diagnostic_collec
 
     auto conv = std::from_chars(param.data() + start, param.data() + param.size(), res, 10);
 
-    if (conv.ec == std::errc() || conv.ptr != param.data() + param.size())
+    if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
     return res;
@@ -276,7 +275,7 @@ context::SET_t ca_function::INDEX(const context::C_t& lhs, const context::C_t& r
     return idx == std::string::npos ? 0 : (context::A_t)idx + 1;
 }
 
-context::SET_t ca_function::ISBIN(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::ISBIN(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -286,7 +285,7 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, ranged_diagnostic_c
     return (context::A_t)0;
 }
 
-context::SET_t ca_function::ISDEC(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::ISDEC(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -300,7 +299,7 @@ context::SET_t ca_function::ISDEC(const context::C_t& param, ranged_diagnostic_c
         context::A_t tmp;
         auto conv = std::from_chars(param.c_str(), param.c_str() + param.size(), tmp, 10);
 
-        if (conv.ec == std::errc() || conv.ptr != param.c_str() + param.size())
+        if (conv.ec != std::errc() || conv.ptr != param.c_str() + param.size())
             ret = 0;
         else
             ret = 1;
@@ -308,7 +307,7 @@ context::SET_t ca_function::ISDEC(const context::C_t& param, ranged_diagnostic_c
     return ret;
 }
 
-context::SET_t ca_function::ISHEX(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::ISHEX(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -318,7 +317,7 @@ context::SET_t ca_function::ISHEX(const context::C_t& param, ranged_diagnostic_c
     return (context::A_t)0;
 }
 
-context::SET_t ca_function::ISSYM(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::ISSYM(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -329,7 +328,7 @@ context::SET_t ca_function::ISSYM(const context::C_t& param, ranged_diagnostic_c
     return 0;
 }
 
-context::SET_t ca_function::X2A(std::string_view param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::X2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return 0;
@@ -341,7 +340,7 @@ context::SET_t ca_function::X2A(std::string_view param, ranged_diagnostic_collec
 
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 16);
 
-    if (conv.ec == std::errc() || conv.ptr != param.data() + param.size())
+    if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
     return res;
@@ -388,7 +387,7 @@ context::SET_t ca_function::A2X(context::A_t param)
     return stream.str();
 }
 
-context::SET_t ca_function::B2C(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::B2C(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -423,7 +422,7 @@ context::SET_t ca_function::B2C(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::B2D(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::B2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     auto tmp = B2A(param, std::move(add_diagnostic));
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
@@ -431,7 +430,7 @@ context::SET_t ca_function::B2D(const context::C_t& param, ranged_diagnostic_col
     return A2D(tmp.access_a());
 }
 
-context::SET_t ca_function::B2X(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::B2X(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -466,7 +465,7 @@ context::SET_t ca_function::B2X(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::BYTE(context::A_t param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::BYTE(context::A_t param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param > 255 || param < 0)
         RET_ERRPARM;
@@ -474,7 +473,7 @@ context::SET_t ca_function::BYTE(context::A_t param, ranged_diagnostic_collector
         return ebcdic_encoding::to_ascii((unsigned char)param);
 }
 
-context::SET_t ca_function::C2B(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::C2B(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -492,7 +491,7 @@ context::SET_t ca_function::C2B(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::C2D(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::C2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     auto tmp = C2A(param, std::move(add_diagnostic));
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
@@ -500,7 +499,7 @@ context::SET_t ca_function::C2D(const context::C_t& param, ranged_diagnostic_col
     return A2D(tmp.access_a());
 }
 
-context::SET_t ca_function::C2X(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::C2X(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -521,7 +520,7 @@ context::SET_t ca_function::C2X(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::D2B(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::D2B(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -532,7 +531,7 @@ context::SET_t ca_function::D2B(const context::C_t& param, ranged_diagnostic_col
     return A2B(tmp.access_a());
 }
 
-context::SET_t ca_function::D2C(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::D2C(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -543,7 +542,7 @@ context::SET_t ca_function::D2C(const context::C_t& param, ranged_diagnostic_col
     return A2C(tmp.access_a());
 }
 
-context::SET_t ca_function::D2X(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::D2X(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         RET_ERRPARM;
@@ -581,7 +580,7 @@ context::SET_t ca_function::DEQUOTE(context::C_t param)
     return param;
 }
 
-context::SET_t ca_function::DOUBLE(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::DOUBLE(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     std::string ret;
     ret.reserve(param.size());
@@ -618,7 +617,7 @@ context::SET_t ca_function::UPPER(context::C_t param)
     return param;
 }
 
-context::SET_t ca_function::X2B(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::X2B(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -641,7 +640,7 @@ context::SET_t ca_function::X2B(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::X2C(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::X2C(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     if (param.empty())
         return "";
@@ -660,7 +659,7 @@ context::SET_t ca_function::X2C(const context::C_t& param, ranged_diagnostic_col
     return ret;
 }
 
-context::SET_t ca_function::X2D(const context::C_t& param, ranged_diagnostic_collector add_diagnostic)
+context::SET_t ca_function::X2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
     auto tmp = X2A(param, std::move(add_diagnostic));
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)

@@ -466,7 +466,7 @@ SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, id_index s
                 auto attr_val = ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute);
                 return { (char)ebcdic_encoding::e2a[attr_val] };
             }
-            return "U";
+            return std::string("U");
         case data_attr_kind::O:
             return get_opcode_attr(symbol_name);
         default:
@@ -508,7 +508,7 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
         return "O";
 
     auto res = expressions::ca_constant::try_self_defining_term(value);
-    if (!res)
+    if (res)
         return "N";
 
     id_index symbol_name = ids_.add(std::move(value));

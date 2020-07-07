@@ -30,7 +30,6 @@ class ca_processor : public instruction_processor
         std::unordered_map<context::id_index, std::function<void(const semantics::complete_statement&)>>;
 
     const process_table_t table_;
-    context_manager mngr_;
     processing_state_listener& listener_;
 
 public:
@@ -100,8 +99,6 @@ private:
     void process_AREAD(const semantics::complete_statement& stmt);
 
     void process_empty(const semantics::complete_statement&);
-
-    virtual void collect_diags() const override;
 };
 
 template<typename T> inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
@@ -116,7 +113,7 @@ template<typename T> inline void ca_processor::process_SET(const semantics::comp
         return;
 
     if (!set_symbol)
-        set_symbol = mngr_.hlasm_ctx.create_local_variable<T>(name, index == -1).get();
+        set_symbol = hlasm_ctx.create_local_variable<T>(name, index == -1).get();
 
     ok = prepare_SET_operands(stmt, expr_values);
 

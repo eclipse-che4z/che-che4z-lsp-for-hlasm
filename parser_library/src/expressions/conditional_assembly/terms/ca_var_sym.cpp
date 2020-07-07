@@ -60,7 +60,10 @@ void ca_var_sym::collect_diags() const
 
 bool ca_var_sym::is_character_expression() const { return false; }
 
-context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const { return symbol->evaluate(eval_ctx); }
+context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const
+{
+    return convert_return_types(symbol->evaluate(eval_ctx), expr_kind, eval_ctx);
+}
 
 } // namespace expressions
 } // namespace parser_library

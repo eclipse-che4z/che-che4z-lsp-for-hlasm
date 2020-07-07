@@ -104,7 +104,7 @@ R EQU C-B
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags()[0].code, "D022");
 }
 
