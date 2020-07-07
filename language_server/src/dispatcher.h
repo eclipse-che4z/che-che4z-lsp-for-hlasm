@@ -41,9 +41,6 @@ public:
     // Reads messages from in_ in infinite loop, deserializes it and notifies the server.
     // Returns return value according to LSP: 0 if server was shut down apropriately
     int run_server_loop();
-    bool read_message(std::string& out);
-
-    void write_message(const std::string& in);
 
     // Serializes the json and sends it as message.
     void reply(const json& result) override;
@@ -51,6 +48,10 @@ public:
 
 
 private:
+    bool read_message(std::string& out);
+
+    void write_message(const std::string& in);
+
     server& server_;
     std::istream& in_;
     std::ostream& out_;
