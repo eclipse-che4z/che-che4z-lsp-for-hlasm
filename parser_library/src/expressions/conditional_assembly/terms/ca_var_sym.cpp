@@ -14,6 +14,7 @@
 
 #include "ca_var_sym.h"
 
+#include "ca_constant.h"
 #include "processing/context_manager.h"
 #include "semantics/concatenation_term.h"
 
@@ -63,6 +64,34 @@ bool ca_var_sym::is_character_expression() const { return false; }
 context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const
 {
     return convert_return_types(symbol->evaluate(eval_ctx), expr_kind, eval_ctx);
+}
+
+context::SET_t ca_var_sym::convert_return_types(
+    context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
+{
+    if (retval.type == context::SET_t_enum::C_TYPE)
+    {
+        switch (type)
+        {
+            case context::SET_t_enum::A_TYPE:
+            case context::SET_t_enum::B_TYPE:
+                return ca_constant::self_defining_term(
+                    retval.access_c(), ranged_diagnostic_collector(&eval_ctx, expr_range));
+            case context::SET_t_enum::C_TYPE:
+                return std::move(retval);
+            default:
+                return context::SET_t();
+        }
+    }
+    else if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)
+    {
+        retval.type = context::SET_t_enum::A_TYPE;
+    }
+    else if (retval.type == context::SET_t_enum::A_TYPE && type == context::SET_t_enum::B_TYPE)
+    {
+        retval.type = context::SET_t_enum::B_TYPE;
+    }
+    return std::move(retval);
 }
 
 } // namespace expressions
