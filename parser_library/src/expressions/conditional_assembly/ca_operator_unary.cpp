@@ -96,7 +96,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
                 break;
         }
     }
-    return context::SET_t();
+    return context::SET_t(expr_kind);
 }
 
 ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)

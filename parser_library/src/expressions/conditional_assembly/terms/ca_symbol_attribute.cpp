@@ -102,7 +102,7 @@ context::SET_t ca_symbol_attribute::evaluate(evaluation_context& eval_ctx) const
         return evaluate_varsym(std::get<semantics::vs_ptr>(symbol), eval_ctx);
     }
 
-    return context::SET_t();
+    return context::SET_t(expr_kind);
 }
 
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const

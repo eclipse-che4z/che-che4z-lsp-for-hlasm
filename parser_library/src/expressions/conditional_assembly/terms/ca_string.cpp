@@ -71,7 +71,7 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
     if (str.size() > MAX_STR_SIZE)
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
-        return context::SET_t();
+        return context::object_traits<context::C_t>::default_v();
     }
 
     if (substring.start)
@@ -82,12 +82,12 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
         if (start < 0 || count < 0 || (start == 0 && count > 0))
         {
             eval_ctx.add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
-            return context::SET_t();
+            return context::object_traits<context::C_t>::default_v();
         }
         if (start > (context::A_t)str.size())
         {
             eval_ctx.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
-            return context::SET_t();
+            return context::object_traits<context::C_t>::default_v();
         }
 
         str = str.substr(start - 1, count);

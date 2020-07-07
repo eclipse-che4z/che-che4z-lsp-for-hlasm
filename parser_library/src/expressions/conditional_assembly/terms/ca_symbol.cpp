@@ -49,7 +49,7 @@ context::SET_t ca_symbol::evaluate(evaluation_context& eval_ctx) const
     else
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_CE012(expr_range));
-        return context::SET_t();
+        return context::object_traits<context::A_t>::default_v();
     }
 }
 

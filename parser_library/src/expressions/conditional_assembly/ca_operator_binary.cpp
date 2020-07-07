@@ -179,7 +179,7 @@ context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, contex
                 break;
         }
     }
-    return context::SET_t();
+    return context::SET_t(expr_kind);
 }
 
 int ca_function_binary_operator::compare_string(const context::C_t& lhs, const context::C_t& rhs)
@@ -267,7 +267,7 @@ context::SET_t ca_conc::operation(
     if (lhs.access_c().size() + rhs.access_c().size() > ca_string::MAX_STR_SIZE)
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
-        return context::SET_t();
+        return context::object_traits<context::C_t>::default_v();
     }
     auto ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());

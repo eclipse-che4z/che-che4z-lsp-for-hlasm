@@ -68,7 +68,7 @@ context::SET_t ca_expr_list::evaluate(evaluation_context& eval_ctx) const
     assert(expr_list.size() <= 1);
 
     if (expr_list.empty())
-        return context::SET_t();
+        return context::SET_t(expr_kind);
     return expr_list.front()->evaluate(eval_ctx);
 }
 

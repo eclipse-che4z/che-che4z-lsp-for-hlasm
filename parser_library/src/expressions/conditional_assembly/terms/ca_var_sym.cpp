@@ -80,7 +80,7 @@ context::SET_t ca_var_sym::convert_return_types(
             case context::SET_t_enum::C_TYPE:
                 return std::move(retval);
             default:
-                return context::SET_t();
+                return context::SET_t(expr_kind);
         }
     }
     else if (retval.type == context::SET_t_enum::B_TYPE && type == context::SET_t_enum::A_TYPE)

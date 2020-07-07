@@ -454,5 +454,5 @@ B EQU 1
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    ASSERT_EQ(a.diags().size(), (size_t)3);
 }

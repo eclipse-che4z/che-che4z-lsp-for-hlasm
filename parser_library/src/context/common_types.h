@@ -100,7 +100,7 @@ public:
     SET_t(A_t value);
     SET_t(B_t value);
     SET_t(C_t value);
-    SET_t();
+    SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE);
 
     SET_t_enum type;
 
