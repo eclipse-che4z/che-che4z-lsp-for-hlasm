@@ -6,9 +6,7 @@
 <img src="https://sonarcloud.io/images/project_badges/sonarcloud-black.svg" width="94" height="20" href="" />
 </a>
 
-HLASM Language Support is an extension for [Visual Studio Code](https://code.visualstudio.com/) (and [Theia](https://theia-ide.org/)) that adds support for
-the High Level Assembler. It provides code completion, highlighting and navigation features, detects common mistakes in the source, and lets you trace the evaluation of the
-conditional assembly source code, using a modern debugging interface.
+HLASM Language Support is an extension for [Visual Studio Code](https://code.visualstudio.com/) (and [Theia](https://theia-ide.org/)) that adds support for the High Level Assembler language. It provides code completion, highlighting and navigation features, detects common mistakes in the source, and lets you trace the evaluation of the conditional assembly source code, using a modern debugging interface.
 
 The extension is available on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.hlasm-language-support). You can install it in a standard way from within the Visual Studio Code.
 
@@ -16,10 +14,10 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 
 ## Useful information
-- If you have a question about the functionalities of the extension, or come across a problem [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).
-- Contributions are always welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for more information
-- See the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/) for project documentation 
-- For instructions how to build and install the project from source, see the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Build-instructions)
+- If you have a question about the functionalities of the extension, or come across a problem, [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).
+- Contributions are always welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+- See the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/) for project documentation. 
+- For instructions on how to build and install the project from source, see the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/Build-instructions).
 - All [releases](https://github.com/eclipse/che-che4z-lsp-for-hlasm/releases) are available here on GitHub.
 - Any and all feedback is appreciated and welcome!
 
