@@ -12,9 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
-#define HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
-
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -24,9 +21,9 @@
 #include "lsp/feature_text_synchronization.h"
 #include "lsp/feature_workspace_folders.h"
 #include "lsp/lsp_server.h"
-#include "send_message_provider_mock.h"
+#include "../send_message_provider_mock.h"
 #include "workspace_manager.h"
-#include "ws_mngr_mock.h"
+#include "../ws_mngr_mock.h"
 
 namespace nlohmann {
 // needed in order to have mock methods with json arguments
@@ -36,7 +33,7 @@ inline void PrintTo(json const& json, std::ostream* os) { *os << json.dump(); }
 using namespace hlasm_plugin;
 using namespace language_server;
 
-TEST(lsp_server_test, initialize)
+TEST(lsp_server, initialize)
 {
     // this is json params actually sent by vscode LSP client
     json j =
@@ -64,6 +61,31 @@ TEST(lsp_server_test, initialize)
     EXPECT_EQ(server_capab["id"].get<json::number_unsigned_t>(), 47);
     ASSERT_NE(server_capab.find("result"), server_capab.end());
     EXPECT_NE(server_capab["result"].find("capabilities"), server_capab["result"].end());
+
+    json shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
+    json shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
+    json exit_notification = R"({"jsonrpc":"2.0","method":"exit","params":null})"_json;
+    EXPECT_CALL(smpm, reply(shutdown_response)).Times(1);
+    EXPECT_FALSE(s.is_exit_notification_received());
+    EXPECT_FALSE(s.is_shutdown_request_received());
+    s.message_received(shutdown_request);
+    EXPECT_FALSE(s.is_exit_notification_received());
+    EXPECT_TRUE(s.is_shutdown_request_received());
+    s.message_received(exit_notification);
+    EXPECT_TRUE(s.is_exit_notification_received());
+    EXPECT_TRUE(s.is_shutdown_request_received());
+
 }
 
-#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_SERVER_TEST_H
+TEST(lsp_server, not_implemented_method)
+{
+    json j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
+    ws_mngr_mock ws_mngr;
+    send_message_provider_mock smpm;
+    lsp::server s(ws_mngr);
+    s.set_send_message_provider(&smpm);
+
+    s.message_received(j);
+    //No result is tested, server should ignore unknown LSP method
+}
+
