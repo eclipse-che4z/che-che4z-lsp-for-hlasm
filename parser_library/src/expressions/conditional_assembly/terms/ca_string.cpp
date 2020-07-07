@@ -77,7 +77,7 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
     if (substring.start)
     {
         auto start = substring.start->evaluate(eval_ctx).access_a();
-        auto count = substring.count ? substring.count->evaluate(eval_ctx).access_a() : (context::A_t)str.size();
+        auto count = substring.count ? substring.count->evaluate(eval_ctx).access_a() : (context::A_t)str.size() - start + 1;
 
         if (start < 0 || count < 0 || (start == 0 && count > 0))
         {
@@ -89,8 +89,13 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
             eval_ctx.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
             return context::object_traits<context::C_t>::default_v();
         }
+        if (start + count - 1 > (int)str.size())
+            eval_ctx.add_diagnostic(diagnostic_op::error_CW001(substring.start->expr_range));
 
-        str = str.substr(start - 1, count);
+        if (count != 0)
+            str = str.substr(start - 1, count);
+        else
+            str = "";
     }
 
     return duplicate(duplication_factor, std::move(str), expr_range, eval_ctx);

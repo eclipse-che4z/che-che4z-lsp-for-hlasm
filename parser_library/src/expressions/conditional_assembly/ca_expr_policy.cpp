@@ -263,7 +263,7 @@ context::SET_t_enum ca_character_policy::get_operands_type(ca_expr_ops op)
 
 // string to op
 #define S2O(X)                                                                                                         \
-    if (op == #X)                                                                                                     \
+    if (op == #X)                                                                                                      \
     return ca_expr_ops::X
 
 ca_expr_ops get_expr_operator(const std::string& op)
@@ -274,12 +274,9 @@ ca_expr_ops get_expr_operator(const std::string& op)
     S2O(SRL);
     S2O(FIND);
     S2O(INDEX);
-    if (op == "AND NOT")
-        return ca_expr_ops::AND_NOT;
-    if (op == "OR NOT")
-        return ca_expr_ops::OR_NOT;
-    if (op == "XOR NOT")
-        return ca_expr_ops::XOR_NOT;
+    S2O(AND_NOT);
+    S2O(OR_NOT);
+    S2O(XOR_NOT);
     S2O(EQ);
     S2O(NE);
     S2O(LE);
@@ -360,7 +357,7 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
 
 // string to func
 #define S2F(X)                                                                                                         \
-    if (op == #X)                                                                                                     \
+    if (op == #X)                                                                                                      \
     return ca_expr_funcs::X
 
 ca_expr_funcs ca_common_expr_policy::get_function(const std::string& op)

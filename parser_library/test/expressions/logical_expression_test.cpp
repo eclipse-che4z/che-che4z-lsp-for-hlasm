@@ -176,5 +176,5 @@ TEST(logical_expressions, arithmetic_logical_clash)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
     SETBEQ("A1", 0);
-    SETBEQ("A2", 0);
+    SETBEQ("A2", 1);
 }

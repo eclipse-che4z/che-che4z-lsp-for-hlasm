@@ -83,11 +83,11 @@ TEST(character_expresssion, invalid_substring_notation)
     ASSERT_EQ(a.diags().size(), (size_t)4);
 }
 
-TEST(character_expresssion, exceeds_varning)
+TEST(character_expresssion, exceeds_warning)
 {
     std::string input =
         R"(
-&C SETC 'ABC'(2,2)
+&C SETC 'ABC'(2,3)
 )";
     analyzer a(input);
     a.analyze();
@@ -103,13 +103,12 @@ TEST(character_expresssion, invalid_string)
         R"(
 &C SETC '&'
 &C SETC (5000)'A'
-&C SETC ’A’
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    ASSERT_EQ(a.diags().size(), (size_t)2);
 }
 
 TEST(character_expresssion, escaping)
