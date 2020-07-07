@@ -70,7 +70,6 @@ void request_manager::end_worker()
 
 bool hlasm_plugin::language_server::request_manager::is_running() 
 {
-    std::lock_guard<std::mutex> lock(q_mtx_);
     return !requests_.empty();
 }
 
