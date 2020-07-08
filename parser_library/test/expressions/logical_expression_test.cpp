@@ -178,3 +178,22 @@ TEST(logical_expressions, arithmetic_logical_clash)
     SETBEQ("A1", 0);
     SETBEQ("A2", 1);
 }
+
+TEST(logical_expressions, no_spaces)
+{
+    std::string input =
+        R"(
+&A1 SETB (NOT(0))
+&A2 SETB ((1)AND(1))
+&A3 SETB ('3'ge'2')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETBEQ("A1", 1);
+    SETBEQ("A2", 1);
+    SETBEQ("A3", 1);
+}

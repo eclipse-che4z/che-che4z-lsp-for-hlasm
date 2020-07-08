@@ -35,9 +35,13 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace expressions {
 
-ca_function::ca_function(
-    ca_expr_funcs function, std::vector<ca_expr_ptr> parameters, ca_expr_ptr duplication_factor, range expr_range)
+ca_function::ca_function(context::id_index function_name,
+    ca_expr_funcs function,
+    std::vector<ca_expr_ptr> parameters,
+    ca_expr_ptr duplication_factor,
+    range expr_range)
     : ca_expression(ca_common_expr_policy::get_function_type(function), std::move(expr_range))
+    , function_name(function_name)
     , function(function)
     , parameters(std::move(parameters))
     , duplication_factor(std::move(duplication_factor))

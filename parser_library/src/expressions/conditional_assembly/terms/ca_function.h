@@ -29,13 +29,17 @@ namespace expressions {
 class ca_function : public ca_expression
 {
 public:
+    context::id_index function_name;
     const ca_expr_funcs function;
     std::vector<ca_expr_ptr> parameters;
     ca_expr_ptr duplication_factor;
 
 
-    ca_function(
-        ca_expr_funcs function, std::vector<ca_expr_ptr> parameters, ca_expr_ptr duplication_factor, range expr_range);
+    ca_function(context::id_index function_name,
+        ca_expr_funcs function,
+        std::vector<ca_expr_ptr> parameters,
+        ca_expr_ptr duplication_factor,
+        range expr_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
 

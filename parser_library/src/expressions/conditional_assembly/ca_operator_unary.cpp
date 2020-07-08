@@ -125,8 +125,6 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
 {
     expr->resolve_expression_tree(kind);
     expr_kind = expr->expr_kind;
-    if (expr_kind != kind)
-        add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
 context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context&) const

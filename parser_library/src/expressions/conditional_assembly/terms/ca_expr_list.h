@@ -42,6 +42,8 @@ public:
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
 
 private:
+    void unknown_functions_to_operators();
+
     template<typename T> void resolve();
     template<typename EXPR_POLICY> ca_expr_ptr retrieve_term(size_t& it, int priority);
     template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
