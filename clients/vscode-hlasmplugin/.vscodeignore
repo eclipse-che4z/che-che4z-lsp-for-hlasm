@@ -1,6 +1,10 @@
 .vscode/**
+coverage/**
+.nyc_output/**
 src/**
 .gitignore
 tsconfig.json
 CMakeLists.txt
 hlasmplugin.log
+build/bin/**
+lib/test/**

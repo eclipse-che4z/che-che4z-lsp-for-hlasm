@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-#include "context/instruction.h"
+#include "context/instruction_type.h"
 #include "parsing/parser_impl.h"
 #include "postponed_statement_impl.h"
 #include "processing/context_manager.h"

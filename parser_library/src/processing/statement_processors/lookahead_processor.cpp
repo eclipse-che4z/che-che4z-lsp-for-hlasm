@@ -26,15 +26,8 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
 {
     if (instruction.type == semantics::instruction_si_type::ORD)
     {
-        auto opcode = hlasm_ctx.get_mnemonic_opcode(std::get<context::id_index>(instruction.value));
-
-        if (hlasm_ctx.macros().find(opcode) != hlasm_ctx.macros().end())
-        {
-            return std::make_pair(processing_format(processing_kind::LOOKAHEAD, processing_form::IGNORED),
-                op_code(opcode, context::instruction_type::MAC));
-        }
-
-        auto status = ordinary_processor::get_instruction_processing_status(opcode, hlasm_ctx);
+        auto status = ordinary_processor::get_instruction_processing_status(
+            std::get<context::id_index>(instruction.value), hlasm_ctx);
 
         if (status)
         {
@@ -144,7 +137,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_error(hlasm_ctx.ord_ctx) && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
         {
             auto t_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
@@ -161,7 +154,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_error(hlasm_ctx.ord_ctx) && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
         {
             auto length_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0

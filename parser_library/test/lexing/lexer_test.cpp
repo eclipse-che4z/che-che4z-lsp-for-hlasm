@@ -26,9 +26,6 @@
 // tests lexer class:
 // AREAD, continuation statements, rewinding, token creation
 
-// returns contents of source file
-std::string get_content(std::string source);
-
 using parser = hlasm_plugin::parser_library::parsing::hlasmparser;
 
 TEST(lexer_test, aread)

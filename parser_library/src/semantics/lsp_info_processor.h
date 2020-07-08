@@ -90,10 +90,11 @@ private:
     context::hlasm_context* ctx_;
     // highlighting information
     semantics::highlighting_info hl_info_;
-    // regex that represents a common position of instruction within a statement
-    const std::regex instruction_regex;
     // specifies whether to generate highlighting information
     bool collect_hl_info_;
+    // regex that represents a common position of instruction within a statement
+    const std::regex instruction_regex;
+
 
     // checks whether the given position is within occurence's range
     bool is_in_range_(const position& pos, const context::occurence& occ) const;

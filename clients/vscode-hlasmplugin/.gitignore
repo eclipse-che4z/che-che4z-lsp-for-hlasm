@@ -1,4 +1,7 @@
-node_modules
-lib
+node_modules/
+lib/
 hlasmplugin.log
-bin
+.vscode-test/
+.nyc_output/
+coverage/
+/bin

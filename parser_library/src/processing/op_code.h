@@ -17,7 +17,8 @@
 
 #include <utility>
 
-#include "context/instruction.h"
+#include "context/id_storage.h"
+#include "context/instruction_type.h"
 #include "processing_format.h"
 
 namespace hlasm_plugin {

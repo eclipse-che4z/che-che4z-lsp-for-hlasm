@@ -196,10 +196,7 @@ version_t file_impl::get_version() { return version_; }
 
 bool file_impl::update_and_get_bad()
 {
-    // if the file is not up_to_date, the next 'get_text' would cause
-    // the load anyway, which will make this call obsolete
-    if (!up_to_date_)
-        load_text();
+    load_text();
     return bad_;
 }
 

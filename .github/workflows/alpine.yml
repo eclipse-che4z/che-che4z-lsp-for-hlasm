@@ -37,7 +37,7 @@ jobs:
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build
         run: cd build && cmake --build .
-      - name: Test
+      - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)

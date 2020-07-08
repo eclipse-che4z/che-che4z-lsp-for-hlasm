@@ -25,12 +25,20 @@ class library_test : public testing::Test
 {
 public:
     virtual void setup(std::string param)
-    {
-        input = get_content("test/library/input/" + param + ".in");
+    { 
+        get_content("test/library/input/" + param + ".in", input);
         holder = std::make_unique<analyzer>(input);
     }
 
 protected:
+    void get_content(const std::string& file_name, std::string& content)
+    {
+        std::ifstream ifs(file_name);
+        ASSERT_TRUE(ifs.good()) << "Could not open file '" << file_name
+                                << "'. Tests must be started from the bin/ folder.\n";
+        std::string read((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        content = std::move(read);
+    }
     std::unique_ptr<analyzer> holder;
     std::string input;
 };
@@ -81,23 +89,6 @@ TEST_F(library_test, continuation)
     // no errors found while parsing
     ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
 }
-#define CORRECTNESS_TEST
-#ifdef CORRECTNESS_TEST
-// simply parse correctly
-TEST_F(library_test, correctness)
-{
-    std::string tcase = "correctness";
-
-    setup(tcase);
-
-    // compare tokens with output file
-    // ASSERT_EQ(token_string, get_content("test/library/output/tokens/" + tcase + ".output"));
-
-    holder->analyze();
-    // no errors found while parsing
-    ASSERT_EQ(holder->parser().getNumberOfSyntaxErrors(), size_t_zero);
-}
-#endif
 
 // finding 3 variable symbols in model statement
 TEST_F(library_test, model_statement)

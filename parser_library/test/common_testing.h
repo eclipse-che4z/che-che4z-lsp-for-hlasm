@@ -49,14 +49,6 @@ class empty_attribute_provider : public attribute_provider
     }
 };
 
-// returns contents of source file
-inline std::string get_content(std::string source)
-{
-    std::ifstream ifs(source);
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    return content;
-}
-
 inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
     hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)
 {
