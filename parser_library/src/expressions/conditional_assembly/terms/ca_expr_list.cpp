@@ -43,7 +43,7 @@ const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<co
 
 void tidy_list(std::vector<ca_expr_ptr>& expr_list)
 {
-    for (int idx = expr_list.size() - 1; idx > 0; --idx)
+    for (int idx = (int)expr_list.size() - 1; idx > 0; --idx)
     {
         if (!expr_list[idx])
             expr_list.erase(expr_list.begin() + idx);

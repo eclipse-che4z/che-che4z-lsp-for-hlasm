@@ -40,7 +40,7 @@ SET_t::SET_t(context::A_t value)
 { }
 
 SET_t::SET_t(context::B_t value)
-    : a_value(object_traits<A_t>::default_v())
+    : a_value(value)
     , b_value(value)
     , c_value(object_traits<C_t>::default_v())
     , type(SET_t_enum::B_TYPE)
