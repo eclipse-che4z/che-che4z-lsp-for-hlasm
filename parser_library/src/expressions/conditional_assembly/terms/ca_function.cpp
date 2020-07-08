@@ -336,14 +336,14 @@ context::SET_t ca_function::X2A(std::string_view param, const ranged_diagnostic_
     if (param.size() > 8)
         RET_ERRPARM;
 
-    int res;
+    unsigned int res;
 
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 16);
 
     if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
-    return res;
+    return *reinterpret_cast<int*>(&res);
 }
 
 context::SET_t ca_function::A2B(context::A_t param) { return std::bitset<32>(param).to_string(); }
@@ -424,7 +424,7 @@ context::SET_t ca_function::B2C(const context::C_t& param, const ranged_diagnost
 
 context::SET_t ca_function::B2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
-    auto tmp = B2A(param, std::move(add_diagnostic));
+    auto tmp = B2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());
@@ -493,7 +493,7 @@ context::SET_t ca_function::C2B(const context::C_t& param, const ranged_diagnost
 
 context::SET_t ca_function::C2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
-    auto tmp = C2A(param, std::move(add_diagnostic));
+    auto tmp = C2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());
@@ -525,7 +525,7 @@ context::SET_t ca_function::D2B(const context::C_t& param, const ranged_diagnost
     if (param.empty())
         return "";
 
-    auto tmp = C2A(param, std::move(add_diagnostic));
+    auto tmp = C2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2B(tmp.access_a());
@@ -536,7 +536,7 @@ context::SET_t ca_function::D2C(const context::C_t& param, const ranged_diagnost
     if (param.empty())
         RET_ERRPARM;
 
-    auto tmp = D2A(param, std::move(add_diagnostic));
+    auto tmp = D2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2C(tmp.access_a());
@@ -547,7 +547,7 @@ context::SET_t ca_function::D2X(const context::C_t& param, const ranged_diagnost
     if (param.empty())
         RET_ERRPARM;
 
-    auto tmp = D2A(param, std::move(add_diagnostic));
+    auto tmp = D2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2X(tmp.access_a());
@@ -661,7 +661,7 @@ context::SET_t ca_function::X2C(const context::C_t& param, const ranged_diagnost
 
 context::SET_t ca_function::X2D(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
 {
-    auto tmp = X2A(param, std::move(add_diagnostic));
+    auto tmp = X2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2D(tmp.access_a());

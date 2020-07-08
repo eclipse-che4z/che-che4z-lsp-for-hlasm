@@ -221,7 +221,7 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
     auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
     if (add_diagnostic.diagnostics_present)
-        diags().back().file_name = ctx->opencode_file_name();
+        diags().back().file_name = ctx->processing_stack().back().proc_location.file;
     return val;
 }
 
@@ -280,7 +280,7 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SE
     expr->resolve_expression_tree(type);
     expr->collect_diags();
     for (auto& d : expr->diags())
-        add_diagnostic(diagnostic_s(ctx->opencode_file_name(), std::move(d)));
+        add_diagnostic(diagnostic_s(ctx->processing_stack().back().proc_location.file, std::move(d)));
     expr->diags().clear();
 }
 
@@ -300,6 +300,8 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr)
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     else if (opcode.value == ctx->ids().add("SETC"))
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
+    else if (opcode.value == ctx->ids().add("AREAD"))
+    { } // aread operand is just enumeration
     else
     {
         assert(false);

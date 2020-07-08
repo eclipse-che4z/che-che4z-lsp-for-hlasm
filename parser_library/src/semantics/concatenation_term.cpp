@@ -75,8 +75,12 @@ std::string sublist_conc::evaluate(expressions::evaluation_context& eval_ctx) co
 {
     std::string ret;
     ret.push_back('(');
-    for (const auto& chain : list)
-        ret.append(concatenation_point::evaluate(chain, eval_ctx));
+    for (size_t i = 0; i < list.size(); ++i)
+    {
+        ret.append(concatenation_point::evaluate(list[i], eval_ctx));
+        if (i + 1 != list.size())
+            ret.push_back(',');
+    }
     ret.push_back(')');
     return ret;
 }

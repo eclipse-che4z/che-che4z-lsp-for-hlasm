@@ -111,11 +111,11 @@ struct diagnostic_op
         , code(std::move(code))
         , message(std::move(message)) {};
 
-    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range range_)
+    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range diag_range)
         : severity(severity)
         , code(std::move(code))
         , message(std::move(message))
-        , diag_range(std::move(range_)) {};
+        , diag_range(std::move(diag_range)) {};
 
     static diagnostic_op error_I999(const std::string& instr_name, const range& range);
 
