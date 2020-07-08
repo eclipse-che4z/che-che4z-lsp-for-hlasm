@@ -238,8 +238,8 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
         {
             auto id = mngr.get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
             assert(id != context::id_storage::empty_id);
-            auto named = hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().find(id);
-            if (named == hlasm_ctx.macros().find(statement.opcode_ref().value)->second->named_params().end()
+            auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
+            if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
                 || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
             {
                 add_diagnostic(diagnostic_op::error_E010(

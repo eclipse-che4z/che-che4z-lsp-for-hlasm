@@ -24,16 +24,16 @@ namespace hlasm_plugin::parser_library::workspaces {
 processor_file_impl::processor_file_impl(std::string file_name, std::atomic<bool>* cancel)
     : file_impl(std::move(file_name))
     , cancel_(cancel)
-{}
+{ }
 
 processor_file_impl::processor_file_impl(file_impl&& f_impl, std::atomic<bool>* cancel)
     : file_impl(std::move(f_impl))
     , cancel_(cancel)
-{}
+{ }
 
 processor_file_impl::processor_file_impl(const file_impl& file, std::atomic<bool>* cancel)
     : file_impl(file)
-{}
+{ }
 
 void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
 
@@ -79,7 +79,7 @@ parse_result processor_file_impl::parse_macro(
 parse_result processor_file_impl::parse_no_lsp_update(
     parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
-    no_update_analyzer_ =
+    auto no_update_analyzer_ =
         std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
     no_update_analyzer_->analyze();
     return true;

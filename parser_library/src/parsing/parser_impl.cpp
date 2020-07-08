@@ -98,13 +98,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         sub = field;
     parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
 
-    h.input->append(field);
+    h.input->reset(field);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(field_range.original_range.start);
     h.lex->set_unlimited_line(after_substitution);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(hlasm_ctx, field_range, status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
@@ -118,7 +118,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
             ctx->ids().add(ctx->processing_stack().back().proc_location.file, true));
     }
 
-    // h.parser->append();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -510,20 +510,20 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
 
-    h.input->append(operands);
+    h.input->reset(operands);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(field_range.start);
     h.lex->set_unlimited_line(true);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(ctx, tmp_provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    //	h.parser->reset();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -535,8 +535,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
     collector.append_reparsed_symbols(std::move(h.parser->collector));
 
     collect_diags_from_child(listener);
-
-    // parsers_.emplace_back(std::move(h));
 
     return list;
 }
@@ -557,19 +555,19 @@ void parser_impl::parse_rest(std::string text, range text_range)
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 
-    h.input->append(text);
+    h.input->reset(text);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(text_range.start);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(this);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    // h.parser->reset();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -611,8 +609,6 @@ void parser_impl::parse_rest(std::string text, range text_range)
     collect_diags_from_child(listener);
 
     collector.append_operand_field(std::move(h.parser->collector));
-
-    // parsers_.emplace_back(std::move(h));
 }
 
 void parser_impl::parse_lookahead(std::string text, range text_range)
@@ -651,20 +647,20 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 
-    h.input->append(text);
+    h.input->reset(text);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(text_range.start);
     h.lex->set_unlimited_line(true);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(this);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    // h.parser->append();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
