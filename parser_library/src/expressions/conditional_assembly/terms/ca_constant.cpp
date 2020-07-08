@@ -70,13 +70,11 @@ context::A_t ca_constant::self_defining_term(
 context::A_t ca_constant::self_defining_term(
     const std::string& value, const ranged_diagnostic_collector& add_diagnostic)
 {
-    if (value.size() < 3)
-        return self_defining_term("D", value, add_diagnostic);
-    else if (value[1] == '\'' && value.back() == '\'')
+    if (value.size() >= 3 && value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
             std::string_view(value.c_str(), 1), std::string_view(value.c_str() + 2, value.size() - 3), add_diagnostic);
     else
-        add_diagnostic(diagnostic_op::error_CE015);
+        return self_defining_term("D", value, add_diagnostic);
     return context::object_traits<context::A_t>::default_v();
 }
 
