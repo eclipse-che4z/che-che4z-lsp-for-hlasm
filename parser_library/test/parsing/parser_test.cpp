@@ -43,13 +43,6 @@ protected:
     std::string input;
 };
 
-TEST_F(library_test, expression_test)
-{
-    std::string tcase = "expression_test";
-
-    ASSERT_TRUE(false);
-}
-
 // 3 instruction statements and 3 EOLLN
 TEST_F(library_test, simple)
 {

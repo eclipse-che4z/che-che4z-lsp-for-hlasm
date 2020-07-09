@@ -203,13 +203,13 @@ context::SET_t ca_function::B2A(std::string_view param, const ranged_diagnostic_
     if (param.size() > 32)
         RET_ERRPARM;
 
-    context::A_t res;
+    unsigned int res;
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 2);
 
     if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
-    return res;
+    return *reinterpret_cast<int*>(&res);
 }
 
 context::SET_t ca_function::C2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic)
@@ -258,7 +258,7 @@ context::SET_t ca_function::D2A(std::string_view param, const ranged_diagnostic_
 context::SET_t ca_function::DCLEN(const context::C_t& param)
 {
     context::A_t ret = 0;
-    for (const char* c = param.c_str(); *c != 0; ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
         if ((*c == '\'' && *(c + 1) == '\'') || (*c == '&' && *(c + 1) == '&'))
             ++c;
@@ -415,7 +415,7 @@ context::SET_t ca_function::B2C(const context::C_t& param, const ranged_diagnost
         unsigned char c = 0;
         for (size_t j = 0; j < 8; ++j)
         {
-            unsigned char bit = new_str[i * 8 + 7 - j] - '0';
+            unsigned char bit = new_str[i * 8 + j] - '0';
             if (bit != 0 && bit != 1)
                 RET_ERRPARM;
             c = (c << 1) + bit;
@@ -458,7 +458,7 @@ context::SET_t ca_function::B2X(const context::C_t& param, const ranged_diagnost
         unsigned char c = 0;
         for (size_t j = 0; j < 4; ++j)
         {
-            unsigned char bit = new_str[i * 4 + 3 - j] - '0';
+            unsigned char bit = new_str[i * 4 + j] - '0';
             if (bit != 0 && bit != 1)
                 RET_ERRPARM;
             c = (c << 1) + bit;
@@ -487,7 +487,7 @@ context::SET_t ca_function::C2B(const context::C_t& param, const ranged_diagnost
 
     std::string ret;
     ret.reserve(param.size() * 8);
-    for (const char* c = param.c_str(); *c != 0; ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
         auto value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
         ret.append(std::bitset<8>(value).to_string());
@@ -513,9 +513,9 @@ context::SET_t ca_function::C2X(const context::C_t& param, const ranged_diagnost
 
     std::string ret;
     ret.reserve(param.size() * 2);
-    for (const char* c = param.c_str(); *c != 0; ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
-        auto value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
+        int value = ebcdic_encoding::to_ebcdic(ebcdic_encoding::to_pseudoascii(c));
 
         std::stringstream stream;
         stream << std::setfill('0') << std::setw(2) << std::uppercase << std::hex << value;
@@ -529,7 +529,7 @@ context::SET_t ca_function::D2B(const context::C_t& param, const ranged_diagnost
     if (param.empty())
         return "";
 
-    auto tmp = C2A(param, add_diagnostic);
+    auto tmp = D2A(param, add_diagnostic);
     if (tmp.type == context::SET_t_enum::UNDEF_TYPE)
         return tmp;
     return A2B(tmp.access_a());
@@ -561,7 +561,7 @@ context::SET_t ca_function::DCVAL(const context::C_t& param)
 {
     std::string ret;
 
-    for (const char* c = param.c_str(); *c != 0; ++c)
+    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
         if ((*c == '\'' && *(c + 1) == '\'') || (*c == '&' && *(c + 1) == '&'))
             ++c;
@@ -631,7 +631,7 @@ context::SET_t ca_function::X2B(const context::C_t& param, const ranged_diagnost
 
     std::string ret;
     ret.reserve(param.size() * 4);
-    for (auto c = param.c_str(); *c != '\0'; ++c)
+    for (auto c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
         unsigned char value = 0;
         if (std::isxdigit(*c))
@@ -649,12 +649,19 @@ context::SET_t ca_function::X2C(const context::C_t& param, const ranged_diagnost
     if (param.empty())
         return "";
 
+    std::string new_string;
+    new_string.reserve(param.size());
+
+    if (param.size() % 2 == 1)
+        new_string.push_back('0');
+    new_string += param;
+
     std::string ret;
-    for (auto c = param.c_str(); *c != '\0'; ++c)
+    for (auto c = new_string.c_str(); c != new_string.c_str() + new_string.size(); c += 2)
     {
         unsigned char value = 0;
         if (std::isxdigit(*c))
-            std::from_chars(c, c + 1, value, 16);
+            std::from_chars(c, c + 2, value, 16);
         else
             RET_ERRPARM;
 
