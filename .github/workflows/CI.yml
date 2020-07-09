@@ -45,6 +45,9 @@ jobs:
     - name: Extension Test
       shell: cmd
       run: npm --prefix .\clients\vscode-hlasmplugin test
+    - name: Extension Test Insiders
+      shell: cmd
+      run: npm --prefix .\clients\vscode-hlasmplugin test:insiders
     - name: Actions artifact
       uses: actions/upload-artifact@v1
       with:
@@ -69,6 +72,10 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.0
         with:
           run: npm --prefix clients/vscode-hlasmplugin test
+      - name: Extension Test Insiders
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -93,6 +100,8 @@ jobs:
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
         run: npm --prefix clients/vscode-hlasmplugin test
+      - name: Extension Test Insiders
+        run: npm --prefix clients/vscode-hlasmplugin test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -168,8 +177,11 @@ jobs:
       name: Theia Integration Test
       runs-on: ubuntu-18.04
       needs: alpine-VSIX
+      strategy:
+        matrix: 
+          theia: [theiaide/theia, theiaide/theia:next]
       container:
-        image: theiaide/theia
+        image: ${{ matrix.theia }}
         options: --user root
       
       steps:
