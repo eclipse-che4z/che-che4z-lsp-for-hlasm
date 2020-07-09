@@ -60,7 +60,7 @@ struct occurence
     inline occurence(range range, const std::string* str)
         : symbol_range(range)
         , file_name(str)
-    { }
+    {}
 };
 
 // representation of an lsp symbol as it comes from parser
@@ -72,7 +72,7 @@ struct lsp_symbol
         , symbol_range(std::move(symbol_range))
         , type(type)
         , scope({ nullptr, 0 })
-    { }
+    {}
 
     // name of symbol
     const std::string* name;
@@ -142,19 +142,19 @@ struct definition
     // created from lsp symbol with no addictional info
     inline definition(const lsp_symbol& sym)
         : definition(sym.name, sym.symbol_range.file, sym.symbol_range.r)
-    { }
+    {}
 
     // empty definition
     inline definition(const std::string* empty_string)
         : name(empty_string)
         , file_name(empty_string)
-    { }
+    {}
 
     inline definition(const std::string* name, const std::string* file_name, range definition_range)
         : name(name)
         , file_name(file_name)
         , definition_range(definition_range)
-    { }
+    {}
 
     // returns value of the symbol
     virtual std::vector<std::string> get_value() const;
@@ -181,11 +181,11 @@ struct ord_definition : public definition
 
     inline ord_definition(const std::string* name, const std::string* file_name, range definition_range)
         : definition(name, file_name, definition_range)
-    { }
+    {}
 
     inline ord_definition(const lsp_symbol& sym)
         : definition(sym)
-    { }
+    {}
 
     // constructor with addition of symbol value and symbol attributes
     inline ord_definition(const std::string* name,
@@ -196,7 +196,7 @@ struct ord_definition : public definition
         : definition(name, file_name, definition_range)
         , val(val)
         , attr(attr)
-    { }
+    {}
 
     virtual std::vector<std::string> get_value() const override;
     virtual size_t hash() const override;
@@ -230,7 +230,7 @@ struct var_definition : public definition
         : definition(sym)
         , type(var_type::BOOL)
         , scope { nullptr, 0 }
-    { }
+    {}
 
     // constructor with addition of variable symbol type and scope of the symbol
     inline var_definition(const std::string* name,
@@ -241,7 +241,7 @@ struct var_definition : public definition
         : definition(name, file_name, definition_range)
         , type(type)
         , scope(scope)
-    { }
+    {}
 
     virtual std::vector<std::string> get_value() const override;
     virtual size_t hash() const override;
@@ -264,14 +264,14 @@ struct seq_definition : public definition
     inline seq_definition(const lsp_symbol& sym)
         : definition(sym)
         , scope { nullptr, 0 }
-    { }
+    {}
 
     // constructor with addition of scope of the symbol
     inline seq_definition(
         const std::string* name, const std::string* file_name, const range& definition_range, macro_id scope)
         : definition(name, file_name, definition_range)
         , scope(scope)
-    { }
+    {}
 
     virtual std::vector<std::string> get_value() const override;
     virtual size_t hash() const override;
@@ -292,7 +292,7 @@ struct instr_definition : public definition
     inline instr_definition(const lsp_symbol& sym)
         : definition(sym)
         , version(0)
-    { }
+    {}
 
     // constructor with addition of the completion item describing the instruction and the version of the instruction
     // (macros only)
@@ -304,7 +304,7 @@ struct instr_definition : public definition
         : definition(name, file_name, definition_range)
         , item(item)
         , version(version)
-    { }
+    {}
 
     virtual std::vector<std::string> get_value() const override;
     virtual size_t hash() const override;
@@ -355,7 +355,7 @@ struct lsp_context
     inline lsp_context()
         : deferred_macro_statement()
 
-    { }
+    {}
 };
 
 using lsp_ctx_ptr = std::shared_ptr<lsp_context>;

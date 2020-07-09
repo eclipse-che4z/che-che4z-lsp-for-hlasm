@@ -154,7 +154,7 @@ completion_item_s::completion_item_s(
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
     , kind(kind)
-{ }
+{}
 
 completion_item_s::completion_item_s(
     std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents, size_t kind)
@@ -163,7 +163,7 @@ completion_item_s::completion_item_s(
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
     , kind(kind)
-{ }
+{}
 
 std::vector<std::string> completion_item_s::get_contents() const
 {
