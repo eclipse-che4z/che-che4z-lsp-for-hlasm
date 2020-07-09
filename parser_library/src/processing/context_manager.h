@@ -26,9 +26,7 @@
 #include "workspaces/parse_lib_provider.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // class wrapping context providing ranges, checks and diagnostics to hlasm_context
 class context_manager : public diagnosable_ctx
@@ -51,7 +49,8 @@ public:
     }
 
     context::SET_t convert(context::SET_t source, context::SET_t_enum target_type, range value_range) const;
-    template<typename T> T convert_to(context::SET_t source, range value_range) const
+    template<typename T>
+    T convert_to(context::SET_t source, range value_range) const
     {
         auto tmp = convert(std::move(source), context::object_traits<T>::type_enum, value_range);
 
@@ -87,7 +86,5 @@ private:
         const std::function<std::string(const semantics::concat_chain& chain)>& to_string) const;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

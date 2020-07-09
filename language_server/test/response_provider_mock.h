@@ -16,8 +16,7 @@
 
 #include "feature.h"
 
-namespace hlasm_plugin::language_server
-{
+namespace hlasm_plugin::language_server {
 
 class response_provider_mock : public response_provider
 {
@@ -31,4 +30,4 @@ class response_provider_mock : public response_provider
             const json& error));
 };
 
-}
+} // namespace hlasm_plugin::language_server

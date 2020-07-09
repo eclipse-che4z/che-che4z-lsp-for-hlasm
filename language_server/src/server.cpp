@@ -26,7 +26,7 @@ namespace hlasm_plugin::language_server {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : ws_mngr_(ws_mngr)
-{ }
+{}
 
 void server::register_feature_methods()
 {

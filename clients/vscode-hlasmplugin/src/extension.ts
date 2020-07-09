@@ -57,7 +57,6 @@ export async function activate(context: vscode.ExtensionContext) {
     hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
     await registerToContext(context, factory.dapPort, highlight);
-
     //give the server some time to start listening when using TCP
     setTimeout(function () {
         hlasmpluginClient.start();

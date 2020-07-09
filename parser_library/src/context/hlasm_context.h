@@ -26,9 +26,7 @@
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class hlasm_context;
 using ctx_ptr = std::unique_ptr<hlasm_context>;
@@ -192,7 +190,8 @@ public:
     void leave_copy_member();
 
     // creates specified global set symbol
-    template<typename T> set_sym_ptr create_global_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_global_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())
@@ -214,7 +213,8 @@ public:
     }
 
     // creates specified local set symbol
-    template<typename T> set_sym_ptr create_local_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_local_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())
@@ -229,7 +229,5 @@ public:
     }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

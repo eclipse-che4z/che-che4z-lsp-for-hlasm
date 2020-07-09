@@ -73,7 +73,6 @@ TEST(dap_server, dap_server)
     EXPECT_EQ(smp.replies, expected_response_disconnect);
     EXPECT_TRUE(serv.is_exit_notification_received());
     EXPECT_TRUE(serv.is_shutdown_request_received());
-
 }
 
 TEST(dap_server, malformed_message)
@@ -82,7 +81,7 @@ TEST(dap_server, malformed_message)
     json malf = R"({"commnd":"disconnect"})"_json;
     dap::server serv(ws_mngr);
 
-    
+
     serv.message_received(malf);
     // No assertions, the server must not crash.
 }

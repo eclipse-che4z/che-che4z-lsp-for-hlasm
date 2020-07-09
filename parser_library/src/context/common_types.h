@@ -17,9 +17,7 @@
 
 #include <string>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // type for SETA symbol
 using A_t = int32_t;
@@ -53,12 +51,14 @@ enum class macro_param_type
 };
 
 // helper traits structure for SET types
-template<typename T> struct object_traits
+template<typename T>
+struct object_traits
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::UNDEF_TYPE;
 };
 
-template<> struct object_traits<A_t>
+template<>
+struct object_traits<A_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::A_TYPE;
     static const A_t& default_v()
@@ -68,7 +68,8 @@ template<> struct object_traits<A_t>
     }
 };
 
-template<> struct object_traits<B_t>
+template<>
+struct object_traits<B_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::B_TYPE;
     static const B_t& default_v()
@@ -78,7 +79,8 @@ template<> struct object_traits<B_t>
     }
 };
 
-template<> struct object_traits<C_t>
+template<>
+struct object_traits<C_t>
 {
     static constexpr SET_t_enum type_enum = SET_t_enum::C_TYPE;
     static const C_t& default_v()
@@ -113,7 +115,5 @@ public:
 std::string& to_upper(std::string& s);
 std::string to_upper_copy(std::string s);
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

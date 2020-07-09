@@ -26,7 +26,7 @@ class library_test : public testing::Test
 {
 public:
     virtual void setup(std::string param)
-    { 
+    {
         get_content("test/library/input/" + param + ".in", input);
         holder = std::make_unique<analyzer>(input);
     }

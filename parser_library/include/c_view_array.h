@@ -21,7 +21,8 @@ namespace hlasm_plugin::parser_library {
 // converted to its exported representation in implementation
 // of item. c_type is the exported type, impl is its
 // implementation.
-template<typename c_type, typename impl> class c_view_array
+template<typename c_type, typename impl>
+class c_view_array
 {
 public:
     c_view_array(const impl* data, size_t size)
@@ -31,7 +32,7 @@ public:
 
     // needs to be specialized for every use
     c_type item(size_t index);
-    size_t size() { return size_; }
+    size_t size() const { return size_; }
 
 private:
     const impl* data_;
