@@ -267,7 +267,7 @@ bool workspace::load_config()
         // extension wildcard
         if (std::regex_match(wildcard_str, extension_regex))
             extensions.insert({ std::regex_replace(wildcard_str, extension_regex, "$2"),
-                wildcard2regex((ws_path / wildcard_str).string()) });
+                wildcard2regex(wildcard_str) });
     }
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups
