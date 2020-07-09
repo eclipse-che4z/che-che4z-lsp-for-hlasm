@@ -53,6 +53,13 @@ SET_t::SET_t(context::C_t value)
     , type(SET_t_enum::C_TYPE)
 { }
 
+SET_t::SET_t(const char* value)
+    : a_value(object_traits<A_t>::default_v())
+    , b_value(object_traits<B_t>::default_v())
+    , c_value(value)
+    , type(SET_t_enum::C_TYPE)
+{ }
+
 SET_t::SET_t(SET_t_enum type)
     : a_value(object_traits<A_t>::default_v())
     , b_value(object_traits<B_t>::default_v())

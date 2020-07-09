@@ -100,6 +100,8 @@ public:
     SET_t(A_t value);
     SET_t(B_t value);
     SET_t(C_t value);
+    // for string literals (otherwise they prefer coversion to bool rather than to string)
+    SET_t(const char* value);
     SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE);
 
     SET_t_enum type;
