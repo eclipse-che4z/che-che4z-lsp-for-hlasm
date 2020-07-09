@@ -44,10 +44,10 @@ jobs:
       run: cd build\bin && library_test.exe && server_test.exe
     - name: Extension Test
       shell: cmd
-      run: npm --prefix .\clients\vscode-hlasmplugin test
+      run: npm --prefix .\clients\vscode-hlasmplugin run test
     - name: Extension Test Insiders
       shell: cmd
-      run: npm --prefix .\clients\vscode-hlasmplugin test:insiders
+      run: npm --prefix .\clients\vscode-hlasmplugin run test:insiders
     - name: Actions artifact
       uses: actions/upload-artifact@v1
       with:
@@ -71,11 +71,11 @@ jobs:
       - name: Extension Test
         uses: GabrielBB/xvfb-action@v1.0
         with:
-          run: npm --prefix clients/vscode-hlasmplugin test
+          run: npm --prefix clients/vscode-hlasmplugin run test
       - name: Extension Test Insiders
         uses: GabrielBB/xvfb-action@v1.0
         with:
-          run: npm --prefix clients/vscode-hlasmplugin test:insiders
+          run: npm --prefix clients/vscode-hlasmplugin run test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -99,9 +99,9 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        run: npm --prefix clients/vscode-hlasmplugin test
+        run: npm --prefix clients/vscode-hlasmplugin run test
       - name: Extension Test Insiders
-        run: npm --prefix clients/vscode-hlasmplugin test:insiders
+        run: npm --prefix clients/vscode-hlasmplugin run test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
