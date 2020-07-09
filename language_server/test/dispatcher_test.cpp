@@ -32,13 +32,13 @@ public:
     server_mock(int max_messages)
         : server(ws)
         , messages_limit(max_messages)
-    { }
+    {}
 
     std::vector<json> messages;
 
-    virtual void respond(const json&, const std::string&, const json&) override { }
-    virtual void notify(const std::string&, const json&) override { }
-    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override { }
+    virtual void respond(const json&, const std::string&, const json&) override {}
+    virtual void notify(const std::string&, const json&) override {}
+    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
     virtual void message_received(const json& message) override
     {
         ++counter;
@@ -67,7 +67,7 @@ struct stringer
 };
 
 class dispatcher_fixture : public ::testing::TestWithParam<test_param>
-{ };
+{};
 
 INSTANTIATE_TEST_SUITE_P(dispatcher,
     dispatcher_fixture,
@@ -79,13 +79,13 @@ INSTANTIATE_TEST_SUITE_P(dispatcher,
             { "\"A json message 1\""_json },
             false,
             "unexpected_header_entry" },
-        test_param{ 1,
+        test_param { 1,
             0,
             { "Content-Length: 30\r\nContent-Length: 18\r\n\r\n" },
             { "\"A json message 1\""_json },
             true,
             "two_content_length_headers" },
-        test_param{ 1,
+        test_param { 1,
             0,
             { "Content-Length: 0\r\nContent-Length: 18\r\n\r\n" },
             { "\"A json message 1\""_json },
@@ -97,16 +97,12 @@ INSTANTIATE_TEST_SUITE_P(dispatcher,
             {},
             false,
             "unexpected_content_length" },
-        test_param{ 1,
-            1,
-            { "Content-Length: 27\r\n\r\n\"A malformed json message 1" },
-            {},
-            false,
-            "malformed_message" },
-        test_param{ 2,
+        test_param {
+            1, 1, { "Content-Length: 27\r\n\r\n\"A malformed json message 1" }, {}, false, "malformed_message" },
+        test_param { 2,
             0,
             { "Content-Length: 18\r\n\r\n", "Content-Length: 20\r\n\r\n" },
-            { "\"A json message 1\""_json, R"({"Second":"message"})"_json},
+            { "\"A json message 1\""_json, R"({"Second":"message"})"_json },
             true,
             "two_messages" }),
     stringer());
@@ -151,6 +147,6 @@ TEST(dispatcher, write_message)
     d.reply(message);
 
     EXPECT_EQ(ss.str(), "Content-Length: 16\r\n\r\n" + message.dump());
-    
+
     rm.end_worker();
 }

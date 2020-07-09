@@ -20,9 +20,8 @@
 #include "expression.h"
 #include "logic_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 class expression;
 class character_expression;
 using char_ptr = std::shared_ptr<character_expression>;
@@ -61,7 +60,8 @@ public:
     /**
      * special HLASM CA substring
      * */
-    template<typename T> char_ptr substring(int32_t dupl, const T& s, const T& e) const
+    template<typename T>
+    char_ptr substring(int32_t dupl, const T& s, const T& e) const
     {
         if (dupl < 0)
             return default_expr_with_error<character_expression>(error_messages::ec01());
@@ -177,8 +177,7 @@ private:
 
     std::string value_ = "";
 };
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

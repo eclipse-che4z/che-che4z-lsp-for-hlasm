@@ -24,9 +24,8 @@
 #include "diagnosable.h"
 #include "error_messages.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 class expression;
 using expr_ptr = std::shared_ptr<expression>;
 using expr_list = std::vector<expr_ptr>;
@@ -70,9 +69,17 @@ public:
     virtual bool is_complex_keyword() const { return false; }
     virtual std::string get_str_val() const = 0;
 
-    template<typename T> T* retype() { return dynamic_cast<T*>(this); }
+    template<typename T>
+    T* retype()
+    {
+        return dynamic_cast<T*>(this);
+    }
 
-    template<typename T> const T* retype() const { return dynamic_cast<const T*>(this); }
+    template<typename T>
+    const T* retype() const
+    {
+        return dynamic_cast<const T*>(this);
+    }
 
 
     expression(expression&&) = default;
@@ -84,7 +91,8 @@ protected:
     void copy_diag(const expression* o);
     void copy_diag(const expression& o);
 
-    template<typename T> static typename std::shared_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
+    template<typename T>
+    static typename std::shared_ptr<T> default_expr_with_error(std::unique_ptr<diagnostic_op> diag)
     {
         auto ex = std::make_shared<T>();
         ex->diag = std::move(diag);
@@ -102,7 +110,8 @@ protected:
      * see: copy_return_on_error and copy_return_on_error_binary
      * */
 
-    template<typename T> static typename std::shared_ptr<T> test_and_copy_error(const expression* e)
+    template<typename T>
+    static typename std::shared_ptr<T> test_and_copy_error(const expression* e)
     {
         if (e->has_error())
         {
@@ -113,7 +122,8 @@ protected:
         return std::unique_ptr<T>();
     }
 
-    template<typename T> static typename std::shared_ptr<T> test_and_copy_error(const expression& e)
+    template<typename T>
+    static typename std::shared_ptr<T> test_and_copy_error(const expression& e)
     {
         if (e.has_error())
         {
@@ -127,9 +137,8 @@ protected:
     static expr_ptr evaluate_term(std::deque<expr_ptr>& exprs, uint8_t priority, size_t& operator_count);
     static expr_ptr evaluate_factor(std::deque<expr_ptr>& exprs, size_t& operator_count);
 };
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #define make_arith(val) std::make_shared<arithmetic_expression>(val)
 #define make_logic(val) std::make_shared<logic_expression>(val)

@@ -20,11 +20,10 @@
 
 #include "variable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
-template<typename T> class set_symbol;
+template<typename T>
+class set_symbol;
 using set_sym_ptr = std::shared_ptr<set_symbol_base>;
 
 // base class for set_symbols
@@ -39,12 +38,14 @@ public:
     const SET_t_enum type;
 
     // casts this to specialized set symbol
-    template<typename T> set_symbol<T>* access_set_symbol()
+    template<typename T>
+    set_symbol<T>* access_set_symbol()
     {
         return (type == object_traits<T>::type_enum) ? static_cast<set_symbol<T>*>(this) : nullptr;
     }
 
-    template<typename T> const set_symbol<T>* access_set_symbol() const
+    template<typename T>
+    const set_symbol<T>* access_set_symbol() const
     {
         return (type == object_traits<T>::type_enum) ? static_cast<const set_symbol<T>*>(this) : nullptr;
     }
@@ -57,7 +58,8 @@ protected:
 };
 
 // specialized set symbol holding data T (int = A_t, bool = B_t, std::string=C_t)
-template<typename T> class set_symbol : public set_symbol_base
+template<typename T>
+class set_symbol : public set_symbol_base
 {
     static_assert(object_traits<T>::type_enum != SET_t_enum::UNDEF_TYPE, "Not a SET variable type.");
 
@@ -145,24 +147,25 @@ private:
 };
 
 
-template<> inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
+template<>
+inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
 {
     auto tmp = get_data(std::move(offset));
     return tmp ? (A_t)std::to_string(*tmp).size() : (A_t)1;
 }
-template<> inline A_t set_symbol<B_t>::count(std::vector<size_t> offset) const
+template<>
+inline A_t set_symbol<B_t>::count(std::vector<size_t> offset) const
 {
     (void)offset;
     return (A_t)1;
 }
-template<> inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
+template<>
+inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
 {
     auto tmp = get_data(std::move(offset));
     return tmp ? (A_t)tmp->size() : (A_t)0;
 }
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

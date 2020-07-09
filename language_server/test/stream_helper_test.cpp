@@ -22,18 +22,17 @@ using namespace hlasm_plugin::language_server;
 
 TEST(stream_helper, stream_helper)
 {
-	std::stringstream ss("Spaces must not be treated\nas whitespaces and \n\r\n newlines must be \t treated as whitespaces.");
-	newline_is_space::imbue_stream(ss);
-	std::vector<std::string> lines;
-	std::string line;
-	while (ss >> line)
-	{
-		lines.push_back(line);
-	}
-	std::vector<std::string> expected = {
-		"Spaces must not be treated",
-		"as whitespaces and ",
-		"\r",
-		" newlines must be \t treated as whitespaces."};
-	EXPECT_EQ(lines, expected);
+    std::stringstream ss(
+        "Spaces must not be treated\nas whitespaces and \n\r\n newlines must be \t treated as whitespaces.");
+    newline_is_space::imbue_stream(ss);
+    std::vector<std::string> lines;
+    std::string line;
+    while (ss >> line)
+    {
+        lines.push_back(line);
+    }
+    std::vector<std::string> expected = {
+        "Spaces must not be treated", "as whitespaces and ", "\r", " newlines must be \t treated as whitespaces."
+    };
+    EXPECT_EQ(lines, expected);
 }

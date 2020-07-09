@@ -173,7 +173,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
     }
 }
 
-template<checking::data_instr_type instr_type> void asm_processor::process_data_instruction(rebuilt_statement stmt)
+template<checking::data_instr_type instr_type>
+void asm_processor::process_data_instruction(rebuilt_statement stmt)
 {
     // enforce alignment of the first operand
     context::alignment al = context::no_align;

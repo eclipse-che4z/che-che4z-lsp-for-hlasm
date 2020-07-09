@@ -13,19 +13,31 @@
  */
 
 import * as path from 'path';
-import { runTests } from 'vscode-test';
+import { runTests, downloadAndUnzipVSCode } from 'vscode-test';
 import { TestOptions } from 'vscode-test/out/runTest';
+import * as process from 'process';
 
 async function main() {
 	try {
 		// prepare development and tests paths
 		const extensionDevelopmentPath = path.join(__dirname, '../../');
 		const extensionTestsPath = path.join(__dirname, './suite/index');
-		const launchArgs = [path.join(__dirname, './workspace/')];
-		const options: TestOptions = {
-			extensionDevelopmentPath,
-			extensionTestsPath,
-			launchArgs
+		const launchArgs = [path.join(__dirname, './workspace/'),'--disable-extensions'];
+		var options: TestOptions;
+		if (process.argv.length > 2 && process.argv[2] == 'insiders') {
+			const vscodeExecutablePath = await downloadAndUnzipVSCode('insiders');
+			options = {
+				vscodeExecutablePath,
+				extensionDevelopmentPath,
+				extensionTestsPath,
+				launchArgs
+			}
+		} else {
+			options = {
+				extensionDevelopmentPath,
+				extensionTestsPath,
+				launchArgs
+			}
 		}
 		// run tests
 		await runTests(options);

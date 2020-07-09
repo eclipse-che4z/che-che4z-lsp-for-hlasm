@@ -26,7 +26,8 @@
 namespace hlasm_plugin::parser_library::checking {
 
 // Represents data def modifiers, type, extension and duplication factor
-template<typename T> struct data_def_field
+template<typename T>
+struct data_def_field
 {
     data_def_field()
         : present(false)
@@ -97,7 +98,11 @@ using scale_modifier_t = data_def_field<int16_t>;
 using exponent_modifier_t = data_def_field<int32_t>;
 using dupl_factor_modifier_t = data_def_field<int32_t>;
 
-template<typename T> inline T round_up(T n, T m) { return ((n + m - 1) / m) * m; }
+template<typename T>
+inline T round_up(T n, T m)
+{
+    return ((n + m - 1) / m) * m;
+}
 
 } // namespace hlasm_plugin::parser_library::checking
 

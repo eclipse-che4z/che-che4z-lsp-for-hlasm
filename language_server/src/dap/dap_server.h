@@ -48,7 +48,6 @@ public:
 
     virtual void message_received(const json& message) override;
 
-    
 
 
 private:

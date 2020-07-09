@@ -44,7 +44,10 @@ jobs:
       run: cd build\bin && library_test.exe && server_test.exe
     - name: Extension Test
       shell: cmd
-      run: npm --prefix .\clients\vscode-hlasmplugin test
+      run: npm --prefix .\clients\vscode-hlasmplugin run test
+    - name: Extension Test Insiders
+      shell: cmd
+      run: npm --prefix .\clients\vscode-hlasmplugin run test:insiders
     - name: Actions artifact
       uses: actions/upload-artifact@v1
       with:
@@ -68,7 +71,11 @@ jobs:
       - name: Extension Test
         uses: GabrielBB/xvfb-action@v1.0
         with:
-          run: npm --prefix clients/vscode-hlasmplugin test
+          run: npm --prefix clients/vscode-hlasmplugin run test
+      - name: Extension Test Insiders
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin run test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -92,7 +99,9 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
-        run: npm --prefix clients/vscode-hlasmplugin test
+        run: npm --prefix clients/vscode-hlasmplugin run test
+      - name: Extension Test Insiders
+        run: npm --prefix clients/vscode-hlasmplugin run test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
@@ -163,3 +172,28 @@ jobs:
         with:
           name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
           path: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+
+  theia-test:
+      name: Theia Integration Test
+      runs-on: ubuntu-18.04
+      needs: alpine-VSIX
+      strategy:
+        matrix: 
+          theia: ['theiaide/theia', 'theiaide/theia:next']
+      container:
+        image: ${{ matrix.theia }}
+        options: --user root
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Install Chromium
+        run: apk add --no-cache chromium
+      - name: Get version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
+      - name: Download VSIX
+        uses: actions/download-artifact@v2
+        with:
+          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          path: clients/vscode-hlasmplugin/plugin/
+      - name: Run Tests
+        run: cd clients/vscode-hlasmplugin && npm install && npm run compile && node ./build/bin/theiaTest.js /home/theia/

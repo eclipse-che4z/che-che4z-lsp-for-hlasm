@@ -31,7 +31,7 @@ public:
     server_mock_rm(std::atomic<bool>* cancel)
         : server(ws_mngr_)
         , cancel_(cancel)
-    { }
+    {}
     void message_received(const json&) override
     {
         ++messages_received;
@@ -43,9 +43,9 @@ public:
         }
     }
 
-    virtual void respond(const json&, const std::string&, const json&) override { }
-    virtual void notify(const std::string&, const json&) override { }
-    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override { }
+    virtual void respond(const json&, const std::string&, const json&) override {}
+    virtual void notify(const std::string&, const json&) override {}
+    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
 
     int messages_received = 0;
 

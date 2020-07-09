@@ -119,7 +119,7 @@ struct feature_launch_test : public testing::Test
         feat.initialize_feature(R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
 
         file_name = std::filesystem::absolute("to_trace").string();
-        file_name[0] = (char) std::tolower((char)file_name[0]);
+        file_name[0] = (char)std::tolower((char)file_name[0]);
     }
 
     void check_simple_stack_trace(json id, size_t expected_line)
@@ -350,7 +350,7 @@ TEST_F(feature_launch_test, variables)
     EXPECT_EQ(r.req_method, "scopes");
     json scopes = r.args["scopes"];
     json locals_ref;
-    for (const json & scope : scopes)
+    for (const json& scope : scopes)
     {
         EXPECT_FALSE(scope.find("name") == scope.end());
         EXPECT_FALSE(scope.find("variablesReference") == scope.end());
@@ -366,9 +366,9 @@ TEST_F(feature_launch_test, variables)
     r = resp_provider.responses[0];
     EXPECT_EQ(r.id, "8"_json);
     EXPECT_EQ(r.req_method, "variables");
-    const json & variables = r.args["variables"];
+    const json& variables = r.args["variables"];
     size_t var_count = 0;
-    for (const json & var : variables)
+    for (const json& var : variables)
     {
         EXPECT_FALSE(var.find("name") == var.end());
         EXPECT_FALSE(var.find("value") == var.end());
@@ -392,7 +392,7 @@ TEST_F(feature_launch_test, variables)
             ++var_count;
         }
     }
-    //test, that all variable symbols were reported
+    // test, that all variable symbols were reported
     EXPECT_EQ(var_count, 3);
 
     ws_mngr.disconnect();

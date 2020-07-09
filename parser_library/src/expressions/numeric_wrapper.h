@@ -18,15 +18,15 @@
 #include "expression.h"
 #include "logic_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
+
 /**
  * Wrapper for logic and arithmetic expressions
  * HLASM supports expressions with mixed operand types
  * logic expression is then converted to arithmetic
  * */
-template<typename T> class arithmetic_logic_expr_wrapper
+template<typename T>
+class arithmetic_logic_expr_wrapper
 {
     typename std::enable_if_t<
         std::is_base_of_v<expression, typename std::remove_const_t<typename std::remove_reference_t<T>>>,
@@ -64,12 +64,12 @@ public:
     }
 };
 
-template<typename U> static arithmetic_logic_expr_wrapper<U&&> al_wrap(U&& u)
+template<typename U>
+static arithmetic_logic_expr_wrapper<U&&> al_wrap(U&& u)
 {
     return arithmetic_logic_expr_wrapper<U&&>::wrap(std::forward<U>(u));
 }
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif
