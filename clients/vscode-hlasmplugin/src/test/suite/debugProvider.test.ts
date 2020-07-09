@@ -55,5 +55,5 @@ suite('Debug Test Suite', () => {
         await vscode.languages.setTextDocumentLanguage(hlasmDocument, 'hlasm');
         await vscode.window.showTextDocument(hlasmDocument);
         assert.equal(getCurrentProgramName(), path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'test'));
-    }).slow(2000);
+    });
 });
