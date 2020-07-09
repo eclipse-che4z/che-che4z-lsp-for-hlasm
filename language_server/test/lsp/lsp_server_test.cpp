@@ -17,13 +17,13 @@
 #include "gmock/gmock.h"
 #include "json.hpp"
 
+#include "../send_message_provider_mock.h"
+#include "../ws_mngr_mock.h"
 #include "feature.h"
 #include "lsp/feature_text_synchronization.h"
 #include "lsp/feature_workspace_folders.h"
 #include "lsp/lsp_server.h"
-#include "../send_message_provider_mock.h"
 #include "workspace_manager.h"
-#include "../ws_mngr_mock.h"
 
 namespace nlohmann {
 // needed in order to have mock methods with json arguments
@@ -74,7 +74,6 @@ TEST(lsp_server, initialize)
     s.message_received(exit_notification);
     EXPECT_TRUE(s.is_exit_notification_received());
     EXPECT_TRUE(s.is_shutdown_request_received());
-
 }
 
 TEST(lsp_server, not_implemented_method)
@@ -86,6 +85,5 @@ TEST(lsp_server, not_implemented_method)
     s.set_send_message_provider(&smpm);
 
     s.message_received(j);
-    //No result is tested, server should ignore unknown LSP method
+    // No result is tested, server should ignore unknown LSP method
 }
-

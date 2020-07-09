@@ -59,6 +59,7 @@ protected:
         int err_code,
         const std::string& err_message,
         const json& error) override;
+
 private:
     // requests
 

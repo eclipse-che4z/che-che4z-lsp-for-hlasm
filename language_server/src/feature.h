@@ -47,12 +47,12 @@ public:
     // All the requests and notification are passed to the workspace manager
     explicit feature(parser_library::workspace_manager& ws_mngr)
         : ws_mngr_(ws_mngr)
-    { }
+    {}
     // Constructs the feature with workspace_manager and response_provider through which the feature can send messages.
     feature(parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
         : ws_mngr_(ws_mngr)
         , response_(&response_provider)
-    { }
+    {}
 
     // Implement to add methods to server.
     void virtual register_methods(std::map<std::string, method>& methods) = 0;
@@ -74,8 +74,8 @@ public:
     // Converts LSP json representation of position into parse_library::position.
     static parser_library::position parse_position(const json& position_json);
 
-    static json range_to_json(const parser_library::range & range);
-    static json position_to_json(const parser_library::position & position);
+    static json range_to_json(const parser_library::range& range);
+    static json position_to_json(const parser_library::position& position);
 
     virtual ~feature() = default;
 

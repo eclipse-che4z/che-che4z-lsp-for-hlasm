@@ -68,10 +68,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool request_manager::is_running() const
-{
-    return !requests_.empty();
-}
+bool request_manager::is_running() const { return !requests_.empty(); }
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
 {
@@ -81,7 +78,7 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
         std::unique_lock<std::mutex> lock(q_mtx_);
         // wait for work to come
         cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
-        if (*end_loop) 
+        if (*end_loop)
             return;
 
         // get first request
@@ -120,7 +117,7 @@ void request_manager::finish_server_requests(server* to_finish)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // executes all remaining requests for a server
-    for(auto& req : requests_)
+    for (auto& req : requests_)
     {
         if (req.executing_server != to_finish)
             continue;
