@@ -179,7 +179,7 @@ jobs:
       needs: alpine-VSIX
       strategy:
         matrix: 
-          theia: [theiaide/theia, theiaide/theia:next]
+          theia: ['theiaide/theia', 'theiaide/theia:next']
       container:
         image: ${{ matrix.theia }}
         options: --user root
