@@ -12,9 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_LANGUAGESERVER_TEST_REGRESS_TEST_H
-#define HLASMPLUGIN_LANGUAGESERVER_TEST_REGRESS_TEST_H
-
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -670,9 +667,3 @@ TEST(regress_test, stability_sync)
     for (const auto& message : messages) 
         s.message_received(message);
 }
-
-
-
-
-
-#endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_REGRESS_TEST_H

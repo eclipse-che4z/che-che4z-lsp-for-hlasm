@@ -1,0 +1,12 @@
+        MACRO
+        REGS
+
+&I      SETA 0
+.REP    ANOP
+R&I     EQU     &I
+&I      SETA 1+&I
+        AIF (&I NE 16).REP
+        
+        
+
+        MEND
