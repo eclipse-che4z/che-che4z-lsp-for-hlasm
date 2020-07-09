@@ -148,20 +148,22 @@ bool seq_definition::operator==(const seq_definition& other) const
 }
 
 completion_item_s::completion_item_s(
-    std::string label, std::string detail, std::string insert_text, content_pos contents)
+    std::string label, std::string detail, std::string insert_text, content_pos contents, size_t kind)
     : content_meta(contents)
     , label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
-{}
+    , kind(kind)
+{ }
 
 completion_item_s::completion_item_s(
-    std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents)
+    std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents, size_t kind)
     : content(std::move(contents))
     , label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
-{}
+    , kind(kind)
+{ }
 
 std::vector<std::string> completion_item_s::get_contents() const
 {

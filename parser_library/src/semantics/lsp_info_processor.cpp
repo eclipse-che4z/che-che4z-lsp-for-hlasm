@@ -605,17 +605,10 @@ void lsp_info_processor::process_instruction_sym_()
             params_text << *deferred_vars_[i].name;
         }
 
-        std::string trim_instr = *deferred_instruction_.name;
-        if (trim_instr.size() > 0)
-        {
-            auto c = trim_instr[0];
-            trim_instr = (c == '#' || c == '$' || c == '@' || c == '_' || c == '*') ? trim_instr.substr(1) : trim_instr;
-        }
-
         // add it to list of completion items
         ctx_->lsp_ctx->all_instructions.push_back({ *deferred_instruction_.name,
             params_text.str(),
-            trim_instr + "   " + params_text.str(),
+            *deferred_instruction_.name + "   " + params_text.str(),
             content_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
         // add it to definitions
@@ -681,7 +674,7 @@ completion_list_s lsp_info_processor::complete_var_(const position& pos) const
         {
             auto value = symbol.first.get_value();
             assert(value.size() == 1);
-            items.push_back({ *symbol.first.name, value[0], *symbol.first.name, { "" } });
+            items.push_back({ "&" + *symbol.first.name, value[0], "&" + *symbol.first.name, { "" }, (size_t)5 });
         }
     }
     return { false, items };
@@ -696,7 +689,7 @@ completion_list_s lsp_info_processor::complete_seq_(const position& pos) const
         {
             auto value = symbol.first.get_value();
             assert(value.size() == 1);
-            items.push_back({ *symbol.first.name, value[0], *symbol.first.name, { "" } });
+            items.push_back({ "." + *symbol.first.name, value[0], "." + *symbol.first.name, { "" }, (size_t)5 });
         }
     }
     return { false, items };
