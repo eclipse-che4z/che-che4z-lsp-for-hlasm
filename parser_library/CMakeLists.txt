@@ -21,10 +21,6 @@ set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
 #generated grammar source files
 set(GENERATED_SRC
    ${GENERATED_FOLDER}/hlasmparser.cpp
-   ${GENERATED_FOLDER}/hlasmparserBaseListener.cpp
-   ${GENERATED_FOLDER}/hlasmparserBaseVisitor.cpp
-   ${GENERATED_FOLDER}/hlasmparserListener.cpp
-   ${GENERATED_FOLDER}/hlasmparserVisitor.cpp
  )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -42,7 +38,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
    ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -visitor -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
    DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/parsing/grammar/lex.tokens
    )
