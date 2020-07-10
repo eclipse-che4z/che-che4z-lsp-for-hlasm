@@ -35,7 +35,7 @@ To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.js
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
 3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow [Configuration](#Configuration) for more detailed instructions on configuring the environment.
+Follow the section *External Macro Libraries and COPY Members* below for more detailed instructions on configuring the environment.
 
 ## Language Features
 
