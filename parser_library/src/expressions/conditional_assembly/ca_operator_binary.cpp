@@ -101,22 +101,53 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     if (shift_part == 0)
         return rhs;
 
-    auto sign_bit = lhs & (1U << 31);
-    auto unsigned_lhs = lhs & ~(1U << 31);
+    auto unsigned_lhs = *reinterpret_cast<unsigned int*>(&lhs);
+    auto sign_bit = unsigned_lhs & (1U << 31);
+
+    unsigned int result;
+
+    if (shift_part >= 32)
+    {
+        switch (shift)
+        {
+            case ca_expr_ops::SLA:
+                result = sign_bit;
+                break;
+            case ca_expr_ops::SRA:
+                result = ~0U;
+                break;
+            case ca_expr_ops::SLL:
+            case ca_expr_ops::SRL:
+            default:
+                result = 0;
+                break;
+        }
+        return *reinterpret_cast<context::A_t*>(&result);
+    }
 
     switch (shift)
     {
         case ca_expr_ops::SLA:
-            return (context::A_t)((unsigned_lhs << shift_part) | sign_bit);
+            result = (unsigned_lhs << shift_part) | sign_bit;
+            break;
         case ca_expr_ops::SLL:
-            return (context::A_t)(unsigned_lhs << shift_part);
+            result = unsigned_lhs << shift_part;
+            break;
         case ca_expr_ops::SRA:
-            return (context::A_t)((unsigned_lhs >> shift_part) | sign_bit);
+            if (sign_bit)
+                result = (unsigned_lhs >> shift_part) | (~0U << (32 - shift_part));
+            else
+                result = unsigned_lhs >> shift_part;
+            break;
         case ca_expr_ops::SRL:
-            return (context::A_t)(unsigned_lhs >> shift_part);
+            result = unsigned_lhs >> shift_part;
+            break;
         default:
-            return 0;
+            result = 0;
+            break;
     }
+
+    return *reinterpret_cast<context::A_t*>(&result);
 }
 
 context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&) const
