@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "expressions/conditional_assembly/ca_expr_policy.h"
 #include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/conditional_assembly/ca_operator_unary.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"

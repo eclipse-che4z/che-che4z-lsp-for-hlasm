@@ -75,7 +75,6 @@ context::A_t ca_constant::self_defining_term(
             std::string_view(value.c_str(), 1), std::string_view(value.c_str() + 2, value.size() - 3), add_diagnostic);
     else
         return self_defining_term("D", value, add_diagnostic);
-    return context::object_traits<context::A_t>::default_v();
 }
 
 std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)
