@@ -43,7 +43,7 @@ size_t token::get_end_of_token_in_line_utf16() const { return end_of_token_in_li
     , token_index_(token_index)
     , char_position_in_line_16_(char_position_in_line_16)
     , end_of_token_in_line_utf16_(end_of_token_in_line_utf16)
-{ }
+{}
 
 std::string token::getText() const
 {

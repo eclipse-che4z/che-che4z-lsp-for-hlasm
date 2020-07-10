@@ -20,7 +20,7 @@ using namespace hlasm_plugin::parser_library::context;
 
 dependency_collector::dependency_collector(bool has_error)
     : has_error(has_error)
-{ }
+{}
 
 dependency_collector::dependency_collector(id_index undefined_symbol)
     : has_error(false)
@@ -31,7 +31,7 @@ dependency_collector::dependency_collector(id_index undefined_symbol)
 dependency_collector::dependency_collector(address unresolved_address)
     : has_error(false)
     , unresolved_address(std::move(unresolved_address))
-{ }
+{}
 
 dependency_collector::dependency_collector(attr_ref attribute_reference)
     : has_error(false)

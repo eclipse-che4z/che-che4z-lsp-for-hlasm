@@ -22,7 +22,7 @@ namespace semantics {
 
 concatenation_point::concatenation_point(const concat_type type)
     : type(type)
-{ }
+{}
 
 char_str_conc* concatenation_point::access_str()
 {

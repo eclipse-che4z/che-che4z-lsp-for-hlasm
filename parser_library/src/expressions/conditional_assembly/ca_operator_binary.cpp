@@ -30,7 +30,7 @@ ca_binary_operator::ca_binary_operator(
     : ca_expression(expr_kind, std::move(expr_range))
     , left_expr(std::move(left_expr))
     , right_expr(std::move(right_expr))
-{ }
+{}
 
 undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -70,7 +70,7 @@ ca_function_binary_operator::ca_function_binary_operator(ca_expr_ptr left_expr,
     range expr_range)
     : ca_binary_operator(std::move(left_expr), std::move(right_expr), expr_kind, std::move(expr_range))
     , function(function)
-{ }
+{}
 
 void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum kind)
 {

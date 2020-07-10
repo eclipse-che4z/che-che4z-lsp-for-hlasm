@@ -29,6 +29,7 @@ namespace hlasm_plugin::parser_library::processing {
 class context_manager : public diagnosable_ctx
 {
     expressions::evaluation_context* eval_ctx_;
+
 public:
     using name_result = std::pair<bool, context::id_index>;
 

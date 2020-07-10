@@ -38,11 +38,11 @@ struct evaluation_context : public diagnosable_ctx
         , hlasm_ctx(hlasm_ctx)
         , attr_provider(attr_provider)
         , lib_provider(lib_provider)
-    { }
+    {}
 
     evaluation_context(const evaluation_context&) = delete;
 
-    virtual void collect_diags() const override { }
+    virtual void collect_diags() const override {}
 
     using diagnosable_ctx::collect_diags_from_child;
 };

@@ -196,20 +196,24 @@ public:
     static ca_expr_funcs get_function(const std::string& symbol);
 };
 
-template<typename T> struct ca_expr_traits
+template<typename T>
+struct ca_expr_traits
 {};
 
-template<> struct ca_expr_traits<context::A_t>
+template<>
+struct ca_expr_traits<context::A_t>
 {
     using policy_t = ca_arithmetic_policy;
 };
 
-template<> struct ca_expr_traits<context::B_t>
+template<>
+struct ca_expr_traits<context::B_t>
 {
     using policy_t = ca_binary_policy;
 };
 
-template<> struct ca_expr_traits<context::C_t>
+template<>
+struct ca_expr_traits<context::C_t>
 {
     using policy_t = ca_character_policy;
 };

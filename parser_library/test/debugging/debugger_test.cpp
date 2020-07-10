@@ -86,40 +86,40 @@ public:
     test_var_value(std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
         , ignore_(false)
-    { }
+    {}
     test_var_value(A_t str)
         : data_(std::to_string(str))
         , ignore_(false)
-    { }
+    {}
     test_var_value(B_t str)
         : data_(str ? "TRUE" : "FALSE")
         , ignore_(false)
-    { }
+    {}
     test_var_value(std::string str)
         : data_(str)
         , ignore_(false)
-    { }
+    {}
     test_var_value(std::string str, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
         , data_(str)
         , ignore_(false)
-    { }
+    {}
     test_var_value(const char* cstr)
         : data_(std::string(cstr))
         , ignore_(false)
-    { }
+    {}
     test_var_value(const char* cstr, std::unordered_map<std::string, std::shared_ptr<test_var_value>> vec)
         : children_(vec)
         , data_(std::string(cstr))
         , ignore_(false)
-    { }
+    {}
     test_var_value()
         : ignore_(true)
-    { }
+    {}
 
     test_var_value(std::string str, set_type)
         : data_(str)
-    { }
+    {}
 
     bool check(debugger& d, const debugging::variable& var) const
     {
@@ -227,7 +227,7 @@ class workspace_mock : public workspace
 public:
     workspace_mock(file_manager& file_mngr)
         : workspace(file_mngr)
-    { }
+    {}
 
     virtual parse_result parse_library(
         const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override

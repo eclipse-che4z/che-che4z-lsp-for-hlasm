@@ -57,7 +57,7 @@ protected:
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
         , eval_ctx { hlasm_ctx, attr_provider, lib_provider }
-    { }
+    {}
 };
 
 } // namespace processing

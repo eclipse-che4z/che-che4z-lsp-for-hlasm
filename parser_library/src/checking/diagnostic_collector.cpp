@@ -21,15 +21,15 @@ namespace hlasm_plugin::parser_library {
 diagnostic_collector::diagnostic_collector(const diagnosable_ctx* diagnoser, context::processing_stack_t location_stack)
     : diagnoser_(diagnoser)
     , location_stack_(std::move(location_stack))
-{ }
+{}
 
 diagnostic_collector::diagnostic_collector(const diagnosable_ctx* diagnoser)
     : diagnoser_(diagnoser)
-{ }
+{}
 
 diagnostic_collector::diagnostic_collector()
     : diagnoser_(nullptr)
-{ }
+{}
 
 void diagnostic_collector::operator()(diagnostic_op diagnostic) const
 {

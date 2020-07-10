@@ -27,7 +27,7 @@ namespace expressions {
 ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_kind, range expr_range)
     : ca_expression(expr_kind, std::move(expr_range))
     , expr(std::move(expr))
-{ }
+{}
 
 undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -55,7 +55,7 @@ ca_function_unary_operator::ca_function_unary_operator(
     ca_expr_ptr expr, ca_expr_ops function, context::SET_t_enum kind, range expr_range)
     : ca_unary_operator(std::move(expr), kind, std::move(expr_range))
     , function(function)
-{ }
+{}
 
 void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kind)
 {
@@ -101,7 +101,7 @@ context::SET_t ca_function_unary_operator::operation(context::SET_t operand, eva
 
 ca_plus_operator::ca_plus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{ }
+{}
 
 context::SET_t ca_plus_operator::operation(context::SET_t operand, evaluation_context&) const
 {
@@ -110,7 +110,7 @@ context::SET_t ca_plus_operator::operation(context::SET_t operand, evaluation_co
 
 ca_minus_operator::ca_minus_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::A_TYPE, std::move(expr_range))
-{ }
+{}
 
 context::SET_t ca_minus_operator::operation(context::SET_t operand, evaluation_context&) const
 {
@@ -119,7 +119,7 @@ context::SET_t ca_minus_operator::operation(context::SET_t operand, evaluation_c
 
 ca_par_operator::ca_par_operator(ca_expr_ptr expr, range expr_range)
     : ca_unary_operator(std::move(expr), context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
-{ }
+{}
 
 void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
 {

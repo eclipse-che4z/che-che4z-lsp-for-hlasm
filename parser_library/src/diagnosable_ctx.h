@@ -44,7 +44,7 @@ public:
 protected:
     diagnosable_ctx(context::hlasm_context& ctx)
         : ctx_(ctx)
-    { }
+    {}
 
     virtual ~diagnosable_ctx() {};
 

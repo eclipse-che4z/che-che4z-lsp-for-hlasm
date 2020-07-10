@@ -38,7 +38,7 @@ workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager)
 
 workspace::workspace(ws_uri uri, file_manager& file_manager)
     : workspace(uri, uri, file_manager)
-{ }
+{}
 
 workspace::workspace(file_manager& file_manager)
     : workspace("", file_manager)

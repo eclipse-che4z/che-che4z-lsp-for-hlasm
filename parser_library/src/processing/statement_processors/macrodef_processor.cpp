@@ -161,7 +161,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     return std::make_pair(format, op_code());
 }
 
-void macrodef_processor::collect_diags() const { }
+void macrodef_processor::collect_diags() const {}
 
 void macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {

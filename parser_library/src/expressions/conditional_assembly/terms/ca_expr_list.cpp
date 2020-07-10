@@ -28,7 +28,7 @@ namespace expressions {
 ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
     : ca_expression(context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
     , expr_list(std::move(expr_list))
-{ }
+{}
 
 undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -121,7 +121,8 @@ void ca_expr_list::unknown_functions_to_operators()
     }
 }
 
-template<typename T> void ca_expr_list::resolve()
+template<typename T>
+void ca_expr_list::resolve()
 {
     if (expr_list.empty())
     {
@@ -162,7 +163,8 @@ template<typename T> void ca_expr_list::resolve()
     expr_list.emplace_back(std::move(final_expr));
 }
 
-template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
+template<typename EXPR_POLICY>
+ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
 {
     // list is exhausted
     if (it == expr_list.size())
@@ -213,7 +215,8 @@ template<typename EXPR_POLICY> ca_expr_ptr ca_expr_list::retrieve_term(size_t& i
         std::move(curr_expr), std::move(right_expr), op_type, EXPR_POLICY::set_type, op_range);
 }
 
-template<typename EXPR_POLICY> std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err)
+template<typename EXPR_POLICY>
+std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err)
 {
     auto& op = expr_list[it];
 

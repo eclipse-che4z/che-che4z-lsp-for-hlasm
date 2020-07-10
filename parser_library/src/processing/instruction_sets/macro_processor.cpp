@@ -28,7 +28,7 @@ macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider)
     : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
-{ }
+{}
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
 {

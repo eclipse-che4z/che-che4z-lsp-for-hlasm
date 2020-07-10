@@ -24,7 +24,7 @@ const id_storage::const_pointer id_storage::empty_id = &id_storage::empty_string
 
 hlasm_plugin::parser_library::context::id_storage::id_storage()
     : well_known(lit_)
-{ }
+{}
 
 size_t id_storage::size() const { return lit_.size(); }
 
@@ -71,4 +71,4 @@ hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_know
     , MEND(&*ptr.emplace("MEND").first)
     , ASPACE(&*ptr.emplace("ASPACE").first)
     , empty(&*ptr.emplace("").first)
-{ }
+{}

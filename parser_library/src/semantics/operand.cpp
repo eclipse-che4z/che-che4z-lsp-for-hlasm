@@ -22,7 +22,7 @@ using namespace hlasm_plugin::parser_library;
 operand::operand(const operand_type type, range operand_range)
     : type(type)
     , operand_range(std::move(operand_range))
-{ }
+{}
 
 model_operand* operand::access_model()
 {
@@ -44,20 +44,20 @@ assembler_operand* operand::access_asm() { return dynamic_cast<assembler_operand
 
 empty_operand::empty_operand(range operand_range)
     : operand(operand_type::EMPTY, std::move(operand_range))
-{ }
+{}
 
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
-{ }
+{}
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
-{ }
+{}
 
 machine_operand::machine_operand(const mach_kind kind)
     : kind(kind)
-{ }
+{}
 
 expr_machine_operand* machine_operand::access_expr()
 {
@@ -98,7 +98,7 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
     : evaluable_operand(operand_type::MACH, std::move(operand_range))
     , machine_operand(mach_kind::EXPR)
     , simple_expr_operand(std::move(expression))
-{ }
+{}
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
@@ -126,7 +126,7 @@ address_machine_operand::address_machine_operand(expressions::mach_expr_ptr disp
     , first_par(std::move(first_par))
     , second_par(std::move(second_par))
     , state(std::move(state))
-{ }
+{}
 
 bool address_machine_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
 {
@@ -221,7 +221,7 @@ void address_machine_operand::collect_diags() const
 
 assembler_operand::assembler_operand(const asm_kind kind)
     : kind(kind)
-{ }
+{}
 
 expr_assembler_operand* assembler_operand::access_expr()
 {
@@ -251,7 +251,7 @@ expr_assembler_operand::expr_assembler_operand(
     , assembler_operand(asm_kind::EXPR)
     , simple_expr_operand(std::move(expression))
     , value_(std::move(string_value))
-{ }
+{}
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
@@ -280,7 +280,7 @@ using_instr_assembler_operand::using_instr_assembler_operand(
     , assembler_operand(asm_kind::BASE_END)
     , base(std::move(base))
     , end(std::move(end))
-{ }
+{}
 
 bool using_instr_assembler_operand::has_dependencies(
     hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
@@ -320,7 +320,7 @@ complex_assembler_operand::complex_assembler_operand(
     : evaluable_operand(operand_type::ASM, std::move(operand_range))
     , assembler_operand(asm_kind::COMPLEX)
     , value(identifier, std::move(values), operand_range)
-{ }
+{}
 
 bool complex_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info) const
 {
@@ -339,13 +339,13 @@ std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
     return value.create_operand();
 }
 
-void complex_assembler_operand::collect_diags() const { }
+void complex_assembler_operand::collect_diags() const {}
 
 //***************** ca_operand *********************
 ca_operand::ca_operand(const ca_kind kind, range operand_range)
     : operand(operand_type::CA, std::move(operand_range))
     , kind(kind)
-{ }
+{}
 
 var_ca_operand* ca_operand::access_var() { return kind == ca_kind::VAR ? static_cast<var_ca_operand*>(this) : nullptr; }
 
@@ -383,7 +383,7 @@ const branch_ca_operand* ca_operand::access_branch() const
 
 simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
     : expression(std::move(expression))
-{ }
+{}
 
 bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
@@ -400,37 +400,37 @@ std::vector<const context::resolvable*> simple_expr_operand::get_resolvables() c
 var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     : ca_operand(ca_kind::VAR, std::move(operand_range))
     , variable_symbol(std::move(variable_symbol))
-{ }
+{}
 
 expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::EXPR, std::move(operand_range))
     , expression(std::move(expression))
-{ }
+{}
 
 seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     : ca_operand(ca_kind::SEQ, std::move(operand_range))
     , sequence_symbol(std::move(sequence_symbol))
-{ }
+{}
 
 branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::BRANCH, std::move(operand_range))
     , sequence_symbol(std::move(sequence_symbol))
     , expression(std::move(expression))
-{ }
+{}
 
 
 
 macro_operand::macro_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MAC, std::move(operand_range))
     , chain(std::move(chain))
-{ }
+{}
 
 
 
 data_def_operand::data_def_operand(expressions::data_definition val, range operand_range)
     : evaluable_operand(operand_type::DAT, std::move(operand_range))
     , value(std::make_shared<expressions::data_definition>(std::move(val)))
-{ }
+{}
 
 
 context::dependency_collector data_def_operand::get_length_dependencies(expressions::mach_evaluate_info info) const
@@ -516,7 +516,7 @@ string_assembler_operand::string_assembler_operand(std::string value, range oper
     : evaluable_operand(operand_type::ASM, std::move(operand_range))
     , assembler_operand(asm_kind::STRING)
     , value(std::move(value))
-{ }
+{}
 
 bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
 
@@ -532,9 +532,9 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
     return std::make_unique<checking::one_operand>("'" + value + "'");
 }
 
-void string_assembler_operand::collect_diags() const { }
+void string_assembler_operand::collect_diags() const {}
 
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
     : operand(operand_type::MAC, operand_range)
     , value(std::move(value))
-{ }
+{}

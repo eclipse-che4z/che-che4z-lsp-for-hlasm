@@ -27,7 +27,7 @@ using namespace hlasm_plugin::parser_library;
 
 data::data(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1)
-{ }
+{}
 
 template<data_instr_type instr_type>
 bool data::check_data(const std::vector<const asm_operand*>& to_check,
@@ -70,7 +70,7 @@ bool data::check_data(const std::vector<const asm_operand*>& to_check,
 
 dc::dc(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : data(allowed_types, name_of_instruction)
-{ }
+{}
 
 bool dc::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,

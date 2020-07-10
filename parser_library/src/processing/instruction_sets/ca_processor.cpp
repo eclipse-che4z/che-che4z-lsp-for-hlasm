@@ -28,7 +28,7 @@ ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
     : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
     , table_(create_table(hlasm_ctx))
     , listener_(listener)
-{ }
+{}
 
 void ca_processor::process(context::shared_stmt_ptr stmt) { process_(stmt); }
 
@@ -490,4 +490,4 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         "                                                                                ", index - 1);
 }
 
-void ca_processor::process_empty(const semantics::complete_statement&) { }
+void ca_processor::process_empty(const semantics::complete_statement&) {}

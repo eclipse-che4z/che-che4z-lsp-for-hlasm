@@ -85,7 +85,7 @@ data_def_type_B::data_def_type_B()
         nominal_value_type::STRING,
         no_align,
         as_needed())
-{ }
+{}
 
 bool data_def_type_B::check(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
@@ -136,7 +136,7 @@ data_def_type_CA_CE::data_def_type_CA_CE(char extension)
         nominal_value_type::STRING,
         no_align,
         as_needed())
-{ }
+{}
 
 uint64_t data_def_type_CA_CE::get_nominal_length(const nominal_value_t& op) const
 {
@@ -161,20 +161,20 @@ uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const nominal_value_t
 
 data_def_type_C::data_def_type_C()
     : data_def_type_CA_CE('\0')
-{ }
+{}
 
 data_def_type_CA::data_def_type_CA()
     : data_def_type_CA_CE('A')
-{ }
+{}
 
 data_def_type_CE::data_def_type_CE()
     : data_def_type_CA_CE('E')
-{ }
+{}
 
 data_def_type_CU::data_def_type_CU()
     : data_def_type(
         'C', 'U', n_a(), modifier_bound { 1, 256 }, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed())
-{ }
+{}
 
 uint64_t data_def_type_CU::get_nominal_length(const nominal_value_t& op) const
 {
@@ -220,7 +220,7 @@ data_def_type_G::data_def_type_G()
         nominal_value_type::STRING,
         no_align,
         as_needed())
-{ }
+{}
 
 bool data_def_type_G::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
@@ -274,7 +274,7 @@ data_def_type_X::data_def_type_X()
         nominal_value_type::STRING,
         no_align,
         as_needed())
-{ }
+{}
 
 bool data_def_type_X::check(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const

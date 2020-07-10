@@ -500,7 +500,7 @@ class bad_mock : public parse_lib_provider
 public:
     bad_mock(int lib_code)
         : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
-    { }
+    {}
 
     virtual parse_result parse_library(
         const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)

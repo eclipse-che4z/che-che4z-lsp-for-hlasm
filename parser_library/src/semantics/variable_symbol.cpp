@@ -25,7 +25,7 @@ basic_variable_symbol::basic_variable_symbol(
     context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(false, std::move(subscript), std::move(symbol_range))
     , name(name)
-{ }
+{}
 
 context::id_index basic_variable_symbol::evaluate_name(expressions::evaluation_context&) const { return name; }
 
@@ -33,7 +33,7 @@ created_variable_symbol::created_variable_symbol(
     concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(true, std::move(subscript), std::move(symbol_range))
     , created_name(std::move(created_name))
-{ }
+{}
 
 context::id_index created_variable_symbol::evaluate_name(expressions::evaluation_context& eval_ctx) const
 {
@@ -93,7 +93,7 @@ variable_symbol::variable_symbol(
     : created(created)
     , subscript(std::move(subscript))
     , symbol_range(std::move(symbol_range))
-{ }
+{}
 
 } // namespace semantics
 } // namespace parser_library

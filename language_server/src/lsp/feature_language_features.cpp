@@ -25,7 +25,7 @@ namespace hlasm_plugin::language_server::lsp {
 feature_language_features::feature_language_features(
     parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
     : feature(ws_mngr, response_provider)
-{ }
+{}
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
 {

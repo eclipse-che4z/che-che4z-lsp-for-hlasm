@@ -47,13 +47,13 @@ ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data
     , attribute(attribute)
     , symbol(symbol)
 
-{ }
+{}
 
 ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(std::move(symbol))
-{ }
+{}
 
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {

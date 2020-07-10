@@ -22,7 +22,7 @@ common_statement_provider::common_statement_provider(
     : statement_provider(kind)
     , hlasm_ctx(hlasm_ctx)
     , parser(parser)
-{ }
+{}
 
 void common_statement_provider::preprocess_deferred(
     statement_processor& processor, context::cached_statement_storage& cache)

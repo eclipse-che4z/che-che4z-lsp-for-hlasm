@@ -23,20 +23,20 @@ ranged_diagnostic_collector::ranged_diagnostic_collector(const collectable<diagn
     , op_diagnoser_(nullptr)
     , diag_range_(diag_range)
     , diagnostics_present(false)
-{ }
+{}
 
 ranged_diagnostic_collector::ranged_diagnostic_collector(const collectable<diagnostic_op>* diagnoser, range diag_range)
     : s_diagnoser_(nullptr)
     , op_diagnoser_(diagnoser)
     , diag_range_(diag_range)
     , diagnostics_present(false)
-{ }
+{}
 
 ranged_diagnostic_collector::ranged_diagnostic_collector()
     : s_diagnoser_(nullptr)
     , op_diagnoser_(nullptr)
     , diagnostics_present(false)
-{ }
+{}
 
 void ranged_diagnostic_collector::operator()(const std::function<diagnostic_op(range)>& f) const
 {

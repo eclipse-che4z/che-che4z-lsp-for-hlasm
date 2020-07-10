@@ -20,7 +20,7 @@ namespace hlasm_plugin::language_server::lsp {
 
 feature_workspace_folders::feature_workspace_folders(parser_library::workspace_manager& ws_mngr)
     : feature(ws_mngr)
-{ }
+{}
 
 void feature_workspace_folders::register_methods(std::map<std::string, method>& methods)
 {

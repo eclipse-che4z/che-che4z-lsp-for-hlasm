@@ -23,7 +23,7 @@ namespace expressions {
 ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
     : expr_range(std::move(expr_range))
     , expr_kind(expr_kind)
-{ }
+{}
 
 context::SET_t ca_expression::convert_return_types(
     context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const

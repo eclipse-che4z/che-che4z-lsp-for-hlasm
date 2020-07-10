@@ -24,7 +24,7 @@ ca_string::substring_t::substring_t()
     : start(nullptr)
     , count(nullptr)
     , substring_range()
-{ }
+{}
 
 ca_string::ca_string(
     semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range)
@@ -32,7 +32,7 @@ ca_string::ca_string(
     , value(std::move(value))
     , duplication_factor(std::move(duplication_factor))
     , substring(std::move(substring))
-{ }
+{}
 
 undef_sym_set ca_string::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {

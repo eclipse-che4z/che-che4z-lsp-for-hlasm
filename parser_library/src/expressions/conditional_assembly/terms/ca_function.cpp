@@ -45,7 +45,7 @@ ca_function::ca_function(context::id_index function_name,
     , function(function)
     , parameters(std::move(parameters))
     , duplication_factor(std::move(duplication_factor))
-{ }
+{}
 
 undef_sym_set ca_function::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -76,7 +76,7 @@ void ca_function::resolve_expression_tree(context::SET_t_enum kind)
     }
 }
 
-void ca_function::collect_diags() const { }
+void ca_function::collect_diags() const {}
 
 bool ca_function::is_character_expression() const { return false; }
 

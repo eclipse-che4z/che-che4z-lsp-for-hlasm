@@ -36,7 +36,7 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , parent_(nullptr)
     , last_line_processed_(false)
     , line_end_pushed_(false)
-{ }
+{}
 
 void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc)
 {
@@ -301,7 +301,7 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr)
     else if (opcode.value == ctx->ids().add("SETC"))
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
     else if (opcode.value == ctx->ids().add("AREAD"))
-    { } // aread operand is just enumeration
+    {} // aread operand is just enumeration
     else
     {
         assert(false);
@@ -680,6 +680,6 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return antlr4::Parser::getExpectedTokens();
 }
 
-parser_holder::~parser_holder() { }
+parser_holder::~parser_holder() {}
 
 } // namespace hlasm_plugin::parser_library::parsing

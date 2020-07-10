@@ -73,7 +73,7 @@ bool copy_processor::terminal_condition(const statement_provider_kind prov_kind)
 
 bool copy_processor::finished() { return false; }
 
-void copy_processor::collect_diags() const { }
+void copy_processor::collect_diags() const {}
 
 void copy_processor::process_statement(const context::hlasm_statement& statement)
 {

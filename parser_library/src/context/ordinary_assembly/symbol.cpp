@@ -22,13 +22,13 @@ using namespace hlasm_plugin::parser_library::context;
 
 symbol_value::symbol_value(abs_value_t value)
     : value_(value)
-{ }
+{}
 
 symbol_value::symbol_value(reloc_value_t value)
     : value_(value)
-{ }
+{}
 
-symbol_value::symbol_value() { }
+symbol_value::symbol_value() {}
 
 symbol_value symbol_value::operator+(const symbol_value& value) const
 {
@@ -146,7 +146,7 @@ symbol::symbol(id_index name, symbol_value value, symbol_attributes attributes, 
     , symbol_location(std::move(symbol_location))
     , value_(std::move(value))
     , attributes_(attributes)
-{ }
+{}
 
 const symbol_value& symbol::value() const { return value_; }
 

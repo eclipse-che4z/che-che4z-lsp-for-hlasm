@@ -30,7 +30,7 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
     statement_fields_parser& parser)
     : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
     , parser(parser)
-{ }
+{}
 
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
 {

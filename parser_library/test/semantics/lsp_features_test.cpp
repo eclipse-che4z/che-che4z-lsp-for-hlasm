@@ -32,7 +32,7 @@ public:
               + context::instruction::mnemonic_codes.size()) {};
 
     virtual void SetUp() { a.analyze(); }
-    virtual void TearDown() { }
+    virtual void TearDown() {}
 
 protected:
     const std::string contents =

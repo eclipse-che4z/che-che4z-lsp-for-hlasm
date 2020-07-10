@@ -23,7 +23,7 @@ namespace expressions {
 ca_constant::ca_constant(context::A_t value, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
     , value(value)
-{ }
+{}
 
 undef_sym_set ca_constant::get_undefined_attributed_symbols(const context::dependency_solver&) const
 {
@@ -36,7 +36,7 @@ void ca_constant::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-void ca_constant::collect_diags() const { }
+void ca_constant::collect_diags() const {}
 
 bool ca_constant::is_character_expression() const { return false; }
 

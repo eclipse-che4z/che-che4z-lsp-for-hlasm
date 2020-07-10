@@ -116,7 +116,7 @@ symbol_attributes::symbol_attributes(symbol_origin origin)
     , length_(undef_length)
     , scale_(undef_scale)
     , integer_(undef_length)
-{ }
+{}
 
 symbol_attributes::symbol_attributes(
     symbol_origin origin, type_attr type, len_attr length, scale_attr scale, len_attr integer)
@@ -125,7 +125,7 @@ symbol_attributes::symbol_attributes(
     , length_(length)
     , scale_(scale)
     , integer_(integer)
-{ }
+{}
 
 symbol_attributes::type_attr symbol_attributes::type() const { return type_; }
 

@@ -22,7 +22,7 @@ token_stream::token_stream(antlr4::TokenSource* token_source)
     , enabled_cont_(false)
     , enabled_hidden_(false)
     , needSetup_(true)
-{ }
+{}
 
 void token_stream::enable_continuation() { enabled_cont_ = true; }
 

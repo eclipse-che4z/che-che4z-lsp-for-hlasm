@@ -21,7 +21,7 @@ namespace hlasm_plugin::parser_library::lexing {
 
 input_source::input_source(const std::string& input)
     : ANTLRInputStream(input)
-{ }
+{}
 
 void input_source::append(const UTF32String& str) { _data.append(str); }
 

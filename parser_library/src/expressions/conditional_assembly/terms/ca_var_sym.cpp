@@ -25,7 +25,7 @@ namespace expressions {
 ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
     , symbol(std::move(symbol))
-{ }
+{}
 
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     const semantics::vs_ptr& symbol, const context::dependency_solver& solver)
@@ -44,7 +44,7 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     return tmp;
 }
 
-void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&) { }
+void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&) {}
 
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {

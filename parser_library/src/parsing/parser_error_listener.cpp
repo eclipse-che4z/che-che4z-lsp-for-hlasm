@@ -253,22 +253,22 @@ void parser_error_listener_base::syntaxError(
 
 void parser_error_listener_base::reportAmbiguity(
     antlr4::Parser*, const antlr4::dfa::DFA&, size_t, size_t, bool, const antlrcpp::BitSet&, antlr4::atn::ATNConfigSet*)
-{ }
+{}
 
 void parser_error_listener_base::reportAttemptingFullContext(
     antlr4::Parser*, const antlr4::dfa::DFA&, size_t, size_t, const antlrcpp::BitSet&, antlr4::atn::ATNConfigSet*)
-{ }
+{}
 
 void parser_error_listener_base::reportContextSensitivity(
     antlr4::Parser*, const antlr4::dfa::DFA&, size_t, size_t, size_t, antlr4::atn::ATNConfigSet*)
-{ }
+{}
 
 
 parser_error_listener::parser_error_listener(std::string file_name)
     : file_name_(std::move(file_name))
-{ }
+{}
 
-void parser_error_listener::collect_diags() const { }
+void parser_error_listener::collect_diags() const {}
 
 void parser_error_listener::add_parser_diagnostic(
     range diagnostic_range, diagnostic_severity severity, std::string code, std::string message)

@@ -30,7 +30,7 @@ space::space(location_counter& owner, alignment align, space_kind kind)
     , previous_loctr_value(address::base {}, 0, {})
     , owner(owner)
     , resolved_(false)
-{ }
+{}
 
 space::space(location_counter& owner, alignment align, address previous_loctr_value, size_t boundary, int offset)
     : kind(space_kind::LOCTR_UNKNOWN)
@@ -40,7 +40,7 @@ space::space(location_counter& owner, alignment align, address previous_loctr_va
     , previous_offset(offset)
     , owner(owner)
     , resolved_(false)
-{ }
+{}
 
 void space::resolve(space_ptr this_space, int length)
 {
@@ -178,7 +178,7 @@ address::address(base address_base, int offset, const space_storage& spaces)
 
 address::address(const address& addr)
     : address(addr.bases, addr.offset, addr.spaces)
-{ }
+{}
 
 address& address::operator=(const address& addr)
 {

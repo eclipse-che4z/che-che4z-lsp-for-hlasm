@@ -42,12 +42,13 @@ public:
     virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const = 0;
 };
 
-template<typename OP> class ca_basic_binary_operator : public ca_binary_operator
+template<typename OP>
+class ca_basic_binary_operator : public ca_binary_operator
 {
 public:
     ca_basic_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, range expr_range)
         : ca_binary_operator(std::move(left_expr), std::move(right_expr), OP::type, std::move(expr_range))
-    { }
+    {}
 
     virtual context::SET_t operation(
         context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override

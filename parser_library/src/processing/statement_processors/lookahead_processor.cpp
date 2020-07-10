@@ -70,7 +70,7 @@ attribute_provider::resolved_reference_storage lookahead_processor::collect_foun
     return std::move(result_.resolved_refs);
 }
 
-void lookahead_processor::collect_diags() const { }
+void lookahead_processor::collect_diags() const {}
 
 lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx,
     branching_provider& branch_provider,
@@ -88,7 +88,7 @@ lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx,
     , target_(start.target)
     , action(start.action)
     , asm_proc_table_(create_table(hlasm_ctx))
-{ }
+{}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
 void lookahead_processor::process_MEND() { macro_nest_ -= macro_nest_ == 0 ? 0 : 1; }

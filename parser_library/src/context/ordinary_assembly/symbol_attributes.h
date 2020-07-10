@@ -16,6 +16,7 @@
 #define CONTEXT_SYMBOL_ATTRIBUTES_H
 
 #include <cstdint>
+
 #include "context/common_types.h"
 
 namespace hlasm_plugin {

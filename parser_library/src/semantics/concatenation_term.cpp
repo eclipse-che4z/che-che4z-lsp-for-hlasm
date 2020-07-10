@@ -23,14 +23,14 @@ namespace semantics {
 char_str_conc::char_str_conc(std::string value)
     : concatenation_point(concat_type::STR)
     , value(std::move(value))
-{ }
+{}
 
 std::string char_str_conc::evaluate(expressions::evaluation_context&) const { return value; }
 
 var_sym_conc::var_sym_conc(vs_ptr symbol)
     : concatenation_point(concat_type::VAR)
     , symbol(std::move(symbol))
-{ }
+{}
 
 std::string var_sym_conc::evaluate(expressions::evaluation_context& eval_ctx) const
 {
@@ -56,20 +56,20 @@ std::string var_sym_conc::evaluate(context::SET_t varsym_value)
 
 dot_conc::dot_conc()
     : concatenation_point(concat_type::DOT)
-{ }
+{}
 
 std::string dot_conc::evaluate(expressions::evaluation_context&) const { return "."; }
 
 equals_conc::equals_conc()
     : concatenation_point(concat_type::EQU)
-{ }
+{}
 
 std::string equals_conc::evaluate(expressions::evaluation_context&) const { return "="; }
 
 sublist_conc::sublist_conc(std::vector<concat_chain> list)
     : concatenation_point(concat_type::SUB)
     , list(std::move(list))
-{ }
+{}
 
 std::string sublist_conc::evaluate(expressions::evaluation_context& eval_ctx) const
 {

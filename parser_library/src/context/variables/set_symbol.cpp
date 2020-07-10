@@ -20,4 +20,4 @@ set_symbol_base::set_symbol_base(id_index name, bool is_scalar, bool is_global, 
     : variable_symbol(variable_kind::SET_VAR_KIND, name, is_global)
     , is_scalar(is_scalar)
     , type(type)
-{ }
+{}

@@ -43,7 +43,7 @@ void debug_config::set_breakpoints(breakpoints breakpoints)
 debugger::debugger(debug_event_consumer_s& event_consumer, debug_config& debug_cfg)
     : event_(event_consumer)
     , cfg_(debug_cfg)
-{ }
+{}
 
 void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider, bool stop_on_entry)
 {

@@ -67,12 +67,14 @@ private:
     bool prepare_SET_operands(
         const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values);
 
-    template<typename T> void process_SET(const semantics::complete_statement& stmt);
+    template<typename T>
+    void process_SET(const semantics::complete_statement& stmt);
 
     bool prepare_GBL_LCL(
         const semantics::complete_statement& stmt, std::vector<context::id_index>& ids, std::vector<bool>& scalar_info);
 
-    template<typename T, bool global> void process_GBL_LCL(const semantics::complete_statement& stmt);
+    template<typename T, bool global>
+    void process_GBL_LCL(const semantics::complete_statement& stmt);
 
     void process_ANOP(const semantics::complete_statement& stmt);
 
@@ -100,7 +102,8 @@ private:
     void process_empty(const semantics::complete_statement&);
 };
 
-template<typename T> inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
+template<typename T>
+inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
 {
     std::vector<expressions::ca_expression*> expr_values;
     int index;
@@ -123,7 +126,8 @@ template<typename T> inline void ca_processor::process_SET(const semantics::comp
         set_symbol->access_set_symbol<T>()->set_value(expr_values[i]->evaluate<T>(eval_ctx), index - 1 + i);
 }
 
-template<typename T, bool global> inline void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
+template<typename T, bool global>
+inline void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
 {
     register_seq_sym(stmt);
 
@@ -143,5 +147,5 @@ template<typename T, bool global> inline void ca_processor::process_GBL_LCL(cons
     }
 }
 
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

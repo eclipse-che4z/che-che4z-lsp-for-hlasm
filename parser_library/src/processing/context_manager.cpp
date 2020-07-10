@@ -24,13 +24,13 @@ context_manager::context_manager(context::hlasm_context& hlasm_ctx)
     : diagnosable_ctx(hlasm_ctx)
     , eval_ctx_(nullptr)
     , hlasm_ctx(hlasm_ctx)
-{ }
+{}
 
 context_manager::context_manager(expressions::evaluation_context* eval_ctx)
     : diagnosable_ctx(eval_ctx->hlasm_ctx)
     , eval_ctx_(eval_ctx)
     , hlasm_ctx(eval_ctx->hlasm_ctx)
-{ }
+{}
 
 context::SET_t context_manager::get_var_sym_value(
     context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const
@@ -161,7 +161,7 @@ bool context_manager::test_symbol_for_read(
     return true;
 }
 
-void context_manager::collect_diags() const { }
+void context_manager::collect_diags() const {}
 
 context_manager::~context_manager()
 {

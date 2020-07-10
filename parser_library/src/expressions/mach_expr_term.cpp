@@ -38,7 +38,7 @@ mach_expr_constant::mach_expr_constant(std::string value_text, range rng)
 mach_expr_constant::mach_expr_constant(int value, range rng)
     : mach_expression(rng)
     , value_(value)
-{ }
+{}
 
 context::dependency_collector mach_expr_constant::get_dependencies(context::dependency_solver&) const
 {
@@ -47,7 +47,7 @@ context::dependency_collector mach_expr_constant::get_dependencies(context::depe
 
 mach_expr_constant::value_t mach_expr_constant::evaluate(mach_evaluate_info) const { return value_; }
 
-void mach_expr_constant::fill_location_counter(context::address) { }
+void mach_expr_constant::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_constant::leftmost_term() const { return this; }
 
@@ -58,7 +58,7 @@ mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng)
     : mach_expression(rng)
     , value(value)
     , len_expr(value, context::data_attr_kind::L, rng)
-{ }
+{}
 
 context::dependency_collector mach_expr_symbol::get_dependencies(context::dependency_solver& solver) const
 {
@@ -81,7 +81,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) 
 
     return symbol->value();
 }
-void mach_expr_symbol::fill_location_counter(context::address) { }
+void mach_expr_symbol::fill_location_counter(context::address) {}
 const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
 //***********  mach_expr_self_def ************
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
@@ -98,13 +98,13 @@ context::dependency_collector mach_expr_self_def::get_dependencies(context::depe
 
 mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info) const { return value_; }
 
-void mach_expr_self_def::fill_location_counter(context::address) { }
+void mach_expr_self_def::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
 
 mach_expr_location_counter::mach_expr_location_counter(range rng)
     : mach_expression(rng)
-{ }
+{}
 
 context::dependency_collector mach_expr_location_counter::get_dependencies(context::dependency_solver&) const
 {
@@ -128,7 +128,7 @@ const mach_expression* mach_expr_location_counter::leftmost_term() const { retur
 
 mach_expr_default::mach_expr_default(range rng)
     : mach_expression(rng)
-{ }
+{}
 
 context::dependency_collector mach_expr_default::get_dependencies(context::dependency_solver&) const
 {
@@ -137,17 +137,17 @@ context::dependency_collector mach_expr_default::get_dependencies(context::depen
 
 mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info) const { return value_t(); }
 
-void mach_expr_default::fill_location_counter(context::address) { }
+void mach_expr_default::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_default::leftmost_term() const { return this; }
 
-void mach_expr_default::collect_diags() const { }
+void mach_expr_default::collect_diags() const {}
 
 mach_expr_data_attr::mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng)
     : mach_expression(rng)
     , value(value)
     , attribute(attribute)
-{ }
+{}
 
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const
 {
@@ -183,6 +183,6 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
         return context::symbol_attributes::default_value(attribute);
 }
 
-void mach_expr_data_attr::fill_location_counter(context::address) { }
+void mach_expr_data_attr::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
