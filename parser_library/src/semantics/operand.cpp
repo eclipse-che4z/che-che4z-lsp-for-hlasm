@@ -49,7 +49,9 @@ empty_operand::empty_operand(range operand_range)
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
-{}
+{
+    concatenation_point::clear_concat_chain(this->chain);
+}
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
