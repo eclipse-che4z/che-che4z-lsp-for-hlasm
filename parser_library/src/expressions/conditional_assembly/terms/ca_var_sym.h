@@ -37,7 +37,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
     static undef_sym_set get_undefined_attributed_symbols_vs(
         const semantics::vs_ptr& symbol, const context::dependency_solver& solver);

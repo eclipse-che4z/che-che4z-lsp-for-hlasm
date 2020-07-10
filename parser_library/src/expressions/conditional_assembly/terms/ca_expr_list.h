@@ -39,7 +39,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
 private:
     void unknown_functions_to_operators();

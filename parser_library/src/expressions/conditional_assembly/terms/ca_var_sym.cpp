@@ -82,7 +82,7 @@ context::SET_t ca_var_sym::convert_return_types(
                 return ca_constant::self_defining_term(
                     retval.access_c(), ranged_diagnostic_collector(&eval_ctx, expr_range));
             case context::SET_t_enum::C_TYPE:
-                return std::move(retval);
+                return retval;
             default:
                 return context::SET_t(expr_kind);
         }
@@ -95,7 +95,7 @@ context::SET_t ca_var_sym::convert_return_types(
     {
         retval.type = context::SET_t_enum::B_TYPE;
     }
-    return std::move(retval);
+    return retval;
 }
 
 } // namespace expressions

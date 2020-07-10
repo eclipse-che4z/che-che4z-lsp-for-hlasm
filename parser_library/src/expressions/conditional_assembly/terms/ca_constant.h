@@ -41,7 +41,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
     static context::A_t self_defining_term(
         std::string_view type, std::string_view value, const ranged_diagnostic_collector& add_diagnostic);

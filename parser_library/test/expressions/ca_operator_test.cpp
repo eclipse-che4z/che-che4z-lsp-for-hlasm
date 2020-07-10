@@ -58,7 +58,8 @@ class attr_prov_mock : public processing::attribute_provider
 {
     virtual const resolved_reference_storage& lookup_forward_attribute_references(forward_reference_storage) override
     {
-        return {};
+        static resolved_reference_storage st;
+        return st;
     }
 };
 

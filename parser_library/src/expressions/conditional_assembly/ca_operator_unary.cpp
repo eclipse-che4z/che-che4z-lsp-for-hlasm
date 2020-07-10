@@ -129,7 +129,7 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
 
 context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context&) const
 {
-    return std::move(operand);
+    return operand;
 }
 
 } // namespace expressions

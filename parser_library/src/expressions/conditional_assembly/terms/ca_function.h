@@ -49,7 +49,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
     static context::SET_t B2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic);
     static context::SET_t C2A(std::string_view param, const ranged_diagnostic_collector& add_diagnostic);

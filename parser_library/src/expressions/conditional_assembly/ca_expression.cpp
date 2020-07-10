@@ -37,7 +37,7 @@ context::SET_t ca_expression::convert_return_types(
         eval_ctx.add_diagnostic(diagnostic_op::error_CE004(expr_range));
         return context::SET_t(expr_kind);
     }
-    return std::move(retval);
+    return retval;
 }
 
 } // namespace expressions

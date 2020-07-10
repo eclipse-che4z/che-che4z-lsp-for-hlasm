@@ -47,7 +47,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const;
+    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 
     static std::string duplicate(
         const ca_expr_ptr& dupl_factor, std::string value, range expr_range, evaluation_context& eval_ctx);
