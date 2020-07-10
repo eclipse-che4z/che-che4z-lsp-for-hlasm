@@ -54,8 +54,8 @@ class benchmark_test : public testing::Test
 {
 public:
     benchmark_test() {};
-    virtual void SetUp() {}
-    virtual void TearDown() {}
+    virtual void SetUp() { }
+    virtual void TearDown() { }
     void setUpAnalyzer(const std::string& content)
     {
         a = std::make_unique<analyzer>(content, SOURCE_FILE, lib_provider);

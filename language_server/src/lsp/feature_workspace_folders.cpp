@@ -20,7 +20,7 @@ namespace hlasm_plugin::language_server::lsp {
 
 feature_workspace_folders::feature_workspace_folders(parser_library::workspace_manager& ws_mngr)
     : feature(ws_mngr)
-{}
+{ }
 
 void feature_workspace_folders::register_methods(std::map<std::string, method>& methods)
 {
@@ -97,7 +97,7 @@ void feature_workspace_folders::add_workspaces(const json& added)
 }
 void feature_workspace_folders::remove_workspaces(const json& removed)
 {
-    for(auto ws : removed)
+    for (auto ws : removed)
     {
         std::string uri = ws["uri"].get<std::string>();
 
@@ -116,7 +116,8 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
     for (auto& change : changes)
         paths.push_back(uri_to_path(change["uri"].get<std::string>()));
     std::vector<const char*> c_uris;
-    std::transform(paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });
+    std::transform(
+        paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });
     ws_mngr_.did_change_watched_files(c_uris.data(), c_uris.size());
 }
 } // namespace hlasm_plugin::language_server::lsp

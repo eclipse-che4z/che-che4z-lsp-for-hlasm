@@ -34,7 +34,7 @@ data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t wo
         nominal_value_type::STRING,
         { 0, word_length },
         word_length)
-{}
+{ }
 
 class H_F_FD_number_spec
 {
@@ -102,15 +102,15 @@ int32_t data_def_type_H_F_FD::get_integer_attribute_impl(uint32_t length, int32_
 
 data_def_type_H::data_def_type_H()
     : data_def_type_H_F_FD('H', '\0', 2)
-{}
+{ }
 
 data_def_type_F::data_def_type_F()
     : data_def_type_H_F_FD('F', '\0', 4)
-{}
+{ }
 
 data_def_type_FD::data_def_type_FD()
     : data_def_type_H_F_FD('F', 'D', 8)
-{}
+{ }
 
 //***************************   types P, Z   *****************************//
 
@@ -132,7 +132,7 @@ data_def_type_P_Z::data_def_type_P_Z(char type)
         nominal_value_type::STRING,
         no_align,
         as_needed())
-{}
+{ }
 
 bool data_def_type_P_Z::check(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
@@ -189,7 +189,7 @@ int16_t data_def_type_P_Z::get_implicit_scale(const nominal_value_t& op) const
 
 data_def_type_P::data_def_type_P()
     : data_def_type_P_Z('P')
-{}
+{ }
 
 uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
 {
@@ -246,7 +246,7 @@ int32_t data_def_type_P::get_integer_attribute_impl(uint32_t length, int32_t sca
 
 data_def_type_Z::data_def_type_Z()
     : data_def_type_P_Z('Z')
-{}
+{ }
 
 uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
 {

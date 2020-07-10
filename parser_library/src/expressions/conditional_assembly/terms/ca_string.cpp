@@ -77,7 +77,8 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
     if (substring.start)
     {
         auto start = substring.start->evaluate(eval_ctx).access_a();
-        auto count = substring.count ? substring.count->evaluate(eval_ctx).access_a() : (context::A_t)str.size() - start + 1;
+        auto count =
+            substring.count ? substring.count->evaluate(eval_ctx).access_a() : (context::A_t)str.size() - start + 1;
 
         if (start < 0 || count < 0 || (start == 0 && count > 0))
         {

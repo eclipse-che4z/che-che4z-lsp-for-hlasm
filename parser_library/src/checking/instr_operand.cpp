@@ -22,14 +22,14 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::checking;
 
-complex_operand::complex_operand() {}
+complex_operand::complex_operand() { }
 
 complex_operand::complex_operand(
     std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params)
     : operand_identifier(operand_identifier)
     , operand_parameters(std::move(operand_params)) {};
 
-machine_operand::machine_operand() {}
+machine_operand::machine_operand() { }
 
 bool machine_operand::is_operand_corresponding(int operand, parameter param)
 {
@@ -225,39 +225,39 @@ one_operand::one_operand()
     : operand_identifier("")
     , value(0)
     , is_default(true)
-{}
+{ }
 
 one_operand::one_operand(std::string operand_identifier, int value)
     : operand_identifier(operand_identifier)
     , value(value)
     , is_default(false)
-{}
+{ }
 
 one_operand::one_operand(std::string operand_identifier)
     : operand_identifier(operand_identifier)
     , value(0)
     , is_default(true)
-{}
+{ }
 
 one_operand::one_operand(int value)
     : operand_identifier(std::to_string(value))
     , value(value)
     , is_default(false)
-{}
+{ }
 
 one_operand::one_operand(std::string operand_identifier, range range)
     : operand(range)
     , operand_identifier(operand_identifier)
     , value(0)
     , is_default(true)
-{}
+{ }
 
 one_operand::one_operand(int value, range range)
     : operand(range)
     , operand_identifier(std::to_string(value))
     , value(value)
     , is_default(false)
-{}
+{ }
 
 one_operand::one_operand(const one_operand& op)
 {
@@ -330,7 +330,7 @@ bool one_operand::check(
     return true;
 }
 
-empty_operand::empty_operand() {}
+empty_operand::empty_operand() { }
 
 bool empty_operand::check(
     diagnostic_op& diag, const machine_operand_format, const std::string& instr_name, const range&) const

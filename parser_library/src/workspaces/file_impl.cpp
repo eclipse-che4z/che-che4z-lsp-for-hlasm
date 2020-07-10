@@ -28,9 +28,9 @@ namespace hlasm_plugin::parser_library::workspaces {
 file_impl::file_impl(file_uri uri)
     : file_name_(std::move(uri))
     , text_()
-{}
+{ }
 
-void file_impl::collect_diags() const {}
+void file_impl::collect_diags() const { }
 
 const file_uri& file_impl::get_file_name() { return file_name_; }
 

@@ -170,4 +170,4 @@ macro_invocation::macro_invocation(id_index name,
     , labels(labels)
     , definition_location(definition_location)
     , current_statement(-1)
-{}
+{ }

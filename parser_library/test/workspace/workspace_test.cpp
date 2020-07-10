@@ -28,7 +28,7 @@ using namespace hlasm_plugin::parser_library::workspaces;
 class workspace_test : public diagnosable_impl, public testing::Test
 {
 public:
-    void collect_diags() const override {}
+    void collect_diags() const override { }
     size_t collect_and_get_diags_size(workspace& ws, file_manager& file_mngr)
     {
         diags().clear();
@@ -104,7 +104,7 @@ class file_proc_grps : public file_impl
 public:
     file_proc_grps()
         : file_impl("proc_grps.json")
-    {}
+    { }
 
     file_uri uri = "test_uri";
 
@@ -186,7 +186,7 @@ class file_pgm_conf : public file_impl
 public:
     file_pgm_conf()
         : file_impl("proc_grps.json")
-    {}
+    { }
 
     file_uri uri = "test_uri";
 
@@ -241,9 +241,9 @@ public:
 
 
     // Inherited via file_manager
-    virtual void did_open_file(const std::string&, version_t, std::string) override {}
-    virtual void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
-    virtual void did_close_file(const std::string&) override {}
+    virtual void did_open_file(const std::string&, version_t, std::string) override { }
+    virtual void did_change_file(const std::string&, version_t, const document_change*, size_t) override { }
+    virtual void did_close_file(const std::string&) override { }
 };
 
 TEST(workspace, load_config_synthetic)

@@ -55,7 +55,7 @@ alignable_address_resolver::alignable_address_resolver(
     , base_addrs(std::move(base_addrs))
     , boundary(boundary)
     , offset(offset)
-{}
+{ }
 
 symbol_value alignable_address_resolver::resolve(dependency_solver&) const { return resolve(base_addrs.front()); }
 
@@ -71,12 +71,12 @@ alignable_address_resolver::alignable_address_resolver(
     , base_addrs(std::move(base_addrs_))
     , boundary(boundary_)
     , offset(offset_)
-{}
+{ }
 
 
 alignable_address_abs_part_resolver::alignable_address_abs_part_resolver(const resolvable* dependency_source)
     : dependency_source_(dependency_source)
-{}
+{ }
 
 dependency_collector alignable_address_abs_part_resolver::get_dependencies(dependency_solver& solver) const
 {
@@ -92,7 +92,7 @@ symbol_value alignable_address_abs_part_resolver::resolve(dependency_solver& sol
 
 aggregate_address_resolver::aggregate_address_resolver(std::vector<address> base_addrs, size_t boundary, int offset)
     : alignable_address_resolver(base_addrs.back(), base_addrs, boundary, offset, false)
-{}
+{ }
 
 symbol_value aggregate_address_resolver::resolve(dependency_solver&) const
 {

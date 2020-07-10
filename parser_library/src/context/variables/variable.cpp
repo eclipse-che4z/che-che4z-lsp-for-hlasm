@@ -39,7 +39,7 @@ variable_symbol::variable_symbol(variable_kind var_kind, id_index name, bool is_
     : id(name)
     , is_global(is_global)
     , var_kind(var_kind)
-{}
+{ }
 
 
 

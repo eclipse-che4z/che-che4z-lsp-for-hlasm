@@ -22,9 +22,9 @@ parser_error_listener_ctx::parser_error_listener_ctx(
     : diagnosable_ctx(hlasm_ctx)
     , substituted_(std::move(substituted))
     , provider_(std::move(provider))
-{}
+{ }
 
-void parser_error_listener_ctx::collect_diags() const {}
+void parser_error_listener_ctx::collect_diags() const { }
 
 void parser_error_listener_ctx::add_parser_diagnostic(
     range diagnostic_range, diagnostic_severity severity, std::string code, std::string message)

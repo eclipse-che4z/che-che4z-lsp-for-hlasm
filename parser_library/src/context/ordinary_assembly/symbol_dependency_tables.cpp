@@ -214,7 +214,7 @@ void symbol_dependency_tables::try_erase_source_statement(dependant index)
 
 symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sym_ctx)
     : sym_ctx_(sym_ctx)
-{}
+{ }
 
 bool symbol_dependency_tables::add_dependency(
     dependant target, const resolvable* dependency_source, bool check_for_cycle)
@@ -432,13 +432,13 @@ std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
 statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
     : stmt_ref(std::move(stmt_ref))
     , ref_count(ref_count)
-{}
+{ }
 
 dependency_adder::dependency_adder(symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt)
     : owner_(owner)
     , ref_count_(0)
     , source_stmt(std::move(dependency_source_stmt))
-{}
+{ }
 
 bool dependency_adder::add_dependency(id_index target, const resolvable* dependency_source)
 {

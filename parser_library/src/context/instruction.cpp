@@ -221,7 +221,7 @@ public:
         size_t size,
         size_t page_no)
         : machine_instruction(name, format, operands, (int)size, page_no, (size_t)0)
-    {}
+    { }
 
     virtual bool check(const std::string& name_of_instruction,
         const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check,

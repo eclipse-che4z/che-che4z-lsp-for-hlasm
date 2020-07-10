@@ -98,8 +98,7 @@ void ca_expr_list::unknown_functions_to_operators()
             if (true_func->duplication_factor)
             {
                 auto expr_r = true_func->duplication_factor->expr_range;
-                expr_list[idx] =
-                    std::make_unique<ca_par_operator>(std::move(true_func->duplication_factor), expr_r);
+                expr_list[idx] = std::make_unique<ca_par_operator>(std::move(true_func->duplication_factor), expr_r);
 
                 expr_r = true_func->parameters.front()->expr_range;
                 expr_list.insert(expr_list.begin() + idx + 1,
@@ -112,7 +111,7 @@ void ca_expr_list::unknown_functions_to_operators()
             else
             {
                 auto expr_r = true_func->expr_range;
-                expr_list[idx]= std::make_unique<ca_symbol>(true_func->function_name, expr_r);
+                expr_list[idx] = std::make_unique<ca_symbol>(true_func->function_name, expr_r);
 
                 expr_r = true_func->parameters.front()->expr_range;
                 expr_list.insert(expr_list.begin() + idx + 1,

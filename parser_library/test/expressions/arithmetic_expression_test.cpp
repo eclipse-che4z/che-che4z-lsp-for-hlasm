@@ -139,7 +139,7 @@ TEST(arithmetic_expressions, binary_space_separated_operator)
     SETAEQ("A", 2);
 }
 
-//requires proper lexer token that recognises number with minus sign
+// requires proper lexer token that recognises number with minus sign
 #if 0
 TEST(arithmetic_expressions, limits)
 {
@@ -202,7 +202,7 @@ TEST(arithmetic_expressions, operator_priorities)
     SETAEQ("B", 11);
     SETAEQ("C", 10);
     SETAEQ("D", 40);
-    SETAEQ("E",  7);
+    SETAEQ("E", 7);
 }
 
 TEST(arithmetic_expressions, invalid_operator)

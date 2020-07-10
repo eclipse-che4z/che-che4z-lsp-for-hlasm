@@ -36,7 +36,7 @@ const system_variable* macro_param_base::access_system_variable() const
 macro_param_base::macro_param_base(macro_param_type param_type, id_index name, bool is_global)
     : variable_symbol(variable_kind::MACRO_VAR_KIND, name, is_global)
     , param_type(param_type)
-{}
+{ }
 
 const C_t& macro_param_base::get_value(const std::vector<size_t>& offset) const
 {
@@ -100,7 +100,7 @@ keyword_param::keyword_param(id_index name, macro_data_shared_ptr default_value,
     : macro_param_base(macro_param_type::KEY_PAR_TYPE, name, false)
     , assigned_data_(std::move(assigned_value))
     , default_data(std::move(default_value))
-{}
+{ }
 
 const macro_param_data_component* keyword_param::real_data() const
 {
@@ -111,6 +111,6 @@ positional_param::positional_param(id_index name, size_t position, const macro_p
     : macro_param_base(macro_param_type::POS_PAR_TYPE, name, false)
     , data_(assigned_value)
     , position(position)
-{}
+{ }
 
 const macro_param_data_component* positional_param::real_data() const { return &data_; }

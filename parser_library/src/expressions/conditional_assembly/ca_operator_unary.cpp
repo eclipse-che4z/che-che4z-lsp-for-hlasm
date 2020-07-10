@@ -127,10 +127,7 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
     expr_kind = expr->expr_kind;
 }
 
-context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context&) const
-{
-    return operand;
-}
+context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context&) const { return operand; }
 
 } // namespace expressions
 } // namespace parser_library

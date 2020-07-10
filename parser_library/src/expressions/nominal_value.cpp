@@ -29,7 +29,7 @@ dependency_collector nominal_value_string::get_dependencies(dependency_solver&) 
 nominal_value_string::nominal_value_string(std::string value, hlasm_plugin::parser_library::range rng)
     : value(std::move(value))
     , value_range(rng)
-{}
+{ }
 
 //*********** nominal_value_exprs ***************
 dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& solver) const
@@ -50,7 +50,7 @@ dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& so
 
 nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs)
     : exprs(std::move(exprs))
-{}
+{ }
 
 
 
@@ -68,9 +68,9 @@ dependency_collector address_nominal::get_dependencies(dependency_solver& solver
 address_nominal::address_nominal()
     : displacement()
     , base()
-{}
+{ }
 
 address_nominal::address_nominal(mach_expr_ptr displacement, mach_expr_ptr base)
     : displacement(std::move(displacement))
     , base(std::move(base))
-{}
+{ }

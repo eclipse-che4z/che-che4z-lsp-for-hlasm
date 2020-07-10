@@ -26,7 +26,7 @@ collector::collector()
     , instr_(instrs_)
     , lsp_symbols_extracted_(false)
     , hl_symbols_extracted_(false)
-{}
+{ }
 
 const label_si& collector::current_label() { return **lbl_; }
 

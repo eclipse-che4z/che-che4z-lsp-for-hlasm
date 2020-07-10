@@ -21,7 +21,7 @@ using namespace hlasm_plugin::parser_library::expressions;
 
 mach_expression::mach_expression(range rng)
     : expr_range_(rng)
-{}
+{ }
 
 mach_expr_ptr hlasm_plugin::parser_library::expressions::mach_expression::assign_expr(
     mach_expr_ptr expr, range expr_range)

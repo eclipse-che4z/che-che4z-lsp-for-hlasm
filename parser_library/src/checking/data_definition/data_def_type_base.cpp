@@ -483,7 +483,7 @@ const data_def_type* data_def_type::access_data_def_type(char type, char extensi
     return found == types.end() ? nullptr : found->second.get();
 }
 
-data_def_type::~data_def_type() {}
+data_def_type::~data_def_type() { }
 
 template bool data_def_type::check<data_instr_type::DC>(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;

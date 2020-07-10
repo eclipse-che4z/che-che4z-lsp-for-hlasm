@@ -60,7 +60,7 @@ analyzer::analyzer(const std::string& text,
     const library_data data,
     bool collect_hl_info)
     : analyzer(text, file_name, lib_provider, &hlasm_ctx, data, false, nullptr, collect_hl_info)
-{}
+{ }
 
 analyzer::analyzer(const std::string& text,
     std::string file_name,
@@ -75,7 +75,7 @@ analyzer::analyzer(const std::string& text,
         true,
         tracer,
         collect_hl_info)
-{}
+{ }
 
 context::hlasm_context& analyzer::context() { return hlasm_ctx_ref_; }
 

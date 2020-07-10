@@ -127,16 +127,16 @@ position range_provider::adjust_position(position pos)
 range_provider::range_provider(range original_range, adjusting_state state)
     : original_range(original_range)
     , state(state)
-{}
+{ }
 
 range_provider::range_provider(
     range original_field_range, std::vector<range> original_operand_ranges, adjusting_state state)
     : original_range(original_field_range)
     , original_operand_ranges(std::move(original_operand_ranges))
     , state(state)
-{}
+{ }
 
 range_provider::range_provider()
     : original_range()
     , state(adjusting_state::NONE)
-{}
+{ }

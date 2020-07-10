@@ -21,7 +21,7 @@ using namespace hlasm_plugin::parser_library::context;
 
 cached_statement_storage::cached_statement_storage(shared_stmt_ptr base)
     : base_stmt_(std::move(base))
-{}
+{ }
 
 bool cached_statement_storage::contains(processing::processing_form format) const
 {

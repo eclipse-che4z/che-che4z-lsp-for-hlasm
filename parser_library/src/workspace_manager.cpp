@@ -29,7 +29,7 @@ namespace hlasm_plugin::parser_library {
 
 workspace_manager::workspace_manager(std::atomic<bool>* cancel)
     : impl_(new impl(cancel))
-{}
+{ }
 
 workspace_manager::workspace_manager(workspace_manager&& ws_mngr) noexcept
     : impl_(ws_mngr.impl_)

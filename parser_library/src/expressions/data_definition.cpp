@@ -252,7 +252,7 @@ void data_definition::assign_location_counter(context::address loctr_value)
     }
 }
 
-void data_definition::collect_diags() const {}
+void data_definition::collect_diags() const { }
 
 checking::data_def_field<int32_t> set_data_def_field(
     const expressions::mach_expression* e, expressions::mach_evaluate_info info)

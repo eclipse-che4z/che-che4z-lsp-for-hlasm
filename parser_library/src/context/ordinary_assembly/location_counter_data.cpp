@@ -22,14 +22,14 @@ using namespace hlasm_plugin::parser_library::context;
 
 location_counter_data::location_counter_data()
     : location_counter_data(loctr_data_kind::UNKNOWN_MAX)
-{}
+{ }
 
 location_counter_data::location_counter_data(loctr_data_kind kind)
     : storage(0)
     , initial_storage(0)
     , current_safe_area(0)
     , kind(kind)
-{}
+{ }
 
 void location_counter_data::append_space(space_ptr sp)
 {

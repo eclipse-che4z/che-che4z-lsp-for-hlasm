@@ -37,7 +37,7 @@ ordinary_processor::ordinary_processor(context::hlasm_context& hlasm_ctx,
     , mach_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , tracer_(tracer)
-{}
+{ }
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {

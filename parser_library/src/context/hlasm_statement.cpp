@@ -39,4 +39,4 @@ semantics::deferred_statement* hlasm_statement::access_deferred()
 
 hlasm_statement::hlasm_statement(const statement_kind kind)
     : kind(kind)
-{}
+{ }
