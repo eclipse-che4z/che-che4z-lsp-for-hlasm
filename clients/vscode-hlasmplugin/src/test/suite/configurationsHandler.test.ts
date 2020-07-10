@@ -32,7 +32,7 @@ suite('Configurations Handler Test Suite', () => {
     // 4 expressions - 2 for always recognize, 1 open code and 1 library file
     test('Update wildcards test', () => {
         const wildcards = handler.updateWildcards();
-        assert.equal(wildcards.length, 4);
+        assert.equal(wildcards.length, 5);
     });
 
     // 2 files matching the wildcards

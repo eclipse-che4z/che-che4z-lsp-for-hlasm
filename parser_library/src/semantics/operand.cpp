@@ -453,7 +453,8 @@ bool data_def_operand::has_error(expressions::mach_evaluate_info info) const
     return value->get_dependencies(info).has_error;
 }
 
-template<typename... args> std::vector<const context::resolvable*> resolvable_list(const args&... expr)
+template<typename... args>
+std::vector<const context::resolvable*> resolvable_list(const args&... expr)
 {
     std::vector<const context::resolvable*> list;
     (

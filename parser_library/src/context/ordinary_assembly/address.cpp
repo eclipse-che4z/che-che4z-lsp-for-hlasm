@@ -80,7 +80,7 @@ void space::resolve(space_ptr this_space, space_ptr value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    for (int i = this_space->listeners_.size() - 1; i >= 0; --i)
+    for (int i = (int)this_space->listeners_.size() - 1; i >= 0; --i)
     {
         auto listener = this_space->listeners_[i];
         assert(listener->spaces.front().first == this_space);
@@ -101,7 +101,7 @@ void space::resolve(space_ptr this_space, address value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    for (int i = this_space->listeners_.size() - 1; i >= 0; --i)
+    for (int i = (int)this_space->listeners_.size() - 1; i >= 0; --i)
     {
         auto listener = this_space->listeners_[i];
         assert(listener->spaces.front().first == this_space);
@@ -235,8 +235,13 @@ enum class op
     SUB
 };
 
-template<typename T> bool compare(const T& lhs, const T& rhs) { return lhs == rhs; }
-template<> bool compare<address::base>(const address::base& lhs, const address::base& rhs)
+template<typename T>
+bool compare(const T& lhs, const T& rhs)
+{
+    return lhs == rhs;
+}
+template<>
+bool compare<address::base>(const address::base& lhs, const address::base& rhs)
 {
     return lhs.owner == rhs.owner;
 }

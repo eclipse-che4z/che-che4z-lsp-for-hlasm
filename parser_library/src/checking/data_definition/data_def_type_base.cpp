@@ -209,7 +209,8 @@ std::pair<bool, bool> data_def_type::check_nominal_present<data_instr_type::DS>(
     else
         return { true, false };
 }
-template<data_instr_type instr_type> modifier_spec data_def_type::get_length_spec() const
+template<data_instr_type instr_type>
+modifier_spec data_def_type::get_length_spec() const
 {
     if constexpr (instr_type == data_instr_type::DC)
         return length_spec_;
@@ -217,7 +218,8 @@ template<data_instr_type instr_type> modifier_spec data_def_type::get_length_spe
         return ds_length_spec_;
 }
 
-template<data_instr_type instr_type> modifier_spec data_def_type::get_bit_length_spec() const
+template<data_instr_type instr_type>
+modifier_spec data_def_type::get_bit_length_spec() const
 {
     if constexpr (instr_type == data_instr_type::DC)
         return bit_length_spec_;

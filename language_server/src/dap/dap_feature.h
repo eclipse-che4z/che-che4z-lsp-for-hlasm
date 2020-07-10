@@ -69,6 +69,7 @@ protected:
 
     int column_1_based_;
     int line_1_based_;
+
 private:
     path_format path_format_;
 };

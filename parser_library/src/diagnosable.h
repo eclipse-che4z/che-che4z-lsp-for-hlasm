@@ -33,7 +33,8 @@ namespace hlasm_plugin::parser_library {
 
 // Interface that allows to collect objects (diagnostics)
 // from a tree structure of objects.
-template<typename T> class collectable
+template<typename T>
+class collectable
 {
 public:
     using diagnostic_container = std::vector<T>;
@@ -48,7 +49,8 @@ public:
     virtual ~collectable() = 0;
 };
 
-template<typename T> inline collectable<T>::~collectable() {};
+template<typename T>
+inline collectable<T>::~collectable() {};
 
 using diagnosable = collectable<diagnostic_s>;
 

@@ -126,7 +126,7 @@ private:
     int find_latest_version_(const context::instr_definition& current,
         const context::definitions<context::instr_definition>& to_check) const;
     // returns the first macro id on the parsing stack
-    context::macro_id get_top_macro_stack_();
+    context::macro_id get_top_macro_stack_() const;
 };
 } // namespace semantics
 } // namespace parser_library

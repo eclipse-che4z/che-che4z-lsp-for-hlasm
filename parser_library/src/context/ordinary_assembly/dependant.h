@@ -20,9 +20,7 @@
 #include "address.h"
 #include "symbol_attributes.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // structure representing symbol attribute reference
 struct attr_ref
@@ -55,12 +53,11 @@ struct dependant
     value_t value;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 namespace std {
-template<> struct hash<hlasm_plugin::parser_library::context::attr_ref>
+template<>
+struct hash<hlasm_plugin::parser_library::context::attr_ref>
 {
     std::size_t operator()(const hlasm_plugin::parser_library::context::attr_ref& k) const
     {
@@ -68,7 +65,8 @@ template<> struct hash<hlasm_plugin::parser_library::context::attr_ref>
     }
 };
 
-template<> struct hash<hlasm_plugin::parser_library::context::dependant>
+template<>
+struct hash<hlasm_plugin::parser_library::context::dependant>
 {
     std::size_t operator()(const hlasm_plugin::parser_library::context::dependant& k) const
     {

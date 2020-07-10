@@ -23,9 +23,7 @@
 #include "workspaces/parse_lib_provider.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // class wrapping context providing ranges, checks and diagnostics to hlasm_context
 class context_manager : public diagnosable_ctx
@@ -55,7 +53,5 @@ public:
     ~context_manager();
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

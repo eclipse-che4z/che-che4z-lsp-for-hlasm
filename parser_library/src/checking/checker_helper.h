@@ -27,9 +27,7 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4505)
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking {
 
 inline const one_operand* get_simple_operand(const asm_operand* to_check_operand)
 {
@@ -134,7 +132,7 @@ inline static bool is_date(const std::string& to_test)
         leap_year = true;
     else
         leap_year = false;
-    return ((size_t)day <= days_in_month[month - 1] || (month == 2 && leap_year && day == 29));
+    return (day <= days_in_month[month - 1] || (month == 2 && leap_year && day == 29));
 };
 
 inline bool is_sign(char c) { return c == '-' || c == '+'; }
@@ -152,7 +150,8 @@ inline bool is_decimal_number_ch(char c) { return is_digit(c) || is_sign(c) || c
 // number_spec must implement two static functions:
 // bool is_end_char(char c) specifies whether char is valid character that delimits number.
 // bool is_sign_char(char c) specifies whether char is valid beginning character
-template<class number_spec> inline bool check_number(const std::string& nominal, size_t& i)
+template<class number_spec>
+inline bool check_number(const std::string& nominal, size_t& i)
 {
     if (nominal[i] == ',')
         return false;
@@ -211,9 +210,7 @@ inline bool check_exponent(const std::string& nominal, size_t& i)
     }
     return found_digit;
 }
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking
 
 #pragma warning(pop)
 

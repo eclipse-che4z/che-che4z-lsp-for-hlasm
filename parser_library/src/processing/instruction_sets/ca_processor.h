@@ -19,9 +19,7 @@
 #include "processing/context_manager.h"
 #include "processing/processing_state_listener.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor of conditional assembly instructions
 class ca_processor : public instruction_processor
@@ -43,7 +41,8 @@ public:
     virtual void process(context::shared_stmt_ptr stmt) override;
 
 private:
-    template<typename T> void process_(T stmt_ptr)
+    template<typename T>
+    void process_(T stmt_ptr)
     {
         auto it = table_.find(stmt_ptr->access_resolved()->opcode_ref().value);
         assert(it != table_.end());
@@ -144,7 +143,5 @@ template<typename T, bool global> inline void ca_processor::process_GBL_LCL(cons
     }
 }
 
-} // namespace processing
-} // namespace parser_library
 } // namespace hlasm_plugin
 #endif

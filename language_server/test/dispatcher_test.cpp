@@ -32,13 +32,13 @@ public:
     server_mock(int max_messages)
         : server(ws)
         , messages_limit(max_messages)
-    { }
+    {}
 
     std::vector<json> messages;
 
-    virtual void respond(const json&, const std::string&, const json&) override { }
-    virtual void notify(const std::string&, const json&) override { }
-    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override { }
+    virtual void respond(const json&, const std::string&, const json&) override {}
+    virtual void notify(const std::string&, const json&) override {}
+    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
     virtual void message_received(const json& message) override
     {
         ++counter;
@@ -67,7 +67,7 @@ struct stringer
 };
 
 class dispatcher_fixture : public ::testing::TestWithParam<test_param>
-{ };
+{};
 
 INSTANTIATE_TEST_SUITE_P(dispatcher,
     dispatcher_fixture,

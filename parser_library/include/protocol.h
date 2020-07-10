@@ -89,12 +89,12 @@ struct PARSER_LIBRARY_EXPORT completion_item
 {
     completion_item(context::completion_item_s& info);
 
-    const char* label();
-    size_t kind();
-    const char* detail();
+    const char* label() const;
+    size_t kind() const;
+    const char* detail() const;
     const char* documentation();
-    bool deprecated();
-    const char* insert_text();
+    bool deprecated() const;
+    const char* insert_text() const;
 
 private:
     context::completion_item_s& impl_;
@@ -103,9 +103,9 @@ private:
 struct PARSER_LIBRARY_EXPORT completion_list
 {
     completion_list(semantics::completion_list_s& info);
-    bool is_incomplete();
+    bool is_incomplete() const;
     completion_item item(size_t index);
-    size_t count();
+    size_t count() const;
 
 private:
     semantics::completion_list_s& impl_;
@@ -114,8 +114,8 @@ private:
 struct PARSER_LIBRARY_EXPORT position_uri
 {
     position_uri(semantics::position_uri_s&);
-    position pos();
-    const char* uri();
+    position pos() const;
+    const char* uri() const;
 
 private:
     semantics::position_uri_s& impl_;
@@ -126,7 +126,7 @@ struct PARSER_LIBRARY_EXPORT position_uris
     position_uris(semantics::position_uri_s* data, size_t size);
 
     position_uri get_position_uri(size_t index);
-    size_t size();
+    size_t size() const;
 
 private:
     semantics::position_uri_s* data_;
@@ -138,8 +138,8 @@ struct range_uri_s;
 struct PARSER_LIBRARY_EXPORT range_uri
 {
     range_uri(range_uri_s& range);
-    range get_range();
-    const char* uri();
+    range get_range() const;
+    const char* uri() const;
 
 private:
     range_uri_s& impl_;
@@ -205,14 +205,14 @@ struct PARSER_LIBRARY_EXPORT diagnostic
 {
     diagnostic(diagnostic_s&);
 
-    const char* file_name();
-    range get_range();
-    diagnostic_severity severity();
-    const char* code();
-    const char* source();
-    const char* message();
+    const char* file_name() const;
+    range get_range() const;
+    diagnostic_severity severity() const;
+    const char* code() const;
+    const char* source() const;
+    const char* message() const;
     const diagnostic_related_info related_info(size_t index) const;
-    size_t related_info_size();
+    size_t related_info_size() const;
 
 private:
     diagnostic_s& impl_;
@@ -239,7 +239,7 @@ struct PARSER_LIBRARY_EXPORT diagnostic_list
     diagnostic_list(diagnostic_s* begin, size_t size);
 
     diagnostic diagnostics(size_t index);
-    size_t diagnostics_size();
+    size_t diagnostics_size() const;
 
 private:
     diagnostic_s* begin_;
@@ -258,14 +258,14 @@ struct PARSER_LIBRARY_EXPORT file_highlighting_info
 {
     file_highlighting_info(semantics::highlighting_info& info);
 
-    const char* document_uri();
-    version_t document_version();
-    size_t continuation_count();
+    const char* document_uri() const;
+    version_t document_version() const;
+    size_t continuation_count() const;
     position continuation(size_t index);
     token_info token(size_t index);
-    size_t token_count();
-    size_t continuation_column();
-    size_t continue_column();
+    size_t token_count() const;
+    size_t continuation_column() const;
+    size_t continue_column() const;
 
 private:
     semantics::highlighting_info& info;
@@ -276,8 +276,8 @@ struct PARSER_LIBRARY_EXPORT all_highlighting_info
     all_highlighting_info(file_id* files, size_t files_count);
 
     file_id* files();
-    size_t files_count();
-    file_highlighting_info file_info(file_id);
+    size_t files_count() const;
+    file_highlighting_info file_info(file_id) const;
 
 private:
     file_id* files_;
@@ -288,7 +288,7 @@ struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);
 
-    const char* path();
+    const char* path() const;
 
 private:
     const debugging::source& source_;
@@ -298,12 +298,12 @@ struct PARSER_LIBRARY_EXPORT stack_frame
 {
     stack_frame(const debugging::stack_frame& frame);
 
-    const char* name();
-    uint32_t id();
+    const char* name() const;
+    uint32_t id() const;
     // problem
-    range get_range();
+    range get_range() const;
     // dalsi problem
-    source get_source();
+    source get_source() const;
 
     const debugging::stack_frame& impl_;
 };
