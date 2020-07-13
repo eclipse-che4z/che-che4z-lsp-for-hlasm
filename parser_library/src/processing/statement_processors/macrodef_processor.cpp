@@ -284,7 +284,7 @@ void macrodef_processor::process_prototype_operand(
         {
             auto var = tmp_chain[0]->access_var()->symbol.get();
 
-            if (test_varsym_validity(var, param_names, tmp->operand_range))
+            if (test_varsym_validity(var, param_names, tmp->operand_range, true))
             {
                 auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
@@ -298,7 +298,7 @@ void macrodef_processor::process_prototype_operand(
             {
                 auto var = tmp_chain[0]->access_var()->symbol.get();
 
-                if (test_varsym_validity(var, param_names, tmp->operand_range))
+                if (test_varsym_validity(var, param_names, tmp->operand_range, false))
                 {
                     auto var_id = var->access_basic()->name;
 
@@ -322,7 +322,7 @@ void macrodef_processor::process_prototype_operand(
 }
 
 bool macrodef_processor::test_varsym_validity(
-    const semantics::variable_symbol* var, const std::vector<context::id_index>& param_names, range op_range)
+    const semantics::variable_symbol* var, const std::vector<context::id_index>& param_names, range op_range, bool add_empty)
 {
     if (var->created || !var->subscript.empty())
     {
@@ -336,7 +336,8 @@ bool macrodef_processor::test_varsym_validity(
     if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
     {
         add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
-        result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+        if (add_empty)
+            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
         return false;
     }
     return true;

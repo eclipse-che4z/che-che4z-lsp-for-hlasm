@@ -69,8 +69,10 @@ private:
     void process_prototype_instruction(const resolved_statement& statement);
     void process_prototype_operand(const resolved_statement& statement, std::vector<context::id_index>& param_names);
 
-    bool test_varsym_validity(
-        const semantics::variable_symbol* var, const std::vector<context::id_index>& param_names, range op_range);
+    bool test_varsym_validity(const semantics::variable_symbol* var,
+        const std::vector<context::id_index>& param_names,
+        range op_range,
+        bool add_empty);
 
 
     void process_MACRO();
