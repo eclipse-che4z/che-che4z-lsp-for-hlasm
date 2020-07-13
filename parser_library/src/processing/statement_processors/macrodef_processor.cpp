@@ -321,8 +321,10 @@ void macrodef_processor::process_prototype_operand(
     collect_diags_from_child(mngr);
 }
 
-bool macrodef_processor::test_varsym_validity(
-    const semantics::variable_symbol* var, const std::vector<context::id_index>& param_names, range op_range, bool add_empty)
+bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* var,
+    const std::vector<context::id_index>& param_names,
+    range op_range,
+    bool add_empty)
 {
     if (var->created || !var->subscript.empty())
     {

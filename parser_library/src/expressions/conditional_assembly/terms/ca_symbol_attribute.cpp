@@ -125,7 +125,8 @@ context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name
     return retrieve_value(ord_symbol, eval_ctx);
 }
 
-context::SET_t ca_symbol_attribute::retrieve_value(const context::symbol* ord_symbol, evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::retrieve_value(
+    const context::symbol* ord_symbol, evaluation_context& eval_ctx) const
 {
     if (attribute == context::data_attr_kind::T)
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
@@ -254,4 +255,4 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return evaluate_ordsym(ord_name, eval_ctx);
 }
 
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
