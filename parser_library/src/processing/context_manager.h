@@ -39,10 +39,11 @@ public:
     context_manager(context::hlasm_context& hlasm_ctx);
     context_manager(expressions::evaluation_context* eval_ctx);
 
+    context_manager(const context_manager& mngr) = delete;
+
     context::SET_t get_var_sym_value(
         context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
-    context::id_index get_symbol_name(const semantics::vs_ptr& symbol, expressions::evaluation_context eval_ctx) const;
     context::id_index get_symbol_name(const std::string& symbol, range symbol_range) const;
     name_result try_get_symbol_name(const std::string& symbol) const;
 

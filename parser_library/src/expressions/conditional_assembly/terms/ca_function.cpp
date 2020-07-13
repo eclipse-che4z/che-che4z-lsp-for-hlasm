@@ -258,11 +258,13 @@ context::SET_t ca_function::D2A(std::string_view param, const ranged_diagnostic_
 context::SET_t ca_function::DCLEN(const context::C_t& param)
 {
     context::A_t ret = 0;
-    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
+    const char* c = param.c_str();
+    while (c < param.c_str() + param.size())
     {
         if ((*c == '\'' && *(c + 1) == '\'') || (*c == '&' && *(c + 1) == '&'))
             ++c;
         ++ret;
+        ++c;
     }
     return ret;
 }
@@ -560,12 +562,13 @@ context::SET_t ca_function::D2X(const context::C_t& param, const ranged_diagnost
 context::SET_t ca_function::DCVAL(const context::C_t& param)
 {
     std::string ret;
-
-    for (const char* c = param.c_str(); c != param.c_str() + param.size(); ++c)
+    const char* c = param.c_str();
+    while (c < param.c_str() + param.size())
     {
         if ((*c == '\'' && *(c + 1) == '\'') || (*c == '&' && *(c + 1) == '&'))
             ++c;
         ret.push_back(*c);
+        ++c;
     }
     return ret;
 }
