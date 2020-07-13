@@ -19,9 +19,7 @@
 #include "expressions/evaluation_context.h"
 #include "processing/context_manager.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 context::SET_t_enum get_attribute_type(context::data_attr_kind attr)
 {
@@ -127,7 +125,7 @@ context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name
     return retrieve_value(ord_symbol, eval_ctx);
 }
 
-context::SET_t ca_symbol_attribute::retrieve_value(context::symbol* ord_symbol, evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::retrieve_value(const context::symbol* ord_symbol, evaluation_context& eval_ctx) const
 {
     if (attribute == context::data_attr_kind::T)
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
@@ -202,38 +200,22 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
     }
 
     // must substitute var sym
-    if (context::symbol_attributes::requires_ordinary_symbol(attribute) || attribute == context::data_attr_kind::T)
+    if (context::symbol_attributes::requires_ordinary_symbol(attribute))
     {
-        if (attribute == context::data_attr_kind::T)
-        {
-            if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
-                return std::string("U");
+        return evaluate_substituted(var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx);
+    }
+    else if (attribute == context::data_attr_kind::T)
+    {
+        if (!mngr.test_symbol_for_read(var_symbol, expr_subscript, vs->symbol_range))
+            return std::string("U");
 
-            context::SET_t value =
-                eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript)).access_c();
-            if (value.access_c() != "U")
-                return value;
-        }
+        context::SET_t value =
+            eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, var_symbol, transform(expr_subscript)).access_c();
 
-        // get substituted name
-        context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, vs->symbol_range);
-        if (substituted_name.type != context::SET_t_enum::C_TYPE)
-        {
-            if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
-                eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
-            return context::symbol_attributes::default_ca_value(attribute);
-        }
-
-        auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
-
-        if (!valid)
-        {
-            if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
-                eval_ctx.add_diagnostic(diagnostic_op::error_E065(expr_range));
-            return context::symbol_attributes::default_ca_value(attribute);
-        }
-        else
-            return evaluate_ordsym(ord_name, eval_ctx);
+        if (value.access_c() != "U")
+            return value;
+        return evaluate_substituted(
+            var_name, std::move(expr_subscript), vs->symbol_range, eval_ctx); // is type U, must substitute var sym
     }
     else
     {
@@ -244,7 +226,32 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
     }
 }
 
+context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_name,
+    std::vector<context::A_t> expr_subscript,
+    range var_range,
+    evaluation_context& eval_ctx) const
+{
+    processing::context_manager mngr(&eval_ctx);
 
-} // namespace expressions
-} // namespace parser_library
+    context::SET_t substituted_name = mngr.get_var_sym_value(var_name, expr_subscript, var_range);
+
+    if (substituted_name.type != context::SET_t_enum::C_TYPE)
+    {
+        if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
+            eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        return context::symbol_attributes::default_ca_value(attribute);
+    }
+
+    auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+
+    if (!valid)
+    {
+        if (attribute != context::data_attr_kind::O && attribute != context::data_attr_kind::T)
+            eval_ctx.add_diagnostic(diagnostic_op::error_E065(expr_range));
+        return context::symbol_attributes::default_ca_value(attribute);
+    }
+    else
+        return evaluate_ordsym(ord_name, eval_ctx);
+}
+
 } // namespace hlasm_plugin

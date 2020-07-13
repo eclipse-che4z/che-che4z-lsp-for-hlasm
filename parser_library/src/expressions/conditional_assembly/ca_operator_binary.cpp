@@ -21,9 +21,7 @@
 #include "terms/ca_function.h"
 #include "terms/ca_string.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_binary_operator::ca_binary_operator(
     ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range)
@@ -116,8 +114,6 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
             case ca_expr_ops::SRA:
                 result = ~0U;
                 break;
-            case ca_expr_ops::SLL:
-            case ca_expr_ops::SRL:
             default:
                 result = 0;
                 break;
@@ -255,7 +251,7 @@ bool ca_function_binary_operator::is_relational() const
     }
 }
 
-context::A_t overflow_transform(std::int64_t val, range expr_range, evaluation_context& eval_ctx)
+context::A_t overflow_transform(std::int64_t val, range expr_range, const evaluation_context& eval_ctx)
 {
     if (val > std::numeric_limits<context::A_t>::max())
     {
@@ -271,30 +267,34 @@ context::A_t overflow_transform(std::int64_t val, range expr_range, evaluation_c
         return (context::A_t)val;
 }
 
-context::SET_t ca_add::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+context::SET_t ca_add::operation(
+    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() + (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_sub::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+context::SET_t ca_sub::operation(
+    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() - (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_mul::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+context::SET_t ca_mul::operation(
+    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() * (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
-context::SET_t ca_div::operation(context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+context::SET_t ca_div::operation(
+    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     if (rhs.access_a() == 0)
-        return (context::A_t)0;
+        return 0;
     return overflow_transform((std::int64_t)lhs.access_a() / (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
 context::SET_t ca_conc::operation(
-    context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx)
+    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     if (lhs.access_c().size() + rhs.access_c().size() > ca_string::MAX_STR_SIZE)
     {
@@ -307,6 +307,4 @@ context::SET_t ca_conc::operation(
     return ret;
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

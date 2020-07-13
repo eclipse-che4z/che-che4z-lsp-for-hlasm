@@ -18,9 +18,7 @@
 #include "../ca_expression.h"
 #include "semantics/variable_symbol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_var_sym : public ca_expression
 {
@@ -45,13 +43,10 @@ public:
 
 private:
     context::SET_t convert_return_types(
-        context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const;
+        context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const;
 };
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

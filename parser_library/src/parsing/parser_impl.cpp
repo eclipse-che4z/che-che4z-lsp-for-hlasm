@@ -46,7 +46,10 @@ void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_i
     pushed_state_ = false;
 }
 
-bool parser_impl::is_last_line() { return dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).is_last_line(); }
+bool parser_impl::is_last_line() const
+{
+    return dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).is_last_line();
+}
 
 void parser_impl::rewind_input(context::source_position pos)
 {
@@ -275,7 +278,7 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
     }
 }
 
-void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type)
+void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
     expr->resolve_expression_tree(type);
     expr->collect_diags();
@@ -284,13 +287,13 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SE
     expr->diags().clear();
 }
 
-void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr_list, context::SET_t_enum type)
+void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr_list, context::SET_t_enum type) const
 {
     for (auto& expr : expr_list)
         resolve_expression(expr, type);
 }
 
-void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr)
+void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
     auto [_, opcode] = *proc_status;
     if (opcode.value == ctx->ids().add("SETA") || opcode.value == ctx->ids().add("ACTR")
@@ -301,7 +304,9 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr)
     else if (opcode.value == ctx->ids().add("SETC"))
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
     else if (opcode.value == ctx->ids().add("AREAD"))
-    {} // aread operand is just enumeration
+    {
+        // aread operand is just enumeration
+    }
     else
     {
         assert(false);

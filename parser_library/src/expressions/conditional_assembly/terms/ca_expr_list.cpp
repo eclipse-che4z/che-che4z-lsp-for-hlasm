@@ -218,7 +218,7 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
 template<typename EXPR_POLICY>
 std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, bool& err)
 {
-    auto& op = expr_list[it];
+    const auto& op = expr_list[it];
 
     if (!is_symbol(op) || !EXPR_POLICY::is_operator(EXPR_POLICY::get_operator(get_symbol(op))))
     {
@@ -229,13 +229,10 @@ std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, b
 
     ca_expr_ops op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]));
 
-    if (EXPR_POLICY::multiple_words(op_type))
+    if (EXPR_POLICY::multiple_words(op_type) && is_symbol(expr_list[it + 1]) && get_symbol(expr_list[it + 1]) == "NOT")
     {
-        if (is_symbol(expr_list[it + 1]) && get_symbol(expr_list[it + 1]) == "NOT")
-        {
-            op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]) + "_NOT");
-            ++it;
-        }
+        op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]) + "_NOT");
+        ++it;
     }
 
     auto op_prio = EXPR_POLICY::get_priority(op_type);

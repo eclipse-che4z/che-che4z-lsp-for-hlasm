@@ -31,9 +31,7 @@
         return context::SET_t();                                                                                       \
     } while (0)
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_function::ca_function(context::id_index function_name,
     ca_expr_funcs function,
@@ -76,7 +74,10 @@ void ca_function::resolve_expression_tree(context::SET_t_enum kind)
     }
 }
 
-void ca_function::collect_diags() const {}
+void ca_function::collect_diags() const
+{
+    // nothing to collect
+}
 
 bool ca_function::is_character_expression() const { return false; }
 
@@ -287,8 +288,8 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, const ranged_diagno
         RET_ERRPARM;
 
     if (param.size() <= 32 && std ::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
-        return (context::A_t)1;
-    return (context::A_t)0;
+        return 1;
+    return 0;
 }
 
 context::SET_t ca_function::ISDEC(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
@@ -319,8 +320,8 @@ context::SET_t ca_function::ISHEX(const context::C_t& param, const ranged_diagno
         RET_ERRPARM;
 
     if (param.size() <= 8 && std::all_of(param.cbegin(), param.cend(), [](char c) { return std::isxdigit(c); }))
-        return (context::A_t)1;
-    return (context::A_t)0;
+        return 1;
+    return 0;
 }
 
 context::SET_t ca_function::ISSYM(const context::C_t& param, const ranged_diagnostic_collector& add_diagnostic)
@@ -689,6 +690,4 @@ context::SET_t ca_function::get_ith_param(size_t idx, evaluation_context& eval_c
         return context::SET_t();
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

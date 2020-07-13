@@ -40,7 +40,7 @@ public:
 
     // constructor with implicit location stack (aquired from the diagnoser)
     // used for default statement checking
-    diagnostic_collector(const diagnosable_ctx* diagnoser);
+    explicit diagnostic_collector(const diagnosable_ctx* diagnoser);
 
     // constructor for collector that silences diagnostics
     diagnostic_collector();

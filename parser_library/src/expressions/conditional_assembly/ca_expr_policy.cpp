@@ -16,9 +16,7 @@
 
 #include "ca_expr_policy.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 bool ca_arithmetic_policy::is_unary(ca_expr_ops op) { return op == ca_expr_ops::NOT; }
 bool ca_binary_policy::is_unary(ca_expr_ops op) { return op == ca_expr_ops::NOT; }
@@ -404,6 +402,4 @@ ca_expr_funcs ca_common_expr_policy::get_function(const std::string& op)
 }
 
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

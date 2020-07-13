@@ -18,9 +18,7 @@
 #include "ca_expr_policy.h"
 #include "ca_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_binary_operator : public ca_expression
 {
@@ -86,7 +84,7 @@ struct ca_add
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx);
+        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_sub
@@ -94,7 +92,7 @@ struct ca_sub
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx);
+        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_mul
@@ -102,7 +100,7 @@ struct ca_mul
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx);
+        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_div
@@ -110,7 +108,7 @@ struct ca_div
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx);
+        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_conc
@@ -118,12 +116,10 @@ struct ca_conc
     static constexpr context::SET_t_enum type = context::SET_t_enum::C_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, evaluation_context& eval_ctx);
+        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

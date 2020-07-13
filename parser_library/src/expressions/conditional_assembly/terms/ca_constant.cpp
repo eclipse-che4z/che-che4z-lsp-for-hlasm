@@ -16,9 +16,7 @@
 
 #include "ca_function.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_constant::ca_constant(context::A_t value, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
@@ -36,7 +34,10 @@ void ca_constant::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-void ca_constant::collect_diags() const {}
+void ca_constant::collect_diags() const
+{
+    // nothing to collect
+}
 
 bool ca_constant::is_character_expression() const { return false; }
 
@@ -87,6 +88,4 @@ std::optional<context::A_t> ca_constant::try_self_defining_term(const std::strin
         return ret;
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

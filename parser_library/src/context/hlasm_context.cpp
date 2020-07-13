@@ -490,19 +490,19 @@ SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, const symb
     {
         case data_attr_kind::D:
             if (symbol)
-                return (A_t)1;
-            return (A_t)0;
+                return 1;
+            return 0;
         case data_attr_kind::T:
             if (symbol)
             {
                 auto attr_val = symbol->attributes().get_attribute_value(attribute);
                 return std::string { (char)ebcdic_encoding::e2a[attr_val] };
             }
-            return std::string("U");
+            return "U";
         case data_attr_kind::O:
             if (symbol)
                 return get_opcode_attr(symbol->name);
-            return std::string("U");
+            return "U";
         default:
             if (symbol)
                 return symbol->attributes().get_attribute_value(attribute);

@@ -104,9 +104,9 @@ SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
         case data_attr_kind::O:
             return std::string("U");
         case data_attr_kind::L:
-            return (A_t)1;
+            return 1;
         default:
-            return (A_t)0;
+            return 0;
     }
 }
 

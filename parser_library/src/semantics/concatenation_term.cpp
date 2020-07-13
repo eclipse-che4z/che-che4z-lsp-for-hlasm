@@ -16,9 +16,7 @@
 
 #include <cassert>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 char_str_conc::char_str_conc(std::string value)
     : concatenation_point(concat_type::STR)
@@ -85,6 +83,4 @@ std::string sublist_conc::evaluate(expressions::evaluation_context& eval_ctx) co
     return ret;
 }
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics

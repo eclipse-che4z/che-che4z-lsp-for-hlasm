@@ -27,9 +27,7 @@
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 struct variable_symbol;
 struct basic_variable_symbol;
@@ -62,7 +60,7 @@ protected:
     virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const = 0;
 };
 
-struct basic_variable_symbol : public variable_symbol
+struct basic_variable_symbol : variable_symbol
 {
     basic_variable_symbol(context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
@@ -71,7 +69,7 @@ struct basic_variable_symbol : public variable_symbol
     virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
 };
 
-struct created_variable_symbol : public variable_symbol
+struct created_variable_symbol : variable_symbol
 {
     created_variable_symbol(
         concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
@@ -81,9 +79,6 @@ struct created_variable_symbol : public variable_symbol
     virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
 };
 
-
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 
 #endif

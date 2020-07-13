@@ -21,14 +21,12 @@
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 // concatenation point representing character string
-struct char_str_conc : public concatenation_point
+struct char_str_conc : concatenation_point
 {
-    char_str_conc(std::string value);
+    explicit char_str_conc(std::string value);
 
     std::string value;
 
@@ -36,9 +34,9 @@ struct char_str_conc : public concatenation_point
 };
 
 // concatenation point representing variable symbol
-struct var_sym_conc : public concatenation_point
+struct var_sym_conc : concatenation_point
 {
-    var_sym_conc(vs_ptr);
+    explicit var_sym_conc(vs_ptr);
 
     vs_ptr symbol;
 
@@ -48,7 +46,7 @@ struct var_sym_conc : public concatenation_point
 };
 
 // concatenation point representing dot
-struct dot_conc : public concatenation_point
+struct dot_conc : concatenation_point
 {
     dot_conc();
 
@@ -56,7 +54,7 @@ struct dot_conc : public concatenation_point
 };
 
 // concatenation point representing equals sign
-struct equals_conc : public concatenation_point
+struct equals_conc : concatenation_point
 {
     equals_conc();
 
@@ -64,16 +62,14 @@ struct equals_conc : public concatenation_point
 };
 
 // concatenation point representing macro operand sublist
-struct sublist_conc : public concatenation_point
+struct sublist_conc : concatenation_point
 {
-    sublist_conc(std::vector<concat_chain> list);
+    explicit sublist_conc(std::vector<concat_chain> list);
 
     std::vector<concat_chain> list;
 
     virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const override;
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 #endif

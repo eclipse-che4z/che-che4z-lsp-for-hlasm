@@ -19,9 +19,7 @@
 
 #include "processing/context_manager.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
     attribute_provider& attr_provider,
@@ -182,46 +180,52 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
 
 macro_arguments macro_processor::get_args(const resolved_statement& statement) const
 {
-    context_manager mngr(hlasm_ctx);
-
-    context::macro_data_ptr label_value;
-
     macro_arguments args;
 
-    // label
+    args.name_param = get_label_args(statement);
+
+    args.symbolic_params = get_operand_args(statement);
+
+    return args;
+}
+
+context::macro_data_ptr macro_processor::get_label_args(const resolved_statement& statement) const
+{
     switch (statement.label_ref().type)
     {
-        case semantics::label_si_type::SEQ:
-        case semantics::label_si_type::EMPTY:
-            label_value = nullptr;
-            break;
         case semantics::label_si_type::CONC:
-            label_value = std::make_unique<context::macro_param_data_single>(semantics::concatenation_point::evaluate(
+            return std::make_unique<context::macro_param_data_single>(semantics::concatenation_point::evaluate(
                 std::get<semantics::concat_chain>(statement.label_ref().value), eval_ctx));
-            break;
         case semantics::label_si_type::ORD:
         case semantics::label_si_type::MAC:
-            label_value =
-                std::make_unique<context::macro_param_data_single>(std::get<std::string>(statement.label_ref().value));
-            break;
+            return std::make_unique<context::macro_param_data_single>(
+                std::get<std::string>(statement.label_ref().value));
         case semantics::label_si_type::VAR:
-            label_value = std::make_unique<context::macro_param_data_single>(semantics::var_sym_conc::evaluate(
+            return std::make_unique<context::macro_param_data_single>(semantics::var_sym_conc::evaluate(
                 std::get<semantics::vs_ptr>(statement.label_ref().value)->evaluate(eval_ctx)));
-            break;
         default:
-            break;
+            return nullptr;
     }
+}
 
-    args.name_param = std::move(label_value);
+bool is_keyword(const semantics::concat_chain& chain, const context_manager& mngr)
+{
+    return chain.size() >= 2 && chain[0]->type == semantics::concat_type::STR
+        && chain[1]->type == semantics::concat_type::EQU
+        && mngr.try_get_symbol_name(chain[0]->access_str()->value).first;
+}
 
-    // op
+std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved_statement& statement) const
+{
+    context_manager mngr(hlasm_ctx);
+    std::vector<context::macro_arg> args;
     std::vector<context::id_index> keyword_params;
 
     for (const auto& op : statement.operands_ref().value)
     {
         if (op->type == semantics::operand_type::EMPTY)
         {
-            args.symbolic_params.push_back({ std::make_unique<context::macro_param_data_dummy>(), nullptr });
+            args.push_back({ std::make_unique<context::macro_param_data_dummy>(), nullptr });
             continue;
         }
 
@@ -232,66 +236,67 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 
         semantics::concatenation_point::clear_concat_chain(tmp_chain);
 
-        if (tmp_chain.size() >= 2 && tmp_chain[0]->type == semantics::concat_type::STR
-            && tmp_chain[1]->type == semantics::concat_type::EQU
-            && mngr.try_get_symbol_name(tmp_chain[0]->access_str()->value).first)
+        if (is_keyword(tmp_chain, mngr)) // keyword
         {
-            auto id = mngr.get_symbol_name(tmp_chain[0]->access_str()->value, op->operand_range);
-            assert(id != context::id_storage::empty_id);
-            auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
-            if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
-                || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
-            {
-                add_diagnostic(diagnostic_op::error_E010(
-                    "keyword parameter", tmp->operand_range)); // error - unknown name of keyword parameter
-
-                // MACROCASE TODO
-                auto name = tmp_chain[0]->access_str()->value;
-
-                args.symbolic_params.push_back(
-                    { std::make_unique<context::macro_param_data_single>(name + "="
-                          + semantics::concatenation_point::to_string(tmp_chain.begin() + 2, tmp_chain.end())),
-                        nullptr });
-            }
-            else
-            {
-                if (std::find(keyword_params.begin(), keyword_params.end(), id) != keyword_params.end())
-                {
-                    add_diagnostic(
-                        diagnostic_op::error_E011("Keyword", tmp->operand_range)); // error - keyword already defined
-                }
-                else
-                {
-                    keyword_params.push_back(id);
-                }
-
-                auto chain_begin = tmp_chain.begin() + 2;
-                auto chain_end = tmp_chain.end();
-                auto chain_size = tmp_chain.size() - 2;
-                context::macro_data_ptr data;
-
-                if (chain_size == 1 && (*chain_begin)->type == semantics::concat_type::SUB)
-                    data = create_macro_data(chain_begin, chain_end, eval_ctx);
-                else
-                    data =
-                        string_to_macrodata(semantics::concatenation_point::evaluate(chain_begin, chain_end, eval_ctx));
-
-                args.symbolic_params.push_back({ std::move(data), id });
-            }
+            get_keyword_arg(statement, tmp_chain, args, keyword_params, tmp->operand_range);
         }
-        else if (tmp_chain.size() == 1 && tmp_chain.front()->type == semantics::concat_type::VAR)
+        else if (tmp_chain.size() == 1 && tmp_chain.front()->type == semantics::concat_type::VAR) // single varsym
         {
             context::macro_data_ptr data = string_to_macrodata(
                 semantics::var_sym_conc::evaluate(tmp_chain.front()->access_var()->symbol->evaluate(eval_ctx)));
 
-            args.symbolic_params.push_back({ std::move(data), nullptr });
+            args.push_back({ std::move(data), nullptr });
         }
-        else
-            args.symbolic_params.push_back(
-                { create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx), nullptr });
+        else // rest
+            args.push_back({ create_macro_data(tmp_chain.begin(), tmp_chain.end(), eval_ctx), nullptr });
     }
 
     return args;
+}
+
+void macro_processor::get_keyword_arg(const resolved_statement& statement,
+    const semantics::concat_chain& chain,
+    std::vector<context::macro_arg>& args,
+    std::vector<context::id_index>& keyword_params,
+    range op_range) const
+{
+    context_manager mngr(hlasm_ctx);
+
+    auto id = mngr.try_get_symbol_name(chain[0]->access_str()->value).second;
+    assert(id != context::id_storage::empty_id);
+
+    auto named = hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().find(id);
+    if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
+        || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
+    {
+        add_diagnostic(diagnostic_op::error_E010("keyword parameter", op_range));
+
+        // MACROCASE TODO
+        auto name = chain[0]->access_str()->value;
+
+        args.push_back({ std::make_unique<context::macro_param_data_single>(
+                             name + "=" + semantics::concatenation_point::to_string(chain.begin() + 2, chain.end())),
+            nullptr });
+    }
+    else
+    {
+        if (std::find(keyword_params.begin(), keyword_params.end(), id) != keyword_params.end())
+            add_diagnostic(diagnostic_op::error_E011("Keyword", op_range));
+        else
+            keyword_params.push_back(id);
+
+        auto chain_begin = chain.begin() + 2;
+        auto chain_end = chain.end();
+        auto chain_size = chain.size() - 2;
+        context::macro_data_ptr data;
+
+        if (chain_size == 1 && (*chain_begin)->type == semantics::concat_type::SUB)
+            data = create_macro_data(chain_begin, chain_end, eval_ctx);
+        else
+            data = string_to_macrodata(semantics::concatenation_point::evaluate(chain_begin, chain_end, eval_ctx));
+
+        args.push_back({ std::move(data), id });
+    }
 }
 
 context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_iterator begin,
@@ -318,7 +323,7 @@ context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_i
 
 context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_chain::const_iterator begin,
     semantics::concat_chain::const_iterator end,
-    ranged_diagnostic_collector add_diagnostic)
+    const ranged_diagnostic_collector& add_diagnostic)
 {
     auto tmp = semantics::concatenation_point::contains_var_sym(begin, end);
     if (tmp)
@@ -337,12 +342,10 @@ context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_cha
     semantics::concat_chain::const_iterator end,
     expressions::evaluation_context& eval_ctx)
 {
-    auto f = [&](semantics::concat_chain::const_iterator b, semantics::concat_chain::const_iterator e) {
+    auto f = [&eval_ctx](semantics::concat_chain::const_iterator b, semantics::concat_chain::const_iterator e) {
         return semantics::concatenation_point::evaluate(b, e, eval_ctx);
     };
     return create_macro_data_inner(begin, end, f);
 }
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing

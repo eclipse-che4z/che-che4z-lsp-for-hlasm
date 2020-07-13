@@ -20,9 +20,7 @@
 #include "expressions/evaluation_context.h"
 #include "terms/ca_function.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_kind, range expr_range)
     : ca_expression(expr_kind, std::move(expr_range))
@@ -129,6 +127,4 @@ void ca_par_operator::resolve_expression_tree(context::SET_t_enum kind)
 
 context::SET_t ca_par_operator::operation(context::SET_t operand, evaluation_context&) const { return operand; }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

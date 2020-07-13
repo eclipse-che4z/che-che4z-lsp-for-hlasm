@@ -22,9 +22,7 @@
 #include "checking/ranged_diagnostic_collector.h"
 #include "diagnosable_ctx.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_constant : public ca_expression
 {
@@ -51,10 +49,7 @@ public:
     static std::optional<context::A_t> try_self_defining_term(const std::string& value);
 };
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

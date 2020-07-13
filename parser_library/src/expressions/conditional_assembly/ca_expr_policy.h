@@ -18,9 +18,7 @@
 #include "context/common_types.h"
 #include "context/id_storage.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 enum class ca_expr_ops
 {
@@ -218,9 +216,7 @@ struct ca_expr_traits<context::C_t>
     using policy_t = ca_character_policy;
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

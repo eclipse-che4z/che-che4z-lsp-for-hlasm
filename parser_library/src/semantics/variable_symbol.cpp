@@ -17,9 +17,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "processing/context_manager.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 basic_variable_symbol::basic_variable_symbol(
     context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
@@ -95,6 +93,4 @@ variable_symbol::variable_symbol(
     , symbol_range(std::move(symbol_range))
 {}
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics

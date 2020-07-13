@@ -16,9 +16,7 @@
 
 #include "concatenation_term.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 concatenation_point::concatenation_point(const concat_type type)
     : type(type)
@@ -168,6 +166,4 @@ var_sym_conc* concatenation_point::contains_var_sym(
     return nullptr;
 }
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics

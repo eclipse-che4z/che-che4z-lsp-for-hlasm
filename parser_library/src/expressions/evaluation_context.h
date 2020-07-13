@@ -25,7 +25,7 @@ namespace parser_library {
 namespace expressions {
 
 // structure holding required objects to correcly perform evaluation of expressions
-struct evaluation_context : public diagnosable_ctx
+struct evaluation_context : diagnosable_ctx
 {
     context::hlasm_context& hlasm_ctx;
     processing::attribute_provider& attr_provider;
@@ -42,7 +42,10 @@ struct evaluation_context : public diagnosable_ctx
 
     evaluation_context(const evaluation_context&) = delete;
 
-    virtual void collect_diags() const override {}
+    virtual void collect_diags() const override
+    {
+        // nothing to collect
+    }
 
     using diagnosable_ctx::collect_diags_from_child;
 };

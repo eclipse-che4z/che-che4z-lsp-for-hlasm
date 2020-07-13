@@ -20,9 +20,7 @@
 #include "../ca_expression.h"
 #include "semantics/variable_symbol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_symbol_attribute : public ca_expression
 {
@@ -48,16 +46,17 @@ public:
 
 private:
     context::SET_t get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const;
-    context::SET_t retrieve_value(context::symbol* ord_symbol, evaluation_context& eval_ctx) const;
+    context::SET_t retrieve_value(const context::symbol* ord_symbol, evaluation_context& eval_ctx) const;
 
     context::SET_t evaluate_ordsym(context::id_index symbol, evaluation_context& eval_ctx) const;
     context::SET_t evaluate_varsym(const semantics::vs_ptr& symbol, evaluation_context& eval_ctx) const;
+    context::SET_t evaluate_substituted(context::id_index var_name,
+        std::vector<context::A_t> expr_subscript,
+        range var_range,
+        evaluation_context& eval_ctx) const;
 };
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

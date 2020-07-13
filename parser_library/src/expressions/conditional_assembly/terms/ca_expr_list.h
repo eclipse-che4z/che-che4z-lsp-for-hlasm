@@ -20,9 +20,7 @@
 #include "../ca_expr_policy.h"
 #include "../ca_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_expr_list : public ca_expression
 {
@@ -52,10 +50,7 @@ private:
     std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
 };
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

@@ -28,7 +28,7 @@ public:
     static void check(const resolved_statement& stmt,
         context::hlasm_context& hlasm_ctx,
         checking::instruction_checker& checker,
-        diagnosable_ctx& diagnoser);
+        const diagnosable_ctx& diagnoser);
 
 protected:
     statement_fields_parser& parser;

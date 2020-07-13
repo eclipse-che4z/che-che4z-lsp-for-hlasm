@@ -16,9 +16,7 @@
 
 #include "expressions/evaluation_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
@@ -36,7 +34,10 @@ void ca_symbol::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
 }
 
-void ca_symbol::collect_diags() const {}
+void ca_symbol::collect_diags() const
+{
+    // nothing to collect
+}
 
 bool ca_symbol::is_character_expression() const { return false; }
 
@@ -53,6 +54,4 @@ context::SET_t ca_symbol::evaluate(evaluation_context& eval_ctx) const
     }
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

@@ -22,9 +22,7 @@
 #include "../ca_expression.h"
 #include "checking/ranged_diagnostic_collector.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_function : public ca_expression
 {
@@ -93,9 +91,7 @@ private:
     context::SET_t get_ith_param(size_t idx, evaluation_context& eval_ctx) const;
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

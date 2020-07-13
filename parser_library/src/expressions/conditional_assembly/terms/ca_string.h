@@ -18,16 +18,15 @@
 #include "../ca_expression.h"
 #include "semantics/concatenation.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_string : public ca_expression
 {
 public:
     struct substring_t
     {
-        ca_expr_ptr start, count;
+        ca_expr_ptr start;
+        ca_expr_ptr count;
         range substring_range;
         substring_t();
     };
@@ -53,9 +52,7 @@ public:
         const ca_expr_ptr& dupl_factor, std::string value, range expr_range, evaluation_context& eval_ctx);
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif

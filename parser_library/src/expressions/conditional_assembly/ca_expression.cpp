@@ -16,9 +16,7 @@
 
 #include "expressions/evaluation_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
     : expr_range(std::move(expr_range))
@@ -26,7 +24,7 @@ ca_expression::ca_expression(context::SET_t_enum expr_kind, range expr_range)
 {}
 
 context::SET_t ca_expression::convert_return_types(
-    context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
+    context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const
 {
     if (type != retval.type)
     {
@@ -40,6 +38,4 @@ context::SET_t ca_expression::convert_return_types(
     return retval;
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

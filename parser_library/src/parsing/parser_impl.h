@@ -53,7 +53,7 @@ public:
 
     void initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc);
 
-    bool is_last_line();
+    bool is_last_line() const;
     virtual void rewind_input(context::source_position pos) override;
     virtual void push_line_end() override;
     context::source_position statement_start() const;
@@ -81,9 +81,9 @@ protected:
     context::id_index parse_identifier(std::string value, range id_range);
     void parse_macro_operands(semantics::op_rem& line);
 
-    void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type);
-    void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type);
-    void resolve_expression(expressions::ca_expr_ptr& expr);
+    void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
+    void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
+    void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
     void process_instruction();
     void process_statement();

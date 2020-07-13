@@ -22,9 +22,7 @@
 #include "context/ordinary_assembly/dependable.h"
 #include "diagnosable_impl.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
@@ -55,7 +53,7 @@ public:
 
 protected:
     context::SET_t convert_return_types(
-        context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const;
+        context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const;
 };
 
 
@@ -75,9 +73,6 @@ inline T ca_expression::evaluate(evaluation_context& eval_ctx) const
         return std::move(ret.access_c());
 }
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

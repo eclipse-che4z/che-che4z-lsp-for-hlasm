@@ -16,9 +16,7 @@
 
 #include "expressions/evaluation_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_string::substring_t::substring_t()
     : start(nullptr)
@@ -135,6 +133,4 @@ std::string ca_string::duplicate(
     return value;
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

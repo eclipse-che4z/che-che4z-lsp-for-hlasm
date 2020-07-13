@@ -18,9 +18,7 @@
 #include "processing/context_manager.h"
 #include "semantics/concatenation_term.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
     : ca_expression(context::SET_t_enum::A_TYPE, std::move(expr_range))
@@ -71,7 +69,7 @@ context::SET_t ca_var_sym::evaluate(evaluation_context& eval_ctx) const
 }
 
 context::SET_t ca_var_sym::convert_return_types(
-    context::SET_t retval, context::SET_t_enum type, evaluation_context& eval_ctx) const
+    context::SET_t retval, context::SET_t_enum type, const evaluation_context& eval_ctx) const
 {
     if (retval.type == context::SET_t_enum::C_TYPE)
     {
@@ -98,6 +96,4 @@ context::SET_t ca_var_sym::convert_return_types(
     return retval;
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

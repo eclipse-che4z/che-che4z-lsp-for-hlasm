@@ -17,9 +17,7 @@
 
 #include "../ca_expression.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 class ca_symbol : public ca_expression
 {
@@ -39,10 +37,7 @@ public:
     virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
 };
 
-
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 
 #endif
