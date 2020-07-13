@@ -21,13 +21,11 @@
 #include "semantics/concatenation.h"
 #include "semantics/statement.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
     processing_state_listener& listener,
-    parse_lib_provider& provider,
+    workspaces::parse_lib_provider& provider,
     macrodef_start_data start)
     : statement_processor(processing_kind::MACRO, hlasm_context)
     , listener_(listener)
@@ -223,9 +221,17 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 void macrodef_processor::process_prototype(const resolved_statement& statement)
 {
     std::vector<context::id_index> param_names;
-    processing::context_manager mngr(hlasm_ctx);
 
-    // label processing
+    process_prototype_label(statement, param_names);
+
+    process_prototype_instruction(statement);
+
+    process_prototype_operand(statement, param_names);
+}
+
+void macrodef_processor::process_prototype_label(
+    const resolved_statement& statement, std::vector<context::id_index>& param_names)
+{
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
         auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
@@ -239,8 +245,10 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
     }
     else if (statement.label_ref().type != semantics::label_si_type::EMPTY)
         add_diagnostic(diagnostic_op::error_E044(statement.label_ref().field_range));
+}
 
-    // instr
+void macrodef_processor::process_prototype_instruction(const resolved_statement& statement)
+{
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
     {
@@ -250,8 +258,13 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
         return;
     }
     result_.prototype.macro_name = statement.opcode_ref().value;
+}
 
-    // ops
+void macrodef_processor::process_prototype_operand(
+    const resolved_statement& statement, std::vector<context::id_index>& param_names)
+{
+    processing::context_manager mngr(hlasm_ctx);
+
     for (auto& op : statement.operands_ref().value)
     {
         if (op->type == semantics::operand_type::EMPTY)
@@ -271,29 +284,12 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
         {
             auto var = tmp_chain[0]->access_var()->symbol.get();
 
-            if (var->created || !var->subscript.empty())
+            if (test_varsym_validity(var, param_names, tmp->operand_range))
             {
-                add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
-                result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
-                continue;
-            }
-
-            auto var_id = var->access_basic()->name;
-
-            if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
-            {
-                add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", tmp->operand_range));
-                result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
-            }
-            else
-            {
+                auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
             }
-        }
-        else if (tmp_chain.size() == 0) // if operand is empty
-        {
-            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
         }
         else if (tmp_chain.size() > 1)
         {
@@ -302,21 +298,10 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
             {
                 auto var = tmp_chain[0]->access_var()->symbol.get();
 
-                if (var->created || !var->subscript.empty())
+                if (test_varsym_validity(var, param_names, tmp->operand_range))
                 {
-                    add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
-                    result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
-                    continue;
-                }
+                    auto var_id = var->access_basic()->name;
 
-                auto var_id = var->access_basic()->name;
-
-                if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
-                {
-                    add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", tmp->operand_range));
-                }
-                else
-                {
                     param_names.push_back(var_id);
 
                     result_.prototype.symbolic_params.emplace_back(
@@ -329,9 +314,32 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
             else
                 add_diagnostic(diagnostic_op::error_E043(op->operand_range));
         }
+        else if (tmp_chain.size() == 0) // if operand is empty
+            result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
     }
 
     collect_diags_from_child(mngr);
+}
+
+bool macrodef_processor::test_varsym_validity(
+    const semantics::variable_symbol* var, const std::vector<context::id_index>& param_names, range op_range)
+{
+    if (var->created || !var->subscript.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
+        result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+        return false;
+    }
+
+    auto var_id = var->access_basic()->name;
+
+    if (std::find(param_names.begin(), param_names.end(), var_id) != param_names.end())
+    {
+        add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
+        result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
+        return false;
+    }
+    return true;
 }
 
 void macrodef_processor::process_MACRO() { ++macro_nest_; }
@@ -399,3 +407,5 @@ void macrodef_processor::add_correct_copy_nest()
         result_.nests.back().push_back(std::move(loc));
     }
 }
+
+} // namespace hlasm_plugin::parser_library::processing

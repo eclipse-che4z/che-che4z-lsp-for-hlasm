@@ -75,6 +75,16 @@ context::source_position parser_impl::statement_end() const
     return { pos.line, pos.offset };
 }
 
+std::unique_ptr<parser_holder> create_parser_holder()
+{
+    std::string s;
+    auto h = std::make_unique<parser_holder>();
+    h->input = std::make_unique<lexing::input_source>(s);
+    h->lex = std::make_unique<lexing::lexer>(h->input.get(), nullptr);
+    h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
+    h->parser = std::make_unique<hlasmparser>(h->stream.get());
+    return h;
+}
 
 std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
     context::hlasm_context* hlasm_ctx,
@@ -84,14 +94,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     processing::processing_status status)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<lexing::input_source>(s);
-        reparser_->lex = std::make_unique<lexing::lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<lexing::token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     hlasm_ctx->metrics.reparsed_statements++;
     parser_holder& h = *reparser_;
@@ -500,14 +503,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
     std::string operands, range field_range, std::vector<range> operand_ranges)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<lexing::input_source>(s);
-        reparser_->lex = std::make_unique<lexing::lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<lexing::token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     parser_holder& h = *reparser_;
 
@@ -547,14 +543,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
 void parser_impl::parse_rest(std::string text, range text_range)
 {
     if (!rest_parser_)
-    {
-        std::string s;
-        rest_parser_ = std::make_unique<parser_holder>();
-        rest_parser_->input = std::make_unique<lexing::input_source>(s);
-        rest_parser_->lex = std::make_unique<lexing::lexer>(rest_parser_->input.get(), nullptr);
-        rest_parser_->stream = std::make_unique<lexing::token_stream>(rest_parser_->lex.get());
-        rest_parser_->parser = std::make_unique<hlasmparser>(rest_parser_->stream.get());
-    }
+        rest_parser_ = create_parser_holder();
 
     parser_holder& h = *rest_parser_;
 
@@ -619,14 +608,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
 void parser_impl::parse_lookahead(std::string text, range text_range)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<lexing::input_source>(s);
-        reparser_->lex = std::make_unique<lexing::lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<lexing::token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     if (proc_status->first.form == processing::processing_form::IGNORED)
     {
