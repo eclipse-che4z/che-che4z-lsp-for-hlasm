@@ -74,7 +74,7 @@ public:
         context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override;
 
     static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
-    static int compare_relational(context::SET_t& lhs, context::SET_t& rhs, context::SET_t_enum type);
+    static int compare_relational(const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type);
 
 private:
     bool is_relational() const;
@@ -85,7 +85,7 @@ struct ca_add
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
+        const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_sub
@@ -93,7 +93,7 @@ struct ca_sub
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
+        const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_mul
@@ -101,7 +101,7 @@ struct ca_mul
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
+        const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_div
@@ -109,7 +109,7 @@ struct ca_div
     static constexpr context::SET_t_enum type = context::SET_t_enum::A_TYPE;
 
     static context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx);
+        const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx);
 };
 
 struct ca_conc

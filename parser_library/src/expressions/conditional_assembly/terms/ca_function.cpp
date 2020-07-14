@@ -583,7 +583,7 @@ context::SET_t ca_function::DEQUOTE(context::C_t param)
         param.erase(param.begin());
 
     if (param.size() && param.back() == '\'')
-        param.erase(param.end() - 1);
+        param.pop_back();
 
     return param;
 }

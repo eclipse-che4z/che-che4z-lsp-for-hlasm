@@ -99,7 +99,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     if (shift_part == 0)
         return rhs;
 
-    auto unsigned_lhs = *reinterpret_cast<unsigned int*>(&lhs);
+    std::uint32_t unsigned_lhs = lhs;
     auto sign_bit = unsigned_lhs & (1U << 31);
 
     unsigned int result;
@@ -118,7 +118,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
                 result = 0;
                 break;
         }
-        return *reinterpret_cast<context::A_t*>(&result);
+        return result;
     }
 
     switch (shift)
@@ -143,7 +143,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
             break;
     }
 
-    return *reinterpret_cast<context::A_t*>(&result);
+    return result;
 }
 
 context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&) const
@@ -220,7 +220,8 @@ int ca_function_binary_operator::compare_string(const context::C_t& lhs, const c
     return ebcdic_encoding::to_ebcdic(lhs).compare(ebcdic_encoding::to_ebcdic(rhs));
 }
 
-int ca_function_binary_operator::compare_relational(context::SET_t& lhs, context::SET_t& rhs, context::SET_t_enum type)
+int ca_function_binary_operator::compare_relational(
+    const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type)
 {
     switch (type)
     {
@@ -266,25 +267,25 @@ context::A_t overflow_transform(std::int64_t val, range expr_range, const evalua
 }
 
 context::SET_t ca_add::operation(
-    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
+    const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() + (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
 context::SET_t ca_sub::operation(
-    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
+    const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() - (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
 context::SET_t ca_mul::operation(
-    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
+    const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     return overflow_transform((std::int64_t)lhs.access_a() * (std::int64_t)rhs.access_a(), expr_range, eval_ctx);
 }
 
 context::SET_t ca_div::operation(
-    context::SET_t lhs, context::SET_t rhs, range expr_range, const evaluation_context& eval_ctx)
+    const context::SET_t& lhs, const context::SET_t& rhs, range expr_range, const evaluation_context& eval_ctx)
 {
     if (rhs.access_a() == 0)
         return 0;
@@ -299,7 +300,7 @@ context::SET_t ca_conc::operation(
         eval_ctx.add_diagnostic(diagnostic_op::error_CE011(expr_range));
         return context::object_traits<context::C_t>::default_v();
     }
-    auto ret = lhs.access_c();
+    auto& ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());
     ret.append(rhs.access_c().begin(), rhs.access_c().end());
     return ret;
