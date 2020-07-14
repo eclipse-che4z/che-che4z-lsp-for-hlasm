@@ -33,7 +33,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     auto vs = std::make_unique<basic_variable_symbol>(&name, std::move(subscript), range());
 
-    ca_symbol_attribute attr(std::move(vs),context::data_attr_kind::D, range());
+    ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range());
 
     auto res = attr.get_undefined_attributed_symbols(m);
 

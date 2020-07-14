@@ -23,7 +23,7 @@ using namespace hlasm_plugin::parser_library;
 
 class dep_sol_mock : public context::dependency_solver
 {
-    virtual const context::symbol* get_symbol(context::id_index ) const { return nullptr; };
+    virtual const context::symbol* get_symbol(context::id_index) const { return nullptr; };
 };
 
 class attr_prov_mock : public processing::attribute_provider
