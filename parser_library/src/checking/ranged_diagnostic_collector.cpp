@@ -38,7 +38,7 @@ ranged_diagnostic_collector::ranged_diagnostic_collector()
     , diagnostics_present(false)
 {}
 
-void ranged_diagnostic_collector::operator()(const std::function<diagnostic_op(range)>& f) const
+void ranged_diagnostic_collector::operator()(const std::function<diagnostic_op(range)>& f)
 {
     diagnostics_present = true;
     if (s_diagnoser_)

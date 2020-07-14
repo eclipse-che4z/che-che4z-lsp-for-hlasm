@@ -44,7 +44,7 @@ public:
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,
-        const ranged_diagnostic_collector& add_diagnostic);
+        ranged_diagnostic_collector& add_diagnostic);
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,

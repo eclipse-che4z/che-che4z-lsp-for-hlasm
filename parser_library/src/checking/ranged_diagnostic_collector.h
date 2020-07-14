@@ -30,7 +30,7 @@ class ranged_diagnostic_collector
     range diag_range_;
 
 public:
-    mutable bool diagnostics_present;
+    bool diagnostics_present;
 
     ranged_diagnostic_collector(const collectable<diagnostic_s>* diagnoser, range diag_range);
 
@@ -38,7 +38,7 @@ public:
 
     ranged_diagnostic_collector();
 
-    void operator()(const std::function<diagnostic_op(range)>& f) const;
+    void operator()(const std::function<diagnostic_op(range)>& f);
 };
 
 } // namespace hlasm_plugin::parser_library

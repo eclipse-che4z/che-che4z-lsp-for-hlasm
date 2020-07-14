@@ -44,7 +44,7 @@ bool ca_constant::is_character_expression() const { return false; }
 context::SET_t ca_constant::evaluate(evaluation_context&) const { return value; }
 
 context::A_t ca_constant::self_defining_term(
-    std::string_view type, std::string_view value, const ranged_diagnostic_collector& add_diagnostic)
+    std::string_view type, std::string_view value, ranged_diagnostic_collector& add_diagnostic)
 {
     if (value.empty() || type.size() != 1)
     {
@@ -69,7 +69,7 @@ context::A_t ca_constant::self_defining_term(
 }
 
 context::A_t ca_constant::self_defining_term(
-    const std::string& value, const ranged_diagnostic_collector& add_diagnostic)
+    const std::string& value, ranged_diagnostic_collector& add_diagnostic)
 {
     if (value.size() >= 3 && value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
