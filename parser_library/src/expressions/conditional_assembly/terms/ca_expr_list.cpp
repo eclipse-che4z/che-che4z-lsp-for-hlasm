@@ -21,9 +21,7 @@
 #include "ca_function.h"
 #include "ca_symbol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
     : ca_expression(context::SET_t_enum::UNDEF_TYPE, std::move(expr_range))
@@ -240,6 +238,4 @@ std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, b
     return std::make_pair(op_prio, op_type);
 }
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions

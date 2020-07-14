@@ -36,8 +36,8 @@ public:
     // wrapped context
     context::hlasm_context& hlasm_ctx;
 
-    context_manager(context::hlasm_context& hlasm_ctx);
-    context_manager(expressions::evaluation_context* eval_ctx);
+    explicit context_manager(context::hlasm_context& hlasm_ctx);
+    explicit context_manager(expressions::evaluation_context* eval_ctx);
 
     context_manager(const context_manager& mngr) = delete;
 

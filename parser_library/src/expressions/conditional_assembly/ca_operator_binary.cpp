@@ -228,8 +228,6 @@ int ca_function_binary_operator::compare_relational(context::SET_t& lhs, context
             return lhs.access_a() - rhs.access_a();
         case context::SET_t_enum::C_TYPE:
             return compare_string(lhs.access_c(), rhs.access_c());
-        case context::SET_t_enum::B_TYPE:
-        case context::SET_t_enum::UNDEF_TYPE:
         default:
             return 0;
     }

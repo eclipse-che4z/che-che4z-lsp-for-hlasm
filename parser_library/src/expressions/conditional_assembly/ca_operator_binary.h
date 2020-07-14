@@ -23,7 +23,8 @@ namespace hlasm_plugin::parser_library::expressions {
 class ca_binary_operator : public ca_expression
 {
 public:
-    const ca_expr_ptr left_expr, right_expr;
+    const ca_expr_ptr left_expr;
+    const ca_expr_ptr right_expr;
 
     ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range);
 
