@@ -46,8 +46,6 @@ struct evaluation_context : diagnosable_ctx
     {
         // nothing to collect
     }
-
-    using diagnosable_ctx::collect_diags_from_child;
 };
 
 } // namespace expressions

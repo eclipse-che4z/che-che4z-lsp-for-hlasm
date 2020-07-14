@@ -17,8 +17,7 @@
 #include "context/variables/system_variable.h"
 #include "lexing/lexer.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+namespace hlasm_plugin::parser_library::processing {
 
 context_manager::context_manager(context::hlasm_context& hlasm_ctx)
     : diagnosable_ctx(hlasm_ctx)
@@ -163,8 +162,12 @@ bool context_manager::test_symbol_for_read(
 
 void context_manager::collect_diags() const {}
 
-context_manager::~context_manager()
+void context_manager::add_diagnostic(diagnostic_s diagnostic) const
 {
     if (eval_ctx_)
-        eval_ctx_->collect_diags_from_child(*this);
+        eval_ctx_->add_diagnostic(std::move(diagnostic));
+    else
+        diagnosable_ctx::add_diagnostic(std::move(diagnostic));
 }
+
+} // namespace hlasm_plugin::parser_library::processing

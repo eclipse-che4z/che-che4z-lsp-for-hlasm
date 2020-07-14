@@ -39,8 +39,6 @@ public:
     explicit context_manager(context::hlasm_context& hlasm_ctx);
     explicit context_manager(expressions::evaluation_context* eval_ctx);
 
-    context_manager(const context_manager& mngr) = delete;
-
     context::SET_t get_var_sym_value(
         context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
@@ -52,7 +50,8 @@ public:
 
     virtual void collect_diags() const override;
 
-    ~context_manager();
+private:
+    virtual void add_diagnostic(diagnostic_s diagnostic) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
