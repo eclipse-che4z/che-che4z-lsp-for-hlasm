@@ -486,8 +486,10 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
     if (!set_symbol)
         set_symbol = hlasm_ctx.create_local_variable<context::C_t>(name, index == -1).get();
 
-    set_symbol->access_set_symbol<context::C_t>()->set_value(
-        "                                                                                ", index - 1);
+    // TODO read proper input line
+    auto empty_line = "                                                                                ";
+
+    set_symbol->access_set_symbol<context::C_t>()->set_value(empty_line, index - 1);
 }
 
 void ca_processor::process_empty(const semantics::complete_statement&) {}

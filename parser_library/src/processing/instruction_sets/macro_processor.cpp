@@ -204,7 +204,7 @@ context::macro_data_ptr macro_processor::get_label_args(const resolved_statement
             return std::make_unique<context::macro_param_data_single>(semantics::var_sym_conc::evaluate(
                 std::get<semantics::vs_ptr>(statement.label_ref().value)->evaluate(eval_ctx)));
         default:
-            return nullptr;
+            return context::macro_data_ptr();
     }
 }
 

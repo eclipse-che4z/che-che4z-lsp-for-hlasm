@@ -28,6 +28,7 @@ namespace hlasm_plugin::parser_library::parsing {
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
+    , input(dynamic_cast<lexing::token_stream&>(*input))
     , ctx(nullptr)
     , lsp_proc(nullptr)
     , processor(nullptr)
@@ -56,8 +57,7 @@ void parser_impl::rewind_input(context::source_position pos)
     finished_flag = false;
     last_line_processed_ = false;
     _matchedEOF = false;
-    dynamic_cast<lexing::token_stream&>(*_input).rewind_input(
-        lexing::lexer::stream_position { pos.file_line, pos.file_offset }, line_end_pushed_);
+    input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset }, line_end_pushed_);
     line_end_pushed_ = false;
 }
 
@@ -191,13 +191,13 @@ void parser_impl::collect_diags() const
 
 
 
-void parser_impl::enable_continuation() { dynamic_cast<lexing::token_stream&>(*_input).enable_continuation(); }
+void parser_impl::enable_continuation() { input.enable_continuation(); }
 
-void parser_impl::disable_continuation() { dynamic_cast<lexing::token_stream&>(*_input).disable_continuation(); }
+void parser_impl::disable_continuation() { input.disable_continuation(); }
 
-void parser_impl::enable_hidden() { dynamic_cast<lexing::token_stream&>(*_input).enable_hidden(); }
+void parser_impl::enable_hidden() { input.enable_hidden(); }
 
-void parser_impl::disable_hidden() { dynamic_cast<lexing::token_stream&>(*_input).disable_hidden(); }
+void parser_impl::disable_hidden() { input.disable_hidden(); }
 
 bool parser_impl::is_self_def()
 {
