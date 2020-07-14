@@ -55,12 +55,10 @@ ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data
 
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
-    if (!context::symbol_attributes::is_ordinary_attribute(attribute))
-        return undef_sym_set();
-
     if (std::holds_alternative<context::id_index>(symbol))
     {
-        if (!solver.get_symbol(std::get<context::id_index>(symbol)))
+        if (context::symbol_attributes::is_ordinary_attribute(attribute)
+            && !solver.get_symbol(std::get<context::id_index>(symbol)))
             return { std::get<context::id_index>(symbol) };
         return undef_sym_set();
     }

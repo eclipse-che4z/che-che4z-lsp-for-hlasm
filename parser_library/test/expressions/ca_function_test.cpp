@@ -1,5 +1,5 @@
 /*
- * Copyright (c){} 2019 Broadcom.
+ * Copyright (c) 2019 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -14,7 +14,9 @@
 
 #include "gmock/gmock.h"
 
+#include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
+#include "expressions/evaluation_context.h"
 
 using namespace std::string_literals;
 using namespace hlasm_plugin::parser_library;
@@ -49,97 +51,50 @@ struct stringer
     std::string operator()(::testing::TestParamInfo<func_test_param> p) { return p.param.name; }
 };
 
+class set_expr : public ca_expression
+{
+public:
+    context::SET_t value;
+
+    set_expr(context::SET_t value)
+        : ca_expression(context::SET_t_enum::A_TYPE, range())
+        , value(std::move(value))
+    {}
+
+    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver&) const override
+    {
+        return {};
+    };
+
+    virtual void resolve_expression_tree(context::SET_t_enum) override {}
+
+    virtual bool is_character_expression() const override { return false; }
+
+    virtual context::SET_t evaluate(evaluation_context&) const override { return value; }
+
+    virtual void collect_diags() const override {}
+};
+
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    ranged_diagnostic_collector add_diags;
+    context::hlasm_context ctx;
+    attr_prov_mock attr;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, attr, lib };
 
     context::SET_t get_result()
     {
-        switch (GetParam().function)
-        {
-            case ca_expr_funcs::B2A:
-                return ca_function::B2A(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::C2A:
-                return ca_function::C2A(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::D2A:
-                return ca_function::D2A(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::DCLEN:
-                return ca_function::DCLEN(GetParam().params.front().access_c());
-            case ca_expr_funcs::FIND:
-                return ca_function::FIND(GetParam().params[0].access_c(), GetParam().params[1].access_c());
-            case ca_expr_funcs::INDEX:
-                return ca_function::INDEX(GetParam().params[0].access_c(), GetParam().params[1].access_c());
-            case ca_expr_funcs::ISBIN:
-                return ca_function::ISBIN(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::ISDEC:
-                return ca_function::ISDEC(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::ISHEX:
-                return ca_function::ISHEX(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::ISSYM:
-                return ca_function::ISSYM(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::X2A:
-                return ca_function::X2A(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::A2B:
-                return ca_function::A2B(GetParam().params.front().access_a());
-            case ca_expr_funcs::A2C:
-                return ca_function::A2C(GetParam().params.front().access_a());
-            case ca_expr_funcs::A2D:
-                return ca_function::A2D(GetParam().params.front().access_a());
-            case ca_expr_funcs::A2X:
-                return ca_function::A2X(GetParam().params.front().access_a());
-            case ca_expr_funcs::B2C:
-                return ca_function::B2C(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::B2D:
-                return ca_function::B2D(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::B2X:
-                return ca_function::B2X(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::BYTE:
-                return ca_function::BYTE(GetParam().params.front().access_a(), add_diags);
-            case ca_expr_funcs::C2B:
-                return ca_function::C2B(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::C2D:
-                return ca_function::C2D(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::C2X:
-                return ca_function::C2X(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::D2B:
-                return ca_function::D2B(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::D2C:
-                return ca_function::D2C(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::D2X:
-                return ca_function::D2X(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::DCVAL:
-                return ca_function::DCVAL(GetParam().params.front().access_c());
-            case ca_expr_funcs::DEQUOTE:
-                return ca_function::DEQUOTE(GetParam().params.front().access_c());
-            case ca_expr_funcs::DOUBLE:
-                return ca_function::DOUBLE(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::LOWER:
-                return ca_function::LOWER(GetParam().params.front().access_c());
-            case ca_expr_funcs::SIGNED:
-                return ca_function::SIGNED(GetParam().params.front().access_a());
-            case ca_expr_funcs::UPPER:
-                return ca_function::UPPER(GetParam().params.front().access_c());
-            case ca_expr_funcs::X2B:
-                return ca_function::X2B(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::X2C:
-                return ca_function::X2C(GetParam().params.front().access_c(), add_diags);
-            case ca_expr_funcs::X2D:
-                return ca_function::X2D(GetParam().params.front().access_c(), add_diags);
-            default:
-                return context::SET_t();
-        }
+        std::vector<ca_expr_ptr> params;
+        for (auto& param : GetParam().params)
+            params.push_back(std::make_unique<set_expr>(std::move(param)));
+
+
+        ca_function f(nullptr, GetParam().function, std::move(params), nullptr, range());
+
+        return f.evaluate(eval_ctx);
     }
 };
-
-std::string big_string(char c = '1')
-{
-    std::string s;
-    s.reserve(1000);
-    for (size_t i = 0; i < 4000; i++)
-        s.push_back(c);
-    return s;
-}
 
 INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
     ca_func,
@@ -342,7 +297,7 @@ TEST_P(ca_func, test)
 {
     auto result = get_result();
 
-    ASSERT_EQ(add_diags.diagnostics_present, GetParam().erroneous);
+    ASSERT_EQ(eval_ctx.diags().size(), GetParam().erroneous);
 
     if (!GetParam().erroneous)
     {

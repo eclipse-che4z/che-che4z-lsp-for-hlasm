@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
+
+#include "gmock/gmock.h"
+
+#include "expr_mocks.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
+#include "expressions/evaluation_context.h"
+
+using namespace hlasm_plugin::parser_library::expressions;
+using namespace hlasm_plugin::parser_library::semantics;
+using namespace hlasm_plugin::parser_library;
+
+TEST(ca_constant, undefined_attributes)
+{
+    dep_sol_mock m;
+    ca_constant c(1, range());
+
+    ASSERT_EQ(c.get_undefined_attributed_symbols(m).size(), 0U);
+}
+
+TEST(ca_constant, self_def_term_invalid_input)
+{
+    {
+        ranged_diagnostic_collector add_diags;
+        ca_constant::self_defining_term("", add_diags);
+        EXPECT_TRUE(add_diags.diagnostics_present);
+    }
+    {
+        ranged_diagnostic_collector add_diags;
+        ca_constant::self_defining_term("Q'dc'", add_diags);
+        EXPECT_TRUE(add_diags.diagnostics_present);
+    }
+}
+
+TEST(ca_constant, self_def_term_valid_input)
+{
+    {
+        ranged_diagnostic_collector add_diags;
+        auto res = ca_constant::self_defining_term("B'10'", add_diags);
+        ASSERT_FALSE(add_diags.diagnostics_present);
+        EXPECT_EQ(res, 2);
+    }
+    {
+        ranged_diagnostic_collector add_diags;
+        auto res = ca_constant::self_defining_term("C'1'", add_diags);
+        ASSERT_FALSE(add_diags.diagnostics_present);
+        EXPECT_EQ(res, 241);
+    }
+    {
+        ranged_diagnostic_collector add_diags;
+        auto res = ca_constant::self_defining_term("X'f'", add_diags);
+        ASSERT_FALSE(add_diags.diagnostics_present);
+        EXPECT_EQ(res, 15);
+    }
+}

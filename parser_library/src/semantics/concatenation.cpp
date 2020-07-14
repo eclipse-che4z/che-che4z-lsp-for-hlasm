@@ -120,7 +120,11 @@ std::string concatenation_point::to_string(concat_chain::const_iterator begin, c
             case concat_type::VAR:
                 ret.push_back('&');
                 if (point->access_var()->symbol->created)
+                {
+                    ret.push_back('(');
                     ret.append(to_string(point->access_var()->symbol->access_created()->created_name));
+                    ret.push_back(')');
+                }
                 else
                     ret.append(*point->access_var()->symbol->access_basic()->name);
                 break;

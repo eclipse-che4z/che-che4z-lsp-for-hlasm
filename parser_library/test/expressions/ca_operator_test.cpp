@@ -1,5 +1,5 @@
 /*
- * Copyright (c){} 2019 Broadcom.
+ * Copyright (c) 2019 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "expr_mocks.h"
 #include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/conditional_assembly/ca_operator_unary.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
@@ -53,27 +54,6 @@ struct stringer
 {
     std::string operator()(::testing::TestParamInfo<op_test_param> p) { return p.param.name; }
 };
-
-class attr_prov_mock : public processing::attribute_provider
-{
-    virtual const resolved_reference_storage& lookup_forward_attribute_references(forward_reference_storage) override
-    {
-        static resolved_reference_storage st;
-        return st;
-    }
-};
-
-class lib_prov_mock : public workspaces::parse_lib_provider
-{
-    virtual workspaces::parse_result parse_library(
-        const std::string&, context::hlasm_context&, const workspaces::library_data)
-    {
-        return false;
-    };
-
-    virtual bool has_library(const std::string&, context::hlasm_context&) const { return false; }
-};
-
 
 class ca_op : public ::testing::TestWithParam<op_test_param>
 {
