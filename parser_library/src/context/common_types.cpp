@@ -29,7 +29,7 @@ std::string to_upper_copy(std::string s)
 {
     for (auto& c : s)
         c = static_cast<char>(std::toupper(c));
-    return std::move(s);
+    return s;
 }
 
 SET_t::SET_t(context::A_t value)

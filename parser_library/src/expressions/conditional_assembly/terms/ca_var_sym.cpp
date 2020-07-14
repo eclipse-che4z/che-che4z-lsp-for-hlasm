@@ -76,9 +76,10 @@ context::SET_t ca_var_sym::convert_return_types(
         switch (type)
         {
             case context::SET_t_enum::A_TYPE:
-            case context::SET_t_enum::B_TYPE:
-                return ca_constant::self_defining_term(
-                    retval.access_c(), ranged_diagnostic_collector(&eval_ctx, expr_range));
+            case context::SET_t_enum::B_TYPE: {
+                ranged_diagnostic_collector add_diags(&eval_ctx, expr_range);
+                return ca_constant::self_defining_term(retval.access_c(), add_diags);
+            }
             case context::SET_t_enum::C_TYPE:
                 return retval;
             default:

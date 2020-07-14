@@ -304,11 +304,10 @@ void macrodef_processor::process_prototype_operand(
 
                     param_names.push_back(var_id);
 
+                    ranged_diagnostic_collector add_diags(this, op->operand_range);
+
                     result_.prototype.symbolic_params.emplace_back(
-                        macro_processor::create_macro_data(tmp_chain.begin() + 2,
-                            tmp_chain.end(),
-                            ranged_diagnostic_collector(this, op->operand_range)),
-                        var_id);
+                        macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
                 }
             }
             else
