@@ -68,8 +68,7 @@ context::A_t ca_constant::self_defining_term(
     }
 }
 
-context::A_t ca_constant::self_defining_term(
-    const std::string& value, ranged_diagnostic_collector& add_diagnostic)
+context::A_t ca_constant::self_defining_term(const std::string& value, ranged_diagnostic_collector& add_diagnostic)
 {
     if (value.size() >= 3 && value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
