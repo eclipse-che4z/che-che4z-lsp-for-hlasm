@@ -304,7 +304,7 @@ context::SET_t ca_conc::operation(
     auto& ret = lhs.access_c();
     ret.reserve(ret.size() + rhs.access_c().size());
     ret.append(rhs.access_c().begin(), rhs.access_c().end());
-    return ret;
+    return lhs;
 }
 
 } // namespace hlasm_plugin::parser_library::expressions
