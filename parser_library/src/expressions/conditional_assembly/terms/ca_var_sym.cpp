@@ -42,7 +42,10 @@ undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
     return tmp;
 }
 
-void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&) {}
+void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&)
+{
+    // already resolved in parser
+}
 
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
 {
@@ -73,13 +76,12 @@ context::SET_t ca_var_sym::convert_return_types(
 {
     if (retval.type == context::SET_t_enum::C_TYPE)
     {
+        ranged_diagnostic_collector add_diags(&eval_ctx, expr_range);
         switch (type)
         {
             case context::SET_t_enum::A_TYPE:
-            case context::SET_t_enum::B_TYPE: {
-                ranged_diagnostic_collector add_diags(&eval_ctx, expr_range);
+            case context::SET_t_enum::B_TYPE:
                 return ca_constant::self_defining_term(retval.access_c(), add_diags);
-            }
             case context::SET_t_enum::C_TYPE:
                 return retval;
             default:
