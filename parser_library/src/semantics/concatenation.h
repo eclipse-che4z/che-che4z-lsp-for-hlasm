@@ -73,12 +73,12 @@ struct concatenation_point
     equals_conc* access_equ();
     sublist_conc* access_sub();
 
-    static std::string evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx);
+    static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
     static std::string evaluate(concat_chain::const_iterator begin,
         concat_chain::const_iterator end,
-        expressions::evaluation_context& eval_ctx);
+        const expressions::evaluation_context& eval_ctx);
 
-    virtual std::string evaluate(expressions::evaluation_context& eval_ctx) const = 0;
+    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const = 0;
 
     virtual ~concatenation_point() = default;
 };

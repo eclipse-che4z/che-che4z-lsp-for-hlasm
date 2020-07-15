@@ -23,14 +23,14 @@ char_str_conc::char_str_conc(std::string value)
     , value(std::move(value))
 {}
 
-std::string char_str_conc::evaluate(expressions::evaluation_context&) const { return value; }
+std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }
 
 var_sym_conc::var_sym_conc(vs_ptr symbol)
     : concatenation_point(concat_type::VAR)
     , symbol(std::move(symbol))
 {}
 
-std::string var_sym_conc::evaluate(expressions::evaluation_context& eval_ctx) const
+std::string var_sym_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
 {
     auto value = symbol->evaluate(eval_ctx);
 
@@ -56,20 +56,20 @@ dot_conc::dot_conc()
     : concatenation_point(concat_type::DOT)
 {}
 
-std::string dot_conc::evaluate(expressions::evaluation_context&) const { return "."; }
+std::string dot_conc::evaluate(const expressions::evaluation_context&) const { return "."; }
 
 equals_conc::equals_conc()
     : concatenation_point(concat_type::EQU)
 {}
 
-std::string equals_conc::evaluate(expressions::evaluation_context&) const { return "="; }
+std::string equals_conc::evaluate(const expressions::evaluation_context&) const { return "="; }
 
 sublist_conc::sublist_conc(std::vector<concat_chain> list)
     : concatenation_point(concat_type::SUB)
     , list(std::move(list))
 {}
 
-std::string sublist_conc::evaluate(expressions::evaluation_context& eval_ctx) const
+std::string sublist_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
 {
     std::string ret;
     ret.push_back('(');

@@ -41,7 +41,7 @@ void ca_symbol::collect_diags() const
 
 bool ca_symbol::is_character_expression() const { return false; }
 
-context::SET_t ca_symbol::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_symbol::evaluate(const evaluation_context& eval_ctx) const
 {
     auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol);
 

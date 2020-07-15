@@ -47,13 +47,14 @@ sublist_conc* concatenation_point::access_sub()
     return type == concat_type::SUB ? static_cast<sublist_conc*>(this) : nullptr;
 }
 
-std::string concatenation_point::evaluate(const concat_chain& chain, expressions::evaluation_context& eval_ctx)
+std::string concatenation_point::evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
 {
     return evaluate(chain.begin(), chain.end(), eval_ctx);
 }
 
-std::string concatenation_point::evaluate(
-    concat_chain::const_iterator begin, concat_chain::const_iterator end, expressions::evaluation_context& eval_ctx)
+std::string concatenation_point::evaluate(concat_chain::const_iterator begin,
+    concat_chain::const_iterator end,
+    const expressions::evaluation_context& eval_ctx)
 {
     std::string ret;
     bool was_var = false;

@@ -25,7 +25,7 @@ context_manager::context_manager(context::hlasm_context& hlasm_ctx)
     , hlasm_ctx(hlasm_ctx)
 {}
 
-context_manager::context_manager(expressions::evaluation_context* eval_ctx)
+context_manager::context_manager(const expressions::evaluation_context* eval_ctx)
     : diagnosable_ctx(eval_ctx->hlasm_ctx)
     , eval_ctx_(eval_ctx)
     , hlasm_ctx(eval_ctx->hlasm_ctx)

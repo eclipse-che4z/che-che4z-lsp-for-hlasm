@@ -34,7 +34,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

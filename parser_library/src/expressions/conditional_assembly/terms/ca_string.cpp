@@ -62,7 +62,7 @@ void ca_string::collect_diags() const
 
 bool ca_string::is_character_expression() const { return duplication_factor == nullptr; }
 
-context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
 {
     context::C_t str = semantics::concatenation_point::evaluate(value, eval_ctx);
 
@@ -101,7 +101,7 @@ context::SET_t ca_string::evaluate(evaluation_context& eval_ctx) const
 }
 
 std::string ca_string::duplicate(
-    const ca_expr_ptr& dupl_factor, std::string value, range expr_range, evaluation_context& eval_ctx)
+    const ca_expr_ptr& dupl_factor, std::string value, range expr_range, const evaluation_context& eval_ctx)
 {
     if (dupl_factor)
     {

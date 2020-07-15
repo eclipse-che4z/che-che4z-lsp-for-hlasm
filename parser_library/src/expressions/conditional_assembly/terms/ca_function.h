@@ -47,7 +47,7 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     static context::SET_t B2A(std::string_view param, ranged_diagnostic_collector& add_diagnostic);
     static context::SET_t C2A(std::string_view param, ranged_diagnostic_collector& add_diagnostic);
@@ -88,7 +88,7 @@ public:
     static context::SET_t X2D(const context::C_t& param, ranged_diagnostic_collector& add_diagnostic);
 
 private:
-    context::SET_t get_ith_param(size_t idx, evaluation_context& eval_ctx) const;
+    context::SET_t get_ith_param(size_t idx, const evaluation_context& eval_ctx) const;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

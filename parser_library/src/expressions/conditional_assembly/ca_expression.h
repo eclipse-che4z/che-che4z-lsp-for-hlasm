@@ -45,9 +45,9 @@ public:
     virtual bool is_character_expression() const = 0;
 
     template<typename T>
-    T evaluate(evaluation_context& eval_ctx) const;
+    T evaluate(const evaluation_context& eval_ctx) const;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const = 0;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const = 0;
 
     virtual ~ca_expression() = default;
 
@@ -58,7 +58,7 @@ protected:
 
 
 template<typename T>
-inline T ca_expression::evaluate(evaluation_context& eval_ctx) const
+inline T ca_expression::evaluate(const evaluation_context& eval_ctx) const
 {
     static_assert(context::object_traits<T>::type_enum != context::SET_t_enum::UNDEF_TYPE);
     auto ret = evaluate(eval_ctx);

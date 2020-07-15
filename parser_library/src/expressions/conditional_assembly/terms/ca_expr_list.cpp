@@ -75,7 +75,7 @@ void ca_expr_list::collect_diags() const
 
 bool ca_expr_list::is_character_expression() const { return false; }
 
-context::SET_t ca_expr_list::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_expr_list::evaluate(const evaluation_context& eval_ctx) const
 {
     assert(expr_list.size() <= 1);
 

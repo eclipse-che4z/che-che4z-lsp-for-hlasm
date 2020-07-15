@@ -28,7 +28,7 @@ namespace hlasm_plugin::parser_library::processing {
 // class wrapping context providing ranges, checks and diagnostics to hlasm_context
 class context_manager : public diagnosable_ctx
 {
-    expressions::evaluation_context* eval_ctx_;
+    const expressions::evaluation_context* eval_ctx_;
 
 public:
     using name_result = std::pair<bool, context::id_index>;
@@ -37,7 +37,7 @@ public:
     context::hlasm_context& hlasm_ctx;
 
     explicit context_manager(context::hlasm_context& hlasm_ctx);
-    explicit context_manager(expressions::evaluation_context* eval_ctx);
+    explicit context_manager(const expressions::evaluation_context* eval_ctx);
 
     context::SET_t get_var_sym_value(
         context::id_index name, const std::vector<context::A_t>& subscript, range symbol_range) const;

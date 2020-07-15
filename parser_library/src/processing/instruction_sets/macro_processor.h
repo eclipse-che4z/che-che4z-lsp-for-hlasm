@@ -48,7 +48,7 @@ public:
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,
-        expressions::evaluation_context& eval_ctx);
+        const expressions::evaluation_context& eval_ctx);
 
 private:
     macro_arguments get_args(const resolved_statement& statement) const;

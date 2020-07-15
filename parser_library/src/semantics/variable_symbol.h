@@ -49,15 +49,15 @@ struct variable_symbol
     created_variable_symbol* access_created();
     const created_variable_symbol* access_created() const;
 
-    vs_eval evaluate_symbol(expressions::evaluation_context& eval_ctx) const;
-    context::SET_t evaluate(expressions::evaluation_context& eval_ctx) const;
+    vs_eval evaluate_symbol(const expressions::evaluation_context& eval_ctx) const;
+    context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
     virtual ~variable_symbol() = default;
 
 protected:
     variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
 
-    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const = 0;
+    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
 };
 
 struct basic_variable_symbol : variable_symbol
@@ -66,7 +66,7 @@ struct basic_variable_symbol : variable_symbol
 
     const context::id_index name;
 
-    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
+    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const;
 };
 
 struct created_variable_symbol : variable_symbol
@@ -76,7 +76,7 @@ struct created_variable_symbol : variable_symbol
 
     const concat_chain created_name;
 
-    virtual context::id_index evaluate_name(expressions::evaluation_context& eval_ctx) const;
+    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

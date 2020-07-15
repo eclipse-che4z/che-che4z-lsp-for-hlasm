@@ -94,7 +94,7 @@ bool ca_symbol_attribute::is_character_expression() const
     return get_attribute_type(attribute) == context::SET_t_enum::C_TYPE;
 }
 
-context::SET_t ca_symbol_attribute::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx) const
 {
     if (std::holds_alternative<context::id_index>(symbol))
     {
@@ -109,7 +109,8 @@ context::SET_t ca_symbol_attribute::evaluate(evaluation_context& eval_ctx) const
     return context::SET_t(expr_kind);
 }
 
-context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
+    context::id_index name, const evaluation_context& eval_ctx) const
 {
     auto ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
 
@@ -124,7 +125,7 @@ context::SET_t ca_symbol_attribute::get_ordsym_attr_value(context::id_index name
 }
 
 context::SET_t ca_symbol_attribute::retrieve_value(
-    const context::symbol* ord_symbol, evaluation_context& eval_ctx) const
+    const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const
 {
     if (attribute == context::data_attr_kind::T)
         return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
@@ -151,7 +152,7 @@ context::SET_t ca_symbol_attribute::retrieve_value(
     return eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, ord_symbol);
 }
 
-context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, const evaluation_context& eval_ctx) const
 {
     if (context::symbol_attributes::is_ordinary_attribute(attribute))
     {
@@ -183,7 +184,8 @@ std::vector<size_t> transform(const std::vector<context::A_t>& v)
     return ret;
 }
 
-context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs, evaluation_context& eval_ctx) const
+context::SET_t ca_symbol_attribute::evaluate_varsym(
+    const semantics::vs_ptr& vs, const evaluation_context& eval_ctx) const
 {
     processing::context_manager mngr(&eval_ctx);
 
@@ -228,7 +230,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(const semantics::vs_ptr& vs,
 context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_name,
     std::vector<context::A_t> expr_subscript,
     range var_range,
-    evaluation_context& eval_ctx) const
+    const evaluation_context& eval_ctx) const
 {
     processing::context_manager mngr(&eval_ctx);
 

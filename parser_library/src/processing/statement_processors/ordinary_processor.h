@@ -31,7 +31,7 @@ class ordinary_processor : public statement_processor
     static constexpr size_t NEST_LIMIT = 100;
     static constexpr size_t ACTR_LIMIT = 100;
 
-    mutable expressions::evaluation_context eval_ctx;
+    expressions::evaluation_context eval_ctx;
 
     ca_processor ca_proc_;
     macro_processor mac_proc_;

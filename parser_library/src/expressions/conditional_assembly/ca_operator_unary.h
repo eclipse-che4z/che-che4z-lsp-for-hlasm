@@ -35,9 +35,9 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
-    virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const = 0;
+    virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const = 0;
 };
 
 class ca_plus_operator : public ca_unary_operator
@@ -45,7 +45,7 @@ class ca_plus_operator : public ca_unary_operator
 public:
     ca_plus_operator(ca_expr_ptr expr, range expr_range);
 
-    virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const override;
+    virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
 class ca_minus_operator : public ca_unary_operator
@@ -53,7 +53,7 @@ class ca_minus_operator : public ca_unary_operator
 public:
     ca_minus_operator(ca_expr_ptr expr, range expr_range);
 
-    virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const override;
+    virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
 class ca_par_operator : public ca_unary_operator
@@ -63,7 +63,7 @@ public:
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const override;
+    virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
 // NOT, BYTE, ...
@@ -76,7 +76,7 @@ public:
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual context::SET_t operation(context::SET_t operand, evaluation_context& eval_ctx) const override;
+    virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

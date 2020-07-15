@@ -340,7 +340,7 @@ context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_cha
 
 context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_chain::const_iterator begin,
     semantics::concat_chain::const_iterator end,
-    expressions::evaluation_context& eval_ctx)
+    const expressions::evaluation_context& eval_ctx)
 {
     auto f = [&eval_ctx](semantics::concat_chain::const_iterator b, semantics::concat_chain::const_iterator e) {
         return semantics::concatenation_point::evaluate(b, e, eval_ctx);

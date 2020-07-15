@@ -56,7 +56,7 @@ void ca_binary_operator::collect_diags() const
 
 bool ca_binary_operator::is_character_expression() const { return left_expr->is_character_expression(); }
 
-context::SET_t ca_binary_operator::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_binary_operator::evaluate(const evaluation_context& eval_ctx) const
 {
     return operation(left_expr->evaluate(eval_ctx), right_expr->evaluate(eval_ctx), eval_ctx);
 }
@@ -146,7 +146,8 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     return result;
 }
 
-context::SET_t ca_function_binary_operator::operation(context::SET_t lhs, context::SET_t rhs, evaluation_context&) const
+context::SET_t ca_function_binary_operator::operation(
+    context::SET_t lhs, context::SET_t rhs, const evaluation_context&) const
 {
     if (expr_kind == context::SET_t_enum::A_TYPE)
     {

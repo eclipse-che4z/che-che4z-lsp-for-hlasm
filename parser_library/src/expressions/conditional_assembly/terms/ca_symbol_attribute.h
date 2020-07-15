@@ -42,18 +42,18 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
 private:
-    context::SET_t get_ordsym_attr_value(context::id_index name, evaluation_context& eval_ctx) const;
-    context::SET_t retrieve_value(const context::symbol* ord_symbol, evaluation_context& eval_ctx) const;
+    context::SET_t get_ordsym_attr_value(context::id_index name, const evaluation_context& eval_ctx) const;
+    context::SET_t retrieve_value(const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const;
 
-    context::SET_t evaluate_ordsym(context::id_index symbol, evaluation_context& eval_ctx) const;
-    context::SET_t evaluate_varsym(const semantics::vs_ptr& symbol, evaluation_context& eval_ctx) const;
+    context::SET_t evaluate_ordsym(context::id_index symbol, const evaluation_context& eval_ctx) const;
+    context::SET_t evaluate_varsym(const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx) const;
     context::SET_t evaluate_substituted(context::id_index var_name,
         std::vector<context::A_t> expr_subscript,
         range var_range,
-        evaluation_context& eval_ctx) const;
+        const evaluation_context& eval_ctx) const;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

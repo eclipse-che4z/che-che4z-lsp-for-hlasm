@@ -45,7 +45,7 @@ protected:
     branching_provider& branch_provider;
     workspaces::parse_lib_provider& lib_provider;
 
-    mutable expressions::evaluation_context eval_ctx;
+    expressions::evaluation_context eval_ctx;
 
     instruction_processor(context::hlasm_context& hlasm_ctx,
         attribute_provider& attr_provider,

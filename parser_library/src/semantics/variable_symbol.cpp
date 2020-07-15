@@ -25,7 +25,7 @@ basic_variable_symbol::basic_variable_symbol(
     , name(name)
 {}
 
-context::id_index basic_variable_symbol::evaluate_name(expressions::evaluation_context&) const { return name; }
+context::id_index basic_variable_symbol::evaluate_name(const expressions::evaluation_context&) const { return name; }
 
 created_variable_symbol::created_variable_symbol(
     concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
@@ -33,7 +33,7 @@ created_variable_symbol::created_variable_symbol(
     , created_name(std::move(created_name))
 {}
 
-context::id_index created_variable_symbol::evaluate_name(expressions::evaluation_context& eval_ctx) const
+context::id_index created_variable_symbol::evaluate_name(const expressions::evaluation_context& eval_ctx) const
 {
     auto str_name = concatenation_point::evaluate(created_name, eval_ctx);
 
@@ -62,7 +62,7 @@ const created_variable_symbol* variable_symbol::access_created() const
     return created ? static_cast<const created_variable_symbol*>(this) : nullptr;
 }
 
-vs_eval variable_symbol::evaluate_symbol(expressions::evaluation_context& eval_ctx) const
+vs_eval variable_symbol::evaluate_symbol(const expressions::evaluation_context& eval_ctx) const
 {
     auto name = evaluate_name(eval_ctx);
     std::vector<context::A_t> eval_subscript;
@@ -75,7 +75,7 @@ vs_eval variable_symbol::evaluate_symbol(expressions::evaluation_context& eval_c
     return vs_eval(name, std::move(eval_subscript));
 }
 
-context::SET_t variable_symbol::evaluate(expressions::evaluation_context& eval_ctx) const
+context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& eval_ctx) const
 {
     auto [name, evaluated_subscript] = evaluate_symbol(eval_ctx);
 

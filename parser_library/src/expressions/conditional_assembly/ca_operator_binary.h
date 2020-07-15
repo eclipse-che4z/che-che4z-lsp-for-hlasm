@@ -36,9 +36,10 @@ public:
 
     virtual bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(evaluation_context& eval_ctx) const override;
+    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
-    virtual context::SET_t operation(context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const = 0;
+    virtual context::SET_t operation(
+        context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const = 0;
 };
 
 template<typename OP>
@@ -50,7 +51,7 @@ public:
     {}
 
     virtual context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override
+        context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override
     {
         return OP::operation(std::move(lhs), std::move(rhs), expr_range, eval_ctx);
     }
@@ -71,7 +72,7 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
     virtual context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, evaluation_context& eval_ctx) const override;
+        context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override;
 
     static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
     static int compare_relational(const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type);

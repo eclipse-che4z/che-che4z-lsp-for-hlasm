@@ -81,7 +81,7 @@ void ca_function::collect_diags() const
 
 bool ca_function::is_character_expression() const { return false; }
 
-context::SET_t ca_function::evaluate(evaluation_context& eval_ctx) const
+context::SET_t ca_function::evaluate(const evaluation_context& eval_ctx) const
 {
     context::SET_t str_ret;
     ranged_diagnostic_collector add_diagnostic(&eval_ctx, expr_range);
@@ -682,7 +682,7 @@ context::SET_t ca_function::X2D(const context::C_t& param, ranged_diagnostic_col
     return A2D(tmp.access_a());
 }
 
-context::SET_t ca_function::get_ith_param(size_t idx, evaluation_context& eval_ctx) const
+context::SET_t ca_function::get_ith_param(size_t idx, const evaluation_context& eval_ctx) const
 {
     if (idx < parameters.size())
         return parameters[idx]->evaluate(eval_ctx);

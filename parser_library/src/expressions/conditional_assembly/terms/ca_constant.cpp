@@ -41,7 +41,7 @@ void ca_constant::collect_diags() const
 
 bool ca_constant::is_character_expression() const { return false; }
 
-context::SET_t ca_constant::evaluate(evaluation_context&) const { return value; }
+context::SET_t ca_constant::evaluate(const evaluation_context&) const { return value; }
 
 context::A_t ca_constant::self_defining_term(
     std::string_view type, std::string_view value, ranged_diagnostic_collector& add_diagnostic)
