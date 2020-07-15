@@ -16,36 +16,36 @@
 parser grammar ca_expr_rules; 
 
 expr returns [ca_expr_ptr ca_expr]
-	: expr_s											
+	: begin=expr_s								
 	{
-		$ca_expr = std::move($expr_s.ca_expr);
+		$ca_expr = std::move($begin.ca_expr);
+	} 
+	((plus|minus) next=expr_s
+	{
+		auto r = provider.get_range($begin.ctx->getStart(), $next.ctx->getStop());
+		if ($plus.ctx)
+			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_add>>(std::move($ca_expr), std::move($next.ca_expr), r);
+		else
+			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_sub>>(std::move($ca_expr), std::move($next.ca_expr), r);
+		$plus.ctx = nullptr;
 	}
-	| tmp=expr minus expr_s
-	{
-		auto r = provider.get_range($tmp.ctx->getStart(), $expr_s.ctx->getStop());
-		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_sub>>(std::move($tmp.ca_expr), std::move($expr_s.ca_expr), r);
-	}
-	| tmp=expr plus expr_s
-	{
-		auto r = provider.get_range($tmp.ctx->getStart(), $expr_s.ctx->getStop());
-		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_add>>(std::move($tmp.ca_expr), std::move($expr_s.ca_expr), r);
-	};
+	)*;
 
 expr_s returns [ca_expr_ptr ca_expr]
-	: term_c												
+	: begin=term_c								
 	{
-		$ca_expr = std::move($term_c.ca_expr);
+		$ca_expr = std::move($begin.ca_expr);
+	} 
+	((slash|asterisk) next=term_c
+	{
+		auto r = provider.get_range($begin.ctx->getStart(), $next.ctx->getStop());
+		if ($slash.ctx)
+			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_div>>(std::move($ca_expr), std::move($next.ca_expr), r);
+		else
+			$ca_expr = std::make_unique<ca_basic_binary_operator<ca_mul>>(std::move($ca_expr), std::move($next.ca_expr), r);
+		$slash.ctx = nullptr;
 	}
-	| tmp=expr_s slash term_c
-	{
-		auto r = provider.get_range($tmp.ctx->getStart(), $term_c.ctx->getStop());
-		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_div>>(std::move($tmp.ca_expr), std::move($term_c.ca_expr), r);
-	}
-	| tmp=expr_s asterisk term_c
-	{
-		auto r = provider.get_range($tmp.ctx->getStart(), $term_c.ctx->getStop());
-		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_mul>>(std::move($tmp.ca_expr), std::move($term_c.ca_expr), r);
-	};
+	)*;
 
 term_c returns [ca_expr_ptr ca_expr]
 	: term

@@ -16,32 +16,34 @@
 parser grammar machine_expr_rules; 
 
 mach_expr returns [mach_expr_ptr m_e]
-	: l=mach_expr plus r=mach_expr_s
+	: begin=mach_expr_s 
 	{
-		$m_e = std::make_unique<mach_expr_binary<add>>(std::move($l.m_e), std::move($r.m_e), provider.get_range( $l.ctx->getStart(), $r.ctx->getStop()));
+		$m_e = mach_expression::assign_expr(std::move($begin.m_e),provider.get_range($begin.ctx));
+	} 
+	((plus|minus) next=mach_expr_s
+	{
+		if ($plus.ctx)
+			$m_e = std::make_unique<mach_expr_binary<add>>(std::move($m_e), std::move($next.m_e), provider.get_range( $begin.ctx->getStart(), $next.ctx->getStop()));
+		else
+			$m_e = std::make_unique<mach_expr_binary<sub>>(std::move($m_e), std::move($next.m_e), provider.get_range( $begin.ctx->getStart(), $next.ctx->getStop()));
+		$plus.ctx = nullptr;
 	}
-	| l=mach_expr minus r=mach_expr_s
-	{
-		$m_e = std::make_unique<mach_expr_binary<sub>>(std::move($l.m_e), std::move($r.m_e), provider.get_range( $l.ctx->getStart(), $r.ctx->getStop()));
-	}
-	| mach_expr_s
-	{
-		$m_e = mach_expression::assign_expr(std::move($mach_expr_s.m_e),provider.get_range($mach_expr_s.ctx));
-	};
+	)*;
 
 mach_expr_s returns [mach_expr_ptr m_e]
-	: mach_term_c
+	: begin=mach_term_c 
 	{
-		$m_e = std::move($mach_term_c.m_e);
+		$m_e = std::move($begin.m_e);
+	} 
+	((slash|asterisk) next=mach_term_c
+	{
+		if ($slash.ctx)
+			$m_e = std::make_unique<mach_expr_binary<div>>(std::move($m_e), std::move($next.m_e), provider.get_range( $begin.ctx->getStart(), $next.ctx->getStop()));
+		else
+			$m_e = std::make_unique<mach_expr_binary<mul>>(std::move($m_e), std::move($next.m_e), provider.get_range( $begin.ctx->getStart(), $next.ctx->getStop()));
+		$slash.ctx = nullptr;
 	}
-	| l=mach_expr_s slash r=mach_term_c 
-	{
-		$m_e = std::make_unique<mach_expr_binary<div>>(std::move($l.m_e), std::move($r.m_e), provider.get_range( $l.ctx->getStart(), $r.ctx->getStop()));
-	}
-	| l=mach_expr_s asterisk r=mach_term_c
-	{
-		$m_e = std::make_unique<mach_expr_binary<mul>>(std::move($l.m_e), std::move($r.m_e), provider.get_range( $l.ctx->getStart(), $r.ctx->getStop()));
-	};
+	)*;
 
 mach_term_c returns [mach_expr_ptr m_e]
 	: mach_term
