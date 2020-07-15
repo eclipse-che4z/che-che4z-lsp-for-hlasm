@@ -20,6 +20,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+// represents CA expression variable symbol
 class ca_var_sym : public ca_expression
 {
 public:

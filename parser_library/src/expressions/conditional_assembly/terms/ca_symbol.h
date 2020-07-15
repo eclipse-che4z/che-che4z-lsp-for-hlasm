@@ -19,6 +19,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+// represents CA expression ordinary symbol
 class ca_symbol : public ca_expression
 {
 public:

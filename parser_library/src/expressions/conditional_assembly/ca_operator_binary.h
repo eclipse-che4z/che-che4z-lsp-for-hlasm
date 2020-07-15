@@ -20,6 +20,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+// abstract class for binary CA operators
 class ca_binary_operator : public ca_expression
 {
 public:
@@ -42,6 +43,7 @@ public:
         context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const = 0;
 };
 
+// binary CA operators - + - * / .
 template<typename OP>
 class ca_basic_binary_operator : public ca_binary_operator
 {
@@ -57,7 +59,7 @@ public:
     }
 };
 
-// AND, SLL, OR, ...
+// function binary CA operators - AND, SLL, OR, ...
 class ca_function_binary_operator : public ca_binary_operator
 {
 public:

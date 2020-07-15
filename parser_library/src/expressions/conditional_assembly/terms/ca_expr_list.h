@@ -22,6 +22,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+// represents unresolved list of terms in logical CA expression
 class ca_expr_list : public ca_expression
 {
 public:

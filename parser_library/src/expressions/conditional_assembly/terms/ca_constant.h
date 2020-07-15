@@ -24,6 +24,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+// represents CA expression constant
 class ca_constant : public ca_expression
 {
 public:
