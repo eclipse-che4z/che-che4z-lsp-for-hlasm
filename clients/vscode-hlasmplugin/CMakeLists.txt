@@ -17,7 +17,7 @@ PROJECT(vscode-hlasmplugin)
 set(CHECK "${GLOBAL_OUTPUT_PATH}/npm_install.stamp")
 
 if (WIN32)
-	set(CALL "call")
+	set(CALL cmd /c)
 else()
 	set(CALL "")
 endif()
@@ -85,3 +85,11 @@ add_custom_target(vsix
 )
 
 add_dependencies(vsix language_server parser_library)
+
+if(BUILD_TESTING)
+	add_test(
+		NAME npm_test 
+		COMMAND ${CALL} npm run test
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+	)
+endif()
