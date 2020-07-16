@@ -13,6 +13,7 @@
 #
 
 name: Check
+
 on:
   push:
     branches:
@@ -24,12 +25,11 @@ on:
       - development
 
 jobs:
-  
   clang:
-      name: Clang ASAN, UBSAN
-      runs-on: ubuntu-18.04
-      
-      steps:
+    name: Clang ASAN, UBSAN
+    runs-on: ubuntu-18.04
+
+    steps:
       - uses: actions/checkout@v1
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
@@ -39,12 +39,12 @@ jobs:
         run: cd build && cmake --build .
       - name: Test
         run: cd build/bin && ./server_test && ./library_test
-  
+
   clang-format-check:
-      name: Code format
-      runs-on: ubuntu-18.04
-      
-      steps:
+    name: Code format
+    runs-on: ubuntu-18.04
+
+    steps:
       - uses: actions/checkout@v1
       - name: Requirements install
         run: |
@@ -53,7 +53,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-format-10
       - name: Run clang-format
-        run:  clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run: clang-format-10 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Upload clang-format-output.txt
         uses: actions/upload-artifact@v1
         with:
@@ -66,11 +66,10 @@ jobs:
             exit 1
           fi
 
-  
   license-headers:
-      name: Check license headers
-      runs-on: ubuntu-18.04
-      steps:
+    name: Check license headers
+    runs-on: ubuntu-18.04
+    steps:
       - uses: actions/checkout@v1
       - name: Check license headers
         run: |
