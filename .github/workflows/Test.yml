@@ -12,7 +12,7 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Check
+name: Test
 
 on:
   push:
