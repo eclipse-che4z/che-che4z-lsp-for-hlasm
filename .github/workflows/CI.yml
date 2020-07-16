@@ -133,6 +133,13 @@ jobs:
         run: |
           chmod +x clients/vscode-hlasmplugin/bin/darwin/language_server
           chmod +x clients/vscode-hlasmplugin/bin/linux/language_server
+      - name: Extract branch name
+        run: echo ::set-env name=BRANCH::${GITHUB_REF#refs/heads/}
+      - name: Update version
+        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
+        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package VSIX
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
       - name: Get VSIX filename
@@ -154,7 +161,16 @@ jobs:
       steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: apk update && apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
+        run: |
+          apk update
+          apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
+      - name: Extract branch name
+        run: echo ::set-env name=BRANCH::${GITHUB_REF#refs/heads/}
+      - name: Update version
+        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
+        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build
@@ -166,12 +182,88 @@ jobs:
       - name: Get version
         run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
       - name: Rename VSIX
-        run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+        run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-${{ env.VERSION }}-alpine.vsix
       - name: Upload VSIX
         uses: actions/upload-artifact@v1
         with:
-          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
-          path: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
+          path: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
+  
+  
+  
+  release:
+      name: Release VSIXs
+      runs-on: ubuntu-18.04
+      if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && startsWith(github.head_ref, 'release'))
+      needs: [alpine-VSIX, VSIX]
+      
+      steps:
+      - uses: actions/checkout@v1
+      - name: Update version
+        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get new version
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+      - name: Download VSIX
+        uses: actions/download-artifact@v1
+        with:
+          name: hlasm-language-support-${{ env.VERSION }}.vsix
+          path: clients/vscode-hlasmplugin/
+      - name: Download alpine VSIX
+        uses: actions/download-artifact@v1
+        with:
+          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
+          path: clients/vscode-hlasmplugin/
+      - name: Rename VSIXs
+        run: |
+          cd clients/vscode-hlasmplugin/
+          mv hlasm-language-support-${{ env.VERSION }}.vsix         multi.vsix
+          mv hlasm-language-support-${{ env.VERSION }}-alpine.vsix  alpine.vsix
+      
+      - name: Commit changes
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions"
+          git add CHANGELOG.md clients/vscode-hlasmplugin/package.json clients/vscode-hlasmplugin/CHANGELOG.md
+          git commit -m "chore: Update version & changelog [skip ci]"
+      - name: Push changes
+        if: github.event_name == 'push'
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Release new version
+        run: cd clients/vscode-hlasmplugin && npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge master into development
+        if: github.event_name == 'push'
+        run: |
+          git stash
+          git fetch
+          git checkout origin/development
+          git merge origin/master
+          
+          cd clients/vscode-hlasmplugin
+          sed -i 's/"version": "\(.*\)"/"version": "\1-NEXT"/g' package.json
+          sed -i '2s/^/\n## ****Unreleased****\n/' CHANGELOG.md
+          git add package.json CHANGELOG.md
+          git commit -m "chore: Prepare for next development cycle [skip ci]"
+      - name: Push changes
+        if: github.event_name == 'push'
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: development
+      
+      - name: Delete PRs head branches
+        if: github.event_name == 'push'
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: release-${{ env.VERSION }}
 
   theia-test:
       name: Theia Integration Test
@@ -193,7 +285,7 @@ jobs:
       - name: Download VSIX
         uses: actions/download-artifact@v2
         with:
-          name: hlasm-language-support-alpine-${{ env.VERSION }}.vsix
+          name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
           path: clients/vscode-hlasmplugin/plugin/
       - name: Run Tests
         run: cd clients/vscode-hlasmplugin && npm install && npm run compile && node ./build/bin/theiaTest.js /home/theia/
