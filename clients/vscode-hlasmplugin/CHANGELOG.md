@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the HLASM Language Support extension are documented in this file.
+## ****Unreleased****
 
 ## [0.11.0] - 2020-05-07
 

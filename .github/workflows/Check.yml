@@ -12,7 +12,7 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Test
+name: Check
 
 on:
   push:
@@ -67,7 +67,7 @@ jobs:
           fi
 
   license-headers:
-    name: Check license headers
+    name: License headers check
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
@@ -75,3 +75,12 @@ jobs:
         run: |
           chmod +x cmake/check_license.sh
           cmake/check_license.sh
+
+  pr-base-check:
+    name: Master PR check
+    runs-on: ubuntu-18.04
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check, whether PR to master is from a release branch
+        if: github.base_ref == 'master' && !contains(github.head_ref, 'release')
+        run: exit 1
