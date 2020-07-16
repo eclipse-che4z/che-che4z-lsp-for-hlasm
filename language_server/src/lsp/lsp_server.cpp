@@ -31,6 +31,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_language_features>(ws_mngr_, *this));
+    register_feature_methods();
     register_methods();
 
     ws_mngr_.register_diagnostics_consumer(this);
@@ -85,8 +86,6 @@ void server::respond_error(
 
 void server::register_methods()
 {
-    language_server::server::register_methods();
-
     methods_.emplace(
         "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
     methods_.emplace("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
@@ -170,7 +169,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // set of all files for which diagnostics came from the server.
     std::unordered_set<std::string> new_files;
     // transform the diagnostics into json
-    for (auto& file_diags : diags)
+    for (const auto& file_diags : diags)
     {
         json diags_array = json::array();
         for (auto d : file_diags.second)

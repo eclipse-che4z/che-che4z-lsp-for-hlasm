@@ -51,7 +51,10 @@ json feature_text_synchronization::register_capabilities()
 }
 
 
-void feature_text_synchronization::initialize_feature(const json&) {}
+void feature_text_synchronization::initialize_feature(const json&)
+{
+    // No need for initialization in this feature.
+}
 
 void feature_text_synchronization::on_did_open(const json&, const json& params)
 {
@@ -163,6 +166,9 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
                     break;
                 case parser_library::semantics::hl_scopes::data_def_extension:
                     scope = "data_def_extension";
+                    break;
+                default:
+                    assert(false);
                     break;
             }
             tokens_array.push_back(json { { "lineStart", fi.token(j).token_range.start.line },

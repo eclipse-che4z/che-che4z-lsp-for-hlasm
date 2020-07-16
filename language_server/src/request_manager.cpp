@@ -22,22 +22,28 @@ request::request(json message, server* executing_server)
     , executing_server(executing_server)
 {}
 
-request_manager::request_manager(std::atomic<bool>* cancel)
+request_manager::request_manager(std::atomic<bool>* cancel, async_policy async_pol)
     : end_worker_(false)
     , cancel_(cancel)
     , worker_(&request_manager::handle_request_, this, &end_worker_)
+    , async_policy_(async_pol)
 {}
 
 void request_manager::add_request(server* server, json message)
 {
+    if (async_policy_ == async_policy::SYNC)
+    {
+        server->message_received(message);
+        return;
+    }
     // add request to q
     {
         std::unique_lock<std::mutex> lock(q_mtx_);
         bool is_parsing_required = false;
         // get new file
-        auto file = get_request_file_(message,&is_parsing_required);
+        auto file = get_request_file_(message, &is_parsing_required);
         // if the new file is the same as the currently running one, cancel the old one
-        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required) 
+        if (currently_running_file_ == file && currently_running_file_ != "" && is_parsing_required)
         {
             *cancel_ = true;
             // mark redundant requests as non valid
@@ -62,15 +68,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool hlasm_plugin::language_server::request_manager::is_running() 
-{
-    bool result = false;
-    {
-        std::unique_lock<std::mutex> lock(q_mtx_);
-        result = !requests_.empty();
-    }
-    return result;
-}
+bool request_manager::is_running() const { return !requests_.empty(); }
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
 {
@@ -79,9 +77,8 @@ void request_manager::handle_request_(const std::atomic<bool>* end_loop)
     {
         std::unique_lock<std::mutex> lock(q_mtx_);
         // wait for work to come
-        if (requests_.empty())
-            cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
-        if (*end_loop) 
+        cond_.wait(lock, [&] { return !requests_.empty() || *end_loop; });
+        if (*end_loop)
             return;
 
         // get first request
@@ -109,6 +106,9 @@ void request_manager::finish_server_requests(server* to_finish)
 {
     std::lock_guard guard(q_mtx_);
 
+    if (requests_.empty())
+        return;
+
     if (cancel_)
         *cancel_ = true;
 
@@ -117,12 +117,12 @@ void request_manager::finish_server_requests(server* to_finish)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // executes all remaining requests for a server
-    for (auto it = requests_.begin(); it != requests_.end(); ++it)
+    for (auto& req : requests_)
     {
-        if (it->executing_server != to_finish)
+        if (req.executing_server != to_finish)
             continue;
 
-        it->executing_server->message_received(it->message);
+        req.executing_server->message_received(req.message);
     }
     // remove the executed requests
     requests_.erase(
@@ -132,7 +132,7 @@ void request_manager::finish_server_requests(server* to_finish)
 }
 
 
-std::string request_manager::get_request_file_(json r, bool* is_parsing_required)
+std::string request_manager::get_request_file_(json r, bool* is_parsing_required) const
 {
     constexpr const char* didOpen = "textDocument/didOpen";
     constexpr const char* didChange = "textDocument/didChange";
@@ -141,9 +141,9 @@ std::string request_manager::get_request_file_(json r, bool* is_parsing_required
     if (found == r.end())
         return "";
     auto method = r["method"].get<std::string>();
-    if (method.substr(0, 12) == "textDocument") 
+    if (method.substr(0, 12) == "textDocument")
     {
-        if (is_parsing_required) 
+        if (is_parsing_required)
         {
             if (method == didOpen || method == didChange)
                 *is_parsing_required = true;

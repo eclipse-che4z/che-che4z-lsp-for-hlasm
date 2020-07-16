@@ -301,9 +301,9 @@ bool lsp_info_processor::find_references_(
 
 completion_list_s lsp_info_processor::completion(const position& pos, const char trigger_char, int trigger_kind) const
 {
-    if (!ctx_->lsp_ctx || ctx_->lsp_ctx.use_count() == 0)
-		return { false, {} };
-        
+    if (!ctx_->lsp_ctx || ctx_->lsp_ctx.use_count() == 0 || text_.size() == 0)
+        return { false, {} };
+
     std::string line_before = (pos.line > 0) ? text_[(unsigned int)pos.line - 1] : "";
     auto line = text_[(unsigned int)pos.line];
     auto line_so_far = line.substr(0, (pos.column == 0) ? 1 : (unsigned int)pos.column);
@@ -720,7 +720,7 @@ int lsp_info_processor::find_latest_version_(
     }
 }
 
-context::macro_id lsp_info_processor::get_top_macro_stack_()
+context::macro_id lsp_info_processor::get_top_macro_stack_() const
 {
     if (!ctx_->lsp_ctx->parser_macro_stack.empty())
         return ctx_->lsp_ctx->parser_macro_stack.top();

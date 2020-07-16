@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
 import { CustomEditorCommands } from '../../customEditorCommands';
 import { TextEditorEditMock, TextEditorMock, TextDocumentMock } from '../mocks';
 
-suite('Language Detection Test Suite', () => {
+suite('Custom Editor Commands Test Suite', () => {
     const commands = new CustomEditorCommands();
 
     test('Insert chars test', () => {

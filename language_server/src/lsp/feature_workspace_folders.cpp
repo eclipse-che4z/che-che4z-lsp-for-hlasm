@@ -60,24 +60,18 @@ void feature_workspace_folders::initialize_feature(const json& initialize_params
 
 
     auto root_uri = initialize_params.find("rootUri");
-    if (root_uri != initialize_params.end())
+    if (root_uri != initialize_params.end() && !root_uri->is_null())
     {
-        if (!root_uri->is_null())
-        {
-            std::string uri = root_uri->get<std::string>();
-            add_workspace(uri, uri_to_path(uri));
-            return;
-        }
+        std::string uri = root_uri->get<std::string>();
+        add_workspace(uri, uri_to_path(uri));
+        return;
     }
 
     auto root_path = initialize_params.find("rootPath");
-    if (root_path != initialize_params.end())
+    if (root_path != initialize_params.end() && !root_path->is_null())
     {
-        if (!root_path->is_null())
-        {
-            std::filesystem::path path(root_path->get<std::string>());
-            add_workspace(path.lexically_normal().string(), path.lexically_normal().string());
-        }
+        std::filesystem::path path(root_path->get<std::string>());
+        add_workspace(path.lexically_normal().string(), path.lexically_normal().string());
     }
 }
 
@@ -103,9 +97,9 @@ void feature_workspace_folders::add_workspaces(const json& added)
 }
 void feature_workspace_folders::remove_workspaces(const json& removed)
 {
-    for (auto it = removed.begin(); it != removed.end(); ++it)
+    for (auto ws : removed)
     {
-        std::string uri = (*it)["uri"].get<std::string>();
+        std::string uri = ws["uri"].get<std::string>();
 
         ws_mngr_.remove_workspace(uri_to_path(uri).c_str());
     }
@@ -122,7 +116,8 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
     for (auto& change : changes)
         paths.push_back(uri_to_path(change["uri"].get<std::string>()));
     std::vector<const char*> c_uris;
-    std::transform(paths.begin(), paths.end(), std::back_inserter(c_uris), [](std::string& s) { return s.c_str(); });
+    std::transform(
+        paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });
     ws_mngr_.did_change_watched_files(c_uris.data(), c_uris.size());
 }
 } // namespace hlasm_plugin::language_server::lsp

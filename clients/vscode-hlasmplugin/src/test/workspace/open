@@ -1,6 +1,10 @@
+&VAR2 SETC 'SOMETHING'
+ LR 1,R1
  LR 1,1
- MAC 1,1
 &VAR SETA 5        these are my remarks                                X
                
 * THIS IS COMMENT
  MAC   &VAR,&VAR
+ 
+
+R1 EQU 1

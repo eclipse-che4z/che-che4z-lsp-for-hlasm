@@ -19,7 +19,7 @@ Make sure that the user email you specified on your local git is the same as on 
 For more information, please see the Eclipse Committer Handbook:
 https://www.eclipse.org/projects/handbook/#resources-commit
 
-Such signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
+The signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
 ```
 git commit --signoff
 ```

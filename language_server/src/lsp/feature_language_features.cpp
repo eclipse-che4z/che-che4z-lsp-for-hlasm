@@ -48,7 +48,10 @@ json feature_language_features::register_capabilities()
             { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } } };
 }
 
-void feature_language_features::initialize_feature(const json&) {}
+void feature_language_features::initialize_feature(const json&)
+{
+    // No need for initialization in this feature.
+}
 
 void feature_language_features::definition(const json& id, const json& params)
 {

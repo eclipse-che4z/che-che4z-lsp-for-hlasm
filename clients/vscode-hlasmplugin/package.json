@@ -49,6 +49,7 @@
     "glob": "^7.1.6",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
+    "puppeteer": "^4.0.0",
     "semantic-release": "^17.0.7",
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
@@ -61,10 +62,11 @@
   },
   "scripts": {
     "postinstall": "npm run compile",
-    "compile": "tsc -p ./tsconfig.json",
+    "compile": "tsc -p ./tsconfig.json && node ./build/bin/prepareWorkspace.js",
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
-    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js"
+    "test": "npm run compile && node ./lib/test/runTest.js",
+    "test:insiders": "npm run compile && node ./lib/test/runTest.js insiders"
   },
   "contributes": {
     "jsonValidation": [
