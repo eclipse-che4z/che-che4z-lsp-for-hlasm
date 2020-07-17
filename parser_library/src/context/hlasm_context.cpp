@@ -628,7 +628,7 @@ macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_pa
     assert(macro_def);
 
     auto invo((macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"))));
-    scope_stack_.emplace_back(invo);
+    scope_stack_.emplace_back(invo, macro_def);
     add_system_vars_to_scope();
 
     visited_files_.insert(macro_def->definition_location.file);

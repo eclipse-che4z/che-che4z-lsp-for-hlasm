@@ -45,15 +45,19 @@ struct code_scope
 
     bool is_in_macro() const { return !!this_macro; }
 
-    code_scope(macro_invo_ptr macro_invo)
+    code_scope(macro_invo_ptr macro_invo, macro_def_ptr macro_def)
         : this_macro(std::move(macro_invo))
         , branch_counter(4096)
         , branch_counter_change(0)
+        , this_macro_def_(std::move(macro_def))
     {}
     code_scope()
         : branch_counter(4096)
         , branch_counter_change(0)
     {}
+
+private:
+    macro_def_ptr this_macro_def_;
 };
 
 } // namespace context
