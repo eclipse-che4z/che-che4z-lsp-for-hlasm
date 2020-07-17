@@ -632,6 +632,8 @@ void lexer::lex_word()
         ++w_len;
     }
 
+    bool var_sym_tmp = creating_var_symbol_;
+
     if (ord && w_len <= 63)
         create_token(ORDSYMBOL);
     else if (num)
@@ -639,7 +641,7 @@ void lexer::lex_word()
     else
         create_token(IDENTIFIER);
 
-    if (input_state_->c == '\'' && last_char_data_attr
+    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp
         && (unlimited_line_ || input_state_->char_position_in_line != end_))
     {
         start_token();
