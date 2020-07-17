@@ -21,7 +21,7 @@
 
 #include "ordinary_assembly_context.h"
 
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependant> dependencies)
 {
@@ -275,9 +275,9 @@ void symbol_dependency_tables::add_dependency(
 
     if (dependency_source_stmt)
     {
-        auto [sit, sinserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
+        auto [sit, inserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
 
-        if (!sinserted)
+        if (!inserted)
             throw std::runtime_error("statement already registered");
 
         dependency_source_stmts_.emplace(dependant(std::move(target)), statement_ref(sit, 1));
@@ -429,6 +429,12 @@ std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
     return res;
 }
 
+void symbol_dependency_tables::resolve_all_as_default()
+{
+    for (auto& [target, dep_src] : dependencies_)
+        resolve_dependant_default(target);
+}
+
 statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
     : stmt_ref(std::move(stmt_ref))
     , ref_count(ref_count)
@@ -492,3 +498,5 @@ void dependency_adder::finish()
 
     dependants.clear();
 }
+
+} // namespace hlasm_plugin::parser_library::context

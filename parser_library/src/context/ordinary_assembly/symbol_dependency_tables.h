@@ -112,6 +112,9 @@ public:
     // collect all postponed statements either if they still contain dependent objects
     std::vector<post_stmt_ptr> collect_postponed();
 
+    //assign default values to all unresoved dependants
+    void resolve_all_as_default();
+
     friend dependency_adder;
 };
 
