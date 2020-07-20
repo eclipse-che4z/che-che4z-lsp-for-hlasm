@@ -69,8 +69,14 @@ void hlasm_context::add_system_vars_to_scope()
         {
             auto SYSNDX = ids().add("SYSNDX");
 
-            auto val_ndx = std::make_shared<set_symbol<A_t>>(SYSNDX, true, false);
-            val_ndx->set_value((A_t)SYSNDX_);
+            auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
+
+            std::string value = std::to_string(SYSNDX_);
+            auto tmp_size = value.size();
+            for (int i = 0; i < 4 - tmp_size; ++i)
+                value.insert(value.begin(), '0');
+
+            val_ndx->set_value(std::move(value));
             curr_scope()->variables.insert({ SYSNDX, val_ndx });
         }
 
