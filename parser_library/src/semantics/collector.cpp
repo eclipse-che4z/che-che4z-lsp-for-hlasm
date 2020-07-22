@@ -15,8 +15,8 @@
 #include "collector.h"
 
 #include "lexing/lexer.h"
-#include "range_provider.h"
 #include "processing/statement.h"
+#include "range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -214,8 +214,7 @@ void collector::append_operand_field(collector&& c)
 
 const instruction_si& collector::peek_instruction() { return **instr_; }
 
-context::unique_stmt_ptr collector::extract_statement(
-    processing::processing_status status, range& statement_range)
+context::shared_stmt_ptr collector::extract_statement(processing::processing_status status, range& statement_range)
 {
     if (!*lbl_)
         lbl_->emplace(statement_range);
@@ -232,7 +231,8 @@ context::unique_stmt_ptr collector::extract_statement(
     {
         if (!def_)
             def_.emplace("", instr_->value().field_range);
-        return std::make_unique<statement_si_deferred>(range_provider::union_range(lbl_->value().field_range, def_->second),
+        return std::make_shared<statement_si_deferred>(
+            range_provider::union_range(lbl_->value().field_range, def_->second),
             std::move(**lbl_),
             std::move(**instr_),
             std::move(def_.value().first),
@@ -251,12 +251,9 @@ context::unique_stmt_ptr collector::extract_statement(
         }
 
         statement_range = range_provider::union_range(lbl_->value().field_range, op_->field_range);
-        auto stmt_si =  std::make_shared<statement_si>(statement_range,
-            std::move(**lbl_),
-            std::move(**instr_),
-            std::move(*op_),
-            std::move(*rem_));
-        return std::make_unique<processing::resolved_statement_impl>(std::move(stmt_si), std::move(status));
+        auto stmt_si = std::make_shared<statement_si>(
+            statement_range, std::move(**lbl_), std::move(**instr_), std::move(*op_), std::move(*rem_));
+        return std::make_shared<processing::resolved_statement_impl>(std::move(stmt_si), std::move(status));
     }
 }
 

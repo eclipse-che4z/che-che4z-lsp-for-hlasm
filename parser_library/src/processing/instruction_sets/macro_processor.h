@@ -37,7 +37,6 @@ public:
         attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider);
-    virtual void process(context::unique_stmt_ptr stmt) override;
     virtual void process(context::shared_stmt_ptr stmt) override;
 
     static context::macro_data_ptr string_to_macrodata(std::string data);

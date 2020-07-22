@@ -44,9 +44,29 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
     return std::make_pair(processing_format(processing_kind::LOOKAHEAD, processing_form::IGNORED), op_code());
 }
 
-void lookahead_processor::process_statement(context::shared_stmt_ptr statement) { process_statement(*statement); }
+void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
+{
+    if (macro_nest_ == 0)
+        find_target(*statement);
 
-void lookahead_processor::process_statement(context::unique_stmt_ptr statement) { process_statement(*statement); }
+    auto resolved = statement->access_resolved();
+
+    if (!resolved)
+        return;
+
+    if (resolved->opcode_ref().value == macro_id)
+    {
+        process_MACRO();
+    }
+    else if (resolved->opcode_ref().value == mend_id)
+    {
+        process_MEND();
+    }
+    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
+    {
+        process_COPY(*resolved);
+    }
+}
 
 void lookahead_processor::end_processing()
 {
@@ -270,30 +290,6 @@ void lookahead_processor::assign_assembler_attributes(
             context::symbol_value(),
             context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
             location());
-    }
-}
-
-void lookahead_processor::process_statement(const context::hlasm_statement& statement)
-{
-    if (macro_nest_ == 0)
-        find_target(statement);
-
-    auto resolved = statement.access_resolved();
-
-    if (!resolved)
-        return;
-
-    if (resolved->opcode_ref().value == macro_id)
-    {
-        process_MACRO();
-    }
-    else if (resolved->opcode_ref().value == mend_id)
-    {
-        process_MEND();
-    }
-    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
-    {
-        process_COPY(*resolved);
     }
 }
 

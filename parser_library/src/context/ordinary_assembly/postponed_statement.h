@@ -15,9 +15,7 @@
 #ifndef CONTEXT_POSTPONED_STATEMENT_H
 #define CONTEXT_POSTPONED_STATEMENT_H
 
-#include "context/hlasm_statement.h"
 #include "context/processing_context.h"
-
 
 namespace hlasm_plugin::parser_library::processing {
 struct postponed_statement_impl;

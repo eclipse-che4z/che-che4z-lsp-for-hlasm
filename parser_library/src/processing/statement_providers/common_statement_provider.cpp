@@ -60,13 +60,13 @@ void common_statement_provider::preprocess_deferred(statement_processor& process
         }
 
         cache.insert(status.first.form, ptr);
-        context::unique_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
+        context::shared_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
         processor.process_statement(std::move(stmt));
     }
     else
     {
         auto ptr = cache.get(status.first.form);
-        context::unique_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
+        context::shared_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
         processor.process_statement(std::move(stmt));
     }
 }

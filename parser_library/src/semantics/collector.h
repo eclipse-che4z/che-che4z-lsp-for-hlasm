@@ -63,7 +63,7 @@ public:
     void append_operand_field(collector&& c);
 
     const instruction_si& peek_instruction();
-    context::unique_stmt_ptr extract_statement(processing::processing_status status, range& statement_range);
+    context::shared_stmt_ptr extract_statement(processing::processing_status status, range& statement_range);
     std::vector<context::lsp_symbol> extract_lsp_symbols();
     std::vector<token_info> extract_hl_symbols();
     void prepare_for_next_statement();

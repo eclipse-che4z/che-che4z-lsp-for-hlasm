@@ -511,7 +511,32 @@ asm_processor::asm_processor(context::hlasm_context& hlasm_ctx,
     , table_(create_table(hlasm_ctx))
 {}
 
-void asm_processor::process(context::shared_stmt_ptr stmt) { process(preprocess(stmt)); }
+void asm_processor::process(context::shared_stmt_ptr stmt)
+{
+    auto rebuilt_stmt = preprocess(stmt);
+
+    auto it = table_.find(rebuilt_stmt.opcode_ref().value);
+    if (it != table_.end())
+    {
+        auto& [key, func] = *it;
+        func(std::move(rebuilt_stmt));
+    }
+    else
+    {
+        // until implementation of all instructions, if has deps, ignore
+        for (auto& op : rebuilt_stmt.operands_ref().value)
+        {
+            auto tmp = context::instruction::assembler_instructions.find(*rebuilt_stmt.opcode_ref().value);
+            bool can_have_ord_syms =
+                tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+
+            if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
+                && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
+                return;
+        }
+        check(rebuilt_stmt, hlasm_ctx, checker_, *this);
+    }
+}
 
 void asm_processor::process_copy(const semantics::complete_statement& stmt,
     context::hlasm_context& hlasm_ctx,
@@ -556,8 +581,6 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     hlasm_ctx.enter_copy_member(sym_expr->value);
 }
 
-void asm_processor::process(context::unique_stmt_ptr stmt) { process(preprocess(std::move(stmt))); }
-
 asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& ctx)
 {
     process_table_t table;
@@ -592,30 +615,5 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
             return symbol.name;
         default:
             return context::id_storage::empty_id;
-    }
-}
-
-void asm_processor::process(rebuilt_statement statement)
-{
-    auto it = table_.find(statement.opcode_ref().value);
-    if (it != table_.end())
-    {
-        auto& [key, func] = *it;
-        func(std::move(statement));
-    }
-    else
-    {
-        // until implementation of all instructions, if has deps, ignore
-        for (auto& op : statement.operands_ref().value)
-        {
-            auto tmp = context::instruction::assembler_instructions.find(*statement.opcode_ref().value);
-            bool can_have_ord_syms =
-                tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
-
-            if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
-                && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
-                return;
-        }
-        check(statement, hlasm_ctx, checker_, *this);
     }
 }

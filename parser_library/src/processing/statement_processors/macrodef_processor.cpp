@@ -81,19 +81,6 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
     }
 }
 
-void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
-{
-    bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
-
-    process_statement(*statement);
-
-    if (!expecting_tmp && !omit_next_)
-    {
-        result_.definition.push_back(std::move(statement));
-        add_correct_copy_nest();
-    }
-}
-
 void macrodef_processor::end_processing()
 {
     if (!finished_flag_)

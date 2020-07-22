@@ -32,14 +32,6 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
     , parser(parser)
 {}
 
-rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
-{
-    context::shared_stmt_ptr sh_stmt = context::shared_stmt_ptr(statement.release());
-    auto stmt = std::dynamic_pointer_cast<const resolved_statement>(sh_stmt);
-    auto [label, ops] = preprocess_inner(*stmt);
-    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
-}
-
 rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr statement)
 {
     auto stmt = std::dynamic_pointer_cast<const resolved_statement>(statement);

@@ -32,7 +32,6 @@ namespace hlasm_plugin::parser_library::context {
 struct hlasm_statement;
 
 using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
-using unique_stmt_ptr = std::unique_ptr<hlasm_statement>;
 
 using statement_block = std::vector<shared_stmt_ptr>;
 

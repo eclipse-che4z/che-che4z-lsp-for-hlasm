@@ -46,7 +46,6 @@ public:
     // infers processing status of rest of the statement from instruction field
     // used for statement providers to correctly provide statement
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const = 0;
-    virtual void process_statement(context::unique_stmt_ptr statement) = 0;
     virtual void process_statement(context::shared_stmt_ptr statement) = 0;
     virtual void end_processing() = 0;
     virtual bool terminal_condition(const statement_provider_kind kind) const = 0;

@@ -34,7 +34,6 @@ namespace processing {
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
 class instruction_processor : public diagnosable_ctx
 {
-    virtual void process(context::unique_stmt_ptr stmt) = 0;
     virtual void process(context::shared_stmt_ptr stmt) = 0;
 
     virtual void collect_diags() const override { collect_diags_from_child(eval_ctx); }

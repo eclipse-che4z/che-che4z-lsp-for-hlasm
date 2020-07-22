@@ -30,9 +30,13 @@ ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
     , listener_(listener)
 {}
 
-void ca_processor::process(context::shared_stmt_ptr stmt) { process_(stmt); }
-
-void ca_processor::process(context::unique_stmt_ptr stmt) { process_(std::move(stmt)); }
+void ca_processor::process(context::shared_stmt_ptr stmt)
+{
+    auto it = table_.find(stmt->access_resolved()->opcode_ref().value);
+    assert(it != table_.end());
+    auto& [key, func] = *it;
+    func(*stmt->access_resolved());
+}
 
 ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& ctx)
 {
