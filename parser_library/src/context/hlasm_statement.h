@@ -38,8 +38,8 @@ using statement_block = std::vector<shared_stmt_ptr>;
 
 enum class statement_kind
 {
-    COMPLETE,
-    PARTIAL
+    RESOLVED,
+    DEFERRED
 };
 
 // abstract structure representing general HLASM statement
@@ -47,11 +47,11 @@ struct hlasm_statement
 {
     const statement_kind kind;
 
-    const processing::resolved_statement* access_complete() const;
-    processing::resolved_statement* access_complete();
+    const processing::resolved_statement* access_resolved() const;
+    processing::resolved_statement* access_resolved();
 
-    const semantics::deferred_statement* access_partial() const;
-    semantics::deferred_statement* access_partial();
+    const semantics::deferred_statement* access_deferred() const;
+    semantics::deferred_statement* access_deferred();
 
     virtual position statement_position() const = 0;
 

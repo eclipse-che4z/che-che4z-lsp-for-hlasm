@@ -169,7 +169,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     {
         result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
 
-        auto res_stmt = statement.access_complete();
+        auto res_stmt = statement.access_resolved();
 
         if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
         {
@@ -184,8 +184,8 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else if (expecting_prototype_)
     {
-        assert(statement.access_complete());
-        process_prototype(*statement.access_complete());
+        assert(statement.access_resolved());
+        process_prototype(*statement.access_resolved());
         expecting_prototype_ = false;
     }
     else
@@ -193,7 +193,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         if (hlasm_ctx.current_copy_stack().size() - initial_copy_nest_ == 0)
             curr_outer_position_ = statement.statement_position();
 
-        if (auto res_stmt = statement.access_complete())
+        if (auto res_stmt = statement.access_resolved())
         {
             process_sequence_symbol(res_stmt->label_ref());
 
@@ -204,7 +204,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
             else if (res_stmt->opcode_ref().value == copy_id)
                 process_COPY(*res_stmt);
         }
-        else if (auto def_stmt = statement.access_partial())
+        else if (auto def_stmt = statement.access_deferred())
         {
             process_sequence_symbol(def_stmt->label_ref());
         }

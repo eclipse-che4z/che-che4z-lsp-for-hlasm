@@ -36,7 +36,7 @@ struct resolved_statement : public context::hlasm_statement, public semantics::c
     virtual position statement_position() const override { return stmt_range_ref().start; }
 
     resolved_statement()
-        : context::hlasm_statement(context::statement_kind::COMPLETE)
+        : context::hlasm_statement(context::statement_kind::RESOLVED)
     {}
 };
 

@@ -51,7 +51,7 @@ struct deferred_statement : public core_statement, public context::hlasm_stateme
 
 protected:
     deferred_statement()
-        : context::hlasm_statement(context::statement_kind::PARTIAL)
+        : context::hlasm_statement(context::statement_kind::DEFERRED)
     {}
 };
 

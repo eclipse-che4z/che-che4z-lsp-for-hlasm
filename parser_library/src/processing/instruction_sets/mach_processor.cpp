@@ -35,12 +35,12 @@ mach_processor::mach_processor(context::hlasm_context& hlasm_ctx,
 
 void mach_processor::process(context::shared_stmt_ptr stmt)
 {
-    process(preprocess(stmt), stmt->access_complete()->opcode_ref());
+    process(preprocess(stmt), stmt->access_resolved()->opcode_ref());
 }
 
 void mach_processor::process(context::unique_stmt_ptr stmt)
 {
-    auto opcode = stmt->access_complete()->opcode_ref();
+    auto opcode = stmt->access_resolved()->opcode_ref();
     process(preprocess(std::move(stmt)), opcode);
 }
 

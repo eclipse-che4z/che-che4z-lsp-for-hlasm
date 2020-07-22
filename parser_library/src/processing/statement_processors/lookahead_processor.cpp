@@ -278,7 +278,7 @@ void lookahead_processor::process_statement(const context::hlasm_statement& stat
     if (macro_nest_ == 0)
         find_target(statement);
 
-    auto resolved = statement.access_complete();
+    auto resolved = statement.access_resolved();
 
     if (!resolved)
         return;

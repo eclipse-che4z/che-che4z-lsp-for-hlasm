@@ -19,22 +19,22 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;
 
-const processing::resolved_statement* hlasm_statement::access_complete() const
+const processing::resolved_statement* hlasm_statement::access_resolved() const
 {
-    return kind == statement_kind::COMPLETE ? static_cast<const processing::resolved_statement*>(this) : nullptr;
+    return kind == statement_kind::RESOLVED ? static_cast<const processing::resolved_statement*>(this) : nullptr;
 }
-processing::resolved_statement* hlasm_statement::access_complete()
+processing::resolved_statement* hlasm_statement::access_resolved()
 {
-    return kind == statement_kind::COMPLETE ? static_cast<processing::resolved_statement*>(this) : nullptr;
+    return kind == statement_kind::RESOLVED ? static_cast<processing::resolved_statement*>(this) : nullptr;
 }
 
-const semantics::deferred_statement* hlasm_statement::access_partial() const
+const semantics::deferred_statement* hlasm_statement::access_deferred() const
 {
-    return kind == statement_kind::PARTIAL ? static_cast<const semantics::deferred_statement*>(this) : nullptr;
+    return kind == statement_kind::DEFERRED ? static_cast<const semantics::deferred_statement*>(this) : nullptr;
 }
-semantics::deferred_statement* hlasm_statement::access_partial()
+semantics::deferred_statement* hlasm_statement::access_deferred()
 {
-    return kind == statement_kind::PARTIAL ? static_cast<semantics::deferred_statement*>(this) : nullptr;
+    return kind == statement_kind::DEFERRED ? static_cast<semantics::deferred_statement*>(this) : nullptr;
 }
 
 hlasm_statement::hlasm_statement(const statement_kind kind)

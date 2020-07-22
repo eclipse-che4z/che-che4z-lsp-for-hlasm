@@ -83,7 +83,7 @@ void copy_processor::process_statement(const context::hlasm_statement& statement
         first_statement_ = false;
     }
 
-    if (auto res_stmt = statement.access_complete())
+    if (auto res_stmt = statement.access_resolved())
     {
         if (res_stmt->opcode_ref().value == macro_id)
             process_MACRO();
