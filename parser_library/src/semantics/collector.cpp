@@ -16,7 +16,7 @@
 
 #include "lexing/lexer.h"
 #include "range_provider.h"
-#include "processing/rebuilt_statement.h"
+#include "processing/statement.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;

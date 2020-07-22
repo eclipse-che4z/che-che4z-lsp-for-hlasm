@@ -19,7 +19,7 @@
 #include "diagnosable_ctx.h"
 #include "processing/op_code.h"
 #include "processing/statement_providers/statement_provider_kind.h"
-#include "processing/rebuilt_statement.h"
+#include "processing/statement.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

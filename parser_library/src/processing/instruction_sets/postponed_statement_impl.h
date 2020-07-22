@@ -18,7 +18,7 @@
 #include <variant>
 
 #include "context/ordinary_assembly/postponed_statement.h"
-#include "processing/rebuilt_statement.h"
+#include "processing/statement.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

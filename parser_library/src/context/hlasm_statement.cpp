@@ -14,8 +14,7 @@
 
 #include "hlasm_statement.h"
 
-#include "semantics/statement.h"
-#include "processing/rebuilt_statement.h"
+#include "processing/statement.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::context;

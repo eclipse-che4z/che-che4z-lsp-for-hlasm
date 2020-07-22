@@ -23,7 +23,7 @@
 #include "expressions/evaluation_context.h"
 #include "processing/attribute_provider.h"
 #include "processing/branching_provider.h"
-#include "processing/rebuilt_statement.h"
+#include "processing/statement.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin {

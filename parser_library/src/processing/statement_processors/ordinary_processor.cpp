@@ -14,7 +14,6 @@
 
 #include "ordinary_processor.h"
 
-#include "processing/rebuilt_statement.h"
 #include "checking/instruction_checker.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
