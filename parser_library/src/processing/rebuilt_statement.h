@@ -27,10 +27,42 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-// statement used for preprocessing of resolved statements
-struct rebuilt_statement : public semantics::complete_statement
+// statement that contains resolved operation code and also all semantic fields
+struct resolved_statement : public context::hlasm_statement, public semantics::complete_statement
 {
-    rebuilt_statement(std::shared_ptr<const semantics::complete_statement> base_stmt,
+    virtual const op_code& opcode_ref() const = 0;
+    virtual processing_format format_ref() const = 0;
+
+    virtual position statement_position() const override { return stmt_range_ref().start; }
+
+    resolved_statement()
+        : context::hlasm_statement(context::statement_kind::COMPLETE)
+    {}
+};
+
+struct resolved_statement_impl : public resolved_statement
+{
+    resolved_statement_impl(std::shared_ptr<const semantics::complete_statement> base_stmt, processing_status status)
+        : base_stmt(std::move(base_stmt))
+        , status(std::move(status))
+    {}
+
+    std::shared_ptr<const semantics::complete_statement> base_stmt;
+    processing_status status;
+
+    virtual const semantics::label_si& label_ref() const override { return base_stmt->label_ref(); }
+    virtual const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
+    virtual const semantics::operands_si& operands_ref() const override { return base_stmt->operands_ref(); }
+    virtual const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
+    virtual const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    virtual const op_code& opcode_ref() const override { return status.second; }
+    virtual processing_format format_ref() const override { return status.first; }
+};
+
+// statement used for preprocessing of resolved statements
+struct rebuilt_statement : public resolved_statement
+{
+    rebuilt_statement(std::shared_ptr<const resolved_statement> base_stmt,
         std::optional<semantics::label_si> label,
         std::optional<semantics::operands_si> operands)
         : base_stmt(base_stmt)
@@ -38,7 +70,7 @@ struct rebuilt_statement : public semantics::complete_statement
         , rebuilt_operands(std::move(operands))
     {}
 
-    std::shared_ptr<const semantics::complete_statement> base_stmt;
+    std::shared_ptr<const resolved_statement> base_stmt;
     std::optional<semantics::label_si> rebuilt_label;
     std::optional<semantics::operands_si> rebuilt_operands;
 

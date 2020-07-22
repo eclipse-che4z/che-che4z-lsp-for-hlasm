@@ -333,10 +333,8 @@ void parser_impl::process_statement()
 
     // ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 
-    auto stmt(collector.extract_statement(*proc_status, range(position(statement_start().file_line, 0))));
-    range statement_range = stmt->stmt_range_ref();
-
-    context::unique_stmt_ptr ptr = std::move(stmt);
+    range statement_range(position(statement_start().file_line, 0)); //assign default
+    auto stmt = collector.extract_statement(*proc_status, statement_range);
 
     if (statement_range.start.line < statement_range.end.line)
         ctx->metrics.continued_statements++;
@@ -347,7 +345,7 @@ void parser_impl::process_statement()
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
     collector.prepare_for_next_statement();
 
-    processor->process_statement(std::move(ptr));
+    processor->process_statement(std::move(stmt));
 }
 
 void parser_impl::process_statement(semantics::op_rem line, range op_range)

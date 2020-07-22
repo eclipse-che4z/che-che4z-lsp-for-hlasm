@@ -92,7 +92,7 @@ lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx,
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
 void lookahead_processor::process_MEND() { macro_nest_ -= macro_nest_ == 0 ? 0 : 1; }
-void lookahead_processor::process_COPY(const semantics::complete_statement& statement)
+void lookahead_processor::process_COPY(const resolved_statement& statement)
 {
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
@@ -128,7 +128,7 @@ lookahead_processor::process_table_t lookahead_processor::create_table(context::
 }
 
 void lookahead_processor::assign_EQU_attributes(
-    context::id_index symbol_name, const semantics::complete_statement& statement)
+    context::id_index symbol_name, const resolved_statement& statement)
 {
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
@@ -193,7 +193,7 @@ void lookahead_processor::assign_EQU_attributes(
 }
 
 void lookahead_processor::assign_data_def_attributes(
-    context::id_index symbol_name, const semantics::complete_statement& statement)
+    context::id_index symbol_name, const resolved_statement& statement)
 {
     if (statement.operands_ref().value.empty())
         return;
@@ -228,7 +228,7 @@ void lookahead_processor::assign_data_def_attributes(
         location());
 }
 
-void lookahead_processor::assign_section_attributes(context::id_index symbol_name, const semantics::complete_statement&)
+void lookahead_processor::assign_section_attributes(context::id_index symbol_name, const resolved_statement&)
 {
     result_.resolved_refs.try_emplace(symbol_name,
         symbol_name,
@@ -238,7 +238,7 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 }
 
 void lookahead_processor::assign_machine_attributes(
-    context::id_index symbol_name, const semantics::complete_statement& statement)
+    context::id_index symbol_name, const resolved_statement& statement)
 {
     auto mnem_tmp = context::instruction::mnemonic_codes.find(*statement.opcode_ref().value);
 
@@ -255,7 +255,7 @@ void lookahead_processor::assign_machine_attributes(
 }
 
 void lookahead_processor::assign_assembler_attributes(
-    context::id_index symbol_name, const semantics::complete_statement& statement)
+    context::id_index symbol_name, const resolved_statement& statement)
 {
     auto it = asm_proc_table_.find(statement.opcode_ref().value);
     if (it != asm_proc_table_.end())
@@ -305,7 +305,7 @@ void lookahead_processor::find_target(const context::hlasm_statement& statement)
             find_seq(dynamic_cast<const semantics::core_statement&>(statement).label_ref());
             break;
         case lookahead_action::ORD:
-            find_ord(dynamic_cast<const semantics::complete_statement&>(statement));
+            find_ord(dynamic_cast<const resolved_statement&>(statement));
             break;
         default:
             assert(false);
@@ -329,7 +329,7 @@ void lookahead_processor::find_seq(const semantics::label_si& label)
     }
 }
 
-void lookahead_processor::find_ord(const semantics::complete_statement& statement)
+void lookahead_processor::find_ord(const resolved_statement& statement)
 {
     // checks
     if (statement.label_ref().type != semantics::label_si_type::ORD)

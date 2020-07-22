@@ -64,12 +64,12 @@ public:
 private:
     void process_statement(const context::hlasm_statement& statement);
 
-    void process_prototype(const semantics::complete_statement& statement);
+    void process_prototype(const resolved_statement& statement);
     void process_prototype_label(
-        const semantics::complete_statement& statement, std::vector<context::id_index>& param_names);
-    void process_prototype_instruction(const semantics::complete_statement& statement);
+        const resolved_statement& statement, std::vector<context::id_index>& param_names);
+    void process_prototype_instruction(const resolved_statement& statement);
     void process_prototype_operand(
-        const semantics::complete_statement& statement, std::vector<context::id_index>& param_names);
+        const resolved_statement& statement, std::vector<context::id_index>& param_names);
 
     bool test_varsym_validity(const semantics::variable_symbol* var,
         const std::vector<context::id_index>& param_names,
@@ -79,7 +79,7 @@ private:
 
     void process_MACRO();
     void process_MEND();
-    void process_COPY(const semantics::complete_statement& statement);
+    void process_COPY(const resolved_statement& statement);
 
     void process_sequence_symbol(const semantics::label_si& label);
 

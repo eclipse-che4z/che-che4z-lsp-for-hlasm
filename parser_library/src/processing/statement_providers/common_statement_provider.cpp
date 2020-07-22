@@ -13,6 +13,7 @@
  */
 
 #include "common_statement_provider.h"
+
 #include "semantics/statement.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -25,10 +26,9 @@ common_statement_provider::common_statement_provider(
     , parser(parser)
 {}
 
-void common_statement_provider::preprocess_deferred(
-    statement_processor& processor, context::statement_cache& cache)
+void common_statement_provider::preprocess_deferred(statement_processor& processor, context::statement_cache& cache)
 {
-    auto def_stmt = std::dynamic_pointer_cast<const semantics::partial_statement>(cache.get_base());
+    auto def_stmt = std::dynamic_pointer_cast<const semantics::deferred_statement>(cache.get_base());
 
     auto status = processor.get_processing_status(def_stmt->instruction_ref());
 
@@ -38,7 +38,7 @@ void common_statement_provider::preprocess_deferred(
     }
     else if (!cache.contains(status.first.form))
     {
-        context::shared_stmt_ptr ptr;
+        std::shared_ptr<semantics::statement_si_defer_done> ptr;
 
         if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
             || status.first.form == processing_form::IGNORED)
@@ -46,7 +46,7 @@ void common_statement_provider::preprocess_deferred(
             semantics::operands_si op(def_stmt->deferred_range_ref(), semantics::operand_list());
             semantics::remarks_si rem(def_stmt->deferred_range_ref(), {});
 
-            ptr = std::make_shared<semantics::statement_si_defer_done>(def_stmt, std::move(op), std::move(rem), status);
+            ptr = std::make_shared<semantics::statement_si_defer_done>(def_stmt, std::move(op), std::move(rem));
         }
         else
         {
@@ -56,15 +56,17 @@ void common_statement_provider::preprocess_deferred(
                 semantics::range_provider(def_stmt->deferred_range_ref(), semantics::adjusting_state::NONE),
                 status);
 
-            ptr = std::make_shared<semantics::statement_si_defer_done>(def_stmt, std::move(op), std::move(rem), status);
+            ptr = std::make_shared<semantics::statement_si_defer_done>(def_stmt, std::move(op), std::move(rem));
         }
 
         cache.insert(status.first.form, ptr);
-        processor.process_statement(std::move(ptr));
+        context::unique_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
+        processor.process_statement(std::move(stmt));
     }
     else
     {
         auto ptr = cache.get(status.first.form);
-        processor.process_statement(std::move(ptr));
+        context::unique_stmt_ptr stmt = std::make_unique<resolved_statement_impl>(std::move(ptr), status);
+        processor.process_statement(std::move(stmt));
     }
 }

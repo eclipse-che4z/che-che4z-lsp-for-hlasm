@@ -21,8 +21,10 @@
 #include "range.h"
 
 namespace hlasm_plugin::parser_library::semantics {
-struct partial_statement;
-struct complete_statement;
+struct deferred_statement;
+} // namespace hlasm_plugin::parser_library::semantics
+namespace hlasm_plugin::parser_library::processing {
+struct resolved_statement;
 } // namespace hlasm_plugin::parser_library::semantics
 
 namespace hlasm_plugin::parser_library::context {
@@ -45,11 +47,11 @@ struct hlasm_statement
 {
     const statement_kind kind;
 
-    const semantics::complete_statement* access_complete() const;
-    semantics::complete_statement* access_complete();
+    const processing::resolved_statement* access_complete() const;
+    processing::resolved_statement* access_complete();
 
-    const semantics::partial_statement* access_partial() const;
-    semantics::partial_statement* access_partial();
+    const semantics::deferred_statement* access_partial() const;
+    semantics::deferred_statement* access_partial();
 
     virtual position statement_position() const = 0;
 

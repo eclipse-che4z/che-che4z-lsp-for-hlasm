@@ -18,21 +18,25 @@
 #include "hlasm_statement.h"
 #include "processing/processing_format.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::semantics {
+struct complete_statement;
+}
+
+namespace hlasm_plugin::parser_library::context {
 
 // storage used to store one deferred statement in many parsed formats
 // used by macro and copy definition to avoid multiple re-parsing of a deferrend stataments
 class statement_cache
 {
 public:
+    using cached_statement_t = std::shared_ptr<semantics::complete_statement>;
+
     // pair of processing format and reparsed statement
     // processing format serves as an identifier of reparsing kind
-    using cached_statement_t = std::pair<processing::processing_form, shared_stmt_ptr>;
+    using cache_t = std::pair<processing::processing_form, cached_statement_t>;
 
 private:
-    std::vector<cached_statement_t> cache_;
+    std::vector<cache_t> cache_;
     shared_stmt_ptr base_stmt_;
 
 public:
@@ -40,16 +44,14 @@ public:
 
     bool contains(processing::processing_form format) const;
 
-    void insert(processing::processing_form format, shared_stmt_ptr statement);
+    void insert(processing::processing_form format, cached_statement_t statement);
 
-    shared_stmt_ptr get(processing::processing_form format) const;
+    cached_statement_t get(processing::processing_form format) const;
 
     shared_stmt_ptr get_base() const;
 };
 
 using cached_block = std::vector<statement_cache>;
 
-} // namespace context
-} // namespace parser_library
 } // namespace hlasm_plugin
 #endif

@@ -215,7 +215,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
 }
 
-void macrodef_processor::process_prototype(const semantics::complete_statement& statement)
+void macrodef_processor::process_prototype(const resolved_statement& statement)
 {
     std::vector<context::id_index> param_names;
 
@@ -227,7 +227,7 @@ void macrodef_processor::process_prototype(const semantics::complete_statement& 
 }
 
 void macrodef_processor::process_prototype_label(
-    const semantics::complete_statement& statement, std::vector<context::id_index>& param_names)
+    const resolved_statement& statement, std::vector<context::id_index>& param_names)
 {
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
@@ -244,7 +244,7 @@ void macrodef_processor::process_prototype_label(
         add_diagnostic(diagnostic_op::error_E044(statement.label_ref().field_range));
 }
 
-void macrodef_processor::process_prototype_instruction(const semantics::complete_statement& statement)
+void macrodef_processor::process_prototype_instruction(const resolved_statement& statement)
 {
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
@@ -258,7 +258,7 @@ void macrodef_processor::process_prototype_instruction(const semantics::complete
 }
 
 void macrodef_processor::process_prototype_operand(
-    const semantics::complete_statement& statement, std::vector<context::id_index>& param_names)
+    const resolved_statement& statement, std::vector<context::id_index>& param_names)
 {
     processing::context_manager mngr(hlasm_ctx);
 
@@ -352,15 +352,17 @@ void macrodef_processor::process_MEND()
         finished_flag_ = true;
 }
 
-void macrodef_processor::process_COPY(const semantics::complete_statement& statement)
+void macrodef_processor::process_COPY(const resolved_statement& statement)
 {
     // substitute copy for anop to not be processed again
 
-    auto empty = std::make_unique<semantics::statement_si>(statement.stmt_range_ref(),
+    auto empty_sem = std::make_shared<semantics::statement_si>(statement.stmt_range_ref(),
         semantics::label_si(statement.stmt_range_ref()),
         semantics::instruction_si(statement.stmt_range_ref()),
         semantics::operands_si(statement.stmt_range_ref(), {}),
-        semantics::remarks_si(statement.stmt_range_ref(), {}),
+        semantics::remarks_si(statement.stmt_range_ref(), {}));
+
+    auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
         processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
             op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
 

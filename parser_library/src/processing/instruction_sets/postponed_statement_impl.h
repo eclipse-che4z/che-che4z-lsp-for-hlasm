@@ -25,7 +25,7 @@ namespace parser_library {
 namespace processing {
 
 // implementation of postponed_statement interface
-struct postponed_statement_impl : public context::postponed_statement, public semantics::complete_statement
+struct postponed_statement_impl : public context::postponed_statement, public resolved_statement
 {
     postponed_statement_impl(rebuilt_statement stmt, context::processing_stack_t stmt_location_stack)
         : stmt(std::move(stmt))
