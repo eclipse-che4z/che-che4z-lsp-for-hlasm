@@ -14,18 +14,17 @@
 
 #include "ordinary_processor.h"
 
-#include "../statement.h"
+#include "processing/rebuilt_statement.h"
 #include "checking/instruction_checker.h"
 #include "ebcdic_encoding.h"
+#include "processing/instruction_sets/postponed_statement_impl.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 ordinary_processor::ordinary_processor(context::hlasm_context& hlasm_ctx,
     attribute_provider& attr_provider,
     branching_provider& branch_provider,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     processing_tracer* tracer)
@@ -51,7 +50,7 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
     if (!status)
     {
-        auto found = eval_ctx.lib_provider.parse_library(*id, hlasm_ctx, library_data { processing_kind::MACRO, id });
+        auto found = eval_ctx.lib_provider.parse_library(*id, hlasm_ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)
@@ -192,13 +191,14 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
         if (!stmt)
             continue;
 
-        assert(stmt->opcode_ref().type == context::instruction_type::ASM
-            || stmt->opcode_ref().type == context::instruction_type::MACH);
 
-        if (stmt->opcode_ref().type == context::instruction_type::ASM)
-            low_language_processor::check(*stmt, hlasm_ctx, asm_checker, *this);
+        assert(stmt->impl()->opcode_ref().type == context::instruction_type::ASM
+            || stmt->impl()->opcode_ref().type == context::instruction_type::MACH);
+
+        if (stmt->impl()->opcode_ref().type == context::instruction_type::ASM)
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, asm_checker, *this);
         else
-            low_language_processor::check(*stmt, hlasm_ctx, mach_checker, *this);
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, mach_checker, *this);
     }
 }
 
@@ -316,3 +316,5 @@ void ordinary_processor::collect_ordinary_symbol_definitions()
     }
     hlasm_ctx.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
 }
+
+} // namespace hlasm_plugin::parser_library::processing

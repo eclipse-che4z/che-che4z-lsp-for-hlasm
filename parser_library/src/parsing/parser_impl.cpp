@@ -22,7 +22,6 @@
 #include "lexing/token_stream.h"
 #include "parser_error_listener_ctx.h"
 #include "processing/context_manager.h"
-#include "processing/statement.h"
 
 namespace hlasm_plugin::parser_library::parsing {
 
@@ -334,24 +333,10 @@ void parser_impl::process_statement()
 
     // ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 
-    bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
-    auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
-    context::unique_stmt_ptr ptr;
+    auto stmt(collector.extract_statement(*proc_status, range(position(statement_start().file_line, 0))));
+    range statement_range = stmt->stmt_range_ref();
 
-    range statement_range;
-    if (!hint)
-    {
-        ptr = std::make_unique<processing::resolved_statement_impl>(
-            std::move(std::get<semantics::statement_si>(stmt)), proc_status.value().second, proc_status.value().first);
-        statement_range = dynamic_cast<processing::resolved_statement_impl*>(ptr.get())->stmt_range_ref();
-    }
-    else
-    {
-        assert(std::holds_alternative<semantics::statement_si_deferred>(stmt));
-        ptr = std::make_unique<semantics::statement_si_deferred>(
-            std::move(std::get<semantics::statement_si_deferred>(stmt)));
-        statement_range = dynamic_cast<semantics::statement_si_deferred*>(ptr.get())->deferred_range_ref();
-    }
+    context::unique_stmt_ptr ptr = std::move(stmt);
 
     if (statement_range.start.line < statement_range.end.line)
         ctx->metrics.continued_statements++;

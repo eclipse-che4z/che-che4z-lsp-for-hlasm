@@ -17,9 +17,6 @@
 #include "processing/context_manager.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
-#include "processing/statement.h"
-#include "semantics/concatenation.h"
-#include "semantics/statement.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -172,7 +169,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     {
         result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
 
-        auto res_stmt = statement.access_resolved();
+        auto res_stmt = statement.access_complete();
 
         if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
         {
@@ -187,8 +184,8 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else if (expecting_prototype_)
     {
-        assert(statement.access_resolved());
-        process_prototype(*statement.access_resolved());
+        assert(statement.access_complete());
+        process_prototype(*statement.access_complete());
         expecting_prototype_ = false;
     }
     else
@@ -196,7 +193,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         if (hlasm_ctx.current_copy_stack().size() - initial_copy_nest_ == 0)
             curr_outer_position_ = statement.statement_position();
 
-        if (auto res_stmt = statement.access_resolved())
+        if (auto res_stmt = statement.access_complete())
         {
             process_sequence_symbol(res_stmt->label_ref());
 
@@ -207,7 +204,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
             else if (res_stmt->opcode_ref().value == copy_id)
                 process_COPY(*res_stmt);
         }
-        else if (auto def_stmt = statement.access_deferred())
+        else if (auto def_stmt = statement.access_partial())
         {
             process_sequence_symbol(def_stmt->label_ref());
         }
@@ -218,7 +215,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
 }
 
-void macrodef_processor::process_prototype(const resolved_statement& statement)
+void macrodef_processor::process_prototype(const semantics::complete_statement& statement)
 {
     std::vector<context::id_index> param_names;
 
@@ -230,7 +227,7 @@ void macrodef_processor::process_prototype(const resolved_statement& statement)
 }
 
 void macrodef_processor::process_prototype_label(
-    const resolved_statement& statement, std::vector<context::id_index>& param_names)
+    const semantics::complete_statement& statement, std::vector<context::id_index>& param_names)
 {
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
@@ -247,7 +244,7 @@ void macrodef_processor::process_prototype_label(
         add_diagnostic(diagnostic_op::error_E044(statement.label_ref().field_range));
 }
 
-void macrodef_processor::process_prototype_instruction(const resolved_statement& statement)
+void macrodef_processor::process_prototype_instruction(const semantics::complete_statement& statement)
 {
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
@@ -261,7 +258,7 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
 }
 
 void macrodef_processor::process_prototype_operand(
-    const resolved_statement& statement, std::vector<context::id_index>& param_names)
+    const semantics::complete_statement& statement, std::vector<context::id_index>& param_names)
 {
     processing::context_manager mngr(hlasm_ctx);
 
@@ -355,17 +352,19 @@ void macrodef_processor::process_MEND()
         finished_flag_ = true;
 }
 
-void macrodef_processor::process_COPY(const resolved_statement& statement)
+void macrodef_processor::process_COPY(const semantics::complete_statement& statement)
 {
     // substitute copy for anop to not be processed again
-    result_.definition.push_back(
-        std::make_unique<resolved_statement_impl>(semantics::statement_si(statement.stmt_range_ref(),
-                                                      semantics::label_si(statement.stmt_range_ref()),
-                                                      semantics::instruction_si(statement.stmt_range_ref()),
-                                                      semantics::operands_si(statement.stmt_range_ref(), {}),
-                                                      semantics::remarks_si(statement.stmt_range_ref(), {})),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA),
-            processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT)));
+
+    auto empty = std::make_unique<semantics::statement_si>(statement.stmt_range_ref(),
+        semantics::label_si(statement.stmt_range_ref()),
+        semantics::instruction_si(statement.stmt_range_ref()),
+        semantics::operands_si(statement.stmt_range_ref(), {}),
+        semantics::remarks_si(statement.stmt_range_ref(), {}),
+        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
+            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+
+    result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())

@@ -74,7 +74,7 @@ private:
     template<typename T>
     void process_statement_base(T statement)
     {
-        assert(statement->kind == context::statement_kind::RESOLVED);
+        assert(statement->kind == context::statement_kind::COMPLETE);
 
         bool fatal = check_fatals(range(statement->statement_position()));
         if (fatal)
@@ -82,15 +82,15 @@ private:
 
         if (tracer_)
         {
-            if (statement->access_resolved()->opcode_ref().value != context::id_storage::empty_id)
-                tracer_->statement(statement->access_resolved()->stmt_range_ref());
+            if (statement->access_complete()->opcode_ref().value != context::id_storage::empty_id)
+                tracer_->statement(statement->access_complete()->stmt_range_ref());
         }
 
-        switch (statement->access_resolved()->opcode_ref().type)
+        switch (statement->access_complete()->opcode_ref().type)
         {
             case context::instruction_type::UNDEF:
-                add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value,
-                    statement->access_resolved()->instruction_ref().field_range));
+                add_diagnostic(diagnostic_op::error_E049(*statement->access_complete()->opcode_ref().value,
+                    statement->access_complete()->instruction_ref().field_range));
                 return;
             case context::instruction_type::CA:
                 ca_proc_.process(std::move(statement));

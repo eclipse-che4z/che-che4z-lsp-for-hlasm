@@ -34,15 +34,16 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
 
 rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
 {
-    auto& stmt = dynamic_cast<resolved_statement_impl&>(*statement->access_resolved());
-    auto [label, ops] = preprocess_inner(stmt);
+    context::shared_stmt_ptr sh_stmt = context::shared_stmt_ptr(statement.release());
+    auto stmt = std::dynamic_pointer_cast<const semantics::complete_statement>(sh_stmt);
+    auto [label, ops] = preprocess_inner(*stmt);
     return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
 }
 
 rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr statement)
 {
-    const auto& stmt = dynamic_cast<const resolved_statement_impl&>(*statement->access_resolved());
-    auto [label, ops] = preprocess_inner(stmt);
+    auto stmt = std::dynamic_pointer_cast<const semantics::complete_statement>(statement);
+    auto [label, ops] = preprocess_inner(*stmt);
     return rebuilt_statement(stmt, std::move(label), std::move(ops));
 }
 
@@ -74,7 +75,8 @@ bool low_language_processor::create_symbol(
     return ok;
 }
 
-low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
+low_language_processor::preprocessed_part low_language_processor::preprocess_inner(
+    const semantics::complete_statement& stmt)
 {
     context_manager mngr(hlasm_ctx);
 
@@ -121,7 +123,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
                                  true,
                                  semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
                                      semantics::adjusting_state::SUBSTITUTION),
-                                 processing_status(stmt.format, stmt.opcode))
+                                 processing_status(stmt.format_ref(), stmt.opcode_ref()))
                              .first);
     }
 
@@ -210,7 +212,7 @@ void low_language_processor::check_loctr_dependencies(range err_range)
 
 
 low_language_processor::transform_result low_language_processor::transform_mnemonic(
-    const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
+    const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
 {
     // operands obtained from the user
     const auto& operands = stmt.operands_ref().value;
@@ -274,7 +276,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 }
 
 low_language_processor::transform_result low_language_processor::transform_default(
-    const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
+    const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
 {
     std::vector<checking::check_op_ptr> operand_vector;
     for (auto& op : stmt.operands_ref().value)
@@ -301,7 +303,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
 checking::check_op_ptr low_language_processor::get_check_op(const semantics::operand* op,
     context::hlasm_context& hlasm_ctx,
     diagnostic_collector add_diagnostic,
-    const resolved_statement& stmt,
+    const semantics::complete_statement& stmt,
     size_t op_position,
     const std::string* mnemonic)
 {
@@ -347,7 +349,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     return uniq;
 }
 
-void low_language_processor::check(const resolved_statement& stmt,
+void low_language_processor::check(const semantics::complete_statement& stmt,
     context::hlasm_context& hlasm_ctx,
     checking::instruction_checker& checker,
     const diagnosable_ctx& diagnoser)

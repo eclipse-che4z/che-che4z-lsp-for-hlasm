@@ -39,10 +39,10 @@ void copy_statement_provider::process_next(statement_processor& processor)
 
     switch (cache.get_base()->kind)
     {
-        case context::statement_kind::RESOLVED:
+        case context::statement_kind::COMPLETE:
             processor.process_statement(cache.get_base());
             break;
-        case context::statement_kind::DEFERRED:
+        case context::statement_kind::PARTIAL:
             preprocess_deferred(processor, cache);
             break;
         default:

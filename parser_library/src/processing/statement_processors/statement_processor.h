@@ -17,12 +17,11 @@
 
 #include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
-#include "processing/processing_format.h"
+#include "processing/op_code.h"
 #include "processing/statement_providers/statement_provider_kind.h"
+#include "processing/rebuilt_statement.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_processor;
 
@@ -62,7 +61,6 @@ protected:
     const context::id_index macro_id, mend_id, copy_id;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

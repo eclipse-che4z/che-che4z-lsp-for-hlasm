@@ -25,7 +25,7 @@ namespace hlasm_plugin::parser_library::processing {
 class low_language_processor : public instruction_processor
 {
 public:
-    static void check(const resolved_statement& stmt,
+    static void check(const semantics::complete_statement& stmt,
         context::hlasm_context& hlasm_ctx,
         checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
@@ -69,7 +69,7 @@ protected:
 
 private:
     using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
-    preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
+    preprocessed_part preprocess_inner(const semantics::complete_statement& stmt);
 
     // check for newly added loctr dependencies
     void check_loctr_dependencies(range err_range);
@@ -77,15 +77,15 @@ private:
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
     // transform semantic operands to checking operands - machine mnemonics instructions
     static transform_result transform_mnemonic(
-        const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
+        const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
     // transform semantic operands to checking operands - default machine instructions
     static transform_result transform_default(
-        const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
+        const semantics::complete_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector collector);
 
     static checking::check_op_ptr get_check_op(const semantics::operand* op,
         context::hlasm_context& hlasm_ctx,
         diagnostic_collector collector,
-        const resolved_statement& stmt,
+        const semantics::complete_statement& stmt,
         size_t op_position,
         const std::string* mnemonic = nullptr);
 };

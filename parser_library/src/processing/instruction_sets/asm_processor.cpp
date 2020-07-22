@@ -268,17 +268,17 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
         else
             hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
-                                                       adder.source_stmt->operands_ref().value, hlasm_ctx.ord_ctx),
+                                                       adder.source_stmt->impl()->operands_ref().value, hlasm_ctx.ord_ctx),
                 context::no_align);
 
         bool cycle_ok = true;
 
         if (label != context::id_storage::empty_id)
         {
-            if (adder.source_stmt->operands_ref().value.empty())
+            if (adder.source_stmt->impl()->operands_ref().value.empty())
                 return;
 
-            auto data_op = adder.source_stmt->operands_ref().value.front()->access_data_def();
+            auto data_op = adder.source_stmt->impl()->operands_ref().value.front()->access_data_def();
 
             if (data_op->value->length
                 && data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
@@ -294,7 +294,8 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         if (cycle_ok)
             adder.finish();
         else
-            add_diagnostic(diagnostic_op::error_E033(adder.source_stmt->operands_ref().value.front()->operand_range));
+            add_diagnostic(
+                diagnostic_op::error_E033(adder.source_stmt->impl()->operands_ref().value.front()->operand_range));
     }
     else
     {

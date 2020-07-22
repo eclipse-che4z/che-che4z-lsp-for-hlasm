@@ -44,10 +44,10 @@ private:
     template<typename T>
     void process_(T stmt_ptr)
     {
-        auto it = table_.find(stmt_ptr->access_resolved()->opcode_ref().value);
+        auto it = table_.find(stmt_ptr->access_complete()->opcode_ref().value);
         assert(it != table_.end());
         auto& [key, func] = *it;
-        func(*stmt_ptr->access_resolved());
+        func(*stmt_ptr->access_complete());
     }
 
     process_table_t create_table(context::hlasm_context& hlasm_ctx);

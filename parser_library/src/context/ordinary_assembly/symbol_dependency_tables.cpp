@@ -18,6 +18,7 @@
 #include <queue>
 #include <stack>
 #include <stdexcept>
+#include <cassert>
 
 #include "ordinary_assembly_context.h"
 

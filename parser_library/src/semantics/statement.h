@@ -16,6 +16,7 @@
 #define SEMANTICS_STATEMENT_H
 
 #include "context/hlasm_statement.h"
+#include "processing/op_code.h"
 #include "statement_fields.h"
 
 // this file contains inherited structures from hlasm_statement that are used during the parsing
@@ -25,13 +26,20 @@ namespace parser_library {
 namespace semantics {
 
 // structure representing core fields of statmenent
-struct core_statement
+struct core_statement : public context::hlasm_statement
 {
     virtual const range& stmt_range_ref() const = 0;
     virtual const label_si& label_ref() const = 0;
     virtual const instruction_si& instruction_ref() const = 0;
 
+    virtual position statement_position() const override { return stmt_range_ref().start; }
+
     virtual ~core_statement() = default;
+
+protected:
+    core_statement(context::statement_kind kind)
+        : context::hlasm_statement(kind)
+    {}
 };
 
 // statement with all fields
@@ -39,24 +47,29 @@ struct complete_statement : public core_statement
 {
     virtual const operands_si& operands_ref() const = 0;
     virtual const remarks_si& remarks_ref() const = 0;
+
+    virtual const processing::op_code& opcode_ref() const = 0;
+    virtual processing::processing_format format_ref() const = 0;
+
+    complete_statement()
+        : core_statement(context::statement_kind::COMPLETE)
+    {}
 };
 
 // statement with deferred operand and remark field
-struct deferred_statement : public context::hlasm_statement, public core_statement
+struct partial_statement : public core_statement
 {
     virtual const std::string& deferred_ref() const = 0;
     virtual const range& deferred_range_ref() const = 0;
 
-    virtual position statement_position() const override { return stmt_range_ref().start; }
-
-    deferred_statement()
-        : hlasm_statement(context::statement_kind::DEFERRED)
+    partial_statement()
+        : core_statement(context::statement_kind::PARTIAL)
     {}
 };
 
 // implementation of deferred statement
 // struct holding deferred semantic information (si) about whole instruction statement, whole logical line
-struct statement_si_deferred : public deferred_statement
+struct statement_si_deferred : public partial_statement
 {
     statement_si_deferred(
         range stmt_range, label_si label, instruction_si instruction, std::string deferred_field, range deferred_range)
@@ -74,22 +87,23 @@ struct statement_si_deferred : public deferred_statement
     std::string deferred_field;
     range deferred_range;
 
-    virtual const label_si& label_ref() const { return label; };
-    virtual const instruction_si& instruction_ref() const { return instruction; };
-    virtual const std::string& deferred_ref() const { return deferred_field; };
-    virtual const range& deferred_range_ref() const { return deferred_range; };
-    virtual const range& stmt_range_ref() const { return stmt_range; };
+    virtual const label_si& label_ref() const override { return label; };
+    virtual const instruction_si& instruction_ref() const override { return instruction; };
+    virtual const std::string& deferred_ref() const override { return deferred_field; };
+    virtual const range& deferred_range_ref() const override { return deferred_range; };
+    virtual const range& stmt_range_ref() const override { return stmt_range; };
 };
 
 // struct holding full semantic information (si) about whole instruction statement, whole logical line
 struct statement_si : public complete_statement
 {
-    statement_si(range stmt_range, label_si label, instruction_si instruction, operands_si operands, remarks_si remarks)
+    statement_si(range stmt_range, label_si label, instruction_si instruction, operands_si operands, remarks_si remarks, processing::processing_status status)
         : stmt_range(std::move(stmt_range))
         , label(std::move(label))
         , instruction(std::move(instruction))
         , operands(std::move(operands))
         , remarks(std::move(remarks))
+        , status(std::move(status))
     {}
 
     range stmt_range;
@@ -98,34 +112,43 @@ struct statement_si : public complete_statement
     instruction_si instruction;
     operands_si operands;
     remarks_si remarks;
+    processing::processing_status status;
 
-    virtual const label_si& label_ref() const { return label; }
-    virtual const instruction_si& instruction_ref() const { return instruction; }
-    virtual const operands_si& operands_ref() const { return operands; }
-    virtual const remarks_si& remarks_ref() const { return remarks; }
-    virtual const range& stmt_range_ref() const { return stmt_range; }
+    virtual const label_si& label_ref() const override { return label; }
+    virtual const instruction_si& instruction_ref() const override { return instruction; }
+    virtual const operands_si& operands_ref() const override { return operands; }
+    virtual const remarks_si& remarks_ref() const override { return remarks; }
+    virtual const range& stmt_range_ref() const override { return stmt_range; }
+    virtual const processing::op_code& opcode_ref() const override { return status.second; }
+    virtual processing::processing_format format_ref() const override { return status.first; }
 };
 
 // structure holding deferred statement that is now complete
 struct statement_si_defer_done : public complete_statement
 {
-    statement_si_defer_done(
-        std::shared_ptr<const statement_si_deferred> deferred_stmt, operands_si operands, remarks_si remarks)
+    statement_si_defer_done(std::shared_ptr<const partial_statement> deferred_stmt,
+        operands_si operands,
+        remarks_si remarks,
+        processing::processing_status status)
         : deferred_stmt(deferred_stmt)
         , operands(std::move(operands))
         , remarks(std::move(remarks))
+        , status(std::move(status))
     {}
 
-    std::shared_ptr<const statement_si_deferred> deferred_stmt;
+    std::shared_ptr<const partial_statement> deferred_stmt;
 
     operands_si operands;
     remarks_si remarks;
+    processing::processing_status status;
 
-    virtual const label_si& label_ref() const { return deferred_stmt->label; }
-    virtual const instruction_si& instruction_ref() const { return deferred_stmt->instruction; }
-    virtual const operands_si& operands_ref() const { return operands; }
-    virtual const remarks_si& remarks_ref() const { return remarks; }
-    virtual const range& stmt_range_ref() const { return deferred_stmt->stmt_range; }
+    virtual const label_si& label_ref() const override { return deferred_stmt->label_ref(); }
+    virtual const instruction_si& instruction_ref() const override { return deferred_stmt->instruction_ref(); }
+    virtual const operands_si& operands_ref() const override { return operands; }
+    virtual const remarks_si& remarks_ref() const override { return remarks; }
+    virtual const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
+    virtual const processing::op_code& opcode_ref() const override { return status.second; }
+    virtual processing::processing_format format_ref() const override { return status.first; }
 };
 
 } // namespace semantics

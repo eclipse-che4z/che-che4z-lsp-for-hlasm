@@ -213,7 +213,8 @@ void collector::append_operand_field(collector&& c)
 
 const instruction_si& collector::peek_instruction() { return **instr_; }
 
-std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint, range default_range)
+std::unique_ptr<core_statement> collector::extract_statement(
+    processing::processing_status status, range default_range)
 {
     if (!*lbl_)
         lbl_->emplace(default_range);
@@ -222,13 +223,15 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
     if (!rem_)
         rem_.emplace(default_range, remark_list {});
 
+    bool deferred_hint = status.first.form == processing::processing_form::DEFERRED;
+
     assert(!deferred_hint || !(op_ && !op_->value.empty()));
 
     if (deferred_hint)
     {
         if (!def_)
             def_.emplace("", instr_->value().field_range);
-        return statement_si_deferred(range_provider::union_range(lbl_->value().field_range, def_->second),
+        return std::make_unique<statement_si_deferred>(range_provider::union_range(lbl_->value().field_range, def_->second),
             std::move(**lbl_),
             std::move(**instr_),
             std::move(def_.value().first),
@@ -247,7 +250,8 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
         }
 
         range r = range_provider::union_range(lbl_->value().field_range, op_->field_range);
-        return statement_si(r, std::move(**lbl_), std::move(**instr_), std::move(*op_), std::move(*rem_));
+        return std::make_unique<statement_si>(
+            r, std::move(**lbl_), std::move(**instr_), std::move(*op_), std::move(*rem_), std::move(status));
     }
 }
 

@@ -17,6 +17,8 @@
 
 #include "context/hlasm_context.h"
 #include "semantics/range_provider.h"
+#include "semantics/statement_fields.h"
+#include "processing/op_code.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

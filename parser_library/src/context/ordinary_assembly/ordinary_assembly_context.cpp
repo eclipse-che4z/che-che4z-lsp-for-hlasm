@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <cassert>
 
 #include "alignment.h"
 

@@ -30,19 +30,19 @@ macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
 {
-    auto args = get_args(*stmt->access_resolved());
+    auto args = get_args(*stmt->access_complete());
 
     hlasm_ctx.enter_macro(
-        stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
+        stmt->access_complete()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
 
 void macro_processor::process(context::unique_stmt_ptr stmt)
 {
-    auto args = get_args(*stmt->access_resolved());
+    auto args = get_args(*stmt->access_complete());
 
     hlasm_ctx.enter_macro(
-        stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
+        stmt->access_complete()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
 bool is_data_def(char c)
@@ -178,7 +178,7 @@ context::macro_data_ptr macro_processor::string_to_macrodata(std::string data)
     return std::move(macro_data.top().front());
 }
 
-macro_arguments macro_processor::get_args(const resolved_statement& statement) const
+macro_arguments macro_processor::get_args(const semantics::complete_statement& statement) const
 {
     macro_arguments args;
 
@@ -189,7 +189,7 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
     return args;
 }
 
-context::macro_data_ptr macro_processor::get_label_args(const resolved_statement& statement) const
+context::macro_data_ptr macro_processor::get_label_args(const semantics::complete_statement& statement) const
 {
     switch (statement.label_ref().type)
     {
@@ -215,7 +215,7 @@ bool is_keyword(const semantics::concat_chain& chain, const context_manager& mng
         && mngr.try_get_symbol_name(chain[0]->access_str()->value).first;
 }
 
-std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved_statement& statement) const
+std::vector<context::macro_arg> macro_processor::get_operand_args(const semantics::complete_statement& statement) const
 {
     context_manager mngr(hlasm_ctx);
     std::vector<context::macro_arg> args;
@@ -254,7 +254,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
     return args;
 }
 
-void macro_processor::get_keyword_arg(const resolved_statement& statement,
+void macro_processor::get_keyword_arg(const semantics::complete_statement& statement,
     const semantics::concat_chain& chain,
     std::vector<context::macro_arg>& args,
     std::vector<context::id_index>& keyword_params,

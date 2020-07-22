@@ -35,7 +35,7 @@ protected:
     context::hlasm_context& hlasm_ctx;
     statement_fields_parser& parser;
 
-    void preprocess_deferred(statement_processor& processor, context::cached_statement_storage& cache);
+    void preprocess_deferred(statement_processor& processor, context::statement_cache& cache);
 };
 
 } // namespace processing

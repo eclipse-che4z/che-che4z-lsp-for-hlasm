@@ -15,7 +15,7 @@
 #ifndef CONTEXT_COPY_MEMBER_H
 #define CONTEXT_COPY_MEMBER_H
 
-#include "cached_statement.h"
+#include "statement_cache.h"
 #include "id_storage.h"
 #include "range.h"
 

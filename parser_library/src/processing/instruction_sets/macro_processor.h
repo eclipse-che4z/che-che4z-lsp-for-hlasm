@@ -51,11 +51,11 @@ public:
         const expressions::evaluation_context& eval_ctx);
 
 private:
-    macro_arguments get_args(const resolved_statement& statement) const;
-    context::macro_data_ptr get_label_args(const resolved_statement& statement) const;
-    std::vector<context::macro_arg> get_operand_args(const resolved_statement& statement) const;
+    macro_arguments get_args(const semantics::complete_statement& statement) const;
+    context::macro_data_ptr get_label_args(const semantics::complete_statement& statement) const;
+    std::vector<context::macro_arg> get_operand_args(const semantics::complete_statement& statement) const;
 
-    void get_keyword_arg(const resolved_statement& statement,
+    void get_keyword_arg(const semantics::complete_statement& statement,
         const semantics::concat_chain& chain,
         std::vector<context::macro_arg>& args,
         std::vector<context::id_index>& keyword_params,

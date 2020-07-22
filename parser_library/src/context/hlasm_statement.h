@@ -20,15 +20,12 @@
 
 #include "range.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
-struct resolved_statement;
-}
-namespace semantics {
-struct deferred_statement;
-}
-namespace context {
+namespace hlasm_plugin::parser_library::semantics {
+struct partial_statement;
+struct complete_statement;
+} // namespace hlasm_plugin::parser_library::semantics
+
+namespace hlasm_plugin::parser_library::context {
 
 struct hlasm_statement;
 
@@ -39,8 +36,8 @@ using statement_block = std::vector<shared_stmt_ptr>;
 
 enum class statement_kind
 {
-    RESOLVED,
-    DEFERRED
+    COMPLETE,
+    PARTIAL
 };
 
 // abstract structure representing general HLASM statement
@@ -48,11 +45,11 @@ struct hlasm_statement
 {
     const statement_kind kind;
 
-    const processing::resolved_statement* access_resolved() const;
-    processing::resolved_statement* access_resolved();
+    const semantics::complete_statement* access_complete() const;
+    semantics::complete_statement* access_complete();
 
-    const semantics::deferred_statement* access_deferred() const;
-    semantics::deferred_statement* access_deferred();
+    const semantics::partial_statement* access_partial() const;
+    semantics::partial_statement* access_partial();
 
     virtual position statement_position() const = 0;
 
@@ -63,8 +60,6 @@ protected:
 };
 
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

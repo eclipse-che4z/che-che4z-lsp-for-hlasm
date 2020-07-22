@@ -18,6 +18,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/evaluation_context.h"
+#include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
