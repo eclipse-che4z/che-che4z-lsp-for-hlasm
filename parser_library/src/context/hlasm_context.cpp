@@ -72,7 +72,7 @@ void hlasm_context::add_system_vars_to_scope()
             auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
 
             std::string value = std::to_string(SYSNDX_);
-            auto tmp_size = value.size();
+            int tmp_size = (int)value.size();
             for (int i = 0; i < 4 - tmp_size; ++i)
                 value.insert(value.begin(), '0');
 
