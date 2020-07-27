@@ -36,7 +36,7 @@ ordinary_assembly_context::ordinary_assembly_context(id_storage& storage)
     , symbol_dependencies(*this)
 {}
 
-bool ordinary_assembly_context::create_symbol(
+void ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
 {
     auto res = symbols_.try_emplace(name, name, value, attributes, std::move(symbol_location));
@@ -44,15 +44,8 @@ bool ordinary_assembly_context::create_symbol(
     if (!res.second)
         throw std::runtime_error("symbol name in use");
 
-    bool ok = true;
-
-    if (value.value_kind() == symbol_value_kind::RELOC)
-        ok = symbol_dependencies.check_loctr_cycle();
-
     if (value.value_kind() != symbol_value_kind::UNDEF)
         symbol_dependencies.add_defined();
-
-    return ok;
 }
 
 const symbol* ordinary_assembly_context::get_symbol(id_index name) const
@@ -199,14 +192,10 @@ bool ordinary_assembly_context::counter_defined(id_index name)
     return false;
 }
 
-// reserves storage area of specified length and alignment
-
 address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
 {
     return reserve_storage_area_space(length, align).first;
 }
-
-// aligns storage
 
 address ordinary_assembly_context::align(alignment align) { return reserve_storage_area(0, align); }
 

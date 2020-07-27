@@ -48,8 +48,8 @@ class dependency_adder;
 // class holding data about dependencies between symbols
 class symbol_dependency_tables
 {
-    // actual dependecies of symbol or space
-    std::unordered_map<dependant, const resolvable*> dependencies_;
+    std::unordered_map<dependant, const resolvable*> loctr_dependencies_;
+    std::unordered_map<dependant, const resolvable*> abs_dependencies_;
 
     // statements where dependencies are from
     std::unordered_map<dependant, statement_ref> dependency_source_stmts_;

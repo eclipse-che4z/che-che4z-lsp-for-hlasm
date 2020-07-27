@@ -37,9 +37,9 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
         auto top_dep = std::move(dependencies.back());
         dependencies.pop_back();
 
-        auto it = dependencies_.find(top_dep);
+        auto it = abs_dependencies_.find(top_dep);
 
-        if (it != dependencies_.end())
+        if (it != abs_dependencies_.end())
         {
             auto& [_, dep_src] = *it;
             for (auto&& dep : extract_dependencies(dep_src))
@@ -219,13 +219,22 @@ symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sy
 bool symbol_dependency_tables::add_dependency(
     dependant target, const resolvable* dependency_source, bool check_for_cycle)
 {
-    if (dependencies_.find(target) != dependencies_.end())
-        throw std::invalid_argument("symbol dependency already present");
+    if (std::holds_alternative<space>(target.value))
+    {
+        if (loctr_dependencies_.find(target) != loctr_dependencies_.end())
+            throw std::invalid_argument("symbol dependency already present");
+    }
+    else
+    {
+        if (abs_dependencies_.find(target) != abs_dependencies_.end())
+            throw std::invalid_argument("symbol dependency already present");
+    }
 
-    auto dependencies = extract_dependencies(dependency_source);
 
     if (check_for_cycle)
     {
+        auto dependencies = extract_dependencies(dependency_source);
+
         bool no_cycle = check_cycle(target, dependencies);
         if (!no_cycle)
         {
@@ -234,7 +243,16 @@ bool symbol_dependency_tables::add_dependency(
         }
     }
 
-    dependencies_.emplace(target, dependency_source);
+    
+    if (std::holds_alternative<space>(target.value))
+    {
+        loctr_dependencies_.emplace(target, dependency_source);
+    }
+    else
+    {
+        abs_dependencies_.emplace(target, dependency_source);
+    }
+
     return true;
 }
 

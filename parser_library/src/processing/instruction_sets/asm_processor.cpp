@@ -155,16 +155,13 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
             {
                 if (!holder.is_address())
                 {
-                    bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
+                    create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
 
-                    if (cycle_ok)
-                    {
-                        auto r = stmt.stmt_range_ref();
-                        add_dependency(r,
-                            symbol_name,
-                            &*expr_op->expression,
-                            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
-                    }
+                    auto r = stmt.stmt_range_ref();
+                    add_dependency(r,
+                        symbol_name,
+                        &*expr_op->expression,
+                        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
                 }
                 else
                     create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
@@ -184,7 +181,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     context::address adr = hlasm_ctx.ord_ctx.align(al);
 
     // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
-    bool has_depdendencies = false;
+    bool has_dependencies = false;
     // has_length_dependencies specifies whether the length of the data instruction can be resolved right now or must be
     // postponed
     bool has_length_dependencies = false;
@@ -196,7 +193,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         data_op->value->assign_location_counter(adr);
 
-        has_depdendencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
+        has_dependencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
 
         has_length_dependencies |= data_op->get_length_dependencies(hlasm_ctx.ord_ctx).contains_dependencies();
 
@@ -212,41 +209,32 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
-            if (!stmt.operands_ref().value.empty())
+            auto data_op = stmt.operands_ref().value.front()->access_data_def();
+
+            context::symbol_attributes::type_attr type =
+                ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
+
+            context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
+            context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
+
+            auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
+            auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+
+            if (!data_op->value->length
+                || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                auto data_op = stmt.operands_ref().value.front()->access_data_def();
-
-                context::symbol_attributes::type_attr type =
-                    ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
-                ;
-                context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
-                context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
-
-                auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-                auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
-
-                if (!data_op->value->length
-                    || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-                {
-                    len = value->get_length_attribute();
-                }
-                if (data_op->value->scale
-                    && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-                {
-                    scale = value->get_scale_attribute();
-                }
-                create_symbol(stmt.stmt_range_ref(),
-                    label,
-                    std::move(adr),
-                    context::symbol_attributes(
-                        context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
+                len = value->get_length_attribute();
             }
-            else
-                create_symbol(stmt.stmt_range_ref(),
-                    label,
-                    std::move(adr),
-                    context::symbol_attributes(
-                        context::symbol_origin::DAT, context::symbol_attributes::undef_type, 1, 0, 0));
+            if (data_op->value->scale
+                && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+            {
+                scale = value->get_scale_attribute();
+            }
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                std::move(adr),
+                context::symbol_attributes(
+                    context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -256,7 +244,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // hlasm_ctx.ord_ctx.current_section()->current_location_counter().
 
 
-    if (has_depdendencies)
+    if (has_dependencies)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
             std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()));

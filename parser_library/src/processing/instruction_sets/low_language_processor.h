@@ -55,7 +55,7 @@ protected:
     context::id_index find_label_symbol(const rebuilt_statement& stmt) const;
 
     // helper method to create symbol
-    bool create_symbol(range err_range,
+    void create_symbol(range err_range,
         context::id_index symbol_name,
         context::symbol_value value,
         context::symbol_attributes attributes);
