@@ -169,16 +169,16 @@ bool low_language_processor::check_address_for_ORG(range err_range,
 void low_language_processor::resolve_unknown_loctr(context::space_ptr sp, context::address addr, range err_range)
 {
     bool ok = true;
-    auto tmp_sect = hlasm_ctx.ord_ctx.current_section();
+    auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
-    hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
+    hlasm_ctx.ord_ctx.set_location_counter(sp->owner.name, location());
     hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
     if (!check_address_for_ORG(
             err_range, addr, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
     {
         (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-        hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
+        hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
         return;
     }
 
@@ -186,7 +186,7 @@ void low_language_processor::resolve_unknown_loctr(context::space_ptr sp, contex
         addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
 
     auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-    hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
+    hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
 
     context::space::resolve(sp, std::move(ret));
 
