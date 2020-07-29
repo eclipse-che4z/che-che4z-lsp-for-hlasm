@@ -155,13 +155,16 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
             {
                 if (!holder.is_address())
                 {
-                    create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
+                    bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
 
-                    auto r = stmt.stmt_range_ref();
-                    add_dependency(r,
-                        symbol_name,
-                        &*expr_op->expression,
-                        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+                    if (cycle_ok)
+                    {
+                        auto r = stmt.stmt_range_ref();
+                        add_dependency(r,
+                            symbol_name,
+                            &*expr_op->expression,
+                            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+                    }
                 }
                 else
                     create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);
@@ -279,10 +282,10 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         adder.add_dependency();
 
-        if (cycle_ok)
-            adder.finish();
-        else
+        if (!cycle_ok)
             add_diagnostic(diagnostic_op::error_E033(adder.source_stmt->operands_ref().value.front()->operand_range));
+
+        adder.finish();
     }
     else
     {
@@ -443,7 +446,6 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     }
     else
         hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);
-    ;
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)

@@ -26,9 +26,11 @@
 #include "dependant.h"
 #include "postponed_statement.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::processing {
+class low_language_processor;
+}
+
+namespace hlasm_plugin::parser_library::context {
 
 class ordinary_assembly_context;
 
@@ -62,7 +64,7 @@ class symbol_dependency_tables
 
     bool check_cycle(dependant target, std::vector<dependant> dependencies);
 
-    void resolve_dependant(dependant target, const resolvable* dep_src);
+    void resolve_dependant(dependant target, const resolvable* dep_src, processing::low_language_processor* resolver = nullptr);
     void resolve_dependant_default(dependant target);
     void resolve();
 
@@ -105,6 +107,7 @@ public:
 
     // registers that some symbol has been defined
     void add_defined();
+    void resolve_all(processing::low_language_processor* resolver);
 
     // checks for cycle in location counter value
     bool check_loctr_cycle();
@@ -148,7 +151,5 @@ public:
 };
 
 } // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
 
 #endif

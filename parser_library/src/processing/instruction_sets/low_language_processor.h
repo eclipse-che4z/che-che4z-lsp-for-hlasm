@@ -30,6 +30,8 @@ public:
         checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
 
+    void resolve_unknown_loctr(context::space_ptr sp, context::address addr, range err_range);
+
 protected:
     statement_fields_parser& parser;
 
@@ -55,7 +57,7 @@ protected:
     context::id_index find_label_symbol(const rebuilt_statement& stmt) const;
 
     // helper method to create symbol
-    void create_symbol(range err_range,
+    bool create_symbol(range err_range,
         context::id_index symbol_name,
         context::symbol_value value,
         context::symbol_attributes attributes);
@@ -67,12 +69,13 @@ protected:
         size_t boundary,
         int offset);
 
+
 private:
     using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
     preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
 
     // check for newly added loctr dependencies
-    void check_loctr_dependencies(range err_range);
+    //void check_loctr_dependencies(range err_range);
 
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
     // transform semantic operands to checking operands - machine mnemonics instructions

@@ -53,7 +53,8 @@ public:
     ordinary_assembly_context(id_storage& storage);
 
     // creates symbol
-    void create_symbol(
+    // returns false if loctr cycle has occured
+    [[nodiscard]] bool create_symbol(
         id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
 
     // gets symbol by name

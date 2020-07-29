@@ -59,13 +59,19 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
         return context::id_storage::empty_id;
 }
 
-void low_language_processor::create_symbol(
+bool low_language_processor::create_symbol(
     range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
 {
     auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
     sym_loc.pos.column = 0;
-    hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes), std::move(sym_loc));
+    bool ok = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes), std::move(sym_loc));
+
+    if (!ok)
+        add_diagnostic(diagnostic_op::error_E033(err_range));
+
+    return ok;
 }
+
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
 {
@@ -160,45 +166,40 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     return true;
 }
 
-void low_language_processor::check_loctr_dependencies(range err_range)
+void low_language_processor::resolve_unknown_loctr(context::space_ptr sp, context::address addr, range err_range)
 {
-    if (hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.empty())
-        return;
-
     bool ok = true;
     auto tmp_sect = hlasm_ctx.ord_ctx.current_section();
 
-    for (auto&& [sp, dep] : hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies)
+    hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
+    hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
+
+    if (!check_address_for_ORG(
+            err_range, addr, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
     {
-        hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
-        hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
-
-        if (!check_address_for_ORG(
-                err_range, dep, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
-        {
-            (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-            continue;
-        }
-
-        auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
-            dep, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
-        auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-        context::space::resolve(sp, std::move(ret));
-        ok &= hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp);
+        (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+        hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
+        return;
     }
+
+    auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
+        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
+
+    auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
     hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
-    hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.clear();
-    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined();
-    if (!ok)
+
+    context::space::resolve(sp, std::move(ret));
+
+    if (!hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp))
         add_diagnostic(diagnostic_op::error_E033(err_range));
 
-    ok = true;
     for (auto& sect : hlasm_ctx.ord_ctx.sections())
         for (auto& loctr : sect->location_counters())
-            ok &= loctr->check_underflow();
-
-    if (!ok)
-        add_diagnostic(diagnostic_op::error_E068(err_range));
+            if (!loctr->check_underflow())
+            {
+                add_diagnostic(diagnostic_op::error_E068(err_range));
+                return;
+            }
 }
 
 

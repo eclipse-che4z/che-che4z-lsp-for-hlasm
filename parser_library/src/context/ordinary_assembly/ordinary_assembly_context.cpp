@@ -19,8 +19,7 @@
 
 #include "alignment.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 void ordinary_assembly_context::create_private_section()
 {
@@ -36,7 +35,7 @@ ordinary_assembly_context::ordinary_assembly_context(id_storage& storage)
     , symbol_dependencies(*this)
 {}
 
-void ordinary_assembly_context::create_symbol(
+bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
 {
     auto res = symbols_.try_emplace(name, name, value, attributes, std::move(symbol_location));
@@ -44,8 +43,15 @@ void ordinary_assembly_context::create_symbol(
     if (!res.second)
         throw std::runtime_error("symbol name in use");
 
+    bool ok = true;
+
+    if (value.value_kind() == symbol_value_kind::RELOC)
+        ok = symbol_dependencies.check_loctr_cycle();
+
     if (value.value_kind() != symbol_value_kind::UNDEF)
         symbol_dependencies.add_defined();
+
+    return ok;
 }
 
 const symbol* ordinary_assembly_context::get_symbol(id_index name) const
@@ -221,7 +227,7 @@ void ordinary_assembly_context::finish_module_layout()
                     return;
 
                 sect->location_counters()[i]->finish_layout(sect->location_counters()[i - 1]->storage());
-                symbol_dependencies.add_defined();
+                symbol_dependencies.resolve_all(nullptr);
             }
         }
     }
@@ -245,3 +251,5 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
     }
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);
 }
+
+} // namespace hlasm_plugin::parser_library::context

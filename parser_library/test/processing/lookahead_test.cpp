@@ -204,9 +204,8 @@ TEST(attribute_lookahead, lookup_not_triggered)
     auto& expr = a.parser().expr()->ca_expr;
 
     // define symbol with undefined length
-    auto tmp = a.context().ord_ctx.create_symbol(
+    a.context().ord_ctx.create_symbol(
         a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
-    ASSERT_TRUE(tmp);
 
     // although length is undefined the actual symbol is defined so no lookup should happen
     EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)0);
