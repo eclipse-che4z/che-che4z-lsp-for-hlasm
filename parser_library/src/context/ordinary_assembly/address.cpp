@@ -277,8 +277,8 @@ std::vector<T> merge_entries(const std::vector<T>& lhs, const std::vector<T>& rh
 address address::operator+(const address& addr) const
 {
     return address(merge_entries(bases_, addr.bases_, op::ADD),
-        offset_ + addr.offset_,
-        merge_entries(spaces_, addr.spaces_, op::ADD));
+        offset() + addr.offset(),
+        merge_entries(normalized_spaces(), addr.normalized_spaces(), op::ADD));
 }
 
 address address::operator+(int offs) const { return address(bases_, offset_ + offs, spaces_); }
@@ -286,8 +286,8 @@ address address::operator+(int offs) const { return address(bases_, offset_ + of
 address address::operator-(const address& addr) const
 {
     return address(merge_entries(bases_, addr.bases_, op::SUB),
-        offset_ - addr.offset_,
-        merge_entries(spaces_, addr.spaces_, op::SUB));
+        offset() - addr.offset(),
+        merge_entries(normalized_spaces(), addr.normalized_spaces(), op::SUB));
 }
 
 address address::operator-(int offs) const { return address(bases_, offset_ - offs, spaces_); }
@@ -334,7 +334,7 @@ bool address::has_dependant_space() const
 {
     for (size_t i = 0; i < spaces_.size(); i++)
     {
-        if (i == 0 && spaces_[i].first->kind != space_kind::LOCTR_BEGIN)
+        if (i == 0 && spaces_[i].first->kind == space_kind::LOCTR_BEGIN)
             continue;
         if (has_dependant_spaces(spaces_[i].first))
             return true;
