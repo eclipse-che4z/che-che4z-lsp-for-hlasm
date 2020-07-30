@@ -75,8 +75,6 @@ bool low_language_processor::create_symbol(
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
 {
-    context_manager mngr(hlasm_ctx);
-
     std::optional<semantics::label_si> label;
     std::optional<semantics::operands_si> operands;
 
@@ -139,8 +137,6 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         }
     }
 
-    collect_diags_from_child(mngr);
-
     return std::make_pair(std::move(label), std::move(operands));
 }
 
@@ -150,9 +146,9 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     size_t boundary,
     int offset)
 {
-    int al = boundary ? (int)((boundary - (addr_to_check.offset % boundary)) % boundary) : 0;
+    int al = boundary ? (int)((boundary - (addr_to_check.offset() % boundary)) % boundary) : 0;
 
-    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset + al + offset < 0;
+    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset() + al + offset < 0;
     if (!curr_addr.in_same_loctr(addr_to_check) || underflow)
     {
         add_diagnostic(diagnostic_op::error_E068(err_range));
@@ -168,7 +164,6 @@ bool low_language_processor::check_address_for_ORG(range err_range,
 
 void low_language_processor::resolve_unknown_loctr(context::space_ptr sp, context::address addr, range err_range)
 {
-    bool ok = true;
     auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
     hlasm_ctx.ord_ctx.set_location_counter(sp->owner.name, location());

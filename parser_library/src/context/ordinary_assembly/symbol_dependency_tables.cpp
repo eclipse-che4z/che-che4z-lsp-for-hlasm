@@ -73,7 +73,7 @@ void symbol_dependency_tables::resolve_dependant(
         if (sp->kind == space_kind::ORDINARY || sp->kind == space_kind::LOCTR_MAX || sp->kind == space_kind::LOCTR_SET)
             length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
         else if (sp->kind == space_kind::ALIGNMENT)
-            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset : 0;
+            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
 
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
             resolver->resolve_unknown_loctr(sp, val.get_reloc(), dependency_source_stmts_.find(sp)->second.stmt_ref->get()->stmt_range_ref());
@@ -222,7 +222,7 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const reso
         ret.push_back(attr_ref { attr_r.first, attr_r.second });
 
     if (deps.unresolved_address)
-        for (auto& [space_id, count] : deps.unresolved_address->spaces)
+        for (auto& [space_id, count] : deps.unresolved_address->normalized_spaces())
         {
             assert(count != 0);
             ret.push_back(space_id);

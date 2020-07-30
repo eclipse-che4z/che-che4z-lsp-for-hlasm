@@ -25,23 +25,26 @@ address_resolver::address_resolver(address dependency_address_)
     cached_deps_.unresolved_address = extract_dep_address(dependency_address);
 }
 
-dependency_collector address_resolver::get_dependencies(dependency_solver&) const { return cached_deps_; }
+dependency_collector address_resolver::get_dependencies(dependency_solver&) const
+{
+    return extract_dep_address(dependency_address);
+}
 
 symbol_value address_resolver::resolve(dependency_solver&) const
 {
-    if (!dependency_address.bases.empty())
+    if (!dependency_address.bases().empty())
         return dependency_address;
     else
-        return dependency_address.offset;
+        return dependency_address.offset();
 }
 
 address address_resolver::extract_dep_address(const address& addr)
 {
     address tmp(address::base {}, 0, {});
-    for (auto it = addr.spaces.rbegin(); it != addr.spaces.rend(); ++it)
+    auto spaces = addr.normalized_spaces();
+    for (auto it = spaces.rbegin(); it != spaces.rend(); ++it)
     {
-        tmp.spaces.push_back(*it);
-        it->first->add_listener(&tmp);
+        tmp.spaces().push_back(*it);
         if (it->first->kind == space_kind::ALIGNMENT || it->first->kind == space_kind::LOCTR_SET
             || it->first->kind == space_kind::LOCTR_MAX)
             break;
@@ -61,8 +64,8 @@ symbol_value alignable_address_resolver::resolve(dependency_solver&) const { ret
 
 symbol_value alignable_address_resolver::resolve(const address& addr) const
 {
-    auto al = boundary ? (boundary - addr.offset % boundary) % boundary : 0;
-    return addr.offset + al + offset;
+    auto al = boundary ? (boundary - addr.offset() % boundary) % boundary : 0;
+    return addr.offset() + al + offset;
 }
 
 alignable_address_resolver::alignable_address_resolver(
@@ -100,9 +103,9 @@ symbol_value aggregate_address_resolver::resolve(dependency_solver&) const
     size_t idx = 0;
     for (size_t i = 0; i < base_addrs.size(); ++i)
     {
-        if (base_addrs[i].offset > max)
+        if (base_addrs[i].offset() > max)
         {
-            max = base_addrs[i].offset;
+            max = base_addrs[i].offset();
             idx = i;
         }
     }

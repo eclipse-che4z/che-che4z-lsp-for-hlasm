@@ -80,11 +80,11 @@ bool location_counter::need_space_alignment(alignment align) const { return curr
 
 space_ptr location_counter::set_value(const address& addr, size_t boundary, int offset, bool has_undefined_part)
 {
-    int al = boundary ? (int)((boundary - (addr.offset % boundary)) % boundary) : 0;
+    int al = boundary ? (int)((boundary - (addr.offset() % boundary)) % boundary) : 0;
 
     auto curr_addr = current_address();
 
-    if (!addr.in_same_loctr(curr_addr) || (!addr.has_dependant_space() && addr.offset + al + offset < 0))
+    if (!addr.in_same_loctr(curr_addr) || (!addr.has_dependant_space() && addr.offset() + al + offset < 0))
         throw std::runtime_error("set incompatible loctr value");
 
     if (has_undefined_part)
@@ -93,15 +93,15 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
         return register_space(context::no_align, std::move(curr_addr), boundary, offset);
     }
 
-    if (curr_addr.spaces != addr.spaces || (int)curr_data().storage - addr.offset > curr_data().current_safe_area
-        || (boundary && (int)curr_data().storage - addr.offset > curr_data().current_safe_area + offset))
+    if (curr_addr.spaces() != addr.spaces() || (int)curr_data().storage - addr.offset() > curr_data().current_safe_area
+        || (boundary && (int)curr_data().storage - addr.offset() > curr_data().current_safe_area + offset))
     {
         org_data_.emplace_back();
         return register_space(context::no_align, space_kind::LOCTR_SET);
     }
     else
     {
-        int diff = addr.offset - curr_data().storage;
+        int diff = addr.offset() - curr_data().storage;
         if (diff < 0 && curr_data().kind == loctr_data_kind::POTENTIAL_MAX)
         {
             org_data_.emplace_back(curr_data());
@@ -131,15 +131,12 @@ std::pair<space_ptr, std::vector<address>> location_counter::set_available_value
     space_ptr loctr_start = nullptr;
     if (kind == loctr_kind::NONSTARTING)
     {
-        loctr_start = addr_arr.front().spaces.front().first;
+        loctr_start = addr_arr.front().spaces().front().first;
         assert(loctr_start->kind == space_kind::LOCTR_BEGIN);
         for (auto& addr : addr_arr)
         {
-            if (addr.spaces.front().first->kind == space_kind::LOCTR_BEGIN)
-            {
-                addr.spaces.front().first->remove_listener(&addr);
-                addr.spaces.erase(addr.spaces.begin());
-            }
+            if (addr.spaces().front().first->kind == space_kind::LOCTR_BEGIN)
+                addr.spaces().erase(addr.spaces().begin());
         }
     }
 

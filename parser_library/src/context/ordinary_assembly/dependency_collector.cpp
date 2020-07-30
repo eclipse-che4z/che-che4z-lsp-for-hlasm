@@ -55,13 +55,13 @@ dependency_collector& dependency_collector::operator/(const dependency_collector
 
 bool dependency_collector::is_address() const
 {
-    return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases.empty();
+    return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases().empty();
 }
 
 bool dependency_collector::contains_dependencies() const
 {
     return !undefined_symbols.empty() || !undefined_attr_refs.empty()
-        || (unresolved_address && !unresolved_address->spaces.empty());
+        || (unresolved_address && !unresolved_address->normalized_spaces().empty());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)
@@ -120,13 +120,10 @@ dependency_collector& dependency_collector::div_mul(const dependency_collector& 
 
 void dependency_collector::adjust_address(address& addr)
 {
-    auto known_spaces = std::partition(addr.spaces.begin(), addr.spaces.end(), [](auto& entry) {
+    auto known_spaces = std::partition(addr.spaces().begin(), addr.spaces().end(), [](auto& entry) {
         return entry.first->kind == context::space_kind::LOCTR_UNKNOWN;
     });
-    if (known_spaces != addr.spaces.begin())
-    {
-        std::for_each(
-            known_spaces, addr.spaces.end(), [&addr](auto& entry) { return entry.first->remove_listener(&addr); });
-        addr.spaces.erase(known_spaces, addr.spaces.end());
-    }
+
+    if (known_spaces != addr.spaces().begin())
+        addr.spaces().erase(known_spaces, addr.spaces().end());
 }

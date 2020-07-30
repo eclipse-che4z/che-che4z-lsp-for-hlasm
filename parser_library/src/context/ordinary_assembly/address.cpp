@@ -22,13 +22,14 @@
 #include "location_counter.h"
 #include "section.h"
 
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 space::space(location_counter& owner, alignment align, space_kind kind)
     : kind(kind)
     , align(std::move(align))
     , previous_loctr_value(address::base {}, 0, {})
     , owner(owner)
+    , resolved_length(0)
     , resolved_(false)
 {}
 
@@ -39,6 +40,7 @@ space::space(location_counter& owner, alignment align, address previous_loctr_va
     , previous_boundary(boundary)
     , previous_offset(offset)
     , owner(owner)
+    , resolved_length(0)
     , resolved_(false)
 {}
 
@@ -56,19 +58,9 @@ void space::resolve(space_ptr this_space, int length)
             length = 0;
     }
 
+    this_space->resolved_length = length;
+
     this_space->owner.resolve_space(this_space, length);
-
-    for (auto& listener : this_space->listeners_)
-    {
-        auto l_tmp = std::find_if(
-            listener->spaces.begin(), listener->spaces.end(), [&](auto s) { return s.first == this_space; });
-
-        assert(l_tmp != listener->spaces.end());
-
-        listener->offset += length;
-
-        listener->spaces.erase(l_tmp);
-    }
 
     this_space->resolved_ = true;
 }
@@ -80,17 +72,8 @@ void space::resolve(space_ptr this_space, space_ptr value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    for (int i = (int)this_space->listeners_.size() - 1; i >= 0; --i)
-    {
-        auto listener = this_space->listeners_[i];
-        assert(listener->spaces.front().first == this_space);
+    this_space->resolved_ptrs.push_back(address::space_entry(value, 1));
 
-        listener->spaces.front().first->remove_listener(listener);
-        listener->spaces.front().first = value;
-        value->add_listener(listener);
-    }
-
-    this_space->listeners_.clear();
     this_space->resolved_ = true;
 }
 
@@ -101,27 +84,10 @@ void space::resolve(space_ptr this_space, address value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    for (int i = (int)this_space->listeners_.size() - 1; i >= 0; --i)
-    {
-        auto listener = this_space->listeners_[i];
-        assert(listener->spaces.front().first == this_space);
+    this_space->resolved_ptrs = std::move(value.spaces());
 
-        assert(listener->bases.size() == value.bases.size());
-        listener->offset += value.offset;
-        listener->spaces.erase(listener->spaces.begin());
-        auto spaces = value.spaces;
-        for (auto&& space : listener->spaces)
-            spaces.push_back(std::move(space));
-        listener->spaces = spaces;
-        for (auto&& sp : value.spaces)
-            sp.first->add_listener(listener);
-    }
+    this_space->resolved_length = value.offset();
 
-    for (auto& sp : value.spaces)
-        sp.first->remove_listener(&value);
-    value.spaces.clear();
-
-    this_space->listeners_.clear();
     this_space->resolved_ = true;
 }
 
@@ -133,26 +99,12 @@ void space::resolve(space_ptr this_space, std::variant<space_ptr, address> value
         resolve(std::move(this_space), std::move(std::get<address>(value)));
 }
 
-void space::add_listener(address* addr)
-{
-    assert(!resolved_);
-    assert(std::find(listeners_.begin(), listeners_.end(), addr) == listeners_.end());
-    assert(std::find_if(addr->spaces.begin(), addr->spaces.end(), [=](auto& sp) { return &*sp.first == this; })
-        != addr->spaces.end());
-    listeners_.push_back(addr);
-}
-
-void space::remove_listener(address* addr)
-{
-    auto it = std::find(listeners_.begin(), listeners_.end(), addr);
-    assert(it != listeners_.end());
-    listeners_.erase(it);
-}
+bool space::resolved() const { return resolved_; }
 
 std::string address::to_string() const
 {
     std::stringstream ss;
-    for (const auto& b : bases)
+    for (const auto& b : bases_)
     {
         if (*b.first.owner->name == "" || b.second == 0)
             continue;
@@ -160,73 +112,102 @@ std::string address::to_string() const
             ss << b.second << "*";
         ss << *b.first.owner->name << " + ";
     }
-    ss << std::to_string(offset);
+    ss << std::to_string(offset());
     return ss.str();
 }
 
-address::address(base address_base, int offset, const space_storage& spaces)
-    : offset(offset)
+const std::vector<address::base_entry>& address::bases() const { return bases_; }
+
+std::vector<address::base_entry>& address::bases() { return bases_; }
+
+int get_space_offset(space_ptr sp)
 {
-    bases.emplace_back(address_base, 1);
+    int offset = 0;
+    if (sp->resolved())
+    {
+        offset += sp->resolved_length;
+        for (const auto& s : sp->resolved_ptrs)
+            offset += get_space_offset(s.first);
+    }
+    return offset;
+}
+
+int address::offset()
+{
+    int offs = offset_;
+    for (const auto& s : spaces_)
+        offs += get_space_offset(s.first);
+    return offs;
+}
+
+int address::offset() const
+{
+    int offs = offset_;
+    for (const auto& s : spaces_)
+        offs += get_space_offset(s.first);
+    return offs;
+}
+
+std::vector<address::space_entry>& address::spaces()
+{
+    // refresh();
+    return spaces_;
+}
+
+std::pair<int, std::vector<address::space_entry>> get_unresolved_spaces(const address::space_entry& sp)
+{
+    int offset = 0;
+    std::vector<address::space_entry> spaces;
+    if (sp.first->resolved())
+    {
+        offset += sp.first->resolved_length;
+        for (const auto& s : sp.first->resolved_ptrs)
+        {
+            auto [new_offs, new_spaces] = get_unresolved_spaces(s);
+            offset += new_offs;
+            spaces.insert(spaces.end(), new_spaces.begin(), new_spaces.end());
+        }
+    }
+    else
+        spaces.push_back(sp);
+
+    return std::make_pair(offset, std::move(spaces));
+}
+
+const std::vector<address::space_entry>& address::spaces() const
+{
+    /*
+    std::vector<space_entry> res_spaces;
+    for (const auto& sp : spaces_)
+    {
+        auto [_, spcs] = get_unresolved_spaces(sp);
+        res_spaces.insert(res_spaces.end(), spcs.begin(), spcs.end());
+    }
+    return res_spaces;*/
+    return spaces_;
+}
+
+std::vector<address::space_entry> address::normalized_spaces() const
+{
+    std::vector<space_entry> res_spaces;
+    for (const auto& sp : spaces_)
+    {
+        auto [_, spcs] = get_unresolved_spaces(sp);
+        res_spaces.insert(res_spaces.end(), spcs.begin(), spcs.end());
+    }
+    return res_spaces;
+}
+
+address::address(base address_base, int offset, const space_storage& spaces)
+    : offset_(offset)
+{
+    bases_.emplace_back(address_base, 1);
 
     for (auto& space : spaces)
     {
-        this->spaces.emplace_back(space, 1);
-        space->add_listener(this);
+        spaces_.emplace_back(space, 1);
     }
-}
-
-address::address(const address& addr)
-    : address(addr.bases, addr.offset, addr.spaces)
-{}
-
-address& address::operator=(const address& addr)
-{
-    for (auto& [sp, count] : spaces)
-        sp->remove_listener(this);
-
-    bases = addr.bases;
-    offset = addr.offset;
-    spaces = addr.spaces;
-
-    for (auto& [sp, count] : spaces)
-        sp->add_listener(this);
-
-    return *this;
-}
-
-address::address(address&& addr)
-    : bases(std::move(addr.bases))
-    , offset(addr.offset)
-    , spaces(std::move(addr.spaces))
-{
-    for (auto& [sp, count] : spaces)
-    {
-        sp->add_listener(this);
-        sp->remove_listener(&addr);
-    }
-
-    addr.spaces = {};
-}
-
-address& address::operator=(address&& addr)
-{
-    for (auto& [sp, count] : spaces)
-        sp->remove_listener(this);
-
-    bases = std::move(addr.bases);
-    offset = std::move(addr.offset);
-    spaces = std::move(addr.spaces);
-
-    for (auto& [sp, count] : spaces)
-    {
-        sp->add_listener(this);
-        sp->remove_listener(&addr);
-    }
-
-    addr.spaces = {};
-
-    return *this;
+    refresh();
 }
 
 enum class op
@@ -295,75 +276,90 @@ std::vector<T> merge_entries(const std::vector<T>& lhs, const std::vector<T>& rh
 
 address address::operator+(const address& addr) const
 {
-    return address(
-        merge_entries(bases, addr.bases, op::ADD), offset + addr.offset, merge_entries(spaces, addr.spaces, op::ADD));
+    return address(merge_entries(bases_, addr.bases_, op::ADD),
+        offset_ + addr.offset_,
+        merge_entries(spaces_, addr.spaces_, op::ADD));
 }
 
-address address::operator+(int offs) const { return address(bases, offset + offs, spaces); }
+address address::operator+(int offs) const { return address(bases_, offset_ + offs, spaces_); }
 
 address address::operator-(const address& addr) const
 {
-    return address(
-        merge_entries(bases, addr.bases, op::SUB), offset - addr.offset, merge_entries(spaces, addr.spaces, op::SUB));
+    return address(merge_entries(bases_, addr.bases_, op::SUB),
+        offset_ - addr.offset_,
+        merge_entries(spaces_, addr.spaces_, op::SUB));
 }
 
-address address::operator-(int offs) const { return address(bases, offset - offs, spaces); }
+address address::operator-(int offs) const { return address(bases_, offset_ - offs, spaces_); }
 
 address address::operator-() const
 {
-    return address(merge_entries({}, bases, op::SUB), -offset, merge_entries({}, spaces, op::SUB));
+    return address(merge_entries({}, bases_, op::SUB), -offset_, merge_entries({}, spaces_, op::SUB));
 }
 
-bool address::is_complex() const { return bases.size() > 1; }
+bool address::is_complex() const { return bases_.size() > 1; }
 
 bool address::in_same_loctr(const address& addr) const
 {
     if (!is_simple() || !addr.is_simple())
         return false;
 
-    if (addr.bases[0].first.owner != bases[0].first.owner)
+    if (addr.bases_[0].first.owner != bases_[0].first.owner)
         return false;
 
-    int counter = (addr.spaces.size() && addr.spaces[0].first->kind == space_kind::LOCTR_BEGIN)
-        + (spaces.size() && spaces[0].first->kind == space_kind::LOCTR_BEGIN);
+    int counter = (addr.spaces_.size() && addr.spaces_[0].first->kind == space_kind::LOCTR_BEGIN)
+        + (spaces_.size() && spaces_[0].first->kind == space_kind::LOCTR_BEGIN);
 
     if (counter == 2)
-        return addr.spaces[0].first == spaces[0].first;
+        return addr.spaces_[0].first == spaces_[0].first;
     else if (counter == 0)
         return true;
     else
         return false;
 }
 
-bool address::is_simple() const { return bases.size() == 1 && bases[0].second == 1; }
+bool address::is_simple() const { return bases_.size() == 1 && bases_[0].second == 1; }
+
+bool has_dependant_spaces(const space_ptr sp)
+{
+    if (!sp->resolved())
+        return true;
+    for (const auto& [s, _] : sp->resolved_ptrs)
+        if (has_dependant_spaces(s))
+            return true;
+    return false;
+}
 
 bool address::has_dependant_space() const
 {
-    switch (spaces.size())
+    for (size_t i = 0; i < spaces_.size(); i++)
     {
-        case 0:
-            return false;
-        case 1:
-            return spaces.front().first->kind != space_kind::LOCTR_BEGIN;
-        default:
+        if (i == 0 && spaces_[i].first->kind != space_kind::LOCTR_BEGIN)
+            continue;
+        if (has_dependant_spaces(spaces_[i].first))
             return true;
     }
-}
-
-address::~address()
-{
-    for (auto& [sp, count] : spaces)
-        sp->remove_listener(this);
+    return false;
 }
 
 address::address(std::vector<base_entry> bases_, int offset_, std::vector<space_entry> spaces_)
-    : bases(std::move(bases_))
-    , offset(offset_)
-    , spaces(std::move(spaces_))
+    : bases_(std::move(bases_))
+    , offset_(offset_)
+    , spaces_(std::move(spaces_))
 {
-    for (auto& [sp, count] : spaces)
-    {
-        assert(count != 0);
-        sp->add_listener(this);
-    }
+    refresh();
 }
+
+void address::refresh()
+{
+    std::vector<space_entry> tmp_spaces;
+    for (const auto& sp : spaces_)
+    {
+        auto [off, spcs] = get_unresolved_spaces(sp);
+        offset_ += off;
+        tmp_spaces.insert(tmp_spaces.end(), spcs.begin(), spcs.end());
+    }
+    spaces_ = std::move(tmp_spaces);
+}
+
+} // namespace hlasm_plugin::parser_library::context
