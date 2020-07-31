@@ -61,7 +61,7 @@ bool dependency_collector::is_address() const
 bool dependency_collector::contains_dependencies() const
 {
     return !undefined_symbols.empty() || !undefined_attr_refs.empty()
-        || (unresolved_address && !unresolved_address->normalized_spaces().empty());
+        || (unresolved_address && unresolved_address->has_unresolved_space());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)

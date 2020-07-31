@@ -84,11 +84,12 @@ public:
     bool in_same_loctr(const address& addr) const;
     bool is_simple() const;
     bool has_dependant_space() const;
+    bool has_unresolved_space() const;
+
+    void normalize();
 
 private:
     address(std::vector<base_entry> bases, int offset, std::vector<space_entry> spaces);
-
-    void refresh();
 };
 
 enum class space_kind
