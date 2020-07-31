@@ -24,17 +24,12 @@
 #include "address_resolver.h"
 #include "dependable.h"
 #include "dependant.h"
+#include "loctr_dependency_resolver.h"
 #include "postponed_statement.h"
-
-namespace hlasm_plugin::parser_library::processing {
-class low_language_processor;
-}
 
 namespace hlasm_plugin::parser_library::context {
 
 class ordinary_assembly_context;
-
-using redefined_t = std::pair<space_ptr, address>;
 
 // helper structure to count dependencies of a statement
 struct statement_ref
@@ -50,8 +45,8 @@ class dependency_adder;
 // class holding data about dependencies between symbols
 class symbol_dependency_tables
 {
-    std::unordered_map<dependant, const resolvable*> loctr_dependencies_;
-    std::unordered_map<dependant, const resolvable*> abs_dependencies_;
+    // actual dependecies of symbol or space
+    std::unordered_map<dependant, const resolvable*> dependencies_;
 
     // statements where dependencies are from
     std::unordered_map<dependant, statement_ref> dependency_source_stmts_;
@@ -64,9 +59,9 @@ class symbol_dependency_tables
 
     bool check_cycle(dependant target, std::vector<dependant> dependencies);
 
-    void resolve_dependant(dependant target, const resolvable* dep_src, processing::low_language_processor* resolver = nullptr);
+    void resolve_dependant(dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver);
     void resolve_dependant_default(dependant target);
-    void resolve();
+    void resolve(loctr_dependency_resolver* resolver);
 
     std::vector<dependant> extract_dependencies(const resolvable* dependency_source);
     std::vector<dependant> extract_dependencies(const std::vector<const resolvable*>& dependency_sources);
@@ -76,9 +71,6 @@ class symbol_dependency_tables
     bool add_dependency(dependant target, const resolvable* dependency_source, bool check_cycle);
 
 public:
-    // newly defined loctr values
-    std::vector<redefined_t> loctr_dependencies;
-
     symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
 
     // add symbol dependency on statement
@@ -106,8 +98,8 @@ public:
     dependency_adder add_dependencies(post_stmt_ptr dependency_source_stmt);
 
     // registers that some symbol has been defined
-    void add_defined();
-    void resolve_all(processing::low_language_processor* resolver);
+    // if resolver is present, location counter dependencies are checked as well (not just symbol deps)
+    void add_defined(loctr_dependency_resolver* resolver = nullptr);
 
     // checks for cycle in location counter value
     bool check_loctr_cycle();
@@ -115,7 +107,7 @@ public:
     // collect all postponed statements either if they still contain dependent objects
     std::vector<post_stmt_ptr> collect_postponed();
 
-    //assign default values to all unresoved dependants
+    // assign default values to all unresoved dependants
     void resolve_all_as_default();
 
     friend dependency_adder;
@@ -150,6 +142,6 @@ public:
     void finish();
 };
 
-} // namespace context
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

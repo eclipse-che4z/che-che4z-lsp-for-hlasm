@@ -23,6 +23,7 @@
 #include "section.h"
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
+#include "loctr_dependency_resolver.h"
 
 
 namespace hlasm_plugin {
@@ -102,7 +103,7 @@ public:
     space_ptr register_ordinary_space(alignment align);
 
     // creates layout of every section
-    void finish_module_layout();
+    void finish_module_layout(loctr_dependency_resolver* resolver);
 
     const std::unordered_map<id_index, symbol>& get_all_symbols();
 
