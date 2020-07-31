@@ -166,7 +166,8 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     return true;
 }
 
-void low_language_processor::resolve_unknown_loctr(context::space_ptr sp, context::address addr, range err_range)
+void low_language_processor::resolve_unknown_loctr_dependency(
+    context::space_ptr sp, context::address addr, range err_range)
 {
     bool ok = true;
     auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();

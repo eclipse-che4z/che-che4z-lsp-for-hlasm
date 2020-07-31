@@ -40,9 +40,7 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
 
         const resolvable* dep_src = nullptr;
 
-        if (auto it = abs_dependencies_.find(top_dep); it != abs_dependencies_.end())
-            dep_src = it->second;
-        else if (auto it = loctr_dependencies_.find(top_dep); it != loctr_dependencies_.end())
+        if (auto it = dependencies_.find(top_dep); it != dependencies_.end())
             dep_src = it->second;
         else
             continue;
@@ -62,7 +60,7 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
 }
 
 void symbol_dependency_tables::resolve_dependant(
-    dependant target, const resolvable* dep_src, processing::low_language_processor* resolver)
+    dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver)
 {
     symbol_value val = dep_src->resolve(sym_ctx_);
 
@@ -76,7 +74,8 @@ void symbol_dependency_tables::resolve_dependant(
             length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset : 0;
 
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
-            resolver->resolve_unknown_loctr(sp, val.get_reloc(), dependency_source_stmts_.find(sp)->second.stmt_ref->get()->stmt_range_ref());
+            resolver->resolve_unknown_loctr_dependency(
+                sp, val.get_reloc(), dependency_source_stmts_.find(sp)->second.stmt_ref->get()->stmt_range_ref());
         else
             space::resolve(sp, length);
     }
@@ -128,7 +127,7 @@ void symbol_dependency_tables::resolve_dependant_default(dependant target)
     }
 }
 
-void symbol_dependency_tables::resolve()
+void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
 {
     bool defined = true;
     std::vector<dependant> to_delete;
@@ -136,13 +135,17 @@ void symbol_dependency_tables::resolve()
     while (defined)
     {
         defined = false;
-        for (auto& [target, dep_src] : abs_dependencies_)
+        for (auto& [target, dep_src] : dependencies_)
         {
+            // resolve only symbol dependencies when resolver is not present
+            if (resolver == nullptr && target.kind() == dependant_kind::SPACE)
+                continue;
+
             if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
             {
                 to_delete.push_back(target);
 
-                resolve_dependant(target, dep_src); // resolve target
+                resolve_dependant(target, dep_src, resolver); // resolve target
 
                 defined = true; // another defined target => iterate again
             }
@@ -150,59 +153,11 @@ void symbol_dependency_tables::resolve()
 
         for (auto del : to_delete)
         {
-            abs_dependencies_.erase(del);
+            dependencies_.erase(del);
             try_erase_source_statement(del);
         }
 
         to_delete.clear();
-    }
-}
-
-void symbol_dependency_tables::resolve_all(processing::low_language_processor* resolver)
-{
-    bool defined = true;
-    std::vector<dependant> to_delete_abs, to_delete_loctr;
-
-    while (defined)
-    {
-        defined = false;
-        for (auto& [target, dep_src] : abs_dependencies_)
-        {
-            if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
-            {
-                to_delete_abs.push_back(target);
-
-                resolve_dependant(target, dep_src, resolver); // resolve target
-
-                defined = true; // another defined target => iterate again
-            }
-        }
-
-        for (auto& [target, dep_src] : loctr_dependencies_)
-        {
-            if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
-            {
-                to_delete_loctr.push_back(target);
-
-                resolve_dependant(target, dep_src, resolver); // resolve target
-
-                defined = true; // another defined target => iterate again
-            }
-        }
-
-        for (auto del : to_delete_abs)
-        {
-            abs_dependencies_.erase(del);
-            try_erase_source_statement(del);
-        }
-
-        for (auto del : to_delete_loctr)
-        {
-            loctr_dependencies_.erase(del);
-            try_erase_source_statement(del);
-        }
-
-        to_delete_abs.clear();
     }
 }
 
@@ -272,16 +227,8 @@ symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sy
 bool symbol_dependency_tables::add_dependency(
     dependant target, const resolvable* dependency_source, bool check_for_cycle)
 {
-    if (std::holds_alternative<space_ptr>(target.value))
-    {
-        if (loctr_dependencies_.find(target) != loctr_dependencies_.end())
-            throw std::invalid_argument("symbol dependency already present");
-    }
-    else
-    {
-        if (abs_dependencies_.find(target) != abs_dependencies_.end())
-            throw std::invalid_argument("symbol dependency already present");
-    }
+    if (dependencies_.find(target) != dependencies_.end())
+        throw std::invalid_argument("symbol dependency already present");
 
 
     if (check_for_cycle)
@@ -291,20 +238,12 @@ bool symbol_dependency_tables::add_dependency(
         bool no_cycle = check_cycle(target, dependencies);
         if (!no_cycle)
         {
-            resolve();
+            resolve(nullptr);
             return false;
         }
     }
 
-
-    if (std::holds_alternative<space_ptr>(target.value))
-    {
-        loctr_dependencies_.emplace(target, dependency_source);
-    }
-    else
-    {
-        abs_dependencies_.emplace(target, dependency_source);
-    }
+    dependencies_.emplace(target, dependency_source);
 
     return true;
 }
@@ -357,14 +296,14 @@ void symbol_dependency_tables::add_dependency(
 
 bool symbol_dependency_tables::check_cycle(space_ptr target)
 {
-    auto dep_src = loctr_dependencies_.find(target);
-    if (dep_src == loctr_dependencies_.end())
+    auto dep_src = dependencies_.find(target);
+    if (dep_src == dependencies_.end())
         return true;
 
     bool no_cycle = check_cycle(target, extract_dependencies(dep_src->second));
 
     if (!no_cycle)
-        resolve();
+        resolve(nullptr);
 
     return no_cycle;
 }
@@ -381,7 +320,7 @@ dependency_adder symbol_dependency_tables::add_dependencies(post_stmt_ptr depend
     return dependency_adder(*this, std::move(dependency_source_stmt));
 }
 
-void symbol_dependency_tables::add_defined() { resolve(); }
+void symbol_dependency_tables::add_defined(loctr_dependency_resolver* resolver) { resolve(resolver); }
 
 bool symbol_dependency_tables::check_loctr_cycle()
 {
@@ -394,7 +333,7 @@ bool symbol_dependency_tables::check_loctr_cycle()
     std::unordered_map<dependant, dep_set> visited;
 
     // create graph
-    for (auto& [target, dep_src] : loctr_dependencies_)
+    for (auto& [target, dep_src] : dependencies_)
     {
         if (target.kind() == dependant_kind::SPACE)
         {
@@ -475,7 +414,7 @@ bool symbol_dependency_tables::check_loctr_cycle()
     for (auto target : cycled)
     {
         resolve_dependant_default(target);
-        loctr_dependencies_.erase(target);
+        dependencies_.erase(target);
         try_erase_source_statement(target);
     }
 
@@ -495,17 +434,14 @@ std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
 
     postponed_stmts_.clear();
     dependency_source_stmts_.clear();
-    abs_dependencies_.clear();
-    loctr_dependencies_.clear();
+    dependencies_.clear();
 
     return res;
 }
 
 void symbol_dependency_tables::resolve_all_as_default()
 {
-    for (auto& [target, dep_src] : abs_dependencies_)
-        resolve_dependant_default(target);
-    for (auto& [target, dep_src] : loctr_dependencies_)
+    for (auto& [target, dep_src] : dependencies_)
         resolve_dependant_default(target);
 }
 
