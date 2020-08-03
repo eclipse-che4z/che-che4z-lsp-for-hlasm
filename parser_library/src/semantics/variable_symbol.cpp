@@ -27,11 +27,18 @@ basic_variable_symbol::basic_variable_symbol(
 
 context::id_index basic_variable_symbol::evaluate_name(const expressions::evaluation_context&) const { return name; }
 
+concat_chain&& clear_chain(concat_chain& chain)
+{
+    concatenation_point::clear_concat_chain(chain);
+    return std::move(chain);
+}
+
 created_variable_symbol::created_variable_symbol(
     concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(true, std::move(subscript), std::move(symbol_range))
-    , created_name(std::move(created_name))
-{}
+    , created_name(clear_chain(created_name))
+{
+}
 
 context::id_index created_variable_symbol::evaluate_name(const expressions::evaluation_context& eval_ctx) const
 {
