@@ -31,7 +31,7 @@ R EQU B-A
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(DC, non_previously_defined_length)
