@@ -283,6 +283,9 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
 
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
+    if (!expr)
+        return;
+
     expr->resolve_expression_tree(type);
     expr->collect_diags();
     for (auto& d : expr->diags())
