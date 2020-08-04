@@ -571,7 +571,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 32, 740);
     add_machine_instr(result, "XIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 740);
     add_machine_instr(result, "XILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 740);
-    add_machine_instr(result, "EXRL", mach_format::RIL_b, { reg_4_U, imm_32_S }, 48, 740);
+    add_machine_instr(result, "EXRL", mach_format::RIL_b, { reg_4_U, db_12_4_U }, 48, 740);
     add_machine_instr(result, "EAR", mach_format::RRE, { reg_4_U, reg_4_U }, 32, 741);
     add_machine_instr(result, "ECAG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 48, 741);
     add_machine_instr(result, "ECTG", mach_format::SSF, { db_12_4_U, db_12_4_U, reg_4_U }, 48, 744);
