@@ -28,6 +28,7 @@ export class ConfigurationsHandler {
     private pgmConfPath: string;
     private procGrpsPath: string;
     private folderPath: string;
+    private extensionRegex: RegExp;
     // whether to create warning prompts on missing configs
     shouldCheckConfigs: boolean;
 
@@ -37,6 +38,7 @@ export class ConfigurationsHandler {
         this.procGrpsPath = undefined;
         this.folderPath = undefined;
         this.shouldCheckConfigs = true;
+        this.extensionRegex = new RegExp("^(.*\\*)(\\.\\w+)$");
     }
 
     /**
@@ -108,7 +110,10 @@ export class ConfigurationsHandler {
         // convert each pgm to regex
         if (content.pgms) {
             (content.pgms as any[]).forEach(pgm => {
-                const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pgm.program as string));
+                const pathStr = (path.isAbsolute(pgm.program as string)) 
+                                ? pgm.program as string 
+                                : path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pgm.program as string);
+                const regex = this.convertWildcardToRegex(pathStr);
                 if (regex)
                     this.definedExpressions.push(regex);
             });
@@ -117,7 +122,10 @@ export class ConfigurationsHandler {
         // convert each wildcard to regex
         if (content.alwaysRecognize) {
             (content.alwaysRecognize as string[]).forEach(strExpr => {
-                const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, strExpr));
+                const pathStr = (path.isAbsolute(strExpr) || this.extensionRegex.test(strExpr)) 
+                            ? strExpr
+                            : path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, strExpr);
+                const regex = this.convertWildcardToRegex(pathStr);
                 if (regex)
                     this.definedExpressions.push(regex);
             });
@@ -129,7 +137,10 @@ export class ConfigurationsHandler {
             (content.pgroups as any[]).forEach(pgroup => {
                 if (pgroup.libs)
                     (pgroup.libs as string[]).forEach(lib => {
-                        const regex = this.convertWildcardToRegex(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, lib, '*'));
+                        const pathStr = (path.isAbsolute(lib)) 
+                            ? path.join(lib, '*')
+                            : path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, lib, '*');
+                        const regex = this.convertWildcardToRegex(pathStr);
                         if (regex)
                             this.definedExpressions.push(regex);
                     })
