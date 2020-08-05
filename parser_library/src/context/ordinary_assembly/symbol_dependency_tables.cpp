@@ -148,6 +148,8 @@ void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
                 resolve_dependant(target, dep_src, resolver); // resolve target
 
                 defined = true; // another defined target => iterate again
+
+                break;
             }
         }
 
