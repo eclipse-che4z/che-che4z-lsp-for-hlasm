@@ -38,7 +38,7 @@ workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager)
 
 workspace::workspace(ws_uri uri, file_manager& file_manager)
     : workspace(uri, uri, file_manager)
-{}
+{ }
 
 workspace::workspace(file_manager& file_manager)
     : workspace("", file_manager)
@@ -266,8 +266,8 @@ bool workspace::load_config()
         std::string wildcard_str = wildcard.get<std::string>();
         // extension wildcard
         if (std::regex_match(wildcard_str, extension_regex))
-            extensions.insert({ std::regex_replace(wildcard_str, extension_regex, "$2"),
-                wildcard2regex(wildcard_str) });
+            extensions.insert(
+                { std::regex_replace(wildcard_str, extension_regex, "$2"), wildcard2regex(wildcard_str) });
     }
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups
