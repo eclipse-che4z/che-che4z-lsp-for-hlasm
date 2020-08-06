@@ -156,6 +156,7 @@
         "aliases": [
           "HLASM"
         ],
+        "configuration": "./language-configuration.json",
         "filenames": [],
         "firstLine": " *MACRO *"
       }
