@@ -175,6 +175,13 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const reso
     if (!ret.empty())
         return ret;
 
+    ret.insert(ret.end(),
+        std::make_move_iterator(deps.unresolved_spaces.begin()),
+        std::make_move_iterator(deps.unresolved_spaces.end()));
+
+    if (!ret.empty())
+        return ret;
+
     for (auto& attr_r : deps.undefined_attr_refs)
         ret.push_back(attr_ref { attr_r.first, attr_r.second });
 

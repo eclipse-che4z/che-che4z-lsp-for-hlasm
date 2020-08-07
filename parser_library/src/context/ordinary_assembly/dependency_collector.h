@@ -36,7 +36,10 @@ struct dependency_collector
     // dependent symbol
     std::set<id_index> undefined_symbols;
     // dependent symbol dependencies
-    std::vector<attr_ref> undefined_attr_refs;
+    std::set<attr_ref> undefined_attr_refs;
+    // unresolved spaces that must be resolved due to * or / operator
+    //nonempty when address without base but with spaces is multiplied or divided
+    std::set<space_ptr> unresolved_spaces;
 
     explicit dependency_collector(bool has_error = false);
     dependency_collector(id_index undefined_symbol);
