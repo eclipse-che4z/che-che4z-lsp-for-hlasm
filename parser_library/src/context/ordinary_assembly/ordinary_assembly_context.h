@@ -51,7 +51,7 @@ public:
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage);
+    ordinary_assembly_context(id_storage& storage); 
 
     // creates symbol
     // returns false if loctr cycle has occured

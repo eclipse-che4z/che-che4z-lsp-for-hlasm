@@ -88,8 +88,10 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
             eval_ctx.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
             return context::object_traits<context::C_t>::default_v();
         }
+
+        /* TODO implement compiler flag to allow this warning
         if (start + count - 1 > (int)str.size())
-            eval_ctx.add_diagnostic(diagnostic_op::error_CW001(substring.start->expr_range));
+            eval_ctx.add_diagnostic(diagnostic_op::error_CW001(substring.count->expr_range));*/
 
         if (count != 0)
             str = str.substr(start - 1, count);
