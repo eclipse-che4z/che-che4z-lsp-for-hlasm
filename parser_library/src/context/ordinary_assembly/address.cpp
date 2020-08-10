@@ -319,7 +319,11 @@ bool address::in_same_loctr(const address& addr) const
     else if (counter == 0)
         return true;
     else
+    {
+        if (addr.spaces_.size() && spaces_.size())
+            return addr.spaces_.front().first->owner.name == spaces_.front().first->owner.name;
         return false;
+    }
 }
 
 bool address::is_simple() const { return bases_.size() == 1 && bases_[0].second == 1; }
