@@ -239,7 +239,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
         return context::symbol_attributes::transform_attr(c);
     }
 
-    add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
+    add_diagnostic(diagnostic_s::error_S101(ctx->processing_stack().back().proc_location.file, attr_data, data_range));
 
     return context::data_attr_kind::UNKNOWN;
 }
@@ -247,7 +247,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
     if (value.size() > 63)
-        add_diagnostic(diagnostic_s::error_S100("", value, id_range));
+        add_diagnostic(diagnostic_s::error_S100(ctx->processing_stack().back().proc_location.file, value, id_range));
 
     return ctx->ids().add(std::move(value));
 }
