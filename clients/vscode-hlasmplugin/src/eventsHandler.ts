@@ -14,10 +14,10 @@
 
 import * as vscode from 'vscode';
 
-import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
+//import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
 import { ConfigurationsHandler } from './configurationsHandler'
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
-import { SemanticHighlightingFeature } from './semanticHighlighting';
+//import { SemanticHighlightingFeature } from './semanticHighlighting';
 
 /**
  * Handles various events happening in VSCode
@@ -60,7 +60,7 @@ export class EventsHandler {
     }
 
     // when contents of a document change, issue a completion request
-    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, info: ContinuationDocumentsInfo): boolean {
+    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent/*, info: ContinuationDocumentsInfo*/): boolean {
         if (getConfig<boolean>('continuationHandling', false)) {
             if (event.document.languageId != 'hlasm')
                 return false;
@@ -76,11 +76,11 @@ export class EventsHandler {
                         change.range.start.line, 0),
                         change.range.start));
                         
-            const foundDoc = info.get(event.document.uri.toString());
-            const notContinued =
+            //const foundDoc = info.get(event.document.uri.toString());
+            const notContinued = true; /*
                 change.range.start.line == 0 ||
                 !foundDoc ||
-                !foundDoc.lineContinuations.get(change.range.start.line - 1);
+                !foundDoc.lineContinuations.get(change.range.start.line - 1);*/
 
             if ((currentLine != "" &&
                 this.isTrigger.test(change.text) &&
@@ -94,6 +94,7 @@ export class EventsHandler {
         return false;
     }
 
+    /*
     // when any visible text editor changes, apply decorations for it
     onDidChangeVisibleTextEditors(editors: vscode.TextEditor[], highlight: SemanticHighlightingFeature) {
         for (var i = 0; i < editors.length; i++) {
@@ -102,7 +103,7 @@ export class EventsHandler {
                 break;
             }
         }
-    }
+    }*/
 
     // when document opens, show parse progress
     onDidOpenTextDocument(document: vscode.TextDocument) {

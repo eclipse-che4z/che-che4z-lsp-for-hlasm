@@ -349,6 +349,32 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
         return result;
     return result;
 }
+
+std::vector<size_t> hlasm_plugin::parser_library::semantics::lsp_info_processor::semantic_tokens() const
+{
+    std::vector<size_t> encoded_tokens;
+    for (size_t i = 0; i < hl_info_.lines.size(); i++)
+    {
+        const auto& current = hl_info_.lines[i];
+        size_t delta_line = (i == 0) ? current.token_range.start.line
+                                     : current.token_range.start.line - hl_info_.lines[i-1].token_range.start.line;
+        size_t delta_char = (i == 0 || hl_info_.lines[i - 1].token_range.start.line != current.token_range.start.line)
+            ? current.token_range.start.column
+            : current.token_range.start.column - hl_info_.lines[i - 1].token_range.start.column;
+        size_t length = (current.token_range.start.column > current.token_range.end.column)
+            ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
+            : current.token_range.end.column - current.token_range.start.column;
+
+        encoded_tokens.push_back(delta_line);
+        encoded_tokens.push_back(delta_char);
+        encoded_tokens.push_back(length);
+        encoded_tokens.push_back(static_cast<std::underlying_type_t<hl_scopes>>(current.scope));
+        encoded_tokens.push_back((size_t)0);
+    }
+
+    return encoded_tokens;
+}
+
 void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 {
     symbol.scope = get_top_macro_stack_();
@@ -379,11 +405,25 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             hl_info_.cont_info.continuation_positions.push_back(
                 { symbol.token_range.start.line, symbol.token_range.start.column });
         }
-        hl_info_.lines.push_back(symbol);
+
+        if (hl_info_.lines.empty())
+            hl_info_.lines.push_back(symbol);
+        else
+            for (lines_info::reverse_iterator it = hl_info_.lines.rbegin(); it != hl_info_.lines.rend(); it++)
+            {
+                if (it->token_range.start.line < symbol.token_range.start.line || 
+                    (it->token_range.start.line == symbol.token_range.start.line &&
+                     it->token_range.start.column < symbol.token_range.start.column))
+                {
+                    hl_info_.lines.insert(it.base(), symbol);
+                    break;
+                }
+            }
+        //hl_info_.lines.push_back(symbol);
     }
 }
 
-semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }
+//semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }
 
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {

@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import {
-	TextDocumentRegistrationOptions, ClientCapabilities, ServerCapabilities, DocumentSelector, NotificationHandler,
+	TextDocumentRegistrationOptions, ClientCapabilities, ServerCapabilities, DocumentSelector, NotificationHandler, Disposable,
 } from 'vscode-languageserver-protocol';
 
 import { SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingClientCapabilities } from './protocol.semanticHighlighting'
@@ -40,15 +40,16 @@ export * from 'vscode-languageclient'
 type scope = string;
 type uri = string;
 
-export type ScopeRangeMap = Map<scope, vscode.Range[]>;
-export type EditorColorsMap = Map<uri, ScopeRangeMap>;
+export type DecorationTypeInfo = [vscode.Range[], vscode.TextEditorDecorationType]
+export type ScopesMap = Map<scope, DecorationTypeInfo>;
+export type EditorColorsMap = Map<uri, ScopesMap>;
 
 export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	protected readonly toDispose: vscode.Disposable[];
 	protected readonly handlers: NotificationHandler<SemanticHighlightingParams>[];
-	// map of possible decoration types: scope of symbol -> color of scope
-	protected decorationTypes: Map<scope, DecorationType>;
+	protected decorationTypes: Map<string, vscode.TextEditorDecorationType>;
+	protected providerRegistration: Disposable;
 	// map: document -> its decorations (map: scope of symbol -> ranges of scope)
 	protected definedEditors: EditorColorsMap;
 	constructor(client: BaseLanguageClient) {
@@ -80,12 +81,10 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		};
 	}
 
-
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!documentSelector) {
 			return;
 		}
-		this.updateColors();
 
 		const id = UUID.generateUuid();
 		this.register(this.messages, {
@@ -125,24 +124,60 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 		var decors = this.definedEditors.get(parsed);
 		// editor found, clear its decorations
 		if (decors == undefined) {
-			this.definedEditors.set(parsed, new Map<scope, vscode.Range[]>());
+			this.definedEditors.set(parsed, new Map<scope, DecorationTypeInfo>());
 			decors = this.definedEditors.get(parsed);
 		}
-		// clear ranges
-		Array.from(this.decorationTypes.keys()).forEach(scope => {
-			decors.set(scope, []);
-		})
+
+		// reset current decors
+		decors.forEach((value: DecorationTypeInfo, key: string) => {
+			value[0] = [];
+			value[1].dispose();
+			value[1] = vscode.window.createTextEditorDecorationType({
+				color:  new vscode.ThemeColor('hlasm.' + key)
+			});
+		});
+		
+		if (this.providerRegistration !== undefined)
+			this.providerRegistration.dispose();
+		const tokenTypes = ['class', 'interface', 'enum', 'function', 'variable'];
+		const tokenModifiers = ['declaration', 'documentation'];
+		const selector = [{ language: 'hlasm' }];
+		const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+		const provider: vscode.DocumentSemanticTokensProvider = {
+			provideDocumentSemanticTokens(
+			  document: vscode.TextDocument
+			): vscode.ProviderResult<vscode.SemanticTokens> {
+			  // analyze the document and return semantic tokens
+				
+			  const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
+			  // on line 1, characters 1-5 are a class declaration
+			  tokensBuilder.push(
+				new vscode.Range(new vscode.Position(1, 1), new vscode.Position(1, 5)),
+				'class',
+				['declaration']
+			  );
+			  return tokensBuilder.build();
+			}
+		  };
+		
+		this.providerRegistration = vscode.languages.registerDocumentSemanticTokensProvider(selector, provider, legend);
+
 		// add range for each token to its corresponding scope
 		params.tokens.forEach(token => {
-			decors.get(token.scope)!.push(new vscode.Range(new vscode.Position(token.lineStart, token.columnStart), new vscode.Position(token.lineEnd, token.columnEnd)));
+			// if it does not exist, create new
+			if (!decors.has(token.scope))
+				decors.set(token.scope,[[], vscode.window.createTextEditorDecorationType({
+					color:  new vscode.ThemeColor('hlasm.' + token.scope)
+				})]);
+			// push ranges
+			decors.get(token.scope)[0].push(new vscode.Range(new vscode.Position(token.lineStart, token.columnStart), new vscode.Position(token.lineEnd, token.columnEnd)));
 		});
-		this.colorize();
+		//this.colorize();
 		return this.definedEditors;
 	}
 
 	colorize() {
 		// update colors from config
-		this.updateColors();
 		vscode.window.visibleTextEditors.forEach(editor => {
 			if (editor.document.languageId == 'hlasm') {
 				// find the decorations of current editor
@@ -150,38 +185,15 @@ export class SemanticHighlightingFeature extends TextDocumentFeature<TextDocumen
 				// draw decorations of visible editor
 				if (decors !== undefined) {
 					// for each of its saved decorations, draw them
-					decors.forEach((ranges: vscode.Range[], scope: string) => {
-						editor.setDecorations(this.decorationTypes.get(scope).type, ranges);
+					decors.forEach((value: DecorationTypeInfo) => {
+						// set new
+						editor.setDecorations(
+							value[1]
+							, value[0]);
 					});
 				}
 			}
 		});
 	}
 
-	updateColors() {
-		// get colors from config
-		const config = vscode.workspace.getConfiguration('hlasm');
-		if (!config)
-			return;
-		const colors = config.get<{ id: string, hex: string }[]>('semanticHighlightingColors');
-		if (colors != null) {
-			// wipe all the decorations (clean)
-			this.decorationTypes.forEach(type => {
-				type.type.dispose();
-			});
-			// for each color, create its decoration
-			for (let color of colors) {
-				this.decorationTypes.set(color.id, new DecorationType(color.hex));
-			}
-		}
-	}
-}
-
-class DecorationType {
-	public type: vscode.TextEditorDecorationType;
-	public hex: string;
-	constructor(hex: string) {
-		this.type = vscode.window.createTextEditorDecorationType({ color: hex });
-		this.hex = hex;
-	}
 }

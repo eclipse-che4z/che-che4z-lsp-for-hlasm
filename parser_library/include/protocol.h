@@ -40,6 +40,14 @@ struct PARSER_LIBRARY_EXPORT string_array
     size_t size;
 };
 
+struct PARSER_LIBRARY_EXPORT num_array
+{
+    num_array(size_t* arr, size_t size);
+
+    size_t* arr;
+    size_t size;
+};
+
 using version_t = uint64_t;
 
 namespace context {
@@ -50,22 +58,25 @@ namespace semantics {
 struct position_uri_s;
 struct completion_list_s;
 struct highlighting_info;
-enum class PARSER_LIBRARY_EXPORT hl_scopes
+
+// in case any changes are done to these scopes, the tokenTypes field in feature_language_features.cpp
+// needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
+enum class PARSER_LIBRARY_EXPORT hl_scopes: size_t
 {
-    label,
-    instruction,
-    remark,
-    ignored,
-    comment,
-    continuation,
-    seq_symbol,
-    var_symbol,
-    operator_symbol,
-    string,
-    number,
-    operand,
-    data_def_type,
-    data_def_extension
+    label = 0,
+    instruction = 1,
+    remark = 2,
+    ignored = 3,
+    comment = 4,
+    continuation = 5,
+    seq_symbol = 6,
+    var_symbol = 7,
+    operator_symbol = 8,
+    string = 9,
+    number = 10,
+    operand = 11,
+    data_def_type = 12,
+    data_def_extension = 13
 };
 } // namespace semantics
 
@@ -253,7 +264,7 @@ struct PARSER_LIBRARY_EXPORT token_info
     range token_range;
     semantics::hl_scopes scope;
 };
-
+/*
 struct PARSER_LIBRARY_EXPORT file_highlighting_info
 {
     file_highlighting_info(semantics::highlighting_info& info);
@@ -283,7 +294,7 @@ private:
     file_id* files_;
     size_t files_count_;
 };
-
+*/
 struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);

@@ -49,12 +49,11 @@ suite('HLASM Semantic Highlighting Test Suite', () => {
                 columnEnd: secondRange.end.character
             }]
         }
-        highlight.updateColors();
         const results = highlight.applyDecorations(params);
         const documentMap = results.get(vscode.Uri.file('file').toString())
         assert.ok(documentMap);
-        assert.ok(compareRanges(documentMap.get('instruction')[0], firstRange));
-        assert.ok(compareRanges(documentMap.get('label')[0], secondRange));
+        assert.ok(compareRanges(documentMap.get('instruction')[0][0], firstRange));
+        assert.ok(compareRanges(documentMap.get('label')[0][0], secondRange));
     });
 
     test('Only Continuations Apply Decorations test', () => {

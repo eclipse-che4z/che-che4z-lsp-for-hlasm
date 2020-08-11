@@ -23,7 +23,7 @@ feature_text_synchronization::feature_text_synchronization(
     parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
     : feature(ws_mngr, response_provider)
 {
-    ws_mngr.register_highlighting_consumer(this);
+    //ws_mngr.register_highlighting_consumer(this);
 }
 
 void feature_text_synchronization::register_methods(std::map<std::string, method>& methods)
@@ -112,6 +112,7 @@ void feature_text_synchronization::on_did_close(const json&, const json& params)
     ws_mngr_.did_close_file(uri_to_path(uri).c_str());
 }
 
+/*
 void feature_text_synchronization::consume_highlighting_info(parser_library::all_highlighting_info info)
 {
     auto f = info.files();
@@ -198,5 +199,5 @@ void feature_text_synchronization::consume_highlighting_info(parser_library::all
 
         response_->notify("textDocument/semanticHighlighting", args);
     }
-}
+}*/
 } // namespace hlasm_plugin::language_server::lsp

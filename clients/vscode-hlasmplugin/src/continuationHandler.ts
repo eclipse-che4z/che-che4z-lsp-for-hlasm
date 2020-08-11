@@ -16,7 +16,7 @@ import * as vscode from 'vscode';
 
 import { setCursor } from './customEditorCommands'
 import { getConfig } from './eventsHandler'
-import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
+//import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
 
 /**
  * Implements removeContinuation and insertContinuation commands.
@@ -25,17 +25,17 @@ export class ContinuationHandler {
     dispose() { }
 
     // insert continuation character X to the current line
-    insertContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, info: ContinuationDocumentsInfo) {
+    insertContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit/*, info: ContinuationDocumentsInfo*/) {
         if (!getConfig<boolean>('continuationHandling', false))
             return;
 
         // retrieve continuation information
-        const foundDoc = info.get(editor.document.uri.toString());
+        /*const foundDoc = info.get(editor.document.uri.toString());
         if (!foundDoc)
-            return;
-        const continuationOffset = foundDoc.continuationColumn;
-        const continueColumn = foundDoc.continueColumn;
-        const isContinued = foundDoc.lineContinuations.get(editor.selection.active.line);
+            return;*/
+        const continuationOffset = 72;//foundDoc.continuationColumn;
+        const continueColumn = 15;//foundDoc.continueColumn;
+        const isContinued = false;//foundDoc.lineContinuations.get(editor.selection.active.line);
 
         if (!isContinued) {
             if (editor.selection.active.character < continuationOffset) {
@@ -64,15 +64,15 @@ export class ContinuationHandler {
     }
 
     // remove continuation from previous line
-    removeContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, info: ContinuationDocumentsInfo) {
+    removeContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit/*, info: ContinuationDocumentsInfo*/) {
         if (!getConfig<boolean>('continuationHandling', false))
             return;
 
-        const foundDoc = info.get(editor.document.uri.toString());
+        /*const foundDoc = info.get(editor.document.uri.toString());
         if (!foundDoc)
-            return;
-        const continuationOffset = foundDoc.continuationColumn;
-        const wasLastContinued = foundDoc.lineContinuations.get(editor.selection.active.line - 1);
+            return;*/
+        const continuationOffset = 72;//foundDoc.continuationColumn;
+        const wasLastContinued = false;//foundDoc.lineContinuations.get(editor.selection.active.line - 1);
 
         if (editor.selection.active.line > 0 && wasLastContinued) {
             const continuationPosition = new vscode.Position(

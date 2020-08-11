@@ -72,13 +72,14 @@ public:
     std::vector<position_uri_s> references(const position& pos) const;
     std::vector<std::string> hover(const position& pos) const;
     completion_list_s completion(const position& pos, const char trigger_char, int trigger_kind) const;
+    std::vector<size_t> semantic_tokens() const;
 
     // add one lsp symbol to the context
     void add_lsp_symbol(context::lsp_symbol& symbol);
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
 
-    semantics::highlighting_info& get_hl_info();
+    //semantics::highlighting_info& get_hl_info();
 
 private:
     // stored symbols that couldn't be processed without further information
@@ -94,7 +95,6 @@ private:
     bool collect_hl_info_;
     // regex that represents a common position of instruction within a statement
     const std::regex instruction_regex;
-
 
     // checks whether the given position is within occurence's range
     bool is_in_range_(const position& pos, const context::occurence& occ) const;

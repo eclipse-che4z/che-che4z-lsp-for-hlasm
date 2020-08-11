@@ -17,7 +17,7 @@
  * On top of the Semantic Highlighting, this provides continuation information retrieved from the server as part of the semantic highlighting request
  */
 
-import { SemanticHighlightingFeature, ExtendedClientCapabilities, SemanticHighlightingParams, EditorColorsMap } from './semanticHighlighting'
+//import { SemanticHighlightingFeature, ExtendedClientCapabilities, SemanticHighlightingParams, EditorColorsMap } from './semanticHighlighting'
 import { BaseLanguageClient } from 'vscode-languageclient';
 
 export class ContinuationInfo {

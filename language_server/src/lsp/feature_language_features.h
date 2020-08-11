@@ -20,7 +20,7 @@
 #include "../feature.h"
 #include "../logger.h"
 #include "workspace_manager.h"
-
+#include "protocol.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -39,6 +39,7 @@ private:
     void references(const json& id, const json& params);
     void hover(const json& id, const json& params);
     void completion(const json& id, const json& params);
+    void semantic_tokens(const json& id, const json& params);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

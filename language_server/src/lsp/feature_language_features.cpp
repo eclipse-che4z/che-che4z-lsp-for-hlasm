@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "../feature.h"
-#include "protocol.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -37,15 +36,38 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         std::bind(&feature_language_features::hover, this, std::placeholders::_1, std::placeholders::_2));
     methods.emplace("textDocument/completion",
         std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
+    methods.emplace("textDocument/semanticTokens/full",
+        std::bind(&feature_language_features::semantic_tokens, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_language_features::register_capabilities()
 {
+    // in case any changes are done to tokenTypes, the hl_scopes field in protocol.h
+    // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
     return json { { "definitionProvider", true },
         { "referencesProvider", true },
         { "hoverProvider", true },
         { "completionProvider",
-            { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } } };
+            { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } },
+        { "semanticTokensProvider",
+            { { "legend",
+                  { { "tokenTypes",
+                        { "class",
+                            "function",
+                            "comment",
+                            "event",
+                            "comment",
+                            "modifier",
+                            "keyword",
+                            "variable",
+                            "operator",
+                            "string",
+                            "number",
+                            "parameter",
+                            "regexp",
+                            "modifier" } },
+                      { "tokenModifiers", json::array() } } },
+                { "full", true } } } };
 }
 
 void feature_language_features::initialize_feature(const json&)
@@ -123,4 +145,17 @@ void feature_language_features::completion(const json& id, const json& params)
 
     response_->respond(id, "", to_ret);
 }
+
+void feature_language_features::semantic_tokens(const json& id, const json& params)
+{
+    auto document_uri = params["textDocument"]["uri"].get<std::string>();
+
+    auto tokens = ws_mngr_.semantic_tokens(uri_to_path(document_uri).c_str());
+    json num_array = json::array();
+    for (size_t i = 0; i < tokens.size; i++)
+        num_array.push_back(tokens.arr[i]);
+
+    response_->respond(id, "", { { "data", num_array } });
+}
+
 } // namespace hlasm_plugin::language_server::lsp

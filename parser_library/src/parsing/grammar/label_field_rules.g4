@@ -30,7 +30,8 @@ label
 		}
 		else
 		{
-			collector.add_hl_symbol(token_info(r,hl_scopes::label));
+			if (label.size()>1 && label[0] != '&')
+				collector.add_hl_symbol(token_info(r,hl_scopes::label));
 			auto id = ctx->ids().add($l_char_string.value);
 			collector.set_label_field(id,$l_char_string.ctx,r); 
 		}

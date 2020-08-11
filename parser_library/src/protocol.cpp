@@ -25,6 +25,10 @@ string_array::string_array(const char** arr, size_t size)
     : arr(arr)
     , size(size) {};
 
+num_array::num_array(size_t* arr, size_t size)
+    : arr(arr)
+    , size(size) {};
+
 completion_item::completion_item(context::completion_item_s& info)
     : impl_(info)
 {}
@@ -92,7 +96,7 @@ const char* diagnostic::message() const { return impl_.message.c_str(); }
 const diagnostic_related_info diagnostic::related_info(size_t index) const { return impl_.related[index]; }
 
 size_t diagnostic::related_info_size() const { return impl_.related.size(); }
-
+/*
 //*********************** file_higlighting_info *****************
 file_highlighting_info::file_highlighting_info(semantics::highlighting_info& info)
     : info(info)
@@ -126,7 +130,7 @@ file_id* all_highlighting_info::files() { return files_; }
 size_t all_highlighting_info::files_count() const { return files_count_; }
 
 file_highlighting_info all_highlighting_info::file_info(file_id file_id) const { return file_id->get_hl_info(); }
-
+*/
 //********************* diagnostics_container *******************
 
 class diagnostic_list_impl
