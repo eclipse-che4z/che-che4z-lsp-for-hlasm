@@ -1817,6 +1817,11 @@ diagnostic_op diagnostic_op::warning_W013(const range& range)
     return diagnostic_op(diagnostic_severity::warning, "W013", "Undefined symbol attribute, default used", range);
 }
 
+diagnostic_op diagnostic_op::warning_W014(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "W013", "Undefined keyword parameter, default to positional including keyword", range);
+}
+
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);

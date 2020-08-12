@@ -269,7 +269,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
         || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
     {
-        add_diagnostic(diagnostic_op::error_E010("keyword parameter", op_range));
+        add_diagnostic(diagnostic_op::warning_W014(op_range));
 
         // MACROCASE TODO
         auto name = chain[0]->access_str()->value;
