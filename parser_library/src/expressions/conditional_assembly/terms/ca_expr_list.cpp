@@ -227,7 +227,8 @@ std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, b
 
     ca_expr_ops op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]));
 
-    if (EXPR_POLICY::multiple_words(op_type) && is_symbol(expr_list[it + 1]) && get_symbol(expr_list[it + 1]) == "NOT")
+    if (EXPR_POLICY::multiple_words(op_type) && it + 1 < expr_list.size() && is_symbol(expr_list[it + 1])
+        && get_symbol(expr_list[it + 1]) == "NOT")
     {
         op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]) + "_NOT");
         ++it;

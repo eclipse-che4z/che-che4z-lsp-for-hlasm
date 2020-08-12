@@ -641,7 +641,7 @@ void lexer::lex_word()
     else
         create_token(IDENTIFIER);
 
-    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp
+    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && w_len == 1
         && (unlimited_line_ || input_state_->char_position_in_line != end_))
     {
         start_token();
