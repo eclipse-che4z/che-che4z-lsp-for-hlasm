@@ -12,7 +12,7 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: Move new issues into the project board
+name: Isuue automation
 
 on:
   issues:
