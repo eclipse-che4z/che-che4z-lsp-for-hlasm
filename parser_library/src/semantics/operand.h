@@ -238,7 +238,14 @@ public:
 
     virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
+    std::unique_ptr<checking::operand> get_operand_value(
+        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
+
     virtual void collect_diags() const override;
+
+private:
+    std::unique_ptr<checking::operand> get_operand_value_inner(
+        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
 };
 
 

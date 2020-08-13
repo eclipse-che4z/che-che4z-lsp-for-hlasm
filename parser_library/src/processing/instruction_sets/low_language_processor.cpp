@@ -324,6 +324,10 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
         else
             uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
     }
+    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(ev_op))
+    {
+        uniq = expr_op->get_operand_value(hlasm_ctx.ord_ctx, can_have_ord_syms);
+    }
     else
     {
         uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);

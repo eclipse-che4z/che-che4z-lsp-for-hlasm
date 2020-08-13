@@ -13,9 +13,9 @@
  */
 
 #include "operand.h"
+#include "expressions/mach_expr_term.h"
 
-using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::semantics {
 
 //***************** operand *********************
 
@@ -257,6 +257,23 @@ expr_assembler_operand::expr_assembler_operand(
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
+    return get_operand_value_inner(info, true);
+}
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    return get_operand_value_inner(info, can_have_ordsym);
+}
+
+void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
+        return std::make_unique<checking::one_operand>(value_);
+
     auto res = expression->evaluate(info);
     switch (res.value_kind())
     {
@@ -271,8 +288,6 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(exp
             return std::make_unique<checking::empty_operand>();
     }
 }
-
-void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
 
 //***************** end_instr_machine_operand *********************
 
@@ -540,3 +555,5 @@ macro_operand_string::macro_operand_string(std::string value, const range operan
     : operand(operand_type::MAC, operand_range)
     , value(std::move(value))
 {}
+
+} // namespace hlasm_plugin::parser_library::semantics
