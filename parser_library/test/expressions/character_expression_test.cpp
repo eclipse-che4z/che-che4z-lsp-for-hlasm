@@ -137,3 +137,22 @@ TEST(character_expresssion, escaping)
     SETCEQ("C5", "A..");
     SETCEQ("C6", "&A");
 }
+
+TEST(character_expresssion, single_operand_with_spaces)
+{
+    std::string input =
+        R"(
+&C1 SETC UPPER( 'A' )
+&C2 SETC UPPER( 'A')
+&C3 SETC UPPER('A' )
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETCEQ("C1", "A");
+    SETCEQ("C2", "A");
+    SETCEQ("C3", "A");
+}

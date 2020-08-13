@@ -140,15 +140,20 @@ seq_symbol returns [seq_sym ss]
 	};
 
 subscript_ne returns [std::vector<ca_expr_ptr> value]
-	: lpar expr_comma_c rpar
+	: lpar SPACE? expr SPACE? rpar
 	{
-		$value = std::move($expr_comma_c.ca_exprs);
+		$value.push_back(std::move($expr.ca_expr));
+	}
+	| lpar expr comma expr_comma_c rpar
+	{
+		$value.push_back(std::move($expr.ca_expr));
+		$value.insert($value.end(), std::make_move_iterator($expr_comma_c.ca_exprs.begin()),std::make_move_iterator($expr_comma_c.ca_exprs.end()));
 	};
 
 subscript returns [std::vector<ca_expr_ptr> value]
-	: subscript_ne
+	: lpar expr_comma_c rpar
 	{
-		$value = std::move($subscript_ne.value);
+		$value = std::move($expr_comma_c.ca_exprs);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
 	| ;
