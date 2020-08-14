@@ -197,3 +197,17 @@ TEST(logical_expressions, no_spaces)
     SETBEQ("A2", 1);
     SETBEQ("A3", 1);
 }
+
+TEST(logical_expressions, bad_number_of_operands)
+{
+    std::string input =
+        R"(
+&A SETA FIND('A','B','C')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().front().code, "CE006");
+}

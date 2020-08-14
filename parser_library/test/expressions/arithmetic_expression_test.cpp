@@ -216,4 +216,19 @@ TEST(arithmetic_expressions, invalid_operator)
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().front().code, "CE002");
+}
+
+TEST(character_expresssion, illegal_dupl_factor)
+{
+    std::string input =
+        R"(
+&A SETA (1)FIND('A','B')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().front().code, "CE005");
 }

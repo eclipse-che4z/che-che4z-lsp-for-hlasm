@@ -218,9 +218,15 @@ std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, b
 {
     const auto& op = expr_list[it];
 
-    if (!is_symbol(op) || !EXPR_POLICY::is_operator(EXPR_POLICY::get_operator(get_symbol(op))))
+    if (!is_symbol(op))
     {
         add_diagnostic(diagnostic_op::error_CE001(expr_range));
+        err = true;
+        return std::make_pair(0, ca_expr_ops::UNKNOWN);
+    }
+    else if (!EXPR_POLICY::is_operator(EXPR_POLICY::get_operator(get_symbol(op))))
+    {
+        add_diagnostic(diagnostic_op::error_CE002(get_symbol(op), expr_range));
         err = true;
         return std::make_pair(0, ca_expr_ops::UNKNOWN);
     }
