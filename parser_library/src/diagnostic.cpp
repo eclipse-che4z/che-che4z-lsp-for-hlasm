@@ -1854,7 +1854,7 @@ diagnostic_op diagnostic_op::error_CE003(const range& range)
 
 diagnostic_op diagnostic_op::error_CE004(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "CE004", "Bad operator type", range);
+    return diagnostic_op(diagnostic_severity::error, "CE004", "Invalid use of operator - different return type expected", range);
 }
 
 diagnostic_op diagnostic_op::error_CE005(const range& range)
