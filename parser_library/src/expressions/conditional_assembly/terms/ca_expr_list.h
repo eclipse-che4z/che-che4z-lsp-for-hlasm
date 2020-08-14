@@ -41,7 +41,7 @@ public:
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
 private:
-    // this function is present due to the fact that in hlasm you can ommit space between operator and operands if
+    // this function is present due to the fact that in hlasm you can omit space between operator and operands if
     // operators are in parentheses (eg. ('A')FIND('B') )
     // however, the parser recognizes it as a function with one parameter and a duplication factor
     // this function checks whether any function in expr_list is unknown

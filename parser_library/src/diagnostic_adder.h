@@ -24,7 +24,8 @@
 namespace hlasm_plugin::parser_library {
 
 // class that simplyfies adding of diagnostics
-// holds range and collectable object, so there is no need to specify range in a diagnostic creation
+// holds both range and collectable object
+// hence, there is no need to specify range in a diagnostic creation, just pass diagnostic function
 class diagnostic_adder
 {
     const collectable<diagnostic_s>* s_diagnoser_;
