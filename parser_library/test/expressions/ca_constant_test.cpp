@@ -33,12 +33,12 @@ TEST(ca_constant, undefined_attributes)
 TEST(ca_constant, self_def_term_invalid_input)
 {
     {
-        ranged_diagnostic_collector add_diags;
+        diagnostic_adder add_diags;
         ca_constant::self_defining_term("", add_diags);
         EXPECT_TRUE(add_diags.diagnostics_present);
     }
     {
-        ranged_diagnostic_collector add_diags;
+        diagnostic_adder add_diags;
         ca_constant::self_defining_term("Q'dc'", add_diags);
         EXPECT_TRUE(add_diags.diagnostics_present);
     }
@@ -47,19 +47,19 @@ TEST(ca_constant, self_def_term_invalid_input)
 TEST(ca_constant, self_def_term_valid_input)
 {
     {
-        ranged_diagnostic_collector add_diags;
+        diagnostic_adder add_diags;
         auto res = ca_constant::self_defining_term("B'10'", add_diags);
         ASSERT_FALSE(add_diags.diagnostics_present);
         EXPECT_EQ(res, 2);
     }
     {
-        ranged_diagnostic_collector add_diags;
+        diagnostic_adder add_diags;
         auto res = ca_constant::self_defining_term("C'1'", add_diags);
         ASSERT_FALSE(add_diags.diagnostics_present);
         EXPECT_EQ(res, 241);
     }
     {
-        ranged_diagnostic_collector add_diags;
+        diagnostic_adder add_diags;
         auto res = ca_constant::self_defining_term("X'f'", add_diags);
         ASSERT_FALSE(add_diags.diagnostics_present);
         EXPECT_EQ(res, 15);

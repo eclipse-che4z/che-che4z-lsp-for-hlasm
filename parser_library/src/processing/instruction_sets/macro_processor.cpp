@@ -323,7 +323,7 @@ context::macro_data_ptr create_macro_data_inner(semantics::concat_chain::const_i
 
 context::macro_data_ptr macro_processor::create_macro_data(semantics::concat_chain::const_iterator begin,
     semantics::concat_chain::const_iterator end,
-    ranged_diagnostic_collector& add_diagnostic)
+    diagnostic_adder& add_diagnostic)
 {
     auto tmp = semantics::concatenation_point::contains_var_sym(begin, end);
     if (tmp)

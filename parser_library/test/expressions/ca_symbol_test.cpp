@@ -14,7 +14,7 @@
 
 #include "gmock/gmock.h"
 
-#include "checking/ranged_diagnostic_collector.h"
+#include "diagnostic_adder.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 
@@ -36,7 +36,7 @@ TEST(ca_symbol, undefined_attributes)
 
 TEST(ca_symbol, resolve_expr_tree)
 {
-    ranged_diagnostic_collector add_diags;
+    diagnostic_adder add_diags;
 
     ca_symbol sym(nullptr, range());
 

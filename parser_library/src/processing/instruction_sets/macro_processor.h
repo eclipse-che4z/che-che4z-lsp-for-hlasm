@@ -15,7 +15,7 @@
 #ifndef PROCESSING_MACRO_PROCESSOR_H
 #define PROCESSING_MACRO_PROCESSOR_H
 
-#include "checking/ranged_diagnostic_collector.h"
+#include "diagnostic_adder.h"
 #include "context/macro.h"
 #include "instruction_processor.h"
 
@@ -44,7 +44,7 @@ public:
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,
-        ranged_diagnostic_collector& add_diagnostic);
+        diagnostic_adder& add_diagnostic);
 
     static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
         semantics::concat_chain::const_iterator end,

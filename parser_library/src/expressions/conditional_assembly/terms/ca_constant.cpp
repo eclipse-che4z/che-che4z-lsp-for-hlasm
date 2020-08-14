@@ -44,7 +44,7 @@ bool ca_constant::is_character_expression() const { return false; }
 context::SET_t ca_constant::evaluate(const evaluation_context&) const { return value; }
 
 context::A_t ca_constant::self_defining_term(
-    std::string_view type, std::string_view value, ranged_diagnostic_collector& add_diagnostic)
+    std::string_view type, std::string_view value, diagnostic_adder& add_diagnostic)
 {
     if (value.empty() || type.size() != 1)
     {
@@ -68,7 +68,7 @@ context::A_t ca_constant::self_defining_term(
     }
 }
 
-context::A_t ca_constant::self_defining_term(const std::string& value, ranged_diagnostic_collector& add_diagnostic)
+context::A_t ca_constant::self_defining_term(const std::string& value, diagnostic_adder& add_diagnostic)
 {
     if (value.size() >= 3 && value[1] == '\'' && value.back() == '\'')
         return self_defining_term(
@@ -79,7 +79,7 @@ context::A_t ca_constant::self_defining_term(const std::string& value, ranged_di
 
 std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)
 {
-    auto empty_add = ranged_diagnostic_collector();
+    auto empty_add = diagnostic_adder();
     auto ret = self_defining_term(value, empty_add);
     if (empty_add.diagnostics_present)
         return std::nullopt;
