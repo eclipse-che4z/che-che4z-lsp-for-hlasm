@@ -1879,7 +1879,7 @@ diagnostic_op diagnostic_op::error_CE008(const range& range)
 
 diagnostic_op diagnostic_op::error_CE009(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "CE009", "Substring past string end", range);
+    return diagnostic_op(diagnostic_severity::error, "CE009", "Substring start points past string end", range);
 }
 
 diagnostic_op diagnostic_op::error_CE010(const range& range)
@@ -1914,7 +1914,7 @@ diagnostic_op diagnostic_op::error_CE015(const range& range)
 
 diagnostic_op diagnostic_op::error_CW001(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring beyond string end", range);
+    return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
 }
 
 

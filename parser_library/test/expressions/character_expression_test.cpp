@@ -82,7 +82,7 @@ TEST(character_expresssion, invalid_substring_notation)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)4);
 }
-
+/*uncomment when compiler options will be implemented
 TEST(character_expresssion, exceeds_warning)
 {
     std::string input =
@@ -96,7 +96,7 @@ TEST(character_expresssion, exceeds_warning)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
 }
-
+*/
 TEST(character_expresssion, invalid_string)
 {
     std::string input =
