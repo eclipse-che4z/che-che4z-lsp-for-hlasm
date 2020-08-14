@@ -14,7 +14,7 @@ These virtual classes provide point of inheritance for specialized classes that 
 
 - Term classes `ca_function`, `ca_constant`, `ca_string`, `ca_symbol`, `ca_symbol_attribute`, `ca_var_sym`  
 They all inherit from the `ca_expression` class. Each of them represents a term that can be used in HLASM conditional assembly expressions.   
-We provide examples of each one to show theirs usege:
+We provide examples of each one to show their usage:
 
     | Class                   | Examples of terms they represent  |
     |:------------------------|:----------------------------------|
@@ -43,7 +43,7 @@ This class defines a custom EBCDIC literal and provides helper functions for con
 
 ## CA expressions resolving and evaluation
 
-To evaluate a CA expression, the expression object has to be resolved once. Each class overrides `resolve_expression` method which typically check whether its fields have correct type of are of a correct number. The `ca_expr_list` class does the most of the resolving work.  
+To evaluate a CA expression, the expression object has to be resolved once. Each class overrides `resolve_expression` method which typically checks whether its fields have correct type of are of a correct number. The `ca_expr_list` class does the most of the resolving work.  
 It contains algorithm that creates an expression tree from its list of expression terms. This tree is then used for further evaluation.
 
 When an expression was resolved once, it can be properly evaluated.  
