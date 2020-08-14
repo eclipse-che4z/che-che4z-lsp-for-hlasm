@@ -217,7 +217,7 @@ public:
     static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
-//policy class that aggregates some methods of specific policy classes above
+// policy class that aggregates some methods of specific policy classes above
 class ca_common_expr_policy
 {
 public:
