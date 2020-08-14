@@ -41,17 +41,28 @@ public:
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
 private:
+    // this function is present due to the fact that in hlasm you can ommit space between operator and operands if
+    // operators are in parentheses (eg. ('A')FIND('B') )
+    // however, the parser recognizes it as a function with one parameter and a duplication factor
+    // this function checks whether any function in expr_list is unknown
+    // if so, then it breaks it to three objects so the resolve method can handle it
     void unknown_functions_to_operators();
 
+    // in a loop it tries to retrieve first term, binary operator, second term
+    // each loop iteration it pastes them together and continue until list is exhausted
     template<typename T>
     void resolve();
+    // retrieves single term with possible unary operators before it
+    // also checks for following binary operator,
+    // if it has higher prio than the current one, recursively calls retrieve_term for the second term for the higher
+    // priority operator
     template<typename EXPR_POLICY>
     ca_expr_ptr retrieve_term(size_t& it, int priority);
+    // retrieves following binary operator with its priority
     template<typename EXPR_POLICY>
     std::pair<int, ca_expr_ops> retrieve_binary_operator(size_t& it, bool& err);
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
-
 
 #endif

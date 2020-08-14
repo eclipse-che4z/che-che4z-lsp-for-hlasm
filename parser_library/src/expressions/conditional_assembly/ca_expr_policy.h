@@ -106,84 +106,118 @@ enum class ca_expr_funcs
     UNKNOWN
 };
 
+// policy class for arithmetic functions and operators
 class ca_arithmetic_policy
 {
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::A_TYPE;
 
+    // is unary arithmetic operation
     static bool is_unary(ca_expr_ops op);
 
+    // is binary arithmetic operation
     static bool is_binary(ca_expr_ops op);
 
+    // true if op can consist of multiple words (eg AND NOT)
     static bool multiple_words(ca_expr_ops op);
 
+    // get priority relative to rest of arithmetic operators
     static int get_priority(ca_expr_ops op);
 
+    // is arithmetic operator
     static bool is_operator(ca_expr_ops op);
 
+    // is arithmetic function
     static bool is_function(ca_expr_funcs func);
 
+    // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
 
+    // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);
 
+    // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
 
+    // get operand types of operator op
     static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
+// policy class for binary functions and operators
 class ca_binary_policy
 {
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::B_TYPE;
 
+    // is unary binary operation
     static bool is_unary(ca_expr_ops op);
 
+    // is binary binary operation
     static bool is_binary(ca_expr_ops op);
 
+    // true if op can consist of multiple words (eg AND NOT)
     static bool multiple_words(ca_expr_ops op);
 
+    // get priority relative to rest of binary operators
     static int get_priority(ca_expr_ops op);
 
+    // is binary operator
     static bool is_operator(ca_expr_ops op);
 
+    // is binary function
     static bool is_function(ca_expr_funcs func);
 
+    // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
 
+    // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);
 
+    // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
 
+    // get operand types of operator op
     static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
+// policy class for character functions and operators
 class ca_character_policy
 {
 public:
     static constexpr context::SET_t_enum set_type = context::SET_t_enum::C_TYPE;
 
+    // is unary character operation
     static bool is_unary(ca_expr_ops op);
 
+    // is binary character operation
     static bool is_binary(ca_expr_ops op);
 
+    // true if op can consist of multiple words (eg AND NOT)
     static bool multiple_words(ca_expr_ops op);
 
+    // get priority relative to rest of character operators
     static int get_priority(ca_expr_ops op);
 
+    // is character operator
     static bool is_operator(ca_expr_ops op);
 
+    // is character function
     static bool is_function(ca_expr_funcs func);
 
+    // transforms string operator to enum
     static ca_expr_ops get_operator(const std::string& symbol);
 
+    // transforms string function to enum
     static ca_expr_funcs get_function(const std::string& symbol);
 
+    // return number of required parameters and return type
     static std::pair<size_t, context::SET_t_enum> get_function_param_info(ca_expr_funcs func);
 
+    // get operand types of operator op
     static context::SET_t_enum get_operands_type(ca_expr_ops op);
 };
 
+//policy class that aggregates some methods of specific policy classes above
 class ca_common_expr_policy
 {
 public:
