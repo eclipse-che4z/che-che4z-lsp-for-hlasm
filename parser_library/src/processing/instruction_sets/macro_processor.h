@@ -15,8 +15,8 @@
 #ifndef PROCESSING_MACRO_PROCESSOR_H
 #define PROCESSING_MACRO_PROCESSOR_H
 
-#include "diagnostic_adder.h"
 #include "context/macro.h"
+#include "diagnostic_adder.h"
 #include "instruction_processor.h"
 
 namespace hlasm_plugin {
