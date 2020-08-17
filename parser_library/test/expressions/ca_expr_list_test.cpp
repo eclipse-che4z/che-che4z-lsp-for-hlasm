@@ -117,3 +117,64 @@ TEST(ca_expr_list, is_character_expression)
 
     ASSERT_FALSE(expr_list.is_character_expression());
 }
+
+TEST(ca_expr_list, unfinished_expressions)
+{
+    // ()
+    {
+        ca_expr_list expr_list({}, range());
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+
+        ASSERT_FALSE(expr_list.diags().empty());
+    }
+    // (NOT)
+    {
+        std::string name = "NOT";
+        auto sym = std::make_unique<ca_symbol>(&name, range());
+
+        std::vector<ca_expr_ptr> list;
+        list.emplace_back(std::move(sym));
+
+        ca_expr_list expr_list(std::move(list), range());
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+
+        ASSERT_FALSE(expr_list.diags().empty());
+    }
+    // (1 AND)
+    {
+        auto c = std::make_unique<ca_constant>(1, range());
+
+        std::string name = "AND";
+        auto sym = std::make_unique<ca_symbol>(&name, range());
+
+        std::vector<ca_expr_ptr> list;
+        list.emplace_back(std::move(c));
+        list.emplace_back(std::move(sym));
+
+        ca_expr_list expr_list(std::move(list), range());
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+
+        ASSERT_FALSE(expr_list.diags().empty());
+    }
+    // (1 AND 1 EQ)
+    {
+        auto c = std::make_unique<ca_constant>(1, range());
+        auto c2 = std::make_unique<ca_constant>(1, range());
+
+        std::string and_name = "AND";
+        std::string eq_name = "EQ";
+        auto and_sym = std::make_unique<ca_symbol>(&and_name, range());
+        auto eq_sym = std::make_unique<ca_symbol>(&eq_name, range());
+
+        std::vector<ca_expr_ptr> list;
+        list.emplace_back(std::move(c));
+        list.emplace_back(std::move(and_sym));
+        list.emplace_back(std::move(c2));
+        list.emplace_back(std::move(eq_sym));
+
+        ca_expr_list expr_list(std::move(list), range());
+        expr_list.resolve_expression_tree(context::SET_t_enum::B_TYPE);
+
+        ASSERT_FALSE(expr_list.diags().empty());
+    }
+}

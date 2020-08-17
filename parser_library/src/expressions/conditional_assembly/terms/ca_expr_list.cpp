@@ -183,6 +183,9 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
         if (auto op_type = EXPR_POLICY::get_operator(get_symbol(curr_expr)); EXPR_POLICY::is_unary(op_type))
         {
             auto new_expr = retrieve_term<EXPR_POLICY>(++it, EXPR_POLICY::get_priority(op_type));
+            if (!new_expr)
+                return nullptr;
+
             return std::make_unique<ca_function_unary_operator>(
                 std::move(new_expr), op_type, EXPR_POLICY::set_type, curr_expr->expr_range);
         }
@@ -208,6 +211,8 @@ ca_expr_ptr ca_expr_list::retrieve_term(size_t& it, int priority)
         it = op_it;
 
     auto right_expr = retrieve_term<EXPR_POLICY>(++it, op_prio);
+    if (!right_expr)
+        return nullptr;
 
     return std::make_unique<ca_function_binary_operator>(
         std::move(curr_expr), std::move(right_expr), op_type, EXPR_POLICY::set_type, op_range);
@@ -233,7 +238,8 @@ std::pair<int, ca_expr_ops> ca_expr_list::retrieve_binary_operator(size_t& it, b
 
     ca_expr_ops op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]));
 
-    if (EXPR_POLICY::multiple_words(op_type) && is_symbol(expr_list[it + 1]) && get_symbol(expr_list[it + 1]) == "NOT")
+    if (EXPR_POLICY::multiple_words(op_type) && it + 1 < expr_list.size() && is_symbol(expr_list[it + 1])
+        && get_symbol(expr_list[it + 1]) == "NOT")
     {
         op_type = EXPR_POLICY::get_operator(get_symbol(expr_list[it]) + "_NOT");
         ++it;
