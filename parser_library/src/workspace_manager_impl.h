@@ -281,9 +281,9 @@ public:
 
 private:
     debugging::debug_config debug_cfg_;
-    std::unique_ptr<debugging::debugger> debugger_;
     std::set<debug_event_consumer*> debug_event_consumers_;
     std::unique_ptr<debugging::debug_lib_provider> debug_lib_provider_;
+    std::unique_ptr<debugging::debugger> debugger_;
 
     // Inherited via debug_event_consumer_s
     virtual void stopped(const std::string& reason, const std::string& addtl_info) override
