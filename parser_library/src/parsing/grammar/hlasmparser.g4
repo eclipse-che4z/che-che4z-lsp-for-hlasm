@@ -171,7 +171,6 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
-			process_instruction();
 		}
 	} EOLLN
 	| SPACE? 
@@ -180,8 +179,6 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
-		process_statement();
 	} EOLLN
 	| EOF	{finished_flag=true;};
 

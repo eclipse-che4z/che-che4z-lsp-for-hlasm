@@ -393,11 +393,19 @@ void parser_impl::process_next(processing::statement_processor& proc)
     {
         bool state = pushed_state_;
         auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
-        if (state != pushed_state_)
-            pop_state();
 
-        if (!finished_flag && lab_instr->op_text)
-            parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
+        if (!finished_flag && collector.has_instruction()) {
+            process_instruction();
+            if (state != pushed_state_)
+                pop_state();
+            if (!lab_instr->op_text)
+                process_statement();
+            else
+                parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
+        }
+
+        //if (!finished_flag && lab_instr->op_text)
+        //    parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
     }
     processor = nullptr;
     collector.prepare_for_next_statement();
