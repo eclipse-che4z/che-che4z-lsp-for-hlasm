@@ -373,19 +373,19 @@ TEST_F(feature_launch_test, variables)
         EXPECT_FALSE(var.find("name") == var.end());
         EXPECT_FALSE(var.find("value") == var.end());
         EXPECT_FALSE(var.find("variablesReference") == var.end());
-        if (var["name"] == "VARA")
+        if (var["name"] == "&VARA")
         {
             EXPECT_EQ(var["value"], json("4"));
             EXPECT_EQ(var["type"], json("A_TYPE"));
             ++var_count;
         }
-        else if (var["name"] == "VARB")
+        else if (var["name"] == "&VARB")
         {
             EXPECT_EQ(var["value"], json("TRUE"));
             EXPECT_EQ(var["type"], json("B_TYPE"));
             ++var_count;
         }
-        else if (var["name"] == "VARC")
+        else if (var["name"] == "&VARC")
         {
             EXPECT_EQ(var["value"], json("STH"));
             EXPECT_EQ(var["type"], json("C_TYPE"));
