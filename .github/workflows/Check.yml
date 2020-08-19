@@ -25,7 +25,7 @@ on:
       - development
 
 jobs:
-  clang:
+  clang-asan:
     name: Clang ASAN, UBSAN
     runs-on: ubuntu-18.04
 
@@ -34,7 +34,22 @@ jobs:
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined,fuzzer-no-link" ../
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Test
+        run: cd build/bin && ./server_test && ./library_test
+  
+  clang-tsan:
+    name: Clang TSAN
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_CXX_FLAGS="-fsanitize=thread" ../
       - name: Build
         run: cd build && cmake --build .
       - name: Test
