@@ -254,6 +254,7 @@ TEST_F(feature_launch_test, step)
 
     methods["continue"]("47"_json, json());
     resp_provider.wait_for_exited();
+    ws_mngr.disconnect();
 }
 
 std::string file_breakpoint = R"(  LR 1,1
