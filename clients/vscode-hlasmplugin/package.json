@@ -289,6 +289,13 @@
         "firstLine": " *MACRO *"
       }
     ],
+    "grammars": [
+      {
+        "language": "hlasm",
+        "scopeName": "source.hlasm",
+        "path": "./syntaxes/hlasm.tmLanguage.json"
+      }
+    ],
     "configurationDefaults": {
       "[hlasm]": {
         "editor.rulers": [

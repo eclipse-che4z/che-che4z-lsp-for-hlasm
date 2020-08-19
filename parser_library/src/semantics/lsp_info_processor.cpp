@@ -413,7 +413,7 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             {
                 if (it->token_range.start.line < symbol.token_range.start.line || 
                     (it->token_range.start.line == symbol.token_range.start.line &&
-                     it->token_range.start.column < symbol.token_range.start.column))
+                     it->token_range.start.column <= symbol.token_range.start.column))
                 {
                     hl_info_.lines.insert(it.base(), symbol);
                     break;
