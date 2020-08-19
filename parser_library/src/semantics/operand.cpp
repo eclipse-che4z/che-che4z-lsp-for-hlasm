@@ -112,7 +112,7 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     return make_check_operand(info, *expression, type_hint);
 }
 
-//suppress MSVC warning 'inherits via dominance'
+// suppress MSVC warning 'inherits via dominance'
 bool expr_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     return simple_expr_operand::has_dependencies(info);
