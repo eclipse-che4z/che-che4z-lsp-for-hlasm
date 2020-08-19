@@ -14,8 +14,7 @@
 
 #include "operand.h"
 
-using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::semantics {
 
 //***************** operand *********************
 
@@ -111,6 +110,24 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
 {
     return make_check_operand(info, *expression, type_hint);
+}
+
+//suppress MSVC warning 'inherits via dominance'
+bool expr_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_dependencies(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_machine_operand::has_error(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_error(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+std::vector<const context::resolvable*> expr_machine_operand::get_resolvables() const
+{
+    return simple_expr_operand::get_resolvables();
 }
 
 void expr_machine_operand::collect_diags() const { collect_diags_from_child(*expression); }
@@ -270,6 +287,24 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(exp
             assert(false);
             return std::make_unique<checking::empty_operand>();
     }
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_dependencies(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_error(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+std::vector<const context::resolvable*> expr_assembler_operand::get_resolvables() const
+{
+    return simple_expr_operand::get_resolvables();
 }
 
 void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
@@ -540,3 +575,5 @@ macro_operand_string::macro_operand_string(std::string value, const range operan
     : operand(operand_type::MAC, operand_range)
     , value(std::move(value))
 {}
+
+} // namespace hlasm_plugin::parser_library::semantics
