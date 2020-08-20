@@ -185,8 +185,7 @@ void collector::append_reparsed_symbols(collector&& c)
         hl_symbols_.push_back(std::move(sym));
 
     size_t i;
-    for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != context::symbol_type::instruction; ++i)
-        ;
+    for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != context::symbol_type::instruction; ++i) {};
 
     if (i != lsp_symbols_.size())
         while (lsp_symbols_.size() != i + 1)

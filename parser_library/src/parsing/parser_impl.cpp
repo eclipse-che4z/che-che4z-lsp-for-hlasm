@@ -116,16 +116,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
-
-    // indicates that the reparse is done to resolve deferred ordinary symbols (and not to substitute)
-    if (!after_substitution)
-    {
-        lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(),
-            ctx->ids().add(ctx->processing_stack().back().proc_location.file, true));
-    }
-
     h.parser->reset();
-    h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
 
@@ -153,6 +144,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
             default:
                 break;
         }
+    }
+
+    // indicates that the reparse reason is to resolve deferred ordinary symbols (and not to substitute)
+    if (!after_substitution)
+    {
+        lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(),
+            ctx->ids().add(ctx->processing_stack().back().proc_location.file, true));
     }
 
     collect_diags_from_child(listener);
@@ -370,8 +368,8 @@ void parser_impl::process_statement(semantics::op_rem line, range op_range)
     collector.set_operand_remark_field(std::move(line.operands), std::move(line.remarks), op_range);
     collector.add_operands_hl_symbols();
     collector.add_remarks_hl_symbols();
-    parent_->collector.append_operand_field(std::move(collector));
-    parent_->process_statement();
+    //parent_->collector.append_operand_field(std::move(collector));
+    process_statement();
 }
 
 void parser_impl::process_next(processing::statement_processor& proc)
@@ -533,7 +531,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
     h.parser->addErrorListener(&listener);
 
     h.parser->reset();
-    h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
 
@@ -570,14 +567,16 @@ void parser_impl::parse_rest(std::string text, range text_range)
     h.parser->addErrorListener(&listener);
 
     h.parser->reset();
-    h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
 
     auto& [format, opcode] = *proc_status;
     if (format.occurence == processing::operand_occurence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
+    {
         h.parser->op_rem_body_noop();
+        process_statement();
+    }
     else
     {
         switch (format.form)
@@ -587,30 +586,45 @@ void parser_impl::parse_rest(std::string text, range text_range)
                 break;
             case processing::processing_form::DEFERRED:
                 h.parser->op_rem_body_deferred();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement();
                 break;
-            case processing::processing_form::CA:
-                h.parser->op_rem_body_ca();
+            case processing::processing_form::CA: {
+                auto rule = h.parser->op_rem_body_ca();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement(std::move(rule->line), rule->line_range);
                 break;
-            case processing::processing_form::MAC:
-                h.parser->op_rem_body_mac();
+            }
+            case processing::processing_form::MAC: {
+                auto rule = h.parser->op_rem_body_mac();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement(std::move(rule->line), rule->line_range);
                 break;
-            case processing::processing_form::ASM:
-                h.parser->op_rem_body_asm();
+            }
+            case processing::processing_form::ASM: {
+                auto rule = h.parser->op_rem_body_asm();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement(std::move(rule->line), rule->line_range);
                 break;
-            case processing::processing_form::MACH:
-                h.parser->op_rem_body_mach();
+            }
+            case processing::processing_form::MACH: {
+                auto rule = h.parser->op_rem_body_mach();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement(std::move(rule->line), rule->line_range);
                 break;
-            case processing::processing_form::DAT:
-                h.parser->op_rem_body_dat();
+            }
+            case processing::processing_form::DAT: {
+                auto rule = h.parser->op_rem_body_dat();
+                collector.append_operand_field(std::move(h.parser->collector));
+                process_statement(std::move(rule->line), rule->line_range);
                 break;
+            }
             default:
                 break;
         }
     }
 
     collect_diags_from_child(listener);
-
-    collector.append_operand_field(std::move(h.parser->collector));
 }
 
 void parser_impl::parse_lookahead(std::string text, range text_range)
@@ -656,7 +670,6 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
     h.parser->addErrorListener(&listener);
 
     h.parser->reset();
-    h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
 
