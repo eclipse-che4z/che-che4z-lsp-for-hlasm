@@ -22,7 +22,6 @@
 
 #include "analyzer.h"
 #include "ebcdic_encoding.h"
-#include "expressions/visitors/expression_analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"

@@ -111,11 +111,11 @@ struct diagnostic_op
         , code(std::move(code))
         , message(std::move(message)) {};
 
-    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range range_)
+    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range diag_range)
         : severity(severity)
         , code(std::move(code))
         , message(std::move(message))
-        , diag_range(std::move(range_)) {};
+        , diag_range(std::move(diag_range)) {};
 
     static diagnostic_op error_I999(const std::string& instr_name, const range& range);
 
@@ -584,6 +584,38 @@ struct diagnostic_op
     static diagnostic_op error_ME001(const range& range);
 
     static diagnostic_op error_ME002(const range& range);
+
+    static diagnostic_op error_CE001(const range& range);
+
+    static diagnostic_op error_CE002(const std::string& message, const range& range);
+
+    static diagnostic_op error_CE003(const range& range);
+
+    static diagnostic_op error_CE004(const range& range);
+
+    static diagnostic_op error_CE005(const range& range);
+
+    static diagnostic_op error_CE006(const range& range);
+
+    static diagnostic_op error_CE007(const range& range);
+
+    static diagnostic_op error_CE008(const range& range);
+
+    static diagnostic_op error_CE009(const range& range);
+
+    static diagnostic_op error_CE010(const range& range);
+
+    static diagnostic_op error_CE011(const range& range);
+
+    static diagnostic_op error_CE012(const range& range);
+
+    static diagnostic_op error_CE013(const range& range);
+
+    static diagnostic_op error_CE014(const range& range);
+
+    static diagnostic_op error_CE015(const range& range);
+
+    static diagnostic_op error_CW001(const range& range);
 };
 
 struct range_uri_s

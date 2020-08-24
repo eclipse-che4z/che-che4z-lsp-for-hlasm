@@ -15,21 +15,20 @@
 #ifndef SEMANTICS_CONCATENATION_H
 #define SEMANTICS_CONCATENATION_H
 
-#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "antlr4-runtime.h"
-
-#include "context/id_storage.h"
-#include "range.h"
+#include "context/common_types.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
 namespace hlasm_plugin {
 namespace parser_library {
+namespace expressions {
+struct evaluation_context;
+}
 namespace semantics {
 
 enum class concat_type
@@ -41,11 +40,11 @@ enum class concat_type
     EQU
 };
 
-struct char_str;
-struct var_sym;
-struct dot;
-struct equals;
-struct sublist;
+struct char_str_conc;
+struct var_sym_conc;
+struct dot_conc;
+struct equals_conc;
+struct sublist_conc;
 
 struct concatenation_point;
 using concat_point_ptr = std::unique_ptr<concatenation_point>;
@@ -60,88 +59,28 @@ struct concatenation_point
     static void clear_concat_chain(concat_chain& conc_list);
 
     static std::string to_string(const concat_chain& chain);
+    static std::string to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static var_sym* contains_var_sym(const concat_chain& chain);
-
-    static concat_chain clone(const concat_chain& chain);
+    static var_sym_conc* contains_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
     const concat_type type;
 
     concatenation_point(const concat_type type);
 
-    char_str* access_str();
-    var_sym* access_var();
-    dot* access_dot();
-    equals* access_equ();
-    sublist* access_sub();
+    char_str_conc* access_str();
+    var_sym_conc* access_var();
+    dot_conc* access_dot();
+    equals_conc* access_equ();
+    sublist_conc* access_sub();
+
+    static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
+    static std::string evaluate(concat_chain::const_iterator begin,
+        concat_chain::const_iterator end,
+        const expressions::evaluation_context& eval_ctx);
+
+    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const = 0;
 
     virtual ~concatenation_point() = default;
-};
-
-// concatenation point representing character string
-struct char_str : public concatenation_point
-{
-    char_str(std::string value);
-
-    std::string value;
-};
-
-struct basic_var_sym;
-struct created_var_sym;
-
-struct var_sym : public concatenation_point
-{
-    const bool created;
-
-    std::vector<antlr4::ParserRuleContext*> subscript;
-
-    const range symbol_range;
-
-    basic_var_sym* access_basic();
-    const basic_var_sym* access_basic() const;
-    created_var_sym* access_created();
-    const created_var_sym* access_created() const;
-
-protected:
-    var_sym(const bool created, std::vector<antlr4::ParserRuleContext*> subscript, const range symbol_range);
-};
-
-using vs_ptr = std::unique_ptr<var_sym>;
-
-// concatenation point representing variable symbol
-struct basic_var_sym : public var_sym
-{
-    basic_var_sym(context::id_index name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
-
-    const context::id_index name;
-};
-
-// concatenation point representing created variable symbol
-struct created_var_sym : public var_sym
-{
-    created_var_sym(concat_chain created_name, std::vector<antlr4::ParserRuleContext*> subscript, range symbol_range);
-
-    const concat_chain created_name;
-};
-
-// concatenation point representing dot
-struct dot : public concatenation_point
-{
-    dot();
-};
-
-// concatenation point representing equals sign
-struct equals : public concatenation_point
-{
-    equals();
-};
-
-// concatenation point representing macro operand sublist
-struct sublist : public concatenation_point
-{
-    sublist(std::vector<concat_chain> list);
-
-    std::vector<concat_chain> list;
 };
 
 } // namespace semantics

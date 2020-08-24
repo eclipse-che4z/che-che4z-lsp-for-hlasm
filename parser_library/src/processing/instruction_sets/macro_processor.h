@@ -16,6 +16,7 @@
 #define PROCESSING_MACRO_PROCESSOR_H
 
 #include "context/macro.h"
+#include "diagnostic_adder.h"
 #include "instruction_processor.h"
 
 namespace hlasm_plugin {
@@ -41,8 +42,24 @@ public:
 
     static context::macro_data_ptr string_to_macrodata(std::string data);
 
+    static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
+        semantics::concat_chain::const_iterator end,
+        diagnostic_adder& add_diagnostic);
+
+    static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
+        semantics::concat_chain::const_iterator end,
+        const expressions::evaluation_context& eval_ctx);
+
 private:
     macro_arguments get_args(const resolved_statement& statement) const;
+    context::macro_data_ptr get_label_args(const resolved_statement& statement) const;
+    std::vector<context::macro_arg> get_operand_args(const resolved_statement& statement) const;
+
+    void get_keyword_arg(const resolved_statement& statement,
+        const semantics::concat_chain& chain,
+        std::vector<context::macro_arg>& args,
+        std::vector<context::id_index>& keyword_params,
+        range op_range) const;
 };
 
 } // namespace processing

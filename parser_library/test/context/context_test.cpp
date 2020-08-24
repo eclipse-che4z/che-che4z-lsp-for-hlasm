@@ -550,13 +550,13 @@ TEST(context, id_check)
     hlasm_context ctx;
     processing::context_manager mngr(ctx);
 
-    EXPECT_TRUE(mngr.try_get_symbol_name("LIST", range()).first);
-    EXPECT_TRUE(mngr.try_get_symbol_name("T_A", range()).first);
-    EXPECT_TRUE(mngr.try_get_symbol_name("T1", range()).first);
-    EXPECT_TRUE(mngr.try_get_symbol_name("a1-", range()).first);
+    EXPECT_TRUE(mngr.try_get_symbol_name("LIST").first);
+    EXPECT_TRUE(mngr.try_get_symbol_name("T_A").first);
+    EXPECT_TRUE(mngr.try_get_symbol_name("T1").first);
+    EXPECT_TRUE(mngr.try_get_symbol_name("a1-").first);
 
-    EXPECT_FALSE(mngr.try_get_symbol_name("*1", range()).first);
-    EXPECT_FALSE(mngr.try_get_symbol_name("1av", range()).first);
+    EXPECT_FALSE(mngr.try_get_symbol_name("*1").first);
+    EXPECT_FALSE(mngr.try_get_symbol_name("1av").first);
 }
 
 TEST(context_system_variables, SYSNEST_SYSMAC)

@@ -111,14 +111,13 @@ public:
     }
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t> offset = {}) const override
+    virtual A_t number(std::vector<size_t>) const override
     {
-        (void)offset;
         return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
     }
 
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset = {}) const override;
+    virtual A_t count(std::vector<size_t> offset) const override;
 
     virtual size_t size() const override { return data.size(); };
 
@@ -132,7 +131,7 @@ public:
     }
 
 private:
-    const T* get_data(std::vector<size_t> offset = {}) const
+    const T* get_data(std::vector<size_t> offset) const
     {
         if ((is_scalar && !offset.empty()) || (!is_scalar && offset.size() != 1))
             return nullptr;
@@ -153,12 +152,13 @@ inline A_t set_symbol<A_t>::count(std::vector<size_t> offset) const
     auto tmp = get_data(std::move(offset));
     return tmp ? (A_t)std::to_string(*tmp).size() : (A_t)1;
 }
+
 template<>
-inline A_t set_symbol<B_t>::count(std::vector<size_t> offset) const
+inline A_t set_symbol<B_t>::count(std::vector<size_t>) const
 {
-    (void)offset;
     return (A_t)1;
 }
+
 template<>
 inline A_t set_symbol<C_t>::count(std::vector<size_t> offset) const
 {

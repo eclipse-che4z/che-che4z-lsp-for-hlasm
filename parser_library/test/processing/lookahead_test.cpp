@@ -190,13 +190,9 @@ TEST(attribute_lookahead, lookup_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
-
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)1);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -205,19 +201,15 @@ TEST(attribute_lookahead, lookup_not_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
     // define symbol with undefined length
     auto tmp = a.context().ord_ctx.create_symbol(
         a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
     ASSERT_TRUE(tmp);
 
-    empty_attribute_provider prov;
-
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
     // although length is undefined the actual symbol is defined so no lookup should happen
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)0);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)0);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -226,13 +218,9 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 {
     std::string input("L'X+L'Y");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
-
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)2);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -241,13 +229,9 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 {
     std::string input("S'X+L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
-
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)1);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

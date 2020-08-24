@@ -15,19 +15,17 @@
 #include "hlasm_context.h"
 
 #include <ctime>
+#include <stdexcept>
 
-#include "diagnosable_impl.h"
 #include "ebcdic_encoding.h"
-#include "expressions/arithmetic_expression.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "instruction.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 code_scope* hlasm_context::curr_scope() { return &scope_stack_.back(); }
 
 const code_scope* hlasm_context::curr_scope() const { return &scope_stack_.back(); }
-
 
 hlasm_context::instruction_storage hlasm_context::init_instruction_map()
 {
@@ -337,7 +335,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
     return ret;
 }
 
-void hlasm_plugin::parser_library::context::hlasm_context::fill_metrics_files()
+void hlasm_context::fill_metrics_files()
 {
     metrics.files = visited_files_.size();
     // for each line without '\n' at the end of the files
@@ -461,15 +459,16 @@ opcode_t hlasm_context::get_operation_code(id_index symbol) const
     return value;
 }
 
-SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
+SET_t hlasm_context::get_attribute_value_ca(
+    data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset)
 {
     switch (attribute)
     {
         case data_attr_kind::K:
-            return var_symbol ? var_symbol->count(offset) : 0;
+            return var_symbol ? var_symbol->count(std::move(offset)) : 0;
         case data_attr_kind::N:
-            return var_symbol ? var_symbol->number(offset) : 0;
-        case hlasm_plugin::parser_library::context::data_attr_kind::T:
+            return var_symbol ? var_symbol->number(std::move(offset)) : 0;
+        case data_attr_kind::T:
             return get_type_attr(var_symbol, std::move(offset));
         default:
             break;
@@ -478,22 +477,36 @@ SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, var_sym_ptr va
     return SET_t();
 }
 
-SET_t hlasm_context::get_data_attribute(data_attr_kind attribute, id_index symbol_name)
+SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, id_index symbol_name)
+{
+    if (attribute == data_attr_kind::O)
+        return get_opcode_attr(symbol_name);
+    return get_attribute_value_ca(attribute, ord_ctx.get_symbol(symbol_name));
+}
+
+SET_t hlasm_context::get_attribute_value_ca(data_attr_kind attribute, const symbol* symbol)
 {
     switch (attribute)
     {
-        case hlasm_plugin::parser_library::context::data_attr_kind::D:
-            return ord_ctx.symbol_defined(symbol_name) ? 1 : 0;
-        case hlasm_plugin::parser_library::context::data_attr_kind::T:
-            return std::string({ ord_ctx.symbol_defined(symbol_name) ? (char)ebcdic_encoding::e2a
-                                     [ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute)]
-                                                                     : 'U' });
-        case hlasm_plugin::parser_library::context::data_attr_kind::O:
-            return get_opcode_attr(symbol_name);
+        case data_attr_kind::D:
+            if (symbol)
+                return 1;
+            return 0;
+        case data_attr_kind::T:
+            if (symbol)
+            {
+                auto attr_val = symbol->attributes().get_attribute_value(attribute);
+                return std::string { (char)ebcdic_encoding::e2a[attr_val] };
+            }
+            return "U";
+        case data_attr_kind::O:
+            if (symbol)
+                return get_opcode_attr(symbol->name);
+            return "U";
         default:
-            return ord_ctx.symbol_defined(symbol_name)
-                ? ord_ctx.get_symbol(symbol_name)->attributes().get_attribute_value(attribute)
-                : symbol_attributes::default_value(attribute);
+            if (symbol)
+                return symbol->attributes().get_attribute_value(attribute);
+            return symbol_attributes::default_value(attribute);
     }
 }
 
@@ -528,8 +541,8 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     if (value.empty())
         return "O";
 
-    auto res = expressions::arithmetic_expression::from_string(value, false);
-    if (!res->diag)
+    auto res = expressions::ca_constant::try_self_defining_term(value);
+    if (res)
         return "N";
 
     id_index symbol_name = ids_.add(std::move(value));
@@ -678,3 +691,5 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 }
 
 const code_scope& hlasm_context::current_scope() const { return *curr_scope(); }
+
+} // namespace hlasm_plugin::parser_library::context

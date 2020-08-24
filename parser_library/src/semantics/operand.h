@@ -19,7 +19,7 @@
 
 #include "checking/data_definition/data_definition_operand.h"
 #include "checking/instr_operand.h"
-#include "concatenation.h"
+#include "concatenation_term.h"
 #include "expressions/data_definition.h"
 #include "expressions/mach_expression.h"
 
@@ -169,6 +169,10 @@ struct expr_machine_operand final : public machine_operand, public simple_expr_o
     virtual std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
+    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+
     virtual void collect_diags() const override;
 };
 
@@ -237,6 +241,10 @@ public:
     expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range);
 
     virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+
+    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
     virtual void collect_diags() const override;
 };
@@ -426,9 +434,9 @@ struct var_ca_operand final : public ca_operand
 // CA expression operand
 struct expr_ca_operand final : public ca_operand
 {
-    expr_ca_operand(antlr4::ParserRuleContext* expression, const range operand_range);
+    expr_ca_operand(expressions::ca_expr_ptr expression, const range operand_range);
 
-    antlr4::ParserRuleContext* expression;
+    expressions::ca_expr_ptr expression;
 };
 
 // CA sequence symbol operand
@@ -442,10 +450,10 @@ struct seq_ca_operand final : public ca_operand
 // CA branching operand (i.e. (5).here)
 struct branch_ca_operand final : public ca_operand
 {
-    branch_ca_operand(seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, const range operand_range);
+    branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, const range operand_range);
 
     seq_sym sequence_symbol;
-    antlr4::ParserRuleContext* expression;
+    expressions::ca_expr_ptr expression;
 };
 
 

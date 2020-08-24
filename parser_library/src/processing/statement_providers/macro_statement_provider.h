@@ -35,4 +35,5 @@ public:
 } // namespace processing
 } // namespace parser_library
 } // namespace hlasm_plugin
+
 #endif

@@ -1837,6 +1837,88 @@ diagnostic_op diagnostic_op::error_ME002(const range& range)
     return diagnostic_op(diagnostic_severity::error, "ME002", "multiplication or division of address", range);
 }
 
+diagnostic_op diagnostic_op::error_CE001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);
+}
+
+diagnostic_op diagnostic_op::error_CE002(const std::string& message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE002", "Undefined operator - " + message, range);
+}
+
+diagnostic_op diagnostic_op::error_CE003(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE003", "Operand expected", range);
+}
+
+diagnostic_op diagnostic_op::error_CE004(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "CE004", "Invalid use of operator - different return type expected", range);
+}
+
+diagnostic_op diagnostic_op::error_CE005(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE005", "Illegal duplication factor", range);
+}
+
+diagnostic_op diagnostic_op::error_CE006(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE006", "Bad number of operands", range);
+}
+
+diagnostic_op diagnostic_op::error_CE007(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE007", "Bad operand value", range);
+}
+
+diagnostic_op diagnostic_op::error_CE008(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE008", "Bad substring expression", range);
+}
+
+diagnostic_op diagnostic_op::error_CE009(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE009", "Substring start points past string end", range);
+}
+
+diagnostic_op diagnostic_op::error_CE010(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE010", "Negative duplication factor", range);
+}
+
+diagnostic_op diagnostic_op::error_CE011(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE011", "Maximum string size exceeded", range);
+}
+
+diagnostic_op diagnostic_op::error_CE012(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE012", "Only absolute and defined symbols allowed", range);
+}
+
+diagnostic_op diagnostic_op::error_CE013(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE013", "Arithmetic overflow", range);
+}
+
+diagnostic_op diagnostic_op::error_CE014(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE014", "Arithmetic underflow", range);
+}
+
+diagnostic_op diagnostic_op::error_CE015(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE015", "Invalid self-defining term", range);
+}
+
+diagnostic_op diagnostic_op::error_CW001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
+}
+
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,

@@ -87,9 +87,7 @@ void collector::set_label_field(concat_chain label, range symbol_range)
     concatenation_point::clear_concat_chain(label);
     if (label.size() == 1 && label[0]->type == concat_type::VAR) // label is variable symbol
     {
-        auto vs = std::unique_ptr<var_sym>(label[0]->access_var());
-        label[0].release();
-        lbl_->emplace(symbol_range, std::move(vs));
+        lbl_->emplace(symbol_range, std::move(label[0]->access_var()->symbol));
     }
     else // label is concatenation
     {
@@ -115,6 +113,7 @@ void collector::set_instruction_field(concat_chain instr, range symbol_range)
 {
     if (*instr_)
         throw std::runtime_error("field already assigned");
+    concatenation_point::clear_concat_chain(instr);
     instr_->emplace(symbol_range, std::move(instr));
 }
 

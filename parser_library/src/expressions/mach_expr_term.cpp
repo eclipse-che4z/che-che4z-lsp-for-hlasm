@@ -14,8 +14,10 @@
 
 #include "mach_expr_term.h"
 
-#include "arithmetic_expression.h"
+#include <stdexcept>
+
 #include "checking/checker_helper.h"
+#include "conditional_assembly/terms/ca_constant.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
@@ -85,13 +87,8 @@ const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
     : mach_expression(rng)
 {
-    auto ae = arithmetic_expression::from_string(
-        std::move(option), std::move(value), false); // could generate diagnostic + DBCS
-    ae->diag->diag_range = rng;
-    if (ae->has_error())
-        add_diagnostic(*ae->diag);
-    else
-        value_ = ae->get_numeric_value();
+    diagnostic_adder add_diagnostic(this, rng);
+    value_ = ca_constant::self_defining_term(option, value, add_diagnostic);
 }
 
 context::dependency_collector mach_expr_self_def::get_dependencies(context::dependency_solver&) const
