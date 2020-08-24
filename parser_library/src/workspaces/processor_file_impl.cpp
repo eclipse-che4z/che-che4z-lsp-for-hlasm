@@ -79,7 +79,7 @@ parse_result processor_file_impl::parse_macro(
 parse_result processor_file_impl::parse_no_lsp_update(
     parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
 {
-    no_update_analyzer_ =
+    auto no_update_analyzer_ =
         std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
     no_update_analyzer_->analyze();
     return true;

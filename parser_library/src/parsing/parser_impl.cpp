@@ -17,19 +17,18 @@
 #include <cctype>
 
 #include "error_strategy.h"
-#include "expressions/arithmetic_expression.h"
+#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parser_error_listener_ctx.h"
 #include "processing/context_manager.h"
 #include "processing/statement.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::lexing;
-using namespace hlasm_plugin::parser_library::parsing;
+namespace hlasm_plugin::parser_library::parsing {
 
 parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
+    , input(dynamic_cast<lexing::token_stream&>(*input))
     , ctx(nullptr)
     , lsp_proc(nullptr)
     , processor(nullptr)
@@ -48,15 +47,17 @@ void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_i
     pushed_state_ = false;
 }
 
-bool parser_impl::is_last_line() { return dynamic_cast<lexer&>(*_input->getTokenSource()).is_last_line(); }
+bool parser_impl::is_last_line() const
+{
+    return dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).is_last_line();
+}
 
 void parser_impl::rewind_input(context::source_position pos)
 {
     finished_flag = false;
     last_line_processed_ = false;
     _matchedEOF = false;
-    dynamic_cast<token_stream&>(*_input).rewind_input(
-        lexer::stream_position { pos.file_line, pos.file_offset }, line_end_pushed_);
+    input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset }, line_end_pushed_);
     line_end_pushed_ = false;
 }
 
@@ -64,16 +65,26 @@ void parser_impl::push_line_end() { line_end_pushed_ = true; }
 
 context::source_position parser_impl::statement_start() const
 {
-    auto pos = dynamic_cast<lexer&>(*_input->getTokenSource()).last_lln_begin_position();
+    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_begin_position();
     return { pos.line, pos.offset };
 }
 
 context::source_position parser_impl::statement_end() const
 {
-    auto pos = dynamic_cast<lexer&>(*_input->getTokenSource()).last_lln_end_position();
+    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_end_position();
     return { pos.line, pos.offset };
 }
 
+std::unique_ptr<parser_holder> create_parser_holder()
+{
+    std::string s;
+    auto h = std::make_unique<parser_holder>();
+    h->input = std::make_unique<lexing::input_source>(s);
+    h->lex = std::make_unique<lexing::lexer>(h->input.get(), nullptr);
+    h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
+    h->parser = std::make_unique<hlasmparser>(h->stream.get());
+    return h;
+}
 
 std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
     context::hlasm_context* hlasm_ctx,
@@ -83,14 +94,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     processing::processing_status status)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<input_source>(s);
-        reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     hlasm_ctx->metrics.reparsed_statements++;
     parser_holder& h = *reparser_;
@@ -100,13 +104,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         sub = field;
     parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
 
-    h.input->append(field);
+    h.input->reset(field);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(field_range.original_range.start);
     h.lex->set_unlimited_line(after_substitution);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(hlasm_ctx, field_range, status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
@@ -120,7 +124,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
             ctx->ids().add(ctx->processing_stack().back().proc_location.file, true));
     }
 
-    // h.parser->append();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -187,13 +191,13 @@ void parser_impl::collect_diags() const
 
 
 
-void parser_impl::enable_continuation() { dynamic_cast<token_stream&>(*_input).enable_continuation(); }
+void parser_impl::enable_continuation() { input.enable_continuation(); }
 
-void parser_impl::disable_continuation() { dynamic_cast<token_stream&>(*_input).disable_continuation(); }
+void parser_impl::disable_continuation() { input.disable_continuation(); }
 
-void parser_impl::enable_hidden() { dynamic_cast<token_stream&>(*_input).enable_hidden(); }
+void parser_impl::enable_hidden() { input.enable_hidden(); }
 
-void parser_impl::disable_hidden() { dynamic_cast<token_stream&>(*_input).disable_hidden(); }
+void parser_impl::disable_hidden() { input.disable_hidden(); }
 
 bool parser_impl::is_self_def()
 {
@@ -219,16 +223,12 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    auto ae = expressions::arithmetic_expression::from_string(option, value, false); // could generate diagnostic + DBCS
-    if (ae->has_error())
-    {
-        ae->diag->diag_range = term_range;
-        add_diagnostic(diagnostic_s(ctx->opencode_file_name(), *ae->diag));
-    }
-    else
-        return ae->get_numeric_value();
+    diagnostic_adder add_diagnostic(this, term_range);
+    auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
-    return 0;
+    if (add_diagnostic.diagnostics_present)
+        diags().back().file_name = ctx->processing_stack().back().proc_location.file;
+    return val;
 }
 
 context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range data_range)
@@ -278,6 +278,42 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
             line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
 
         line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges));
+    }
+}
+
+void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
+{
+    expr->resolve_expression_tree(type);
+    expr->collect_diags();
+    for (auto& d : expr->diags())
+        add_diagnostic(diagnostic_s(ctx->processing_stack().back().proc_location.file, std::move(d)));
+    expr->diags().clear();
+}
+
+void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr_list, context::SET_t_enum type) const
+{
+    for (auto& expr : expr_list)
+        resolve_expression(expr, type);
+}
+
+void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
+{
+    auto [_, opcode] = *proc_status;
+    if (opcode.value == ctx->ids().add("SETA") || opcode.value == ctx->ids().add("ACTR")
+        || opcode.value == ctx->ids().add("ASPACE") || opcode.value == ctx->ids().add("AGO"))
+        resolve_expression(expr, context::SET_t_enum::A_TYPE);
+    else if (opcode.value == ctx->ids().add("SETB") || opcode.value == ctx->ids().add("AIF"))
+        resolve_expression(expr, context::SET_t_enum::B_TYPE);
+    else if (opcode.value == ctx->ids().add("SETC"))
+        resolve_expression(expr, context::SET_t_enum::C_TYPE);
+    else if (opcode.value == ctx->ids().add("AREAD"))
+    {
+        // aread operand is just enumeration
+    }
+    else
+    {
+        assert(false);
+        resolve_expression(expr, context::SET_t_enum::UNDEF_TYPE);
     }
 }
 
@@ -467,14 +503,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
     std::string operands, range field_range, std::vector<range> operand_ranges)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<input_source>(s);
-        reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     parser_holder& h = *reparser_;
 
@@ -482,20 +511,20 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
 
-    h.input->append(operands);
+    h.input->reset(operands);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(field_range.start);
     h.lex->set_unlimited_line(true);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(ctx, tmp_provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    //	h.parser->reset();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -508,40 +537,31 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     collect_diags_from_child(listener);
 
-    // parsers_.emplace_back(std::move(h));
-
     return list;
 }
 
 void parser_impl::parse_rest(std::string text, range text_range)
 {
     if (!rest_parser_)
-    {
-        std::string s;
-        rest_parser_ = std::make_unique<parser_holder>();
-        rest_parser_->input = std::make_unique<input_source>(s);
-        rest_parser_->lex = std::make_unique<lexer>(rest_parser_->input.get(), nullptr);
-        rest_parser_->stream = std::make_unique<token_stream>(rest_parser_->lex.get());
-        rest_parser_->parser = std::make_unique<hlasmparser>(rest_parser_->stream.get());
-    }
+        rest_parser_ = create_parser_holder();
 
     parser_holder& h = *rest_parser_;
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 
-    h.input->append(text);
+    h.input->reset(text);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(text_range.start);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(this);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    // h.parser->reset();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -583,21 +603,12 @@ void parser_impl::parse_rest(std::string text, range text_range)
     collect_diags_from_child(listener);
 
     collector.append_operand_field(std::move(h.parser->collector));
-
-    // parsers_.emplace_back(std::move(h));
 }
 
 void parser_impl::parse_lookahead(std::string text, range text_range)
 {
     if (!reparser_)
-    {
-        std::string s;
-        reparser_ = std::make_unique<parser_holder>();
-        reparser_->input = std::make_unique<input_source>(s);
-        reparser_->lex = std::make_unique<lexer>(reparser_->input.get(), nullptr);
-        reparser_->stream = std::make_unique<token_stream>(reparser_->lex.get());
-        reparser_->parser = std::make_unique<hlasmparser>(reparser_->stream.get());
-    }
+        reparser_ = create_parser_holder();
 
     if (proc_status->first.form == processing::processing_form::IGNORED)
     {
@@ -623,20 +634,20 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 
-    h.input->append(text);
+    h.input->reset(text);
 
-    h.lex->append();
+    h.lex->reset();
     h.lex->set_file_offset(text_range.start);
     h.lex->set_unlimited_line(true);
 
-    h.stream->append();
+    h.stream->reset();
 
     h.parser->initialize(this);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
 
-    // h.parser->append();
+    h.parser->reset();
     h.parser->_matchedEOF = false;
 
     h.parser->collector.prepare_for_next_statement();
@@ -657,3 +668,5 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 }
 
 parser_holder::~parser_holder() {}
+
+} // namespace hlasm_plugin::parser_library::parsing

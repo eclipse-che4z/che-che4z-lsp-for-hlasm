@@ -69,12 +69,12 @@ l_common_rules returns [concat_chain chain]
 	}
 	| l_string_poss_space_c l_string_v
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_poss_space_c.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_poss_space_c.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v.chain.begin()), std::make_move_iterator($l_string_v.chain.end()));
 	}
 	| l_string_v_apo_sp l_string
 	{
-		$l_string_v_apo_sp.chain.push_back(std::make_unique<char_str>(std::move($l_string.value)));
+		$l_string_v_apo_sp.chain.push_back(std::make_unique<char_str_conc>(std::move($l_string.value)));
 		$chain = std::move($l_string_v_apo_sp.chain);
 	};
 
@@ -89,12 +89,12 @@ l_model_sp returns [concat_chain chain]
 	| l_common_rules l_string_no_space_c
 	{
 		$chain = std::move($l_common_rules.chain);
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_no_space_c.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_no_space_c.value)));
 	}
 	| l_string_poss_space_c l_string l_string_v_apo
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_poss_space_c.value)));
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_poss_space_c.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v_apo.chain.begin()), std::make_move_iterator($l_string_v_apo.chain.end()));
 	};
 
@@ -105,7 +105,7 @@ l_model returns [concat_chain chain]
 	}
 	| l_string l_string_v_apo
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v_apo.chain.begin()), std::make_move_iterator($l_string_v_apo.chain.end()));
 	}
 	| l_string_v l_string_v_apo
@@ -116,7 +116,7 @@ l_model returns [concat_chain chain]
 	| l_string_v l_string_no_space_c
 	{
 		$chain = std::move($l_string_v.chain);
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_no_space_c.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_no_space_c.value)));
 	};
 
 
@@ -144,27 +144,27 @@ l_ch returns [std::string value]
 	| RPAR													{$value = ")";};
 
 common_ch_v returns [concat_point_ptr point]
-	: ASTERISK												{$point = std::make_unique<char_str>("*");}
-	| MINUS													{$point = std::make_unique<char_str>("-");}
-	| PLUS													{$point = std::make_unique<char_str>("+");}
-	| LT													{$point = std::make_unique<char_str>("<");}
-	| GT													{$point = std::make_unique<char_str>(">");}
-	| SLASH													{$point = std::make_unique<char_str>("/");}
-	| EQUALS												{$point = std::make_unique<equals>();}
-	| AMPERSAND AMPERSAND									{$point = std::make_unique<char_str>("&&");}
-	| VERTICAL												{$point = std::make_unique<char_str>("|");}
-	| IDENTIFIER											{$point = std::make_unique<char_str>($IDENTIFIER->getText());}
-	| NUM													{$point = std::make_unique<char_str>($NUM->getText());}
-	| ORDSYMBOL												{$point = std::make_unique<char_str>($ORDSYMBOL->getText());}
-	| DOT													{$point = std::make_unique<dot>();}											
-	| var_symbol											{$point = std::move($var_symbol.vs);};
+	: ASTERISK												{$point = std::make_unique<char_str_conc>("*");}
+	| MINUS													{$point = std::make_unique<char_str_conc>("-");}
+	| PLUS													{$point = std::make_unique<char_str_conc>("+");}
+	| LT													{$point = std::make_unique<char_str_conc>("<");}
+	| GT													{$point = std::make_unique<char_str_conc>(">");}
+	| SLASH													{$point = std::make_unique<char_str_conc>("/");}
+	| EQUALS												{$point = std::make_unique<equals_conc>();}
+	| AMPERSAND AMPERSAND									{$point = std::make_unique<char_str_conc>("&&");}
+	| VERTICAL												{$point = std::make_unique<char_str_conc>("|");}
+	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());}
+	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
+	| ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
+	| DOT													{$point = std::make_unique<dot_conc>();}											
+	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));};
 
 l_ch_v returns [concat_point_ptr point]
 	: common_ch_v											{$point = std::move($common_ch_v.point);}
-	| EQUALS												{$point = std::make_unique<char_str>("=");}
-	| COMMA													{$point = std::make_unique<char_str>(",");}
-	| LPAR													{$point = std::make_unique<char_str>("(");}
-	| RPAR													{$point = std::make_unique<char_str>(")");};
+	| EQUALS												{$point = std::make_unique<char_str_conc>("=");}
+	| COMMA													{$point = std::make_unique<char_str_conc>(",");}
+	| LPAR													{$point = std::make_unique<char_str_conc>("(");}
+	| RPAR													{$point = std::make_unique<char_str_conc>(")");};
 
 l_str_v returns [concat_chain chain]
 	:														
@@ -177,8 +177,8 @@ l_string returns [std::string value]
 l_string_v returns [concat_chain chain]
 	: l_string_o var_symbol l_str_v							
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_o.value))); 
-		$chain.push_back(std::move($var_symbol.vs));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_o.value))); 
+		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_str_v.chain.begin()), std::make_move_iterator($l_str_v.chain.end()));
 	};
 
@@ -200,21 +200,21 @@ l_string_no_space_v returns [concat_chain chain]
 	: l_apo l_string_o l_apo l_string_v
 	{
 		std::string tmp("'"); tmp.append(std::move($l_string_o.value)); tmp.append("'");
-		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move(tmp)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v.chain.begin()), std::make_move_iterator($l_string_v.chain.end()));
 	}
 	| l_apo l_string_v l_apo l_string_o
 	{
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v.chain.begin()), std::make_move_iterator($l_string_v.chain.end()));
-		$chain.push_back(std::make_unique<char_str>("'"));
-		$chain.push_back(std::make_unique<char_str>(std::move($l_string_o.value)));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_o.value)));
 	}
 	| l_apo str1=l_string_v l_apo str2=l_string_v
 	{
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($str1.chain.begin()), std::make_move_iterator($str1.chain.end()));
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($str2.chain.begin()), std::make_move_iterator($str2.chain.end()));
 	};
 
@@ -223,7 +223,7 @@ l_string_no_space_u returns [concat_chain chain]
 	| l_apo str1=l_string_o l_apo str2=l_string_o
 	{
 		std::string tmp("'"); tmp.append(std::move($str1.value)); tmp.append("'");  tmp.append(std::move($str2.value));
-		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move(tmp)));
 	};
 
 l_string_no_space_u_c returns [concat_chain chain]
@@ -241,7 +241,7 @@ l_string_no_space_c_o returns [std::string value]
 l_string_v_apo returns [concat_chain chain]
 	: cl1=l_string_no_space_c_o  cl2=l_string_no_space_v cl3=l_string_no_space_u_c
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($cl1.value)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($cl1.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($cl2.chain.begin()), std::make_move_iterator($cl2.chain.end()));	
 		$chain.insert($chain.end(), std::make_move_iterator($cl3.chain.begin()), std::make_move_iterator($cl3.chain.end()));
 	};
@@ -254,7 +254,7 @@ l_sp_ch returns [std::string value] //l_ch with SPACE
 	| SPACE															{$value = $SPACE->getText();}; 					
 l_sp_ch_v returns [concat_point_ptr point]
 	: l_ch_v														{$point = std::move($l_ch_v.point);}
-	| SPACE															{$point = std::make_unique<char_str>($SPACE->getText());};
+	| SPACE															{$point = std::make_unique<char_str_conc>($SPACE->getText());};
 
 l_sp_str_v returns [concat_chain chain]
 	:		
@@ -267,8 +267,8 @@ l_sp_string returns [std::string value]
 l_sp_string_v returns [concat_chain chain]
 	: l_sp_string var_symbol l_sp_str_v
 	{
-		$chain.push_back(std::make_unique<char_str>(std::move($l_sp_string.value))); 
-		$chain.push_back(std::move($var_symbol.vs));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_sp_string.value))); 
+		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_sp_str_v.chain.begin()), std::make_move_iterator($l_sp_str_v.chain.end()));
 	};
 
@@ -285,13 +285,13 @@ l_string_poss_space_u returns [concat_chain chain]
 	: l_apo l_sp_string l_apo										
 	{
 		std::string tmp("'"); tmp.append(std::move($l_sp_string.value)); tmp.append("'"); 
-		$chain.push_back(std::make_unique<char_str>(std::move(tmp)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move(tmp)));
 	}
 	| l_apo l_sp_string_v l_apo
 	{
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($l_sp_string_v.chain.begin()), std::make_move_iterator($l_sp_string_v.chain.end()));
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 	};
 
 l_string_poss_space_u_c returns [concat_chain chain]
@@ -306,8 +306,8 @@ l_string_v_apo_sp returns [concat_chain chain]
 	: cl1=l_string_poss_space_c_o l_apo cl2=l_sp_string_v l_apo cl3=l_string_poss_space_u_c
 	{
 		$cl1.value.append("'");
-		$cl2.chain.push_back(std::make_unique<char_str>("'"));
-		$chain.push_back(std::make_unique<char_str>(std::move($cl1.value)));
+		$cl2.chain.push_back(std::make_unique<char_str_conc>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($cl1.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($cl2.chain.begin()), std::make_move_iterator($cl2.chain.end()));
 		$chain.insert($chain.end(), std::make_move_iterator($cl3.chain.begin()), std::make_move_iterator($cl3.chain.end()));
 	};

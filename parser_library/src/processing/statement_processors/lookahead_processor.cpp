@@ -333,7 +333,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
         return;
 
     auto name = std::get<std::string>(statement.label_ref().value);
-    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(std::move(name), range());
+    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(std::move(name));
     if (!valid)
         return;
 

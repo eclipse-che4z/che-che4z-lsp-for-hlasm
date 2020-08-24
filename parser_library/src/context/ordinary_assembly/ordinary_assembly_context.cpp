@@ -55,6 +55,13 @@ bool ordinary_assembly_context::create_symbol(
     return ok;
 }
 
+const symbol* ordinary_assembly_context::get_symbol(id_index name) const
+{
+    auto tmp = symbols_.find(name);
+
+    return tmp == symbols_.end() ? nullptr : &tmp->second;
+}
+
 symbol* ordinary_assembly_context::get_symbol(id_index name)
 {
     auto tmp = symbols_.find(name);

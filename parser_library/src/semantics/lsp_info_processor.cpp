@@ -14,7 +14,7 @@
 
 #include "lsp_info_processor.h"
 
-#include <string_view>
+#include <sstream>
 
 #include "context/instruction.h"
 

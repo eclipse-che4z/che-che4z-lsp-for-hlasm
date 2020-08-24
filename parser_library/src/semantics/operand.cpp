@@ -14,8 +14,7 @@
 
 #include "operand.h"
 
-using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::semantics {
 
 //***************** operand *********************
 
@@ -49,7 +48,9 @@ empty_operand::empty_operand(range operand_range)
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
-{}
+{
+    concatenation_point::clear_concat_chain(this->chain);
+}
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
@@ -109,6 +110,24 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
 {
     return make_check_operand(info, *expression, type_hint);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_dependencies(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_machine_operand::has_error(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_error(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+std::vector<const context::resolvable*> expr_machine_operand::get_resolvables() const
+{
+    return simple_expr_operand::get_resolvables();
 }
 
 void expr_machine_operand::collect_diags() const { collect_diags_from_child(*expression); }
@@ -270,6 +289,24 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(exp
     }
 }
 
+// suppress MSVC warning 'inherits via dominance'
+bool expr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_dependencies(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+bool expr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+{
+    return simple_expr_operand::has_error(info);
+}
+
+// suppress MSVC warning 'inherits via dominance'
+std::vector<const context::resolvable*> expr_assembler_operand::get_resolvables() const
+{
+    return simple_expr_operand::get_resolvables();
+}
+
 void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
 
 //***************** end_instr_machine_operand *********************
@@ -402,9 +439,9 @@ var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     , variable_symbol(std::move(variable_symbol))
 {}
 
-expr_ca_operand::expr_ca_operand(antlr4::ParserRuleContext* expression, range operand_range)
+expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::EXPR, std::move(operand_range))
-    , expression(expression)
+    , expression(std::move(expression))
 {}
 
 seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
@@ -412,11 +449,10 @@ seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     , sequence_symbol(std::move(sequence_symbol))
 {}
 
-branch_ca_operand::branch_ca_operand(
-    seq_sym sequence_symbol, antlr4::ParserRuleContext* expression, range operand_range)
+branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::BRANCH, std::move(operand_range))
     , sequence_symbol(std::move(sequence_symbol))
-    , expression(expression)
+    , expression(std::move(expression))
 {}
 
 
@@ -539,3 +575,5 @@ macro_operand_string::macro_operand_string(std::string value, const range operan
     : operand(operand_type::MAC, operand_range)
     , value(std::move(value))
 {}
+
+} // namespace hlasm_plugin::parser_library::semantics

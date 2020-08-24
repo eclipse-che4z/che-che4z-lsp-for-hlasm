@@ -17,6 +17,8 @@
 
 #include <cstdint>
 
+#include "context/common_types.h"
+
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
@@ -68,9 +70,10 @@ struct symbol_attributes
     // helper function to transform char to enum
     static data_attr_kind transform_attr(char c);
 
-    static bool needs_ordinary(data_attr_kind attribute);
-    static bool ordinary_allowed(data_attr_kind attribute);
+    static bool requires_ordinary_symbol(data_attr_kind attribute);
+    static bool is_ordinary_attribute(data_attr_kind attribute);
     static value_t default_value(data_attr_kind attribute);
+    static SET_t default_ca_value(data_attr_kind attribute);
 
     symbol_attributes(symbol_origin origin,
         type_attr type,

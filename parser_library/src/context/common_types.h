@@ -102,13 +102,19 @@ public:
     SET_t(A_t value);
     SET_t(B_t value);
     SET_t(C_t value);
-    SET_t();
+    // for string literals (otherwise they prefer coversion to bool rather than to string)
+    SET_t(const char* value);
+    SET_t(SET_t_enum type = SET_t_enum::UNDEF_TYPE);
 
-    const SET_t_enum type;
+    SET_t_enum type;
 
     A_t& access_a();
     B_t& access_b();
     C_t& access_c();
+
+    const A_t& access_a() const;
+    const B_t& access_b() const;
+    const C_t& access_c() const;
 };
 
 // just mock method for now, will be implemented later with respect to UTF/EBCDIC

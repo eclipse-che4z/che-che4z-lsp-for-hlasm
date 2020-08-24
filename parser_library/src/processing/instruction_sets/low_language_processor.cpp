@@ -51,10 +51,9 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (stmt.label_ref().type == semantics::label_si_type::ORD)
     {
         context_manager mngr(hlasm_ctx);
-        auto ret =
-            mngr.try_get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
+        auto ret = mngr.get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
         collect_diags_from_child(mngr);
-        return ret.second;
+        return ret;
     }
     else
         return context::id_storage::empty_id;
@@ -88,12 +87,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     {
         case semantics::label_si_type::CONC:
             label.emplace(stmt.label_ref().field_range,
-                mngr.concatenate_str(std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
+                semantics::concatenation_point::evaluate(
+                    std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
             break;
         case semantics::label_si_type::VAR:
-            new_label = mngr.convert_to<context::C_t>(
-                mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value), eval_ctx),
-                std::get<semantics::vs_ptr>(stmt.label_ref().value)->symbol_range);
+            new_label = semantics::var_sym_conc::evaluate(
+                std::get<semantics::vs_ptr>(stmt.label_ref().value)->evaluate(eval_ctx));
             if (new_label.empty() || new_label[0] == ' ')
                 label.emplace(stmt.label_ref().field_range);
             else
@@ -114,7 +113,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type == semantics::operand_type::MODEL)
     {
         assert(stmt.operands_ref().value.size() == 1);
-        std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
+        std::string field(
+            semantics::concatenation_point::evaluate(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
         operands.emplace(parser
                              .parse_operand_field(&hlasm_ctx,
                                  std::move(field),
@@ -350,7 +350,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 void low_language_processor::check(const resolved_statement& stmt,
     context::hlasm_context& hlasm_ctx,
     checking::instruction_checker& checker,
-    diagnosable_ctx& diagnoser)
+    const diagnosable_ctx& diagnoser)
 {
     auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
     diagnostic_collector collector(
