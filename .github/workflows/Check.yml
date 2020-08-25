@@ -55,6 +55,27 @@ jobs:
       - name: Test
         run: cd build/bin && ./server_test && ./library_test
 
+  macos-server:
+    name: MacOS Clang TSAN
+    runs-on: macos-10.15
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: |
+          brew install ninja llvm@8
+          export PATH=~/usr/local/opt/llvm\@8/bin:$PATH
+      - name: Configure
+        run: mkdir build && cd build && cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 -DCMAKE_CXX_FLAGS="-fsanitize=thread" ../
+      - name: Build
+        run: cd build && cmake --build . -- -v
+      - name: Server Test
+        run: cd build/bin && ./server_test && ./library_test
+      - name: Extension Test
+        run: npm --prefix clients/vscode-hlasmplugin run test
+      - name: Extension Test Insiders
+        run: npm --prefix clients/vscode-hlasmplugin run test:insiders
+
   clang-format-check:
     name: Code format
     runs-on: ubuntu-18.04
