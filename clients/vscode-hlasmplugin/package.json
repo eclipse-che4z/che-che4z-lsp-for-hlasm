@@ -58,7 +58,7 @@
     "vscode-test": "^1.3.0"
   },
   "dependencies": {
-    "vscode-languageclient": "7.0.0-next.8"
+    "vscode-languageclient": "^5.2.1"
   },
   "scripts": {
     "postinstall": "npm run compile",
@@ -71,17 +71,17 @@
   "contributes": {
     "colors": [
       {
-        "id": "hlasm.instruction",
+        "id": "hlasm.function",
         "description": "Color for HLASM instructions",
         "defaults": {
-          "dark": "#F44747",
-          "light": "#CD3131",
-          "highContrast": "#F44747"
+          "dark": "#DCDCAA",
+          "light": "#795E26",
+          "highContrast": "#DCDCAA"
         }
       },
       {
         "id": "hlasm.comment",
-        "description": "Color for comments",
+        "description": "Color for comments and remarks",
         "defaults": {
           "dark": "#6A9955",
           "light": "#008000",
@@ -89,57 +89,39 @@
         }
       },
       {
-        "id": "hlasm.ignored",
+        "id": "hlasm.event",
         "description": "Color for ignored characters",
         "defaults": {
-          "dark": "#B267E6",
-          "light": "#800080",
-          "highContrast": "#B267E6"
+          "dark": "#F44747",
+          "light": "#CD3131",
+          "highContrast": "#F44747"
         }
       },
       {
-        "id": "hlasm.continuation",
-        "description": "Color for continuation characters",
+        "id": "hlasm.modifier",
+        "description": "Color for continuation characters and data definition type extension character",
         "defaults": {
-          "dark": "#5fffff",
-          "light": "#5fffff",
-          "highContrast": "#5fffff"
+          "dark": "#569CD6",
+          "light": "#0000FF",
+          "highContrast": "#569CD6"
         }
       },
       {
-        "id": "hlasm.data_def_type",
+        "id": "hlasm.regexp",
         "description": "Color for data definition type character",
         "defaults": {
-          "dark": "#6699ff",
-          "light": "#6699ff",
-          "highContrast": "#6699ff"
+          "dark": "#646695",
+          "light": "#811F3F",
+          "highContrast": "#B46695"
         }
       },
       {
-        "id": "hlasm.data_def_extension",
-        "description": "Color for data definition type extension character",
-        "defaults": {
-          "dark": "#6699AA",
-          "light": "#6699AA",
-          "highContrast": "#6699AA"
-        }
-      },
-      {
-        "id": "hlasm.remark",
-        "description": "Color for remarks",
-        "defaults": {
-          "dark": "#06aed8",
-          "light": "#06aed8",
-          "highContrast": "#06aed8"
-        }
-      },
-      {
-        "id": "hlasm.varSymbol",
+        "id": "hlasm.variable",
         "description": "Color for variable symbols",
         "defaults": {
-          "dark": "#ee4f7c",
-          "light": "#ee4f7c",
-          "highContrast": "#ee4f7c"
+          "dark": "#9CDCFE",
+          "light": "#001080",
+          "highContrast": "#9CDCFE"
         }
       },
       {
@@ -155,27 +137,27 @@
         "id": "hlasm.number",
         "description": "Color for numbers",
         "defaults": {
-          "dark": "#2a397a",
-          "light": "#2a397a",
-          "highContrast": "#2a397a"
+          "dark": "#B5CEA8",
+          "light": "#098658",
+          "highContrast": "#B5CEA8"
         }
       },
       {
-        "id": "hlasm.seqSymbol",
+        "id": "hlasm.keyword",
         "description": "Color for sequence symbols",
         "defaults": {
-          "dark": "#8b7d6b",
-          "light": "#8b7d6b",
-          "highContrast": "#8b7d6b"
+          "dark": "#569CD6",
+          "light": "#0000FF",
+          "highContrast": "#569CD6"
         }
       },
       {
-        "id": "hlasm.label",
+        "id": "hlasm.class",
         "description": "Color for labels",
         "defaults": {
-          "dark": "#ffff00",
-          "light": "#ffff00",
-          "highContrast": "#ffff00"
+          "dark": "#4EC9B0",
+          "light": "#267F99",
+          "highContrast": "#4EC9B0"
         }
       },
       {
@@ -188,12 +170,12 @@
         }
       },
       {
-        "id": "hlasm.operand",
+        "id": "hlasm.parameter",
         "description": "Color for operands",
         "defaults": {
-          "dark": "#797979",
-          "light": "#797979",
-          "highContrast": "#797979"
+          "dark": "#808080",
+          "light": "#800000",
+          "highContrast": "#808080"
         }
       }
     ],

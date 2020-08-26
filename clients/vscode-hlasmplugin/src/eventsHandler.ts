@@ -13,10 +13,12 @@
  */
 
 import * as vscode from 'vscode';
+import * as vscodelc from 'vscode-languageclient';
 
 //import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
 import { ConfigurationsHandler } from './configurationsHandler'
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
+import { SemanticTokensFeature } from './semanticTokens';
 //import { SemanticHighlightingFeature } from './semanticHighlighting';
 
 /**
@@ -60,7 +62,9 @@ export class EventsHandler {
     }
 
     // when contents of a document change, issue a completion request
-    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent/*, info: ContinuationDocumentsInfo*/): boolean {
+    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, highlight: SemanticTokensFeature/*, info: ContinuationDocumentsInfo*/): boolean {
+        // remove this once LSP implements semantic tokens
+        highlight.askForTokens(event.document);
         if (getConfig<boolean>('continuationHandling', false)) {
             if (event.document.languageId != 'hlasm')
                 return false;
@@ -94,20 +98,21 @@ export class EventsHandler {
         return false;
     }
 
-    /*
     // when any visible text editor changes, apply decorations for it
-    onDidChangeVisibleTextEditors(editors: vscode.TextEditor[], highlight: SemanticHighlightingFeature) {
+    onDidChangeVisibleTextEditors(editors: vscode.TextEditor[], highlight: SemanticTokensFeature) {
         for (var i = 0; i < editors.length; i++) {
             if (editors[i].document.languageId == 'hlasm') {
                 highlight.colorize();
                 break;
             }
         }
-    }*/
+    }
 
     // when document opens, show parse progress
-    onDidOpenTextDocument(document: vscode.TextDocument) {
+    onDidOpenTextDocument(document: vscode.TextDocument, highlight: SemanticTokensFeature) {
         //this.showProgress(document);
+        // remove this once LSP implements semantic tokens
+        highlight.askForTokens(document);
         this.editorChanged(document);
     }
 
@@ -143,3 +148,4 @@ export function getConfig<T>(option: string, defaultValue?: any): T {
     const config = vscode.workspace.getConfiguration('hlasm');
     return config.get<T>(option, defaultValue);
 }
+

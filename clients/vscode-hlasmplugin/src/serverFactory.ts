@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import * as vscodelc from 'vscode-languageclient/node';
+import * as vscodelc from 'vscode-languageclient';
 import * as net from 'net';
 import * as fork from 'child_process'
 import * as path from 'path'
