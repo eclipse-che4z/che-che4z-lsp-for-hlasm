@@ -87,7 +87,6 @@ protected:
 
     void process_instruction();
     void process_statement();
-    void process_statement(semantics::op_rem line, range op_range);
 
     virtual void process_next(processing::statement_processor& processor) override;
     virtual bool finished() const override;
@@ -116,8 +115,6 @@ private:
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
-    parser_impl* parent_;
-    void initialize(parser_impl* parent);
 
     void push_state();
     void pop_state();

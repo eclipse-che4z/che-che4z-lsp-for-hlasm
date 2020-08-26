@@ -34,7 +34,6 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , processor(nullptr)
     , finished_flag(false)
     , provider()
-    , parent_(nullptr)
     , last_line_processed_(false)
     , line_end_pushed_(false)
 {}
@@ -186,8 +185,6 @@ void parser_impl::collect_diags() const
         collect_diags_from_child(*rest_parser_->parser);
 }
 
-
-
 void parser_impl::enable_continuation() { input.enable_continuation(); }
 
 void parser_impl::disable_continuation() { input.disable_continuation(); }
@@ -251,7 +248,7 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
 
 void parser_impl::parse_macro_operands(semantics::op_rem& line)
 {
-    if (line.operands.size() && MAC())
+    if (line.operands.size())
     {
         size_t string_size = line.operands.size();
         std::vector<range> ranges;
@@ -322,15 +319,6 @@ void parser_impl::process_instruction()
 
 void parser_impl::process_statement()
 {
-    if (parent_)
-    {
-        parent_->collector.append_operand_field(std::move(collector));
-        parent_->process_statement();
-        return;
-    }
-
-    // ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-
     bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
     auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
     context::unique_stmt_ptr ptr;
@@ -362,12 +350,6 @@ void parser_impl::process_statement()
     processor->process_statement(std::move(ptr));
 }
 
-void parser_impl::process_statement(semantics::op_rem line, range op_range)
-{
-    collector.set_operand_remark_field(std::move(line.operands), std::move(line.remarks), op_range);
-    process_statement();
-}
-
 void parser_impl::process_next(processing::statement_processor& proc)
 {
     if (collector.has_instruction())
@@ -380,8 +362,14 @@ void parser_impl::process_next(processing::statement_processor& proc)
     if (proc.kind == processing::processing_kind::LOOKAHEAD)
     {
         auto look_lab_instr = dynamic_cast<hlasmparser&>(*this).look_lab_instr();
-        if (!finished_flag && look_lab_instr->op_text)
-            parse_lookahead(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
+        if (!finished_flag)
+        {
+            process_instruction();
+            if (!look_lab_instr->op_text)
+                process_statement();
+            else
+                parse_lookahead(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
+        }
     }
     else
     {
@@ -399,8 +387,6 @@ void parser_impl::process_next(processing::statement_processor& proc)
                 parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
         }
 
-        // if (!finished_flag && lab_instr->op_text)
-        //    parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
     }
     processor = nullptr;
     collector.prepare_for_next_statement();
@@ -479,15 +465,6 @@ void parser_impl::initialize(
     pushed_state_ = false;
 }
 
-void parser_impl::initialize(parser_impl* parent)
-{
-    ctx = parent->ctx;
-    provider = parent->provider;
-    proc_status = parent->proc_status;
-    parent_ = parent;
-    pushed_state_ = false;
-}
-
 void parser_impl::push_state()
 {
     collector.push_fields();
@@ -555,7 +532,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
 
     h.stream->reset();
 
-    h.parser->initialize(this);
+    h.parser->initialize(ctx, provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
@@ -624,6 +601,7 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
         return;
     }
 
+    // optimization : if statement has no label and is not COPY, do not even parse operands
     if (!collector.has_label())
     {
         if (collector.current_instruction().type == semantics::instruction_si_type::ORD)
@@ -650,7 +628,7 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
 
     h.stream->reset();
 
-    h.parser->initialize(this);
+    h.parser->initialize(ctx, provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
@@ -660,6 +638,11 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
     h.parser->collector.prepare_for_next_statement();
 
     h.parser->lookahead_operands_and_remarks();
+
+    h.parser->collector.clear_hl_lsp_symbols();
+    collector.append_operand_field(std::move(h.parser->collector));
+
+    process_statement();
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
