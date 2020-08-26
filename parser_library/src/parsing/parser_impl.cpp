@@ -93,11 +93,11 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     semantics::range_provider field_range,
     processing::processing_status status)
 {
-    if (!reparser_)
-        reparser_ = create_parser_holder();
+    if (!rest_parser_)
+        rest_parser_ = create_parser_holder();
 
     hlasm_ctx->metrics.reparsed_statements++;
-    parser_holder& h = *reparser_;
+    parser_holder& h = *rest_parser_;
 
     std::optional<std::string> sub;
     if (after_substitution)
@@ -131,6 +131,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         {
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
+                parse_macro_operands(line);
                 break;
             case processing::processing_form::ASM:
                 line = std::move(h.parser->op_rem_body_asm_r()->line);
@@ -146,7 +147,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         }
     }
 
-    // indicates that the reparse reason is to resolve deferred ordinary symbols (and not to substitute)
+    // indicates that the reparse reason is to resolve deferred operands (and not to substitute varsymbols)
     if (!after_substitution)
     {
         lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(),
@@ -181,8 +182,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
 
 void parser_impl::collect_diags() const
 {
-    if (reparser_)
-        collect_diags_from_child(*reparser_->parser);
     if (rest_parser_)
         collect_diags_from_child(*rest_parser_->parser);
 }
@@ -366,9 +365,6 @@ void parser_impl::process_statement()
 void parser_impl::process_statement(semantics::op_rem line, range op_range)
 {
     collector.set_operand_remark_field(std::move(line.operands), std::move(line.remarks), op_range);
-    collector.add_operands_hl_symbols();
-    collector.add_remarks_hl_symbols();
-    //parent_->collector.append_operand_field(std::move(collector));
     process_statement();
 }
 
@@ -392,7 +388,8 @@ void parser_impl::process_next(processing::statement_processor& proc)
         bool state = pushed_state_;
         auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
 
-        if (!finished_flag && collector.has_instruction()) {
+        if (!finished_flag && collector.has_instruction())
+        {
             process_instruction();
             if (state != pushed_state_)
                 pop_state();
@@ -402,7 +399,7 @@ void parser_impl::process_next(processing::statement_processor& proc)
                 parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
         }
 
-        //if (!finished_flag && lab_instr->op_text)
+        // if (!finished_flag && lab_instr->op_text)
         //    parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
     }
     processor = nullptr;
@@ -508,10 +505,10 @@ void parser_impl::pop_state()
 semantics::operand_list parser_impl::parse_macro_operands(
     std::string operands, range field_range, std::vector<range> operand_ranges)
 {
-    if (!reparser_)
-        reparser_ = create_parser_holder();
+    if (!rest_parser_)
+        rest_parser_ = create_parser_holder();
 
-    parser_holder& h = *reparser_;
+    parser_holder& h = *rest_parser_;
 
     semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
@@ -536,10 +533,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     auto list = std::move(h.parser->macro_ops()->list);
 
-    if (parent_)
-        collector.prepare_for_next_statement();
-    collector.append_reparsed_symbols(std::move(h.parser->collector));
-
     collect_diags_from_child(listener);
 
     return list;
@@ -558,6 +551,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
 
     h.lex->reset();
     h.lex->set_file_offset(text_range.start);
+    h.lex->set_unlimited_line(false);
 
     h.stream->reset();
 
@@ -573,10 +567,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
     auto& [format, opcode] = *proc_status;
     if (format.occurence == processing::operand_occurence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
-    {
         h.parser->op_rem_body_noop();
-        process_statement();
-    }
     else
     {
         switch (format.form)
@@ -586,42 +577,37 @@ void parser_impl::parse_rest(std::string text, range text_range)
                 break;
             case processing::processing_form::DEFERRED:
                 h.parser->op_rem_body_deferred();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement();
                 break;
-            case processing::processing_form::CA: {
-                auto rule = h.parser->op_rem_body_ca();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement(std::move(rule->line), rule->line_range);
+            case processing::processing_form::CA:
+                h.parser->op_rem_body_ca();
                 break;
-            }
             case processing::processing_form::MAC: {
                 auto rule = h.parser->op_rem_body_mac();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement(std::move(rule->line), rule->line_range);
-                break;
+                auto line = std::move(rule->line);
+                auto line_range = rule->line_range;
+                parse_macro_operands(line);
+                h.parser->collector.set_operand_remark_field(
+                    std::move(line.operands), std::move(line.remarks), line_range);
             }
-            case processing::processing_form::ASM: {
-                auto rule = h.parser->op_rem_body_asm();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement(std::move(rule->line), rule->line_range);
+            break;
+            case processing::processing_form::ASM:
+                h.parser->op_rem_body_asm();
                 break;
-            }
-            case processing::processing_form::MACH: {
-                auto rule = h.parser->op_rem_body_mach();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement(std::move(rule->line), rule->line_range);
+            case processing::processing_form::MACH:
+                h.parser->op_rem_body_mach();
                 break;
-            }
-            case processing::processing_form::DAT: {
-                auto rule = h.parser->op_rem_body_dat();
-                collector.append_operand_field(std::move(h.parser->collector));
-                process_statement(std::move(rule->line), rule->line_range);
+            case processing::processing_form::DAT:
+                h.parser->op_rem_body_dat();
                 break;
-            }
             default:
                 break;
         }
+    }
+
+    if (format.form != processing::processing_form::IGNORED)
+    {
+        collector.append_operand_field(std::move(h.parser->collector));
+        process_statement();
     }
 
     collect_diags_from_child(listener);
@@ -629,8 +615,8 @@ void parser_impl::parse_rest(std::string text, range text_range)
 
 void parser_impl::parse_lookahead(std::string text, range text_range)
 {
-    if (!reparser_)
-        reparser_ = create_parser_holder();
+    if (!rest_parser_)
+        rest_parser_ = create_parser_holder();
 
     if (proc_status->first.form == processing::processing_form::IGNORED)
     {
@@ -652,7 +638,7 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
         }
     }
 
-    parser_holder& h = *reparser_;
+    parser_holder& h = *rest_parser_;
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 
@@ -674,10 +660,6 @@ void parser_impl::parse_lookahead(std::string text, range text_range)
     h.parser->collector.prepare_for_next_statement();
 
     h.parser->lookahead_operands_and_remarks();
-
-    listener.diags().clear();
-
-    collector.prepare_for_next_statement();
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()

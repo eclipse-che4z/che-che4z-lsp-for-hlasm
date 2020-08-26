@@ -132,7 +132,6 @@ private:
 
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
 
-    std::unique_ptr<parser_holder> reparser_;
     std::unique_ptr<parser_holder> rest_parser_;
 
     bool last_line_processed_;

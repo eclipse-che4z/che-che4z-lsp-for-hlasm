@@ -124,6 +124,8 @@ void collector::set_operand_remark_field(range symbol_range)
     op_.emplace(symbol_range, operand_list());
     rem_.emplace(symbol_range, std::vector<range>());
     def_.emplace("", symbol_range);
+
+    add_operand_remark_hl_symbols();
 }
 
 void collector::set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range)
@@ -132,6 +134,8 @@ void collector::set_operand_remark_field(std::string deferred, std::vector<range
         throw std::runtime_error("field already assigned");
     def_.emplace(std::move(deferred), symbol_range);
     rem_.emplace(symbol_range, std::move(remarks));
+
+    add_operand_remark_hl_symbols();
 }
 
 void collector::set_operand_remark_field(
@@ -143,6 +147,8 @@ void collector::set_operand_remark_field(
         operands.clear();
     op_.emplace(symbol_range, std::move(operands));
     rem_.emplace(symbol_range, std::move(remarks));
+
+    add_operand_remark_hl_symbols();
 }
 
 void collector::add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type)
@@ -158,24 +164,19 @@ void collector::clear_hl_lsp_symbols()
     hl_symbols_.clear();
 }
 
-void collector::add_operands_hl_symbols()
+void collector::add_operand_remark_hl_symbols()
 {
-    if (!op_)
-        return;
-    for (auto&& operand : current_operands().value)
+    if (op_)
     {
-        if (operand)
-            add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
+        for (auto&& operand : current_operands().value)
+            if (operand)
+                add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
     }
-}
 
-void collector::add_remarks_hl_symbols()
-{
-    if (!rem_)
-        return;
-    for (auto remark : current_remarks().value)
+    if (rem_)
     {
-        add_hl_symbol(token_info(remark, hl_scopes::remark));
+        for (auto remark : current_remarks().value)
+            add_hl_symbol(token_info(remark, hl_scopes::remark));
     }
 }
 

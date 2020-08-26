@@ -55,8 +55,6 @@ public:
     void add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type);
     void add_hl_symbol(token_info symbol);
     void clear_hl_lsp_symbols();
-    void add_operands_hl_symbols();
-    void add_remarks_hl_symbols();
 
     void append_reparsed_symbols(collector&& c);
     void append_operand_field(collector&& c);
@@ -82,6 +80,8 @@ private:
     std::vector<token_info> hl_symbols_;
     bool lsp_symbols_extracted_;
     bool hl_symbols_extracted_;
+
+    void add_operand_remark_hl_symbols();
 };
 
 } // namespace semantics
