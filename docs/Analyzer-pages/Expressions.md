@@ -10,11 +10,11 @@ The HLASM CA expression is conceptually similar to expressions in other language
 A pure virtual class that defines a shared interface, operators, and functions.
 
 - `ca_unary_operator` and `ca_binary_operator`  
-These virtual classes provide point of inheritance for specialized classes that represent binary and unary operators that are found in HLASM. There are basic arithmetic operators (e.g. plus, minus, ...) or function operators (e.g. `NOT`, `SLL`, ...).
+These virtual classes provide a point of inheritance for specialized classes that represent binary and unary operators that are found in HLASM. There are basic arithmetic operators (e.g. plus, minus) or function operators (e.g. `NOT`, `SLL`).
 
 - Term classes `ca_function`, `ca_constant`, `ca_string`, `ca_symbol`, `ca_symbol_attribute`, `ca_var_sym`  
-They all inherit from the `ca_expression` class. Each of them represents a term that can be used in HLASM conditional assembly expressions.   
-We provide examples of each one to show their usage:
+These classes all inherit from the `ca_expression` class. Each of them represents a term that can be used in HLASM conditional assembly expressions.   
+The following examples show the usage of each class:
 
     | Class                   | Examples of terms they represent  |
     |:------------------------|:----------------------------------|
@@ -26,30 +26,30 @@ We provide examples of each one to show their usage:
     | `ca_var_sym`            | `&VAR`, `&VAR(1,2,3)`             |
 
 - `ca_expr_list`  
-This is the class that holds a list of instantiated objects of above stated classes.   
-In logical expressions, some symbols can be either expression operators or ordinary symbol identifiers (see the example below). Therefore, the resolution of symbols can be complicated and cannot be done straight during parsing. This class holds the list of the terms that contributed to the logical expressions and contains algorithm that disambiguates the expression (from the example logical expression `(NOT AND AND AND)`, the object of this class would hold four `ca_symbol` objects, one `NOT` and three `AND`s).
+This is the class that holds a list of instantiated objects of the above stated classes.   
+In logical expressions, some symbols can be either expression operators or ordinary symbol identifiers (see the example below). Therefore, the resolution of symbols can be complicated and cannot be done straight during parsing. This class holds the list of the terms that contributed to the logical expressions and contains an algorithm that disambiguates the expression (from the example logical expression `(NOT AND AND AND)`, the object of this class would hold four `ca_symbol` objects, one `NOT` and three `AND`s.
 
 <!-- -->
         AND    EQU   1
                AIF   (NOT AND AND AND).LAB   <- EVALUATES TO (!1 & 1)
 
 - `ca_expr_policies`  
-Static classes that provide useful information about each built-in function (e.g. return type, number of parameters, ...) and operators. The classes are divided into arithmetic, logical and character because some operators have different meaning in different types of expressions (like logical and arithmetic `AND`).
+Static classes that provide useful information about each built-in function (e.g. return type, number of parameters) and operators. The classes are divided into arithmetic, logical and character because some operators have different meanings in different types of expressions (like logical and arithmetic `AND`).
 
 - `ebcdic_encoding`  
 This class defines a custom EBCDIC literal and provides helper functions for conversion between EBCDIC and ASCII. EBCDIC is a character encoding used on IBM mainframes. It has a different layout to ASCII.  
 
 <img src="img/ebcdic.png" alt="EBCDIC layout. Taken from https://i.stack.imgur.com/h3u5A.png."/>
 
-## CA expressions resolving and evaluation
+## Resolution and evaluation of CA expressions
 
-To evaluate a CA expression, the expression object has to be resolved once. Each class overrides `resolve_expression` method which typically checks whether its fields have correct type of are of a correct number. The `ca_expr_list` class does the most of the resolving work.  
-It contains algorithm that creates an expression tree from its list of expression terms. This tree is then used for further evaluation.
+To evaluate a CA expression, the expression object has to be resolved once. Each class overrides the `resolve_expression` method which typically checks whether it has the correct number of fields and that the fields are of the correct type. The `ca_expr_list` class does the most of the resolving work.  
+It contains an algorithm that creates an expression tree from its list of expression terms. This tree is then used for further evaluation.
 
 When an expression was resolved once, it can be properly evaluated.  
-During the evaluation, variable and ordinary symbols are substituted for their values. To know which values to substitute, the `evaluate` method is given *evaluation context*. This consists of objects that are required for correct evaluation: *HLASM context* for symbol values, *attribute provider* for values of symbol attributes that are not yet defined and *library provider* for evaluation of some types of symbol attributes.
+During the evaluation, variable and ordinary symbols are substituted for their values. To determine which values to substitute, the `evaluate` method is given *evaluation context*. This consists of objects that are required for correct evaluation: *HLASM context* for symbol values, *attribute provider* for values of symbol attributes that are not yet defined and *library provider* for evaluation of some types of symbol attributes.
 
-Lookahead is triggered in conditional assembly expressions when evaluation visits a yet undefined ordinary symbol. As this might be a rather demanding operation, `ca_expression` class contains method `get_undefined_attributed_symbols`. It looks for all the undefined symbol references in the expression and collects them in a common collection. Then, the lookahead can be triggered to look for all references in the collection. Hence, it is triggered once per expression rather than any time an undefined symbol reference is found.
+Lookahead is triggered in conditional assembly expressions when an evaluation visits a yet undefined ordinary symbol. As this might be a rather demanding operation, the `ca_expression` class contains the method `get_undefined_attributed_symbols`. It looks for all the undefined symbol references in the expression and collects them in a common collection. Then, the lookahead can be triggered to look for all references in the collection. Hence, it is triggered once per expression rather than any time an undefined symbol reference is found.
 
 # Machine expressions
 
