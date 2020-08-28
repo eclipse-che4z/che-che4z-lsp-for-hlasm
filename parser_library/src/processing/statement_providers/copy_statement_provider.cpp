@@ -14,40 +14,26 @@
 
 #include "copy_statement_provider.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+namespace hlasm_plugin::parser_library::processing {
 
 copy_statement_provider::copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
     : common_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser)
 {}
 
-void copy_statement_provider::process_next(statement_processor& processor)
-{
-    if (finished())
-        throw std::runtime_error("provider already finished");
+bool copy_statement_provider::finished() const { return hlasm_ctx.current_copy_stack().empty(); }
 
+context::cached_statement_storage* copy_statement_provider::get_next()
+{
     auto& invo = hlasm_ctx.current_copy_stack().back();
 
     ++invo.current_statement;
     if ((size_t)invo.current_statement == invo.cached_definition.size())
     {
         hlasm_ctx.leave_copy_member();
-        return;
+        return nullptr;
     }
 
-    auto& cache = invo.cached_definition[invo.current_statement];
-
-    switch (cache.get_base()->kind)
-    {
-        case context::statement_kind::RESOLVED:
-            processor.process_statement(cache.get_base());
-            break;
-        case context::statement_kind::DEFERRED:
-            preprocess_deferred(processor, cache);
-            break;
-        default:
-            break;
-    }
+    return &invo.cached_definition[invo.current_statement];
 }
 
-bool copy_statement_provider::finished() const { return hlasm_ctx.current_copy_stack().empty(); }
+} // namespace hlasm_plugin::parser_library::processing

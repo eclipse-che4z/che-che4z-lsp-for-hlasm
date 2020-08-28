@@ -24,6 +24,29 @@ common_statement_provider::common_statement_provider(
     , parser(parser)
 {}
 
+void common_statement_provider::process_next(statement_processor& processor)
+{
+    if (finished())
+        throw std::runtime_error("provider already finished");
+
+    auto cache = get_next();
+
+    if (!cache)
+        return;
+
+    switch (cache->get_base()->kind)
+    {
+        case context::statement_kind::RESOLVED:
+            processor.process_statement(cache->get_base());
+            break;
+        case context::statement_kind::DEFERRED:
+            preprocess_deferred(processor, *cache);
+            break;
+        default:
+            break;
+    }
+}
+
 void common_statement_provider::preprocess_deferred(
     statement_processor& processor, context::cached_statement_storage& cache)
 {

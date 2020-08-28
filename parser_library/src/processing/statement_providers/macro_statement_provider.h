@@ -27,9 +27,10 @@ class macro_statement_provider : public common_statement_provider
 public:
     macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
 
-    virtual void process_next(statement_processor& processor) override;
-
     virtual bool finished() const override;
+
+protected:
+    virtual context::cached_statement_storage* get_next() override;
 };
 
 } // namespace processing

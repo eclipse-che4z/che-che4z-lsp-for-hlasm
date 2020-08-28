@@ -44,6 +44,10 @@ public:
     virtual bool finished() const = 0;
 
     virtual ~statement_provider() = default;
+
+protected:
+    bool try_trigger_attribute_lookahead(const semantics::instruction_si& instruction);
+    bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement);
 };
 
 } // namespace processing
