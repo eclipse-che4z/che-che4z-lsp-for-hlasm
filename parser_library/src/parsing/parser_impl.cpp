@@ -34,8 +34,6 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , processor(nullptr)
     , finished_flag(false)
     , provider()
-    , last_line_processed_(false)
-    , line_end_pushed_(false)
 {}
 
 void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc)
@@ -54,13 +52,9 @@ bool parser_impl::is_last_line() const
 void parser_impl::rewind_input(context::source_position pos)
 {
     finished_flag = false;
-    last_line_processed_ = false;
     _matchedEOF = false;
-    input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset }, line_end_pushed_);
-    line_end_pushed_ = false;
+    input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset });
 }
-
-void parser_impl::push_line_end() { line_end_pushed_ = true; }
 
 context::source_position parser_impl::statement_start() const
 {
@@ -386,7 +380,6 @@ void parser_impl::process_next(processing::statement_processor& proc)
             else
                 parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
         }
-
     }
     processor = nullptr;
     collector.prepare_for_next_statement();

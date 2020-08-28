@@ -55,7 +55,6 @@ public:
 
     bool is_last_line() const;
     virtual void rewind_input(context::source_position pos) override;
-    virtual void push_line_end() override;
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
@@ -130,9 +129,6 @@ private:
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
 
     std::unique_ptr<parser_holder> rest_parser_;
-
-    bool last_line_processed_;
-    bool line_end_pushed_;
 };
 
 // structure containing parser components

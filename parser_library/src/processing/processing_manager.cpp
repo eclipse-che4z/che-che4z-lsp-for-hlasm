@@ -301,8 +301,6 @@ const attribute_provider::resolved_reference_storage& processing_manager::lookup
             context::source_position(attr_lookahead_stop_->end_line + 1, attr_lookahead_stop_->end_index),
             *attr_lookahead_stop_);
 
-    opencode_prov_.push_line_end();
-
     while (true)
     {
         // macro statement provider is not relevant in attribute lookahead
