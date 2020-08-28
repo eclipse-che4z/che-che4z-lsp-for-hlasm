@@ -14,8 +14,7 @@
 
 #include "members_statement_provider.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+namespace hlasm_plugin::parser_library::processing {
 
 members_statement_provider::members_statement_provider(
     const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
@@ -34,20 +33,31 @@ void members_statement_provider::process_next(statement_processor& processor)
     if (!cache)
         return;
 
+    //if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(retrieve_instruction(*cache)))
+    //    return;
+
+    context::shared_stmt_ptr statement;
+
     switch (cache->get_base()->kind)
     {
         case context::statement_kind::RESOLVED:
-            processor.process_statement(cache->get_base());
+            statement = cache->get_base();
             break;
         case context::statement_kind::DEFERRED:
-            preprocess_deferred(processor, *cache);
+            statement = preprocess_deferred(processor, *cache);
             break;
         default:
+            assert(false);
             break;
     }
+
+    //if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(*statement))
+    //    return;
+
+    processor.process_statement(statement);
 }
 
-void members_statement_provider::preprocess_deferred(
+context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
     statement_processor& processor, context::cached_statement_storage& cache)
 {
     const auto& def_stmt = *cache.get_base()->access_deferred();
@@ -56,7 +66,7 @@ void members_statement_provider::preprocess_deferred(
 
     if (status.first.form == processing_form::DEFERRED)
     {
-        processor.process_statement(cache.get_base());
+        return cache.get_base();
     }
     else if (!cache.contains(status.first.form))
     {
@@ -83,13 +93,28 @@ void members_statement_provider::preprocess_deferred(
         }
 
         cache.insert(status.first.form, ptr);
-        context::unique_stmt_ptr resolved = std::make_unique<resolved_statement_impl>(ptr, status.second, status.first);
-        processor.process_statement(std::move(resolved));
+        return std::make_shared<resolved_statement_impl>(ptr, status.second, status.first);
     }
     else
     {
         auto ptr = cache.get(status.first.form);
-        context::unique_stmt_ptr resolved = std::make_unique<resolved_statement_impl>(ptr, status.second, status.first);
-        processor.process_statement(std::move(resolved));
+        return std::make_shared<resolved_statement_impl>(ptr, status.second, status.first);
     }
 }
+
+const semantics::instruction_si& members_statement_provider::retrieve_instruction(
+    context::cached_statement_storage& cache)
+{
+    switch (cache.get_base()->kind)
+    {
+        case context::statement_kind::RESOLVED:
+            return cache.get_base()->access_resolved()->instruction_ref();
+        case context::statement_kind::DEFERRED:
+            return cache.get_base()->access_deferred()->instruction_ref();
+        default:
+            assert(false);
+            break;
+    }
+}
+
+} // namespace hlasm_plugin::parser_library::processing

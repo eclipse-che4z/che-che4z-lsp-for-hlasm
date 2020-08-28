@@ -15,10 +15,10 @@
 #ifndef PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 #define PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 
+#include "context/cached_statement.h"
 #include "context/hlasm_context.h"
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
-#include "context/cached_statement.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -37,9 +37,13 @@ protected:
     context::hlasm_context& hlasm_ctx;
     statement_fields_parser& parser;
 
-    void preprocess_deferred(statement_processor& processor, context::cached_statement_storage& cache);
-
     virtual context::cached_statement_storage* get_next() = 0;
+
+private:
+    context::shared_stmt_ptr preprocess_deferred(
+        statement_processor& processor, context::cached_statement_storage& cache);
+
+    const semantics::instruction_si& retrieve_instruction(context::cached_statement_storage& cache);
 };
 
 } // namespace processing
