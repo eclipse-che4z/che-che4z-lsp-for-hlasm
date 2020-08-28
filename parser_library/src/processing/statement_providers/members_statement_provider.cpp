@@ -12,19 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "common_statement_provider.h"
+#include "members_statement_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-common_statement_provider::common_statement_provider(
+members_statement_provider::members_statement_provider(
     const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
     : statement_provider(kind)
     , hlasm_ctx(hlasm_ctx)
     , parser(parser)
 {}
 
-void common_statement_provider::process_next(statement_processor& processor)
+void members_statement_provider::process_next(statement_processor& processor)
 {
     if (finished())
         throw std::runtime_error("provider already finished");
@@ -47,7 +47,7 @@ void common_statement_provider::process_next(statement_processor& processor)
     }
 }
 
-void common_statement_provider::preprocess_deferred(
+void members_statement_provider::preprocess_deferred(
     statement_processor& processor, context::cached_statement_storage& cache)
 {
     const auto& def_stmt = *cache.get_base()->access_deferred();

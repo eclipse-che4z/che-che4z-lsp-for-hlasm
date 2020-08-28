@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef PROCESSING_COMMON_STATEMENT_PROVIDER_H
-#define PROCESSING_COMMON_STATEMENT_PROVIDER_H
+#ifndef PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
+#define PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 
 #include "context/hlasm_context.h"
 #include "processing/statement_fields_parser.h"
@@ -24,11 +24,11 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-// common class for more complicated statement providers
-class common_statement_provider : public statement_provider
+// common class for copy and macro statement providers (provider of copy and macro members)
+class members_statement_provider : public statement_provider
 {
 public:
-    common_statement_provider(
+    members_statement_provider(
         const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
 
     virtual void process_next(statement_processor& processor) override;
