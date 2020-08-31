@@ -18,10 +18,7 @@
 #include "processing/statement_processors/statement_processor.h"
 #include "statement_provider_kind.h"
 
-
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
@@ -33,9 +30,7 @@ class statement_provider
 public:
     const statement_provider_kind kind;
 
-    statement_provider(const statement_provider_kind kind)
-        : kind(kind)
-    {}
+    statement_provider(const statement_provider_kind kind);
 
     // processes next statement with help of a processor
     virtual void process_next(statement_processor& processor) = 0;
@@ -50,7 +45,6 @@ protected:
     bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement);
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

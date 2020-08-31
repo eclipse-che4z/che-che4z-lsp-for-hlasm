@@ -305,13 +305,18 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     }
 }
 
-void parser_impl::process_instruction()
+bool parser_impl::process_instruction()
 {
+    if (processor->kind == processing::processing_kind::ORDINARY
+        && try_trigger_attribute_lookahead(collector.current_instruction()))
+        return true;
+
     ctx->set_source_position(collector.current_instruction().field_range.start);
     proc_status = processor->get_processing_status(collector.peek_instruction());
+    return false;
 }
 
-void parser_impl::process_statement()
+bool parser_impl::process_statement()
 {
     bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
     auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
@@ -332,6 +337,9 @@ void parser_impl::process_statement()
         statement_range = dynamic_cast<semantics::statement_si_deferred*>(ptr.get())->deferred_range_ref();
     }
 
+    if (processor->kind == processing::processing_kind::ORDINARY && try_trigger_attribute_lookahead(*ptr))
+        return true;
+
     if (statement_range.start.line < statement_range.end.line)
         ctx->metrics.continued_statements++;
     else
@@ -342,6 +350,8 @@ void parser_impl::process_statement()
     collector.prepare_for_next_statement();
 
     processor->process_statement(std::move(ptr));
+
+    return false;
 }
 
 void parser_impl::process_next(processing::statement_processor& proc)
@@ -352,35 +362,14 @@ void parser_impl::process_next(processing::statement_processor& proc)
         assert(proc.kind == processing::processing_kind::LOOKAHEAD);
         push_state();
     }
-    processor = &proc;
-    if (proc.kind == processing::processing_kind::LOOKAHEAD)
-    {
-        auto look_lab_instr = dynamic_cast<hlasmparser&>(*this).look_lab_instr();
-        if (!finished_flag)
-        {
-            process_instruction();
-            if (!look_lab_instr->op_text)
-                process_statement();
-            else
-                parse_lookahead(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
-        }
-    }
-    else
-    {
-        bool state = pushed_state_;
-        auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
 
-        if (!finished_flag && collector.has_instruction())
-        {
-            process_instruction();
-            if (state != pushed_state_)
-                pop_state();
-            if (!lab_instr->op_text)
-                process_statement();
-            else
-                parse_rest(std::move(*lab_instr->op_text), lab_instr->op_range);
-        }
-    }
+    processor = &proc;
+
+    if (proc.kind == processing::processing_kind::LOOKAHEAD)
+        process_lookahead();
+    else
+        process_ordinary();
+
     processor = nullptr;
     collector.prepare_for_next_statement();
     proc_status.reset();
@@ -508,7 +497,41 @@ semantics::operand_list parser_impl::parse_macro_operands(
     return list;
 }
 
-void parser_impl::parse_rest(std::string text, range text_range)
+void parser_impl::process_ordinary()
+{
+    bool state = pushed_state_;
+    auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
+
+    if (!finished_flag && collector.has_instruction())
+    {
+        bool attr_look_needed = process_instruction();
+
+        if (attr_look_needed)
+            return;
+
+        if (state != pushed_state_)
+            pop_state();
+        if (!lab_instr->op_text)
+            process_statement();
+        else
+            parse_operands(std::move(*lab_instr->op_text), lab_instr->op_range);
+    }
+}
+
+void parser_impl::process_lookahead()
+{
+    auto look_lab_instr = dynamic_cast<hlasmparser&>(*this).look_lab_instr();
+    if (!finished_flag)
+    {
+        process_instruction();
+        if (!look_lab_instr->op_text)
+            process_statement();
+        else
+            parse_lookahead_operands(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
+    }
+}
+
+void parser_impl::parse_operands(std::string text, range text_range)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -583,7 +606,7 @@ void parser_impl::parse_rest(std::string text, range text_range)
     collect_diags_from_child(listener);
 }
 
-void parser_impl::parse_lookahead(std::string text, range text_range)
+void parser_impl::parse_lookahead_operands(std::string text, range text_range)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();

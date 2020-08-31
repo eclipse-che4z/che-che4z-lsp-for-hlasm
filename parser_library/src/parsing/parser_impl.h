@@ -84,8 +84,9 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    void process_instruction();
-    void process_statement();
+    // process methods return true if attribute lookahead needed
+    bool process_instruction();
+    bool process_statement();
 
     virtual void process_next(processing::statement_processor& processor) override;
     virtual bool finished() const override;
@@ -123,8 +124,11 @@ private:
     semantics::operand_list parse_macro_operands(
         std::string operands, range field_range, std::vector<range> operand_ranges);
 
-    void parse_rest(std::string text, range text_range);
-    void parse_lookahead(std::string text, range text_range);
+    void process_ordinary();
+    void process_lookahead();
+
+    void parse_operands(std::string text, range text_range);
+    void parse_lookahead_operands(std::string text, range text_range);
 
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
 

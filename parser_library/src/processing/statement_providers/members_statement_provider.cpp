@@ -33,8 +33,8 @@ void members_statement_provider::process_next(statement_processor& processor)
     if (!cache)
         return;
 
-    //if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(retrieve_instruction(*cache)))
-    //    return;
+    if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(retrieve_instruction(*cache)))
+        return;
 
     context::shared_stmt_ptr statement;
 
@@ -51,8 +51,8 @@ void members_statement_provider::process_next(statement_processor& processor)
             break;
     }
 
-    //if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(*statement))
-    //    return;
+    if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(*statement))
+        return;
 
     processor.process_statement(statement);
 }
@@ -113,7 +113,7 @@ const semantics::instruction_si& members_statement_provider::retrieve_instructio
             return cache.get_base()->access_deferred()->instruction_ref();
         default:
             assert(false);
-            break;
+            return semantics::instruction_si(range());
     }
 }
 
