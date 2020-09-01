@@ -16,11 +16,16 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-members_statement_provider::members_statement_provider(
-    const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
+members_statement_provider::members_statement_provider(const statement_provider_kind kind,
+    context::hlasm_context& hlasm_ctx,
+    statement_fields_parser& parser,
+    workspaces::parse_lib_provider& lib_provider,
+    processing::processing_state_listener& listener)
     : statement_provider(kind)
     , hlasm_ctx(hlasm_ctx)
     , parser(parser)
+    , lib_provider(lib_provider)
+    , listener(listener)
 {}
 
 void members_statement_provider::process_next(statement_processor& processor)
@@ -33,7 +38,8 @@ void members_statement_provider::process_next(statement_processor& processor)
     if (!cache)
         return;
 
-    if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(retrieve_instruction(*cache)))
+    if (processor.kind == processing_kind::ORDINARY
+        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { hlasm_ctx, lib_provider }, listener))
         return;
 
     context::shared_stmt_ptr statement;
@@ -51,7 +57,8 @@ void members_statement_provider::process_next(statement_processor& processor)
             break;
     }
 
-    if (processor.kind == processing_kind::ORDINARY && try_trigger_attribute_lookahead(*statement))
+    if (processor.kind == processing_kind::ORDINARY
+        && try_trigger_attribute_lookahead(*statement, { hlasm_ctx, lib_provider }, listener))
         return;
 
     processor.process_statement(statement);

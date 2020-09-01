@@ -54,8 +54,12 @@ struct lookahead_start_data
     // ORD action
     std::set<context::id_index> targets;
 
-    lookahead_start_data(std::set<context::id_index> targets)
+    lookahead_start_data(std::set<context::id_index> targets,
+        context::source_position statement_position,
+        context::source_snapshot snapshot)
         : action(lookahead_action::ORD)
+        , statement_position(statement_position)
+        , snapshot(std::move(snapshot))
         , target(nullptr)
         , targets(targets)
     {}

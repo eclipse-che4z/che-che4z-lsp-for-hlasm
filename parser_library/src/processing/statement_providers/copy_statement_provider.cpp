@@ -16,8 +16,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-copy_statement_provider::copy_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
-    : members_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser)
+copy_statement_provider::copy_statement_provider(context::hlasm_context& hlasm_ctx,
+    statement_fields_parser& parser,
+    workspaces::parse_lib_provider& lib_provider,
+    processing::processing_state_listener& listener)
+    : members_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser, lib_provider, listener)
 {}
 
 bool copy_statement_provider::finished() const { return hlasm_ctx.current_copy_stack().empty(); }

@@ -36,12 +36,17 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , provider()
 {}
 
-void parser_impl::initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc)
+void parser_impl::initialize(context::hlasm_context* hlasm_ctx,
+    semantics::lsp_info_processor* lsp_prc,
+    workspaces::parse_lib_provider* lib_provider,
+    processing::processing_state_listener* state_listener)
 {
     ctx = hlasm_ctx;
     lsp_proc = lsp_prc;
     finished_flag = false;
     pushed_state_ = false;
+    lib_provider_ = lib_provider;
+    state_listener_ = state_listener;
 }
 
 bool parser_impl::is_last_line() const
@@ -308,7 +313,7 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 bool parser_impl::process_instruction()
 {
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(collector.current_instruction()))
+        && try_trigger_attribute_lookahead(collector.current_instruction(), { *ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     ctx->set_source_position(collector.current_instruction().field_range.start);
@@ -337,7 +342,8 @@ bool parser_impl::process_statement()
         statement_range = dynamic_cast<semantics::statement_si_deferred*>(ptr.get())->deferred_range_ref();
     }
 
-    if (processor->kind == processing::processing_kind::ORDINARY && try_trigger_attribute_lookahead(*ptr))
+    if (processor->kind == processing::processing_kind::ORDINARY
+        && try_trigger_attribute_lookahead(*ptr, { *ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     if (statement_range.start.line < statement_range.end.line)

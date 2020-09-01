@@ -17,6 +17,8 @@
 
 #include "context/cached_statement.h"
 #include "context/hlasm_context.h"
+#include "expressions/evaluation_context.h"
+#include "processing/processing_state_listener.h"
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
 
@@ -28,14 +30,19 @@ namespace processing {
 class members_statement_provider : public statement_provider
 {
 public:
-    members_statement_provider(
-        const statement_provider_kind kind, context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
+    members_statement_provider(const statement_provider_kind kind,
+        context::hlasm_context& hlasm_ctx,
+        statement_fields_parser& parser,
+        workspaces::parse_lib_provider& lib_provider,
+        processing::processing_state_listener& listener);
 
     virtual void process_next(statement_processor& processor) override;
 
 protected:
     context::hlasm_context& hlasm_ctx;
     statement_fields_parser& parser;
+    workspaces::parse_lib_provider& lib_provider;
+    processing::processing_state_listener& listener;
 
     virtual context::cached_statement_storage* get_next() = 0;
 

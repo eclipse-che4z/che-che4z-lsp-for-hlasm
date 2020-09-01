@@ -51,7 +51,10 @@ class parser_impl : public antlr4::Parser,
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc);
+    void initialize(context::hlasm_context* hlasm_ctx,
+        semantics::lsp_info_processor* lsp_prc,
+        workspaces::parse_lib_provider* lib_provider,
+        processing::processing_state_listener* state_listener);
 
     bool is_last_line() const;
     virtual void rewind_input(context::source_position pos) override;
@@ -112,6 +115,10 @@ protected:
     bool UNKNOWN();
 
 private:
+    std::unique_ptr<parser_holder> rest_parser_;
+    workspaces::parse_lib_provider* lib_provider_;
+    processing::processing_state_listener* state_listener_;
+
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
@@ -131,8 +138,6 @@ private:
     void parse_lookahead_operands(std::string text, range text_range);
 
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
-
-    std::unique_ptr<parser_holder> rest_parser_;
 };
 
 // structure containing parser components

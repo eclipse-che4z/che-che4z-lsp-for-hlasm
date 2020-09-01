@@ -46,7 +46,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
-            provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser));
+            provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
             procs_.emplace_back(
                 std::make_unique<ordinary_processor>(hlasm_ctx, *this, lib_provider, *this, parser, tracer_));
             break;
@@ -64,7 +64,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(hlasm_ctx, parser));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
     provs_.emplace_back(std::move(base_provider));
 }
 
@@ -277,6 +277,7 @@ void processing_manager::perform_opencode_jump(
 const std::map<context::id_index, context::symbol>& processing_manager::lookup_forward_attribute_references(
     std::set<context::id_index> references)
 {
+    /*
     if (references.empty())
         return resolved_symbols;
 
@@ -323,7 +324,7 @@ const std::map<context::id_index, context::symbol>& processing_manager::lookup_f
 
     for (auto& sym : ret)
         resolved_symbols.insert(std::move(sym));
-
+        */
     return resolved_symbols;
 }
 

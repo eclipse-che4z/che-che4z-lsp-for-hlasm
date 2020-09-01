@@ -16,6 +16,7 @@
 #define PROCESSING_STATEMENT_PROVIDER_H
 
 #include "expressions/evaluation_context.h"
+#include "processing/processing_state_listener.h"
 #include "processing/statement_processors/statement_processor.h"
 #include "statement_provider_kind.h"
 
@@ -42,8 +43,12 @@ public:
     virtual ~statement_provider() = default;
 
 protected:
-    bool try_trigger_attribute_lookahead(const semantics::instruction_si& instruction);
-    bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement);
+    static bool try_trigger_attribute_lookahead(const semantics::instruction_si& instruction,
+        expressions::evaluation_context eval_ctx,
+        processing::processing_state_listener& listener);
+    static bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement,
+        expressions::evaluation_context eval_ctx,
+        processing::processing_state_listener& listener);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

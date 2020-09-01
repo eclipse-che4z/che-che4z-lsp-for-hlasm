@@ -25,7 +25,10 @@ namespace processing {
 class macro_statement_provider : public members_statement_provider
 {
 public:
-    macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
+    macro_statement_provider(context::hlasm_context& hlasm_ctx,
+        statement_fields_parser& parser,
+        workspaces::parse_lib_provider& lib_provider,
+        processing::processing_state_listener& listener);
 
     virtual bool finished() const override;
 
