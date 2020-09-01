@@ -26,18 +26,18 @@ ca_var_sym::ca_var_sym(semantics::vs_ptr symbol, range expr_range)
 {}
 
 undef_sym_set ca_var_sym::get_undefined_attributed_symbols_vs(
-    const semantics::vs_ptr& symbol, const context::dependency_solver& solver)
+    const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx)
 {
     undef_sym_set tmp;
     for (auto&& expr : symbol->subscript)
-        tmp.merge(expr->get_undefined_attributed_symbols(solver));
+        tmp.merge(expr->get_undefined_attributed_symbols(eval_ctx));
 
     if (symbol->created)
     {
         auto created = symbol->access_created();
         for (auto&& point : created->created_name)
             if (point->type == semantics::concat_type::VAR)
-                tmp.merge(get_undefined_attributed_symbols_vs(point->access_var()->symbol, solver));
+                tmp.merge(get_undefined_attributed_symbols_vs(point->access_var()->symbol, eval_ctx));
     }
     return tmp;
 }
@@ -47,9 +47,9 @@ void ca_var_sym::resolve_expression_tree_vs(const semantics::vs_ptr&)
     // already resolved in parser
 }
 
-undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_var_sym::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
-    return get_undefined_attributed_symbols_vs(symbol, solver);
+    return get_undefined_attributed_symbols_vs(symbol, eval_ctx);
 }
 
 void ca_var_sym::resolve_expression_tree(context::SET_t_enum kind)

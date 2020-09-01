@@ -48,7 +48,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser));
             procs_.emplace_back(
-                std::make_unique<ordinary_processor>(hlasm_ctx, *this, *this, lib_provider, *this, parser, tracer_));
+                std::make_unique<ordinary_processor>(hlasm_ctx, *this, lib_provider, *this, parser, tracer_));
             break;
         case processing_kind::COPY:
             hlasm_ctx.push_statement_processing(processing_kind::COPY, std::move(file_name));
@@ -274,8 +274,8 @@ void processing_manager::perform_opencode_jump(
     hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
 }
 
-const attribute_provider::resolved_reference_storage& processing_manager::lookup_forward_attribute_references(
-    attribute_provider::forward_reference_storage references)
+const std::map<context::id_index, context::symbol>& processing_manager::lookup_forward_attribute_references(
+    std::set<context::id_index> references)
 {
     if (references.empty())
         return resolved_symbols;

@@ -18,8 +18,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "context/common_types.h"
+#include "context/id_storage.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
@@ -62,6 +64,9 @@ struct concatenation_point
     static std::string to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
     static var_sym_conc* contains_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
+
+    static std::set<context::id_index> get_undefined_attributed_symbols(
+        const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
 
     const concat_type type;
 

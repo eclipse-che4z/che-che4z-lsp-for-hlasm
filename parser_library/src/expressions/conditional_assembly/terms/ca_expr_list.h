@@ -30,7 +30,7 @@ public:
 
     ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range);
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 

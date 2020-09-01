@@ -502,11 +502,10 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
 }
 
 asm_processor::asm_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : low_language_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser)
+    : low_language_processor(hlasm_ctx, branch_provider, lib_provider, parser)
     , table_(create_table(hlasm_ctx))
 {}
 

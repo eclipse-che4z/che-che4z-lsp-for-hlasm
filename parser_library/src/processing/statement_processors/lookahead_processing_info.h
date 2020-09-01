@@ -15,12 +15,13 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
-#include "context/source_snapshot.h"
-#include "processing/attribute_provider.h"
+#include <unordered_map>
+#include <set>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+#include "context/source_snapshot.h"
+#include "context/ordinary_assembly/symbol.h"
+
+namespace hlasm_plugin::parser_library::processing {
 
 enum class lookahead_action
 {
@@ -51,9 +52,9 @@ struct lookahead_start_data
     {}
 
     // ORD action
-    processing::attribute_provider::forward_reference_storage targets;
+    std::set<context::id_index> targets;
 
-    lookahead_start_data(processing::attribute_provider::forward_reference_storage targets)
+    lookahead_start_data(std::set<context::id_index> targets)
         : action(lookahead_action::ORD)
         , target(nullptr)
         , targets(targets)
@@ -71,7 +72,7 @@ struct lookahead_processing_result
     context::id_index symbol_name;
     range symbol_range;
 
-    processing::attribute_provider::resolved_reference_storage resolved_refs;
+    std::unordered_map<context::id_index, context::symbol> resolved_refs;
 
     lookahead_processing_result(lookahead_start_data&& initial_data)
         : success(false)
@@ -87,14 +88,13 @@ struct lookahead_processing_result
         , symbol_range(target_range)
     {}
 
-    lookahead_processing_result(processing::attribute_provider::resolved_reference_storage targets)
+    lookahead_processing_result(std::unordered_map<context::id_index, context::symbol> targets)
         : success(true)
         , symbol_name(nullptr)
         , resolved_refs(std::move(targets))
     {}
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

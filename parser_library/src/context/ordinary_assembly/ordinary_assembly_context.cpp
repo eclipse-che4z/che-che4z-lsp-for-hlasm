@@ -19,8 +19,7 @@
 
 #include "alignment.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 void ordinary_assembly_context::create_private_section()
 {
@@ -53,6 +52,15 @@ bool ordinary_assembly_context::create_symbol(
         symbol_dependencies.add_defined();
 
     return ok;
+}
+
+void ordinary_assembly_context::add_symbol_reference(symbol sym) { symbol_refs_.try_emplace(sym.name, std::move(sym)); }
+
+const symbol* ordinary_assembly_context::get_symbol_reference(context::id_index name) const
+{
+    auto tmp = symbol_refs_.find(name);
+
+    return tmp == symbol_refs_.end() ? nullptr : &tmp->second;
 }
 
 const symbol* ordinary_assembly_context::get_symbol(id_index name) const
@@ -256,3 +264,5 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
     }
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);
 }
+
+} // namespace hlasm_plugin::parser_library::context

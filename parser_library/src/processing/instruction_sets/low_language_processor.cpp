@@ -24,11 +24,10 @@ using namespace processing;
 using namespace workspaces;
 
 low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
+    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
     , parser(parser)
 {}
 

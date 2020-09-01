@@ -38,7 +38,7 @@ class lookahead_processor : public statement_processor
     processing_state_listener& listener_;
     workspaces::parse_lib_provider& lib_provider_;
 
-    processing::attribute_provider::forward_reference_storage to_find_;
+    std::set<context::id_index> to_find_;
     context::id_index target_;
 
 public:
@@ -57,7 +57,7 @@ public:
     virtual bool terminal_condition(const statement_provider_kind kind) const override;
     virtual bool finished() override;
 
-    attribute_provider::resolved_reference_storage collect_found_refereces();
+    std::unordered_map<context::id_index, context::symbol> collect_found_refereces();
 
     virtual void collect_diags() const override;
 

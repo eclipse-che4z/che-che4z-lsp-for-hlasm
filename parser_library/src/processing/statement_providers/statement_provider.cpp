@@ -27,6 +27,8 @@ bool statement_provider::try_trigger_attribute_lookahead(const semantics::instru
 
     const auto& chain = std::get<semantics::concat_chain>(instruction.value);
 
+   // auto refs = semantics::concatenation_point::get_undefined_attributed_symbols(chain);
+
     return false;
 }
 

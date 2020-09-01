@@ -61,7 +61,7 @@ public:
         , value(std::move(value))
     {}
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver&) const override
+    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override
     {
         return {};
     };
@@ -79,9 +79,8 @@ class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
     context::hlasm_context ctx;
-    attr_prov_mock attr;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, attr, lib };
+    evaluation_context eval_ctx { ctx, lib };
 
     context::SET_t get_result()
     {

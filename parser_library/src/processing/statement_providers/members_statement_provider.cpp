@@ -113,7 +113,7 @@ const semantics::instruction_si& members_statement_provider::retrieve_instructio
             return cache.get_base()->access_deferred()->instruction_ref();
         default:
             assert(false);
-            return semantics::instruction_si(range());
+            throw std::runtime_error("unexpected statement_kind enum value");
     }
 }
 

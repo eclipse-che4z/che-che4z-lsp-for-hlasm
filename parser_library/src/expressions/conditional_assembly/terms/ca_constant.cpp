@@ -23,7 +23,7 @@ ca_constant::ca_constant(context::A_t value, range expr_range)
     , value(value)
 {}
 
-undef_sym_set ca_constant::get_undefined_attributed_symbols(const context::dependency_solver&) const
+undef_sym_set ca_constant::get_undefined_attributed_symbols(const evaluation_context& ) const
 {
     return undef_sym_set();
 }

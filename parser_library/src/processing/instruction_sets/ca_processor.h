@@ -32,7 +32,6 @@ class ca_processor : public instruction_processor
 
 public:
     ca_processor(context::hlasm_context& hlasm_ctx,
-        attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& listener);

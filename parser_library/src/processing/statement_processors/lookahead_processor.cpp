@@ -64,7 +64,7 @@ bool lookahead_processor::terminal_condition(const statement_provider_kind prov_
 
 bool lookahead_processor::finished() { return finished_flag_; }
 
-attribute_provider::resolved_reference_storage lookahead_processor::collect_found_refereces()
+std::unordered_map<context::id_index, context::symbol> lookahead_processor::collect_found_refereces()
 {
     finished_flag_ = true;
     return std::move(result_.resolved_refs);

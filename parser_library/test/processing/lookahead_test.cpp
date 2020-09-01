@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../expressions/expr_mocks.h"
 
 // tests for lookahead feature:
 // forward/backward jums
@@ -192,7 +193,10 @@ TEST(attribute_lookahead, lookup_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)1);
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
+
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -203,13 +207,16 @@ TEST(attribute_lookahead, lookup_not_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
+
     // define symbol with undefined length
     auto tmp = a.context().ord_ctx.create_symbol(
         a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
     ASSERT_TRUE(tmp);
 
     // although length is undefined the actual symbol is defined so no lookup should happen
-    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)0);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)0);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -220,7 +227,10 @@ TEST(attribute_lookahead, lookup_of_two_refs)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)2);
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
+
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -231,7 +241,10 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    EXPECT_EQ(expr->get_undefined_attributed_symbols(a.context().ord_ctx).size(), (size_t)1);
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
+
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

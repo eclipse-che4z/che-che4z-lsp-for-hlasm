@@ -25,7 +25,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol_attr, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
 
@@ -35,7 +38,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range());
 
-    auto res = attr.get_undefined_attributed_symbols(m);
+    auto res = attr.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
 }
@@ -52,49 +55,45 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
     context::hlasm_context ctx;
-    attr_prov_mock a;
-    lib_prov_mock l;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
 
-    evaluation_context eval { ctx, a, l };
+    auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids()).evaluate(eval_ctx);
 
-    auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids()).evaluate(eval);
-
-    ASSERT_EQ(eval.diags().size(), 1U);
-    EXPECT_EQ(eval.diags().front().code, "E010");
+    ASSERT_EQ(eval_ctx.diags().size(), 1U);
+    EXPECT_EQ(eval_ctx.diags().front().code, "E010");
 }
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
     context::hlasm_context ctx;
-    attr_prov_mock a;
-    lib_prov_mock l;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     auto name = ctx.ids().add("n");
 
     auto var = ctx.create_local_variable<int>(name, true);
     var->access_set_symbol<int>()->set_value(12);
 
-    evaluation_context eval { ctx, a, l };
+    auto res = create_var_sym_attr(context::data_attr_kind::L, ctx.ids()).evaluate(eval_ctx);
 
-    auto res = create_var_sym_attr(context::data_attr_kind::L, ctx.ids()).evaluate(eval);
-
-    ASSERT_EQ(eval.diags().size(), 1U);
-    EXPECT_EQ(eval.diags().front().code, "E066");
+    ASSERT_EQ(eval_ctx.diags().size(), 1U);
+    EXPECT_EQ(eval_ctx.diags().front().code, "E066");
 }
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
     context::hlasm_context ctx;
-    attr_prov_mock a;
-    lib_prov_mock l;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     auto name = ctx.ids().add("n");
 
     auto var = ctx.create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value("(abc");
 
-    evaluation_context eval { ctx, a, l };
+    auto res = create_var_sym_attr(context::data_attr_kind::L, ctx.ids()).evaluate(eval_ctx);
 
-    auto res = create_var_sym_attr(context::data_attr_kind::L, ctx.ids()).evaluate(eval);
-
-    ASSERT_EQ(eval.diags().size(), 1U);
-    EXPECT_EQ(eval.diags().front().code, "E065");
+    ASSERT_EQ(eval_ctx.diags().size(), 1U);
+    EXPECT_EQ(eval_ctx.diags().front().code, "E065");
 }
