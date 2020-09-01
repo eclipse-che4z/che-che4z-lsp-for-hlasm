@@ -123,11 +123,6 @@ private:
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
 
-    void push_state();
-    void pop_state();
-    bool pushed_state_;
-    processing::statement_processor* processor_storage_;
-
     semantics::operand_list parse_macro_operands(
         std::string operands, range field_range, std::vector<range> operand_ranges);
 

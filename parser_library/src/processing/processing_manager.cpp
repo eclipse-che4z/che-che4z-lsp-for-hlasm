@@ -121,6 +121,14 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 
 statement_provider& processing_manager::find_provider()
 {
+    if (auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back()); look_pr && look_pr->action == lookahead_action::ORD)
+    {
+        auto& opencode_prov = **(provs_.end() - 1);
+        auto& copy_prov = **(provs_.end() - 2);
+        auto& prov = !copy_prov.finished() ? copy_prov : opencode_prov;
+        return prov;
+    }
+
     for (auto& prov : provs_)
     {
         if (!prov->finished())
@@ -164,16 +172,26 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
 {
-    if (result.success)
-        jump_in_statements(result.symbol_name, result.symbol_range);
+    if (result.action == lookahead_action::SEQ)
+    {
+        if (result.success)
+            jump_in_statements(result.symbol_name, result.symbol_range);
+        else
+        {
+            perform_opencode_jump(result.statement_position, std::move(result.snapshot));
+
+            empty_processor tmp(hlasm_ctx_); // skip next statement
+            find_provider().process_next(tmp);
+
+            add_diagnostic(diagnostic_op::error_E047(*result.symbol_name, result.symbol_range));
+        }
+    }
     else
     {
+        for (auto&& [name, sym] : result.resolved_refs)
+            hlasm_ctx_.ord_ctx.add_symbol_reference(std::move(sym));
+
         perform_opencode_jump(result.statement_position, std::move(result.snapshot));
-
-        empty_processor tmp(hlasm_ctx_); // skip next statement
-        find_provider().process_next(tmp);
-
-        add_diagnostic(diagnostic_op::error_E047(*result.symbol_name, result.symbol_range));
     }
 }
 

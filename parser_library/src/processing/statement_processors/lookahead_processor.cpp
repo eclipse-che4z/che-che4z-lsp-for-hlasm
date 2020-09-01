@@ -52,6 +52,16 @@ void lookahead_processor::end_processing()
 {
     hlasm_ctx.pop_statement_processing();
 
+    if (action == lookahead_action::ORD)
+    {
+        for (auto&& symbol_name : to_find_)
+            result_.resolved_refs.try_emplace(symbol_name,
+                symbol_name,
+                context::symbol_value(),
+                context::symbol_attributes(context::symbol_origin::UNKNOWN),
+                location());
+    }
+
     listener_.finish_lookahead(std::move(result_));
 
     finished_flag_ = true;
@@ -63,12 +73,6 @@ bool lookahead_processor::terminal_condition(const statement_provider_kind prov_
 }
 
 bool lookahead_processor::finished() { return finished_flag_; }
-
-std::unordered_map<context::id_index, context::symbol> lookahead_processor::collect_found_refereces()
-{
-    finished_flag_ = true;
-    return std::move(result_.resolved_refs);
-}
 
 void lookahead_processor::collect_diags() const {}
 
@@ -181,6 +185,8 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
                 if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
                     length_attr = len_symbol->attributes().length();
             }
+            else
+                length_attr = 1;
         }
     }
 

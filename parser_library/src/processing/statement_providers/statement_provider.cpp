@@ -35,11 +35,9 @@ bool statement_provider::try_trigger_attribute_lookahead(const semantics::instru
         return false;
 
     context::source_position statement_position(
-        (size_t)eval_ctx.hlasm_ctx.current_source().end_line + 1, eval_ctx.hlasm_ctx.current_source().end_index);
+        (size_t)eval_ctx.hlasm_ctx.current_source().end_line, eval_ctx.hlasm_ctx.current_source().begin_index);
 
     context::source_snapshot snapshot = eval_ctx.hlasm_ctx.current_source().create_snapshot();
-    if (!snapshot.copy_frames.empty())
-        ++snapshot.copy_frames.back().statement_offset;
 
     listener.start_lookahead(lookahead_start_data(std::move(references), statement_position, std::move(snapshot)));
 

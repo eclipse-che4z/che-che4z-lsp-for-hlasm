@@ -15,11 +15,11 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 
-#include "context/source_snapshot.h"
 #include "context/ordinary_assembly/symbol.h"
+#include "context/source_snapshot.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -68,6 +68,7 @@ struct lookahead_start_data
 // result of lookahead_processor
 struct lookahead_processing_result
 {
+    lookahead_action action;
     bool success;
 
     context::source_position statement_position;
@@ -79,7 +80,8 @@ struct lookahead_processing_result
     std::unordered_map<context::id_index, context::symbol> resolved_refs;
 
     lookahead_processing_result(lookahead_start_data&& initial_data)
-        : success(false)
+        : action(initial_data.action)
+        , success(false)
         , statement_position(initial_data.statement_position)
         , snapshot(std::move(initial_data.snapshot))
         , symbol_name(initial_data.target)
@@ -87,15 +89,10 @@ struct lookahead_processing_result
     {}
 
     lookahead_processing_result(context::id_index target, range target_range)
-        : success(true)
+        : action(lookahead_action::SEQ)
+        , success(true)
         , symbol_name(target)
         , symbol_range(target_range)
-    {}
-
-    lookahead_processing_result(std::unordered_map<context::id_index, context::symbol> targets)
-        : success(true)
-        , symbol_name(nullptr)
-        , resolved_refs(std::move(targets))
     {}
 };
 

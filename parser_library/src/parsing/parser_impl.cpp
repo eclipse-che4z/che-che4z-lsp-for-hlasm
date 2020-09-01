@@ -44,7 +44,6 @@ void parser_impl::initialize(context::hlasm_context* hlasm_ctx,
     ctx = hlasm_ctx;
     lsp_proc = lsp_prc;
     finished_flag = false;
-    pushed_state_ = false;
     lib_provider_ = lib_provider;
     state_listener_ = state_listener;
 }
@@ -362,13 +361,6 @@ bool parser_impl::process_statement()
 
 void parser_impl::process_next(processing::statement_processor& proc)
 {
-    if (collector.has_instruction())
-    {
-        // lookahead of attribute ref during instruction processing
-        assert(proc.kind == processing::processing_kind::LOOKAHEAD);
-        push_state();
-    }
-
     processor = &proc;
 
     if (proc.kind == processing::processing_kind::LOOKAHEAD)
@@ -450,21 +442,6 @@ void parser_impl::initialize(
     ctx = hlasm_ctx;
     provider = range_prov;
     proc_status = proc_stat;
-    pushed_state_ = false;
-}
-
-void parser_impl::push_state()
-{
-    collector.push_fields();
-    processor_storage_ = processor;
-    pushed_state_ = true;
-}
-
-void parser_impl::pop_state()
-{
-    collector.pop_fields();
-    processor = processor_storage_;
-    pushed_state_ = false;
 }
 
 semantics::operand_list parser_impl::parse_macro_operands(
@@ -505,7 +482,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
 void parser_impl::process_ordinary()
 {
-    bool state = pushed_state_;
     auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
 
     if (!finished_flag && collector.has_instruction())
@@ -515,8 +491,6 @@ void parser_impl::process_ordinary()
         if (attr_look_needed)
             return;
 
-        if (state != pushed_state_)
-            pop_state();
         if (!lab_instr->op_text)
             process_statement();
         else

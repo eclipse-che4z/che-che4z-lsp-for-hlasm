@@ -57,8 +57,6 @@ public:
     virtual bool terminal_condition(const statement_provider_kind kind) const override;
     virtual bool finished() override;
 
-    std::unordered_map<context::id_index, context::symbol> collect_found_refereces();
-
     virtual void collect_diags() const override;
 
 private:

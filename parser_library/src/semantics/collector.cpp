@@ -22,19 +22,18 @@ using namespace hlasm_plugin::parser_library::semantics;
 
 
 collector::collector()
-    : lbl_(lbls_)
-    , instr_(instrs_)
-    , lsp_symbols_extracted_(false)
+    : 
+     lsp_symbols_extracted_(false)
     , hl_symbols_extracted_(false)
 {}
 
-const label_si& collector::current_label() { return **lbl_; }
+const label_si& collector::current_label() { return *lbl_; }
 
-bool collector::has_label() const { return lbl_->has_value(); }
+bool collector::has_label() const { return lbl_.has_value(); }
 
-const instruction_si& collector::current_instruction() { return **instr_; }
+const instruction_si& collector::current_instruction() { return *instr_; }
 
-bool collector::has_instruction() const { return instr_->has_value(); }
+bool collector::has_instruction() const { return instr_.has_value(); }
 
 const operands_si& collector::current_operands() { return *op_; }
 
@@ -42,28 +41,28 @@ const remarks_si& collector::current_remarks() { return *rem_; }
 
 void collector::set_label_field(range symbol_range)
 {
-    if (*lbl_)
+    if (lbl_)
         throw std::runtime_error("field already assigned");
-    lbl_->emplace(symbol_range);
+    lbl_.emplace(symbol_range);
 }
 
 void collector::set_label_field(std::string label, range symbol_range)
 {
-    if (*lbl_)
+    if (lbl_)
         throw std::runtime_error("field already assigned");
-    lbl_->emplace(symbol_range, std::move(label), label_si::mac_flag());
+    lbl_.emplace(symbol_range, std::move(label), label_si::mac_flag());
 }
 
 void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
 {
-    if (*lbl_)
+    if (lbl_)
         throw std::runtime_error("field already assigned");
-    lbl_->emplace(symbol_range, std::move(sequence_symbol));
+    lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
 void collector::set_label_field(const std::string* label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
 {
-    if (*lbl_)
+    if (lbl_)
         throw std::runtime_error("field already assigned");
     // recognise, whether label consists only of ORDSYMBOL token
     if (!parser_ctx
@@ -71,50 +70,50 @@ void collector::set_label_field(const std::string* label, antlr4::ParserRuleCont
             && parser_ctx->getStart()->getType() == lexing::lexer::Tokens::ORDSYMBOL))
     {
         add_lsp_symbol(label, symbol_range, context::symbol_type::ord);
-        lbl_->emplace(symbol_range, *label);
+        lbl_.emplace(symbol_range, *label);
     }
     // otherwise it is macro label parameter
     else
     {
-        lbl_->emplace(symbol_range, *label, label_si::mac_flag());
+        lbl_.emplace(symbol_range, *label, label_si::mac_flag());
     }
 }
 
 void collector::set_label_field(concat_chain label, range symbol_range)
 {
-    if (*lbl_)
+    if (lbl_)
         throw std::runtime_error("field already assigned");
     concatenation_point::clear_concat_chain(label);
     if (label.size() == 1 && label[0]->type == concat_type::VAR) // label is variable symbol
     {
-        lbl_->emplace(symbol_range, std::move(label[0]->access_var()->symbol));
+        lbl_.emplace(symbol_range, std::move(label[0]->access_var()->symbol));
     }
     else // label is concatenation
     {
-        lbl_->emplace(symbol_range, std::move(label));
+        lbl_.emplace(symbol_range, std::move(label));
     }
 }
 
 void collector::set_instruction_field(range symbol_range)
 {
-    if (*instr_)
+    if (instr_)
         throw std::runtime_error("field already assigned");
-    instr_->emplace(symbol_range);
+    instr_.emplace(symbol_range);
 }
 
 void collector::set_instruction_field(context::id_index instr, range symbol_range)
 {
-    if (*instr_)
+    if (instr_)
         throw std::runtime_error("field already assigned");
-    instr_->emplace(symbol_range, instr);
+    instr_.emplace(symbol_range, instr);
 }
 
 void collector::set_instruction_field(concat_chain instr, range symbol_range)
 {
-    if (*instr_)
+    if (instr_)
         throw std::runtime_error("field already assigned");
     concatenation_point::clear_concat_chain(instr);
-    instr_->emplace(symbol_range, std::move(instr));
+    instr_.emplace(symbol_range, std::move(instr));
 }
 
 void collector::set_operand_remark_field(range symbol_range)
@@ -175,7 +174,7 @@ void collector::add_operand_remark_hl_symbols()
 
     if (rem_)
     {
-        for (auto remark : current_remarks().value)
+        for (const auto& remark : current_remarks().value)
             add_hl_symbol(token_info(remark, hl_scopes::remark));
     }
 }
@@ -211,14 +210,14 @@ void collector::append_operand_field(collector&& c)
         lsp_symbols_.push_back(std::move(symbol));
 }
 
-const instruction_si& collector::peek_instruction() { return **instr_; }
+const instruction_si& collector::peek_instruction() { return *instr_; }
 
 std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint, range default_range)
 {
-    if (!*lbl_)
-        lbl_->emplace(default_range);
-    if (!*instr_)
-        instr_->emplace(default_range);
+    if (!lbl_)
+        lbl_.emplace(default_range);
+    if (!instr_)
+        instr_.emplace(default_range);
     if (!rem_)
         rem_.emplace(default_range, remark_list {});
 
@@ -227,27 +226,27 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
     if (deferred_hint)
     {
         if (!def_)
-            def_.emplace("", instr_->value().field_range);
-        return statement_si_deferred(range_provider::union_range(lbl_->value().field_range, def_->second),
-            std::move(**lbl_),
-            std::move(**instr_),
+            def_.emplace("", instr_.value().field_range);
+        return statement_si_deferred(range_provider::union_range(lbl_.value().field_range, def_->second),
+            std::move(*lbl_),
+            std::move(*instr_),
             std::move(def_.value().first),
             def_.value().second);
     }
     else
     {
         if (!op_)
-            op_.emplace(instr_->value().field_range, operand_list {});
+            op_.emplace(instr_.value().field_range, operand_list {});
 
         // foreach operand substitute null with empty
         for (size_t i = 0; i < op_->value.size(); i++)
         {
             if (!op_->value[i])
-                op_->value[i] = std::make_unique<empty_operand>(instr_->value().field_range);
+                op_->value[i] = std::make_unique<empty_operand>(instr_.value().field_range);
         }
 
-        range r = range_provider::union_range(lbl_->value().field_range, op_->field_range);
-        return statement_si(r, std::move(**lbl_), std::move(**instr_), std::move(*op_), std::move(*rem_));
+        range r = range_provider::union_range(lbl_.value().field_range, op_->field_range);
+        return statement_si(r, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
     }
 }
 
@@ -271,8 +270,8 @@ std::vector<token_info> collector::extract_hl_symbols()
 
 void collector::prepare_for_next_statement()
 {
-    lbl_->reset();
-    instr_->reset();
+    lbl_.reset();
+    instr_.reset();
     op_.reset();
     rem_.reset();
     def_.reset();
@@ -281,22 +280,4 @@ void collector::prepare_for_next_statement()
     hl_symbols_.clear();
     lsp_symbols_extracted_ = false;
     hl_symbols_extracted_ = false;
-}
-
-void collector::push_fields()
-{
-    if (instr_ == instrs_ + 1)
-        throw std::runtime_error("fields already pushed");
-    ++instr_;
-    ++lbl_;
-}
-
-void collector::pop_fields()
-{
-    if (instr_ == instrs_)
-        throw std::runtime_error("fields already popped");
-    instr_->reset();
-    lbl_->reset();
-    --instr_;
-    --lbl_;
 }
