@@ -63,7 +63,11 @@ void request_manager::add_request(server* server, json message)
 
 void request_manager::end_worker()
 {
-    end_worker_ = true;
+    {
+        std::lock_guard<std::mutex> lock(q_mtx_);
+        end_worker_ = true;
+    }
+
     cond_.notify_one();
     worker_.join();
 }
