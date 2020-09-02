@@ -44,6 +44,7 @@ workspace::workspace(file_manager& file_manager)
     : workspace("", file_manager)
 {
     opened_ = true;
+    suppress_diags_ = true;
 }
 
 void workspace::collect_diags() const
@@ -63,6 +64,18 @@ bool workspace::program_id_match(const std::string& filename, const program_id& 
 {
     std::regex prg_regex = wildcard2regex(program);
     return std::regex_match(filename, prg_regex);
+}
+
+void workspace::delete_diags(processor_file_ptr file)
+{
+    file->diags().clear();
+
+    for (const std::string& fname : file->dependencies())
+    {
+        auto file = file_manager_.find_processor_file(fname);
+        if (file)
+            file->diags().clear();
+    }
 }
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
@@ -109,7 +122,8 @@ void workspace::parse_file(const std::string& file_uri)
                     filter_and_close_dependencies_(found->files_to_close(), found);
             }
         }
-
+        else
+            suppress_diags_ = true;
         return;
     }
     // what about removing files??? what if depentands_ points to not existing file?
@@ -142,6 +156,9 @@ void workspace::parse_file(const std::string& file_uri)
         f->parse(*this);
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
+        
+        if (suppress_diags_)
+            delete_diags(f);
     }
 
     // second check after all dependants are there to close all files that used to be dependencies
@@ -196,7 +213,7 @@ void workspace::did_change_watched_files(const std::string& file_uri)
     parse_file(file_uri);
 }
 
-void workspace::open() { load_config(); }
+void workspace::open() { suppress_diags_ = load_config(); }
 
 void workspace::close() { opened_ = false; }
 

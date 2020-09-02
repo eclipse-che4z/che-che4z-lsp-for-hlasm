@@ -31,7 +31,7 @@ class workspace_manager::impl : public diagnosable_impl, public debugging::debug
 public:
     impl(std::atomic<bool>* cancel = nullptr)
         : file_manager_(cancel)
-        , implicit_workspace_({ file_manager_ })
+        , implicit_workspace_(file_manager_)
         , cancel_(cancel)
     {}
     impl(const impl&) = delete;

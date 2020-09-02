@@ -110,6 +110,7 @@ private:
     std::filesystem::path pgm_conf_path_;
 
     bool opened_ = false;
+    bool suppress_diags_ = false;
 
     bool load_config();
 
@@ -124,6 +125,8 @@ private:
     bool is_dependency_(const std::string& file_uri);
 
     bool program_id_match(const std::string& filename, const program_id& program) const;
+
+    void delete_diags(processor_file_ptr file);
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
