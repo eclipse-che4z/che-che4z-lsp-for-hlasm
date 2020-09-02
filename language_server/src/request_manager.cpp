@@ -72,7 +72,7 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool request_manager::is_running()
+bool request_manager::is_running() const
 {
     std::unique_lock<std::mutex> lock(q_mtx_);
     return !requests_.empty();
