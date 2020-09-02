@@ -147,4 +147,5 @@ inline void ca_processor::process_GBL_LCL(const semantics::complete_statement& s
 }
 
 } // namespace hlasm_plugin::parser_library::processing
+
 #endif

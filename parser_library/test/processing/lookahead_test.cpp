@@ -308,7 +308,7 @@ X EQU 1,10,C'T'
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
-TEST(EQU_attribute_lookahead, unresolvable_attribute_referece)
+TEST(EQU_attribute_lookahead, unresolvable_attribute_reference)
 {
     std::string input(
         R"( 
@@ -327,7 +327,8 @@ X EQU 1,Y+11,C'T'
                   ->get_value(),
         1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)2);
 }
 
 TEST(EQU_attribute_lookahead, errorous_but_resolable_statement_incorrect_operand)
@@ -885,13 +886,14 @@ X EQU 1,*-Y
 
   AIF (L'A EQ 4).NO
 B LR 1,1
-A DC AL(*-B)(*)
+A DC AL(*-B+2)(*)
 )");
 
     analyzer a(input);
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
+    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)5);
 }

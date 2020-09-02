@@ -25,15 +25,13 @@
 #include "statement_providers/copy_statement_provider.h"
 #include "statement_providers/macro_statement_provider.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
     context::hlasm_context& hlasm_ctx,
-    const library_data data,
+    const workspaces::library_data data,
     std::string file_name,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     processing_tracer* tracer)
     : diagnosable_ctx(hlasm_ctx)
@@ -121,7 +119,8 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
 
 statement_provider& processing_manager::find_provider()
 {
-    if (auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back()); look_pr && look_pr->action == lookahead_action::ORD)
+    if (auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
+        look_pr && look_pr->action == lookahead_action::ORD)
     {
         auto& opencode_prov = **(provs_.end() - 1);
         auto& copy_prov = **(provs_.end() - 2);
@@ -190,6 +189,9 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
     {
         for (auto&& [name, sym] : result.resolved_refs)
             hlasm_ctx_.ord_ctx.add_symbol_reference(std::move(sym));
+
+        if (hlasm_ctx_.current_scope().this_macro)
+            --hlasm_ctx_.current_scope().this_macro->current_statement;
 
         perform_opencode_jump(result.statement_position, std::move(result.snapshot));
     }
@@ -268,7 +270,7 @@ std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_op
 
     context::source_position statement_position;
 
-    if (hlasm_ctx_.current_source().copy_stack.empty())
+    if (hlasm_ctx_.current_copy_stack().empty())
     {
         statement_position.file_offset = hlasm_ctx_.current_source().begin_index;
         statement_position.file_line = (size_t)hlasm_ctx_.current_source().current_instruction.pos.line;
@@ -353,3 +355,5 @@ void processing_manager::collect_diags() const
 
     collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
 }
+
+} // namespace hlasm_plugin::parser_library::processing

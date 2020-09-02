@@ -70,10 +70,22 @@ void statement_provider::trigger_attribute_lookahead(std::set<context::id_index>
     const expressions::evaluation_context& eval_ctx,
     processing::processing_state_listener& listener)
 {
-    context::source_position statement_position(
-        (size_t)eval_ctx.hlasm_ctx.current_source().end_line, eval_ctx.hlasm_ctx.current_source().begin_index);
+    context::source_position statement_position;
+    if (eval_ctx.hlasm_ctx.scope_stack().size() == 1 && eval_ctx.hlasm_ctx.current_copy_stack().empty())
+    {
+        statement_position.file_offset = eval_ctx.hlasm_ctx.current_source().begin_index;
+        statement_position.file_line = (size_t)eval_ctx.hlasm_ctx.current_source().current_instruction.pos.line;
+    }
+    else
+    {
+        statement_position.file_offset = eval_ctx.hlasm_ctx.current_source().end_index;
+        statement_position.file_line = eval_ctx.hlasm_ctx.current_source().end_line + 1;
+    }
 
     context::source_snapshot snapshot = eval_ctx.hlasm_ctx.current_source().create_snapshot();
+
+    if (snapshot.copy_frames.size() && eval_ctx.hlasm_ctx.scope_stack().size() > 1)
+        ++snapshot.copy_frames.back().statement_offset;
 
     listener.start_lookahead(lookahead_start_data(std::move(references), statement_position, std::move(snapshot)));
 }

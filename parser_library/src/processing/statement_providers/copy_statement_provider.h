@@ -17,9 +17,7 @@
 
 #include "members_statement_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // statement provider providing statements of copy members
 class copy_statement_provider : public members_statement_provider
@@ -37,6 +35,5 @@ protected:
 };
 
 } // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
 #endif
