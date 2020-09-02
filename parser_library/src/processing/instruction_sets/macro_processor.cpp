@@ -228,7 +228,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
             continue;
         }
 
-        auto tmp = op->access_mac();
+        auto tmp = op->access_mac()->access_chain();
         assert(tmp);
 
         auto& tmp_chain = tmp->chain;

@@ -457,8 +457,8 @@ branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_ex
 
 
 
-macro_operand::macro_operand(concat_chain chain, range operand_range)
-    : operand(operand_type::MAC, std::move(operand_range))
+macro_operand_chain::macro_operand_chain(concat_chain chain, range operand_range)
+    : macro_operand(mac_kind::CHAIN, std::move(operand_range))
     , chain(std::move(chain))
 {}
 
@@ -572,8 +572,22 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
 void string_assembler_operand::collect_diags() const {}
 
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
-    : operand(operand_type::MAC, operand_range)
+    : macro_operand(mac_kind::STRING, operand_range)
     , value(std::move(value))
+{}
+
+macro_operand_chain* macro_operand::access_chain()
+{
+    return kind == mac_kind::CHAIN ? static_cast<macro_operand_chain*>(this) : nullptr;
+}
+
+macro_operand_string* macro_operand::access_string()
+{
+    return kind == mac_kind::STRING ? static_cast<macro_operand_string*>(this) : nullptr;
+}
+
+macro_operand::macro_operand(mac_kind kind, range operand_range)
+    : operand(operand_type::MAC, std::move(operand_range)), kind(kind)
 {}
 
 } // namespace hlasm_plugin::parser_library::semantics

@@ -25,9 +25,7 @@
 
 // the file contains structures representing operands in the operand field of statement
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 enum class operand_type
 {
@@ -457,17 +455,36 @@ struct branch_ca_operand final : public ca_operand
 };
 
 
+enum class mac_kind
+{
+    CHAIN,
+    STRING
+};
+
+struct macro_operand_chain;
+struct macro_operand_string;
+
+struct macro_operand : public operand
+{
+    const mac_kind kind;
+
+    macro_operand_chain* access_chain();
+    macro_operand_string* access_string();
+
+protected:
+    macro_operand(mac_kind kind, range operand_range);
+};
 
 // macro instruction operand
-struct macro_operand final : public operand
+struct macro_operand_chain final : public macro_operand
 {
-    macro_operand(concat_chain chain, const range operand_range);
+    macro_operand_chain(concat_chain chain, const range operand_range);
 
     concat_chain chain;
 };
 
 // macro instruction operand
-struct macro_operand_string final : public operand
+struct macro_operand_string final : public macro_operand
 {
     macro_operand_string(std::string value, const range operand_range);
 
@@ -475,6 +492,5 @@ struct macro_operand_string final : public operand
 };
 
 } // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+
 #endif
