@@ -82,7 +82,10 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
             if (!valid)
                 return {};
 
-            return { ord_name };
+            if (context::symbol_attributes::is_ordinary_attribute(attribute)
+                && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(ord_name)
+                && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(ord_name))
+                return { ord_name };
         }
         return undef_syms;
     }

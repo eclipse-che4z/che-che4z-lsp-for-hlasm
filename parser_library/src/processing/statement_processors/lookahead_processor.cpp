@@ -320,7 +320,7 @@ void lookahead_processor::find_seq(const semantics::core_statement& statement)
 {
     if (statement.label_ref().type == semantics::label_si_type::SEQ)
     {
-        auto symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
+        const auto& symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
 
         branch_provider_.register_sequence_symbol(symbol.name, symbol.symbol_range);
 

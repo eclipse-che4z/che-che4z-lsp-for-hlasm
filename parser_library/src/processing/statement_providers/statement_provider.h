@@ -49,6 +49,18 @@ protected:
     static bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement,
         expressions::evaluation_context eval_ctx,
         processing::processing_state_listener& listener);
+
+private:
+    static void trigger_attribute_lookahead(std::set<context::id_index> references,
+        const expressions::evaluation_context& eval_ctx,
+        processing::processing_state_listener& listener);
+
+    static std::set<context::id_index> process_label(
+        const semantics::label_si& label, expressions::evaluation_context& eval_ctx);
+    static std::set<context::id_index> process_instruction(
+        const semantics::instruction_si& instruction, expressions::evaluation_context& eval_ctx);
+    static std::set<context::id_index> process_operands(
+        const semantics::operands_si& operands, expressions::evaluation_context& eval_ctx);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
