@@ -54,11 +54,16 @@ public:
 private:
     context::hlasm_context& hlasm_ctx_;
     workspaces::parse_lib_provider& lib_provider_;
+    opencode_provider& opencode_prov_;
 
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 
-    opencode_provider& opencode_prov_;
+    context::source_snapshot lookahead_stop_;
+
+    processing_tracer* tracer_ = nullptr;
+
+    bool attr_lookahead_active() const;
 
     statement_provider& find_provider();
     void finish_processor();
@@ -75,14 +80,8 @@ private:
     std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(
         context::id_index name, range symbol_range);
 
-    std::optional<context::source_snapshot> attr_lookahead_stop_;
-    std::map<context::id_index, context::symbol>  resolved_symbols;
-    const std::map<context::id_index, context::symbol>& lookup_forward_attribute_references(
-        std::set<context::id_index> references);
-
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
 
-    processing_tracer* tracer_ = nullptr;
 };
 
 } // namespace processing

@@ -21,9 +21,7 @@
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor used for lookahead, hence finding desired symbol
 class lookahead_processor : public statement_processor
@@ -76,12 +74,12 @@ private:
 
     void process_statement(const context::hlasm_statement& statement);
 
-    void find_target(const context::hlasm_statement& statement);
     void find_seq(const semantics::core_statement& statement);
     void find_ord(const resolved_statement& statement);
+
+    void register_attr_ref(context::id_index name, context::symbol_attributes attributes);
 };
 
 } // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
 #endif

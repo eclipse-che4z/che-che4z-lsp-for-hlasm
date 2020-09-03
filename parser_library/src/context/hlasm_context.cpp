@@ -366,11 +366,9 @@ var_sym_ptr hlasm_context::get_var_sym(id_index name)
 
 void hlasm_context::add_sequence_symbol(sequence_symbol_ptr seq_sym)
 {
-    if (curr_scope()->is_in_macro())
-        throw std::runtime_error("adding sequence symbols to macro definition not allowed");
-
-    if (curr_scope()->sequence_symbols.find(seq_sym->name) == curr_scope()->sequence_symbols.end())
-        curr_scope()->sequence_symbols.emplace(seq_sym->name, std::move(seq_sym));
+    auto& opencode = scope_stack_.front();
+    if (opencode.sequence_symbols.find(seq_sym->name) == opencode.sequence_symbols.end())
+        opencode.sequence_symbols.emplace(seq_sym->name, std::move(seq_sym));
 }
 
 const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const

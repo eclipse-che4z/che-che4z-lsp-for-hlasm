@@ -16,7 +16,6 @@
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
 #include <set>
-#include <unordered_map>
 
 #include "context/ordinary_assembly/symbol.h"
 #include "context/source_snapshot.h"
@@ -76,8 +75,6 @@ struct lookahead_processing_result
 
     context::id_index symbol_name;
     range symbol_range;
-
-    std::unordered_map<context::id_index, context::symbol> resolved_refs;
 
     lookahead_processing_result(lookahead_start_data&& initial_data)
         : action(initial_data.action)

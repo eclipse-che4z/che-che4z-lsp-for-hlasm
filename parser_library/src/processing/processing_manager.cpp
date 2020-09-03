@@ -117,10 +117,15 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
     }
 }
 
+bool processing_manager::attr_lookahead_active() const
+{
+    auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
+    return look_pr && look_pr->action == lookahead_action::ORD;
+}
+
 statement_provider& processing_manager::find_provider()
 {
-    if (auto look_pr = dynamic_cast<lookahead_processor*>(&*procs_.back());
-        look_pr && look_pr->action == lookahead_action::ORD)
+    if (attr_lookahead_active())
     {
         auto& opencode_prov = **(provs_.end() - 1);
         auto& copy_prov = **(provs_.end() - 2);
@@ -164,6 +169,11 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
 
 void processing_manager::start_lookahead(lookahead_start_data start)
 {
+    // jump to the statement where the previous lookahead stopped
+    if (hlasm_ctx_.current_source().end_index < lookahead_stop_.end_index)
+        perform_opencode_jump(
+            context::source_position(lookahead_stop_.end_line + 1, lookahead_stop_.end_index), lookahead_stop_);
+
     hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
     procs_.emplace_back(
         std::make_unique<lookahead_processor>(hlasm_ctx_, *this, *this, lib_provider_, std::move(start)));
@@ -171,6 +181,8 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
 {
+    lookahead_stop_ = hlasm_ctx_.current_source().create_snapshot();
+
     if (result.action == lookahead_action::SEQ)
     {
         if (result.success)
@@ -187,9 +199,6 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
     }
     else
     {
-        for (auto&& [name, sym] : result.resolved_refs)
-            hlasm_ctx_.ord_ctx.add_symbol_reference(std::move(sym));
-
         if (hlasm_ctx_.current_scope().this_macro)
             --hlasm_ctx_.current_scope().this_macro->current_statement;
 
@@ -246,7 +255,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
 
 void processing_manager::register_sequence_symbol(context::id_index target, range symbol_range)
 {
-    if (hlasm_ctx_.is_in_macro())
+    if (!attr_lookahead_active() && hlasm_ctx_.is_in_macro())
         return;
 
     auto symbol = hlasm_ctx_.get_sequence_symbol(target);
@@ -292,60 +301,6 @@ void processing_manager::perform_opencode_jump(
     opencode_prov_.rewind_input(statement_position);
 
     hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
-}
-
-const std::map<context::id_index, context::symbol>& processing_manager::lookup_forward_attribute_references(
-    std::set<context::id_index> references)
-{
-    /*
-    if (references.empty())
-        return resolved_symbols;
-
-    bool all_resolved = true;
-    for (auto ref : references)
-        all_resolved &= resolved_symbols.find(ref) != resolved_symbols.end();
-
-    if (all_resolved)
-        return resolved_symbols;
-
-    lookahead_processor proc(hlasm_ctx_, *this, *this, lib_provider_, lookahead_start_data(std::move(references)));
-
-    context::source_snapshot snapshot = hlasm_ctx_.current_source().create_snapshot();
-    if (!snapshot.copy_frames.empty())
-        ++snapshot.copy_frames.back().statement_offset;
-
-    context::source_position statement_position(
-        (size_t)hlasm_ctx_.current_source().end_line + 1, hlasm_ctx_.current_source().end_index);
-
-    if (attr_lookahead_stop_ && hlasm_ctx_.current_source().end_index < attr_lookahead_stop_->end_index)
-        perform_opencode_jump(
-            context::source_position(attr_lookahead_stop_->end_line + 1, attr_lookahead_stop_->end_index),
-            *attr_lookahead_stop_);
-
-    while (true)
-    {
-        // macro statement provider is not relevant in attribute lookahead
-        // provs_.size() is always more than 2, it results from calling constructor
-        auto& opencode_prov = **(provs_.end() - 1);
-        auto& copy_prov = **(provs_.end() - 2);
-        auto& prov = !copy_prov.finished() ? copy_prov : opencode_prov;
-
-        if (prov.finished() || proc.finished())
-            break;
-
-        prov.process_next(proc);
-    }
-
-    attr_lookahead_stop_ = hlasm_ctx_.current_source().create_snapshot();
-
-    perform_opencode_jump(statement_position, std::move(snapshot));
-
-    auto ret = proc.collect_found_refereces();
-
-    for (auto& sym : ret)
-        resolved_symbols.insert(std::move(sym));
-        */
-    return resolved_symbols;
 }
 
 void processing_manager::collect_diags() const
