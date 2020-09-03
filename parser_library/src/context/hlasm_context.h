@@ -95,6 +95,9 @@ public:
     // sets current source file indices
     void set_source_indices(size_t begin_index, size_t end_index, size_t end_line);
 
+    std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros);
+    std::pair<source_position, source_snapshot> get_end_snapshot();
+
     // pushes new kind of statement processing
     void push_statement_processing(const processing::processing_kind kind);
     // pushes new kind of statement processing as well as new source

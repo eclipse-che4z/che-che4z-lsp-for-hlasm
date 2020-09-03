@@ -191,9 +191,6 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
         {
             perform_opencode_jump(result.statement_position, std::move(result.snapshot));
 
-            empty_processor tmp(hlasm_ctx_); // skip next statement
-            find_provider().process_next(tmp);
-
             add_diagnostic(diagnostic_op::error_E047(*result.symbol_name, result.symbol_range));
         }
     }
@@ -229,9 +226,9 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
         }
         else
         {
-            auto open_symbol = create_opencode_sequence_symbol(nullptr, range());
-            start_lookahead(lookahead_start_data(
-                target, symbol_range, std::move(open_symbol->statement_position), std::move(open_symbol->snapshot)));
+            auto&& [statement_position, snapshot] = hlasm_ctx_.get_end_snapshot();
+            start_lookahead(
+                lookahead_start_data(target, symbol_range, std::move(statement_position), std::move(snapshot)));
         }
     }
     else
@@ -277,20 +274,7 @@ std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_op
     auto symbol_pos = symbol_range.start;
     location loc(symbol_pos, hlasm_ctx_.processing_stack().back().proc_location.file);
 
-    context::source_position statement_position;
-
-    if (hlasm_ctx_.current_copy_stack().empty())
-    {
-        statement_position.file_offset = hlasm_ctx_.current_source().begin_index;
-        statement_position.file_line = (size_t)hlasm_ctx_.current_source().current_instruction.pos.line;
-    }
-    else
-    {
-        statement_position.file_offset = hlasm_ctx_.current_source().end_index;
-        statement_position.file_line = hlasm_ctx_.current_source().end_line + 1;
-    }
-
-    auto snapshot = hlasm_ctx_.current_source().create_snapshot();
+    auto&& [statement_position, snapshot] = hlasm_ctx_.get_begin_snapshot(attr_lookahead_active());
 
     return std::make_unique<context::opencode_sequence_symbol>(name, loc, statement_position, std::move(snapshot));
 }

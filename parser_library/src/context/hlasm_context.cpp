@@ -262,6 +262,45 @@ void hlasm_context::set_source_indices(size_t begin_index, size_t end_index, siz
     source_stack_.back().end_line = end_line;
 }
 
+std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros)
+{
+    context::source_position statement_position;
+
+    bool is_in_macros = ignore_macros ? false : scope_stack_.size() > 1;
+
+    if (!is_in_macros && current_copy_stack().empty())
+    {
+        statement_position.file_offset = current_source().begin_index;
+        statement_position.file_line = (size_t)current_source().current_instruction.pos.line;
+    }
+    else
+    {
+        statement_position.file_offset = current_source().end_index;
+        statement_position.file_line = current_source().end_line + 1;
+    }
+
+    context::source_snapshot snapshot = current_source().create_snapshot();
+
+    if (snapshot.copy_frames.size() && is_in_macros)
+        ++snapshot.copy_frames.back().statement_offset;
+
+    return std::make_pair(std::move(statement_position), std::move(snapshot));
+}
+
+std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot()
+{
+    context::source_position statement_position;
+    statement_position.file_offset = current_source().end_index;
+    statement_position.file_line = current_source().end_line + 1;
+
+    context::source_snapshot snapshot = current_source().create_snapshot();
+
+    if (snapshot.copy_frames.size())
+        ++snapshot.copy_frames.back().statement_offset;
+
+    return std::make_pair(std::move(statement_position), std::move(snapshot));
+}
+
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
     assert(!proc_stack_.empty());
