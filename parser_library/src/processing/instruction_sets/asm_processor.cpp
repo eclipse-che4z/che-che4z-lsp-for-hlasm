@@ -156,10 +156,13 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                     bool cycle_ok = create_symbol(stmt.stmt_range_ref(), symbol_name, context::symbol_value(), attrs);
 
                     if (cycle_ok)
-                        add_dependency(stmt.stmt_range_ref(),
+                    {
+                        const auto& stmt_range = stmt.stmt_range_ref();
+                        add_dependency(stmt_range,
                             symbol_name,
                             &*expr_op->expression,
                             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+                    }
                 }
                 else
                     create_symbol(stmt.stmt_range_ref(), symbol_name, *holder.unresolved_address, attrs);

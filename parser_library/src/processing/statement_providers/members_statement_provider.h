@@ -47,10 +47,23 @@ protected:
     virtual context::cached_statement_storage* get_next() = 0;
 
 private:
-    context::shared_stmt_ptr preprocess_deferred(
-        statement_processor& processor, context::cached_statement_storage& cache);
-
     const semantics::instruction_si& retrieve_instruction(context::cached_statement_storage& cache);
+
+    void fill_cache(context::cached_statement_storage& cache,
+        const semantics::deferred_statement& def_stmt,
+        const processing_status& status);
+
+    void preprocess_deferred(statement_processor& processor, context::cached_statement_storage& cache);
+
+    template<typename T>
+    void do_process_statement(statement_processor& processor, T statement)
+    {
+        if (processor.kind == processing_kind::ORDINARY
+            && try_trigger_attribute_lookahead(*statement, { hlasm_ctx, lib_provider }, listener))
+            return;
+
+        processor.process_statement(std::move(statement));
+    }
 };
 
 } // namespace processing
