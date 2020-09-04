@@ -50,7 +50,9 @@ bad_look
 	| DOT ~(ORDSYMBOL|EOLLN) ~EOLLN*
 	| ORDSYMBOL ~(SPACE|EOLLN) ~EOLLN*
 	| ORDSYMBOL SPACE
-	| SPACE?;
+	| SPACE
+	| DOT
+	| ;
 
 lookahead_operands_and_remarks
 	: SPACE+ lookahead_operand_list remark_o
