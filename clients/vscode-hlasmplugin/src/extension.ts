@@ -64,14 +64,8 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: HLASMSemanticHighlightingFeature) {
-    // vscode/theia compatibility temporary fix
-    // theia uses monaco commands
-    var completeCommand: string;
+    const completeCommand = "editor.action.triggerSuggest";
     var commandList = await vscode.commands.getCommands();
-    if (commandList.find(command => command == "editor.action.triggerSuggest"))
-        completeCommand = "editor.action.triggerSuggest";
-    else if (commandList.find(command => command == "monaco.editor.action.triggerSuggest"))
-        completeCommand = "monaco.editor.action.triggerSuggest";
 
     // check whether the continuation commands have already been registered
     var commandsRegistered = commandList.find(command => command == 'insertContinuation' || command == 'removeContinuation');
