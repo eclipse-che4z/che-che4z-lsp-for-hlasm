@@ -134,6 +134,38 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
     return context::SET_t(expr_kind);
 }
 
+std::string ca_symbol_attribute::get_first_term(const std::string& expr)
+{
+    std::string delims = "+-*/()";
+    bool in_str = false;
+
+    size_t start = 0;
+    for (; start < expr.size() && expr[start] == '('; ++start) {};
+
+    for (size_t i = start; i < expr.size(); ++i)
+    {
+        if (in_str)
+        {
+            if (expr[i] == '\'')
+            {
+                if (i + 1 < expr.size() && expr[i + 1] == '\'')
+                    ++i;
+                else
+                    in_str = false;
+            }
+        }
+        else
+        {
+            if (expr[i] == '\'')
+                in_str = true;
+            else if (delims.find(expr[i]) != std::string::npos)
+                return expr.substr(start, i - start);
+        }
+    }
+
+    return expr;
+}
+
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
     context::id_index name, const evaluation_context& eval_ctx) const
 {
@@ -264,7 +296,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+    auto [valid, ord_name] = mngr.try_get_symbol_name(get_first_term(substituted_name.access_c()));
 
     if (!valid)
     {

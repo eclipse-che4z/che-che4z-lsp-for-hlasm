@@ -45,6 +45,8 @@ public:
 
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
+    static std::string get_first_term(const std::string& expr);
+
 private:
     context::SET_t get_ordsym_attr_value(context::id_index name, const evaluation_context& eval_ctx) const;
     context::SET_t retrieve_value(const context::symbol* ord_symbol, const evaluation_context& eval_ctx) const;

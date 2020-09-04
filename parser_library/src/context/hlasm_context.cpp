@@ -19,6 +19,7 @@
 
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
+#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -577,6 +578,8 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
 
     if (value.empty())
         return "O";
+
+    value = expressions::ca_symbol_attribute::get_first_term(value);
 
     auto res = expressions::ca_constant::try_self_defining_term(value);
     if (res)
