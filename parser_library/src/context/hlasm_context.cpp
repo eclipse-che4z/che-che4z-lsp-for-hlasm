@@ -367,10 +367,7 @@ const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() c
     return source_stack_.back().copy_stack;
 }
 
-std::vector<copy_member_invocation>& hlasm_context::current_copy_stack()
-{
-    return source_stack_.back().copy_stack;
-}
+std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
 
 std::vector<id_index> hlasm_context::whole_copy_stack() const
 {

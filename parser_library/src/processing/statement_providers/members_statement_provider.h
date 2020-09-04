@@ -64,6 +64,6 @@ private:
     }
 };
 
-} // namespace processing
+} // namespace hlasm_plugin::parser_library:processing
 
 #endif
