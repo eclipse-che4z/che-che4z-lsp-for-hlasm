@@ -57,7 +57,7 @@ void members_statement_provider::process_next(statement_processor& processor)
 }
 
 const semantics::instruction_si& members_statement_provider::retrieve_instruction(
-    context::cached_statement_storage& cache)
+    context::cached_statement_storage& cache) const
 {
     switch (cache.get_base()->kind)
     {

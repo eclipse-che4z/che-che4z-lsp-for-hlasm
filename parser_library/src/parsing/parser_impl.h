@@ -129,8 +129,8 @@ private:
     void process_ordinary();
     void process_lookahead();
 
-    void parse_operands(std::string text, range text_range);
-    void parse_lookahead_operands(std::string text, range text_range);
+    void parse_operands(const std::string& text, range text_range);
+    void parse_lookahead_operands(const std::string& text, range text_range);
 
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
 };

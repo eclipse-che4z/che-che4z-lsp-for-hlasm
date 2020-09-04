@@ -95,8 +95,8 @@ public:
     // sets current source file indices
     void set_source_indices(size_t begin_index, size_t end_index, size_t end_line);
 
-    std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros);
-    std::pair<source_position, source_snapshot> get_end_snapshot();
+    std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros) const;
+    std::pair<source_position, source_snapshot> get_end_snapshot() const;
 
     // pushes new kind of statement processing
     void push_statement_processing(const processing::processing_kind kind);
@@ -110,6 +110,7 @@ public:
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;
     // gets copy nest of current statement processing
+    const std::vector<copy_member_invocation>& current_copy_stack() const;
     std::vector<copy_member_invocation>& current_copy_stack();
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
@@ -208,7 +209,7 @@ public:
             return glob->second;
         }
 
-        set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, true));
+        auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
         globals_.insert({ id, val });
         curr_scope()->variables.insert({ id, val });

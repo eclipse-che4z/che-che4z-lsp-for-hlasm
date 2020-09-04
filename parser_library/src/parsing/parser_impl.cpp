@@ -94,7 +94,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         rest_parser_ = create_parser_holder();
 
     hlasm_ctx->metrics.reparsed_statements++;
-    parser_holder& h = *rest_parser_;
+    const parser_holder& h = *rest_parser_;
 
     std::optional<std::string> sub;
     if (after_substitution)
@@ -450,7 +450,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
 
-    parser_holder& h = *rest_parser_;
+    const parser_holder& h = *rest_parser_;
 
     semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
@@ -511,7 +511,7 @@ void parser_impl::process_lookahead()
     }
 }
 
-void parser_impl::parse_operands(std::string text, range text_range)
+void parser_impl::parse_operands(const std::string& text, range text_range)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -586,7 +586,7 @@ void parser_impl::parse_operands(std::string text, range text_range)
     collect_diags_from_child(listener);
 }
 
-void parser_impl::parse_lookahead_operands(std::string text, range text_range)
+void parser_impl::parse_lookahead_operands(const std::string& text, range text_range)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -612,7 +612,7 @@ void parser_impl::parse_lookahead_operands(std::string text, range text_range)
         }
     }
 
-    parser_holder& h = *rest_parser_;
+    const parser_holder& h = *rest_parser_;
 
     parser_error_listener_ctx listener(*ctx, std::nullopt);
 

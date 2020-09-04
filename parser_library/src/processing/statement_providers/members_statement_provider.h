@@ -22,9 +22,7 @@
 #include "processing/statement_fields_parser.h"
 #include "statement_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // common class for copy and macro statement providers (provider of copy and macro members)
 class members_statement_provider : public statement_provider
@@ -47,7 +45,7 @@ protected:
     virtual context::cached_statement_storage* get_next() = 0;
 
 private:
-    const semantics::instruction_si& retrieve_instruction(context::cached_statement_storage& cache);
+    const semantics::instruction_si& retrieve_instruction(context::cached_statement_storage& cache) const;
 
     void fill_cache(context::cached_statement_storage& cache,
         const semantics::deferred_statement& def_stmt,
@@ -67,6 +65,5 @@ private:
 };
 
 } // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
 #endif

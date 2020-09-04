@@ -263,7 +263,7 @@ void hlasm_context::set_source_indices(size_t begin_index, size_t end_index, siz
     source_stack_.back().end_line = end_line;
 }
 
-std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros)
+std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros) const
 {
     context::source_position statement_position;
 
@@ -272,7 +272,7 @@ std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bo
     if (!is_in_macros && current_copy_stack().empty())
     {
         statement_position.file_offset = current_source().begin_index;
-        statement_position.file_line = (size_t)current_source().current_instruction.pos.line;
+        statement_position.file_line = current_source().current_instruction.pos.line;
     }
     else
     {
@@ -288,7 +288,7 @@ std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bo
     return std::make_pair(std::move(statement_position), std::move(snapshot));
 }
 
-std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot()
+std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() const
 {
     context::source_position statement_position;
     statement_position.file_offset = current_source().end_index;
@@ -362,7 +362,15 @@ const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }
 
-std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
+const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() const
+{
+    return source_stack_.back().copy_stack;
+}
+
+std::vector<copy_member_invocation>& hlasm_context::current_copy_stack()
+{
+    return source_stack_.back().copy_stack;
+}
 
 std::vector<id_index> hlasm_context::whole_copy_stack() const
 {

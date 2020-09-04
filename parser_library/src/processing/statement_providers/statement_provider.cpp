@@ -76,7 +76,7 @@ void statement_provider::trigger_attribute_lookahead(std::set<context::id_index>
 }
 
 std::set<context::id_index> statement_provider::process_label(
-    const semantics::label_si& label, expressions::evaluation_context& eval_ctx)
+    const semantics::label_si& label, const expressions::evaluation_context& eval_ctx)
 {
     switch (label.type)
     {
@@ -92,7 +92,7 @@ std::set<context::id_index> statement_provider::process_label(
 }
 
 std::set<context::id_index> statement_provider::process_instruction(
-    const semantics::instruction_si& instruction, expressions::evaluation_context& eval_ctx)
+    const semantics::instruction_si& instruction, const expressions::evaluation_context& eval_ctx)
 {
     if (instruction.type != semantics::instruction_si_type::CONC)
         return {};
@@ -103,7 +103,7 @@ std::set<context::id_index> statement_provider::process_instruction(
 }
 
 std::set<context::id_index> statement_provider::process_operands(
-    const semantics::operands_si& operands, expressions::evaluation_context& eval_ctx)
+    const semantics::operands_si& operands, const expressions::evaluation_context& eval_ctx)
 {
     std::set<context::id_index> ret;
     for (const auto& op : operands.value)
