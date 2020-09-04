@@ -68,7 +68,11 @@ void request_manager::end_worker()
     worker_.join();
 }
 
-bool request_manager::is_running() const { return !requests_.empty(); }
+bool request_manager::is_running()
+{
+    std::unique_lock<std::mutex> lock(q_mtx_);
+    return !requests_.empty();
+}
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
 {
