@@ -321,8 +321,7 @@ using_instr_assembler_operand::using_instr_assembler_operand(
     , end(std::move(end))
 {}
 
-bool using_instr_assembler_operand::has_dependencies(
-    expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
 }
@@ -361,10 +360,7 @@ complex_assembler_operand::complex_assembler_operand(
     , value(identifier, std::move(values), operand_range)
 {}
 
-bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const
-{
-    return false;
-}
+bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
 
 bool complex_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
 
@@ -463,8 +459,7 @@ seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     , sequence_symbol(std::move(sequence_symbol))
 {}
 
-std::set<context::id_index> seq_ca_operand::get_undefined_attributed_symbols(
-    const expressions::evaluation_context& )
+std::set<context::id_index> seq_ca_operand::get_undefined_attributed_symbols(const expressions::evaluation_context&)
 {
     return std::set<context::id_index>();
 }

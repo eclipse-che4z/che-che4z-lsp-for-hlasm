@@ -22,8 +22,7 @@ using namespace hlasm_plugin::parser_library::semantics;
 
 
 collector::collector()
-    : 
-     lsp_symbols_extracted_(false)
+    : lsp_symbols_extracted_(false)
     , hl_symbols_extracted_(false)
 {}
 

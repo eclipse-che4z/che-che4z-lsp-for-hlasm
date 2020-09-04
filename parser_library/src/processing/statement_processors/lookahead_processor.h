@@ -80,6 +80,6 @@ private:
     void register_attr_ref(context::id_index name, context::symbol_attributes attributes);
 };
 
-} // namespace processing
+} // namespace hlasm_plugin::parser_library::processing
 
 #endif

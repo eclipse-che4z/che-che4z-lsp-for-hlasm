@@ -429,7 +429,7 @@ struct var_ca_operand final : public ca_operand
 {
     var_ca_operand(vs_ptr variable_symbol, const range operand_range);
 
-     virtual std::set<context::id_index> get_undefined_attributed_symbols(
+    virtual std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 
     vs_ptr variable_symbol;

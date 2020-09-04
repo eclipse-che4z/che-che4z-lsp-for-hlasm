@@ -99,7 +99,7 @@ TEST_P(ca_string_suite, dupl)
     ca_expr_ptr dupl = std::make_unique<ca_constant>(GetParam().factor, range());
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
-    
+
     context::hlasm_context ctx;
     lib_prov_mock lib;
     evaluation_context eval_ctx { ctx, lib };

@@ -33,9 +33,7 @@ namespace processing {
 // is constructed with base statement provider and has stack of statement processors which take statements from
 // providers and go through the code creating other providers and processors it holds those providers and processors and
 // manages the whole processing
-class processing_manager : public processing_state_listener,
-                           public branching_provider,
-                           public diagnosable_ctx
+class processing_manager : public processing_state_listener, public branching_provider, public diagnosable_ctx
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
@@ -81,7 +79,6 @@ private:
         context::id_index name, range symbol_range);
 
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
-
 };
 
 } // namespace processing

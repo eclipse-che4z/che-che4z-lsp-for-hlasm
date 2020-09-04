@@ -16,9 +16,9 @@
 #define SEMANTICS_CONCATENATION_H
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "context/common_types.h"
 #include "context/id_storage.h"

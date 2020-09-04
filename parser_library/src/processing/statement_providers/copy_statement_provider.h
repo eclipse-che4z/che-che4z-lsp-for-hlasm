@@ -34,6 +34,6 @@ protected:
     virtual context::cached_statement_storage* get_next() override;
 };
 
-} // namespace processing
+} // namespace hlasm_plugin::parser_library::processing
 
 #endif

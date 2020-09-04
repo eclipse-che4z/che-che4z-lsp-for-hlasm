@@ -14,11 +14,11 @@
 
 #include "gmock/gmock.h"
 
+#include "ebcdic_encoding.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
-#include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -126,7 +126,7 @@ protected:
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
     ca_attr,
-    ::testing::Values(attr_test_param { "C-A",context::data_attr_kind::T, "w", "T_mach_expr" },
+    ::testing::Values(attr_test_param { "C-A", context::data_attr_kind::T, "w", "T_mach_expr" },
         attr_test_param { "C(R1)", context::data_attr_kind::T, "w", "T_address" },
         attr_test_param { "C'TEXT'", context::data_attr_kind::T, "N", "T_self_def_term" },
         attr_test_param { "C'TEXT'", context::data_attr_kind::L, 1, "L_self_def_term" },
@@ -145,7 +145,7 @@ TEST_P(ca_attr, test)
     auto var = ctx.create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value(GetParam().value);
 
-    auto result =  create_var_sym_attr(GetParam().attr, name).evaluate(eval_ctx);
+    auto result = create_var_sym_attr(GetParam().attr, name).evaluate(eval_ctx);
 
     ASSERT_EQ(result.type, GetParam().result.type);
 

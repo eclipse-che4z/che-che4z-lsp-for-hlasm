@@ -23,10 +23,7 @@ ca_constant::ca_constant(context::A_t value, range expr_range)
     , value(value)
 {}
 
-undef_sym_set ca_constant::get_undefined_attributed_symbols(const evaluation_context& ) const
-{
-    return undef_sym_set();
-}
+undef_sym_set ca_constant::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
 void ca_constant::resolve_expression_tree(context::SET_t_enum kind)
 {

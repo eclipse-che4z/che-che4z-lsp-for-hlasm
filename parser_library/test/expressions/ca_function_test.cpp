@@ -61,10 +61,7 @@ public:
         , value(std::move(value))
     {}
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override
-    {
-        return {};
-    };
+    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
     virtual void resolve_expression_tree(context::SET_t_enum) override {}
 
