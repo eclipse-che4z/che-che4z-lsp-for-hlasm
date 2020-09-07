@@ -98,12 +98,15 @@ context::id_index context_manager::get_symbol_name(const std::string& symbol, ra
 
 context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol) const
 {
+    if (symbol.empty() || symbol.size() > 63)
+        return std::make_pair(false, context::id_storage::empty_id);
+
     bool is_symbol = true;
     for (size_t i = 0; i < symbol.size(); ++i)
         if (!lexing::lexer::ord_char(symbol[i]) || !(i != 0 || !isdigit(symbol[i])))
             is_symbol = false;
 
-    if (symbol.empty() || symbol.size() > 63 || !is_symbol)
+    if (!is_symbol)
         return std::make_pair(false, context::id_storage::empty_id);
     return std::make_pair(true, hlasm_ctx.ids().add(symbol));
 }
