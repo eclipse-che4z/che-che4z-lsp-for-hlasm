@@ -20,10 +20,10 @@
 #include "alignment.h"
 #include "dependable.h"
 #include "location_counter.h"
+#include "loctr_dependency_resolver.h"
 #include "section.h"
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
-#include "loctr_dependency_resolver.h"
 
 
 namespace hlasm_plugin {
@@ -51,7 +51,7 @@ public:
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage); 
+    ordinary_assembly_context(id_storage& storage);
 
     // creates symbol
     // returns false if loctr cycle has occured

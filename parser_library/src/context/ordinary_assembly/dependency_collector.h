@@ -38,7 +38,7 @@ struct dependency_collector
     // dependent symbol dependencies
     std::set<attr_ref> undefined_attr_refs;
     // unresolved spaces that must be resolved due to * or / operator
-    //nonempty when address without base but with spaces is multiplied or divided
+    // nonempty when address without base but with spaces is multiplied or divided
     std::set<space_ptr> unresolved_spaces;
 
     explicit dependency_collector(bool has_error = false);

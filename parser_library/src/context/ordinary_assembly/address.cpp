@@ -149,10 +149,7 @@ int address::offset() const
     return offs;
 }
 
-std::vector<address::space_entry>& address::spaces()
-{
-    return spaces_;
-}
+std::vector<address::space_entry>& address::spaces() { return spaces_; }
 
 void insert(const address::space_entry& sp,
     std::unordered_map<space_ptr, size_t>& normalized_map,
@@ -362,8 +359,7 @@ address::address(std::vector<base_entry> bases_, int offset_, std::vector<space_
     : bases_(std::move(bases_))
     , offset_(offset_)
     , spaces_(std::move(spaces_))
-{
-}
+{}
 
 void address::normalize()
 {

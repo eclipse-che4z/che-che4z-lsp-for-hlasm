@@ -601,7 +601,7 @@ bool lexer::ord_char(char_t c)
 
 bool lexer::is_ord_char() const { return ord_char(input_state_->c); }
 
-bool lexer::is_space() const {return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
+bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
 
 bool lexer::is_data_attribute() const
 {

@@ -51,7 +51,6 @@ struct address
     using base_entry = std::pair<base, int>;
 
 private:
-
     // list of bases and their counts to which is the address relative
     std::vector<base_entry> bases_;
     // offset relative to bases

@@ -394,7 +394,8 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         if (i == 0)
         {
             auto deps = expr->expression->get_dependencies(hlasm_ctx.ord_ctx);
-            undefined_absolute_part = deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
+            undefined_absolute_part =
+                deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
             if (!deps.unresolved_address)
             {
                 add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));

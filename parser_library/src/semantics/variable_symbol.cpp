@@ -37,8 +37,7 @@ created_variable_symbol::created_variable_symbol(
     concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
     : variable_symbol(true, std::move(subscript), std::move(symbol_range))
     , created_name(clear_chain(created_name))
-{
-}
+{}
 
 context::id_index created_variable_symbol::evaluate_name(const expressions::evaluation_context& eval_ctx) const
 {
