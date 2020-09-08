@@ -56,7 +56,6 @@ public:
     void add_hl_symbol(token_info symbol);
     void clear_hl_lsp_symbols();
 
-    void append_reparsed_symbols(collector&& c);
     void append_operand_field(collector&& c);
 
     const instruction_si& peek_instruction();

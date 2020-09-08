@@ -178,22 +178,6 @@ void collector::add_operand_remark_hl_symbols()
     }
 }
 
-void collector::append_reparsed_symbols(collector&& c)
-{
-    for (auto& sym : c.hl_symbols_)
-        hl_symbols_.push_back(std::move(sym));
-
-    size_t i;
-    for (i = 0; i < lsp_symbols_.size() && lsp_symbols_[i].type != context::symbol_type::instruction; ++i) {};
-
-    if (i != lsp_symbols_.size())
-        while (lsp_symbols_.size() != i + 1)
-            lsp_symbols_.pop_back();
-
-    for (auto& s : c.lsp_symbols_)
-        lsp_symbols_.push_back(std::move(s));
-}
-
 void collector::append_operand_field(collector&& c)
 {
     if (c.op_)
