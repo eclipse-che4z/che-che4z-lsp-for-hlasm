@@ -69,7 +69,7 @@ expr_machine_operand* machine_operand::access_expr()
 
 address_machine_operand* machine_operand::access_address()
 {
-    return kind == mach_kind::EXPR ? static_cast<address_machine_operand*>(this) : nullptr;
+    return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
 std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
