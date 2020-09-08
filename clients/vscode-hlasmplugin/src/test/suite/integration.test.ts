@@ -188,10 +188,10 @@ suite('Integration Test Suite', () => {
 							variables = variablesResult.variables;
 						else
 							variables = variablesResult.body.variables;
-						if (variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == 'VAR2')
+						if (variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2')
 							done();
 						else
-							done('Wrong debug variable VAR2');
+							done('Wrong debug variable &VAR2');
 					});
 				})}, 1000);
 			}, 1000)
