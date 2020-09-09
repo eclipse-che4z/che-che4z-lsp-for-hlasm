@@ -229,31 +229,21 @@ void lexer::consume()
         input_state_->char_position++;
         input_state_->c = static_cast<char_t>(input_state_->input->LA(1));
 
-        if (input_state_->c == '\t')
+        input_state_->char_position_in_line++;
+        if (input_state_->c == static_cast<char32_t>(-1))
         {
-            input_state_->c = ' ';
-            // warning
-            input_state_->char_position_in_line += tab_size_;
-            input_state_->char_position_in_line_utf16 += tab_size_;
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16 += 1;
+        }
+        else if (input_state_->c > 0xFFFF)
+        {
+            last_char_utf16_long_ = true;
+            input_state_->char_position_in_line_utf16 += 2;
         }
         else
         {
-            input_state_->char_position_in_line++;
-            if (input_state_->c == static_cast<char32_t>(-1))
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16 += 1;
-            }
-            else if (input_state_->c > 0xFFFF)
-            {
-                last_char_utf16_long_ = true;
-                input_state_->char_position_in_line_utf16 += 2;
-            }
-            else
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16++;
-            }
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16++;
         }
     }
 }
@@ -601,7 +591,7 @@ bool lexer::ord_char(char_t c)
 
 bool lexer::is_ord_char() const { return ord_char(input_state_->c); }
 
-bool lexer::is_space() const { return input_state_->c <= 255 && isspace(input_state_->c); }
+bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
 
 bool lexer::is_data_attribute() const
 {

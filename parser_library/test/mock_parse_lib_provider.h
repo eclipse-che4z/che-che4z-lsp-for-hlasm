@@ -51,7 +51,7 @@ private:
 )";
     const std::string copy_contents =
         R"(R2 EQU 2
-			LR R2,R2)";
+            LR R2,R2)";
 };
 
 } // namespace hlasm_plugin::parser_library
