@@ -906,6 +906,26 @@ A EQU 1,2,1
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(attribute_lookahead, lookahead_from_instruction_field_macro)
+{
+    std::string input(
+        R"( 
+ MACRO
+ M
+&A(1) SETC 'LR','SAM64','LR'
+ &A(L'A) 
+ MEND
+ M
+A EQU 1,2,1
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(EQU_attribute_lookahead, location_counter_use)
 {
     std::string input(
