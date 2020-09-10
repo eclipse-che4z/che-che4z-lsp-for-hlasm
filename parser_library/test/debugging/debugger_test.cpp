@@ -443,7 +443,7 @@ B EQU A
 TEST(debugger, concurrent_next_and_file_change)
 {
     std::string open_code = R"(
-		LR 1,1
+        LR 1,1
     COPY COPY1
 )";
     std::string copy1_filename = "COPY1";

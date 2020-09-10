@@ -306,3 +306,15 @@ EOF
 
     ASSERT_EQ(token_string, out);
 }
+
+TEST(lexer_test, special_spaces)
+{
+    std::string in = "A\v\f\t LR";
+    hlasm_plugin::parser_library::lexing::input_source input(in);
+    hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input", "", nullptr, false };
+    hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
+
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IDENTIFIER);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+}
