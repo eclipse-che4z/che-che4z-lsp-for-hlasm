@@ -255,7 +255,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     if (!attr_lookahead_active() && hlasm_ctx_.is_in_macro())
         return;
 
-    auto symbol = hlasm_ctx_.get_sequence_symbol(target);
+    auto symbol = hlasm_ctx_.get_opencode_sequence_symbol(target);
     auto new_symbol = create_opencode_sequence_symbol(target, symbol_range);
 
     if (!symbol)

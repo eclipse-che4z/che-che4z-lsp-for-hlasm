@@ -436,6 +436,14 @@ const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
         return nullptr;
 }
 
+const sequence_symbol* hlasm_context::get_opencode_sequence_symbol(id_index name) const
+{
+    if (const auto& sym = scope_stack_.front().sequence_symbols.find(name);
+        sym != scope_stack_.front().sequence_symbols.end())
+        return sym->second.get();
+    return nullptr;
+}
+
 void hlasm_context::set_branch_counter(A_t value)
 {
     curr_scope()->branch_counter = value;
@@ -583,7 +591,7 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     if (value.empty())
         return "O";
 
-    value = expressions::ca_symbol_attribute::get_first_term(value);
+    expressions::ca_symbol_attribute::try_extract_leading_symbol(value);
 
     auto res = expressions::ca_constant::try_self_defining_term(value);
     if (res)

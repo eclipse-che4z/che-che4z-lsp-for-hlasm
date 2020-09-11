@@ -45,7 +45,9 @@ public:
 
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
-    static std::string get_first_term(const std::string& expr);
+    // if expr contains a symbol as a first term, the rest of the string is thrown away
+    // used for L'I'S'T' reference of variable symbol
+    static void try_extract_leading_symbol(std::string& expr);
 
 private:
     context::SET_t get_ordsym_attr_value(context::id_index name, const evaluation_context& eval_ctx) const;

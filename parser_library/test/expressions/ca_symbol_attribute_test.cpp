@@ -131,7 +131,8 @@ INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
         attr_test_param { "C'TEXT'", context::data_attr_kind::T, "N", "T_self_def_term" },
         attr_test_param { "C'T''T'", context::data_attr_kind::T, "N", "T_self_def_term_apo" },
         attr_test_param { "C'TEXT'", context::data_attr_kind::L, 1, "L_self_def_term" },
-        attr_test_param { "(C)", context::data_attr_kind::L, 10, "T_mach_expr_pars" }),
+        attr_test_param { "(C)", context::data_attr_kind::L, 10, "T_mach_expr_pars" },
+        attr_test_param { "4(,R15)", context::data_attr_kind::T, "U", "T_mach_expr_number" }),
     stringer());
 
 TEST_P(ca_attr, test)

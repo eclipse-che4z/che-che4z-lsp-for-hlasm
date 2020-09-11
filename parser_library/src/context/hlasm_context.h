@@ -143,6 +143,9 @@ public:
     // return sequence symbol in current scope
     // returns nullptr if there is none in the current scope
     const sequence_symbol* get_sequence_symbol(id_index name) const;
+    // return opencode sequence symbol
+    // returns nullptr if there is none
+    const sequence_symbol* get_opencode_sequence_symbol(id_index name) const;
 
     void set_branch_counter(A_t value);
     A_t get_branch_counter() const;

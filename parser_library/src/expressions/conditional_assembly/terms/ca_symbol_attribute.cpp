@@ -17,6 +17,7 @@
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
 #include "expressions/evaluation_context.h"
+#include "lexing/lexer.h"
 #include "processing/context_manager.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -134,13 +135,16 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
     return context::SET_t(expr_kind);
 }
 
-std::string ca_symbol_attribute::get_first_term(const std::string& expr)
+void ca_symbol_attribute::try_extract_leading_symbol(std::string& expr)
 {
     std::string delims = "+-*/()";
     bool in_str = false;
 
     size_t start = 0;
     for (; start < expr.size() && expr[start] == '('; ++start) {};
+
+    if (!lexing::lexer::ord_char(expr[start]) || (expr[start] >= '0' && expr[start] <= '9'))
+        return;
 
     for (size_t i = start; i < expr.size(); ++i)
     {
@@ -159,11 +163,12 @@ std::string ca_symbol_attribute::get_first_term(const std::string& expr)
             if (expr[i] == '\'')
                 in_str = true;
             else if (delims.find(expr[i]) != std::string::npos)
-                return expr.substr(start, i - start);
+            {
+                expr.resize(i);
+                expr.erase(0, start);
+            }
         }
     }
-
-    return expr;
 }
 
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
@@ -296,7 +301,8 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    auto [valid, ord_name] = mngr.try_get_symbol_name(get_first_term(substituted_name.access_c()));
+    try_extract_leading_symbol(substituted_name.access_c());
+    auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
 
     if (!valid)
     {
