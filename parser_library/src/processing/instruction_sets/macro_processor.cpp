@@ -22,10 +22,9 @@
 namespace hlasm_plugin::parser_library::processing {
 
 macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider)
-    : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
+    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
 {}
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
@@ -229,7 +228,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
             continue;
         }
 
-        auto tmp = op->access_mac();
+        auto tmp = op->access_mac()->access_chain();
         assert(tmp);
 
         auto& tmp_chain = tmp->chain;

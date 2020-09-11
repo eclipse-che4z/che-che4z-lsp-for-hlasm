@@ -30,10 +30,10 @@ ca_binary_operator::ca_binary_operator(
     , right_expr(std::move(right_expr))
 {}
 
-undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
-    auto tmp = left_expr->get_undefined_attributed_symbols(solver);
-    tmp.merge(right_expr->get_undefined_attributed_symbols(solver));
+    auto tmp = left_expr->get_undefined_attributed_symbols(eval_ctx);
+    tmp.merge(right_expr->get_undefined_attributed_symbols(eval_ctx));
     return tmp;
 }
 

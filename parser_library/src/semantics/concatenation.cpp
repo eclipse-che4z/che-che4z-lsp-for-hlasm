@@ -15,6 +15,7 @@
 #include "concatenation.h"
 
 #include "concatenation_term.h"
+#include "expressions/conditional_assembly/terms/ca_var_sym.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -169,6 +170,30 @@ var_sym_conc* concatenation_point::contains_var_sym(
             continue;
     }
     return nullptr;
+}
+
+std::set<context::id_index> concatenation_point::get_undefined_attributed_symbols(
+    const concat_chain& chain, const expressions::evaluation_context& eval_ctx)
+{
+    std::set<context::id_index> ret;
+    for (auto it = chain.begin(); it != chain.end(); ++it)
+    {
+        auto&& point = *it;
+        switch (point->type)
+        {
+            case concat_type::VAR:
+                ret.merge(expressions::ca_var_sym::get_undefined_attributed_symbols_vs(
+                    point->access_var()->symbol, eval_ctx));
+                break;
+            case concat_type::SUB:
+                for (const auto& ch : point->access_sub()->list)
+                    ret.merge(get_undefined_attributed_symbols(ch, eval_ctx));
+                break;
+            default:
+                break;
+        }
+    }
+    return ret;
 }
 
 } // namespace hlasm_plugin::parser_library::semantics

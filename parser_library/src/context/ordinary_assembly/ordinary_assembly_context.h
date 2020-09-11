@@ -26,9 +26,7 @@
 #include "symbol_dependency_tables.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
@@ -38,6 +36,8 @@ class ordinary_assembly_context : public dependency_solver
     std::vector<std::unique_ptr<section>> sections_;
     // list of visited symbols
     std::unordered_map<id_index, symbol> symbols_;
+    // list of lookaheaded symbols
+    std::unordered_map<id_index, symbol> symbol_refs_;
 
     section* curr_section_;
 
@@ -57,6 +57,9 @@ public:
     // returns false if loctr cycle has occured
     [[nodiscard]] bool create_symbol(
         id_index name, symbol_value value, symbol_attributes attributes, location symbol_location);
+
+    void add_symbol_reference(symbol sym);
+    const symbol* get_symbol_reference(context::id_index name) const;
 
     // gets symbol by name
     virtual const symbol* get_symbol(id_index name) const override;
@@ -112,7 +115,6 @@ private:
     std::pair<address, space_ptr> reserve_storage_area_space(size_t length, alignment align);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
+
 #endif

@@ -19,8 +19,7 @@
 #include "ordinary_processor.h"
 #include "processing/instruction_sets/asm_processor.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+namespace hlasm_plugin::parser_library::processing {
 
 processing_status lookahead_processor::get_processing_status(const semantics::instruction_si& instruction) const
 {
@@ -52,6 +51,9 @@ void lookahead_processor::end_processing()
 {
     hlasm_ctx.pop_statement_processing();
 
+    for (auto&& symbol_name : to_find_)
+        register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::UNKNOWN));
+
     listener_.finish_lookahead(std::move(result_));
 
     finished_flag_ = true;
@@ -63,12 +65,6 @@ bool lookahead_processor::terminal_condition(const statement_provider_kind prov_
 }
 
 bool lookahead_processor::finished() { return finished_flag_; }
-
-attribute_provider::resolved_reference_storage lookahead_processor::collect_found_refereces()
-{
-    finished_flag_ = true;
-    return std::move(result_.resolved_refs);
-}
 
 void lookahead_processor::collect_diags() const {}
 
@@ -181,14 +177,12 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
                 if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
                     length_attr = len_symbol->attributes().length();
             }
+            else
+                length_attr = 1;
         }
     }
 
-    result_.resolved_refs.try_emplace(symbol_name,
-        symbol_name,
-        context::symbol_value(),
-        context::symbol_attributes(context::symbol_origin::DAT, t_attr, length_attr),
-        location());
+    register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, t_attr, length_attr));
 }
 
 void lookahead_processor::assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement)
@@ -219,20 +213,12 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
         scale = value->get_scale_attribute();
     }
 
-    result_.resolved_refs.try_emplace(symbol_name,
-        symbol_name,
-        context::symbol_value(),
-        context::symbol_attributes(context::symbol_origin::DAT, type, len, scale),
-        location());
+    register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));
 }
 
 void lookahead_processor::assign_section_attributes(context::id_index symbol_name, const resolved_statement&)
 {
-    result_.resolved_refs.try_emplace(symbol_name,
-        symbol_name,
-        context::symbol_value(),
-        context::symbol_attributes::make_section_attrs(),
-        location());
+    register_attr_ref(symbol_name, context::symbol_attributes::make_section_attrs());
 }
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
@@ -243,12 +229,9 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
         ? context::instruction::machine_instructions.find(mnem_tmp->second.instruction)
         : context::instruction::machine_instructions.find(*statement.opcode_ref().value);
 
-    result_.resolved_refs.try_emplace(symbol_name,
-        symbol_name,
-        context::symbol_value(),
+    register_attr_ref(symbol_name,
         context::symbol_attributes::make_machine_attrs(
-            (context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8),
-        location());
+            (context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8));
 }
 
 void lookahead_processor::assign_assembler_attributes(
@@ -261,19 +244,16 @@ void lookahead_processor::assign_assembler_attributes(
         func(symbol_name, statement);
     }
     else
-    {
-        result_.resolved_refs.try_emplace(symbol_name,
-            symbol_name,
-            context::symbol_value(),
-            context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
-            location());
-    }
+        register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
 }
 
 void lookahead_processor::process_statement(const context::hlasm_statement& statement)
 {
     if (macro_nest_ == 0)
-        find_target(statement);
+    {
+        find_seq(dynamic_cast<const semantics::core_statement&>(statement));
+        find_ord(dynamic_cast<const resolved_statement&>(statement));
+    }
 
     auto resolved = statement.access_resolved();
 
@@ -294,27 +274,11 @@ void lookahead_processor::process_statement(const context::hlasm_statement& stat
     }
 }
 
-void lookahead_processor::find_target(const context::hlasm_statement& statement)
-{
-    switch (action)
-    {
-        case lookahead_action::SEQ:
-            find_seq(dynamic_cast<const semantics::core_statement&>(statement));
-            break;
-        case lookahead_action::ORD:
-            find_ord(dynamic_cast<const resolved_statement&>(statement));
-            break;
-        default:
-            assert(false);
-            break;
-    }
-}
-
 void lookahead_processor::find_seq(const semantics::core_statement& statement)
 {
     if (statement.label_ref().type == semantics::label_si_type::SEQ)
     {
-        auto symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
+        const auto& symbol = std::get<semantics::seq_sym>(statement.label_ref().value);
 
         branch_provider_.register_sequence_symbol(symbol.name, symbol.symbol_range);
 
@@ -347,12 +311,9 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
         case context::instruction_type::CA:
         case context::instruction_type::UNDEF:
         case context::instruction_type::MAC:
-            result_.resolved_refs.try_emplace(id,
-                id,
-                context::symbol_value(),
+            register_attr_ref(id,
                 context::symbol_attributes(context::symbol_origin::MACH,
-                    statement.opcode_ref().type == context::instruction_type::CA ? 'U'_ebcdic : 'M'_ebcdic),
-                location());
+                    statement.opcode_ref().type == context::instruction_type::CA ? 'U'_ebcdic : 'M'_ebcdic));
             break;
         case context::instruction_type::MACH:
             assign_machine_attributes(id, statement);
@@ -365,5 +326,12 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
             break;
     }
 
-    finished_flag_ = to_find_.empty();
+    finished_flag_ = action == lookahead_action::ORD && to_find_.empty();
 }
+
+void lookahead_processor::register_attr_ref(context::id_index name, context::symbol_attributes attributes)
+{
+    hlasm_ctx.ord_ctx.add_symbol_reference(context::symbol(name, context::symbol_value(), attributes, location()));
+}
+
+} // namespace hlasm_plugin::parser_library::processing

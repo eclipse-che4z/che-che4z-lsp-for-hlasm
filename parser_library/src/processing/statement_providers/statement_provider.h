@@ -15,13 +15,12 @@
 #ifndef PROCESSING_STATEMENT_PROVIDER_H
 #define PROCESSING_STATEMENT_PROVIDER_H
 
+#include "expressions/evaluation_context.h"
+#include "processing/processing_state_listener.h"
 #include "processing/statement_processors/statement_processor.h"
 #include "statement_provider_kind.h"
 
-
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
@@ -33,9 +32,7 @@ class statement_provider
 public:
     const statement_provider_kind kind;
 
-    statement_provider(const statement_provider_kind kind)
-        : kind(kind)
-    {}
+    explicit statement_provider(const statement_provider_kind kind);
 
     // processes next statement with help of a processor
     virtual void process_next(statement_processor& processor) = 0;
@@ -44,9 +41,28 @@ public:
     virtual bool finished() const = 0;
 
     virtual ~statement_provider() = default;
+
+protected:
+    static bool try_trigger_attribute_lookahead(const semantics::instruction_si& instruction,
+        expressions::evaluation_context eval_ctx,
+        processing::processing_state_listener& listener);
+    static bool try_trigger_attribute_lookahead(const context::hlasm_statement& statement,
+        expressions::evaluation_context eval_ctx,
+        processing::processing_state_listener& listener);
+
+private:
+    static void trigger_attribute_lookahead(std::set<context::id_index> references,
+        const expressions::evaluation_context& eval_ctx,
+        processing::processing_state_listener& listener);
+
+    static std::set<context::id_index> process_label(
+        const semantics::label_si& label, const expressions::evaluation_context& eval_ctx);
+    static std::set<context::id_index> process_instruction(
+        const semantics::instruction_si& instruction, const expressions::evaluation_context& eval_ctx);
+    static std::set<context::id_index> process_operands(
+        const semantics::operands_si& operands, const expressions::evaluation_context& eval_ctx);
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

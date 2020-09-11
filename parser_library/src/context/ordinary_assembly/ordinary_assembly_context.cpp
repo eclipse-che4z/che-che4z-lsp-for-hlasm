@@ -54,6 +54,19 @@ bool ordinary_assembly_context::create_symbol(
     return ok;
 }
 
+void ordinary_assembly_context::add_symbol_reference(symbol sym)
+{
+    auto name = sym.name;
+    symbol_refs_.try_emplace(name, std::move(sym));
+}
+
+const symbol* ordinary_assembly_context::get_symbol_reference(context::id_index name) const
+{
+    auto tmp = symbol_refs_.find(name);
+
+    return tmp == symbol_refs_.end() ? nullptr : &tmp->second;
+}
+
 const symbol* ordinary_assembly_context::get_symbol(id_index name) const
 {
     auto tmp = symbols_.find(name);

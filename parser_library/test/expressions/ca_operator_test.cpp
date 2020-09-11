@@ -59,9 +59,8 @@ class ca_op : public ::testing::TestWithParam<op_test_param>
 {
 protected:
     hlasm_context ctx;
-    attr_prov_mock attr;
     lib_prov_mock prov;
-    evaluation_context eval_ctx { ctx, attr, prov };
+    evaluation_context eval_ctx { ctx, prov };
 
     SET_t get_result()
     {
