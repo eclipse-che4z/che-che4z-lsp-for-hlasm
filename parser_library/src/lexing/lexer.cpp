@@ -229,31 +229,21 @@ void lexer::consume()
         input_state_->char_position++;
         input_state_->c = static_cast<char_t>(input_state_->input->LA(1));
 
-        if (input_state_->c == '\t')
+        input_state_->char_position_in_line++;
+        if (input_state_->c == static_cast<char32_t>(-1))
         {
-            input_state_->c = ' ';
-            // warning
-            input_state_->char_position_in_line += tab_size_;
-            input_state_->char_position_in_line_utf16 += tab_size_;
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16 += 1;
+        }
+        else if (input_state_->c > 0xFFFF)
+        {
+            last_char_utf16_long_ = true;
+            input_state_->char_position_in_line_utf16 += 2;
         }
         else
         {
-            input_state_->char_position_in_line++;
-            if (input_state_->c == static_cast<char32_t>(-1))
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16 += 1;
-            }
-            else if (input_state_->c > 0xFFFF)
-            {
-                last_char_utf16_long_ = true;
-                input_state_->char_position_in_line_utf16 += 2;
-            }
-            else
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16++;
-            }
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16++;
         }
     }
 }

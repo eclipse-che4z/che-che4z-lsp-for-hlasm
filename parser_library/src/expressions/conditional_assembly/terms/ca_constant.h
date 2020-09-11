@@ -19,8 +19,8 @@
 #include <string_view>
 
 #include "../ca_expression.h"
-#include "checking/ranged_diagnostic_collector.h"
 #include "diagnosable_ctx.h"
+#include "diagnostic_adder.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -43,9 +43,9 @@ public:
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     static context::A_t self_defining_term(
-        std::string_view type, std::string_view value, ranged_diagnostic_collector& add_diagnostic);
+        std::string_view type, std::string_view value, diagnostic_adder& add_diagnostic);
 
-    static context::A_t self_defining_term(const std::string& value, ranged_diagnostic_collector& add_diagnostic);
+    static context::A_t self_defining_term(const std::string& value, diagnostic_adder& add_diagnostic);
 
     static std::optional<context::A_t> try_self_defining_term(const std::string& value);
 };

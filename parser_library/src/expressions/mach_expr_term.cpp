@@ -87,7 +87,7 @@ const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
     : mach_expression(rng)
 {
-    ranged_diagnostic_collector add_diagnostic(this, rng);
+    diagnostic_adder add_diagnostic(this, rng);
     value_ = ca_constant::self_defining_term(option, value, add_diagnostic);
 }
 

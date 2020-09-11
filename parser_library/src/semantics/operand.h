@@ -169,6 +169,10 @@ struct expr_machine_operand final : public machine_operand, public simple_expr_o
     virtual std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
+    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+
     virtual void collect_diags() const override;
 };
 
@@ -240,6 +244,10 @@ public:
 
     std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, bool can_have_ordsym) const;
+
+    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
     virtual void collect_diags() const override;
 

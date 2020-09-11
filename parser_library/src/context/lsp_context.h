@@ -115,10 +115,14 @@ class completion_item_s
 
 public:
     // constructor in case the contents should be resolved later in lazy style
-    completion_item_s(std::string label, std::string detail, std::string insert_text, content_pos contents);
-    // contents directly passed via the contrusctor
     completion_item_s(
-        std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents);
+        std::string label, std::string detail, std::string insert_text, content_pos contents, size_t kind = 2);
+    // contents directly passed via the contrusctor
+    completion_item_s(std::string label,
+        std::string detail,
+        std::string insert_text,
+        std::vector<std::string> contents,
+        size_t kind = 2);
 
     std::vector<std::string> get_contents() const;
     // helper function, recreates the content vector to content string

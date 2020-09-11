@@ -83,7 +83,7 @@ TEST(character_expresssion, invalid_substring_notation)
     ASSERT_EQ(a.diags().size(), (size_t)4);
 }
 
-/* TODO enable when compiler flags are implemented
+/*TODO uncomment when assembler options will be implemented
 TEST(character_expresssion, exceeds_warning)
 {
     std::string input =

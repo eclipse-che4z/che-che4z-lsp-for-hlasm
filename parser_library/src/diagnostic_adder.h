@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_RANGED_DIAGNOSTIC_COLLECTOR_H
-#define HLASMPLUGIN_PARSERLIBRARY_RANGED_DIAGNOSTIC_COLLECTOR_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_ADDER_H
+#define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_ADDER_H
 
 #include <functional>
 #include <vector>
@@ -24,8 +24,9 @@
 namespace hlasm_plugin::parser_library {
 
 // class that simplyfies adding of diagnostics
-// holds range and collectable object, so there is no need to specify range in a diagnostic creation
-class ranged_diagnostic_collector
+// holds both range and collectable object
+// hence, there is no need to specify range in a diagnostic creation, just pass diagnostic function
+class diagnostic_adder
 {
     const collectable<diagnostic_s>* s_diagnoser_;
     const collectable<diagnostic_op>* op_diagnoser_;
@@ -34,14 +35,15 @@ class ranged_diagnostic_collector
 public:
     bool diagnostics_present;
 
-    ranged_diagnostic_collector(const collectable<diagnostic_s>* diagnoser, range diag_range);
+    diagnostic_adder(const collectable<diagnostic_s>* diagnoser, range diag_range);
 
-    ranged_diagnostic_collector(const collectable<diagnostic_op>* diagnoser, range diag_range);
+    diagnostic_adder(const collectable<diagnostic_op>* diagnoser, range diag_range);
 
-    ranged_diagnostic_collector();
+    diagnostic_adder();
 
     void operator()(const std::function<diagnostic_op(range)>& f);
 };
 
 } // namespace hlasm_plugin::parser_library
+
 #endif

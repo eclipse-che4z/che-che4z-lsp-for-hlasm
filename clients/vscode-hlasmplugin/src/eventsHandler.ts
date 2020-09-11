@@ -39,7 +39,7 @@ export class EventsHandler {
     constructor(completeCommand: string)
     {
         this.isInstruction = new RegExp("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)$");
-        this.isTrigger = new RegExp("^[a-zA-Z\*]+$");
+        this.isTrigger = new RegExp("^[a-zA-Z\*\@\#\$\_]+$");
         this.completeCommand = completeCommand;
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
