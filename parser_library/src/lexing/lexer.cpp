@@ -170,6 +170,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
         last_continuation_ = last_token_id_;
 
     creating_var_symbol_ = ttype == AMPERSAND;
+    if (creating_attr_ref_)
+        creating_attr_ref_ = ttype == IGNORED || ttype == CONTINUATION;
 
     last_token_id_++;
 
@@ -411,9 +413,14 @@ void lexer::lex_tokens()
             break;
 
         case '\'':
-            apostrophes_++;
             consume();
-            create_token(APOSTROPHE);
+            if (!creating_attr_ref_)
+            {
+                apostrophes_++;
+                create_token(APOSTROPHE);
+            }
+            else
+                create_token(ATTR);
             break;
 
         case '/':
@@ -638,6 +645,9 @@ void lexer::lex_word()
         consume();
         create_token(ATTR);
     }
+
+    creating_attr_ref_ = !unlimited_line_ && input_state_->char_position_in_line == end_ && last_char_data_attr
+        && !var_sym_tmp && w_len == 1;
 }
 
 bool lexer::set_begin(size_t begin)

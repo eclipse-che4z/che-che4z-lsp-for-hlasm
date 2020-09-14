@@ -294,9 +294,9 @@ void symbol_dependency_tables::add_dependency(
 
     if (dependency_source_stmt)
     {
-        auto [sit, inserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
+        auto [sit, sinserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
 
-        if (!inserted)
+        if (!sinserted)
             throw std::runtime_error("statement already registered");
 
         dependency_source_stmts_.emplace(dependant(std::move(target)), statement_ref(sit, 1));
