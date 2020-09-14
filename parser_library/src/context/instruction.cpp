@@ -565,7 +565,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "X", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 32, 738);
     add_machine_instr(result, "XY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 48, 738);
     add_machine_instr(result, "XG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 48, 738);
-    add_machine_instr(result, "XI", mach_format::SI, { db_12_4_U, imm_8_U }, 32, 739);
+    add_machine_instr(result, "XI", mach_format::SI, { db_12_4_U, imm_8_S }, 32, 739);
     add_machine_instr(result, "XIY", mach_format::SIY, { db_20_4_S, imm_8_S }, 48, 739);
     add_machine_instr(result, "XC", mach_format::SS_a, { db_12_8x4L_U, db_20_4_S }, 48, 739);
     add_machine_instr(result, "EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 32, 740);
@@ -676,8 +676,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 765);
     add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 765);
     add_machine_instr(result, "LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 765);
-    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 765);
-    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 765);
+    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 765);
+    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 765);
     add_machine_instr(result, "LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 32, 765);
     add_machine_instr(result, "LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 48, 766);
     add_machine_instr(result, "LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 48, 766);
@@ -720,7 +720,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "MVN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 48, 785);
     add_machine_instr(result, "MVST", mach_format::RRE, { reg_4_U, reg_4_U }, 32, 785);
     add_machine_instr(result, "MVO", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 48, 786);
-    add_machine_instr(result, "MVZ", mach_format::SS_a, { db_12_4x4L_U, db_12_4_U }, 48, 787);
+    add_machine_instr(result, "MVZ", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 48, 787);
     add_machine_instr(result, "MR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 788);
     add_machine_instr(result, "MGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 32, 788);
     add_machine_instr(result, "M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 32, 788);
@@ -764,8 +764,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "OIHH", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 796);
     add_machine_instr(result, "OIHL", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 796);
     add_machine_instr(result, "OILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 32, 796);
-    add_machine_instr(result, "OILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 796);
-    add_machine_instr(result, "OILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 796);
+    add_machine_instr(result, "OILH", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 796);
+    add_machine_instr(result, "OILL", mach_format::RI_a, { reg_4_U, imm_16_S }, 32, 796);
     add_machine_instr(result, "PACK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 32, 796);
     add_machine_instr(result, "PKA", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 48, 797);
     add_machine_instr(result, "PKU", mach_format::SS_f, { db_12_4_U, db_12_8x4L_U }, 48, 798);
@@ -1798,7 +1798,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "JLNO", { "BRCL", { { 0, 14 } } });
     add_mnemonic_code(result, "JAS", { "BRAS", {} });
     add_mnemonic_code(result, "JASL", { "BRASL", {} });
-    add_mnemonic_code(result, "JC", { "BRC", {} });
     add_mnemonic_code(result, "JCT", { "BRCT", {} });
     add_mnemonic_code(result, "JCTG", { "BRCTG", {} });
     add_mnemonic_code(result, "JXH", { "BRXH", {} });
