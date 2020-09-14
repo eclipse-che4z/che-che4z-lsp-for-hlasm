@@ -132,7 +132,9 @@ INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
         attr_test_param { "C'T''T'", context::data_attr_kind::T, "N", "T_self_def_term_apo" },
         attr_test_param { "C'TEXT'", context::data_attr_kind::L, 1, "L_self_def_term" },
         attr_test_param { "(C)", context::data_attr_kind::L, 10, "T_mach_expr_pars" },
-        attr_test_param { "4(,R15)", context::data_attr_kind::T, "U", "T_mach_expr_number" }),
+        attr_test_param { "4(,R15)", context::data_attr_kind::T, "U", "T_mach_expr_number" },
+        attr_test_param { "A.C", context::data_attr_kind::L, 10, "L_using_prefix" },
+        attr_test_param { "T'C", context::data_attr_kind::T, "U", "T_attribute" }),
     stringer());
 
 TEST_P(ca_attr, test)
@@ -140,6 +142,11 @@ TEST_P(ca_attr, test)
     auto name = ctx.ids().add("VAR");
 
     (void)ctx.ord_ctx.create_symbol(ctx.ids().add("C"),
+        context::symbol_value(),
+        context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
+        location());
+
+    (void)ctx.ord_ctx.create_symbol(ctx.ids().add("T"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
         location());

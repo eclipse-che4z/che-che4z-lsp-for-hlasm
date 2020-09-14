@@ -138,36 +138,31 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
 void ca_symbol_attribute::try_extract_leading_symbol(std::string& expr)
 {
     std::string delims = "+-*/()";
-    bool in_str = false;
 
+    // remove parentheses
     size_t start = 0;
-    for (; start < expr.size() && expr[start] == '('; ++start) {};
+    for (; start < expr.size() && expr[start] == '(' && expr[expr.size() - 1 - start] == ')'; ++start) {};
+    expr.resize(expr.size() - start);
 
-    if (!lexing::lexer::ord_char(expr[start]) || (expr[start] >= '0' && expr[start] <= '9'))
-        return;
-
+    // remove leading using prefixes
     for (size_t i = start; i < expr.size(); ++i)
     {
-        if (in_str)
-        {
-            if (expr[i] == '\'')
-            {
-                if (i + 1 < expr.size() && expr[i + 1] == '\'')
-                    ++i;
-                else
-                    in_str = false;
-            }
-        }
-        else
-        {
-            if (expr[i] == '\'')
-                in_str = true;
-            else if (delims.find(expr[i]) != std::string::npos)
-            {
-                expr.resize(i);
-                expr.erase(0, start);
-            }
-        }
+        if (expr[i] == '.' && i != expr.size() - 1)
+            start = i + 1;
+        else if (!lexing::lexer::ord_char(expr[i]))
+            break;
+    }
+    expr.erase(0, start);
+
+    // look for symbol in the rest
+    if (expr.front() >= '0' && expr.front() <= '9')
+        return;
+    for (size_t i = 0; i < expr.size(); ++i)
+    {
+        if (delims.find(expr[i]) != std::string::npos)
+            expr.resize(i);
+        else if (!lexing::lexer::ord_char(expr[i]))
+            return;
     }
 }
 
