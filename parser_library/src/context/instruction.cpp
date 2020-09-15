@@ -348,10 +348,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "NI", mach_format::SI, { db_12_4_U, imm_8_U }, 32, 517);
     add_machine_instr(result, "NIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 48, 518);
     add_machine_instr(result, "NC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 48, 518);
-    add_machine_instr(result, "NIHF", mach_format::RIL_a, { reg_4_U, imm_32_U }, 48, 518);
+    add_machine_instr(result, "NIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 518);
     add_machine_instr(result, "NIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 518);
     add_machine_instr(result, "NIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 518);
-    add_machine_instr(result, "NILF", mach_format::RIL_a, { reg_4_U, imm_32_U }, 48, 519);
+    add_machine_instr(result, "NILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 519);
     add_machine_instr(result, "NILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 519);
     add_machine_instr(result, "NILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 519);
     add_machine_instr(result, "BALR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 519);
@@ -583,10 +583,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "ICM", mach_format::RS_b, { reg_4_U, mask_4_U, db_12_4_U }, 32, 746);
     add_machine_instr(result, "ICMY", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 48, 746);
     add_machine_instr(result, "ICMH", mach_format::RSY_b, { reg_4_U, mask_4_U, db_20_4_S }, 48, 746);
-    add_machine_instr(result, "IIHF", mach_format::RIL_a, { reg_4_U, imm_32_U }, 48, 747);
+    add_machine_instr(result, "IIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 747);
     add_machine_instr(result, "IIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 747);
     add_machine_instr(result, "IIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 747);
-    add_machine_instr(result, "IILF", mach_format::RIL_a, { reg_4_U, imm_32_U }, 48, 747);
+    add_machine_instr(result, "IILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 48, 747);
     add_machine_instr(result, "IILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 747);
     add_machine_instr(result, "IILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 32, 747);
     add_machine_instr(result, "IPM", mach_format::RRE, { reg_4_U }, 32, 748);
