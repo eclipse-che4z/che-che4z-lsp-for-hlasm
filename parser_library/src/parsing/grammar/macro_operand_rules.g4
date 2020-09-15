@@ -26,7 +26,7 @@ mac_op_o returns [operand_ptr op]
 	: mac_entry?							
 	{
 		if($mac_entry.ctx)
-			$op = std::make_unique<macro_operand>(std::move($mac_entry.chain),provider.get_range($mac_entry.ctx));
+			$op = std::make_unique<macro_operand_chain>(std::move($mac_entry.chain),provider.get_range($mac_entry.ctx));
 		else
 			$op = std::make_unique<semantics::empty_operand>(provider.original_range);
 	};

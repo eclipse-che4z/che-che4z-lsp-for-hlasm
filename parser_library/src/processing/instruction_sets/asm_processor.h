@@ -30,7 +30,6 @@ class asm_processor : public low_language_processor
 
 public:
     asm_processor(context::hlasm_context& hlasm_ctx,
-        attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);

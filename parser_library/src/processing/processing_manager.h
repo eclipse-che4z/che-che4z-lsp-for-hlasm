@@ -18,7 +18,6 @@
 #include <set>
 #include <stack>
 
-#include "attribute_provider.h"
 #include "branching_provider.h"
 #include "opencode_provider.h"
 #include "processing_state_listener.h"
@@ -34,10 +33,7 @@ namespace processing {
 // is constructed with base statement provider and has stack of statement processors which take statements from
 // providers and go through the code creating other providers and processors it holds those providers and processors and
 // manages the whole processing
-class processing_manager : public processing_state_listener,
-                           public branching_provider,
-                           public attribute_provider,
-                           public diagnosable_ctx
+class processing_manager : public processing_state_listener, public branching_provider, public diagnosable_ctx
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
@@ -56,11 +52,16 @@ public:
 private:
     context::hlasm_context& hlasm_ctx_;
     workspaces::parse_lib_provider& lib_provider_;
+    opencode_provider& opencode_prov_;
 
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 
-    opencode_provider& opencode_prov_;
+    context::source_snapshot lookahead_stop_;
+
+    processing_tracer* tracer_ = nullptr;
+
+    bool attr_lookahead_active() const;
 
     statement_provider& find_provider();
     void finish_processor();
@@ -77,13 +78,7 @@ private:
     std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(
         context::id_index name, range symbol_range);
 
-    std::optional<context::source_snapshot> attr_lookahead_stop_;
-    virtual const attribute_provider::resolved_reference_storage& lookup_forward_attribute_references(
-        attribute_provider::forward_reference_storage references) override;
-
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
-
-    processing_tracer* tracer_ = nullptr;
 };
 
 } // namespace processing

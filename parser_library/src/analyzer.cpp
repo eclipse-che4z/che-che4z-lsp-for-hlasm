@@ -47,7 +47,7 @@ analyzer::analyzer(const std::string& text,
           *parser_,
           tracer)
 {
-    parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_);
+    parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);

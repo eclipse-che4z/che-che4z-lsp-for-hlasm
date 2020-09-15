@@ -24,10 +24,13 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     ca_constant c(1, range());
 
-    ASSERT_EQ(c.get_undefined_attributed_symbols(m).size(), 0U);
+    ASSERT_EQ(c.get_undefined_attributed_symbols(eval_ctx).size(), 0U);
 }
 
 class collectable_mock : public diagnosable_op_impl

@@ -28,11 +28,11 @@ ca_expr_list::ca_expr_list(std::vector<ca_expr_ptr> expr_list, range expr_range)
     , expr_list(std::move(expr_list))
 {}
 
-undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
     undef_sym_set tmp;
     for (auto&& expr : expr_list)
-        tmp.merge(expr->get_undefined_attributed_symbols(solver));
+        tmp.merge(expr->get_undefined_attributed_symbols(eval_ctx));
     return tmp;
 }
 

@@ -21,11 +21,10 @@ using namespace processing;
 using namespace workspaces;
 
 ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     processing_state_listener& listener)
-    : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
+    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
     , table_(create_table(hlasm_ctx))
     , listener_(listener)
 {}

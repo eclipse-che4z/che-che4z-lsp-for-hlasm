@@ -35,7 +35,7 @@ public:
     ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range);
     ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range);
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
@@ -44,6 +44,10 @@ public:
     virtual bool is_character_expression() const override;
 
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
+
+    // if expr contains a symbol as a first term, the rest of the string is thrown away
+    // used for L'I'S'T' reference of variable symbol
+    static void try_extract_leading_symbol(std::string& expr);
 
 private:
     context::SET_t get_ordsym_attr_value(context::id_index name, const evaluation_context& eval_ctx) const;

@@ -27,9 +27,9 @@ ca_unary_operator::ca_unary_operator(ca_expr_ptr expr, context::SET_t_enum expr_
     , expr(std::move(expr))
 {}
 
-undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_unary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
-    return expr->get_undefined_attributed_symbols(solver);
+    return expr->get_undefined_attributed_symbols(eval_ctx);
 }
 
 void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind)

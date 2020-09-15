@@ -19,6 +19,7 @@
 
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
+#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -262,6 +263,45 @@ void hlasm_context::set_source_indices(size_t begin_index, size_t end_index, siz
     source_stack_.back().end_line = end_line;
 }
 
+std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros) const
+{
+    context::source_position statement_position;
+
+    bool is_in_macros = ignore_macros ? false : scope_stack_.size() > 1;
+
+    if (!is_in_macros && current_copy_stack().empty())
+    {
+        statement_position.file_offset = current_source().begin_index;
+        statement_position.file_line = current_source().current_instruction.pos.line;
+    }
+    else
+    {
+        statement_position.file_offset = current_source().end_index;
+        statement_position.file_line = current_source().end_line + 1;
+    }
+
+    context::source_snapshot snapshot = current_source().create_snapshot();
+
+    if (snapshot.copy_frames.size() && is_in_macros)
+        ++snapshot.copy_frames.back().statement_offset;
+
+    return std::make_pair(std::move(statement_position), std::move(snapshot));
+}
+
+std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() const
+{
+    context::source_position statement_position;
+    statement_position.file_offset = current_source().end_index;
+    statement_position.file_line = current_source().end_line + 1;
+
+    context::source_snapshot snapshot = current_source().create_snapshot();
+
+    if (snapshot.copy_frames.size())
+        ++snapshot.copy_frames.back().statement_offset;
+
+    return std::make_pair(std::move(statement_position), std::move(snapshot));
+}
+
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
     assert(!proc_stack_.empty());
@@ -322,6 +362,11 @@ const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }
 
+const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() const
+{
+    return source_stack_.back().copy_stack;
+}
+
 std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
 
 std::vector<id_index> hlasm_context::whole_copy_stack() const
@@ -366,11 +411,8 @@ var_sym_ptr hlasm_context::get_var_sym(id_index name)
 
 void hlasm_context::add_sequence_symbol(sequence_symbol_ptr seq_sym)
 {
-    if (curr_scope()->is_in_macro())
-        throw std::runtime_error("adding sequence symbols to macro definition not allowed");
-
-    if (curr_scope()->sequence_symbols.find(seq_sym->name) == curr_scope()->sequence_symbols.end())
-        curr_scope()->sequence_symbols.emplace(seq_sym->name, std::move(seq_sym));
+    auto& opencode = scope_stack_.front();
+    opencode.sequence_symbols.try_emplace(seq_sym->name, std::move(seq_sym));
 }
 
 const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
@@ -392,6 +434,14 @@ const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
         return found->second.get();
     else
         return nullptr;
+}
+
+const sequence_symbol* hlasm_context::get_opencode_sequence_symbol(id_index name) const
+{
+    if (const auto& sym = scope_stack_.front().sequence_symbols.find(name);
+        sym != scope_stack_.front().sequence_symbols.end())
+        return sym->second.get();
+    return nullptr;
 }
 
 void hlasm_context::set_branch_counter(A_t value)
@@ -540,6 +590,8 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
 
     if (value.empty())
         return "O";
+
+    expressions::ca_symbol_attribute::try_extract_leading_symbol(value);
 
     auto res = expressions::ca_constant::try_self_defining_term(value);
     if (res)
