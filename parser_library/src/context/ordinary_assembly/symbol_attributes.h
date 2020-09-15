@@ -44,7 +44,8 @@ enum class symbol_origin
     SECT,
     MACH,
     EQU,
-    DAT
+    DAT,
+    UNKNOWN
 };
 
 // structure wrapping attributes of the symbol

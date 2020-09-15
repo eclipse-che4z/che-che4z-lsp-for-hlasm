@@ -3,7 +3,7 @@
  m &v
  DC FD'&V'
  mend
- m
+'string with space' m
 
  macro
  xxxxxxxx &p1=,&p2=,&p3=,&p4=,&p5=,&ppp6=,&p7=

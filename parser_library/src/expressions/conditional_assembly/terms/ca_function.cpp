@@ -45,13 +45,13 @@ ca_function::ca_function(context::id_index function_name,
     , duplication_factor(std::move(duplication_factor))
 {}
 
-undef_sym_set ca_function::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_function::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
     undef_sym_set ret;
     for (auto&& expr : parameters)
-        ret.merge(expr->get_undefined_attributed_symbols(solver));
+        ret.merge(expr->get_undefined_attributed_symbols(eval_ctx));
     if (duplication_factor)
-        ret.merge(duplication_factor->get_undefined_attributed_symbols(solver));
+        ret.merge(duplication_factor->get_undefined_attributed_symbols(eval_ctx));
     return ret;
 }
 

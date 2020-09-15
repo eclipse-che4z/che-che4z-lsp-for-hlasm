@@ -21,9 +21,7 @@
 #include "postponed_statement_impl.h"
 #include "processing/context_manager.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace processing;
-using namespace workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement stmt)
 {
@@ -159,8 +157,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
                     if (cycle_ok)
                     {
-                        auto r = stmt.stmt_range_ref();
-                        add_dependency(r,
+                        const auto& stmt_range = stmt.stmt_range_ref();
+                        add_dependency(stmt_range,
                             symbol_name,
                             &*expr_op->expression,
                             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
@@ -502,11 +500,10 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
 }
 
 asm_processor::asm_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : low_language_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser)
+    : low_language_processor(hlasm_ctx, branch_provider, lib_provider, parser)
     , table_(create_table(hlasm_ctx))
 {}
 
@@ -514,7 +511,7 @@ void asm_processor::process(context::shared_stmt_ptr stmt) { process(preprocess(
 
 void asm_processor::process_copy(const semantics::complete_statement& stmt,
     context::hlasm_context& hlasm_ctx,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     diagnosable_ctx* diagnoser)
 {
     auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
@@ -532,7 +529,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     if (tmp == hlasm_ctx.copy_members().end())
     {
         bool result = lib_provider.parse_library(
-            *sym_expr->value, hlasm_ctx, library_data { processing_kind::COPY, sym_expr->value });
+            *sym_expr->value, hlasm_ctx, workspaces::library_data { processing_kind::COPY, sym_expr->value });
 
         if (!result)
         {
@@ -618,3 +615,5 @@ void asm_processor::process(rebuilt_statement statement)
         check(statement, hlasm_ctx, checker_, *this);
     }
 }
+
+} // namespace hlasm_plugin::parser_library::processing

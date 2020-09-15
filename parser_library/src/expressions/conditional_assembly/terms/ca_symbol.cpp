@@ -23,10 +23,7 @@ ca_symbol::ca_symbol(context::id_index symbol, range expr_range)
     , symbol(symbol)
 {}
 
-undef_sym_set ca_symbol::get_undefined_attributed_symbols(const context::dependency_solver&) const
-{
-    return undef_sym_set();
-}
+undef_sym_set ca_symbol::get_undefined_attributed_symbols(const evaluation_context&) const { return undef_sym_set(); }
 
 void ca_symbol::resolve_expression_tree(context::SET_t_enum kind)
 {

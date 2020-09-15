@@ -32,7 +32,7 @@ void token_stream::enable_hidden() { enabled_hidden_ = true; }
 
 void token_stream::disable_hidden() { enabled_hidden_ = false; }
 
-void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
+void token_stream::rewind_input(lexer::stream_position pos)
 {
     auto& lexer_tmp = dynamic_cast<lexer&>(*_tokenSource);
 
@@ -49,9 +49,6 @@ void token_stream::rewind_input(lexer::stream_position pos, bool insert_EOLLN)
         lexer_tmp.delete_token(index_tmp);
         _p = _tokens.size();
     }
-
-    if (insert_EOLLN)
-        lexer_tmp.insert_EOLLN();
 
     _fetchedEOF = false;
     sync(_p);

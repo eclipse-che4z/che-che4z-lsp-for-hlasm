@@ -25,7 +25,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_var_sym_basic, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
 
@@ -35,14 +38,17 @@ TEST(ca_var_sym_basic, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    auto res = var.get_undefined_attributed_symbols(m);
+    auto res = var.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
 }
 
 TEST(ca_var_sym_created, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+
     std::string name = "n";
     concat_chain created_name;
     std::vector<ca_expr_ptr> subscript;
@@ -55,7 +61,7 @@ TEST(ca_var_sym_created, undefined_attributes)
 
     ca_var_sym var(std::move(vs), range());
 
-    auto res = var.get_undefined_attributed_symbols(m);
+    auto res = var.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
 }

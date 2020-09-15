@@ -29,11 +29,6 @@ public:
     // rewinds position in file
     virtual void rewind_input(context::source_position pos) = 0;
 
-    // pushes the logical line ending to currently evaluated statement
-    // so other statements can be processed within evaluation of current
-    // ending is poped with first rewind_input
-    virtual void push_line_end() = 0;
-
     opencode_provider()
         : statement_provider(processing::statement_provider_kind::OPEN)
     {}

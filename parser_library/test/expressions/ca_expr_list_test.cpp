@@ -30,9 +30,8 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_expr_list, unknown_function_to_operator)
 {
     context::hlasm_context ctx;
-    attr_prov_mock attr;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, attr, lib };
+    evaluation_context eval_ctx { ctx, lib };
 
     std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
@@ -59,9 +58,8 @@ TEST(ca_expr_list, unknown_function_to_operator)
 TEST(ca_expr_list, resolve_C_type)
 {
     context::hlasm_context ctx;
-    attr_prov_mock attr;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, attr, lib };
+    evaluation_context eval_ctx { ctx, lib };
 
     std::string name = "UPPER";
     auto sym = std::make_unique<ca_symbol>(&name, range());
@@ -98,8 +96,10 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range());
 
-    dep_sol_mock m;
-    auto res = expr_list.get_undefined_attributed_symbols(m);
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
+    auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_TRUE(res.size());
 }

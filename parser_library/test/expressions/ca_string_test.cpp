@@ -25,7 +25,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_string, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
 
     concat_chain value;
     value.push_back(std::make_unique<char_str_conc>("gfds"));
@@ -39,7 +41,7 @@ TEST(ca_string, undefined_attributes)
 
     ca_string s(std::move(value), std::move(dupl), std::move(substr), range());
 
-    auto res = s.get_undefined_attributed_symbols(m);
+    auto res = s.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
 }
@@ -79,14 +81,12 @@ TEST(ca_string, test)
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
     context::hlasm_context ctx;
-    attr_prov_mock a;
-    lib_prov_mock l;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
 
-    evaluation_context eval { ctx, a, l };
+    auto res = s.evaluate(eval_ctx);
 
-    auto res = s.evaluate(eval);
-
-    ASSERT_EQ(eval.diags().size(), 0U);
+    ASSERT_EQ(eval_ctx.diags().size(), 0U);
 
     EXPECT_EQ(res.access_c(), "");
 }
@@ -101,14 +101,12 @@ TEST_P(ca_string_suite, dupl)
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
     context::hlasm_context ctx;
-    attr_prov_mock a;
-    lib_prov_mock l;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
 
-    evaluation_context eval { ctx, a, l };
+    auto res = s.evaluate(eval_ctx);
 
-    auto res = s.evaluate(eval);
-
-    ASSERT_EQ(eval.diags().size(), GetParam().error);
+    ASSERT_EQ(eval_ctx.diags().size(), GetParam().error);
 
     if (!GetParam().error)
         EXPECT_EQ(res.access_c(), GetParam().result);

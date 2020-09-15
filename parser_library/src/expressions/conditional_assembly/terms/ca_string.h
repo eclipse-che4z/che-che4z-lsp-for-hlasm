@@ -39,7 +39,7 @@ public:
 
     ca_string(semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range);
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const context::dependency_solver& solver) const override;
+    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
     virtual void resolve_expression_tree(context::SET_t_enum kind) override;
 
