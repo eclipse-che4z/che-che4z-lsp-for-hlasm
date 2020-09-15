@@ -85,9 +85,9 @@ void space::resolve(space_ptr this_space, address value)
 
     assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
 
-    this_space->resolved_ptrs = std::move(value.spaces());
-
     this_space->resolved_length = value.offset();
+
+    this_space->resolved_ptrs = std::move(value.spaces());
 
     this_space->resolved_ = true;
 }
@@ -308,12 +308,12 @@ bool address::in_same_loctr(const address& addr) const
     if (addr.bases_[0].first.owner != bases_[0].first.owner)
         return false;
 
-    int counter = (addr.spaces_.size() && addr.spaces_[0].first->kind == space_kind::LOCTR_BEGIN)
-        + (spaces_.size() && spaces_[0].first->kind == space_kind::LOCTR_BEGIN);
+    bool this_has_loctr_begin = spaces_.size() && spaces_[0].first->kind == space_kind::LOCTR_BEGIN;
+    bool addr_has_loctr_begin = addr.spaces_.size() && addr.spaces_[0].first->kind == space_kind::LOCTR_BEGIN;
 
-    if (counter == 2)
+    if (this_has_loctr_begin && addr_has_loctr_begin)
         return addr.spaces_[0].first == spaces_[0].first;
-    else if (counter == 0)
+    else if (!this_has_loctr_begin && !addr_has_loctr_begin)
         return true;
     else
     {

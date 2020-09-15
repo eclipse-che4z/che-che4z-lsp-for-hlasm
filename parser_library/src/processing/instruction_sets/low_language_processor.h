@@ -32,7 +32,7 @@ public:
         const diagnosable_ctx& diagnoser);
 
     virtual void resolve_unknown_loctr_dependency(
-        context::space_ptr sp, context::address addr, range err_range) override;
+        context::space_ptr sp, const context::address& addr, range err_range) override;
 
 protected:
     statement_fields_parser& parser;

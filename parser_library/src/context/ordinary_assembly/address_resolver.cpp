@@ -65,7 +65,7 @@ symbol_value alignable_address_resolver::resolve(dependency_solver&) const { ret
 symbol_value alignable_address_resolver::resolve(const address& addr) const
 {
     auto al = boundary ? (boundary - addr.offset() % boundary) % boundary : 0;
-    return addr.offset() + al + offset;
+    return addr.offset() + (symbol_value::abs_value_t)al + offset;
 }
 
 alignable_address_resolver::alignable_address_resolver(

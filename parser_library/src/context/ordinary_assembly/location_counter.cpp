@@ -192,10 +192,9 @@ void location_counter::resolve_space(space_ptr sp, int length)
     {
         for (size_t i = 0; i < org_data_.size(); ++i)
         {
-            if (org_data_[i].fist_space() == sp)
+            if (org_data_[i].fist_space() == sp && i > 0)
             {
-                if (i > 0)
-                    org_data_.erase(org_data_.begin(), org_data_.begin() + i - 1);
+                org_data_.erase(org_data_.begin(), org_data_.begin() + i - 1);
                 break;
             }
         }
