@@ -1798,6 +1798,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "JLNO", { "BRCL", { { 0, 14 } } });
     add_mnemonic_code(result, "JAS", { "BRAS", {} });
     add_mnemonic_code(result, "JASL", { "BRASL", {} });
+    add_mnemonic_code(result, "JC", { "BRC", {} });
     add_mnemonic_code(result, "JCT", { "BRCT", {} });
     add_mnemonic_code(result, "JCTG", { "BRCTG", {} });
     add_mnemonic_code(result, "JXH", { "BRXH", {} });

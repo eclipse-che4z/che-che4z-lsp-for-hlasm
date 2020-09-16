@@ -133,14 +133,6 @@ int get_space_offset(space_ptr sp)
     return offset;
 }
 
-int address::offset()
-{
-    int offs = offset_;
-    for (const auto& s : spaces_)
-        offs += get_space_offset(s.first);
-    return offs;
-}
-
 int address::offset() const
 {
     int offs = offset_;

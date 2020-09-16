@@ -63,7 +63,6 @@ public:
     const std::vector<base_entry>& bases() const;
     std::vector<base_entry>& bases();
     // offset relative to bases
-    int offset();
     int offset() const;
     // list of spaces with their counts this address contains
     std::vector<space_entry>& spaces();
