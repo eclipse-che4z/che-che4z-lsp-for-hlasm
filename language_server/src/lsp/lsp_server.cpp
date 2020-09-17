@@ -63,6 +63,12 @@ void server::message_received(const json& message)
     }
 }
 
+void server::request(const json& id, const std::string& requested_method, const json& args)
+{
+    json reply{ { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
+    send_message_->reply(reply);
+}
+
 void server::respond(const json& id, const std::string&, const json& args)
 {
     json reply { { "jsonrpc", "2.0" }, { "id", id }, { "result", args } };
