@@ -263,8 +263,6 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
 void macrodef_processor::process_prototype_operand(
     const resolved_statement& statement, std::vector<context::id_index>& param_names)
 {
-    processing::context_manager mngr(hlasm_ctx);
-
     for (auto& op : statement.operands_ref().value)
     {
         if (op->type == semantics::operand_type::EMPTY)
@@ -316,8 +314,6 @@ void macrodef_processor::process_prototype_operand(
         else if (tmp_chain.size() == 0) // if operand is empty
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
     }
-
-    collect_diags_from_child(mngr);
 }
 
 bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* var,

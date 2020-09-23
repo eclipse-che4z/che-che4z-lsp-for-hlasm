@@ -25,9 +25,7 @@
 #include "statement_fields_parser.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // main class for processing of the opencode
 // is constructed with base statement provider and has stack of statement processors which take statements from
@@ -81,7 +79,6 @@ private:
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif
