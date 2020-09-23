@@ -15,6 +15,7 @@
 #include "operand.h"
 
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
+#include "operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -47,12 +48,16 @@ empty_operand::empty_operand(range operand_range)
     : operand(operand_type::EMPTY, std::move(operand_range))
 {}
 
+void empty_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
 {
     concatenation_point::clear_concat_chain(this->chain);
 }
+
+void model_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
@@ -133,6 +138,8 @@ std::vector<const context::resolvable*> expr_machine_operand::get_resolvables() 
 }
 
 void expr_machine_operand::collect_diags() const { collect_diags_from_child(*expression); }
+
+void expr_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 //***************** address_machine_operand *********************
 
@@ -240,6 +247,8 @@ void address_machine_operand::collect_diags() const
         collect_diags_from_child(*second_par);
 }
 
+void address_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 assembler_operand::assembler_operand(const asm_kind kind)
     : kind(kind)
 {}
@@ -311,6 +320,8 @@ std::vector<const context::resolvable*> expr_assembler_operand::get_resolvables(
 
 void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
 
+void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 //***************** end_instr_machine_operand *********************
 
 using_instr_assembler_operand::using_instr_assembler_operand(
@@ -352,6 +363,8 @@ void using_instr_assembler_operand::collect_diags() const
     collect_diags_from_child(*end);
 }
 
+void using_instr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 //***************** complex_assempler_operand *********************
 complex_assembler_operand::complex_assembler_operand(
     std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, range operand_range)
@@ -375,6 +388,8 @@ std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
 }
 
 void complex_assembler_operand::collect_diags() const {}
+
+void complex_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 //***************** ca_operand *********************
 ca_operand::ca_operand(const ca_kind kind, range operand_range)
@@ -443,6 +458,8 @@ std::set<context::id_index> var_ca_operand::get_undefined_attributed_symbols(
     return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(variable_symbol, eval_ctx);
 }
 
+void var_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::EXPR, std::move(operand_range))
     , expression(std::move(expression))
@@ -454,6 +471,8 @@ std::set<context::id_index> expr_ca_operand::get_undefined_attributed_symbols(
     return expression->get_undefined_attributed_symbols(eval_ctx);
 }
 
+void expr_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     : ca_operand(ca_kind::SEQ, std::move(operand_range))
     , sequence_symbol(std::move(sequence_symbol))
@@ -463,6 +482,8 @@ std::set<context::id_index> seq_ca_operand::get_undefined_attributed_symbols(con
 {
     return std::set<context::id_index>();
 }
+
+void seq_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::BRANCH, std::move(operand_range))
@@ -476,12 +497,16 @@ std::set<context::id_index> branch_ca_operand::get_undefined_attributed_symbols(
     return expression->get_undefined_attributed_symbols(eval_ctx);
 }
 
+void branch_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 
 
 macro_operand_chain::macro_operand_chain(concat_chain chain, range operand_range)
     : macro_operand(mac_kind::CHAIN, std::move(operand_range))
     , chain(std::move(chain))
 {}
+
+void macro_operand_chain::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 
 
@@ -570,6 +595,8 @@ std::unique_ptr<checking::operand> data_def_operand::get_operand_value(expressio
 
 void data_def_operand::collect_diags() const { collect_diags_from_child(*value); }
 
+void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 string_assembler_operand::string_assembler_operand(std::string value, range operand_range)
     : evaluable_operand(operand_type::ASM, std::move(operand_range))
     , assembler_operand(asm_kind::STRING)
@@ -592,10 +619,14 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
 
 void string_assembler_operand::collect_diags() const {}
 
+void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
     : macro_operand(mac_kind::STRING, operand_range)
     , value(std::move(value))
 {}
+
+void macro_operand_string::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 macro_operand_chain* macro_operand::access_chain()
 {

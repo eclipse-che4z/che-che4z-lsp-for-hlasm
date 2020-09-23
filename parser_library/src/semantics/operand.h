@@ -64,10 +64,14 @@ struct seq_sym
     range symbol_range;
 };
 
+class operand_visitor;
+
 // struct representing operand of instruction
 struct operand
 {
     operand(const operand_type type, const range operand_range);
+
+    virtual void apply(operand_visitor& visitor) const = 0;
 
     model_operand* access_model();
     ca_operand* access_ca();
@@ -88,6 +92,8 @@ struct operand
 struct empty_operand final : operand
 {
     empty_operand(const range operand_range);
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -98,6 +104,8 @@ struct model_operand final : operand
     model_operand(concat_chain chain, const range operand_range);
 
     concat_chain chain;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -172,6 +180,8 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
     virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -200,6 +210,8 @@ struct address_machine_operand final : machine_operand
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -245,6 +257,8 @@ public:
     virtual std::vector<const context::resolvable*> get_resolvables() const override;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -267,6 +281,8 @@ struct using_instr_assembler_operand final : assembler_operand
     expressions::mach_expr_ptr end;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -347,12 +363,14 @@ struct complex_assembler_operand final : assembler_operand
     composite_value_t value;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
 
 // assembler string operand
-struct string_assembler_operand : assembler_operand
+struct string_assembler_operand final : assembler_operand
 {
     string_assembler_operand(std::string value, const range operand_range);
 
@@ -367,6 +385,8 @@ struct string_assembler_operand : assembler_operand
     std::string value;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 // data definition operand
@@ -389,6 +409,8 @@ struct data_def_operand final : evaluable_operand
     virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     virtual void collect_diags() const override;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -433,6 +455,8 @@ struct var_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     vs_ptr variable_symbol;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 // CA expression operand
@@ -445,6 +469,8 @@ struct expr_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     expressions::ca_expr_ptr expression;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 // CA sequence symbol operand
@@ -457,6 +483,8 @@ struct seq_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     seq_sym sequence_symbol;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 // CA branching operand (i.e. (5).here)
@@ -470,6 +498,8 @@ struct branch_ca_operand final : ca_operand
 
     seq_sym sequence_symbol;
     expressions::ca_expr_ptr expression;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -499,6 +529,8 @@ struct macro_operand_chain final : macro_operand
     macro_operand_chain(concat_chain chain, const range operand_range);
 
     concat_chain chain;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 // macro instruction operand
@@ -507,6 +539,8 @@ struct macro_operand_string final : macro_operand
     macro_operand_string(std::string value, const range operand_range);
 
     std::string value;
+
+    virtual void apply(operand_visitor& visitor) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics
