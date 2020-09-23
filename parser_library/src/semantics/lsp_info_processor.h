@@ -127,6 +127,7 @@ private:
         const context::definitions<context::instr_definition>& to_check) const;
     // returns the first macro id on the parsing stack
     context::macro_id get_top_macro_stack_() const;
+    void insert_sorted_hl_symbol(token_info symbol);
 };
 } // namespace semantics
 } // namespace parser_library

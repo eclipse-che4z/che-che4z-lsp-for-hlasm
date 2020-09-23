@@ -13,13 +13,11 @@
  */
 
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient';
 
-//import { ContinuationDocumentsInfo } from './hlasmSemanticHighlighting'
 import { ConfigurationsHandler } from './configurationsHandler'
+import { isLineContinued } from './customEditorCommands';
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
 import { SemanticTokensFeature } from './semanticTokens';
-//import { SemanticHighlightingFeature } from './semanticHighlighting';
 
 /**
  * Handles various events happening in VSCode
@@ -34,35 +32,34 @@ export class EventsHandler {
     private langDetect: HLASMLanguageDetection;
     // parse in progress indicator
     /**
-     * 
      * @param completeCommand Used to invoke complete manually in continuationHandling mode
      * @param highlight Shows/hides parsing progress
      */
-    constructor(completeCommand: string)
+    constructor(completeCommand: string, highlight: SemanticTokensFeature)
     {
         this.isInstruction = new RegExp("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)$");
         this.isTrigger = new RegExp("^[a-zA-Z\*\@\#\$\_]+$");
         this.completeCommand = completeCommand;
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
-        this.initialize();
+        this.initialize(highlight);
     }
 
     dispose() {}
 
     // invoked on extension activation
-    private initialize()
+    private initialize(highlight: SemanticTokensFeature)
     {
         // initialize wildcards
         this.configSetup.updateWildcards();
-        // first run, check for assembler language and configurations
-        if (vscode.window.activeTextEditor) {
-            this.editorChanged(vscode.window.activeTextEditor.document);
+        // first run, simulate ondidopen
+        if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId == 'plaintext') {
+            this.onDidOpenTextDocument(vscode.window.activeTextEditor.document, highlight);
         }
     }
 
     // when contents of a document change, issue a completion request
-    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, highlight: SemanticTokensFeature/*, info: ContinuationDocumentsInfo*/): boolean {
+    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, highlight: SemanticTokensFeature, continuationOffset: number): boolean {
         // remove this once LSP implements semantic tokens
         highlight.askForTokens(event.document);
         if (getConfig<boolean>('continuationHandling', false)) {
@@ -80,11 +77,8 @@ export class EventsHandler {
                         change.range.start.line, 0),
                         change.range.start));
                         
-            //const foundDoc = info.get(event.document.uri.toString());
-            const notContinued = true; /*
-                change.range.start.line == 0 ||
-                !foundDoc ||
-                !foundDoc.lineContinuations.get(change.range.start.line - 1);*/
+            const notContinued = change.range.start.line == 0 ||
+                !isLineContinued(event.document, change.range.start.line, continuationOffset);
 
             if ((currentLine != "" &&
                 this.isTrigger.test(change.text) &&
@@ -110,10 +104,9 @@ export class EventsHandler {
 
     // when document opens, show parse progress
     onDidOpenTextDocument(document: vscode.TextDocument, highlight: SemanticTokensFeature) {
-        //this.showProgress(document);
         // remove this once LSP implements semantic tokens
-        highlight.askForTokens(document);
         this.editorChanged(document);
+        highlight.askForTokens(document);
     }
 
     onDidChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
@@ -148,4 +141,3 @@ export function getConfig<T>(option: string, defaultValue?: any): T {
     const config = vscode.workspace.getConfiguration('hlasm');
     return config.get<T>(option, defaultValue);
 }
-

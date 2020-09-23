@@ -365,6 +365,10 @@ std::vector<size_t> hlasm_plugin::parser_library::semantics::lsp_info_processor:
             ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
             : current.token_range.end.column - current.token_range.start.column;
 
+        // skip overlaying tokens
+        if (delta_line == 0 && delta_char == 0 && i != 0)
+            continue;
+
         encoded_tokens.push_back(delta_line);
         encoded_tokens.push_back(delta_char);
         encoded_tokens.push_back(length);
@@ -406,21 +410,39 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
                 { symbol.token_range.start.line, symbol.token_range.start.column });
         }
 
-        if (hl_info_.lines.empty())
-            hl_info_.lines.push_back(symbol);
-        else
-            for (lines_info::reverse_iterator it = hl_info_.lines.rbegin(); it != hl_info_.lines.rend(); it++)
-            {
-                if (it->token_range.start.line < symbol.token_range.start.line || 
-                    (it->token_range.start.line == symbol.token_range.start.line &&
-                     it->token_range.start.column <= symbol.token_range.start.column))
-                {
-                    hl_info_.lines.insert(it.base(), symbol);
-                    break;
-                }
-            }
+        // split multi line symbols
+        auto rest = symbol;
+        while (rest.token_range.start.line != rest.token_range.end.line)
+        {
+            // remove first line and add as separate token
+            auto first = rest;
+            first.token_range.end.line = first.token_range.start.line;
+            first.token_range.end.column = hl_info_.cont_info.continuation_column;
+            insert_sorted_hl_symbol(first);
+            rest.token_range.start.line++;
+            rest.token_range.start.column = hl_info_.cont_info.continue_column;
+        }
+        insert_sorted_hl_symbol(rest);
+
         //hl_info_.lines.push_back(symbol);
     }
+}
+
+void lsp_info_processor::insert_sorted_hl_symbol(token_info symbol)
+{
+    if (hl_info_.lines.empty())
+        hl_info_.lines.push_back(symbol);
+    else
+        for (lines_info::reverse_iterator it = hl_info_.lines.rbegin(); it != hl_info_.lines.rend(); it++)
+        {
+            if (it->token_range.start.line < symbol.token_range.start.line
+                || (it->token_range.start.line == symbol.token_range.start.line
+                    && it->token_range.start.column <= symbol.token_range.start.column))
+            {
+                hl_info_.lines.insert(it.base(), symbol);
+                break;
+            }
+        }
 }
 
 //semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }

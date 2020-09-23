@@ -53,11 +53,11 @@
     "lineComment": {
       "patterns": [
         {
-          "name": "comment.line.double-slash.hlasm",
+          "name": "comment.hlasm",
           "match": "^(\\*.{70,70})(.*)",
           "captures": {
             "1": {
-              "name": "comment.line.double-slash.hlasm"
+              "name": "comment.hlasm"
             },
             "2": {
               "patterns": [
@@ -93,7 +93,7 @@
           }
         },
         {
-          "name": "comment.line.double-slash.hlasm",
+          "name": "comment.hlasm",
           "match": "\\*.*"
         }
       ]
@@ -163,7 +163,7 @@
           "match": "^([^*]\\S*)?\\s+(.*)$",
           "captures": {
             "1": {
-              "name": "entity.name.function.hlasm"
+              "name": "support.class.hlasm"
             },
             "2": {
               "patterns": [
@@ -182,7 +182,7 @@
           "match": "(\\S+)\\s*(.*)",
           "captures": {
             "1": {
-              "name": "keyword.other.hlasm"
+              "name": "entity.name.function.hlasm"
             },
             "2": {
               "patterns": [
@@ -223,7 +223,7 @@
           "match": "(\\S*)(.*)",
           "captures": {
             "1": {
-              "name": "keyword.control.hlasm",
+              "name": "punctuation.definition.tag.hlasm",
               "patterns": [
                 {
                   "include": "#additionalAsmHighlight"
@@ -231,13 +231,13 @@
               ]
             },
             "2": {
-              "name": "comment.line.double-slash.hlasm"
+              "name": "comment.hlasm"
             }
           }
         },
         {
           "match": "\\s.*",
-          "name": "comment.line.double-slash.hlasm"
+          "name": "comment.hlasm"
         }
       ]
     },
@@ -247,7 +247,7 @@
           "match": "(\\S*?)('.*?')(.*)",
           "captures": {
             "1": {
-              "name": "keyword.control.hlasm",
+              "name": "punctuation.definition.tag.hlasm",
               "patterns": [
                 {
                   "include": "#additionalAsmHighlight"
@@ -255,7 +255,7 @@
               ]
             },
             "2": {
-              "name": "string.quoted.single.hlasm"
+              "name": "string.hlasm"
             },
             "3": {
               "patterns": [
@@ -297,7 +297,7 @@
     },
     "labels": {
       "match": "[*]",
-      "name": "support.function.hlasm"
+      "name": "support.class.hlasm"
     },
     "operators": {
       "match": "[=(),+]",

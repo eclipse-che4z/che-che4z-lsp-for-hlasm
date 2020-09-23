@@ -146,9 +146,9 @@
         "id": "hlasm.keyword",
         "description": "Color for sequence symbols",
         "defaults": {
-          "dark": "#569CD6",
-          "light": "#0000FF",
-          "highContrast": "#569CD6"
+          "dark": "#C586C0",
+          "light": "#AF00DB",
+          "highContrast": "#C586C0"
         }
       },
       {

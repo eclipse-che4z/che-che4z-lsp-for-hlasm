@@ -85,7 +85,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<TextDocumentRegis
 				if (result.data.length > 0)
 					this.applyDecorations(document, result.data);
 			})
-		}, 1000);
+		}, 100);
 	}
 
 	applyDecorations(document: vscode.TextDocument, data: number[]): EditorColorsMap {
