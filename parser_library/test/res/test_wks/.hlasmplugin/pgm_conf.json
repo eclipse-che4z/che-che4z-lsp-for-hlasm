@@ -7,6 +7,10 @@
     {
       "program": "faulty",
       "pgroup": "P1"
+    },
+    {
+      "program": "new_file",
+      "pgroup": "P1"
     }
   ]
 }

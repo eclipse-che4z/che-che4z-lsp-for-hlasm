@@ -21,6 +21,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "json.hpp"
+
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "library.h"
@@ -112,7 +114,10 @@ private:
     bool opened_ = false;
     bool suppress_diags_ = false;
 
-    bool load_config();
+    bool load_and_process_config();
+    //Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
+    //Returns false if there is any error.
+    bool load_config(nlohmann::json& proc_grps_json, nlohmann::json& pgm_conf_json, file_ptr& pgm_conf_file);
 
     bool is_wildcard(const std::string& str);
 
