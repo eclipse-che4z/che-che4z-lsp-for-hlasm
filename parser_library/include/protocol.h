@@ -264,37 +264,7 @@ struct PARSER_LIBRARY_EXPORT token_info
     range token_range;
     semantics::hl_scopes scope;
 };
-/*
-struct PARSER_LIBRARY_EXPORT file_highlighting_info
-{
-    file_highlighting_info(semantics::highlighting_info& info);
 
-    const char* document_uri() const;
-    version_t document_version() const;
-    size_t continuation_count() const;
-    position continuation(size_t index);
-    token_info token(size_t index);
-    size_t token_count() const;
-    size_t continuation_column() const;
-    size_t continue_column() const;
-
-private:
-    semantics::highlighting_info& info;
-};
-
-struct PARSER_LIBRARY_EXPORT all_highlighting_info
-{
-    all_highlighting_info(file_id* files, size_t files_count);
-
-    file_id* files();
-    size_t files_count() const;
-    file_highlighting_info file_info(file_id) const;
-
-private:
-    file_id* files_;
-    size_t files_count_;
-};
-*/
 struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);

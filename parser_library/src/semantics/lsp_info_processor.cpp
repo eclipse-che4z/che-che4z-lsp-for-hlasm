@@ -445,7 +445,6 @@ void lsp_info_processor::insert_sorted_hl_symbol(token_info symbol)
         }
 }
 
-//semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }
 
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {

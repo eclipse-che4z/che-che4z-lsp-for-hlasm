@@ -80,7 +80,6 @@ public:
         if (cancel_ && *cancel_)
             return;
 
-        //notify_highlighting_consumers();
         notify_diagnostics_consumers();
         // only on open
         notify_performance_consumers(document_uri);
@@ -97,7 +96,6 @@ public:
         if (cancel_ && *cancel_)
             return;
 
-        //notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
 
@@ -105,7 +103,6 @@ public:
     {
         workspaces::workspace& ws = ws_path_match(document_uri);
         ws.did_close_file(document_uri);
-        //notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
 
@@ -116,11 +113,8 @@ public:
             workspaces::workspace& ws = ws_path_match(path);
             ws.did_change_watched_files(path);
         }
-        //notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
-
-    //void register_highlighting_consumer(highlighting_consumer* consumer) { hl_consumers_.push_back(consumer); }
 
     void register_diagnostics_consumer(diagnostics_consumer* consumer) { diag_consumers_.push_back(consumer); }
 
@@ -325,17 +319,6 @@ private:
             collect_diags_from_child(it.second);
     }
 
-    /*
-    void notify_highlighting_consumers()
-    {
-        auto file_list = file_manager_.list_updated_files();
-        all_highlighting_info hl_info(file_list.data(), file_list.size());
-        for (auto consumer : hl_consumers_)
-        {
-            consumer->consume_highlighting_info(hl_info);
-        }
-    }*/
-
     void notify_diagnostics_consumers() const
     {
         diags().clear();
@@ -401,7 +384,6 @@ private:
     workspaces::workspace implicit_workspace_;
     std::atomic<bool>* cancel_;
 
-    //std::vector<highlighting_consumer*> hl_consumers_;
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<performance_metrics_consumer*> metrics_consumers_;
 };

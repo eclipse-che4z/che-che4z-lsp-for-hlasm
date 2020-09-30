@@ -25,7 +25,7 @@ namespace hlasm_plugin::language_server::lsp {
 
 // Groups text synchronization methods, which decode incomming notifications and call methods of
 // provided workspace_manager. Also consumes highligting from library and sends it as json to LSP client.
-class feature_text_synchronization : public feature//, public parser_library::highlighting_consumer
+class feature_text_synchronization : public feature
 {
 public:
     // synchronization kind from LSP specification, we use incremental
@@ -53,9 +53,6 @@ private:
     void on_did_change(const json& id, const json& params);
     // Handles textDocument/didClose notification.
     void on_did_close(const json& id, const json& params);
-
-    // Reads the highlighting info that comes from parser_library and sends it to LSP client.
-    //virtual void consume_highlighting_info(parser_library::all_highlighting_info info) override;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

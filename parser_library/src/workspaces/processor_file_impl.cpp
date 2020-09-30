@@ -94,8 +94,6 @@ bool processor_file_impl::parse_info_updated()
 
 const std::set<std::string>& processor_file_impl::dependencies() { return dependencies_; }
 
-//const file_highlighting_info processor_file_impl::get_hl_info() { return analyzer_->lsp_processor().get_hl_info(); }
-
 const semantics::lsp_info_processor processor_file_impl::get_lsp_info() { return analyzer_->lsp_processor(); }
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }

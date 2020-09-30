@@ -22,9 +22,7 @@ namespace hlasm_plugin::language_server::lsp {
 feature_text_synchronization::feature_text_synchronization(
     parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
     : feature(ws_mngr, response_provider)
-{
-    //ws_mngr.register_highlighting_consumer(this);
-}
+{}
 
 void feature_text_synchronization::register_methods(std::map<std::string, method>& methods)
 {
@@ -112,92 +110,4 @@ void feature_text_synchronization::on_did_close(const json&, const json& params)
     ws_mngr_.did_close_file(uri_to_path(uri).c_str());
 }
 
-/*
-void feature_text_synchronization::consume_highlighting_info(parser_library::all_highlighting_info info)
-{
-    auto f = info.files();
-    for (size_t i = 0; i < info.files_count(); i++)
-    {
-        auto fi = info.file_info(f[i]);
-
-        std::string scope;
-        json tokens_array = json::array();
-        for (size_t j = 0; j < fi.token_count(); j++)
-        {
-            switch (fi.token(j).scope)
-            {
-                case parser_library::semantics::hl_scopes::label:
-                    scope = "label";
-                    break;
-                case parser_library::semantics::hl_scopes::instruction:
-                    scope = "instruction";
-                    break;
-                case parser_library::semantics::hl_scopes::remark:
-                    scope = "remark";
-                    break;
-                case parser_library::semantics::hl_scopes::comment:
-                    scope = "comment";
-                    break;
-                case parser_library::semantics::hl_scopes::ignored:
-                    scope = "ignored";
-                    break;
-                case parser_library::semantics::hl_scopes::continuation:
-                    scope = "continuation";
-                    break;
-                case parser_library::semantics::hl_scopes::operator_symbol:
-                    scope = "operator";
-                    break;
-                case parser_library::semantics::hl_scopes::seq_symbol:
-                    scope = "seqSymbol";
-                    break;
-                case parser_library::semantics::hl_scopes::var_symbol:
-                    scope = "varSymbol";
-                    break;
-                case parser_library::semantics::hl_scopes::string:
-                    scope = "string";
-                    break;
-                case parser_library::semantics::hl_scopes::number:
-                    scope = "number";
-                    break;
-                case parser_library::semantics::hl_scopes::operand:
-                    scope = "operand";
-                    break;
-                case parser_library::semantics::hl_scopes::data_def_type:
-                    scope = "data_def_type";
-                    break;
-                case parser_library::semantics::hl_scopes::data_def_extension:
-                    scope = "data_def_extension";
-                    break;
-                default:
-                    assert(false);
-                    break;
-            }
-            tokens_array.push_back(json { { "lineStart", fi.token(j).token_range.start.line },
-                { "columnStart", fi.token(j).token_range.start.column },
-                { "lineEnd", fi.token(j).token_range.end.line },
-                { "columnEnd", fi.token(j).token_range.end.column },
-                { "scope", scope } });
-        }
-
-        json continuations_array = json::array();
-        for (size_t j = 0; j < fi.continuation_count(); j++)
-        {
-            continuations_array.push_back(
-                json { { "line", fi.continuation(j).line }, { "continuationPosition", fi.continuation(j).column } });
-        }
-
-        json args = json {
-            { "textDocument",
-                json { { "uri", feature::path_to_uri(fi.document_uri()) }, { "version", fi.document_version() } } },
-            { "tokens", tokens_array },
-            { "continuation",
-                json { json { "global",
-                           { { "continueColumn", fi.continue_column() },
-                               { "continuationColumn", fi.continuation_column() } } },
-                    json { "continuationPositions", continuations_array } } }
-        };
-
-        response_->notify("textDocument/semanticHighlighting", args);
-    }
-}*/
 } // namespace hlasm_plugin::language_server::lsp

@@ -96,41 +96,7 @@ const char* diagnostic::message() const { return impl_.message.c_str(); }
 const diagnostic_related_info diagnostic::related_info(size_t index) const { return impl_.related[index]; }
 
 size_t diagnostic::related_info_size() const { return impl_.related.size(); }
-/*
-//*********************** file_higlighting_info *****************
-file_highlighting_info::file_highlighting_info(semantics::highlighting_info& info)
-    : info(info)
-{}
 
-const char* file_highlighting_info::document_uri() const { return info.document.uri.c_str(); }
-
-version_t file_highlighting_info::document_version() const { return info.document.version; }
-
-token_info file_highlighting_info::token(size_t index) { return info.lines[index]; }
-
-size_t file_highlighting_info::token_count() const { return info.lines.size(); }
-
-position file_highlighting_info::continuation(size_t index) { return info.cont_info.continuation_positions[index]; }
-
-size_t file_highlighting_info::continuation_count() const { return info.cont_info.continuation_positions.size(); }
-
-size_t file_highlighting_info::continuation_column() const { return info.cont_info.continuation_column; }
-
-size_t file_highlighting_info::continue_column() const { return info.cont_info.continue_column; }
-
-//********************** highlighting_info ***********************
-
-all_highlighting_info::all_highlighting_info(file_id* files, size_t files_count)
-    : files_(files)
-    , files_count_(files_count)
-{}
-
-file_id* all_highlighting_info::files() { return files_; }
-
-size_t all_highlighting_info::files_count() const { return files_count_; }
-
-file_highlighting_info all_highlighting_info::file_info(file_id file_id) const { return file_id->get_hl_info(); }
-*/
 //********************* diagnostics_container *******************
 
 class diagnostic_list_impl

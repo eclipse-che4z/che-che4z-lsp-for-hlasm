@@ -78,9 +78,6 @@ public:
     void add_lsp_symbol(context::lsp_symbol& symbol);
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
-
-    //semantics::highlighting_info& get_hl_info();
-
 private:
     // stored symbols that couldn't be processed without further information
     std::vector<context::var_definition> deferred_vars_;
