@@ -16,7 +16,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import { ContinuationHandler } from '../../continuationHandler';
-import { ContinuationDocumentsInfo, DocumentContinuation } from '../../hlasmSemanticHighlighting';
 import { TextDocumentMock, TextEditorEditMock, TextEditorMock } from '../mocks';
 
 suite('Continuation Handler Test Suite', () => {
@@ -34,22 +33,14 @@ suite('Continuation Handler Test Suite', () => {
         editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
         const edit = new TextEditorEditMock('this');
         document.text = edit.text;
-        // prepare continuation info
-        const info: ContinuationDocumentsInfo = new Map();
-        const documentCont = new DocumentContinuation();
-        documentCont.continuationColumn = 15;
-        documentCont.continueColumn = 5;
-        info.set(document.uri.toString(), documentCont);
 
         // insert new continuation
-        handler.insertContinuation(editor, edit, info);
+        handler.insertContinuation(editor, edit, 15,5);
         document.text = edit.text;
         assert.equal(document.text, 'this           X\r\n     ');
 
         // insert continuation on continued line
-        documentCont.lineContinuations.set(0, 15);
-        info.set(document.uri.toString(), documentCont);
-        handler.insertContinuation(editor, edit, info);
+        handler.insertContinuation(editor, edit, 15,5);
         document.text = edit.text;
         assert.equal(document.text, 'this           X\r\n               X\r\n     ');
     });
@@ -65,28 +56,18 @@ suite('Continuation Handler Test Suite', () => {
         editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
         const edit = new TextEditorEditMock('continuation   X\r\n     ');
         document.text = edit.text;
-        // prepare continuation info
-        const info: ContinuationDocumentsInfo = new Map();
-        const documentCont = new DocumentContinuation();
-        documentCont.continuationColumn = 15;
-        documentCont.continueColumn = 5;
-        documentCont.lineContinuations.set(0, 15);
-        info.set(document.uri.toString(), documentCont);
 
         // delete existing continuation
-        handler.removeContinuation(editor, edit, info);
+        handler.removeContinuation(editor, edit, 15);
         document.text = edit.text;
         assert.equal(document.text, 'continuation   ');
 
         // prepare document
         cursorPosition = new vscode.Position(0, 0);
         editor.selection = new vscode.Selection(cursorPosition, cursorPosition);
-        // prepare continuation info
-        documentCont.lineContinuations = new Map();
-        info.set(document.uri.toString(), documentCont);
 
         // delete non existing continuation - nothing happens
-        handler.removeContinuation(editor, edit, info);
+        handler.removeContinuation(editor, edit, 15);
         document.text = edit.text;
         assert.equal(document.text, 'continuation   ');
     });

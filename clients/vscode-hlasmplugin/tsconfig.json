@@ -15,6 +15,5 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true
-  },
-  "exclude": ["deprecated","src/test","lib"]
+  }
 }

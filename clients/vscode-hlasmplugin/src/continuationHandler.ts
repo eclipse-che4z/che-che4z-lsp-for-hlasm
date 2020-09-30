@@ -24,12 +24,11 @@ export class ContinuationHandler {
     dispose() { }
 
     // insert continuation character X to the current line
-    insertContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number) {
+    insertContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number, continueColumn: number) {
         if (!getConfig<boolean>('continuationHandling', false))
             return;
 
         // retrieve continuation information
-        const continueColumn = 15;
         const isContinued = isLineContinued(editor.document, editor.selection.active.line, continuationOffset);
 
         if (!isContinued) {

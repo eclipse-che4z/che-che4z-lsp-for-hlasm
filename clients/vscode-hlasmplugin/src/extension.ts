@@ -24,6 +24,7 @@ import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory } from './serverFactory';
 const useTcp = false;
 const offset = 71;
+const continueColumn = 15;
 /**
  * ACTIVATION
  * activates the extension
@@ -88,7 +89,7 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     // register continuation handlers
     if (!commandsRegistered) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("insertContinuation",
-            (editor, edit) => contHandling.insertContinuation(editor, edit, offset)));
+            (editor, edit) => contHandling.insertContinuation(editor, edit, offset, continueColumn)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
             (editor, edit) => contHandling.removeContinuation(editor, edit, offset)));
     }

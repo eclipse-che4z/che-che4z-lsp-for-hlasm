@@ -191,6 +191,8 @@ export function setCursor(editor: vscode.TextEditor, position: vscode.Position) 
 }
 
 export function isLineContinued(document: vscode.TextDocument, line: number, offset: number): boolean {
+    if (line < 0 || offset < 0)
+        return false;
     const continuationPosition = new vscode.Position(line, offset);
     return document.validatePosition(continuationPosition) == continuationPosition &&
         document.lineAt(line).text[offset] != " ";
