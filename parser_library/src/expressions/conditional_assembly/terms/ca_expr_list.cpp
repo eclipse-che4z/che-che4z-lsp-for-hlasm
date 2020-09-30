@@ -20,6 +20,7 @@
 #include "../ca_operator_unary.h"
 #include "ca_function.h"
 #include "ca_symbol.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -74,6 +75,8 @@ void ca_expr_list::collect_diags() const
 }
 
 bool ca_expr_list::is_character_expression() const { return false; }
+
+void ca_expr_list::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_expr_list::evaluate(const evaluation_context& eval_ctx) const
 {

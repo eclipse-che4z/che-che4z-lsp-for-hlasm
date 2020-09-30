@@ -15,6 +15,8 @@
 #ifndef PROCESSING_OCCURENCE_COLLECTOR_H
 #define PROCESSING_OCCURENCE_COLLECTOR_H
 
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
+#include "expressions/mach_expr_visitor.h"
 #include "semantics/operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -34,7 +36,9 @@ struct symbol_occurence
     range occurence;
 };
 
-class occurence_collector : public semantics::operand_visitor
+class occurence_collector : public semantics::operand_visitor,
+                            expressions::mach_expr_visitor,
+                            expressions::ca_expr_visitor
 {
     const occurence_kind collector_kind_;
 
@@ -59,7 +63,26 @@ public:
 
     static std::vector<symbol_occurence> get_occurences(occurence_kind kind, const semantics::concat_chain& chain);
 
-    static std::vector<symbol_occurence> get_occurences(expressions::mach_expr_ptr mach_expr);
+private:
+    void get_occurence(const semantics::variable_symbol& var);
+    void get_occurence(const semantics::seq_sym& seq);
+    void get_occurence(context::id_index ord, const range& ord_range);
+    void get_occurence(const semantics::concat_chain& chain);
+
+    virtual void visit(const expressions::mach_expr_constant& expr) override;
+    virtual void visit(const expressions::mach_expr_data_attr& expr) override;
+    virtual void visit(const expressions::mach_expr_symbol& expr) override;
+    virtual void visit(const expressions::mach_expr_location_counter& expr) override;
+    virtual void visit(const expressions::mach_expr_self_def& expr) override;
+    virtual void visit(const expressions::mach_expr_default& expr) override;
+
+    virtual void visit(const expressions::ca_constant& expr) override;
+    virtual void visit(const expressions::ca_expr_list& expr) override;
+    virtual void visit(const expressions::ca_function& expr) override;
+    virtual void visit(const expressions::ca_string& expr) override;
+    virtual void visit(const expressions::ca_symbol& expr) override;
+    virtual void visit(const expressions::ca_symbol_attribute& expr) override;
+    virtual void visit(const expressions::ca_var_sym& expr) override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -67,6 +67,8 @@ public:
 
     virtual bool is_character_expression() const override { return false; }
 
+    virtual void apply(ca_expr_visitor&) const override {}
+
     virtual context::SET_t evaluate(const evaluation_context&) const override { return value; }
 
     virtual void collect_diags() const override {}

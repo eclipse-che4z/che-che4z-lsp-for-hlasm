@@ -24,12 +24,14 @@ namespace hlasm_plugin::parser_library::expressions {
 class mach_expr_visitor
 {
 public:
-    virtual void visit(const mach_expr_constant& op) = 0;
-    virtual void visit(const mach_expr_data_attr& op) = 0;
-    virtual void visit(const mach_expr_symbol& op) = 0;
-    virtual void visit(const mach_expr_location_counter& op) = 0;
-    virtual void visit(const mach_expr_self_def& op) = 0;
-    virtual void visit(const mach_expr_default& op) = 0;
+    virtual void visit(const mach_expr_constant& expr) = 0;
+    virtual void visit(const mach_expr_data_attr& expr) = 0;
+    virtual void visit(const mach_expr_symbol& expr) = 0;
+    virtual void visit(const mach_expr_location_counter& expr) = 0;
+    virtual void visit(const mach_expr_self_def& expr) = 0;
+    virtual void visit(const mach_expr_default& expr) = 0;
+
+    virtual ~mach_expr_visitor() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

@@ -24,6 +24,7 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
+class ca_expr_visitor;
 class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
 using undef_sym_set = std::set<context::id_index>;
@@ -46,6 +47,8 @@ public:
     virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
 
     virtual bool is_character_expression() const = 0;
+
+    virtual void apply(ca_expr_visitor& visitor) const = 0;
 
     template<typename T>
     T evaluate(const evaluation_context& eval_ctx) const;

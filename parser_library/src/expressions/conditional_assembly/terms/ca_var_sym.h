@@ -36,6 +36,8 @@ public:
 
     virtual bool is_character_expression() const override;
 
+    virtual void apply(ca_expr_visitor& visitor) const override;
+
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     static undef_sym_set get_undefined_attributed_symbols_vs(

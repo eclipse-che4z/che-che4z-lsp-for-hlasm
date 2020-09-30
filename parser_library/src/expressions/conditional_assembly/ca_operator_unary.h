@@ -35,6 +35,8 @@ public:
 
     virtual bool is_character_expression() const override;
 
+    virtual void apply(ca_expr_visitor& visitor) const override;
+
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     virtual context::SET_t operation(context::SET_t operand, const evaluation_context& eval_ctx) const = 0;

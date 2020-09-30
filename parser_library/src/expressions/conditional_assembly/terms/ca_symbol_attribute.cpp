@@ -16,6 +16,7 @@
 
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
 #include "processing/context_manager.h"
@@ -119,6 +120,8 @@ bool ca_symbol_attribute::is_character_expression() const
 {
     return get_attribute_type(attribute) == context::SET_t_enum::C_TYPE;
 }
+
+void ca_symbol_attribute::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx) const
 {

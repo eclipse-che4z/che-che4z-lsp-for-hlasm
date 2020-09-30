@@ -18,21 +18,108 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-void occurence_collector::visit(const semantics::empty_operand& op) {}
+void occurence_collector::visit(const semantics::empty_operand&) {}
 
-void occurence_collector::visit(const semantics::model_operand& op)
+void occurence_collector::visit(const semantics::model_operand& op) { get_occurence(op.chain); }
+
+void occurence_collector::visit(const semantics::expr_machine_operand& op) { op.expression->apply(*this); }
+
+void occurence_collector::visit(const semantics::address_machine_operand& op)
 {
-    auto tmp = get_occurences(collector_kind_, op.chain);
-    occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
+    op.displacement->apply(*this);
+    op.first_par->apply(*this);
+    op.second_par->apply(*this);
 }
 
-void occurence_collector::visit(const semantics::expr_machine_operand& op) {}
+void occurence_collector::visit(const semantics::expr_assembler_operand& op) { op.expression->apply(*this); }
+
+void occurence_collector::visit(const semantics::using_instr_assembler_operand& op)
+{
+    op.base->apply(*this);
+    op.end->apply(*this);
+}
+
+void occurence_collector::visit(const semantics::complex_assembler_operand&) {}
+
+void occurence_collector::visit(const semantics::string_assembler_operand&) {}
+
+void occurence_collector::visit(const semantics::data_def_operand& op)
+{
+    if (op.value->dupl_factor)
+        op.value->dupl_factor->apply(*this);
+    if (op.value->program_type)
+        op.value->program_type->apply(*this);
+    if (op.value->length)
+        op.value->length->apply(*this);
+    if (op.value->scale)
+        op.value->scale->apply(*this);
+    if (op.value->exponent)
+        op.value->exponent->apply(*this);
+
+    if (op.value->nominal_value && op.value->nominal_value->access_exprs())
+    {
+        for (const auto& val : op.value->nominal_value->access_exprs()->exprs)
+        {
+            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
+                std::get<expressions::mach_expr_ptr>(val)->apply(*this);
+            else
+            {
+                const auto& addr = std::get<expressions::address_nominal>(val);
+                addr.base->apply(*this);
+                addr.displacement->apply(*this);
+            }
+        }
+    }
+}
+
+void occurence_collector::visit(const semantics::var_ca_operand& op) { get_occurence(*op.variable_symbol); }
+
+void occurence_collector::visit(const semantics::expr_ca_operand& op) { op.expression->apply(*this); }
+
+void occurence_collector::visit(const semantics::seq_ca_operand& op) { get_occurence(op.sequence_symbol); }
+
+void occurence_collector::visit(const semantics::branch_ca_operand& op)
+{
+    op.expression->apply(*this);
+    get_occurence(op.sequence_symbol);
+}
+
+void occurence_collector::visit(const semantics::macro_operand_chain& op) { get_occurence(op.chain); }
+
+void occurence_collector::visit(const semantics::macro_operand_string&) {}
 
 std::vector<symbol_occurence> get_var_occurence(const semantics::variable_symbol& var)
 {
     if (var.created)
         return occurence_collector::get_occurences(occurence_kind::VAR, var.access_created()->created_name);
     return { symbol_occurence { occurence_kind::VAR, var.access_basic()->name, var.symbol_range } };
+}
+
+void occurence_collector::get_occurence(const semantics::variable_symbol& var)
+{
+    if (collector_kind_ == occurence_kind::VAR)
+    {
+        auto tmp = get_var_occurence(var);
+        occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
+    }
+}
+
+void occurence_collector::get_occurence(const semantics::seq_sym& seq)
+{
+    if (collector_kind_ == occurence_kind::SEQ)
+        occurences_.push_back(symbol_occurence { occurence_kind::ORD, seq.name, seq.symbol_range });
+}
+
+void occurence_collector::get_occurence(context::id_index ord, const range& ord_range)
+{
+    if (collector_kind_ == occurence_kind::ORD)
+        occurences_.push_back(symbol_occurence { occurence_kind::ORD, ord, ord_range });
+}
+
+void occurence_collector::get_occurence(const semantics::concat_chain& chain)
+{
+    auto tmp = get_occurences(collector_kind_, chain);
+    occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
 }
 
 std::vector<symbol_occurence> occurence_collector::get_occurences(
@@ -76,5 +163,49 @@ std::vector<symbol_occurence> occurence_collector::get_occurences(
     }
     return occurences;
 }
+
+void occurence_collector::visit(const expressions::mach_expr_constant&) {}
+
+void occurence_collector::visit(const expressions::mach_expr_data_attr& expr)
+{
+    get_occurence(expr.value, expr.get_range());
+}
+
+void occurence_collector::visit(const expressions::mach_expr_symbol& expr)
+{
+    get_occurence(expr.value, expr.get_range());
+}
+
+void occurence_collector::visit(const expressions::mach_expr_location_counter&) {}
+
+void occurence_collector::visit(const expressions::mach_expr_self_def&) {}
+
+void occurence_collector::visit(const expressions::mach_expr_default&) {}
+
+void occurence_collector::visit(const expressions::ca_constant&) {}
+
+void occurence_collector::visit(const expressions::ca_expr_list&) {}
+
+void occurence_collector::visit(const expressions::ca_function& expr)
+{
+    if (expr.duplication_factor)
+        expr.duplication_factor->apply(*this);
+    for (const auto& e : expr.parameters)
+        e->apply(*this);
+}
+
+void occurence_collector::visit(const expressions::ca_string&) {}
+
+void occurence_collector::visit(const expressions::ca_symbol& expr) { get_occurence(expr.symbol, expr.expr_range); }
+
+void occurence_collector::visit(const expressions::ca_symbol_attribute& expr)
+{
+    if (std::holds_alternative<context::id_index>(expr.symbol))
+        get_occurence(std::get<context::id_index>(expr.symbol), expr.expr_range);
+    else
+        get_occurence(*std::get<semantics::vs_ptr>(expr.symbol));
+}
+
+void occurence_collector::visit(const expressions::ca_var_sym& expr) { get_occurence(*expr.symbol); }
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -464,7 +464,6 @@ struct expr_ca_operand final : ca_operand
 {
     expr_ca_operand(expressions::ca_expr_ptr expression, const range operand_range);
 
-
     virtual std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 

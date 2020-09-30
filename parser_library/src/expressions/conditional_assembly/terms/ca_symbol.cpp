@@ -14,6 +14,7 @@
 
 #include "ca_symbol.h"
 
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -37,6 +38,8 @@ void ca_symbol::collect_diags() const
 }
 
 bool ca_symbol::is_character_expression() const { return false; }
+
+void ca_symbol::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_symbol::evaluate(const evaluation_context& eval_ctx) const
 {

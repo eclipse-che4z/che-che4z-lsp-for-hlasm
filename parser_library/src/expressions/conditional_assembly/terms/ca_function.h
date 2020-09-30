@@ -48,6 +48,8 @@ public:
 
     virtual bool is_character_expression() const override;
 
+    virtual void apply(ca_expr_visitor& visitor) const override;
+
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     static context::SET_t B2A(std::string_view param, diagnostic_adder& add_diagnostic);
