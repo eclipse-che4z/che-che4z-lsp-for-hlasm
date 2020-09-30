@@ -26,7 +26,7 @@ void occurence_collector::visit(const semantics::model_operand& op)
     occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
 }
 
-void occurence_collector::visit(const semantics::expr_machine_operand& op) { op.}
+void occurence_collector::visit(const semantics::expr_machine_operand& op) {}
 
 std::vector<symbol_occurence> get_var_occurence(const semantics::variable_symbol& var)
 {
@@ -38,7 +38,7 @@ std::vector<symbol_occurence> get_var_occurence(const semantics::variable_symbol
 std::vector<symbol_occurence> occurence_collector::get_occurences(
     occurence_kind kind, const semantics::concat_chain& chain)
 {
-    std::vector<symbol_occurence> occurences, tmp;
+    std::vector<symbol_occurence> occurences;
 
     for (const auto& point : chain)
     {

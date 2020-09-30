@@ -36,7 +36,6 @@ struct symbol_occurence
 
 class occurence_collector : public semantics::operand_visitor
 {
-    context::hlasm_context& hlasm_ctx_;
     const occurence_kind collector_kind_;
 
     std::vector<symbol_occurence> occurences_;

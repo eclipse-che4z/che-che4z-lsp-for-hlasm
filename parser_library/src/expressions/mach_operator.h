@@ -50,6 +50,12 @@ public:
         right_->fill_location_counter(std::move(addr));
     }
 
+    virtual void apply(mach_expr_visitor& visitor) const override
+    {
+        left_->apply(visitor);
+        right_->apply(visitor);
+    }
+
     const mach_expression* leftmost_term() const override { return left_->leftmost_term(); }
 
     void collect_diags() const override
@@ -83,6 +89,8 @@ public:
     {
         child_->fill_location_counter(std::move(addr));
     }
+
+    virtual void apply(mach_expr_visitor& visitor) const override { child_->apply(visitor); }
 
     virtual const mach_expression* leftmost_term() const override { return child_->leftmost_term(); }
 

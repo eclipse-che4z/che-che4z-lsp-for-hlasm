@@ -18,9 +18,9 @@
 
 #include "checking/checker_helper.h"
 #include "conditional_assembly/terms/ca_constant.h"
+#include "mach_expr_visitor.h"
 
-using namespace hlasm_plugin::parser_library::expressions;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::expressions {
 
 //***********  mach_expr_constant ************
 mach_expr_constant::mach_expr_constant(std::string value_text, range rng)
@@ -50,6 +50,8 @@ mach_expr_constant::value_t mach_expr_constant::evaluate(mach_evaluate_info) con
 void mach_expr_constant::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_constant::leftmost_term() const { return this; }
+
+void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 
 
@@ -83,6 +85,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) 
 }
 void mach_expr_symbol::fill_location_counter(context::address) {}
 const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
+void mach_expr_symbol::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 //***********  mach_expr_self_def ************
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
     : mach_expression(rng)
@@ -101,6 +104,8 @@ mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info) con
 void mach_expr_self_def::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
+
+void mach_expr_self_def::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 mach_expr_location_counter::mach_expr_location_counter(range rng)
     : mach_expression(rng)
@@ -126,6 +131,8 @@ void mach_expr_location_counter::fill_location_counter(context::address addr) { 
 
 const mach_expression* mach_expr_location_counter::leftmost_term() const { return this; }
 
+void mach_expr_location_counter::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+
 mach_expr_default::mach_expr_default(range rng)
     : mach_expression(rng)
 {}
@@ -140,6 +147,8 @@ mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info) const {
 void mach_expr_default::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_default::leftmost_term() const { return this; }
+
+void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 void mach_expr_default::collect_diags() const {}
 
@@ -186,3 +195,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
 void mach_expr_data_attr::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
+
+void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+
+} // namespace hlasm_plugin::parser_library::expressions
