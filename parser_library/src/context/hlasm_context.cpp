@@ -358,6 +358,28 @@ processing_stack_t hlasm_context::processing_stack() const
     return res;
 }
 
+location hlasm_context::current_statement_location() const
+{
+    if (source_stack_.size() > 1 || scope_stack_.size() == 1)
+    {
+        if (source_stack_.back().copy_stack.size())
+        {
+            const auto& member = source_stack_.back().copy_stack.back();
+
+            auto pos = member.cached_definition[member.current_statement].get_base()->statement_position();
+            return location(pos, member.definition_location.file);
+        }
+        else
+            return source_stack_.back().current_instruction;
+    }
+    else
+    {
+        const auto& mac_invo = scope_stack_.back().this_macro;
+
+        return mac_invo->copy_nests[mac_invo->current_statement].back();
+    }
+}
+
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }
