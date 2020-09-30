@@ -17,10 +17,9 @@
 
 #include "operand.h"
 
-// the file contains base visitor class over operands
-
 namespace hlasm_plugin::parser_library::semantics {
 
+// base class for a visitor pattern over operand structures
 class operand_visitor
 {
 public:
