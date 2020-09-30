@@ -19,8 +19,8 @@
 
 #include "../feature.h"
 #include "../logger.h"
-#include "workspace_manager.h"
 #include "protocol.h"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
