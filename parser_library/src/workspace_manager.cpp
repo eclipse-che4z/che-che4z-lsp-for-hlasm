@@ -108,10 +108,7 @@ completion_list workspace_manager::completion(
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
-num_array workspace_manager::semantic_tokens(const char* document_uri)
-{ 
-    return impl_->semantic_tokens(document_uri); 
-}
+num_array workspace_manager::semantic_tokens(const char* document_uri) { return impl_->semantic_tokens(document_uri); }
 
 void workspace_manager::launch(const char* file_name, bool stop_on_entry) { impl_->launch(file_name, stop_on_entry); }
 

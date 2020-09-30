@@ -187,7 +187,7 @@ public:
     }
 
     std::vector<size_t> tokens;
-    num_array semantic_tokens(const char* document_uri) 
+    num_array semantic_tokens(const char* document_uri)
     {
         tokens.clear();
         if (cancel_ && *cancel_)

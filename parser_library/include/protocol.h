@@ -61,7 +61,7 @@ struct highlighting_info;
 
 // in case any changes are done to these scopes, the tokenTypes field in feature_language_features.cpp
 // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
-enum class PARSER_LIBRARY_EXPORT hl_scopes: size_t
+enum class PARSER_LIBRARY_EXPORT hl_scopes : size_t
 {
     label = 0,
     instruction = 1,

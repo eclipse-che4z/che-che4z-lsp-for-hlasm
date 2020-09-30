@@ -357,7 +357,7 @@ std::vector<size_t> hlasm_plugin::parser_library::semantics::lsp_info_processor:
     {
         const auto& current = hl_info_.lines[i];
         size_t delta_line = (i == 0) ? current.token_range.start.line
-                                     : current.token_range.start.line - hl_info_.lines[i-1].token_range.start.line;
+                                     : current.token_range.start.line - hl_info_.lines[i - 1].token_range.start.line;
         size_t delta_char = (i == 0 || hl_info_.lines[i - 1].token_range.start.line != current.token_range.start.line)
             ? current.token_range.start.column
             : current.token_range.start.column - hl_info_.lines[i - 1].token_range.start.column;
@@ -424,7 +424,7 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
         }
         insert_sorted_hl_symbol(rest);
 
-        //hl_info_.lines.push_back(symbol);
+        // hl_info_.lines.push_back(symbol);
     }
 }
 
