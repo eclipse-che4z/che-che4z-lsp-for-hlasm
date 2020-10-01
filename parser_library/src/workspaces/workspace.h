@@ -26,8 +26,10 @@
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "library.h"
+#include "message_consumer.h"
 #include "processor.h"
 #include "processor_group.h"
+
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -90,6 +92,8 @@ public:
     void open();
     void close();
 
+    void set_message_consumer(message_consumer* consumer);
+
 protected:
     file_manager& get_file_manager();
 
@@ -115,8 +119,8 @@ private:
     bool suppress_diags_ = false;
 
     bool load_and_process_config();
-    //Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
-    //Returns false if there is any error.
+    // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
+    // Returns false if there is any error.
     bool load_config(nlohmann::json& proc_grps_json, nlohmann::json& pgm_conf_json, file_ptr& pgm_conf_file);
 
     bool is_wildcard(const std::string& str);
@@ -132,6 +136,13 @@ private:
     bool program_id_match(const std::string& filename, const program_id& program) const;
 
     void delete_diags(processor_file_ptr file);
+
+    void show_message(const std::string& message);
+
+    message_consumer* message_consumer_ = nullptr;
+
+    // A map that holds true values for files that have diags suppressed and the user was already notified about it
+    std::unordered_map<std::string, bool> diag_suppress_notified_;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

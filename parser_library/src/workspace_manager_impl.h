@@ -56,6 +56,7 @@ public:
     void add_workspace(std::string name, std::string uri)
     {
         auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_));
+        ws.first->second.set_message_consumer(message_consumer_);
         ws.first->second.open();
 
         notify_diagnostics_consumers();
@@ -127,6 +128,14 @@ public:
     void register_performance_metrics_consumer(performance_metrics_consumer* consumer)
     {
         metrics_consumers_.push_back(consumer);
+    }
+
+    void set_message_consumer(message_consumer* consumer)
+    {
+        message_consumer_ = consumer;
+        for (auto& wks : workspaces_)
+            wks.second.set_message_consumer(consumer);
+        
     }
 
     semantics::position_uri_s found_position;
@@ -389,6 +398,7 @@ private:
     std::vector<highlighting_consumer*> hl_consumers_;
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<performance_metrics_consumer*> metrics_consumers_;
+    message_consumer* message_consumer_ = nullptr;
 };
 } // namespace hlasm_plugin::parser_library
 

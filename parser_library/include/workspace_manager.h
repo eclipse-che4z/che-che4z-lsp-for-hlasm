@@ -28,6 +28,7 @@
 
 #include "parser_library_export.h"
 #include "protocol.h"
+#include "message_consumer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -114,7 +115,7 @@ public:
     virtual void register_highlighting_consumer(highlighting_consumer* consumer);
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
     virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
-
+    virtual void set_message_consumer(message_consumer* consumer);
 
     // debugger
     virtual void register_debug_event_consumer(debug_event_consumer& consumer);

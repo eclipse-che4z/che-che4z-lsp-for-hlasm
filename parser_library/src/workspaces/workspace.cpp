@@ -76,6 +76,17 @@ void workspace::delete_diags(processor_file_ptr file)
         if (dep_file)
             dep_file->diags().clear();
     }
+
+    auto& notified_found = diag_suppress_notified_.find(file->get_file_name());
+    if(!notified_found->second)
+        show_message("Deleted diags from " + file->get_file_name() + ", because there is no configuration.");
+    notified_found->second = true;
+}
+
+void workspace::show_message(const std::string& message)
+{
+    if(message_consumer_)
+        message_consumer_->show_message(message, message_type::MT_INFO);
 }
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
@@ -157,8 +168,10 @@ void workspace::parse_file(const std::string& file_uri)
 
         // if there is no processor group assigned to the program, delete diagnostics that may have been created
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
-        if (&grp == &implicit_proc_grp || suppress_diags_)
+        if (&grp == &implicit_proc_grp)
             delete_diags(f);
+        else
+            diag_suppress_notified_[f->get_file_name()] = false;
     }
 
     // second check after all dependants are there to close all files that used to be dependencies
@@ -181,6 +194,7 @@ void workspace::did_open_file(const std::string& file_uri) { parse_file(file_uri
 
 void workspace::did_close_file(const std::string& file_uri)
 {
+    diag_suppress_notified_[file_uri] = false;
     // first check whether the file is a dependency
     // if so, simply close it, no other action is needed
     if (is_dependency_(file_uri))
@@ -216,6 +230,11 @@ void workspace::did_change_watched_files(const std::string& file_uri)
 void workspace::open() { load_and_process_config(); }
 
 void workspace::close() { opened_ = false; }
+
+void workspace::set_message_consumer(message_consumer* consumer)
+{
+    message_consumer_ = consumer;
+}
 
 file_manager& workspace::get_file_manager() { return file_manager_; }
 

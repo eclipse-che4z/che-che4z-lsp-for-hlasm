@@ -35,6 +35,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     register_methods();
 
     ws_mngr_.register_diagnostics_consumer(this);
+    ws_mngr_.set_message_consumer(this);
 }
 
 void server::message_received(const json& message)
@@ -141,7 +142,7 @@ void server::on_shutdown(json id, const json&)
 
 void server::on_exit(json, const json&) { exit_notification_received_ = true; }
 
-void server::show_message(const std::string& message, message_type type)
+void server::show_message(const std::string& message, parser_library::message_type type)
 {
     json m { { "type", (int)type }, { "message", message } };
     notify("window/showMessage", m);
