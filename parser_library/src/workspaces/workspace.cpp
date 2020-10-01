@@ -18,6 +18,7 @@
 #include <regex>
 #include <string>
 
+#include "lib_config.h"
 #include "processor.h"
 #include "wildcard.h"
 
@@ -77,7 +78,7 @@ void workspace::delete_diags(processor_file_ptr file)
             dep_file->diags().clear();
     }
 
-    auto& notified_found = diag_suppress_notified_.find(file->get_file_name());
+    auto notified_found = diag_suppress_notified_.find(file->get_file_name());
     if(!notified_found->second)
         show_message("Deleted diags from " + file->get_file_name() + ", because there is no configuration.");
     notified_found->second = true;
@@ -168,7 +169,8 @@ void workspace::parse_file(const std::string& file_uri)
 
         // if there is no processor group assigned to the program, delete diagnostics that may have been created
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
-        if (&grp == &implicit_proc_grp)
+        f->collect_diags();
+        if (&grp == &implicit_proc_grp && f->diags().size() > lib_config::get_instance()->diag_supress_limit)
             delete_diags(f);
         else
             diag_suppress_notified_[f->get_file_name()] = false;

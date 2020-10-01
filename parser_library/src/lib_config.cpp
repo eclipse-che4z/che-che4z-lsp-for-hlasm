@@ -11,11 +11,7 @@ void lib_config::load_from_json(const nlohmann::json& config)
 {
 	std::shared_ptr<lib_config> loaded = std::make_shared<lib_config>();
 
-	auto found = config.find("continuationHandling");
-	if (found != config.end())
-		loaded->continuationHandling = found->get<bool>();
-
-	found = config.find("diagnosticsSuppressLimit");
+	auto found = config.find("diagnosticsSuppressLimit");
 	if (found != config.end())
 		loaded->diag_supress_limit = found->get<int64_t>();
 
