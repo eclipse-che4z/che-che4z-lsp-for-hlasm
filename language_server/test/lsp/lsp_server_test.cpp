@@ -50,7 +50,7 @@ TEST(lsp_server, initialize)
     json show_message =
         R"({"jsonrpc":"2.0", "method" : "window/showMessage", "params" : {"message":"The capabilities of hlasm language server were sent!", "type" : 3}})"_json;
 
-    EXPECT_CALL(smpm, reply(::testing::_)).WillOnce(::testing::SaveArg<0>(&server_capab));
+    EXPECT_CALL(smpm, reply(::testing::_)).WillRepeatedly(::testing::SaveArg<0>(&server_capab));
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));
     s.message_received(j);
 

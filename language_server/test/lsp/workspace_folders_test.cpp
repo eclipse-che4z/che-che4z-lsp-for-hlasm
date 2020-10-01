@@ -17,6 +17,8 @@
 
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_workspace_folders.h"
+#include "../response_provider_mock.h"
+
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
 const std::string ws1_uri = "file:///c%3A/path/to/W%20S/OneDrive";
@@ -47,7 +49,9 @@ const std::string ws1_path_json_string = R"(/path/to/W S/OneDrive)";
 TEST(workspace_folders, did_change_workspace_folders)
 {
     ws_mngr_mock ws_mngr;
-    lsp::feature_workspace_folders f(ws_mngr);
+    response_provider_mock rpm;
+
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
 
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("OneDrive"), ::testing::StrEq(ws1_path)));
 
@@ -80,7 +84,8 @@ TEST(workspace_folders, initialize_folders)
 {
     using namespace ::testing;
     ws_mngr_mock ws_mngr;
-    lsp::feature_workspace_folders f(ws_mngr);
+    response_provider_mock rpm;
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
 
     // workspace folders on, but no workspaces provided
     json init1 = R"({"processId":5236,

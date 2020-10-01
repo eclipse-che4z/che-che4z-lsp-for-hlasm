@@ -36,7 +36,7 @@ public:
 
     std::vector<json> messages;
 
-    virtual void request(const json&, const std::string&, const json&) override {}
+    virtual void request(const json&, const std::string&, const json&, method) override {}
     virtual void respond(const json&, const std::string&, const json&) override {}
     virtual void notify(const std::string&, const json&) override {}
     virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}

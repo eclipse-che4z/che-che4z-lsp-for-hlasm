@@ -23,12 +23,14 @@
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
 
+#include "lib_config.h"
+
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(ws_mngr)
 {
-    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_));
+    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_language_features>(ws_mngr_, *this));
     register_feature_methods();
@@ -40,9 +42,43 @@ server::server(parser_library::workspace_manager& ws_mngr)
 
 void server::message_received(const json& message)
 {
-    // we do not support any requests sent from this server
-    // thus we do not accept any responses
     auto id_found = message.find("id");
+
+
+    auto result_found = message.find("result");
+    auto error_result_found = message.find("error");
+
+    if (result_found != message.end())
+    {
+        //we received a response to our request that was successful
+        auto handler_found = request_handlers_.find(*id_found);
+        if (handler_found == request_handlers_.end())
+        {
+            LOG_WARNING("A response with no registered handler received.");
+            return;
+        }
+        if (id_found == message.end())
+        {
+            LOG_WARNING("A response with no id field received.");
+            return;
+        }
+        method handler = handler_found->second;
+        request_handlers_.erase(handler_found);
+        handler(id_found.value(), result_found.value());
+        return;
+    }
+    else if (error_result_found != message.end())
+    {
+        auto message_found = error_result_found->find("message");
+        std::string message;
+        if (message_found != error_result_found->end() && message_found->is_string())
+            message = message_found->get<std::string>();
+        else
+            message = "Request with id " + id_found->dump() + " returned with unspecified error.";
+        LOG_WARNING(message);
+        return;
+    }
+
     auto params_found = message.find("params");
     auto method_found = message.find("method");
 
@@ -64,9 +100,10 @@ void server::message_received(const json& message)
     }
 }
 
-void server::request(const json& id, const std::string& requested_method, const json& args)
+void server::request(const json & id, const std::string& requested_method, const json& args, method handler)
 {
-    json reply{ { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
+    json reply { { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
+    request_handlers_.emplace(id, handler);
     send_message_->reply(reply);
 }
 
@@ -99,6 +136,13 @@ void server::register_methods()
     methods_.emplace("exit", std::bind(&server::on_exit, this, std::placeholders::_1, std::placeholders::_2));
 }
 
+void empty_handler(json, const json&)
+{
+    //Does nothing
+}
+
+
+uint64_t config_request_number = 0;
 void server::on_initialize(json id, const json& param)
 {
     // send server capabilities back
@@ -123,6 +167,17 @@ void server::on_initialize(json id, const json& param)
     }
 
     respond(id, "", capabilities);
+
+    json register_configuration_changed_args {
+        { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
+    };
+    /*json register_message{ { "jsonrpc", "2.0" },
+    { "id", "register1" },
+    { "method", "client/registerCapability" },
+    { "params",  } };
+    send_message_->reply(register_message);*/
+
+    request("register1", "client/registerCapability", register_configuration_changed_args, &empty_handler);
 
 
     for (auto& f : features_)
