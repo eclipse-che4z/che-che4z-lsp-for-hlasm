@@ -1,6 +1,6 @@
 #include "lib_config.h"
 
-static std::shared_ptr<lib_config> config_instance;
+static std::shared_ptr<lib_config> config_instance = std::make_shared<lib_config>();
 
 std::shared_ptr<lib_config> lib_config::get_instance()
 {

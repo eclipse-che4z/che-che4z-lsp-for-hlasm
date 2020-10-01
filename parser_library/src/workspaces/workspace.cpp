@@ -45,7 +45,6 @@ workspace::workspace(file_manager& file_manager)
     : workspace("", file_manager)
 {
     opened_ = true;
-    suppress_diags_ = true;
 }
 
 void workspace::collect_diags() const
@@ -275,6 +274,23 @@ bool workspace::load_and_process_config()
             extensions.insert({ std::regex_replace(wildcard_str, extension_regex, "$2"),
                 wildcard2regex((ws_path / wildcard_str).string()) });
     }
+
+    /*auto suppress_diags_json = pgm_conf_json.find("diagnosticsSuppress");
+    if (suppress_diags_json != pgm_conf_json.end())
+    {
+        if (suppress_diags_json->is_boolean())
+            suppress_diags_ = suppress_diags_json->get<bool>();
+    }
+
+    auto suppress_diags_limit_json = pgm_conf_json.find("diagnosticsSuppressLimit");
+    if (suppress_diags_json != pgm_conf_json.end())
+    {
+        if (suppress_diags_json->is_number_integer())
+            suppress_diags_limit_ = suppress_diags_json->get<int64_t>();
+    }
+    else
+        suppress_diags_limit_.reset();*/
+
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups
     json pgs = proc_grps_json["pgroups"];

@@ -116,7 +116,7 @@ private:
     std::filesystem::path pgm_conf_path_;
 
     bool opened_ = false;
-    bool suppress_diags_ = false;
+    
 
     bool load_and_process_config();
     // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
@@ -143,6 +143,8 @@ private:
 
     // A map that holds true values for files that have diags suppressed and the user was already notified about it
     std::unordered_map<std::string, bool> diag_suppress_notified_;
+    bool suppress_diags_ = false;
+    std::optional<int64_t> suppress_diags_limit_;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
