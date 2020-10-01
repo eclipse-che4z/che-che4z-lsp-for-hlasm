@@ -55,7 +55,7 @@ struct notif_mock
 
 struct response_provider_mock : public response_provider
 {
-    void request(const json& id, const std::string& requested_method, const json& args) override {};
+    void request(const json&, const std::string&, const json&, method) override {};
     void respond(const json& id, const std::string& requested_method, const json& args) override
     {
         responses.push_back({ id, requested_method, args });

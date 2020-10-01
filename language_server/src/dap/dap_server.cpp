@@ -31,7 +31,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     register_methods();
 }
 
-void server::request(const json& request_seq, const std::string& requested_command, const json& args)
+void server::request(const json& request_seq, const std::string& requested_command, const json& args, method handler)
 {
     send_message_->reply(json{ { "seq", request_seq },
         { "type", "request" },

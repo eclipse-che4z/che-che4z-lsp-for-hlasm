@@ -50,7 +50,7 @@ public:
 
 protected:
     // Sends request to LSP client using send_message_provider.
-    void request(const json& id, const std::string& requested_method, const json& args) override;
+    void request(const json& id, const std::string& requested_method, const json& args, method handler) override;
     // Sends respond to request to LSP client using send_message_provider.
     void respond(const json& id, const std::string& requested_method, const json& args) override;
     // Sends notification to LSP client using send_message_provider.
