@@ -26,8 +26,9 @@ using json = nlohmann::json;
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager)
-    : name_(name)
+workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager, std::atomic<bool>* cancel)
+    : cancel_(cancel)
+    , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
     , implicit_proc_grp("pg_implicit")
@@ -37,12 +38,12 @@ workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager)
     pgm_conf_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF;
 }
 
-workspace::workspace(ws_uri uri, file_manager& file_manager)
-    : workspace(uri, uri, file_manager)
+workspace::workspace(ws_uri uri, file_manager& file_manager, std::atomic<bool>* cancel)
+    : workspace(uri, uri, file_manager, cancel)
 {}
 
-workspace::workspace(file_manager& file_manager)
-    : workspace("", file_manager)
+workspace::workspace(file_manager& file_manager, std::atomic<bool>* cancel)
+    : workspace("", file_manager, cancel)
 {
     opened_ = true;
 }
@@ -77,16 +78,23 @@ void workspace::delete_diags(processor_file_ptr file)
             dep_file->diags().clear();
     }
 
-    auto notified_found = diag_suppress_notified_.find(file->get_file_name());
-    if(!notified_found->second)
-        show_message("Deleted diags from " + file->get_file_name() + ", because there is no configuration.");
-    notified_found->second = true;
+    auto notified_found = diag_suppress_notified_.emplace(file->get_file_name(), false);
+    if (!notified_found.first->second)
+        show_message("Diagnostics suppressed from " + file->get_file_name() + ", because there is no configuration.");
+    notified_found.first->second = true;
 }
 
 void workspace::show_message(const std::string& message)
 {
-    if(message_consumer_)
+    if (message_consumer_)
         message_consumer_->show_message(message, message_type::MT_INFO);
+}
+
+int64_t workspace::get_suppress_diags_limit()
+{
+    if (suppress_diags_limit_)
+        return suppress_diags_limit_.value();
+    return lib_config::get_instance()->diag_supress_limit;
 }
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
@@ -166,10 +174,14 @@ void workspace::parse_file(const std::string& file_uri)
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
 
+
         // if there is no processor group assigned to the program, delete diagnostics that may have been created
+        if (cancel_ && *cancel_) // skip, if parsing was cancelled using the cancellation token
+            continue;
+
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
         f->collect_diags();
-        if (&grp == &implicit_proc_grp && f->diags().size() > lib_config::get_instance()->diag_supress_limit)
+        if (&grp == &implicit_proc_grp && f->diags().size() > get_suppress_diags_limit())
             delete_diags(f);
         else
             diag_suppress_notified_[f->get_file_name()] = false;
@@ -232,10 +244,7 @@ void workspace::open() { load_and_process_config(); }
 
 void workspace::close() { opened_ = false; }
 
-void workspace::set_message_consumer(message_consumer* consumer)
-{
-    message_consumer_ = consumer;
-}
+void workspace::set_message_consumer(message_consumer* consumer) { message_consumer_ = consumer; }
 
 file_manager& workspace::get_file_manager() { return file_manager_; }
 
@@ -275,21 +284,14 @@ bool workspace::load_and_process_config()
                 wildcard2regex((ws_path / wildcard_str).string()) });
     }
 
-    /*auto suppress_diags_json = pgm_conf_json.find("diagnosticsSuppress");
-    if (suppress_diags_json != pgm_conf_json.end())
-    {
-        if (suppress_diags_json->is_boolean())
-            suppress_diags_ = suppress_diags_json->get<bool>();
-    }
-
     auto suppress_diags_limit_json = pgm_conf_json.find("diagnosticsSuppressLimit");
-    if (suppress_diags_json != pgm_conf_json.end())
+    if (suppress_diags_limit_json != pgm_conf_json.end())
     {
-        if (suppress_diags_json->is_number_integer())
-            suppress_diags_limit_ = suppress_diags_json->get<int64_t>();
+        if (suppress_diags_limit_json->is_number_integer())
+            suppress_diags_limit_ = suppress_diags_limit_json->get<int64_t>();
     }
     else
-        suppress_diags_limit_.reset();*/
+        suppress_diags_limit_.reset();
 
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups

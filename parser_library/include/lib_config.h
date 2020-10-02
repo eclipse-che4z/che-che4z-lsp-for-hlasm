@@ -12,7 +12,7 @@ struct PARSER_LIBRARY_EXPORT lib_config
 	static std::shared_ptr<lib_config> get_instance();
 	static void load_from_json(const nlohmann::json & config);
 
-	int64_t diag_supress_limit;
+	int64_t diag_supress_limit = 10;
 };
 
 

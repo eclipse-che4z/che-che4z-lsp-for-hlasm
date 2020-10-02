@@ -60,9 +60,9 @@ class workspace : public diagnosable_impl, public parse_lib_provider
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
     // between files.
-    workspace(file_manager& file_manager);
-    workspace(ws_uri uri, file_manager& file_manager);
-    workspace(ws_uri uri, std::string name, file_manager& file_manager);
+    workspace(file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
+    workspace(ws_uri uri, file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
+    workspace(ws_uri uri, std::string name, file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
 
     workspace(const workspace& ws) = delete;
     workspace& operator=(const workspace&) = delete;
@@ -101,6 +101,8 @@ private:
     constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
     constexpr static char FILENAME_PGM_CONF[] = "pgm_conf.json";
     constexpr static char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
+
+    std::atomic<bool>* cancel_;
 
     std::string name_;
     ws_uri uri_;
@@ -143,8 +145,8 @@ private:
 
     // A map that holds true values for files that have diags suppressed and the user was already notified about it
     std::unordered_map<std::string, bool> diag_suppress_notified_;
-    bool suppress_diags_ = false;
     std::optional<int64_t> suppress_diags_limit_;
+    int64_t get_suppress_diags_limit();
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
