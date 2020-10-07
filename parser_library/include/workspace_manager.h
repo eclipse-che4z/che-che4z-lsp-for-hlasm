@@ -26,9 +26,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "message_consumer.h"
 #include "parser_library_export.h"
 #include "protocol.h"
-#include "message_consumer.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

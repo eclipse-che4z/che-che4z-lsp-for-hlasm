@@ -22,7 +22,6 @@
 #include "feature_language_features.h"
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
-
 #include "lib_config.h"
 
 namespace hlasm_plugin::language_server::lsp {
@@ -50,7 +49,7 @@ void server::message_received(const json& message)
 
     if (result_found != message.end())
     {
-        //we received a response to our request that was successful
+        // we received a response to our request that was successful
         auto handler_found = request_handlers_.find(*id_found);
         if (handler_found == request_handlers_.end())
         {
@@ -100,7 +99,7 @@ void server::message_received(const json& message)
     }
 }
 
-void server::request(const json & id, const std::string& requested_method, const json& args, method handler)
+void server::request(const json& id, const std::string& requested_method, const json& args, method handler)
 {
     json reply { { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
     request_handlers_.emplace(id, handler);
@@ -138,7 +137,7 @@ void server::register_methods()
 
 void empty_handler(json, const json&)
 {
-    //Does nothing
+    // Does nothing
 }
 
 

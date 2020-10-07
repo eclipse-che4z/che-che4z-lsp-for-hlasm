@@ -29,7 +29,6 @@ namespace hlasm_plugin::language_server {
 class response_provider
 {
 public:
-    
     virtual void request(const json& id, const std::string& requested_method, const json& args, method handler) = 0;
     virtual void respond(const json& id, const std::string& requested_method, const json& args) = 0;
     virtual void notify(const std::string& method, const json& args) = 0;

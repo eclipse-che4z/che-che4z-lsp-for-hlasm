@@ -135,7 +135,6 @@ public:
         message_consumer_ = consumer;
         for (auto& wks : workspaces_)
             wks.second.set_message_consumer(consumer);
-        
     }
 
     semantics::position_uri_s found_position;

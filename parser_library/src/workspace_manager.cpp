@@ -92,10 +92,7 @@ void workspace_manager::register_performance_metrics_consumer(performance_metric
     impl_->register_performance_metrics_consumer(consumer);
 }
 
-void workspace_manager::set_message_consumer(message_consumer* consumer)
-{
-    impl_->set_message_consumer(consumer);
-}
+void workspace_manager::set_message_consumer(message_consumer* consumer) { impl_->set_message_consumer(consumer); }
 
 position_uri workspace_manager::definition(const char* document_uri, const position pos)
 {
