@@ -15,9 +15,9 @@
 
 #include <string>
 
+#include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_workspace_folders.h"
-#include "../response_provider_mock.h"
 
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
@@ -87,6 +87,14 @@ TEST(workspace_folders, initialize_folders)
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
+    for (int config_request_number = 0; config_request_number < 5; ++config_request_number)
+        EXPECT_CALL(rpm,
+            request(json("config_request_" + std::to_string(config_request_number)),
+                std::string("workspace/configuration"),
+                _,
+                _))
+            .Times(1);
+
     // workspace folders on, but no workspaces provided
     json init1 = R"({"processId":5236,
                      "rootPath":null,
@@ -95,6 +103,7 @@ TEST(workspace_folders, initialize_folders)
                      "workspaceFolders":null})"_json;
 
     EXPECT_CALL(ws_mngr, add_workspace(_, _)).Times(0);
+
     f.initialize_feature(init1);
 
 

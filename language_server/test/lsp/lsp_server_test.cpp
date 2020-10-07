@@ -46,12 +46,21 @@ TEST(lsp_server, initialize)
 
 
     json server_capab;
+    json second;
 
     json show_message =
         R"({"jsonrpc":"2.0", "method" : "window/showMessage", "params" : {"message":"The capabilities of hlasm language server were sent!", "type" : 3}})"_json;
+    json register_message =
+        R"({"jsonrpc":"2.0", "id":"register1", "method" : "client/registerCapability", "params" : [{"registrations":[{"id":"configureRegister", "method":"workspace/didChangeConfiguration"}]}]})"_json;
+    json config_request_message =
+        R"({"id":"config_request_0","jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"}]}})"_json;
 
     EXPECT_CALL(smpm, reply(::testing::_)).WillRepeatedly(::testing::SaveArg<0>(&server_capab));
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));
+    EXPECT_CALL(smpm, reply(register_message)).Times(::testing::AtMost(1));
+    EXPECT_CALL(smpm, reply(config_request_message)).Times(::testing::AtMost(1));
+
+    // EXPECT_CALL(smpm, reply(::testing::_)).Times(::testing::AtMost(4));
     s.message_received(j);
 
 
