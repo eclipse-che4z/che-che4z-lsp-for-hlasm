@@ -15,6 +15,7 @@
 #ifndef PROCESSING_LSP_ANALYZER_H
 #define PROCESSING_LSP_ANALYZER_H
 
+#include "occurence_collector.h"
 #include "processing/processing_format.h"
 #include "statement_analyzer.h"
 
@@ -28,11 +29,13 @@ public:
         processing_kind proc_kind) override;
 
 private:
-    void collect_ord_occurences(const context::hlasm_statement& statement);
-    void collect_var_occurences(const context::hlasm_statement& statement);
+    void collect_occurences(occurence_kind kind, const context::hlasm_statement& statement);
     void collect_var_definitions(const context::hlasm_statement& statement);
-    void collect_seq_occurences(const context::hlasm_statement& statement);
     void collect_var_seq_scope();
+
+    void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
+    void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);
+    void collect_occurence(const semantics::operands_si& operands, occurence_collector& collector);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
