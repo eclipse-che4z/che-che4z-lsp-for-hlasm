@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <string>
