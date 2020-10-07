@@ -36,15 +36,19 @@ struct symbol_occurence
     range occurence;
 };
 
+using occurence_storage = std::vector<symbol_occurence>;
+
 class occurence_collector : public semantics::operand_visitor,
                             expressions::mach_expr_visitor,
                             expressions::ca_expr_visitor
 {
-    const occurence_kind collector_kind_;
-
-    std::vector<symbol_occurence> occurences_;
-
 public:
+    const occurence_kind collector_kind;
+    std::vector<symbol_occurence>& occurences;
+
+
+    occurence_collector(occurence_kind collector_kind, occurence_storage& storage);
+
     virtual void visit(const semantics::empty_operand& op) override;
     virtual void visit(const semantics::model_operand& op) override;
     virtual void visit(const semantics::expr_machine_operand& op) override;
@@ -61,14 +65,12 @@ public:
     virtual void visit(const semantics::macro_operand_chain& op) override;
     virtual void visit(const semantics::macro_operand_string& op) override;
 
-    static std::vector<symbol_occurence> get_occurences(occurence_kind kind, const semantics::concat_chain& chain);
-
-private:
     void get_occurence(const semantics::variable_symbol& var);
     void get_occurence(const semantics::seq_sym& seq);
     void get_occurence(context::id_index ord, const range& ord_range);
     void get_occurence(const semantics::concat_chain& chain);
 
+private:
     virtual void visit(const expressions::mach_expr_constant& expr) override;
     virtual void visit(const expressions::mach_expr_data_attr& expr) override;
     virtual void visit(const expressions::mach_expr_symbol& expr) override;

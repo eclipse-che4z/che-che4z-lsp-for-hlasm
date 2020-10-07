@@ -18,6 +18,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+occurence_collector::occurence_collector(occurence_kind collector_kind, occurence_storage& storage)
+    : collector_kind(collector_kind)
+    , occurences(storage)
+{}
+
 void occurence_collector::visit(const semantics::empty_operand&) {}
 
 void occurence_collector::visit(const semantics::model_operand& op) { get_occurence(op.chain); }
@@ -88,52 +93,38 @@ void occurence_collector::visit(const semantics::macro_operand_chain& op) { get_
 
 void occurence_collector::visit(const semantics::macro_operand_string&) {}
 
-std::vector<symbol_occurence> get_var_occurence(const semantics::variable_symbol& var)
-{
-    if (var.created)
-        return occurence_collector::get_occurences(occurence_kind::VAR, var.access_created()->created_name);
-    return { symbol_occurence { occurence_kind::VAR, var.access_basic()->name, var.symbol_range } };
-}
-
 void occurence_collector::get_occurence(const semantics::variable_symbol& var)
 {
-    if (collector_kind_ == occurence_kind::VAR)
+    if (collector_kind == occurence_kind::VAR)
     {
-        auto tmp = get_var_occurence(var);
-        occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
+        if (var.created)
+            get_occurence(var.access_created()->created_name);
+        else
+            occurences.push_back(symbol_occurence { occurence_kind::VAR, var.access_basic()->name, var.symbol_range });
     }
 }
 
 void occurence_collector::get_occurence(const semantics::seq_sym& seq)
 {
-    if (collector_kind_ == occurence_kind::SEQ)
-        occurences_.push_back(symbol_occurence { occurence_kind::ORD, seq.name, seq.symbol_range });
+    if (collector_kind == occurence_kind::SEQ)
+        occurences.push_back(symbol_occurence { occurence_kind::ORD, seq.name, seq.symbol_range });
 }
 
 void occurence_collector::get_occurence(context::id_index ord, const range& ord_range)
 {
-    if (collector_kind_ == occurence_kind::ORD)
-        occurences_.push_back(symbol_occurence { occurence_kind::ORD, ord, ord_range });
+    if (collector_kind == occurence_kind::ORD)
+        occurences.push_back(symbol_occurence { occurence_kind::ORD, ord, ord_range });
 }
 
 void occurence_collector::get_occurence(const semantics::concat_chain& chain)
 {
-    auto tmp = get_occurences(collector_kind_, chain);
-    occurences_.insert(occurences_.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
-}
-
-std::vector<symbol_occurence> occurence_collector::get_occurences(
-    occurence_kind kind, const semantics::concat_chain& chain)
-{
-    std::vector<symbol_occurence> occurences;
-
     for (const auto& point : chain)
     {
         switch (point->type)
         {
             case semantics::concat_type::STR:
                 /* TODO add range to str_conc struct
-                if (kind == occurence_kind::ORD)
+                if (collector_kind == occurence_kind::ORD)
                 {
                     auto [valid, name] =
                 processing::context_manager(hlasm_ctx).try_get_symbol_name(point->access_str()->value); if (valid)
@@ -142,26 +133,17 @@ std::vector<symbol_occurence> occurence_collector::get_occurences(
                 }*/
                 break;
             case semantics::concat_type::VAR:
-                if (kind == occurence_kind::VAR)
-                {
-                    auto tmp = get_var_occurence(*point->access_var()->access_var()->symbol);
-                    occurences.insert(
-                        occurences.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
-                }
+                if (collector_kind == occurence_kind::VAR)
+                    get_occurence(*point->access_var()->access_var()->symbol);
                 break;
             case semantics::concat_type::SUB:
                 for (const auto& ch : point->access_sub()->list)
-                {
-                    auto tmp = get_occurences(kind, ch);
-                    occurences.insert(
-                        occurences.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
-                }
+                    get_occurence(ch);
                 break;
             default:
                 break;
         }
     }
-    return occurences;
 }
 
 void occurence_collector::visit(const expressions::mach_expr_constant&) {}
