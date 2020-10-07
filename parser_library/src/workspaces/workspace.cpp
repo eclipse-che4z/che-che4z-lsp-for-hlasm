@@ -176,7 +176,7 @@ void workspace::parse_file(const std::string& file_uri)
 
 
         // if there is no processor group assigned to the program, delete diagnostics that may have been created
-        if (cancel_ && *cancel_) // skip, if parsing was cancelled using the cancellation token
+        if (cancel_ && cancel_->load()) // skip, if parsing was cancelled using the cancellation token
             continue;
 
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
