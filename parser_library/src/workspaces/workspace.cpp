@@ -181,7 +181,7 @@ void workspace::parse_file(const std::string& file_uri)
 
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
         f->collect_diags();
-        if (&grp == &implicit_proc_grp && f->diags().size() > get_suppress_diags_limit())
+        if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_suppress_diags_limit())
             delete_diags(f);
         else
             diag_suppress_notified_[f->get_file_name()] = false;
