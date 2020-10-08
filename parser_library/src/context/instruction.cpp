@@ -234,8 +234,8 @@ public:
         {
             try
             {
-                const one_operand& second = dynamic_cast<const one_operand&>(*to_check[1]);
-                const one_operand& third = dynamic_cast<const one_operand&>(*to_check[2]);
+                auto&& second = dynamic_cast<const one_operand&>(*to_check[1]);
+                auto&& third = dynamic_cast<const one_operand&>(*to_check[2]);
                 if (second.value == third.value)
                     return true;
                 else
