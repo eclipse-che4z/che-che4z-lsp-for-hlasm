@@ -35,7 +35,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         }
     }
 
-    workspaces::file_impl::replace_non_utf8_chars(source);
+    source = workspaces::file_impl::replace_non_utf8_chars(source);
 
     try
     {
