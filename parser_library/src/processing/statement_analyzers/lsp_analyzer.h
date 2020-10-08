@@ -23,6 +23,8 @@ namespace hlasm_plugin::parser_library::processing {
 
 class lsp_analyzer : public statement_analyzer
 {
+    context::hlasm_context& hlasm_ctx_;
+
 public:
     virtual void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,

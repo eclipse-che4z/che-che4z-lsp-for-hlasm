@@ -16,6 +16,9 @@
 
 #include <algorithm>
 
+#include "processing/context_manager.h"
+
+
 namespace hlasm_plugin::parser_library::processing {
 
 void lsp_analyzer::analyze(
@@ -72,10 +75,12 @@ void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence
         case semantics::label_si_type::CONC:
             collector.get_occurence(std::get<semantics::concat_chain>(label.value));
             break;
-            /*
-        case semantics::label_si_type::ORD:
-            collector.get_occurence(std::get<semantics::concat_chain>(label.value));
-            break;*/
+        case semantics::label_si_type::ORD: {
+            auto [valid, name] = context_manager(hlasm_ctx_).try_get_symbol_name(std::get<std::string>(label.value));
+            if (valid)
+                collector.get_occurence(name, label.field_range);
+            break;
+        }
         case semantics::label_si_type::SEQ:
             collector.get_occurence(std::get<semantics::seq_sym>(label.value));
             break;
