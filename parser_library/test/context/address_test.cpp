@@ -38,3 +38,23 @@ TEST(address, normalized_spaces)
     EXPECT_EQ(normalized.front().first, sp2);
     EXPECT_EQ(normalized.front().second, (size_t)2);
 }
+
+TEST(address, has_unresolved_spaces)
+{
+    hlasm_context ctx;
+    ctx.ord_ctx.set_section(ctx.ids().add("TEST"), section_kind::COMMON, location());
+
+    auto sp1 = ctx.ord_ctx.current_section()->current_location_counter().set_value(
+        ctx.ord_ctx.current_section()->current_location_counter().current_address(), 0, 0, true);
+    auto sp2 = ctx.ord_ctx.current_section()->current_location_counter().register_ordinary_space(halfword);
+
+    auto addr = ctx.ord_ctx.current_section()->current_location_counter().current_address();
+
+    space::resolve(sp1, sp2);
+
+    ASSERT_TRUE(addr.has_unresolved_space());
+
+    space::resolve(sp2, 1);
+
+    ASSERT_FALSE(addr.has_unresolved_space());
+}
