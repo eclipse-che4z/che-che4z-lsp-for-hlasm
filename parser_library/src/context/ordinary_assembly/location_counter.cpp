@@ -84,11 +84,13 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
 
     auto curr_addr = current_address();
 
+    // checks whether addr is in this location counter and if it is well formed
     if (!addr.in_same_loctr(curr_addr) || (!addr.has_dependant_space() && addr.offset() + al + offset < 0))
         throw std::runtime_error("set incompatible loctr value");
 
     if (has_undefined_part)
     {
+        // when address has undefined absolute part, register space
         org_data_.emplace_back();
         return register_space(context::no_align, std::move(curr_addr), boundary, offset);
     }
@@ -96,6 +98,7 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
     if (curr_addr.spaces() != addr.spaces() || (int)curr_data().storage - addr.offset() > curr_data().current_safe_area
         || (boundary && (int)curr_data().storage - addr.offset() > curr_data().current_safe_area + offset))
     {
+        // when addr is composed of different spaces or falls outside safe area, register space
         org_data_.emplace_back();
         return register_space(context::no_align, space_kind::LOCTR_SET);
     }
@@ -104,6 +107,8 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
         int diff = addr.offset() - curr_data().storage;
         if (diff < 0 && curr_data().kind == loctr_data_kind::POTENTIAL_MAX)
         {
+            // when value of addr is lower than loctr's and current loctr value is at its maximum, create new loctr data
+            // so that we can track new loctr value for later maximum retrieval (in method set_available_value)
             org_data_.emplace_back(curr_data());
             curr_data().kind = loctr_data_kind::UNKNOWN_MAX;
         }
@@ -115,13 +120,21 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
 
 std::pair<space_ptr, std::vector<address>> location_counter::set_available_value()
 {
+    // here we find the loctr data with the highest value
+
+    // erase last loctr data, if its value is lower than the previous one (and has the UNKNOWN_MAX enum)
     if (curr_data().kind == loctr_data_kind::UNKNOWN_MAX && (org_data_.end() - 2)->storage >= curr_data().storage)
         org_data_.erase(org_data_.end() - 1);
 
+    // if we have only one loctr data with no spaces (or nonstarting loctr space),
+    // we are already at the highest loctr value
     if (org_data_.size() == 1
-        && (org_data_.begin()->unknown_parts.empty()
-            || (org_data_.begin()->unknown_parts.size() == 1 && kind == loctr_kind::NONSTARTING)))
+        && (org_data_.front().unknown_parts.empty()
+            || (org_data_.front().unknown_parts.size() == 1 && kind == loctr_kind::NONSTARTING)))
         return std::make_pair(nullptr, std::vector<address> {});
+
+    // otherwise we collect representing addresses from all loctr values
+    // and register space that will represent the highest loctr value
 
     std::vector<address> addr_arr;
 
