@@ -50,17 +50,19 @@ void server::message_received(const json& message)
     if (result_found != message.end())
     {
         // we received a response to our request that was successful
+        if (id_found == message.end())
+        {
+            LOG_WARNING("A response with no id field received.");
+            return;
+        }
+        
         auto handler_found = request_handlers_.find(*id_found);
         if (handler_found == request_handlers_.end())
         {
             LOG_WARNING("A response with no registered handler received.");
             return;
         }
-        if (id_found == message.end())
-        {
-            LOG_WARNING("A response with no id field received.");
-            return;
-        }
+
         method handler = handler_found->second;
         request_handlers_.erase(handler_found);
         handler(id_found.value(), result_found.value());
@@ -140,8 +142,6 @@ void empty_handler(json, const json&)
     // Does nothing
 }
 
-
-uint64_t config_request_number = 0;
 void server::on_initialize(json id, const json& param)
 {
     // send server capabilities back

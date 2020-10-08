@@ -96,3 +96,69 @@ TEST(lsp_server, not_implemented_method)
     s.message_received(j);
     // No result is tested, server should ignore unknown LSP method
 }
+class request_handler
+{
+public:
+    void handle(json id, json args)
+    {
+        ++counter;
+        received_id = id;
+        received_args = args;
+    }
+
+    int counter = 0;
+    json received_id;
+    json received_args;
+};
+
+TEST(lsp_server, request_correct)
+{
+    parser_library::workspace_manager mngr;
+    send_message_provider_mock message_provider;
+    lsp::server s(mngr);
+    s.set_send_message_provider(&message_provider);
+    response_provider& rp = s;
+    request_handler handler;
+
+    json expected_message = R"({"id":"a_request","jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
+
+    EXPECT_CALL(message_provider, reply(expected_message));
+
+    rp.request("a_request", "client_method", "a_json_parameter", std::bind(&request_handler::handle, &handler, std::placeholders::_1, std::placeholders::_2));
+
+    json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
+
+    s.message_received(request_response);
+
+    ASSERT_EQ(handler.counter, 1);
+    EXPECT_EQ(handler.received_id, "a_request");
+    EXPECT_EQ(handler.received_args, "response_result");
+}
+
+TEST(lsp_server, request_no_handler)
+{
+    parser_library::workspace_manager mngr;
+    send_message_provider_mock message_provider;
+    lsp::server s(mngr);
+    s.set_send_message_provider(&message_provider);
+
+    json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
+
+    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+
+    s.message_received(request_response);
+}
+
+TEST(lsp_server, request_no_id)
+{
+    parser_library::workspace_manager mngr;
+    send_message_provider_mock message_provider;
+    lsp::server s(mngr);
+    s.set_send_message_provider(&message_provider);
+
+    json request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
+
+    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+
+    s.message_received(request_response);
+}
