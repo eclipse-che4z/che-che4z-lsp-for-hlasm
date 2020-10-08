@@ -87,7 +87,7 @@ TEST(workspace_folders, initialize_folders)
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
-    for (int config_request_number = 1; config_request_number <= 5; ++config_request_number)
+    for (int config_request_number = 0; config_request_number < 5; ++config_request_number)
         EXPECT_CALL(rpm,
             request(json("config_request_" + std::to_string(config_request_number)),
                 std::string("workspace/configuration"),

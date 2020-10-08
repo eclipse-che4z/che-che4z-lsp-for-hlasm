@@ -55,7 +55,7 @@ TEST(lsp_server, initialize)
     json config_request_message =
         R"({"id":"config_request_0","jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"}]}})"_json;
 
-    EXPECT_CALL(smpm, reply(::testing::_)).WillRepeatedly(::testing::SaveArg<0>(&server_capab));
+    EXPECT_CALL(smpm, reply(::testing::_)).WillOnce(::testing::SaveArg<0>(&server_capab));
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(register_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(config_request_message)).Times(::testing::AtMost(1));
@@ -157,6 +157,36 @@ TEST(lsp_server, request_no_id)
     s.set_send_message_provider(&message_provider);
 
     json request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
+
+    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+
+    s.message_received(request_response);
+}
+
+
+
+TEST(lsp_server, request_error)
+{
+    parser_library::workspace_manager mngr;
+    send_message_provider_mock message_provider;
+    lsp::server s(mngr);
+    s.set_send_message_provider(&message_provider);
+
+    json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
+
+    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+
+    s.message_received(request_response);
+}
+
+TEST(lsp_server, request_error_no_message)
+{
+    parser_library::workspace_manager mngr;
+    send_message_provider_mock message_provider;
+    lsp::server s(mngr);
+    s.set_send_message_provider(&message_provider);
+
+    json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;
 
     EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
 

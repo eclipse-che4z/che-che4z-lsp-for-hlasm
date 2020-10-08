@@ -72,8 +72,8 @@ void server::message_received(const json& message)
     {
         auto message_found = error_result_found->find("message");
         std::string warn_message;
-        if (message_found != error_result_found->end() && message_found->is_string())
-            warn_message = message_found->get<std::string>();
+        if (message_found != error_result_found->end())
+            warn_message = message_found->dump();
         else
             warn_message = "Request with id " + id_found->dump() + " returned with unspecified error.";
         LOG_WARNING(warn_message);

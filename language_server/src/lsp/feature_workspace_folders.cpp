@@ -138,12 +138,11 @@ void feature_workspace_folders::send_configuration_request()
     if (!response_)
         return;
     static const json config_request_args { { "items", { { { "section", "hlasm" } } } } };
-    static uint64_t config_request_number = 0;
-    response_->request("config_request_" + std::to_string(config_request_number),
+    response_->request("config_request_" + std::to_string(config_request_number_),
         "workspace/configuration",
         config_request_args,
         std::bind(&feature_workspace_folders::configuration, this, std::placeholders::_1, std::placeholders::_2));
-    ++config_request_number;
+    ++config_request_number_;
 }
 
 void feature_workspace_folders::configuration(const json&, const json& params)

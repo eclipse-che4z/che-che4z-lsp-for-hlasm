@@ -56,6 +56,7 @@ private:
     // Adds one workspace to the workspace manager.
     void add_workspace(const std::string& name, const std::string& uri);
 
+    uint64_t config_request_number_ = 0;
     void send_configuration_request();
 };
 
