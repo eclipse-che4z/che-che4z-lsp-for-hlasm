@@ -80,6 +80,15 @@ TEST(diags_suppress, no_suppress)
     EXPECT_EQ(pfile->diags().size(), 6U);
 }
 
+class message_consumer_mock : public hlasm_plugin::parser_library::message_consumer
+{
+public:
+    virtual void show_message(const std::string& message, message_type type) override
+    {
+        messages.push_back(std::make_pair(message, type));
+    }
+    std::vector<std::pair<std::string, message_type>> messages;
+};
 TEST(diags_suppress, do_suppress)
 {
     json new_config = R"({"diagnosticsSuppressLimit":5})"_json;
@@ -100,7 +109,10 @@ TEST(diags_suppress, do_suppress)
     LR 1,
 )");
 
+    message_consumer_mock msg_consumer;
+
     workspace ws(fm);
+    ws.set_message_consumer(&msg_consumer);
     ws.open();
     ws.did_open_file(file_name);
 
@@ -109,6 +121,10 @@ TEST(diags_suppress, do_suppress)
 
     pfile->collect_diags();
     EXPECT_EQ(pfile->diags().size(), 0U);
+
+    ASSERT_EQ(msg_consumer.messages.size(), 1U);
+    EXPECT_EQ(msg_consumer.messages[0].first, "Diagnostics suppressed from a_file, because there is no configuration.");
+    EXPECT_EQ(msg_consumer.messages[0].second, message_type::MT_INFO);
 }
 
 TEST(diags_suppress, pgm_supress_limit_changed)
@@ -154,4 +170,36 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     ASSERT_TRUE(pfile);
     pfile->collect_diags();
     EXPECT_EQ(pfile->diags().size(), 0U);
+}
+
+TEST(diags_suppress, cancel_token)
+{
+    json new_config = R"({"diagnosticsSuppressLimit":5})"_json;
+    lib_config::load_from_json(new_config);
+
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(proc_grps_name, 0, one_proc_grps);
+
+    std::string file_name = "a_file";
+
+    fm.did_open_file(file_name, 0, R"(
+    LR 1,
+    LR 1,
+    LR 1,
+    LR 1,
+    LR 1,
+    LR 1,
+)");
+
+    std::atomic<bool> cancel = true;
+    workspace ws(fm, &cancel);
+    ws.open();
+    ws.did_open_file(file_name);
+
+    auto pfile = fm.find(file_name);
+    ASSERT_TRUE(pfile);
+
+    pfile->collect_diags();
+    EXPECT_EQ(pfile->diags().size(), 6U);
 }
