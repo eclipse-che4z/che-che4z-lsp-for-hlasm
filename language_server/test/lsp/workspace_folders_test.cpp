@@ -17,8 +17,8 @@
 
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
-#include "lsp/feature_workspace_folders.h"
 #include "lib_config.h";
+#include "lsp/feature_workspace_folders.h"
 
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
@@ -153,19 +153,21 @@ TEST(workspace_folders, did_change_configuration)
     using namespace lsp;
     lib_config::load_from_json(R"({"diagnosticsSuppressLimit":10})"_json);
     ws_mngr_mock ws_mngr;
-    
+
     response_provider_mock provider;
     feature_workspace_folders feat(ws_mngr, provider);
 
 
     std::map<std::string, method> methods;
     feat.register_methods(methods);
-    
-    
-    method handler;
-    json config_request_args{ { "items", { { { "section", "hlasm" } } } } };
 
-    EXPECT_CALL(provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_)).WillOnce(::testing::SaveArg<3>(&handler));
+
+    method handler;
+    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+
+    EXPECT_CALL(
+        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<3>(&handler));
 
     methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
 
@@ -190,9 +192,11 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
 
     method handler;
-    json config_request_args{ { "items", { { { "section", "hlasm" } } } } };
+    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
 
-    EXPECT_CALL(provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_)).WillOnce(::testing::SaveArg<3>(&handler));
+    EXPECT_CALL(
+        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<3>(&handler));
 
     methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
 

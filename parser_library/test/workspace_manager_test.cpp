@@ -12,8 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <filesystem>
+
 #include "gtest/gtest.h"
 
+#include "lib_config.h"
+#include "message_consumer_mock.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -96,4 +100,28 @@ TEST(workspace_manager, did_change_file)
     ws_mngr.did_change_file("test/library/test_wks/new_file", 3, changes1.data(), 1);
 
     EXPECT_GT(consumer.diags.diagnostics_size(), (size_t)0);
+}
+
+
+TEST(workspace_manager, set_message_consumer)
+{
+    lib_config::load_from_json(R"({"diagnosticsSuppressLimit":0})"_json);
+
+    workspace_manager mngr;
+    mngr.add_workspace("ws1", "ws1");
+
+    message_consumer_mock msg_consumer;
+
+    mngr.set_message_consumer(&msg_consumer);
+
+    std::string error_file_text = "someerror";
+    mngr.did_open_file("no_workspace_file", 0, error_file_text.c_str(), error_file_text.size());
+    ASSERT_EQ(msg_consumer.messages.size(), 1U);
+    msg_consumer.messages.clear();
+
+    mngr.did_open_file((std::filesystem::path("ws1") / "no_workspace_file").string().c_str(),
+        0,
+        error_file_text.c_str(),
+        error_file_text.size());
+    ASSERT_EQ(msg_consumer.messages.size(), 1U);
 }

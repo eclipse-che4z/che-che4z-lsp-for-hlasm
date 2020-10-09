@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
 
 #include <algorithm>
 #include <fstream>
@@ -5,10 +18,10 @@
 
 #include "gtest/gtest.h"
 
+#include "empty_configs.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
-#include "empty_configs.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -170,12 +183,12 @@ TEST(workspace, load_config_synthetic)
     auto& pg = ws.get_proc_grp("P1");
     EXPECT_EQ("P1", pg.name());
 #ifdef _WIN32
-    std::string expected[4]{ "C:\\Users\\Desktop\\ASLib\\",
+    std::string expected[4] { "C:\\Users\\Desktop\\ASLib\\",
         "test_proc_grps_uri\\lib\\",
         "test_proc_grps_uri\\libs\\lib2\\",
         "test_proc_grps_uri\\" };
 #else
-    std::string expected[4]{
+    std::string expected[4] {
         "/home/user/ASLib/", "test_proc_grps_uri/lib/", "test_proc_grps_uri/libs/lib2/", "test_proc_grps_uri/"
     };
 #endif // _WIN32
@@ -190,11 +203,11 @@ TEST(workspace, load_config_synthetic)
     auto& pg2 = ws.get_proc_grp("P2");
     EXPECT_EQ("P2", pg2.name());
 #ifdef _WIN32
-    std::string expected2[3]{
+    std::string expected2[3] {
         "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\"
     };
 #else
-    std::string expected2[3]{ "/home/user/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
+    std::string expected2[3] { "/home/user/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
 #endif // _WIN32
     EXPECT_EQ(std::size(expected2), pg2.libraries().size());
     for (size_t i = 0; i < std::min(std::size(expected2), pg2.libraries().size()); ++i)
@@ -237,7 +250,6 @@ TEST(workspace, load_config_synthetic)
 
 TEST(workspace, pgm_conf_malformed)
 {
-
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, R"({ "pgms": [})");
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
@@ -252,7 +264,6 @@ TEST(workspace, pgm_conf_malformed)
 
 TEST(workspace, proc_grps_malformed)
 {
-
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
@@ -267,7 +278,6 @@ TEST(workspace, proc_grps_malformed)
 
 TEST(workspace, pgm_conf_missing)
 {
-
     file_manager_impl fm;
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 

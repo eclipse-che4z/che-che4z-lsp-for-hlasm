@@ -55,7 +55,7 @@ void server::message_received(const json& message)
             LOG_WARNING("A response with no id field received.");
             return;
         }
-        
+
         auto handler_found = request_handlers_.find(*id_found);
         if (handler_found == request_handlers_.end())
         {

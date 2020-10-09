@@ -133,6 +133,7 @@ public:
     void set_message_consumer(message_consumer* consumer)
     {
         message_consumer_ = consumer;
+        implicit_workspace_.set_message_consumer(consumer);
         for (auto& wks : workspaces_)
             wks.second.set_message_consumer(consumer);
     }

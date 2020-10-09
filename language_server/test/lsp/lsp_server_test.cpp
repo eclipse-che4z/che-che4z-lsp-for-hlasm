@@ -60,16 +60,17 @@ TEST(lsp_server, initialize)
     EXPECT_CALL(smpm, reply(register_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(config_request_message)).Times(::testing::AtMost(1));
 
-    // EXPECT_CALL(smpm, reply(::testing::_)).Times(::testing::AtMost(4));
     s.message_received(j);
-
-
 
     EXPECT_NE(server_capab.find("jsonrpc"), server_capab.end());
     ASSERT_NE(server_capab.find("id"), server_capab.end());
     EXPECT_EQ(server_capab["id"].get<json::number_unsigned_t>(), 47);
     ASSERT_NE(server_capab.find("result"), server_capab.end());
     EXPECT_NE(server_capab["result"].find("capabilities"), server_capab["result"].end());
+
+    // provide response to the register request
+    json register_response = R"({"jsonrpc":"2.0","id":"register1","result":null})"_json;
+    s.message_received(register_response);
 
     json shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
     json shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
@@ -120,11 +121,15 @@ TEST(lsp_server, request_correct)
     response_provider& rp = s;
     request_handler handler;
 
-    json expected_message = R"({"id":"a_request","jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
+    json expected_message =
+        R"({"id":"a_request","jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
 
     EXPECT_CALL(message_provider, reply(expected_message));
 
-    rp.request("a_request", "client_method", "a_json_parameter", std::bind(&request_handler::handle, &handler, std::placeholders::_1, std::placeholders::_2));
+    rp.request("a_request",
+        "client_method",
+        "a_json_parameter",
+        std::bind(&request_handler::handle, &handler, std::placeholders::_1, std::placeholders::_2));
 
     json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
 

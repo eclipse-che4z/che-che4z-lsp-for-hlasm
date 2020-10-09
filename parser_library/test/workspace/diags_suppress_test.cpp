@@ -19,11 +19,12 @@
 
 #include "gtest/gtest.h"
 
+#include "../message_consumer_mock.h"
+#include "empty_configs.h"
 #include "lib_config.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
-#include "empty_configs.h"
 
 using namespace nlohmann;
 using namespace hlasm_plugin::parser_library;
@@ -68,15 +69,6 @@ TEST(diags_suppress, no_suppress)
     EXPECT_EQ(pfile->diags().size(), 6U);
 }
 
-class message_consumer_mock : public hlasm_plugin::parser_library::message_consumer
-{
-public:
-    virtual void show_message(const std::string& message, message_type type) override
-    {
-        messages.push_back(std::make_pair(message, type));
-    }
-    std::vector<std::pair<std::string, message_type>> messages;
-};
 TEST(diags_suppress, do_suppress)
 {
     json new_config = R"({"diagnosticsSuppressLimit":5})"_json;
