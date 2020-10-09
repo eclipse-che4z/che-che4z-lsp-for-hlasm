@@ -18,6 +18,7 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_workspace_folders.h"
+#include "lib_config.h";
 
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
@@ -145,4 +146,57 @@ TEST(workspace_folders, initialize_folders)
         + R"(","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
     EXPECT_CALL(ws_mngr, add_workspace(_, ::testing::StrEq(ws1_path)));
     f.initialize_feature(init5);
+}
+
+TEST(workspace_folders, did_change_configuration)
+{
+    using namespace lsp;
+    lib_config::load_from_json(R"({"diagnosticsSuppressLimit":10})"_json);
+    ws_mngr_mock ws_mngr;
+    
+    response_provider_mock provider;
+    feature_workspace_folders feat(ws_mngr, provider);
+
+
+    std::map<std::string, method> methods;
+    feat.register_methods(methods);
+    
+    
+    method handler;
+    json config_request_args{ { "items", { { { "section", "hlasm" } } } } };
+
+    EXPECT_CALL(provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_)).WillOnce(::testing::SaveArg<3>(&handler));
+
+    methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
+
+    handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
+
+    EXPECT_EQ(lib_config::get_instance()->diag_supress_limit, 42);
+}
+
+TEST(workspace_folders, did_change_configuration_empty_configuration_params)
+{
+    using namespace lsp;
+    lib_config::load_from_json(R"({"diagnosticsSuppressLimit":10})"_json);
+
+    ws_mngr_mock ws_mngr;
+
+    response_provider_mock provider;
+    feature_workspace_folders feat(ws_mngr, provider);
+
+
+    std::map<std::string, method> methods;
+    feat.register_methods(methods);
+
+
+    method handler;
+    json config_request_args{ { "items", { { { "section", "hlasm" } } } } };
+
+    EXPECT_CALL(provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_)).WillOnce(::testing::SaveArg<3>(&handler));
+
+    methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
+
+    handler("config_respond", R"([])"_json);
+
+    EXPECT_EQ(lib_config::get_instance()->diag_supress_limit, 10);
 }

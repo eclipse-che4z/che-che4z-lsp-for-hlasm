@@ -33,8 +33,9 @@ server::server(parser_library::workspace_manager& ws_mngr)
 
 void server::request(const json& request_seq, const std::string& requested_command, const json& args, method handler)
 {
-    send_message_->reply(json {
-        { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });
+    // Currently, there are no supported DAP requests from client to server
+    /*send_message_->reply(json {
+        { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
 void server::respond(const json& request_seq, const std::string& requested_command, const json& args)

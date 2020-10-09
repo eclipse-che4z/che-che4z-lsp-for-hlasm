@@ -135,8 +135,6 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
 
 void feature_workspace_folders::send_configuration_request()
 {
-    if (!response_)
-        return;
     static const json config_request_args { { "items", { { { "section", "hlasm" } } } } };
     response_->request("config_request_" + std::to_string(config_request_number_),
         "workspace/configuration",
@@ -148,7 +146,10 @@ void feature_workspace_folders::send_configuration_request()
 void feature_workspace_folders::configuration(const json&, const json& params)
 {
     if (params.size() == 0)
+    {
         LOG_WARNING("Empty configuration response received.");
+        return;
+    }
 
     lib_config::load_from_json(params[0]);
 }
