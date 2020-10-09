@@ -190,8 +190,7 @@ created_set_body returns [concat_point_ptr point]
 	| dot													{$point = std::make_unique<dot_conc>();};
 
 created_set_body_c returns [concat_chain concat_list]
-	: cl=created_set_body									{$concat_list.push_back(std::move($cl.point));}
-	| clc=created_set_body_c cl=created_set_body			{$clc.concat_list.push_back(std::move($cl.point)); $concat_list =std::move($clc.concat_list);};
+	: (cl=created_set_body {$concat_list.push_back(std::move($cl.point));})+;
 	finally
 	{concatenation_point::clear_concat_chain($concat_list);}
 
