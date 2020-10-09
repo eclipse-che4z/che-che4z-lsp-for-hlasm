@@ -185,6 +185,8 @@ l_string_v returns [concat_chain chain]
 		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_str_v.chain.begin()), std::make_move_iterator($l_str_v.chain.end()));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 l_string_o returns [std::string value]
 	: l_string												{$value = std::move($l_string.value);}				
