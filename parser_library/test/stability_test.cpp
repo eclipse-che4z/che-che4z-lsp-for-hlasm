@@ -80,3 +80,15 @@ T= [&@0@(USING'')&@0@(USING' 8)");
     analyzer a(input);
     a.analyze();
 }
+
+TEST(stability_test, entry_6)
+{
+    std::string input(R"(
+&&( +&(&
+5 &(&-
+ &(&--&&
+)");
+
+    analyzer a(input);
+    a.analyze();
+}
