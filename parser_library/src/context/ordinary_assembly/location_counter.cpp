@@ -95,8 +95,8 @@ space_ptr location_counter::set_value(const address& addr, size_t boundary, int 
         return register_space(context::no_align, std::move(curr_addr), boundary, offset);
     }
 
-    if (curr_addr.spaces() != addr.spaces() || (int)curr_data().storage - addr.offset() > curr_data().current_safe_area
-        || (boundary && (int)curr_data().storage - addr.offset() > curr_data().current_safe_area + offset))
+    if (curr_addr.spaces() != addr.spaces() || curr_data().storage - addr.offset() > curr_data().current_safe_area
+        || (boundary && curr_data().storage - addr.offset() > curr_data().current_safe_area + offset))
     {
         // when addr is composed of different spaces or falls outside safe area, register space
         org_data_.emplace_back();

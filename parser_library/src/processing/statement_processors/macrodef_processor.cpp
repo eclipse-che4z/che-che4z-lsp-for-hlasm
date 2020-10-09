@@ -235,7 +235,7 @@ void macrodef_processor::process_prototype_label(
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
         auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
-        if (var->created || var->subscript.size() != 0)
+        if (var->created || var->subscript.size())
             add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
         else
         {
@@ -311,7 +311,7 @@ void macrodef_processor::process_prototype_operand(
             else
                 add_diagnostic(diagnostic_op::error_E043(op->operand_range));
         }
-        else if (tmp_chain.size() == 0) // if operand is empty
+        else if (tmp_chain.empty()) // if operand is empty
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
     }
 

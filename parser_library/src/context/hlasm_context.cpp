@@ -663,7 +663,7 @@ const macro_definition& hlasm_context::add_macro(id_index name,
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
 
-const macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
+macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {
     macro_def_ptr macro_def;
 
