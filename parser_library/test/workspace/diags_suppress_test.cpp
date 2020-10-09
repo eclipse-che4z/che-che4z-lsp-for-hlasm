@@ -23,21 +23,11 @@
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "empty_configs.h"
 
 using namespace nlohmann;
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
-
-std::string pgm_conf_name = (std::filesystem::path(".hlasmplugin") / "pgm_conf.json").string();
-std::string proc_grps_name = (std::filesystem::path(".hlasmplugin") / "proc_grps.json").string();
-
-std::string empty_pgm_conf = R"(
-{
-	"pgms": [
-	]
-}
-)";
-
 
 std::string one_proc_grps = R"(
 {
@@ -46,8 +36,6 @@ std::string one_proc_grps = R"(
 	]
 }
 )";
-
-
 
 TEST(diags_suppress, no_suppress)
 {
@@ -158,8 +146,8 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     EXPECT_EQ(pfile->diags().size(), 6U);
     pfile->diags().clear();
 
-    std::string new_limit_str = R"(,"diagnosticsSuppressLimit":5)";
-    document_change ch(range({ 4, 0 }, { 4, 0 }), new_limit_str.c_str(), new_limit_str.size());
+    std::string new_limit_str = R"("diagnosticsSuppressLimit":5,)";
+    document_change ch(range({ 0, 1 }, { 0, 1 }), new_limit_str.c_str(), new_limit_str.size());
 
     fm.did_change_file(pgm_conf_name, 1, &ch, 1);
     ws.did_change_file(pgm_conf_name, &ch, 1);

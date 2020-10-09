@@ -8,6 +8,7 @@
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "empty_configs.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -218,7 +219,7 @@ TEST(workspace, load_config_synthetic)
         EXPECT_EQ(expected[i], libl->get_lib_path());
     }
 
-    // test of
+
 #ifdef _WIN32
     auto& pg4 = ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything");
 #else
@@ -231,4 +232,60 @@ TEST(workspace, load_config_synthetic)
         ASSERT_NE(libl, nullptr);
         EXPECT_EQ(expected2[i], libl->get_lib_path());
     }
+}
+
+
+TEST(workspace, pgm_conf_malformed)
+{
+
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, R"({ "pgms": [})");
+    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+
+    workspace ws(fm);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 1U);
+    EXPECT_EQ(ws.diags()[0].code, "W0003");
+}
+
+TEST(workspace, proc_grps_malformed)
+{
+
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
+
+    workspace ws(fm);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 1U);
+    EXPECT_EQ(ws.diags()[0].code, "W0002");
+}
+
+TEST(workspace, pgm_conf_missing)
+{
+
+    file_manager_impl fm;
+    fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
+
+    workspace ws(fm);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 0U);
+}
+
+TEST(workspace, proc_grps_missing)
+{
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+
+    workspace ws(fm);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 0U);
 }
