@@ -29,5 +29,5 @@ public:
     std::vector<std::pair<std::string, message_type>> messages;
 };
 
-}
+} // namespace hlasm_plugin::parser_library
 #endif

@@ -143,7 +143,7 @@ void feature_workspace_folders::send_configuration_request()
     ++config_request_number_;
 }
 
-void feature_workspace_folders::configuration(const json&, const json& params)
+void feature_workspace_folders::configuration(const json&, const json& params) const
 {
     if (params.size() == 0)
     {

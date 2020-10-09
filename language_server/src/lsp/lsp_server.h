@@ -74,7 +74,7 @@ private:
     // client notifications
 
     // Implements the LSP showMessage request.
-    virtual void show_message(const std::string& message, parser_library::message_type type) override;
+    void show_message(const std::string& message, parser_library::message_type type) override;
 
     // Remembers name of files for which were sent diagnostics the last time
     // diagnostics were sent to client. Used to clear diagnostics in client

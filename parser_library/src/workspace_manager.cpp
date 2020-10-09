@@ -104,7 +104,7 @@ position_uris workspace_manager::references(const char* document_uri, const posi
     return impl_->references(document_uri, pos);
 }
 
-const string_array workspace_manager::hover(const char* document_uri, const position pos)
+string_array workspace_manager::hover(const char* document_uri, const position pos)
 {
     return impl_->hover(document_uri, pos);
 }

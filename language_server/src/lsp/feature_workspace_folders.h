@@ -43,7 +43,7 @@ private:
     void on_did_change_workspace_folders(const json& id, const json& params);
     void did_change_watched_files(const json&, const json& params);
 
-    void configuration(const json&, const json& params);
+    void configuration(const json&, const json& params) const;
     void did_change_configuration(const json&, const json& params);
 
 

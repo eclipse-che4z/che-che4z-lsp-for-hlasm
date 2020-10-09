@@ -37,7 +37,7 @@ public:
 
     MOCK_METHOD(position_uri, definition, (const char* document_uri, const position pos), (override));
     MOCK_METHOD(position_uris, references, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(const string_array, hover, (const char* document_uri, const position pos), (override));
+    MOCK_METHOD(string_array, hover, (const char* document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
         (const char* document_uri, const position pos, const char trigger_char, int trigger_kind),

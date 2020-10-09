@@ -17,7 +17,7 @@
 
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
-#include "lib_config.h";
+#include "lib_config.h"
 #include "lsp/feature_workspace_folders.h"
 
 using namespace hlasm_plugin::language_server;

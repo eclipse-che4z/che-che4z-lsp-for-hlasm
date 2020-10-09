@@ -168,7 +168,7 @@ public:
 
     std::vector<std::string> output;
     std::vector<const char*> coutput;
-    const string_array hover(const char* document_uri, const position pos)
+    string_array hover(const char* document_uri, const position pos)
     {
         coutput.clear();
         if (cancel_ && *cancel_)

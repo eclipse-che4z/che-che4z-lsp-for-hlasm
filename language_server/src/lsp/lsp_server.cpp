@@ -170,11 +170,6 @@ void server::on_initialize(json id, const json& param)
     json register_configuration_changed_args {
         { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
     };
-    /*json register_message{ { "jsonrpc", "2.0" },
-    { "id", "register1" },
-    { "method", "client/registerCapability" },
-    { "params",  } };
-    send_message_->reply(register_message);*/
 
     request("register1", "client/registerCapability", register_configuration_changed_args, &empty_handler);
 

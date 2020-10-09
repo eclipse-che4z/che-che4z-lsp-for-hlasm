@@ -107,7 +107,7 @@ public:
 
     virtual position_uri definition(const char* document_uri, const position pos);
     virtual position_uris references(const char* document_uri, const position pos);
-    virtual const string_array hover(const char* document_uri, const position pos);
+    virtual string_array hover(const char* document_uri, const position pos);
     virtual completion_list completion(
         const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
 
