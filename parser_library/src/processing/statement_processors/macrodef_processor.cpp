@@ -278,8 +278,6 @@ void macrodef_processor::process_prototype_operand(
 
         auto& tmp_chain = tmp->chain;
 
-        semantics::concatenation_point::clear_concat_chain(tmp_chain);
-
         if (tmp_chain.size() == 1 && tmp_chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
         {
             auto var = tmp_chain[0]->access_var()->symbol.get();

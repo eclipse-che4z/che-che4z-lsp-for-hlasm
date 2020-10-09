@@ -90,6 +90,8 @@ model_op returns [std::optional<concat_chain> chain_opt]
 			$chain_opt = std::move(chain);
 		}
 	};
+	finally
+	{if ($chain_opt) concatenation_point::clear_concat_chain(*$chain_opt);}
 
 model_string_ch returns [std::string value]
 	: l_sp_ch								{$value = std::move($l_sp_ch.value);}

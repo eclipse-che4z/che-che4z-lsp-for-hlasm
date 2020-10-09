@@ -233,8 +233,6 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
 
         auto& tmp_chain = tmp->chain;
 
-        semantics::concatenation_point::clear_concat_chain(tmp_chain);
-
         if (is_keyword(tmp_chain, mngr)) // keyword
         {
             get_keyword_arg(statement, tmp_chain, args, keyword_params, tmp->operand_range);
