@@ -40,20 +40,10 @@ bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(
 
 const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol*>(expr.get())->symbol; }
 
-void tidy_list(std::vector<ca_expr_ptr>& expr_list)
-{
-    for (int idx = (int)expr_list.size() - 1; idx >= 0; --idx)
-    {
-        if (!expr_list[idx])
-            expr_list.erase(expr_list.begin() + idx);
-    }
-}
-
 void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
 {
     expr_kind = kind;
 
-    tidy_list(expr_list);
     if (kind == context::SET_t_enum::B_TYPE)
         unknown_functions_to_operators();
 

@@ -116,40 +116,24 @@ data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr>
 	| var_symbol		{$value = std::move($var_symbol.vs);}
 	| id				{$value = $id.name;};
 
-
 string_ch returns [std::string value]
-	: l_sp_ch								{$value = std::move($l_sp_ch.value);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
+	: l_sp_ch								
+	{
+		if ($l_sp_ch.value == "&&")
+			$value = "&";
+		else
+			$value = std::move($l_sp_ch.value);
 
-string_ch_v returns [concat_point_ptr point]
-	: l_sp_ch_v								{$point=std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'");};
+	}
+	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
 
 string_ch_c returns [std::string value]
 	:
 	| tmp=string_ch_c string_ch				{$value = std::move($tmp.value); $value.append($string_ch.value);};
 
-string_ch_v_c returns [concat_chain chain]
-	:
-	| tmp=string_ch_v_c string_ch_v				{$tmp.chain.push_back(std::move($string_ch_v.point)); $chain = std::move($tmp.chain);};
-
-
-
 string returns [std::string value]
 	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)	
 	{ 
 		$value.append(std::move($string_ch_c.value));
-		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
-	};
-
-string_v returns [concat_chain chain]
-	: ap1=APOSTROPHE string_ch_v_c ap2=(APOSTROPHE|ATTR)	
-	{ 
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
-		$chain.insert($chain.end(), 
-			std::make_move_iterator($string_ch_v_c.chain.begin()), 
-			std::make_move_iterator($string_ch_v_c.chain.end())
-		);
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};

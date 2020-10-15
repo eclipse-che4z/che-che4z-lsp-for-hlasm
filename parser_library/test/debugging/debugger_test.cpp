@@ -322,7 +322,7 @@ TEST(debugger, test)
                         list { { "0", std::make_shared<test_var_value>("10") },
                             { "1", std::make_shared<test_var_value>("13") } }) },
                 { "&SYSECT", "" },
-                { "&SYSNDX", 0 },
+                { "&SYSNDX", "0000" },
                 { "&SYSSTYP", "" },
                 { "&SYSLOC", "" },
                 { "&SYSNEST", 1 },

@@ -170,7 +170,7 @@ public:
 
     // gets macro storage
     const macro_storage& macros() const;
-    const macro_def_ptr get_macro_definition(id_index name) const;
+    macro_def_ptr get_macro_definition(id_index name) const;
     // checks whether processing is currently in macro
     bool is_in_macro() const;
     // returns macro we are currently in or empty shared_ptr if in open code

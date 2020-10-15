@@ -79,7 +79,11 @@ void ordinary_processor::process_statement(context::unique_stmt_ptr statement)
 
 void ordinary_processor::end_processing()
 {
-    hlasm_ctx.ord_ctx.finish_module_layout();
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
     collect_ordinary_symbol_definitions();

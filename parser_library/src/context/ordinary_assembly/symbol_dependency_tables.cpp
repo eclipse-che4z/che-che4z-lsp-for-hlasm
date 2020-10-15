@@ -20,8 +20,9 @@
 #include <stdexcept>
 
 #include "ordinary_assembly_context.h"
+#include "processing/instruction_sets/low_language_processor.h"
 
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
 bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependant> dependencies)
 {
@@ -37,27 +38,29 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
         auto top_dep = std::move(dependencies.back());
         dependencies.pop_back();
 
-        auto it = dependencies_.find(top_dep);
+        const resolvable* dep_src = nullptr;
 
-        if (it != dependencies_.end())
+        if (auto it = dependencies_.find(top_dep); it != dependencies_.end())
+            dep_src = it->second;
+        else
+            continue;
+
+        for (auto&& dep : extract_dependencies(dep_src))
         {
-            auto& [_, dep_src] = *it;
-            for (auto&& dep : extract_dependencies(dep_src))
+            if (dep == target)
             {
-                if (dep == target)
-                {
-                    resolve_dependant_default(target);
-                    return false;
-                }
-                dependencies.push_back(std::move(dep));
+                resolve_dependant_default(target);
+                return false;
             }
+            dependencies.push_back(std::move(dep));
         }
     }
 
     return true;
 }
 
-void symbol_dependency_tables::resolve_dependant(dependant target, const resolvable* dep_src)
+void symbol_dependency_tables::resolve_dependant(
+    dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver)
 {
     symbol_value val = dep_src->resolve(sym_ctx_);
 
@@ -68,10 +71,11 @@ void symbol_dependency_tables::resolve_dependant(dependant target, const resolva
         if (sp->kind == space_kind::ORDINARY || sp->kind == space_kind::LOCTR_MAX || sp->kind == space_kind::LOCTR_SET)
             length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
         else if (sp->kind == space_kind::ALIGNMENT)
-            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset : 0;
+            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
 
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
-            loctr_dependencies.emplace_back(sp, val.get_reloc());
+            resolver->resolve_unknown_loctr_dependency(
+                sp, val.get_reloc(), dependency_source_stmts_.find(sp)->second.stmt_ref->get()->stmt_range_ref());
         else
             space::resolve(sp, length);
     }
@@ -123,7 +127,7 @@ void symbol_dependency_tables::resolve_dependant_default(dependant target)
     }
 }
 
-void symbol_dependency_tables::resolve()
+void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
 {
     bool defined = true;
     std::vector<dependant> to_delete;
@@ -133,13 +137,19 @@ void symbol_dependency_tables::resolve()
         defined = false;
         for (auto& [target, dep_src] : dependencies_)
         {
+            // resolve only symbol dependencies when resolver is not present
+            if (resolver == nullptr && target.kind() == dependant_kind::SPACE)
+                continue;
+
             if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
             {
                 to_delete.push_back(target);
 
-                resolve_dependant(target, dep_src); // resolve target
+                resolve_dependant(target, dep_src, resolver); // resolve target
 
                 defined = true; // another defined target => iterate again
+
+                break;
             }
         }
 
@@ -165,11 +175,18 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const reso
     if (!ret.empty())
         return ret;
 
+    ret.insert(ret.end(),
+        std::make_move_iterator(deps.unresolved_spaces.begin()),
+        std::make_move_iterator(deps.unresolved_spaces.end()));
+
+    if (!ret.empty())
+        return ret;
+
     for (auto& attr_r : deps.undefined_attr_refs)
         ret.push_back(attr_ref { attr_r.first, attr_r.second });
 
     if (deps.unresolved_address)
-        for (auto& [space_id, count] : deps.unresolved_address->spaces)
+        for (auto& [space_id, count] : deps.unresolved_address->normalized_spaces())
         {
             assert(count != 0);
             ret.push_back(space_id);
@@ -222,19 +239,21 @@ bool symbol_dependency_tables::add_dependency(
     if (dependencies_.find(target) != dependencies_.end())
         throw std::invalid_argument("symbol dependency already present");
 
-    auto dependencies = extract_dependencies(dependency_source);
 
     if (check_for_cycle)
     {
+        auto dependencies = extract_dependencies(dependency_source);
+
         bool no_cycle = check_cycle(target, dependencies);
         if (!no_cycle)
         {
-            resolve();
+            resolve(nullptr);
             return false;
         }
     }
 
     dependencies_.emplace(target, dependency_source);
+
     return true;
 }
 
@@ -293,7 +312,7 @@ bool symbol_dependency_tables::check_cycle(space_ptr target)
     bool no_cycle = check_cycle(target, extract_dependencies(dep_src->second));
 
     if (!no_cycle)
-        resolve();
+        resolve(nullptr);
 
     return no_cycle;
 }
@@ -310,7 +329,7 @@ dependency_adder symbol_dependency_tables::add_dependencies(post_stmt_ptr depend
     return dependency_adder(*this, std::move(dependency_source_stmt));
 }
 
-void symbol_dependency_tables::add_defined() { resolve(); }
+void symbol_dependency_tables::add_defined(loctr_dependency_resolver* resolver) { resolve(resolver); }
 
 bool symbol_dependency_tables::check_loctr_cycle()
 {
@@ -429,6 +448,12 @@ std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
     return res;
 }
 
+void symbol_dependency_tables::resolve_all_as_default()
+{
+    for (auto& [target, dep_src] : dependencies_)
+        resolve_dependant_default(target);
+}
+
 statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
     : stmt_ref(std::move(stmt_ref))
     , ref_count(ref_count)
@@ -492,3 +517,5 @@ void dependency_adder::finish()
 
     dependants.clear();
 }
+
+} // namespace hlasm_plugin::parser_library::context

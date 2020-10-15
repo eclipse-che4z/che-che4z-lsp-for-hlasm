@@ -207,14 +207,10 @@ bool ordinary_assembly_context::counter_defined(id_index name)
     return false;
 }
 
-// reserves storage area of specified length and alignment
-
 address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
 {
     return reserve_storage_area_space(length, align).first;
 }
-
-// aligns storage
 
 address ordinary_assembly_context::align(alignment align) { return reserve_storage_area(0, align); }
 
@@ -226,7 +222,7 @@ space_ptr ordinary_assembly_context::register_ordinary_space(alignment align)
     return curr_section_->current_location_counter().register_ordinary_space(align);
 }
 
-void ordinary_assembly_context::finish_module_layout()
+void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* resolver)
 {
     for (auto& sect : sections_)
     {
@@ -240,7 +236,7 @@ void ordinary_assembly_context::finish_module_layout()
                     return;
 
                 sect->location_counters()[i]->finish_layout(sect->location_counters()[i - 1]->storage());
-                symbol_dependencies.add_defined();
+                symbol_dependencies.add_defined(resolver);
             }
         }
     }
