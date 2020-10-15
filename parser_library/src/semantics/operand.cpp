@@ -15,6 +15,7 @@
 #include "operand.h"
 
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
+#include "expressions/mach_expr_term.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -50,9 +51,7 @@ empty_operand::empty_operand(range operand_range)
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
-{
-    concatenation_point::clear_concat_chain(this->chain);
-}
+{}
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
@@ -276,6 +275,21 @@ expr_assembler_operand::expr_assembler_operand(
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
+    return get_operand_value_inner(info, true);
+}
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    return get_operand_value_inner(info, can_have_ordsym);
+}
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
+        return std::make_unique<checking::one_operand>(value_);
+
     auto res = expression->evaluate(info);
     switch (res.value_kind())
     {

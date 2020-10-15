@@ -30,6 +30,8 @@ expr returns [ca_expr_ptr ca_expr]
 		$plus.ctx = nullptr;
 	}
 	)*;
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 expr_s returns [ca_expr_ptr ca_expr]
 	: begin=term_c								
@@ -46,6 +48,8 @@ expr_s returns [ca_expr_ptr ca_expr]
 		$slash.ctx = nullptr;
 	}
 	)*;
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 term_c returns [ca_expr_ptr ca_expr]
 	: term
@@ -62,6 +66,8 @@ term_c returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($minus.ctx->getStart(), $tmp.ctx->getStop());
 		$ca_expr = std::make_unique<ca_minus_operator>(std::move($tmp.ca_expr), r);
 	};
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 term returns [ca_expr_ptr ca_expr]
 	: expr_list
@@ -112,6 +118,8 @@ term returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($id_no_dot.ctx);
 		$ca_expr = std::make_unique<ca_symbol>($id_no_dot.name, r);
 	};
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 expr_list returns [ca_expr_ptr ca_expr]
 	: lpar SPACE* expr_space_c SPACE* rpar
@@ -119,6 +127,8 @@ expr_list returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());
 		$ca_expr = std::make_unique<ca_expr_list>(std::move($expr_space_c.ca_exprs), r);
 	};
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 	
 expr_space_c returns [std::vector<ca_expr_ptr> ca_exprs]
  	: expr
@@ -140,15 +150,20 @@ seq_symbol returns [seq_sym ss]
 	};
 
 subscript_ne returns [std::vector<ca_expr_ptr> value]
-	: lpar expr_comma_c rpar
+	: lpar SPACE? expr SPACE? rpar
 	{
-		$value = std::move($expr_comma_c.ca_exprs);
+		$value.push_back(std::move($expr.ca_expr));
+	}
+	| lpar expr comma expr_comma_c rpar
+	{
+		$value.push_back(std::move($expr.ca_expr));
+		$value.insert($value.end(), std::make_move_iterator($expr_comma_c.ca_exprs.begin()),std::make_move_iterator($expr_comma_c.ca_exprs.end()));
 	};
 
 subscript returns [std::vector<ca_expr_ptr> value]
-	: subscript_ne
+	: lpar expr_comma_c rpar
 	{
-		$value = std::move($subscript_ne.value);
+		$value = std::move($expr_comma_c.ca_exprs);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
 	| ;
@@ -175,8 +190,9 @@ created_set_body returns [concat_point_ptr point]
 	| dot													{$point = std::make_unique<dot_conc>();};
 
 created_set_body_c returns [concat_chain concat_list]
-	: cl=created_set_body									{$concat_list.push_back(std::move($cl.point));}
-	| clc=created_set_body_c cl=created_set_body			{$clc.concat_list.push_back(std::move($cl.point)); $concat_list =std::move($clc.concat_list);};
+	: (cl=created_set_body {$concat_list.push_back(std::move($cl.point));})+;
+	finally
+	{concatenation_point::clear_concat_chain($concat_list);}
 
 created_set_symbol returns [vs_ptr vs]
 	: AMPERSAND lpar clc=created_set_body_c rpar subscript 	
@@ -268,6 +284,8 @@ ca_string_b returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $substring.ctx->getStop());
 		$ca_expr = std::make_unique<expressions::ca_string>(std::move($string_ch_v_c.chain), std::move($ca_dupl_factor.value), std::move($substring.value), r);
 	};
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 ca_string returns [ca_expr_ptr ca_expr]
 	: ca_string_b
@@ -279,6 +297,8 @@ ca_string returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($tmp.ctx->getStart(), $ca_string_b.ctx->getStop());
 		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_conc>>(std::move($tmp.ca_expr), std::move($ca_string_b.ca_expr), r);
 	};
+	finally
+	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 string_ch_v returns [concat_point_ptr point]
 	: l_sp_ch_v								{$point = std::move($l_sp_ch_v.point);}
@@ -287,3 +307,5 @@ string_ch_v returns [concat_point_ptr point]
 string_ch_v_c returns [concat_chain chain]
 	:
 	| cl=string_ch_v_c string_ch_v		{$cl.chain.push_back(std::move($string_ch_v.point)); $chain = std::move($cl.chain);};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
