@@ -26,24 +26,25 @@ using json = nlohmann::json;
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager, std::atomic<bool>* cancel)
+    workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager, const lib_config & global_config, std::atomic<bool>* cancel)
     : cancel_(cancel)
     , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
     , implicit_proc_grp("pg_implicit")
     , ws_path_(uri)
+    , global_config_(global_config)
 {
     proc_grps_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS;
     pgm_conf_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF;
 }
 
-workspace::workspace(ws_uri uri, file_manager& file_manager, std::atomic<bool>* cancel)
-    : workspace(uri, uri, file_manager, cancel)
+workspace::workspace(ws_uri uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
+    : workspace(uri, uri, file_manager, global_config, cancel)
 {}
 
-workspace::workspace(file_manager& file_manager, std::atomic<bool>* cancel)
-    : workspace("", file_manager, cancel)
+workspace::workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
+    : workspace("", file_manager, global_config, cancel)
 {
     opened_ = true;
 }
@@ -90,11 +91,9 @@ void workspace::show_message(const std::string& message)
         message_consumer_->show_message(message, message_type::MT_INFO);
 }
 
-int64_t workspace::get_suppress_diags_limit()
+lib_config workspace::get_config()
 {
-    if (suppress_diags_limit_)
-        return suppress_diags_limit_.value();
-    return lib_config::get_instance()->diag_supress_limit;
+    return local_config_.fill_missing_settings(global_config_);
 }
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
@@ -181,7 +180,7 @@ void workspace::parse_file(const std::string& file_uri)
 
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
         f->collect_diags();
-        if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_suppress_diags_limit())
+        if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_config().diag_supress_limit)
             delete_diags(f);
         else
             diag_suppress_notified_[f->get_file_name()] = false;
@@ -284,14 +283,13 @@ bool workspace::load_and_process_config()
                 wildcard2regex((ws_path / wildcard_str).string()) });
     }
 
-    auto suppress_diags_limit_json = pgm_conf_json.find("diagnosticsSuppressLimit");
+    /*auto suppress_diags_limit_json = pgm_conf_json.find("diagnosticsSuppressLimit");
     if (suppress_diags_limit_json != pgm_conf_json.end())
     {
         if (suppress_diags_limit_json->is_number_integer())
-            suppress_diags_limit_ = suppress_diags_limit_json->get<int64_t>();
-    }
-    else
-        suppress_diags_limit_.reset();
+            new_config.diag_supress_limit = suppress_diags_limit_json->get<int64_t>();
+    }*/
+    local_config_ = lib_config::load_from_json(pgm_conf_json);
 
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups

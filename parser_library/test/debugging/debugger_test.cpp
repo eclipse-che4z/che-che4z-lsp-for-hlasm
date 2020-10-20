@@ -32,7 +32,8 @@ using namespace hlasm_plugin::parser_library::workspaces;
 TEST(debugger, stopped_on_entry)
 {
     file_manager_impl file_manager;
-    workspace ws("test_workspace", file_manager);
+    lib_config config;
+    workspace ws("test_workspace", file_manager, config);
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
@@ -66,7 +67,8 @@ TEST(debugger, stopped_on_entry)
 TEST(debugger, disconnect)
 {
     file_manager_impl file_manager;
-    workspace ws("test_workspace", file_manager);
+    lib_config config;
+    workspace ws("test_workspace", file_manager, config);
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
@@ -224,9 +226,10 @@ bool check_step(
 
 class workspace_mock : public workspace
 {
+    lib_config config;
 public:
     workspace_mock(file_manager& file_mngr)
-        : workspace(file_mngr)
+        : workspace(file_mngr, config)
     {}
 
     virtual parse_result parse_library(

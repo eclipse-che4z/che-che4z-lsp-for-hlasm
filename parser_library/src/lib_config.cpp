@@ -14,17 +14,50 @@
 
 #include "lib_config.h"
 
-std::shared_ptr<lib_config> lib_config::config_instance = std::make_shared<lib_config>();
+namespace hlasm_plugin::parser_library {
 
-std::shared_ptr<lib_config> lib_config::get_instance() { return std::atomic_load(&config_instance); }
+const lib_config lib_config::default_config = lib_config::make_default();
 
-void lib_config::load_from_json(const nlohmann::json& config)
+lib_config lib_config::make_default()
 {
-    auto loaded = std::make_shared<lib_config>();
+    lib_config def_config;
+    def_config.diag_supress_limit = 10;
+
+    return def_config;
+}
+
+lib_config lib_config::load_from_json(const nlohmann::json& config)
+{
+    lib_config loaded;
 
     auto found = config.find("diagnosticsSuppressLimit");
     if (found != config.end())
-        loaded->diag_supress_limit = found->get<int64_t>();
+    {
+        loaded.diag_supress_limit = found->get<int64_t>();
+        if (loaded.diag_supress_limit < 0)
+            loaded.diag_supress_limit = 0;
+    }
 
-    std::atomic_store(&config_instance, loaded);
+
+    return loaded;
+}
+
+lib_config lib_config::fill_missing_settings(const lib_config& second)
+{
+    return combine_two_configs(second).combine_two_configs(default_config);
+}
+
+lib_config lib_config::combine_two_configs(const lib_config& second)
+{
+    lib_config combined(*this);
+    if (!combined.diag_supress_limit.has_value())
+        combined.diag_supress_limit = second.diag_supress_limit;
+    return combined;
+}
+
+bool operator==(const lib_config& lhs, const lib_config& rhs)
+{
+    return lhs.diag_supress_limit == rhs.diag_supress_limit;
+}
+
 }

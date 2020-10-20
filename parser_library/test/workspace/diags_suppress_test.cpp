@@ -40,9 +40,6 @@ std::string one_proc_grps = R"(
 
 TEST(diags_suppress, no_suppress)
 {
-    json new_config = R"({"diagnosticsSuppressLimit":10})"_json;
-    lib_config::load_from_json(new_config);
-
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, one_proc_grps);
@@ -58,7 +55,8 @@ TEST(diags_suppress, no_suppress)
     LR 1,
 )");
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
     ws.did_open_file(file_name);
 
@@ -71,8 +69,7 @@ TEST(diags_suppress, no_suppress)
 
 TEST(diags_suppress, do_suppress)
 {
-    json new_config = R"({"diagnosticsSuppressLimit":5})"_json;
-    lib_config::load_from_json(new_config);
+    auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
 
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
@@ -91,7 +88,7 @@ TEST(diags_suppress, do_suppress)
 
     message_consumer_mock msg_consumer;
 
-    workspace ws(fm);
+    workspace ws(fm, config);
     ws.set_message_consumer(&msg_consumer);
     ws.open();
     ws.did_open_file(file_name);
@@ -109,9 +106,6 @@ TEST(diags_suppress, do_suppress)
 
 TEST(diags_suppress, pgm_supress_limit_changed)
 {
-    json new_config = R"({"diagnosticsSuppressLimit":10})"_json;
-    lib_config::load_from_json(new_config);
-
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, one_proc_grps);
@@ -127,7 +121,8 @@ TEST(diags_suppress, pgm_supress_limit_changed)
     LR 1,
 )");
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
     ws.did_open_file(file_name);
 
@@ -154,8 +149,7 @@ TEST(diags_suppress, pgm_supress_limit_changed)
 
 TEST(diags_suppress, cancel_token)
 {
-    json new_config = R"({"diagnosticsSuppressLimit":5})"_json;
-    lib_config::load_from_json(new_config);
+    
 
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
@@ -173,7 +167,8 @@ TEST(diags_suppress, cancel_token)
 )");
 
     std::atomic<bool> cancel = true;
-    workspace ws(fm, &cancel);
+    auto config = lib_config::load_from_json(R"({"diagnosticsSuppressLimit":5})"_json);
+    workspace ws(fm, config, &cancel);
     ws.open();
     ws.did_open_file(file_name);
 

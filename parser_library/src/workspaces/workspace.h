@@ -26,6 +26,7 @@
 
 #include "diagnosable_impl.h"
 #include "file_manager.h"
+#include "lib_config.h"
 #include "library.h"
 #include "message_consumer.h"
 #include "processor.h"
@@ -61,9 +62,13 @@ class workspace : public diagnosable_impl, public parse_lib_provider
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
     // between files.
-    workspace(file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
-    workspace(ws_uri uri, file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
-    workspace(ws_uri uri, std::string name, file_manager& file_manager, std::atomic<bool>* cancel = nullptr);
+    workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
+    workspace(ws_uri uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
+    workspace(ws_uri uri,
+        std::string name,
+        file_manager& file_manager,
+        const lib_config& global_config,
+        std::atomic<bool>* cancel = nullptr);
 
     workspace(const workspace& ws) = delete;
     workspace& operator=(const workspace&) = delete;
@@ -146,8 +151,9 @@ private:
 
     // A map that holds true values for files that have diags suppressed and the user was already notified about it
     std::unordered_map<std::string, bool> diag_suppress_notified_;
-    std::optional<int64_t> suppress_diags_limit_;
-    int64_t get_suppress_diags_limit();
+    const lib_config& global_config_;
+    lib_config local_config_;
+    lib_config get_config();
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

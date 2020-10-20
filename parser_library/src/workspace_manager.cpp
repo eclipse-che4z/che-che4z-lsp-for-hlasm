@@ -77,6 +77,11 @@ void workspace_manager::did_change_file(
 
 void workspace_manager::did_close_file(const char* document_uri) { impl_->did_close_file(document_uri); }
 
+void workspace_manager::configuration_changed(const lib_config& new_config)
+{
+    impl_->configuration_changed(new_config);
+}
+
 void workspace_manager::register_highlighting_consumer(highlighting_consumer* consumer)
 {
     impl_->register_highlighting_consumer(consumer);

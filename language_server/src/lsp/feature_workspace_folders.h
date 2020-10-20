@@ -31,7 +31,7 @@ public:
     explicit feature_workspace_folders(
         parser_library::workspace_manager& ws_mngr, response_provider& response_provider);
 
-    // Adds workspace/didChangeWorkspaceFolders method to the map.
+    // Adds workspace/* methods to the map.
     void register_methods(std::map<std::string, method>&) override;
     // Returns workspaces capability.
     json virtual register_capabilities() override;

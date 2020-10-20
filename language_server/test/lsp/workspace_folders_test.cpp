@@ -151,7 +151,6 @@ TEST(workspace_folders, initialize_folders)
 TEST(workspace_folders, did_change_configuration)
 {
     using namespace lsp;
-    lib_config::load_from_json(R"({"diagnosticsSuppressLimit":10})"_json);
     ws_mngr_mock ws_mngr;
 
     response_provider_mock provider;
@@ -173,13 +172,15 @@ TEST(workspace_folders, did_change_configuration)
 
     handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
 
-    EXPECT_EQ(lib_config::get_instance()->diag_supress_limit, 42);
+    lib_config expected_config;
+    expected_config.diag_supress_limit = 42;
+
+    EXPECT_CALL(ws_mngr, configuration_changed(expected_config));
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 {
     using namespace lsp;
-    lib_config::load_from_json(R"({"diagnosticsSuppressLimit":10})"_json);
 
     ws_mngr_mock ws_mngr;
 
@@ -202,5 +203,8 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
     handler("config_respond", R"([])"_json);
 
-    EXPECT_EQ(lib_config::get_instance()->diag_supress_limit, 10);
+
+    lib_config default_config = lib_config().fill_missing_settings(lib_config());
+
+    EXPECT_CALL(ws_mngr, configuration_changed(default_config));
 }

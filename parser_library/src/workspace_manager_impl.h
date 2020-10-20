@@ -31,7 +31,7 @@ class workspace_manager::impl : public diagnosable_impl, public debugging::debug
 public:
     impl(std::atomic<bool>* cancel = nullptr)
         : file_manager_(cancel)
-        , implicit_workspace_(file_manager_, cancel)
+        , implicit_workspace_(file_manager_, global_config_, cancel)
         , cancel_(cancel)
     {}
     impl(const impl&) = delete;
@@ -55,7 +55,7 @@ public:
 
     void add_workspace(std::string name, std::string uri)
     {
-        auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_, cancel_));
+        auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_, global_config_, cancel_));
         ws.first->second.set_message_consumer(message_consumer_);
         ws.first->second.open();
 
@@ -199,6 +199,12 @@ public:
                                     .completion(pos, trigger_char, trigger_kind);
 
         return completion_result;
+    }
+
+    lib_config global_config_;
+    virtual void configuration_changed(const lib_config& new_config)
+    {
+        global_config_ = new_config;
     }
 
     void launch(std::string file_name, bool stop_on_entry)

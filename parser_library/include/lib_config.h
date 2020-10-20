@@ -16,21 +16,40 @@
 #define HLASMPLUGIN_PARSERLIBRARY_LIB_CONFIG_H
 
 #include <memory>
+#include <optional>
 
 #include "json.hpp"
 
 #include "parser_library_export.h"
+namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT lib_config
+// Encapsulates user defined settings of library and individual workspaces
+class PARSER_LIBRARY_EXPORT lib_config
 {
-    static std::shared_ptr<lib_config> get_instance();
-    static void load_from_json(const nlohmann::json& config);
+public:
+    // Creates an instance of lib_config with values from input json.
+    [[nodiscard]] static lib_config load_from_json(const nlohmann::json& config);
+    // Returns a lib_config instance that is a copy of this instance, but the missing settings are replaced with the
+    // parameter second. If there are more missing settings after that step, they are filled with default values
+    [[nodiscard]] lib_config fill_missing_settings(const lib_config& second);
 
-    int64_t diag_supress_limit = 10;
+    std::optional<int64_t> diag_supress_limit;
+
+
 
 private:
-    static std::shared_ptr<lib_config> config_instance;
+    // Returns an instance that has missing settings of this filled with not missing setting of the parameter
+    [[nodiscard]] lib_config combine_two_configs(const lib_config& second);
+
+    // Return instance of lib_config with default values.
+    static lib_config make_default();
+    const static lib_config default_config;
 };
+
+bool operator==(const lib_config& lhs, const lib_config& rhs);
+
+
+} // namespace hlasm_plugin::parser_library
 
 
 

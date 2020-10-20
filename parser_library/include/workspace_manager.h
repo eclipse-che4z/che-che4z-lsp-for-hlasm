@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "lib_config.h"
 #include "message_consumer.h"
 #include "parser_library_export.h"
 #include "protocol.h"
@@ -110,6 +111,8 @@ public:
     virtual string_array hover(const char* document_uri, const position pos);
     virtual completion_list completion(
         const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
+
+    virtual void configuration_changed(const lib_config& new_config);
 
     // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
     virtual void register_highlighting_consumer(highlighting_consumer* consumer);

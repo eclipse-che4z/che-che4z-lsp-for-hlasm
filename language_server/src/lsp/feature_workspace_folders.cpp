@@ -119,8 +119,6 @@ void feature_workspace_folders::add_workspace(const std::string& name, const std
     ws_mngr_.add_workspace(name.c_str(), path.c_str());
 }
 
-
-
 void feature_workspace_folders::did_change_watched_files(const json&, const json& params)
 {
     std::vector<json> changes = params["changes"];
@@ -151,7 +149,7 @@ void feature_workspace_folders::configuration(const json&, const json& params) c
         return;
     }
 
-    lib_config::load_from_json(params[0]);
+    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]));
 }
 
 void feature_workspace_folders::did_change_configuration(const json&, const json&) { send_configuration_request(); }

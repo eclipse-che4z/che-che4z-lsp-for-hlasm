@@ -176,7 +176,8 @@ public:
 TEST(workspace, load_config_synthetic)
 {
     file_manager_proc_grps_test file_manager;
-    workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager);
+    lib_config config;
+    workspace ws("test_proc_grps_uri", "test_proc_grps_name", file_manager, config);
 
     ws.open();
 
@@ -254,7 +255,8 @@ TEST(workspace, pgm_conf_malformed)
     fm.did_open_file(pgm_conf_name, 0, R"({ "pgms": [})");
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
 
     ws.collect_diags();
@@ -268,7 +270,8 @@ TEST(workspace, proc_grps_malformed)
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
 
     ws.collect_diags();
@@ -281,7 +284,8 @@ TEST(workspace, pgm_conf_missing)
     file_manager_impl fm;
     fm.did_open_file(proc_grps_name, 0, empty_proc_grps);
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
 
     ws.collect_diags();
@@ -293,7 +297,8 @@ TEST(workspace, proc_grps_missing)
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
 
-    workspace ws(fm);
+    lib_config config;
+    workspace ws(fm, config);
     ws.open();
 
     ws.collect_diags();

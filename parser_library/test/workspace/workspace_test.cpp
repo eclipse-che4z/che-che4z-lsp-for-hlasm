@@ -13,6 +13,7 @@
  */
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 
@@ -58,13 +59,14 @@ public:
 
 TEST_F(workspace_test, parse_lib_provider)
 {
+    lib_config config;
     file_manager_impl file_mngr;
 
-#if _WIN32
-    workspace ws("test\\library\\test_wks", file_mngr);
-#else
-    workspace ws("test/library/test_wks", file_mngr);
-#endif
+    std::string test_wks_path = (std::filesystem::path("test") / "library" / "test_wks").string();
+
+
+    workspace ws(test_wks_path, file_mngr, config);
+
     ws.open();
 
     collect_diags_from_child(ws);
@@ -199,8 +201,9 @@ public:
 
 TEST_F(workspace_test, did_close_file)
 {
+    lib_config config;
     file_manager_extended file_manager;
-    workspace ws("", "workspace_name", file_manager);
+    workspace ws("", "workspace_name", file_manager, config);
     ws.open();
     // 3 files are open
     //	- open codes source1 and source2 with syntax errors using macro ERROR
@@ -240,7 +243,8 @@ TEST_F(workspace_test, did_close_file)
 TEST_F(workspace_test, did_change_watched_files)
 {
     file_manager_extended file_manager;
-    workspace ws("", "workspace_name", file_manager);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
     ws.open();
 
     // no diagnostics with no syntax errors
