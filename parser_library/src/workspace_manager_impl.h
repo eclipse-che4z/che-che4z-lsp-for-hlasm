@@ -202,10 +202,7 @@ public:
     }
 
     lib_config global_config_;
-    virtual void configuration_changed(const lib_config& new_config)
-    {
-        global_config_ = new_config;
-    }
+    virtual void configuration_changed(const lib_config& new_config) { global_config_ = new_config; }
 
     void launch(std::string file_name, bool stop_on_entry)
     {

@@ -149,8 +149,6 @@ TEST(diags_suppress, pgm_supress_limit_changed)
 
 TEST(diags_suppress, cancel_token)
 {
-    
-
     file_manager_impl fm;
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, one_proc_grps);

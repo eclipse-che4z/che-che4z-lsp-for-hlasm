@@ -170,12 +170,12 @@ TEST(workspace_folders, did_change_configuration)
 
     methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
 
-    handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
-
     lib_config expected_config;
     expected_config.diag_supress_limit = 42;
 
-    EXPECT_CALL(ws_mngr, configuration_changed(expected_config));
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config)));
+
+    handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
 }
 
 TEST(workspace_folders, did_change_configuration_empty_configuration_params)
@@ -201,10 +201,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 
     methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
 
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::_)).Times(0);
+
     handler("config_respond", R"([])"_json);
-
-
-    lib_config default_config = lib_config().fill_missing_settings(lib_config());
-
-    EXPECT_CALL(ws_mngr, configuration_changed(default_config));
 }

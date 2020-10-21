@@ -63,7 +63,8 @@ public:
     // Creates just a dummy workspace with no libraries - no dependencies
     // between files.
     workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
-    workspace(ws_uri uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
+    workspace(
+        ws_uri uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
     workspace(ws_uri uri,
         std::string name,
         file_manager& file_manager,

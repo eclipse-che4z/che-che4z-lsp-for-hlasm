@@ -227,6 +227,7 @@ bool check_step(
 class workspace_mock : public workspace
 {
     lib_config config;
+
 public:
     workspace_mock(file_manager& file_mngr)
         : workspace(file_mngr, config)

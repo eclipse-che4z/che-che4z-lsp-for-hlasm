@@ -26,7 +26,11 @@ using json = nlohmann::json;
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-    workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager, const lib_config & global_config, std::atomic<bool>* cancel)
+workspace::workspace(ws_uri uri,
+    std::string name,
+    file_manager& file_manager,
+    const lib_config& global_config,
+    std::atomic<bool>* cancel)
     : cancel_(cancel)
     , name_(name)
     , uri_(uri)
@@ -91,10 +95,7 @@ void workspace::show_message(const std::string& message)
         message_consumer_->show_message(message, message_type::MT_INFO);
 }
 
-lib_config workspace::get_config()
-{
-    return local_config_.fill_missing_settings(global_config_);
-}
+lib_config workspace::get_config() { return local_config_.fill_missing_settings(global_config_); }
 
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
 {

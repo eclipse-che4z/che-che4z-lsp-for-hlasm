@@ -60,4 +60,4 @@ bool operator==(const lib_config& lhs, const lib_config& rhs)
     return lhs.diag_supress_limit == rhs.diag_supress_limit;
 }
 
-}
+} // namespace hlasm_plugin::parser_library
