@@ -38,6 +38,7 @@ macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
     , expecting_MACRO_(start_.is_external)
     , omit_next_(false)
     , finished_flag_(false)
+    , table_(create_table(hlasm_context))
 {
     result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
     if (start_.is_external)
@@ -200,12 +201,11 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         {
             process_sequence_symbol(res_stmt->label_ref());
 
-            if (res_stmt->opcode_ref().value == macro_id)
-                process_MACRO();
-            else if (res_stmt->opcode_ref().value == mend_id)
-                process_MEND();
-            else if (res_stmt->opcode_ref().value == copy_id)
-                process_COPY(*res_stmt);
+            if (auto found = table_.find(res_stmt->opcode_ref().value); found != table_.end())
+            {
+                auto& [key, func] = *found;
+                func(*res_stmt);
+            }
         }
         else if (auto def_stmt = statement.access_deferred())
         {
@@ -240,6 +240,8 @@ void macrodef_processor::process_prototype_label(
         else
         {
             result_.prototype.name_param = var->access_basic()->name;
+            result_.variable_symbols.emplace(var->access_basic()->name,
+                context::variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -287,6 +289,9 @@ void macrodef_processor::process_prototype_operand(
                 auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
+                result_.variable_symbols.emplace(var->access_basic()->name,
+                    context::variable_symbol_definition(
+                        var->access_basic()->name, curr_line_, var->symbol_range.start));
             }
         }
         else if (tmp_chain.size() > 1)
@@ -306,6 +311,9 @@ void macrodef_processor::process_prototype_operand(
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
+                    result_.variable_symbols.emplace(var->access_basic()->name,
+                        context::variable_symbol_definition(
+                            var->access_basic()->name, curr_line_, var->symbol_range.start));
                 }
             }
             else
@@ -340,6 +348,39 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     return true;
 }
 
+macrodef_processor::process_table_t macrodef_processor::create_table(context::hlasm_context& ctx)
+{
+    process_table_t table;
+    table.emplace(ctx.ids().add("SETA"),
+        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::A_TYPE));
+    table.emplace(ctx.ids().add("SETB"),
+        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::B_TYPE));
+    table.emplace(ctx.ids().add("SETC"),
+        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::C_TYPE));
+    table.emplace(ctx.ids().add("LCLA"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, false));
+    table.emplace(ctx.ids().add("LCLB"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, false));
+    table.emplace(ctx.ids().add("LCLC"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, false));
+    table.emplace(ctx.ids().add("GBLA"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, true));
+    table.emplace(ctx.ids().add("GBLB"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, true));
+    table.emplace(ctx.ids().add("GBLC"),
+        std::bind(
+            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, true));
+    table.emplace(ctx.ids().add("MACRO"), std::bind(&macrodef_processor::process_MACRO, this));
+    table.emplace(ctx.ids().add("MEND"), std::bind(&macrodef_processor::process_MEND, this));
+    table.emplace(ctx.ids().add("COPY"), std::bind(&macrodef_processor::process_COPY, this, std::placeholders::_1));
+    return table;
+}
+
 void macrodef_processor::process_MACRO() { ++macro_nest_; }
 
 void macrodef_processor::process_MEND()
@@ -372,6 +413,49 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
         add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
 
     omit_next_ = true;
+}
+
+void macrodef_processor::process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global)
+{
+    for (auto& op : statement.operands_ref().value)
+    {
+        if (op->type != semantics::operand_type::EMPTY)
+            continue;
+
+        auto ca_op = op->access_ca();
+        assert(ca_op);
+
+        if (ca_op->kind == semantics::ca_kind::VAR)
+        {
+            auto var = ca_op->access_var()->variable_symbol.get();
+
+            add_SET_sym_to_res(var, set_type, global);
+        }
+    }
+}
+
+void macrodef_processor::process_SET(const resolved_statement& statement, context::SET_t_enum set_type)
+{
+    if (statement.label_ref().type != semantics::label_si_type::VAR)
+        return;
+
+    auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
+
+    add_SET_sym_to_res(var, set_type, false);
+}
+
+void macrodef_processor::add_SET_sym_to_res(
+    const semantics::variable_symbol* var, context::SET_t_enum set_type, bool global)
+{
+    if (var->created)
+        return;
+
+    if (auto found = result_.variable_symbols.find(var->access_basic()->name); found != result_.variable_symbols.end())
+        return;
+
+    result_.variable_symbols.emplace(var->access_basic()->name,
+        context::variable_symbol_definition(
+            var->access_basic()->name, set_type, false, curr_line_, var->symbol_range.start));
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)

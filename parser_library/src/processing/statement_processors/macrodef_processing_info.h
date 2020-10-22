@@ -17,9 +17,7 @@
 
 #include "context/macro.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // data to start macrodef_processor
 struct macrodef_start_data
@@ -63,13 +61,13 @@ struct macrodef_processing_result
     context::statement_block definition;
     context::copy_nest_storage nests;
     context::label_storage sequence_symbols;
+    context::vardef_storage variable_symbols;
 
     location definition_location;
 
     bool invalid;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

@@ -239,4 +239,5 @@ public:
 };
 
 } // namespace hlasm_plugin::parser_library::context
+
 #endif

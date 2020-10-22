@@ -23,9 +23,7 @@
 #include "sequence_symbol.h"
 #include "variables/macro_param.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // struct wrapping macro call args
 struct macro_arg
@@ -43,16 +41,54 @@ struct macro_arg
     {}
 };
 
+struct variable_symbol_definition
+{
+    // variable symbol name
+    context::id_index name;
+
+    // flag whether is macro parameter
+    bool macro_param;
+
+    // type of SET symbol
+    context::SET_t_enum type;
+    // flag whether SET symbol is global
+    bool global;
+
+    // statement number in macro
+    size_t def_location;
+    position def_position;
+
+    // macro parm constructor
+    variable_symbol_definition(context::id_index name, size_t def_location, position def_position)
+        : name(name)
+        , macro_param(true)
+        , def_location(def_location)
+        , def_position(def_position)
+    {}
+
+    // SET symbol constructor
+    variable_symbol_definition(
+        context::id_index name, context::SET_t_enum type, bool global, size_t def_location, position def_position)
+        : name(name)
+        , macro_param(false)
+        , type(type)
+        , global(global)
+        , def_location(def_location)
+        , def_position(def_position)
+    {}
+};
+
 class macro_definition;
 struct macro_invocation;
 using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 using macro_def_ptr = std::shared_ptr<macro_definition>;
 using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
+using vardef_storage = std::unordered_map<id_index, variable_symbol_definition>;
 using copy_nest_storage = std::vector<std::vector<location>>;
 
 // class representing macro definition
-// contains info about keyword, positional parameters of HLASM mascro as well as derivation tree of the actual code
-// has methods call to represent macro instruction call
+// contains info about keyword, positional parameters of HLASM macro as well as list of statements
+// has the 'call' method to represent macro instruction call
 // serves as prototype for creating macro_invocation objects
 class macro_definition
 {
@@ -120,7 +156,6 @@ public:
         const location& definition_location);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
+
 #endif
