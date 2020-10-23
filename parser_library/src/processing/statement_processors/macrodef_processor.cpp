@@ -241,7 +241,7 @@ void macrodef_processor::process_prototype_label(
         {
             result_.prototype.name_param = var->access_basic()->name;
             result_.variable_symbols.emplace(var->access_basic()->name,
-                context::variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
+                variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -290,8 +290,7 @@ void macrodef_processor::process_prototype_operand(
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
                 result_.variable_symbols.emplace(var->access_basic()->name,
-                    context::variable_symbol_definition(
-                        var->access_basic()->name, curr_line_, var->symbol_range.start));
+                    variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
             }
         }
         else if (tmp_chain.size() > 1)
@@ -312,8 +311,7 @@ void macrodef_processor::process_prototype_operand(
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
                     result_.variable_symbols.emplace(var->access_basic()->name,
-                        context::variable_symbol_definition(
-                            var->access_basic()->name, curr_line_, var->symbol_range.start));
+                        variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
                 }
             }
             else
@@ -454,8 +452,7 @@ void macrodef_processor::add_SET_sym_to_res(
         return;
 
     result_.variable_symbols.emplace(var->access_basic()->name,
-        context::variable_symbol_definition(
-            var->access_basic()->name, set_type, false, curr_line_, var->symbol_range.start));
+        variable_symbol_definition(var->access_basic()->name, set_type, global, curr_line_, var->symbol_range.start));
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
@@ -487,6 +484,19 @@ void macrodef_processor::add_correct_copy_nest()
         auto pos = nest.cached_definition[nest.current_statement].get_base()->statement_position();
         auto loc = location(pos, nest.definition_location.file);
         result_.nests.back().push_back(std::move(loc));
+    }
+
+    const auto& bottom_loc = result_.nests.back().back();
+    bool in_inner_macro = macro_nest_ != 1;
+
+    if (result_.file_scopes[bottom_loc.file].empty())
+        result_.file_scopes[bottom_loc.file].emplace_back(bottom_loc.pos.line, in_inner_macro);
+    else
+    {
+        auto& last_scope = result_.file_scopes[bottom_loc.file].back();
+        last_scope.end_line = bottom_loc.pos.line;
+        if (last_scope.inner_macro != in_inner_macro) // add new scope
+            result_.file_scopes[bottom_loc.file].emplace_back(bottom_loc.pos.line, in_inner_macro);
     }
 }
 

@@ -21,9 +21,7 @@
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor that creates macro definition from provided statements
 class macrodef_processor : public statement_processor
@@ -93,7 +91,6 @@ private:
     void add_correct_copy_nest();
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif
