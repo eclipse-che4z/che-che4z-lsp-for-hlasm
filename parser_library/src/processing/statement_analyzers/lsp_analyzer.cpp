@@ -27,29 +27,26 @@ void lsp_analyzer::analyze(
     switch (proc_kind)
     {
         case processing_kind::ORDINARY:
-            collect_occurences(occurence_kind::ORD, statement);
+            collect_occurences(lsp::occurence_kind::ORD, statement);
             if (prov_kind != statement_provider_kind::MACRO) // macros already processed during macro def processing
             {
-                collect_occurences(occurence_kind::VAR, statement);
-                collect_occurences(occurence_kind::SEQ, statement);
+                collect_occurences(lsp::occurence_kind::VAR, statement);
+                collect_occurences(lsp::occurence_kind::SEQ, statement);
                 collect_var_definitions(statement);
             }
-            collect_var_seq_scope();
             break;
         case processing_kind::MACRO:
-            collect_occurences(occurence_kind::VAR, statement);
-            collect_occurences(occurence_kind::SEQ, statement);
-            collect_var_definitions(statement);
-            collect_var_seq_scope();
+            collect_occurences(lsp::occurence_kind::VAR, statement);
+            collect_occurences(lsp::occurence_kind::SEQ, statement);
             break;
         default:
             break;
     }
 }
 
-void lsp_analyzer::collect_occurences(occurence_kind kind, const context::hlasm_statement& statement)
+void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
 {
-    occurence_storage s;
+    lsp::occurence_storage s;
     occurence_collector collector(kind, s);
 
     if (auto def_stmt = statement.access_deferred(); def_stmt)

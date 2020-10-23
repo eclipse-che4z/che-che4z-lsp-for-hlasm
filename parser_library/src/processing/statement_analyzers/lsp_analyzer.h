@@ -30,10 +30,11 @@ public:
         statement_provider_kind prov_kind,
         processing_kind proc_kind) override;
 
+    virtual void macrodef_started(const macrodef_start_data& data) override;
+    virtual void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result& result) override;
+
 private:
-    void collect_occurences(occurence_kind kind, const context::hlasm_statement& statement);
-    void collect_var_definitions(const context::hlasm_statement& statement);
-    void collect_var_seq_scope();
+    void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
 
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
     void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);

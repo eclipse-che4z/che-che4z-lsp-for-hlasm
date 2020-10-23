@@ -16,6 +16,7 @@
 #define PROCESSING_MACRODEF_PROCESSING_INFO_H
 
 #include "context/macro.h"
+#include "lsp/macro_info.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -49,58 +50,7 @@ struct macrodef_prototype
     std::vector<context::macro_arg> symbolic_params;
 };
 
-struct variable_symbol_definition
-{
-    // variable symbol name
-    context::id_index name;
-
-    // flag whether is macro parameter
-    bool macro_param;
-
-    // type of SET symbol
-    context::SET_t_enum type;
-    // flag whether SET symbol is global
-    bool global;
-
-    // statement number in macro
-    size_t def_location;
-    position def_position;
-
-    // macro parm constructor
-    variable_symbol_definition(context::id_index name, size_t def_location, position def_position)
-        : name(name)
-        , macro_param(true)
-        , def_location(def_location)
-        , def_position(def_position)
-    {}
-
-    // SET symbol constructor
-    variable_symbol_definition(
-        context::id_index name, context::SET_t_enum type, bool global, size_t def_location, position def_position)
-        : name(name)
-        , macro_param(false)
-        , type(type)
-        , global(global)
-        , def_location(def_location)
-        , def_position(def_position)
-    {}
-};
-
-using vardef_storage = std::unordered_map<context::id_index, variable_symbol_definition>;
-
-struct macro_slice_t
-{
-    size_t begin_line, end_line;
-    bool inner_macro;
-
-    macro_slice_t(size_t begin_line, bool inner_macro)
-        : begin_line(begin_line)
-        , end_line(begin_line)
-        , inner_macro(inner_macro)
-    {}
-};
-
-using macro_file_scopes_t = std::unordered_map<std::string, std::vector<macro_slice_t>>;
+using macro_file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
 
 // result of macrodef_processor
 struct macrodef_processing_result
@@ -115,7 +65,7 @@ struct macrodef_processing_result
     context::copy_nest_storage nests;
     context::label_storage sequence_symbols;
 
-    vardef_storage variable_symbols;
+    lsp::vardef_storage variable_symbols;
     macro_file_scopes_t file_scopes;
 
     location definition_location;

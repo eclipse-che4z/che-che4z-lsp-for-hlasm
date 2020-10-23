@@ -18,7 +18,7 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-occurence_collector::occurence_collector(occurence_kind collector_kind, occurence_storage& storage)
+occurence_collector::occurence_collector(lsp::occurence_kind collector_kind, lsp::occurence_storage& storage)
     : collector_kind(collector_kind)
     , occurences(storage)
 {}
@@ -95,25 +95,26 @@ void occurence_collector::visit(const semantics::macro_operand_string&) {}
 
 void occurence_collector::get_occurence(const semantics::variable_symbol& var)
 {
-    if (collector_kind == occurence_kind::VAR)
+    if (collector_kind == lsp::occurence_kind::VAR)
     {
         if (var.created)
             get_occurence(var.access_created()->created_name);
         else
-            occurences.push_back(symbol_occurence { occurence_kind::VAR, var.access_basic()->name, var.symbol_range });
+            occurences.push_back(
+                lsp::symbol_occurence { lsp::occurence_kind::VAR, var.access_basic()->name, var.symbol_range });
     }
 }
 
 void occurence_collector::get_occurence(const semantics::seq_sym& seq)
 {
-    if (collector_kind == occurence_kind::SEQ)
-        occurences.push_back(symbol_occurence { occurence_kind::ORD, seq.name, seq.symbol_range });
+    if (collector_kind == lsp::occurence_kind::SEQ)
+        occurences.push_back(lsp::symbol_occurence { lsp::occurence_kind::ORD, seq.name, seq.symbol_range });
 }
 
 void occurence_collector::get_occurence(context::id_index ord, const range& ord_range)
 {
-    if (collector_kind == occurence_kind::ORD)
-        occurences.push_back(symbol_occurence { occurence_kind::ORD, ord, ord_range });
+    if (collector_kind == lsp::occurence_kind::ORD)
+        occurences.push_back(lsp::symbol_occurence { lsp::occurence_kind::ORD, ord, ord_range });
 }
 
 void occurence_collector::get_occurence(const semantics::concat_chain& chain)
@@ -124,16 +125,16 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
         {
             case semantics::concat_type::STR:
                 /* TODO add range to str_conc struct
-                if (collector_kind == occurence_kind::ORD)
+                if (collector_kind == lsp::occurence_kind::ORD)
                 {
                     auto [valid, name] =
                 processing::context_manager(hlasm_ctx).try_get_symbol_name(point->access_str()->value); if (valid)
                         occurences.push_back(
-                            symbol_occurence { occurence_kind::ORD, name, point-> });
+                            lsp::symbol_occurence { lsp::occurence_kind::ORD, name, point-> });
                 }*/
                 break;
             case semantics::concat_type::VAR:
-                if (collector_kind == occurence_kind::VAR)
+                if (collector_kind == lsp::occurence_kind::VAR)
                     get_occurence(*point->access_var()->access_var()->symbol);
                 break;
             case semantics::concat_type::SUB:

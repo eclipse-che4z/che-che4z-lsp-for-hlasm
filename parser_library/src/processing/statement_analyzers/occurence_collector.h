@@ -17,37 +17,21 @@
 
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/mach_expr_visitor.h"
+#include "lsp/symbol_occurence.h"
 #include "semantics/operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::processing {
-
-enum class occurence_kind
-{
-    ORD,
-    VAR,
-    SEQ,
-    INSTR
-};
-
-struct symbol_occurence
-{
-    occurence_kind kind;
-    context::id_index name;
-    range occurence;
-};
-
-using occurence_storage = std::vector<symbol_occurence>;
 
 class occurence_collector : public semantics::operand_visitor,
                             expressions::mach_expr_visitor,
                             expressions::ca_expr_visitor
 {
 public:
-    const occurence_kind collector_kind;
-    std::vector<symbol_occurence>& occurences;
+    const lsp::occurence_kind collector_kind;
+    std::vector<lsp::symbol_occurence>& occurences;
 
 
-    occurence_collector(occurence_kind collector_kind, occurence_storage& storage);
+    occurence_collector(lsp::occurence_kind collector_kind, lsp::occurence_storage& storage);
 
     virtual void visit(const semantics::empty_operand& op) override;
     virtual void visit(const semantics::model_operand& op) override;
