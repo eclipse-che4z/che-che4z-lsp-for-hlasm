@@ -38,25 +38,35 @@ struct file_slice_t
 
     size_t begin_idx, end_idx;
     size_t begin_line, end_line;
+
+    static file_slice_t transform_slice(const macro_slice_t& slice, const macro_info& macro_i);
+    static std::vector<file_slice_t> transform_slices(
+        const std::vector<macro_slice_t>& slices, const macro_info& macro_i);
+};
+
+enum class file_type
+{
+    MACRO,
+    COPY,
+    OPENCODE
 };
 
 struct file_info
 {
-    using owner_t = std::variant<macro_info_ptr, context::copy_member_ptr>;
+    using owner_t = std::variant<context::macro_def_ptr, context::copy_member_ptr>;
 
     const std::string name;
+    const file_type type;
     owner_t owner;
 
     std::vector<file_slice_t> slices;
     std::vector<symbol_occurence> occurences;
 
-    file_info(macro_info_ptr macro_i, std::vector<macro_slice_t> slices, std::vector<symbol_occurence> occurences);
-    file_info(context::copy_member_ptr owner);
+    explicit file_info(context::macro_def_ptr owner);
+    explicit file_info(context::copy_member_ptr owner);
 
-    void update_slices(std::vector<macro_slice_t> slices);
-
-    static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
-    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
+    void update_occurences(const occurence_storage& occurences);
+    void update_slices(std::vector<file_slice_t>&& slices);
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

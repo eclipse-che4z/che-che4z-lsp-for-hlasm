@@ -74,14 +74,19 @@ struct macro_slice_t
 using macro_file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
 using macro_file_occurences_t = std::unordered_map<std::string, occurence_storage>;
 
+class lsp_context;
+
 struct macro_info
 {
+    bool external;
     context::macro_def_ptr macro_definition;
     std::vector<variable_symbol_definition> var_definitions;
 
 private:
     macro_file_scopes_t file_scopes_;
     macro_file_occurences_t file_occurences_;
+
+    friend lsp_context;
 };
 
 using macro_info_ptr = std::shared_ptr<macro_info>;

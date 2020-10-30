@@ -22,9 +22,17 @@ namespace hlasm_plugin::parser_library::lsp {
 class lsp_context
 {
     std::unordered_map<std::string, file_info> files_;
+    std::unordered_map<context::id_index, macro_info_ptr> macros_;
 
 public:
-    std::string opencode_name;
+    const std::string opencode_name;
+
+    void add_file(file_info file_i);
+    void add_copy(context::copy_member_ptr copy);
+    void add_macro(macro_info_ptr macro_i);
+
+private:
+    void distribute_macro_i(const macro_info& macro_i);
 };
 
 } // namespace hlasm_plugin::parser_library::lsp
