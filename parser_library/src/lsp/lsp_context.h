@@ -25,11 +25,11 @@ class lsp_context
     std::unordered_map<context::id_index, macro_info_ptr> macros_;
 
 public:
-    const std::string opencode_name;
-
     void add_file(file_info file_i);
     void add_copy(context::copy_member_ptr copy);
     void add_macro(macro_info_ptr macro_i);
+
+    void update_file_info(const std::string& name, const occurence_storage& occurences);
 
 private:
     void distribute_macro_i(const macro_info& macro_i);

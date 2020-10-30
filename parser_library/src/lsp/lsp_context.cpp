@@ -31,6 +31,11 @@ void lsp_context::add_macro(macro_info_ptr macro_i)
     distribute_macro_i(*macro_i);
 }
 
+void lsp_context::update_file_info(const std::string& name, const occurence_storage& occurences)
+{
+    files_[name].update_occurences(occurences);
+}
+
 void lsp_context::distribute_macro_i(const macro_info& macro_i)
 {
     for (const auto& [file, slices] : macro_i.file_scopes_)

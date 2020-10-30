@@ -80,7 +80,19 @@ struct macro_info
 {
     bool external;
     context::macro_def_ptr macro_definition;
-    std::vector<variable_symbol_definition> var_definitions;
+    vardef_storage var_definitions;
+
+    macro_info(bool external,
+        context::macro_def_ptr macro_definition,
+        vardef_storage var_definitions,
+        macro_file_scopes_t file_scopes,
+        macro_file_occurences_t file_occurences)
+        : external(external)
+        , macro_definition(std::move(macro_definition))
+        , var_definitions(std::move(var_definitions))
+        , file_scopes_(std::move(file_scopes))
+        , file_occurences_(std::move(file_occurences))
+    {}
 
 private:
     macro_file_scopes_t file_scopes_;

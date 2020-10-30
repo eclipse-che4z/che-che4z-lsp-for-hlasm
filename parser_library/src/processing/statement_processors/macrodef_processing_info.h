@@ -54,7 +54,8 @@ struct macrodef_prototype
 struct macrodef_processing_result
 {
     macrodef_processing_result()
-        : invalid(false)
+        : external(false)
+        , invalid(false)
     {}
 
     macrodef_prototype prototype;
@@ -68,6 +69,7 @@ struct macrodef_processing_result
 
     location definition_location;
 
+    bool external;
     bool invalid;
 };
 

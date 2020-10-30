@@ -41,6 +41,7 @@ macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
     , table_(create_table(hlasm_context))
 {
     result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
+    result_.external = start_.is_external;
     if (start_.is_external)
         result_.prototype.macro_name = start_.external_name;
 }

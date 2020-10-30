@@ -15,6 +15,7 @@
 #ifndef PROCESSING_LSP_ANALYZER_H
 #define PROCESSING_LSP_ANALYZER_H
 
+#include "lsp/lsp_context.h"
 #include "occurence_collector.h"
 #include "processing/processing_format.h"
 #include "statement_analyzer.h"
@@ -24,6 +25,10 @@ namespace hlasm_plugin::parser_library::processing {
 class lsp_analyzer : public statement_analyzer
 {
     context::hlasm_context& hlasm_ctx_;
+    lsp::lsp_context& lsp_ctx_;
+
+    bool in_macro_;
+    lsp::macro_file_occurences_t macro_occurences_;
 
 public:
     virtual void analyze(const context::hlasm_statement& statement,
@@ -31,7 +36,10 @@ public:
         processing_kind proc_kind) override;
 
     virtual void macrodef_started(const macrodef_start_data& data) override;
-    virtual void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result& result) override;
+    virtual void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result) override;
+
+    virtual void copydef_started(const copy_start_data& data) override;
+    virtual void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result) override;
 
 private:
     void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);

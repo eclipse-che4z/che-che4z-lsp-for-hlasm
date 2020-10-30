@@ -44,10 +44,30 @@ void lsp_analyzer::analyze(
     }
 }
 
+void lsp_analyzer::macrodef_started(const macrodef_start_data&) { in_macro_ = true; }
+
+void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result)
+{
+    lsp_ctx_.add_macro(std::make_shared<lsp::macro_info>(result.external,
+        std::move(macrodef),
+        std::move(result.variable_symbols),
+        std::move(result.file_scopes),
+        std::move(macro_occurences_)));
+
+    in_macro_ = false;
+}
+
+void lsp_analyzer::copydef_started(const copy_start_data&) {}
+
+void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_processing_result&&)
+{
+    lsp_ctx_.add_copy(std::move(copydef));
+}
+
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
 {
-    lsp::occurence_storage s;
-    occurence_collector collector(kind, s);
+    lsp::occurence_storage occs;
+    occurence_collector collector(kind, occs);
 
     if (auto def_stmt = statement.access_deferred(); def_stmt)
     {
@@ -63,6 +83,14 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::h
         collect_occurence(res_stmt->instruction_ref(), collector);
         collect_occurence(res_stmt->operands_ref(), collector);
     }
+
+    if (in_macro_)
+    {
+        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().file];
+        file_occs.insert(file_occs.end(), std::move_iterator(occs.begin()), std::move_iterator(occs.end()));
+    }
+    else
+        lsp_ctx_.update_file_info(hlasm_ctx_.current_statement_location().file, occs);
 }
 
 void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence_collector& collector)
