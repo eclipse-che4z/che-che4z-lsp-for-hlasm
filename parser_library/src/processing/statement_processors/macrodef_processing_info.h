@@ -50,8 +50,6 @@ struct macrodef_prototype
     std::vector<context::macro_arg> symbolic_params;
 };
 
-using macro_file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
-
 // result of macrodef_processor
 struct macrodef_processing_result
 {
@@ -66,7 +64,7 @@ struct macrodef_processing_result
     context::label_storage sequence_symbols;
 
     lsp::vardef_storage variable_symbols;
-    macro_file_scopes_t file_scopes;
+    lsp::macro_file_scopes_t file_scopes;
 
     location definition_location;
 

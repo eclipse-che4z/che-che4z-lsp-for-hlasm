@@ -15,6 +15,9 @@
 #ifndef LSP_FILE_INFO_H
 #define LSP_FILE_INFO_H
 
+#include <variant>
+
+#include "context/copy_member.h"
 #include "macro_info.h"
 #include "symbol_occurence.h"
 
@@ -27,7 +30,7 @@ enum class scope_type
     INNER_MACRO
 };
 
-struct file_slice
+struct file_slice_t
 {
     scope_type type;
 
@@ -39,12 +42,21 @@ struct file_slice
 
 struct file_info
 {
-    const std::string name;
+    using owner_t = std::variant<macro_info_ptr, context::copy_member_ptr>;
 
-    std::vector<file_slice> slices;
+    const std::string name;
+    owner_t owner;
+
+    std::vector<file_slice_t> slices;
     std::vector<symbol_occurence> occurences;
 
-    void update_slices(std::vector<macro_slices> slices);
+    file_info(macro_info_ptr macro_i, std::vector<macro_slice_t> slices, std::vector<symbol_occurence> occurences);
+    file_info(context::copy_member_ptr owner);
+
+    void update_slices(std::vector<macro_slice_t> slices);
+
+    static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
+    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

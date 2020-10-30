@@ -39,6 +39,9 @@ struct copy_member_invocation
     {}
 };
 
+struct copy_member;
+using copy_member_ptr = std::shared_ptr<copy_member>;
+
 // structure represents COPY member in HLASM macro library
 struct copy_member
 {
