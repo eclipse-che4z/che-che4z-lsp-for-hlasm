@@ -260,7 +260,7 @@ TEST(context_macro, add_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    auto& m = ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -308,7 +308,7 @@ TEST(context_macro, call_and_leave_macro)
     // call->|		MAC		ada,mko,
     auto m2 = ctx.enter_macro(idx, nullptr, move(params));
 
-    ASSERT_TRUE(m.id == m2->id);
+    ASSERT_TRUE(m->id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.this_macro() == m2);
 

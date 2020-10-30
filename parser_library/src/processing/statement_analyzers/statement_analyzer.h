@@ -23,6 +23,10 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+class statement_analyzer;
+
+using analyzer_ptr = std::unique_ptr<statement_analyzer>;
+
 class statement_analyzer
 {
 public:

@@ -14,12 +14,14 @@
 
 #include "lsp_context.h"
 
+#include <cassert>
+
 namespace hlasm_plugin::parser_library::lsp {
 
 void lsp_context::add_file(file_info file_i)
 {
     std::string name = file_i.name;
-    files_.emplace(std::move(name), std::move(file_i));
+    files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
 void lsp_context::add_copy(context::copy_member_ptr copy) { add_file(file_info(std::move(copy))); }
@@ -28,21 +30,36 @@ void lsp_context::add_macro(macro_info_ptr macro_i)
 {
     if (macro_i->external)
         add_file(file_info(macro_i->macro_definition));
-    distribute_macro_i(*macro_i);
+    distribute_macro_i(macro_i);
 }
 
 void lsp_context::update_file_info(const std::string& name, const occurence_storage& occurences)
 {
-    files_[name].update_occurences(occurences);
+    assert(files_.find(name) != files_.end());
+    files_[name]->update_occurences(occurences);
 }
 
-void lsp_context::distribute_macro_i(const macro_info& macro_i)
+bool files_present(const std::unordered_map<std::string, file_info_ptr>& files,
+    const macro_file_scopes_t& scopes,
+    const macro_file_occurences_t& occs)
 {
-    for (const auto& [file, slices] : macro_i.file_scopes_)
-        files_[file].update_slices(file_slice_t::transform_slices(slices, macro_i));
+    bool present = true;
+    for (const auto& [file, _] : scopes)
+        present |= files.find(file) != files.end();
+    for (const auto& [file, _] : occs)
+        present |= files.find(file) != files.end();
+    return present;
+}
 
-    for (const auto& [file, occs] : macro_i.file_occurences_)
-        files_[file].update_occurences(occs);
+void lsp_context::distribute_macro_i(macro_info_ptr macro_i)
+{
+    assert(files_present(files_, macro_i->file_scopes_, macro_i->file_occurences_));
+
+    for (const auto& [file, slices] : macro_i->file_scopes_)
+        files_[file]->update_slices(file_slice_t::transform_slices(slices, macro_i));
+
+    for (const auto& [file, occs] : macro_i->file_occurences_)
+        files_[file]->update_occurences(occs);
 }
 
 } // namespace hlasm_plugin::parser_library::lsp

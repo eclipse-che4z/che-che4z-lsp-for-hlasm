@@ -39,9 +39,8 @@ struct file_slice_t
     size_t begin_idx, end_idx;
     size_t begin_line, end_line;
 
-    static file_slice_t transform_slice(const macro_slice_t& slice, const macro_info& macro_i);
-    static std::vector<file_slice_t> transform_slices(
-        const std::vector<macro_slice_t>& slices, const macro_info& macro_i);
+    static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
+    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
 };
 
 enum class file_type
@@ -50,6 +49,10 @@ enum class file_type
     COPY,
     OPENCODE
 };
+
+struct file_info;
+
+using file_info_ptr = std::unique_ptr<file_info>;
 
 struct file_info
 {

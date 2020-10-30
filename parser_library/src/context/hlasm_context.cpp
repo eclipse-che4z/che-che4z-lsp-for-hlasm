@@ -657,7 +657,7 @@ C_t hlasm_context::get_opcode_attr(id_index symbol)
     return "U";
 }
 
-const macro_definition& hlasm_context::add_macro(id_index name,
+macro_def_ptr hlasm_context::add_macro(id_index name,
     id_index label_param_name,
     std::vector<macro_arg> params,
     statement_block definition,
@@ -665,16 +665,16 @@ const macro_definition& hlasm_context::add_macro(id_index name,
     label_storage labels,
     location definition_location)
 {
-    return *macros_
-                .insert_or_assign(name,
-                    std::make_shared<macro_definition>(name,
-                        label_param_name,
-                        std::move(params),
-                        std::move(definition),
-                        std::move(copy_nests),
-                        std::move(labels),
-                        std::move(definition_location)))
-                .first->second.get();
+    return macros_
+        .insert_or_assign(name,
+            std::make_shared<macro_definition>(name,
+                label_param_name,
+                std::move(params),
+                std::move(definition),
+                std::move(copy_nests),
+                std::move(labels),
+                std::move(definition_location)))
+        .first->second;
 }
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
@@ -724,10 +724,16 @@ const std::string& hlasm_context::opencode_file_name() const { return source_sta
 
 const std::set<std::string>& hlasm_context::get_visited_files() { return visited_files_; }
 
-void hlasm_context::add_copy_member(id_index member, statement_block definition, location definition_location)
+copy_member_ptr hlasm_context::add_copy_member(
+    id_index member, statement_block definition, location definition_location)
 {
-    copy_members_.try_emplace(member, member, std::move(definition), definition_location);
+    auto copydef =
+        copy_members_
+            .try_emplace(member, std::make_shared<copy_member>(member, std::move(definition), definition_location))
+            .first->second;
     visited_files_.insert(std::move(definition_location.file));
+
+    return copydef;
 }
 
 void hlasm_context::enter_copy_member(id_index member_name)
@@ -738,7 +744,7 @@ void hlasm_context::enter_copy_member(id_index member_name)
 
     auto& [name, member] = *tmp;
 
-    source_stack_.back().copy_stack.emplace_back(member.enter());
+    source_stack_.back().copy_stack.emplace_back(member->enter());
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return copy_members_; }
@@ -758,7 +764,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 
     for (auto& frame : snapshot.copy_frames)
     {
-        auto invo = copy_members_.at(frame.copy_member).enter();
+        auto invo = copy_members_.at(frame.copy_member)->enter();
         invo.current_statement = (int)frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }

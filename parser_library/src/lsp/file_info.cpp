@@ -28,22 +28,24 @@ file_info::file_info(context::copy_member_ptr owner)
     , owner(std::move(owner))
 {}
 
-file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, const macro_info& macro_i)
+file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i)
 {
     file_slice_t fslice;
 
     fslice.begin_idx = slice.begin_statement;
     fslice.end_idx = slice.end_statement;
 
-    fslice.begin_line = macro_i.macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
-    fslice.begin_line = macro_i.macro_definition->copy_nests[fslice.end_idx].back().pos.line;
+    fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
+    fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = macro_i;
+
+    return fslice;
 }
 
 std::vector<file_slice_t> file_slice_t::transform_slices(
-    const std::vector<macro_slice_t>& slices, const macro_info& macro_i)
+    const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i)
 {
     std::vector<file_slice_t> ret;
     for (const auto& s : slices)

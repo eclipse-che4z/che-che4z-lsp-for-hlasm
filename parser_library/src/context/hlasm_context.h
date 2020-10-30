@@ -38,7 +38,7 @@ using ctx_ptr = std::unique_ptr<hlasm_context>;
 class hlasm_context
 {
     using macro_storage = std::unordered_map<id_index, macro_def_ptr>;
-    using copy_member_storage = std::unordered_map<id_index, copy_member>;
+    using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, instruction::instruction_array>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
 
@@ -177,7 +177,7 @@ public:
     // returns macro we are currently in or empty shared_ptr if in open code
     macro_invo_ptr this_macro() const;
     // registers new macro
-    const macro_definition& add_macro(id_index name,
+    macro_def_ptr add_macro(id_index name,
         id_index label_param_name,
         std::vector<macro_arg> params,
         statement_block definition,
@@ -192,7 +192,7 @@ public:
     // gets copy member storage
     const copy_member_storage& copy_members();
     // registers new copy member
-    void add_copy_member(id_index member, statement_block definition, location definition_location);
+    copy_member_ptr add_copy_member(id_index member, statement_block definition, location definition_location);
     // enters a copy member
     void enter_copy_member(id_index member);
     // leaves current copy member
