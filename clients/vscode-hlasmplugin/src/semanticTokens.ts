@@ -81,6 +81,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<TextDocumentRegis
 
 	askForTokens(document: vscode.TextDocument) {
 		setTimeout(() => {
+			
 			this._client.sendRequest('textDocument/semanticTokens/full',{textDocument: {uri: document.uri.toString()}}).then((result: SemanticTokensResult) => {
 				if (result.data.length > 0)
 					this.applyDecorations(document, result.data);

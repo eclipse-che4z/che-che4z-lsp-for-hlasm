@@ -25,6 +25,7 @@ import { ServerFactory } from './serverFactory';
 const useTcp = false;
 const offset = 71;
 const continueColumn = 15;
+//export var hlasmpluginClient : vscodelc.LanguageClient;
 /**
  * ACTIVATION
  * activates the extension
@@ -52,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const serverOptions = await factory.create(useTcp);
 
     //client init
-    const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
 
     //asm contribution 
     var highlight = new SemanticTokensFeature(hlasmpluginClient);
@@ -64,6 +65,13 @@ export async function activate(context: vscode.ExtensionContext) {
     setTimeout(function () {
         hlasmpluginClient.start();
     }, (useTcp) ? 2000 : 0);
+    
+    let api = {
+        getExtension() : vscodelc.LanguageClient {
+            return hlasmpluginClient;
+        }
+    };
+    return api;
 }
 
 async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: SemanticTokensFeature) {

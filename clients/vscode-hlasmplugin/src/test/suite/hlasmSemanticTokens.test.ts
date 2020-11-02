@@ -49,12 +49,14 @@ suite('HLASM Semantic Tokens Test Suite', () => {
         const result: SemanticTokensResult = {
             data: [0,0,2,0,0,0,3,3,1,0]
         };
-
-        const results = highlight.applyDecorations(document,result.data);
-
-        const documentMap = results.get(document.uri.toString());
-        assert.ok(documentMap);
-        assert.ok(compareRanges(documentMap.get('label')[0][0], firstRange));
-        assert.ok(compareRanges(documentMap.get('instruction')[0][0], secondRange));
+        client.onReady().then(() => {
+            var results = highlight.applyDecorations(document,result.data)
+            assert.notEqual(results, undefined);
+            const documentMap = results.get(document.uri.toString());
+            assert.ok(documentMap);
+            assert.ok(compareRanges(documentMap.get('label')[0][0], firstRange));
+            assert.ok(compareRanges(documentMap.get('instruction')[0][0], secondRange));
+        })
+        
     });
 })
