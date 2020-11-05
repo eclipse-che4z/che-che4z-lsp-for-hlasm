@@ -22,7 +22,7 @@ suite('Integration Test Suite', () => {
 	
 	// open 'open' file, should be recognized as hlasm
 	test('HLASM file open test', (done) => {
-		var hh = vscode.extensions.getExtension("broadcomMFD.hlasm-language-support").exports.getExtension().onReady().then(() => {
+		
 		// 'open' should be in workspace
 		vscode.workspace.findFiles('open').then(files => {
 			assert.ok(files && files[0]);
@@ -41,7 +41,6 @@ suite('Integration Test Suite', () => {
 
 				});
 			});
-		});
 		});
 	}).timeout(10000).slow(4000);
 
