@@ -18,7 +18,7 @@
 
 #include "network/uri/uri.hpp"
 
-#include "logger.h"
+#include "../logger.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
