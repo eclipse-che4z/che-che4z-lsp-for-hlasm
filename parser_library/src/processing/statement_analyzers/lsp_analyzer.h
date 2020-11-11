@@ -42,6 +42,8 @@ public:
     virtual void copydef_started(const copy_start_data& data) override;
     virtual void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result) override;
 
+    virtual void opencode_finished() override;
+
 private:
     void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
 

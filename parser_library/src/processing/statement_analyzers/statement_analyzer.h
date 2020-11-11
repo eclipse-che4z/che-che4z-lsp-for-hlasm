@@ -38,6 +38,8 @@ public:
     virtual void copydef_started(const copy_start_data& data) = 0;
     virtual void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result) = 0;
 
+    virtual void opencode_finished() = 0;
+
     virtual ~statement_analyzer() = default;
 };
 

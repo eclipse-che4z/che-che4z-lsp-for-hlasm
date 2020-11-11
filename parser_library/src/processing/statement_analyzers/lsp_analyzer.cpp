@@ -65,6 +65,11 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
     lsp_ctx_.add_copy(std::move(copydef));
 }
 
+void lsp_analyzer::opencode_finished()
+{
+    lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), hlasm_ctx_));
+}
+
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
 {
     lsp::occurence_storage occs;

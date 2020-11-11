@@ -16,19 +16,21 @@
 #define LSP_CONTEXT_H
 
 #include "file_info.h"
+#include "opencode_info.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
 class lsp_context
 {
+    opencode_info_ptr opencode_;
     std::unordered_map<std::string, file_info_ptr> files_;
     std::unordered_map<context::id_index, macro_info_ptr> macros_;
 
 public:
     void add_copy(context::copy_member_ptr copy);
     void add_macro(macro_info_ptr macro_i);
+    void add_opencode(opencode_info_ptr opencode_i);
 
-    void add_opencode_info(vardef_storage var_definitions);
     void update_file_info(const std::string& name, const occurence_storage& occurences);
 
 private:

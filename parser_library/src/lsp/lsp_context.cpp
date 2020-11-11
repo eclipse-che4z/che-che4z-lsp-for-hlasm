@@ -33,6 +33,8 @@ void lsp_context::add_macro(macro_info_ptr macro_i)
     distribute_macro_i(macro_i);
 }
 
+void lsp_context::add_opencode(opencode_info_ptr opencode_i) { opencode_ = std::move(opencode_i); }
+
 void lsp_context::update_file_info(const std::string& name, const occurence_storage& occurences)
 {
     assert(files_.find(name) != files_.end());
