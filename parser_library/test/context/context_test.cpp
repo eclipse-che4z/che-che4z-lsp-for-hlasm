@@ -292,7 +292,7 @@ TEST(context_macro, call_and_leave_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
@@ -308,7 +308,7 @@ TEST(context_macro, call_and_leave_macro)
     // call->|		MAC		ada,mko,
     auto m2 = ctx.enter_macro(idx, nullptr, move(params));
 
-    ASSERT_TRUE(m->id == m2->id);
+    ASSERT_TRUE(m.id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.this_macro() == m2);
 
