@@ -241,8 +241,7 @@ void macrodef_processor::process_prototype_label(
         else
         {
             result_.prototype.name_param = var->access_basic()->name;
-            result_.variable_symbols.emplace(var->access_basic()->name,
-                lsp::variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
+            result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -290,8 +289,7 @@ void macrodef_processor::process_prototype_operand(
                 auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
-                result_.variable_symbols.emplace(var->access_basic()->name,
-                    lsp::variable_symbol_definition(var->access_basic()->name, curr_line_, var->symbol_range.start));
+                result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
             }
         }
         else if (tmp_chain.size() > 1)
@@ -311,9 +309,8 @@ void macrodef_processor::process_prototype_operand(
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
-                    result_.variable_symbols.emplace(var->access_basic()->name,
-                        lsp::variable_symbol_definition(
-                            var->access_basic()->name, curr_line_, var->symbol_range.start));
+                    result_.variable_symbols.emplace_back(
+                        var->access_basic()->name, curr_line_, var->symbol_range.start);
                 }
             }
             else
@@ -450,12 +447,14 @@ void macrodef_processor::add_SET_sym_to_res(
     if (var->created)
         return;
 
-    if (auto found = result_.variable_symbols.find(var->access_basic()->name); found != result_.variable_symbols.end())
+    if (std::find_if(result_.variable_symbols.begin(),
+            result_.variable_symbols.end(),
+            [&](const auto& def) { return def.name == var->access_basic()->name; })
+        != result_.variable_symbols.end())
         return;
 
-    result_.variable_symbols.emplace(var->access_basic()->name,
-        lsp::variable_symbol_definition(
-            var->access_basic()->name, set_type, global, curr_line_, var->symbol_range.start));
+    result_.variable_symbols.emplace_back(
+        var->access_basic()->name, set_type, global, curr_line_, var->symbol_range.start);
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)

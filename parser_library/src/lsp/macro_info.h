@@ -57,7 +57,7 @@ struct variable_symbol_definition
     {}
 };
 
-using vardef_storage = std::unordered_map<context::id_index, variable_symbol_definition>;
+using vardef_storage = std::vector<variable_symbol_definition>;
 
 struct macro_slice_t
 {
