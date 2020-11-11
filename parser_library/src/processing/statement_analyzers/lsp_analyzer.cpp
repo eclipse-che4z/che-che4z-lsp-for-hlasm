@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-#include "processing/context_manager.h"
+#include "processing/statement_processors/macrodef_processor.h"
 
 
 namespace hlasm_plugin::parser_library::processing {
@@ -32,7 +32,7 @@ void lsp_analyzer::analyze(
             {
                 collect_occurences(lsp::occurence_kind::VAR, statement);
                 collect_occurences(lsp::occurence_kind::SEQ, statement);
-                collect_var_definitions(statement);
+                collect_var_definition(statement);
             }
             break;
         case processing_kind::MACRO:
@@ -55,6 +55,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
         std::move(macro_occurences_)));
 
     in_macro_ = false;
+    macro_occurences_.clear();
 }
 
 void lsp_analyzer::copydef_started(const copy_start_data&) {}
@@ -123,6 +124,105 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)
 {
     std::for_each(operands.value.begin(), operands.value.end(), [&](const auto& op) { op->apply(collector); });
+}
+
+#define IF_LCL_GBL(X, Y, Z)                                                                                            \
+    if (code.value == ctx.ids().add(#X))                                                                               \
+    {                                                                                                                  \
+        set_type = context::SET_t_enum::Y;                                                                             \
+        global = Z;                                                                                                    \
+        return true;                                                                                                   \
+    }
+#define IF_SET(X, Y)                                                                                                   \
+    if (code.value == ctx.ids().add(#X))                                                                               \
+    {                                                                                                                  \
+        set_type = context::SET_t_enum::Y;                                                                             \
+        return true;                                                                                                   \
+    }
+
+bool is_LCL_GBL(const processing::resolved_statement& statement,
+    context::hlasm_context& ctx,
+    context::SET_t_enum& set_type,
+    bool& global)
+{
+    const auto& code = statement.opcode_ref();
+
+    IF_LCL_GBL(LCLA, A_TYPE, false);
+    IF_LCL_GBL(LCLB, B_TYPE, false);
+    IF_LCL_GBL(LCLC, C_TYPE, false);
+    IF_LCL_GBL(GBLA, A_TYPE, true);
+    IF_LCL_GBL(GBLB, B_TYPE, true);
+    IF_LCL_GBL(GBLC, C_TYPE, true);
+    return false;
+}
+
+bool is_SET(const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
+{
+    const auto& code = statement.opcode_ref();
+
+    IF_SET(SETA, A_TYPE);
+    IF_SET(SETB, B_TYPE);
+    IF_SET(SETC, C_TYPE);
+    return false;
+}
+
+void lsp_analyzer::collect_var_definition(const context::hlasm_statement& statement)
+{
+    auto res_stmt = statement.access_resolved();
+    if (!res_stmt)
+        return;
+
+    bool global;
+    context::SET_t_enum type;
+    if (is_SET(*res_stmt, hlasm_ctx_, type))
+        collect_SET_defs(*res_stmt, type);
+    else if (is_LCL_GBL(*res_stmt, hlasm_ctx_, type, global))
+        collect_LCL_GBL_defs(*res_stmt, type, global);
+}
+
+void lsp_analyzer::collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type)
+{
+    if (statement.label_ref().type != semantics::label_si_type::VAR)
+        return;
+
+    auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
+
+    add_var_def(var, type, false);
+}
+
+void lsp_analyzer::collect_LCL_GBL_defs(
+    const processing::resolved_statement& statement, context::SET_t_enum type, bool global)
+{
+    for (auto& op : statement.operands_ref().value)
+    {
+        if (op->type != semantics::operand_type::EMPTY)
+            continue;
+
+        auto ca_op = op->access_ca();
+        assert(ca_op);
+
+        if (ca_op->kind == semantics::ca_kind::VAR)
+        {
+            auto var = ca_op->access_var()->variable_symbol.get();
+
+            add_var_def(var, type, global);
+        }
+    }
+}
+
+void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global)
+{
+    if (var->created)
+        return;
+
+    if (std::find_if(opencode_var_defs_.begin(),
+            opencode_var_defs_.end(),
+            [&](const auto& def) { return def.name == var->access_basic()->name; })
+        != opencode_var_defs_.end())
+        return;
+
+    opencode_var_defs_.emplace_back(
+        var->access_basic()->name, type, global, hlasm_ctx_.current_statement_location().file, var->symbol_range.start);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

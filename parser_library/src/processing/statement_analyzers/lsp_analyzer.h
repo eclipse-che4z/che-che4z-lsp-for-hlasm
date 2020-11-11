@@ -29,6 +29,7 @@ class lsp_analyzer : public statement_analyzer
 
     bool in_macro_;
     lsp::macro_file_occurences_t macro_occurences_;
+    lsp::vardef_storage opencode_var_defs_;
 
 public:
     virtual void analyze(const context::hlasm_statement& statement,
@@ -47,6 +48,12 @@ private:
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
     void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);
     void collect_occurence(const semantics::operands_si& operands, occurence_collector& collector);
+
+    void collect_var_definition(const context::hlasm_statement& statement);
+
+    void collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type);
+    void collect_LCL_GBL_defs(const processing::resolved_statement& statement, context::SET_t_enum type, bool global);
+    void add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

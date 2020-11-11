@@ -35,6 +35,9 @@ struct variable_symbol_definition
 
     // statement number in macro
     size_t def_location;
+    // file in opencode
+    std::string file;
+
     position def_position;
 
     // macro parm constructor
@@ -45,7 +48,7 @@ struct variable_symbol_definition
         , def_position(def_position)
     {}
 
-    // SET symbol constructor
+    // in-macro SET symbol constructor
     variable_symbol_definition(
         context::id_index name, context::SET_t_enum type, bool global, size_t def_location, position def_position)
         : name(name)
@@ -53,6 +56,17 @@ struct variable_symbol_definition
         , type(type)
         , global(global)
         , def_location(def_location)
+        , def_position(def_position)
+    {}
+
+    // in-opencode SET symbol constructor
+    variable_symbol_definition(
+        context::id_index name, context::SET_t_enum type, bool global, std::string file, position def_position)
+        : name(name)
+        , macro_param(false)
+        , type(type)
+        , global(global)
+        , file(std::move(file))
         , def_position(def_position)
     {}
 };
