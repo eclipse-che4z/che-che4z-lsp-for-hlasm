@@ -29,22 +29,26 @@ class diagnosable_ctx;
 // used to unify diagnostics collecting for checking objects
 class diagnostic_collector
 {
-    diagnosable_ctx* diagnoser_;
+    const diagnosable_ctx* diagnoser_;
     context::processing_stack_t location_stack_;
+    range diag_range_;
 
 public:
     // constructor with explicit location stack
     // used for outputing diagnostic of postponed statements
-    diagnostic_collector(diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
+    diagnostic_collector(const diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
 
     // constructor with implicit location stack (aquired from the diagnoser)
     // used for default statement checking
-    diagnostic_collector(diagnosable_ctx* diagnoser);
+    explicit diagnostic_collector(const diagnosable_ctx* diagnoser);
 
     // constructor for collector that silences diagnostics
     diagnostic_collector();
 
     void operator()(diagnostic_op diagnostic) const;
+
+private:
+    context::processing_stack_t get_location_stack() const;
 };
 
 } // namespace hlasm_plugin::parser_library

@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef SEMANTICS_SYMBOL_DEPENDANT_H
-#define SEMANTICS_SYMBOL_DEPENDANT_H
+#ifndef CONTEXT_DEPENDANT_H
+#define CONTEXT_DEPENDANT_H
 
 #include <variant>
 

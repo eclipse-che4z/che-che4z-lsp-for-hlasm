@@ -15,24 +15,29 @@
 #ifndef PROCESSING_MACRO_STATEMENT_PROVIDER_H
 #define PROCESSING_MACRO_STATEMENT_PROVIDER_H
 
-#include "common_statement_provider.h"
+#include "members_statement_provider.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
 // statement provider providing statements of macro defintion
-class macro_statement_provider : public common_statement_provider
+class macro_statement_provider : public members_statement_provider
 {
 public:
-    macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser);
-
-    virtual void process_next(statement_processor& processor) override;
+    macro_statement_provider(context::hlasm_context& hlasm_ctx,
+        statement_fields_parser& parser,
+        workspaces::parse_lib_provider& lib_provider,
+        processing::processing_state_listener& listener);
 
     virtual bool finished() const override;
+
+protected:
+    virtual context::cached_statement_storage* get_next() override;
 };
 
 } // namespace processing
 } // namespace parser_library
 } // namespace hlasm_plugin
+
 #endif

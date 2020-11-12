@@ -34,11 +34,15 @@ deferred_operand_rules;
 @header
 {
 	#include "parsing/parser_impl.h"
-	#include "expressions/expression.h"
-	#include "expressions/arithmetic_expression.h"
-	#include "expressions/logic_expression.h"
-	#include "expressions/character_expression.h"
-	#include "expressions/keyword_expression.h"
+	#include "expressions/conditional_assembly/ca_operator_unary.h"
+	#include "expressions/conditional_assembly/ca_operator_binary.h"
+	#include "expressions/conditional_assembly/terms/ca_constant.h"
+	#include "expressions/conditional_assembly/terms/ca_expr_list.h"
+	#include "expressions/conditional_assembly/terms/ca_function.h"
+	#include "expressions/conditional_assembly/terms/ca_string.h"
+	#include "expressions/conditional_assembly/terms/ca_symbol.h"
+	#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
+	#include "expressions/conditional_assembly/terms/ca_var_sym.h"
 	#include "expressions/mach_expr_term.h"
 	#include "expressions/mach_operator.h"
 	#include "expressions/data_definition.h"
@@ -167,7 +171,6 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
-			process_instruction();
 		}
 	} EOLLN
 	| SPACE? 
@@ -176,8 +179,6 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
-		process_statement();
 	} EOLLN
 	| EOF	{finished_flag=true;};
 
@@ -185,7 +186,7 @@ num_ch
 	: NUM+;
 
 num returns [self_def_t value]
-	: num_ch									{$value = parse_self_def_term("",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
+	: num_ch									{$value = parse_self_def_term("D",$num_ch.ctx->getText(),provider.get_range($num_ch.ctx));};
 
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
@@ -207,7 +208,7 @@ id_ch_c returns [std::string value]
 
 id returns [id_index name, id_index using_qualifier]
 	: id_no_dot									{$name = $id_no_dot.name;}
-	| q=id_no_dot dot_ n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
+	| q=id_no_dot dot n=id_no_dot				{$name = $n.name; $using_qualifier = $q.name; };
 
 id_no_dot returns [id_index name = id_storage::empty_id]
 	: ORDSYMBOL id_ch_c
@@ -222,7 +223,7 @@ id_no_dot returns [id_index name = id_storage::empty_id]
 
 
 opt_dot returns [std::string value]
-	: dot_ id_ch_c								{$value = std::move($id_ch_c.value); }
+	: dot id_ch_c								{$value = std::move($id_ch_c.value); }
 	| ;
 
 id_comma_c: id
@@ -246,7 +247,7 @@ remark_o returns [std::optional<range> value]
 	//***** highlighting rules
 comma 
 	: COMMA {collector.add_hl_symbol(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol)); };
-dot_ 
+dot 
 	: DOT {collector.add_hl_symbol(token_info(provider.get_range( $DOT),hl_scopes::operator_symbol)); };
 apostrophe 
 	: APOSTROPHE ;
@@ -258,7 +259,7 @@ rpar
 	: RPAR {collector.add_hl_symbol(token_info(provider.get_range( $RPAR),hl_scopes::operator_symbol)); };
 ampersand 
 	: AMPERSAND { collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND),hl_scopes::operator_symbol)); };
-equals_ 
+equals 
 	: EQUALS { collector.add_hl_symbol(token_info(provider.get_range( $EQUALS),hl_scopes::operator_symbol)); };
 asterisk 
 	: ASTERISK {collector.add_hl_symbol(token_info(provider.get_range( $ASTERISK),hl_scopes::operator_symbol)); };
@@ -273,8 +274,8 @@ plus
 
 
 expr_statement
-	: expr_p
-	| tmp=expr_statement EOLLN expr_p
+	: expr
+	| tmp=expr_statement EOLLN expr
 	;
 
 expr_test

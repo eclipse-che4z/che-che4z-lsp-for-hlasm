@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../expressions/expr_mocks.h"
 
 // tests for lookahead feature:
 // forward/backward jums
@@ -190,13 +191,42 @@ TEST(attribute_lookahead, lookup_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
 
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(attribute_lookahead, nested_lookup_triggered)
+{
+    std::string input("L'&V1(L'&V2)");
+    analyzer a(input);
+    auto& expr = a.parser().expr()->ca_expr;
+
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
+
+    auto v1 = a.context().create_local_variable<context::C_t>(a.context().ids().add("V1"), false);
+    v1->access_set_symbol<context::C_t>()->set_value("A", 0);
+    auto v2 = a.context().create_local_variable<context::C_t>(a.context().ids().add("V2"), true);
+    v2->access_set_symbol<context::C_t>()->set_value("B");
+
+    auto res = expr->get_undefined_attributed_symbols(eval_ctx);
+    ASSERT_EQ(res.size(), (size_t)1);
+    EXPECT_TRUE(res.find(a.context().ids().add("B")) != res.end());
+
+    a.context().ord_ctx.add_symbol_reference(context::symbol(a.context().ids().add("B"),
+        context::symbol_value(),
+        context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1),
+        location()));
+
+    res = expr->get_undefined_attributed_symbols(eval_ctx);
+    ASSERT_EQ(res.size(), (size_t)1);
+    EXPECT_TRUE(res.find(a.context().ids().add("A")) != res.end());
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -205,19 +235,18 @@ TEST(attribute_lookahead, lookup_not_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
+
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
 
     // define symbol with undefined length
     auto tmp = a.context().ord_ctx.create_symbol(
         a.context().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
     ASSERT_TRUE(tmp);
 
-    empty_attribute_provider prov;
-
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
     // although length is undefined the actual symbol is defined so no lookup should happen
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)0);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)0);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -226,13 +255,12 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 {
     std::string input("L'X+L'Y");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
 
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)2);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -241,13 +269,12 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 {
     std::string input("S'X+L'X");
     analyzer a(input);
-    auto expr = a.parser().expr();
+    auto& expr = a.parser().expr()->ca_expr;
 
-    empty_attribute_provider prov;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { a.context(), lib };
 
-    expression_analyzer ea(evaluation_context { a.context(), prov, empty_parse_lib_provider::instance });
-
-    EXPECT_EQ(ea.get_undefined_symbol_references(expr).size(), (size_t)1);
+    EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -311,7 +338,7 @@ X EQU 1,10,C'T'
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
-TEST(EQU_attribute_lookahead, unresolvable_attribute_referece)
+TEST(EQU_attribute_lookahead, unresolvable_attribute_reference)
 {
     std::string input(
         R"( 
@@ -330,7 +357,8 @@ X EQU 1,Y+11,C'T'
                   ->get_value(),
         1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)2);
 }
 
 TEST(EQU_attribute_lookahead, errorous_but_resolable_statement_incorrect_operand)
@@ -878,6 +906,26 @@ A EQU 1,2,1
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(attribute_lookahead, lookahead_from_instruction_field_macro)
+{
+    std::string input(
+        R"( 
+ MACRO
+ M
+&A(1) SETC 'LR','SAM64','LR'
+ &A(L'A) 
+ MEND
+ M
+A EQU 1,2,1
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
 TEST(EQU_attribute_lookahead, location_counter_use)
 {
     std::string input(
@@ -888,13 +936,14 @@ X EQU 1,*-Y
 
   AIF (L'A EQ 4).NO
 B LR 1,1
-A DC AL(*-B)(*)
+A DC AL(*-B+2)(*)
 )");
 
     analyzer a(input);
     a.analyze();
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
+    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)5);
 }

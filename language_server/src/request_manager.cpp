@@ -63,12 +63,20 @@ void request_manager::add_request(server* server, json message)
 
 void request_manager::end_worker()
 {
-    end_worker_ = true;
+    {
+        std::lock_guard<std::mutex> lock(q_mtx_);
+        end_worker_ = true;
+    }
+
     cond_.notify_one();
     worker_.join();
 }
 
-bool request_manager::is_running() const { return !requests_.empty(); }
+bool request_manager::is_running() const
+{
+    std::unique_lock<std::mutex> lock(q_mtx_);
+    return !requests_.empty();
+}
 
 void request_manager::handle_request_(const std::atomic<bool>* end_loop)
 {

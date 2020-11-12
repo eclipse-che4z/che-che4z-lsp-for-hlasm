@@ -52,8 +52,6 @@ public:
 
 private:
     std::unique_ptr<analyzer> analyzer_;
-    // This is here only because CA expressions need parser to be alive to evaluate
-    std::unique_ptr<analyzer> no_update_analyzer_;
 
     bool parse_inner(analyzer&);
 

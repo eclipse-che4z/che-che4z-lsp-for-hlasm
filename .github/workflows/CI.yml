@@ -13,6 +13,7 @@
 #
 
 name: CI
+
 on:
   push:
     branches:
@@ -24,41 +25,40 @@ on:
       - development
 
 jobs:
-  
   win-server:
     name: Windows language server
     runs-on: windows-2019
-    
+
     steps:
-    - uses: actions/checkout@v1
-    - name: Install ninja-build tool
-      uses: seanmiddleditch/gha-setup-ninja@v1
-    - name: Configure
-      shell: cmd
-      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ../
-    - name: Build
-      shell: cmd
-      run: cd build && cmake --build . --parallel --config Release
-    - name: Server Test
-      shell: cmd
-      run: cd build\bin && library_test.exe && server_test.exe
-    - name: Extension Test
-      shell: cmd
-      run: npm --prefix .\clients\vscode-hlasmplugin run test
-    - name: Extension Test Insiders
-      shell: cmd
-      run: npm --prefix .\clients\vscode-hlasmplugin run test:insiders
-    - name: Actions artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: language_server_win
-        path: build/bin/language_server.exe
+      - uses: actions/checkout@v1
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v1
+      - name: Configure
+        shell: cmd
+        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ../
+      - name: Build
+        shell: cmd
+        run: cd build && cmake --build . --parallel --config Release
+      - name: Server Test
+        shell: cmd
+        run: cd build\bin && library_test.exe && server_test.exe
+      - name: Extension Test
+        shell: cmd
+        run: npm --prefix .\clients\vscode-hlasmplugin run test
+      - name: Extension Test Insiders
+        shell: cmd
+        run: npm --prefix .\clients\vscode-hlasmplugin run test:insiders
+      - name: Actions artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: language_server_win
+          path: build/bin/language_server.exe
 
   linux-server:
-      name: Linux language server
-      runs-on: ubuntu-18.04
-      
-      steps:
+    name: Linux language server
+    runs-on: ubuntu-18.04
+
+    steps:
       - uses: actions/checkout@v1
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev g++-8 ninja-build
@@ -81,12 +81,12 @@ jobs:
         with:
           name: language_server_linux
           path: build/bin/language_server
-  
+
   macos-server:
-      name: MacOS language server
-      runs-on: macos-10.15
-      
-      steps:
+    name: MacOS language server
+    runs-on: macos-10.15
+
+    steps:
       - uses: actions/checkout@v1
       - name: Requirements install
         run: |
@@ -100,18 +100,19 @@ jobs:
         run: cd build/bin && ./server_test && ./library_test
       - name: Extension Test
         run: npm --prefix clients/vscode-hlasmplugin run test
-      - name: Extension Test Insiders
-        run: npm --prefix clients/vscode-hlasmplugin run test:insiders
+#      Remove the insiders test until it is clear where is the problem with freezing of the test
+#      - name: Extension Test Insiders
+#        run: npm --prefix clients/vscode-hlasmplugin run test:insiders
       - name: Actions artifact
         uses: actions/upload-artifact@v1
         with:
           name: language_server_macos
           path: build/bin/language_server
-    
+
   VSIX:
     runs-on: ubuntu-18.04
     needs: [win-server, linux-server, macos-server]
-    
+
     steps:
       - uses: actions/checkout@v1
       - name: Download windows language server
@@ -145,20 +146,20 @@ jobs:
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls clients/vscode-hlasmplugin/*.vsix)
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
       - name: Upload VSIX
         uses: actions/upload-artifact@v1
         with:
           name: hlasm-language-support-${{ env.VERSION }}.vsix
           path: ${{ env.VSIX_FILENAME }}
-        
+
   alpine-VSIX:
-      name: Alpine VSIX
-      runs-on: ubuntu-18.04
-      container:
-        image: alpine:3.10
-      
-      steps:
+    name: Alpine VSIX
+    runs-on: ubuntu-18.04
+    container:
+      image: alpine:3.10
+
+    steps:
       - uses: actions/checkout@v1
       - name: Requirements install
         run: |
@@ -180,7 +181,7 @@ jobs:
       - name: Get VSIX filename
         run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
       - name: Rename VSIX
         run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-${{ env.VERSION }}-alpine.vsix
       - name: Upload VSIX
@@ -188,23 +189,21 @@ jobs:
         with:
           name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
           path: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
-  
-  
-  
+
   release:
-      name: Release VSIXs
-      runs-on: ubuntu-18.04
-      if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && startsWith(github.head_ref, 'release'))
-      needs: [alpine-VSIX, VSIX]
-      
-      steps:
+    name: Release VSIXs
+    runs-on: ubuntu-18.04
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && startsWith(github.head_ref, 'release'))
+    needs: [alpine-VSIX, VSIX]
+
+    steps:
       - uses: actions/checkout@v1
       - name: Update version
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get new version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
       - name: Download VSIX
         uses: actions/download-artifact@v1
         with:
@@ -220,7 +219,7 @@ jobs:
           cd clients/vscode-hlasmplugin/
           mv hlasm-language-support-${{ env.VERSION }}.vsix         multi.vsix
           mv hlasm-language-support-${{ env.VERSION }}-alpine.vsix  alpine.vsix
-      
+
       - name: Commit changes
         if: github.event_name == 'push'
         run: |
@@ -233,7 +232,7 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Release new version
         run: cd clients/vscode-hlasmplugin && npx semantic-release
         env:
@@ -245,7 +244,7 @@ jobs:
           git fetch
           git checkout origin/development
           git merge origin/master
-          
+
           cd clients/vscode-hlasmplugin
           sed -i 's/"version": "\(.*\)"/"version": "\1-NEXT"/g' package.json
           sed -i '2s/^/\n## ****Unreleased****\n/' CHANGELOG.md
@@ -257,7 +256,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: development
-      
+
       - name: Delete PRs head branches
         if: github.event_name == 'push'
         uses: dawidd6/action-delete-branch@v3
@@ -266,17 +265,17 @@ jobs:
           branches: release-${{ env.VERSION }}
 
   theia-test:
-      name: Theia Integration Test
-      runs-on: ubuntu-18.04
-      needs: alpine-VSIX
-      strategy:
-        matrix: 
-          theia: ['theiaide/theia', 'theiaide/theia:next']
-      container:
-        image: ${{ matrix.theia }}
-        options: --user root
-      
-      steps:
+    name: Theia Integration Test
+    runs-on: ubuntu-18.04
+    needs: alpine-VSIX
+    strategy:
+      matrix:
+        theia: ["theiaide/theia", "theiaide/theia:next"]
+    container:
+      image: ${{ matrix.theia }}
+      options: --user root
+
+    steps:
       - uses: actions/checkout@v1
       - name: Install Chromium
         run: apk add --no-cache chromium

@@ -17,11 +17,14 @@ parser grammar ca_operand_rules;
 
 
 ca_op returns [operand_ptr op]
-	: lpar expr rpar seq_symbol
+	: expr_list seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
 		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
-		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss),$expr.ctx,provider.get_range($lpar.ctx->getStart(),$seq_symbol.ctx->getStop()));
+
+		resolve_expression($expr_list.ca_expr);
+		auto r = provider.get_range($expr_list.ctx->getStart(),$seq_symbol.ctx->getStop());
+		$op = std::make_unique<branch_ca_operand>(std::move($seq_symbol.ss), std::move($expr_list.ca_expr), r);
 	}
 	| seq_symbol
 	{
@@ -29,16 +32,12 @@ ca_op returns [operand_ptr op]
 		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 		$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
 	}
-	| expr_p
+	| {!is_var_def()}? expr
 	{
-		if($expr_p.vs_link && is_var_def()) 
-		{
-			
-			auto tmp = std::make_unique<var_ca_operand>(std::move(*$expr_p.vs_link),provider.get_range($expr_p.ctx));
-			$op = std::move(tmp);
-		}
-		else 
-		{
-			$op = std::make_unique<expr_ca_operand>($expr_p.ctx,provider.get_range($expr_p.ctx));
-		}
+		resolve_expression($expr.ca_expr);
+		$op = std::make_unique<expr_ca_operand>(std::move($expr.ca_expr), provider.get_range($expr.ctx));
+	}
+	| { is_var_def()}? var_def
+	{
+		$op = std::make_unique<var_ca_operand>(std::move($var_def.vs), provider.get_range($var_def.ctx));
 	};

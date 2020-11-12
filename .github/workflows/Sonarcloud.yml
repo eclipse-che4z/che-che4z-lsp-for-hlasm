@@ -13,6 +13,7 @@
 #
 
 name: SonarCloud
+
 on:
   pull_request:
     branches:
@@ -23,17 +24,15 @@ on:
       - development
       - master
 
-
 jobs:
-  
   sonar:
-      name: Sonar scan
-      runs-on: ubuntu-18.04
-      
-      steps:
+    name: Sonar scan
+    runs-on: ubuntu-18.04
+
+    steps:
       - uses: actions/checkout@v1
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") 
+        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
       - name: Requirements install
         run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
       - name: Configure
@@ -102,4 +101,3 @@ jobs:
           -Dsonar.coverage.exclusions=benchmark/benchmark.cpp
           ${{ env.HEAD_BRANCH }}
           ${{ env.PR_NUMBER }}
-

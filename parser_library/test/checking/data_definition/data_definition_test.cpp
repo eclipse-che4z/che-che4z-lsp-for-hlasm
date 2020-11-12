@@ -59,7 +59,7 @@ TEST(data_definition_grammar, modifiers)
  DC (1*8)FDP(123)L3S(2*4)E12'2.25'
  DC (1*8)FDP(123)L1S30E(-12*2)'2.25'
  DC (1*8)FDP(123)L1S30E40'2.25'
-	
+
  DC 10FDL(2*3)S(2*4)E(-12*2)'2.25'
  DC 10FDL2S(2*4)E(-12*2)'2.25'
  DC 10FDL(2*3)S6E(-12*2)'2.25'

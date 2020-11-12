@@ -57,7 +57,7 @@ private:
 
     // request_manager uses conditional variable to put the
     // worker thread asleep when the request queue is empty
-    std::mutex q_mtx_;
+    mutable std::mutex q_mtx_;
     std::condition_variable cond_;
 
     // the request manager invalidates older requests on the

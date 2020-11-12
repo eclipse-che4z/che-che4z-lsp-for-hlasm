@@ -22,8 +22,6 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));
 		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
-		process_statement();
 	} EOLLN
 	| ORDSYMBOL? SPACE instruction operand_field_rest 
 	{
@@ -34,7 +32,6 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			collector.set_label_field(id,nullptr,r); 
 		}
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
 
 		$op_text = $operand_field_rest.ctx->getText();
 		$op_range = provider.get_range($operand_field_rest.ctx);
@@ -45,8 +42,6 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range(_localctx));
 		collector.set_operand_remark_field(provider.get_range(_localctx));
 		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
-		process_statement();
 	} EOLLN
 	| EOF	{finished_flag=true;};
 
@@ -54,19 +49,21 @@ bad_look
 	: ~(ORDSYMBOL|DOT|SPACE|EOLLN) ~EOLLN*
 	| DOT ~(ORDSYMBOL|EOLLN) ~EOLLN*
 	| ORDSYMBOL ~(SPACE|EOLLN) ~EOLLN*
-	| ORDSYMBOL SPACE
-	| SPACE?;
+	| ORDSYMBOL SPACE?
+	| SPACE
+	| DOT
+	| ;
 
 lookahead_operands_and_remarks
 	: SPACE+ lookahead_operand_list remark_o
 	{
-		op_rem line;
-		line.operands = std::move($lookahead_operand_list.operands);
-		process_statement(std::move(line), provider.get_range($lookahead_operand_list.ctx));
+		range r = provider.get_range($lookahead_operand_list.ctx);
+		collector.set_operand_remark_field(std::move($lookahead_operand_list.operands), std::vector<range>(), r);
 	} EOLLN EOF
 	| SPACE?
 	{
-		process_statement({}, provider.get_range(_localctx));
+		range r = provider.get_range(_localctx);
+		collector.set_operand_remark_field(operand_list(), std::vector<range>(), r);
 	} EOLLN EOF;
 
 lookahead_operand_list returns [operand_list operands]

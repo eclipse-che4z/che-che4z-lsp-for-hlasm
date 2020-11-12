@@ -21,7 +21,6 @@
 #include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
 #include "expressions/evaluation_context.h"
-#include "processing/attribute_provider.h"
 #include "processing/branching_provider.h"
 #include "processing/statement.h"
 #include "workspaces/parse_lib_provider.h"
@@ -37,26 +36,23 @@ class instruction_processor : public diagnosable_ctx
     virtual void process(context::unique_stmt_ptr stmt) = 0;
     virtual void process(context::shared_stmt_ptr stmt) = 0;
 
-    virtual void collect_diags() const override {}
+    virtual void collect_diags() const override { collect_diags_from_child(eval_ctx); }
 
 protected:
     context::hlasm_context& hlasm_ctx;
-    attribute_provider& attr_provider;
     branching_provider& branch_provider;
     workspaces::parse_lib_provider& lib_provider;
 
     expressions::evaluation_context eval_ctx;
 
     instruction_processor(context::hlasm_context& hlasm_ctx,
-        attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider)
         : diagnosable_ctx(hlasm_ctx)
         , hlasm_ctx(hlasm_ctx)
-        , attr_provider(attr_provider)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
-        , eval_ctx { hlasm_ctx, attr_provider, lib_provider }
+        , eval_ctx { hlasm_ctx, lib_provider }
     {}
 };
 

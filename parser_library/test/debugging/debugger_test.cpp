@@ -168,11 +168,11 @@ struct frame_vars
         , locals(std::move(locals))
         , ord_syms(std::move(ords))
     {
-        this->globals["SYSDATE"];
-        this->globals["SYSDATC"];
-        this->globals["SYSTIME"];
-        this->globals["SYSPARM"];
-        this->globals["SYSOPT_RENT"];
+        this->globals["&SYSDATE"];
+        this->globals["&SYSDATC"];
+        this->globals["&SYSTIME"];
+        this->globals["&SYSPARM"];
+        this->globals["&SYSOPT_RENT"];
     }
     std::unordered_map<std::string, test_var_value> globals;
     std::unordered_map<std::string, test_var_value> locals;
@@ -289,20 +289,20 @@ TEST(debugger, test)
 
     d.next();
     m.wait_for_stopped();
-    exp_frame_vars[0].locals.emplace("VAR", 2);
+    exp_frame_vars[0].locals.emplace("&VAR", 2);
     exp_frames[0].begin_line = exp_frames[0].end_line = 2;
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.next();
     m.wait_for_stopped();
     exp_frames[0].begin_line = exp_frames[0].end_line = 3;
-    exp_frame_vars[0].locals.emplace("BOOL", true);
+    exp_frame_vars[0].locals.emplace("&BOOL", true);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.next();
     m.wait_for_stopped();
     exp_frames[0].begin_line = exp_frames[0].end_line = 5;
-    exp_frame_vars[0].locals.emplace("STR", "SOMETHING");
+    exp_frame_vars[0].locals.emplace("&STR", "SOMETHING");
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.next();
@@ -317,17 +317,17 @@ TEST(debugger, test)
         frame_vars(std::unordered_map<std::string, test_var_value> {}, // empty globals
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
-                { "SYSLIST",
+                { "&SYSLIST",
                     test_var_value("(10,13)",
                         list { { "0", std::make_shared<test_var_value>("10") },
                             { "1", std::make_shared<test_var_value>("13") } }) },
-                { "SYSECT", "" },
-                { "SYSNDX", 0 },
-                { "SYSSTYP", "" },
-                { "SYSLOC", "" },
-                { "SYSNEST", 1 },
-                { "SYSMAC", test_var_value() },
-                { "VAR", "13" },
+                { "&SYSECT", "" },
+                { "&SYSNDX", "0000" },
+                { "&SYSSTYP", "" },
+                { "&SYSLOC", "" },
+                { "&SYSNEST", 1 },
+                { "&SYSMAC", test_var_value() },
+                { "&VAR", "13" },
             },
             {} // empty ord symbols
             ));
@@ -393,7 +393,7 @@ TEST(debugger, var_symbol_array)
 
     d.next();
     m.wait_for_stopped();
-    exp_frame_vars[0].locals.emplace("VARP",
+    exp_frame_vars[0].locals.emplace("&VARP",
         list { { "30", std::make_shared<test_var_value>(1) },
             { "31", std::make_shared<test_var_value>(456) },
             { "32", std::make_shared<test_var_value>(48) },
@@ -443,7 +443,7 @@ B EQU A
 TEST(debugger, concurrent_next_and_file_change)
 {
     std::string open_code = R"(
-		LR 1,1
+        LR 1,1
     COPY COPY1
 )";
     std::string copy1_filename = "COPY1";

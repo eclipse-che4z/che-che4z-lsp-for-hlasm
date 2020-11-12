@@ -98,7 +98,7 @@ TEST(var_subs, set_to_var)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    int tmp = m.get_var_sym_value(it, {}, {}).access_a();
+    int tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_a();
     EXPECT_EQ(tmp, 3);
 }
 
@@ -114,8 +114,8 @@ TEST(var_subs, set_to_var_idx)
     auto it = ctx.ids().find("var");
 
     ASSERT_TRUE(ctx.get_var_sym(it));
-    std::vector<expr_ptr> subscript1;
-    subscript1.push_back(make_arith(2));
+    std::vector<A_t> subscript1;
+    subscript1.push_back(2);
     int tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
     EXPECT_EQ(tmp, 3);
 }
@@ -141,16 +141,16 @@ TEST(var_subs, set_to_var_idx_many)
     ASSERT_TRUE(ctx.get_var_sym(it));
 
     int tmp;
-    std::vector<expr_ptr> subscript1;
-    subscript1.push_back(make_arith(2));
+    std::vector<A_t> subscript1;
+    subscript1.push_back(2);
     tmp = m.get_var_sym_value(it, std::move(subscript1), {}).access_a();
     EXPECT_EQ(tmp, 3);
-    std::vector<expr_ptr> subscript2;
-    subscript2.push_back(make_arith(3));
+    std::vector<A_t> subscript2;
+    subscript2.push_back(3);
     tmp = m.get_var_sym_value(it, std::move(subscript2), {}).access_a();
     EXPECT_EQ(tmp, 4);
-    std::vector<expr_ptr> subscript3;
-    subscript3.push_back(make_arith(4));
+    std::vector<A_t> subscript3;
+    subscript3.push_back(4);
     tmp = m.get_var_sym_value(it, std::move(subscript3), {}).access_a();
     EXPECT_EQ(tmp, 5);
 }
@@ -168,7 +168,7 @@ TEST(var_subs, var_sym_reset)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    std::string tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    std::string tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "XXX");
 }
 
@@ -185,7 +185,7 @@ TEST(var_subs, created_set_sym)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_a();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_a();
     EXPECT_EQ(tmp, 11);
 }
 
@@ -226,7 +226,7 @@ TEST(var_concatenation, concatenated_string_dot_last)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc");
 }
 
@@ -243,7 +243,7 @@ TEST(var_concatenation, concatenated_string_dot)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc-get");
 }
 
@@ -260,7 +260,7 @@ TEST(var_concatenation, concatenated_string_double_dot)
 
     ASSERT_TRUE(ctx.get_var_sym(it));
 
-    auto tmp = m.get_var_sym_value(it, {}, {}).access_c();
+    auto tmp = m.get_var_sym_value(it, std::vector<int> {}, {}).access_c();
     EXPECT_EQ(tmp, "avc.");
 }
 
@@ -434,7 +434,7 @@ TEST(SET, conversions_invalid)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)4);
+    ASSERT_EQ(a.diags().size(), (size_t)6);
 }
 
 TEST(CA_instructions, undefined_relocatable)
@@ -454,5 +454,5 @@ B EQU 1
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)2);
+    ASSERT_EQ(a.diags().size(), (size_t)3);
 }

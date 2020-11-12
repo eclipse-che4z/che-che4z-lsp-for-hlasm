@@ -22,7 +22,6 @@
 
 #include "analyzer.h"
 #include "ebcdic_encoding.h"
-#include "expressions/visitors/expression_analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/token_stream.h"
@@ -38,17 +37,6 @@ using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::expressions;
 
 const size_t size_t_zero = static_cast<size_t>(0);
-
-// mock for attribute provider that has empty functionality
-class empty_attribute_provider : public attribute_provider
-{
-    virtual const attribute_provider::resolved_reference_storage& lookup_forward_attribute_references(
-        attribute_provider::forward_reference_storage references)
-    {
-        (void)references;
-        return resolved_symbols;
-    }
-};
 
 inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
     hlasm_plugin::parser_library::parsing::hlasmparser& h_parser)

@@ -144,6 +144,7 @@ private:
     bool eof_generated_ = false;
     bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
+    bool creating_attr_ref_ = false;
     // insert string to the ainsert stream; to the front=True or to the end (front=False)
     void ainsert(const std::string& inp, bool front);
     std::unique_ptr<input_source> ainsert_stream_;

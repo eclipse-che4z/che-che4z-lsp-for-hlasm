@@ -16,25 +16,28 @@
 #define PROCESSING_LOW_LANGUAGE_PROCESSOR_H
 
 #include "checking/instruction_checker.h"
+#include "context/ordinary_assembly/loctr_dependency_resolver.h"
 #include "instruction_processor.h"
 #include "processing/statement_fields_parser.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 // common ancestor for ASM and MACH processing containing useful methods
-class low_language_processor : public instruction_processor
+class low_language_processor : public instruction_processor, public context::loctr_dependency_resolver
 {
 public:
     static void check(const resolved_statement& stmt,
         context::hlasm_context& hlasm_ctx,
         checking::instruction_checker& checker,
-        diagnosable_ctx& diagnoser);
+        const diagnosable_ctx& diagnoser);
+
+    virtual void resolve_unknown_loctr_dependency(
+        context::space_ptr sp, const context::address& addr, range err_range) override;
 
 protected:
     statement_fields_parser& parser;
 
     low_language_processor(context::hlasm_context& hlasm_ctx,
-        attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
@@ -67,12 +70,10 @@ protected:
         size_t boundary,
         int offset);
 
+
 private:
     using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
     preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
-
-    // check for newly added loctr dependencies
-    void check_loctr_dependencies(range err_range);
 
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
     // transform semantic operands to checking operands - machine mnemonics instructions

@@ -170,6 +170,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
         last_continuation_ = last_token_id_;
 
     creating_var_symbol_ = ttype == AMPERSAND;
+    if (creating_attr_ref_)
+        creating_attr_ref_ = ttype == IGNORED || ttype == CONTINUATION;
 
     last_token_id_++;
 
@@ -232,31 +234,21 @@ void lexer::consume()
         input_state_->char_position++;
         input_state_->c = static_cast<char_t>(input_state_->input->LA(1));
 
-        if (input_state_->c == '\t')
+        input_state_->char_position_in_line++;
+        if (input_state_->c == static_cast<char32_t>(-1))
         {
-            input_state_->c = ' ';
-            // warning
-            input_state_->char_position_in_line += tab_size_;
-            input_state_->char_position_in_line_utf16 += tab_size_;
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16 += 1;
+        }
+        else if (input_state_->c > 0xFFFF)
+        {
+            last_char_utf16_long_ = true;
+            input_state_->char_position_in_line_utf16 += 2;
         }
         else
         {
-            input_state_->char_position_in_line++;
-            if (input_state_->c == static_cast<char32_t>(-1))
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16 += 1;
-            }
-            else if (input_state_->c > 0xFFFF)
-            {
-                last_char_utf16_long_ = true;
-                input_state_->char_position_in_line_utf16 += 2;
-            }
-            else
-            {
-                last_char_utf16_long_ = false;
-                input_state_->char_position_in_line_utf16++;
-            }
+            last_char_utf16_long_ = false;
+            input_state_->char_position_in_line_utf16++;
         }
     }
 }
@@ -424,9 +416,14 @@ void lexer::lex_tokens()
             break;
 
         case '\'':
-            apostrophes_++;
             consume();
-            create_token(APOSTROPHE);
+            if (!creating_attr_ref_)
+            {
+                apostrophes_++;
+                create_token(APOSTROPHE);
+            }
+            else
+                create_token(ATTR);
             break;
 
         case '/':
@@ -606,7 +603,7 @@ bool lexer::ord_char(char_t c)
 
 bool lexer::is_ord_char() const { return ord_char(input_state_->c); }
 
-bool lexer::is_space() const { return input_state_->c <= 255 && isspace(input_state_->c); }
+bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
 
 bool lexer::is_data_attribute() const
 {
@@ -637,6 +634,8 @@ void lexer::lex_word()
         ++w_len;
     }
 
+    bool var_sym_tmp = creating_var_symbol_;
+
     if (ord && w_len <= 63)
         create_token(ORDSYMBOL);
     else if (num)
@@ -644,13 +643,16 @@ void lexer::lex_word()
     else
         create_token(IDENTIFIER);
 
-    if (input_state_->c == '\'' && last_char_data_attr
+    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && w_len == 1
         && (unlimited_line_ || input_state_->char_position_in_line != end_))
     {
         start_token();
         consume();
         create_token(ATTR);
     }
+
+    creating_attr_ref_ = !unlimited_line_ && input_state_->char_position_in_line == end_ && last_char_data_attr
+        && !var_sym_tmp && w_len == 1;
 }
 
 bool lexer::set_begin(size_t begin)

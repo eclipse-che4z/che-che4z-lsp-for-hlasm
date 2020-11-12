@@ -25,7 +25,7 @@ empty_processor::empty_processor(context::hlasm_context& hlasm_ctx)
 
 processing_status empty_processor::get_processing_status(const semantics::instruction_si&) const
 {
-    return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::CA), op_code());
+    return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::IGNORED), op_code());
 }
 
 void empty_processor::process_statement(context::unique_stmt_ptr) {}

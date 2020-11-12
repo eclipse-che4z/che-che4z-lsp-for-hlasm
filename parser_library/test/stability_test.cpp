@@ -68,3 +68,27 @@ R
     analyzer a(input);
     a.analyze();
 }
+
+TEST(stability_test, entry_5)
+{
+    std::string input(R"( &U(R'R/')&
+SCE2>#9 D |+M''M&
+&C$O)))))))))))))))))))))))))))))))))))))))))))
+&O &$(GGGGGGGGGGGGGGGGGGGGGGGGGG'=S'),[ # Y]=e2&"&w
+T= [&@0@(USING'')&@0@(USING' 8)");
+
+    analyzer a(input);
+    a.analyze();
+}
+
+TEST(stability_test, entry_6)
+{
+    std::string input(R"(
+&&( +&(&
+5 &(&-
+ &(&--&&
+)");
+
+    analyzer a(input);
+    a.analyze();
+}
