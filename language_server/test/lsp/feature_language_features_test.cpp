@@ -66,8 +66,7 @@ TEST(language_features, hover)
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
     std::string s("test");
-    std::vector<const char*> coutput = { s.c_str() };
-    const string_array ret({ coutput.data(), coutput.size() });
+    string_array ret = { s };
     EXPECT_CALL(ws_mngr, hover(StrEq(path), position(0, 1))).WillOnce(Return(ret));
     notifs["textDocument/hover"]("", params1);
 }
@@ -86,8 +85,8 @@ TEST(language_features, definition)
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
 
-    semantics::position_uri_s pos_s(path, position(0, 1));
-    EXPECT_CALL(ws_mngr, definition(StrEq(path), position(0, 1))).WillOnce(Return(position_uri(pos_s)));
+    position_uri pos { position(0, 1), path };
+    EXPECT_CALL(ws_mngr, definition(StrEq(path), position(0, 1))).WillOnce(Return(pos));
     notifs["textDocument/definition"]("", params1);
 }
 
@@ -104,9 +103,8 @@ TEST(language_features, references)
 #else
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
-    std::vector<semantics::position_uri_s> ret = { semantics::position_uri_s(path, position(0, 1)) };
-    EXPECT_CALL(ws_mngr, references(StrEq(path), position(0, 1)))
-        .WillOnce(Return(position_uris(ret.data(), ret.size())));
+    position_uris ret = { position_uri { position(0, 1), path } };
+    EXPECT_CALL(ws_mngr, references(StrEq(path), position(0, 1))).WillOnce(Return(ret));
     notifs["textDocument/references"]("", params1);
 }
 #endif

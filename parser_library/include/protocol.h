@@ -20,8 +20,10 @@
 // Most of them use pimpl to hide their implementation somewhere
 // in the library.
 // Most of the types are C++ representation of LSP/DAP data types.
+
 #include <cstdint>
-#include <cstring>
+#include <string>
+#include <vector>
 
 #include "c_view_array.h"
 #include "parser_library_export.h"
@@ -32,13 +34,9 @@
 
 namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT string_array
-{
-    string_array(const char** arr, size_t size);
+template class PARSER_LIBRARY_EXPORT std::vector<std::string>;
 
-    const char** arr;
-    size_t size;
-};
+using string_array = std::vector<std::string>;
 
 using version_t = uint64_t;
 
@@ -113,25 +111,13 @@ private:
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
-    position_uri(semantics::position_uri_s&);
-    position pos() const;
-    const char* uri() const;
-
-private:
-    semantics::position_uri_s& impl_;
+    position pos;
+    std::string uri;
 };
 
-struct PARSER_LIBRARY_EXPORT position_uris
-{
-    position_uris(semantics::position_uri_s* data, size_t size);
+template class PARSER_LIBRARY_EXPORT std::vector<position_uri>;
 
-    position_uri get_position_uri(size_t index);
-    size_t size() const;
-
-private:
-    semantics::position_uri_s* data_;
-    size_t size_;
-};
+using position_uris = std::vector<position_uri>;
 
 struct range_uri_s;
 

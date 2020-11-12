@@ -134,13 +134,13 @@ public:
     {
         found_position = { document_uri, pos };
         if (cancel_ && *cancel_)
-            return found_position;
+            return { found_position.pos, found_position.uri };
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
 
-        return found_position;
+        return { found_position.pos, found_position.uri };
     }
 
     std::vector<semantics::position_uri_s> found_refs;
@@ -148,13 +148,16 @@ public:
     {
         found_refs.clear();
         if (cancel_ && *cancel_)
-            return { found_refs.data(), found_refs.size() };
+            return {};
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
             found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
 
-        return { found_refs.data(), found_refs.size() };
+        position_uris uris;
+        for (auto&& uri : found_refs)
+            uris.emplace_back(position_uri { uri.pos, uri.uri });
+        return uris;
     }
 
     std::vector<std::string> output;
@@ -163,7 +166,7 @@ public:
     {
         coutput.clear();
         if (cancel_ && *cancel_)
-            return { coutput.data(), coutput.size() };
+            return {};
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
@@ -173,7 +176,7 @@ public:
         for (const auto& str : output)
             coutput.push_back(str.c_str());
 
-        return { coutput.data(), coutput.size() };
+        return output;
     }
 
     semantics::completion_list_s completion_result;

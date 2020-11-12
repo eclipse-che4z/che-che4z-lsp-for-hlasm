@@ -60,10 +60,9 @@ void feature_language_features::definition(const json& id, const json& params)
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
 
     auto definition_position_uri = ws_mngr_.definition(uri_to_path(document_uri).c_str(), pos);
-    document_uri =
-        (definition_position_uri.uri()[0] == '\0') ? document_uri : path_to_uri(definition_position_uri.uri());
+    document_uri = (definition_position_uri.uri[0] == '\0') ? document_uri : path_to_uri(definition_position_uri.uri);
     json to_ret { { "uri", document_uri },
-        { "range", range_to_json({ definition_position_uri.pos(), definition_position_uri.pos() }) } };
+        { "range", range_to_json({ definition_position_uri.pos, definition_position_uri.pos }) } };
     response_->respond(id, "", to_ret);
 }
 
@@ -76,9 +75,8 @@ void feature_language_features::references(const json& id, const json& params)
     auto references = ws_mngr_.references(uri_to_path(document_uri).c_str(), pos);
     for (size_t i = 0; i < references.size(); ++i)
     {
-        auto ref = references.get_position_uri(i);
-        to_ret.push_back(
-            json { { "uri", path_to_uri(ref.uri()) }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
+        auto ref = references[i];
+        to_ret.push_back(json { { "uri", path_to_uri(ref.uri) }, { "range", range_to_json({ ref.pos, ref.pos }) } });
     }
     response_->respond(id, "", to_ret);
 }
@@ -90,9 +88,9 @@ void feature_language_features::hover(const json& id, const json& params)
 
     json hover_arr = json::array();
     auto hover_list = ws_mngr_.hover(uri_to_path(document_uri).c_str(), pos);
-    for (size_t i = 0; i < hover_list.size; i++)
+    for (size_t i = 0; i < hover_list.size(); i++)
     {
-        hover_arr.push_back(hover_list.arr[i]);
+        hover_arr.push_back(hover_list[i]);
     }
     response_->respond(id, "", json { { "contents", hover_arr } });
 }

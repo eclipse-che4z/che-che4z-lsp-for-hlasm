@@ -21,9 +21,6 @@
 #include "workspaces/processor.h"
 
 namespace hlasm_plugin::parser_library {
-string_array::string_array(const char** arr, size_t size)
-    : arr(arr)
-    , size(size) {};
 
 completion_item::completion_item(context::completion_item_s& info)
     : impl_(info)
@@ -47,14 +44,6 @@ completion_list::completion_list(semantics::completion_list_s& info)
 bool completion_list::is_incomplete() const { return impl_.is_incomplete; }
 completion_item completion_list::item(size_t index) { return impl_.items[index]; }
 size_t completion_list::count() const { return impl_.items.size(); }
-
-position_uri::position_uri(semantics::position_uri_s& info)
-    : impl_(info)
-{}
-
-position position_uri::pos() const { return impl_.pos; }
-
-const char* position_uri::uri() const { return impl_.uri.c_str(); }
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
     : impl_(info)
@@ -148,14 +137,6 @@ diagnostic_list::diagnostic_list(diagnostic_s* begin, size_t size)
 diagnostic diagnostic_list::diagnostics(size_t index) { return begin_[index]; }
 
 size_t diagnostic_list::diagnostics_size() const { return size_; }
-
-position_uris::position_uris(semantics::position_uri_s* data, size_t size)
-    : data_(data)
-    , size_(size)
-{}
-
-position_uri position_uris::get_position_uri(size_t index) { return data_[index]; }
-size_t position_uris::size() const { return size_; }
 
 token_info::token_info(const range& token_range, semantics::hl_scopes scope)
     : token_range(token_range)
