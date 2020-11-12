@@ -14,6 +14,8 @@
 
 #include "file_info.h"
 
+#include <algorithm>
+
 namespace hlasm_plugin::parser_library::lsp {
 
 file_info::file_info(context::macro_def_ptr owner)
@@ -27,6 +29,34 @@ file_info::file_info(context::copy_member_ptr owner)
     , type(file_type::COPY)
     , owner(std::move(owner))
 {}
+
+void file_info::update_occurences(const occurence_storage& occurences_upd)
+{
+    for (const auto& occ : occurences_upd)
+        occurences.emplace_back(occ);
+}
+
+void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
+{
+    size_t curr_slice = 0;
+    bool reached_end = false;
+
+    for (size_t i = 0; i < slices_upd.size(); ++i)
+    {
+        if (curr_slice == slices.size() || reached_end) // if at the end of current slices, append new slices to the end
+        {
+            reached_end = true;
+            slices.emplace_back(slices_upd[i]);
+        }
+        else if (slices_upd[i].end_line <= slices[curr_slice].begin_line) // if new slice inbetween present slices
+            slices.insert(slices.begin() + curr_slice++, slices_upd[i]);
+        else if (slices_upd[i].begin_line == slices[curr_slice].begin_line
+            && slices_upd[i].end_line == slices[curr_slice].end_line) // if slices match exactly
+            slices[curr_slice++] = slices_upd[i];
+        else
+            curr_slice++;
+    }
+}
 
 file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i)
 {

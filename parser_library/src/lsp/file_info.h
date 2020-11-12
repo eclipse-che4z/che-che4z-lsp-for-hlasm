@@ -68,8 +68,8 @@ struct file_info
     explicit file_info(context::macro_def_ptr owner);
     explicit file_info(context::copy_member_ptr owner);
 
-    void update_occurences(const occurence_storage& occurences);
-    void update_slices(std::vector<file_slice_t>&& slices);
+    void update_occurences(const occurence_storage& occurences_upd);
+    void update_slices(const std::vector<file_slice_t>& slices);
 };
 
 } // namespace hlasm_plugin::parser_library::lsp
