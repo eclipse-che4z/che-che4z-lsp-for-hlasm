@@ -56,8 +56,12 @@ term returns [vs_ptr* vs_link = nullptr]
 	| data_attribute
 	| {is_self_def()}? ORDSYMBOL string
 	| num
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $num.ctx),hl_scopes::number));
+	}
 	| id_sub
 	{ 
+		collector.add_hl_symbol(token_info(provider.get_range( $id_sub.ctx),hl_scopes::operand));
 		$vs_link = &$id_sub.vs;
 	};
 
@@ -92,9 +96,9 @@ expr_p_space_c returns [std::deque<ParserRuleContext*> ext]
 
 
 seq_symbol returns [seq_sym ss]
-	: dot_ id_no_dot		
+	: DOT id_no_dot
 	{	
-		$ss = seq_sym{$id_no_dot.name,provider.get_range( $dot_.ctx->getStart(),$id_no_dot.ctx->getStop())};
+		$ss = seq_sym{$id_no_dot.name,provider.get_range( $DOT, $id_no_dot.ctx->getStop())};
 	};
 
 
