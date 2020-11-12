@@ -41,6 +41,18 @@ void lsp_context::update_file_info(const std::string& name, const occurence_stor
     files_[name]->update_occurences(occurences);
 }
 
+position_uri lsp_context::definition(const char* document_uri, const position pos) { return position_uri(); }
+
+position_uris lsp_context::references(const char* document_uri, const position pos) { return position_uris(); }
+
+string_array lsp_context::hover(const char* document_uri, const position pos) { return string_array(); }
+
+completion_list lsp_context::completion(
+    const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+{
+    return completion_list();
+}
+
 bool files_present(const std::unordered_map<std::string, file_info_ptr>& files,
     const macro_file_scopes_t& scopes,
     const macro_file_occurences_t& occs)
