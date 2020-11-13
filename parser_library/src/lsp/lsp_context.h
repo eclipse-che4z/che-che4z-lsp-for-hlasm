@@ -43,8 +43,11 @@ public:
 private:
     void add_file(file_info file_i);
     void distribute_macro_i(macro_info_ptr macro_i);
+    void distribute_file_occurences(const file_occurences_t& occurences);
 
-    std::optional<location> find_definition_position(const symbol_occurence& occ, macro_info_ptr macro_i);
+    occurence_scope_t find_occurence_with_scope(const char* document_uri, const position pos) const;
+
+    std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

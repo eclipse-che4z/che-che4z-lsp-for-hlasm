@@ -54,6 +54,8 @@ struct file_info;
 
 using file_info_ptr = std::unique_ptr<file_info>;
 
+using occurence_scope_t = std::pair<const symbol_occurence*, macro_info_ptr>;
+
 struct file_info
 {
     using owner_t = std::variant<context::macro_def_ptr, context::copy_member_ptr>;
@@ -70,7 +72,9 @@ struct file_info
 
     static bool is_in_range(const position& pos, const range& r);
 
-    const symbol_occurence* find_occurence(position pos, macro_info_ptr& macro_i);
+    occurence_scope_t find_occurence_with_scope(position pos);
+    static std::vector<position> find_references(
+        const symbol_occurence& occurence, const std::vector<symbol_occurence>& occurences);
 
     void update_occurences(const occurence_storage& occurences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);

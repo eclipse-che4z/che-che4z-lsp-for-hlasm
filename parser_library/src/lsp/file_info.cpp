@@ -36,9 +36,10 @@ bool file_info::is_in_range(const position& pos, const range& r)
         && r.end.column <= pos.column;
 }
 
-const symbol_occurence* file_info::find_occurence(position pos, macro_info_ptr& macro_i)
+occurence_scope_t file_info::find_occurence_with_scope(position pos)
 {
     const symbol_occurence* found = nullptr;
+    macro_info_ptr macro_i = nullptr;
 
     // find in occurences
     for (const auto& occ : occurences)
@@ -47,7 +48,7 @@ const symbol_occurence* file_info::find_occurence(position pos, macro_info_ptr& 
 
     // if not found, return
     if (!found)
-        return nullptr;
+        return std::make_pair(nullptr, nullptr);
 
     // else, find scope
     for (const auto& scope : slices)
@@ -63,7 +64,17 @@ const symbol_occurence* file_info::find_occurence(position pos, macro_info_ptr& 
             break;
         }
     }
-    return found;
+    return std::make_pair(found, macro_i);
+}
+
+std::vector<position> file_info::find_references(
+    const symbol_occurence& occurence, const std::vector<symbol_occurence>& occurences)
+{
+    std::vector<position> result;
+    for (const auto& occ : occurences)
+        if (occ.kind == occurence.kind && occ.name == occurence.name)
+            result.emplace_back(occ.occurence_range.start);
+    return result;
 }
 
 void file_info::update_occurences(const occurence_storage& occurences_upd)

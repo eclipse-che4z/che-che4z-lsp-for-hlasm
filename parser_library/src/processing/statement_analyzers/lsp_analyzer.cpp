@@ -67,7 +67,8 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
 
 void lsp_analyzer::opencode_finished()
 {
-    lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), hlasm_ctx_));
+    lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(
+        hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)));
 }
 
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
@@ -96,7 +97,10 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::h
         file_occs.insert(file_occs.end(), std::move_iterator(occs.begin()), std::move_iterator(occs.end()));
     }
     else
-        lsp_ctx_.update_file_info(hlasm_ctx_.current_statement_location().file, occs);
+    {
+        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().file];
+        file_occs.insert(file_occs.end(), std::move_iterator(occs.begin()), std::move_iterator(occs.end()));
+    }
 }
 
 void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence_collector& collector)

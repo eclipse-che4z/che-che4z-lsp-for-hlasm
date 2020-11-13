@@ -65,7 +65,7 @@ struct macrodef_processing_result
     context::label_storage sequence_symbols;
 
     lsp::vardef_storage variable_symbols;
-    lsp::macro_file_scopes_t file_scopes;
+    lsp::file_scopes_t file_scopes;
 
     location definition_location;
 

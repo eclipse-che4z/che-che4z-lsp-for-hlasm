@@ -85,8 +85,8 @@ struct macro_slice_t
     {}
 };
 
-using macro_file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
-using macro_file_occurences_t = std::unordered_map<std::string, occurence_storage>;
+using file_scopes_t = std::unordered_map<std::string, std::vector<lsp::macro_slice_t>>;
+using file_occurences_t = std::unordered_map<std::string, occurence_storage>;
 
 class lsp_context;
 
@@ -99,8 +99,8 @@ struct macro_info
     macro_info(bool external,
         context::macro_def_ptr macro_definition,
         vardef_storage var_definitions,
-        macro_file_scopes_t file_scopes,
-        macro_file_occurences_t file_occurences)
+        file_scopes_t file_scopes,
+        file_occurences_t file_occurences)
         : external(external)
         , macro_definition(std::move(macro_definition))
         , var_definitions(std::move(var_definitions))
@@ -109,8 +109,8 @@ struct macro_info
     {}
 
 private:
-    macro_file_scopes_t file_scopes_;
-    macro_file_occurences_t file_occurences_;
+    file_scopes_t file_scopes_;
+    file_occurences_t file_occurences_;
 
     friend lsp_context;
 };

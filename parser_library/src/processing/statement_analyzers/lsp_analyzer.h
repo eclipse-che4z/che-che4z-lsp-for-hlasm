@@ -28,7 +28,9 @@ class lsp_analyzer : public statement_analyzer
     lsp::lsp_context& lsp_ctx_;
 
     bool in_macro_;
-    lsp::macro_file_occurences_t macro_occurences_;
+    lsp::file_occurences_t macro_occurences_;
+
+    lsp::file_occurences_t opencode_occurences_;
     lsp::vardef_storage opencode_var_defs_;
 
 public:
