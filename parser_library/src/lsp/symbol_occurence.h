@@ -35,6 +35,31 @@ struct symbol_occurence
     occurence_kind kind;
     context::id_index name;
     range occurence_range;
+
+    // in case of INSTR kind, holds potential macro opcode
+    context::macro_def_ptr opcode;
+
+    symbol_occurence(occurence_kind kind, context::id_index name, const range& occurence_range)
+        : kind(kind)
+        , name(name)
+        , occurence_range(occurence_range)
+        , opcode(nullptr)
+    {}
+
+    symbol_occurence(context::id_index name, context::macro_def_ptr opcode, const range& occurence_range)
+        : kind(occurence_kind::INSTR)
+        , name(name)
+        , occurence_range(occurence_range)
+        , opcode(std::move(opcode))
+    {}
+
+    // returns true, if this occurence kind depends on a scope
+    bool is_scoped() const { return kind == occurence_kind::SEQ || kind == occurence_kind::VAR; }
+
+    bool is_same(const symbol_occurence& occ) const
+    {
+        return kind == occ.kind && name == occ.name && opcode == occ.opcode;
+    }
 };
 
 using occurence_storage = std::vector<symbol_occurence>;

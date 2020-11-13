@@ -28,6 +28,7 @@ void lsp_analyzer::analyze(
     {
         case processing_kind::ORDINARY:
             collect_occurences(lsp::occurence_kind::ORD, statement);
+            collect_occurences(lsp::occurence_kind::INSTR, statement);
             if (prov_kind != statement_provider_kind::MACRO) // macros already processed during macro def processing
             {
                 collect_occurences(lsp::occurence_kind::VAR, statement);
@@ -128,6 +129,12 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
 {
     if (instruction.type == semantics::instruction_si_type::CONC)
         collector.get_occurence(std::get<semantics::concat_chain>(instruction.value));
+    else if (instruction.type == semantics::instruction_si_type::ORD
+        && collector.collector_kind == lsp::occurence_kind::INSTR)
+    {
+        auto opcode = hlasm_ctx_.get_operation_code(std::get<context::id_index>(instruction.value));
+        collector.occurences.emplace_back(opcode.machine_opcode, opcode.macro_opcode, instruction.field_range);
+    }
 }
 
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)

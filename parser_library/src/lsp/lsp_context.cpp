@@ -56,6 +56,7 @@ position_uri lsp_context::definition(const char* document_uri, const position po
 
     if (def)
         return { def->pos, def->file };
+    return { pos, document_uri };
 }
 
 void collect_references(position_uris& refs, const symbol_occurence& occ, const file_occurences_t& file_occs)
@@ -86,10 +87,19 @@ position_uris lsp_context::references(const char* document_uri, const position p
 
     std::vector<location> scoped_result;
 
-    if (macro_scope)
-        collect_references(result, *occ, macro_scope->file_occurences_);
+    if (occ->is_scoped())
+    {
+        if (macro_scope)
+            collect_references(result, *occ, macro_scope->file_occurences_);
+        else
+            collect_references(result, *occ, opencode_->file_occurences);
+    }
     else
+    {
+        for (const auto& mac_i : macros_)
+            collect_references(result, *occ, mac_i.second->file_occurences_);
         collect_references(result, *occ, opencode_->file_occurences);
+    }
 
     return result;
 }
@@ -184,6 +194,10 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
                 if (sym != opencode_->variable_definitions.end())
                     return location(sym->def_position, sym->file);
             }
+            break;
+        case lsp::occurence_kind::INSTR:
+            if (occ.opcode)
+                return occ.opcode->definition_location;
             break;
         default:
             break;

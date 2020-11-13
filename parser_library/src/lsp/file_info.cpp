@@ -44,7 +44,10 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
     // find in occurences
     for (const auto& occ : occurences)
         if (is_in_range(pos, occ.occurence_range))
+        {
             found = &occ;
+            break;
+        }
 
     // if not found, return
     if (!found)
@@ -72,7 +75,7 @@ std::vector<position> file_info::find_references(
 {
     std::vector<position> result;
     for (const auto& occ : occurences)
-        if (occ.kind == occurence.kind && occ.name == occurence.name)
+        if (occurence.is_same(occ))
             result.emplace_back(occ.occurence_range.start);
     return result;
 }
