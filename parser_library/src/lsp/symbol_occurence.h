@@ -34,7 +34,7 @@ struct symbol_occurence
 {
     occurence_kind kind;
     context::id_index name;
-    range occurence;
+    range occurence_range;
 };
 
 using occurence_storage = std::vector<symbol_occurence>;

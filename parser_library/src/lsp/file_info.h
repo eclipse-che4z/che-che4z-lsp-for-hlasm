@@ -68,6 +68,10 @@ struct file_info
     explicit file_info(context::macro_def_ptr owner);
     explicit file_info(context::copy_member_ptr owner);
 
+    static bool is_in_range(const position& pos, const range& r);
+
+    const symbol_occurence* find_occurence(position pos, macro_info_ptr& macro_i);
+
     void update_occurences(const occurence_storage& occurences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
 };

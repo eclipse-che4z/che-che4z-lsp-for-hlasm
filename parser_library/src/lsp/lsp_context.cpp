@@ -41,7 +41,23 @@ void lsp_context::update_file_info(const std::string& name, const occurence_stor
     files_[name]->update_occurences(occurences);
 }
 
-position_uri lsp_context::definition(const char* document_uri, const position pos) { return position_uri(); }
+position_uri lsp_context::definition(const char* document_uri, const position pos)
+{
+    if (auto file = files_.find(document_uri); file != files_.end())
+    {
+        macro_info_ptr in_macro;
+        auto occurence = file->second->find_occurence(pos, in_macro);
+
+        if (!occurence)
+            return { pos, document_uri };
+
+        auto def = find_definition_position(*occurence, in_macro);
+
+        if (def)
+            return { def->pos, def->file };
+    }
+    return { pos, document_uri };
+}
 
 position_uris lsp_context::references(const char* document_uri, const position pos) { return position_uris(); }
 
@@ -49,9 +65,7 @@ string_array lsp_context::hover(const char* document_uri, const position pos) { 
 
 completion_list lsp_context::completion(
     const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
-{
-    return completion_list();
-}
+{}
 
 bool files_present(const std::unordered_map<std::string, file_info_ptr>& files,
     const macro_file_scopes_t& scopes,
@@ -74,6 +88,56 @@ void lsp_context::distribute_macro_i(macro_info_ptr macro_i)
 
     for (const auto& [file, occs] : macro_i->file_occurences_)
         files_[file]->update_occurences(occs);
+}
+
+std::optional<location> lsp_context::find_definition_position(const symbol_occurence& occ, macro_info_ptr macro_i)
+{
+    switch (occ.kind)
+    {
+        case lsp::occurence_kind::ORD: {
+            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            if (sym)
+                return sym->symbol_location;
+            break;
+        }
+        case lsp::occurence_kind::SEQ:
+            if (macro_i)
+            {
+                auto sym = macro_i->macro_definition->labels.find(occ.name);
+                if (sym != macro_i->macro_definition->labels.end())
+                    return sym->second->symbol_location;
+            }
+            else
+            {
+                auto sym = opencode_->hlasm_ctx.current_scope().sequence_symbols.find(occ.name);
+                if (sym != opencode_->hlasm_ctx.current_scope().sequence_symbols.end())
+                    return sym->second->symbol_location;
+            }
+            break;
+        case lsp::occurence_kind::VAR:
+            if (macro_i)
+            {
+                auto sym = std::find_if(macro_i->var_definitions.begin(),
+                    macro_i->var_definitions.end(),
+                    [&](const auto& var) { return var.name == occ.name; });
+
+                if (sym != macro_i->var_definitions.end())
+                    return location(
+                        sym->def_position, macro_i->macro_definition->copy_nests[sym->def_location].back().file);
+            }
+            else
+            {
+                auto sym = std::find_if(opencode_->variable_definitions.begin(),
+                    opencode_->variable_definitions.end(),
+                    [&](const auto& var) { return var.name == occ.name; });
+                if (sym != opencode_->variable_definitions.end())
+                    return location(sym->def_position, sym->file);
+            }
+            break;
+        default:
+            break;
+    }
+    return std::nullopt;
 }
 
 } // namespace hlasm_plugin::parser_library::lsp
