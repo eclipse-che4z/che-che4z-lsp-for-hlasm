@@ -48,6 +48,12 @@ private:
     occurence_scope_t find_occurence_with_scope(const char* document_uri, const position pos) const;
 
     std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+    string_array find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+
+    string_array hover(const context::symbol& sym) const;
+    string_array hover(const context::sequence_symbol& sym) const;
+    string_array hover(const variable_symbol_definition& sym) const;
+    string_array hover(const context::opcode_t& sym) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

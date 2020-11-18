@@ -16,6 +16,8 @@
 
 #include <cassert>
 
+#include "ebcdic_encoding.h"
+
 namespace hlasm_plugin::parser_library::lsp {
 
 void lsp_context::add_file(file_info file_i)
@@ -104,24 +106,27 @@ position_uris lsp_context::references(const char* document_uri, const position p
     return result;
 }
 
-string_array lsp_context::hover(const char* document_uri, const position pos) { return string_array(); }
+string_array lsp_context::hover(const char* document_uri, const position pos)
+{
+    string_array result;
+    auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
+
+    if (!occ)
+        return result;
+
+    return find_hover(*occ, macro_scope);
+}
 
 completion_list lsp_context::completion(
     const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
 {}
 
-bool files_present(const std::unordered_map<std::string, file_info_ptr>& files, const file_scopes_t& scopes)
+template<typename T>
+bool files_present(
+    const std::unordered_map<std::string, file_info_ptr>& files, const std::unordered_map<std::string, T>& scopes)
 {
     bool present = true;
     for (const auto& [file, _] : scopes)
-        present |= files.find(file) != files.end();
-    return present;
-}
-
-bool files_present(const std::unordered_map<std::string, file_info_ptr>& files, const file_occurences_t& occs)
-{
-    bool present = true;
-    for (const auto& [file, _] : occs)
         present |= files.find(file) != files.end();
     return present;
 }
@@ -151,50 +156,91 @@ occurence_scope_t lsp_context::find_occurence_with_scope(const char* document_ur
     return std::make_pair(nullptr, nullptr);
 }
 
+
+template<lsp::occurence_kind kind, typename T>
+T find_definition(const symbol_occurence& occ, macro_info_ptr macro_i, const opencode_info& opencode)
+{
+    if constexpr (kind == lsp::occurence_kind::ORD)
+    {
+        return opencode.hlasm_ctx.ord_ctx.get_symbol(occ.name);
+    }
+    if constexpr (kind == lsp::occurence_kind::SEQ)
+    {
+        const context::sequence_symbol* retval = nullptr;
+        if (macro_i)
+        {
+            auto sym = macro_i->macro_definition->labels.find(occ.name);
+            if (sym != macro_i->macro_definition->labels.end())
+                retval = sym->second.get();
+        }
+        else
+        {
+            auto sym = opencode.hlasm_ctx.current_scope().sequence_symbols.find(occ.name);
+            if (sym != opencode.hlasm_ctx.current_scope().sequence_symbols.end())
+                retval = sym->second.get();
+        }
+        return retval;
+    }
+    if constexpr (kind == lsp::occurence_kind::VAR)
+    {
+        const variable_symbol_definition* retval = nullptr;
+        if (macro_i)
+        {
+            auto sym = std::find_if(macro_i->var_definitions.begin(),
+                macro_i->var_definitions.end(),
+                [&](const auto& var) { return var.name == occ.name; });
+
+            if (sym != macro_i->var_definitions.end())
+                retval = &*sym;
+        }
+        else
+        {
+            auto sym = std::find_if(opencode.variable_definitions.begin(),
+                opencode.variable_definitions.end(),
+                [&](const auto& var) { return var.name == occ.name; });
+            if (sym != opencode.variable_definitions.end())
+                retval = &*sym;
+        }
+        return retval;
+    }
+    if constexpr (kind == lsp::occurence_kind::INSTR)
+    {
+        context::opcode_t retval;
+        retval.machine_opcode = occ.name;
+        retval.macro_opcode = occ.opcode;
+        return retval;
+    }
+}
+
 std::optional<location> lsp_context::find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const
 {
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            auto sym = find_definition<lsp::occurence_kind::ORD, const context::symbol*>(occ, macro_i, *opencode_);
             if (sym)
                 return sym->symbol_location;
             break;
         }
-        case lsp::occurence_kind::SEQ:
-            if (macro_i)
-            {
-                auto sym = macro_i->macro_definition->labels.find(occ.name);
-                if (sym != macro_i->macro_definition->labels.end())
-                    return sym->second->symbol_location;
-            }
-            else
-            {
-                auto sym = opencode_->hlasm_ctx.current_scope().sequence_symbols.find(occ.name);
-                if (sym != opencode_->hlasm_ctx.current_scope().sequence_symbols.end())
-                    return sym->second->symbol_location;
-            }
+        case lsp::occurence_kind::SEQ: {
+            auto sym =
+                find_definition<lsp::occurence_kind::SEQ, const context::sequence_symbol*>(occ, macro_i, *opencode_);
+            if (sym)
+                return sym->symbol_location;
             break;
-        case lsp::occurence_kind::VAR:
-            if (macro_i)
+        }
+        case lsp::occurence_kind::VAR: {
+            auto sym =
+                find_definition<lsp::occurence_kind::VAR, const variable_symbol_definition*>(occ, macro_i, *opencode_);
+            if (sym)
             {
-                auto sym = std::find_if(macro_i->var_definitions.begin(),
-                    macro_i->var_definitions.end(),
-                    [&](const auto& var) { return var.name == occ.name; });
-
-                if (sym != macro_i->var_definitions.end())
+                if (macro_i)
                     return location(
                         sym->def_position, macro_i->macro_definition->copy_nests[sym->def_location].back().file);
-            }
-            else
-            {
-                auto sym = std::find_if(opencode_->variable_definitions.begin(),
-                    opencode_->variable_definitions.end(),
-                    [&](const auto& var) { return var.name == occ.name; });
-                if (sym != opencode_->variable_definitions.end())
-                    return location(sym->def_position, sym->file);
+                return location(sym->def_position, sym->file);
             }
             break;
+        }
         case lsp::occurence_kind::INSTR:
             if (occ.opcode)
                 return occ.opcode->definition_location;
@@ -204,5 +250,98 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
     }
     return std::nullopt;
 }
+
+string_array lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const
+{
+    switch (occ.kind)
+    {
+        case lsp::occurence_kind::ORD: {
+            auto sym = find_definition<lsp::occurence_kind::ORD, const context::symbol*>(occ, macro_i, *opencode_);
+            if (sym)
+                return hover(*sym);
+            break;
+        }
+        case lsp::occurence_kind::SEQ: {
+            auto sym =
+                find_definition<lsp::occurence_kind::SEQ, const context::sequence_symbol*>(occ, macro_i, *opencode_);
+            if (sym)
+                return hover(*sym);
+            break;
+        }
+        case lsp::occurence_kind::VAR: {
+            auto sym =
+                find_definition<lsp::occurence_kind::VAR, const variable_symbol_definition*>(occ, macro_i, *opencode_);
+            if (sym)
+                return hover(*sym);
+            break;
+        }
+        case lsp::occurence_kind::INSTR: {
+            auto sym = find_definition<lsp::occurence_kind::INSTR, const context::opcode_t>(occ, macro_i, *opencode_);
+            return hover(sym);
+        }
+        default:
+            break;
+    }
+    return {};
+}
+
+string_array lsp_context::hover(const context::symbol& sym) const
+{
+    string_array result;
+    if (sym.value().value_kind() == context::symbol_value_kind::UNDEF)
+        return result;
+
+    if (sym.value().value_kind() == context::symbol_value_kind::ABS)
+    {
+        result = { std::to_string(sym.value().get_abs()) };
+        result.push_back("Absolute Symbol");
+    }
+    else if (sym.value().value_kind() == context::symbol_value_kind::RELOC)
+    {
+        result = { sym.value().get_reloc().to_string() }; // move to_string method from that class to this class
+        result.push_back("Relocatable Symbol");
+    }
+
+    const auto& attrs = sym.attributes();
+    if (attrs.is_defined(context::data_attr_kind::L))
+        result.push_back("L: " + std::to_string(attrs.length()));
+    if (attrs.is_defined(context::data_attr_kind::I))
+        result.push_back("I: " + std::to_string(attrs.integer()));
+    if (attrs.is_defined(context::data_attr_kind::S))
+        result.push_back("S: " + std::to_string(attrs.scale()));
+    if (attrs.is_defined(context::data_attr_kind::T))
+        result.push_back("T: " + ebcdic_encoding::to_ascii((unsigned char)attrs.type()));
+
+    return result;
+}
+
+string_array lsp_context::hover(const context::sequence_symbol& sym) const { return string_array(); }
+
+string_array lsp_context::hover(const variable_symbol_definition& sym) const
+{
+    string_array result;
+
+    if (sym.macro_param)
+        result.push_back("MACRO parameter");
+    else
+        switch (sym.type)
+        {
+            case context::SET_t_enum::A_TYPE:
+                result.push_back("SETA variable");
+                break;
+            case context::SET_t_enum::B_TYPE:
+                result.push_back("SETB variable");
+                break;
+            case context::SET_t_enum::C_TYPE:
+                result.push_back("SETC variable");
+                break;
+            default:
+                break;
+        }
+
+    return result;
+}
+
+string_array lsp_context::hover(const context::opcode_t& sym) const { return string_array(); }
 
 } // namespace hlasm_plugin::parser_library::lsp
