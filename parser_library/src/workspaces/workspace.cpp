@@ -65,6 +65,27 @@ bool workspace::program_id_match(const std::string& filename, const program_id& 
     return std::regex_match(filename, prg_regex);
 }
 
+std::vector<processor_file_ptr> workspace::find_related_opencodes(const std::string document_uri) const
+{
+    std::vector<processor_file_ptr> opencodes;
+
+    for (const auto& dep : dependants_)
+    {
+        auto f = file_manager_.find_processor_file(dep);
+        if (!f)
+            continue;
+        if (f->dependencies().find(document_uri) != f->dependencies().end())
+            opencodes.push_back(f);
+    }
+
+    if (opencodes.size())
+        return opencodes;
+
+    if (auto f = file_manager_.find_processor_file(document_uri))
+        return { f };
+    return {};
+}
+
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
 {
     assert(opened_);
@@ -194,6 +215,35 @@ void workspace::did_change_watched_files(const std::string& file_uri)
 {
     refresh_libraries();
     parse_file(file_uri);
+}
+
+position_uri workspace::definition(const std::string& document_uri, const position pos) const
+{
+    auto opencodes = find_related_opencodes(document_uri);
+    // for now take last opencode
+    return opencodes.back()->get_lsp_feature_provider().definition(document_uri, pos);
+}
+
+position_uris workspace::references(const std::string& document_uri, const position pos) const
+{
+    auto opencodes = find_related_opencodes(document_uri);
+    // for now take last opencode
+    return opencodes.back()->get_lsp_feature_provider().references(document_uri, pos);
+}
+
+string_array workspace::hover(const std::string& document_uri, const position pos) const
+{
+    auto opencodes = find_related_opencodes(document_uri);
+    // for now take last opencode
+    return opencodes.back()->get_lsp_feature_provider().hover(document_uri, pos);
+}
+
+completion_list workspace::completion(
+    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const
+{
+    auto opencodes = find_related_opencodes(document_uri);
+    // for now take last opencode
+    return opencodes.back()->get_lsp_feature_provider().completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
 void workspace::open() { load_config(); }

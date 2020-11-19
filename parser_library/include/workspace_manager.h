@@ -104,11 +104,11 @@ public:
     virtual void did_close_file(const char* document_uri);
     virtual void did_change_watched_files(const char** paths, size_t size);
 
-    virtual position_uri definition(const char* document_uri, const position pos);
-    virtual position_uris references(const char* document_uri, const position pos);
-    virtual const string_array hover(const char* document_uri, const position pos);
+    virtual position_uri definition(const std::string& document_uri, const position pos);
+    virtual position_uris references(const std::string& document_uri, const position pos);
+    virtual string_array hover(const std::string& document_uri, const position pos);
     virtual completion_list completion(
-        const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
+        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind);
 
     // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
     virtual void register_highlighting_consumer(highlighting_consumer* consumer);

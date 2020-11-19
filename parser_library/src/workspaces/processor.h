@@ -17,11 +17,10 @@
 
 #include <memory>
 
-#include "context/hlasm_context.h"
 #include "diagnosable.h"
 #include "file.h"
+#include "lsp/feature_provider.h"
 #include "parse_lib_provider.h"
-#include "semantics/lsp_info_processor.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -46,7 +45,7 @@ class processor_file : public virtual file, public processor
 public:
     virtual const std::set<std::string>& dependencies() = 0;
     virtual const file_highlighting_info get_hl_info() = 0;
-    virtual const semantics::lsp_info_processor get_lsp_info() = 0;
+    virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
     virtual const std::set<std::string>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
 };

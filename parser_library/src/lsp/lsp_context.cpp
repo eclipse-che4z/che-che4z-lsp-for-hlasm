@@ -47,7 +47,7 @@ void lsp_context::update_file_info(const std::string& name, const occurence_stor
     files_[name]->update_occurences(occurences);
 }
 
-position_uri lsp_context::definition(const char* document_uri, const position pos)
+position_uri lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
@@ -71,7 +71,7 @@ void collect_references(position_uris& refs, const symbol_occurence& occ, const 
     }
 }
 
-position_uris lsp_context::references(const char* document_uri, const position pos)
+position_uris lsp_context::references(const std::string& document_uri, const position pos) const
 {
     position_uris result;
     result.push_back({ pos, document_uri });
@@ -106,7 +106,7 @@ position_uris lsp_context::references(const char* document_uri, const position p
     return result;
 }
 
-string_array lsp_context::hover(const char* document_uri, const position pos)
+string_array lsp_context::hover(const std::string& document_uri, const position pos) const
 {
     string_array result;
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
@@ -118,7 +118,7 @@ string_array lsp_context::hover(const char* document_uri, const position pos)
 }
 
 completion_list lsp_context::completion(
-    const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const
 {
     return completion_list();
 }
@@ -151,7 +151,7 @@ void lsp_context::distribute_file_occurences(const file_occurences_t& occurences
         files_[file]->update_occurences(occs);
 }
 
-occurence_scope_t lsp_context::find_occurence_with_scope(const char* document_uri, const position pos) const
+occurence_scope_t lsp_context::find_occurence_with_scope(const std::string& document_uri, const position pos) const
 {
     if (auto file = files_.find(document_uri); file != files_.end())
         return file->second->find_occurence_with_scope(pos);
@@ -317,7 +317,7 @@ string_array lsp_context::hover(const context::symbol& sym) const
     return result;
 }
 
-string_array lsp_context::hover(const context::sequence_symbol& sym) const { return string_array(); }
+string_array lsp_context::hover(const context::sequence_symbol&) const { return string_array(); }
 
 string_array lsp_context::hover(const variable_symbol_definition& sym) const
 {

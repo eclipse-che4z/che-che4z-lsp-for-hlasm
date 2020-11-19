@@ -35,12 +35,12 @@ public:
         void(const char* document_uri, version_t version, const document_change* changes, size_t ch_size));
     MOCK_METHOD1(did_close_file, void(const char* document_uri));
 
-    MOCK_METHOD(position_uri, definition, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(position_uris, references, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(const string_array, hover, (const char* document_uri, const position pos), (override));
+    MOCK_METHOD(position_uri, definition, (const std::string& document_uri, const position pos), (override));
+    MOCK_METHOD(position_uris, references, (const std::string& document_uri, const position pos), (override));
+    MOCK_METHOD(string_array, hover, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
-        (const char* document_uri, const position pos, const char trigger_char, int trigger_kind),
+        (const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind),
         (override));
 };
 

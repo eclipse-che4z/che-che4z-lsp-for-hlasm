@@ -96,7 +96,7 @@ const std::set<std::string>& processor_file_impl::dependencies() { return depend
 
 const file_highlighting_info processor_file_impl::get_hl_info() { return analyzer_->lsp_processor().get_hl_info(); }
 
-const semantics::lsp_info_processor processor_file_impl::get_lsp_info() { return analyzer_->lsp_processor(); }
+const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider() { return *analyzer_->context().lsp_ctx; }
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }
 

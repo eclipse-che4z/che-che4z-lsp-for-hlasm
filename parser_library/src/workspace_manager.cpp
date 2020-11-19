@@ -91,23 +91,23 @@ void workspace_manager::register_performance_metrics_consumer(performance_metric
 {
     impl_->register_performance_metrics_consumer(consumer);
 }
-position_uri workspace_manager::definition(const char* document_uri, const position pos)
+position_uri workspace_manager::definition(const std::string& document_uri, const position pos)
 {
     return impl_->definition(document_uri, pos);
 }
 
-position_uris workspace_manager::references(const char* document_uri, const position pos)
+position_uris workspace_manager::references(const std::string& document_uri, const position pos)
 {
     return impl_->references(document_uri, pos);
 }
 
-const string_array workspace_manager::hover(const char* document_uri, const position pos)
+string_array workspace_manager::hover(const std::string& document_uri, const position pos)
 {
     return impl_->hover(document_uri, pos);
 }
 
 completion_list workspace_manager::completion(
-    const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind)
 {
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
 }

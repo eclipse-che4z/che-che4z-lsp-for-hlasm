@@ -38,18 +38,18 @@ public:
 
     void update_file_info(const std::string& name, const occurence_storage& occurences);
 
-    virtual position_uri definition(const char* document_uri, const position pos) override;
-    virtual position_uris references(const char* document_uri, const position pos) override;
-    virtual string_array hover(const char* document_uri, const position pos) override;
+    virtual position_uri definition(const std::string& document_uri, const position pos) const override;
+    virtual position_uris references(const std::string& document_uri, const position pos) const override;
+    virtual string_array hover(const std::string& document_uri, const position pos) const override;
     virtual completion_list completion(
-        const char* document_uri, const position pos, const char trigger_char, int trigger_kind) override;
+        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const override;
 
 private:
     void add_file(file_info file_i);
     void distribute_macro_i(macro_info_ptr macro_i);
     void distribute_file_occurences(const file_occurences_t& occurences);
 
-    occurence_scope_t find_occurence_with_scope(const char* document_uri, const position pos) const;
+    occurence_scope_t find_occurence_with_scope(const std::string& document_uri, const position pos) const;
 
     std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
     string_array find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;

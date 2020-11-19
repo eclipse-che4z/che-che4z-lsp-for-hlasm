@@ -129,70 +129,37 @@ public:
         metrics_consumers_.push_back(consumer);
     }
 
-    semantics::position_uri_s found_position;
-    position_uri definition(std::string document_uri, const position pos)
+    position_uri definition(const std::string& document_uri, const position pos)
     {
-        found_position = { document_uri, pos };
         if (cancel_ && *cancel_)
-            return { found_position.pos, found_position.uri };
+            return { pos, document_uri };
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
-
-        return { found_position.pos, found_position.uri };
+        return ws_path_match(document_uri).definition(document_uri, pos);
     }
 
-    std::vector<semantics::position_uri_s> found_refs;
     position_uris references(std::string document_uri, const position pos)
     {
-        found_refs.clear();
         if (cancel_ && *cancel_)
             return {};
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
-
-        position_uris uris;
-        for (auto&& uri : found_refs)
-            uris.emplace_back(position_uri { uri.pos, uri.uri });
-        return uris;
+        return ws_path_match(document_uri).references(document_uri, pos);
     }
 
-    std::vector<std::string> output;
-    std::vector<const char*> coutput;
-    const string_array hover(const char* document_uri, const position pos)
+    string_array hover(const std::string& document_uri, const position pos)
     {
-        coutput.clear();
         if (cancel_ && *cancel_)
             return {};
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
-        else
-            output.clear();
-        for (const auto& str : output)
-            coutput.push_back(str.c_str());
-
-        return output;
+        return ws_path_match(document_uri).hover(document_uri, pos);
     }
 
-    semantics::completion_list_s completion_result;
-    completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+    completion_list completion(
+        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind)
     {
-        completion_result = semantics::completion_list_s();
         if (cancel_ && *cancel_)
-            return completion_list();
+            return completion_list { {}, true };
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            completion_result = file_manager_.find_processor_file(document_uri)
-                                    ->get_lsp_info()
-                                    .completion(pos, trigger_char, trigger_kind);
-
-        return completion_list();
+        return ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
     }
 
     void launch(std::string file_name, bool stop_on_entry)

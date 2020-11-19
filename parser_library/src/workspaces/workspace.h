@@ -51,7 +51,7 @@ struct program
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl, public parse_lib_provider
+class workspace : public diagnosable_impl, public parse_lib_provider, lsp::feature_provider
 {
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
@@ -78,6 +78,12 @@ public:
     void did_close_file(const std::string& file_uri);
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
+
+    virtual position_uri definition(const std::string& document_uri, const position pos) const override;
+    virtual position_uris references(const std::string& document_uri, const position pos) const override;
+    virtual string_array hover(const std::string& document_uri, const position pos) const override;
+    virtual completion_list completion(
+        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const override;
 
     virtual parse_result parse_library(
         const std::string& library, analyzing_context ctx, const library_data data) override;
@@ -124,6 +130,8 @@ private:
     bool is_dependency_(const std::string& file_uri);
 
     bool program_id_match(const std::string& filename, const program_id& program) const;
+
+    std::vector<processor_file_ptr> find_related_opencodes(const std::string document_uri) const;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
