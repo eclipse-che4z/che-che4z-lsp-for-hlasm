@@ -22,29 +22,6 @@
 
 namespace hlasm_plugin::parser_library {
 
-completion_item::completion_item(context::completion_item_s& info)
-    : impl_(info)
-{}
-
-const char* completion_item::label() const { return impl_.label.c_str(); }
-size_t completion_item::kind() const { return impl_.kind; }
-const char* completion_item::detail() const { return impl_.detail.c_str(); }
-const char* completion_item::documentation()
-{
-    impl_.implode_contents();
-    return impl_.content_string.c_str();
-}
-bool completion_item::deprecated() const { return impl_.deprecated; }
-const char* completion_item::insert_text() const { return impl_.insert_text.c_str(); }
-
-completion_list::completion_list(semantics::completion_list_s& info)
-    : impl_(info)
-{}
-
-bool completion_list::is_incomplete() const { return impl_.is_incomplete; }
-completion_item completion_list::item(size_t index) { return impl_.items[index]; }
-size_t completion_list::count() const { return impl_.items.size(); }
-
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
     : impl_(info)
 {}

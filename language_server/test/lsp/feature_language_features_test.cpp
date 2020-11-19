@@ -48,7 +48,7 @@ TEST(language_features, completion)
     std::vector<context::completion_item_s> item_list = { context::completion_item_s(
         "LR", "machine", "LR", std::vector<std::string> { "machine doc" }) };
     auto list_s = semantics::completion_list_s(false, item_list);
-    EXPECT_CALL(ws_mngr, completion(StrEq(path), position(0, 1), '\0', 1)).WillOnce(Return(completion_list(list_s)));
+    EXPECT_CALL(ws_mngr, completion(StrEq(path), position(0, 1), '\0', 1)).WillOnce(Return(completion_list()));
     notifs["textDocument/completion"]("", params1);
 }
 

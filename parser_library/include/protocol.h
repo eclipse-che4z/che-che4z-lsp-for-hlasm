@@ -85,28 +85,18 @@ using file_id = workspaces::processor_file*;
 
 struct PARSER_LIBRARY_EXPORT completion_item
 {
-    completion_item(context::completion_item_s& info);
-
-    const char* label() const;
-    size_t kind() const;
-    const char* detail() const;
-    const char* documentation();
-    bool deprecated() const;
-    const char* insert_text() const;
-
-private:
-    context::completion_item_s& impl_;
+    std::string label;
+    size_t kind;
+    std::string detail;
+    std::string documentation;
+    bool deprecated;
+    std::string insert_text;
 };
 
 struct PARSER_LIBRARY_EXPORT completion_list
 {
-    completion_list(semantics::completion_list_s& info);
-    bool is_incomplete() const;
-    completion_item item(size_t index);
-    size_t count() const;
-
-private:
-    semantics::completion_list_s& impl_;
+    std::vector<completion_item> items;
+    bool is_incomplete;
 };
 
 struct PARSER_LIBRARY_EXPORT position_uri

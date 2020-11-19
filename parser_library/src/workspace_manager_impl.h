@@ -184,7 +184,7 @@ public:
     {
         completion_result = semantics::completion_list_s();
         if (cancel_ && *cancel_)
-            return completion_result;
+            return completion_list();
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
@@ -192,7 +192,7 @@ public:
                                     ->get_lsp_info()
                                     .completion(pos, trigger_char, trigger_kind);
 
-        return completion_result;
+        return completion_list();
     }
 
     void launch(std::string file_name, bool stop_on_entry)

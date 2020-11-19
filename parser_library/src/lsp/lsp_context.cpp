@@ -119,7 +119,9 @@ string_array lsp_context::hover(const char* document_uri, const position pos)
 
 completion_list lsp_context::completion(
     const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
-{}
+{
+    return completion_list();
+}
 
 template<typename T>
 bool files_present(
