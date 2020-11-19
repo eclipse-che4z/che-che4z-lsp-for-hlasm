@@ -272,7 +272,7 @@ void debugger::debug_start(processor_file_ptr open_code, parse_lib_provider* pro
     std::lock_guard<std::mutex> guard(variable_mtx_);
     analyzer a(open_code->get_text(), open_code->get_file_name(), *provider, this);
 
-    ctx_ = &a.context();
+    ctx_ = &a.hlasm_ctx();
 
     a.analyze(&cancel_);
 

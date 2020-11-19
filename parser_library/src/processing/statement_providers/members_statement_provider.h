@@ -29,7 +29,7 @@ class members_statement_provider : public statement_provider
 {
 public:
     members_statement_provider(const statement_provider_kind kind,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
@@ -37,7 +37,7 @@ public:
     virtual void process_next(statement_processor& processor) override;
 
 protected:
-    context::hlasm_context& hlasm_ctx;
+    analyzing_context ctx;
     statement_fields_parser& parser;
     workspaces::parse_lib_provider& lib_provider;
     processing::processing_state_listener& listener;
@@ -57,7 +57,7 @@ private:
     void do_process_statement(statement_processor& processor, T statement)
     {
         if (processor.kind == processing_kind::ORDINARY
-            && try_trigger_attribute_lookahead(*statement, { hlasm_ctx, lib_provider }, listener))
+            && try_trigger_attribute_lookahead(*statement, { ctx, lib_provider }, listener))
             return;
 
         processor.process_statement(std::move(statement));

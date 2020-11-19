@@ -35,9 +35,9 @@ public:
     // starts parser with new (empty) context
     virtual parse_result parse(parse_lib_provider&) = 0;
     // starts parser with in the context of parameter
-    virtual parse_result parse_macro(parse_lib_provider&, context::hlasm_context&, const library_data) = 0;
+    virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) = 0;
     // starts parser to parse macro but does not update parse info or diagnostics
-    virtual parse_result parse_no_lsp_update(parse_lib_provider&, context::hlasm_context&, const library_data) = 0;
+    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context, const library_data) = 0;
 };
 
 // Interface that represents a file that can be parsed.

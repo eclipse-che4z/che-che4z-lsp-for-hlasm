@@ -31,7 +31,7 @@ label
 		else
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::label));
-			auto id = ctx->ids().add($l_char_string.value);
+			auto id = hlasm_ctx->ids().add($l_char_string.value);
 			collector.set_label_field(id,$l_char_string.ctx,r); 
 		}
 

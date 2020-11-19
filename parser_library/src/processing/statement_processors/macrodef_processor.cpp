@@ -23,11 +23,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
+macrodef_processor::macrodef_processor(analyzing_context ctx,
     processing_state_listener& listener,
     workspaces::parse_lib_provider& provider,
     macrodef_start_data start)
-    : statement_processor(processing_kind::MACRO, hlasm_context)
+    : statement_processor(processing_kind::MACRO, std::move(ctx))
     , listener_(listener)
     , provider_(provider)
     , start_(std::move(start))
@@ -38,7 +38,7 @@ macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
     , expecting_MACRO_(start_.is_external)
     , omit_next_(false)
     , finished_flag_(false)
-    , table_(create_table(hlasm_context))
+    , table_(create_table())
 {
     result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
     result_.external = start_.is_external;
@@ -345,36 +345,37 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     return true;
 }
 
-macrodef_processor::process_table_t macrodef_processor::create_table(context::hlasm_context& ctx)
+macrodef_processor::process_table_t macrodef_processor::create_table()
 {
     process_table_t table;
-    table.emplace(ctx.ids().add("SETA"),
+    table.emplace(hlasm_ctx.ids().add("SETA"),
         std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::A_TYPE));
-    table.emplace(ctx.ids().add("SETB"),
+    table.emplace(hlasm_ctx.ids().add("SETB"),
         std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::B_TYPE));
-    table.emplace(ctx.ids().add("SETC"),
+    table.emplace(hlasm_ctx.ids().add("SETC"),
         std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::C_TYPE));
-    table.emplace(ctx.ids().add("LCLA"),
+    table.emplace(hlasm_ctx.ids().add("LCLA"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, false));
-    table.emplace(ctx.ids().add("LCLB"),
+    table.emplace(hlasm_ctx.ids().add("LCLB"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, false));
-    table.emplace(ctx.ids().add("LCLC"),
+    table.emplace(hlasm_ctx.ids().add("LCLC"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, false));
-    table.emplace(ctx.ids().add("GBLA"),
+    table.emplace(hlasm_ctx.ids().add("GBLA"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, true));
-    table.emplace(ctx.ids().add("GBLB"),
+    table.emplace(hlasm_ctx.ids().add("GBLB"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, true));
-    table.emplace(ctx.ids().add("GBLC"),
+    table.emplace(hlasm_ctx.ids().add("GBLC"),
         std::bind(
             &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, true));
-    table.emplace(ctx.ids().add("MACRO"), std::bind(&macrodef_processor::process_MACRO, this));
-    table.emplace(ctx.ids().add("MEND"), std::bind(&macrodef_processor::process_MEND, this));
-    table.emplace(ctx.ids().add("COPY"), std::bind(&macrodef_processor::process_COPY, this, std::placeholders::_1));
+    table.emplace(hlasm_ctx.ids().add("MACRO"), std::bind(&macrodef_processor::process_MACRO, this));
+    table.emplace(hlasm_ctx.ids().add("MEND"), std::bind(&macrodef_processor::process_MEND, this));
+    table.emplace(
+        hlasm_ctx.ids().add("COPY"), std::bind(&macrodef_processor::process_COPY, this, std::placeholders::_1));
     return table;
 }
 
@@ -404,7 +405,7 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
-        asm_processor::process_copy(statement, hlasm_ctx, provider_, this);
+        asm_processor::process_copy(statement, ctx, provider_, this);
     }
     else
         add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));

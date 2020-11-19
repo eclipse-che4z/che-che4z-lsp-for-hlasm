@@ -25,9 +25,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_var_sym_basic, undefined_attributes)
 {
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -45,9 +46,10 @@ TEST(ca_var_sym_basic, undefined_attributes)
 
 TEST(ca_var_sym_created, undefined_attributes)
 {
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     std::string name = "n";
     concat_chain created_name;

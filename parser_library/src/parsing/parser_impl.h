@@ -51,7 +51,7 @@ class parser_impl : public antlr4::Parser,
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx,
+    void initialize(analyzing_context ctx,
         semantics::lsp_info_processor* lsp_prc,
         workspaces::parse_lib_provider* lib_provider,
         processing::processing_state_listener* state_listener);
@@ -61,8 +61,7 @@ public:
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
-    virtual processing::statement_fields_parser::parse_result parse_operand_field(context::hlasm_context* hlasm_ctx,
-        std::string field,
+    virtual processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status) override;
@@ -95,7 +94,8 @@ protected:
     virtual bool finished() const override;
 
     lexing::token_stream& input;
-    context::hlasm_context* ctx;
+    analyzing_context ctx;
+    context::hlasm_context* hlasm_ctx;
     semantics::lsp_info_processor* lsp_proc;
     processing::statement_processor* processor;
     std::optional<processing::processing_status> proc_status;

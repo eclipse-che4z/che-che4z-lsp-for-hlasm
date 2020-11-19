@@ -29,19 +29,20 @@ namespace hlasm_plugin::parser_library::parsing {
 parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
     , input(dynamic_cast<lexing::token_stream&>(*input))
-    , ctx(nullptr)
+    , hlasm_ctx(nullptr)
     , lsp_proc(nullptr)
     , processor(nullptr)
     , finished_flag(false)
     , provider()
 {}
 
-void parser_impl::initialize(context::hlasm_context* hlasm_ctx,
+void parser_impl::initialize(analyzing_context a_ctx,
     semantics::lsp_info_processor* lsp_prc,
     workspaces::parse_lib_provider* lib_provider,
     processing::processing_state_listener* state_listener)
 {
-    ctx = hlasm_ctx;
+    ctx = std::move(a_ctx);
+    hlasm_ctx = &*ctx.hlasm_ctx;
     lsp_proc = lsp_prc;
     finished_flag = false;
     lib_provider_ = lib_provider;
@@ -83,9 +84,7 @@ std::unique_ptr<parser_holder> create_parser_holder()
     return h;
 }
 
-std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(
-    context::hlasm_context* hlasm_ctx,
-    std::string field,
+std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status)
@@ -148,7 +147,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     if (!after_substitution)
     {
         lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(),
-            ctx->ids().add(ctx->processing_stack().back().proc_location.file, true));
+            hlasm_ctx->ids().add(hlasm_ctx->processing_stack().back().proc_location.file, true));
     }
 
     collect_diags_from_child(listener);
@@ -208,9 +207,9 @@ bool parser_impl::is_data_attr()
 bool parser_impl::is_var_def()
 {
     auto [_, opcode] = *proc_status;
-    return opcode.value == ctx->ids().add("GBLA") || opcode.value == ctx->ids().add("GBLB")
-        || opcode.value == ctx->ids().add("GBLC") || opcode.value == ctx->ids().add("LCLA")
-        || opcode.value == ctx->ids().add("LCLB") || opcode.value == ctx->ids().add("LCLC");
+    return opcode.value == hlasm_ctx->ids().add("GBLA") || opcode.value == hlasm_ctx->ids().add("GBLB")
+        || opcode.value == hlasm_ctx->ids().add("GBLC") || opcode.value == hlasm_ctx->ids().add("LCLA")
+        || opcode.value == hlasm_ctx->ids().add("LCLB") || opcode.value == hlasm_ctx->ids().add("LCLC");
 }
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
@@ -219,7 +218,7 @@ self_def_t parser_impl::parse_self_def_term(const std::string& option, const std
     auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
     if (add_diagnostic.diagnostics_present)
-        diags().back().file_name = ctx->processing_stack().back().proc_location.file;
+        diags().back().file_name = hlasm_ctx->processing_stack().back().proc_location.file;
     return val;
 }
 
@@ -241,7 +240,7 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
     if (value.size() > 63)
         add_diagnostic(diagnostic_s::error_S100("", value, id_range));
 
-    return ctx->ids().add(std::move(value));
+    return hlasm_ctx->ids().add(std::move(value));
 }
 
 void parser_impl::parse_macro_operands(semantics::op_rem& line)
@@ -278,7 +277,7 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SE
     expr->resolve_expression_tree(type);
     expr->collect_diags();
     for (auto& d : expr->diags())
-        add_diagnostic(diagnostic_s(ctx->processing_stack().back().proc_location.file, std::move(d)));
+        add_diagnostic(diagnostic_s(hlasm_ctx->processing_stack().back().proc_location.file, std::move(d)));
     expr->diags().clear();
 }
 
@@ -291,14 +290,14 @@ void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
     auto [_, opcode] = *proc_status;
-    if (opcode.value == ctx->ids().add("SETA") || opcode.value == ctx->ids().add("ACTR")
-        || opcode.value == ctx->ids().add("ASPACE") || opcode.value == ctx->ids().add("AGO"))
+    if (opcode.value == hlasm_ctx->ids().add("SETA") || opcode.value == hlasm_ctx->ids().add("ACTR")
+        || opcode.value == hlasm_ctx->ids().add("ASPACE") || opcode.value == hlasm_ctx->ids().add("AGO"))
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == ctx->ids().add("SETB") || opcode.value == ctx->ids().add("AIF"))
+    else if (opcode.value == hlasm_ctx->ids().add("SETB") || opcode.value == hlasm_ctx->ids().add("AIF"))
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
-    else if (opcode.value == ctx->ids().add("SETC"))
+    else if (opcode.value == hlasm_ctx->ids().add("SETC"))
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-    else if (opcode.value == ctx->ids().add("AREAD"))
+    else if (opcode.value == hlasm_ctx->ids().add("AREAD"))
     {
         // aread operand is just enumeration
     }
@@ -312,10 +311,10 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 bool parser_impl::process_instruction()
 {
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(collector.current_instruction(), { *ctx, *lib_provider_ }, *state_listener_))
+        && try_trigger_attribute_lookahead(collector.current_instruction(), { ctx, *lib_provider_ }, *state_listener_))
         return true;
 
-    ctx->set_source_position(collector.current_instruction().field_range.start);
+    hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
     proc_status = processor->get_processing_status(collector.peek_instruction());
     return false;
 }
@@ -342,13 +341,13 @@ bool parser_impl::process_statement()
     }
 
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*ptr, { *ctx, *lib_provider_ }, *state_listener_))
+        && try_trigger_attribute_lookahead(*ptr, { ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     if (statement_range.start.line < statement_range.end.line)
-        ctx->metrics.continued_statements++;
+        hlasm_ctx->metrics.continued_statements++;
     else
-        ctx->metrics.non_continued_statements++;
+        hlasm_ctx->metrics.non_continued_statements++;
 
     lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
@@ -437,9 +436,9 @@ bool parser_impl::UNKNOWN()
 }
 
 void parser_impl::initialize(
-    context::hlasm_context* hlasm_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
+    context::hlasm_context* h_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
 {
-    ctx = hlasm_ctx;
+    hlasm_ctx = h_ctx;
     provider = range_prov;
     proc_status = proc_stat;
 }
@@ -454,7 +453,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
-    parser_error_listener_ctx listener(*ctx, std::nullopt, tmp_provider);
+    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt, tmp_provider);
 
     h.input->reset(operands);
 
@@ -464,7 +463,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     h.stream->reset();
 
-    h.parser->initialize(ctx, tmp_provider, *proc_status);
+    h.parser->initialize(hlasm_ctx, tmp_provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
@@ -518,7 +517,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
 
     parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
 
     h.input->reset(text);
 
@@ -528,7 +527,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
 
     h.stream->reset();
 
-    h.parser->initialize(ctx, provider, *proc_status);
+    h.parser->initialize(hlasm_ctx, provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);
@@ -604,7 +603,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
         {
             context::id_index tmp;
             tmp = std::get<context::id_index>(collector.current_instruction().value);
-            if (tmp != ctx->ids().add("COPY"))
+            if (tmp != hlasm_ctx->ids().add("COPY"))
             {
                 process_statement();
                 return;
@@ -614,7 +613,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
 
     const parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
 
     h.input->reset(text);
 
@@ -624,7 +623,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
 
     h.stream->reset();
 
-    h.parser->initialize(ctx, provider, *proc_status);
+    h.parser->initialize(hlasm_ctx, provider, *proc_status);
     h.parser->setErrorHandler(std::make_shared<error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&listener);

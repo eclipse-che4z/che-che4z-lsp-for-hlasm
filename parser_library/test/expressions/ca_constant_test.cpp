@@ -24,9 +24,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     ca_constant c(1, range());
 

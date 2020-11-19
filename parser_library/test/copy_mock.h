@@ -57,23 +57,19 @@ class copy_mock : public workspaces::parse_lib_provider
 
 public:
     virtual workspaces::parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data)
+        const std::string& library, analyzing_context ctx, const workspaces::library_data data)
     {
         current_content = find_content(library);
         if (!current_content)
             return false;
 
         holder.push_back(std::move(a));
-        a = std::make_unique<analyzer>(*current_content, library, hlasm_ctx, *this, data);
+        a = std::make_unique<analyzer>(*current_content, library, std::move(ctx), *this, data);
         a->analyze();
         a->collect_diags();
         return true;
     }
-    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const
-    {
-        (void)hlasm_ctx;
-        return find_content(library);
-    }
+    virtual bool has_library(const std::string& library, const std::string&) const { return find_content(library); }
     std::vector<std::unique_ptr<analyzer>> holder;
     std::unique_ptr<analyzer> a;
 

@@ -34,6 +34,8 @@ class lsp_analyzer : public statement_analyzer
     lsp::vardef_storage opencode_var_defs_;
 
 public:
+    lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx);
+
     virtual void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,
         processing_kind proc_kind) override;

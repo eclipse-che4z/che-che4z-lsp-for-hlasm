@@ -77,9 +77,10 @@ public:
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     context::SET_t get_result()
     {

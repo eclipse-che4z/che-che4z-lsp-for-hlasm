@@ -22,18 +22,18 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::workspaces;
 
-ordinary_processor::ordinary_processor(context::hlasm_context& hlasm_ctx,
+ordinary_processor::ordinary_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     processing_tracer* tracer)
-    : statement_processor(processing_kind::ORDINARY, hlasm_ctx)
-    , eval_ctx { hlasm_ctx, lib_provider }
-    , ca_proc_(hlasm_ctx, branch_provider, lib_provider, state_listener)
-    , mac_proc_(hlasm_ctx, branch_provider, lib_provider)
-    , asm_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
-    , mach_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
+    : statement_processor(processing_kind::ORDINARY, ctx)
+    , eval_ctx { ctx, lib_provider }
+    , ca_proc_(ctx, branch_provider, lib_provider, state_listener)
+    , mac_proc_(ctx, branch_provider, lib_provider)
+    , asm_proc_(ctx, branch_provider, lib_provider, parser)
+    , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , tracer_(tracer)
 {}
@@ -50,7 +50,7 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
     if (!status)
     {
-        auto found = eval_ctx.lib_provider.parse_library(*id, hlasm_ctx, library_data { processing_kind::MACRO, id });
+        auto found = eval_ctx.lib_provider.parse_library(*id, ctx, library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)

@@ -17,12 +17,12 @@
 namespace hlasm_plugin::parser_library::processing {
 
 members_statement_provider::members_statement_provider(const statement_provider_kind kind,
-    context::hlasm_context& hlasm_ctx,
+    analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener)
     : statement_provider(kind)
-    , hlasm_ctx(hlasm_ctx)
+    , ctx(std::move(ctx))
     , parser(parser)
     , lib_provider(lib_provider)
     , listener(listener)
@@ -39,7 +39,7 @@ void members_statement_provider::process_next(statement_processor& processor)
         return;
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { hlasm_ctx, lib_provider }, listener))
+        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { ctx, lib_provider }, listener))
         return;
 
     switch (cache->get_base()->kind)
@@ -88,8 +88,7 @@ void members_statement_provider::fill_cache(context::cached_statement_storage& c
     }
     else
     {
-        auto [op, rem] = parser.parse_operand_field(&hlasm_ctx,
-            def_stmt.deferred_ref(),
+        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref(),
             false,
             semantics::range_provider(def_stmt.deferred_range_ref(), semantics::adjusting_state::NONE),
             status);

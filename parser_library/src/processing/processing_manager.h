@@ -36,7 +36,7 @@ class processing_manager : public processing_state_listener, public branching_pr
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         const workspaces::library_data data,
         std::string file_name,
         workspaces::parse_lib_provider& lib_provider,
@@ -49,6 +49,7 @@ public:
     virtual void collect_diags() const override;
 
 private:
+    analyzing_context ctx_;
     context::hlasm_context& hlasm_ctx_;
     workspaces::parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;

@@ -80,8 +80,8 @@ public:
     void did_change_watched_files(const std::string& file_uri);
 
     virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override;
-    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override;
+        const std::string& library, analyzing_context ctx, const library_data data) override;
+    virtual bool has_library(const std::string& library, const std::string& program) const override;
 
     const ws_uri& uri();
 

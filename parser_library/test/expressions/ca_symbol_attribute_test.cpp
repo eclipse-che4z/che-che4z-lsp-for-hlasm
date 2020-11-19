@@ -26,9 +26,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol_attr, undefined_attributes)
 {
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -53,11 +53,11 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 
 TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
-    auto res = create_var_sym_attr(context::data_attr_kind::D, ctx.ids().add("n")).evaluate(eval_ctx);
+    auto res = create_var_sym_attr(context::data_attr_kind::D, hlasm_ctx->ids().add("n")).evaluate(eval_ctx);
 
     ASSERT_EQ(eval_ctx.diags().size(), 1U);
     EXPECT_EQ(eval_ctx.diags().front().code, "E010");
@@ -65,13 +65,13 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
-    auto name = ctx.ids().add("n");
+    auto name = hlasm_ctx->ids().add("n");
 
-    auto var = ctx.create_local_variable<int>(name, true);
+    auto var = hlasm_ctx->create_local_variable<int>(name, true);
     var->access_set_symbol<int>()->set_value(12);
 
     auto res = create_var_sym_attr(context::data_attr_kind::L, name).evaluate(eval_ctx);
@@ -82,13 +82,13 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
-    auto name = ctx.ids().add("n");
+    auto name = hlasm_ctx->ids().add("n");
 
-    auto var = ctx.create_local_variable<context::C_t>(name, true);
+    auto var = hlasm_ctx->create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value("(abc");
 
     auto res = create_var_sym_attr(context::data_attr_kind::L, name).evaluate(eval_ctx);
@@ -119,9 +119,9 @@ struct stringer
 class ca_attr : public ::testing::TestWithParam<attr_test_param>
 {
 protected:
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 };
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
@@ -139,19 +139,19 @@ INSTANTIATE_TEST_SUITE_P(ca_attr_suite,
 
 TEST_P(ca_attr, test)
 {
-    auto name = ctx.ids().add("VAR");
+    auto name = hlasm_ctx->ids().add("VAR");
 
-    (void)ctx.ord_ctx.create_symbol(ctx.ids().add("C"),
+    (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("C"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
         location());
 
-    (void)ctx.ord_ctx.create_symbol(ctx.ids().add("T"),
+    (void)hlasm_ctx->ord_ctx.create_symbol(hlasm_ctx->ids().add("T"),
         context::symbol_value(),
         context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
         location());
 
-    auto var = ctx.create_local_variable<context::C_t>(name, true);
+    auto var = hlasm_ctx->create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value(GetParam().value);
 
     auto result = create_var_sym_attr(GetParam().attr, name).evaluate(eval_ctx);

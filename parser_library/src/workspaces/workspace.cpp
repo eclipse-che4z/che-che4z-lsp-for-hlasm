@@ -378,23 +378,22 @@ bool workspace::is_dependency_(const std::string& file_uri)
     return false;
 }
 
-parse_result workspace::parse_library(
-    const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, const library_data data)
 {
-    auto& proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+    auto& proc_grp = get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
     for (auto&& lib : proc_grp.libraries())
     {
         std::shared_ptr<processor> found = lib->find_file(library);
         if (found)
-            return found->parse_macro(*this, hlasm_ctx, data);
+            return found->parse_macro(*this, std::move(ctx), data);
     }
 
     return false;
 }
 
-bool workspace::has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const
+bool workspace::has_library(const std::string& library, const std::string& program) const
 {
-    auto& proc_grp = get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+    auto& proc_grp = get_proc_grp_by_program(program);
     for (auto&& lib : proc_grp.libraries())
     {
         std::shared_ptr<processor> found = lib->find_file(library);

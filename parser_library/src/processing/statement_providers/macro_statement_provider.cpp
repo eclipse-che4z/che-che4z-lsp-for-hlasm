@@ -18,24 +18,24 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-macro_statement_provider::macro_statement_provider(context::hlasm_context& hlasm_ctx,
+macro_statement_provider::macro_statement_provider(analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener)
-    : members_statement_provider(statement_provider_kind::MACRO, hlasm_ctx, parser, lib_provider, listener)
+    : members_statement_provider(statement_provider_kind::MACRO, std::move(ctx), parser, lib_provider, listener)
 {}
 
-bool macro_statement_provider::finished() const { return hlasm_ctx.scope_stack().size() == 1; }
+bool macro_statement_provider::finished() const { return ctx.hlasm_ctx->scope_stack().size() == 1; }
 
 context::cached_statement_storage* macro_statement_provider::get_next()
 {
-    auto& invo = hlasm_ctx.scope_stack().back().this_macro;
+    auto& invo = ctx.hlasm_ctx->scope_stack().back().this_macro;
     assert(invo);
 
     ++invo->current_statement;
     if ((size_t)invo->current_statement == invo->cached_definition.size())
     {
-        hlasm_ctx.leave_macro();
+        ctx.hlasm_ctx->leave_macro();
         return nullptr;
     }
 

@@ -35,10 +35,10 @@ public:
     // Starts parser with new (empty) context
     virtual parse_result parse(parse_lib_provider&) override;
     // Starts parser with in the context of parameter
-    virtual parse_result parse_macro(parse_lib_provider&, context::hlasm_context&, const library_data) override;
+    virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) override;
     // Starts parser with in the context of parameter, but does not affect LSP, HL info or parse_info_updated.
     // Used by the macro tracer.
-    virtual parse_result parse_no_lsp_update(parse_lib_provider&, context::hlasm_context&, const library_data) override;
+    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, const library_data) override;
 
     // Returns true if parsing occured since this method was called last.
     bool parse_info_updated() override;

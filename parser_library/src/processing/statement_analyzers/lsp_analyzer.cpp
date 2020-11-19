@@ -21,6 +21,12 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx)
+    : hlasm_ctx_(hlasm_ctx)
+    , lsp_ctx_(lsp_ctx)
+    , in_macro_(false)
+{}
+
 void lsp_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind)
 {

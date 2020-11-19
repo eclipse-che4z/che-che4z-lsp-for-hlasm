@@ -50,7 +50,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
     if (!cancel_ || !*cancel_)
     {
         dependencies_.clear();
-        for (auto& file : analyzer_->context().get_visited_files())
+        for (auto& file : analyzer_->hlasm_ctx().get_visited_files())
             if (file != get_file_name())
                 dependencies_.insert(file);
     }
@@ -68,19 +68,19 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 
 
 parse_result processor_file_impl::parse_macro(
-    parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
     analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
+        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
 
     return parse_inner(*analyzer_);
 }
 
 parse_result processor_file_impl::parse_no_lsp_update(
-    parse_lib_provider& lib_provider, context::hlasm_context& hlasm_ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
     auto no_update_analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), hlasm_ctx, lib_provider, data, get_lsp_editing());
+        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
     no_update_analyzer_->analyze();
     return true;
 }

@@ -15,7 +15,7 @@
 #ifndef PROCESSING_STATEMENT_PROCESSOR_H
 #define PROCESSING_STATEMENT_PROCESSOR_H
 
-#include "context/hlasm_context.h"
+#include "analyzing_context.h"
 #include "diagnosable_ctx.h"
 #include "processing/processing_format.h"
 #include "processing/statement_providers/statement_provider_kind.h"
@@ -35,10 +35,11 @@ using processor_ptr = std::unique_ptr<statement_processor>;
 class statement_processor : public diagnosable_ctx
 {
 public:
-    statement_processor(const processing_kind kind, context::hlasm_context& hlasm_ctx)
+    statement_processor(const processing_kind kind, analyzing_context ctx)
         : diagnosable_ctx(hlasm_ctx)
         , kind(kind)
-        , hlasm_ctx(hlasm_ctx)
+        , ctx(ctx)
+        , hlasm_ctx(*ctx.hlasm_ctx)
         , macro_id(hlasm_ctx.ids().add("MACRO"))
         , mend_id(hlasm_ctx.ids().add("MEND"))
         , copy_id(hlasm_ctx.ids().add("COPY"))
@@ -58,6 +59,7 @@ public:
     virtual ~statement_processor() = default;
 
 protected:
+    analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     const context::id_index macro_id, mend_id, copy_id;
 };

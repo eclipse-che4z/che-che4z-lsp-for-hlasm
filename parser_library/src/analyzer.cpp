@@ -24,30 +24,23 @@ using namespace hlasm_plugin::parser_library::workspaces;
 
 analyzer::analyzer(const std::string& text,
     std::string file_name,
+    analyzing_context ctx,
     parse_lib_provider& lib_provider,
-    context::hlasm_context* hlasm_ctx,
     const library_data data,
-    bool own_ctx,
     processing::processing_tracer* tracer,
     bool collect_hl_info)
-    : diagnosable_ctx(*hlasm_ctx)
-    , hlasm_ctx_(own_ctx ? hlasm_ctx : nullptr)
-    , hlasm_ctx_ref_(*hlasm_ctx)
+    : diagnosable_ctx(*ctx.hlasm_ctx)
+    , ctx_(ctx)
     , listener_(file_name)
-    , lsp_proc_(file_name, text, hlasm_ctx, collect_hl_info)
+    , lsp_proc_(file_name, text, &*ctx.hlasm_ctx, collect_hl_info)
     , input_(text)
-    , lexer_(&input_, &lsp_proc_, &hlasm_ctx_ref_.metrics)
+    , lexer_(&input_, &lsp_proc_, &ctx.hlasm_ctx->metrics)
     , tokens_(&lexer_)
     , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_),
-          hlasm_ctx_ref_,
-          data,
-          file_name,
-          lib_provider,
-          *parser_,
-          tracer)
+    , mngr_(
+          std::unique_ptr<processing::opencode_provider>(parser_), ctx, data, file_name, lib_provider, *parser_, tracer)
 {
-    parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_, &lib_provider, &mngr_);
+    parser_->initialize(ctx, &lsp_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);
@@ -55,11 +48,11 @@ analyzer::analyzer(const std::string& text,
 
 analyzer::analyzer(const std::string& text,
     std::string file_name,
-    context::hlasm_context& hlasm_ctx,
+    analyzing_context ctx,
     parse_lib_provider& lib_provider,
     const library_data data,
     bool collect_hl_info)
-    : analyzer(text, file_name, lib_provider, &hlasm_ctx, data, false, nullptr, collect_hl_info)
+    : analyzer(text, file_name, std::move(ctx), lib_provider, data, nullptr, collect_hl_info)
 {}
 
 analyzer::analyzer(const std::string& text,
@@ -69,15 +62,16 @@ analyzer::analyzer(const std::string& text,
     bool collect_hl_info)
     : analyzer(text,
         file_name,
+        analyzing_context { std::make_unique<context::hlasm_context>(file_name), std::make_unique<lsp::lsp_context>() },
         lib_provider,
-        new context::hlasm_context(file_name),
         library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
-        true,
         tracer,
         collect_hl_info)
 {}
 
-context::hlasm_context& analyzer::context() { return hlasm_ctx_ref_; }
+analyzing_context analyzer::context() { return ctx_; }
+
+context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
 parsing::hlasmparser& analyzer::parser() { return *parser_; }
 
@@ -93,6 +87,6 @@ void analyzer::collect_diags() const
 
 const performance_metrics& analyzer::get_metrics()
 {
-    hlasm_ctx_ref_.fill_metrics_files();
-    return hlasm_ctx_ref_.metrics;
+    ctx_.hlasm_ctx->fill_metrics_files();
+    return ctx_.hlasm_ctx->metrics;
 }

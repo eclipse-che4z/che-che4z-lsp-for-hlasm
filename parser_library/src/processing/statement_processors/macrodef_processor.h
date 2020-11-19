@@ -46,7 +46,7 @@ class macrodef_processor : public statement_processor
     const process_table_t table_;
 
 public:
-    macrodef_processor(context::hlasm_context& hlasm_ctx,
+    macrodef_processor(analyzing_context ctx,
         processing_state_listener& listener,
         workspaces::parse_lib_provider& provider,
         macrodef_start_data start);
@@ -76,7 +76,7 @@ private:
         range op_range,
         bool add_empty);
 
-    process_table_t create_table(context::hlasm_context& hlasm_ctx);
+    process_table_t create_table();
 
     void process_MACRO();
     void process_MEND();

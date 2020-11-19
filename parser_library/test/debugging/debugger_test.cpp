@@ -230,11 +230,11 @@ public:
     {}
 
     virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
+        const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::shared_ptr<processor> found = get_file_manager().add_processor_file(library);
         if (found)
-            return found->parse_no_lsp_update(*this, hlasm_ctx, data);
+            return found->parse_no_lsp_update(*this, std::move(ctx), data);
 
         return false;
     }

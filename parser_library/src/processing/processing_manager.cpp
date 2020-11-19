@@ -17,6 +17,7 @@
 #include <assert.h>
 
 #include "parsing/parser_impl.h"
+#include "statement_analyzers/lsp_analyzer.h"
 #include "statement_processors/copy_processor.h"
 #include "statement_processors/empty_processor.h"
 #include "statement_processors/lookahead_processor.h"
@@ -28,25 +29,25 @@
 namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
-    context::hlasm_context& hlasm_ctx,
+    analyzing_context ctx,
     const workspaces::library_data data,
     std::string file_name,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     processing_tracer* tracer)
-    : diagnosable_ctx(hlasm_ctx)
-    , hlasm_ctx_(hlasm_ctx)
+    : diagnosable_ctx(*ctx.hlasm_ctx)
+    , ctx_(std::move(ctx))
+    , hlasm_ctx_(*ctx.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
     , tracer_(tracer)
-
 {
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
-            provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
+            provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this));
             procs_.emplace_back(
-                std::make_unique<ordinary_processor>(hlasm_ctx, *this, lib_provider, *this, parser, tracer_));
+                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, tracer_));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { data.library_member, std::move(file_name) });
@@ -58,8 +59,10 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx, parser, lib_provider, *this));
     provs_.emplace_back(std::move(base_provider));
+
+    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx.hlasm_ctx, *ctx.lsp_ctx);
 }
 
 void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind, performance_metrics& metrics)
@@ -175,8 +178,7 @@ void processing_manager::start_lookahead(lookahead_start_data start)
             context::source_position(lookahead_stop_.end_line + 1, lookahead_stop_.end_index), lookahead_stop_);
 
     hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
-    procs_.emplace_back(
-        std::make_unique<lookahead_processor>(hlasm_ctx_, *this, *this, lib_provider_, std::move(start)));
+    procs_.emplace_back(std::make_unique<lookahead_processor>(ctx_, *this, *this, lib_provider_, std::move(start)));
 }
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
@@ -208,7 +210,7 @@ void processing_manager::start_copy_member(copy_start_data start)
     stmt_analyzer_->copydef_started(start);
 
     hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_file));
-    procs_.emplace_back(std::make_unique<copy_processor>(hlasm_ctx_, *this, std::move(start)));
+    procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
 }
 
 void processing_manager::finish_copy_member(copy_processing_result result)
@@ -227,7 +229,7 @@ void processing_manager::start_macro_definition(macrodef_start_data start, std::
     else
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO, std::move(*file));
 
-    procs_.emplace_back(std::make_unique<macrodef_processor>(hlasm_ctx_, *this, lib_provider_, std::move(start)));
+    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
 }
 
 void processing_manager::jump_in_statements(context::id_index target, range symbol_range)

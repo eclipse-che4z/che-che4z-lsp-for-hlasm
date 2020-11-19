@@ -18,7 +18,6 @@
 #include <functional>
 #include <unordered_map>
 
-#include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
 #include "expressions/evaluation_context.h"
 #include "processing/branching_provider.h"
@@ -39,20 +38,21 @@ class instruction_processor : public diagnosable_ctx
     virtual void collect_diags() const override { collect_diags_from_child(eval_ctx); }
 
 protected:
+    analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     branching_provider& branch_provider;
     workspaces::parse_lib_provider& lib_provider;
 
     expressions::evaluation_context eval_ctx;
 
-    instruction_processor(context::hlasm_context& hlasm_ctx,
-        branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider)
-        : diagnosable_ctx(hlasm_ctx)
+    instruction_processor(
+        analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
+        : diagnosable_ctx(*ctx.hlasm_ctx)
+        , ctx(ctx)
         , hlasm_ctx(hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
-        , eval_ctx { hlasm_ctx, lib_provider }
+        , eval_ctx { ctx, lib_provider }
     {}
 };
 

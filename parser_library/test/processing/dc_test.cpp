@@ -49,8 +49,8 @@ R EQU B-A
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    id_index R = a.context().ids().add("R");
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 2);
+    id_index R = a.hlasm_ctx().ids().add("R");
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(R)->value().get_abs(), 2);
 }
 
 TEST(DC, previously_defined_length)
@@ -69,8 +69,8 @@ R EQU C-B
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    id_index R = a.context().ids().add("R");
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 4);
+    id_index R = a.hlasm_ctx().ids().add("R");
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(R)->value().get_abs(), 4);
 }
 
 TEST(DC, implicit_length)
@@ -88,8 +88,8 @@ R EQU C-B
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    id_index R = a.context().ids().add("R");
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(R)->value().get_abs(), 4);
+    id_index R = a.hlasm_ctx().ids().add("R");
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(R)->value().get_abs(), 4);
 }
 
 TEST(DC, implicit_length_deferred_checking)
@@ -148,7 +148,7 @@ A DC CL(X+14)'A'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("a"))->attributes().length(),
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("a"))->attributes().length(),
         (symbol_attributes::len_attr)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
@@ -165,7 +165,7 @@ A DC FS(X+14)'1'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("a"))->attributes().scale(),
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("a"))->attributes().scale(),
         (symbol_attributes::scale_attr)36);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
@@ -182,7 +182,7 @@ A EQU L'X
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 0);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 0);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -198,7 +198,7 @@ X DC CL(A+1)'X'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -215,10 +215,10 @@ Y EQU L'A
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(),
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 1);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->attributes().length(),
         (symbol_attributes::len_attr)1);
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 1);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -235,10 +235,10 @@ Y EQU A
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->value().get_abs(), 1);
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->attributes().length(),
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 1);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->attributes().length(),
         (symbol_attributes::len_attr)1);
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->value().get_abs(), 0);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 0);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }

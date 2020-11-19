@@ -21,6 +21,10 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
+class lsp_context;
+
+using lsp_ctx_ptr = std::shared_ptr<lsp_context>;
+
 class lsp_context : public feature_provider
 {
     opencode_info_ptr opencode_;

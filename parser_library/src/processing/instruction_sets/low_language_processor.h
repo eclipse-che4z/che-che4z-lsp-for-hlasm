@@ -33,7 +33,7 @@ public:
 protected:
     statement_fields_parser& parser;
 
-    low_language_processor(context::hlasm_context& hlasm_ctx,
+    low_language_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);

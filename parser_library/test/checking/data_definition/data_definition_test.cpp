@@ -135,7 +135,7 @@ TEST(data_definition, duplication_factor)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
     EXPECT_EQ(dup_f, 13);
 }
 
@@ -149,7 +149,7 @@ TEST(data_definition, duplication_factor_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
     EXPECT_EQ(dup_f, 26);
 }
 
@@ -163,7 +163,7 @@ TEST(data_definition, duplication_factor_out_of_range)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
     EXPECT_EQ(dup_f, 1);
 }
 
@@ -177,7 +177,7 @@ TEST(data_definition, duplication_factor_invalid_number)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
     EXPECT_EQ(dup_f, 1);
 }
 
@@ -191,14 +191,14 @@ TEST(data_definition, all_fields)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs();
+    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
     EXPECT_EQ(dup_f, 8);
 
-    EXPECT_EQ(parsed.program_type->evaluate(a.context().ord_ctx).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(a.context().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.program_type->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
-    EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), 8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
+    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -213,9 +213,9 @@ TEST(data_definition, no_nominal)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs(), 0);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.context().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -232,9 +232,9 @@ TEST(data_definition, no_nominal_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs(), 0);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.context().ord_ctx).get_abs(), 4);
+    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 4);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -251,13 +251,13 @@ TEST(data_definition, bit_length)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs(), 8);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
 
-    EXPECT_EQ(parsed.program_type->evaluate(a.context().ord_ctx).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(a.context().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.program_type->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -8);
+    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -272,13 +272,13 @@ TEST(data_definition, unexpected_dot)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.context().ord_ctx).get_abs(), 8);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
 
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.context().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(a.context().ord_ctx).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.context().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -8);
+    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }

@@ -37,7 +37,7 @@ instruction returns [id_index instr]
 	| bad_instr
 	{
 		collector.set_instruction_field(
-			ctx->ids().add($bad_instr.ctx->getText()),
+			hlasm_ctx->ids().add($bad_instr.ctx->getText()),
 			provider.get_range($bad_instr.ctx));
 	};
 

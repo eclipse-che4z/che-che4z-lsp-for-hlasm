@@ -29,7 +29,7 @@
 namespace hlasm_plugin::parser_library::context {
 
 class hlasm_context;
-using ctx_ptr = std::unique_ptr<hlasm_context>;
+using hlasm_ctx_ptr = std::shared_ptr<hlasm_context>;
 
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one

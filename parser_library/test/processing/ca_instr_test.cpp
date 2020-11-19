@@ -31,7 +31,7 @@ TEST(var_subs, gbl_instr_only)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("var");
 
@@ -44,7 +44,7 @@ TEST(var_subs, lcl_instr_only)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("var");
 
@@ -57,7 +57,7 @@ TEST(var_subs, gbl_instr_more)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("var");
     auto it2 = ctx.ids().find("var2");
@@ -74,7 +74,7 @@ TEST(var_subs, lcl_instr_more)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("var");
     auto it2 = ctx.ids().find("var2");
@@ -91,8 +91,8 @@ TEST(var_subs, set_to_var)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var");
 
@@ -108,8 +108,8 @@ TEST(var_subs, set_to_var_idx)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var");
 
@@ -133,8 +133,8 @@ TEST(var_subs, set_to_var_idx_many)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var");
 
@@ -161,8 +161,8 @@ TEST(var_subs, var_sym_reset)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var");
 
@@ -178,8 +178,8 @@ TEST(var_subs, created_set_sym)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("abavccd0");
 
@@ -219,8 +219,8 @@ TEST(var_concatenation, concatenated_string_dot_last)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var2");
 
@@ -236,8 +236,8 @@ TEST(var_concatenation, concatenated_string_dot)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var2");
 
@@ -253,8 +253,8 @@ TEST(var_concatenation, concatenated_string_double_dot)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
-    processing::context_manager m(a.context());
+    auto& ctx = a.hlasm_ctx();
+    processing::context_manager m(a.hlasm_ctx());
 
     auto it = ctx.ids().find("var2");
 
@@ -278,7 +278,7 @@ TEST(AGO, extended)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it1 = ctx.ids().add("var1");
     auto it2 = ctx.ids().add("var2");
@@ -303,7 +303,7 @@ TEST(AGO, extended_fail)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it1 = ctx.ids().add("var1");
     auto it2 = ctx.ids().add("var2");
@@ -328,7 +328,7 @@ TEST(AIF, extended)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it1 = ctx.ids().add("var1");
     auto it2 = ctx.ids().add("var2");
@@ -353,7 +353,7 @@ TEST(AIF, extended_fail)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it1 = ctx.ids().add("var1");
     auto it2 = ctx.ids().add("var2");

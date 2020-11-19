@@ -20,8 +20,8 @@
 // arithmetic SETA expressions
 
 #define SETAEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.context()                                                                                              \
-                  .get_var_sym(a.context().ids().add(X))                                                               \
+    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
+                  .get_var_sym(a.hlasm_ctx().ids().add(X))                                                             \
                   ->access_set_symbol_base()                                                                           \
                   ->access_set_symbol<A_t>()                                                                           \
                   ->get_value(),                                                                                       \
@@ -78,15 +78,15 @@ TEST(arithmetic_expressions, substitution_to_character_expression)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C1"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("C1"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<C_t>()
                   ->get_value(),
         "5-10*10");
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C2"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("C2"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<C_t>()
                   ->get_value(),

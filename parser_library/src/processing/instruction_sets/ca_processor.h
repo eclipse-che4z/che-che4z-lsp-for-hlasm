@@ -31,7 +31,7 @@ class ca_processor : public instruction_processor
     processing_state_listener& listener_;
 
 public:
-    ca_processor(context::hlasm_context& hlasm_ctx,
+    ca_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& listener);
@@ -49,7 +49,7 @@ private:
         func(*stmt_ptr->access_resolved());
     }
 
-    process_table_t create_table(context::hlasm_context& hlasm_ctx);
+    process_table_t create_table();
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 
