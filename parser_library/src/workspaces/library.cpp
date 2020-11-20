@@ -34,7 +34,14 @@ library_local::library_local(file_manager& file_manager,
     , optional_(optional)
 {}
 
-library_local::library_local(library_local&&) noexcept = default;
+library_local::library_local(library_local&& l) noexcept
+    : file_manager_(l.file_manager_)
+    , lib_path_(std::move(l.lib_path_))
+    , files_(std::move(l.files_))
+    , extensions_(std::move(l.extensions_))
+    , files_loaded_(l.files_loaded_)
+    , optional_(l.optional_)
+{}
 
 void library_local::collect_diags() const
 {
