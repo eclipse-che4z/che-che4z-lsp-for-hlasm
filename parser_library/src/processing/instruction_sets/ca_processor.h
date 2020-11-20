@@ -36,19 +36,9 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& listener);
 
-    virtual void process(context::unique_stmt_ptr stmt) override;
     virtual void process(context::shared_stmt_ptr stmt) override;
 
 private:
-    template<typename T>
-    void process_(T stmt_ptr)
-    {
-        auto it = table_.find(stmt_ptr->access_resolved()->opcode_ref().value);
-        assert(it != table_.end());
-        auto& [key, func] = *it;
-        func(*stmt_ptr->access_resolved());
-    }
-
     process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void register_seq_sym(const semantics::complete_statement& stmt);

@@ -16,7 +16,9 @@
 #define PROCESSING_STATEMENT_FIELDS_PARSER_H
 
 #include "context/hlasm_context.h"
+#include "processing/op_code.h"
 #include "semantics/range_provider.h"
+#include "semantics/statement_fields.h"
 
 namespace hlasm_plugin {
 namespace parser_library {

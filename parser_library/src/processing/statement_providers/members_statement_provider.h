@@ -15,7 +15,6 @@
 #ifndef PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 #define PROCESSING_MEMBERS_STATEMENT_PROVIDER_H
 
-#include "context/cached_statement.h"
 #include "context/hlasm_context.h"
 #include "expressions/evaluation_context.h"
 #include "processing/processing_state_listener.h"
@@ -42,26 +41,16 @@ protected:
     workspaces::parse_lib_provider& lib_provider;
     processing::processing_state_listener& listener;
 
-    virtual context::cached_statement_storage* get_next() = 0;
+    virtual context::statement_cache* get_next() = 0;
 
 private:
-    const semantics::instruction_si& retrieve_instruction(context::cached_statement_storage& cache) const;
+    const semantics::instruction_si& retrieve_instruction(context::statement_cache& cache) const;
 
-    void fill_cache(context::cached_statement_storage& cache,
+    void fill_cache(context::statement_cache& cache,
         const semantics::deferred_statement& def_stmt,
         const processing_status& status);
 
-    void preprocess_deferred(statement_processor& processor, context::cached_statement_storage& cache);
-
-    template<typename T>
-    void do_process_statement(statement_processor& processor, T statement)
-    {
-        if (processor.kind == processing_kind::ORDINARY
-            && try_trigger_attribute_lookahead(*statement, { hlasm_ctx, lib_provider }, listener))
-            return;
-
-        processor.process_statement(std::move(statement));
-    }
+    context::shared_stmt_ptr preprocess_deferred(statement_processor& processor, context::statement_cache& cache);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -35,15 +35,6 @@ void macro_processor::process(context::shared_stmt_ptr stmt)
         stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
-
-void macro_processor::process(context::unique_stmt_ptr stmt)
-{
-    auto args = get_args(*stmt->access_resolved());
-
-    hlasm_ctx.enter_macro(
-        stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
-}
-
 bool is_data_def(char c)
 {
     c = (char)toupper(c);

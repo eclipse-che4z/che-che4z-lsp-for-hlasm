@@ -50,7 +50,6 @@ public:
         macrodef_start_data start);
 
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::unique_stmt_ptr statement) override;
     virtual void process_statement(context::shared_stmt_ptr statement) override;
     virtual void end_processing() override;
     virtual bool terminal_condition(const statement_provider_kind kind) const override;
