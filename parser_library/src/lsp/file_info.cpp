@@ -18,6 +18,11 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
+file_info::file_info(std::string name)
+    : name(std::move(name))
+    , type(file_type::OPENCODE)
+{}
+
 file_info::file_info(context::macro_def_ptr owner)
     : name(owner->definition_location.file)
     , type(file_type::MACRO)
@@ -115,8 +120,15 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
     fslice.begin_idx = slice.begin_statement;
     fslice.end_idx = slice.end_statement;
 
-    fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
-    fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
+    if (slice.begin_statement == 0)
+        fslice.begin_line = macro_i->macro_definition->definition_location.pos.line;
+    else
+        fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
+
+    if (slice.end_statement == macro_i->macro_definition->copy_nests.size())
+        fslice.begin_line = macro_i->macro_definition->copy_nests.back().back().pos.line + 1;
+    else
+        fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = macro_i;

@@ -490,10 +490,15 @@ void macrodef_processor::add_correct_copy_nest()
     }
 
     const auto& current_file = result_.nests.back().back().file;
-    bool in_inner_macro = macro_nest_ != 1;
+    bool in_inner_macro = macro_nest_ > 1;
 
     if (result_.file_scopes[current_file].empty())
-        result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+    {
+        if (curr_line_ == 1)
+            result_.file_scopes[current_file].emplace_back(0, curr_line_, in_inner_macro);
+        else
+            result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+    }
     else
     {
         auto& last_scope = result_.file_scopes[current_file].back();

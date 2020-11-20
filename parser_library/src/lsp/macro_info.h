@@ -78,9 +78,15 @@ struct macro_slice_t
     size_t begin_statement, end_statement;
     bool inner_macro;
 
-    macro_slice_t(size_t begin_line, bool inner_macro)
-        : begin_statement(begin_line)
-        , end_statement(begin_line)
+    macro_slice_t(size_t begin_statement, bool inner_macro)
+        : begin_statement(begin_statement)
+        , end_statement(begin_statement)
+        , inner_macro(inner_macro)
+    {}
+
+    macro_slice_t(size_t begin_statement, size_t end_statement, bool inner_macro)
+        : begin_statement(begin_statement)
+        , end_statement(end_statement)
         , inner_macro(inner_macro)
     {}
 };

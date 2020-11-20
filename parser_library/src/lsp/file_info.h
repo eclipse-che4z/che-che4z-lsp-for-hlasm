@@ -58,7 +58,7 @@ using occurence_scope_t = std::pair<const symbol_occurence*, macro_info_ptr>;
 
 struct file_info
 {
-    using owner_t = std::variant<context::macro_def_ptr, context::copy_member_ptr>;
+    using owner_t = std::variant<context::macro_def_ptr, context::copy_member_ptr, std::monostate>;
 
     const std::string name;
     const file_type type;
@@ -67,6 +67,7 @@ struct file_info
     std::vector<file_slice_t> slices;
     std::vector<symbol_occurence> occurences;
 
+    explicit file_info(std::string name);
     explicit file_info(context::macro_def_ptr owner);
     explicit file_info(context::copy_member_ptr owner);
 
