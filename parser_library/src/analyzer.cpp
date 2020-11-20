@@ -62,7 +62,8 @@ analyzer::analyzer(const std::string& text,
     bool collect_hl_info)
     : analyzer(text,
         file_name,
-        analyzing_context { std::make_unique<context::hlasm_context>(file_name), std::make_unique<lsp::lsp_context>() },
+        analyzing_context {
+            std::make_unique<context::hlasm_context>(file_name), std::make_unique<lsp::lsp_context>(file_name) },
         lib_provider,
         library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
         tracer,

@@ -70,60 +70,62 @@ R1      MAC   R2
     const size_t instruction_count;
 };
 
+bool operator==(const position_uri& lhs, const position_uri& rhs) { return lhs.pos == rhs.pos && lhs.uri == rhs.uri; }
+
 TEST_F(lsp_features_test, go_to)
 {
     // jump from source to macro, MAC instruction
-    EXPECT_EQ(
-        semantics::position_uri_s(MACRO_FILE, position(1, 7)), a.lsp_processor().go_to_definition(position(0, 4)));
+    EXPECT_TRUE(
+        (position_uri { position(1, 7), MACRO_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 4)));
     // no jump
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(0, 8)), a.lsp_processor().go_to_definition(position(0, 8)));
+    EXPECT_TRUE(
+        (position_uri { position(0, 8), SOURCE_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 8)));
     // jump in source, open code, var symbol &VAR
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(1, 0)), a.lsp_processor().go_to_definition(position(2, 13)));
+    EXPECT_TRUE((position_uri { position(1, 0), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(2, 13)));
     // jump in source, open code, seq symbol .HERE
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(5, 0)), a.lsp_processor().go_to_definition(position(3, 13)));
+    EXPECT_TRUE((position_uri { position(5, 0), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(3, 13)));
     // jump in source, macro, seq symbol .HERE
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(15, 0)), a.lsp_processor().go_to_definition(position(12, 15)));
+    EXPECT_TRUE((position_uri { position(15, 0), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(12, 15)));
     // jump in source, macro, var symbol &LABEL
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(8, 0)), a.lsp_processor().go_to_definition(position(11, 20)));
+    EXPECT_TRUE((position_uri { position(8, 0), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 20)));
     // jump in source, macro, var symbol &VAR
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(8, 13)), a.lsp_processor().go_to_definition(position(11, 15)));
+    EXPECT_TRUE((position_uri { position(8, 13), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 15)));
     // forward jump in source, open code, ord symbol R1
-    EXPECT_EQ(
-        semantics::position_uri_s(SOURCE_FILE, position(22, 0)), a.lsp_processor().go_to_definition(position(21, 10)));
+    EXPECT_TRUE((position_uri { position(22, 0), SOURCE_FILE })
+        == a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 10)));
     // jump from source to copy file, ord symbol R2 on machine instrution
-    EXPECT_EQ(
-        semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(21, 13)));
+    EXPECT_TRUE(
+        (position_uri { position(0, 0), COPY_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 13)));
     // jump from source to copy file, ord symbol R2 on macro MAC
-    EXPECT_EQ(
-        semantics::position_uri_s(COPY_FILE, position(0, 0)), a.lsp_processor().go_to_definition(position(23, 14)));
+    EXPECT_TRUE(
+        (position_uri { position(0, 0), COPY_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(23, 14)));
     // jump from source to first instruction in copy file, COPY COPYFILE
-    EXPECT_EQ(
-        semantics::position_uri_s(COPY_FILE, position(0, 3)), a.lsp_processor().go_to_definition(position(20, 14)));
+    EXPECT_TRUE(
+        (position_uri { position(0, 3), COPY_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(20, 14)));
 }
 
 TEST_F(lsp_features_test, refs)
 {
     // the same as go_to test but with references
     // reference MAC, should appear once in source and once in macro file
-    EXPECT_EQ(a.lsp_processor().references(position(0, 4)).size(), (size_t)2);
+    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 4)).size());
     // no reference, returns the same line where the references command was called
-    EXPECT_EQ((size_t)1, a.lsp_processor().references(position(0, 8)).size());
+    EXPECT_EQ((size_t)1, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 8)).size());
     // source code references for &VAR, appeared three times
-    EXPECT_EQ((size_t)3, a.lsp_processor().references(position(2, 13)).size());
+    EXPECT_EQ((size_t)3, a.context().lsp_ctx->references(SOURCE_FILE, position(2, 13)).size());
     // source code references for .HERE, appeared twice
-    EXPECT_EQ((size_t)2, a.lsp_processor().references(position(3, 13)).size());
+    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(3, 13)).size());
     // references inside macro def, seq symbol .HERE
-    EXPECT_EQ((size_t)2, a.lsp_processor().references(position(12, 15)).size());
+    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(12, 15)).size());
     //  references inside macro def, var symbol &LABEL
-    EXPECT_EQ((size_t)2, a.lsp_processor().references(position(11, 20)).size());
+    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 20)).size());
     //  references inside macro def, var symbol &VAR
-    EXPECT_EQ((size_t)2, a.lsp_processor().references(position(11, 15)).size());
+    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 15)).size());
 }
 
 // 4 cases, instruction, sequence, variable and none

@@ -26,6 +26,8 @@ void lsp_context::add_file(file_info file_i)
     files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
+lsp_context::lsp_context(std::string opencode_name) { add_file(file_info(std::move(opencode_name))); }
+
 void lsp_context::add_copy(context::copy_member_ptr copy) { add_file(file_info(std::move(copy))); }
 
 void lsp_context::add_macro(macro_info_ptr macro_i)
@@ -129,7 +131,7 @@ bool files_present(
 {
     bool present = true;
     for (const auto& [file, _] : scopes)
-        present |= files.find(file) != files.end();
+        present &= files.find(file) != files.end();
     return present;
 }
 

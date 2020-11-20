@@ -126,9 +126,9 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
         fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
 
     if (slice.end_statement == macro_i->macro_definition->copy_nests.size())
-        fslice.begin_line = macro_i->macro_definition->copy_nests.back().back().pos.line + 1;
+        fslice.end_line = macro_i->macro_definition->copy_nests.back().back().pos.line + 1;
     else
-        fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
+        fslice.end_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = macro_i;

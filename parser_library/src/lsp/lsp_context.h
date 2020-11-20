@@ -32,6 +32,8 @@ class lsp_context : public feature_provider
     std::unordered_map<context::id_index, macro_info_ptr> macros_;
 
 public:
+    lsp_context(std::string opencode_name = "");
+
     void add_copy(context::copy_member_ptr copy);
     void add_macro(macro_info_ptr macro_i);
     void add_opencode(opencode_info_ptr opencode_i);

@@ -55,11 +55,12 @@ void lsp_analyzer::macrodef_started(const macrodef_start_data&) { in_macro_ = tr
 
 void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result)
 {
-    lsp_ctx_.add_macro(std::make_shared<lsp::macro_info>(result.external,
-        std::move(macrodef),
-        std::move(result.variable_symbols),
-        std::move(result.file_scopes),
-        std::move(macro_occurences_)));
+    if (!result.invalid)
+        lsp_ctx_.add_macro(std::make_shared<lsp::macro_info>(result.external,
+            std::move(macrodef),
+            std::move(result.variable_symbols),
+            std::move(result.file_scopes),
+            std::move(macro_occurences_)));
 
     in_macro_ = false;
     macro_occurences_.clear();

@@ -36,7 +36,7 @@ class statement_processor : public diagnosable_ctx
 {
 public:
     statement_processor(const processing_kind kind, analyzing_context ctx)
-        : diagnosable_ctx(hlasm_ctx)
+        : diagnosable_ctx(*ctx.hlasm_ctx)
         , kind(kind)
         , ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)

@@ -42,6 +42,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , opencode_prov_(*base_provider)
     , tracer_(tracer)
 {
+    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx);
+
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
@@ -61,8 +63,6 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
 
     provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this));
     provs_.emplace_back(std::move(base_provider));
-
-    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx);
 }
 
 void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind, performance_metrics& metrics)
@@ -111,8 +111,9 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
             continue;
         }
 
-        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
         prov.process_next(proc);
+
+        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
     }
 }
 
@@ -225,9 +226,9 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
 {
     if (file)
-        hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
-    else
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO, std::move(*file));
+    else
+        hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
     procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
 }
