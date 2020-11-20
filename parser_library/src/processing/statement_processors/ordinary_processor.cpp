@@ -48,7 +48,8 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
     if (!status)
     {
-        auto found = eval_ctx.lib_provider.parse_library(*id, ctx, library_data { processing_kind::MACRO, id });
+        auto found =
+            eval_ctx.lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)

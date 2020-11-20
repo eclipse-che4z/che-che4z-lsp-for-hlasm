@@ -1001,7 +1001,7 @@ B EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->value().get_abs(), 1);
+    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

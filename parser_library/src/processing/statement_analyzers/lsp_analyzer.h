@@ -18,6 +18,7 @@
 #include "lsp/lsp_context.h"
 #include "occurence_collector.h"
 #include "processing/processing_format.h"
+#include "processing/statement.h"
 #include "statement_analyzer.h"
 
 namespace hlasm_plugin::parser_library::processing {

@@ -229,7 +229,8 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
         return context::symbol_attributes::transform_attr(c);
     }
 
-    add_diagnostic(diagnostic_s::error_S101(ctx->processing_stack().back().proc_location.file, attr_data, data_range));
+    add_diagnostic(
+        diagnostic_s::error_S101(hlasm_ctx->processing_stack().back().proc_location.file, attr_data, data_range));
 
     return context::data_attr_kind::UNKNOWN;
 }
@@ -237,7 +238,8 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
     if (value.size() > 63)
-        add_diagnostic(diagnostic_s::error_S100(ctx->processing_stack().back().proc_location.file, value, id_range));
+        add_diagnostic(
+            diagnostic_s::error_S100(hlasm_ctx->processing_stack().back().proc_location.file, value, id_range));
 
     return hlasm_ctx->ids().add(std::move(value));
 }
@@ -324,7 +326,7 @@ bool parser_impl::process_statement()
     auto stmt = collector.extract_statement(*proc_status, statement_range);
 
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*ptr, { ctx, *lib_provider_ }, *state_listener_))
+        && try_trigger_attribute_lookahead(*stmt, { ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     if (statement_range.start.line < statement_range.end.line)

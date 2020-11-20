@@ -59,7 +59,7 @@ void members_statement_provider::process_next(statement_processor& processor)
 
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { hlasm_ctx, lib_provider }, listener))
+        && try_trigger_attribute_lookahead(*stmt, { ctx, lib_provider }, listener))
         return;
 
     processor.process_statement(std::move(stmt));
