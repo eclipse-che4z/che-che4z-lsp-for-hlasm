@@ -34,8 +34,9 @@ public:
 
     explicit statement_provider(const statement_provider_kind kind);
 
-    // processes next statement with help of a processor
-    virtual void process_next(statement_processor& processor) = 0;
+    // processes next statement with help of a processor and returns it
+    // if return is nullptr, statement is ignored and not processed
+    virtual context::shared_stmt_ptr process_next(statement_processor& processor) = 0;
 
     // checks whether provider has finished
     virtual bool finished() const = 0;

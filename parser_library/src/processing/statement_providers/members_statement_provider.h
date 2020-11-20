@@ -33,7 +33,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
 
-    virtual void process_next(statement_processor& processor) override;
+    virtual context::shared_stmt_ptr process_next(statement_processor& processor) override;
 
 protected:
     analyzing_context ctx;

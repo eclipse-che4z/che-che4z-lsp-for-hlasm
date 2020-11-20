@@ -111,9 +111,13 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
             continue;
         }
 
-        prov.process_next(proc);
+        auto stmt = prov.process_next(proc);
 
-        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
+        if (stmt)
+        {
+            update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
+            stmt_analyzer_->analyze(*stmt, prov.kind, proc.kind);
+        }
     }
 }
 

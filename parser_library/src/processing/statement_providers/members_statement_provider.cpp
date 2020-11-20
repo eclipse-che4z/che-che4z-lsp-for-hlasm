@@ -28,7 +28,7 @@ members_statement_provider::members_statement_provider(const statement_provider_
     , listener(listener)
 {}
 
-void members_statement_provider::process_next(statement_processor& processor)
+context::shared_stmt_ptr members_statement_provider::process_next(statement_processor& processor)
 {
     if (finished())
         throw std::runtime_error("provider already finished");
@@ -36,11 +36,11 @@ void members_statement_provider::process_next(statement_processor& processor)
     auto cache = get_next();
 
     if (!cache)
-        return;
+        return nullptr;
 
     if (processor.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { ctx, lib_provider }, listener))
-        return;
+        return nullptr;
 
     context::shared_stmt_ptr stmt;
 
@@ -60,9 +60,10 @@ void members_statement_provider::process_next(statement_processor& processor)
 
     if (processor.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*stmt, { ctx, lib_provider }, listener))
-        return;
+        return nullptr;
 
-    processor.process_statement(std::move(stmt));
+    processor.process_statement(stmt);
+    return stmt;
 }
 
 const semantics::instruction_si& members_statement_provider::retrieve_instruction(context::statement_cache& cache) const

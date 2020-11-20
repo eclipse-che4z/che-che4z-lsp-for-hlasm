@@ -86,11 +86,7 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    // process methods return true if attribute lookahead needed
-    bool process_instruction();
-    bool process_statement();
-
-    virtual void process_next(processing::statement_processor& processor) override;
+    virtual context::shared_stmt_ptr process_next(processing::statement_processor& processor) override;
     virtual bool finished() const override;
 
     lexing::token_stream& input;
@@ -98,6 +94,7 @@ protected:
     context::hlasm_context* hlasm_ctx;
     semantics::lsp_info_processor* lsp_proc;
     processing::statement_processor* processor;
+    context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
     bool finished_flag;
     semantics::collector collector;
@@ -125,6 +122,10 @@ private:
 
     semantics::operand_list parse_macro_operands(
         std::string operands, range field_range, std::vector<range> operand_ranges);
+
+    // process methods return true if attribute lookahead needed
+    bool process_instruction();
+    bool process_statement();
 
     void process_ordinary();
     void process_lookahead();

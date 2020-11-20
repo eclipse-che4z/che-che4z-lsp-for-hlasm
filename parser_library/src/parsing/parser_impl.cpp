@@ -31,6 +31,7 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , hlasm_ctx(nullptr)
     , lsp_proc(nullptr)
     , processor(nullptr)
+    , current_statement(nullptr)
     , finished_flag(false)
     , provider()
 {}
@@ -323,10 +324,10 @@ bool parser_impl::process_instruction()
 bool parser_impl::process_statement()
 {
     range statement_range(position(statement_start().file_line, 0)); // assign default
-    auto stmt = collector.extract_statement(*proc_status, statement_range);
+    current_statement = collector.extract_statement(*proc_status, statement_range);
 
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { ctx, *lib_provider_ }, *state_listener_))
+        && try_trigger_attribute_lookahead(*current_statement, { ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     if (statement_range.start.line < statement_range.end.line)
@@ -338,12 +339,12 @@ bool parser_impl::process_statement()
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
     collector.prepare_for_next_statement();
 
-    processor->process_statement(std::move(stmt));
+    processor->process_statement(current_statement);
 
     return false;
 }
 
-void parser_impl::process_next(processing::statement_processor& proc)
+context::shared_stmt_ptr parser_impl::process_next(processing::statement_processor& proc)
 {
     processor = &proc;
 
@@ -352,9 +353,14 @@ void parser_impl::process_next(processing::statement_processor& proc)
     else
         process_ordinary();
 
+    auto ret_stmt = current_statement;
+
     processor = nullptr;
+    current_statement = nullptr;
     collector.prepare_for_next_statement();
     proc_status.reset();
+
+    return ret_stmt;
 }
 
 bool parser_impl::finished() const { return finished_flag; }
