@@ -18,9 +18,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "cached_statement.h"
 #include "common_types.h"
 #include "sequence_symbol.h"
+#include "statement_cache.h"
 #include "variables/macro_param.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -67,7 +67,7 @@ public:
     // params of macro
     const std::unordered_map<id_index, const macro_param_base*>& named_params() const;
     // vector of statements representing macro definition
-    std::vector<cached_statement_storage> cached_definition;
+    std::vector<statement_cache> cached_definition;
     // vector assigning each statement its copy nest
     const copy_nest_storage copy_nests;
     // storage of sequence symbols in the macro

@@ -20,6 +20,7 @@
 #include "alignment.h"
 #include "dependable.h"
 #include "location_counter.h"
+#include "loctr_dependency_resolver.h"
 #include "section.h"
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
@@ -105,7 +106,7 @@ public:
     space_ptr register_ordinary_space(alignment align);
 
     // creates layout of every section
-    void finish_module_layout();
+    void finish_module_layout(loctr_dependency_resolver* resolver);
 
     const std::unordered_map<id_index, symbol>& get_all_symbols();
 

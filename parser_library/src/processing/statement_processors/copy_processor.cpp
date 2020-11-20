@@ -39,16 +39,21 @@ processing_status copy_processor::get_processing_status(const semantics::instruc
 
 void copy_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    process_statement(*statement);
+    if (first_statement_)
+    {
+        result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
+        first_statement_ = false;
+    }
+
+    if (auto res_stmt = statement->access_resolved())
+    {
+        if (res_stmt->opcode_ref().value == macro_id)
+            process_MACRO();
+        else if (res_stmt->opcode_ref().value == mend_id)
+            process_MEND();
+    }
 
     result_.definition.push_back(statement);
-}
-
-void copy_processor::process_statement(context::unique_stmt_ptr statement)
-{
-    process_statement(*statement);
-
-    result_.definition.push_back(std::move(statement));
 }
 
 void copy_processor::end_processing()
@@ -73,23 +78,6 @@ bool copy_processor::terminal_condition(const statement_provider_kind prov_kind)
 bool copy_processor::finished() { return false; }
 
 void copy_processor::collect_diags() const {}
-
-void copy_processor::process_statement(const context::hlasm_statement& statement)
-{
-    if (first_statement_)
-    {
-        result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
-        first_statement_ = false;
-    }
-
-    if (auto res_stmt = statement.access_resolved())
-    {
-        if (res_stmt->opcode_ref().value == macro_id)
-            process_MACRO();
-        else if (res_stmt->opcode_ref().value == mend_id)
-            process_MEND();
-    }
-}
 
 void copy_processor::process_MACRO() { ++macro_nest_; }
 

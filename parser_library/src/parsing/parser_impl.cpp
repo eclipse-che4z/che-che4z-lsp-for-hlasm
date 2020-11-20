@@ -22,7 +22,6 @@
 #include "lexing/token_stream.h"
 #include "parser_error_listener_ctx.h"
 #include "processing/context_manager.h"
-#include "processing/statement.h"
 
 namespace hlasm_plugin::parser_library::parsing {
 
@@ -230,7 +229,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
         return context::symbol_attributes::transform_attr(c);
     }
 
-    add_diagnostic(diagnostic_s::error_S101("", attr_data, data_range));
+    add_diagnostic(diagnostic_s::error_S101(ctx->processing_stack().back().proc_location.file, attr_data, data_range));
 
     return context::data_attr_kind::UNKNOWN;
 }
@@ -238,7 +237,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
     if (value.size() > 63)
-        add_diagnostic(diagnostic_s::error_S100("", value, id_range));
+        add_diagnostic(diagnostic_s::error_S100(ctx->processing_stack().back().proc_location.file, value, id_range));
 
     return hlasm_ctx->ids().add(std::move(value));
 }
@@ -321,24 +320,8 @@ bool parser_impl::process_instruction()
 
 bool parser_impl::process_statement()
 {
-    bool hint = proc_status->first.form == processing::processing_form::DEFERRED;
-    auto stmt(collector.extract_statement(hint, range(position(statement_start().file_line, 0))));
-    context::unique_stmt_ptr ptr;
-
-    range statement_range;
-    if (!hint)
-    {
-        ptr = std::make_unique<processing::resolved_statement_impl>(
-            std::move(std::get<semantics::statement_si>(stmt)), proc_status.value().second, proc_status.value().first);
-        statement_range = dynamic_cast<processing::resolved_statement_impl*>(ptr.get())->stmt_range_ref();
-    }
-    else
-    {
-        assert(std::holds_alternative<semantics::statement_si_deferred>(stmt));
-        ptr = std::make_unique<semantics::statement_si_deferred>(
-            std::move(std::get<semantics::statement_si_deferred>(stmt)));
-        statement_range = dynamic_cast<semantics::statement_si_deferred*>(ptr.get())->deferred_range_ref();
-    }
+    range statement_range(position(statement_start().file_line, 0)); // assign default
+    auto stmt = collector.extract_statement(*proc_status, statement_range);
 
     if (processor->kind == processing::processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*ptr, { ctx, *lib_provider_ }, *state_listener_))
@@ -353,7 +336,7 @@ bool parser_impl::process_statement()
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
     collector.prepare_for_next_statement();
 
-    processor->process_statement(std::move(ptr));
+    processor->process_statement(std::move(stmt));
 
     return false;
 }

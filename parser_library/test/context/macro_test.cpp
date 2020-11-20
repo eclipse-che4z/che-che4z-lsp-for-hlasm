@@ -234,6 +234,25 @@ TEST(macro, macro_keyword_param)
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
+TEST(macro, macro_undefined_keyword_param)
+{
+    std::string input =
+        R"( MACRO
+   M1 &a
+   aif ('&a' eq 'x=1').a
+   err
+.a mend
+
+ M1 x=1
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    ASSERT_EQ(dynamic_cast<diagnosable*>(&a)->diags().front().severity, diagnostic_severity::warning);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
 TEST(macro, macro_param_expr)
 {
     std::string input =

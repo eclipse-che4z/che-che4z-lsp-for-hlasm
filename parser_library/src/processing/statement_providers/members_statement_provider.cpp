@@ -42,22 +42,30 @@ void members_statement_provider::process_next(statement_processor& processor)
         && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { ctx, lib_provider }, listener))
         return;
 
+    context::shared_stmt_ptr stmt;
+
     switch (cache->get_base()->kind)
     {
         case context::statement_kind::RESOLVED:
-            do_process_statement(processor, cache->get_base());
+            stmt = cache->get_base();
             break;
         case context::statement_kind::DEFERRED:
-            preprocess_deferred(processor, *cache);
+            stmt = preprocess_deferred(processor, *cache);
             break;
         default:
             assert(false);
             break;
     }
+
+
+    if (processor.kind == processing_kind::ORDINARY
+        && try_trigger_attribute_lookahead(*stmt, { hlasm_ctx, lib_provider }, listener))
+        return;
+
+    processor.process_statement(std::move(stmt));
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(
-    context::cached_statement_storage& cache) const
+const semantics::instruction_si& members_statement_provider::retrieve_instruction(context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {
@@ -71,11 +79,10 @@ const semantics::instruction_si& members_statement_provider::retrieve_instructio
     }
 }
 
-void members_statement_provider::fill_cache(context::cached_statement_storage& cache,
-    const semantics::deferred_statement& def_stmt,
-    const processing_status& status)
+void members_statement_provider::fill_cache(
+    context::statement_cache& cache, const semantics::deferred_statement& def_stmt, const processing_status& status)
 {
-    context::cached_statement_storage::cache_entry_t ptr;
+    context::statement_cache::cached_statement_t ptr;
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
@@ -98,26 +105,20 @@ void members_statement_provider::fill_cache(context::cached_statement_storage& c
     cache.insert(status.first.form, ptr);
 }
 
-void members_statement_provider::preprocess_deferred(
-    statement_processor& processor, context::cached_statement_storage& cache)
+context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
+    statement_processor& processor, context::statement_cache& cache)
 {
     const auto& def_stmt = *cache.get_base()->access_deferred();
 
     auto status = processor.get_processing_status(def_stmt.instruction_ref());
 
     if (status.first.form == processing_form::DEFERRED)
-    {
-        do_process_statement(processor, cache.get_base());
-        return;
-    }
+        return cache.get_base();
 
     if (!cache.contains(status.first.form))
         fill_cache(cache, def_stmt, status);
 
-    context::unique_stmt_ptr cached =
-        std::make_unique<resolved_statement_impl>(cache.get(status.first.form), status.second, status.first);
-
-    do_process_statement(processor, std::move(cached));
+    return std::make_shared<resolved_statement_impl>(cache.get(status.first.form), status);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

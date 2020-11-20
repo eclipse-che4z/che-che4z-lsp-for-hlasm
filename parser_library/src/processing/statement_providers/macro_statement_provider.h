@@ -33,7 +33,7 @@ public:
     virtual bool finished() const override;
 
 protected:
-    virtual context::cached_statement_storage* get_next() override;
+    virtual context::statement_cache* get_next() override;
 };
 
 } // namespace processing

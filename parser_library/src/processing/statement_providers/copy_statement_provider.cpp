@@ -25,7 +25,7 @@ copy_statement_provider::copy_statement_provider(analyzing_context ctx,
 
 bool copy_statement_provider::finished() const { return ctx.hlasm_ctx->current_copy_stack().empty(); }
 
-context::cached_statement_storage* copy_statement_provider::get_next()
+context::statement_cache* copy_statement_provider::get_next()
 {
     auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
 

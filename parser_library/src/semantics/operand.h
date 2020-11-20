@@ -252,6 +252,9 @@ public:
 
     virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
+    std::unique_ptr<checking::operand> get_operand_value(
+        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
+
     virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
     virtual bool has_error(expressions::mach_evaluate_info info) const override;
     virtual std::vector<const context::resolvable*> get_resolvables() const override;
@@ -259,6 +262,10 @@ public:
     virtual void collect_diags() const override;
 
     virtual void apply(operand_visitor& visitor) const override;
+
+private:
+    std::unique_ptr<checking::operand> get_operand_value_inner(
+        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
 };
 
 

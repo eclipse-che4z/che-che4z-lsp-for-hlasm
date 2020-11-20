@@ -82,7 +82,8 @@ TEST(character_expresssion, invalid_substring_notation)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)4);
 }
-/*uncomment when compiler options will be implemented
+
+/*TODO uncomment when assembler options will be implemented
 TEST(character_expresssion, exceeds_warning)
 {
     std::string input =
@@ -95,8 +96,8 @@ TEST(character_expresssion, exceeds_warning)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
-}
-*/
+}*/
+
 TEST(character_expresssion, invalid_string)
 {
     std::string input =
@@ -135,4 +136,23 @@ TEST(character_expresssion, escaping)
     SETCEQ("C4", "L'SYMBOL.S");
     SETCEQ("C5", "A..");
     SETCEQ("C6", "&A");
+}
+
+TEST(character_expresssion, single_operand_with_spaces)
+{
+    std::string input =
+        R"(
+&C1 SETC UPPER( 'A' )
+&C2 SETC UPPER( 'A')
+&C3 SETC UPPER('A' )
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETCEQ("C1", "A");
+    SETCEQ("C2", "A");
+    SETCEQ("C3", "A");
 }

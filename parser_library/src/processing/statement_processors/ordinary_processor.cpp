@@ -14,17 +14,15 @@
 
 #include "ordinary_processor.h"
 
-#include "../statement.h"
 #include "checking/instruction_checker.h"
 #include "ebcdic_encoding.h"
+#include "processing/instruction_sets/postponed_statement_impl.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 ordinary_processor::ordinary_processor(analyzing_context ctx,
     branching_provider& branch_provider,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     processing_tracer* tracer)
@@ -70,16 +68,51 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
         return *status;
 }
 
-void ordinary_processor::process_statement(context::shared_stmt_ptr statement) { process_statement_base(statement); }
-
-void ordinary_processor::process_statement(context::unique_stmt_ptr statement)
+void ordinary_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    process_statement_base(std::move(statement));
+    assert(statement->kind == context::statement_kind::RESOLVED);
+
+    bool fatal = check_fatals(range(statement->statement_position()));
+    if (fatal)
+        return;
+
+    if (tracer_)
+    {
+        if (statement->access_resolved()->opcode_ref().value != context::id_storage::empty_id)
+            tracer_->statement(statement->access_resolved()->stmt_range_ref());
+    }
+
+    switch (statement->access_resolved()->opcode_ref().type)
+    {
+        case context::instruction_type::UNDEF:
+            add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value,
+                statement->access_resolved()->instruction_ref().field_range));
+            return;
+        case context::instruction_type::CA:
+            ca_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::MAC:
+            mac_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::ASM:
+            asm_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::MACH:
+            mach_proc_.process(std::move(statement));
+            return;
+        default:
+            assert(false);
+            return;
+    }
 }
 
 void ordinary_processor::end_processing()
 {
-    hlasm_ctx.ord_ctx.finish_module_layout();
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
     collect_ordinary_symbol_definitions();
@@ -191,13 +224,14 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
         if (!stmt)
             continue;
 
-        assert(stmt->opcode_ref().type == context::instruction_type::ASM
-            || stmt->opcode_ref().type == context::instruction_type::MACH);
 
-        if (stmt->opcode_ref().type == context::instruction_type::ASM)
-            low_language_processor::check(*stmt, hlasm_ctx, asm_checker, *this);
+        assert(stmt->impl()->opcode_ref().type == context::instruction_type::ASM
+            || stmt->impl()->opcode_ref().type == context::instruction_type::MACH);
+
+        if (stmt->impl()->opcode_ref().type == context::instruction_type::ASM)
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, asm_checker, *this);
         else
-            low_language_processor::check(*stmt, hlasm_ctx, mach_checker, *this);
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, mach_checker, *this);
     }
 }
 
@@ -315,3 +349,5 @@ void ordinary_processor::collect_ordinary_symbol_definitions()
     }
     hlasm_ctx.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
 }
+
+} // namespace hlasm_plugin::parser_library::processing

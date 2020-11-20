@@ -15,6 +15,7 @@
 #include "collector.h"
 
 #include "lexing/lexer.h"
+#include "processing/statement.h"
 #include "range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -82,7 +83,7 @@ void collector::set_label_field(concat_chain label, range symbol_range)
 {
     if (lbl_)
         throw std::runtime_error("field already assigned");
-    concatenation_point::clear_concat_chain(label);
+
     if (label.size() == 1 && label[0]->type == concat_type::VAR) // label is variable symbol
     {
         lbl_.emplace(symbol_range, std::move(label[0]->access_var()->symbol));
@@ -111,7 +112,7 @@ void collector::set_instruction_field(concat_chain instr, range symbol_range)
 {
     if (instr_)
         throw std::runtime_error("field already assigned");
-    concatenation_point::clear_concat_chain(instr);
+
     instr_.emplace(symbol_range, std::move(instr));
 }
 
@@ -195,14 +196,16 @@ void collector::append_operand_field(collector&& c)
 
 const instruction_si& collector::peek_instruction() { return *instr_; }
 
-std::variant<statement_si, statement_si_deferred> collector::extract_statement(bool deferred_hint, range default_range)
+context::shared_stmt_ptr collector::extract_statement(processing::processing_status status, range& statement_range)
 {
     if (!lbl_)
-        lbl_.emplace(default_range);
+        lbl_.emplace(statement_range);
     if (!instr_)
-        instr_.emplace(default_range);
+        instr_.emplace(statement_range);
     if (!rem_)
-        rem_.emplace(default_range, remark_list {});
+        rem_.emplace(statement_range, remark_list {});
+
+    bool deferred_hint = status.first.form == processing::processing_form::DEFERRED;
 
     assert(!deferred_hint || !(op_ && !op_->value.empty()));
 
@@ -210,7 +213,8 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
     {
         if (!def_)
             def_.emplace("", instr_.value().field_range);
-        return statement_si_deferred(range_provider::union_range(lbl_.value().field_range, def_->second),
+        return std::make_shared<statement_si_deferred>(
+            range_provider::union_range(lbl_.value().field_range, def_->second),
             std::move(*lbl_),
             std::move(*instr_),
             std::move(def_.value().first),
@@ -228,8 +232,10 @@ std::variant<statement_si, statement_si_deferred> collector::extract_statement(b
                 op_->value[i] = std::make_unique<empty_operand>(instr_.value().field_range);
         }
 
-        range r = range_provider::union_range(lbl_.value().field_range, op_->field_range);
-        return statement_si(r, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
+        statement_range = range_provider::union_range(lbl_->field_range, op_->field_range);
+        auto stmt_si = std::make_shared<statement_si>(
+            statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
+        return std::make_shared<processing::resolved_statement_impl>(std::move(stmt_si), std::move(status));
     }
 }
 

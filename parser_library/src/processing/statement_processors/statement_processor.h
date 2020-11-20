@@ -17,12 +17,11 @@
 
 #include "analyzing_context.h"
 #include "diagnosable_ctx.h"
-#include "processing/processing_format.h"
+#include "processing/op_code.h"
+#include "processing/statement.h"
 #include "processing/statement_providers/statement_provider_kind.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_processor;
 
@@ -48,7 +47,6 @@ public:
     // infers processing status of rest of the statement from instruction field
     // used for statement providers to correctly provide statement
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const = 0;
-    virtual void process_statement(context::unique_stmt_ptr statement) = 0;
     virtual void process_statement(context::shared_stmt_ptr statement) = 0;
     virtual void end_processing() = 0;
     virtual bool terminal_condition(const statement_provider_kind kind) const = 0;
@@ -64,7 +62,6 @@ protected:
     const context::id_index macro_id, mend_id, copy_id;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

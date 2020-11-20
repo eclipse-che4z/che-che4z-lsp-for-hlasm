@@ -32,11 +32,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    virtual void process(context::unique_stmt_ptr stmt) override;
     virtual void process(context::shared_stmt_ptr stmt) override;
-
-private:
-    void process(rebuilt_statement statement, const op_code& opcode);
 };
 
 } // namespace processing

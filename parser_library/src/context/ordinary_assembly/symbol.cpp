@@ -49,8 +49,8 @@ symbol_value symbol_value::operator+(const symbol_value& value) const
         else
         {
             auto tmp_val(get_reloc() + value.get_reloc());
-            if (tmp_val.bases.empty() && tmp_val.spaces.empty())
-                return tmp_val.offset;
+            if (tmp_val.bases().empty() && !tmp_val.has_unresolved_space())
+                return tmp_val.offset();
             else
                 return tmp_val;
         }
@@ -81,8 +81,8 @@ symbol_value symbol_value::operator-(const symbol_value& value) const
         else
         {
             auto tmp_val(get_reloc() - value.get_reloc());
-            if (tmp_val.bases.empty() && tmp_val.spaces.empty())
-                return tmp_val.offset;
+            if (tmp_val.bases().empty() && !tmp_val.has_unresolved_space())
+                return tmp_val.offset();
             else
                 return tmp_val;
         }

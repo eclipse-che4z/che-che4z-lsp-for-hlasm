@@ -7,7 +7,13 @@
 
  macro
  xxxxxxxx &p1=,&p2=,&p3=,&p4=,&p5=,&ppp6=,&p7=
- mend
+ aif ('&p1' eq '=XX(XXX_X)' and '&p2' eq '=CL8''XXX_000'''             x
+               and '&p3' eq '=XD(XXXXDATA)' and '&p4' eq               x
+               '=CL8''Common''' and '&p5' eq '=FD''0''' and '&ppp6' eq x
+               'XXX_0000' and '&p7' eq  '(E,X_XXXXXXXX)').a
+               
+               error
+.a mend
 
          xxxxxxxx Xxx_Xxx,                 xxxxxx xxxxxx               +
                P1==XX(XXX_X),              Xxxxxx                      +

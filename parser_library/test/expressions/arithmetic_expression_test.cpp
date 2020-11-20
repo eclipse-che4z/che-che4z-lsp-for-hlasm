@@ -232,3 +232,19 @@ TEST(character_expresssion, illegal_dupl_factor)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().code, "CE005");
 }
+
+
+TEST(arithmetic_expressions, multiple_operand_with_spaces)
+{
+    std::string input =
+        R"(
+&A1 SETA FIND( 'A','B' )
+&A2 SETA FIND( 'A','B')
+&A3 SETA FIND('A','B' )
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)3);
+}

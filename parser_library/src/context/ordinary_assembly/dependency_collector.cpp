@@ -31,12 +31,14 @@ dependency_collector::dependency_collector(id_index undefined_symbol)
 dependency_collector::dependency_collector(address unresolved_address)
     : has_error(false)
     , unresolved_address(std::move(unresolved_address))
-{}
+{
+    this->unresolved_address->normalize();
+}
 
 dependency_collector::dependency_collector(attr_ref attribute_reference)
     : has_error(false)
 {
-    undefined_attr_refs.push_back(std::move(attribute_reference));
+    undefined_attr_refs.insert(std::move(attribute_reference));
 }
 
 dependency_collector& dependency_collector::operator+(const dependency_collector& holder)
@@ -55,13 +57,13 @@ dependency_collector& dependency_collector::operator/(const dependency_collector
 
 bool dependency_collector::is_address() const
 {
-    return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases.empty();
+    return undefined_symbols.empty() && unresolved_address && !unresolved_address.value().bases().empty();
 }
 
 bool dependency_collector::contains_dependencies() const
 {
-    return !undefined_symbols.empty() || !undefined_attr_refs.empty()
-        || (unresolved_address && !unresolved_address->spaces.empty());
+    return !undefined_symbols.empty() || !undefined_attr_refs.empty() || !unresolved_spaces.empty()
+        || (unresolved_address && unresolved_address->has_unresolved_space());
 }
 
 bool dependency_collector::merge_undef(const dependency_collector& holder)
@@ -73,8 +75,9 @@ bool dependency_collector::merge_undef(const dependency_collector& holder)
 
     undefined_symbols.insert(holder.undefined_symbols.begin(), holder.undefined_symbols.end());
 
-    undefined_attr_refs.insert(
-        undefined_attr_refs.end(), holder.undefined_attr_refs.begin(), holder.undefined_attr_refs.end());
+    undefined_attr_refs.insert(holder.undefined_attr_refs.begin(), holder.undefined_attr_refs.end());
+
+    unresolved_spaces.insert(holder.unresolved_spaces.begin(), holder.unresolved_spaces.end());
 
     return !undefined_symbols.empty();
 }
@@ -112,21 +115,27 @@ dependency_collector& dependency_collector::div_mul(const dependency_collector& 
     if (finished)
         return *this;
 
-    if (unresolved_address || holder.unresolved_address)
+    if (is_address() || holder.is_address())
         has_error = true;
+    else
+    {
+        if (unresolved_address)
+            for (const auto& [sp, c] : unresolved_address->spaces())
+                unresolved_spaces.insert(sp);
+        if (holder.unresolved_address)
+            for (const auto& [sp, c] : holder.unresolved_address->spaces())
+                unresolved_spaces.insert(sp);
+    }
 
     return *this;
 }
 
 void dependency_collector::adjust_address(address& addr)
 {
-    auto known_spaces = std::partition(addr.spaces.begin(), addr.spaces.end(), [](auto& entry) {
+    auto known_spaces = std::partition(addr.spaces().begin(), addr.spaces().end(), [](auto& entry) {
         return entry.first->kind == context::space_kind::LOCTR_UNKNOWN;
     });
-    if (known_spaces != addr.spaces.begin())
-    {
-        std::for_each(
-            known_spaces, addr.spaces.end(), [&addr](auto& entry) { return entry.first->remove_listener(&addr); });
-        addr.spaces.erase(known_spaces, addr.spaces.end());
-    }
+
+    if (known_spaces != addr.spaces().begin())
+        addr.spaces().erase(known_spaces, addr.spaces().end());
 }

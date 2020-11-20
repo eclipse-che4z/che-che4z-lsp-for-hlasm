@@ -117,6 +117,8 @@ mac_entry returns [concat_chain chain]
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 mac_sublist_b_c returns [concat_chain chain]
 	: mac_ch_c										{$chain = std::move($mac_ch_c.chain);}

@@ -312,3 +312,18 @@ TEST(diagnostics, parser_diagnostics_passing)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 }
+
+TEST(diagnostics, previously_defined_enum_operand)
+{
+    std::string input(
+        R"( 
+PRINT EQU *
+      POP PRINT
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}

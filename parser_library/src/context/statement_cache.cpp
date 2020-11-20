@@ -12,18 +12,17 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "cached_statement.h"
+#include "statement_cache.h"
 
 #include "semantics/statement.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
-cached_statement_storage::cached_statement_storage(shared_stmt_ptr base)
+statement_cache::statement_cache(shared_stmt_ptr base)
     : base_stmt_(std::move(base))
 {}
 
-bool cached_statement_storage::contains(processing::processing_form format) const
+bool statement_cache::contains(processing::processing_form format) const
 {
     for (const auto& entry : cache_)
         if (entry.first == format)
@@ -31,12 +30,12 @@ bool cached_statement_storage::contains(processing::processing_form format) cons
     return false;
 }
 
-void cached_statement_storage::insert(processing::processing_form format, cache_entry_t statement)
+void statement_cache::insert(processing::processing_form format, cached_statement_t statement)
 {
     cache_.emplace_back(format, std::move(statement));
 }
 
-cached_statement_storage::cache_entry_t cached_statement_storage::get(processing::processing_form format) const
+statement_cache::cached_statement_t statement_cache::get(processing::processing_form format) const
 {
     for (const auto& entry : cache_)
         if (entry.first == format)
@@ -44,4 +43,6 @@ cached_statement_storage::cache_entry_t cached_statement_storage::get(processing
     return nullptr;
 }
 
-shared_stmt_ptr cached_statement_storage::get_base() const { return base_stmt_; }
+shared_stmt_ptr statement_cache::get_base() const { return base_stmt_; }
+
+} // namespace hlasm_plugin::parser_library::context

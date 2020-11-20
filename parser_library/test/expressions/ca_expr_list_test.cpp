@@ -22,6 +22,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
+#include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;

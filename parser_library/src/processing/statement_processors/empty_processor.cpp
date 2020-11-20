@@ -28,8 +28,6 @@ processing_status empty_processor::get_processing_status(const semantics::instru
     return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::IGNORED), op_code());
 }
 
-void empty_processor::process_statement(context::unique_stmt_ptr) {}
-
 void empty_processor::process_statement(context::shared_stmt_ptr) {}
 
 void empty_processor::end_processing() {}

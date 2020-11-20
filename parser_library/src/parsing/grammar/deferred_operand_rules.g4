@@ -32,6 +32,8 @@ def_string returns [concat_chain chain]
 	{ 
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 deferred_op_rem returns [remark_list remarks]
 	: deferred_entry* remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 

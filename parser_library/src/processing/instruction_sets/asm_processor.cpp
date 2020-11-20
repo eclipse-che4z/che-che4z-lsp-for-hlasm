@@ -182,7 +182,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     context::address adr = hlasm_ctx.ord_ctx.align(al);
 
     // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
-    bool has_depdendencies = false;
+    bool has_dependencies = false;
     // has_length_dependencies specifies whether the length of the data instruction can be resolved right now or must be
     // postponed
     bool has_length_dependencies = false;
@@ -194,7 +194,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         data_op->value->assign_location_counter(adr);
 
-        has_depdendencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
+        has_dependencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
 
         has_length_dependencies |= data_op->get_length_dependencies(hlasm_ctx.ord_ctx).contains_dependencies();
 
@@ -210,41 +210,32 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
-            if (!stmt.operands_ref().value.empty())
+            auto data_op = stmt.operands_ref().value.front()->access_data_def();
+
+            context::symbol_attributes::type_attr type =
+                ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
+
+            context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
+            context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
+
+            auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
+            auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+
+            if (!data_op->value->length
+                || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                auto data_op = stmt.operands_ref().value.front()->access_data_def();
-
-                context::symbol_attributes::type_attr type =
-                    ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
-                ;
-                context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
-                context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
-
-                auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-                auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
-
-                if (!data_op->value->length
-                    || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-                {
-                    len = value->get_length_attribute();
-                }
-                if (data_op->value->scale
-                    && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
-                {
-                    scale = value->get_scale_attribute();
-                }
-                create_symbol(stmt.stmt_range_ref(),
-                    label,
-                    std::move(adr),
-                    context::symbol_attributes(
-                        context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
+                len = value->get_length_attribute();
             }
-            else
-                create_symbol(stmt.stmt_range_ref(),
-                    label,
-                    std::move(adr),
-                    context::symbol_attributes(
-                        context::symbol_origin::DAT, context::symbol_attributes::undef_type, 1, 0, 0));
+            if (data_op->value->scale
+                && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+            {
+                scale = value->get_scale_attribute();
+            }
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                std::move(adr),
+                context::symbol_attributes(
+                    context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -254,7 +245,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // hlasm_ctx.ord_ctx.current_section()->current_location_counter().
 
 
-    if (has_depdendencies)
+    if (has_dependencies)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
             std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()));
@@ -265,18 +256,19 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                 sp, dynamic_cast<const data_def_postponed_statement<instr_type>*>(&*adder.source_stmt));
         }
         else
-            hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
-                                                       adder.source_stmt->operands_ref().value, hlasm_ctx.ord_ctx),
+            hlasm_ctx.ord_ctx.reserve_storage_area(
+                data_def_postponed_statement<instr_type>::get_operands_length(
+                    adder.source_stmt->impl()->operands_ref().value, hlasm_ctx.ord_ctx),
                 context::no_align);
 
         bool cycle_ok = true;
 
         if (label != context::id_storage::empty_id)
         {
-            if (adder.source_stmt->operands_ref().value.empty())
+            if (adder.source_stmt->impl()->operands_ref().value.empty())
                 return;
 
-            auto data_op = adder.source_stmt->operands_ref().value.front()->access_data_def();
+            auto data_op = adder.source_stmt->impl()->operands_ref().value.front()->access_data_def();
 
             if (data_op->value->length
                 && data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
@@ -289,10 +281,11 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         adder.add_dependency();
 
-        if (cycle_ok)
-            adder.finish();
-        else
-            add_diagnostic(diagnostic_op::error_E033(adder.source_stmt->operands_ref().value.front()->operand_range));
+        if (!cycle_ok)
+            add_diagnostic(
+                diagnostic_op::error_E033(adder.source_stmt->impl()->operands_ref().value.front()->operand_range));
+
+        adder.finish();
     }
     else
     {
@@ -401,7 +394,8 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         if (i == 0)
         {
             auto deps = expr->expression->get_dependencies(hlasm_ctx.ord_ctx);
-            undefined_absolute_part = deps.undefined_attr_refs.size() || deps.undefined_symbols.size();
+            undefined_absolute_part =
+                deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
             if (!deps.unresolved_address)
             {
                 add_diagnostic(diagnostic_op::error_A245_ORG_expression(stmt.stmt_range_ref()));
@@ -453,7 +447,6 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     }
     else
         hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);
-    ;
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
@@ -507,7 +500,32 @@ asm_processor::asm_processor(analyzing_context ctx,
     , table_(create_table(*ctx.hlasm_ctx))
 {}
 
-void asm_processor::process(context::shared_stmt_ptr stmt) { process(preprocess(stmt)); }
+void asm_processor::process(context::shared_stmt_ptr stmt)
+{
+    auto rebuilt_stmt = preprocess(stmt);
+
+    auto it = table_.find(rebuilt_stmt.opcode_ref().value);
+    if (it != table_.end())
+    {
+        auto& [key, func] = *it;
+        func(std::move(rebuilt_stmt));
+    }
+    else
+    {
+        // until implementation of all instructions, if has deps, ignore
+        for (auto& op : rebuilt_stmt.operands_ref().value)
+        {
+            auto tmp = context::instruction::assembler_instructions.find(*rebuilt_stmt.opcode_ref().value);
+            bool can_have_ord_syms =
+                tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
+
+            if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
+                && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
+                return;
+        }
+        check(rebuilt_stmt, hlasm_ctx, checker_, *this);
+    }
+}
 
 void asm_processor::process_copy(const semantics::complete_statement& stmt,
     analyzing_context ctx,
@@ -552,8 +570,6 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
 }
 
-void asm_processor::process(context::unique_stmt_ptr stmt) { process(preprocess(std::move(stmt))); }
-
 asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& h_ctx)
 {
     process_table_t table;
@@ -588,31 +604,6 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
             return symbol.name;
         default:
             return context::id_storage::empty_id;
-    }
-}
-
-void asm_processor::process(rebuilt_statement statement)
-{
-    auto it = table_.find(statement.opcode_ref().value);
-    if (it != table_.end())
-    {
-        auto& [key, func] = *it;
-        func(std::move(statement));
-    }
-    else
-    {
-        // until implementation of all instructions, if has deps, ignore
-        for (auto& op : statement.operands_ref().value)
-        {
-            auto tmp = context::instruction::assembler_instructions.find(*statement.opcode_ref().value);
-            bool can_have_ord_syms =
-                tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
-
-            if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
-                && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
-                return;
-        }
-        check(statement, hlasm_ctx, checker_, *this);
     }
 }
 
