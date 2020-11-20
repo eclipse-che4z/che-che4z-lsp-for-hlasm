@@ -63,7 +63,7 @@ private:
     void process_COPY(const resolved_statement& statement);
 
     process_table_t asm_proc_table_;
-    process_table_t create_table();
+    process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement);

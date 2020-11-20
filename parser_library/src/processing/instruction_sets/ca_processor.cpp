@@ -25,7 +25,7 @@ ca_processor::ca_processor(analyzing_context ctx,
     parse_lib_provider& lib_provider,
     processing_state_listener& listener)
     : instruction_processor(ctx, branch_provider, lib_provider)
-    , table_(create_table())
+    , table_(create_table(*ctx.hlasm_ctx))
     , listener_(listener)
 {}
 
@@ -33,38 +33,38 @@ void ca_processor::process(context::shared_stmt_ptr stmt) { process_(stmt); }
 
 void ca_processor::process(context::unique_stmt_ptr stmt) { process_(std::move(stmt)); }
 
-ca_processor::process_table_t ca_processor::create_table()
+ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& h_ctx)
 {
     process_table_t table;
     table.emplace(
-        hlasm_ctx.ids().add("SETA"), std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
+        h_ctx.ids().add("SETA"), std::bind(&ca_processor::process_SET<context::A_t>, this, std::placeholders::_1));
     table.emplace(
-        hlasm_ctx.ids().add("SETB"), std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
+        h_ctx.ids().add("SETB"), std::bind(&ca_processor::process_SET<context::B_t>, this, std::placeholders::_1));
     table.emplace(
-        hlasm_ctx.ids().add("SETC"), std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("LCLA"),
+        h_ctx.ids().add("SETC"), std::bind(&ca_processor::process_SET<context::C_t>, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("LCLA"),
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, false>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("LCLB"),
+    table.emplace(h_ctx.ids().add("LCLB"),
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, false>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("LCLC"),
+    table.emplace(h_ctx.ids().add("LCLC"),
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, false>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("GBLA"),
+    table.emplace(h_ctx.ids().add("GBLA"),
         std::bind(&ca_processor::process_GBL_LCL<context::A_t, true>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("GBLB"),
+    table.emplace(h_ctx.ids().add("GBLB"),
         std::bind(&ca_processor::process_GBL_LCL<context::B_t, true>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("GBLC"),
+    table.emplace(h_ctx.ids().add("GBLC"),
         std::bind(&ca_processor::process_GBL_LCL<context::C_t, true>, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("ANOP"), std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("ACTR"), std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("AGO"), std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("AIF"), std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("ANOP"), std::bind(&ca_processor::process_ANOP, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("ACTR"), std::bind(&ca_processor::process_ACTR, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("AGO"), std::bind(&ca_processor::process_AGO, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("AIF"), std::bind(&ca_processor::process_AIF, this, std::placeholders::_1));
     table.emplace(context::id_storage::empty_id, std::bind(&ca_processor::process_empty, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("MACRO"), std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("MEND"), std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("MEXIT"), std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("AREAD"), std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("ASPACE"), std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("AEJECT"), std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("MACRO"), std::bind(&ca_processor::process_MACRO, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("MEND"), std::bind(&ca_processor::process_MEND, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("MEXIT"), std::bind(&ca_processor::process_MEXIT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("AREAD"), std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("ASPACE"), std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("AEJECT"), std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
 
     return table;
 }

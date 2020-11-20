@@ -49,7 +49,7 @@ private:
         func(*stmt_ptr->access_resolved());
     }
 
-    process_table_t create_table();
+    process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 

@@ -37,7 +37,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     processing_tracer* tracer)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(std::move(ctx))
-    , hlasm_ctx_(*ctx.hlasm_ctx)
+    , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
     , tracer_(tracer)
@@ -59,10 +59,10 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx, parser, lib_provider, *this));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this));
     provs_.emplace_back(std::move(base_provider));
 
-    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx.hlasm_ctx, *ctx.lsp_ctx);
+    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx);
 }
 
 void update_metrics(processing_kind proc_kind, statement_provider_kind prov_kind, performance_metrics& metrics)

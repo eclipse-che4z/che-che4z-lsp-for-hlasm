@@ -504,7 +504,7 @@ asm_processor::asm_processor(analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
     : low_language_processor(ctx, branch_provider, lib_provider, parser)
-    , table_(create_table())
+    , table_(create_table(*ctx.hlasm_ctx))
 {}
 
 void asm_processor::process(context::shared_stmt_ptr stmt) { process(preprocess(stmt)); }
@@ -554,25 +554,25 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
 
 void asm_processor::process(context::unique_stmt_ptr stmt) { process(preprocess(std::move(stmt))); }
 
-asm_processor::process_table_t asm_processor::create_table()
+asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& h_ctx)
 {
     process_table_t table;
-    table.emplace(hlasm_ctx.ids().add("CSECT"),
+    table.emplace(h_ctx.ids().add("CSECT"),
         std::bind(&asm_processor::process_sect, this, context::section_kind::EXECUTABLE, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("DSECT"),
+    table.emplace(h_ctx.ids().add("DSECT"),
         std::bind(&asm_processor::process_sect, this, context::section_kind::DUMMY, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("RSECT"),
+    table.emplace(h_ctx.ids().add("RSECT"),
         std::bind(&asm_processor::process_sect, this, context::section_kind::READONLY, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("COM"),
+    table.emplace(h_ctx.ids().add("COM"),
         std::bind(&asm_processor::process_sect, this, context::section_kind::COMMON, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("LOCTR"), std::bind(&asm_processor::process_LOCTR, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("EQU"), std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("DC"), std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("COPY"), std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
-    table.emplace(hlasm_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("LOCTR"), std::bind(&asm_processor::process_LOCTR, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("EQU"), std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("DC"), std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("COPY"), std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
 
     return table;
 }

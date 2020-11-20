@@ -49,7 +49,7 @@ protected:
         analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
         : diagnosable_ctx(*ctx.hlasm_ctx)
         , ctx(ctx)
-        , hlasm_ctx(hlasm_ctx)
+        , hlasm_ctx(*ctx.hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
         , eval_ctx { ctx, lib_provider }

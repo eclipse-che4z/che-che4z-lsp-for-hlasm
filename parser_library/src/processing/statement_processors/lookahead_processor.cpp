@@ -73,7 +73,7 @@ lookahead_processor::lookahead_processor(analyzing_context ctx,
     processing_state_listener& listener,
     workspaces::parse_lib_provider& lib_provider,
     lookahead_start_data start)
-    : statement_processor(processing_kind::LOOKAHEAD, std::move(ctx))
+    : statement_processor(processing_kind::LOOKAHEAD, ctx)
     , finished_flag_(start.action == lookahead_action::ORD && start.targets.empty())
     , result_(std::move(start))
     , macro_nest_(0)
@@ -83,7 +83,7 @@ lookahead_processor::lookahead_processor(analyzing_context ctx,
     , to_find_(std::move(start.targets))
     , target_(start.target)
     , action(start.action)
-    , asm_proc_table_(create_table())
+    , asm_proc_table_(create_table(*ctx.hlasm_ctx))
 {}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
@@ -96,27 +96,27 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
     }
 }
 
-lookahead_processor::process_table_t lookahead_processor::create_table()
+lookahead_processor::process_table_t lookahead_processor::create_table(context::hlasm_context& h_ctx)
 {
     process_table_t table;
-    table.emplace(hlasm_ctx.ids().add("CSECT"),
+    table.emplace(h_ctx.ids().add("CSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("DSECT"),
+    table.emplace(h_ctx.ids().add("DSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("RSECT"),
+    table.emplace(h_ctx.ids().add("RSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("COM"),
+    table.emplace(h_ctx.ids().add("COM"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("DXD"),
+    table.emplace(h_ctx.ids().add("DXD"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("LOCTR"),
+    table.emplace(h_ctx.ids().add("LOCTR"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("EQU"),
+    table.emplace(h_ctx.ids().add("EQU"),
         std::bind(&lookahead_processor::assign_EQU_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("DC"),
+    table.emplace(h_ctx.ids().add("DC"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(hlasm_ctx.ids().add("DS"),
+    table.emplace(h_ctx.ids().add("DS"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
 

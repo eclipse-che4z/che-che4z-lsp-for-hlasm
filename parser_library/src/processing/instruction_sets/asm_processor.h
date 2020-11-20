@@ -43,7 +43,7 @@ public:
         diagnosable_ctx* diagnoser);
 
 private:
-    process_table_t create_table();
+    process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
 
