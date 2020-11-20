@@ -27,21 +27,34 @@ void occurence_collector::visit(const semantics::empty_operand&) {}
 
 void occurence_collector::visit(const semantics::model_operand& op) { get_occurence(op.chain); }
 
-void occurence_collector::visit(const semantics::expr_machine_operand& op) { op.expression->apply(*this); }
+void occurence_collector::visit(const semantics::expr_machine_operand& op)
+{
+    if (op.expression)
+        op.expression->apply(*this);
+}
 
 void occurence_collector::visit(const semantics::address_machine_operand& op)
 {
-    op.displacement->apply(*this);
-    op.first_par->apply(*this);
-    op.second_par->apply(*this);
+    if (op.displacement)
+        op.displacement->apply(*this);
+    if (op.first_par)
+        op.first_par->apply(*this);
+    if (op.second_par)
+        op.second_par->apply(*this);
 }
 
-void occurence_collector::visit(const semantics::expr_assembler_operand& op) { op.expression->apply(*this); }
+void occurence_collector::visit(const semantics::expr_assembler_operand& op)
+{
+    if (op.expression)
+        op.expression->apply(*this);
+}
 
 void occurence_collector::visit(const semantics::using_instr_assembler_operand& op)
 {
-    op.base->apply(*this);
-    op.end->apply(*this);
+    if (op.base)
+        op.base->apply(*this);
+    if (op.end)
+        op.end->apply(*this);
 }
 
 void occurence_collector::visit(const semantics::complex_assembler_operand&) {}
@@ -79,7 +92,11 @@ void occurence_collector::visit(const semantics::data_def_operand& op)
 
 void occurence_collector::visit(const semantics::var_ca_operand& op) { get_occurence(*op.variable_symbol); }
 
-void occurence_collector::visit(const semantics::expr_ca_operand& op) { op.expression->apply(*this); }
+void occurence_collector::visit(const semantics::expr_ca_operand& op)
+{
+    if (op.expression)
+        op.expression->apply(*this);
+}
 
 void occurence_collector::visit(const semantics::seq_ca_operand& op) { get_occurence(op.sequence_symbol); }
 
