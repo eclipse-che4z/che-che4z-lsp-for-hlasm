@@ -324,10 +324,10 @@ bool parser_impl::process_instruction()
 bool parser_impl::process_statement()
 {
     range statement_range(position(statement_start().file_line, 0)); // assign default
-    current_statement = collector.extract_statement(*proc_status, statement_range);
+    auto stmt = collector.extract_statement(*proc_status, statement_range);
 
     if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*current_statement, { ctx, *lib_provider_ }, *state_listener_))
+        && try_trigger_attribute_lookahead(*stmt, { ctx, *lib_provider_ }, *state_listener_))
         return true;
 
     if (statement_range.start.line < statement_range.end.line)
@@ -337,6 +337,7 @@ bool parser_impl::process_statement()
 
     lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
+    current_statement = stmt;
 
     return false;
 }
