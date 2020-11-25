@@ -16,7 +16,7 @@
 parser grammar ca_expr_rules; 
 
 expr returns [ca_expr_ptr ca_expr]
-	: begin=expr_s								
+	: begin=expr_s
 	{
 		$ca_expr = std::move($begin.ca_expr);
 	} 
@@ -79,7 +79,7 @@ term returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($var_symbol.ctx);
 		$ca_expr = std::make_unique<ca_var_sym>(std::move($var_symbol.vs), r);
 	}
-	| ca_string	
+	| ca_string
 	{ 
 		auto r = provider.get_range($ca_string.ctx);
 		collector.add_hl_symbol(token_info(r, hl_scopes::string));
@@ -105,10 +105,10 @@ term returns [ca_expr_ptr ca_expr]
 		$ca_expr = std::make_unique<ca_constant>($num.value, r);
 	}
 	| ca_dupl_factor id_no_dot subscript_ne
-	{ 
+	{
 		collector.add_hl_symbol(token_info(provider.get_range( $id_no_dot.ctx),hl_scopes::operand));
+		
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
-
 		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
 		auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
 		resolve_expression($subscript_ne.value, param_kind);
@@ -117,6 +117,7 @@ term returns [ca_expr_ptr ca_expr]
 	}
 	| id_no_dot
 	{
+		collector.add_hl_symbol(token_info(provider.get_range( $id_no_dot.ctx),hl_scopes::operand));
 		auto r = provider.get_range($id_no_dot.ctx);
 		$ca_expr = std::make_unique<ca_symbol>($id_no_dot.name, r);
 	};
@@ -133,21 +134,19 @@ expr_list returns [ca_expr_ptr ca_expr]
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 	
 expr_space_c returns [std::vector<ca_expr_ptr> ca_exprs]
- 	: expr
-	{ 
+	: expr
+	{
 		$ca_exprs.push_back(std::move($expr.ca_expr)); 
 	}
 	| tmp=expr_space_c SPACE* expr
-	{ 
+	{
 		$tmp.ca_exprs.push_back(std::move($expr.ca_expr)); 
 		$ca_exprs = std::move($tmp.ca_exprs);
 	};
- 
-
 
 seq_symbol returns [seq_sym ss]
 	: DOT id_no_dot
-	{	
+	{
 		$ss = seq_sym{$id_no_dot.name,provider.get_range( $DOT, $id_no_dot.ctx->getStop())};
 	};
 
@@ -168,16 +167,16 @@ subscript returns [std::vector<ca_expr_ptr> value]
 		$value = std::move($expr_comma_c.ca_exprs);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
-	| ;
+	|;
 
 
 expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
 	: expr
-	{ 
+	{
 		$ca_exprs.push_back(std::move($expr.ca_expr));
 	}
 	| tmp=expr_comma_c comma expr
-	{ 
+	{
 		$tmp.ca_exprs.push_back(std::move($expr.ca_expr));
 		$ca_exprs = std::move($tmp.ca_exprs);
 	};
@@ -185,9 +184,21 @@ expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
 
 
 created_set_body returns [concat_point_ptr point]
-	: ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
-	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());}
-	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
+	: ORDSYMBOL
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::var_symbol));
+		$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());
+	}
+	| IDENTIFIER
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $IDENTIFIER),hl_scopes::var_symbol));
+		$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());
+	}
+	| NUM
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $NUM),hl_scopes::var_symbol));
+		$point = std::make_unique<char_str_conc>($NUM->getText());
+	}
 	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));}
 	| dot													{$point = std::make_unique<dot_conc>();};
 
@@ -199,20 +210,41 @@ created_set_body_c returns [concat_chain concat_list]
 created_set_symbol returns [vs_ptr vs]
 	: AMPERSAND lpar clc=created_set_body_c rpar subscript 	
 	{
+		collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND),hl_scopes::var_symbol));
 		$vs = std::make_unique<created_variable_symbol>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range($AMPERSAND,$subscript.ctx->getStop()));
 	}
 	| ampersand lpar rpar subscript; 	//empty set symbol err TODO
 
 var_symbol returns [vs_ptr vs]
-	: AMPERSAND vs_id tmp=subscript								
+	: AMPERSAND vs_id tmp=subscript
 	{
 		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
 		$vs = std::make_unique<basic_variable_symbol>(id, std::move($tmp.value), r);
 		collector.add_lsp_symbol(id,r,symbol_type::var);
-		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
+		collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND, $vs_id.ctx->getStop()),hl_scopes::var_symbol));
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
+
+data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value]
+	: ORDSYMBOL ATTR data_attribute_value
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
+		$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));
+		$value = std::move($data_attribute_value.value);
+	};
+
+data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
+	: literal			
+	| var_symbol
+	{
+		$value = std::move($var_symbol.vs);
+	}
+	| id
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx), hl_scopes::ordinary_symbol));
+		$value = $id.name;
+	};
 
 vs_id_ch_c
 	: (NUM|ORDSYMBOL)+;
@@ -256,11 +288,11 @@ var_def_substr returns [std::vector<ca_expr_ptr> value]
 
 
 ca_dupl_factor returns [ca_expr_ptr value]
-	: lpar expr rpar							
+	: lpar expr rpar
 	{
 		$value =std::move($expr.ca_expr);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
-	}										
+	}
 	|;
 
 substring returns [expressions::ca_string::substring_t value]

@@ -164,12 +164,12 @@ void collector::clear_hl_lsp_symbols()
 
 void collector::add_operand_remark_hl_symbols()
 {
-    if (op_)
+    /*if (op_)
     {
         for (auto&& operand : current_operands().value)
             if (operand)
                 add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
-    }
+    }*/
 
     if (rem_)
     {

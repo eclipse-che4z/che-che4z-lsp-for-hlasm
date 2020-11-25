@@ -14,7 +14,6 @@
 
 #include "gtest/gtest.h"
 
-#include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -23,9 +22,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(highlighting, AIF)
 {
-    mock_parse_lib_provider lib_provider;
-    const std::string contents = " AIF (&VAR EQ 4).JUMP";
-    analyzer a(contents, SOURCE_FILE, lib_provider, nullptr, true);
+    std::string source_file = "file_name";
+    workspaces::empty_parse_lib_provider lib_provider;
+    const std::string contents = "&VARP(31+L'C) SETA 45\n\nC EQU 1";
+    analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
     auto tokens = a.lsp_processor().semantic_tokens();
     

@@ -27,6 +27,11 @@ namespace hlasm_plugin::parser_library::checking {
 class data_def_type;
 }
 
+namespace hlasm_plugin::parser_library::semantics {
+class collector;
+}
+
+
 namespace hlasm_plugin::parser_library::expressions {
 
 // Represents data definition operand as it was written into source code.
@@ -58,8 +63,13 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
     // Creates the data definition. format is the string representation of data definition as the user
     // has written it, excapt all expressions are replaced with '&' and nominal value is replaced with " ".
     // The expressions are passed separately as exprs in the same order as '&' appear in the format. begin is
-    // the position of first character of data definition.
-    static data_definition create(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
+    // the position of first character of data definition. The function filles the passed collector with 
+    // highlighting information.
+    static data_definition create(semantics::collector& coll,
+        std::string format,
+        mach_expr_list exprs,
+        nominal_value_ptr nominal,
+        position begin);
 
     // Returns conjunction of all dependencies of all expression in data_definition.
     virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
@@ -113,7 +123,7 @@ private:
 class data_definition::parser
 {
 public:
-    parser(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
+    parser(semantics::collector & coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
     // Parses the data definition specified as parameters of constructor.
     data_definition parse();
 
@@ -137,6 +147,7 @@ public:
     void assign_expr_to_modifier(char modifier, mach_expr_ptr expr);
 
 private:
+    semantics::collector & collector_;
     // Input parameters specifying the data definition as grammar parsed it
     std::string format_;
     mach_expr_list exprs_;

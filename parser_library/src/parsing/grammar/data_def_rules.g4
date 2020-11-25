@@ -127,10 +127,7 @@ data_def returns [data_definition value]
 
 		auto begin_range = provider.get_range($d_e.ctx->getStart(),$d_e.ctx->getStop());
 
-		$value = data_definition::create(std::move(form), std::move(exprs), std::move($nominal_value_o.nominal), begin_range.start);
-
-		collector.add_hl_symbol(token_info($value.type_range,hl_scopes::data_def_type));
-		collector.add_hl_symbol(token_info($value.extension_range,hl_scopes::data_def_extension));
+		$value = data_definition::create(collector, std::move(form), std::move(exprs), std::move($nominal_value_o.nominal), begin_range.start);
 	};
 
 data_def_ch returns [std::string value]

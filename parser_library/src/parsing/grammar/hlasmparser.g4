@@ -191,7 +191,8 @@ num returns [self_def_t value]
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
 	{
-		auto opt = $ORDSYMBOL->getText(); 
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::self_def_type));
+		auto opt = $ORDSYMBOL->getText();
 		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
 	};
 

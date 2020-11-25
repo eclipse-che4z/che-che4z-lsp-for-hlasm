@@ -76,7 +76,10 @@ enum class PARSER_LIBRARY_EXPORT hl_scopes : size_t
     number = 10,
     operand = 11,
     data_def_type = 12,
-    data_def_extension = 13
+    data_def_modifier = 13,
+    data_attr_type = 14,
+    self_def_type = 15,
+    ordinary_symbol = 16
 };
 } // namespace semantics
 

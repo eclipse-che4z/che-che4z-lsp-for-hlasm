@@ -52,20 +52,23 @@ json feature_language_features::register_capabilities()
         { "semanticTokensProvider",
             { { "legend",
                   { { "tokenTypes",
-                        { "class",
-                            "function",
-                            "comment",
-                            "event",
-                            "comment",
-                            "modifier",
-                            "keyword",
-                            "variable",
-                            "operator",
-                            "string",
-                            "number",
-                            "parameter",
-                            "regexp",
-                            "modifier" } },
+                        { "class", //           label              = 0
+                            "function", //      instruction        = 1
+                            "comment", //       remark             = 2
+                            "event", //         ignored            = 3
+                            "comment", //       comment            = 4
+                            "modifier", //      continuation       = 5
+                            "keyword", //       seq_symbol         = 6
+                            "variable", //      var_symbol         = 7
+                            "operator", //      operator_symbol    = 8
+                            "string", //        string             = 9
+                            "number", //        number             = 10
+                            "parameter", //     operand            = 11
+                            "regexp", //        data_def_type      = 12
+                            "modifier", //      data_def_extension = 13
+                            "modifier", //      data_attrib_type   = 14
+                            "regexp", //        self_def_type      = 15
+                            "parameter" } }, // ordinary_symbol    = 16
                       { "tokenModifiers", json::array() } } },
                 { "full", true } } } };
 }

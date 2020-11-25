@@ -423,8 +423,6 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             rest.token_range.start.column = hl_info_.cont_info.continue_column;
         }
         insert_sorted_hl_symbol(rest);
-
-        // hl_info_.lines.push_back(symbol);
     }
 }
 
@@ -433,6 +431,7 @@ void lsp_info_processor::insert_sorted_hl_symbol(token_info symbol)
     if (hl_info_.lines.empty())
         hl_info_.lines.push_back(symbol);
     else
+    {
         for (lines_info::reverse_iterator it = hl_info_.lines.rbegin(); it != hl_info_.lines.rend(); it++)
         {
             if (it->token_range.start.line < symbol.token_range.start.line
@@ -440,9 +439,11 @@ void lsp_info_processor::insert_sorted_hl_symbol(token_info symbol)
                     && it->token_range.start.column <= symbol.token_range.start.column))
             {
                 hl_info_.lines.insert(it.base(), symbol);
-                break;
+                return;
             }
         }
+        hl_info_.lines.insert(hl_info_.lines.begin(), symbol);
+    }
 }
 
 
