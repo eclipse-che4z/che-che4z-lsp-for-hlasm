@@ -86,14 +86,14 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    virtual context::shared_stmt_ptr process_next(processing::statement_processor& processor) override;
+    virtual context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
     virtual bool finished() const override;
 
     lexing::token_stream& input;
     analyzing_context ctx;
     context::hlasm_context* hlasm_ctx;
     semantics::lsp_info_processor* lsp_proc;
-    processing::statement_processor* processor;
+    const processing::statement_processor* processor;
     context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
     bool finished_flag;

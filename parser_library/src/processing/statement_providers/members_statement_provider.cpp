@@ -28,7 +28,7 @@ members_statement_provider::members_statement_provider(const statement_provider_
     , listener(listener)
 {}
 
-context::shared_stmt_ptr members_statement_provider::process_next(statement_processor& processor)
+context::shared_stmt_ptr members_statement_provider::get_next(const statement_processor& processor)
 {
     if (finished())
         throw std::runtime_error("provider already finished");
@@ -62,7 +62,6 @@ context::shared_stmt_ptr members_statement_provider::process_next(statement_proc
         && try_trigger_attribute_lookahead(*stmt, { ctx, lib_provider }, listener))
         return nullptr;
 
-    processor.process_statement(stmt);
     return stmt;
 }
 
@@ -107,7 +106,7 @@ void members_statement_provider::fill_cache(
 }
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
-    statement_processor& processor, context::statement_cache& cache)
+    const statement_processor& processor, context::statement_cache& cache)
 {
     const auto& def_stmt = *cache.get_base()->access_deferred();
 

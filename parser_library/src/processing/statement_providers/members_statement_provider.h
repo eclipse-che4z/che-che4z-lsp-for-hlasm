@@ -33,7 +33,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
 
-    virtual context::shared_stmt_ptr process_next(statement_processor& processor) override;
+    virtual context::shared_stmt_ptr get_next(const statement_processor& processor) override;
 
 protected:
     analyzing_context ctx;
@@ -50,7 +50,7 @@ private:
         const semantics::deferred_statement& def_stmt,
         const processing_status& status);
 
-    context::shared_stmt_ptr preprocess_deferred(statement_processor& processor, context::statement_cache& cache);
+    context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
