@@ -40,6 +40,7 @@ class ordinary_processor : public statement_processor
 
     bool finished_flag_;
 
+    processing_state_listener& listener_;
     processing_tracer* tracer_;
 
 public:

@@ -33,6 +33,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     , asm_proc_(ctx, branch_provider, lib_provider, parser)
     , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
+    , listener_(state_listener)
     , tracer_(tracer)
 {}
 
@@ -119,6 +120,9 @@ void ordinary_processor::end_processing()
     collect_ordinary_symbol_definitions();
 
     hlasm_ctx.pop_statement_processing();
+
+    listener_.finish_opencode();
+
     finished_flag_ = true;
 }
 

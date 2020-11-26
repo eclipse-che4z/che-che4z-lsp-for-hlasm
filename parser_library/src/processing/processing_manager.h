@@ -73,6 +73,7 @@ private:
     virtual void finish_lookahead(lookahead_processing_result result) override;
     virtual void start_copy_member(copy_start_data start) override;
     virtual void finish_copy_member(copy_processing_result result) override;
+    virtual void finish_opencode() override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
 

@@ -229,6 +229,8 @@ void processing_manager::finish_copy_member(copy_processing_result result)
     stmt_analyzer_->copydef_finished(member, std::move(result));
 }
 
+void processing_manager::finish_opencode() { stmt_analyzer_->opencode_finished(); }
+
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
 {
     if (file)

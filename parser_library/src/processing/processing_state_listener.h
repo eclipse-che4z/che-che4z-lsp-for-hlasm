@@ -36,6 +36,8 @@ public:
     virtual void start_copy_member(copy_start_data start) = 0;
     virtual void finish_copy_member(copy_processing_result result) = 0;
 
+    virtual void finish_opencode() = 0;
+
     virtual ~processing_state_listener() = default;
 };
 
