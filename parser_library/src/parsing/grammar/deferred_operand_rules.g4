@@ -36,18 +36,9 @@ def_string returns [concat_chain chain]
 	{concatenation_point::clear_concat_chain($chain);}
 
 deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
-	: deferred_entry* remark_o 
-	{
-		if($remark_o.value) 
-			$remarks.push_back(*$remark_o.value);
-		if ($deferred_entry.ctx && $deferred_entry.vs)
-			$var_list.push_back(std::move($deferred_entry.vs));
-	} 
-	(CONTINUATION deferred_entry* remark_o 
-	{
-		if($remark_o.value) 
-			$remarks.push_back(*$remark_o.value);
-		if ($deferred_entry.ctx && $deferred_entry.vs)
-			$var_list.push_back(std::move($deferred_entry.vs));
-	}
+	: (deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
+	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
+	(CONTINUATION 
+	(deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
+	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
 	)*;
