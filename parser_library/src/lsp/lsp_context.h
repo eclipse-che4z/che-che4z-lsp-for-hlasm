@@ -29,7 +29,7 @@ class lsp_context : public feature_provider
 {
     opencode_info_ptr opencode_;
     std::unordered_map<std::string, file_info_ptr> files_;
-    std::unordered_map<context::id_index, macro_info_ptr> macros_;
+    std::unordered_map<context::macro_def_ptr, macro_info_ptr> macros_;
 
 public:
     lsp_context(std::string opencode_name = "");

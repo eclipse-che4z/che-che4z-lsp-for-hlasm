@@ -244,6 +244,7 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
         return;
     }
     result_.prototype.macro_name = statement.opcode_ref().value;
+    result_.prototype.macro_name_range = statement.instruction_ref().field_range;
 }
 
 void macrodef_processor::process_prototype_operand(

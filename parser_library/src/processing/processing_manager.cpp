@@ -157,8 +157,6 @@ void processing_manager::finish_processor()
 
 void processing_manager::start_macro_definition(macrodef_start_data start)
 {
-    stmt_analyzer_->macrodef_started(start);
-
     start_macro_definition(std::move(start), std::nullopt);
 }
 
@@ -238,6 +236,7 @@ void processing_manager::start_macro_definition(macrodef_start_data start, std::
     else
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
+    stmt_analyzer_->macrodef_started(start);
     procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
 }
 

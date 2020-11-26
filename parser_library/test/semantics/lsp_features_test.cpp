@@ -76,7 +76,7 @@ TEST_F(lsp_features_test, go_to)
 {
     // jump from source to macro, macro MAC
     EXPECT_TRUE(
-        (position_uri { position(0, 3), MACRO_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 4)));
+        (position_uri { position(1, 7), MACRO_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 4)));
     // no jump
     EXPECT_TRUE(
         (position_uri { position(0, 8), SOURCE_FILE }) == a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 8)));

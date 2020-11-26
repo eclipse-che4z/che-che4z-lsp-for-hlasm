@@ -35,6 +35,8 @@ void lsp_context::add_macro(macro_info_ptr macro_i)
     if (macro_i->external)
         add_file(file_info(macro_i->macro_definition));
     distribute_macro_i(macro_i);
+
+    macros_[macro_i->macro_definition] = macro_i;
 }
 
 void lsp_context::add_opencode(opencode_info_ptr opencode_i)
@@ -76,18 +78,16 @@ void collect_references(position_uris& refs, const symbol_occurence& occ, const 
 position_uris lsp_context::references(const std::string& document_uri, const position pos) const
 {
     position_uris result;
-    result.push_back({ pos, document_uri });
 
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
     if (!occ)
-        return result;
+        return { { pos, document_uri } };
 
     auto def = find_definition_location(*occ, macro_scope);
 
     if (!def)
-        return result;
-    result.push_back({ def->pos, def->file });
+        return { { pos, document_uri } };
 
     std::vector<location> scoped_result;
 
@@ -100,8 +100,8 @@ position_uris lsp_context::references(const std::string& document_uri, const pos
     }
     else
     {
-        for (const auto& mac_i : macros_)
-            collect_references(result, *occ, mac_i.second->file_occurences_);
+        for (const auto& [_, mac_i] : macros_)
+            collect_references(result, *occ, mac_i->file_occurences_);
         collect_references(result, *occ, opencode_->file_occurences);
     }
 
@@ -245,10 +245,12 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             }
             break;
         }
-        case lsp::occurence_kind::INSTR:
-            if (occ.opcode)
-                return occ.opcode->definition_location;
+        case lsp::occurence_kind::INSTR: {
+            auto sym = find_definition<lsp::occurence_kind::INSTR, context::opcode_t>(occ, macro_i, *opencode_);
+            if (sym.macro_opcode && macros_.find(sym.macro_opcode) != macros_.end())
+                return macros_.find(sym.macro_opcode)->second->definition_location;
             break;
+        }
         default:
             break;
     }
@@ -280,7 +282,7 @@ string_array lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             break;
         }
         case lsp::occurence_kind::INSTR: {
-            auto sym = find_definition<lsp::occurence_kind::INSTR, const context::opcode_t>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::INSTR, context::opcode_t>(occ, macro_i, *opencode_);
             return hover(sym);
         }
         default:

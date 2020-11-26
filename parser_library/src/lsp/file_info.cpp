@@ -116,7 +116,7 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
     fslice.end_idx = slice.end_statement;
 
     if (slice.begin_statement == 0)
-        fslice.begin_line = macro_i->macro_definition->definition_location.pos.line;
+        fslice.begin_line = macro_i->definition_location.pos.line;
     else
         fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
 

@@ -56,11 +56,18 @@ void lsp_analyzer::macrodef_started(const macrodef_start_data&) { in_macro_ = tr
 void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result)
 {
     if (!result.invalid)
+    {
+        // add instruction occurence of macro name
+        const auto& macro_file = macrodef->definition_location.file;
+        macro_occurences_[macro_file].emplace_back(nullptr, macrodef, result.prototype.macro_name_range);
+
         lsp_ctx_.add_macro(std::make_shared<lsp::macro_info>(result.external,
+            location(result.prototype.macro_name_range.start, macro_file),
             std::move(macrodef),
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
             std::move(macro_occurences_)));
+    }
 
     in_macro_ = false;
     macro_occurences_.clear();

@@ -99,15 +99,18 @@ class lsp_context;
 struct macro_info
 {
     bool external;
+    location definition_location;
     context::macro_def_ptr macro_definition;
     vardef_storage var_definitions;
 
     macro_info(bool external,
+        location definition_location,
         context::macro_def_ptr macro_definition,
         vardef_storage var_definitions,
         file_scopes_t file_scopes,
         file_occurences_t file_occurences)
         : external(external)
+        , definition_location(std::move(definition_location))
         , macro_definition(std::move(macro_definition))
         , var_definitions(std::move(var_definitions))
         , file_scopes_(std::move(file_scopes))
