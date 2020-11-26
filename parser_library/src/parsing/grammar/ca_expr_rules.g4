@@ -183,9 +183,9 @@ expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
 
 
 created_set_body returns [concat_point_ptr point]
-	: ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText());}
-	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText());}
-	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText());}
+	: ORDSYMBOL												{$point = std::make_unique<char_str_conc>($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));}
+	| IDENTIFIER											{$point = std::make_unique<char_str_conc>($IDENTIFIER->getText(), provider.get_range($IDENTIFIER));}
+	| NUM													{$point = std::make_unique<char_str_conc>($NUM->getText(), provider.get_range($NUM));}
 	| var_symbol											{$point = std::make_unique<var_sym_conc>(std::move($var_symbol.vs));}
 	| dot													{$point = std::make_unique<dot_conc>();};
 
@@ -302,7 +302,7 @@ ca_string returns [ca_expr_ptr ca_expr]
 
 string_ch_v returns [concat_point_ptr point]
 	: l_sp_ch_v								{$point = std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'");};
+	| l=(APOSTROPHE|ATTR) r=(APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'", provider.get_range($l, $r));};
 
 string_ch_v_c returns [concat_chain chain]
 	:
