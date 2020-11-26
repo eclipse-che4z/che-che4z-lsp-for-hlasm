@@ -37,8 +37,8 @@ file_info::file_info(context::copy_member_ptr owner)
 
 bool file_info::is_in_range(const position& pos, const range& r)
 {
-    return r.start.line >= pos.line && r.end.line <= pos.line && r.start.column >= pos.column
-        && r.end.column <= pos.column;
+    return r.start.line <= pos.line && r.end.line >= pos.line && r.start.column <= pos.column
+        && r.end.column >= pos.column;
 }
 
 occurence_scope_t file_info::find_occurence_with_scope(position pos)
@@ -61,11 +61,6 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
     // else, find scope
     for (const auto& scope : slices)
     {
-        if (scope.begin_line < pos.line)
-        {
-            macro_i = nullptr;
-            break;
-        }
         if (scope.begin_line <= pos.line && scope.end_line >= pos.line)
         {
             macro_i = scope.macro_context;

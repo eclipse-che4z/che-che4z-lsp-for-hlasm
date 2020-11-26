@@ -457,8 +457,9 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
         else
         {
             result_.sequence_symbols.emplace(seq.name,
-                std::make_unique<context::macro_sequence_symbol>(
-                    seq.name, hlasm_ctx.processing_stack().back().proc_location, curr_line_));
+                std::make_unique<context::macro_sequence_symbol>(seq.name,
+                    location(label.field_range.start, hlasm_ctx.current_statement_location().file),
+                    curr_line_));
         }
     }
 }

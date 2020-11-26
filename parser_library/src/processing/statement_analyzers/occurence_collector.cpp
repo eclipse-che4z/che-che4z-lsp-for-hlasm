@@ -18,8 +18,10 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-occurence_collector::occurence_collector(lsp::occurence_kind collector_kind, lsp::occurence_storage& storage)
+occurence_collector::occurence_collector(
+    lsp::occurence_kind collector_kind, context::hlasm_context& hlasm_ctx, lsp::occurence_storage& storage)
     : collector_kind(collector_kind)
+    , hlasm_ctx(hlasm_ctx)
     , occurences(storage)
 {}
 
@@ -125,7 +127,7 @@ void occurence_collector::get_occurence(const semantics::variable_symbol& var)
 void occurence_collector::get_occurence(const semantics::seq_sym& seq)
 {
     if (collector_kind == lsp::occurence_kind::SEQ)
-        occurences.push_back(lsp::symbol_occurence { lsp::occurence_kind::ORD, seq.name, seq.symbol_range });
+        occurences.push_back(lsp::symbol_occurence { lsp::occurence_kind::SEQ, seq.name, seq.symbol_range });
 }
 
 void occurence_collector::get_occurence(context::id_index ord, const range& ord_range)
@@ -141,14 +143,14 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
         switch (point->type)
         {
             case semantics::concat_type::STR:
-                /* TODO add range to str_conc struct
                 if (collector_kind == lsp::occurence_kind::ORD)
                 {
                     auto [valid, name] =
-                processing::context_manager(hlasm_ctx).try_get_symbol_name(point->access_str()->value); if (valid)
+                        processing::context_manager(hlasm_ctx).try_get_symbol_name(point->access_str()->value);
+                    if (valid)
                         occurences.push_back(
-                            lsp::symbol_occurence { lsp::occurence_kind::ORD, name, point-> });
-                }*/
+                            lsp::symbol_occurence { lsp::occurence_kind::ORD, name, point->access_str()->conc_range });
+                }
                 break;
             case semantics::concat_type::VAR:
                 if (collector_kind == lsp::occurence_kind::VAR)

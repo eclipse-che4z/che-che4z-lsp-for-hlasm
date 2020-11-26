@@ -82,7 +82,7 @@ void lsp_analyzer::opencode_finished()
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
 {
     lsp::occurence_storage occs;
-    occurence_collector collector(kind, occs);
+    occurence_collector collector(kind, hlasm_ctx_, occs);
 
     if (auto def_stmt = statement.access_deferred(); def_stmt)
     {

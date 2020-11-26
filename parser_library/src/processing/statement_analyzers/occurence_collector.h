@@ -28,10 +28,12 @@ class occurence_collector : public semantics::operand_visitor,
 {
 public:
     const lsp::occurence_kind collector_kind;
+    context::hlasm_context& hlasm_ctx;
     std::vector<lsp::symbol_occurence>& occurences;
 
 
-    occurence_collector(lsp::occurence_kind collector_kind, lsp::occurence_storage& storage);
+    occurence_collector(
+        lsp::occurence_kind collector_kind, context::hlasm_context& hlasm_ctx, lsp::occurence_storage& storage);
 
     virtual void visit(const semantics::empty_operand& op) override;
     virtual void visit(const semantics::model_operand& op) override;
