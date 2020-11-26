@@ -88,16 +88,16 @@ void members_statement_provider::fill_cache(
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {
-        semantics::operands_si op(def_stmt.deferred_range_ref(), semantics::operand_list());
-        semantics::remarks_si rem(def_stmt.deferred_range_ref(), {});
+        semantics::operands_si op(def_stmt.deferred_ref().field_range, semantics::operand_list());
+        semantics::remarks_si rem(def_stmt.deferred_ref().field_range, {});
 
         ptr = std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
     }
     else
     {
-        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref(),
+        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
-            semantics::range_provider(def_stmt.deferred_range_ref(), semantics::adjusting_state::NONE),
+            semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status);
 
         ptr = std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));

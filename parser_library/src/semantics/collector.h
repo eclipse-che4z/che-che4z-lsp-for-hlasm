@@ -50,8 +50,9 @@ public:
     void set_instruction_field(concat_chain instr, range symbol_range);
 
     void set_operand_remark_field(range symbol_range);
-    void set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range);
-    void set_operand_remark_field(std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range);
+    void set_operand_remark_field(
+        std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range);
+    void set_operand_remark_field(operand_list operands, remark_list remarks, range symbol_range);
 
     void add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type);
     void add_hl_symbol(token_info symbol);
@@ -70,7 +71,7 @@ private:
     std::optional<instruction_si> instr_;
     std::optional<operands_si> op_;
     std::optional<remarks_si> rem_;
-    std::optional<std::pair<std::string, range>> def_;
+    std::optional<deferred_operands_si> def_;
     std::vector<context::lsp_symbol> lsp_symbols_;
     std::vector<token_info> hl_symbols_;
     bool lsp_symbols_extracted_;

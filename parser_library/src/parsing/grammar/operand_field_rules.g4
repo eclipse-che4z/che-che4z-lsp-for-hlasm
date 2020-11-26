@@ -295,7 +295,7 @@ op_rem_body_deferred
 	| SPACE {enable_hidden();} deferred_op_rem {disable_hidden();}
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
-		collector.set_operand_remark_field($deferred_op_rem.ctx->getText(),std::move($deferred_op_rem.remarks),r);
+		collector.set_operand_remark_field($deferred_op_rem.ctx->getText(),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r);
 	} EOLLN EOF;
 
 op_rem_body_noop

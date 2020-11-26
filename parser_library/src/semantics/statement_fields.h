@@ -133,6 +133,21 @@ struct operands_si
     operand_list value;
 };
 
+// struct holding semantic information (si) about deferred operand field
+struct deferred_operands_si
+{
+    deferred_operands_si(range field_range, std::string field, std::vector<vs_ptr> vars)
+        : field_range(std::move(field_range))
+        , value(std::move(field))
+        , vars(std::move(vars))
+    {}
+
+    const range field_range;
+
+    std::string value;
+    std::vector<vs_ptr> vars;
+};
+
 // struct holding semantic information (si) about remark field
 struct remarks_si
 {

@@ -38,7 +38,7 @@ macro_ops returns [operand_list list]
 
 mac_preproc: mac_preproc_c+;
 
-mac_preproc_c
+mac_preproc_c returns [vs_ptr vs]
 	: asterisk
 	| minus
 	| plus
@@ -54,6 +54,7 @@ mac_preproc_c
 	| AMPERSAND ORDSYMBOL									
 	{
 		auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
+		$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add($ORDSYMBOL->getText()), std::vector<ca_expr_ptr>(), r);
 		collector.add_lsp_symbol(hlasm_ctx->ids().add($ORDSYMBOL->getText()),r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}

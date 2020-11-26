@@ -55,6 +55,7 @@ private:
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
     void collect_occurence(const semantics::instruction_si& instruction, occurence_collector& collector);
     void collect_occurence(const semantics::operands_si& operands, occurence_collector& collector);
+    void collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector);
 
     void collect_var_definition(const context::hlasm_statement& statement);
 

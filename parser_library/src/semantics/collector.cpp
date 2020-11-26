@@ -122,23 +122,23 @@ void collector::set_operand_remark_field(range symbol_range)
         throw std::runtime_error("field already assigned");
     op_.emplace(symbol_range, operand_list());
     rem_.emplace(symbol_range, std::vector<range>());
-    def_.emplace("", symbol_range);
-
-    add_operand_remark_hl_symbols();
-}
-
-void collector::set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range)
-{
-    if (op_ || rem_ || def_)
-        throw std::runtime_error("field already assigned");
-    def_.emplace(std::move(deferred), symbol_range);
-    rem_.emplace(symbol_range, std::move(remarks));
+    def_.emplace(symbol_range, "", std::vector<vs_ptr>());
 
     add_operand_remark_hl_symbols();
 }
 
 void collector::set_operand_remark_field(
-    std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range)
+    std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range)
+{
+    if (op_ || rem_ || def_)
+        throw std::runtime_error("field already assigned");
+    def_.emplace(symbol_range, std::move(deferred), std::move(vars));
+    rem_.emplace(symbol_range, std::move(remarks));
+
+    add_operand_remark_hl_symbols();
+}
+
+void collector::set_operand_remark_field(operand_list operands, remark_list remarks, range symbol_range)
 {
     if (op_ || rem_ || def_)
         throw std::runtime_error("field already assigned");
@@ -212,13 +212,12 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     if (deferred_hint)
     {
         if (!def_)
-            def_.emplace("", instr_.value().field_range);
+            def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
         return std::make_shared<statement_si_deferred>(
-            range_provider::union_range(lbl_.value().field_range, def_->second),
+            range_provider::union_range(lbl_->field_range, def_->field_range),
             std::move(*lbl_),
             std::move(*instr_),
-            std::move(def_.value().first),
-            def_.value().second);
+            std::move(*def_));
     }
     else
     {

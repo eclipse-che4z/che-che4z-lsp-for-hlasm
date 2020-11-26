@@ -88,6 +88,7 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::h
     {
         collect_occurence(def_stmt->label_ref(), collector);
         collect_occurence(def_stmt->instruction_ref(), collector);
+        collect_occurence(def_stmt->deferred_ref(), collector);
     }
     else
     {
@@ -147,6 +148,11 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
 void lsp_analyzer::collect_occurence(const semantics::operands_si& operands, occurence_collector& collector)
 {
     std::for_each(operands.value.begin(), operands.value.end(), [&](const auto& op) { op->apply(collector); });
+}
+
+void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector)
+{
+    std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurence(*v); });
 }
 
 #define IF_LCL_GBL(X, Y, Z)                                                                                            \
