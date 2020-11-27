@@ -160,9 +160,41 @@ occurence_scope_t lsp_context::find_occurence_with_scope(const std::string& docu
     return std::make_pair(nullptr, nullptr);
 }
 
+template<lsp::occurence_kind kind>
+struct occ_type_helper
+{};
+template<>
+struct occ_type_helper<lsp::occurence_kind::ORD>
+{
+    using ret_type = const context::symbol*;
+};
+template<>
+struct occ_type_helper<lsp::occurence_kind::SEQ>
+{
+    using ret_type = const context::sequence_symbol*;
+};
+template<>
+struct occ_type_helper<lsp::occurence_kind::VAR>
+{
+    using ret_type = const variable_symbol_definition*;
+};
+template<>
+struct occ_type_helper<lsp::occurence_kind::INSTR>
+{
+    using ret_type = context::opcode_t;
+};
+template<>
+struct occ_type_helper<lsp::occurence_kind::COPY_OP>
+{
+    using ret_type = const context::copy_member*;
+};
 
-template<lsp::occurence_kind kind, typename T>
-T find_definition(const symbol_occurence& occ, macro_info_ptr macro_i, const opencode_info& opencode)
+
+template<lsp::occurence_kind kind>
+typename occ_type_helper<kind>::ret_type find_definition(const symbol_occurence& occ,
+    macro_info_ptr macro_i,
+    const opencode_info& opencode,
+    const std::unordered_map<std::string, file_info_ptr>& files)
 {
     if constexpr (kind == lsp::occurence_kind::ORD)
     {
@@ -214,6 +246,17 @@ T find_definition(const symbol_occurence& occ, macro_info_ptr macro_i, const ope
         retval.macro_opcode = occ.opcode;
         return retval;
     }
+    if constexpr (kind == lsp::occurence_kind::COPY_OP)
+    {
+        const context::copy_member* retval = nullptr;
+        auto copy = std::find_if(files.begin(), files.end(), [&](const auto& f) {
+            return f.second->type == file_type::COPY
+                && std::get<context::copy_member_ptr>(f.second->owner)->name == occ.name;
+        });
+        if (copy != files.end())
+            retval = &*std::get<context::copy_member_ptr>(copy->second->owner);
+        return retval;
+    }
 }
 
 std::optional<location> lsp_context::find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const
@@ -221,21 +264,19 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = find_definition<lsp::occurence_kind::ORD, const context::symbol*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::ORD>(occ, macro_i, *opencode_, files_);
             if (sym)
                 return sym->symbol_location;
             break;
         }
         case lsp::occurence_kind::SEQ: {
-            auto sym =
-                find_definition<lsp::occurence_kind::SEQ, const context::sequence_symbol*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::SEQ>(occ, macro_i, *opencode_, files_);
             if (sym)
                 return sym->symbol_location;
             break;
         }
         case lsp::occurence_kind::VAR: {
-            auto sym =
-                find_definition<lsp::occurence_kind::VAR, const variable_symbol_definition*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::VAR>(occ, macro_i, *opencode_, files_);
             if (sym)
             {
                 if (macro_i)
@@ -246,9 +287,15 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
             break;
         }
         case lsp::occurence_kind::INSTR: {
-            auto sym = find_definition<lsp::occurence_kind::INSTR, context::opcode_t>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::INSTR>(occ, macro_i, *opencode_, files_);
             if (sym.macro_opcode && macros_.find(sym.macro_opcode) != macros_.end())
                 return macros_.find(sym.macro_opcode)->second->definition_location;
+            break;
+        }
+        case lsp::occurence_kind::COPY_OP: {
+            auto sym = find_definition<lsp::occurence_kind::COPY_OP>(occ, macro_i, *opencode_, files_);
+            if (sym)
+                return sym->definition_location;
             break;
         }
         default:
@@ -262,28 +309,32 @@ string_array lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = find_definition<lsp::occurence_kind::ORD, const context::symbol*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::ORD>(occ, macro_i, *opencode_, files_);
             if (sym)
                 return hover(*sym);
             break;
         }
         case lsp::occurence_kind::SEQ: {
-            auto sym =
-                find_definition<lsp::occurence_kind::SEQ, const context::sequence_symbol*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::SEQ>(occ, macro_i, *opencode_, files_);
             if (sym)
                 return hover(*sym);
             break;
         }
         case lsp::occurence_kind::VAR: {
-            auto sym =
-                find_definition<lsp::occurence_kind::VAR, const variable_symbol_definition*>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::VAR>(occ, macro_i, *opencode_, files_);
             if (sym)
                 return hover(*sym);
             break;
         }
         case lsp::occurence_kind::INSTR: {
-            auto sym = find_definition<lsp::occurence_kind::INSTR, context::opcode_t>(occ, macro_i, *opencode_);
+            auto sym = find_definition<lsp::occurence_kind::INSTR>(occ, macro_i, *opencode_, files_);
             return hover(sym);
+        }
+        case lsp::occurence_kind::COPY_OP: {
+            auto sym = find_definition<lsp::occurence_kind::COPY_OP>(occ, macro_i, *opencode_, files_);
+            if (sym)
+                return hover(*sym);
+            break;
         }
         default:
             break;
@@ -349,5 +400,7 @@ string_array lsp_context::hover(const variable_symbol_definition& sym) const
 }
 
 string_array lsp_context::hover(const context::opcode_t& sym) const { return string_array(); }
+
+string_array lsp_context::hover(const context::copy_member& sym) const { return string_array(); }
 
 } // namespace hlasm_plugin::parser_library::lsp

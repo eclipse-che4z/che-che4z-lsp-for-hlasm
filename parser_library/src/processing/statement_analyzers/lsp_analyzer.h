@@ -34,6 +34,8 @@ class lsp_analyzer : public statement_analyzer
     lsp::file_occurences_t opencode_occurences_;
     lsp::vardef_storage opencode_var_defs_;
 
+    lsp::occurence_storage stmt_occurences_;
+
 public:
     lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx);
 
@@ -50,6 +52,8 @@ public:
     virtual void opencode_finished() override;
 
 private:
+    void assign_statement_occurences();
+
     void collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement);
 
     void collect_occurence(const semantics::label_si& label, occurence_collector& collector);
@@ -58,10 +62,13 @@ private:
     void collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector);
 
     void collect_var_definition(const context::hlasm_statement& statement);
+    void collect_copy_operands(const context::hlasm_statement& statement);
 
     void collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type);
     void collect_LCL_GBL_defs(const processing::resolved_statement& statement, context::SET_t_enum type, bool global);
     void add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global);
+
+    void add_copy_operand(context::id_index name, const range& operand_range);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

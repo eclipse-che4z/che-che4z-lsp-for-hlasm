@@ -60,6 +60,7 @@ private:
     string_array hover(const context::sequence_symbol& sym) const;
     string_array hover(const variable_symbol_definition& sym) const;
     string_array hover(const context::opcode_t& sym) const;
+    string_array hover(const context::copy_member& sym) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

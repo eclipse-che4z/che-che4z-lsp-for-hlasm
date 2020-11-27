@@ -27,7 +27,8 @@ enum class occurence_kind
     ORD,
     VAR,
     SEQ,
-    INSTR
+    INSTR,
+    COPY_OP
 };
 
 struct symbol_occurence
@@ -60,6 +61,8 @@ struct symbol_occurence
     {
         return kind == occ.kind && name == occ.name && opcode == occ.opcode;
     }
+
+    bool operator==(const symbol_occurence& oth) { return is_same(oth) && occurence_range == oth.occurence_range; }
 };
 
 using occurence_storage = std::vector<symbol_occurence>;

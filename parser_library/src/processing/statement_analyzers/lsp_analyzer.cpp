@@ -40,15 +40,19 @@ void lsp_analyzer::analyze(
                 collect_occurences(lsp::occurence_kind::VAR, statement);
                 collect_occurences(lsp::occurence_kind::SEQ, statement);
                 collect_var_definition(statement);
+                collect_copy_operands(statement);
             }
             break;
         case processing_kind::MACRO:
             collect_occurences(lsp::occurence_kind::VAR, statement);
             collect_occurences(lsp::occurence_kind::SEQ, statement);
+            collect_copy_operands(statement);
             break;
         default:
             break;
     }
+
+    assign_statement_occurences();
 }
 
 void lsp_analyzer::macrodef_started(const macrodef_start_data&) { in_macro_ = true; }
@@ -86,10 +90,26 @@ void lsp_analyzer::opencode_finished()
         hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)));
 }
 
+void lsp_analyzer::assign_statement_occurences()
+{
+    if (in_macro_)
+    {
+        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().file];
+        file_occs.insert(
+            file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
+    }
+    else
+    {
+        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().file];
+        file_occs.insert(
+            file_occs.end(), std::move_iterator(stmt_occurences_.begin()), std::move_iterator(stmt_occurences_.end()));
+    }
+    stmt_occurences_.clear();
+}
+
 void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::hlasm_statement& statement)
 {
-    lsp::occurence_storage occs;
-    occurence_collector collector(kind, hlasm_ctx_, occs);
+    occurence_collector collector(kind, hlasm_ctx_, stmt_occurences_);
 
     if (auto def_stmt = statement.access_deferred(); def_stmt)
     {
@@ -105,17 +125,6 @@ void lsp_analyzer::collect_occurences(lsp::occurence_kind kind, const context::h
         collect_occurence(res_stmt->label_ref(), collector);
         collect_occurence(res_stmt->instruction_ref(), collector);
         collect_occurence(res_stmt->operands_ref(), collector);
-    }
-
-    if (in_macro_)
-    {
-        auto& file_occs = macro_occurences_[hlasm_ctx_.current_statement_location().file];
-        file_occs.insert(file_occs.end(), std::move_iterator(occs.begin()), std::move_iterator(occs.end()));
-    }
-    else
-    {
-        auto& file_occs = opencode_occurences_[hlasm_ctx_.current_statement_location().file];
-        file_occs.insert(file_occs.end(), std::move_iterator(occs.begin()), std::move_iterator(occs.end()));
     }
 }
 
@@ -216,6 +225,23 @@ void lsp_analyzer::collect_var_definition(const context::hlasm_statement& statem
         collect_LCL_GBL_defs(*res_stmt, type, global);
 }
 
+void lsp_analyzer::collect_copy_operands(const context::hlasm_statement& statement)
+{
+    auto res_stmt = statement.access_resolved();
+    if (!res_stmt)
+        return;
+
+    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().add("COPY") && res_stmt->operands_ref().value.size() == 1
+        && res_stmt->operands_ref().value.front()->access_asm())
+    {
+        auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(
+            res_stmt->operands_ref().value.front()->access_asm()->access_expr()->expression.get());
+
+        if (sym_expr)
+            add_copy_operand(sym_expr->value, sym_expr->get_range());
+    }
+}
+
 void lsp_analyzer::collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type)
 {
     if (statement.label_ref().type != semantics::label_si_type::VAR)
@@ -259,6 +285,18 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
 
     opencode_var_defs_.emplace_back(
         var->access_basic()->name, type, global, hlasm_ctx_.current_statement_location().file, var->symbol_range.start);
+}
+
+void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range)
+{
+    // find ORD occurence of COPY_OP
+    lsp::symbol_occurence occ(lsp::occurence_kind::ORD, name, operand_range);
+    auto ord_sym = std::find(stmt_occurences_.begin(), stmt_occurences_.end(), occ);
+
+    if (ord_sym != stmt_occurences_.end())
+        ord_sym->kind = lsp::occurence_kind::COPY_OP;
+    else
+        stmt_occurences_.emplace_back(lsp::occurence_kind::COPY_OP, name, operand_range);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
