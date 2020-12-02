@@ -53,7 +53,7 @@ export class EventsHandler {
         // initialize wildcards
         this.configSetup.updateWildcards();
         // first run, simulate ondidopen
-        if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId == 'plaintext') {
+        if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId == 'hlasm') {
             this.onDidOpenTextDocument(vscode.window.activeTextEditor.document, highlight);
         }
     }
@@ -104,8 +104,8 @@ export class EventsHandler {
 
     // when document opens, show parse progress
     onDidOpenTextDocument(document: vscode.TextDocument, highlight: SemanticTokensFeature) {
-        // remove this once LSP implements semantic tokens
         this.editorChanged(document);
+        // remove this once LSP implements semantic tokens
         highlight.askForTokens(document);
     }
 
