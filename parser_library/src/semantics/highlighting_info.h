@@ -16,6 +16,7 @@
 #define HIGHLIGHTING_INFO
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -39,7 +40,7 @@ struct versioned_document
 };
 
 // vector of tokens
-using lines_info = std::vector<token_info>;
+using lines_info = std::set<token_info>;
 
 // representation about the changes in continuation
 struct continuation_info

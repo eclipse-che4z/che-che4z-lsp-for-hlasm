@@ -266,6 +266,13 @@ struct PARSER_LIBRARY_EXPORT token_info
     token_info(const range& token_range, semantics::hl_scopes scope);
     range token_range;
     semantics::hl_scopes scope;
+
+    bool operator<(const token_info& rhs) const
+    {
+        return token_range.start.line < rhs.token_range.start.line
+            || (token_range.start.line == rhs.token_range.start.line
+                && token_range.start.column < rhs.token_range.start.column);
+    }
 };
 
 struct PARSER_LIBRARY_EXPORT source

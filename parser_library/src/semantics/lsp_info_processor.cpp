@@ -350,23 +350,29 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
     return result;
 }
 
-std::vector<size_t> hlasm_plugin::parser_library::semantics::lsp_info_processor::semantic_tokens() const
+std::vector<size_t> lsp_info_processor::semantic_tokens() const
 {
     std::vector<size_t> encoded_tokens;
-    for (size_t i = 0; i < hl_info_.lines.size(); i++)
+
+    token_info first_virtual_token(0,0,0,0,hl_scopes::label);
+    const token_info* last = &first_virtual_token;
+
+
+    for (const auto& current : hl_info_.lines)
     {
-        const auto& current = hl_info_.lines[i];
-        size_t delta_line = (i == 0) ? current.token_range.start.line
-                                     : current.token_range.start.line - hl_info_.lines[i - 1].token_range.start.line;
-        size_t delta_char = (i == 0 || hl_info_.lines[i - 1].token_range.start.line != current.token_range.start.line)
+
+        size_t delta_line = current.token_range.start.line - last->token_range.start.line;
+
+        size_t delta_char = last->token_range.start.line != current.token_range.start.line
             ? current.token_range.start.column
-            : current.token_range.start.column - hl_info_.lines[i - 1].token_range.start.column;
+            : current.token_range.start.column - last->token_range.start.column;
+
         size_t length = (current.token_range.start.column > current.token_range.end.column)
             ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
             : current.token_range.end.column - current.token_range.start.column;
 
         // skip overlaying tokens
-        if (delta_line == 0 && delta_char == 0 && i != 0)
+        if (delta_line == 0 && delta_char == 0 && last != &first_virtual_token)
             continue;
 
         encoded_tokens.push_back(delta_line);
@@ -374,6 +380,8 @@ std::vector<size_t> hlasm_plugin::parser_library::semantics::lsp_info_processor:
         encoded_tokens.push_back(length);
         encoded_tokens.push_back(static_cast<std::underlying_type_t<hl_scopes>>(current.scope));
         encoded_tokens.push_back((size_t)0);
+
+        last = &current;
     }
 
     return encoded_tokens;
@@ -418,34 +426,13 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             auto first = rest;
             first.token_range.end.line = first.token_range.start.line;
             first.token_range.end.column = hl_info_.cont_info.continuation_column;
-            insert_sorted_hl_symbol(first);
+            hl_info_.lines.insert(std::move(first));
             rest.token_range.start.line++;
             rest.token_range.start.column = hl_info_.cont_info.continue_column;
         }
-        insert_sorted_hl_symbol(rest);
+        hl_info_.lines.insert(std::move(rest));
     }
 }
-
-void lsp_info_processor::insert_sorted_hl_symbol(token_info symbol)
-{
-    if (hl_info_.lines.empty())
-        hl_info_.lines.push_back(symbol);
-    else
-    {
-        for (lines_info::reverse_iterator it = hl_info_.lines.rbegin(); it != hl_info_.lines.rend(); it++)
-        {
-            if (it->token_range.start.line < symbol.token_range.start.line
-                || (it->token_range.start.line == symbol.token_range.start.line
-                    && it->token_range.start.column <= symbol.token_range.start.column))
-            {
-                hl_info_.lines.insert(it.base(), symbol);
-                return;
-            }
-        }
-        hl_info_.lines.insert(hl_info_.lines.begin(), symbol);
-    }
-}
-
 
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {
