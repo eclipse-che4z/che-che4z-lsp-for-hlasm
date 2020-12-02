@@ -100,7 +100,7 @@ public:
     virtual const string_array hover(const char* document_uri, const position pos);
     virtual completion_list completion(
         const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
-    virtual num_array semantic_tokens(const char* document_uri);
+    virtual const std::set<token_info>& semantic_tokens(const char* document_uri);
 
     // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);

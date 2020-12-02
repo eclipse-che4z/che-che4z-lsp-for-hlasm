@@ -149,16 +149,52 @@ void feature_language_features::completion(const json& id, const json& params)
     response_->respond(id, "", to_ret);
 }
 
+json convert_tokens_to_num_array(const std::set<parser_library::token_info>& tokens)
+{
+    using namespace parser_library;
+
+    json encoded_tokens = json::array();
+
+    parser_library::token_info first_virtual_token(0, 0, 0, 0, semantics::hl_scopes::label);
+    const token_info* last = &first_virtual_token;
+
+    for (const auto& current : tokens)
+    {
+        size_t delta_line = current.token_range.start.line - last->token_range.start.line;
+
+        size_t delta_char = last->token_range.start.line != current.token_range.start.line
+            ? current.token_range.start.column
+            : current.token_range.start.column - last->token_range.start.column;
+
+        size_t length = (current.token_range.start.column > current.token_range.end.column)
+            ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
+            : current.token_range.end.column - current.token_range.start.column;
+
+        // skip overlaying tokens
+        if (delta_line == 0 && delta_char == 0 && last != &first_virtual_token)
+            continue;
+
+        encoded_tokens.push_back(delta_line);
+        encoded_tokens.push_back(delta_char);
+        encoded_tokens.push_back(length);
+        encoded_tokens.push_back(static_cast<std::underlying_type_t<semantics::hl_scopes>>(current.scope));
+        encoded_tokens.push_back((size_t)0);
+
+        last = &current;
+    }
+
+    return encoded_tokens;
+}
+
 void feature_language_features::semantic_tokens(const json& id, const json& params)
 {
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
 
     auto tokens = ws_mngr_.semantic_tokens(uri_to_path(document_uri).c_str());
-    json num_array = json::array();
-    for (size_t i = 0; i < tokens.size; i++)
-        num_array.push_back(tokens.arr[i]);
+    json num_array = convert_tokens_to_num_array(tokens);
 
     response_->respond(id, "", { { "data", num_array } });
 }
+
 
 } // namespace hlasm_plugin::language_server::lsp

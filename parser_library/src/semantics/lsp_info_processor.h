@@ -72,7 +72,7 @@ public:
     std::vector<position_uri_s> references(const position& pos) const;
     std::vector<std::string> hover(const position& pos) const;
     completion_list_s completion(const position& pos, const char trigger_char, int trigger_kind) const;
-    std::vector<size_t> semantic_tokens() const;
+    const lines_info& semantic_tokens() const;
 
     // add one lsp symbol to the context
     void add_lsp_symbol(context::lsp_symbol& symbol);

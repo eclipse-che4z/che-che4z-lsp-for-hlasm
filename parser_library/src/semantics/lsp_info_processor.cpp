@@ -350,41 +350,9 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
     return result;
 }
 
-std::vector<size_t> lsp_info_processor::semantic_tokens() const
+const lines_info& lsp_info_processor::semantic_tokens() const
 {
-    std::vector<size_t> encoded_tokens;
-
-    token_info first_virtual_token(0,0,0,0,hl_scopes::label);
-    const token_info* last = &first_virtual_token;
-
-
-    for (const auto& current : hl_info_.lines)
-    {
-
-        size_t delta_line = current.token_range.start.line - last->token_range.start.line;
-
-        size_t delta_char = last->token_range.start.line != current.token_range.start.line
-            ? current.token_range.start.column
-            : current.token_range.start.column - last->token_range.start.column;
-
-        size_t length = (current.token_range.start.column > current.token_range.end.column)
-            ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
-            : current.token_range.end.column - current.token_range.start.column;
-
-        // skip overlaying tokens
-        if (delta_line == 0 && delta_char == 0 && last != &first_virtual_token)
-            continue;
-
-        encoded_tokens.push_back(delta_line);
-        encoded_tokens.push_back(delta_char);
-        encoded_tokens.push_back(length);
-        encoded_tokens.push_back(static_cast<std::underlying_type_t<hl_scopes>>(current.scope));
-        encoded_tokens.push_back((size_t)0);
-
-        last = &current;
-    }
-
-    return encoded_tokens;
+    return hl_info_.lines;
 }
 
 void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)

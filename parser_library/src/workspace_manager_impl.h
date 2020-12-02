@@ -186,18 +186,17 @@ public:
         return completion_result;
     }
 
-    std::vector<size_t> tokens;
-    num_array semantic_tokens(const char* document_uri)
+    std::set<token_info> empty_tokens;
+    const std::set<token_info>& semantic_tokens(const char* document_uri)
     {
-        tokens.clear();
         if (cancel_ && *cancel_)
-            return { tokens.data(), tokens.size() };
+            return empty_tokens;
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            tokens = file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
+            return file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
 
-        return { tokens.data(), tokens.size() };
+        return empty_tokens;
     }
 
     void launch(std::string file_name, bool stop_on_entry)
