@@ -16,14 +16,15 @@
 parser grammar lookahead_rules; 
 
 look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
-	: seq_symbol ~EOLLN* 
+	: seq_symbol ~EOLLN* EOLLN
 	{
 		collector.set_label_field($seq_symbol.ss,provider.get_range($seq_symbol.ctx));
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));
 		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-	} EOLLN
-	| ORDSYMBOL? SPACE instruction operand_field_rest 
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($seq_symbol.ctx->getStart(), $EOLLN);
+	}
+	| ORDSYMBOL? SPACE instruction operand_field_rest EOLLN
 	{
 		if ($ORDSYMBOL)
 		{
@@ -31,18 +32,24 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 			auto id = ctx->ids().add($ORDSYMBOL->getText());
 			collector.set_label_field(id,nullptr,r); 
 		}
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		
+		if ($ORDSYMBOL)
+			set_source_indices($ORDSYMBOL, $EOLLN);
+		else
+			set_source_indices($SPACE, $EOLLN);
+		
 		$op_text = $operand_field_rest.ctx->getText();
 		$op_range = provider.get_range($operand_field_rest.ctx);
-	} EOLLN
-	| bad_look
+	}
+	| bad_look EOLLN
 	{
 		collector.set_label_field(provider.get_range(_localctx));
 		collector.set_instruction_field(provider.get_range(_localctx));
 		collector.set_operand_remark_field(provider.get_range(_localctx));
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-	} EOLLN
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($bad_look.ctx->getStart(), $EOLLN);
+	}
 	| EOF	{finished_flag=true;};
 
 bad_look

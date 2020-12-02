@@ -164,22 +164,24 @@ operand_field_rest
 	: ~EOLLN*;
 
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} 
+	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOLLN
 	{
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($first_part.ctx->getStart(), $EOLLN);
 		if (!$first_part.ctx->exception)
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
 		}
-	} EOLLN
-	| SPACE? 
+	}
+	| SPACE? EOLLN
 	{
 		collector.set_label_field(provider.get_range( _localctx));
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-	} EOLLN
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($SPACE, $EOLLN);
+	}
 	| EOF	{finished_flag=true;};
 
 num_ch
