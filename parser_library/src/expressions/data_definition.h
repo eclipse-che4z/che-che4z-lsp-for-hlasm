@@ -63,7 +63,7 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
     // Creates the data definition. format is the string representation of data definition as the user
     // has written it, excapt all expressions are replaced with '&' and nominal value is replaced with " ".
     // The expressions are passed separately as exprs in the same order as '&' appear in the format. begin is
-    // the position of first character of data definition. The function filles the passed collector with 
+    // the position of first character of data definition. The function filles the passed collector with
     // highlighting information.
     static data_definition create(semantics::collector& coll,
         std::string format,
@@ -123,7 +123,11 @@ private:
 class data_definition::parser
 {
 public:
-    parser(semantics::collector & coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin);
+    parser(semantics::collector& coll,
+        std::string format,
+        mach_expr_list exprs,
+        nominal_value_ptr nominal,
+        position begin);
     // Parses the data definition specified as parameters of constructor.
     data_definition parse();
 
@@ -147,7 +151,7 @@ public:
     void assign_expr_to_modifier(char modifier, mach_expr_ptr expr);
 
 private:
-    semantics::collector & collector_;
+    semantics::collector& collector_;
     // Input parameters specifying the data definition as grammar parsed it
     std::string format_;
     mach_expr_list exprs_;

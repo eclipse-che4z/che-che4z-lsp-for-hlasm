@@ -383,7 +383,7 @@ void parser_impl::set_source_indices(const antlr4::Token* start, const antlr4::T
     auto a1 = statement_start();
     auto a2 = statement_end();
 
-    if(start)
+    if (start)
         start_offset = start->getStartIndex();
     else
         start_offset = stop->getStartIndex();

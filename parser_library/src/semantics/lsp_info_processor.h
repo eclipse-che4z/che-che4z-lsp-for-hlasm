@@ -81,6 +81,7 @@ public:
 
     // finishes collected data
     void finish();
+
 private:
     // stored symbols that couldn't be processed without further information
     std::vector<context::var_definition> deferred_vars_;

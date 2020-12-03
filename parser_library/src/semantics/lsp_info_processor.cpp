@@ -351,15 +351,9 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
     return result;
 }
 
-void lsp_info_processor::finish()
-{
-    std::sort(hl_info_.lines.begin(), hl_info_.lines.end());
-}
+void lsp_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
 
-const lines_info& lsp_info_processor::semantic_tokens() const
-{
-    return hl_info_.lines;
-}
+const lines_info& lsp_info_processor::semantic_tokens() const { return hl_info_.lines; }
 
 void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 {

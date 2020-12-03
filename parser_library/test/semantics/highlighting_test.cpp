@@ -28,6 +28,6 @@ TEST(highlighting, AIF)
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
     auto tokens = a.lsp_processor().semantic_tokens();
-    
+
     int i = 0;
 }
