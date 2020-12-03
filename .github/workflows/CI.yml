@@ -31,8 +31,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v1
       - name: Configure
         shell: cmd
         run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ../
@@ -135,7 +133,7 @@ jobs:
           chmod +x clients/vscode-hlasmplugin/bin/darwin/language_server
           chmod +x clients/vscode-hlasmplugin/bin/linux/language_server
       - name: Extract branch name
-        run: echo ::set-env name=BRANCH::${GITHUB_REF#refs/heads/}
+        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
         if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
@@ -144,9 +142,9 @@ jobs:
       - name: Package VSIX
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
       - name: Get VSIX filename
-        run: echo ::set-env name=VSIX_FILENAME::$(ls clients/vscode-hlasmplugin/*.vsix)
+        run: echo VSIX_FILENAME=$(ls clients/vscode-hlasmplugin/*.vsix) >> $GITHUB_ENV
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
+        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Upload VSIX
         uses: actions/upload-artifact@v1
         with:
@@ -166,7 +164,7 @@ jobs:
           apk update
           apk add --no-cache linux-headers git g++ cmake util-linux-dev npm ninja pkgconfig openjdk8 maven
       - name: Extract branch name
-        run: echo ::set-env name=BRANCH::${GITHUB_REF#refs/heads/}
+        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
       - name: Update version
         if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
@@ -179,9 +177,9 @@ jobs:
       - name: Server Test
         run: cd build/bin && ./server_test && ./library_test
       - name: Get VSIX filename
-        run: echo ::set-env name=VSIX_FILENAME::$(ls build/bin/*.vsix)
+        run: echo VSIX_FILENAME=$(ls build/bin/*.vsix) >> $GITHUB_ENV
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
+        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Rename VSIX
         run: mv ${{ env.VSIX_FILENAME }} hlasm-language-support-${{ env.VERSION }}-alpine.vsix
       - name: Upload VSIX
@@ -203,7 +201,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get new version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
+        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Download VSIX
         uses: actions/download-artifact@v1
         with:
@@ -280,7 +278,7 @@ jobs:
       - name: Install Chromium
         run: apk add --no-cache chromium
       - name: Get version
-        run: echo ::set-env name=VERSION::$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")
+        run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Download VSIX
         uses: actions/download-artifact@v2
         with:
