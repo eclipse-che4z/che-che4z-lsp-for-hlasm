@@ -14,6 +14,7 @@
 
 #include "lsp_info_processor.h"
 
+#include <algorithm>
 #include <sstream>
 
 #include "context/instruction.h"
@@ -350,6 +351,11 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
     return result;
 }
 
+void lsp_info_processor::finish()
+{
+    std::sort(hl_info_.lines.begin(), hl_info_.lines.end());
+}
+
 const lines_info& lsp_info_processor::semantic_tokens() const
 {
     return hl_info_.lines;
@@ -394,11 +400,11 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             auto first = rest;
             first.token_range.end.line = first.token_range.start.line;
             first.token_range.end.column = hl_info_.cont_info.continuation_column;
-            hl_info_.lines.insert(std::move(first));
+            hl_info_.lines.push_back(std::move(first));
             rest.token_range.start.line++;
             rest.token_range.start.column = hl_info_.cont_info.continue_column;
         }
-        hl_info_.lines.insert(std::move(rest));
+        hl_info_.lines.push_back(std::move(rest));
     }
 }
 

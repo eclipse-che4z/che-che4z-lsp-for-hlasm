@@ -186,8 +186,8 @@ public:
         return completion_result;
     }
 
-    std::set<token_info> empty_tokens;
-    const std::set<token_info>& semantic_tokens(const char* document_uri)
+    std::vector<token_info> empty_tokens;
+    const std::vector<token_info>& semantic_tokens(const char* document_uri)
     {
         if (cancel_ && *cancel_)
             return empty_tokens;

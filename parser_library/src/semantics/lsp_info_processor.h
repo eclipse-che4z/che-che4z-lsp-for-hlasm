@@ -79,6 +79,8 @@ public:
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
 
+    // finishes collected data
+    void finish();
 private:
     // stored symbols that couldn't be processed without further information
     std::vector<context::var_definition> deferred_vars_;

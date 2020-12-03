@@ -149,7 +149,7 @@ void feature_language_features::completion(const json& id, const json& params)
     response_->respond(id, "", to_ret);
 }
 
-json convert_tokens_to_num_array(const std::set<parser_library::token_info>& tokens)
+json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
 {
     using namespace parser_library;
 
