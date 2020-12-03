@@ -122,7 +122,7 @@ TEST(language_features, semantic_tokens)
 
     std::string file_text = "A EQU 1\n SAM31";
     ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
-    json params1 = R"({"textDocument":{"uri":"file:///test"}})"_json;
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
 
     json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
     EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
@@ -145,7 +145,7 @@ IIIIIIIIIIIIIII1
 )";
 
     ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
-    json params1 = R"({"textDocument":{"uri":"file:///test"}})"_json;
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
 
     // clang-format off
     json response { { "data",
