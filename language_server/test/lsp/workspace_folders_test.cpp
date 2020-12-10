@@ -76,6 +76,18 @@ TEST(workspace_folders, did_change_workspace_folders)
     notifs["workspace/didChangeWorkspaceFolders"]("", params3);
 }
 
+TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
+{
+    ws_mngr_mock ws_mngr;
+    lsp::feature_workspace_folders f(ws_mngr);
+
+    std::map<std::string, method> notifs;
+
+    f.register_methods(notifs);
+    notifs["workspace/didChangeWatchedFiles"](
+        "", R"({"changes":[{"uri":"user_storage:/user/storage/layout","type":2}, {"uri":"file:///file_name"}]})"_json);
+}
+
 TEST(workspace_folders, initialize_folders)
 {
     using namespace ::testing;

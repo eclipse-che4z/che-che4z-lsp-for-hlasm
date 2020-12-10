@@ -2,6 +2,11 @@
 
 ## ****Unreleased****
 
+## [0.11.1] - 2020-11-09
+
+#### Fixed
+- Plugin crashing when used on che-theia 7.21.
+
 ## [0.11.0] - 2020-05-07
 
 #### Added
