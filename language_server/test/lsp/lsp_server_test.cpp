@@ -87,3 +87,13 @@ TEST(lsp_server, not_implemented_method)
     s.message_received(j);
     // No result is tested, server should ignore unknown LSP method
 }
+TEST(lsp_server_test, wrong_message_received)
+{
+    ws_mngr_mock ws_mngr;
+    send_message_provider_mock smpm;
+    lsp::server s(ws_mngr);
+    s.set_send_message_provider(&smpm);
+
+    s.message_received(
+        R"({"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"user_storage:/user/storage/layout","languageId":"plaintext","version":4,"text":"sad"}}})"_json);
+}
