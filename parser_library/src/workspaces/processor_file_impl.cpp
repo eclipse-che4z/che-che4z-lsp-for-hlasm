@@ -33,6 +33,7 @@ processor_file_impl::processor_file_impl(file_impl&& f_impl, std::atomic<bool>* 
 
 processor_file_impl::processor_file_impl(const file_impl& file, std::atomic<bool>* cancel)
     : file_impl(file)
+    , cancel_(cancel)
 {}
 
 void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
