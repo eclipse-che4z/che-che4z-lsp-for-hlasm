@@ -49,9 +49,11 @@ suite('Integration Test Suite', () => {
 		assert.equal(vscode.window.activeTextEditor, openFileEditor);
 		// register callback to check for the correctness of the diagnostic
 		const listener = vscode.languages.onDidChangeDiagnostics(_ => {
-			const diags = vscode.languages.getDiagnostics();
+			const allDiags = vscode.languages.getDiagnostics();
 			listener.dispose();
-			if (diags.length == 1 && diags[0][1][0].code == 'M003')
+			var openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+			
+			if (openDiags.length == 1 && openDiags[0].code == 'M003')
 				done();
 			else
 				done('Wrong diagnostic'); 
