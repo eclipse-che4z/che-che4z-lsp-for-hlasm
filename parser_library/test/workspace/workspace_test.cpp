@@ -367,7 +367,7 @@ TEST_F(workspace_test, did_change_watched_files)
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
 }
 
-TEST_F(workspace_test, missing_library_requried)
+TEST_F(workspace_test, missing_library_required)
 {
     for (auto type : { file_manager_opt_variant::old_school,
              file_manager_opt_variant::default_to_required,
