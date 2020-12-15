@@ -102,7 +102,7 @@ literal
 	: equals data_def;
 
 mach_data_attribute returns [std::string attribute, id_index data = nullptr]
-	: ORDSYMBOL ATTR mach_data_attribute_value
+	: ORDSYMBOL attr mach_data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = $ORDSYMBOL->getText();
@@ -114,7 +114,7 @@ mach_data_attribute_value returns [id_index data = nullptr]
 	| mach_location_counter
 	| id
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx), hl_scopes::operand));
+		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx), hl_scopes::ordinary_symbol));
 		$data = $id.name;
 	};
 
@@ -134,7 +134,7 @@ string_ch_c returns [std::string value]
 	| tmp=string_ch_c string_ch				{$value = std::move($tmp.value); $value.append($string_ch.value);};
 
 string returns [std::string value]
-	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)	
+	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)
 	{
 		$value.append(std::move($string_ch_c.value));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
