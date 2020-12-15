@@ -286,7 +286,5 @@ jobs:
           path: clients/vscode-hlasmplugin/plugin/
       - name: npm install
         run: cd clients/vscode-hlasmplugin && npm install
-      - name: Typescript compile
-        run: cd clients/vscode-hlasmplugin && npm run compile
       - name: Run Theia Tests
-        run: cd clients/vscode-hlasmplugin && node ./build/bin/theiaTest.js /home/theia/
+        run: cd clients/vscode-hlasmplugin && npm run test:theia /home/theia/
