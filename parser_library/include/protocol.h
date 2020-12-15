@@ -273,6 +273,11 @@ struct PARSER_LIBRARY_EXPORT token_info
             || (token_range.start.line == rhs.token_range.start.line
                 && token_range.start.column < rhs.token_range.start.column);
     }
+
+    bool operator==(const token_info& rhs) const
+    {
+        return token_range == rhs.token_range && scope == rhs.scope;
+    }
 };
 
 struct PARSER_LIBRARY_EXPORT source
