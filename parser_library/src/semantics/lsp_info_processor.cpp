@@ -398,7 +398,9 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             rest.token_range.start.line++;
             rest.token_range.start.column = hl_info_.cont_info.continue_column;
         }
-        hl_info_.lines.push_back(std::move(rest));
+
+        if(rest.token_range.start != rest.token_range.end) // do not add empty tokens
+            hl_info_.lines.push_back(std::move(rest));
     }
 }
 

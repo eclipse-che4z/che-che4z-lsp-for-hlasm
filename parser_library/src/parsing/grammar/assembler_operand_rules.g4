@@ -94,7 +94,7 @@ asm_op_inner returns [std::unique_ptr<complex_assembler_operand::component_value
 
 asm_op_comma_c returns [std::vector<std::unique_ptr<complex_assembler_operand::component_value_t>> asm_ops]
 	: asm_op_inner														{$asm_ops.push_back(std::move($asm_op_inner.op));}
-	| tmp=asm_op_comma_c COMMA asm_op_inner								{$tmp.asm_ops.push_back(std::move($asm_op_inner.op)); $asm_ops = std::move($tmp.asm_ops);};	
+	| tmp=asm_op_comma_c comma asm_op_inner								{$tmp.asm_ops.push_back(std::move($asm_op_inner.op)); $asm_ops = std::move($tmp.asm_ops);};	
 
 end_instr_word returns [std::string value]
 	: end_instr_word_inner
