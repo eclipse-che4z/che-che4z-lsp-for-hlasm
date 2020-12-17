@@ -19,11 +19,14 @@
 #include "network/uri/uri.hpp"
 
 #include "../logger.h"
+#include "lib_config.h"
+
 
 namespace hlasm_plugin::language_server::lsp {
 
-feature_workspace_folders::feature_workspace_folders(parser_library::workspace_manager& ws_mngr)
-    : feature(ws_mngr)
+feature_workspace_folders::feature_workspace_folders(
+    parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
+    : feature(ws_mngr, response_provider)
 {}
 
 void feature_workspace_folders::register_methods(std::map<std::string, method>& methods)
@@ -36,6 +39,9 @@ void feature_workspace_folders::register_methods(std::map<std::string, method>& 
     methods.emplace("workspace/didChangeWatchedFiles",
         std::bind(
             &feature_workspace_folders::did_change_watched_files, this, std::placeholders::_1, std::placeholders::_2));
+    methods.emplace("workspace/didChangeConfiguration",
+        std::bind(
+            &feature_workspace_folders::did_change_configuration, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_workspace_folders::register_capabilities()
@@ -46,6 +52,9 @@ json feature_workspace_folders::register_capabilities()
 
 void feature_workspace_folders::initialize_feature(const json& initialize_params)
 {
+    // Get config at initialization
+    send_configuration_request();
+
     bool ws_folders_support = false;
     auto capabs = initialize_params["capabilities"];
     auto ws = capabs.find("workspace");
@@ -134,4 +143,28 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
         paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });
     ws_mngr_.did_change_watched_files(c_uris.data(), c_uris.size());
 }
+
+void feature_workspace_folders::send_configuration_request()
+{
+    static const json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+    response_->request("config_request_" + std::to_string(config_request_number_),
+        "workspace/configuration",
+        config_request_args,
+        std::bind(&feature_workspace_folders::configuration, this, std::placeholders::_1, std::placeholders::_2));
+    ++config_request_number_;
+}
+
+void feature_workspace_folders::configuration(const json&, const json& params) const
+{
+    if (params.size() == 0)
+    {
+        LOG_WARNING("Empty configuration response received.");
+        return;
+    }
+
+    ws_mngr_.configuration_changed(parser_library::lib_config::load_from_json(params[0]));
+}
+
+void feature_workspace_folders::did_change_configuration(const json&, const json&) { send_configuration_request(); }
+
 } // namespace hlasm_plugin::language_server::lsp

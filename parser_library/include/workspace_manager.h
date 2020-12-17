@@ -26,6 +26,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "lib_config.h"
+#include "message_consumer.h"
 #include "parser_library_export.h"
 #include "protocol.h"
 
@@ -97,15 +99,17 @@ public:
 
     virtual position_uri definition(const char* document_uri, const position pos);
     virtual position_uris references(const char* document_uri, const position pos);
-    virtual const string_array hover(const char* document_uri, const position pos);
+    virtual string_array hover(const char* document_uri, const position pos);
     virtual completion_list completion(
         const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
     virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
 
+    virtual void configuration_changed(const lib_config& new_config);
+
     // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
     virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
-
+    virtual void set_message_consumer(message_consumer* consumer);
 
     // debugger
     virtual void register_debug_event_consumer(debug_event_consumer& consumer);

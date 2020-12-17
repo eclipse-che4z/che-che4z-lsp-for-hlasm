@@ -332,6 +332,11 @@
           "type": "boolean",
           "default": false,
           "description": "Disable in case you experience lags when typing. Note: Extension will be restarted upon changing this option."
+        },
+        "hlasm.diagnosticsSuppressLimit": {
+          "type": "integer",
+          "default": 10,
+          "description": "This option limits number of diagnostics shown for an open code when there is no configuration in pgm_conf.json."
         }
       }
     }
