@@ -164,25 +164,24 @@ operand_field_rest
 	: ~EOLLN*;
 
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} 
+	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOLLN
 	{
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($first_part.ctx->getStart(), $EOLLN);
 		if (!$first_part.ctx->exception)
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
-			process_instruction();
 		}
-	} EOLLN
-	| SPACE? 
+	}
+	| SPACE? EOLLN
 	{
 		collector.set_label_field(provider.get_range( _localctx));
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
-		ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
-		process_instruction();
-		process_statement();
-	} EOLLN
+		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
+		set_source_indices($SPACE, $EOLLN);
+	}
 	| EOF	{finished_flag=true;};
 
 num_ch
@@ -194,7 +193,8 @@ num returns [self_def_t value]
 self_def_term returns [self_def_t value]
 	: ORDSYMBOL string							
 	{
-		auto opt = $ORDSYMBOL->getText(); 
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL),hl_scopes::self_def_type));
+		auto opt = $ORDSYMBOL->getText();
 		$value = parse_self_def_term(opt, $string.value, provider.get_range($ORDSYMBOL,$string.ctx->getStop()));
 	};
 
@@ -253,7 +253,7 @@ comma
 dot 
 	: DOT {collector.add_hl_symbol(token_info(provider.get_range( $DOT),hl_scopes::operator_symbol)); };
 apostrophe 
-	: APOSTROPHE {collector.add_hl_symbol(token_info(provider.get_range( $APOSTROPHE),hl_scopes::operator_symbol)); };
+	: APOSTROPHE ;
 attr 
 	: ATTR {collector.add_hl_symbol(token_info(provider.get_range( $ATTR),hl_scopes::operator_symbol)); };
 lpar 

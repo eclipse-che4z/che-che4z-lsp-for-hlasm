@@ -16,8 +16,11 @@
 
 #include <filesystem>
 
+#include "network/uri/uri.hpp"
+
 #include "../logger.h"
 #include "lib_config.h"
+
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -124,7 +127,17 @@ void feature_workspace_folders::did_change_watched_files(const json&, const json
     std::vector<json> changes = params["changes"];
     std::vector<std::string> paths;
     for (auto& change : changes)
-        paths.push_back(uri_to_path(change["uri"].get<std::string>()));
+    {
+        try
+        {
+            paths.push_back(uri_to_path(change["uri"].get<std::string>()));
+        }
+        catch (const std::system_error& e)
+        {
+            LOG_ERROR(
+                std::string("An exception caught while parsing didChangeWatchedFiles notification uri: ") + e.what());
+        }
+    }
     std::vector<const char*> c_uris;
     std::transform(
         paths.begin(), paths.end(), std::back_inserter(c_uris), [](const std::string& s) { return s.c_str(); });

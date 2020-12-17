@@ -16,11 +16,11 @@
 parser grammar label_field_rules;
 
 label
-	: l_char_string											
+	: l_char_string
 	{
 		range r = provider.get_range( $l_char_string.ctx);
 		auto label = $l_char_string.value;
-		if (label.size()>1 && label[0] == '.')
+		if (label.size() > 1 && label[0] == '.')
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::seq_symbol));
 			auto id = parse_identifier(label.substr(1),r);
@@ -30,32 +30,29 @@ label
 		}
 		else
 		{
-			collector.add_hl_symbol(token_info(r,hl_scopes::label));
+			if (!label.empty() && label[0] != '&')
+				collector.add_hl_symbol(token_info(r,hl_scopes::label));
 			auto id = ctx->ids().add($l_char_string.value);
 			collector.set_label_field(id,$l_char_string.ctx,r); 
 		}
-
-														
-	}		
-	| l_char_string_sp l_char_string_o										
+	}
+	| l_char_string_sp l_char_string_o
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $l_char_string_sp.ctx),hl_scopes::label));
 		collector.add_hl_symbol(token_info(provider.get_range( $l_char_string_o.ctx),hl_scopes::label));
 		$l_char_string_sp.value.append(std::move($l_char_string_o.value));
 		auto r = provider.get_range( $l_char_string_sp.ctx->getStart(),$l_char_string_o.ctx->getStop());
 		collector.set_label_field(std::move($l_char_string_sp.value),r);
-	}																				
-	| l_model												
+	}
+	| l_model
 	{
 		collector.set_label_field(std::move($l_model.chain),provider.get_range( $l_model.ctx));
-		collector.add_hl_symbol(token_info(provider.get_range( $l_model.ctx),hl_scopes::label));
 	}	//model stmt rule with no space
-    | l_model_sp											
+	| l_model_sp
 	{
 		collector.set_label_field(std::move($l_model_sp.chain),provider.get_range( $l_model_sp.ctx));
-		collector.add_hl_symbol(token_info(provider.get_range( $l_model_sp.ctx),hl_scopes::label));
 	}	//model stmt rule with possible space
-	|														
+	|
 	{
 		collector.set_label_field(provider.get_empty_range( _localctx->getStart()));
 	};
@@ -97,6 +94,8 @@ l_model_sp returns [concat_chain chain]
 		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string.value)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_string_v_apo.chain.begin()), std::make_move_iterator($l_string_v_apo.chain.end()));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 l_model returns [concat_chain chain]
 	: l_string_v			
@@ -118,6 +117,8 @@ l_model returns [concat_chain chain]
 		$chain = std::move($l_string_v.chain);
 		$chain.push_back(std::make_unique<char_str_conc>(std::move($l_string_no_space_c.value)));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 
 
@@ -181,6 +182,8 @@ l_string_v returns [concat_chain chain]
 		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), std::make_move_iterator($l_str_v.chain.begin()), std::make_move_iterator($l_str_v.chain.end()));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 l_string_o returns [std::string value]
 	: l_string												{$value = std::move($l_string.value);}				

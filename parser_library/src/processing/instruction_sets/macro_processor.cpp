@@ -22,10 +22,9 @@
 namespace hlasm_plugin::parser_library::processing {
 
 macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider)
-    : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
+    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
 {}
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
@@ -229,12 +228,10 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
             continue;
         }
 
-        auto tmp = op->access_mac();
+        auto tmp = op->access_mac()->access_chain();
         assert(tmp);
 
         auto& tmp_chain = tmp->chain;
-
-        semantics::concatenation_point::clear_concat_chain(tmp_chain);
 
         if (is_keyword(tmp_chain, mngr)) // keyword
         {
@@ -269,7 +266,7 @@ void macro_processor::get_keyword_arg(const resolved_statement& statement,
     if (named == hlasm_ctx.get_macro_definition(statement.opcode_ref().value)->named_params().end()
         || named->second->param_type == context::macro_param_type::POS_PAR_TYPE)
     {
-        add_diagnostic(diagnostic_op::error_E010("keyword parameter", op_range));
+        add_diagnostic(diagnostic_op::warning_W014(op_range));
 
         // MACROCASE TODO
         auto name = chain[0]->access_str()->value;

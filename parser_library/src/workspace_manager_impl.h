@@ -81,7 +81,6 @@ public:
         if (cancel_ && *cancel_)
             return;
 
-        notify_highlighting_consumers();
         notify_diagnostics_consumers();
         // only on open
         notify_performance_consumers(document_uri);
@@ -98,7 +97,6 @@ public:
         if (cancel_ && *cancel_)
             return;
 
-        notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
 
@@ -106,7 +104,6 @@ public:
     {
         workspaces::workspace& ws = ws_path_match(document_uri);
         ws.did_close_file(document_uri);
-        notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
 
@@ -117,11 +114,8 @@ public:
             workspaces::workspace& ws = ws_path_match(path);
             ws.did_change_watched_files(path);
         }
-        notify_highlighting_consumers();
         notify_diagnostics_consumers();
     }
-
-    void register_highlighting_consumer(highlighting_consumer* consumer) { hl_consumers_.push_back(consumer); }
 
     void register_diagnostics_consumer(diagnostics_consumer* consumer) { diag_consumers_.push_back(consumer); }
 
@@ -203,6 +197,19 @@ public:
 
     lib_config global_config_;
     virtual void configuration_changed(const lib_config& new_config) { global_config_ = new_config; }
+
+    std::vector<token_info> empty_tokens;
+    const std::vector<token_info>& semantic_tokens(const char* document_uri)
+    {
+        if (cancel_ && *cancel_)
+            return empty_tokens;
+
+        auto file = file_manager_.find(document_uri);
+        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
+            return file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
+
+        return empty_tokens;
+    }
 
     void launch(std::string file_name, bool stop_on_entry)
     {
@@ -323,16 +330,6 @@ private:
             collect_diags_from_child(it.second);
     }
 
-    void notify_highlighting_consumers()
-    {
-        auto file_list = file_manager_.list_updated_files();
-        all_highlighting_info hl_info(file_list.data(), file_list.size());
-        for (auto consumer : hl_consumers_)
-        {
-            consumer->consume_highlighting_info(hl_info);
-        }
-    }
-
     void notify_diagnostics_consumers() const
     {
         diags().clear();
@@ -398,7 +395,6 @@ private:
     workspaces::workspace implicit_workspace_;
     std::atomic<bool>* cancel_;
 
-    std::vector<highlighting_consumer*> hl_consumers_;
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<performance_metrics_consumer*> metrics_consumers_;
     message_consumer* message_consumer_ = nullptr;

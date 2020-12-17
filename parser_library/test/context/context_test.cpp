@@ -553,8 +553,8 @@ TEST(context, id_check)
     EXPECT_TRUE(mngr.try_get_symbol_name("LIST").first);
     EXPECT_TRUE(mngr.try_get_symbol_name("T_A").first);
     EXPECT_TRUE(mngr.try_get_symbol_name("T1").first);
-    EXPECT_TRUE(mngr.try_get_symbol_name("a1-").first);
 
+    EXPECT_FALSE(mngr.try_get_symbol_name("a1-").first);
     EXPECT_FALSE(mngr.try_get_symbol_name("*1").first);
     EXPECT_FALSE(mngr.try_get_symbol_name("1av").first);
 }

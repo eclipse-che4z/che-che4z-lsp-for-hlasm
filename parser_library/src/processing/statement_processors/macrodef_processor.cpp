@@ -235,7 +235,7 @@ void macrodef_processor::process_prototype_label(
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
         auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
-        if (var->created || var->subscript.size() != 0)
+        if (var->created || var->subscript.size())
             add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
         else
         {
@@ -273,12 +273,10 @@ void macrodef_processor::process_prototype_operand(
             continue;
         }
 
-        auto tmp = op->access_mac();
+        auto tmp = op->access_mac()->access_chain();
         assert(tmp);
 
         auto& tmp_chain = tmp->chain;
-
-        semantics::concatenation_point::clear_concat_chain(tmp_chain);
 
         if (tmp_chain.size() == 1 && tmp_chain[0]->type == semantics::concat_type::VAR) // if operand is varsym
         {
@@ -313,7 +311,7 @@ void macrodef_processor::process_prototype_operand(
             else
                 add_diagnostic(diagnostic_op::error_E043(op->operand_range));
         }
-        else if (tmp_chain.size() == 0) // if operand is empty
+        else if (tmp_chain.empty()) // if operand is empty
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
     }
 

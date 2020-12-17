@@ -17,6 +17,7 @@
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
 #include "expressions/evaluation_context.h"
+#include "lexing/lexer.h"
 #include "processing/context_manager.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -53,17 +54,42 @@ ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data
     , symbol(std::move(symbol))
 {}
 
-undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const context::dependency_solver& solver) const
+undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
     if (std::holds_alternative<context::id_index>(symbol))
     {
         if (context::symbol_attributes::is_ordinary_attribute(attribute)
-            && !solver.get_symbol(std::get<context::id_index>(symbol)))
+            && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(std::get<context::id_index>(symbol))
+            && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(std::get<context::id_index>(symbol)))
             return { std::get<context::id_index>(symbol) };
         return undef_sym_set();
     }
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
-        return ca_var_sym::get_undefined_attributed_symbols_vs(std::get<semantics::vs_ptr>(symbol), solver);
+    {
+        const auto& vs = std::get<semantics::vs_ptr>(symbol);
+
+        auto undef_syms = ca_var_sym::get_undefined_attributed_symbols_vs(vs, eval_ctx);
+
+        if (undef_syms.empty() && context::symbol_attributes::is_ordinary_attribute(attribute))
+        {
+            context::SET_t substituted_name = vs->evaluate(eval_ctx);
+            processing::context_manager mngr(&eval_ctx);
+
+            if (substituted_name.type != context::SET_t_enum::C_TYPE)
+                return {};
+
+            auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+
+            if (!valid)
+                return {};
+
+            if (context::symbol_attributes::is_ordinary_attribute(attribute)
+                && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(ord_name)
+                && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(ord_name))
+                return { ord_name };
+        }
+        return undef_syms;
+    }
     else
     {
         assert(false);
@@ -109,18 +135,45 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
     return context::SET_t(expr_kind);
 }
 
+void ca_symbol_attribute::try_extract_leading_symbol(std::string& expr)
+{
+    std::string delims = "+-*/()";
+
+    // remove parentheses
+    size_t start = 0;
+    for (; start < expr.size() && expr[start] == '(' && expr[expr.size() - 1 - start] == ')'; ++start) {};
+    expr.resize(expr.size() - start);
+
+    // remove leading using prefixes
+    for (size_t i = start; i < expr.size(); ++i)
+    {
+        if (expr[i] == '.' && i != expr.size() - 1)
+            start = i + 1;
+        else if (!lexing::lexer::ord_char(expr[i]))
+            break;
+    }
+    expr.erase(0, start);
+
+    // look for symbol in the rest
+    if (expr.front() >= '0' && expr.front() <= '9')
+        return;
+    for (size_t i = 0; i < expr.size(); ++i)
+    {
+        if (delims.find(expr[i]) != std::string::npos)
+            expr.resize(i);
+        else if (!lexing::lexer::ord_char(expr[i]))
+            return;
+    }
+}
+
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
     context::id_index name, const evaluation_context& eval_ctx) const
 {
-    auto ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
+    const context::symbol* ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(name);
 
     if (!ord_symbol)
-    {
-        auto found = eval_ctx.attr_provider.lookup_forward_attribute_references({ name });
+        ord_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(name);
 
-        if (auto it = found.find(name); it != found.end())
-            return retrieve_value(&it->second, eval_ctx);
-    }
     return retrieve_value(ord_symbol, eval_ctx);
 }
 
@@ -243,6 +296,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
+    try_extract_leading_symbol(substituted_name.access_c());
     auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
 
     if (!valid)

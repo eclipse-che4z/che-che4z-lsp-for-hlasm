@@ -306,3 +306,39 @@ EOF
 
     ASSERT_EQ(token_string, out);
 }
+
+TEST(lexer_test, special_spaces)
+{
+    std::string in = "A\v\f\t LR";
+    hlasm_plugin::parser_library::lexing::input_source input(in);
+    hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "", "", nullptr, false };
+    hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
+
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IDENTIFIER);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+}
+
+TEST(lexer_test, attribute_in_continuation)
+{
+    std::string in =
+        R"(       LR                                                           1,Lx
+               'SYMBOL
+)";
+
+    hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "", "", nullptr, false };
+    hlasm_plugin::parser_library::lexing::input_source input(in);
+    hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
+
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::NUM);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::COMMA);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::CONTINUATION);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IGNORED);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IGNORED);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ATTR);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+}

@@ -144,6 +144,7 @@ private:
     bool eof_generated_ = false;
     bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
+    bool creating_attr_ref_ = false;
     // insert string to the ainsert stream; to the front=True or to the end (front=False)
     void ainsert(const std::string& inp, bool front);
     std::unique_ptr<input_source> ainsert_stream_;
@@ -157,6 +158,7 @@ private:
     // positions of the last line
     stream_position last_lln_begin_pos_ = { 0, 0 };
     stream_position last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
+    size_t last_line_pos_;
 
     std::queue<token_ptr> token_queue_;
     Ref<antlr4::CommonTokenFactory> dummy_factory;

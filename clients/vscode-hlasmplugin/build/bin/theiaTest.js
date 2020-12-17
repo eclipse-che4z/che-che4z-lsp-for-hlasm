@@ -61,6 +61,12 @@ async function main() {
     child.on('close', function() {
         process.exit(2);
     })
+    
+    // Give all the tests 60 seconds to finish, otherwise timeout
+    setTimeout(async function() {
+        process.exit(2);
+    }, 60000)
+    
 }
 
 main();

@@ -47,7 +47,7 @@ analyzer::analyzer(const std::string& text,
           *parser_,
           tracer)
 {
-    parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_);
+    parser_->initialize(&hlasm_ctx_ref_, &lsp_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);
@@ -83,7 +83,11 @@ parsing::hlasmparser& analyzer::parser() { return *parser_; }
 
 semantics::lsp_info_processor& analyzer::lsp_processor() { return lsp_proc_; }
 
-void analyzer::analyze(std::atomic<bool>* cancel) { mngr_.start_processing(cancel); }
+void analyzer::analyze(std::atomic<bool>* cancel)
+{
+    mngr_.start_processing(cancel);
+    lsp_proc_.finish();
+}
 
 void analyzer::collect_diags() const
 {

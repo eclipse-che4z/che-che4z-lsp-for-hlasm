@@ -850,9 +850,6 @@ B EQU T'W
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("A"))->kind(), symbol_value_kind::UNDEF);
-    EXPECT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("B"))->kind(), symbol_value_kind::UNDEF);
-
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)2);
 }

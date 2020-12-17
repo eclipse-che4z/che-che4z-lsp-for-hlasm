@@ -28,6 +28,7 @@ constexpr const char* path = "c:\\test";
 constexpr const char* path = "/home/test";
 #endif
 
+using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
 
 TEST(language_features, completion)
@@ -109,4 +110,57 @@ TEST(language_features, references)
         .WillOnce(Return(position_uris(ret.data(), ret.size())));
     notifs["textDocument/references"]("", params1);
 }
+
+TEST(language_features, semantic_tokens)
+{
+    using namespace ::testing;
+    parser_library::workspace_manager ws_mngr;
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = "A EQU 1\n SAM31";
+    ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
+
+    json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
+    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+
+    notifs["textDocument/semanticTokens/full"]("", params1);
+}
+
+TEST(language_features, semantic_tokens_multiline)
+{
+    using namespace ::testing;
+    parser_library::workspace_manager ws_mngr;
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = R"(
+D EQU                                                                 1X3145
+IIIIIIIIIIIIIII1
+)";
+
+    ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
+
+    // clang-format off
+    json response { { "data",
+        { 1,0,1,0,0,      // label         D
+            0,2,3,1,0,    // instruction   EQU
+            0,68,1,10,0,  // number        1
+            0,1,1,5,0,    // continuation  X
+            0,1,4,3,0,    // ignored       3145
+            1,0,15,3,0,   // ignored       IIIIIIIIIIIIIII
+            0,15,1,10,0   // number        1
+        } } };
+    // clang-format on
+    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+
+    notifs["textDocument/semanticTokens/full"]("", params1);
+}
+
 #endif

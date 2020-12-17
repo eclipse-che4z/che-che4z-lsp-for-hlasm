@@ -23,18 +23,17 @@ using namespace hlasm_plugin::parser_library::processing;
 using namespace hlasm_plugin::parser_library::workspaces;
 
 ordinary_processor::ordinary_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
     processing_tracer* tracer)
     : statement_processor(processing_kind::ORDINARY, hlasm_ctx)
-    , eval_ctx { hlasm_ctx, attr_provider, lib_provider }
-    , ca_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, state_listener)
-    , mac_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider)
-    , asm_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser)
-    , mach_proc_(hlasm_ctx, attr_provider, branch_provider, lib_provider, parser)
+    , eval_ctx { hlasm_ctx, lib_provider }
+    , ca_proc_(hlasm_ctx, branch_provider, lib_provider, state_listener)
+    , mac_proc_(hlasm_ctx, branch_provider, lib_provider)
+    , asm_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
+    , mach_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , tracer_(tracer)
 {}
@@ -80,7 +79,11 @@ void ordinary_processor::process_statement(context::unique_stmt_ptr statement)
 
 void ordinary_processor::end_processing()
 {
-    hlasm_ctx.ord_ctx.finish_module_layout();
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
+
+    hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
     collect_ordinary_symbol_definitions();

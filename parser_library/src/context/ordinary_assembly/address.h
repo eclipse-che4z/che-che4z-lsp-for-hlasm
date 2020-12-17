@@ -50,19 +50,27 @@ struct address
     using space_entry = std::pair<space_ptr, int>;
     using base_entry = std::pair<base, int>;
 
+private:
     // list of bases and their counts to which is the address relative
-    std::vector<base_entry> bases;
+    std::vector<base_entry> bases_;
     // offset relative to bases
-    int offset;
+    int offset_;
     // list of spaces with their counts this address contains
-    std::vector<space_entry> spaces;
+    std::vector<space_entry> spaces_;
+
+public:
+    // list of bases and their counts to which is the address relative
+    const std::vector<base_entry>& bases() const;
+    std::vector<base_entry>& bases();
+    // offset relative to bases
+    int offset() const;
+    // list of spaces with their counts this address contains
+    std::vector<space_entry>& spaces();
+    const std::vector<space_entry>& spaces() const;
+    std::vector<space_entry> normalized_spaces() const;
+
 
     address(base address_base, int offset, const space_storage& spaces);
-
-    address(const address& addr);
-    address& operator=(const address& addr);
-    address(address&& addr);
-    address& operator=(address&& addr);
 
     address operator+(const address& addr) const;
     address operator+(int offs) const;
@@ -74,8 +82,9 @@ struct address
     bool in_same_loctr(const address& addr) const;
     bool is_simple() const;
     bool has_dependant_space() const;
+    bool has_unresolved_space() const;
 
-    ~address();
+    void normalize();
 
 private:
     address(std::vector<base_entry> bases, int offset, std::vector<space_entry> spaces);
@@ -121,14 +130,12 @@ struct space
     // common resolver for 2 methods above
     static void resolve(space_ptr this_space, std::variant<space_ptr, address> value);
 
-    void add_listener(address* addr);
-    void remove_listener(address* addr);
+    bool resolved() const;
+    int resolved_length;
+    std::vector<address::space_entry> resolved_ptrs;
 
 private:
     bool resolved_;
-    // loctr to witch the space belong
-    // addresses that contain the space
-    std::vector<address*> listeners_;
 };
 
 

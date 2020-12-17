@@ -89,15 +89,23 @@ void server::message_received(const json& message)
         return;
     }
 
-    if (id_found == message.end())
+    try
     {
-        // notification
-        call_method(method_found.value().get<std::string>(), "", params_found.value());
+        if (id_found == message.end())
+        {
+            // notification
+            call_method(method_found.value().get<std::string>(), "", params_found.value());
+        }
+        else
+        {
+            // method
+            call_method(method_found.value().get<std::string>(), id_found.value(), params_found.value());
+        }
     }
-    else
+    catch (const std::exception& e)
     {
-        // method
-        call_method(method_found.value().get<std::string>(), id_found.value(), params_found.value());
+        LOG_ERROR(e.what());
+        return;
     }
 }
 
@@ -156,8 +164,7 @@ void server::on_initialize(json id, const json& param)
             { "documentHighlightProvider", false },
             { "renameProvider", false },
             { "documentSymbolProvider", false },
-            { "workspaceSymbolProvider", false },
-            { "semanticHighlighting", true } } } };
+            { "workspaceSymbolProvider", false } } } };
 
     for (auto& f : features_)
     {

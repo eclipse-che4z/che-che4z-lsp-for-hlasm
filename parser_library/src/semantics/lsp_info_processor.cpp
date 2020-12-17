@@ -14,6 +14,7 @@
 
 #include "lsp_info_processor.h"
 
+#include <algorithm>
 #include <sstream>
 
 #include "context/instruction.h"
@@ -349,6 +350,11 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
         return result;
     return result;
 }
+
+void lsp_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
+
+const lines_info& lsp_info_processor::semantic_tokens() const { return hl_info_.lines; }
+
 void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 {
     symbol.scope = get_top_macro_stack_();
@@ -379,11 +385,24 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             hl_info_.cont_info.continuation_positions.push_back(
                 { symbol.token_range.start.line, symbol.token_range.start.column });
         }
-        hl_info_.lines.push_back(symbol);
+
+        // split multi line symbols
+        auto rest = symbol;
+        while (rest.token_range.start.line != rest.token_range.end.line)
+        {
+            // remove first line and add as separate token
+            auto first = rest;
+            first.token_range.end.line = first.token_range.start.line;
+            first.token_range.end.column = hl_info_.cont_info.continuation_column;
+            hl_info_.lines.push_back(std::move(first));
+            rest.token_range.start.line++;
+            rest.token_range.start.column = hl_info_.cont_info.continue_column;
+        }
+
+        if (rest.token_range.start != rest.token_range.end) // do not add empty tokens
+            hl_info_.lines.push_back(std::move(rest));
     }
 }
-
-semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }
 
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {

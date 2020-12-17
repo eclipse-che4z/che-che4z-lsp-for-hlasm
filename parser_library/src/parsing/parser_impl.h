@@ -51,11 +51,13 @@ class parser_impl : public antlr4::Parser,
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx, semantics::lsp_info_processor* lsp_prc);
+    void initialize(context::hlasm_context* hlasm_ctx,
+        semantics::lsp_info_processor* lsp_prc,
+        workspaces::parse_lib_provider* lib_provider,
+        processing::processing_state_listener* state_listener);
 
     bool is_last_line() const;
     virtual void rewind_input(context::source_position pos) override;
-    virtual void push_line_end() override;
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
@@ -85,12 +87,14 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    void process_instruction();
-    void process_statement();
-    void process_statement(semantics::op_rem line, range op_range);
+    // process methods return true if attribute lookahead needed
+    bool process_instruction();
+    bool process_statement();
 
     virtual void process_next(processing::statement_processor& processor) override;
     virtual bool finished() const override;
+
+    void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
 
     lexing::token_stream& input;
     context::hlasm_context* ctx;
@@ -113,30 +117,24 @@ protected:
     bool UNKNOWN();
 
 private:
+    std::unique_ptr<parser_holder> rest_parser_;
+    workspaces::parse_lib_provider* lib_provider_;
+    processing::processing_state_listener* state_listener_;
+
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
-    parser_impl* parent_;
-    void initialize(parser_impl* parent);
-
-    void push_state();
-    void pop_state();
-    bool pushed_state_;
-    processing::statement_processor* processor_storage_;
 
     semantics::operand_list parse_macro_operands(
         std::string operands, range field_range, std::vector<range> operand_ranges);
 
-    void parse_rest(std::string text, range text_range);
-    void parse_lookahead(std::string text, range text_range);
+    void process_ordinary();
+    void process_lookahead();
+
+    void parse_operands(const std::string& text, range text_range);
+    void parse_lookahead_operands(const std::string& text, range text_range);
 
     virtual antlr4::misc::IntervalSet getExpectedTokens() override;
-
-    std::unique_ptr<parser_holder> reparser_;
-    std::unique_ptr<parser_holder> rest_parser_;
-
-    bool last_line_processed_;
-    bool line_end_pushed_;
 };
 
 // structure containing parser components

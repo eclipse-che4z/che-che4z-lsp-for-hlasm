@@ -64,11 +64,11 @@ mach_term returns [mach_expr_ptr m_e]
 	{
 		$m_e = std::make_unique<mach_expr_unary<par>>(std::move($mach_expr.m_e), provider.get_range( $lpar.ctx->getStart(), $rpar.ctx->getStop()));
 	}
-	| asterisk								
-	{ 
-		$m_e = std::make_unique<mach_expr_location_counter>( provider.get_range( $asterisk.ctx));
+	| mach_location_counter
+	{
+		$m_e = std::make_unique<mach_expr_location_counter>( provider.get_range( $mach_location_counter.ctx));
 	}
-	| {is_data_attr()}? mach_data_attribute		
+	| {is_data_attr()}? mach_data_attribute
 	{
 		auto rng = provider.get_range( $mach_data_attribute.ctx);
 		auto attr = get_attribute(std::move($mach_data_attribute.attribute),rng);
@@ -79,11 +79,13 @@ mach_term returns [mach_expr_ptr m_e]
 	}
 	| id
 	{
+		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx),hl_scopes::ordinary_symbol));
 		$m_e = std::make_unique<mach_expr_symbol>($id.name, provider.get_range( $id.ctx));
 		collector.add_lsp_symbol($id.name,provider.get_range($id.ctx),symbol_type::ord);
 	}
 	| num
 	{
+		collector.add_hl_symbol(token_info(provider.get_range( $num.ctx),hl_scopes::number));
 		$m_e =  std::make_unique<mach_expr_constant>($num.value, provider.get_range( $num.ctx));
 	}
 	| self_def_term
@@ -100,56 +102,46 @@ literal
 	: equals data_def;
 
 mach_data_attribute returns [std::string attribute, id_index data = nullptr]
-	: ORDSYMBOL ATTR literal	
-	| ORDSYMBOL ATTR ASTERISK
-	| ORDSYMBOL ATTR id				{$attribute = $ORDSYMBOL->getText(); $data = $id.name;};
-
-data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value]
-	: ORDSYMBOL ATTR data_attribute_value		
+	: ORDSYMBOL attr mach_data_attribute_value
 	{
-		$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));
-		$value = std::move($data_attribute_value.value);
+		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
+		$attribute = $ORDSYMBOL->getText();
+		$data = $mach_data_attribute_value.data;
 	};
 
-data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
-	: literal			
-	| var_symbol		{$value = std::move($var_symbol.vs);}
-	| id				{$value = $id.name;};
-
+mach_data_attribute_value returns [id_index data = nullptr]
+	: literal
+	| mach_location_counter
+	| id
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx), hl_scopes::ordinary_symbol));
+		$data = $id.name;
+	};
 
 string_ch returns [std::string value]
-	: l_sp_ch								{$value = std::move($l_sp_ch.value);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
+	: l_sp_ch
+	{
+		if ($l_sp_ch.value == "&&")
+			$value = "&";
+		else
+			$value = std::move($l_sp_ch.value);
 
-string_ch_v returns [concat_point_ptr point]
-	: l_sp_ch_v								{$point=std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("'");};
+	}
+	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
 
 string_ch_c returns [std::string value]
 	:
 	| tmp=string_ch_c string_ch				{$value = std::move($tmp.value); $value.append($string_ch.value);};
 
-string_ch_v_c returns [concat_chain chain]
-	:
-	| tmp=string_ch_v_c string_ch_v				{$tmp.chain.push_back(std::move($string_ch_v.point)); $chain = std::move($tmp.chain);};
-
-
-
 string returns [std::string value]
-	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)	
-	{ 
+	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)
+	{
 		$value.append(std::move($string_ch_c.value));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
 
-string_v returns [concat_chain chain]
-	: ap1=APOSTROPHE string_ch_v_c ap2=(APOSTROPHE|ATTR)	
-	{ 
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
-		$chain.insert($chain.end(), 
-			std::make_move_iterator($string_ch_v_c.chain.begin()), 
-			std::make_move_iterator($string_ch_v_c.chain.end())
-		);
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
-		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
+mach_location_counter
+	: ASTERISK
+	{
+		collector.add_hl_symbol(token_info(provider.get_range( $ASTERISK), hl_scopes::operand));
 	};

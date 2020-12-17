@@ -16,18 +16,19 @@
 
 #include "processing/processing_manager.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
+namespace hlasm_plugin::parser_library::processing {
 
-macro_statement_provider::macro_statement_provider(context::hlasm_context& hlasm_ctx, statement_fields_parser& parser)
-    : common_statement_provider(statement_provider_kind::MACRO, hlasm_ctx, parser)
+macro_statement_provider::macro_statement_provider(context::hlasm_context& hlasm_ctx,
+    statement_fields_parser& parser,
+    workspaces::parse_lib_provider& lib_provider,
+    processing::processing_state_listener& listener)
+    : members_statement_provider(statement_provider_kind::MACRO, hlasm_ctx, parser, lib_provider, listener)
 {}
 
-void macro_statement_provider::process_next(statement_processor& processor)
-{
-    if (finished())
-        throw std::runtime_error("provider already finished");
+bool macro_statement_provider::finished() const { return hlasm_ctx.scope_stack().size() == 1; }
 
+context::cached_statement_storage* macro_statement_provider::get_next()
+{
     auto& invo = hlasm_ctx.scope_stack().back().this_macro;
     assert(invo);
 
@@ -35,22 +36,10 @@ void macro_statement_provider::process_next(statement_processor& processor)
     if ((size_t)invo->current_statement == invo->cached_definition.size())
     {
         hlasm_ctx.leave_macro();
-        return;
+        return nullptr;
     }
 
-    auto& cache = invo->cached_definition[invo->current_statement];
-
-    switch (cache.get_base()->kind)
-    {
-        case context::statement_kind::RESOLVED:
-            processor.process_statement(cache.get_base());
-            break;
-        case context::statement_kind::DEFERRED:
-            preprocess_deferred(processor, cache);
-            break;
-        default:
-            break;
-    }
+    return &invo->cached_definition[invo->current_statement];
 }
 
-bool macro_statement_provider::finished() const { return hlasm_ctx.scope_stack().size() == 1; }
+} // namespace hlasm_plugin::parser_library::processing

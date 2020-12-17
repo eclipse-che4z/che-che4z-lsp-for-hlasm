@@ -14,6 +14,9 @@
 
 #include "operand.h"
 
+#include "expressions/conditional_assembly/terms/ca_var_sym.h"
+#include "expressions/mach_expr_term.h"
+
 namespace hlasm_plugin::parser_library::semantics {
 
 //***************** operand *********************
@@ -48,9 +51,7 @@ empty_operand::empty_operand(range operand_range)
 model_operand::model_operand(concat_chain chain, range operand_range)
     : operand(operand_type::MODEL, std::move(operand_range))
     , chain(std::move(chain))
-{
-    concatenation_point::clear_concat_chain(this->chain);
-}
+{}
 
 evaluable_operand::evaluable_operand(const operand_type type, range operand_range)
     : operand(type, std::move(operand_range))
@@ -67,7 +68,7 @@ expr_machine_operand* machine_operand::access_expr()
 
 address_machine_operand* machine_operand::access_address()
 {
-    return kind == mach_kind::EXPR ? static_cast<address_machine_operand*>(this) : nullptr;
+    return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
 std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
@@ -147,7 +148,7 @@ address_machine_operand::address_machine_operand(expressions::mach_expr_ptr disp
     , state(std::move(state))
 {}
 
-bool address_machine_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
+bool address_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     if (first_par)
     {
@@ -274,6 +275,21 @@ expr_assembler_operand::expr_assembler_operand(
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
+    return get_operand_value_inner(info, true);
+}
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    return get_operand_value_inner(info, can_have_ordsym);
+}
+
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
+    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+{
+    if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
+        return std::make_unique<checking::one_operand>(value_);
+
     auto res = expression->evaluate(info);
     switch (res.value_kind())
     {
@@ -319,8 +335,7 @@ using_instr_assembler_operand::using_instr_assembler_operand(
     , end(std::move(end))
 {}
 
-bool using_instr_assembler_operand::has_dependencies(
-    hlasm_plugin::parser_library::expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
 }
@@ -359,10 +374,7 @@ complex_assembler_operand::complex_assembler_operand(
     , value(identifier, std::move(values), operand_range)
 {}
 
-bool complex_assembler_operand::has_dependencies(hlasm_plugin::parser_library::expressions::mach_evaluate_info) const
-{
-    return false;
-}
+bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
 
 bool complex_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
 
@@ -439,15 +451,32 @@ var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     , variable_symbol(std::move(variable_symbol))
 {}
 
+std::set<context::id_index> var_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx)
+{
+    return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(variable_symbol, eval_ctx);
+}
+
 expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::EXPR, std::move(operand_range))
     , expression(std::move(expression))
 {}
 
+std::set<context::id_index> expr_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx)
+{
+    return expression->get_undefined_attributed_symbols(eval_ctx);
+}
+
 seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     : ca_operand(ca_kind::SEQ, std::move(operand_range))
     , sequence_symbol(std::move(sequence_symbol))
 {}
+
+std::set<context::id_index> seq_ca_operand::get_undefined_attributed_symbols(const expressions::evaluation_context&)
+{
+    return std::set<context::id_index>();
+}
 
 branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, range operand_range)
     : ca_operand(ca_kind::BRANCH, std::move(operand_range))
@@ -455,10 +484,16 @@ branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_ex
     , expression(std::move(expression))
 {}
 
+std::set<context::id_index> branch_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx)
+{
+    return expression->get_undefined_attributed_symbols(eval_ctx);
+}
 
 
-macro_operand::macro_operand(concat_chain chain, range operand_range)
-    : operand(operand_type::MAC, std::move(operand_range))
+
+macro_operand_chain::macro_operand_chain(concat_chain chain, range operand_range)
+    : macro_operand(mac_kind::CHAIN, std::move(operand_range))
     , chain(std::move(chain))
 {}
 
@@ -572,8 +607,23 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
 void string_assembler_operand::collect_diags() const {}
 
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
-    : operand(operand_type::MAC, operand_range)
+    : macro_operand(mac_kind::STRING, operand_range)
     , value(std::move(value))
+{}
+
+macro_operand_chain* macro_operand::access_chain()
+{
+    return kind == mac_kind::CHAIN ? static_cast<macro_operand_chain*>(this) : nullptr;
+}
+
+macro_operand_string* macro_operand::access_string()
+{
+    return kind == mac_kind::STRING ? static_cast<macro_operand_string*>(this) : nullptr;
+}
+
+macro_operand::macro_operand(mac_kind kind, range operand_range)
+    : operand(operand_type::MAC, std::move(operand_range))
+    , kind(kind)
 {}
 
 } // namespace hlasm_plugin::parser_library::semantics

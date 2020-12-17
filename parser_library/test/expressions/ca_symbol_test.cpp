@@ -17,6 +17,7 @@
 #include "diagnostic_adder.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
+#include "expressions/evaluation_context.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -24,12 +25,14 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol, undefined_attributes)
 {
-    dep_sol_mock m;
+    context::hlasm_context ctx;
+    lib_prov_mock lib;
+    evaluation_context eval_ctx { ctx, lib };
     std::string name = "n";
 
     ca_symbol sym(&name, range());
 
-    auto res = sym.get_undefined_attributed_symbols(m);
+    auto res = sym.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_EQ(res.size(), 0U);
 }

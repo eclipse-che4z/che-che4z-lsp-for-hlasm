@@ -2,7 +2,7 @@
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
   "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
@@ -62,13 +62,124 @@
   },
   "scripts": {
     "postinstall": "npm run compile",
-    "compile": "tsc -p ./tsconfig.json && node ./build/bin/prepareWorkspace.js",
+    "compile": "tsc -p ./tsconfig.json",
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
-    "test": "npm run compile && node ./lib/test/runTest.js",
-    "test:insiders": "npm run compile && node ./lib/test/runTest.js insiders"
+    "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
+    "test:insiders": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
+    "test:theia": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
   },
   "contributes": {
+    "colors": [
+      {
+        "id": "hlasm.function",
+        "description": "Color for HLASM instructions",
+        "defaults": {
+          "dark": "#DCDCAA",
+          "light": "#795E26",
+          "highContrast": "#DCDCAA"
+        }
+      },
+      {
+        "id": "hlasm.comment",
+        "description": "Color for comments and remarks",
+        "defaults": {
+          "dark": "#6A9955",
+          "light": "#008000",
+          "highContrast": "#7CA668"
+        }
+      },
+      {
+        "id": "hlasm.event",
+        "description": "Color for ignored characters",
+        "defaults": {
+          "dark": "#F44747",
+          "light": "#CD3131",
+          "highContrast": "#F44747"
+        }
+      },
+      {
+        "id": "hlasm.modifier",
+        "description": "Color for continuation characters and data definition type extension character",
+        "defaults": {
+          "dark": "#569CD6",
+          "light": "#0000FF",
+          "highContrast": "#569CD6"
+        }
+      },
+      {
+        "id": "hlasm.regexp",
+        "description": "Color for data definition type character",
+        "defaults": {
+          "dark": "#646695",
+          "light": "#811F3F",
+          "highContrast": "#B46695"
+        }
+      },
+      {
+        "id": "hlasm.variable",
+        "description": "Color for variable symbols",
+        "defaults": {
+          "dark": "#9CDCFE",
+          "light": "#001080",
+          "highContrast": "#9CDCFE"
+        }
+      },
+      {
+        "id": "hlasm.string",
+        "description": "Color for strings",
+        "defaults": {
+          "dark": "#CE9178",
+          "light": "#A31515",
+          "highContrast": "#CE9178"
+        }
+      },
+      {
+        "id": "hlasm.number",
+        "description": "Color for numbers",
+        "defaults": {
+          "dark": "#B5CEA8",
+          "light": "#098658",
+          "highContrast": "#B5CEA8"
+        }
+      },
+      {
+        "id": "hlasm.keyword",
+        "description": "Color for sequence symbols",
+        "defaults": {
+          "dark": "#C586C0",
+          "light": "#AF00DB",
+          "highContrast": "#C586C0"
+        }
+      },
+      {
+        "id": "hlasm.class",
+        "description": "Color for labels",
+        "defaults": {
+          "dark": "#4EC9B0",
+          "light": "#267F99",
+          "highContrast": "#4EC9B0"
+        }
+      },
+      {
+        "id": "hlasm.operator",
+        "description": "Color for operators",
+        "defaults": {
+          "dark": "#D4D4D4",
+          "light": "#000000",
+          "highContrast": "#D4D4D4"
+        }
+      },
+      {
+        "id": "hlasm.parameter",
+        "description": "Color for operands",
+        "defaults": {
+          "dark": "#808080",
+          "light": "#800000",
+          "highContrast": "#808080"
+        }
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "pgm_conf.json",
@@ -161,6 +272,13 @@
         "firstLine": " *MACRO *"
       }
     ],
+    "grammars": [
+      {
+        "language": "hlasm",
+        "scopeName": "source.hlasm",
+        "path": "./syntaxes/hlasm.tmLanguage.json"
+      }
+    ],
     "configurationDefaults": {
       "[hlasm]": {
         "editor.rulers": [
@@ -197,81 +315,6 @@
       "type": "object",
       "title": "hlasmplugin configuration",
       "properties": {
-        "hlasm.semanticHighlightingColors": {
-          "type": "array",
-          "default": [
-            {
-              "id": "comment",
-              "description": "Color for comments",
-              "hex": "#4c9b3f"
-            },
-            {
-              "id": "ignored",
-              "description": "Color for ignored characters",
-              "hex": "#b0a6c9"
-            },
-            {
-              "id": "continuation",
-              "description": "Color for continuation characters",
-              "hex": "#5fffff"
-            },
-            {
-              "id": "data_def_type",
-              "description": "Color for data definition type character",
-              "hex": "#6699ff"
-            },
-            {
-              "id": "data_def_extension",
-              "description": "Color for data definition type extension character",
-              "hex": "#6699AA"
-            },
-            {
-              "id": "remark",
-              "description": "Color for remarks",
-              "hex": "#06aed8"
-            },
-            {
-              "id": "varSymbol",
-              "description": "Color for variable symbols",
-              "hex": "#ee4f7c"
-            },
-            {
-              "id": "string",
-              "description": "Color for strings",
-              "hex": "#ff6600"
-            },
-            {
-              "id": "number",
-              "description": "Color for numbers",
-              "hex": "#2a397a"
-            },
-            {
-              "id": "seqSymbol",
-              "description": "Color for sequence symbols",
-              "hex": "#8b7d6b"
-            },
-            {
-              "id": "label",
-              "description": "Color for labels",
-              "hex": "#ffff00"
-            },
-            {
-              "id": "operator",
-              "description": "Color for operators",
-              "hex": "#f5e5c2"
-            },
-            {
-              "id": "instruction",
-              "description": "Color for instructions",
-              "hex": "#ff0000"
-            },
-            {
-              "id": "operand",
-              "description": "Color for operands",
-              "hex": "#797979"
-            }
-          ]
-        },
         "hlasm.arguments": {
           "type": "array",
           "default": [],
