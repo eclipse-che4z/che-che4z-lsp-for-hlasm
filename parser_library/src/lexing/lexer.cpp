@@ -199,12 +199,15 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
                                    position(input_state_->line, stop_position_in_line)),
                         semantics::hl_scopes::continuation));
                 break;
-            case IGNORED:
+            case IGNORED: {
+                auto line_pos =
+                    (token_start_state_.line != input_state_->line) ? last_line_pos_ : stop_position_in_line;
                 lsp_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
-                                   position(input_state_->line, stop_position_in_line)),
+                                   position(token_start_state_.line, line_pos)),
                         semantics::hl_scopes::ignored));
-                break;
+            }
+            break;
             case COMMENT:
                 lsp_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
@@ -492,8 +495,10 @@ void lexer::lex_end(bool eolln)
     start_token();
     while (input_state_->c != '\n' && !eof() && input_state_->c != (char_t)-1)
         consume();
+
     if (!eof())
     {
+        last_line_pos_ = input_state_->char_position_in_line;
         consume();
         if (eolln)
             create_token(EOLLN);

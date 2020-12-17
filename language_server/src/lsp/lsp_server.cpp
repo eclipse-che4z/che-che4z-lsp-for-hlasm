@@ -114,8 +114,7 @@ void server::on_initialize(json id, const json& param)
             { "documentHighlightProvider", false },
             { "renameProvider", false },
             { "documentSymbolProvider", false },
-            { "workspaceSymbolProvider", false },
-            { "semanticHighlighting", true } } } };
+            { "workspaceSymbolProvider", false } } } };
 
     for (auto& f : features_)
     {

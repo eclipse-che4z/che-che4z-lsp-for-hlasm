@@ -16,17 +16,17 @@
 parser grammar instruction_field_rules;
 
 instruction returns [id_index instr]
-	: l_string_v			/*model*/							
+	: l_string_v			/*model*/
 	{
 		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range( $l_string_v.ctx));
 	}
-	| macro_name												
+	| macro_name
 	{
 		collector.set_instruction_field(
 			parse_identifier(std::move($macro_name.value),provider.get_range($macro_name.ctx)),
 			provider.get_range( $macro_name.ctx));
 	}
-	| ORDSYMBOL													
+	| ORDSYMBOL
 	{
 		auto instr_id = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
 		collector.add_lsp_symbol(instr_id,provider.get_range( $ORDSYMBOL),symbol_type::instruction);

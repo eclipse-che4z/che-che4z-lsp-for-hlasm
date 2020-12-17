@@ -158,6 +158,7 @@ private:
     // positions of the last line
     stream_position last_lln_begin_pos_ = { 0, 0 };
     stream_position last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
+    size_t last_line_pos_;
 
     std::queue<token_ptr> token_queue_;
     Ref<antlr4::CommonTokenFactory> dummy_factory;

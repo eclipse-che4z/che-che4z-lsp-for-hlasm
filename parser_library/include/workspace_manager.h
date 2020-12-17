@@ -36,15 +36,6 @@ class workspace;
 }
 using ws_id = workspaces::workspace*;
 
-// Interface that can be implemented to be able to get highligting info
-// from workspace manager whenever a file is parsed and highlighting changes
-class PARSER_LIBRARY_EXPORT highlighting_consumer
-{
-public:
-    virtual void consume_highlighting_info(all_highlighting_info info) = 0;
-    virtual ~highlighting_consumer() {};
-};
-
 // Interface that can be implemented to be able to get list of
 // diagnostics from workspace manager whenever a file is parsed
 // Passes list of all diagnostics that are in all currently opened files.
@@ -109,9 +100,9 @@ public:
     virtual const string_array hover(const char* document_uri, const position pos);
     virtual completion_list completion(
         const char* document_uri, const position pos, const char trigger_char, int trigger_kind);
+    virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
 
     // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
-    virtual void register_highlighting_consumer(highlighting_consumer* consumer);
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
     virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
 

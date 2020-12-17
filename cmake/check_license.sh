@@ -12,8 +12,8 @@
 #   Broadcom, Inc. - initial API and implementation
 
 #These are MIT-licensed third party sources
-EXCEPTIONS="semanticHighlighting.ts
-protocol.semanticHighlighting.ts"
+EXCEPTIONS="semanticTokens.ts
+protocol.semanticTokens.ts"
 
 EXLIST=""
 for e in $EXCEPTIONS

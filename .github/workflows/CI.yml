@@ -284,5 +284,7 @@ jobs:
         with:
           name: hlasm-language-support-${{ env.VERSION }}-alpine.vsix
           path: clients/vscode-hlasmplugin/plugin/
-      - name: Run Tests
-        run: cd clients/vscode-hlasmplugin && npm install && npm run compile && node ./build/bin/theiaTest.js /home/theia/
+      - name: npm install
+        run: cd clients/vscode-hlasmplugin && npm install
+      - name: Run Theia Tests
+        run: cd clients/vscode-hlasmplugin && npm run test:theia /home/theia/
