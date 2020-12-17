@@ -375,6 +375,18 @@ void parser_impl::process_next(processing::statement_processor& proc)
 
 bool parser_impl::finished() const { return finished_flag; }
 
+void parser_impl::set_source_indices(const antlr4::Token* start, const antlr4::Token* stop)
+{
+    assert(stop);
+    size_t start_offset;
+
+    if (start)
+        start_offset = start->getStartIndex();
+    else
+        start_offset = stop->getStartIndex();
+    ctx->set_source_indices(start_offset, stop->getStopIndex() + 1, stop->getLine());
+}
+
 bool parser_impl::deferred()
 {
     auto& [format, opcode] = *proc_status;

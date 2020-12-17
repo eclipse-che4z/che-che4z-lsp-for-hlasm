@@ -83,7 +83,11 @@ parsing::hlasmparser& analyzer::parser() { return *parser_; }
 
 semantics::lsp_info_processor& analyzer::lsp_processor() { return lsp_proc_; }
 
-void analyzer::analyze(std::atomic<bool>* cancel) { mngr_.start_processing(cancel); }
+void analyzer::analyze(std::atomic<bool>* cancel)
+{
+    mngr_.start_processing(cancel);
+    lsp_proc_.finish();
+}
 
 void analyzer::collect_diags() const
 {

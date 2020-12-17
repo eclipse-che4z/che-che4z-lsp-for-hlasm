@@ -14,13 +14,12 @@
 
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
-import { SemanticHighlightingFeature } from '../semanticHighlighting';
-
+import { SemanticTokensFeature } from '../semanticTokens'
 /**
  * A collection of mocked interfaces needed for unit testing
  */
 
-export class SemanticHighlightingFeatureMock extends SemanticHighlightingFeature {
+export class SemanticTokensFeatureMock extends SemanticTokensFeature {
     didColorize = false;
     colorize() {
         this.didColorize = true;
@@ -172,6 +171,9 @@ export class TextDocumentMock implements vscode.TextDocument {
         throw new Error("Method not implemented.");
     }
     validatePosition(position: vscode.Position): vscode.Position {
-        throw new Error("Method not implemented.");
+        if (this.text.length > position.character)
+            return position;
+        else
+            return new vscode.Position(0,this.text.length);
     }
 }

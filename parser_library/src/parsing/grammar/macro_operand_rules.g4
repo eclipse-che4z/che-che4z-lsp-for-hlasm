@@ -23,7 +23,7 @@ mac_op returns [operand_ptr op]
 	};
 
 mac_op_o returns [operand_ptr op] 
-	: mac_entry?							
+	: mac_entry?
 	{
 		if($mac_entry.ctx)
 			$op = std::make_unique<macro_operand_chain>(std::move($mac_entry.chain),provider.get_range($mac_entry.ctx));
@@ -88,7 +88,10 @@ mac_ch returns [concat_chain chain]
 	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));
 													auto token = $common_ch_v.ctx->getStart();
 													if (token->getType() == lexing::lexer::Tokens::ORDSYMBOL && $common_ch_v.ctx->getStop()->getType() == lexing::lexer::Tokens::ORDSYMBOL)
+													{
 														collector.add_lsp_symbol(ctx->ids().add(token->getText()),provider.get_range(token),symbol_type::ord);
+														collector.add_hl_symbol(token_info(provider.get_range( $common_ch_v.ctx), hl_scopes::operand));
+													}
 													;}
 	| ATTR											{$chain.push_back(std::make_unique<char_str_conc>("'"));}
 	| mac_str										{$chain = std::move($mac_str.chain);}
@@ -96,7 +99,7 @@ mac_ch returns [concat_chain chain]
 
 mac_ch_c returns [concat_chain chain]
 	:
-	| tmp=mac_ch_c mac_ch							
+	| tmp=mac_ch_c mac_ch
 	{
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
@@ -105,14 +108,14 @@ mac_ch_c returns [concat_chain chain]
 mac_entry returns [concat_chain chain]
 	: mac_ch										{$chain = std::move($mac_ch.chain);}
 	| literal										{$chain.push_back(std::make_unique<char_str_conc>($literal.ctx->getText()));}
-	| ORDSYMBOL EQUALS literal					
+	| ORDSYMBOL EQUALS literal
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));
 		$chain.push_back(std::make_unique<char_str_conc>($ORDSYMBOL->getText()));
 		$chain.push_back(std::make_unique<char_str_conc>("="));
 		$chain.push_back(std::make_unique<char_str_conc>($literal.ctx->getText()));
 	}
-	| tmp=mac_entry mac_ch							
+	| tmp=mac_entry mac_ch
 	{
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));

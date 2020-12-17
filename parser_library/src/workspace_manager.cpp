@@ -77,10 +77,6 @@ void workspace_manager::did_change_file(
 
 void workspace_manager::did_close_file(const char* document_uri) { impl_->did_close_file(document_uri); }
 
-void workspace_manager::register_highlighting_consumer(highlighting_consumer* consumer)
-{
-    impl_->register_highlighting_consumer(consumer);
-}
 
 void workspace_manager::register_diagnostics_consumer(diagnostics_consumer* consumer)
 {
@@ -110,6 +106,11 @@ completion_list workspace_manager::completion(
     const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
 {
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
+}
+
+const std::vector<token_info>& workspace_manager::semantic_tokens(const char* document_uri)
+{
+    return impl_->semantic_tokens(document_uri);
 }
 
 void workspace_manager::launch(const char* file_name, bool stop_on_entry) { impl_->launch(file_name, stop_on_entry); }
