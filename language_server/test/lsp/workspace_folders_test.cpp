@@ -84,7 +84,8 @@ TEST(workspace_folders, did_change_workspace_folders)
 TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
 {
     ws_mngr_mock ws_mngr;
-    lsp::feature_workspace_folders f(ws_mngr);
+    response_provider_mock rpm;
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
 
     std::map<std::string, method> notifs;
 

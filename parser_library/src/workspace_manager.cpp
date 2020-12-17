@@ -82,11 +82,6 @@ void workspace_manager::configuration_changed(const lib_config& new_config)
     impl_->configuration_changed(new_config);
 }
 
-void workspace_manager::register_highlighting_consumer(highlighting_consumer* consumer)
-{
-    impl_->register_highlighting_consumer(consumer);
-}
-
 void workspace_manager::register_diagnostics_consumer(diagnostics_consumer* consumer)
 {
     impl_->register_diagnostics_consumer(consumer);
