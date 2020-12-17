@@ -278,6 +278,13 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install Chromium
         run: apk add --no-cache chromium
+      - name: Extract branch name
+        run: echo BRANCH=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
+      - name: Update version
+        if: env.BRANCH == 'master' || startsWith(env.BRANCH, 'release')
+        run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get version
         run: echo VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)") >> $GITHUB_ENV
       - name: Download VSIX
