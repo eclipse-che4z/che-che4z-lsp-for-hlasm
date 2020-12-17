@@ -327,7 +327,7 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::m
                     else if (kind == context::symbol_value_kind::RELOC)
                     {
                         checking::expr_type ex_type;
-                        auto reloc = ev.get_reloc();
+                        const auto& reloc = ev.get_reloc();
                         if (reloc.is_complex())
                             ex_type = checking::expr_type::COMPLEX;
                         else
@@ -633,10 +633,6 @@ data_definition data_definition::parser::parse()
             result_.add_diagnostic(diagnostic_op::error_D006({ begin_pos, pos_ }));
         }
     }
-
-    //
-    // collector.add_hl_symbol(token_info($value.extension_range, hl_scopes::data_def_extension));
-
 
     return std::move(result_);
 }
