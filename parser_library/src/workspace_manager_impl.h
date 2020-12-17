@@ -31,7 +31,7 @@ class workspace_manager::impl : public diagnosable_impl, public debugging::debug
 public:
     impl(std::atomic<bool>* cancel = nullptr)
         : file_manager_(cancel)
-        , implicit_workspace_({ file_manager_ })
+        , implicit_workspace_(file_manager_, global_config_, cancel)
         , cancel_(cancel)
     {}
     impl(const impl&) = delete;
@@ -55,7 +55,8 @@ public:
 
     void add_workspace(std::string name, std::string uri)
     {
-        auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_));
+        auto ws = workspaces_.emplace(name, workspaces::workspace(uri, name, file_manager_, global_config_, cancel_));
+        ws.first->second.set_message_consumer(message_consumer_);
         ws.first->second.open();
 
         notify_diagnostics_consumers();
@@ -123,6 +124,14 @@ public:
         metrics_consumers_.push_back(consumer);
     }
 
+    void set_message_consumer(message_consumer* consumer)
+    {
+        message_consumer_ = consumer;
+        implicit_workspace_.set_message_consumer(consumer);
+        for (auto& wks : workspaces_)
+            wks.second.set_message_consumer(consumer);
+    }
+
     semantics::position_uri_s found_position;
     position_uri definition(std::string document_uri, const position pos)
     {
@@ -153,7 +162,7 @@ public:
 
     std::vector<std::string> output;
     std::vector<const char*> coutput;
-    const string_array hover(const char* document_uri, const position pos)
+    string_array hover(const char* document_uri, const position pos)
     {
         coutput.clear();
         if (cancel_ && *cancel_)
@@ -185,6 +194,9 @@ public:
 
         return completion_result;
     }
+
+    lib_config global_config_;
+    virtual void configuration_changed(const lib_config& new_config) { global_config_ = new_config; }
 
     std::vector<token_info> empty_tokens;
     const std::vector<token_info>& semantic_tokens(const char* document_uri)
@@ -385,6 +397,7 @@ private:
 
     std::vector<diagnostics_consumer*> diag_consumers_;
     std::vector<performance_metrics_consumer*> metrics_consumers_;
+    message_consumer* message_consumer_ = nullptr;
 };
 } // namespace hlasm_plugin::parser_library
 

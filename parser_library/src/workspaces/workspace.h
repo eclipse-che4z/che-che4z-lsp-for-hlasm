@@ -15,17 +15,23 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_H
 
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
+#include "json.hpp"
+
 #include "diagnosable_impl.h"
 #include "file_manager.h"
+#include "lib_config.h"
 #include "library.h"
+#include "message_consumer.h"
 #include "processor.h"
 #include "processor_group.h"
+
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -56,9 +62,16 @@ class workspace : public diagnosable_impl, public parse_lib_provider
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
     // between files.
-    workspace(file_manager& file_manager);
-    workspace(ws_uri uri, file_manager& file_manager);
-    workspace(ws_uri uri, std::string name, file_manager& file_manager);
+    workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel = nullptr);
+    workspace(const ws_uri& uri,
+        file_manager& file_manager,
+        const lib_config& global_config,
+        std::atomic<bool>* cancel = nullptr);
+    workspace(const ws_uri& uri,
+        const std::string& name,
+        file_manager& file_manager,
+        const lib_config& global_config,
+        std::atomic<bool>* cancel = nullptr);
 
     workspace(const workspace& ws) = delete;
     workspace& operator=(const workspace&) = delete;
@@ -88,6 +101,8 @@ public:
     void open();
     void close();
 
+    void set_message_consumer(message_consumer* consumer);
+
 protected:
     file_manager& get_file_manager();
 
@@ -95,6 +110,8 @@ private:
     constexpr static char FILENAME_PROC_GRPS[] = "proc_grps.json";
     constexpr static char FILENAME_PGM_CONF[] = "pgm_conf.json";
     constexpr static char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
+
+    std::atomic<bool>* cancel_;
 
     std::string name_;
     ws_uri uri_;
@@ -111,7 +128,11 @@ private:
 
     bool opened_ = false;
 
-    bool load_config();
+
+    bool load_and_process_config();
+    // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
+    // Returns false if there is any error.
+    bool load_config(nlohmann::json& proc_grps_json, nlohmann::json& pgm_conf_json, file_ptr& pgm_conf_file);
 
     bool is_wildcard(const std::string& str);
 
@@ -124,6 +145,18 @@ private:
     bool is_dependency_(const std::string& file_uri);
 
     bool program_id_match(const std::string& filename, const program_id& program) const;
+
+    void delete_diags(processor_file_ptr file);
+
+    void show_message(const std::string& message);
+
+    message_consumer* message_consumer_ = nullptr;
+
+    // A map that holds true values for files that have diags suppressed and the user was already notified about it
+    std::unordered_map<std::string, bool> diag_suppress_notified_;
+    const lib_config& global_config_;
+    lib_config local_config_;
+    lib_config get_config();
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

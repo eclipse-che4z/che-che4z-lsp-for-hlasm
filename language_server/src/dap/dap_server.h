@@ -35,18 +35,19 @@ class server : public hlasm_plugin::language_server::server
 public:
     explicit server(parser_library::workspace_manager& ws_mngr);
 
-    // Inherited via server
-    virtual void respond(const json& id, const std::string& requested_method, const json& args) override;
+    void request(const json& id, const std::string& requested_method, const json& args, method handler) override;
 
-    virtual void notify(const std::string& method, const json& args) override;
+    void respond(const json& id, const std::string& requested_method, const json& args) override;
 
-    virtual void respond_error(const json& id,
+    void notify(const std::string& method, const json& args) override;
+
+    void respond_error(const json& id,
         const std::string& requested_method,
         int err_code,
         const std::string& err_message,
         const json& error) override;
 
-    virtual void message_received(const json& message) override;
+    void message_received(const json& message) override;
 
 
 

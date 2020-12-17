@@ -2,6 +2,14 @@
 
 ## ****Unreleased****
 
+#### Added
+- Diagnostic suppression for files that have no processor group configuration.
+- Support for light and contrast themes.
+
+#### Fixed
+- Parsing issues regarding conditional assembly expressions and attribute lookahead.
+- Several issues causing the extension to crash.
+
 ## [0.11.1] - 2020-11-09
 
 #### Fixed

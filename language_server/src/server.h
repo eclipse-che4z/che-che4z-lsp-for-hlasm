@@ -58,6 +58,7 @@ protected:
     std::vector<std::unique_ptr<feature>> features_;
 
     std::map<std::string, method> methods_;
+    std::unordered_map<json, method> request_handlers_;
 
     bool shutdown_request_received_ = false;
     bool exit_notification_received_ = false;
