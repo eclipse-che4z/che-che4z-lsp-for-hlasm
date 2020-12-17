@@ -182,6 +182,25 @@ The following example of `pgm_conf.json` specifies that the processor group `GRO
 }
 ```
 
+### Suppression of Diagnostics
+
+For files, that use macros extensively, but do not have the definitions available, it is very probable that diagnostics reported by HLASM Language support will not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in editor settings, or in `pgm_conf.json`. For files with no processor group configuration in `pgm_conf.json`, all the diagnostics will be suppressed, if there is too many of them (more than the configured limit).
+
+```
+{
+  "pgms": [
+    {
+      "program": "source_code",
+      "pgroup": "GROUP1"
+    }
+  ],
+  "diagnosticsSuppressLimit" : 15
+}
+```
+With the `pgm_conf.json` above, the `source_code` file has configuration, so all discovered diagnostics will be always shown. However, if you open another file and do not assign a processor group to it, its diagnostcs will not be shown, if there are more than 15 of them.
+
+
+
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
