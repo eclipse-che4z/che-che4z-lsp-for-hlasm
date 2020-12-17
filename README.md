@@ -1,7 +1,7 @@
 # HLASM Language Support
 [![CI](https://github.com/eclipse/che-che4z-lsp-for-hlasm/workflows/CI/badge.svg?branch=development)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/actions?query=workflow%3ACI)
 [![GitHub issues](https://img.shields.io/github/issues-raw/eclipse/che-che4z-lsp-for-hlasm)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues)
-[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/enQtNzk0MzA4NDMzOTIwLWIzMjEwMjJlOGMxNmMyNzQ1NWZlMzkxNmQ3M2VkYWNjMmE0MGQ0MjIyZmY3MTdhZThkZDg3NGNhY2FmZTEwNzQ)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://communityinviter.com/apps/che4z/code4z)
 <a href="https://sonarcloud.io/dashboard?id=eclipse_che-che4z-lsp-for-hlasm">
 <img src="https://sonarcloud.io/images/project_badges/sonarcloud-black.svg" width="94" height="20" href="" />
 </a>
@@ -13,7 +13,7 @@ The extension is available on the [Visual Studio Marketplace](https://marketplac
 HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack), an all-round package that offers a modern experience for mainframe application developers, including [COBOL Language Support](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.cobol-language-support), [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor), [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) and [Debugger for Mainframe](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.debugger-for-mainframe) extensions.
 
 
-## Useful information
+## Useful Information
 - If you have a question about the functionalities of the extension, or come across a problem, [file an issue](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues).
 - Contributions are always welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 - See the project [wiki](https://github.com/eclipse/che-che4z-lsp-for-hlasm/wiki/) for project documentation. 
