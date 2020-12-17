@@ -19,6 +19,7 @@ on:
     branches:
       - master
       - development
+      - release**
   pull_request:
     branches:
       - master
@@ -191,7 +192,7 @@ jobs:
   release:
     name: Release VSIXs
     runs-on: ubuntu-18.04
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'pull_request' && github.base_ref == 'master' && startsWith(github.head_ref, 'release'))
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release'))
     needs: [alpine-VSIX, VSIX]
 
     steps:
@@ -219,14 +220,14 @@ jobs:
           mv hlasm-language-support-${{ env.VERSION }}-alpine.vsix  alpine.vsix
 
       - name: Commit changes
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "github-actions"
           git add CHANGELOG.md clients/vscode-hlasmplugin/package.json clients/vscode-hlasmplugin/CHANGELOG.md
           git commit -m "chore: Update version & changelog [skip ci]"
       - name: Push changes
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -236,7 +237,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge master into development
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           git stash
           git fetch
@@ -256,7 +257,7 @@ jobs:
           branch: development
 
       - name: Delete PRs head branches
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: dawidd6/action-delete-branch@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
