@@ -26,8 +26,8 @@ using json = nlohmann::json;
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-workspace::workspace(ws_uri uri,
-    std::string name,
+workspace::workspace(const ws_uri& uri,
+    const std::string& name,
     file_manager& file_manager,
     const lib_config& global_config,
     std::atomic<bool>* cancel)
@@ -43,7 +43,8 @@ workspace::workspace(ws_uri uri,
     pgm_conf_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF;
 }
 
-workspace::workspace(ws_uri uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
+workspace::workspace(
+    const ws_uri& uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
     : workspace(uri, uri, file_manager, global_config, cancel)
 {}
 

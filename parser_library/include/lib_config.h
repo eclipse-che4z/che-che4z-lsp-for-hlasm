@@ -39,7 +39,7 @@ public:
 
 private:
     // Returns an instance that has missing settings of this filled with not missing setting of the parameter
-    [[nodiscard]] lib_config combine_two_configs(const lib_config& second);
+    [[nodiscard]] lib_config combine_two_configs(const lib_config& second) const;
 
     // Return instance of lib_config with default values.
     static lib_config make_default();

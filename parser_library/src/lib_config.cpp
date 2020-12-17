@@ -47,7 +47,7 @@ lib_config lib_config::fill_missing_settings(const lib_config& second)
     return combine_two_configs(second).combine_two_configs(default_config);
 }
 
-lib_config lib_config::combine_two_configs(const lib_config& second)
+lib_config lib_config::combine_two_configs(const lib_config& second) const
 {
     lib_config combined(*this);
     if (!combined.diag_supress_limit.has_value())
