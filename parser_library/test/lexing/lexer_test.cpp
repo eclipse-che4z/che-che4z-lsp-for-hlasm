@@ -22,6 +22,7 @@
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/lexer.h"
+#include "lexing/token_stream.h"
 
 // tests lexer class:
 // AREAD, continuation statements, rewinding, token creation
@@ -81,7 +82,7 @@ EOF
     hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "aread", "", nullptr, false };
     hlasm_plugin::parser_library::lexing::input_source input(in);
     hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
-    antlr4::CommonTokenStream tokens(&l);
+    hlasm_plugin::parser_library::lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
     l.ainsert_back("INSERTED BACK 1");
@@ -121,7 +122,7 @@ EOF
     hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rntest", "", nullptr, false };
     hlasm_plugin::parser_library::lexing::input_source input("TEST TEST \r\n TEST1 TEST2");
     hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
-    antlr4::CommonTokenStream tokens(&l);
+    hlasm_plugin::parser_library::lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
     tokens.fill();
@@ -145,7 +146,7 @@ TEST(lexer_test, new_line_in_ignored)
         
 label lr 1,1)");
     hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
-    antlr4::CommonTokenStream tokens(&l);
+    hlasm_plugin::parser_library::lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
     tokens.fill();
@@ -215,7 +216,7 @@ EOF
     hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "unlimited_line", "", nullptr, false };
     hlasm_plugin::parser_library::lexing::input_source input(in);
     hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
-    antlr4::CommonTokenStream tokens(&l);
+    hlasm_plugin::parser_library::lexing::token_stream tokens(&l);
     parser parser(&tokens);
     l.set_unlimited_line(true);
 
@@ -257,7 +258,7 @@ EOF
     hlasm_plugin::parser_library::lexing::input_source input(in);
     hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "rewind_input", "", nullptr, false };
     hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
-    antlr4::CommonTokenStream tokens(&l);
+    hlasm_plugin::parser_library::lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
     std::stringstream token_stream;
@@ -304,4 +305,40 @@ EOF
     auto token_string = token_stream.str();
 
     ASSERT_EQ(token_string, out);
+}
+
+TEST(lexer_test, special_spaces)
+{
+    std::string in = "A\v\f\t LR";
+    hlasm_plugin::parser_library::lexing::input_source input(in);
+    hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "", "", nullptr, false };
+    hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
+
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IDENTIFIER);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+}
+
+TEST(lexer_test, attribute_in_continuation)
+{
+    std::string in =
+        R"(       LR                                                           1,Lx
+               'SYMBOL
+)";
+
+    hlasm_plugin::parser_library::semantics::lsp_info_processor lsp_proc = { "", "", nullptr, false };
+    hlasm_plugin::parser_library::lexing::input_source input(in);
+    hlasm_plugin::parser_library::lexing::lexer l(&input, &lsp_proc);
+
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::SPACE);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::NUM);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::COMMA);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::CONTINUATION);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IGNORED);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::IGNORED);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ATTR);
+    ASSERT_EQ(l.nextToken()->getType(), hlasm_plugin::parser_library::lexing::lexer::ORDSYMBOL);
 }

@@ -21,15 +21,16 @@
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "mach_expr_term.h"
+#include "semantics/collector.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
 
 
 data_definition data_definition::create(
-    std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
+    semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
 {
-    parser p(std::move(format), std::move(exprs), std::move(nominal), begin);
+    parser p(coll, std::move(format), std::move(exprs), std::move(nominal), begin);
     return p.parse();
 }
 
@@ -326,7 +327,7 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::m
                     else if (kind == context::symbol_value_kind::RELOC)
                     {
                         checking::expr_type ex_type;
-                        auto reloc = ev.get_reloc();
+                        const auto& reloc = ev.get_reloc();
                         if (reloc.is_complex())
                             ex_type = checking::expr_type::COMPLEX;
                         else
@@ -367,8 +368,10 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::m
     return nom;
 }
 
-data_definition::parser::parser(std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
-    : format_(std::move(format))
+data_definition::parser::parser(
+    semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
+    : collector_(coll)
+    , format_(std::move(format))
     , exprs_(std::move(exprs))
     , nominal_(std::move(nominal))
     , pos_(begin)
@@ -396,10 +399,12 @@ std::optional<int> data_definition::parser::parse_number()
     std::optional<int> parsed;
     try
     {
+        position begin_pos = pos_;
         size_t pos;
         parsed = std::stoi(format_.substr(p_), &pos);
         p_ += pos;
         pos_.column += pos;
+        collector_.add_hl_symbol(token_info(range(begin_pos, pos_), semantics::hl_scopes::number));
         return parsed;
     }
     catch (std::out_of_range&)
@@ -538,6 +543,8 @@ void data_definition::parser::parse_modifier()
     // we assume, that format_[p_] determines one of modifiers PLSE
     position begin_pos = pos_;
     char modifier = format_[p_++];
+    collector_.add_hl_symbol(token_info(
+        range { begin_pos, { begin_pos.line, begin_pos.column + 1 } }, semantics::hl_scopes::data_def_modifier));
     if (p_ >= format_.size())
     {
         // expected something after modifier character
@@ -583,6 +590,7 @@ data_definition data_definition::parser::parse()
 
     result_.type = format_[p_++];
     result_.type_range = { pos_, { pos_.line, pos_.column + 1 } };
+    range unified_type_range = result_.type_range;
     update_position_by_one();
 
 
@@ -593,9 +601,12 @@ data_definition data_definition::parser::parse()
     {
         result_.extension = format_[p_];
         result_.extension_range = { pos_, { pos_.line, pos_.column + 1 } };
+        unified_type_range.end = result_.extension_range.end;
         ++p_;
         update_position_by_one();
     }
+
+    collector_.add_hl_symbol(token_info(unified_type_range, semantics::hl_scopes::data_def_type));
 
     for (size_t i = 0; i < 5 && p_ < format_.size(); ++i)
     {
@@ -622,7 +633,6 @@ data_definition data_definition::parser::parse()
             result_.add_diagnostic(diagnostic_op::error_D006({ begin_pos, pos_ }));
         }
     }
-
 
     return std::move(result_);
 }

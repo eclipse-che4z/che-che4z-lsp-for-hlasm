@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 
         return ret;
     }
-    catch (std::exception& ex)
+    catch (const std::exception& ex)
     {
         LOG_ERROR(ex.what());
         return 1;

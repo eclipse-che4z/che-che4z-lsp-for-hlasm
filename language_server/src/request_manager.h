@@ -40,17 +40,24 @@ struct request
 class request_manager
 {
 public:
-    request_manager(std::atomic<bool>* cancel);
+    enum class async_policy
+    {
+        ASYNC,
+        SYNC
+    };
+
+    explicit request_manager(std::atomic<bool>* cancel, async_policy async_pol = async_policy::ASYNC);
     void add_request(server* server, json message);
     void finish_server_requests(server* server);
     void end_worker();
-    bool is_running();
+    bool is_running() const;
+
 private:
     std::atomic<bool> end_worker_;
 
     // request_manager uses conditional variable to put the
     // worker thread asleep when the request queue is empty
-    std::mutex q_mtx_;
+    mutable std::mutex q_mtx_;
     std::condition_variable cond_;
 
     // the request manager invalidates older requests on the
@@ -59,7 +66,7 @@ private:
     std::atomic<server*> currently_running_server_;
 
     void handle_request_(const std::atomic<bool>* end_loop);
-    std::string get_request_file_(json r, bool* is_parsing_required = nullptr);
+    std::string get_request_file_(json r, bool* is_parsing_required = nullptr) const;
 
     std::deque<request> requests_;
 
@@ -68,6 +75,8 @@ private:
     std::atomic<bool>* cancel_;
 
     std::thread worker_;
+
+    async_policy async_policy_;
 };
 
 

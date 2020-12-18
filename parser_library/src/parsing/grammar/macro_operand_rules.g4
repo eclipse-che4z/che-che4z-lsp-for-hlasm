@@ -23,10 +23,10 @@ mac_op returns [operand_ptr op]
 	};
 
 mac_op_o returns [operand_ptr op] 
-	: mac_entry?							
+	: mac_entry?
 	{
 		if($mac_entry.ctx)
-			$op = std::make_unique<macro_operand>(std::move($mac_entry.chain),provider.get_range($mac_entry.ctx));
+			$op = std::make_unique<macro_operand_chain>(std::move($mac_entry.chain),provider.get_range($mac_entry.ctx));
 		else
 			$op = std::make_unique<semantics::empty_operand>(provider.original_range);
 	};
@@ -45,12 +45,12 @@ mac_preproc_c
 	| LT
 	| GT
 	| slash
-	| equals_
+	| equals
 	| VERTICAL
 	| IDENTIFIER											{collector.add_hl_symbol(token_info(provider.get_range($IDENTIFIER), hl_scopes::operand));}
 	| NUM													{collector.add_hl_symbol(token_info(provider.get_range($NUM), hl_scopes::operand));}
 	| ORDSYMBOL												{collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));}
-	| dot_									
+	| dot									
 	| AMPERSAND ORDSYMBOL									
 	{
 		auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
@@ -66,10 +66,10 @@ mac_preproc_c
 
 mac_str_ch returns [concat_point_ptr point]
 	: common_ch_v									{$point = std::move($common_ch_v.point);}
-	| SPACE											{$point = std::make_unique<char_str>($SPACE->getText());}//here next are for deferred
-	| LPAR											{$point = std::make_unique<char_str>("(");}
-	| RPAR											{$point = std::make_unique<char_str>(")");}
-	| COMMA											{$point = std::make_unique<char_str>(",");};
+	| SPACE											{$point = std::make_unique<char_str_conc>($SPACE->getText());}//here next are for deferred
+	| LPAR											{$point = std::make_unique<char_str_conc>("(");}
+	| RPAR											{$point = std::make_unique<char_str_conc>(")");}
+	| COMMA											{$point = std::make_unique<char_str_conc>(",");};
 
 mac_str_b returns [concat_chain chain]
 	:
@@ -78,9 +78,9 @@ mac_str_b returns [concat_chain chain]
 mac_str returns [concat_chain chain]
 	: ap1=APOSTROPHE mac_str_b ap2=(APOSTROPHE|ATTR)				
 	{
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		$chain.insert($chain.end(), std::make_move_iterator($mac_str_b.chain.begin()), std::make_move_iterator($mac_str_b.chain.end()));
-		$chain.push_back(std::make_unique<char_str>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'"));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
 
@@ -88,15 +88,18 @@ mac_ch returns [concat_chain chain]
 	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));
 													auto token = $common_ch_v.ctx->getStart();
 													if (token->getType() == lexing::lexer::Tokens::ORDSYMBOL && $common_ch_v.ctx->getStop()->getType() == lexing::lexer::Tokens::ORDSYMBOL)
+													{
 														collector.add_lsp_symbol(ctx->ids().add(token->getText()),provider.get_range(token),symbol_type::ord);
+														collector.add_hl_symbol(token_info(provider.get_range( $common_ch_v.ctx), hl_scopes::operand));
+													}
 													;}
-	| ATTR											{$chain.push_back(std::make_unique<char_str>("'"));}
+	| ATTR											{$chain.push_back(std::make_unique<char_str_conc>("'"));}
 	| mac_str										{$chain = std::move($mac_str.chain);}
 	| mac_sublist									{$chain.push_back(std::move($mac_sublist.point));};
 
 mac_ch_c returns [concat_chain chain]
 	:
-	| tmp=mac_ch_c mac_ch							
+	| tmp=mac_ch_c mac_ch
 	{
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
@@ -104,23 +107,25 @@ mac_ch_c returns [concat_chain chain]
 
 mac_entry returns [concat_chain chain]
 	: mac_ch										{$chain = std::move($mac_ch.chain);}
-	| literal										{$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));}
-	| ORDSYMBOL EQUALS literal					
+	| literal										{$chain.push_back(std::make_unique<char_str_conc>($literal.ctx->getText()));}
+	| ORDSYMBOL EQUALS literal
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));
-		$chain.push_back(std::make_unique<char_str>($ORDSYMBOL->getText()));
-		$chain.push_back(std::make_unique<char_str>("="));
-		$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));
+		$chain.push_back(std::make_unique<char_str_conc>($ORDSYMBOL->getText()));
+		$chain.push_back(std::make_unique<char_str_conc>("="));
+		$chain.push_back(std::make_unique<char_str_conc>($literal.ctx->getText()));
 	}
-	| tmp=mac_entry mac_ch							
+	| tmp=mac_entry mac_ch
 	{
 		$chain = std::move($tmp.chain);
 		$chain.insert($chain.end(), std::make_move_iterator($mac_ch.chain.begin()), std::make_move_iterator($mac_ch.chain.end()));
 	};
+	finally
+	{concatenation_point::clear_concat_chain($chain);}
 
 mac_sublist_b_c returns [concat_chain chain]
 	: mac_ch_c										{$chain = std::move($mac_ch_c.chain);}
-	| literal										{$chain.push_back(std::make_unique<char_str>($literal.ctx->getText()));};
+	| literal										{$chain.push_back(std::make_unique<char_str_conc>($literal.ctx->getText()));};
 
 mac_sublist_b returns [std::vector<concat_chain> chains]
 	: mac_sublist_b_c										{$chains.push_back(std::move($mac_sublist_b_c.chain));}
@@ -131,4 +136,4 @@ mac_sublist_b returns [std::vector<concat_chain> chains]
 	};
 
 mac_sublist returns [concat_point_ptr point]
-	: lpar mac_sublist_b rpar						{ $point = std::make_unique<sublist>(std::move($mac_sublist_b.chains)); };
+	: lpar mac_sublist_b rpar						{ $point = std::make_unique<sublist_conc>(std::move($mac_sublist_b.chains)); };

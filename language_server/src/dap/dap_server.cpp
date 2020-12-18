@@ -27,7 +27,15 @@ server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(ws_mngr)
 {
     features_.push_back(std::make_unique<feature_launch>(ws_mngr_, *this));
+    register_feature_methods();
     register_methods();
+}
+
+void server::request(const json&, const std::string&, const json&, method)
+{
+    // Currently, there are no supported DAP requests from client to server
+    /*send_message_->reply(json {
+        { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
 void server::respond(const json& request_seq, const std::string& requested_command, const json& args)
@@ -64,24 +72,23 @@ void server::message_received(const json& message)
 {
     try
     {
-        assert(message["type"] == "request");
-        last_seq_ = message["seq"].get<json::number_unsigned_t>();
+        assert(message.at("type") == "request");
+        last_seq_ = message.at("seq").get<json::number_unsigned_t>();
         auto arguments = message.find("arguments");
         if (arguments == message.end())
-            call_method(message["command"].get<std::string>(), message["seq"], json());
+            call_method(message.at("command").get<std::string>(), message.at("seq"), json());
         else
-            call_method(message["command"].get<std::string>(), message["seq"], arguments.value());
+            call_method(message.at("command").get<std::string>(), message.at("seq"), arguments.value());
     }
     catch (const nlohmann::json::exception& e)
     {
+        (void)e;
         LOG_WARNING(std::string("There was an error with received request:") + e.what());
     }
 }
 
 void server::register_methods()
 {
-    language_server::server::register_methods();
-
     methods_.emplace(
         "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
     methods_.emplace(

@@ -395,3 +395,41 @@ X    EQU    *-A
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(ordinary_symbols, relocatable_ca_invalid)
+{
+    std::string input = R"(
+A LR 1,1
+  DS (D)C
+B LR 1,1
+D EQU 6
+C EQU B-A
+  AIF (C EQ 0).A
+.A ANOP
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(ordinary_symbols, relocatable_ca_valid)
+{
+    std::string input = R"(
+A LR 1,1
+D EQU 6
+  DS (D)C
+B LR 1,1
+C EQU B-A
+  AIF (C EQ 0).A
+.A ANOP
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}

@@ -17,6 +17,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <sstream>
 
 #include "json.hpp"
 
@@ -300,7 +302,7 @@ int main(int argc, char** argv)
     if (single_file != "")
     {
         if (end_range == 0)
-            end_range = LLONG_MAX;
+            end_range = std::numeric_limits<long long int>::max();
         for (size_t i = 0; i < end_range; ++i)
         {
             json j = parse_one_file(

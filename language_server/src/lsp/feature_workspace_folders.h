@@ -28,9 +28,10 @@ namespace hlasm_plugin::language_server::lsp {
 class feature_workspace_folders : public feature
 {
 public:
-    feature_workspace_folders(parser_library::workspace_manager& ws_mngr);
+    explicit feature_workspace_folders(
+        parser_library::workspace_manager& ws_mngr, response_provider& response_provider);
 
-    // Adds workspace/didChangeWorkspaceFolders method to the map.
+    // Adds workspace/* methods to the map.
     void register_methods(std::map<std::string, method>&) override;
     // Returns workspaces capability.
     json virtual register_capabilities() override;
@@ -41,6 +42,11 @@ private:
     // Handles workspace/didChangeWorkspaceFolders notification.
     void on_did_change_workspace_folders(const json& id, const json& params);
     void did_change_watched_files(const json&, const json& params);
+
+    void configuration(const json&, const json& params) const;
+    void did_change_configuration(const json&, const json& params);
+
+
     // Adds all workspaces specified in the json to the workspace manager.
     void add_workspaces(const json& added);
 
@@ -49,6 +55,9 @@ private:
 
     // Adds one workspace to the workspace manager.
     void add_workspace(const std::string& name, const std::string& uri);
+
+    uint64_t config_request_number_ = 0;
+    void send_configuration_request();
 };
 
 } // namespace hlasm_plugin::language_server::lsp

@@ -72,13 +72,15 @@ public:
     std::vector<position_uri_s> references(const position& pos) const;
     std::vector<std::string> hover(const position& pos) const;
     completion_list_s completion(const position& pos, const char trigger_char, int trigger_kind) const;
+    const lines_info& semantic_tokens() const;
 
     // add one lsp symbol to the context
     void add_lsp_symbol(context::lsp_symbol& symbol);
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
 
-    semantics::highlighting_info& get_hl_info();
+    // finishes collected data
+    void finish();
 
 private:
     // stored symbols that couldn't be processed without further information
@@ -94,7 +96,6 @@ private:
     bool collect_hl_info_;
     // regex that represents a common position of instruction within a statement
     const std::regex instruction_regex;
-
 
     // checks whether the given position is within occurence's range
     bool is_in_range_(const position& pos, const context::occurence& occ) const;
@@ -126,7 +127,7 @@ private:
     int find_latest_version_(const context::instr_definition& current,
         const context::definitions<context::instr_definition>& to_check) const;
     // returns the first macro id on the parsing stack
-    context::macro_id get_top_macro_stack_();
+    context::macro_id get_top_macro_stack_() const;
 };
 } // namespace semantics
 } // namespace parser_library

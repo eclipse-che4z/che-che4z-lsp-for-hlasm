@@ -22,25 +22,64 @@
 #include "feature_language_features.h"
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
+#include "lib_config.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(ws_mngr)
 {
-    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_));
+    features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_language_features>(ws_mngr_, *this));
+    register_feature_methods();
     register_methods();
 
     ws_mngr_.register_diagnostics_consumer(this);
+    ws_mngr_.set_message_consumer(this);
 }
 
 void server::message_received(const json& message)
 {
-    // we do not support any requests sent from this server
-    // thus we do not accept any responses
     auto id_found = message.find("id");
+
+
+    auto result_found = message.find("result");
+    auto error_result_found = message.find("error");
+
+    if (result_found != message.end())
+    {
+        // we received a response to our request that was successful
+        if (id_found == message.end())
+        {
+            LOG_WARNING("A response with no id field received.");
+            return;
+        }
+
+        auto handler_found = request_handlers_.find(*id_found);
+        if (handler_found == request_handlers_.end())
+        {
+            LOG_WARNING("A response with no registered handler received.");
+            return;
+        }
+
+        method handler = handler_found->second;
+        request_handlers_.erase(handler_found);
+        handler(id_found.value(), result_found.value());
+        return;
+    }
+    else if (error_result_found != message.end())
+    {
+        auto message_found = error_result_found->find("message");
+        std::string warn_message;
+        if (message_found != error_result_found->end())
+            warn_message = message_found->dump();
+        else
+            warn_message = "Request with id " + id_found->dump() + " returned with unspecified error.";
+        LOG_WARNING(warn_message);
+        return;
+    }
+
     auto params_found = message.find("params");
     auto method_found = message.find("method");
 
@@ -70,6 +109,13 @@ void server::message_received(const json& message)
     }
 }
 
+void server::request(const json& id, const std::string& requested_method, const json& args, method handler)
+{
+    json reply { { "jsonrpc", "2.0" }, { "id", id }, { "method", requested_method }, { "params", args } };
+    request_handlers_.emplace(id, handler);
+    send_message_->reply(reply);
+}
+
 void server::respond(const json& id, const std::string&, const json& args)
 {
     json reply { { "jsonrpc", "2.0" }, { "id", id }, { "result", args } };
@@ -93,12 +139,15 @@ void server::respond_error(
 
 void server::register_methods()
 {
-    language_server::server::register_methods();
-
     methods_.emplace(
         "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
     methods_.emplace("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
     methods_.emplace("exit", std::bind(&server::on_exit, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void empty_handler(json, const json&)
+{
+    // Does nothing
 }
 
 void server::on_initialize(json id, const json& param)
@@ -115,8 +164,7 @@ void server::on_initialize(json id, const json& param)
             { "documentHighlightProvider", false },
             { "renameProvider", false },
             { "documentSymbolProvider", false },
-            { "workspaceSymbolProvider", false },
-            { "semanticHighlighting", true } } } };
+            { "workspaceSymbolProvider", false } } } };
 
     for (auto& f : features_)
     {
@@ -125,6 +173,12 @@ void server::on_initialize(json id, const json& param)
     }
 
     respond(id, "", capabilities);
+
+    json register_configuration_changed_args {
+        { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
+    };
+
+    request("register1", "client/registerCapability", register_configuration_changed_args, &empty_handler);
 
 
     for (auto& f : features_)
@@ -144,7 +198,7 @@ void server::on_shutdown(json id, const json&)
 
 void server::on_exit(json, const json&) { exit_notification_received_ = true; }
 
-void server::show_message(const std::string& message, message_type type)
+void server::show_message(const std::string& message, parser_library::message_type type)
 {
     json m { { "type", (int)type }, { "message", message } };
     notify("window/showMessage", m);
@@ -178,7 +232,7 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // set of all files for which diagnostics came from the server.
     std::unordered_set<std::string> new_files;
     // transform the diagnostics into json
-    for (auto& file_diags : diags)
+    for (const auto& file_diags : diags)
     {
         json diags_array = json::array();
         for (auto d : file_diags.second)

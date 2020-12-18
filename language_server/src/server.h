@@ -40,15 +40,15 @@ class server : public response_provider
 public:
     // Constructs the server with workspace_manager.
     // All the requests and notifications are passed to the workspace manager
-    server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr);
 
     // Tells the server that a massage was received. The server carries out the notification or request.
     virtual void message_received(const json& message) = 0;
 
     // Returns true, if LSP shutdown request has been received.
-    bool is_shutdown_request_received();
+    bool is_shutdown_request_received() const;
     // Returns true, if LSP exit notification has been received.
-    bool is_exit_notification_received();
+    bool is_exit_notification_received() const;
 
     void set_send_message_provider(send_message_provider* provider);
 
@@ -58,13 +58,14 @@ protected:
     std::vector<std::unique_ptr<feature>> features_;
 
     std::map<std::string, method> methods_;
+    std::unordered_map<json, method> request_handlers_;
 
     bool shutdown_request_received_ = false;
     bool exit_notification_received_ = false;
 
     parser_library::workspace_manager& ws_mngr_;
 
-    virtual void register_methods();
+    void register_feature_methods();
 
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
     void call_method(const std::string& method, const json& id, const json& args);

@@ -26,9 +26,7 @@
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class hlasm_context;
 using ctx_ptr = std::unique_ptr<hlasm_context>;
@@ -97,6 +95,9 @@ public:
     // sets current source file indices
     void set_source_indices(size_t begin_index, size_t end_index, size_t end_line);
 
+    std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros) const;
+    std::pair<source_position, source_snapshot> get_end_snapshot() const;
+
     // pushes new kind of statement processing
     void push_statement_processing(const processing::processing_kind kind);
     // pushes new kind of statement processing as well as new source
@@ -109,6 +110,7 @@ public:
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;
     // gets copy nest of current statement processing
+    const std::vector<copy_member_invocation>& current_copy_stack() const;
     std::vector<copy_member_invocation>& current_copy_stack();
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
@@ -141,6 +143,9 @@ public:
     // return sequence symbol in current scope
     // returns nullptr if there is none in the current scope
     const sequence_symbol* get_sequence_symbol(id_index name) const;
+    // return opencode sequence symbol
+    // returns nullptr if there is none
+    const sequence_symbol* get_opencode_sequence_symbol(id_index name) const;
 
     void set_branch_counter(A_t value);
     A_t get_branch_counter() const;
@@ -155,16 +160,17 @@ public:
     opcode_t get_operation_code(id_index symbol) const;
 
     // get data attribute value of variable symbol
-    SET_t get_data_attribute(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset = {});
+    SET_t get_attribute_value_ca(data_attr_kind attribute, var_sym_ptr var_symbol, std::vector<size_t> offset);
     // get data attribute value of ordinary symbol
-    SET_t get_data_attribute(data_attr_kind attribute, id_index symbol);
+    SET_t get_attribute_value_ca(data_attr_kind attribute, id_index symbol);
+    SET_t get_attribute_value_ca(data_attr_kind attribute, const symbol* symbol);
 
     C_t get_type_attr(var_sym_ptr var_symbol, const std::vector<size_t>& offset);
     C_t get_opcode_attr(id_index symbol);
 
     // gets macro storage
     const macro_storage& macros() const;
-    const macro_def_ptr get_macro_definition(id_index name) const;
+    macro_def_ptr get_macro_definition(id_index name) const;
     // checks whether processing is currently in macro
     bool is_in_macro() const;
     // returns macro we are currently in or empty shared_ptr if in open code
@@ -192,7 +198,8 @@ public:
     void leave_copy_member();
 
     // creates specified global set symbol
-    template<typename T> set_sym_ptr create_global_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_global_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())
@@ -205,7 +212,7 @@ public:
             return glob->second;
         }
 
-        set_sym_ptr val(std::make_shared<set_symbol<T>>(id, is_scalar, true));
+        auto val = std::make_shared<set_symbol<T>>(id, is_scalar, true);
 
         globals_.insert({ id, val });
         curr_scope()->variables.insert({ id, val });
@@ -214,7 +221,8 @@ public:
     }
 
     // creates specified local set symbol
-    template<typename T> set_sym_ptr create_local_variable(id_index id, bool is_scalar)
+    template<typename T>
+    set_sym_ptr create_local_variable(id_index id, bool is_scalar)
     {
         auto tmp = curr_scope()->variables.find(id);
         if (tmp != curr_scope()->variables.end())
@@ -229,7 +237,5 @@ public:
     }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

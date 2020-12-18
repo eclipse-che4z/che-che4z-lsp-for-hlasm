@@ -14,7 +14,8 @@
 
 #include "lsp_info_processor.h"
 
-#include <string_view>
+#include <algorithm>
+#include <sstream>
 
 #include "context/instruction.h"
 
@@ -301,9 +302,9 @@ bool lsp_info_processor::find_references_(
 
 completion_list_s lsp_info_processor::completion(const position& pos, const char trigger_char, int trigger_kind) const
 {
-    if (!ctx_->lsp_ctx || ctx_->lsp_ctx.use_count() == 0)
-		return { false, {} };
-        
+    if (!ctx_->lsp_ctx || ctx_->lsp_ctx.use_count() == 0 || text_.size() == 0)
+        return { false, {} };
+
     std::string line_before = (pos.line > 0) ? text_[(unsigned int)pos.line - 1] : "";
     auto line = text_[(unsigned int)pos.line];
     auto line_so_far = line.substr(0, (pos.column == 0) ? 1 : (unsigned int)pos.column);
@@ -349,6 +350,11 @@ std::vector<std::string> lsp_info_processor::hover(const position& pos) const
         return result;
     return result;
 }
+
+void lsp_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
+
+const lines_info& lsp_info_processor::semantic_tokens() const { return hl_info_.lines; }
+
 void lsp_info_processor::add_lsp_symbol(lsp_symbol& symbol)
 {
     symbol.scope = get_top_macro_stack_();
@@ -379,11 +385,24 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
             hl_info_.cont_info.continuation_positions.push_back(
                 { symbol.token_range.start.line, symbol.token_range.start.column });
         }
-        hl_info_.lines.push_back(symbol);
+
+        // split multi line symbols
+        auto rest = symbol;
+        while (rest.token_range.start.line != rest.token_range.end.line)
+        {
+            // remove first line and add as separate token
+            auto first = rest;
+            first.token_range.end.line = first.token_range.start.line;
+            first.token_range.end.column = hl_info_.cont_info.continuation_column;
+            hl_info_.lines.push_back(std::move(first));
+            rest.token_range.start.line++;
+            rest.token_range.start.column = hl_info_.cont_info.continue_column;
+        }
+
+        if (rest.token_range.start != rest.token_range.end) // do not add empty tokens
+            hl_info_.lines.push_back(std::move(rest));
     }
 }
-
-semantics::highlighting_info& lsp_info_processor::get_hl_info() { return hl_info_; }
 
 bool lsp_info_processor::is_in_range_(const position& pos, const occurence& occ) const
 {
@@ -605,17 +624,10 @@ void lsp_info_processor::process_instruction_sym_()
             params_text << *deferred_vars_[i].name;
         }
 
-        std::string trim_instr = *deferred_instruction_.name;
-        if (trim_instr.size() > 0)
-        {
-            auto c = trim_instr[0];
-            trim_instr = (c == '#' || c == '$' || c == '@' || c == '_' || c == '*') ? trim_instr.substr(1) : trim_instr;
-        }
-
         // add it to list of completion items
         ctx_->lsp_ctx->all_instructions.push_back({ *deferred_instruction_.name,
             params_text.str(),
-            trim_instr + "   " + params_text.str(),
+            *deferred_instruction_.name + "   " + params_text.str(),
             content_pos((unsigned int)deferred_instruction_.definition_range.start.line, &text_) });
 
         // add it to definitions
@@ -681,7 +693,7 @@ completion_list_s lsp_info_processor::complete_var_(const position& pos) const
         {
             auto value = symbol.first.get_value();
             assert(value.size() == 1);
-            items.push_back({ *symbol.first.name, value[0], *symbol.first.name, { "" } });
+            items.push_back({ "&" + *symbol.first.name, value[0], "&" + *symbol.first.name, { "" }, (size_t)5 });
         }
     }
     return { false, items };
@@ -696,7 +708,7 @@ completion_list_s lsp_info_processor::complete_seq_(const position& pos) const
         {
             auto value = symbol.first.get_value();
             assert(value.size() == 1);
-            items.push_back({ *symbol.first.name, value[0], *symbol.first.name, { "" } });
+            items.push_back({ "." + *symbol.first.name, value[0], "." + *symbol.first.name, { "" }, (size_t)5 });
         }
     }
     return { false, items };
@@ -720,7 +732,7 @@ int lsp_info_processor::find_latest_version_(
     }
 }
 
-context::macro_id lsp_info_processor::get_top_macro_stack_()
+context::macro_id lsp_info_processor::get_top_macro_stack_() const
 {
     if (!ctx_->lsp_ctx->parser_macro_stack.empty())
         return ctx_->lsp_ctx->parser_macro_stack.top();

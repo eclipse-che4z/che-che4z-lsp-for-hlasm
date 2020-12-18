@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "../feature.h"
-#include "protocol.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -37,18 +36,47 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         std::bind(&feature_language_features::hover, this, std::placeholders::_1, std::placeholders::_2));
     methods.emplace("textDocument/completion",
         std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
+    methods.emplace("textDocument/semanticTokens/full",
+        std::bind(&feature_language_features::semantic_tokens, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_language_features::register_capabilities()
 {
+    // in case any changes are done to tokenTypes, the hl_scopes field in protocol.h
+    // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
     return json { { "definitionProvider", true },
         { "referencesProvider", true },
         { "hoverProvider", true },
         { "completionProvider",
-            { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } } };
+            { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } },
+        { "semanticTokensProvider",
+            { { "legend",
+                  { { "tokenTypes",
+                        { "class", //           label              = 0
+                            "function", //      instruction        = 1
+                            "comment", //       remark             = 2
+                            "event", //         ignored            = 3
+                            "comment", //       comment            = 4
+                            "modifier", //      continuation       = 5
+                            "keyword", //       seq_symbol         = 6
+                            "variable", //      var_symbol         = 7
+                            "operator", //      operator_symbol    = 8
+                            "string", //        string             = 9
+                            "number", //        number             = 10
+                            "parameter", //     operand            = 11
+                            "regexp", //        data_def_type      = 12
+                            "modifier", //      data_def_extension = 13
+                            "modifier", //      data_attrib_type   = 14
+                            "regexp", //        self_def_type      = 15
+                            "parameter" } }, // ordinary_symbol    = 16
+                      { "tokenModifiers", json::array() } } },
+                { "full", true } } } };
 }
 
-void feature_language_features::initialize_feature(const json&) {}
+void feature_language_features::initialize_feature(const json&)
+{
+    // No need for initialization in this feature.
+}
 
 void feature_language_features::definition(const json& id, const json& params)
 {
@@ -120,4 +148,53 @@ void feature_language_features::completion(const json& id, const json& params)
 
     response_->respond(id, "", to_ret);
 }
+
+json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
+{
+    using namespace parser_library;
+
+    json encoded_tokens = json::array();
+
+    parser_library::token_info first_virtual_token(0, 0, 0, 0, semantics::hl_scopes::label);
+    const token_info* last = &first_virtual_token;
+
+    for (const auto& current : tokens)
+    {
+        size_t delta_line = current.token_range.start.line - last->token_range.start.line;
+
+        size_t delta_char = last->token_range.start.line != current.token_range.start.line
+            ? current.token_range.start.column
+            : current.token_range.start.column - last->token_range.start.column;
+
+        size_t length = (current.token_range.start.column > current.token_range.end.column)
+            ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
+            : current.token_range.end.column - current.token_range.start.column;
+
+        // skip overlaying tokens
+        if (delta_line == 0 && delta_char == 0 && last != &first_virtual_token)
+            continue;
+
+        encoded_tokens.push_back(delta_line);
+        encoded_tokens.push_back(delta_char);
+        encoded_tokens.push_back(length);
+        encoded_tokens.push_back(static_cast<std::underlying_type_t<semantics::hl_scopes>>(current.scope));
+        encoded_tokens.push_back((size_t)0);
+
+        last = &current;
+    }
+
+    return encoded_tokens;
+}
+
+void feature_language_features::semantic_tokens(const json& id, const json& params)
+{
+    auto document_uri = params["textDocument"]["uri"].get<std::string>();
+
+    auto tokens = ws_mngr_.semantic_tokens(uri_to_path(document_uri).c_str());
+    json num_array = convert_tokens_to_num_array(tokens);
+
+    response_->respond(id, "", { { "data", num_array } });
+}
+
+
 } // namespace hlasm_plugin::language_server::lsp

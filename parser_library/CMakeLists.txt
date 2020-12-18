@@ -19,12 +19,14 @@ SET (CMAKE_CXX_STANDARD 17)
 
 set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
 #generated grammar source files
+
+set(GENERATED_SRC_CPP
+	${GENERATED_FOLDER}/hlasmparser.cpp
+)
+
 set(GENERATED_SRC
-   ${GENERATED_FOLDER}/hlasmparser.cpp
-   ${GENERATED_FOLDER}/hlasmparserBaseListener.cpp
-   ${GENERATED_FOLDER}/hlasmparserBaseVisitor.cpp
-   ${GENERATED_FOLDER}/hlasmparserListener.cpp
-   ${GENERATED_FOLDER}/hlasmparserVisitor.cpp
+   ${GENERATED_SRC_CPP}
+   ${GENERATED_FOLDER}/hlasmparser.h
  )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -42,7 +44,7 @@ add_custom_command(OUTPUT ${GENERATED_SRC}
    COMMAND 
    ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
    COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -visitor -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
    DEPENDS antlr4jar ${GRAMMAR_SRC} ${PROJECT_SOURCE_DIR}/src/parsing/grammar/lex.tokens
    )
@@ -54,7 +56,7 @@ file(GLOB_RECURSE LIB_SRC
 #Generate the shared library from the library sources
 add_library(parser_library
     ${LIB_SRC}
-    ${GENERATED_SRC}
+    ${GENERATED_SRC_CPP}
 )
 if(NOT BUILD_SHARED_LIBS)
 	set_target_properties(parser_library PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
@@ -94,7 +96,7 @@ if(BUILD_TESTING)
 	    add_executable(library_test
             ${TEST_SRC}
 	    	${LIB_SRC}
-			${GENERATED_SRC}
+			${GENERATED_SRC_CPP}
 	    )
     else() #when building statically linked library, we can link already built parser_library.
     	add_executable(library_test ${TEST_SRC})

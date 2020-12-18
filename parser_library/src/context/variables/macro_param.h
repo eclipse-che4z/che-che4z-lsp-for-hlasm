@@ -48,11 +48,11 @@ public:
     virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t> offset = {}) const override;
+    virtual A_t number(std::vector<size_t> offset) const override;
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset = {}) const override;
+    virtual A_t count(std::vector<size_t> offset) const override;
 
-    virtual size_t size(std::vector<size_t> offset = {}) const;
+    virtual size_t size(std::vector<size_t> offset) const;
 
 protected:
     macro_param_base(macro_param_type param_type, id_index name, bool is_global);

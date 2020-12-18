@@ -16,10 +16,12 @@
 
 #include "feature.h"
 
-using namespace hlasm_plugin::language_server;
+namespace hlasm_plugin::language_server {
 
 class response_provider_mock : public response_provider
 {
+public:
+    MOCK_METHOD4(request, void(const json& id, const std::string& requested_method, const json& args, method handler));
     MOCK_METHOD3(respond, void(const json& id, const std::string& requested_method, const json& args));
     MOCK_METHOD2(notify, void(const std::string& method, const json& args));
     MOCK_METHOD5(respond_error,
@@ -29,3 +31,5 @@ class response_provider_mock : public response_provider
             const std::string& err_message,
             const json& error));
 };
+
+} // namespace hlasm_plugin::language_server

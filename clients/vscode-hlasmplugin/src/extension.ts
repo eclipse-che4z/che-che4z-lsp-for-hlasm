@@ -15,14 +15,17 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient';
 
-import { HLASMSemanticHighlightingFeature, ContinuationDocumentsInfo } from './hlasmSemanticHighlighting';
+
+import { SemanticTokensFeature } from './semanticTokens';
 import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } from './debugProvider';
 import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory } from './serverFactory';
 const useTcp = false;
-
+const offset = 71;
+const continueColumn = 15;
+//export var hlasmpluginClient : vscodelc.LanguageClient;
 /**
  * ACTIVATION
  * activates the extension
@@ -50,35 +53,36 @@ export async function activate(context: vscode.ExtensionContext) {
     const serverOptions = await factory.create(useTcp);
 
     //client init
-    const hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+
     //asm contribution 
-    var highlight = new HLASMSemanticHighlightingFeature(hlasmpluginClient);
+    var highlight = new SemanticTokensFeature(hlasmpluginClient);
     // register highlighting as features
     hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
     await registerToContext(context, factory.dapPort, highlight);
-
     //give the server some time to start listening when using TCP
     setTimeout(function () {
         hlasmpluginClient.start();
     }, (useTcp) ? 2000 : 0);
+    
+    let api = {
+        getExtension() : vscodelc.LanguageClient {
+            return hlasmpluginClient;
+        }
+    };
+    return api;
 }
 
-async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: HLASMSemanticHighlightingFeature) {
-    // vscode/theia compatibility temporary fix
-    // theia uses monaco commands
-    var completeCommand: string;
+async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: SemanticTokensFeature) {
+    const completeCommand = "editor.action.triggerSuggest";
     var commandList = await vscode.commands.getCommands();
-    if (commandList.find(command => command == "editor.action.triggerSuggest"))
-        completeCommand = "editor.action.triggerSuggest";
-    else if (commandList.find(command => command == "monaco.editor.action.triggerSuggest"))
-        completeCommand = "monaco.editor.action.triggerSuggest";
 
     // check whether the continuation commands have already been registered
     var commandsRegistered = commandList.find(command => command == 'insertContinuation' || command == 'removeContinuation');
 
     // initialize helpers
-    const handler = new EventsHandler(completeCommand);
+    const handler = new EventsHandler(completeCommand, highlight);
     const contHandling = new ContinuationHandler();
     const commands = new CustomEditorCommands();
 
@@ -93,29 +97,27 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     // register continuation handlers
     if (!commandsRegistered) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("insertContinuation",
-            (editor, edit) => contHandling.insertContinuation(editor, edit,highlight.getContinuationInfo())));
+            (editor, edit) => contHandling.insertContinuation(editor, edit, offset, continueColumn)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
-            (editor, edit) => contHandling.removeContinuation(editor, edit,highlight.getContinuationInfo())));
+            (editor, edit) => contHandling.removeContinuation(editor, edit, offset)));
     }
         
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
-            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(highlight.getContinuationInfo(),editor))));
+            (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("paste",
-            (editor, edit, args) => commands.insertChars(editor, edit, args, getOffset(highlight.getContinuationInfo(),editor))));
+            (editor, edit, args) => commands.insertChars(editor, edit, args, offset)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("cut",
-            (editor, edit) => commands.cut(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
+            (editor, edit) => commands.cut(editor, edit, offset)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteLeft",
-            (editor, edit) => commands.deleteLeft(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
+            (editor, edit) => commands.deleteLeft(editor, edit, offset)));
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("deleteRight",
-            (editor, edit) => commands.deleteRight(editor, edit, getOffset(highlight.getContinuationInfo(),editor))));
+            (editor, edit) => commands.deleteRight(editor, edit, offset)));
     }
-
     // register event handlers
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e,highlight.getContinuationInfo())));
-    //context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(e => handler.onDidCloseTextDocument(e)));
-    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e)));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e, highlight, offset)));
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e, highlight)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
     context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e,highlight)));
@@ -126,11 +128,4 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
 
     return handler;
-}
-
-function getOffset(info: ContinuationDocumentsInfo, editor: vscode.TextEditor): number {
-    const foundDoc = info.get(editor.document.uri.toString());
-    if (!foundDoc)
-        return undefined;
-    return foundDoc.lineContinuations.get(editor.selection.active.line);
 }

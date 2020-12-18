@@ -19,7 +19,7 @@ Make sure that the user email you specified on your local git is the same as on 
 For more information, please see the Eclipse Committer Handbook:
 https://www.eclipse.org/projects/handbook/#resources-commit
 
-Such signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
+The signoff is easily achieved using the `--signoff` option of the `git commit` command (provided that the git credentials are properly configured):
 ```
 git commit --signoff
 ```
@@ -37,6 +37,8 @@ We encourage every potential contributor to read the project documetation availa
 All the activity on the project should begin with defining a new issue that describes the required changes.
 
 ## Contribution acceptance
+
+We follow the [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. Each pull request has to be named according to the specification so it can be squash merged. Allowed commit types are: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `ci`, `chore`.
 
 Each pull request is automatically verified in the following environments (in a GitHub Actions pipeline):
 

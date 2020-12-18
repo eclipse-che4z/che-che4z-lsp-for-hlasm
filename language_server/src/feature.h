@@ -23,13 +23,13 @@
 #include "common_types.h"
 #include "workspace_manager.h"
 
-namespace hlasm_plugin {
-namespace language_server {
+namespace hlasm_plugin::language_server {
 
 // Provides methods to send notification, respond to request and respond with error respond
 class response_provider
 {
 public:
+    virtual void request(const json& id, const std::string& requested_method, const json& args, method handler) = 0;
     virtual void respond(const json& id, const std::string& requested_method, const json& args) = 0;
     virtual void notify(const std::string& method, const json& args) = 0;
     virtual void respond_error(const json& id,
@@ -37,6 +37,7 @@ public:
         int err_code,
         const std::string& err_message,
         const json& error) = 0;
+    virtual ~response_provider() = default;
 };
 
 // Abstract class for group of methods that add functionality to server.
@@ -45,7 +46,7 @@ class feature
 public:
     // Constructs the feature with workspace_manager.
     // All the requests and notification are passed to the workspace manager
-    feature(parser_library::workspace_manager& ws_mngr)
+    explicit feature(parser_library::workspace_manager& ws_mngr)
         : ws_mngr_(ws_mngr)
     {}
     // Constructs the feature with workspace_manager and response_provider through which the feature can send messages.
@@ -74,8 +75,8 @@ public:
     // Converts LSP json representation of position into parse_library::position.
     static parser_library::position parse_position(const json& position_json);
 
-    static json range_to_json(parser_library::range range);
-    static json position_to_json(parser_library::position position);
+    static json range_to_json(const parser_library::range& range);
+    static json position_to_json(const parser_library::position& position);
 
     virtual ~feature() = default;
 
@@ -85,7 +86,6 @@ protected:
     response_provider* response_ = nullptr;
 };
 
-} // namespace language_server
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::language_server
 
 #endif // !HLASMPLUGIN_LANGUAGESERVER_FEATURE_H

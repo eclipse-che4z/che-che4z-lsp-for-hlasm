@@ -52,10 +52,9 @@ void tcp_handler::async_accept()
         newline_is_space::imbue_stream(*stream_);
         acceptor_.async_accept(*stream_->rdbuf(), std::bind(&tcp_handler::handle_accept, this, std::placeholders::_1));
     }
-    catch (asio::system_error& e)
+    catch (const asio::system_error& e)
     {
         std::string message = "Warning: Macro tracer asio exception. " + std::string(e.what()) + "\n";
-        std::cout << message;
         LOG_WARNING(message);
         return;
     }
@@ -72,10 +71,9 @@ void tcp_handler::cancel()
         acceptor_.cancel();
         acceptor_.close();
     }
-    catch (asio::system_error& e)
+    catch (const asio::system_error& e)
     {
         std::string message = "Warning: Macro tracer asio exception. " + std::string(e.what());
-        std::cout << message;
         LOG_WARNING(message);
     }
 }

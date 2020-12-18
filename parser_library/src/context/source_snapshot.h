@@ -20,9 +20,7 @@
 #include "id_storage.h"
 #include "range.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // helper structure representing position in source file
 struct source_position
@@ -69,6 +67,24 @@ struct source_snapshot
     size_t end_line;
     std::vector<copy_frame> copy_frames;
 
+    source_snapshot()
+        : begin_index(0)
+        , end_index(0)
+        , end_line(0)
+    {}
+
+    source_snapshot(location instruction,
+        size_t begin_index,
+        size_t end_index,
+        size_t end_line,
+        std::vector<copy_frame> copy_frames)
+        : instruction(std::move(instruction))
+        , begin_index(begin_index)
+        , end_index(end_index)
+        , end_line(end_line)
+        , copy_frames(std::move(copy_frames))
+    {}
+
     bool operator==(const source_snapshot& oth) const
     {
         if (!(end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
@@ -83,7 +99,6 @@ struct source_snapshot
     }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
+
 #endif

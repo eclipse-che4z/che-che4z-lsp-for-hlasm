@@ -15,13 +15,14 @@
 #ifndef CONTEXT_LSP_CONTEXT_H
 #define CONTEXT_LSP_CONTEXT_H
 
+#include <optional>
 #include <stack>
+#include <unordered_map>
 
+#include "context/ordinary_assembly/symbol.h"
 #include "semantics/highlighting_info.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // type of symbols that come from the parser
 // sequence symbol, variable symbol, ordinary symbol, instruction symbol and highlighting symbol
@@ -114,10 +115,14 @@ class completion_item_s
 
 public:
     // constructor in case the contents should be resolved later in lazy style
-    completion_item_s(std::string label, std::string detail, std::string insert_text, content_pos contents);
-    // contents directly passed via the contrusctor
     completion_item_s(
-        std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents);
+        std::string label, std::string detail, std::string insert_text, content_pos contents, size_t kind = 2);
+    // contents directly passed via the contrusctor
+    completion_item_s(std::string label,
+        std::string detail,
+        std::string insert_text,
+        std::vector<std::string> contents,
+        size_t kind = 2);
 
     std::vector<std::string> get_contents() const;
     // helper function, recreates the content vector to content string
@@ -317,13 +322,15 @@ struct instr_definition : public definition
 };
 
 // ustom has function used for working with symbol definition classes
-template<typename T> struct hash_function
+template<typename T>
+struct hash_function
 {
     size_t operator()(const T& symbol) const { return symbol.hash(); }
 };
 
 // map of definitions to the vector of their occurences
-template<class T> using definitions = std::unordered_map<T, std::vector<occurence>, hash_function<T>>;
+template<class T>
+using definitions = std::unordered_map<T, std::vector<occurence>, hash_function<T>>;
 
 // lsp context included in hlasm context
 struct lsp_context
@@ -355,7 +362,5 @@ struct lsp_context
 };
 
 using lsp_ctx_ptr = std::shared_ptr<lsp_context>;
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

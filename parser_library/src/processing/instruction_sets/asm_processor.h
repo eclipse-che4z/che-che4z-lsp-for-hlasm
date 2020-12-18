@@ -18,9 +18,7 @@
 #include "low_language_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor of assembler instructions
 class asm_processor : public low_language_processor
@@ -32,7 +30,6 @@ class asm_processor : public low_language_processor
 
 public:
     asm_processor(context::hlasm_context& hlasm_ctx,
-        attribute_provider& attr_provider,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
@@ -62,12 +59,11 @@ private:
     void process_ORG(rebuilt_statement stmt);
     void process_OPSYN(rebuilt_statement stmt);
 
-    template<checking::data_instr_type instr_type> void process_data_instruction(rebuilt_statement stmt);
+    template<checking::data_instr_type instr_type>
+    void process_data_instruction(rebuilt_statement stmt);
 
     std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

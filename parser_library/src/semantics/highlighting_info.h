@@ -16,10 +16,10 @@
 #define HIGHLIGHTING_INFO
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
-#include "operand.h"
 #include "protocol.h"
 
 namespace hlasm_plugin {

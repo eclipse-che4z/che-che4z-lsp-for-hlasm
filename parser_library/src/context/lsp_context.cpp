@@ -14,6 +14,8 @@
 
 #include "lsp_context.h"
 
+#include <sstream>
+
 #include "ebcdic_encoding.h"
 
 using namespace hlasm_plugin::parser_library::context;
@@ -139,7 +141,7 @@ size_t seq_definition::hash() const
 
 std::vector<std::string> seq_definition::get_value() const
 {
-    return { "Defined at line " + std::to_string(definition_range.start.line) };
+    return { "Defined at line " + std::to_string(definition_range.start.line + 1) };
 }
 
 bool seq_definition::operator==(const seq_definition& other) const
@@ -148,19 +150,21 @@ bool seq_definition::operator==(const seq_definition& other) const
 }
 
 completion_item_s::completion_item_s(
-    std::string label, std::string detail, std::string insert_text, content_pos contents)
+    std::string label, std::string detail, std::string insert_text, content_pos contents, size_t kind)
     : content_meta(contents)
     , label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
+    , kind(kind)
 {}
 
 completion_item_s::completion_item_s(
-    std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents)
+    std::string label, std::string detail, std::string insert_text, std::vector<std::string> contents, size_t kind)
     : content(std::move(contents))
     , label(std::move(label))
     , detail(std::move(detail))
     , insert_text(std::move(insert_text))
+    , kind(kind)
 {}
 
 std::vector<std::string> completion_item_s::get_contents() const

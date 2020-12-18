@@ -38,6 +38,7 @@ struct PARSER_LIBRARY_EXPORT position
         , column(column)
     {}
     bool operator==(const position& oth) const { return line == oth.line && column == oth.column; }
+    bool operator!=(const position& oth) const { return !(*this == oth); }
     position_t line;
     position_t column;
 };

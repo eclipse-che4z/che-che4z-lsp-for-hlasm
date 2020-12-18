@@ -1,7 +1,7 @@
 <div id="header" align="center">
 
 [![GitHub issues](https://img.shields.io/github/issues-raw/eclipse/che-che4z-lsp-for-hlasm)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues)
-[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/enQtNzk0MzA4NDMzOTIwLWIzMjEwMjJlOGMxNmMyNzQ1NWZlMzkxNmQ3M2VkYWNjMmE0MGQ0MjIyZmY3MTdhZThkZDg3NGNhY2FmZTEwNzQ)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://communityinviter.com/apps/che4z/code4z)
 <a href="https://sonarcloud.io/dashboard?id=eclipse_che-che4z-lsp-for-hlasm">
 <img src="https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/sonarcloud-black.png" width="94" height="20" href="" />
 </a>
@@ -15,25 +15,27 @@ HLASM Language Support is also part of [Code4z](https://marketplace.visualstudio
 
 ## Getting Started
 
-### Usage
+### Enabling the Extension
 
 Follow these steps to open a HLASM project:
 
-1. In menu _File_ -> _Open Folder..._, select the folder with the HLASM sources. <!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
+1. In _File_ -> _Open Folder..._, select the folder with the HLASM sources. <!-- (An example workspace is provided in the folder `example_workspace`.) Uncomment once PR#44 is merged-->
 2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
 3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
-4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to setup the workspace.
+4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you need to set up a workspace.
 
-### Setting up a multi-file project environment
+### Setting Up a Multi-File Project Environment
 
-HLASM COPY instruction copies the source code from various external files, as driven by HLASM evaluation. The source code interpreter in the HLASM Extension needs to be set up correctly to be able to find the same files as the HLASM assembler program. 
+The HLASM COPY instruction copies the source code from various external files, as driven by HLASM evaluation. The source code interpreter in the HLASM Extension needs to be set up correctly to be able to find the same files as the HLASM assembler program. 
 
-This is done by setting up two configuration files — `proc_grps.json` and `pgm_conf.json`. The extension guides the user in their creation:
+To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.json`. Follow these steps:
 
-1. After opening a HLASM file for the first time, two pop-ups are displayed. Select _Create pgm_conf.json with current program_ and _Create empty proc_grps.json_. The two configuration files are then created with default values. They are written into the `.hlasmplugin` subfolder.
-2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. To do this, simply fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
+1. After you open a HLASM file for the first time, two pop-ups display. Select _Create pgm_conf.json with current program_ and _Create empty proc_grps.json_. 
+   The two configuration files are then created with default values. They are stored in the `.hlasmplugin` subfolder.
+2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
+3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow the section *External Macro Libraries and COPY Members* below for more detailed instructions for configuring the environment.
+Follow the section *External Macro Libraries and COPY Members* below for more detailed instructions on configuring the environment.
 
 ## Language Features
 
@@ -81,16 +83,20 @@ Breakpoints can be set before or during the debugging session.
 
 ![](https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/readme_res/tracer.gif)
 
-## External Macro Libraries and COPY Members
+## Configuration
+
+### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
 - `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories.
 
 - `pgm_conf.json` provides a mapping between _programs_ (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
 
-Therefore, to use a predefined set of macro and copy members, do the following steps: 
-1. Enumerate the library directories in `proc_grps.json` and name them with an identifier; thus, create a new processor group.
-2. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
+To use a predefined set of macro and copy members, follow these steps: 
+1. Specify any number of library directories to search for macros and COPY files in `proc_grps.json`. These directories are searched in order they are listed. 
+2. Name the group of directories with an identifier.
+   You have created a new processor group.
+3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
 
 The structure of the configuration is based on CA Endevor® SCM. Ensure that you configure these files before using macros from separate files or the COPY instruction.
 When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
@@ -140,15 +146,29 @@ The following example specifies that GROUP1 is used when working with `source_co
 ```
 If you have the two configuration files configured as above and invoke the MAC1 macro from `source_code`, the folder `ASMMAC/` in the current workspace is searched for a file with the exact name "MAC1". If that search is unsuccessful the folder `C:/SYS.ASMMAC` is searched. If that search is unsuccessful an error displays that the macro does not exist.
 
-Note that the macro `MAC1` is searched in directories in order as they are listed in the configuration. 
+The program name in `pgm_conf.json` can be wildcarded, as in the following example:
 
-There is also the option `alwaysRecognize` which takes an array of wildcards. It allows you to configure two things:
-- All files matching these wildcards will always be recognized as HLASM files. 
-- If an extension wildcard is defined, all macro and copy files with such extension may be used in the source code. For example, with the extension wildcard `*.hlasm`, a user may add macro `MAC` to his source code even if it is in a file called `Mac.hlasm`.
+```
+{
+  "pgms": [
+    {
+      "program": "*",
+      "pgroup": "GROUP1"
+    }
+  ]
+}
+```
+In this example, GROUP1 is used for all open code programs.
 
-Example of `alwaysRecognize`:
+### File Extensions
 
-With the following configuration file, processor group `GROUP1` will be assigned to `source_code` and `source_code.hlasm` file as well. Also, macro and copy files in the `lib` directory can be referenced and correctly recognized in the program without the `.asm` extension.
+`pgm_conf.json` includes the optional parameter `alwaysRecognize` in which you can specify an array of wildcards. 
+- All files matching these wildcards are automatically recognized as HLASM files.
+- If an extension wildcard is defined, all macro and copy files with this extension can be used in the source code. 
+
+For example, with the extension wildcard `*.hlasm`, a user can add the macro `MAC` to his source code even if it is in a file called `MAC.hlasm`. Additionally, all files with the extension `.hlasm` are automatically recognised as HLASM files.
+
+The following example of `pgm_conf.json` specifies that the processor group `GROUP1` is assigned to both `source_code` and `source_code.hlasm`. Also, macro and copy files in the `lib` directory are referenced and correctly recognized in the program without the `.asm` extension.
 
 ```
 {
@@ -162,20 +182,24 @@ With the following configuration file, processor group `GROUP1` will be assigned
 }
 ```
 
-Example of wildcards:
+### Suppression of Diagnostics
 
-The program field in `pgm_conf.json` supports wildcards, for example:
+For files that use macros extensively but do not have the definitions available, it is very likely that diagnostics reported by HLASM Language support will not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in the editor's settings, or in `pgm_conf.json`. For files that do not have processor group configuration in `pgm_conf.json`, all the diagnostics will be suppressed if they exceed the configured limit.
+
 ```
 {
   "pgms": [
     {
-      "program": "*",
+      "program": "source_code",
       "pgroup": "GROUP1"
     }
-  ]
+  ],
+  "diagnosticsSuppressLimit" : 15
 }
 ```
-In this example, GROUP1 is used for all open code programs.
+In the `pgm_conf.json` above, the `source_code` file has a configuration, so all discovered diagnostics will be always shown. However, if you open another file and do not assign a processor group to it, its diagnostcs will not be shown if there are more than 15 of them.
+
+
 
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)

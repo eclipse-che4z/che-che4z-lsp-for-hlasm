@@ -24,11 +24,10 @@ using namespace processing;
 using namespace workspaces;
 
 low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx,
-    attribute_provider& attr_provider,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : instruction_processor(hlasm_ctx, attr_provider, branch_provider, lib_provider)
+    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
     , parser(parser)
 {}
 
@@ -51,10 +50,9 @@ context::id_index low_language_processor::find_label_symbol(const rebuilt_statem
     if (stmt.label_ref().type == semantics::label_si_type::ORD)
     {
         context_manager mngr(hlasm_ctx);
-        auto ret =
-            mngr.try_get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
+        auto ret = mngr.get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
         collect_diags_from_child(mngr);
-        return ret.second;
+        return ret;
     }
     else
         return context::id_storage::empty_id;
@@ -70,15 +68,12 @@ bool low_language_processor::create_symbol(
     if (!ok)
         add_diagnostic(diagnostic_op::error_E033(err_range));
 
-    check_loctr_dependencies(err_range);
-
     return ok;
 }
 
+
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
 {
-    context_manager mngr(hlasm_ctx);
-
     std::optional<semantics::label_si> label;
     std::optional<semantics::operands_si> operands;
 
@@ -88,12 +83,12 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     {
         case semantics::label_si_type::CONC:
             label.emplace(stmt.label_ref().field_range,
-                mngr.concatenate_str(std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
+                semantics::concatenation_point::evaluate(
+                    std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
             break;
         case semantics::label_si_type::VAR:
-            new_label = mngr.convert_to<context::C_t>(
-                mngr.get_var_sym_value(*std::get<semantics::vs_ptr>(stmt.label_ref().value), eval_ctx),
-                std::get<semantics::vs_ptr>(stmt.label_ref().value)->symbol_range);
+            new_label = semantics::var_sym_conc::evaluate(
+                std::get<semantics::vs_ptr>(stmt.label_ref().value)->evaluate(eval_ctx));
             if (new_label.empty() || new_label[0] == ' ')
                 label.emplace(stmt.label_ref().field_range);
             else
@@ -114,7 +109,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type == semantics::operand_type::MODEL)
     {
         assert(stmt.operands_ref().value.size() == 1);
-        std::string field(mngr.concatenate_str(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
+        std::string field(
+            semantics::concatenation_point::evaluate(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
         operands.emplace(parser
                              .parse_operand_field(&hlasm_ctx,
                                  std::move(field),
@@ -140,8 +136,6 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         }
     }
 
-    collect_diags_from_child(mngr);
-
     return std::make_pair(std::move(label), std::move(operands));
 }
 
@@ -151,9 +145,9 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     size_t boundary,
     int offset)
 {
-    int al = boundary ? (int)((boundary - (addr_to_check.offset % boundary)) % boundary) : 0;
+    int al = boundary ? (int)((boundary - (addr_to_check.offset() % boundary)) % boundary) : 0;
 
-    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset + al + offset < 0;
+    bool underflow = !addr_to_check.has_dependant_space() && addr_to_check.offset() + al + offset < 0;
     if (!curr_addr.in_same_loctr(addr_to_check) || underflow)
     {
         add_diagnostic(diagnostic_op::error_E068(err_range));
@@ -167,45 +161,40 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     return true;
 }
 
-void low_language_processor::check_loctr_dependencies(range err_range)
+void low_language_processor::resolve_unknown_loctr_dependency(
+    context::space_ptr sp, const context::address& addr, range err_range)
 {
-    if (hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.empty())
-        return;
+    auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
-    bool ok = true;
-    auto tmp_sect = hlasm_ctx.ord_ctx.current_section();
+    hlasm_ctx.ord_ctx.set_location_counter(sp->owner.name, location());
+    hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
-    for (auto&& [sp, dep] : hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies)
+    if (!check_address_for_ORG(
+            err_range, addr, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
     {
-        hlasm_ctx.ord_ctx.set_section(sp->owner.owner.name, sp->owner.owner.kind, location());
-        hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
-
-        if (!check_address_for_ORG(
-                err_range, dep, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
-        {
-            (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-            continue;
-        }
-
-        auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
-            dep, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
-        auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
-        context::space::resolve(sp, std::move(ret));
-        ok &= hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp);
+        (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+        hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
+        return;
     }
-    hlasm_ctx.ord_ctx.set_section(tmp_sect->name, tmp_sect->kind, location());
-    hlasm_ctx.ord_ctx.symbol_dependencies.loctr_dependencies.clear();
-    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined();
-    if (!ok)
+
+    auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
+        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
+
+    auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+    hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
+
+    context::space::resolve(sp, std::move(ret));
+
+    if (!hlasm_ctx.ord_ctx.symbol_dependencies.check_cycle(new_sp))
         add_diagnostic(diagnostic_op::error_E033(err_range));
 
-    ok = true;
     for (auto& sect : hlasm_ctx.ord_ctx.sections())
         for (auto& loctr : sect->location_counters())
-            ok &= loctr->check_underflow();
-
-    if (!ok)
-        add_diagnostic(diagnostic_op::error_E068(err_range));
+            if (!loctr->check_underflow())
+            {
+                add_diagnostic(diagnostic_op::error_E068(err_range));
+                return;
+            }
 }
 
 
@@ -334,6 +323,10 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
         else
             uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
     }
+    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(ev_op))
+    {
+        uniq = expr_op->get_operand_value(hlasm_ctx.ord_ctx, can_have_ord_syms);
+    }
     else
     {
         uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
@@ -350,7 +343,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 void low_language_processor::check(const resolved_statement& stmt,
     context::hlasm_context& hlasm_ctx,
     checking::instruction_checker& checker,
-    diagnosable_ctx& diagnoser)
+    const diagnosable_ctx& diagnoser)
 {
     auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
     diagnostic_collector collector(
