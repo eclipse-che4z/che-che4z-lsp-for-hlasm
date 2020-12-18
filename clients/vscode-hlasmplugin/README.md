@@ -184,7 +184,7 @@ The following example of `pgm_conf.json` specifies that the processor group `GRO
 
 ### Suppression of Diagnostics
 
-For files, that use macros extensively, but do not have the definitions available, it is very probable that diagnostics reported by HLASM Language support will not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in editor settings, or in `pgm_conf.json`. For files with no processor group configuration in `pgm_conf.json`, all the diagnostics will be suppressed, if there is too many of them (more than the configured limit).
+For files that use macros extensively but do not have the definitions available, it is very likely that diagnostics reported by HLASM Language support will not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in the editor's settings, or in `pgm_conf.json`. For files that do not have processor group configuration in `pgm_conf.json`, all the diagnostics will be suppressed if they exceed the configured limit.
 
 ```
 {
@@ -197,7 +197,7 @@ For files, that use macros extensively, but do not have the definitions availabl
   "diagnosticsSuppressLimit" : 15
 }
 ```
-With the `pgm_conf.json` above, the `source_code` file has configuration, so all discovered diagnostics will be always shown. However, if you open another file and do not assign a processor group to it, its diagnostcs will not be shown, if there are more than 15 of them.
+In the `pgm_conf.json` above, the `source_code` file has a configuration, so all discovered diagnostics will be always shown. However, if you open another file and do not assign a processor group to it, its diagnostcs will not be shown if there are more than 15 of them.
 
 
 
