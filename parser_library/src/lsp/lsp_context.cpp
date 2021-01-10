@@ -26,15 +26,12 @@ void lsp_context::add_file(file_info file_i)
     files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
-lsp_context::lsp_context(std::string opencode_name) { add_file(file_info(std::move(opencode_name))); }
-
 void lsp_context::add_copy(context::copy_member_ptr copy) { add_file(file_info(std::move(copy))); }
 
 void lsp_context::add_macro(macro_info_ptr macro_i)
 {
     if (macro_i->external)
         add_file(file_info(macro_i->macro_definition));
-    distribute_macro_i(macro_i);
 
     macros_[macro_i->macro_definition] = macro_i;
 }
@@ -42,6 +39,12 @@ void lsp_context::add_macro(macro_info_ptr macro_i)
 void lsp_context::add_opencode(opencode_info_ptr opencode_i)
 {
     opencode_ = std::move(opencode_i);
+    add_file(file_info(opencode_->hlasm_ctx.opencode_file_name()));
+
+    //distribute all occurences as all files are present
+    for (const auto& [_,m] : macros_)
+        distribute_macro_i(m);
+
     distribute_file_occurences(opencode_->file_occurences);
 }
 

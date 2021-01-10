@@ -249,7 +249,8 @@ bool hlasm_context::is_opcode(id_index symbol) const
 }
 
 hlasm_context::hlasm_context(std::string file_name)
-    : instruction_map_(init_instruction_map())
+    : opencode_file_name_(file_name)
+    , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
     , ord_ctx(ids_)
     , lsp_ctx(std::make_shared<lsp_context>())
@@ -726,7 +727,7 @@ macro_invo_ptr hlasm_context::this_macro() const
     return macro_invo_ptr();
 }
 
-const std::string& hlasm_context::opencode_file_name() const { return source_stack_.front().current_instruction.file; }
+const std::string& hlasm_context::opencode_file_name() const { return opencode_file_name_; }
 
 const std::set<std::string>& hlasm_context::get_visited_files() { return visited_files_; }
 

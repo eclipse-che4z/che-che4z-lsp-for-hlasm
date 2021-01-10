@@ -64,6 +64,8 @@ class hlasm_context
     // stack of nested copy member invocations
     std::vector<copy_member_invocation> copy_stack_;
 
+    // path to the opencode
+    std::string opencode_file_name_;
     // all files processes via macro or copy member invocation
     std::set<std::string> visited_files_;
 
