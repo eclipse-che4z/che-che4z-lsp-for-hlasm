@@ -21,9 +21,10 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx)
+lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text)
     : hlasm_ctx_(hlasm_ctx)
     , lsp_ctx_(lsp_ctx)
+    , file_text_(file_text)
     , in_macro_(false)
 {}
 
@@ -65,12 +66,17 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
         const auto& macro_file = macrodef->definition_location.file;
         macro_occurences_[macro_file].emplace_back(nullptr, macrodef, result.prototype.macro_name_range);
 
-        lsp_ctx_.add_macro(std::make_shared<lsp::macro_info>(result.external,
+        auto m_i = std::make_shared<lsp::macro_info>(result.external,
             location(result.prototype.macro_name_range.start, macro_file),
             std::move(macrodef),
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
-            std::move(macro_occurences_)));
+            std::move(macro_occurences_));
+
+        if (result.external)
+            lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_ref_t(file_text_));
+        else
+            lsp_ctx_.add_macro(std::move(m_i));
     }
 
     in_macro_ = false;
@@ -81,13 +87,14 @@ void lsp_analyzer::copydef_started(const copy_start_data&) {}
 
 void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_processing_result&&)
 {
-    lsp_ctx_.add_copy(std::move(copydef));
+    lsp_ctx_.add_copy(std::move(copydef), lsp::text_data_ref_t(file_text_));
 }
 
 void lsp_analyzer::opencode_finished()
 {
     lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(
-        hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)));
+                              hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)),
+        lsp::text_data_ref_t(file_text_));
 }
 
 void lsp_analyzer::assign_statement_occurences()

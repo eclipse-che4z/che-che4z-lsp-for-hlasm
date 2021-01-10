@@ -32,9 +32,9 @@ class lsp_context : public feature_provider
     std::unordered_map<context::macro_def_ptr, macro_info_ptr> macros_;
 
 public:
-    void add_copy(context::copy_member_ptr copy);
-    void add_macro(macro_info_ptr macro_i);
-    void add_opencode(opencode_info_ptr opencode_i);
+    void add_copy(context::copy_member_ptr copy, text_data_ref_t text_data);
+    void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
+    void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
     void update_file_info(const std::string& name, const occurence_storage& occurences);
 

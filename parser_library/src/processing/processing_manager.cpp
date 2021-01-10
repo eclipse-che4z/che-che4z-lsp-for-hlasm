@@ -32,6 +32,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     analyzing_context ctx,
     const workspaces::library_data data,
     std::string file_name,
+    const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     processing_tracer* tracer)
@@ -42,7 +43,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , opencode_prov_(*base_provider)
     , tracer_(tracer)
 {
-    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx);
+    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text);
 
     switch (data.proc_kind)
     {

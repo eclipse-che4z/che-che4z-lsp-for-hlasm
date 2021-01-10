@@ -43,6 +43,17 @@ struct file_slice_t
     static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
 };
 
+struct text_data_ref_t
+{
+    const std::string& text;
+    std::vector<size_t> line_indices;
+
+    text_data_ref_t();
+    explicit text_data_ref_t(const std::string& text);
+
+    static std::string empty_text;
+};
+
 enum class file_type
 {
     MACRO,
@@ -58,18 +69,20 @@ using occurence_scope_t = std::pair<const symbol_occurence*, macro_info_ptr>;
 
 struct file_info
 {
+    //first variant is monostate as there is no storing of opencode statements in the code yet
     using owner_t = std::variant<std::monostate, context::macro_def_ptr, context::copy_member_ptr>;
 
     const std::string name;
     const file_type type;
     const owner_t owner;
+    const text_data_ref_t data;
 
     std::vector<file_slice_t> slices;
     std::vector<symbol_occurence> occurences;
 
-    explicit file_info(std::string name);
-    explicit file_info(context::macro_def_ptr owner);
-    explicit file_info(context::copy_member_ptr owner);
+    explicit file_info(std::string name, text_data_ref_t text_data);
+    explicit file_info(context::macro_def_ptr owner, text_data_ref_t text_data);
+    explicit file_info(context::copy_member_ptr owner, text_data_ref_t text_data);
 
     static bool is_in_range(const position& pos, const range& r);
 

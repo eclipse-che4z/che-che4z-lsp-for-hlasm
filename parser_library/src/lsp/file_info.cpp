@@ -13,26 +13,30 @@
  */
 
 #include "file_info.h"
+#include "workspaces/file_impl.h"
 
 #include <algorithm>
 
 namespace hlasm_plugin::parser_library::lsp {
 
-file_info::file_info(std::string name)
+file_info::file_info(std::string name, text_data_ref_t text_data)
     : name(std::move(name))
     , type(file_type::OPENCODE)
+    , data(std::move(text_data))
 {}
 
-file_info::file_info(context::macro_def_ptr owner)
+file_info::file_info(context::macro_def_ptr owner, text_data_ref_t text_data)
     : name(owner->definition_location.file)
     , type(file_type::MACRO)
     , owner(std::move(owner))
+    , data(std::move(text_data))
 {}
 
-file_info::file_info(context::copy_member_ptr owner)
+file_info::file_info(context::copy_member_ptr owner, text_data_ref_t text_data)
     : name(owner->definition_location.file)
     , type(file_type::COPY)
     , owner(std::move(owner))
+    , data(std::move(text_data))
 {}
 
 bool file_info::is_in_range(const position& pos, const range& r)
@@ -139,5 +143,16 @@ std::vector<file_slice_t> file_slice_t::transform_slices(
         ret.push_back(transform_slice(s, macro_i));
     return ret;
 }
+
+text_data_ref_t::text_data_ref_t()
+    : text(empty_text)
+{}
+
+text_data_ref_t::text_data_ref_t(const std::string& text)
+    : text(text)
+    , line_indices(workspaces::file_impl::create_line_indices(text))
+{}
+
+std::string text_data_ref_t::empty_text;
 
 } // namespace hlasm_plugin::parser_library::lsp

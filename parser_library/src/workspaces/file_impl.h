@@ -50,6 +50,7 @@ public:
     virtual void did_close() override;
 
     static std::string replace_non_utf8_chars(const std::string& text);
+    static std::vector<size_t> create_line_indices(const std::string& text);
 
     virtual ~file_impl() = default;
 

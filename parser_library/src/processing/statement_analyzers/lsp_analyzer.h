@@ -27,6 +27,8 @@ class lsp_analyzer : public statement_analyzer
 {
     context::hlasm_context& hlasm_ctx_;
     lsp::lsp_context& lsp_ctx_;
+    //text of the file this analyzer is assigned to
+    const std::string& file_text_;
 
     bool in_macro_;
     lsp::file_occurences_t macro_occurences_;
@@ -37,7 +39,7 @@ class lsp_analyzer : public statement_analyzer
     lsp::occurence_storage stmt_occurences_;
 
 public:
-    lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx);
+    lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text);
 
     virtual void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,

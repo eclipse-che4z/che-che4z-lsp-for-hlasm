@@ -26,20 +26,26 @@ void lsp_context::add_file(file_info file_i)
     files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
-void lsp_context::add_copy(context::copy_member_ptr copy) { add_file(file_info(std::move(copy))); }
+void lsp_context::add_copy(context::copy_member_ptr copy, text_data_ref_t text_data)
+{
+    add_file(file_info(std::move(copy), std::move(text_data)));
+}
 
-void lsp_context::add_macro(macro_info_ptr macro_i)
+void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
 {
     if (macro_i->external)
-        add_file(file_info(macro_i->macro_definition));
+    {
+        assert(text_data.text != text_data_ref_t::empty_text);
+        add_file(file_info(macro_i->macro_definition, std::move(text_data)));
+    }
 
     macros_[macro_i->macro_definition] = macro_i;
 }
 
-void lsp_context::add_opencode(opencode_info_ptr opencode_i)
+void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data)
 {
     opencode_ = std::move(opencode_i);
-    add_file(file_info(opencode_->hlasm_ctx.opencode_file_name()));
+    add_file(file_info(opencode_->hlasm_ctx.opencode_file_name(), std::move(text_data)));
 
     //distribute all occurences as all files are present
     for (const auto& [_,m] : macros_)

@@ -323,4 +323,13 @@ std::string file_impl::replace_non_utf8_chars(const std::string& text)
     return ret;
 }
 
+std::vector<size_t> file_impl::create_line_indices(const std::string& text)
+{
+    std::vector<size_t> ret;
+    ret.push_back(0);
+    find_newlines(text, ret);
+    return ret;
+}
+
+
 } // namespace hlasm_plugin::parser_library::workspaces
