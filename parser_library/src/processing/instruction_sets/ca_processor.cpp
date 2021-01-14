@@ -14,6 +14,7 @@
 
 #include "ca_processor.h"
 
+#include "semantics/operand_impls.h"
 #include "semantics/range_provider.h"
 
 using namespace hlasm_plugin::parser_library;

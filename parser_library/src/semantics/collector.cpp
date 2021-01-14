@@ -15,6 +15,7 @@
 #include "collector.h"
 
 #include "lexing/lexer.h"
+#include "operand_impls.h"
 #include "processing/statement.h"
 #include "range_provider.h"
 
