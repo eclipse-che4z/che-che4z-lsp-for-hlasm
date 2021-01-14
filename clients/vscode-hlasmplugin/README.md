@@ -1,7 +1,7 @@
 <div id="header" align="center">
 
 [![GitHub issues](https://img.shields.io/github/issues-raw/eclipse/che-che4z-lsp-for-hlasm)](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues)
-[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/che4z/shared_invite/enQtNzk0MzA4NDMzOTIwLWIzMjEwMjJlOGMxNmMyNzQ1NWZlMzkxNmQ3M2VkYWNjMmE0MGQ0MjIyZmY3MTdhZThkZDg3NGNhY2FmZTEwNzQ)
+[![slack](https://img.shields.io/badge/chat-on%20Slack-blue)](https://communityinviter.com/apps/che4z/code4z)
 <a href="https://sonarcloud.io/dashboard?id=eclipse_che-che4z-lsp-for-hlasm">
 <img src="https://github.com/eclipse/che-che4z-lsp-for-hlasm/raw/master/clients/vscode-hlasmplugin/sonarcloud-black.png" width="94" height="20" href="" />
 </a>
@@ -181,6 +181,25 @@ The following example of `pgm_conf.json` specifies that the processor group `GRO
   "alwaysRecognize" : ["*.hlasm", "libs/*.asm"]
 }
 ```
+
+### Suppression of Diagnostics
+
+For files that use macros extensively but do not have the definitions available, it is very likely that diagnostics reported by HLASM Language support will not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in the editor's settings, or in `pgm_conf.json`. For files that do not have processor group configuration in `pgm_conf.json`, all the diagnostics will be suppressed if they exceed the configured limit.
+
+```
+{
+  "pgms": [
+    {
+      "program": "source_code",
+      "pgroup": "GROUP1"
+    }
+  ],
+  "diagnosticsSuppressLimit" : 15
+}
+```
+In the `pgm_conf.json` above, the `source_code` file has a configuration, so all discovered diagnostics will be always shown. However, if you open another file and do not assign a processor group to it, its diagnostcs will not be shown if there are more than 15 of them.
+
+
 
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)

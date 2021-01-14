@@ -2,6 +2,21 @@
 
 ## ****Unreleased****
 
+## [0.12.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.11.1...0.12.0) (2020-12-18)
+
+#### Added
+- Diagnostic suppression for files that have no processor group configuration.
+- Support for light and contrast themes.
+
+#### Fixed
+- Parsing issues regarding conditional assembly expressions and attribute lookahead.
+- Several issues causing the extension to crash.
+
+## [0.11.1] - 2020-11-09
+
+#### Fixed
+- Plugin crashing when used on che-theia 7.21.
+
 ## [0.11.0] - 2020-05-07
 
 #### Added

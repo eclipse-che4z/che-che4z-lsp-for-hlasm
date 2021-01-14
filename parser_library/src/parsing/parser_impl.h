@@ -94,6 +94,8 @@ protected:
     virtual void process_next(processing::statement_processor& processor) override;
     virtual bool finished() const override;
 
+    void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
+
     lexing::token_stream& input;
     context::hlasm_context* ctx;
     semantics::lsp_info_processor* lsp_proc;

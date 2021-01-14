@@ -77,9 +77,9 @@ void workspace_manager::did_change_file(
 
 void workspace_manager::did_close_file(const char* document_uri) { impl_->did_close_file(document_uri); }
 
-void workspace_manager::register_highlighting_consumer(highlighting_consumer* consumer)
+void workspace_manager::configuration_changed(const lib_config& new_config)
 {
-    impl_->register_highlighting_consumer(consumer);
+    impl_->configuration_changed(new_config);
 }
 
 void workspace_manager::register_diagnostics_consumer(diagnostics_consumer* consumer)
@@ -91,6 +91,9 @@ void workspace_manager::register_performance_metrics_consumer(performance_metric
 {
     impl_->register_performance_metrics_consumer(consumer);
 }
+
+void workspace_manager::set_message_consumer(message_consumer* consumer) { impl_->set_message_consumer(consumer); }
+
 position_uri workspace_manager::definition(const char* document_uri, const position pos)
 {
     return impl_->definition(document_uri, pos);
@@ -101,7 +104,7 @@ position_uris workspace_manager::references(const char* document_uri, const posi
     return impl_->references(document_uri, pos);
 }
 
-const string_array workspace_manager::hover(const char* document_uri, const position pos)
+string_array workspace_manager::hover(const char* document_uri, const position pos)
 {
     return impl_->hover(document_uri, pos);
 }
@@ -110,6 +113,11 @@ completion_list workspace_manager::completion(
     const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
 {
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
+}
+
+const std::vector<token_info>& workspace_manager::semantic_tokens(const char* document_uri)
+{
+    return impl_->semantic_tokens(document_uri);
 }
 
 void workspace_manager::launch(const char* file_name, bool stop_on_entry) { impl_->launch(file_name, stop_on_entry); }
