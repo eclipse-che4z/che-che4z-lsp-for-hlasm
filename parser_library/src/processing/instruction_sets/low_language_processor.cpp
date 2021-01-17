@@ -35,7 +35,7 @@ rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr st
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
     auto [label, ops] = preprocess_inner(*stmt);
-    return rebuilt_statement(stmt, std::move(label), std::move(ops));
+    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
 }
 
 context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
