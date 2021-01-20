@@ -55,8 +55,6 @@ struct evaluable_operand : operand, diagnosable_op_impl
 
     virtual bool has_error(expressions::mach_evaluate_info info) const = 0;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const = 0;
-
     virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const = 0;
 };
 
@@ -70,8 +68,6 @@ struct simple_expr_operand : virtual evaluable_operand
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
     bool has_error(expressions::mach_evaluate_info info) const override;
-
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     expressions::mach_expr_ptr expression;
 };
@@ -113,7 +109,6 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
 
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
     bool has_error(expressions::mach_evaluate_info info) const override;
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     void collect_diags() const override;
 };
@@ -136,8 +131,6 @@ struct address_machine_operand final : machine_operand
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
     bool has_error(expressions::mach_evaluate_info info) const override;
-
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
     std::unique_ptr<checking::operand> get_operand_value(
@@ -189,7 +182,6 @@ public:
 
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
     bool has_error(expressions::mach_evaluate_info info) const override;
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     void collect_diags() const override;
 
@@ -209,8 +201,6 @@ struct using_instr_assembler_operand final : assembler_operand
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
     bool has_error(expressions::mach_evaluate_info info) const override;
-
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
@@ -291,8 +281,6 @@ struct complex_assembler_operand final : assembler_operand
 
     bool has_error(expressions::mach_evaluate_info info) const override;
 
-    std::vector<const context::resolvable*> get_resolvables() const override;
-
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     composite_value_t value;
@@ -310,8 +298,6 @@ struct string_assembler_operand : assembler_operand
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
     bool has_error(expressions::mach_evaluate_info info) const override;
-
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
@@ -334,8 +320,6 @@ struct data_def_operand final : evaluable_operand
     bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
     bool has_error(expressions::mach_evaluate_info info) const override;
-
-    std::vector<const context::resolvable*> get_resolvables() const override;
 
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
