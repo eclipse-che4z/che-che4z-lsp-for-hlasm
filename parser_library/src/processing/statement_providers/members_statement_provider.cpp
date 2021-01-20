@@ -65,7 +65,8 @@ void members_statement_provider::process_next(statement_processor& processor)
     processor.process_statement(std::move(stmt));
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(const context::statement_cache& cache) const
+const semantics::instruction_si& members_statement_provider::retrieve_instruction(
+    const context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {

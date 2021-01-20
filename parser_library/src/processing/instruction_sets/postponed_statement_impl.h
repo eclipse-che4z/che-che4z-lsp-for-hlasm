@@ -35,15 +35,15 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     rebuilt_statement stmt;
     context::processing_stack_t stmt_location_stack;
 
-    virtual const semantics::label_si& label_ref() const override { return stmt.label_ref(); }
-    virtual const semantics::instruction_si& instruction_ref() const override { return stmt.instruction_ref(); }
-    virtual const semantics::operands_si& operands_ref() const override { return stmt.operands_ref(); }
-    virtual const semantics::remarks_si& remarks_ref() const override { return stmt.remarks_ref(); }
-    virtual const range& stmt_range_ref() const override { return stmt.stmt_range_ref(); }
-    virtual const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
-    virtual processing_format format_ref() const override { return stmt.format_ref(); }
+    const semantics::label_si& label_ref() const override { return stmt.label_ref(); }
+    const semantics::instruction_si& instruction_ref() const override { return stmt.instruction_ref(); }
+    const semantics::operands_si& operands_ref() const override { return stmt.operands_ref(); }
+    const semantics::remarks_si& remarks_ref() const override { return stmt.remarks_ref(); }
+    const range& stmt_range_ref() const override { return stmt.stmt_range_ref(); }
+    const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
+    processing_format format_ref() const override { return stmt.format_ref(); }
 
-    virtual const context::processing_stack_t& location_stack() const { return stmt_location_stack; }
+    const context::processing_stack_t& location_stack() const { return stmt_location_stack; }
 };
 
 
