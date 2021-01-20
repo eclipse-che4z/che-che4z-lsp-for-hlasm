@@ -65,7 +65,7 @@ void members_statement_provider::process_next(statement_processor& processor)
     processor.process_statement(std::move(stmt));
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(context::statement_cache& cache) const
+const semantics::instruction_si& members_statement_provider::retrieve_instruction(const context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {
@@ -107,7 +107,7 @@ void members_statement_provider::fill_cache(
 }
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
-    statement_processor& processor, context::statement_cache& cache)
+    const statement_processor& processor, context::statement_cache& cache)
 {
     const auto& def_stmt = *cache.get_base()->access_deferred();
 

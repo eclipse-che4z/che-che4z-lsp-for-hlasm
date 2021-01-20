@@ -77,7 +77,7 @@ address_machine_operand* machine_operand::access_address()
 }
 
 std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
-    expressions::mach_expression& expr,
+    const expressions::mach_expression& expr,
     std::optional<checking::machine_operand_type> type_hint = std::nullopt)
 {
     auto res = expr.evaluate(info);
@@ -374,9 +374,9 @@ void using_instr_assembler_operand::collect_diags() const
 //***************** complex_assempler_operand *********************
 complex_assembler_operand::complex_assembler_operand(
     std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, range operand_range)
-    : evaluable_operand(operand_type::ASM, std::move(operand_range))
+    : evaluable_operand(operand_type::ASM, operand_range)
     , assembler_operand(asm_kind::COMPLEX)
-    , value(identifier, std::move(values), operand_range)
+    , value(std::move(identifier), std::move(values), std::move(operand_range))
 {}
 
 bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
@@ -393,7 +393,10 @@ std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(
     return value.create_operand();
 }
 
-void complex_assembler_operand::collect_diags() const {}
+void complex_assembler_operand::collect_diags() const
+{
+    // There are no object to collect diags from.
+}
 
 //***************** ca_operand *********************
 ca_operand::ca_operand(const ca_kind kind, range operand_range)
@@ -401,36 +404,42 @@ ca_operand::ca_operand(const ca_kind kind, range operand_range)
     , kind(kind)
 {}
 
-var_ca_operand* ca_operand::access_var() { return kind == ca_kind::VAR ? static_cast<var_ca_operand*>(this) : nullptr; }
+[[nodiscard]] var_ca_operand* ca_operand::access_var()
+{
+    return kind == ca_kind::VAR ? static_cast<var_ca_operand*>(this) : nullptr;
+}
 
-const var_ca_operand* ca_operand::access_var() const
+[[nodiscard]] const var_ca_operand* ca_operand::access_var() const
 {
     return kind == ca_kind::VAR ? static_cast<const var_ca_operand*>(this) : nullptr;
 }
 
-expr_ca_operand* ca_operand::access_expr()
+[[nodiscard]] expr_ca_operand* ca_operand::access_expr()
 {
     return kind == ca_kind::EXPR ? static_cast<expr_ca_operand*>(this) : nullptr;
 }
 
-const expr_ca_operand* ca_operand::access_expr() const
+[[nodiscard]] const expr_ca_operand* ca_operand::access_expr() const
 {
     return kind == ca_kind::EXPR ? static_cast<const expr_ca_operand*>(this) : nullptr;
 }
 
-seq_ca_operand* ca_operand::access_seq() { return kind == ca_kind::SEQ ? static_cast<seq_ca_operand*>(this) : nullptr; }
+[[nodiscard]] seq_ca_operand* ca_operand::access_seq()
+{
+    return kind == ca_kind::SEQ ? static_cast<seq_ca_operand*>(this) : nullptr;
+}
 
-const seq_ca_operand* ca_operand::access_seq() const
+[[nodiscard]] const seq_ca_operand* ca_operand::access_seq() const
 {
     return kind == ca_kind::SEQ ? static_cast<const seq_ca_operand*>(this) : nullptr;
 }
 
-branch_ca_operand* ca_operand::access_branch()
+[[nodiscard]] branch_ca_operand* ca_operand::access_branch()
 {
     return kind == ca_kind::BRANCH ? static_cast<branch_ca_operand*>(this) : nullptr;
 }
 
-const branch_ca_operand* ca_operand::access_branch() const
+[[nodiscard]] const branch_ca_operand* ca_operand::access_branch() const
 {
     return kind == ca_kind::BRANCH ? static_cast<const branch_ca_operand*>(this) : nullptr;
 }
@@ -439,17 +448,21 @@ simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
     : expression(std::move(expression))
 {}
 
-bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
+
+[[nodiscard]] bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     return expression->get_dependencies(info).contains_dependencies();
 }
 
-bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
 {
     return expression->get_dependencies(info).has_error;
 }
 
-std::vector<const context::resolvable*> simple_expr_operand::get_resolvables() const { return { &*expression }; }
+[[nodiscard]] std::vector<const context::resolvable*> simple_expr_operand::get_resolvables() const
+{
+    return { &*expression };
+}
 
 var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     : ca_operand(ca_kind::VAR, std::move(operand_range))
@@ -609,7 +622,10 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(e
     return std::make_unique<checking::one_operand>("'" + value + "'");
 }
 
-void string_assembler_operand::collect_diags() const {}
+void string_assembler_operand::collect_diags() const
+{
+    // There are no object to collect diags from.
+}
 
 macro_operand_string::macro_operand_string(std::string value, const range operand_range)
     : macro_operand(mac_kind::STRING, operand_range)

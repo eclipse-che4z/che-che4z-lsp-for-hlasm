@@ -67,11 +67,11 @@ struct simple_expr_operand : virtual evaluable_operand
 {
     simple_expr_operand(expressions::mach_expr_ptr expression);
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
     expressions::mach_expr_ptr expression;
 };
@@ -107,15 +107,15 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
 {
     expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range);
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
-    virtual std::unique_ptr<checking::operand> get_operand_value(
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 
@@ -133,17 +133,17 @@ struct address_machine_operand final : machine_operand
     expressions::mach_expr_ptr second_par;
     checking::operand_state state;
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
-    virtual std::unique_ptr<checking::operand> get_operand_value(
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 
@@ -182,16 +182,16 @@ private:
 public:
     expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range);
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     std::unique_ptr<checking::operand> get_operand_value(
         expressions::mach_evaluate_info info, bool can_have_ordsym) const;
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
@@ -206,18 +206,18 @@ struct using_instr_assembler_operand final : assembler_operand
     using_instr_assembler_operand(
         expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     expressions::mach_expr_ptr base;
     expressions::mach_expr_ptr end;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 
@@ -246,7 +246,7 @@ struct complex_assembler_operand final : assembler_operand
             : component_value_t(range)
             , value(value)
         {}
-        virtual std::unique_ptr<checking::asm_operand> create_operand() const override
+        std::unique_ptr<checking::asm_operand> create_operand() const override
         {
             return std::make_unique<checking::one_operand>(value, op_range);
         }
@@ -259,7 +259,7 @@ struct complex_assembler_operand final : assembler_operand
             : component_value_t(range)
             , value(std::move(value))
         {}
-        virtual std::unique_ptr<checking::asm_operand> create_operand() const override
+        std::unique_ptr<checking::asm_operand> create_operand() const override
         {
             return std::make_unique<checking::one_operand>(value, op_range);
         }
@@ -272,7 +272,7 @@ struct complex_assembler_operand final : assembler_operand
             , identifier(std::move(identifier))
             , values(std::move(values))
         {}
-        virtual std::unique_ptr<checking::asm_operand> create_operand() const override
+        std::unique_ptr<checking::asm_operand> create_operand() const override
         {
             std::vector<std::unique_ptr<checking::asm_operand>> ret;
             for (auto& val : values)
@@ -287,17 +287,17 @@ struct complex_assembler_operand final : assembler_operand
     complex_assembler_operand(
         std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range);
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     composite_value_t value;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 
@@ -307,17 +307,17 @@ struct string_assembler_operand : assembler_operand
 {
     string_assembler_operand(std::string value, const range operand_range);
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     std::string value;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 // data definition operand
@@ -331,15 +331,15 @@ struct data_def_operand final : evaluable_operand
 
     context::dependency_collector get_dependencies(expressions::mach_evaluate_info info) const;
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(expressions::mach_evaluate_info info) const override;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(expressions::mach_evaluate_info info) const override;
 
-    virtual std::vector<const context::resolvable*> get_resolvables() const override;
+    std::vector<const context::resolvable*> get_resolvables() const override;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 
@@ -380,7 +380,7 @@ struct var_ca_operand final : ca_operand
 {
     var_ca_operand(vs_ptr variable_symbol, const range operand_range);
 
-    virtual std::set<context::id_index> get_undefined_attributed_symbols(
+    std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 
     vs_ptr variable_symbol;
@@ -392,7 +392,7 @@ struct expr_ca_operand final : ca_operand
     expr_ca_operand(expressions::ca_expr_ptr expression, const range operand_range);
 
 
-    virtual std::set<context::id_index> get_undefined_attributed_symbols(
+    std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 
     expressions::ca_expr_ptr expression;
@@ -404,7 +404,7 @@ struct seq_ca_operand final : ca_operand
     seq_ca_operand(seq_sym sequence_symbol, const range operand_range);
 
 
-    virtual std::set<context::id_index> get_undefined_attributed_symbols(
+    std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 
     seq_sym sequence_symbol;
@@ -416,7 +416,7 @@ struct branch_ca_operand final : ca_operand
     branch_ca_operand(seq_sym sequence_symbol, expressions::ca_expr_ptr expression, const range operand_range);
 
 
-    virtual std::set<context::id_index> get_undefined_attributed_symbols(
+    std::set<context::id_index> get_undefined_attributed_symbols(
         const expressions::evaluation_context& eval_ctx) override;
 
     seq_sym sequence_symbol;

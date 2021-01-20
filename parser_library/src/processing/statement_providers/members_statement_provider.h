@@ -44,13 +44,13 @@ protected:
     virtual context::statement_cache* get_next() = 0;
 
 private:
-    const semantics::instruction_si& retrieve_instruction(context::statement_cache& cache) const;
+    const semantics::instruction_si& retrieve_instruction(const context::statement_cache& cache) const;
 
     void fill_cache(context::statement_cache& cache,
         const semantics::deferred_statement& def_stmt,
         const processing_status& status);
 
-    context::shared_stmt_ptr preprocess_deferred(statement_processor& processor, context::statement_cache& cache);
+    context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
