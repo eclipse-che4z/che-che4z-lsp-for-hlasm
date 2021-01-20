@@ -150,7 +150,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
     {
         if (std::holds_alternative<data_def_address>(e))
         {
-            auto adr = std::get<data_def_address>(e);
+            const auto& adr = std::get<data_def_address>(e);
             if (adr.ignored)
                 continue;
             if (is_signed)
@@ -178,7 +178,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
         else if (std::holds_alternative<data_def_expr>(e))
         {
             // The expression specifies address displacement, base is implicit.
-            auto expr = std::get<data_def_expr>(e);
+            const auto& expr = std::get<data_def_expr>(e);
             if (expr.ignored)
                 continue;
             if (is_signed)
