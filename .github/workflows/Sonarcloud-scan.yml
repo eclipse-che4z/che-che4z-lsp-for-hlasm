@@ -12,7 +12,7 @@
 #   Broadcom, Inc. - initial API and implementation
 #
 
-name: SonarCloud
+name: SonarCloud scan
 
 on:
   workflow_run:
@@ -22,7 +22,7 @@ on:
 
 jobs:
   sonar:
-    name: Sonar scan
+    name: SonarCloud scan
     runs-on: ubuntu-18.04
 
     steps:
@@ -39,7 +39,7 @@ jobs:
                run_id: ${{github.event.workflow_run.id }},
             });
             var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "bw_output"
+              return artifact.name == "bw-output"
             })[0];
             var download = await github.actions.downloadArtifact({
                owner: context.repo.owner,
