@@ -14,6 +14,7 @@
 
 #include "ca_processor.h"
 
+#include "semantics/operand_impls.h"
 #include "semantics/range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -29,9 +30,12 @@ ca_processor::ca_processor(context::hlasm_context& hlasm_ctx,
     , listener_(listener)
 {}
 
-void ca_processor::process(context::shared_stmt_ptr stmt) { process_(stmt); }
-
-void ca_processor::process(context::unique_stmt_ptr stmt) { process_(std::move(stmt)); }
+void ca_processor::process(context::shared_stmt_ptr stmt)
+{
+    auto res = stmt->access_resolved();
+    auto& func = table_.at(res->opcode_ref().value);
+    func(*res);
+}
 
 ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& ctx)
 {

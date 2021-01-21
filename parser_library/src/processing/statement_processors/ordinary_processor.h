@@ -51,7 +51,6 @@ public:
         processing_tracer* tracer);
 
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::unique_stmt_ptr statement) override;
     virtual void process_statement(context::shared_stmt_ptr statement) override;
     virtual void end_processing() override;
     virtual bool terminal_condition(const statement_provider_kind kind) const override;
@@ -69,45 +68,6 @@ private:
     context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;
 
     void collect_ordinary_symbol_definitions();
-
-    template<typename T>
-    void process_statement_base(T statement)
-    {
-        assert(statement->kind == context::statement_kind::RESOLVED);
-
-        bool fatal = check_fatals(range(statement->statement_position()));
-        if (fatal)
-            return;
-
-        if (tracer_)
-        {
-            if (statement->access_resolved()->opcode_ref().value != context::id_storage::empty_id)
-                tracer_->statement(statement->access_resolved()->stmt_range_ref());
-        }
-
-        switch (statement->access_resolved()->opcode_ref().type)
-        {
-            case context::instruction_type::UNDEF:
-                add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value,
-                    statement->access_resolved()->instruction_ref().field_range));
-                return;
-            case context::instruction_type::CA:
-                ca_proc_.process(std::move(statement));
-                return;
-            case context::instruction_type::MAC:
-                mac_proc_.process(std::move(statement));
-                return;
-            case context::instruction_type::ASM:
-                asm_proc_.process(std::move(statement));
-                return;
-            case context::instruction_type::MACH:
-                mach_proc_.process(std::move(statement));
-                return;
-            default:
-                assert(false);
-                return;
-        }
-    }
 };
 
 } // namespace hlasm_plugin::parser_library::processing

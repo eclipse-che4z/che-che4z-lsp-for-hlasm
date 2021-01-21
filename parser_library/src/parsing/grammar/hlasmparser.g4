@@ -46,6 +46,7 @@ deferred_operand_rules;
 	#include "expressions/mach_expr_term.h"
 	#include "expressions/mach_operator.h"
 	#include "expressions/data_definition.h"
+	#include "semantics/operand_impls.h"
 
 	namespace hlasm_plugin::parser_library::parsing
 	{

@@ -27,16 +27,13 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace processing {
 
-using complete_stmt_t = std::variant<semantics::statement_si,
-    semantics::statement_si_defer_done,
-    std::shared_ptr<semantics::statement_si_defer_done>>;
-
 // statement that contains resolved operation code and also all semantic fields
 struct resolved_statement : public context::hlasm_statement, public semantics::complete_statement
 {
     virtual const op_code& opcode_ref() const = 0;
+    virtual processing_format format_ref() const = 0;
 
-    virtual position statement_position() const override { return stmt_range_ref().start; }
+    position statement_position() const override { return stmt_range_ref().start; }
 
     resolved_statement()
         : context::hlasm_statement(context::statement_kind::RESOLVED)
@@ -45,90 +42,51 @@ struct resolved_statement : public context::hlasm_statement, public semantics::c
 
 struct resolved_statement_impl : public resolved_statement
 {
-    resolved_statement_impl(semantics::statement_si stmt, op_code opcode, processing_format format)
-        : opcode(opcode)
-        , format(format)
-        , value(std::move(stmt))
-    {}
-    resolved_statement_impl(semantics::statement_si_defer_done stmt, op_code opcode, processing_format format)
-        : opcode(opcode)
-        , format(format)
-        , value(std::move(stmt))
-    {}
-    resolved_statement_impl(
-        std::shared_ptr<semantics::statement_si_defer_done> stmt, op_code opcode, processing_format format)
-        : opcode(opcode)
-        , format(format)
-        , value(stmt)
+    resolved_statement_impl(std::shared_ptr<const semantics::complete_statement> base_stmt, processing_status status)
+        : base_stmt(std::move(base_stmt))
+        , status(std::move(status))
     {}
 
-    op_code opcode;
-    processing_format format;
-    complete_stmt_t value;
+    std::shared_ptr<const semantics::complete_statement> base_stmt;
+    processing_status status;
 
-    virtual const semantics::label_si& label_ref() const { return get_stmt().label_ref(); }
-    virtual const semantics::instruction_si& instruction_ref() const { return get_stmt().instruction_ref(); }
-    virtual const semantics::operands_si& operands_ref() const { return get_stmt().operands_ref(); }
-    virtual const semantics::remarks_si& remarks_ref() const { return get_stmt().remarks_ref(); }
-    virtual const range& stmt_range_ref() const { return get_stmt().stmt_range_ref(); }
-    virtual const op_code& opcode_ref() const { return opcode; }
-
-private:
-    const semantics::complete_statement& get_stmt() const
-    {
-        if (std::holds_alternative<semantics::statement_si>(value))
-            return std::get<semantics::statement_si>(value);
-        else if (std::holds_alternative<semantics::statement_si_defer_done>(value))
-            return std::get<semantics::statement_si_defer_done>(value);
-        else
-            return *std::get<std::shared_ptr<semantics::statement_si_defer_done>>(value);
-    }
+    const semantics::label_si& label_ref() const override { return base_stmt->label_ref(); }
+    const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
+    const semantics::operands_si& operands_ref() const override { return base_stmt->operands_ref(); }
+    const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
+    const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    const op_code& opcode_ref() const override { return status.second; }
+    processing_format format_ref() const override { return status.first; }
 };
 
 // statement used for preprocessing of resolved statements
 struct rebuilt_statement : public resolved_statement
 {
-    rebuilt_statement(const resolved_statement_impl& base_stmt,
+    rebuilt_statement(std::shared_ptr<const resolved_statement> base_stmt,
         std::optional<semantics::label_si> label,
         std::optional<semantics::operands_si> operands)
-        : base_value(&base_stmt)
+        : base_stmt(base_stmt)
         , rebuilt_label(std::move(label))
         , rebuilt_operands(std::move(operands))
     {}
 
-    rebuilt_statement(resolved_statement_impl&& base_stmt,
-        std::optional<semantics::label_si> label,
-        std::optional<semantics::operands_si> operands)
-        : base_value(std::move(base_stmt))
-        , rebuilt_label(std::move(label))
-        , rebuilt_operands(std::move(operands))
-    {}
-
-    std::variant<const resolved_statement_impl*, resolved_statement_impl> base_value;
+    std::shared_ptr<const resolved_statement> base_stmt;
     std::optional<semantics::label_si> rebuilt_label;
     std::optional<semantics::operands_si> rebuilt_operands;
 
-    virtual const semantics::label_si& label_ref() const
+    const semantics::label_si& label_ref() const override
     {
-        return rebuilt_label ? *rebuilt_label : get_stmt().label_ref();
+        return rebuilt_label ? *rebuilt_label : base_stmt->label_ref();
     }
-    virtual const semantics::instruction_si& instruction_ref() const { return get_stmt().instruction_ref(); }
-    virtual const semantics::operands_si& operands_ref() const
+    const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
+    const semantics::operands_si& operands_ref() const override
     {
-        return rebuilt_operands ? *rebuilt_operands : get_stmt().operands_ref();
+        return rebuilt_operands ? *rebuilt_operands : base_stmt->operands_ref();
     }
-    virtual const semantics::remarks_si& remarks_ref() const { return get_stmt().remarks_ref(); }
-    virtual const range& stmt_range_ref() const { return get_stmt().stmt_range_ref(); }
-    virtual const op_code& opcode_ref() const { return get_stmt().opcode_ref(); }
-
-private:
-    const resolved_statement& get_stmt() const
-    {
-        if (std::holds_alternative<const resolved_statement_impl*>(base_value))
-            return *std::get<const resolved_statement_impl*>(base_value);
-        else
-            return std::get<resolved_statement_impl>(base_value);
-    }
+    const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
+    const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    const op_code& opcode_ref() const override { return base_stmt->opcode_ref(); }
+    processing_format format_ref() const override { return base_stmt->format_ref(); }
 };
 
 

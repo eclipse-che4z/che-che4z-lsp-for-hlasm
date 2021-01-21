@@ -16,6 +16,7 @@
 #define PROCESSING_ASM_PROCESSOR_H
 
 #include "low_language_processor.h"
+#include "semantics/operand_impls.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -34,7 +35,6 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    virtual void process(context::unique_stmt_ptr stmt) override;
     virtual void process(context::shared_stmt_ptr stmt) override;
 
     static void process_copy(const semantics::complete_statement& stmt,
@@ -46,8 +46,6 @@ private:
     process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
-
-    void process(rebuilt_statement statement);
 
     void process_sect(const context::section_kind kind, rebuilt_statement stmt);
     void process_LOCTR(rebuilt_statement stmt);

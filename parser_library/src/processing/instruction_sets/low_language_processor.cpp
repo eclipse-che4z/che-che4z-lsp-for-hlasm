@@ -31,18 +31,11 @@ low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx
     , parser(parser)
 {}
 
-rebuilt_statement low_language_processor::preprocess(context::unique_stmt_ptr statement)
-{
-    auto& stmt = dynamic_cast<resolved_statement_impl&>(*statement->access_resolved());
-    auto [label, ops] = preprocess_inner(stmt);
-    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
-}
-
 rebuilt_statement low_language_processor::preprocess(context::shared_stmt_ptr statement)
 {
-    const auto& stmt = dynamic_cast<const resolved_statement_impl&>(*statement->access_resolved());
-    auto [label, ops] = preprocess_inner(stmt);
-    return rebuilt_statement(stmt, std::move(label), std::move(ops));
+    auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
+    auto [label, ops] = preprocess_inner(*stmt);
+    return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
 }
 
 context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
@@ -72,7 +65,7 @@ bool low_language_processor::create_symbol(
 }
 
 
-low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement_impl& stmt)
+low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
     std::optional<semantics::label_si> label;
     std::optional<semantics::operands_si> operands;
@@ -117,7 +110,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
                                  true,
                                  semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
                                      semantics::adjusting_state::SUBSTITUTION),
-                                 processing_status(stmt.format, stmt.opcode))
+                                 processing_status(stmt.format_ref(), stmt.opcode_ref()))
                              .first);
     }
 

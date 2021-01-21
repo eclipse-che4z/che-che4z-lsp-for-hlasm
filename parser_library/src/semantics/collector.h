@@ -20,6 +20,7 @@
 #include "antlr4-runtime.h"
 
 #include "lsp_info_processor.h"
+#include "processing/op_code.h"
 #include "statement.h"
 
 namespace hlasm_plugin {
@@ -59,7 +60,7 @@ public:
     void append_operand_field(collector&& c);
 
     const instruction_si& peek_instruction();
-    std::variant<statement_si, statement_si_deferred> extract_statement(bool deferred_hint, range default_range);
+    context::shared_stmt_ptr extract_statement(processing::processing_status status, range& statement_range);
     std::vector<context::lsp_symbol> extract_lsp_symbols();
     std::vector<token_info> extract_hl_symbols();
     void prepare_for_next_statement();
