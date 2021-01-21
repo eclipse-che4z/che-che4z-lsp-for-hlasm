@@ -75,8 +75,8 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: bw-output
-          path: 
-            build/bw-output
+          path: |
+            build/bw-output/
             build/bin/coverage.txt
             build/generated_parser/
             clients/vscode-hlasmplugin/coverage/lcov.info
