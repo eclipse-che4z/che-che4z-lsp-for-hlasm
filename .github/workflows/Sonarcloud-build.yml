@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Get version
         run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
       - name: Requirements install
@@ -71,9 +71,6 @@ jobs:
           echo $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number.txt
           echo -Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number-arg.txt
           echo -Dsonar.pullrequest.branch=${{ github.head_ref }} > pr-info/head-branch-arg.txt
-      - name: Push setting
-        if: github.event_name == 'push'
-          mkdir pr-info
 
       - uses: actions/upload-artifact@v2
         with:

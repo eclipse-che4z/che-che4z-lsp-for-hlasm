@@ -27,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: 'Download build output'
         uses: actions/github-script@v3.1.0
         with:
