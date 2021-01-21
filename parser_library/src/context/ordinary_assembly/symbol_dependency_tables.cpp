@@ -15,12 +15,14 @@
 #include "symbol_dependency_tables.h"
 
 #include <algorithm>
+#include <cassert>
 #include <queue>
 #include <stack>
 #include <stdexcept>
 
 #include "ordinary_assembly_context.h"
 #include "processing/instruction_sets/low_language_processor.h"
+#include "processing/instruction_sets/postponed_statement_impl.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -74,8 +76,9 @@ void symbol_dependency_tables::resolve_dependant(
             length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
 
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
-            resolver->resolve_unknown_loctr_dependency(
-                sp, val.get_reloc(), dependency_source_stmts_.find(sp)->second.stmt_ref->get()->stmt_range_ref());
+            resolver->resolve_unknown_loctr_dependency(sp,
+                val.get_reloc(),
+                dependency_source_stmts_.find(sp)->second.stmt_ref->get()->impl()->stmt_range_ref());
         else
             space::resolve(sp, length);
     }

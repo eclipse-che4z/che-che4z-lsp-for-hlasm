@@ -17,9 +17,6 @@
 #include "processing/context_manager.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
-#include "processing/statement.h"
-#include "semantics/concatenation.h"
-#include "semantics/statement.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -80,19 +77,6 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
     if (!expecting_tmp && !omit_next_)
     {
         result_.definition.push_back(statement);
-        add_correct_copy_nest();
-    }
-}
-
-void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
-{
-    bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
-
-    process_statement(*statement);
-
-    if (!expecting_tmp && !omit_next_)
-    {
-        result_.definition.push_back(std::move(statement));
         add_correct_copy_nest();
     }
 }
@@ -356,14 +340,18 @@ void macrodef_processor::process_MEND()
 void macrodef_processor::process_COPY(const resolved_statement& statement)
 {
     // substitute copy for anop to not be processed again
-    result_.definition.push_back(
-        std::make_unique<resolved_statement_impl>(semantics::statement_si(statement.stmt_range_ref(),
-                                                      semantics::label_si(statement.stmt_range_ref()),
-                                                      semantics::instruction_si(statement.stmt_range_ref()),
-                                                      semantics::operands_si(statement.stmt_range_ref(), {}),
-                                                      semantics::remarks_si(statement.stmt_range_ref(), {})),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA),
-            processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT)));
+
+    auto empty_sem = std::make_shared<semantics::statement_si>(statement.stmt_range_ref(),
+        semantics::label_si(statement.stmt_range_ref()),
+        semantics::instruction_si(statement.stmt_range_ref()),
+        semantics::operands_si(statement.stmt_range_ref(), {}),
+        semantics::remarks_si(statement.stmt_range_ref(), {}));
+
+    auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
+        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
+            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+
+    result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())

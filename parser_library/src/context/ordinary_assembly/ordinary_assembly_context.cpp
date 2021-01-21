@@ -15,6 +15,7 @@
 #include "ordinary_assembly_context.h"
 
 #include <algorithm>
+#include <cassert>
 #include <stdexcept>
 
 #include "alignment.h"

@@ -27,7 +27,7 @@ macro_statement_provider::macro_statement_provider(context::hlasm_context& hlasm
 
 bool macro_statement_provider::finished() const { return hlasm_ctx.scope_stack().size() == 1; }
 
-context::cached_statement_storage* macro_statement_provider::get_next()
+context::statement_cache* macro_statement_provider::get_next()
 {
     auto& invo = hlasm_ctx.scope_stack().back().this_macro;
     assert(invo);
