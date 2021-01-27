@@ -78,5 +78,6 @@ jobs:
           path: |
             build/
             !build/bin
+            !build/externals
             clients/vscode-hlasmplugin/coverage/lcov.info
             pr-info/
