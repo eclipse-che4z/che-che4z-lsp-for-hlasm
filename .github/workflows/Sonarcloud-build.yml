@@ -76,8 +76,6 @@ jobs:
         with:
           name: bw-output
           path: |
-            build/bw-output/
-            build/bin/coverage.txt
-            build/generated_parser/
+            build/
             clients/vscode-hlasmplugin/coverage/lcov.info
             pr-info/
