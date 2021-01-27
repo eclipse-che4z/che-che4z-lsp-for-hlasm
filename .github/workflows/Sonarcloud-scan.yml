@@ -77,9 +77,9 @@ jobs:
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.cfamily.build-wrapper-output=build/bw-output
           -Dsonar.cfamily.threads=4
-          -Dsonar.cfamily.llvm-cov.reportPath=build/bin/coverage.txt
+          -Dsonar.cfamily.llvm-cov.reportPath=build/coverage.txt
           -Dsonar.cfamily.cache.enabled=false
-          -Dsonar.typescript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
+          -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
           -Dsonar.projectVersion=${{ env.VERSION }}
           -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
           -Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**
