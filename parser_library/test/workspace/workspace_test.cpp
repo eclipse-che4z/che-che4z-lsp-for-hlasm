@@ -374,7 +374,8 @@ TEST_F(workspace_test, missing_library_required)
              file_manager_opt_variant::required })
     {
         file_manager_opt file_manager(type);
-        workspace ws("", "workspace_name", file_manager);
+        lib_config config;
+        workspace ws("", "workspace_name", file_manager, config);
         ws.open();
 
         ws.did_open_file("source1");
@@ -386,7 +387,8 @@ TEST_F(workspace_test, missing_library_required)
 TEST_F(workspace_test, missing_library_optional)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optional);
-    workspace ws("", "workspace_name", file_manager);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
     ws.open();
 
     ws.did_open_file("source1");
