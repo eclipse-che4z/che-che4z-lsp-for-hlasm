@@ -47,8 +47,8 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
 {
     if (macro_nest_ == 0)
     {
-        find_seq(dynamic_cast<const semantics::core_statement&>(*statement));
-        find_ord(dynamic_cast<const resolved_statement&>(*statement));
+        find_seq(static_cast<const resolved_statement&>(*statement));
+        find_ord(static_cast<const resolved_statement&>(*statement));
     }
 
     auto resolved = statement->access_resolved();

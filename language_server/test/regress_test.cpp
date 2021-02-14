@@ -39,77 +39,6 @@ json make_notification(std::string method_name, json parameter)
     return { { "jsonrpc", "2.0" }, { "method", method_name }, { "params", parameter } };
 }
 
-TEST(regress_test, behaviour_correct)
-{
-    parser_library::workspace_manager ws_mngr;
-    message_provider_mock mess_p;
-    lsp::server s(ws_mngr);
-    s.set_send_message_provider(&mess_p);
-
-    auto notf = make_notification("textDocument/didOpen",
-        R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_correct.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,1 REMARK"}})#"_json);
-    s.message_received(notf);
-
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/semanticHighlighting");
-    auto tokens = mess_p.notfs[0]["params"]["tokens"];
-    for (auto token : tokens)
-    {
-        switch (token["columnStart"].get<int>())
-        {
-            case 0:
-                EXPECT_EQ(token["scope"].get<std::string>(), "label");
-                break;
-            case 6:
-                EXPECT_EQ(token["scope"].get<std::string>(), "instruction");
-                break;
-            case 9:
-                EXPECT_EQ(token["scope"].get<std::string>(), "operand");
-                break;
-            case 10:
-                EXPECT_EQ(token["scope"].get<std::string>(), "operator");
-                break;
-            case 11:
-                EXPECT_EQ(token["scope"].get<std::string>(), "operand");
-                break;
-            case 13:
-                EXPECT_EQ(token["scope"].get<std::string>(), "remark");
-                break;
-            default:
-                FAIL();
-                break;
-        }
-    }
-
-    mess_p.notfs.clear();
-    notf = make_notification("textDocument/didChange",
-        R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_correct.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":6},"end":{"line":0,"character":8}},"rangeLength":5,"text":"SAM24"}]})#"_json);
-    s.message_received(notf);
-
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/semanticHighlighting");
-    tokens = mess_p.notfs[0]["params"]["tokens"];
-    for (auto token : tokens)
-    {
-        switch (token["columnStart"].get<int>())
-        {
-            case 0:
-                EXPECT_EQ(token["scope"].get<std::string>(), "label");
-                break;
-            case 6:
-                EXPECT_EQ(token["scope"].get<std::string>(), "instruction");
-                break;
-            case 12:
-                EXPECT_EQ(token["scope"].get<std::string>(), "remark");
-                break;
-            default:
-                FAIL();
-                break;
-        }
-    }
-    mess_p.notfs.clear();
-}
-
 TEST(regress_test, behaviour_error)
 {
     parser_library::workspace_manager ws_mngr;
@@ -121,10 +50,9 @@ TEST(regress_test, behaviour_error)
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,20 REMARK"}})#"_json);
     s.message_received(notf);
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/semanticHighlighting");
-    ASSERT_EQ(mess_p.notfs[1]["method"], "textDocument/publishDiagnostics");
-    auto diagnostics = mess_p.notfs[1]["params"]["diagnostics"];
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
+    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
+    auto diagnostics = mess_p.notfs[0]["params"]["diagnostics"];
     ASSERT_EQ(diagnostics.size(), (size_t)1);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "M120");
 
@@ -134,10 +62,9 @@ TEST(regress_test, behaviour_error)
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":12},"end":{"line":0,"character":13}},"rangeLength":1,"text":""}]})#"_json);
     s.message_received(notf);
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/semanticHighlighting");
-    ASSERT_EQ(mess_p.notfs[1]["method"], "textDocument/publishDiagnostics");
-    EXPECT_EQ(mess_p.notfs[1]["params"]["diagnostics"].size(), (size_t)0);
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
+    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
+    EXPECT_EQ(mess_p.notfs[0]["params"]["diagnostics"].size(), (size_t)0);
 
     mess_p.notfs.clear();
 
@@ -145,10 +72,9 @@ TEST(regress_test, behaviour_error)
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","version":2},"contentChanges":[{"range":{"start":{"line":0,"character":5},"end":{"line":0,"character":19}},"rangeLength":14,"text":""}]})#"_json);
     s.message_received(notf);
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/semanticHighlighting");
-    ASSERT_EQ(mess_p.notfs[1]["method"], "textDocument/publishDiagnostics");
-    diagnostics = mess_p.notfs[1]["params"]["diagnostics"];
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
+    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
+    diagnostics = mess_p.notfs[0]["params"]["diagnostics"];
     ASSERT_EQ(diagnostics.size(), (size_t)1);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0003");
 

@@ -15,6 +15,7 @@
 #include "collector.h"
 
 #include "lexing/lexer.h"
+#include "operand_impls.h"
 #include "processing/statement.h"
 #include "range_provider.h"
 
@@ -165,13 +166,6 @@ void collector::clear_hl_lsp_symbols()
 
 void collector::add_operand_remark_hl_symbols()
 {
-    if (op_)
-    {
-        for (auto&& operand : current_operands().value)
-            if (operand)
-                add_hl_symbol(token_info(operand->operand_range, hl_scopes::operand));
-    }
-
     if (rem_)
     {
         for (const auto& remark : current_remarks().value)

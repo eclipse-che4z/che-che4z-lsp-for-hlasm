@@ -18,30 +18,38 @@
 #include <regex>
 #include <string>
 
-#include "json.hpp"
-
+#include "lib_config.h"
 #include "processor.h"
 #include "wildcard.h"
 
+using json = nlohmann::json;
+
 namespace hlasm_plugin::parser_library::workspaces {
 
-workspace::workspace(ws_uri uri, std::string name, file_manager& file_manager)
-    : name_(name)
+workspace::workspace(const ws_uri& uri,
+    const std::string& name,
+    file_manager& file_manager,
+    const lib_config& global_config,
+    std::atomic<bool>* cancel)
+    : cancel_(cancel)
+    , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
     , implicit_proc_grp("pg_implicit")
     , ws_path_(uri)
+    , global_config_(global_config)
 {
     proc_grps_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS;
     pgm_conf_path_ = ws_path_ / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF;
 }
 
-workspace::workspace(ws_uri uri, file_manager& file_manager)
-    : workspace(uri, uri, file_manager)
+workspace::workspace(
+    const ws_uri& uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
+    : workspace(uri, uri, file_manager, global_config, cancel)
 {}
 
-workspace::workspace(file_manager& file_manager)
-    : workspace("", file_manager)
+workspace::workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
+    : workspace("", file_manager, global_config, cancel)
 {
     opened_ = true;
 }
@@ -86,6 +94,31 @@ std::vector<processor_file_ptr> workspace::find_related_opencodes(const std::str
     return {};
 }
 
+void workspace::delete_diags(processor_file_ptr file)
+{
+    file->diags().clear();
+
+    for (const std::string& fname : file->dependencies())
+    {
+        auto dep_file = file_manager_.find_processor_file(fname);
+        if (dep_file)
+            dep_file->diags().clear();
+    }
+
+    auto notified_found = diag_suppress_notified_.emplace(file->get_file_name(), false);
+    if (!notified_found.first->second)
+        show_message("Diagnostics suppressed from " + file->get_file_name() + ", because there is no configuration.");
+    notified_found.first->second = true;
+}
+
+void workspace::show_message(const std::string& message)
+{
+    if (message_consumer_)
+        message_consumer_->show_message(message, message_type::MT_INFO);
+}
+
+lib_config workspace::get_config() { return local_config_.fill_missing_settings(global_config_); }
+
 const processor_group& workspace::get_proc_grp_by_program(const std::string& filename) const
 {
     assert(opened_);
@@ -114,7 +147,7 @@ void workspace::parse_file(const std::string& file_uri)
     // add support for hlasm to vscode (auto detection??) and do the decision based on languageid
     if (file_path == proc_grps_path_ || file_path == pgm_conf_path_)
     {
-        if (load_config())
+        if (load_and_process_config())
         {
             for (auto fname : dependants_)
             {
@@ -130,7 +163,6 @@ void workspace::parse_file(const std::string& file_uri)
                     filter_and_close_dependencies_(found->files_to_close(), found);
             }
         }
-
         return;
     }
     // what about removing files??? what if depentands_ points to not existing file?
@@ -163,6 +195,18 @@ void workspace::parse_file(const std::string& file_uri)
         f->parse(*this);
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
+
+
+        // if there is no processor group assigned to the program, delete diagnostics that may have been created
+        if (cancel_ && cancel_->load()) // skip, if parsing was cancelled using the cancellation token
+            continue;
+
+        const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
+        f->collect_diags();
+        if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_config().diag_supress_limit)
+            delete_diags(f);
+        else
+            diag_suppress_notified_[f->get_file_name()] = false;
     }
 
     // second check after all dependants are there to close all files that used to be dependencies
@@ -185,6 +229,7 @@ void workspace::did_open_file(const std::string& file_uri) { parse_file(file_uri
 
 void workspace::did_close_file(const std::string& file_uri)
 {
+    diag_suppress_notified_[file_uri] = false;
     // first check whether the file is a dependency
     // if so, simply close it, no other action is needed
     if (is_dependency_(file_uri))
@@ -246,9 +291,11 @@ completion_list workspace::completion(
     return opencodes.back()->get_lsp_feature_provider().completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
-void workspace::open() { load_config(); }
+void workspace::open() { load_and_process_config(); }
 
 void workspace::close() { opened_ = false; }
+
+void workspace::set_message_consumer(message_consumer* consumer) { message_consumer_ = consumer; }
 
 file_manager& workspace::get_file_manager() { return file_manager_; }
 
@@ -259,53 +306,21 @@ const processor_group& workspace::get_proc_grp(const proc_grp_id& proc_grp) cons
 }
 
 // open config files and parse them
-bool workspace::load_config()
+bool workspace::load_and_process_config()
 {
+    std::filesystem::path ws_path(uri_);
+
     config_diags_.clear();
 
     opened_ = true;
 
-    std::filesystem::path ws_path(uri_);
-    using json = nlohmann::json;
-
-    // proc_grps.json parse
-    file_ptr proc_grps_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS).string());
-
-    if (proc_grps_file->update_and_get_bad())
-        return false;
-
-    json proc_grps_json;
-    try
-    {
-        proc_grps_json = nlohmann::json::parse(proc_grps_file->get_text());
-        proc_grps_.clear();
-    }
-    catch (const nlohmann::json::exception&)
-    {
-        // could not load proc_grps
-        config_diags_.push_back(diagnostic_s::error_W002(proc_grps_file->get_file_name(), name_));
-        return false;
-    }
-
-    // pgm_conf.json parse
-    file_ptr pgm_conf_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF).string());
-
-    if (pgm_conf_file->update_and_get_bad())
-        return false;
-
     json pgm_conf_json;
+    json proc_grps_json;
+    file_ptr pgm_conf_file;
 
-    try
-    {
-        pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
-        exact_pgm_conf_.clear();
-        regex_pgm_conf_.clear();
-    }
-    catch (const nlohmann::json::exception&)
-    {
-        config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
+    bool load_ok = load_config(proc_grps_json, pgm_conf_json, pgm_conf_file);
+    if (!load_ok)
         return false;
-    }
 
     // get extensions from pgm conf
     extension_regex_map extensions;
@@ -319,6 +334,15 @@ bool workspace::load_config()
             extensions.insert({ std::regex_replace(wildcard_str, extension_regex, "$2"),
                 wildcard2regex((ws_path / wildcard_str).string()) });
     }
+
+    /*auto suppress_diags_limit_json = pgm_conf_json.find("diagnosticsSuppressLimit");
+    if (suppress_diags_limit_json != pgm_conf_json.end())
+    {
+        if (suppress_diags_limit_json->is_number_integer())
+            new_config.diag_supress_limit = suppress_diags_limit_json->get<int64_t>();
+    }*/
+    local_config_ = lib_config::load_from_json(pgm_conf_json);
+
     auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups
     json pgs = proc_grps_json["pgroups"];
@@ -371,6 +395,50 @@ bool workspace::load_config()
         {
             config_diags_.push_back(diagnostic_s::error_W004(pgm_conf_file->get_file_name(), name_));
         }
+    }
+
+    return true;
+}
+bool workspace::load_config(nlohmann::json& proc_grps_json, nlohmann::json& pgm_conf_json, file_ptr& pgm_conf_file)
+{
+    std::filesystem::path ws_path(uri_);
+
+
+    // proc_grps.json parse
+    file_ptr proc_grps_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS).string());
+
+    if (proc_grps_file->update_and_get_bad())
+        return false;
+
+
+    try
+    {
+        proc_grps_json = nlohmann::json::parse(proc_grps_file->get_text());
+        proc_grps_.clear();
+    }
+    catch (const nlohmann::json::exception&)
+    {
+        // could not load proc_grps
+        config_diags_.push_back(diagnostic_s::error_W002(proc_grps_file->get_file_name(), name_));
+        return false;
+    }
+
+    // pgm_conf.json parse
+    pgm_conf_file = file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PGM_CONF).string());
+
+    if (pgm_conf_file->update_and_get_bad())
+        return false;
+
+    try
+    {
+        pgm_conf_json = nlohmann::json::parse(pgm_conf_file->get_text());
+        exact_pgm_conf_.clear();
+        regex_pgm_conf_.clear();
+    }
+    catch (const nlohmann::json::exception&)
+    {
+        config_diags_.push_back(diagnostic_s::error_W003(pgm_conf_file->get_file_name(), name_));
+        return false;
     }
 
     return true;

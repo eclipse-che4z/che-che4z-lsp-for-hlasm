@@ -64,7 +64,9 @@ export class CustomEditorCommands {
             editor.selection.active.character - ((selectionSize >= -1) ? selectionSize : 0));
 
         // there is a continuation and it is after our position, handle it
-        if (continuationOffset && editor.selection.active.character < continuationOffset && editor.selection.isSingleLine) {
+        if (isLineContinued(editor.document,editor.selection.active.line, continuationOffset) && 
+        editor.selection.active.character < continuationOffset && 
+        editor.selection.isSingleLine) {
             const beforeContinuationChars =
                 new vscode.Range(editor.selection.active.line,
                     continuationOffset - Math.abs(selectionSize),
@@ -142,7 +144,10 @@ export class CustomEditorCommands {
                 : editor.selection.active.character;
 
         // there is a continuation and it is after our position, handle it
-        if (continuationOffset && endPos < continuationOffset && (editor.selection.active.character > 0 || selectionSize > 0) && editor.selection.isSingleLine) {
+        if (isLineContinued(editor.document,editor.selection.active.line, continuationOffset) && 
+            endPos < continuationOffset && 
+            (editor.selection.active.character > 0 || selectionSize > 0) && 
+            editor.selection.isSingleLine) {
             const beforeContinuationChars = new vscode.Range(
                 editor.selection.active.line, continuationOffset - Math.abs(selectionSize),
                 editor.selection.active.line, continuationOffset);
@@ -183,4 +188,12 @@ export class CustomEditorCommands {
 
 export function setCursor(editor: vscode.TextEditor, position: vscode.Position) {
     editor.selection = new vscode.Selection(position, position);
+}
+
+export function isLineContinued(document: vscode.TextDocument, line: number, offset: number): boolean {
+    if (line < 0 || offset < 0)
+        return false;
+    const continuationPosition = new vscode.Position(line, offset);
+    return document.validatePosition(continuationPosition) == continuationPosition &&
+        document.lineAt(line).text[offset] != " ";
 }

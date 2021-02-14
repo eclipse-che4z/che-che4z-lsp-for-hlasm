@@ -33,7 +33,7 @@ struct resolved_statement : public context::hlasm_statement, public semantics::c
     virtual const op_code& opcode_ref() const = 0;
     virtual processing_format format_ref() const = 0;
 
-    virtual position statement_position() const override { return stmt_range_ref().start; }
+    position statement_position() const override { return stmt_range_ref().start; }
 
     resolved_statement()
         : context::hlasm_statement(context::statement_kind::RESOLVED)
@@ -50,13 +50,13 @@ struct resolved_statement_impl : public resolved_statement
     std::shared_ptr<const semantics::complete_statement> base_stmt;
     processing_status status;
 
-    virtual const semantics::label_si& label_ref() const override { return base_stmt->label_ref(); }
-    virtual const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
-    virtual const semantics::operands_si& operands_ref() const override { return base_stmt->operands_ref(); }
-    virtual const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
-    virtual const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
-    virtual const op_code& opcode_ref() const override { return status.second; }
-    virtual processing_format format_ref() const override { return status.first; }
+    const semantics::label_si& label_ref() const override { return base_stmt->label_ref(); }
+    const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
+    const semantics::operands_si& operands_ref() const override { return base_stmt->operands_ref(); }
+    const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
+    const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    const op_code& opcode_ref() const override { return status.second; }
+    processing_format format_ref() const override { return status.first; }
 };
 
 // statement used for preprocessing of resolved statements
@@ -74,19 +74,19 @@ struct rebuilt_statement : public resolved_statement
     std::optional<semantics::label_si> rebuilt_label;
     std::optional<semantics::operands_si> rebuilt_operands;
 
-    virtual const semantics::label_si& label_ref() const
+    const semantics::label_si& label_ref() const override
     {
         return rebuilt_label ? *rebuilt_label : base_stmt->label_ref();
     }
-    virtual const semantics::instruction_si& instruction_ref() const { return base_stmt->instruction_ref(); }
-    virtual const semantics::operands_si& operands_ref() const
+    const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
+    const semantics::operands_si& operands_ref() const override
     {
         return rebuilt_operands ? *rebuilt_operands : base_stmt->operands_ref();
     }
-    virtual const semantics::remarks_si& remarks_ref() const { return base_stmt->remarks_ref(); }
-    virtual const range& stmt_range_ref() const { return base_stmt->stmt_range_ref(); }
-    virtual const op_code& opcode_ref() const { return base_stmt->opcode_ref(); }
-    virtual processing_format format_ref() const { return base_stmt->format_ref(); }
+    const semantics::remarks_si& remarks_ref() const override { return base_stmt->remarks_ref(); }
+    const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
+    const op_code& opcode_ref() const override { return base_stmt->opcode_ref(); }
+    processing_format format_ref() const override { return base_stmt->format_ref(); }
 };
 
 

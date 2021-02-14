@@ -65,7 +65,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     return stmt;
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(context::statement_cache& cache) const
+const semantics::instruction_si& members_statement_provider::retrieve_instruction(const context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {

@@ -52,7 +52,7 @@ ExternalProject_ADD(
   GIT_TAG            ${ANTLR4CPP_EXTERNAL_TAG}
   GIT_SHALLOW        ON
   # the fix for https://github.com/antlr/antlr4/issues/2550
-  PATCH_COMMAND      ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/cmake/no_viable_shared.diff
+  PATCH_COMMAND      ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR} -P ${PROJECT_SOURCE_DIR}/cmake/apply_patch.cmake
   TIMEOUT            10
   LOG_DOWNLOAD       ON
   GIT_PROGRESS       1

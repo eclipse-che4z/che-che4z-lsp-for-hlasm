@@ -196,6 +196,10 @@ version_t file_impl::get_version() { return version_; }
 
 bool file_impl::update_and_get_bad()
 {
+    // If user is editing file through LSP, do not load from disk.
+    if (editing_)
+        return false;
+
     load_text();
     return bad_;
 }

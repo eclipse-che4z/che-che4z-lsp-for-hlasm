@@ -12,13 +12,14 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "operand.h"
+#include "operand_impls.h"
 
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
 #include "operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::semantics {
+
 
 //***************** operand *********************
 
@@ -45,6 +46,8 @@ machine_operand* operand::access_mach() { return dynamic_cast<machine_operand*>(
 
 assembler_operand* operand::access_asm() { return dynamic_cast<assembler_operand*>(this); }
 
+//***************** empty, model, evaluable operand *********************
+
 empty_operand::empty_operand(range operand_range)
     : operand(operand_type::EMPTY, std::move(operand_range))
 {}
@@ -62,6 +65,8 @@ evaluable_operand::evaluable_operand(const operand_type type, range operand_rang
     : operand(type, std::move(operand_range))
 {}
 
+//***************** machine_operand *********************
+
 machine_operand::machine_operand(const mach_kind kind)
     : kind(kind)
 {}
@@ -77,7 +82,7 @@ address_machine_operand* machine_operand::access_address()
 }
 
 std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
-    expressions::mach_expression& expr,
+    const expressions::mach_expression& expr,
     std::optional<checking::machine_operand_type> type_hint = std::nullopt)
 {
     auto res = expr.evaluate(info);
@@ -130,12 +135,6 @@ bool expr_machine_operand::has_error(expressions::mach_evaluate_info info) const
     return simple_expr_operand::has_error(info);
 }
 
-// suppress MSVC warning 'inherits via dominance'
-std::vector<const context::resolvable*> expr_machine_operand::get_resolvables() const
-{
-    return simple_expr_operand::get_resolvables();
-}
-
 void expr_machine_operand::collect_diags() const { collect_diags_from_child(*expression); }
 
 void expr_machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -185,19 +184,6 @@ bool address_machine_operand::has_error(expressions::mach_evaluate_info info) co
     }
     else
         return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; // D(,B)
-}
-
-std::vector<const context::resolvable*> address_machine_operand::get_resolvables() const
-{
-    std::vector<const context::resolvable*> res;
-
-    res.push_back(&*displacement);
-    if (first_par)
-        res.push_back(&*first_par);
-    if (second_par)
-        res.push_back(&*second_par);
-
-    return res;
 }
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
@@ -326,12 +312,6 @@ bool expr_assembler_operand::has_error(expressions::mach_evaluate_info info) con
     return simple_expr_operand::has_error(info);
 }
 
-// suppress MSVC warning 'inherits via dominance'
-std::vector<const context::resolvable*> expr_assembler_operand::get_resolvables() const
-{
-    return simple_expr_operand::get_resolvables();
-}
-
 void expr_assembler_operand::collect_diags() const { collect_diags_from_child(*expression); }
 
 void expr_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -356,11 +336,6 @@ bool using_instr_assembler_operand::has_error(expressions::mach_evaluate_info in
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
-std::vector<const context::resolvable*> using_instr_assembler_operand::get_resolvables() const
-{
-    return { &*base, &*end };
-}
-
 std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
     expressions::mach_evaluate_info info) const
 {
@@ -382,26 +357,24 @@ void using_instr_assembler_operand::apply(operand_visitor& visitor) const { visi
 //***************** complex_assempler_operand *********************
 complex_assembler_operand::complex_assembler_operand(
     std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, range operand_range)
-    : evaluable_operand(operand_type::ASM, std::move(operand_range))
+    : evaluable_operand(operand_type::ASM, operand_range)
     , assembler_operand(asm_kind::COMPLEX)
-    , value(identifier, std::move(values), operand_range)
+    , value(std::move(identifier), std::move(values), std::move(operand_range))
 {}
 
 bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
 
 bool complex_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
 
-std::vector<const context::resolvable*> complex_assembler_operand::get_resolvables() const
-{
-    return std::vector<const context::resolvable*>();
-}
-
 std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
 {
     return value.create_operand();
 }
 
-void complex_assembler_operand::collect_diags() const {}
+void complex_assembler_operand::collect_diags() const
+{
+    // There are no object to collect diags from.
+}
 
 void complex_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
@@ -411,36 +384,42 @@ ca_operand::ca_operand(const ca_kind kind, range operand_range)
     , kind(kind)
 {}
 
-var_ca_operand* ca_operand::access_var() { return kind == ca_kind::VAR ? static_cast<var_ca_operand*>(this) : nullptr; }
+[[nodiscard]] var_ca_operand* ca_operand::access_var()
+{
+    return kind == ca_kind::VAR ? static_cast<var_ca_operand*>(this) : nullptr;
+}
 
-const var_ca_operand* ca_operand::access_var() const
+[[nodiscard]] const var_ca_operand* ca_operand::access_var() const
 {
     return kind == ca_kind::VAR ? static_cast<const var_ca_operand*>(this) : nullptr;
 }
 
-expr_ca_operand* ca_operand::access_expr()
+[[nodiscard]] expr_ca_operand* ca_operand::access_expr()
 {
     return kind == ca_kind::EXPR ? static_cast<expr_ca_operand*>(this) : nullptr;
 }
 
-const expr_ca_operand* ca_operand::access_expr() const
+[[nodiscard]] const expr_ca_operand* ca_operand::access_expr() const
 {
     return kind == ca_kind::EXPR ? static_cast<const expr_ca_operand*>(this) : nullptr;
 }
 
-seq_ca_operand* ca_operand::access_seq() { return kind == ca_kind::SEQ ? static_cast<seq_ca_operand*>(this) : nullptr; }
+[[nodiscard]] seq_ca_operand* ca_operand::access_seq()
+{
+    return kind == ca_kind::SEQ ? static_cast<seq_ca_operand*>(this) : nullptr;
+}
 
-const seq_ca_operand* ca_operand::access_seq() const
+[[nodiscard]] const seq_ca_operand* ca_operand::access_seq() const
 {
     return kind == ca_kind::SEQ ? static_cast<const seq_ca_operand*>(this) : nullptr;
 }
 
-branch_ca_operand* ca_operand::access_branch()
+[[nodiscard]] branch_ca_operand* ca_operand::access_branch()
 {
     return kind == ca_kind::BRANCH ? static_cast<branch_ca_operand*>(this) : nullptr;
 }
 
-const branch_ca_operand* ca_operand::access_branch() const
+[[nodiscard]] const branch_ca_operand* ca_operand::access_branch() const
 {
     return kind == ca_kind::BRANCH ? static_cast<const branch_ca_operand*>(this) : nullptr;
 }
@@ -449,17 +428,16 @@ simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
     : expression(std::move(expression))
 {}
 
-bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
+
+[[nodiscard]] bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
 {
     return expression->get_dependencies(info).contains_dependencies();
 }
 
-bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
 {
     return expression->get_dependencies(info).has_error;
 }
-
-std::vector<const context::resolvable*> simple_expr_operand::get_resolvables() const { return { &*expression }; }
 
 var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     : ca_operand(ca_kind::VAR, std::move(operand_range))
@@ -563,32 +541,6 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-std::vector<const context::resolvable*> data_def_operand::get_resolvables() const
-{
-    std::vector<const context::resolvable*> res =
-        resolvable_list(value->dupl_factor, value->length, value->exponent, value->scale);
-    if (value->nominal_value)
-    {
-        auto exprs = value->nominal_value->access_exprs();
-        if (exprs)
-        {
-            for (const auto& e : exprs->exprs)
-            {
-                if (std::holds_alternative<expressions::mach_expr_ptr>(e))
-                    res.push_back(std::get<expressions::mach_expr_ptr>(e).get());
-                else
-                {
-                    const expressions::address_nominal& addr = std::get<expressions::address_nominal>(e);
-                    res.push_back(addr.base.get());
-                    res.push_back(addr.displacement.get());
-                }
-            }
-        }
-    }
-
-    return res;
-}
-
 std::unique_ptr<checking::operand> data_def_operand::get_operand_value(expressions::mach_evaluate_info info) const
 {
     auto op = std::make_unique<checking::data_definition_operand>();
@@ -621,17 +573,15 @@ bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info)
 
 bool string_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
 
-std::vector<const context::resolvable*> string_assembler_operand::get_resolvables() const
-{
-    return std::vector<const context::resolvable*>();
-}
-
 std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
 {
     return std::make_unique<checking::one_operand>("'" + value + "'");
 }
 
-void string_assembler_operand::collect_diags() const {}
+void string_assembler_operand::collect_diags() const
+{
+    // There are no object to collect diags from.
+}
 
 void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 

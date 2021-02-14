@@ -16,6 +16,7 @@
 #define HIGHLIGHTING_INFO
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 

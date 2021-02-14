@@ -16,6 +16,7 @@
 #define PROCESSING_ASM_PROCESSOR_H
 
 #include "low_language_processor.h"
+#include "semantics/operand_impls.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {

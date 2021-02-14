@@ -44,7 +44,7 @@ class processor_file : public virtual file, public processor
 {
 public:
     virtual const std::set<std::string>& dependencies() = 0;
-    virtual const file_highlighting_info get_hl_info() = 0;
+    virtual const semantics::lines_info get_hl_info() = 0;
     virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
     virtual const std::set<std::string>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;

@@ -15,10 +15,12 @@
 #ifndef SEMANTICS_STATEMENTFIELDS_H
 #define SEMANTICS_STATEMENTFIELDS_H
 
+#include <string>
 #include <variant>
 
 #include "context/id_storage.h"
 #include "operand.h"
+#include "variable_symbol.h"
 
 // this file contains structures representing each statement field
 

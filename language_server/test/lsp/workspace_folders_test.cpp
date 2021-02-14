@@ -15,8 +15,11 @@
 
 #include <string>
 
+#include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
+#include "lib_config.h"
 #include "lsp/feature_workspace_folders.h"
+
 using namespace hlasm_plugin::language_server;
 #ifdef _WIN32
 const std::string ws1_uri = "file:///c%3A/path/to/W%20S/OneDrive";
@@ -47,7 +50,9 @@ const std::string ws1_path_json_string = R"(/path/to/W S/OneDrive)";
 TEST(workspace_folders, did_change_workspace_folders)
 {
     ws_mngr_mock ws_mngr;
-    lsp::feature_workspace_folders f(ws_mngr);
+    response_provider_mock rpm;
+
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
 
     EXPECT_CALL(ws_mngr, add_workspace(::testing::StrEq("OneDrive"), ::testing::StrEq(ws1_path)));
 
@@ -76,11 +81,33 @@ TEST(workspace_folders, did_change_workspace_folders)
     notifs["workspace/didChangeWorkspaceFolders"]("", params3);
 }
 
+TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
+{
+    ws_mngr_mock ws_mngr;
+    response_provider_mock rpm;
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
+
+    std::map<std::string, method> notifs;
+
+    f.register_methods(notifs);
+    notifs["workspace/didChangeWatchedFiles"](
+        "", R"({"changes":[{"uri":"user_storage:/user/storage/layout","type":2}, {"uri":"file:///file_name"}]})"_json);
+}
+
 TEST(workspace_folders, initialize_folders)
 {
     using namespace ::testing;
     ws_mngr_mock ws_mngr;
-    lsp::feature_workspace_folders f(ws_mngr);
+    response_provider_mock rpm;
+    lsp::feature_workspace_folders f(ws_mngr, rpm);
+
+    for (int config_request_number = 0; config_request_number < 5; ++config_request_number)
+        EXPECT_CALL(rpm,
+            request(json("config_request_" + std::to_string(config_request_number)),
+                std::string("workspace/configuration"),
+                _,
+                _))
+            .Times(1);
 
     // workspace folders on, but no workspaces provided
     json init1 = R"({"processId":5236,
@@ -90,6 +117,7 @@ TEST(workspace_folders, initialize_folders)
                      "workspaceFolders":null})"_json;
 
     EXPECT_CALL(ws_mngr, add_workspace(_, _)).Times(0);
+
     f.initialize_feature(init1);
 
 
@@ -131,4 +159,62 @@ TEST(workspace_folders, initialize_folders)
         + R"(","capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]},"hierarchicalDocumentSymbolSupport":true},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true},"foldingRange":{"dynamicRegistration":true,"rangeLimit":5000,"lineFoldingOnly":true}}},"trace":"off"})");
     EXPECT_CALL(ws_mngr, add_workspace(_, ::testing::StrEq(ws1_path)));
     f.initialize_feature(init5);
+}
+
+TEST(workspace_folders, did_change_configuration)
+{
+    using namespace lsp;
+    ws_mngr_mock ws_mngr;
+
+    response_provider_mock provider;
+    feature_workspace_folders feat(ws_mngr, provider);
+
+
+    std::map<std::string, method> methods;
+    feat.register_methods(methods);
+
+
+    method handler;
+    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+
+    EXPECT_CALL(
+        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<3>(&handler));
+
+    methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
+
+    lib_config expected_config;
+    expected_config.diag_supress_limit = 42;
+
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config)));
+
+    handler("config_respond", R"([{"diagnosticsSuppressLimit":42}])"_json);
+}
+
+TEST(workspace_folders, did_change_configuration_empty_configuration_params)
+{
+    using namespace lsp;
+
+    ws_mngr_mock ws_mngr;
+
+    response_provider_mock provider;
+    feature_workspace_folders feat(ws_mngr, provider);
+
+
+    std::map<std::string, method> methods;
+    feat.register_methods(methods);
+
+
+    method handler;
+    json config_request_args { { "items", { { { "section", "hlasm" } } } } };
+
+    EXPECT_CALL(
+        provider, request(json("config_request_0"), "workspace/configuration", config_request_args, ::testing::_))
+        .WillOnce(::testing::SaveArg<3>(&handler));
+
+    methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
+
+    EXPECT_CALL(ws_mngr, configuration_changed(::testing::_)).Times(0);
+
+    handler("config_respond", R"([])"_json);
 }

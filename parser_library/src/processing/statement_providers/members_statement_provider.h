@@ -44,7 +44,7 @@ protected:
     virtual context::statement_cache* get_next() = 0;
 
 private:
-    const semantics::instruction_si& retrieve_instruction(context::statement_cache& cache) const;
+    const semantics::instruction_si& retrieve_instruction(const context::statement_cache& cache) const;
 
     void fill_cache(context::statement_cache& cache,
         const semantics::deferred_statement& def_stmt,

@@ -18,6 +18,7 @@
 
 #include "context/instruction_type.h"
 #include "postponed_statement_impl.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

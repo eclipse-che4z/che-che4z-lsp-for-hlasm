@@ -28,18 +28,12 @@
 
 namespace hlasm_plugin::language_server::lsp {
 
-enum class message_type
-{
-    MT_ERROR = 1,
-    MT_WARNING = 2,
-    MT_INFO = 3,
-    MT_LOG = 4
-};
-
 // Implements LSP server (session-controlling methods like initialize and shutdown).
 // Integrates 3 features: language features, text synchronization and workspace folders.
 // Consumes diagnostics that come from the parser library and sends them to LSP client.
-class server final : public hlasm_plugin::language_server::server, public parser_library::diagnostics_consumer
+class server final : public hlasm_plugin::language_server::server,
+                     public parser_library::diagnostics_consumer,
+                     public parser_library::message_consumer
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -49,6 +43,8 @@ public:
     void message_received(const json& message) override;
 
 protected:
+    // Sends request to LSP client using send_message_provider.
+    void request(const json& id, const std::string& requested_method, const json& args, method handler) override;
     // Sends respond to request to LSP client using send_message_provider.
     void respond(const json& id, const std::string& requested_method, const json& args) override;
     // Sends notification to LSP client using send_message_provider.
@@ -78,7 +74,7 @@ private:
     // client notifications
 
     // Implements the LSP showMessage request.
-    void show_message(const std::string& message, message_type type);
+    void show_message(const std::string& message, parser_library::message_type type) override;
 
     // Remembers name of files for which were sent diagnostics the last time
     // diagnostics were sent to client. Used to clear diagnostics in client

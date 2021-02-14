@@ -926,6 +926,27 @@ A EQU 1,2,1
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
+TEST(attribute_lookahead, lookahead_from_var_sym_label_index)
+{
+    std::string input(
+        R"(&VAR(L'C) SETA 47
+
+C DC C'STH'
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+    auto var = a.context().hlasm_ctx->get_var_sym(a.context().hlasm_ctx->ids().add("VAR"));
+    ASSERT_NE(var, nullptr);
+    ASSERT_EQ(var->var_kind, variable_kind::SET_VAR_KIND);
+    auto value = var->access_set_symbol_base()->access_set_symbol<int>()->get_value(2);
+
+    EXPECT_EQ(value, 47);
+}
+
 TEST(EQU_attribute_lookahead, location_counter_use)
 {
     std::string input(

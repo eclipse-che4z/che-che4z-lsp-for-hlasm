@@ -89,6 +89,8 @@ protected:
     virtual context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
     virtual bool finished() const override;
 
+    void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
+
     lexing::token_stream& input;
     analyzing_context ctx;
     context::hlasm_context* hlasm_ctx;

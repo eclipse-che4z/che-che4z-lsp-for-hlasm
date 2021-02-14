@@ -15,7 +15,7 @@
 #ifndef SEMANTICS_OPERAND_VISITOR_H
 #define SEMANTICS_OPERAND_VISITOR_H
 
-#include "operand.h"
+#include "operand_impls.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 

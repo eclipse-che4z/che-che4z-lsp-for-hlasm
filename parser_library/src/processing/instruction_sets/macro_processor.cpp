@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "processing/context_manager.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
