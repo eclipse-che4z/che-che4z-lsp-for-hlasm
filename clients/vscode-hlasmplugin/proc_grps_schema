@@ -21,7 +21,7 @@
                     },
                     "asm_options": {
                         "type": "object",
-                        "description": "List of Assembler Compile",
+                        "description": "List of assembler options",
                         "properties": {
                             "SYSPARM": {
                                 "type": "string",

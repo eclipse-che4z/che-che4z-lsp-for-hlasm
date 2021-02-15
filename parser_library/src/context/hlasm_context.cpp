@@ -259,7 +259,7 @@ hlasm_context::hlasm_context(std::string file_name, std::map<std::string, std::s
     , ord_ctx(ids_)
     , lsp_ctx(std::make_shared<lsp_context>())
 {
-    asm_options_ = asm_options;
+    asm_options_ = std::move(asm_options);
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));
