@@ -323,8 +323,15 @@ bool workspace::load_and_process_config()
         if (asm_options_json.size() != 0)
         {
             std::map<std::string, std::string> asm_options;
-            asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
-            asm_options.insert({"PROFILE", asm_options_json["PROFILE"].get<std::string>() });
+
+            if (asm_options_json.count("SYSPARM"))
+            {
+                asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
+            }
+            if (asm_options_json.count("PROFILE"))
+            {
+                asm_options.insert({ "PROFILE", asm_options_json["PROFILE"].get<std::string>() });
+            }
             prc_grp.add_asm_options(asm_options);
         }
         add_proc_grp(std::move(prc_grp));

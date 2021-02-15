@@ -38,10 +38,7 @@ public:
 
     void add_library(std::unique_ptr<library> library) { libs_.push_back(std::move(library)); }
 
-    void add_asm_options(std::map<std::string, std::string> asm_options)
-    {
-        asm_options_ = std::move(asm_options);
-    }
+    void add_asm_options(std::map<std::string, std::string> asm_options) { asm_options_ = std::move(asm_options); }
 
     const std::string& name() const { return name_; }
 
