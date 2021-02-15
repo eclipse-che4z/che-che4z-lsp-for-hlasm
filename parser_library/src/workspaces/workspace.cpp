@@ -322,9 +322,9 @@ bool workspace::load_and_process_config()
         }
         if (asm_options_json.size() != 0)
         {
-            std::vector<std::string> asm_options;
-            asm_options.push_back(asm_options_json["SYSPARM"].get<std::string>());
-            asm_options.push_back(asm_options_json["PROFILE"].get<std::string>());
+            std::map<std::string, std::string> asm_options;
+            asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
+            asm_options.insert({"PROFILE", asm_options_json["PROFILE"].get<std::string>() });
             prc_grp.add_asm_options(asm_options);
         }
         add_proc_grp(std::move(prc_grp));
@@ -479,7 +479,7 @@ bool workspace::has_library(const std::string& library, context::hlasm_context& 
 
     return false;
 }
-std::map<std::string, std::string> workspace::get_asmOptions(const std::string& file_name)
+std::map<std::string, std::string> workspace::get_asm_options(const std::string& file_name)
 {
     auto& proc_grp = get_proc_grp_by_program(file_name);
 

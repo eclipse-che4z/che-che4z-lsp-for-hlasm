@@ -160,8 +160,7 @@ void hlasm_context::add_global_system_vars()
     auto SYSDATC = ids().add("SYSDATC");
     auto SYSDATE = ids().add("SYSDATE");
     auto SYSTIME = ids().add("SYSTIME");
-    auto SYSPARM = asm_options_.find("SYSPARM") == asm_options_.end() ? ids().add("SYSPARM")
-                                                                      : ids().add(asm_options_.at("SYSPARM"));
+    auto SYSPARM = ids().add("SYSPARM");
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
 
     if (!is_in_macro())
@@ -224,6 +223,11 @@ void hlasm_context::add_global_system_vars()
 
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
+            if (asm_options_.count("SYSPARM"))
+            {
+                val->set_value(asm_options_.at("SYSPARM"));
+            }
+
             globals_.insert({ SYSPARM, std::move(val) });
         }
         {

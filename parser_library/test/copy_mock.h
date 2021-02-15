@@ -74,7 +74,7 @@ public:
         (void)hlasm_ctx;
         return find_content(library);
     }
-    std::map<std::string, std::string> get_asmOptions(const std::string&)
+    std::map<std::string, std::string> get_asm_options(const std::string&)
     {
         std::map<std::string, std::string> asm_options;
         return asm_options;

@@ -31,8 +31,7 @@
                                 "type": "string",
                                 "description": "Profile Member to be copied int the source program."
                             }
-                        },
-                        "required": [ "SYSPARM", "PROFILE" ]
+                        }
                     }
                 },
                 "required" : ["name", "libs"]

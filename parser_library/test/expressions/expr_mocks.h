@@ -32,7 +32,7 @@ class lib_prov_mock : public workspaces::parse_lib_provider
     {
         return false;
     };
-    virtual std::map<std::string, std::string> get_asmOptions(const std::string&)
+    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
     {
         std::map<std::string, std::string> asm_options;
         return asm_options;

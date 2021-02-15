@@ -723,7 +723,7 @@ public:
         return true;
     }
     virtual bool has_library(const std::string& lib, context::hlasm_context&) const override { return lib == "MAC"; }
-    virtual std::map<std::string, std::string> get_asmOptions(const std::string&)
+    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
     {
         std::map<std::string, std::string> map;
         return map;
