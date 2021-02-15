@@ -1,10 +1,15 @@
 {
   "pgroups": [
     {
-      "name": "P1",
-      "libs": [
-        "libs","libs2"
-      ]
+        "name": "P1",
+        "libs": [
+            "libs",
+            "libs2"
+        ],
+        "asm_options": {
+            "SYSPARM": "STH1",
+            "PROFILE": "STH2"
+        }
     },
     {
       "name": "JULSUB_PG",

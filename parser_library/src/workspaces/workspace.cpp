@@ -300,6 +300,7 @@ bool workspace::load_and_process_config()
     {
         const std::string& name = pg["name"].get<std::string>();
         const json& libs = pg["libs"];
+        json& asm_options_json = pg["asm_options"];
 
         processor_group prc_grp(name);
 
@@ -319,7 +320,13 @@ bool workspace::load_and_process_config()
                 // else ignore, publish warning
             }
         }
-
+        if (asm_options_json.size() != 0)
+        {
+            std::vector<std::string> asm_options;
+            asm_options.push_back(asm_options_json["SYSPARM"].get<std::string>());
+            asm_options.push_back(asm_options_json["PROFILE"].get<std::string>());
+            prc_grp.add_asm_options(asm_options);
+        }
         add_proc_grp(std::move(prc_grp));
     }
 
@@ -472,5 +479,10 @@ bool workspace::has_library(const std::string& library, context::hlasm_context& 
 
     return false;
 }
+std::map<std::string, std::string> workspace::get_asmOptions(const std::string& file_name)
+{
+    auto& proc_grp = get_proc_grp_by_program(file_name);
 
+    return proc_grp.asm_options();
+}
 } // namespace hlasm_plugin::parser_library::workspaces

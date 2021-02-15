@@ -32,7 +32,11 @@ class lib_prov_mock : public workspaces::parse_lib_provider
     {
         return false;
     };
-
+    virtual std::map<std::string, std::string> get_asmOptions(const std::string&)
+    {
+        std::map<std::string, std::string> asm_options;
+        return asm_options;
+    }
     virtual bool has_library(const std::string&, context::hlasm_context&) const { return false; }
 };
 

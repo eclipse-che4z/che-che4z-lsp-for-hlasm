@@ -37,6 +37,8 @@ public:
 
     virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
 
+    virtual std::map<std::string, std::string> get_asmOptions(const std::string&) = 0;
+    
     virtual ~parse_lib_provider() = default;
 };
 
@@ -47,6 +49,11 @@ public:
     virtual parse_result parse_library(const std::string&, context::hlasm_context&, const library_data) override
     {
         return false;
+    };
+    virtual std::map<std::string, std::string> get_asmOptions(const std::string&)
+    {
+        std::map<std::string, std::string> asm_options;
+        return asm_options;
     };
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; };
 

@@ -160,7 +160,8 @@ void hlasm_context::add_global_system_vars()
     auto SYSDATC = ids().add("SYSDATC");
     auto SYSDATE = ids().add("SYSDATE");
     auto SYSTIME = ids().add("SYSTIME");
-    auto SYSPARM = ids().add("SYSPARM");
+    auto SYSPARM = asm_options_.find("SYSPARM") == asm_options_.end() ? ids().add("SYSPARM")
+                                                                      : ids().add(asm_options_.at("SYSPARM"));
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
 
     if (!is_in_macro())
@@ -248,12 +249,13 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name)
+hlasm_context::hlasm_context(std::string file_name, std::map<std::string, std::string> asm_options)
     : instruction_map_(init_instruction_map())
     , SYSNDX_(0)
     , ord_ctx(ids_)
     , lsp_ctx(std::make_shared<lsp_context>())
 {
+    asm_options_ = asm_options;
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));
