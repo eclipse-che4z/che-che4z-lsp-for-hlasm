@@ -42,7 +42,7 @@ public:
     {
         asm_options_.insert(make_pair("SYSPARM", asm_options.at(0)));
         asm_options_.insert(make_pair("PROFILE", asm_options.at(1)));
-    }   
+    }
 
     const std::string& name() const { return name_; }
 
