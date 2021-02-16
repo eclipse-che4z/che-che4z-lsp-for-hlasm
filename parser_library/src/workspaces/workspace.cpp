@@ -326,7 +326,7 @@ bool workspace::load_and_process_config()
         {
             std::map<std::string, std::string> asm_options;
 
-           if (asm_options_json.count("SYSPARM"))
+            if (asm_options_json.count("SYSPARM"))
             {
                 asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
             }
