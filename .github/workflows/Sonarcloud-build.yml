@@ -64,13 +64,19 @@ jobs:
         run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
       - name: Generate lcov coverage
         run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test -object server_test > ../coverage.txt
-      - name: Pull request setting
+      - name: Pull request event info
         if: github.event_name == 'pull_request'
         run: |
           mkdir pr-info
           echo $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number.txt
+          echo refs/pull/$(cat pr-info/pr-number.txt)/merge > pr-info/ref.txt
           echo -Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number-arg.txt
           echo -Dsonar.pullrequest.branch=${{ github.head_ref }} > pr-info/head-branch-arg.txt
+      - name: Push event info
+        if: github.event_name == 'push'
+        run: |
+          mkdir pr-info
+          echo ${{ github.event.ref }} > pr-info/ref.txt
 
       - uses: actions/upload-artifact@v2
         with:
