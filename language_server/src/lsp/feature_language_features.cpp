@@ -36,6 +36,8 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         std::bind(&feature_language_features::hover, this, std::placeholders::_1, std::placeholders::_2));
     methods.emplace("textDocument/completion",
         std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
+    methods.emplace("textDocument/foldingRange",
+        std::bind(&feature_language_features::folding_range, this, std::placeholders::_1, std::placeholders::_2));
     methods.emplace("textDocument/semanticTokens/full",
         std::bind(&feature_language_features::semantic_tokens, this, std::placeholders::_1, std::placeholders::_2));
 }
@@ -49,6 +51,7 @@ json feature_language_features::register_capabilities()
         { "hoverProvider", true },
         { "completionProvider",
             { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } },
+        { "foldingRangeProvider", true },
         { "semanticTokensProvider",
             { { "legend",
                   { { "tokenTypes",
@@ -194,6 +197,17 @@ void feature_language_features::semantic_tokens(const json& id, const json& para
     json num_array = convert_tokens_to_num_array(tokens);
 
     response_->respond(id, "", { { "data", num_array } });
+}
+
+void feature_language_features::folding_range(const json& id, const json& params)
+{
+    json result = json::array();
+    result.push_back(json { { "startLine", 0 }, { "endLine", 5 } });
+    result.push_back(json { { "startLine", 5 }, { "endLine", 10 } });
+    result.push_back(json { { "startLine", 3 }, { "endLine", 8 } });
+    result.push_back(json { { "startLine", 8 }, { "endLine", 12 } });
+
+    response_->respond(id, "", result);
 }
 
 

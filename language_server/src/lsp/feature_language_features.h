@@ -40,6 +40,7 @@ private:
     void hover(const json& id, const json& params);
     void completion(const json& id, const json& params);
     void semantic_tokens(const json& id, const json& params);
+    void folding_range(const json& id, const json& params);
 };
 
 } // namespace hlasm_plugin::language_server::lsp
