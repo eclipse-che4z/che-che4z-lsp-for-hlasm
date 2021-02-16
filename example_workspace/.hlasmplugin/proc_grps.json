@@ -3,12 +3,11 @@
     {
         "name": "P1",
         "libs": [
-            "libs",
-            "libs2"
+            "libs", "libs2"
         ],
         "asm_options": {
-            "SYSPARM": "STH1",
-            "PROFILE": "STH2"
+            "SYSPARM": "SEVEN",
+            "PROFILE": "MAC1"
         }
     },
     {
