@@ -3,7 +3,7 @@
     {
         "name": "P1",
         "libs": [
-            "libs", "libs2"
+            "libs","libs2"
         ],
         "asm_options": {
             "SYSPARM": "SEVEN",
