@@ -46,7 +46,9 @@ workspace::workspace(const ws_uri& uri,
 workspace::workspace(
     const ws_uri& uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
     : workspace(uri, uri, file_manager, global_config, cancel)
-{}
+{
+    opened_ = true;
+}
 
 workspace::workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
     : workspace("", file_manager, global_config, cancel)
@@ -324,7 +326,7 @@ bool workspace::load_and_process_config()
         {
             std::map<std::string, std::string> asm_options;
 
-            if (asm_options_json.count("SYSPARM"))
+           if (asm_options_json.count("SYSPARM"))
             {
                 asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
             }
