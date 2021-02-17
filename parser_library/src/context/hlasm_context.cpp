@@ -223,6 +223,10 @@ void hlasm_context::add_global_system_vars()
 
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
+            if (asm_options_.count("SYSPARM"))
+            {
+                val->set_value(asm_options_.at("SYSPARM"));
+            }
             globals_.insert({ SYSPARM, std::move(val) });
         }
         {
@@ -248,12 +252,13 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name)
+hlasm_context::hlasm_context(std::string file_name, std::map<std::string, std::string> asm_options)
     : instruction_map_(init_instruction_map())
     , SYSNDX_(0)
     , ord_ctx(ids_)
     , lsp_ctx(std::make_shared<lsp_context>())
 {
+    asm_options_ = std::move(asm_options);
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));

@@ -41,6 +41,11 @@ public:
         return true;
     }
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return true; }
+    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
+    {
+        std::map<std::string, std::string> asm_options;
+        return asm_options;
+    }
 
 private:
     const std::string macro_contents =
@@ -54,4 +59,4 @@ private:
             LR R2,R2)";
 };
 
-} // namespace hlasm_plugin::parser_library
+} // namespace hlasm_plugin::parser_library 

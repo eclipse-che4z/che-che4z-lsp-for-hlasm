@@ -286,6 +286,11 @@ class opsyn_parse_lib_prov : public parse_lib_provider
     }
 
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; }
+    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
+    {
+        std::map<std::string, std::string> asm_options;
+        return asm_options;
+    }
 };
 
 TEST(OPSYN, macro_after_delete)

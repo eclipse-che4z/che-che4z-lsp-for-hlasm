@@ -57,6 +57,12 @@ public:
 
         return false;
     }
+    std::map<std::string, std::string> get_asm_options(const std::string& file_name) override
+    {
+        auto& proc_grp = ws_.get_proc_grp_by_program(file_name);
+
+        return proc_grp.asm_options();
+    }
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

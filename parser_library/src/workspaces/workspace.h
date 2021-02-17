@@ -95,7 +95,8 @@ public:
     virtual parse_result parse_library(
         const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override;
     virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override;
-
+    virtual std::map<std::string, std::string> get_asm_options(const std::string& file_name) override;
+    
     const ws_uri& uri();
 
     void open();

@@ -294,6 +294,11 @@ class loc_mock : public workspaces::parse_lib_provider
     }
 
     virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
+    std::map<std::string, std::string> get_asm_options(const std::string&)
+    {
+        std::map<std::string, std::string> asm_options;
+        return asm_options;
+    }
 };
 
 TEST(ordinary_symbols, symbol_location)

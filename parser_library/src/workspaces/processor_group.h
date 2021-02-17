@@ -38,13 +38,19 @@ public:
 
     void add_library(std::unique_ptr<library> library) { libs_.push_back(std::move(library)); }
 
+    void add_asm_options(std::map<std::string, std::string> asm_options) { asm_options_ = std::move(asm_options); }
+
     const std::string& name() const { return name_; }
 
     const std::vector<std::unique_ptr<library>>& libraries() const { return libs_; }
 
+    const std::map<std::string, std::string>& asm_options() const { return asm_options_; }
+
+
 private:
     std::vector<std::unique_ptr<library>> libs_;
     std::string name_;
+    std::map<std::string, std::string> asm_options_;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces
