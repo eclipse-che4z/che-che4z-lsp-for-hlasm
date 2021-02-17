@@ -67,7 +67,7 @@ class hlasm_context
     // all files processes via macro or copy member invocation
     std::set<std::string> visited_files_;
 
-    // Compiler options 
+    // Compiler options
     std::map<std::string, std::string> asm_options_;
 
     // map of all instruction in HLASM

@@ -59,4 +59,4 @@ private:
             LR R2,R2)";
 };
 
-} // namespace hlasm_plugin::parser_library 
+} // namespace hlasm_plugin::parser_library
