@@ -24,16 +24,23 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-library_local::library_local(
-    file_manager& file_manager, std::string lib_path, std::shared_ptr<const extension_regex_map> extensions)
+library_local::library_local(file_manager& file_manager,
+    std::string lib_path,
+    std::shared_ptr<const extension_regex_map> extensions,
+    bool optional)
     : file_manager_(file_manager)
-    , lib_path_(lib_path)
-    , extensions_(extensions)
+    , lib_path_(std::move(lib_path))
+    , extensions_(std::move(extensions))
+    , optional_(optional)
 {}
 
 library_local::library_local(library_local&& l) noexcept
     : file_manager_(l.file_manager_)
-    , extensions_(l.extensions_)
+    , lib_path_(std::move(l.lib_path_))
+    , files_(std::move(l.files_))
+    , extensions_(std::move(l.extensions_))
+    , files_loaded_(l.files_loaded_)
+    , optional_(l.optional_)
 {}
 
 void library_local::collect_diags() const
@@ -67,7 +74,7 @@ std::shared_ptr<processor> library_local::find_file(const std::string& file_name
 
 void library_local::load_files()
 {
-    auto files_list = file_manager_.list_directory_files(lib_path_);
+    auto files_list = file_manager_.list_directory_files(lib_path_, optional_);
     files_.clear();
     for (const auto& file : files_list)
     {

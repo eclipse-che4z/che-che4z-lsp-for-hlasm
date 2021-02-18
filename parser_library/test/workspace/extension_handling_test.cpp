@@ -30,7 +30,7 @@ const std::string lib_path2 = "lib2/";
 
 class file_manager_extension_mock : public file_manager_impl
 {
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string&) override
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
         return { { "Mac.hlasm", lib_path + "Mac.hlasm" } };
     }
