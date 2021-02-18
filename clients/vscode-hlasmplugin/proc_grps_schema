@@ -29,7 +29,7 @@
                             },
                             "PROFILE": {
                                 "type": "string",
-                                "description": "Profile Member to be copied int the source program."
+                                "description": "Profile Member to be copied into the source program."
                             }
                         }
                     }
