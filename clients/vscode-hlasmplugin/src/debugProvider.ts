@@ -16,10 +16,7 @@ import * as vscode from 'vscode';
 
 // debug configuration provider, adds port number dynamically
 export class HLASMConfigurationProvider implements vscode.DebugConfigurationProvider {
-    private dapPort: number;
-    constructor(dapPort: number) {
-        this.dapPort = dapPort;
-    }
+    constructor() {}
 
     resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined,
         config: vscode.DebugConfiguration)
@@ -32,7 +29,6 @@ export class HLASMConfigurationProvider implements vscode.DebugConfigurationProv
             config.program = "${command:extension.hlasm-plugin.getCurrentProgramName}";
             config.stopOnEntry = true;
         }
-        config.debugServer = this.dapPort;
         return config;
     }
 }

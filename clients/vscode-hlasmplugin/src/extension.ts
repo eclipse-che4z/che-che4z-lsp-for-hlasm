@@ -22,6 +22,8 @@ import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory } from './serverFactory';
+import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
+
 const useTcp = false;
 const offset = 71;
 const continueColumn = 15;
@@ -60,7 +62,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // register highlighting as features
     hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
-    await registerToContext(context, factory.dapPort, highlight);
+    await registerToContext(context, highlight, hlasmpluginClient);
     //give the server some time to start listening when using TCP
     setTimeout(function () {
         hlasmpluginClient.start();
@@ -74,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
     return api;
 }
 
-async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: SemanticTokensFeature) {
+async function registerToContext(context: vscode.ExtensionContext, highlight: SemanticTokensFeature, client: vscodelc.LanguageClient) {
     const completeCommand = "editor.action.triggerSuggest";
     var commandList = await vscode.commands.getCommands();
 
@@ -92,7 +94,8 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(handler);
 
     // register provider for all hlasm debug configurations
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider(dapPort)));
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider()));
+    context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
 
     // register continuation handlers
     if (!commandsRegistered) {
