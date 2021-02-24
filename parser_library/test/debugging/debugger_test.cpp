@@ -325,7 +325,7 @@ TEST(debugger, test)
         frame_vars(std::unordered_map<std::string, test_var_value> { {
                        "&SYSPARM",
                        test_var_value("SEVEN"),
-                   } }, 
+                   } },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 { "&SYSLIST",
