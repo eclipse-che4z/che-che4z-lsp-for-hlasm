@@ -1,0 +1,88 @@
+#
+# Copyright (c) 2019 Broadcom.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Broadcom, Inc. - initial API and implementation
+#
+
+name: SonarCloud build
+
+on:
+  pull_request:
+    branches:
+      - development
+      - master
+  push:
+    branches:
+      - development
+      - master
+
+jobs:
+  sonarcloud-build:
+    name: SonarCloud build
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get version
+        run: echo "VERSION=$(node -e "console.log(require('./clients/vscode-hlasmplugin/package.json').version)")" >> $GITHUB_ENV
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build libc++-8-dev libc++abi-8-dev
+      - name: Configure
+        run: >
+          mkdir build && cd build &&
+          cmake -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=clang-8
+          -DCMAKE_CXX_COMPILER=clang++-8
+          -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          ../
+      - name: Sonar build wrapper download
+        run: >
+          cd build &&
+          curl -LsS https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip > build-wrapper-linux-x86.zip &&
+          unzip build-wrapper-linux-x86.zip &&
+          cp build-wrapper-linux-x86/* .
+      - name: Build
+        run: cd build && ./build-wrapper-linux-x86-64 --out-dir bw-output make -j 4 clean all
+      - name: Server Test
+        run: |
+          cd build/bin
+          LLVM_PROFILE_FILE="library.rawprof" ./library_test 
+          LLVM_PROFILE_FILE="server.rawprof" ./server_test
+      - name: Extension Test
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin test
+      - name: Merge raw profiles
+        run: cd build/bin && llvm-profdata-8 merge -o hlasm_profile library.rawprof server.rawprof
+      - name: Generate lcov coverage
+        run: cd build/bin && llvm-cov-8 show -instr-profile hlasm_profile library_test -object server_test > ../coverage.txt
+      - name: Pull request event info
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir pr-info
+          echo $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number.txt
+          echo refs/pull/$(cat pr-info/pr-number.txt)/merge > pr-info/ref.txt
+          echo -Dsonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") > pr-info/pr-number-arg.txt
+          echo -Dsonar.pullrequest.branch=${{ github.head_ref }} > pr-info/head-branch-arg.txt
+      - name: Push event info
+        if: github.event_name == 'push'
+        run: |
+          mkdir pr-info
+          echo ${{ github.event.ref }} > pr-info/ref.txt
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bw-output
+          path: |
+            build/
+            clients/vscode-hlasmplugin/coverage/lcov.info
+            pr-info/
+            !build/bin/

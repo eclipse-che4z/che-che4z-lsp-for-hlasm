@@ -318,17 +318,45 @@ bool workspace::load_and_process_config()
 
         for (auto& lib_path_json : libs)
         {
+            bool optional = false;
+            std::string path;
+            bool valid = false;
+
             if (lib_path_json.is_string())
             {
                 // the added '/' will ensure the path always ends with directory separator
-                const std::string p = lib_path_json.get<std::string>();
-                std::filesystem::path lib_path(p.empty() ? p : p + '/');
+                path = lib_path_json.get<std::string>();
+                valid = true;
+            }
+            else if (lib_path_json.is_object() && lib_path_json.count("path"))
+            {
+                if (auto pp = lib_path_json.find("path"); pp != lib_path_json.cend() && pp->is_string())
+                {
+                    path = pp->get<std::string>();
+                    if (auto op = lib_path_json.find("optional"); op != lib_path_json.cend())
+                    {
+                        if (op->is_boolean())
+                        {
+                            optional = op->get<bool>();
+                            valid = true;
+                        }
+                    }
+                    else
+                        valid = true;
+                }
+            }
+
+            if (valid)
+            {
+                if (!path.empty())
+                    path += '/';
+                std::filesystem::path lib_path(std::move(path));
                 if (lib_path.is_absolute())
                     prc_grp.add_library(std::make_unique<library_local>(
-                        file_manager_, lib_path.lexically_normal().string(), extensions_ptr));
+                        file_manager_, lib_path.lexically_normal().string(), extensions_ptr, optional));
                 else if (lib_path.is_relative())
                     prc_grp.add_library(std::make_unique<library_local>(
-                        file_manager_, (ws_path / lib_path).lexically_normal().string(), extensions_ptr));
+                        file_manager_, (ws_path / lib_path).lexically_normal().string(), extensions_ptr, optional));
                 // else ignore, publish warning
             }
         }
