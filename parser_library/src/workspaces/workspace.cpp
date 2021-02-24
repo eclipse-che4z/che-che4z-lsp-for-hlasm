@@ -46,9 +46,7 @@ workspace::workspace(const ws_uri& uri,
 workspace::workspace(
     const ws_uri& uri, file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
     : workspace(uri, uri, file_manager, global_config, cancel)
-{
-    opened_ = true;
-}
+{}
 
 workspace::workspace(file_manager& file_manager, const lib_config& global_config, std::atomic<bool>* cancel)
     : workspace("", file_manager, global_config, cancel)
@@ -302,8 +300,20 @@ bool workspace::load_and_process_config()
     {
         const std::string& name = pg["name"].get<std::string>();
         const json& libs = pg["libs"];
-        json& asm_options_json = pg["asm_options"];
-
+        std::map<std::string, std::string> asm_options;
+        try
+        {
+            if (pg.count("asm_options"))
+            {
+                asm_options = pg.at("asm_options").get<std::map<std::string, std::string>>();
+            }
+        }
+        catch (const nlohmann::basic_json<>::exception& e)
+        {
+            file_ptr proc_grps_file =
+                file_manager_.add_file((ws_path / HLASM_PLUGIN_FOLDER / FILENAME_PROC_GRPS).string());
+            config_diags_.push_back(diagnostic_s::error_W002(proc_grps_file->get_file_name(), name_));
+        }
         processor_group prc_grp(name);
 
         for (auto& lib_path_json : libs)
@@ -322,18 +332,8 @@ bool workspace::load_and_process_config()
                 // else ignore, publish warning
             }
         }
-        if (asm_options_json.size() != 0)
+        if (asm_options.size() != 0)
         {
-            std::map<std::string, std::string> asm_options;
-
-            if (asm_options_json.count("SYSPARM"))
-            {
-                asm_options.insert({ "SYSPARM", asm_options_json["SYSPARM"].get<std::string>() });
-            }
-            if (asm_options_json.count("PROFILE"))
-            {
-                asm_options.insert({ "PROFILE", asm_options_json["PROFILE"].get<std::string>() });
-            }
             prc_grp.add_asm_options(asm_options);
         }
 

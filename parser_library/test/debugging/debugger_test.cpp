@@ -33,7 +33,7 @@ TEST(debugger, stopped_on_entry)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws("test_workspace", file_manager, config);
+    workspace ws(file_manager, config);
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
@@ -68,7 +68,7 @@ TEST(debugger, disconnect)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws("test_workspace", file_manager, config);
+    workspace ws(file_manager, config);
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
@@ -242,6 +242,10 @@ public:
 
         return false;
     }
+    virtual std::map<std::string, std::string> get_asm_options(const std::string& file_name)
+    {
+        return { { "SYSPARM", "SEVEN" } };
+    }
 };
 
 TEST(debugger, test)
@@ -318,7 +322,10 @@ TEST(debugger, test)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 0, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        frame_vars(std::unordered_map<std::string, test_var_value> {}, // empty globals
+        frame_vars(std::unordered_map<std::string, test_var_value> { {
+                       "&SYSPARM",
+                       test_var_value("SEVEN"),
+                   } }, 
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 { "&SYSLIST",
