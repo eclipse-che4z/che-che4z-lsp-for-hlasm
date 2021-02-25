@@ -21,7 +21,7 @@
 #include "blocking_queue.h"
 
 namespace hlasm_plugin::language_server {
-class json_queue_channel : public json_channel
+class json_queue_channel final : public json_channel
 {
     blocking_queue<nlohmann::json> queue;
 
