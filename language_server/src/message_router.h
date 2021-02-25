@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_JSON_QUEUE_CHANNEL_H
-#define HLASMPLUGIN_HLASMLANGUAGESERVER_JSON_QUEUE_CHANNEL_H
+#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_MESSAGE_ROUTER_H
+#define HLASMPLUGIN_HLASMLANGUAGESERVER_MESSAGE_ROUTER_H
 
 #include <functional>
 #include <utility>
@@ -23,7 +23,7 @@
 #include "json_channel.h"
 
 namespace hlasm_plugin::language_server {
-class message_router : public json_sink
+class message_router final : public json_sink
 {
 public:
     using message_predicate = std::function<bool(const nlohmann::json&)>;
@@ -41,4 +41,4 @@ public:
 };
 } // namespace hlasm_plugin::language_server
 
-#endif // HLASMPLUGIN_HLASMLANGUAGESERVER_JSON_QUEUE_CHANNEL_H
+#endif // HLASMPLUGIN_HLASMLANGUAGESERVER_MESSAGE_ROUTER_H
