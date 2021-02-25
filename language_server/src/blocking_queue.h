@@ -33,6 +33,8 @@ public:
     void push(T&& t)
     {
         std::lock_guard g(mutex);
+        if (terminated)
+            return;
 
         queue.push_back(std::move(t));
         if (queue.size() == 1)
@@ -41,6 +43,8 @@ public:
     void push(const T& t)
     {
         std::lock_guard g(mutex);
+        if (terminated)
+            return;
 
         queue.push_back(t);
         if (queue.size() == 1)
