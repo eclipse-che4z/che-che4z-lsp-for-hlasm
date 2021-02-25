@@ -15,15 +15,7 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_DISPATCHER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_DISPATCHER_H
 
-#include <atomic>
-#include <condition_variable>
-#include <deque>
-#include <iostream>
-#include <mutex>
-#include <thread>
-
-#include "json.hpp"
-
+#include "json_channel.h"
 #include "request_manager.h"
 #include "server.h"
 
@@ -36,7 +28,7 @@ class dispatcher : public send_message_provider
 public:
     // Takes istream to read messages, ostream to write messages,
     // server and request manager, with which it works
-    dispatcher(std::istream& in, std::ostream& out, server& server, request_manager& req_mngr);
+    dispatcher(json_channel_adapter io, server& server, request_manager& req_mngr);
 
     // Reads messages from in_ in infinite loop, deserializes it and notifies the server.
     // Returns return value according to LSP: 0 if server was shut down apropriately
@@ -45,19 +37,9 @@ public:
     // Serializes the json and sends it as message.
     void reply(const json& result) override;
 
-
-
 private:
-    bool read_message(std::string& out);
-
-    void write_message(const std::string& in);
-
+    json_channel_adapter channel;
     server& server_;
-    std::istream& in_;
-    std::ostream& out_;
-
-    std::mutex mtx_;
-
     request_manager& req_mngr_;
 };
 

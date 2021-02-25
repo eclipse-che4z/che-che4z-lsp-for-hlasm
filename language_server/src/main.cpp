@@ -14,19 +14,22 @@
 
 #include <chrono>
 #include <thread>
+#include <variant>
 
 #define ASIO_STANDALONE
 #include "asio.hpp"
 #include "asio/stream_socket_service.hpp"
 #include "asio/system_error.hpp"
+#include "json_queue_channel.h"
 
-#include "dap/tcp_handler.h"
+#include "dap/dap_server.h"
 #include "dispatcher.h"
 #include "logger.h"
+#include "lsp/channel.h"
 #include "lsp/lsp_server.h"
+#include "message_router.h"
 #include "stream_helper.h"
 #include "workspace_manager.h"
-
 
 #ifdef _WIN32 // set binary mode for input on windows
 #    include <fcntl.h>
@@ -39,23 +42,105 @@
 
 using namespace hlasm_plugin::language_server;
 
+namespace {
+struct tcp_setup
+{
+    asio::io_service io_service;
+    asio::ip::tcp::acceptor acceptor;
+    asio::ip::tcp::socket socket;
+    asio::ip::tcp::iostream stream;
+    tcp_setup(uint16_t port)
+        : acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), port))
+        , socket(io_service)
+    {
+        acceptor.accept(stream.socket());
+
+        newline_is_space::imbue_stream(stream);
+    }
+    std::pair<std::istream&, std::ostream&> get_streams()
+    {
+        return std::pair<std::istream&, std::ostream&>(stream, stream);
+    }
+    ~tcp_setup() { stream.close(); }
+};
+struct std_setup
+{
+    std::pair<std::istream&, std::ostream&> get_streams()
+    {
+        return std::pair<std::istream&, std::ostream&>(std::cin, std::cout);
+    }
+};
+
+template<typename T>
+struct scope_exit
+{
+    const T scope_exit_;
+    scope_exit(T&& t)
+        : scope_exit_(std::move(t))
+    {}
+    ~scope_exit() { scope_exit_(); }
+};
+
+constexpr const std::string_view broadcom_tunnel_method = "broadcom/hlasm/dsp_tunnel";
+
+class dap_message_unwrapper final : public json_source
+{
+    json_source& source;
+
+public:
+    dap_message_unwrapper(json_source& s)
+        : source(s)
+    {}
+    virtual std::optional<nlohmann::json> read() override
+    {
+        auto msg = source.read();
+        if (msg.has_value() && msg.value().count("params"))
+            return std::move(msg.value().at("params"));
+        return std::nullopt;
+    }
+};
+
+class dap_message_wrapper final : public json_sink
+{
+    json_sink& target;
+
+public:
+    dap_message_wrapper(json_sink& t)
+        : target(t)
+    {}
+    void write(const nlohmann::json& msg) override
+    {
+        target.write(nlohmann::json { { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", msg } });
+    }
+    void write(nlohmann::json&& msg) override
+    {
+        target.write(nlohmann::json {
+            { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", std::move(msg) } });
+    }
+};
+} // namespace
+
 int main(int argc, char** argv)
 {
     using namespace std;
     using namespace hlasm_plugin::language_server;
-    // user must define at least one port for dap, e.g. "-p 4745"
-    if (argc < 3 || strcmp(argv[1], "-p") != 0)
+
+    if (argc > 2)
     {
-        std::cout << "Invalid arguments. Use language_server -p <debug port> <lsp port>";
+        std::cout << "Invalid arguments. Use language_server [<lsp port>]";
         return 1;
     }
 
-    int dap_port, lsp_port;
-    dap_port = atoi(argv[2]);
-    if (dap_port <= 0 || dap_port > 65535)
+    const bool use_tcp = argc == 2;
+    int lsp_port = 0;
+    if (use_tcp)
     {
-        std::cout << "Wrong port entered.";
-        return 1;
+        lsp_port = atoi(argv[1]);
+        if (lsp_port <= 0 || lsp_port > 65535)
+        {
+            std::cout << "Wrong port entered.";
+            return 1;
+        }
     }
 
     std::atomic<bool> cancel = false;
@@ -63,54 +148,76 @@ int main(int argc, char** argv)
     {
         SET_BINARY_MODE(stdin);
         SET_BINARY_MODE(stdout);
+        newline_is_space::imbue_stream(cin);
 
         hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
         request_manager req_mngr(&cancel);
+        scope_exit end_request_manager([&req_mngr]() { req_mngr.end_worker(); });
 
-        dap::tcp_handler dap_handler(ws_mngr, req_mngr, (uint16_t)dap_port);
-        dap_handler.async_accept();
-        std::thread dap_thread([&dap_handler]() { dap_handler.run_dap(); });
+        json_queue_channel lsp_queue;
+        json_queue_channel dap_queue;
 
-        newline_is_space::imbue_stream(cin);
-
-        lsp::server server(ws_mngr);
-        int ret;
-
-        if (argc > 3)
-        {
-            // if second port is defined, it is used for tcp lsp communication
-            lsp_port = atoi(argv[3]);
-            if (lsp_port <= 0 || lsp_port > 65535)
+        message_router router(&lsp_queue);
+        constexpr const auto is_dap_message = [](const nlohmann::json& msg) {
+            if (msg.is_object() && msg.count("method"))
             {
-                std::cout << "Wrong port entered.";
-                return 1;
+                auto& method = msg.at("method");
+                return method.get<std::string_view>() == broadcom_tunnel_method;
             }
+            return false;
+        };
+        router.register_route(is_dap_message, dap_queue);
 
-            // setup tcp
-            asio::io_service io_service_;
-            asio::ip::tcp::acceptor acceptor_(
-                io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t)lsp_port));
-            asio::ip::tcp::socket socket_(io_service_);
-            asio::ip::tcp::iostream stream;
-            acceptor_.accept(stream.socket());
-
-            newline_is_space::imbue_stream(stream);
-
-            dispatcher lsp_dispatcher(stream, stream, server, req_mngr);
-            ret = lsp_dispatcher.run_server_loop();
-            stream.close();
-        }
-        else
+        int ret;
         {
-            // communicate with standard IO
-            dispatcher lsp_dispatcher(std::cin, std::cout, server, req_mngr);
-            ret = lsp_dispatcher.run_server_loop();
+            std::variant<std_setup, tcp_setup> io_setup;
+            if (use_tcp)
+                io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
+
+            auto io_streams = std::visit([](auto&& p) { return p.get_streams(); }, io_setup);
+            lsp::channel channel(io_streams.first, io_streams.second);
+            dap_message_wrapper dap_wrapper(channel);
+            dap_message_unwrapper dap_unwrapper(dap_queue);
+
+            std::atomic<bool> dap_active = true;
+            std::thread dap_thread;
+            std::thread lsp_thread;
+
+            scope_exit clean_up_threads([&]() {
+                dap_active = false;
+                dap_queue.terminate();
+                lsp_queue.terminate();
+                if (dap_thread.joinable())
+                    dap_thread.join();
+                if (lsp_thread.joinable())
+                    lsp_thread.join();
+            });
+
+            dap_thread = std::thread(
+                [&dap_active, &ws_mngr, &req_mngr, io = json_channel_adapter(dap_unwrapper, dap_wrapper)]() {
+                    for (; dap_active;)
+                    {
+                        dap::server server(ws_mngr);
+                        dispatcher dap_dispatcher(io, server, req_mngr);
+                        dap_dispatcher.run_server_loop();
+                    }
+                });
+
+            lsp_thread = std::thread([&ret, &ws_mngr, &req_mngr, io = json_channel_adapter(lsp_queue, channel)]() {
+                lsp::server server(ws_mngr);
+
+                dispatcher lsp_dispatcher(io, server, req_mngr);
+                ret = lsp_dispatcher.run_server_loop();
+            });
+
+            for (;;)
+            {
+                auto msg = channel.read();
+                if (!msg.has_value())
+                    break;
+                router.write(std::move(msg).value());
+            }
         }
-
-
-        dap_handler.cancel();
-        dap_thread.join();
-        req_mngr.end_worker();
 
         return ret;
     }

@@ -21,6 +21,8 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/server.cpp
 	${PROJECT_SOURCE_DIR}/src/dispatcher.cpp
 	${PROJECT_SOURCE_DIR}/src/request_manager.cpp
+	${PROJECT_SOURCE_DIR}/src/message_router.cpp
+	${PROJECT_SOURCE_DIR}/src/json_queue_channel.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/channel.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/lsp_server.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_workspace_folders.cpp
@@ -28,7 +30,6 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_language_features.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_server.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/feature_launch.cpp
-	${PROJECT_SOURCE_DIR}/src/dap/tcp_handler.cpp
 	)
 
 # compile sources to the executable
