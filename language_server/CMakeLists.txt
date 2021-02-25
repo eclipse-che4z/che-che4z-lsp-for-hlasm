@@ -21,6 +21,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/server.cpp
 	${PROJECT_SOURCE_DIR}/src/dispatcher.cpp
 	${PROJECT_SOURCE_DIR}/src/request_manager.cpp
+	${PROJECT_SOURCE_DIR}/src/lsp/channel.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/lsp_server.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_workspace_folders.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_text_synchronization.cpp
