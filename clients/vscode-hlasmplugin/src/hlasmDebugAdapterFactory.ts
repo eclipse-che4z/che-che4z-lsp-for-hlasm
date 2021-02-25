@@ -33,7 +33,7 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     constructor(private client: BaseLanguageClient) {
         this.client.onReady().then(() => {
             client.onNotification(HLASMDebugAdapter.message_id, (msg: any) => {
-                console.log("Message receive");
+                this.message_event.fire(msg);
             });
         });
     }

@@ -31,9 +31,6 @@ suite('ServerFactory Test Suite', () => {
             assert.ok(matches.length > 0);
         });
         // check port arguments
-        assert.equal(execOptions.args.length, 2);
-        assert.equal(execOptions.args[0], '-p');
-        assert.equal(execOptions.args[1], factory.dapPort.toString());
-        assert.ok(factory.dapPort > 1024 && factory.dapPort < 65535)
+        assert.equal(execOptions.args.length, 0);
     });
 });

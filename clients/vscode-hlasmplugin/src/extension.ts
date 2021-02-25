@@ -67,9 +67,9 @@ export async function activate(context: vscode.ExtensionContext) {
     setTimeout(function () {
         hlasmpluginClient.start();
     }, (useTcp) ? 2000 : 0);
-    
+
     let api = {
-        getExtension() : vscodelc.LanguageClient {
+        getExtension(): vscodelc.LanguageClient {
             return hlasmpluginClient;
         }
     };
@@ -104,7 +104,7 @@ async function registerToContext(context: vscode.ExtensionContext, highlight: Se
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
             (editor, edit) => contHandling.removeContinuation(editor, edit, offset)));
     }
-        
+
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
@@ -123,9 +123,9 @@ async function registerToContext(context: vscode.ExtensionContext, highlight: Se
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e, highlight)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
-    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e,highlight)));
+    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e, highlight)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
-    
+
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));
