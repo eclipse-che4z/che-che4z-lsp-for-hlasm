@@ -23,6 +23,7 @@
 #include "json_queue_channel.h"
 
 #include "dap/dap_server.h"
+#include "dap/dap_message_wrappers.h"
 #include "dispatcher.h"
 #include "logger.h"
 #include "lsp/channel.h"
@@ -80,44 +81,6 @@ struct scope_exit
     {}
     ~scope_exit() { scope_exit_(); }
 };
-
-constexpr const std::string_view broadcom_tunnel_method = "broadcom/hlasm/dsp_tunnel";
-
-class dap_message_unwrapper final : public json_source
-{
-    json_source& source;
-
-public:
-    dap_message_unwrapper(json_source& s)
-        : source(s)
-    {}
-    virtual std::optional<nlohmann::json> read() override
-    {
-        auto msg = source.read();
-        if (msg.has_value() && msg.value().count("params"))
-            return std::move(msg.value().at("params"));
-        return std::nullopt;
-    }
-};
-
-class dap_message_wrapper final : public json_sink
-{
-    json_sink& target;
-
-public:
-    dap_message_wrapper(json_sink& t)
-        : target(t)
-    {}
-    void write(const nlohmann::json& msg) override
-    {
-        target.write(nlohmann::json { { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", msg } });
-    }
-    void write(nlohmann::json&& msg) override
-    {
-        target.write(nlohmann::json {
-            { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", std::move(msg) } });
-    }
-};
 } // namespace
 
 int main(int argc, char** argv)
@@ -162,7 +125,7 @@ int main(int argc, char** argv)
             if (msg.is_object() && msg.count("method"))
             {
                 auto& method = msg.at("method");
-                return method.get<std::string_view>() == broadcom_tunnel_method;
+                return method.get<std::string_view>() == dap::broadcom_tunnel_method;
             }
             return false;
         };
@@ -176,8 +139,8 @@ int main(int argc, char** argv)
 
             auto io_streams = std::visit([](auto&& p) { return p.get_streams(); }, io_setup);
             lsp::channel channel(io_streams.first, io_streams.second);
-            dap_message_wrapper dap_wrapper(channel);
-            dap_message_unwrapper dap_unwrapper(dap_queue);
+            dap::message_wrapper dap_wrapper(channel);
+            dap::message_unwrapper dap_unwrapper(dap_queue);
 
             std::atomic<bool> dap_active = true;
             std::thread dap_thread;

@@ -30,6 +30,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_language_features.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_server.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/feature_launch.cpp
+	${PROJECT_SOURCE_DIR}/src/dap/dap_message_wrappers.cpp
 	)
 
 # compile sources to the executable
