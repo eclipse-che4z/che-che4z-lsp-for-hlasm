@@ -61,7 +61,7 @@ bool channel::read_message(std::string& out)
 {
     // A Language Server Protocol message starts with a set of HTTP headers,
     // delimited  by \r\n, and terminated by an empty line (\r\n).
-    std::streamsize content_length = 0;
+    std::size_t content_length = 0;
     std::string line;
     for (;;)
     {
@@ -126,20 +126,19 @@ bool channel::read_message(std::string& out)
     }
 
     // LSP continues with message of length specified by Content-Length header.
-    std::streamsize pos = 0;
-    std::streamsize read;
-    out.resize((size_t)content_length);
-    for (; pos < content_length; pos += read)
+    out.resize(content_length);
+    for (std::size_t pos = 0; pos < content_length;)
     {
-        input.read(&out[(size_t)pos], content_length - pos);
-        read = input.gcount();
-        if (read == 0)
+        input.read(&out[pos], content_length - pos);
+        std::streamsize read = input.gcount();
+        if (read <= 0)
         {
             std::ostringstream ss;
             ss << "Input was aborted. Read only " << pos << " bytes of expected " << content_length;
             LOG_WARNING(ss.str());
             return false;
         }
+        pos += read;
     }
 
     return true;
