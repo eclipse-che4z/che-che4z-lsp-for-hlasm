@@ -32,22 +32,30 @@ class blocking_queue
 public:
     void push(T&& t)
     {
-        std::lock_guard g(mutex);
+        std::unique_lock g(mutex);
         if (terminated)
             return;
 
+        const bool notify = queue.size() == 0;
         queue.push_back(std::move(t));
-        if (queue.size() == 1)
+
+        g.unlock();
+
+        if (notify)
             cond_var.notify_one();
     }
     void push(const T& t)
     {
-        std::lock_guard g(mutex);
+        std::unique_lock g(mutex);
         if (terminated)
             return;
 
+        const bool notify = queue.size() == 0;
         queue.push_back(t);
-        if (queue.size() == 1)
+
+        g.unlock();
+
+        if (notify)
             cond_var.notify_one();
     }
 
