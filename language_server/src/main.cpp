@@ -22,8 +22,8 @@
 #include "asio/system_error.hpp"
 #include "json_queue_channel.h"
 
-#include "dap/dap_server.h"
 #include "dap/dap_message_wrappers.h"
+#include "dap/dap_server.h"
 #include "dispatcher.h"
 #include "logger.h"
 #include "lsp/channel.h"

@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_DISPATCHER_H
 
 #include "json_channel.h"
+
 #include "request_manager.h"
 #include "server.h"
 

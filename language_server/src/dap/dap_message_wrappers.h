@@ -43,6 +43,6 @@ public:
     void write(const nlohmann::json& msg) override;
     void write(nlohmann::json&& msg) override;
 };
-}
+} // namespace hlasm_plugin::language_server::dap
 
 #endif // HLASMPLUGIN_HLASMLANGUAGESERVER_DAP_DAP_MESSAGE_WRAPPERS_H

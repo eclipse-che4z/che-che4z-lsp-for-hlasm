@@ -17,8 +17,8 @@
 #include "gmock/gmock.h"
 
 #include "dispatcher.h"
-#include "stream_helper.h"
 #include "lsp/channel.h"
+#include "stream_helper.h"
 
 
 using namespace hlasm_plugin::language_server;
