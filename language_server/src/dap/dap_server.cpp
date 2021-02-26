@@ -72,7 +72,11 @@ void server::message_received(const json& message)
 {
     try
     {
-        assert(message.at("type") == "request");
+        if (message.at("type") != "request")
+        {
+            LOG_WARNING(std::string("Invalid message receive: ") + message.dump());
+            return;
+        }
         last_seq_ = message.at("seq").get<json::number_unsigned_t>();
         auto arguments = message.find("arguments");
         if (arguments == message.end())
