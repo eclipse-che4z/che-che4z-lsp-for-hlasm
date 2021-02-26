@@ -18,6 +18,7 @@
 #include "feature_provider.h"
 #include "file_info.h"
 #include "opencode_info.h"
+#include "completion_item.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -38,11 +39,13 @@ public:
 
     void update_file_info(const std::string& name, const occurence_storage& occurences);
 
-    virtual position_uri definition(const std::string& document_uri, const position pos) const override;
-    virtual position_uris references(const std::string& document_uri, const position pos) const override;
-    virtual string_array hover(const std::string& document_uri, const position pos) const override;
-    virtual completion_list completion(
-        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const override;
+    position_uri definition(const std::string& document_uri, position pos) const override;
+    position_uris references(const std::string& document_uri, position pos) const override;
+    string_array hover(const std::string& document_uri, position pos) const override;
+    completion_list completion(const std::string& document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind) const override;
 
 private:
     void add_file(file_info file_i);

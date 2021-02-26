@@ -124,11 +124,17 @@ void feature_language_features::completion(const json& id, const json& params)
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
     auto pos =
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
+
+    int trigger_kind_int = params["context"]["triggerKind"].get<int>();
+    parser_library::completion_trigger_kind trigger_kind = (trigger_kind_int >= 1 && trigger_kind_int <= 3)
+        ? (parser_library::completion_trigger_kind)trigger_kind_int
+        : parser_library::completion_trigger_kind::invoked;
+
     // no trigger character
     char trigger_char = '\0';
-    int trigger_kind = params["context"]["triggerKind"].get<int>();
-    if (trigger_kind == 2)
+    if (trigger_kind == parser_library::completion_trigger_kind::trigger_character)
         trigger_char = params["context"]["triggerCharacter"].get<std::string>()[0];
+
     auto completion_list = ws_mngr_.completion(uri_to_path(document_uri).c_str(), pos, trigger_char, trigger_kind);
     json to_ret = json::value_t::null;
     json completion_item_array = json::array();

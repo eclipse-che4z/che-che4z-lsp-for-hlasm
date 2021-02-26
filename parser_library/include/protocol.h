@@ -95,7 +95,12 @@ class processor_file;
 
 using file_id = workspaces::processor_file*;
 
-
+enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
+{
+    invoked = 1,
+    trigger_character = 2,
+    trigger_for_incomplete_completions = 3
+};
 
 struct PARSER_LIBRARY_EXPORT completion_item
 {

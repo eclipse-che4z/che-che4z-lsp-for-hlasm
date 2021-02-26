@@ -156,8 +156,10 @@ public:
         return ws_path_match(document_uri).hover(document_uri, pos);
     }
 
-    completion_list completion(
-        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind)
+    completion_list completion(const std::string& document_uri,
+        const position pos,
+        const char trigger_char,
+        completion_trigger_kind trigger_kind)
     {
         if (cancel_ && *cancel_)
             return completion_list { {}, true };

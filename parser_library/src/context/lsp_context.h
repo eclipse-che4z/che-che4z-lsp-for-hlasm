@@ -125,8 +125,6 @@ public:
         size_t kind = 2);
 
     std::vector<std::string> get_contents() const;
-    // helper function, recreates the content vector to content string
-    void implode_contents();
     // several features of completion item from LSP
     std::string label;
     std::string detail;

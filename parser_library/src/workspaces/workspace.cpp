@@ -283,8 +283,10 @@ string_array workspace::hover(const std::string& document_uri, const position po
     return opencodes.back()->get_lsp_feature_provider().hover(document_uri, pos);
 }
 
-completion_list workspace::completion(
-    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const
+completion_list workspace::completion(const std::string& document_uri,
+    const position pos,
+    const char trigger_char,
+    completion_trigger_kind trigger_kind) const
 {
     auto opencodes = find_related_opencodes(document_uri);
     // for now take last opencode

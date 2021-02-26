@@ -128,8 +128,10 @@ string_array lsp_context::hover(const std::string& document_uri, const position 
     return find_hover(*occ, macro_scope);
 }
 
-completion_list lsp_context::completion(
-    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const
+completion_list lsp_context::completion(const std::string& document_uri,
+    const position pos,
+    const char trigger_char,
+    completion_trigger_kind trigger_kind) const
 {
     return completion_list();
 }

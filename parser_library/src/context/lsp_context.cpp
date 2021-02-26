@@ -186,30 +186,3 @@ std::vector<std::string> completion_item_s::get_contents() const
     }
     return content;
 }
-
-void completion_item_s::implode_contents()
-{
-    if (content_string == "")
-    {
-        std::stringstream result;
-        if (!content_meta.defined)
-        {
-            for (size_t i = 1; i <= 10; i++)
-            {
-                if (content_meta.text->size() <= content_meta.line + i)
-                    break;
-                std::string_view line = content_meta.text->at(content_meta.line + i);
-                if (line.size() < 2 || line.front() != '*')
-                    break;
-                line.remove_prefix(1);
-                result << line.data() << '\n';
-            }
-        }
-        else
-        {
-            for (auto line : content)
-                result << line << '\n';
-        }
-        content_string = result.str();
-    }
-}

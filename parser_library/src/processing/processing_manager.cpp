@@ -41,10 +41,9 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
+    , stmt_analyzer_(std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text))
     , tracer_(tracer)
 {
-    stmt_analyzer_ = std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text);
-
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:

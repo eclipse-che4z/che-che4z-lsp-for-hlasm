@@ -92,11 +92,13 @@ public:
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
 
-    virtual position_uri definition(const std::string& document_uri, const position pos) const override;
-    virtual position_uris references(const std::string& document_uri, const position pos) const override;
-    virtual string_array hover(const std::string& document_uri, const position pos) const override;
-    virtual completion_list completion(
-        const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind) const override;
+    position_uri definition(const std::string& document_uri, position pos) const override;
+    position_uris references(const std::string& document_uri, position pos) const override;
+    string_array hover(const std::string& document_uri, position pos) const override;
+    completion_list completion(const std::string& document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind) const override;
 
     virtual parse_result parse_library(
         const std::string& library, analyzing_context ctx, const library_data data) override;

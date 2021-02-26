@@ -109,7 +109,7 @@ string_array workspace_manager::hover(const std::string& document_uri, const pos
 }
 
 completion_list workspace_manager::completion(
-    const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind)
+    const std::string& document_uri, const position pos, const char trigger_char, completion_trigger_kind trigger_kind)
 {
     return impl_->completion(document_uri, pos, trigger_char, trigger_kind);
 }

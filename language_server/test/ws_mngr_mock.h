@@ -42,7 +42,10 @@ public:
     MOCK_METHOD(string_array, hover, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
-        (const std::string& document_uri, const position pos, const char trigger_char, int trigger_kind),
+        (const std::string& document_uri,
+            const position pos,
+            const char trigger_char,
+            completion_trigger_kind trigger_kind),
         (override));
 };
 
