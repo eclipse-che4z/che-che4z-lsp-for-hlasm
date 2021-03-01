@@ -95,7 +95,7 @@ public:
     position_uri definition(const std::string& document_uri, position pos) const override;
     position_uris references(const std::string& document_uri, position pos) const override;
     string_array hover(const std::string& document_uri, position pos) const override;
-    completion_list completion(const std::string& document_uri,
+    lsp::completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;

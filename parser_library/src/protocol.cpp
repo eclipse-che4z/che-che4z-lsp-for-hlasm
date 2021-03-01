@@ -16,6 +16,7 @@
 
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
+#include "lsp/completion_item.h"
 #include "semantics/highlighting_info.h"
 #include "semantics/lsp_info_processor.h"
 #include "workspaces/processor.h"
@@ -154,6 +155,22 @@ variable c_view_array<variable, debugging::variable*>::item(size_t index)
     return *data_[index];
 }
 
+//********************** completion item **********************
 
+completion_item::completion_item(const lsp::completion_item_s& item)
+    : item_(item)
+{}
+
+std::string_view completion_item::label() const { return item_.label; }
+completion_item_kind completion_item::kind() const { return item_.kind; }
+std::string_view completion_item::detail() const { return item_.detail; }
+std::string_view completion_item::documentation() const { return item_.detail; }
+std::string_view completion_item::insert_text() const { return item_.label; }
+
+template<>
+completion_item c_view_array<completion_item, lsp::completion_item_s>::item(size_t index)
+{
+    return data_[index];
+}
 
 } // namespace hlasm_plugin::parser_library

@@ -138,16 +138,16 @@ void feature_language_features::completion(const json& id, const json& params)
     auto completion_list = ws_mngr_.completion(uri_to_path(document_uri).c_str(), pos, trigger_char, trigger_kind);
     json to_ret = json::value_t::null;
     json completion_item_array = json::array();
-    for (const auto& item : completion_list.items)
+    for (size_t i = 0; i < completion_list.size(); ++i)
     {
-        completion_item_array.push_back(json { { "label", item.label },
-            { "kind", item.kind },
-            { "detail", item.detail },
-            { "documentation", item.documentation },
-            { "deprecated", item.deprecated },
-            { "insertText", item.insert_text } });
+        const auto& item = completion_list.item(i);
+        completion_item_array.push_back(json { { "label", item.label() },
+            { "kind", item.kind() },
+            { "detail", item.detail() },
+            { "documentation", item.documentation() },
+            { "insertText", item.insert_text() } });
     }
-    to_ret = json { { "isIncomplete", completion_list.is_incomplete }, { "items", completion_item_array } };
+    to_ret = json { { "isIncomplete", false }, { "items", completion_item_array } };
 
     response_->respond(id, "", to_ret);
 }

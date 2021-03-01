@@ -130,8 +130,8 @@ void file_impl::did_change(range range, std::string new_text)
     size_t range_end_line = (size_t)range.end.line;
     size_t range_start_line = (size_t)range.start.line;
 
-    size_t begin = index_from_location(range.start);
-    size_t end = index_from_location(range.end);
+    size_t begin = index_from_position(text_, lines_ind_, range.start);
+    size_t end = index_from_position(text_, lines_ind_, range.end);
 
     text_.replace(begin, end - begin, new_text);
 
@@ -231,29 +231,29 @@ bool utf8_four_byte_begin(char ch)
 }
 
 // returns the location in text_ that corresponds to utf-16 based location
-size_t file_impl::index_from_location(position loc) const
+size_t file_impl::index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position loc)
 {
     size_t end = (size_t)loc.column;
-    size_t i = lines_ind_[(size_t)loc.line];
+    size_t i = line_indices[(size_t)loc.line];
     size_t utf16_counter = 0;
 
     while (utf16_counter < end)
     {
-        if (!utf8_one_byte_begin(text_[i]))
+        if (!utf8_one_byte_begin(text[i]))
         {
             char width;
             char utf16_width;
-            if (utf8_four_byte_begin(text_[i])) // 11110xxx
+            if (utf8_four_byte_begin(text[i])) // 11110xxx
             {
                 width = 4;
                 utf16_width = 2;
             }
-            else if (utf8_three_byte_begin(text_[i])) // 1110xxxx
+            else if (utf8_three_byte_begin(text[i])) // 1110xxxx
             {
                 width = 3;
                 utf16_width = 1;
             }
-            else if (utf8_two_byte_begin(text_[i])) // 110xxxxx
+            else if (utf8_two_byte_begin(text[i])) // 110xxxxx
             {
                 width = 2;
                 utf16_width = 1;

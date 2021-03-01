@@ -48,7 +48,6 @@ bool file_info::is_in_range(const position& pos, const range& r)
 occurence_scope_t file_info::find_occurence_with_scope(position pos)
 {
     const symbol_occurence* found = nullptr;
-    macro_info_ptr macro_i = nullptr;
 
     // find in occurences
     for (const auto& occ : occurences)
@@ -63,15 +62,16 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
         return std::make_pair(nullptr, nullptr);
 
     // else, find scope
+    macro_info_ptr macro_i = find_scope(pos);
+    return std::make_pair(found, std::move(macro_i));
+}
+
+macro_info_ptr file_info::find_scope(position pos) 
+{
     for (const auto& scope : slices)
-    {
         if (scope.begin_line <= pos.line && scope.end_line >= pos.line)
-        {
-            macro_i = scope.macro_context;
-            break;
-        }
-    }
-    return std::make_pair(found, macro_i);
+            return scope.macro_context;
+    return nullptr;
 }
 
 std::vector<position> file_info::find_references(
@@ -144,15 +144,5 @@ std::vector<file_slice_t> file_slice_t::transform_slices(
     return ret;
 }
 
-text_data_ref_t::text_data_ref_t()
-    : text(empty_text)
-{}
-
-text_data_ref_t::text_data_ref_t(const std::string& text)
-    : text(text)
-    , line_indices(workspaces::file_impl::create_line_indices(text))
-{}
-
-std::string text_data_ref_t::empty_text;
 
 } // namespace hlasm_plugin::parser_library::lsp

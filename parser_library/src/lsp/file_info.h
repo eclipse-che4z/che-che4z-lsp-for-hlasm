@@ -20,6 +20,7 @@
 #include "context/copy_member.h"
 #include "macro_info.h"
 #include "symbol_occurence.h"
+#include "text_data_ref_t.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -41,17 +42,6 @@ struct file_slice_t
 
     static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
     static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
-};
-
-struct text_data_ref_t
-{
-    const std::string& text;
-    std::vector<size_t> line_indices;
-
-    text_data_ref_t();
-    explicit text_data_ref_t(const std::string& text);
-
-    static std::string empty_text;
 };
 
 enum class file_type
@@ -87,6 +77,7 @@ struct file_info
     static bool is_in_range(const position& pos, const range& r);
 
     occurence_scope_t find_occurence_with_scope(position pos);
+    macro_info_ptr find_scope(position pos);
     static std::vector<position> find_references(
         const symbol_occurence& occurence, const std::vector<symbol_occurence>& occurences);
 

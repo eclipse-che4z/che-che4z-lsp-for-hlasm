@@ -15,7 +15,9 @@
 #ifndef LSP_FEATURE_PROVIDER_H
 #define LSP_FEATURE_PROVIDER_H
 
+#include "completion_item.h"
 #include "protocol.h"
+
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -24,7 +26,7 @@ struct feature_provider
     virtual position_uri definition(const std::string& document_uri, position pos) const = 0;
     virtual position_uris references(const std::string& document_uri, position pos) const = 0;
     virtual string_array hover(const std::string& document_uri, position pos) const = 0;
-    virtual completion_list completion(const std::string& document_uri,
+    virtual completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const = 0;

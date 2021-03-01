@@ -15,7 +15,10 @@
 #include "lsp_context.h"
 
 #include <cassert>
+#include <regex>
+#include <string_view>
 
+#include "context/instruction.h"
 #include "ebcdic_encoding.h"
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -35,7 +38,7 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
 {
     if (macro_i->external)
     {
-        assert(text_data.text != text_data_ref_t::empty_text);
+        assert(text_data.text != "");
         add_file(file_info(macro_i->macro_definition, std::move(text_data)));
     }
 
@@ -47,8 +50,8 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
     opencode_ = std::move(opencode_i);
     add_file(file_info(opencode_->hlasm_ctx.opencode_file_name(), std::move(text_data)));
 
-    //distribute all occurences as all files are present
-    for (const auto& [_,m] : macros_)
+    // distribute all occurences as all files are present
+    for (const auto& [_, m] : macros_)
         distribute_macro_i(m);
 
     distribute_file_occurences(opencode_->file_occurences);
@@ -128,13 +131,60 @@ string_array lsp_context::hover(const std::string& document_uri, const position 
     return find_hover(*occ, macro_scope);
 }
 
-completion_list lsp_context::completion(const std::string& document_uri,
+bool should_complete_instr(const text_data_ref_t& text, const position pos)
+{
+    std::string_view line_before = text.get_line(pos.line - 1);
+    std::string_view line_so_far = text.get_line_beginning(pos);
+    size_t constexpr continuation_column = 71;
+    static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
+    return (line_before.size() <= continuation_column || std::isspace(line_before[continuation_column]))
+        && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
+}
+
+completion_list_s lsp_context::completion(const std::string& document_uri,
     const position pos,
     const char trigger_char,
     completion_trigger_kind trigger_kind) const
 {
-    return completion_list();
+    auto file_it = files_.find(document_uri);
+    if (file_it == files_.end())
+        return completion_list_s();
+    const text_data_ref_t& text = file_it->second->data;
+
+    char last_char =
+        (trigger_kind == completion_trigger_kind::trigger_character) ? trigger_char : text.get_character_before(pos);
+
+    if (last_char == '&')
+        return complete_var(file_it->second, pos);
+    else if (last_char == '.')
+        return complete_seq(pos);
+    else if (should_complete_instr(text, pos))
+        return complete_instr(pos);
+
+    return completion_list_s();
 }
+
+completion_list_s lsp_context::complete_var(const file_info_ptr& file, position pos) const
+{
+    auto scope = file->find_scope(pos);
+
+
+    completion_list_s items;
+    const vardef_storage& var_defs = scope ? scope->var_definitions : opencode_->variable_definitions;
+    for (const auto& vardef : var_defs)
+    {
+        auto cont = hover(vardef);
+        completion_item_s item(
+            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::variable);
+        items.push_back(std::move(item));
+    }
+
+    return items;
+}
+
+completion_list_s lsp_context::complete_seq(position pos) const { return completion_list_s(); }
+completion_list_s lsp_context::complete_instr(position pos) const { return completion_list_s(); }
+
 
 template<typename T>
 bool files_present(
@@ -383,7 +433,10 @@ string_array lsp_context::hover(const context::symbol& sym) const
     return result;
 }
 
-string_array lsp_context::hover(const context::sequence_symbol&) const { return string_array(); }
+string_array lsp_context::hover(const context::sequence_symbol& sym) const
+{
+    return string_array { "Sequence symbol" };
+}
 
 string_array lsp_context::hover(const variable_symbol_definition& sym) const
 {

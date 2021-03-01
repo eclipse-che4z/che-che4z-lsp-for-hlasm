@@ -93,6 +93,10 @@ namespace workspaces {
 class processor_file;
 }
 
+namespace lsp {
+struct completion_item_s;
+}
+
 using file_id = workspaces::processor_file*;
 
 enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
@@ -102,21 +106,49 @@ enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
     trigger_for_incomplete_completions = 3
 };
 
-struct PARSER_LIBRARY_EXPORT completion_item
+enum class PARSER_LIBRARY_EXPORT completion_item_kind
 {
-    std::string label;
-    size_t kind;
-    std::string detail;
-    std::string documentation;
-    bool deprecated;
-    std::string insert_text;
+    text = 1,
+    method = 2,
+    function = 3,
+    constructor = 4,
+    field = 5,
+    variable = 6,
+    class_v = 7,
+    interface = 8,
+    module = 9,
+    property = 10,
+    unit = 11,
+    value = 12,
+    enum_v = 13,
+    keyword = 14,
+    snippet = 15,
+    color = 16,
+    file = 17,
+    reference = 18,
+    folder = 19,
+    enum_member = 20,
+    constant = 21,
+    struct_v = 22,
+    event = 23,
+    operator_v = 24,
+    type_parameter = 25
 };
 
-struct PARSER_LIBRARY_EXPORT completion_list
+struct PARSER_LIBRARY_EXPORT completion_item
 {
-    std::vector<completion_item> items;
-    bool is_incomplete;
+    completion_item(const lsp::completion_item_s& item);
+    std::string_view label() const;
+    completion_item_kind kind() const;
+    std::string_view detail() const;
+    std::string_view documentation() const;
+    std::string_view insert_text() const;
+
+private:
+    const lsp::completion_item_s& item_;
 };
+
+using completion_list = c_view_array<completion_item, lsp::completion_item_s>;
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {

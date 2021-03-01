@@ -51,6 +51,7 @@ public:
 
     static std::string replace_non_utf8_chars(const std::string& text);
     static std::vector<size_t> create_line_indices(const std::string& text);
+    static size_t index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position pos);
 
     virtual ~file_impl() = default;
 
@@ -71,7 +72,7 @@ private:
 
     void load_text();
 
-    size_t index_from_location(position pos) const;
+    
 };
 
 #pragma warning(pop)

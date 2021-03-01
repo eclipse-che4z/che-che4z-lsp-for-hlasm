@@ -42,7 +42,7 @@ public:
     position_uri definition(const std::string& document_uri, position pos) const override;
     position_uris references(const std::string& document_uri, position pos) const override;
     string_array hover(const std::string& document_uri, position pos) const override;
-    completion_list completion(const std::string& document_uri,
+    completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
@@ -62,6 +62,10 @@ private:
     string_array hover(const variable_symbol_definition& sym) const;
     string_array hover(const context::opcode_t& sym) const;
     string_array hover(const context::copy_member& sym) const;
+
+    completion_list_s complete_var(const file_info_ptr& file, position pos) const;
+    completion_list_s complete_seq(position pos) const;
+    completion_list_s complete_instr(position pos) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

@@ -19,7 +19,9 @@
 
 #include "workspace_manager.h"
 
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::language_server::test {
+
+using namespace parser_library;
 
 class ws_mngr_mock : public workspace_manager
 {
@@ -49,4 +51,5 @@ public:
         (override));
 };
 
+} // namespace hlasm_plugin::language_server::test
 #endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_WS_MNGR_MOCK_H

@@ -46,7 +46,7 @@ public:
     const std::set<std::string>& dependencies() override;
 
     virtual ~processor_file_impl() = default;
-    virtual const semantics::lines_info get_hl_info() override;
+    virtual const semantics::lines_info& get_hl_info() override;
     virtual const lsp::feature_provider& get_lsp_feature_provider() override;
     virtual const std::set<std::string>& files_to_close() override;
     virtual const performance_metrics& get_metrics() override;

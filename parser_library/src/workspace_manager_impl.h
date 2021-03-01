@@ -156,6 +156,8 @@ public:
         return ws_path_match(document_uri).hover(document_uri, pos);
     }
 
+
+    lsp::completion_list_s completion_result;
     completion_list completion(const std::string& document_uri,
         const position pos,
         const char trigger_char,
@@ -164,7 +166,9 @@ public:
         if (cancel_ && *cancel_)
             return completion_list { {}, true };
 
-        return ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
+        completion_result = ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
+
+        return completion_list(completion_result.data(), completion_result.size());
     }
 
     lib_config global_config_;
