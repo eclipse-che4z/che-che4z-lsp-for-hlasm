@@ -263,42 +263,22 @@ typename occ_type_helper<kind>::ret_type find_definition(const symbol_occurence&
     }
     if constexpr (kind == lsp::occurence_kind::SEQ)
     {
-        const context::sequence_symbol* retval = nullptr;
-        if (macro_i)
-        {
-            auto sym = macro_i->macro_definition->labels.find(occ.name);
-            if (sym != macro_i->macro_definition->labels.end())
-                retval = sym->second.get();
-        }
-        else
-        {
-            auto sym = opencode.hlasm_ctx.current_scope().sequence_symbols.find(occ.name);
-            if (sym != opencode.hlasm_ctx.current_scope().sequence_symbols.end())
-                retval = sym->second.get();
-        }
-        return retval;
+        const context::label_storage seq_syms =
+            macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+        if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
+            return sym->second.get();
+        return nullptr;
     }
     if constexpr (kind == lsp::occurence_kind::VAR)
     {
-        const variable_symbol_definition* retval = nullptr;
-        if (macro_i)
-        {
-            auto sym = std::find_if(macro_i->var_definitions.begin(),
-                macro_i->var_definitions.end(),
-                [&](const auto& var) { return var.name == occ.name; });
+        const vardef_storage& var_syms = macro_i ? macro_i->var_definitions : opencode.variable_definitions;
 
-            if (sym != macro_i->var_definitions.end())
-                retval = &*sym;
-        }
-        else
-        {
-            auto sym = std::find_if(opencode.variable_definitions.begin(),
-                opencode.variable_definitions.end(),
-                [&](const auto& var) { return var.name == occ.name; });
-            if (sym != opencode.variable_definitions.end())
-                retval = &*sym;
-        }
-        return retval;
+        auto sym =
+            std::find_if(var_syms.begin(), var_syms.end(), [&](const auto& var) { return var.name == occ.name; });
+
+        if (sym != var_syms.end())
+            return &*sym;
+        return nullptr
     }
     if constexpr (kind == lsp::occurence_kind::INSTR)
     {
