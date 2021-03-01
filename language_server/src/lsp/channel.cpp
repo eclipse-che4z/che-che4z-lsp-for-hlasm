@@ -119,9 +119,7 @@ bool channel::read_message(std::string& out)
     }
     if (content_length == 0)
     {
-        std::ostringstream ss;
-        ss << "Warning: Missing Content-Length header, or zero-length message.";
-        LOG_WARNING(ss.str());
+        LOG_WARNING("Warning: Missing Content-Length header, or zero-length message.");
         return false;
     }
 

@@ -62,14 +62,9 @@ public:
     std::optional<T> pop()
     {
         std::unique_lock g(mutex);
-        for (;;)
-        {
-            if (terminated)
-                return std::nullopt;
-            if (queue.size())
-                break;
-            cond_var.wait(g);
-        }
+        cond_var.wait(g, [&] { return queue.size() || terminated; });
+        if (terminated)
+            return std::nullopt;
         std::optional<T> result = std::move(queue.front());
         queue.pop_front();
 
