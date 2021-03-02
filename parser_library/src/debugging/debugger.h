@@ -32,6 +32,9 @@ namespace hlasm_plugin::parser_library::debugging {
 // Interface that a listener can implement to be notified about debugging events.
 class debug_event_consumer_s
 {
+protected:
+    ~debug_event_consumer_s() = default;
+
 public:
     virtual void stopped(const std::string& reason, const std::string& addtl_info) = 0;
     virtual void exited(int exit_code) = 0;
@@ -57,9 +60,12 @@ private:
 class debugger : public processing::processing_tracer
 {
 public:
-    debugger(debug_event_consumer_s& event_consumer, debug_config& debug_cfg);
+    debugger();
 
     void launch(workspaces::processor_file_ptr open_code, workspaces::parse_lib_provider& provider, bool stop_on_entry);
+
+    void configure(debug_config* debug_cfg);
+    void set_event_consumer(debug_event_consumer_s* event);
 
     virtual void statement(range stmt_range) override;
 
@@ -94,7 +100,8 @@ private:
     // Specifies whether the debugger stops on the next statement call.
     std::atomic<bool> stop_on_next_stmt_ = false;
     std::atomic<bool> step_over_ = false;
-    size_t step_over_depth_;
+    size_t step_over_depth_ = 0;
+
     // Range of statement that is about to be processed by analyzer.
     range next_stmt_range_;
 
@@ -105,10 +112,10 @@ private:
     std::atomic<bool> cancel_ = false;
 
     // Provides a way to inform outer world about debugger events
-    debug_event_consumer_s& event_;
+    debug_event_consumer_s* event_ = nullptr;
 
     // Debugging information retrieval
-    context::hlasm_context* ctx_;
+    context::hlasm_context* ctx_ = nullptr;
     std::string opencode_source_path_;
     std::vector<stack_frame> stack_frames_;
     std::vector<scope> scopes_;
@@ -117,7 +124,14 @@ private:
     size_t next_var_ref_ = 1;
     context::processing_stack_t proc_stack_;
 
-    debug_config& cfg_;
+    debug_config* cfg_ = nullptr;
+};
+
+struct create_debugger_result
+{
+    workspaces::processor_file_ptr file_ptr;
+    std::unique_ptr<debugger> debugger_ptr;
+    std::unique_ptr<debug_lib_provider> debug_lib_provider_ptr;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

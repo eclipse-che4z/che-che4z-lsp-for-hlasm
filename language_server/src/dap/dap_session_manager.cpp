@@ -51,16 +51,10 @@ void session_manager::cleanup_sessions()
 void session_manager::handle_registration_request(size_t new_id)
 {
     cleanup_sessions();
-    if (!sessions.size())
-    {
-        // currently only one debug session is supported
-        auto new_session = std::make_unique<dap::session>(new_id, *cancel, *ws_mngr, *out_stream);
-        sessions.try_emplace(new_session->get_session_id(), std::move(new_session));
-    }
-    else
-    {
-        /* ignore for now */
-    }
+
+    // currently only one debug session is supported
+    auto new_session = std::make_unique<dap::session>(new_id, *cancel, *ws_mngr, *out_stream);
+    sessions.try_emplace(new_session->get_session_id(), std::move(new_session));
 }
 session_manager::session_manager(
     std::atomic<bool>& c, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out)

@@ -31,7 +31,7 @@ public:
     {}
 
     // needs to be specialized for every use
-    c_type item(size_t index);
+    c_type item(size_t index) const;
     size_t size() const { return size_; }
 
 private:

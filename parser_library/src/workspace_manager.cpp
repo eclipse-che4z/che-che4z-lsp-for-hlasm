@@ -94,6 +94,11 @@ void workspace_manager::register_performance_metrics_consumer(performance_metric
 
 void workspace_manager::set_message_consumer(message_consumer* consumer) { impl_->set_message_consumer(consumer); }
 
+debugging::create_debugger_result workspace_manager::create_debugger(const char* file_name)
+{
+    return impl_->create_debugger(file_name);
+}
+
 position_uri workspace_manager::definition(const char* document_uri, const position pos)
 {
     return impl_->definition(document_uri, pos);
@@ -119,40 +124,4 @@ const std::vector<token_info>& workspace_manager::semantic_tokens(const char* do
 {
     return impl_->semantic_tokens(document_uri);
 }
-
-void workspace_manager::launch(const char* file_name, bool stop_on_entry) { impl_->launch(file_name, stop_on_entry); }
-
-void workspace_manager::next() { impl_->next(); }
-
-void workspace_manager::step_in() { impl_->step_in(); }
-
-void workspace_manager::disconnect() { impl_->disconnect(); }
-
-void workspace_manager::continue_debug() { impl_->continue_debug(); }
-
-stack_frames workspace_manager::get_stack_frames() { return impl_->get_stack_frames(); }
-
-scopes workspace_manager::get_scopes(frame_id_t frame_id) { return impl_->get_scopes(frame_id); }
-
-variables workspace_manager::get_variables(var_reference_t var_reference)
-{
-    return impl_->get_variables(var_reference);
-}
-
-void workspace_manager::set_breakpoints(const char* source_path, breakpoint* breakpoints, size_t br_size)
-{
-    std::vector<breakpoint> brs(breakpoints, breakpoints + br_size);
-    impl_->set_breakpoints(source_path, brs);
-}
-
-void workspace_manager::register_debug_event_consumer(debug_event_consumer& consumer)
-{
-    impl_->register_debug_event_consumer(consumer);
-}
-
-void workspace_manager::unregister_debug_event_consumer(debug_event_consumer& consumer)
-{
-    impl_->unregister_debug_event_consumer(consumer);
-}
-
 } // namespace hlasm_plugin::parser_library

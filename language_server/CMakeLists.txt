@@ -29,7 +29,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_text_synchronization.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_language_features.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_server.cpp
-	${PROJECT_SOURCE_DIR}/src/dap/feature_launch.cpp
+	${PROJECT_SOURCE_DIR}/src/dap/dap_feature.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_message_wrappers.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_session.cpp
 	${PROJECT_SOURCE_DIR}/src/dap/dap_session_manager.cpp

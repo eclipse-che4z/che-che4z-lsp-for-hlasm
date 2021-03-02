@@ -289,7 +289,7 @@ private:
 
 struct PARSER_LIBRARY_EXPORT stack_frame
 {
-    stack_frame(const debugging::stack_frame& frame);
+    explicit stack_frame(const debugging::stack_frame& frame);
 
     const char* name() const;
     uint32_t id() const;
@@ -317,7 +317,7 @@ enum class set_type
 
 struct PARSER_LIBRARY_EXPORT scope
 {
-    scope(const debugging::scope& impl);
+    explicit scope(const debugging::scope& impl);
 
     const char* name() const;
     var_reference_t variable_reference() const;
@@ -332,7 +332,7 @@ template class PARSER_LIBRARY_EXPORT c_view_array<scope, debugging::scope>;
 
 struct PARSER_LIBRARY_EXPORT variable
 {
-    variable(const debugging::variable& impl);
+    explicit variable(const debugging::variable& impl);
 
     const char* name() const;
     set_type type() const;

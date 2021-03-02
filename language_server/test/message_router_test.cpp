@@ -74,7 +74,7 @@ TEST(message_router, without_default)
 
     message_router router;
     router.register_route([](const nlohmann::json& j) { return j.get<std::string>() == "router1"; }, route1);
-    router.register_route([](const nlohmann::json& j) { return true; }, default_route);
+    router.register_route([](const nlohmann::json&) { return true; }, default_route);
 
     auto router1_msg = R"("router1")"_json;
     auto default_msg = R"("default")"_json;

@@ -15,9 +15,9 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H
 #define HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H
 
-#include <filesystem>
-
 #include "../feature.h"
+#include "debugging/debugger.h"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::dap {
 
@@ -27,55 +27,60 @@ enum class path_format
     URI
 };
 
-// Implements DAP-specific capabilities that are needed for all features:
-// path format (path vs URI) and zero-based vs 1-based line and column numbers
-class dap_feature : public feature
+class dap_disconnect_listener
 {
-public:
-    void virtual initialize_feature(const json& client_capabilities) override
-    {
-        line_1_based_ = client_capabilities["linesStartAt1"].get<bool>() ? 1 : 0;
-        column_1_based_ = client_capabilities["columnsStartAt1"].get<bool>() ? 1 : 0;
-        path_format_ =
-            client_capabilities["pathFormat"].get<std::string>() == "path" ? path_format::PATH : path_format::URI;
-    }
-
 protected:
-    dap_feature(parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
-        : feature(ws_mngr, response_provider)
-    {}
+    ~dap_disconnect_listener() = default;
 
-    std::string convert_path(const std::string& path) const
-    {
-        if (path_format_ == path_format::URI)
-            return uri_to_path(path);
-
-        std::filesystem::path p(path);
-        // Theia sends us relative path (while not accepting it back) change, to absolute
-        if (p.is_relative())
-            p = std::filesystem::absolute(p);
-        std::string result = p.lexically_normal().string();
-
-        // on windows, VS code sends us path with capital drive letter through DAP and
-        // lowercase drive letter through LSP.
-        // Remove, once we implement case-insensitive comparison of paths in parser_library for windows
-#ifdef _WIN32
-        if (result[1] == ':')
-            result[0] = (char)tolower(result[0]);
-#endif //  _WIN32
-
-        return result;
-    }
-
-    int column_1_based_;
-    int line_1_based_;
-
-private:
-    path_format path_format_;
+public:
+    virtual void disconnected() = 0;
 };
 
+// Implements DAP-specific capabilities that are needed for all features:
+// path format (path vs URI) and zero-based vs 1-based line and column numbers
+class dap_feature : public feature, public hlasm_plugin::parser_library::debugging::debug_event_consumer_s
+{
+public:
+    void initialize_feature(const json& client_capabilities) override;
 
+    dap_feature(parser_library::workspace_manager& ws_mngr,
+        response_provider& response_provider,
+        dap_disconnect_listener* disconnect_listener);
+
+    void on_initialize(const json& requested_seq, const json& args);
+    void on_disconnect(const json& request_seq, const json& args);
+    void on_launch(const json& request_seq, const json& args);
+    void on_set_breakpoints(const json& request_seq, const json& args);
+    void on_set_exception_breakpoints(const json& request_seq, const json& args);
+    void on_configuration_done(const json& request_seq, const json& args);
+    void on_threads(const json& request_seq, const json& args);
+    void on_stack_trace(const json& request_seq, const json& args);
+    void on_scopes(const json& request_seq, const json& args);
+    void on_next(const json& request_seq, const json& args);
+    void on_step_in(const json& request_seq, const json& args);
+    void on_variables(const json& request_seq, const json& args);
+    void on_continue(const json& request_seq, const json& args);
+
+private:
+    // Inherited via feature
+    void register_methods(std::map<std::string, method>& methods) override;
+    json register_capabilities() override;
+
+    // Inherited via debug_event_consumer_s
+    void stopped(const std::string& reason, const std::string& addtl_info) override;
+    void exited(int exit_code) override;
+
+    hlasm_plugin::parser_library::debugging::debug_config debug_cfg;
+    std::unique_ptr<hlasm_plugin::parser_library::debugging::debug_lib_provider> debug_lib_provider;
+    std::unique_ptr<hlasm_plugin::parser_library::debugging::debugger> debugger;
+
+    int column_1_based_ = 0;
+    int line_1_based_ = 0;
+    path_format path_format_ = path_format::PATH;
+
+    dap_disconnect_listener* disconnect_listener_;
+};
 
 } // namespace hlasm_plugin::language_server::dap
 
-#endif // !HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H
+#endif // HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H

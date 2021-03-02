@@ -15,20 +15,16 @@
 
 #include "dap_server.h"
 
-#include <functional>
-#include <map>
-
 #include "../logger.h"
-#include "feature_launch.h"
+#include "dap_feature.h"
 
 namespace hlasm_plugin::language_server::dap {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(ws_mngr)
 {
-    features_.push_back(std::make_unique<feature_launch>(ws_mngr_, *this));
+    features_.push_back(std::make_unique<dap_feature>(ws_mngr_, *this, this));
     register_feature_methods();
-    register_methods();
 }
 
 void server::request(const json&, const std::string&, const json&, method)
@@ -91,44 +87,10 @@ void server::message_received(const json& message)
     }
 }
 
-void server::register_methods()
+void server::disconnected()
 {
-    methods_.emplace(
-        "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
-    methods_.emplace(
-        "disconnect", std::bind(&server::on_disconnect, this, std::placeholders::_1, std::placeholders::_2));
-}
-
-void server::on_initialize(const json& requested_seq, const json& args)
-{
-    json capabilities = json::object();
-
-    for (auto& f : features_)
-    {
-        json feature_cap = f->register_capabilities();
-        capabilities.insert(feature_cap.begin(), feature_cap.end());
-    }
-
-    respond(requested_seq, "initialize", capabilities);
-
-
-    for (auto& f : features_)
-    {
-        f->initialize_feature(args);
-    }
-
-    notify("initialized", json());
-}
-
-void server::on_disconnect(const json& request_seq, const json&)
-{
-    ws_mngr_.disconnect();
-
-    respond(request_seq, "disconnect", json());
-
     shutdown_request_received_ = true;
     exit_notification_received_ = true;
 }
-
 
 } // namespace hlasm_plugin::language_server::dap

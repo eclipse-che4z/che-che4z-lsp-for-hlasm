@@ -37,7 +37,9 @@ TEST(debugger, stopped_on_entry)
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string file_name = "test_workspace\\test";
     file_manager.did_open_file(file_name, 0, "   LR 1,2");
     d.launch(file_manager.find_processor_file(file_name), ws, true);
@@ -72,7 +74,9 @@ TEST(debugger, disconnect)
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string file_name = "test_workspace\\test";
     file_manager.did_open_file(file_name, 0, "   LR 1,2");
     d.launch(file_manager.find_processor_file(file_name), ws, true);
@@ -288,7 +292,9 @@ TEST(debugger, test)
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
     d.launch(file_manager.find_processor_file(filename), lib_provider, true);
@@ -394,7 +400,9 @@ TEST(debugger, var_symbol_array)
     workspace_mock lib_provider(file_manager);
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
 
@@ -432,7 +440,9 @@ B EQU A
     workspace_mock lib_provider(file_manager);
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
 
@@ -476,7 +486,9 @@ TEST(debugger, concurrent_next_and_file_change)
 
     debug_event_consumer_s_mock m;
     debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
+    d.configure(&cfg);
     std::string filename = "ws\\test";
 
     file_manager.did_open_file(filename, 0, open_code);

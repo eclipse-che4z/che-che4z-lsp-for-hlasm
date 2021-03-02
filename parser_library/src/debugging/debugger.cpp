@@ -40,10 +40,7 @@ void debug_config::set_breakpoints(breakpoints breakpoints)
         res.first->second = breakpoints;
 }
 
-debugger::debugger(debug_event_consumer_s& event_consumer, debug_config& debug_cfg)
-    : event_(event_consumer)
-    , cfg_(debug_cfg)
-{}
+debugger::debugger() {}
 
 void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider, bool stop_on_entry)
 {
@@ -54,17 +51,24 @@ void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider
     thread_ = std::make_unique<std::thread>(b, open_code, &provider);
 }
 
+void debugger::configure(debug_config* debug_cfg) { cfg_ = debug_cfg; }
+
+void debugger::set_event_consumer(debug_event_consumer_s* event) { event_ = event; }
+
 void debugger::statement(range stmt_range)
 {
     if (disconnected_)
         return;
 
     bool breakpoint_hit = false;
-    auto bps = cfg_.get_breakpoints(ctx_->processing_stack().back().proc_location.file);
-    for (auto& bp : bps.points)
+    if (cfg_)
     {
-        if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
-            breakpoint_hit = true;
+        auto bps = cfg_->get_breakpoints(ctx_->processing_stack().back().proc_location.file);
+        for (auto& bp : bps.points)
+        {
+            if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
+                breakpoint_hit = true;
+        }
     }
 
 
@@ -85,7 +89,8 @@ void debugger::statement(range stmt_range)
         next_stmt_range_ = stmt_range;
 
         continue_ = false;
-        event_.stopped("entry", "");
+        if (event_)
+            event_->stopped("entry", "");
 
 
         con_var.wait(lck, [&] { return !!continue_; });
@@ -262,7 +267,7 @@ const std::vector<variable_ptr>& debugger::variables(var_reference_t var_ref)
 debugger::~debugger()
 {
     if (thread_->joinable())
-        thread_->join();
+        disconnect();
 }
 
 
@@ -276,8 +281,8 @@ void debugger::debug_start(processor_file_ptr open_code, parse_lib_provider* pro
 
     a.analyze(&cancel_);
 
-    if (!disconnected_)
-        event_.exited(0);
+    if (!disconnected_ && event_)
+        event_->exited(0);
     debug_ended_ = true;
 }
 
