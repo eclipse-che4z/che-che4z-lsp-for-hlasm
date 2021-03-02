@@ -35,13 +35,17 @@ public:
 class message_wrapper final : public json_sink
 {
     json_sink& target;
+    size_t session_id;
 
 public:
-    message_wrapper(json_sink& t)
+    message_wrapper(json_sink& t, size_t s_id)
         : target(t)
+        , session_id(s_id)
     {}
     void write(const nlohmann::json& msg) override;
     void write(nlohmann::json&& msg) override;
+
+    static std::string generate_method_name(size_t id);
 };
 } // namespace hlasm_plugin::language_server::dap
 

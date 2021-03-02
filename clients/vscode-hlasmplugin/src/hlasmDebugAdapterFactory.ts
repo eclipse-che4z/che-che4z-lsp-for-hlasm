@@ -36,7 +36,7 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
             this.theia_local_server.close();
     }
 
-    // This creates a simple proxy or Theia
+    // This creates a simple proxy for Theia
     // and can be removed as soon as DebugAdapterInlineImplementation is supported
     setup_theia_compatibility_server() {
         const me = this;
@@ -89,12 +89,17 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
 }
 
 class HLASMDebugAdapter implements vscode.DebugAdapter {
+    private static next_session_id: number = 0;
+    private static readonly registration_message_id: string = 'broadcom/hlasm/dsp_tunnel';
+
     private message_event = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
-    private static readonly message_id: string = 'broadcom/hlasm/dsp_tunnel';
+    private readonly session_id: number = HLASMDebugAdapter.next_session_id++;
+    private readonly message_id: string = HLASMDebugAdapter.registration_message_id + '/' + this.session_id;
 
     constructor(private client: BaseLanguageClient) {
+        this.client.sendNotification(HLASMDebugAdapter.registration_message_id, this.session_id);
         this.client.onReady().then(() => {
-            client.onNotification(HLASMDebugAdapter.message_id, (msg: any) => {
+            client.onNotification(this.message_id, (msg: any) => {
                 this.message_event.fire(msg);
             });
         });
@@ -104,10 +109,12 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     }
 
     handleMessage(message: vscode.DebugProtocolMessage): void {
-        this.client.sendNotification(HLASMDebugAdapter.message_id, message);
+        this.client.sendNotification(this.message_id, message);
     }
 
     dispose() {
+        this.client.sendNotification(this.message_id);
+        this.message_event.dispose();
     }
 
 }

@@ -216,11 +216,11 @@ TEST(channel, dap_wrap)
 {
     using namespace ::testing;
     mock_json_sink sink;
-    dap::message_wrapper wrap(sink);
+    dap::message_wrapper wrap(sink, 0);
 
     nlohmann::json value = "[1, 2, 3]"_json;
     auto wrapped_value =
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dsp_tunnel" }, { "params", value } };
+        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dsp_tunnel/0" }, { "params", value } };
 
     nlohmann::json lref;
     nlohmann::json rref;

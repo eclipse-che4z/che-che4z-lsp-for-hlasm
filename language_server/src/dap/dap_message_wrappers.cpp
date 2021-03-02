@@ -19,20 +19,29 @@ namespace hlasm_plugin::language_server::dap {
 std::optional<nlohmann::json> hlasm_plugin::language_server::dap::message_unwrapper::read()
 {
     auto msg = source.read();
-    if (msg.has_value() && msg.value().count("params"))
-        return std::move(msg.value().at("params"));
+    if (msg.has_value())
+    {
+        auto it = msg.value().find("params");
+        if (it != msg.value().end() && !it->is_null())
+            return std::move(*it);
+    }
     return std::nullopt;
 }
 
 void message_wrapper::write(const nlohmann::json& msg)
 {
-    target.write(nlohmann::json { { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", msg } });
+    target.write(
+        nlohmann::json { { "jsonrpc", "2.0" }, { "method", generate_method_name(session_id) }, { "params", msg } });
 }
 
 void message_wrapper::write(nlohmann::json&& msg)
 {
-    target.write(
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", broadcom_tunnel_method }, { "params", std::move(msg) } });
+    target.write(nlohmann::json {
+        { "jsonrpc", "2.0" }, { "method", generate_method_name(session_id) }, { "params", std::move(msg) } });
 }
 
+std::string message_wrapper::generate_method_name(size_t id)
+{
+    return std::string(broadcom_tunnel_method) + '/' + std::to_string(id);
+}
 } // namespace hlasm_plugin::language_server::dap

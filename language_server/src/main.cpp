@@ -24,11 +24,14 @@
 
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
+#include "dap/dap_session.h"
+#include "dap/dap_session_manager.h"
 #include "dispatcher.h"
 #include "logger.h"
 #include "lsp/channel.h"
 #include "lsp/lsp_server.h"
 #include "message_router.h"
+#include "scope_exit.h"
 #include "stream_helper.h"
 #include "workspace_manager.h"
 
@@ -71,16 +74,6 @@ struct std_setup
         return std::pair<std::istream&, std::ostream&>(std::cin, std::cout);
     }
 };
-
-template<typename T>
-struct scope_exit
-{
-    const T scope_exit_;
-    scope_exit(T&& t)
-        : scope_exit_(std::move(t))
-    {}
-    ~scope_exit() { scope_exit_(); }
-};
 } // namespace
 
 int main(int argc, char** argv)
@@ -114,22 +107,10 @@ int main(int argc, char** argv)
         newline_is_space::imbue_stream(cin);
 
         hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
-        request_manager req_mngr(&cancel);
-        scope_exit end_request_manager([&req_mngr]() { req_mngr.end_worker(); });
 
         json_queue_channel lsp_queue;
-        json_queue_channel dap_queue;
 
         message_router router(&lsp_queue);
-        constexpr const auto is_dap_message = [](const nlohmann::json& msg) {
-            if (msg.is_object() && msg.count("method"))
-            {
-                auto& method = msg.at("method");
-                return method.get<std::string_view>() == dap::broadcom_tunnel_method;
-            }
-            return false;
-        };
-        router.register_route(is_dap_message, dap_queue);
 
         int ret;
         {
@@ -137,39 +118,25 @@ int main(int argc, char** argv)
             if (use_tcp)
                 io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
 
-            auto io_streams = std::visit([](auto&& p) { return p.get_streams(); }, io_setup);
-            lsp::channel channel(io_streams.first, io_streams.second);
-            dap::message_wrapper dap_wrapper(channel);
-            dap::message_unwrapper dap_unwrapper(dap_queue);
+            auto [in_stream, out_stream] = std::visit([](auto&& p) { return p.get_streams(); }, io_setup);
+            lsp::channel channel(in_stream, out_stream);
 
-            std::atomic<bool> dap_active = true;
-            std::thread dap_thread;
             std::thread lsp_thread;
-
             scope_exit clean_up_threads([&]() {
-                dap_active = false;
-                dap_queue.terminate();
                 lsp_queue.terminate();
-                if (dap_thread.joinable())
-                    dap_thread.join();
                 if (lsp_thread.joinable())
                     lsp_thread.join();
             });
 
-            dap_thread = std::thread(
-                [&dap_active, &ws_mngr, &req_mngr, io = json_channel_adapter(dap_unwrapper, dap_wrapper)]() {
-                    for (; dap_active;)
-                    {
-                        dap::server server(ws_mngr);
-                        dispatcher dap_dispatcher(io, server, req_mngr);
-                        dap_dispatcher.run_server_loop();
-                    }
-                });
+            dap::session_manager dap_sessions(cancel, ws_mngr, channel);
+            router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
 
-            lsp_thread = std::thread([&ret, &ws_mngr, &req_mngr, io = json_channel_adapter(lsp_queue, channel)]() {
+            lsp_thread = std::thread([&ret, &ws_mngr, &cancel, io = json_channel_adapter(lsp_queue, channel)]() {
+                request_manager req_mgr(&cancel);
+                scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
                 lsp::server server(ws_mngr);
 
-                dispatcher lsp_dispatcher(io, server, req_mngr);
+                dispatcher lsp_dispatcher(io, server, req_mgr);
                 ret = lsp_dispatcher.run_server_loop();
             });
 
