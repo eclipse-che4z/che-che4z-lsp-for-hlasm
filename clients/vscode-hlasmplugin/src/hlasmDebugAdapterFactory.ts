@@ -57,21 +57,24 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
             });
             socket.on('data', function (data: Buffer) {
                 buffer = Buffer.concat([buffer, data]);
-                if (buffer.indexOf(content_length) != 0)
-                    return;
-                let end_of_line = buffer.indexOf('\r\n');
-                if (end_of_line < 0)
-                    return;
-                let length = +buffer.slice(content_length.length, end_of_line);
-                let data_start = buffer.indexOf('\r\n\r\n');
-                if (data_start < 0)
-                    return;
-                let data_end = data_start + 4 + length;
-                if (data_end > buffer.length)
-                    return;
-                let json = JSON.parse(buffer.slice(data_start + 4, data_end).toString());
-                hlasm_client.handleMessage(json);
-                buffer = buffer.slice(data_end);
+                while (true) {
+                    if (buffer.indexOf(content_length) != 0)
+                        return;
+                    let end_of_line = buffer.indexOf('\r\n');
+                    if (end_of_line < 0)
+                        return;
+                    let length = +buffer.slice(content_length.length, end_of_line);
+                    let end_of_headers = buffer.indexOf('\r\n\r\n');
+                    if (end_of_headers < 0)
+                        return;
+                    let data_start = end_of_headers + 4;
+                    let data_end = data_start + length;
+                    if (data_end > buffer.length)
+                        return;
+                    let json = JSON.parse(buffer.slice(data_start, data_end).toString());
+                    hlasm_client.handleMessage(json);
+                    buffer = buffer.slice(data_end);
+                }
             });
             socket.on('close', function () {
                 hlasm_client.dispose();
