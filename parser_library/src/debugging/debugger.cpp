@@ -40,7 +40,7 @@ void debug_config::set_breakpoints(breakpoints breakpoints)
         res.first->second = breakpoints;
 }
 
-debugger::debugger() {}
+debugger::debugger() = default;
 
 void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider, bool stop_on_entry)
 {

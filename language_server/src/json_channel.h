@@ -52,7 +52,7 @@ class json_channel_adapter final : public json_channel
     json_sink& sink;
 
 public:
-    json_channel_adapter(json_channel& ch)
+    explicit json_channel_adapter(json_channel& ch)
         : source(ch)
         , sink(ch)
     {}

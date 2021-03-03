@@ -128,7 +128,7 @@ TEST_P(dispatcher_fixture, basic)
     server_mock dummy_server(GetParam().messages_limit);
 
     lsp::channel channel(ss_in, ss_out);
-    dispatcher disp(channel, dummy_server, rm);
+    dispatcher disp(json_channel_adapter(channel), dummy_server, rm);
 
     int ret = disp.run_server_loop();
 
@@ -144,7 +144,7 @@ TEST(dispatcher, write_message)
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
     lsp::channel channel(ss, ss);
-    dispatcher d(channel, dummy_server, rm);
+    dispatcher d(json_channel_adapter(channel), dummy_server, rm);
 
     json message = R"("A json message")"_json;
     d.reply(message);

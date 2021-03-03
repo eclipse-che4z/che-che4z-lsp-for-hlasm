@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_BLOCKING_QUEUE_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_BLOCKING_QUEUE_H
 
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <mutex>
@@ -27,7 +28,7 @@ class blocking_queue
     std::mutex mutex;
     std::condition_variable cond_var;
     std::deque<T> queue;
-    bool terminated = false;
+    std::atomic<bool> terminated = false;
 
 public:
     void push(T&& t)

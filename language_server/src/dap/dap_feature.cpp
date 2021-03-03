@@ -233,12 +233,9 @@ void dap_feature::on_variables(const json& request_seq, const json& args)
 
     if (debugger)
     {
-        const auto& vars = debugger->variables(args["variablesReference"]);
-
-
-        for (size_t i = 0; i < vars.size(); ++i)
+        for (const auto& v : debugger->variables(args["variablesReference"]))
         {
-            auto var = parser_library::variable(*vars.at(i));
+            auto var = parser_library::variable(*v);
 
             std::string type;
             switch (var.type())

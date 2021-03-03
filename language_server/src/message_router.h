@@ -33,7 +33,7 @@ private:
     json_sink* default_route;
 
 public:
-    message_router(json_sink* optional_default_route = nullptr);
+    explicit message_router(json_sink* optional_default_route = nullptr);
     void register_route(message_predicate predicate, json_sink& sink);
 
     void write(const nlohmann::json&) override;

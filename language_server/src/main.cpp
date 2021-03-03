@@ -53,7 +53,7 @@ struct tcp_setup
     asio::ip::tcp::acceptor acceptor;
     asio::ip::tcp::socket socket;
     asio::ip::tcp::iostream stream;
-    tcp_setup(uint16_t port)
+    explicit tcp_setup(uint16_t port)
         : acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), port))
         , socket(io_service)
     {

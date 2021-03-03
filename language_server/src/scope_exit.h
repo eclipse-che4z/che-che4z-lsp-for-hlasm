@@ -22,7 +22,7 @@ class scope_exit
     T scope_exit_;
 
 public:
-    scope_exit(T&& t)
+    explicit scope_exit(T&& t)
         : scope_exit_(std::move(t))
     {}
     ~scope_exit() { scope_exit_(); }
