@@ -143,14 +143,14 @@ struct mock_json_source : public json_source
 struct mock_json_sink : public json_sink
 {
     MOCK_METHOD1(write, void(const nlohmann::json&));
-    MOCK_METHOD1(write_rvr, void(nlohmann::json));
+    MOCK_METHOD1(write_rvr, void(nlohmann::json&&));
     void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
 };
 struct mock_json_channel : public json_channel
 {
     MOCK_METHOD0(read, std::optional<nlohmann::json>());
     MOCK_METHOD1(write, void(const nlohmann::json&));
-    MOCK_METHOD1(write_rvr, void(nlohmann::json));
+    MOCK_METHOD1(write_rvr, void(nlohmann::json&&));
     void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
 };
 } // namespace

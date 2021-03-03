@@ -25,11 +25,11 @@ void hlasm_plugin::language_server::message_router::register_route(message_predi
 
 void hlasm_plugin::language_server::message_router::write(const nlohmann::json& msg)
 {
-    for (const auto& route : routes)
+    for (const auto& [filter, target] : routes)
     {
-        if (route.first(msg))
+        if (filter(msg))
         {
-            route.second->write(msg);
+            target->write(msg);
             return;
         }
     }
@@ -39,11 +39,11 @@ void hlasm_plugin::language_server::message_router::write(const nlohmann::json& 
 
 void hlasm_plugin::language_server::message_router::write(nlohmann::json&& msg)
 {
-    for (const auto& route : routes)
+    for (const auto& [filter, target] : routes)
     {
-        if (route.first(msg))
+        if (filter(msg))
         {
-            route.second->write(std::move(msg));
+            target->write(std::move(msg));
             return;
         }
     }

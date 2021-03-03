@@ -44,7 +44,9 @@ constexpr const int THREAD_ID = 1;
 } // namespace
 
 namespace hlasm_plugin::language_server::dap {
-void dap_feature::initialize_feature(const json&) {}
+void dap_feature::initialize_feature(const json&)
+{ /* nothing to do */
+}
 
 dap_feature::dap_feature(parser_library::workspace_manager& ws_mngr,
     response_provider& response_provider,
@@ -59,19 +61,19 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
     const auto this_bind = [this](void (dap_feature::*func)(const json&, const json&)) {
         return [this, func](const json& requested_seq, const json& args) { (this->*func)(requested_seq, args); };
     };
-    methods.emplace("initialize", this_bind(&dap_feature::on_initialize));
-    methods.emplace("disconnect", this_bind(&dap_feature::on_disconnect));
-    methods.emplace("launch", this_bind(&dap_feature::on_launch));
-    methods.emplace("setBreakpoints", this_bind(&dap_feature::on_set_breakpoints));
-    methods.emplace("setExceptionBreakpoints", this_bind(&dap_feature::on_set_exception_breakpoints));
-    methods.emplace("configurationDone", this_bind(&dap_feature::on_configuration_done));
-    methods.emplace("threads", this_bind(&dap_feature::on_threads));
-    methods.emplace("stackTrace", this_bind(&dap_feature::on_stack_trace));
-    methods.emplace("scopes", this_bind(&dap_feature::on_scopes));
-    methods.emplace("next", this_bind(&dap_feature::on_next));
-    methods.emplace("stepIn", this_bind(&dap_feature::on_step_in));
-    methods.emplace("variables", this_bind(&dap_feature::on_variables));
-    methods.emplace("continue", this_bind(&dap_feature::on_continue));
+    methods.try_emplace("initialize", this_bind(&dap_feature::on_initialize));
+    methods.try_emplace("disconnect", this_bind(&dap_feature::on_disconnect));
+    methods.try_emplace("launch", this_bind(&dap_feature::on_launch));
+    methods.try_emplace("setBreakpoints", this_bind(&dap_feature::on_set_breakpoints));
+    methods.try_emplace("setExceptionBreakpoints", this_bind(&dap_feature::on_set_exception_breakpoints));
+    methods.try_emplace("configurationDone", this_bind(&dap_feature::on_configuration_done));
+    methods.try_emplace("threads", this_bind(&dap_feature::on_threads));
+    methods.try_emplace("stackTrace", this_bind(&dap_feature::on_stack_trace));
+    methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes));
+    methods.try_emplace("next", this_bind(&dap_feature::on_next));
+    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in));
+    methods.try_emplace("variables", this_bind(&dap_feature::on_variables));
+    methods.try_emplace("continue", this_bind(&dap_feature::on_continue));
 }
 json dap_feature::register_capabilities() { return json(); }
 
@@ -131,9 +133,7 @@ void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
     std::string source = convert_path(args["source"]["path"].get<std::string>(), path_format_);
     std::vector<parser_library::breakpoint> breakpoints;
 
-
-    auto bpoints_found = args.find("breakpoints");
-    if (bpoints_found != args.end())
+    if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
     {
         for (auto& bp_json : bpoints_found.value())
         {
@@ -172,11 +172,9 @@ void dap_feature::on_stack_trace(const json& request_seq, const json&)
 
     if (debugger)
     {
-        const auto& frames = debugger->stack_frames();
-
-        for (size_t i = 0; i < frames.size(); ++i)
+        for (const auto& f : debugger->stack_frames())
         {
-            auto frame = parser_library::stack_frame(frames.at(i));
+            auto frame = parser_library::stack_frame(f);
 
             frames_json.push_back(json {
                 { "id", frame.id() },
@@ -200,11 +198,9 @@ void dap_feature::on_scopes(const json& request_seq, const json& args)
 
     if (debugger)
     {
-        auto res = debugger->scopes(args["frameId"].get<json::number_unsigned_t>());
-
-        for (size_t i = 0; i < res.size(); ++i)
+        for (const auto& s : debugger->scopes(args["frameId"].get<json::number_unsigned_t>()))
         {
-            auto scope = parser_library::scope(res.at(i));
+            auto scope = parser_library::scope(s);
             json scope_json = json { { "name", scope.name() },
                 { "variablesReference", scope.variable_reference() },
                 { "expensive", false },

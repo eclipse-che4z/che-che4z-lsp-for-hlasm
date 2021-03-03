@@ -25,7 +25,7 @@
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::dap {
-class session_manager : public json_sink
+class session_manager final : public json_sink
 {
     std::atomic<bool>* cancel;
     hlasm_plugin::parser_library::workspace_manager* ws_mngr;
@@ -42,7 +42,9 @@ public:
     void write(const nlohmann::json& msg) override;
     void write(nlohmann::json&& msg) override;
 
-    message_router::message_predicate get_filtering_predicate() const;
+    [[nodiscard]] message_router::message_predicate get_filtering_predicate() const;
+
+    [[nodiscard]] size_t registered_sessions_count() const { return sessions.size(); }
 };
 } // namespace hlasm_plugin::language_server::dap
 

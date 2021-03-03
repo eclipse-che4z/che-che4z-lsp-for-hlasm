@@ -27,7 +27,7 @@ namespace {
 struct mock_json_sink : public json_sink
 {
     MOCK_METHOD1(write, void(const nlohmann::json&));
-    MOCK_METHOD1(write_rvr, void(nlohmann::json));
+    MOCK_METHOD1(write_rvr, void(nlohmann::json&&));
     void write(nlohmann::json&& j) override { write_rvr(std::move(j)); }
 };
 } // namespace

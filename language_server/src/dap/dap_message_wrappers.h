@@ -26,7 +26,7 @@ class message_unwrapper final : public json_source
     json_source& source;
 
 public:
-    message_unwrapper(json_source& s)
+    explicit message_unwrapper(json_source& s)
         : source(s)
     {}
     std::optional<nlohmann::json> read() override;

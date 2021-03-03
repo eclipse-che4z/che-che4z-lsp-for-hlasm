@@ -16,8 +16,6 @@ import * as vscode from 'vscode';
 
 // debug configuration provider, adds port number dynamically
 export class HLASMConfigurationProvider implements vscode.DebugConfigurationProvider {
-    constructor() {}
-
     resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined,
         config: vscode.DebugConfiguration)
         : vscode.ProviderResult<vscode.DebugConfiguration> {

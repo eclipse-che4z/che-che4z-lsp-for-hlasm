@@ -25,7 +25,7 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-class session : public json_sink
+class session final : public json_sink
 {
     std::string session_id;
     std::atomic<bool>* cancel;
@@ -45,9 +45,9 @@ public:
 
     message_router::message_predicate get_message_matcher() const;
 
-    bool is_running() const noexcept { return running; }
+    [[nodiscard]] bool is_running() const noexcept { return running; }
 
-    const std::string& get_session_id() const noexcept { return session_id; }
+    [[nodiscard]] const std::string& get_session_id() const noexcept { return session_id; }
 
     // Inherited via json_sink
     void write(const nlohmann::json&) override;

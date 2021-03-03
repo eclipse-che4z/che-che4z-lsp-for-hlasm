@@ -16,10 +16,9 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-std::optional<nlohmann::json> hlasm_plugin::language_server::dap::message_unwrapper::read()
+std::optional<nlohmann::json> message_unwrapper::read()
 {
-    auto msg = source.read();
-    if (msg.has_value())
+    if (auto msg = source.read(); msg.has_value())
     {
         auto it = msg.value().find("params");
         if (it != msg.value().end() && !it->is_null())

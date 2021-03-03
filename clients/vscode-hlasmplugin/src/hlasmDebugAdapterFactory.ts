@@ -49,7 +49,6 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
             var buffer: Buffer = Buffer.from([]);
 
             hlasm_client.onDidSendMessage(function (msg: vscode.DebugProtocolMessage) {
-                console.log(msg);
                 let msg_buffer = Buffer.from(JSON.stringify(msg));
                 socket.write(content_length);
                 socket.write(msg_buffer.length.toString());
@@ -57,7 +56,6 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
                 socket.write(msg_buffer);
             });
             socket.on('data', function (data: Buffer) {
-                console.log(data);
                 buffer = Buffer.concat([buffer, data]);
                 if (buffer.indexOf(content_length) != 0)
                     return;
@@ -72,7 +70,6 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
                 if (data_end > buffer.length)
                     return;
                 let json = JSON.parse(buffer.slice(data_start + 4, data_end).toString());
-                console.log(json);
                 hlasm_client.handleMessage(json);
                 buffer = buffer.slice(data_end);
             });
@@ -81,9 +78,7 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
             });
         });
         this.theia_local_server.listen(0, '127.0.0.1', function () {
-            console.log(server.address());
-            console.log(server.address() as net.AddressInfo);
-            me.theia_local_port = (server.address() as net.AddressInfo).port;
+            me.theia_local_port = (<net.AddressInfo>server.address()).port;
         });
     }
 }

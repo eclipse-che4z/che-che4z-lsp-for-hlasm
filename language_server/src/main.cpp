@@ -112,42 +112,41 @@ int main(int argc, char** argv)
 
         message_router router(&lsp_queue);
 
+        std::variant<std_setup, tcp_setup> io_setup;
+        if (use_tcp)
+            io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
+
+        auto [in_stream, out_stream] = std::visit([](auto& p) { return p.get_streams(); }, io_setup);
+        lsp::channel channel(in_stream, out_stream);
+
+        std::thread lsp_thread;
+        scope_exit clean_up_threads([&]() {
+            lsp_queue.terminate();
+            if (lsp_thread.joinable())
+                lsp_thread.join();
+        });
+
+        dap::session_manager dap_sessions(cancel, ws_mngr, channel);
+        router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
+
         int ret;
+        lsp_thread = std::thread([&ret, &ws_mngr, &cancel, io = json_channel_adapter(lsp_queue, channel)]() {
+            request_manager req_mgr(&cancel);
+            scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
+            lsp::server server(ws_mngr);
+
+            dispatcher lsp_dispatcher(io, server, req_mgr);
+            ret = lsp_dispatcher.run_server_loop();
+        });
+
+        for (;;)
         {
-            std::variant<std_setup, tcp_setup> io_setup;
-            if (use_tcp)
-                io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
-
-            auto [in_stream, out_stream] = std::visit([](auto&& p) { return p.get_streams(); }, io_setup);
-            lsp::channel channel(in_stream, out_stream);
-
-            std::thread lsp_thread;
-            scope_exit clean_up_threads([&]() {
-                lsp_queue.terminate();
-                if (lsp_thread.joinable())
-                    lsp_thread.join();
-            });
-
-            dap::session_manager dap_sessions(cancel, ws_mngr, channel);
-            router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
-
-            lsp_thread = std::thread([&ret, &ws_mngr, &cancel, io = json_channel_adapter(lsp_queue, channel)]() {
-                request_manager req_mgr(&cancel);
-                scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
-                lsp::server server(ws_mngr);
-
-                dispatcher lsp_dispatcher(io, server, req_mgr);
-                ret = lsp_dispatcher.run_server_loop();
-            });
-
-            for (;;)
-            {
-                auto msg = channel.read();
-                if (!msg.has_value())
-                    break;
-                router.write(std::move(msg).value());
-            }
+            auto msg = channel.read();
+            if (!msg.has_value())
+                break;
+            router.write(std::move(msg).value());
         }
+
 
         return ret;
     }

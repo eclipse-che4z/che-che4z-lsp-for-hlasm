@@ -29,7 +29,7 @@ namespace hlasm_plugin::language_server::dap {
 
 // Implements DAP server (session-controlling methods like initialize and disconnect).
 // Integrates 1 feature: feature launch.
-class server : public hlasm_plugin::language_server::server, public dap_disconnect_listener
+class server final : public hlasm_plugin::language_server::server, public dap_disconnect_listener
 {
 public:
     explicit server(parser_library::workspace_manager& ws_mngr);
@@ -49,7 +49,7 @@ public:
     void message_received(const json& message) override;
 
 private:
-    uint64_t last_seq_ = 0;
+    std::atomic<uint64_t> last_seq_ = 0;
 
     void register_methods();
 

@@ -17,14 +17,14 @@
 #include "dap_message_wrappers.h"
 
 namespace {
-std::optional<size_t> is_registration_request(std::string_view method, const nlohmann::json& msg)
+std::optional<size_t> extract_session_id_from_registration_message(std::string_view method, const nlohmann::json& msg)
 {
     if (method != hlasm_plugin::language_server::dap::broadcom_tunnel_method)
         return std::nullopt;
     auto params = msg.find("params");
     if (params == msg.end())
         return std::nullopt;
-    if (!params->is_number_unsigned())
+    if (!params->is_number_integer())
         return std::nullopt;
     return params->get<size_t>();
 }
@@ -70,7 +70,7 @@ void session_manager::write(const nlohmann::json& msg)
     auto method = extract_method(msg);
     if (method.empty())
         return;
-    if (auto new_id = is_registration_request(method, msg); new_id.has_value())
+    if (auto new_id = extract_session_id_from_registration_message(method, msg); new_id.has_value())
         handle_registration_request(new_id.value());
     else
     {
@@ -84,7 +84,7 @@ void session_manager::write(nlohmann::json&& msg)
     auto method = extract_method(msg);
     if (method.empty())
         return;
-    if (auto new_id = is_registration_request(method, msg); new_id.has_value())
+    if (auto new_id = extract_session_id_from_registration_message(method, msg); new_id.has_value())
         handle_registration_request(new_id.value());
     else
     {
