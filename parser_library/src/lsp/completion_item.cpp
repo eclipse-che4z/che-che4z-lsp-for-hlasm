@@ -90,10 +90,11 @@ std::vector<completion_item_s> generate_instruction_completion_items()
         }
         documentation << "Machine instruction " << std::endl
                       << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.second->format);
-        result.push_back({ machine_instr.first,
+        result.emplace_back(machine_instr.first,
             "Operands: " + detail.str(),
             machine_instr.first + "   " + autocomplete.str(),
-            { documentation.str() } });
+            documentation.str(),
+            completion_item_kind::mach_instr);
     }
 
     for (const auto& asm_instr : instruction::assembler_instructions)
@@ -107,8 +108,11 @@ std::vector<completion_item_s> generate_instruction_completion_items()
 
         detail << asm_instr.first << "   " << description;
         documentation << "Assembler instruction";
-        result.push_back(
-            { asm_instr.first, detail.str(), asm_instr.first + "   " /*+ description*/, { documentation.str() } });
+        result.emplace_back(asm_instr.first,
+            detail.str(),
+            asm_instr.first + "   " /*+ description*/,
+            documentation.str(),
+            completion_item_kind::asm_instr);
     }
 
     for (const auto& mnemonic_instr : instruction::mnemonic_codes)
@@ -202,15 +206,16 @@ std::vector<completion_item_s> generate_instruction_completion_items()
                       << "Substituted operands: " << subs_ops_mnems.str() << std::endl
                       << "Instruction format: "
                       << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
-        result.push_back({ mnemonic_instr.first,
+        result.emplace_back(mnemonic_instr.first,
             detail.str(),
             mnemonic_instr.first + "   " + subs_ops_nomnems.str(),
-            { documentation.str() } });
+            documentation.str(),
+            completion_item_kind::mach_instr);
     }
 
     for (const auto& ca_instr : instruction::ca_instructions)
     {
-        result.push_back({ ca_instr.name, "", ca_instr.name, { "Conditional Assembly" } });
+        result.emplace_back(ca_instr.name, "", ca_instr.name, "Conditional Assembly", completion_item_kind::ca_instr);
     }
     return result;
 }

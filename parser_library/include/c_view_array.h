@@ -25,6 +25,11 @@ template<typename c_type, typename impl>
 class c_view_array
 {
 public:
+    // default constructor makes writing GMock tests easier
+    c_view_array()
+        : data_(nullptr)
+        , size_(0)
+    {}
     c_view_array(const impl* data, size_t size)
         : data_(data)
         , size_(size)

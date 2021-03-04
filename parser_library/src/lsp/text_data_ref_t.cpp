@@ -55,6 +55,14 @@ char text_data_ref_t::get_character_before(position pos) const
     return text[index];
 }
 
+std::string_view text_data_ref_t::get_range_content(range r) const
+{
+    size_t start_i = workspaces::file_impl::index_from_position(text, line_indices, r.start);
+    size_t end_i = workspaces::file_impl::index_from_position(text, line_indices, r.end);
+    return std::string_view(&text[start_i], end_i - start_i);
+}
+
+
 std::string text_data_ref_t::empty_text;
 
 } // namespace hlasm_plugin::parser_library::lsp

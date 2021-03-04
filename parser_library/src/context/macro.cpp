@@ -157,6 +157,18 @@ macro_invo_ptr macro_definition::call(
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
 
+const std::vector<std::unique_ptr<positional_param>>& macro_definition::get_positional_params() const
+{
+    return positional_params_;
+}
+
+const std::vector<std::unique_ptr<keyword_param>>& macro_definition::get_keyword_params() const
+{
+    return keyword_params_;
+}
+
+const id_index& macro_definition::get_label_param_name() const { return label_param_name_; }
+
 macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,
     const copy_nest_storage& copy_nests,

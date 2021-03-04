@@ -64,8 +64,8 @@ private:
     string_array hover(const context::copy_member& sym) const;
 
     completion_list_s complete_var(const file_info_ptr& file, position pos) const;
-    completion_list_s complete_seq(position pos) const;
-    completion_list_s complete_instr(position pos) const;
+    completion_list_s complete_seq(const file_info_ptr& file, position pos) const;
+    completion_list_s complete_instr(const file_info_ptr& file, position pos) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

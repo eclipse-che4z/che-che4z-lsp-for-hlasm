@@ -108,31 +108,12 @@ enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
 
 enum class PARSER_LIBRARY_EXPORT completion_item_kind
 {
-    text = 1,
-    method = 2,
-    function = 3,
-    constructor = 4,
-    field = 5,
-    variable = 6,
-    class_v = 7,
-    interface = 8,
-    module = 9,
-    property = 10,
-    unit = 11,
-    value = 12,
-    enum_v = 13,
-    keyword = 14,
-    snippet = 15,
-    color = 16,
-    file = 17,
-    reference = 18,
-    folder = 19,
-    enum_member = 20,
-    constant = 21,
-    struct_v = 22,
-    event = 23,
-    operator_v = 24,
-    type_parameter = 25
+    mach_instr = 0,
+    asm_instr = 1,
+    ca_instr = 2,
+    macro = 3,
+    var_sym = 4,
+    seq_sym = 5
 };
 
 struct PARSER_LIBRARY_EXPORT completion_item

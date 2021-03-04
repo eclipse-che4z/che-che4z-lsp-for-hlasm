@@ -119,6 +119,48 @@ void feature_language_features::hover(const json& id, const json& params)
     }
     response_->respond(id, "", json { { "contents", hover_arr } });
 }
+
+//Completion item kinds from the LSP specification
+enum class lsp_completion_item_kind
+{
+    text = 1,
+    method = 2,
+    function = 3,
+    constructor = 4,
+    field = 5,
+    variable = 6,
+    class_v = 7,
+    interface = 8,
+    module = 9,
+    property = 10,
+    unit = 11,
+    value = 12,
+    enum_v = 13,
+    keyword = 14,
+    snippet = 15,
+    color = 16,
+    file = 17,
+    reference = 18,
+    folder = 19,
+    enum_member = 20,
+    constant = 21,
+    struct_v = 22,
+    event = 23,
+    operator_v = 24,
+    type_parameter = 25
+};
+
+std::unordered_map<parser_library::completion_item_kind, lsp_completion_item_kind> completion_item_kind_mapping()
+{
+    using namespace parser_library;
+    return { { completion_item_kind::mach_instr, lsp_completion_item_kind::function },
+        { completion_item_kind::asm_instr, lsp_completion_item_kind::function },
+        { completion_item_kind::ca_instr, lsp_completion_item_kind::function },
+        { completion_item_kind::macro, lsp_completion_item_kind::file },
+        { completion_item_kind::var_sym, lsp_completion_item_kind::variable },
+        { completion_item_kind::seq_sym, lsp_completion_item_kind::reference } };
+}
+
 void feature_language_features::completion(const json& id, const json& params)
 {
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
@@ -135,14 +177,14 @@ void feature_language_features::completion(const json& id, const json& params)
     if (trigger_kind == parser_library::completion_trigger_kind::trigger_character)
         trigger_char = params["context"]["triggerCharacter"].get<std::string>()[0];
 
-    auto completion_list = ws_mngr_.completion(uri_to_path(document_uri).c_str(), pos, trigger_char, trigger_kind);
+    auto completion_list = ws_mngr_.completion(uri_to_path(document_uri), pos, trigger_char, trigger_kind);
     json to_ret = json::value_t::null;
     json completion_item_array = json::array();
     for (size_t i = 0; i < completion_list.size(); ++i)
     {
         const auto& item = completion_list.item(i);
         completion_item_array.push_back(json { { "label", item.label() },
-            { "kind", item.kind() },
+            { "kind", completion_item_kind_mapping()[item.kind()] },
             { "detail", item.detail() },
             { "documentation", item.documentation() },
             { "insertText", item.insert_text() } });

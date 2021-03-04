@@ -45,12 +45,11 @@ TEST(language_features, completion)
     json params1 =
         R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
 #endif
-    /*std::vector<parser_library::context::completion_item_s> item_list = { context::completion_item_s(
-        "LR", "machine", "LR", std::vector<std::string> { "machine doc" }) };
-    auto list_s = semantics::completion_list_s(false, item_list);
-    EXPECT_CALL(ws_mngr, completion(StrEq(path), position(0, 1), '\0', completion_trigger_kind::invoked))
-        .WillOnce(Return(completion_list()));
-    notifs["textDocument/completion"]("", params1);*/
+
+    EXPECT_CALL(ws_mngr,
+        completion(
+            StrEq(path), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked));
+    notifs["textDocument/completion"]("", params1);
 }
 
 TEST(language_features, hover)

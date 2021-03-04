@@ -33,7 +33,7 @@ public:
         std::string detail,
         std::string insert_text,
         std::string documentation,
-        completion_item_kind kind = completion_item_kind::text);
+        completion_item_kind kind = completion_item_kind::mach_instr);
 
     std::vector<std::string> get_contents() const;
     // several features of completion item from LSP
@@ -41,7 +41,7 @@ public:
     std::string detail;
     std::string insert_text;
     std::string documentation;
-    completion_item_kind kind = completion_item_kind::text;
+    completion_item_kind kind;
 
     static const std::vector<completion_item_s> instruction_completion_items_;
 };

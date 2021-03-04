@@ -164,7 +164,7 @@ public:
         completion_trigger_kind trigger_kind)
     {
         if (cancel_ && *cancel_)
-            return completion_list { {}, true };
+            return completion_list { nullptr, 0 };
 
         completion_result = ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
 

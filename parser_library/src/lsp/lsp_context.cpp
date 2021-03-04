@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <regex>
+#include <sstream>
 #include <string_view>
 
 #include "context/instruction.h"
@@ -131,11 +132,13 @@ string_array lsp_context::hover(const std::string& document_uri, const position 
     return find_hover(*occ, macro_scope);
 }
 
+size_t constexpr continuation_column = 71;
+
 bool should_complete_instr(const text_data_ref_t& text, const position pos)
 {
     std::string_view line_before = text.get_line(pos.line - 1);
     std::string_view line_so_far = text.get_line_beginning(pos);
-    size_t constexpr continuation_column = 71;
+
     static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
     return (line_before.size() <= continuation_column || std::isspace(line_before[continuation_column]))
         && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
@@ -157,9 +160,9 @@ completion_list_s lsp_context::completion(const std::string& document_uri,
     if (last_char == '&')
         return complete_var(file_it->second, pos);
     else if (last_char == '.')
-        return complete_seq(pos);
+        return complete_seq(file_it->second, pos);
     else if (should_complete_instr(text, pos))
-        return complete_instr(pos);
+        return complete_instr(file_it->second, pos);
 
     return completion_list_s();
 }
@@ -175,15 +178,134 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     {
         auto cont = hover(vardef);
         completion_item_s item(
-            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::variable);
+            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::var_sym);
         items.push_back(std::move(item));
     }
 
     return items;
 }
 
-completion_list_s lsp_context::complete_seq(position pos) const { return completion_list_s(); }
-completion_list_s lsp_context::complete_instr(position pos) const { return completion_list_s(); }
+completion_list_s lsp_context::complete_seq(const file_info_ptr& file, position pos) const
+{
+    auto macro_i = file->find_scope(pos);
+
+    const context::label_storage& seq_syms =
+        macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+
+    completion_list_s items;
+    for (const auto& sym : seq_syms)
+    {
+        auto cont = hover(*sym.second);
+        std::string label = "." + *sym.second->name;
+        items.emplace_back(label, std::move(cont[0]), label, "", completion_item_kind::seq_sym);
+    }
+    return items;
+}
+
+std::string get_macro_signature(const context::macro_definition& m)
+{
+    std::stringstream signature;
+    if (*m.get_label_param_name() != "")
+        signature << "&" << *m.get_label_param_name() << " ";
+    signature << *m.id << " ";
+
+    bool first = true;
+    const auto& pos_params = m.get_positional_params();
+    // First positional parameter is always label, even when empty
+    for (size_t i = 1; i < pos_params.size(); ++i)
+    {
+        if (!first)
+            signature << ",";
+        else
+            first = false;
+
+        signature << "&" << *pos_params[i]->id;
+    }
+    for (const auto& param : m.get_keyword_params())
+    {
+        if (!first)
+            signature << ",";
+        else
+            first = false;
+        signature << "&" << *param->id << "=" << param->default_data->get_value();
+    }
+    return signature.str();
+}
+
+
+bool is_comment(std::string_view line)
+{
+    return line.size() > 0 && (line[0] == '*' || (line.size() > 1 && line.substr(0, 2) == ".*"));
+}
+
+bool is_continued_line(std::string_view line)
+{
+    return line.size() > continuation_column && !isspace(line[continuation_column]);
+}
+
+
+std::string get_macro_documentation(const text_data_ref_t& text, const macro_info& m)
+{
+    // We start at line where the name of the macro is written
+
+
+    size_t MACRO_line = m.definition_location.pos.line - 1;
+    // Skip over MACRO statement
+    size_t doc_before_begin_line = MACRO_line - 1;
+    // Find the beginning line of documentation written in front of macro definition
+    while (doc_before_begin_line != -1 && is_comment(text.get_line(doc_before_begin_line)))
+        --doc_before_begin_line;
+    ++doc_before_begin_line;
+
+    std::string_view doc_before = text.get_range_content({ { doc_before_begin_line, 0 }, { MACRO_line, 0 } });
+
+    // Find the end line of macro definition
+    size_t macro_def_end_line = m.definition_location.pos.line;
+    while (macro_def_end_line < text.line_indices.size() && is_continued_line(text.get_line(macro_def_end_line)))
+        ++macro_def_end_line;
+    ++macro_def_end_line;
+
+    std::string_view macro_def =
+        text.get_range_content({ { m.definition_location.pos.line, 0 }, { macro_def_end_line, 0 } });
+
+    // Find the end line of documentation that comes after the macro definition
+    size_t doc_after_end_line = macro_def_end_line;
+
+    while (doc_after_end_line < text.line_indices.size() && is_comment(text.get_line(doc_after_end_line)))
+        ++doc_after_end_line;
+
+    std::string_view doc_after = text.get_range_content({ { macro_def_end_line, 0 }, { doc_after_end_line, 0 } });
+
+    std::string result;
+    result.append(macro_def);
+    result.append(doc_before);
+    result.append(doc_after);
+
+    return result;
+}
+
+completion_list_s lsp_context::complete_instr(const file_info_ptr& file, position pos) const
+{
+    completion_list_s result = completion_item_s::instruction_completion_items_;
+
+    for (const auto& macro_i : macros_)
+    {
+        const context::macro_definition& m = *macro_i.second->macro_definition;
+
+        std::string s = macro_i.second->definition_location.file + "["
+            + std::to_string(macro_i.second->definition_location.pos.line) + ","
+            + std::to_string(macro_i.second->definition_location.pos.column);
+        //get_macro_documentation(file->data, m)
+        result.emplace_back(*m.id,
+            get_macro_signature(m),
+            *m.id,
+            get_macro_documentation(file->data, *macro_i.second),
+            completion_item_kind::macro);
+        // CHECKNI AMXOPUT
+    }
+
+    return result;
+}
 
 
 template<typename T>
@@ -263,8 +385,8 @@ typename occ_type_helper<kind>::ret_type find_definition(const symbol_occurence&
     }
     if constexpr (kind == lsp::occurence_kind::SEQ)
     {
-        const context::label_storage seq_syms =
-            macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+        const context::label_storage& seq_syms =
+            macro_i ? macro_i->macro_definition->labels : opencode.hlasm_ctx.current_scope().sequence_symbols;
         if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
             return sym->second.get();
         return nullptr;
@@ -278,7 +400,7 @@ typename occ_type_helper<kind>::ret_type find_definition(const symbol_occurence&
 
         if (sym != var_syms.end())
             return &*sym;
-        return nullptr
+        return nullptr;
     }
     if constexpr (kind == lsp::occurence_kind::INSTR)
     {
