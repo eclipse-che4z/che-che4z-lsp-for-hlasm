@@ -29,7 +29,6 @@ struct library_data
 // Interface that the analyzer uses to parse macros and COPY files in separate files (libraries).
 class parse_lib_provider
 {
-    
 public:
     // Parses library with specified name and saves it into context.
     // Library data passes information whether COPY or macro is going to be parsed.
@@ -55,10 +54,7 @@ public:
     };
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; };
 
-     const asm_option& get_asm_options(const std::string&) override {
-       
-        return asm_opts;
-    };
+    const asm_option& get_asm_options(const std::string&) override { return asm_opts; };
     static empty_parse_lib_provider instance;
 };
 
