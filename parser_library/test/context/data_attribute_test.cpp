@@ -711,6 +711,8 @@ TEST(data_attributes, O_opencode_var)
 
 class O_mock : public workspaces::parse_lib_provider
 {
+    asm_option asm_options;
+
 public:
     virtual workspaces::parse_result parse_library(
         const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
@@ -723,11 +725,7 @@ public:
         return true;
     }
     virtual bool has_library(const std::string& lib, context::hlasm_context&) const override { return lib == "MAC"; }
-    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
-    {
-        std::map<std::string, std::string> map;
-        return map;
-    }
+    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
 
 private:
     const std::string M =

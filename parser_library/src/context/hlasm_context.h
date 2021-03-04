@@ -19,12 +19,14 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <workspace_manager.h>
 
 #include "code_scope.h"
 #include "lsp_context.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
+
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -68,7 +70,7 @@ class hlasm_context
     std::set<std::string> visited_files_;
 
     // Compiler options
-    std::map<std::string, std::string> asm_options_;
+    asm_option asm_options_;
 
     // map of all instruction in HLASM
     const instruction_storage instruction_map_;
@@ -82,7 +84,7 @@ class hlasm_context
     bool is_opcode(id_index symbol) const;
 
 public:
-    hlasm_context(std::string file_name = "", std::map<std::string, std::string> asm_options = {});
+    hlasm_context(std::string file_name = "", asm_option asm_opts = {});
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;

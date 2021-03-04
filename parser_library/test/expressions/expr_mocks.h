@@ -27,6 +27,7 @@ class dep_sol_mock : public context::dependency_solver
 
 class lib_prov_mock : public workspaces::parse_lib_provider
 {
+    asm_option asm_options;
     virtual workspaces::parse_result parse_library(
         const std::string&, context::hlasm_context&, const workspaces::library_data)
     {
@@ -34,9 +35,9 @@ class lib_prov_mock : public workspaces::parse_lib_provider
     };
 
     virtual bool has_library(const std::string&, context::hlasm_context&) const { return false; }
-    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
+    virtual const asm_option& get_asm_options(const std::string&)
     {
-        std::map<std::string, std::string> asm_options;
+        asm_options = {};
         return asm_options;
     }
 };

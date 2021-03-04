@@ -227,6 +227,7 @@ bool check_step(
 class workspace_mock : public workspace
 {
     lib_config config;
+    asm_option asm_opts;
 
 public:
     workspace_mock(file_manager& file_mngr)
@@ -242,9 +243,10 @@ public:
 
         return false;
     }
-    virtual std::map<std::string, std::string> get_asm_options(const std::string& file_name)
+    virtual const asm_option& get_asm_options(const std::string& file_name)
     {
-        return { { "SYSPARM", "SEVEN" } };
+        asm_opts = {"SEVEN"};
+        return asm_opts;
     }
 };
 

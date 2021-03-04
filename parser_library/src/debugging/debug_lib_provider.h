@@ -57,7 +57,7 @@ public:
 
         return false;
     }
-    std::map<std::string, std::string> get_asm_options(const std::string& file_name) override
+    const asm_option& get_asm_options(const std::string& file_name) override
     {
         auto& proc_grp = ws_.get_proc_grp_by_program(file_name);
 

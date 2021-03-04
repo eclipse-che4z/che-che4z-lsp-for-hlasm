@@ -22,6 +22,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
 
+
 namespace hlasm_plugin::parser_library::context {
 
 code_scope* hlasm_context::curr_scope() { return &scope_stack_.back(); }
@@ -223,10 +224,9 @@ void hlasm_context::add_global_system_vars()
 
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
-            if (asm_options_.count("SYSPARM"))
-            {
-                val->set_value(asm_options_.at("SYSPARM"));
-            }
+
+            val->set_value(asm_options_.sysparm);
+
             globals_.insert({ SYSPARM, std::move(val) });
         }
         {
@@ -252,7 +252,8 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name, std::map<std::string, std::string> asm_options)
+hlasm_context::hlasm_context(std::string file_name, asm_option asm_options)
+
     : asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)

@@ -516,6 +516,8 @@ TEST(macro, arguments_continuation)
 
 class bad_mock : public parse_lib_provider
 {
+    asm_option asm_options;
+
 public:
     bad_mock(int lib_code)
         : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
@@ -532,11 +534,7 @@ public:
         return true;
     }
     virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
-    virtual std::map<std::string, std::string> get_asm_options(const std::string&)
-    {
-        std::map<std::string, std::string> asm_options;
-        return asm_options;
-    }
+    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
     std::unique_ptr<analyzer> a;
 
 private:

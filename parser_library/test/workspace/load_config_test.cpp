@@ -258,12 +258,12 @@ TEST(workspace, load_config_synthetic)
     }
     // test of asm_options
 #ifdef _WIN32
-    auto asm_options = ws.get_asm_options("test_proc_grps_uri\\pgm1");
+    auto& asm_options = ws.get_asm_options("test_proc_grps_uri\\pgm1");
 #else
-    auto asm_options = ws.get_asm_options("test_proc_grps_uri/pgm1");
+    auto& asm_options = ws.get_asm_options("test_proc_grps_uri/pgm1");
 #endif
-    std::map<std::string, std::string> asm_map = { { "SYSPARM", "SEVEN" }, { "PROFILE", "MAC1" } };
-    EXPECT_EQ(asm_options, asm_map);
+    EXPECT_EQ("SEVEN", asm_options.sysparm);
+    EXPECT_EQ("MAC1", asm_options.profile);
 }
 
 
@@ -285,6 +285,7 @@ TEST(workspace, pgm_conf_malformed)
 TEST(workspace, proc_grps_malformed)
 {
     file_manager_impl fm;
+
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
@@ -330,11 +331,14 @@ TEST(workspace, asm_options_invalid)
       "name": "P1",
       "libs": [ "lib" ],    
       "asm_options": {
-        "SYSPARM": 42
+        "SYSPARM" : 42
+   
+        }
     }
   ]
 })";
     file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, proc_file);
 
     lib_config config;

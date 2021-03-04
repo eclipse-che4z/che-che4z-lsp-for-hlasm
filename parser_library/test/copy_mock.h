@@ -21,6 +21,7 @@ namespace hlasm_plugin::parser_library {
 
 class copy_mock : public workspaces::parse_lib_provider
 {
+    asm_option asm_options;
     const std::string* find_content(const std::string& library) const
     {
         if (library == "COPYR")
@@ -74,11 +75,8 @@ public:
         (void)hlasm_ctx;
         return find_content(library);
     }
-    std::map<std::string, std::string> get_asm_options(const std::string&)
-    {
-        std::map<std::string, std::string> asm_options;
-        return asm_options;
-    }
+
+    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
     std::vector<std::unique_ptr<analyzer>> holder;
     std::unique_ptr<analyzer> a;
 

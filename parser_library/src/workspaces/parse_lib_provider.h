@@ -29,6 +29,7 @@ struct library_data
 // Interface that the analyzer uses to parse macros and COPY files in separate files (libraries).
 class parse_lib_provider
 {
+    
 public:
     // Parses library with specified name and saves it into context.
     // Library data passes information whether COPY or macro is going to be parsed.
@@ -37,7 +38,7 @@ public:
 
     virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
 
-    virtual std::map<std::string, std::string> get_asm_options(const std::string&) = 0;
+    virtual const asm_option& get_asm_options(const std::string&) = 0;
 
     virtual ~parse_lib_provider() = default;
 };
@@ -45,6 +46,8 @@ public:
 // Parse lib provider that does not provide any libraries.
 class empty_parse_lib_provider : public parse_lib_provider
 {
+    asm_option asm_opts;
+
 public:
     virtual parse_result parse_library(const std::string&, context::hlasm_context&, const library_data) override
     {
@@ -52,10 +55,9 @@ public:
     };
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; };
 
-    virtual std::map<std::string, std::string> get_asm_options(const std::string&) override
-    {
-        std::map<std::string, std::string> asm_options;
-        return asm_options;
+     const asm_option& get_asm_options(const std::string&) override {
+       
+        return asm_opts;
     };
     static empty_parse_lib_provider instance;
 };
