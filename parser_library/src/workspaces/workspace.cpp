@@ -360,7 +360,7 @@ bool workspace::load_and_process_config()
                 // else ignore, publish warning
             }
         }
-        if (asm_options.size() != 0)
+        if (!asm_options.empty())
         {
             prc_grp.add_asm_options(asm_options);
         }
