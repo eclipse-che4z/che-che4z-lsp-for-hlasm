@@ -13,11 +13,15 @@
  */
 
 #include "file_info.h"
-#include "workspaces/file_impl.h"
 
 #include <algorithm>
 
+#include "workspaces/file_impl.h"
+
 namespace hlasm_plugin::parser_library::lsp {
+
+bool operator==(const line_range& lhs, const line_range& rhs) { return lhs.begin == rhs.begin && lhs.end == rhs.end; }
+bool operator<(const line_range& lhs, const line_range& rhs) { return lhs.begin < rhs.begin && lhs.end < rhs.end; }
 
 file_info::file_info(std::string name, text_data_ref_t text_data)
     : name(std::move(name))
@@ -66,10 +70,10 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
     return std::make_pair(found, std::move(macro_i));
 }
 
-macro_info_ptr file_info::find_scope(position pos) 
+macro_info_ptr file_info::find_scope(position pos)
 {
-    for (const auto& scope : slices)
-        if (scope.begin_line <= pos.line && scope.end_line >= pos.line)
+    for (const auto& [_, scope] : slices)
+        if (scope.file_lines.begin <= pos.line && scope.file_lines.end >= pos.line)
             return scope.macro_context;
     return nullptr;
 }
@@ -92,23 +96,14 @@ void file_info::update_occurences(const occurence_storage& occurences_upd)
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
 {
-    size_t curr_slice = 0;
-    bool reached_end = false;
-
-    for (size_t i = 0; i < slices_upd.size(); ++i)
+    for (const auto& slice : slices_upd)
     {
-        if (curr_slice == slices.size() || reached_end) // if at the end of current slices, append new slices to the end
-        {
-            reached_end = true;
-            slices.emplace_back(slices_upd[i]);
-        }
-        else if (slices_upd[i].end_line <= slices[curr_slice].begin_line) // if new slice inbetween present slices
-            slices.insert(slices.begin() + curr_slice++, slices_upd[i]);
-        else if (slices_upd[i].begin_line == slices[curr_slice].begin_line
-            && slices_upd[i].end_line == slices[curr_slice].end_line) // if slices match exactly
-            slices[curr_slice++] = slices_upd[i];
-        else
-            curr_slice++;
+        // If the slice is not there yet, add it.
+        // If the slice is already there, overwrite it with the new slice.
+        // There may be some obscure cases where the same portion of code is parsed multiple times, resulting in
+        // defining more macros with the same name. For now, we take the last definition (since file_slice contains
+        // pointer to macro definition).
+        slices[slice.file_lines] = slice;
     }
 }
 
@@ -116,18 +111,18 @@ file_slice_t file_slice_t::transform_slice(const macro_slice_t& slice, macro_inf
 {
     file_slice_t fslice;
 
-    fslice.begin_idx = slice.begin_statement;
-    fslice.end_idx = slice.end_statement;
+    fslice.macro_lines.begin = slice.begin_statement;
+    fslice.macro_lines.end = slice.end_statement;
 
     if (slice.begin_statement == 0)
-        fslice.begin_line = macro_i->definition_location.pos.line;
+        fslice.file_lines.begin = macro_i->definition_location.pos.line;
     else
-        fslice.begin_line = macro_i->macro_definition->copy_nests[fslice.begin_idx].back().pos.line;
+        fslice.file_lines.begin = macro_i->macro_definition->copy_nests[fslice.macro_lines.begin].back().pos.line;
 
     if (slice.end_statement == macro_i->macro_definition->copy_nests.size())
-        fslice.end_line = macro_i->macro_definition->copy_nests.back().back().pos.line + 1;
+        fslice.file_lines.end = macro_i->macro_definition->copy_nests.back().back().pos.line + 1;
     else
-        fslice.end_line = macro_i->macro_definition->copy_nests[fslice.end_idx].back().pos.line;
+        fslice.file_lines.end = macro_i->macro_definition->copy_nests[fslice.macro_lines.end].back().pos.line;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = macro_i;

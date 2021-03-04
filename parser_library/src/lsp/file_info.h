@@ -15,6 +15,8 @@
 #ifndef LSP_FILE_INFO_H
 #define LSP_FILE_INFO_H
 
+#include <functional>
+#include <map>
 #include <variant>
 
 #include "context/copy_member.h"
@@ -31,14 +33,25 @@ enum class scope_type
     INNER_MACRO
 };
 
+struct line_range
+{
+    size_t begin;
+    size_t end;
+};
+
+bool operator==(const line_range& lhs, const line_range& rhs);
+bool operator<(const line_range& lhs, const line_range& rhs);
+
 struct file_slice_t
 {
     scope_type type;
 
     macro_info_ptr macro_context;
 
-    size_t begin_idx, end_idx;
-    size_t begin_line, end_line;
+    // range of slice within macro definition
+    line_range macro_lines;
+    // range of slice within file
+    line_range file_lines;
 
     static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
     static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
@@ -51,24 +64,23 @@ enum class file_type
     OPENCODE
 };
 
-struct file_info;
+class file_info;
 
 using file_info_ptr = std::unique_ptr<file_info>;
 
 using occurence_scope_t = std::pair<const symbol_occurence*, macro_info_ptr>;
 
-struct file_info
+class file_info
 {
-    //first variant is monostate as there is no storing of opencode statements in the code yet
+public:
+    // first variant is monostate as there is no storing of opencode statements in the code yet
     using owner_t = std::variant<std::monostate, context::macro_def_ptr, context::copy_member_ptr>;
 
     const std::string name;
     const file_type type;
     const owner_t owner;
     const text_data_ref_t data;
-
-    std::vector<file_slice_t> slices;
-    std::vector<symbol_occurence> occurences;
+    
 
     explicit file_info(std::string name, text_data_ref_t text_data);
     explicit file_info(context::macro_def_ptr owner, text_data_ref_t text_data);
@@ -83,6 +95,10 @@ struct file_info
 
     void update_occurences(const occurence_storage& occurences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
+
+private:
+    std::map<line_range, file_slice_t> slices;
+    std::vector<symbol_occurence> occurences;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp
