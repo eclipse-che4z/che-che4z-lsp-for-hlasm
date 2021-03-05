@@ -120,7 +120,7 @@ void feature_language_features::hover(const json& id, const json& params)
     response_->respond(id, "", json { { "contents", hover_arr } });
 }
 
-//Completion item kinds from the LSP specification
+// Completion item kinds from the LSP specification
 enum class lsp_completion_item_kind
 {
     text = 1,
@@ -161,6 +161,8 @@ std::unordered_map<parser_library::completion_item_kind, lsp_completion_item_kin
         { completion_item_kind::seq_sym, lsp_completion_item_kind::reference } };
 }
 
+json get_markup_content(std::string_view content) { return json { { "kind", "markdown" }, { "value", content } }; }
+
 void feature_language_features::completion(const json& id, const json& params)
 {
     auto document_uri = params["textDocument"]["uri"].get<std::string>();
@@ -186,7 +188,7 @@ void feature_language_features::completion(const json& id, const json& params)
         completion_item_array.push_back(json { { "label", item.label() },
             { "kind", completion_item_kind_mapping()[item.kind()] },
             { "detail", item.detail() },
-            { "documentation", item.documentation() },
+            { "documentation", get_markup_content(item.documentation()) },
             { "insertText", item.insert_text() } });
     }
     to_ret = json { { "isIncomplete", false }, { "items", completion_item_array } };

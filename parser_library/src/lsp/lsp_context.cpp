@@ -214,6 +214,8 @@ std::string get_macro_signature(const context::macro_definition& m)
     // First positional parameter is always label, even when empty
     for (size_t i = 1; i < pos_params.size(); ++i)
     {
+        if (pos_params[i] == nullptr)
+            continue;
         if (!first)
             signature << ",";
         else
@@ -276,10 +278,11 @@ std::string get_macro_documentation(const text_data_ref_t& text, const macro_inf
 
     std::string_view doc_after = text.get_range_content({ { macro_def_end_line, 0 }, { doc_after_end_line, 0 } });
 
-    std::string result;
+    std::string result = "```\n";
     result.append(macro_def);
     result.append(doc_before);
     result.append(doc_after);
+    result.append("```\n");
 
     return result;
 }
@@ -295,11 +298,16 @@ completion_list_s lsp_context::complete_instr(const file_info_ptr& file, positio
         std::string s = macro_i.second->definition_location.file + "["
             + std::to_string(macro_i.second->definition_location.pos.line) + ","
             + std::to_string(macro_i.second->definition_location.pos.column);
+        
+        std::string macro_documentation;
+        
+        if (auto it = files_.find(macro_i.second->definition_location.file); it != files_.end())
+            macro_documentation = get_macro_documentation(it->second->data, *macro_i.second);
+        
         //get_macro_documentation(file->data, m)
         result.emplace_back(*m.id,
             get_macro_signature(m),
-            *m.id,
-            get_macro_documentation(file->data, *macro_i.second),
+            *m.id, std::move(macro_documentation),
             completion_item_kind::macro);
         // CHECKNI AMXOPUT
     }
