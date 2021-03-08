@@ -285,7 +285,7 @@ void lsp_analyzer::collect_LCL_GBL_defs(
 {
     for (auto& op : statement.operands_ref().value)
     {
-        if (op->type != semantics::operand_type::EMPTY)
+        if (op->type == semantics::operand_type::EMPTY)
             continue;
 
         auto ca_op = op->access_ca();
