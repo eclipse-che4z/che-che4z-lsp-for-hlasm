@@ -388,7 +388,7 @@ void lsp_info_processor::add_hl_symbol(token_info symbol)
 
         // split multi line symbols
         auto rest = symbol;
-        while (rest.token_range.start.line != rest.token_range.end.line)
+        while (rest.token_range.start.line < rest.token_range.end.line)
         {
             // remove first line and add as separate token
             auto first = rest;
