@@ -172,7 +172,7 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     {
         auto cont = hover(vardef);
         completion_item_s item(
-            "&" + *vardef.name, std::move(cont.item(0)), "&" + *vardef.name, "", completion_item_kind::var_sym);
+            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::var_sym);
         items.push_back(std::move(item));
     }
 
