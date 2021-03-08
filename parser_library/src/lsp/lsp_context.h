@@ -37,8 +37,6 @@ public:
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
-    void update_file_info(const std::string& name, const occurence_storage& occurences);
-
     position_uri definition(const std::string& document_uri, position pos) const override;
     position_uris references(const std::string& document_uri, position pos) const override;
     string_array hover(const std::string& document_uri, position pos) const override;

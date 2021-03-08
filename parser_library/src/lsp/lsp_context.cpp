@@ -58,12 +58,6 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
     distribute_file_occurences(opencode_->file_occurences);
 }
 
-void lsp_context::update_file_info(const std::string& name, const occurence_storage& occurences)
-{
-    assert(files_.find(name) != files_.end());
-    files_[name]->update_occurences(occurences);
-}
-
 position_uri lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
