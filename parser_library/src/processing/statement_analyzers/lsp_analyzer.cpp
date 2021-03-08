@@ -178,43 +178,64 @@ void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& oper
     std::for_each(operands.vars.begin(), operands.vars.end(), [&](const auto& v) { collector.get_occurence(*v); });
 }
 
-#define IF_LCL_GBL(X, Y, Z)                                                                                            \
-    if (code.value == ctx.ids().add(#X))                                                                               \
-    {                                                                                                                  \
-        set_type = context::SET_t_enum::Y;                                                                             \
-        global = Z;                                                                                                    \
-        return true;                                                                                                   \
-    }
-#define IF_SET(X, Y)                                                                                                   \
-    if (code.value == ctx.ids().add(#X))                                                                               \
-    {                                                                                                                  \
-        set_type = context::SET_t_enum::Y;                                                                             \
-        return true;                                                                                                   \
-    }
+
 
 bool is_LCL_GBL(const processing::resolved_statement& statement,
     context::hlasm_context& ctx,
     context::SET_t_enum& set_type,
     bool& global)
 {
+    using namespace context;
+
+    struct LCL_GBL_instr
+    {
+        std::string name;
+        SET_t_enum type;
+        bool global;
+    };
+
+    const static LCL_GBL_instr instructions[6] = { { "LCLA", SET_t_enum::A_TYPE, false },
+        { "LCLB", SET_t_enum::B_TYPE, false },
+        { "LCLC", SET_t_enum::C_TYPE, false },
+        { "GBLA", SET_t_enum::A_TYPE, true },
+        { "GBLB", SET_t_enum::B_TYPE, true },
+        { "GBLC", SET_t_enum::C_TYPE, true } };
+
+
     const auto& code = statement.opcode_ref();
 
-    IF_LCL_GBL(LCLA, A_TYPE, false);
-    IF_LCL_GBL(LCLB, B_TYPE, false);
-    IF_LCL_GBL(LCLC, C_TYPE, false);
-    IF_LCL_GBL(GBLA, A_TYPE, true);
-    IF_LCL_GBL(GBLB, B_TYPE, true);
-    IF_LCL_GBL(GBLC, C_TYPE, true);
+    for (const auto& i : instructions)
+    {
+        if (code.value == ctx.ids().add(i.name))
+        {
+            set_type = i.type;
+            global = i.global;
+            return true;
+        }
+    }
+
     return false;
 }
 
+
+
 bool is_SET(const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
 {
+    using namespace context;
     const auto& code = statement.opcode_ref();
 
-    IF_SET(SETA, A_TYPE);
-    IF_SET(SETB, B_TYPE);
-    IF_SET(SETC, C_TYPE);
+    const static std::pair<std::string, SET_t_enum> instructions[3] = {
+        { "SETA", SET_t_enum::A_TYPE }, { "SETB", SET_t_enum::B_TYPE }, { "SETC", SET_t_enum::C_TYPE }
+    };
+
+    for (const auto& i : instructions)
+    {
+        if (code.value == ctx.ids().add(i.first))
+        {
+            set_type = i.second;
+            return true;
+        }
+    }
     return false;
 }
 
