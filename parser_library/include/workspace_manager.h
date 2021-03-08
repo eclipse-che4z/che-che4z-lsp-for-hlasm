@@ -98,7 +98,7 @@ public:
     virtual void did_change_watched_files(const char** paths, size_t size);
 
     virtual position_uri definition(const std::string& document_uri, position pos);
-    virtual position_uris references(const std::string& document_uri, position pos);
+    virtual position_uri_list references(const std::string& document_uri, position pos);
     virtual string_array hover(const std::string& document_uri, position pos);
     virtual completion_list completion(const std::string& document_uri,
         position pos,

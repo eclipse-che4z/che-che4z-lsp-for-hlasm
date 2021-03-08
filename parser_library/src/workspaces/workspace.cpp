@@ -262,16 +262,20 @@ void workspace::did_change_watched_files(const std::string& file_uri)
     parse_file(file_uri);
 }
 
-position_uri workspace::definition(const std::string& document_uri, const position pos) const
+location workspace::definition(const std::string& document_uri, const position pos) const
 {
     auto opencodes = find_related_opencodes(document_uri);
+    if (opencodes.empty())
+        return { pos, document_uri };
     // for now take last opencode
     return opencodes.back()->get_lsp_feature_provider().definition(document_uri, pos);
 }
 
-position_uris workspace::references(const std::string& document_uri, const position pos) const
+location_list workspace::references(const std::string& document_uri, const position pos) const
 {
     auto opencodes = find_related_opencodes(document_uri);
+    if (opencodes.empty())
+        return {};
     // for now take last opencode
     return opencodes.back()->get_lsp_feature_provider().references(document_uri, pos);
 }
@@ -279,6 +283,8 @@ position_uris workspace::references(const std::string& document_uri, const posit
 string_array workspace::hover(const std::string& document_uri, const position pos) const
 {
     auto opencodes = find_related_opencodes(document_uri);
+    if (opencodes.empty())
+        return {};
     // for now take last opencode
     return opencodes.back()->get_lsp_feature_provider().hover(document_uri, pos);
 }
@@ -289,6 +295,8 @@ lsp::completion_list_s workspace::completion(const std::string& document_uri,
     completion_trigger_kind trigger_kind) const
 {
     auto opencodes = find_related_opencodes(document_uri);
+    if (opencodes.empty())
+        return {};
     // for now take last opencode
     return opencodes.back()->get_lsp_feature_provider().completion(document_uri, pos, trigger_char, trigger_kind);
 }

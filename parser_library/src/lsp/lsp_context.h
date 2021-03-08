@@ -19,6 +19,7 @@
 #include "file_info.h"
 #include "opencode_info.h"
 #include "completion_item.h"
+#include "location.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
@@ -37,8 +38,8 @@ public:
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
-    position_uri definition(const std::string& document_uri, position pos) const override;
-    position_uris references(const std::string& document_uri, position pos) const override;
+    location definition(const std::string& document_uri, position pos) const override;
+    location_list references(const std::string& document_uri, position pos) const override;
     string_array hover(const std::string& document_uri, position pos) const override;
     completion_list_s completion(const std::string& document_uri,
         position pos,

@@ -40,7 +40,7 @@ public:
     MOCK_METHOD1(configuration_changed, void(const lib_config& new_config));
 
     MOCK_METHOD(position_uri, definition, (const std::string& document_uri, const position pos), (override));
-    MOCK_METHOD(position_uris, references, (const std::string& document_uri, const position pos), (override));
+    MOCK_METHOD(position_uri_list, references, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(string_array, hover, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,

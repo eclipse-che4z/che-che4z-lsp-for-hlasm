@@ -74,7 +74,10 @@ TEST(language_features, hover)
 TEST(language_features, definition)
 {
     using namespace ::testing;
-    test::ws_mngr_mock ws_mngr;
+
+
+    parser_library::workspace_manager ws_mngr;
+
     NiceMock<response_provider_mock> response_mock;
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
@@ -84,9 +87,8 @@ TEST(language_features, definition)
 #else
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
-
-    parser_library::position_uri pos { parser_library::position(0, 1), path };
-    EXPECT_CALL(ws_mngr, definition(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(pos));
+    
+    EXPECT_CALL(response_mock, respond(json(""), "", ::testing::_));
     notifs["textDocument/definition"]("", params1);
 }
 
@@ -103,8 +105,8 @@ TEST(language_features, references)
 #else
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
-    parser_library::position_uris ret = { parser_library::position_uri { parser_library::position(0, 1), path } };
-    EXPECT_CALL(ws_mngr, references(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(ret));
+
+    EXPECT_CALL(ws_mngr, references(StrEq(path), parser_library::position(0, 1)));
     notifs["textDocument/references"]("", params1);
 }
 

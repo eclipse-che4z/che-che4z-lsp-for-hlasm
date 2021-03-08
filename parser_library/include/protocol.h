@@ -36,16 +36,6 @@ namespace hlasm_plugin::parser_library {
 
 template class PARSER_LIBRARY_EXPORT std::vector<std::string>;
 
-using string_array = std::vector<std::string>;
-
-struct PARSER_LIBRARY_EXPORT num_array
-{
-    num_array(size_t* arr, size_t size);
-
-    size_t* arr;
-    size_t size;
-};
-
 using version_t = uint64_t;
 
 namespace context {
@@ -97,7 +87,14 @@ namespace lsp {
 struct completion_item_s;
 }
 
+struct range_uri_s;
+class diagnostic_s;
+class diagnostic_related_info_s;
+struct location;
+
 using file_id = workspaces::processor_file*;
+
+using string_array = std::vector<std::string>;
 
 enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
 {
@@ -133,15 +130,15 @@ using completion_list = c_view_array<completion_item, lsp::completion_item_s>;
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
-    position pos;
-    std::string uri;
+    position_uri(const location& item);
+    position pos();
+    std::string_view file();
+
+private:
+    const location& item_;
 };
 
-template class PARSER_LIBRARY_EXPORT std::vector<position_uri>;
-
-using position_uris = std::vector<position_uri>;
-
-struct range_uri_s;
+using position_uri_list = c_view_array<position_uri, location>;
 
 struct PARSER_LIBRARY_EXPORT range_uri
 {
@@ -194,9 +191,6 @@ enum class PARSER_LIBRARY_EXPORT diagnostic_severity
     hint = 4,
     unspecified = 5
 };
-
-class diagnostic_s;
-class diagnostic_related_info_s;
 
 struct PARSER_LIBRARY_EXPORT diagnostic_related_info
 {

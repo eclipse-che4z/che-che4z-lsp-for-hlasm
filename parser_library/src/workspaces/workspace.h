@@ -92,8 +92,8 @@ public:
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
 
-    position_uri definition(const std::string& document_uri, position pos) const override;
-    position_uris references(const std::string& document_uri, position pos) const override;
+    location definition(const std::string& document_uri, position pos) const override;
+    location_list references(const std::string& document_uri, position pos) const override;
     string_array hover(const std::string& document_uri, position pos) const override;
     lsp::completion_list_s completion(const std::string& document_uri,
         position pos,

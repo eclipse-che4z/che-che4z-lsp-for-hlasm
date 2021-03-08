@@ -98,7 +98,7 @@ position_uri workspace_manager::definition(const std::string& document_uri, cons
     return impl_->definition(document_uri, pos);
 }
 
-position_uris workspace_manager::references(const std::string& document_uri, const position pos)
+position_uri_list workspace_manager::references(const std::string& document_uri, const position pos)
 {
     return impl_->references(document_uri, pos);
 }

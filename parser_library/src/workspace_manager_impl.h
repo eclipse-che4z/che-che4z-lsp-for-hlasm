@@ -132,20 +132,28 @@ public:
             wks.second.set_message_consumer(consumer);
     }
 
+    location definition_result;
     position_uri definition(const std::string& document_uri, const position pos)
     {
         if (cancel_ && *cancel_)
-            return { pos, document_uri };
+        {
+            definition_result = { pos, document_uri };
+            return definition_result;
+        }
+        definition_result = ws_path_match(document_uri).definition(document_uri, pos);
 
-        return ws_path_match(document_uri).definition(document_uri, pos);
+        return definition_result;
     }
 
-    position_uris references(std::string document_uri, const position pos)
+    location_list references_result;
+    position_uri_list references(std::string document_uri, const position pos)
     {
         if (cancel_ && *cancel_)
             return {};
 
-        return ws_path_match(document_uri).references(document_uri, pos);
+        references_result = ws_path_match(document_uri).references(document_uri, pos);
+
+        return { references_result.data(), references_result.size() };
     }
 
     string_array hover(const std::string& document_uri, const position pos)

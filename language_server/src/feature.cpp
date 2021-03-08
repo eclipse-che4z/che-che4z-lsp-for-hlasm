@@ -65,20 +65,20 @@ std::string feature::uri_to_path(const std::string& uri)
     return p.lexically_normal().string();
 }
 
-std::string feature::path_to_uri(std::string path)
+std::string feature::path_to_uri(std::string_view path)
 {
     if (path.substr(0, untitled.size()) == untitled)
-        return path;
+        return std::string(path);
 
-    std::replace(path.begin(), path.end(), '\\', '/');
     // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
     std::string uri;
     auto out = std::back_inserter(uri);
-    auto it = path.cbegin();
-    while (it != path.cend())
+    
+    for (char c : path)
     {
-        network::detail::encode_char(*it, out, "/.%;=");
-        ++it;
+        if (c == '\\')
+            c = '/';
+        network::detail::encode_char(c, out, "/.%;=");
     }
 
 #ifdef _WIN32

@@ -17,11 +17,44 @@
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
 #include "lsp/completion_item.h"
+#include "location.h"
 #include "semantics/highlighting_info.h"
 #include "semantics/lsp_info_processor.h"
 #include "workspaces/processor.h"
 
 namespace hlasm_plugin::parser_library {
+
+//********************** completion item **********************
+
+completion_item::completion_item(const lsp::completion_item_s& item)
+    : item_(item)
+{}
+
+std::string_view completion_item::label() const { return item_.label; }
+completion_item_kind completion_item::kind() const { return item_.kind; }
+std::string_view completion_item::detail() const { return item_.detail; }
+std::string_view completion_item::documentation() const { return item_.documentation; }
+std::string_view completion_item::insert_text() const { return item_.insert_text; }
+
+template<>
+completion_item c_view_array<completion_item, lsp::completion_item_s>::item(size_t index)
+{
+    return data_[index];
+}
+
+//********************** location **********************
+
+position_uri::position_uri(const location& item)
+    : item_(item)
+{}
+position position_uri::pos() { return item_.pos; }
+std::string_view position_uri::file() { return item_.file; }
+
+template<>
+position_uri c_view_array<position_uri, location>::item(size_t index)
+{
+    return data_[index];
+}
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
     : impl_(info)
@@ -155,22 +188,6 @@ variable c_view_array<variable, debugging::variable*>::item(size_t index)
     return *data_[index];
 }
 
-//********************** completion item **********************
 
-completion_item::completion_item(const lsp::completion_item_s& item)
-    : item_(item)
-{}
-
-std::string_view completion_item::label() const { return item_.label; }
-completion_item_kind completion_item::kind() const { return item_.kind; }
-std::string_view completion_item::detail() const { return item_.detail; }
-std::string_view completion_item::documentation() const { return item_.documentation; }
-std::string_view completion_item::insert_text() const { return item_.insert_text; }
-
-template<>
-completion_item c_view_array<completion_item, lsp::completion_item_s>::item(size_t index)
-{
-    return data_[index];
-}
 
 } // namespace hlasm_plugin::parser_library

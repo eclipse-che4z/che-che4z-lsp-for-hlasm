@@ -16,7 +16,7 @@
 #define CONTEXT_COPY_MEMBER_H
 
 #include "id_storage.h"
-#include "range.h"
+#include "location.h"
 #include "statement_cache.h"
 
 namespace hlasm_plugin {

@@ -58,7 +58,7 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
     distribute_file_occurences(opencode_->file_occurences);
 }
 
-position_uri lsp_context::definition(const std::string& document_uri, const position pos) const
+location lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
@@ -72,7 +72,7 @@ position_uri lsp_context::definition(const std::string& document_uri, const posi
     return { pos, document_uri };
 }
 
-void collect_references(position_uris& refs, const symbol_occurence& occ, const file_occurences_t& file_occs)
+void collect_references(location_list& refs, const symbol_occurence& occ, const file_occurences_t& file_occs)
 {
     for (const auto& [file, occs] : file_occs)
     {
@@ -82,9 +82,9 @@ void collect_references(position_uris& refs, const symbol_occurence& occ, const 
     }
 }
 
-position_uris lsp_context::references(const std::string& document_uri, const position pos) const
+location_list lsp_context::references(const std::string& document_uri, const position pos) const
 {
-    position_uris result;
+    location_list result;
 
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
@@ -172,7 +172,7 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     {
         auto cont = hover(vardef);
         completion_item_s item(
-            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::var_sym);
+            "&" + *vardef.name, std::move(cont.item(0)), "&" + *vardef.name, "", completion_item_kind::var_sym);
         items.push_back(std::move(item));
     }
 

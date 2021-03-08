@@ -17,14 +17,15 @@
 
 #include "completion_item.h"
 #include "protocol.h"
+#include "location.h"
 
 
 namespace hlasm_plugin::parser_library::lsp {
 
 struct feature_provider
 {
-    virtual position_uri definition(const std::string& document_uri, position pos) const = 0;
-    virtual position_uris references(const std::string& document_uri, position pos) const = 0;
+    virtual location definition(const std::string& document_uri, position pos) const = 0;
+    virtual location_list references(const std::string& document_uri, position pos) const = 0;
     virtual string_array hover(const std::string& document_uri, position pos) const = 0;
     virtual completion_list_s completion(const std::string& document_uri,
         position pos,
