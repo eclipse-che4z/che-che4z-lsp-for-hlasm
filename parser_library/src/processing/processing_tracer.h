@@ -19,9 +19,11 @@ namespace hlasm_plugin::parser_library::processing {
 
 class processing_tracer
 {
+protected:
+    ~processing_tracer() = default;
+
 public:
     virtual void statement(range statement_range) = 0;
-    virtual ~processing_tracer() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

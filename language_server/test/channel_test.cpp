@@ -220,7 +220,7 @@ TEST(channel, dap_wrap)
 
     nlohmann::json value = "[1, 2, 3]"_json;
     auto wrapped_value =
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dsp_tunnel/0" }, { "params", value } };
+        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dap_tunnel/0" }, { "params", value } };
 
     nlohmann::json lref;
     nlohmann::json rref;
@@ -246,7 +246,7 @@ TEST(channel, dap_unwrap)
 
     nlohmann::json value = "[1, 2, 3]"_json;
     auto wrapped_value =
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dsp_tunnel" }, { "params", value } };
+        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dap_tunnel" }, { "params", value } };
 
     EXPECT_CALL(source, read()).WillOnce(Return(wrapped_value));
 

@@ -17,10 +17,8 @@
 #include "dap_message_wrappers.h"
 
 namespace {
-std::optional<size_t> extract_session_id_from_registration_message(std::string_view method, const nlohmann::json& msg)
+std::optional<size_t> extract_session_id_from_registration_message(const nlohmann::json& msg)
 {
-    if (method != hlasm_plugin::language_server::dap::broadcom_tunnel_method)
-        return std::nullopt;
     auto params = msg.find("params");
     if (params == msg.end())
         return std::nullopt;
@@ -68,29 +66,27 @@ session_manager::session_manager(
 void session_manager::write(const nlohmann::json& msg)
 {
     auto method = extract_method(msg);
-    if (method.empty())
-        return;
-    if (auto new_id = extract_session_id_from_registration_message(method, msg); new_id.has_value())
-        handle_registration_request(new_id.value());
-    else
+    if (auto it = sessions.find(method); it != sessions.end())
     {
-        auto it = sessions.find(method);
-        if (it != sessions.end())
-            it->second->write(msg);
+        it->second->write(msg);
+    }
+    else if (method == hlasm_plugin::language_server::dap::broadcom_tunnel_method)
+    {
+        if (auto new_id = extract_session_id_from_registration_message(msg); new_id.has_value())
+            handle_registration_request(new_id.value());
     }
 }
 void session_manager::write(nlohmann::json&& msg)
 {
     auto method = extract_method(msg);
-    if (method.empty())
-        return;
-    if (auto new_id = extract_session_id_from_registration_message(method, msg); new_id.has_value())
-        handle_registration_request(new_id.value());
-    else
+    if (auto it = sessions.find(method); it != sessions.end())
     {
-        auto it = sessions.find(method);
-        if (it != sessions.end())
-            it->second->write(std::move(msg));
+        it->second->write(std::move(msg));
+    }
+    else if (method == hlasm_plugin::language_server::dap::broadcom_tunnel_method)
+    {
+        if (auto new_id = extract_session_id_from_registration_message(msg); new_id.has_value())
+            handle_registration_request(new_id.value());
     }
 }
 message_router::message_predicate session_manager::get_filtering_predicate() const

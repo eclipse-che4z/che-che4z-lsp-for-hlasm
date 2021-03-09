@@ -45,11 +45,11 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
         const server = net.createServer();
         this.theia_local_server = server;
         this.theia_local_server.on('connection', function (socket: net.Socket) {
-            let hlasm_client = new HLASMDebugAdapter(me.client);
-            var buffer: Buffer = Buffer.from([]);
+            const hlasm_client = new HLASMDebugAdapter(me.client);
+            let buffer = Buffer.from([]);
 
             hlasm_client.onDidSendMessage(function (msg: vscode.DebugProtocolMessage) {
-                let msg_buffer = Buffer.from(JSON.stringify(msg));
+                const msg_buffer = Buffer.from(JSON.stringify(msg));
                 socket.write(content_length);
                 socket.write(msg_buffer.length.toString());
                 socket.write('\r\n\r\n');
@@ -60,18 +60,18 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
                 while (true) {
                     if (buffer.indexOf(content_length) != 0)
                         return;
-                    let end_of_line = buffer.indexOf('\r\n');
+                    const end_of_line = buffer.indexOf('\r\n');
                     if (end_of_line < 0)
                         return;
-                    let length = +buffer.slice(content_length.length, end_of_line);
-                    let end_of_headers = buffer.indexOf('\r\n\r\n');
+                    const length = +buffer.slice(content_length.length, end_of_line);
+                    const end_of_headers = buffer.indexOf('\r\n\r\n');
                     if (end_of_headers < 0)
                         return;
-                    let data_start = end_of_headers + 4;
-                    let data_end = data_start + length;
+                    const data_start = end_of_headers + 4;
+                    const data_end = data_start + length;
                     if (data_end > buffer.length)
                         return;
-                    let json = JSON.parse(buffer.slice(data_start, data_end).toString());
+                    const json = JSON.parse(buffer.slice(data_start, data_end).toString());
                     hlasm_client.handleMessage(json);
                     buffer = buffer.slice(data_end);
                 }
@@ -88,7 +88,7 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
 
 class HLASMDebugAdapter implements vscode.DebugAdapter {
     private static next_session_id: number = 0;
-    private static readonly registration_message_id: string = 'broadcom/hlasm/dsp_tunnel';
+    private static readonly registration_message_id: string = 'broadcom/hlasm/dap_tunnel';
 
     private message_event = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
     private readonly session_id: number = HLASMDebugAdapter.next_session_id++;

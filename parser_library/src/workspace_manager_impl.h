@@ -222,6 +222,14 @@ public:
     }
 
 private:
+    virtual void collect_diags() const override
+    {
+        collect_diags_from_child(file_manager_);
+
+        for (auto& it : workspaces_)
+            collect_diags_from_child(it.second);
+    }
+
     // returns implicit workspace, if the file does not belong to any workspace
     workspaces::workspace& ws_path_match(const std::string& document_uri)
     {
@@ -240,13 +248,6 @@ private:
             return implicit_workspace_;
         else
             return *max_ws;
-    }
-    virtual void collect_diags() const override
-    {
-        collect_diags_from_child(file_manager_);
-
-        for (auto& it : workspaces_)
-            collect_diags_from_child(it.second);
     }
 
     void notify_diagnostics_consumers() const

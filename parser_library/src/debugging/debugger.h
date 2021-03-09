@@ -67,7 +67,7 @@ public:
     void configure(debug_config* debug_cfg);
     void set_event_consumer(debug_event_consumer_s* event);
 
-    virtual void statement(range stmt_range) override;
+    void statement(range stmt_range) override;
 
     // User controls of debugging.
     void next();
