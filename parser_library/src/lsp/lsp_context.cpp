@@ -239,11 +239,15 @@ bool is_continued_line(std::string_view line)
 }
 
 
-std::string get_macro_documentation(const text_data_ref_t& text, const macro_info& m)
+std::string lsp_context::get_macro_documentation(const macro_info& m) const
 {
+    // Get file, where the macro is defined
+    auto it = files_.find(m.definition_location.file);
+    if (it == files_.end())
+        return "";
+    const text_data_ref_t& text = it->second->data;
+
     // We start at line where the name of the macro is written
-
-
     size_t MACRO_line = m.definition_location.pos.line - 1;
     // Skip over MACRO statement
     size_t doc_before_begin_line = MACRO_line - 1;
@@ -287,22 +291,13 @@ completion_list_s lsp_context::complete_instr(const file_info_ptr& file, positio
     for (const auto& macro_i : macros_)
     {
         const context::macro_definition& m = *macro_i.second->macro_definition;
+        ;
 
-        std::string s = macro_i.second->definition_location.file + "["
-            + std::to_string(macro_i.second->definition_location.pos.line) + ","
-            + std::to_string(macro_i.second->definition_location.pos.column);
-        
         std::string macro_documentation;
-        
-        if (auto it = files_.find(macro_i.second->definition_location.file); it != files_.end())
-            macro_documentation = get_macro_documentation(it->second->data, *macro_i.second);
-        
-        //get_macro_documentation(file->data, m)
-        result.emplace_back(*m.id,
-            get_macro_signature(m),
-            *m.id, std::move(macro_documentation),
-            completion_item_kind::macro);
-        // CHECKNI AMXOPUT
+
+
+        result.emplace_back(
+            *m.id, get_macro_signature(m), *m.id, std::move(macro_documentation), completion_item_kind::macro);
     }
 
     return result;
@@ -536,9 +531,7 @@ hover_result lsp_context::hover(const context::symbol& sym) const
     return markdown;
 }
 
-hover_result lsp_context::hover(const context::sequence_symbol& sym) const {
-    return "Sequence symbol";
-}
+hover_result lsp_context::hover(const context::sequence_symbol& sym) const { return "Sequence symbol"; }
 
 hover_result lsp_context::hover(const variable_symbol_definition& sym) const
 {
@@ -565,7 +558,25 @@ hover_result lsp_context::hover(const variable_symbol_definition& sym) const
     return result;
 }
 
-hover_result lsp_context::hover(const context::opcode_t& sym) const { return ""; }
+hover_result lsp_context::hover(const context::opcode_t& sym) const
+{
+    if (sym.macro_opcode)
+    {
+        auto it = macros_.find(sym.macro_opcode);
+        assert(it != macros_.end());
+        return get_macro_documentation(*it->second);
+    }
+    else
+    {
+        auto it = std::find_if(completion_item_s::instruction_completion_items_.begin(),
+            completion_item_s::instruction_completion_items_.end(),
+            [&sym](const auto& item) { return item.label == *sym.machine_opcode; });
+        if (it == completion_item_s::instruction_completion_items_.end())
+            return "";
+        return it->detail + "  \n" + it->documentation;
+    }
+    return "";
+}
 
 hover_result lsp_context::hover(const context::copy_member& sym) const { return ""; }
 

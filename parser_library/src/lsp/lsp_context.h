@@ -65,6 +65,8 @@ private:
     completion_list_s complete_var(const file_info_ptr& file, position pos) const;
     completion_list_s complete_seq(const file_info_ptr& file, position pos) const;
     completion_list_s complete_instr(const file_info_ptr& file, position pos) const;
+
+    std::string get_macro_documentation(const macro_info& m) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp
