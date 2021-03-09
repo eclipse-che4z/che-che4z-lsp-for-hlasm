@@ -156,12 +156,15 @@ public:
         return { references_result.data(), references_result.size() };
     }
 
-    string_array hover(const std::string& document_uri, const position pos)
+    std::string hover_result;
+    std::string_view hover(const std::string& document_uri, const position pos)
     {
         if (cancel_ && *cancel_)
-            return {};
+            return "";
 
-        return ws_path_match(document_uri).hover(document_uri, pos);
+        hover_result = ws_path_match(document_uri).hover(document_uri, pos);
+
+        return hover_result;
     }
 
 

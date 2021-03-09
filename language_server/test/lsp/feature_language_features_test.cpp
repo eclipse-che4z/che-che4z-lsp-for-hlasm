@@ -66,7 +66,7 @@ TEST(language_features, hover)
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
     std::string s("test");
-    parser_library::string_array ret = { s };
+    std::string_view ret(s);
     EXPECT_CALL(ws_mngr, hover(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(ret));
     notifs["textDocument/hover"]("", params1);
 }

@@ -94,7 +94,7 @@ public:
 
     location definition(const std::string& document_uri, position pos) const override;
     location_list references(const std::string& document_uri, position pos) const override;
-    string_array hover(const std::string& document_uri, position pos) const override;
+    lsp::hover_result hover(const std::string& document_uri, position pos) const override;
     lsp::completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,

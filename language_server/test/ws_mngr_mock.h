@@ -41,7 +41,7 @@ public:
 
     MOCK_METHOD(position_uri, definition, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(position_uri_list, references, (const std::string& document_uri, const position pos), (override));
-    MOCK_METHOD(string_array, hover, (const std::string& document_uri, const position pos), (override));
+    MOCK_METHOD(std::string_view, hover, (const std::string& document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
         (const std::string& document_uri,

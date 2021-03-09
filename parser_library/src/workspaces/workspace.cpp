@@ -280,7 +280,7 @@ location_list workspace::references(const std::string& document_uri, const posit
     return opencodes.back()->get_lsp_feature_provider().references(document_uri, pos);
 }
 
-string_array workspace::hover(const std::string& document_uri, const position pos) const
+lsp::hover_result workspace::hover(const std::string& document_uri, const position pos) const
 {
     auto opencodes = find_related_opencodes(document_uri);
     if (opencodes.empty())

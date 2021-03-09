@@ -22,11 +22,13 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
+using hover_result = std::string;
+
 struct feature_provider
 {
     virtual location definition(const std::string& document_uri, position pos) const = 0;
     virtual location_list references(const std::string& document_uri, position pos) const = 0;
-    virtual string_array hover(const std::string& document_uri, position pos) const = 0;
+    virtual hover_result hover(const std::string& document_uri, position pos) const = 0;
     virtual completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,

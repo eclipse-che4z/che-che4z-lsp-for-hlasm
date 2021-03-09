@@ -113,13 +113,17 @@ void feature_language_features::hover(const json& id, const json& params)
     auto pos =
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
 
-    json hover_arr = json::array();
+    
     auto hover_list = ws_mngr_.hover(uri_to_path(document_uri).c_str(), pos);
+
+    
+    /*json hover_arr = json::array();
     for (size_t i = 0; i < hover_list.size(); i++)
     {
         hover_arr.push_back(hover_list[i]);
-    }
-    response_->respond(id, "", json { { "contents", hover_arr } });
+    }*/
+
+    response_->respond(id, "", json { { "contents", hover_list.empty() ? json() : get_markup_content(hover_list) } });
 }
 
 // Completion item kinds from the LSP specification
@@ -163,7 +167,10 @@ std::unordered_map<parser_library::completion_item_kind, lsp_completion_item_kin
         { completion_item_kind::seq_sym, lsp_completion_item_kind::reference } };
 }
 
-json get_markup_content(std::string_view content) { return json { { "kind", "markdown" }, { "value", content } }; }
+json feature_language_features::get_markup_content(std::string_view content)
+{
+    return json { { "kind", "markdown" }, { "value", content } };
+}
 
 void feature_language_features::completion(const json& id, const json& params)
 {

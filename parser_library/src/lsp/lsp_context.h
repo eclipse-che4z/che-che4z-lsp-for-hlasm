@@ -40,7 +40,7 @@ public:
 
     location definition(const std::string& document_uri, position pos) const override;
     location_list references(const std::string& document_uri, position pos) const override;
-    string_array hover(const std::string& document_uri, position pos) const override;
+    hover_result hover(const std::string& document_uri, position pos) const override;
     completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,
@@ -54,13 +54,13 @@ private:
     occurence_scope_t find_occurence_with_scope(const std::string& document_uri, const position pos) const;
 
     std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
-    string_array find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
+    hover_result find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 
-    string_array hover(const context::symbol& sym) const;
-    string_array hover(const context::sequence_symbol& sym) const;
-    string_array hover(const variable_symbol_definition& sym) const;
-    string_array hover(const context::opcode_t& sym) const;
-    string_array hover(const context::copy_member& sym) const;
+    std::string hover(const context::symbol& sym) const;
+    std::string hover(const context::sequence_symbol& sym) const;
+    std::string hover(const variable_symbol_definition& sym) const;
+    std::string hover(const context::opcode_t& sym) const;
+    std::string hover(const context::copy_member& sym) const;
 
     completion_list_s complete_var(const file_info_ptr& file, position pos) const;
     completion_list_s complete_seq(const file_info_ptr& file, position pos) const;

@@ -115,9 +115,9 @@ location_list lsp_context::references(const std::string& document_uri, const pos
     return result;
 }
 
-string_array lsp_context::hover(const std::string& document_uri, const position pos) const
+hover_result lsp_context::hover(const std::string& document_uri, const position pos) const
 {
-    string_array result;
+    std::string result;
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
     if (!occ)
@@ -172,7 +172,7 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     {
         auto cont = hover(vardef);
         completion_item_s item(
-            "&" + *vardef.name, std::move(cont[0]), "&" + *vardef.name, "", completion_item_kind::var_sym);
+            "&" + *vardef.name, std::move(cont), "&" + *vardef.name, "", completion_item_kind::var_sym);
         items.push_back(std::move(item));
     }
 
@@ -189,9 +189,8 @@ completion_list_s lsp_context::complete_seq(const file_info_ptr& file, position 
     completion_list_s items;
     for (const auto& sym : seq_syms)
     {
-        auto cont = hover(*sym.second);
         std::string label = "." + *sym.second->name;
-        items.emplace_back(label, std::move(cont[0]), label, "", completion_item_kind::seq_sym);
+        items.emplace_back(label, hover(*sym.second), label, "", completion_item_kind::seq_sym);
     }
     return items;
 }
@@ -469,7 +468,7 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
     return std::nullopt;
 }
 
-string_array lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const
+hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const
 {
     switch (occ.kind)
     {
@@ -507,58 +506,57 @@ string_array lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
     return {};
 }
 
-string_array lsp_context::hover(const context::symbol& sym) const
+hover_result lsp_context::hover(const context::symbol& sym) const
 {
-    string_array result;
     if (sym.value().value_kind() == context::symbol_value_kind::UNDEF)
-        return result;
+        return "";
+    std::string markdown = "";
 
     if (sym.value().value_kind() == context::symbol_value_kind::ABS)
     {
-        result = { std::to_string(sym.value().get_abs()) };
-        result.push_back("Absolute Symbol");
+        markdown.append(std::to_string(sym.value().get_abs()));
+        markdown.append("\n\n---\n\nAbsolute Symbol\n\n---\n\n");
     }
     else if (sym.value().value_kind() == context::symbol_value_kind::RELOC)
     {
-        result = { sym.value().get_reloc().to_string() }; // move to_string method from that class to this class
-        result.push_back("Relocatable Symbol");
+        markdown.append(sym.value().get_reloc().to_string()); // move to_string method from that class to this class
+        markdown.append("\n\n---\n\nRelocatable Symbol\n\n---\n\n");
     }
 
     const auto& attrs = sym.attributes();
     if (attrs.is_defined(context::data_attr_kind::L))
-        result.push_back("L: " + std::to_string(attrs.length()));
+        markdown.append("L: " + std::to_string(attrs.length()) + "  \n");
     if (attrs.is_defined(context::data_attr_kind::I))
-        result.push_back("I: " + std::to_string(attrs.integer()));
+        markdown.append("I: " + std::to_string(attrs.integer()) + "  \n");
     if (attrs.is_defined(context::data_attr_kind::S))
-        result.push_back("S: " + std::to_string(attrs.scale()));
+        markdown.append("S: " + std::to_string(attrs.scale()) + "  \n");
     if (attrs.is_defined(context::data_attr_kind::T))
-        result.push_back("T: " + ebcdic_encoding::to_ascii((unsigned char)attrs.type()));
+        markdown.append("T: " + ebcdic_encoding::to_ascii((unsigned char)attrs.type()) + "  \n");
 
-    return result;
+    return markdown;
 }
 
-string_array lsp_context::hover(const context::sequence_symbol& sym) const
-{
-    return string_array { "Sequence symbol" };
+hover_result lsp_context::hover(const context::sequence_symbol& sym) const {
+    return "Sequence symbol";
 }
 
-string_array lsp_context::hover(const variable_symbol_definition& sym) const
+hover_result lsp_context::hover(const variable_symbol_definition& sym) const
 {
-    string_array result;
+    std::string result;
 
     if (sym.macro_param)
-        result.push_back("MACRO parameter");
+        result = "MACRO parameter";
     else
         switch (sym.type)
         {
             case context::SET_t_enum::A_TYPE:
-                result.push_back("SETA variable");
+                result = "SETA variable";
                 break;
             case context::SET_t_enum::B_TYPE:
-                result.push_back("SETB variable");
+                result = "SETB variable";
                 break;
             case context::SET_t_enum::C_TYPE:
-                result.push_back("SETC variable");
+                result = "SETC variable";
                 break;
             default:
                 break;
@@ -567,8 +565,8 @@ string_array lsp_context::hover(const variable_symbol_definition& sym) const
     return result;
 }
 
-string_array lsp_context::hover(const context::opcode_t& sym) const { return string_array(); }
+hover_result lsp_context::hover(const context::opcode_t& sym) const { return ""; }
 
-string_array lsp_context::hover(const context::copy_member& sym) const { return string_array(); }
+hover_result lsp_context::hover(const context::copy_member& sym) const { return ""; }
 
 } // namespace hlasm_plugin::parser_library::lsp

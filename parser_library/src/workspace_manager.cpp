@@ -103,7 +103,7 @@ position_uri_list workspace_manager::references(const std::string& document_uri,
     return impl_->references(document_uri, pos);
 }
 
-string_array workspace_manager::hover(const std::string& document_uri, const position pos)
+std::string_view workspace_manager::hover(const std::string& document_uri, const position pos)
 {
     return impl_->hover(document_uri, pos);
 }

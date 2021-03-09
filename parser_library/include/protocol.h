@@ -23,8 +23,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <string>
-#include <vector>
 
 #include "c_view_array.h"
 #include "parser_library_export.h"
@@ -32,8 +30,6 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4661)
-
-template class PARSER_LIBRARY_EXPORT std::vector<std::string>;
 
 namespace hlasm_plugin::parser_library {
 
@@ -94,8 +90,6 @@ class diagnostic_related_info_s;
 struct location;
 
 using file_id = workspaces::processor_file*;
-
-using string_array = std::vector<std::string>;
 
 enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
 {
