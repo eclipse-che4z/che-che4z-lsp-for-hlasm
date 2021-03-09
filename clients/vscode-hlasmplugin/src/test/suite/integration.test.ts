@@ -139,7 +139,7 @@ suite('Integration Test Suite', () => {
 			.then((result: vscode.Hover[]) => {
 				if (result.length == 1
 					&& result[0].contents.length == 1
-					&& (result[0].contents[0] as vscode.MarkdownString).value == 'number')
+					&& (result[0].contents[0] as vscode.MarkdownString).value == 'SETA variable')
 					done();
 				else
 					done('Wrong variable symbol hover contents');
