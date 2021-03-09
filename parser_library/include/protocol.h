@@ -22,6 +22,7 @@
 // Most of the types are C++ representation of LSP/DAP data types.
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
