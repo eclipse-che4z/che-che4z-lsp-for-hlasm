@@ -32,9 +32,9 @@
 #pragma warning(push)
 #pragma warning(disable : 4661)
 
-namespace hlasm_plugin::parser_library {
-
 template class PARSER_LIBRARY_EXPORT std::vector<std::string>;
+
+namespace hlasm_plugin::parser_library {
 
 using version_t = uint64_t;
 
