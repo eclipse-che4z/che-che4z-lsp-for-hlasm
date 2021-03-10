@@ -37,7 +37,7 @@ public:
 
     void add_library(std::unique_ptr<library> library) { libs_.push_back(std::move(library)); }
 
-    void add_asm_options(std::map<std::string, const std::string>& asm_options)
+    void add_asm_options(std::map<std::string, std::string> asm_options)
     {
         asm_optns.sysparm = asm_options.count("SYSPARM") ? asm_options.at("SYSPARM") : "";
         asm_optns.profile = asm_options.count("PROFILE") ? asm_options.at("PROFILE") : "";
