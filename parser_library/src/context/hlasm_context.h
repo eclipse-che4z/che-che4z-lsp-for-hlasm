@@ -15,6 +15,7 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
+#include <compiler_options.h>
 #include <deque>
 #include <memory>
 #include <set>
@@ -25,7 +26,6 @@
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
-#include <compiler_options.h>
 
 
 namespace hlasm_plugin::parser_library::context {
