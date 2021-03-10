@@ -54,15 +54,13 @@ public:
         std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range);
     void set_operand_remark_field(operand_list operands, remark_list remarks, range symbol_range);
 
-    void add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type);
     void add_hl_symbol(token_info symbol);
-    void clear_hl_lsp_symbols();
+    void clear_hl_symbols();
 
     void append_operand_field(collector&& c);
 
     const instruction_si& peek_instruction();
     context::shared_stmt_ptr extract_statement(processing::processing_status status, range& statement_range);
-    std::vector<context::lsp_symbol> extract_lsp_symbols();
     std::vector<token_info> extract_hl_symbols();
     void prepare_for_next_statement();
 
@@ -72,7 +70,6 @@ private:
     std::optional<operands_si> op_;
     std::optional<remarks_si> rem_;
     std::optional<deferred_operands_si> def_;
-    std::vector<context::lsp_symbol> lsp_symbols_;
     std::vector<token_info> hl_symbols_;
     bool lsp_symbols_extracted_;
     bool hl_symbols_extracted_;

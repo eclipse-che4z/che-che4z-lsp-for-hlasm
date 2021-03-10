@@ -127,6 +127,7 @@ TEST_F(lsp_features_test, refs)
     EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 15)).size());
 }
 
+/*
 // 4 cases, instruction, sequence, variable and none
 TEST_F(lsp_features_test, hover)
 {
@@ -190,3 +191,4 @@ TEST_F(lsp_features_test, completion)
     // var symbols
     EXPECT_EQ((size_t)3, a.lsp_processor().completion(position(10, 0), '&', 2).items.size());
 }
+*/

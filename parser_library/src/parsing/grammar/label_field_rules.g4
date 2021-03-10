@@ -24,7 +24,6 @@ label
 		{
 			collector.add_hl_symbol(token_info(r,hl_scopes::seq_symbol));
 			auto id = parse_identifier(label.substr(1),r);
-			collector.add_lsp_symbol(id,r,symbol_type::seq);
 
 			collector.set_label_field({id,r},r);
 		}

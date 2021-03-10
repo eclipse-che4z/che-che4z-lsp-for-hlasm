@@ -253,7 +253,6 @@ hlasm_context::hlasm_context(std::string file_name)
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
     , ord_ctx(ids_)
-    , lsp_ctx(std::make_shared<lsp_context>())
 {
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);

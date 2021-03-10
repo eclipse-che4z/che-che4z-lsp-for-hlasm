@@ -117,7 +117,6 @@ void ordinary_processor::end_processing()
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
-    collect_ordinary_symbol_definitions();
 
     hlasm_ctx.pop_statement_processing();
 
@@ -294,65 +293,6 @@ context::id_index ordinary_processor::resolve_instruction(
     }
 
     return hlasm_ctx.ids().add(std::move(tmp));
-}
-
-void ordinary_processor::collect_ordinary_symbol_definitions()
-{
-    // for all collected ordinary symbol definitions
-    for (const auto& symbol : hlasm_ctx.lsp_ctx->deferred_ord_defs)
-    {
-        // get the symbol id
-        auto id = hlasm_ctx.ids().find(*symbol.name);
-        // find symbol in ord context
-        auto ord_symbol = hlasm_ctx.ord_ctx.get_symbol(id);
-        // if not found, skip it
-        if (!ord_symbol)
-            continue;
-
-        // add new definition
-        auto file = hlasm_ctx.ids().add(ord_symbol->symbol_location.file, true);
-        auto occurences = &hlasm_ctx.lsp_ctx->ord_symbols[context::ord_definition(
-            symbol.name, file, symbol.definition_range, ord_symbol->value(), ord_symbol->attributes())];
-        occurences->push_back({ symbol.definition_range, file });
-
-        // adds all its occurences
-        for (auto& occurence : hlasm_ctx.lsp_ctx->deferred_ord_occs)
-        {
-            if (occurence.first.name == symbol.name)
-            {
-                occurences->push_back({ occurence.first.definition_range, occurence.first.file_name });
-                occurence.second = true;
-            }
-        }
-    }
-
-    std::vector<std::pair<context::ord_definition, bool>> temp_occs;
-    // if there are still some symbols in occurences, check if they are defined in context
-    for (const auto& occurence : hlasm_ctx.lsp_ctx->deferred_ord_occs)
-    {
-        if (occurence.second)
-            continue;
-        // get the symbol id
-        auto id = hlasm_ctx.ids().find(*occurence.first.name);
-        // find symbol in ord context
-        auto ord_symbol = hlasm_ctx.ord_ctx.get_symbol(id);
-        // if not found, skip it
-        if (!ord_symbol)
-        {
-            temp_occs.push_back(occurence);
-            continue;
-        }
-
-        // add
-        hlasm_ctx.lsp_ctx
-            ->ord_symbols[context::ord_definition(occurence.first.name,
-                hlasm_ctx.ids().add(ord_symbol->symbol_location.file, true),
-                { ord_symbol->symbol_location.pos, ord_symbol->symbol_location.pos },
-                ord_symbol->value(),
-                ord_symbol->attributes())]
-            .push_back({ occurence.first.definition_range, occurence.first.file_name });
-    }
-    hlasm_ctx.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

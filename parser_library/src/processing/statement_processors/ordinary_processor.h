@@ -67,8 +67,6 @@ private:
     bool check_fatals(range line_range);
 
     context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;
-
-    void collect_ordinary_symbol_definitions();
 };
 
 } // namespace hlasm_plugin::parser_library::processing

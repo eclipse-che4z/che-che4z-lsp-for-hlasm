@@ -21,6 +21,7 @@
 #include "file.h"
 #include "lsp/feature_provider.h"
 #include "parse_lib_provider.h"
+#include "semantics/highlighting_info.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 

@@ -221,7 +221,6 @@ var_symbol returns [vs_ptr vs]
 		auto id = $vs_id.name; 
 		auto r = provider.get_range( $AMPERSAND,$tmp.ctx->getStop()); 
 		$vs = std::make_unique<basic_variable_symbol>(id, std::move($tmp.value), r);
-		collector.add_lsp_symbol(id,r,symbol_type::var);
 		collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND, $vs_id.ctx->getStop()),hl_scopes::var_symbol));
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
@@ -267,7 +266,6 @@ var_def returns [vs_ptr vs]
 		if ($var_def_name.created_name.empty())
 		{
 			$vs = std::make_unique<basic_variable_symbol>($var_def_name.name, std::move($var_def_substr.value), r);
-			collector.add_lsp_symbol($var_def_name.name,r,symbol_type::var);
 			collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 		}
 		else

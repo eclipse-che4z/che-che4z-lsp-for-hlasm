@@ -143,13 +143,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         }
     }
 
-    // indicates that the reparse reason is to resolve deferred operands (and not to substitute varsymbols)
-    if (!after_substitution)
-    {
-        lsp_proc->process_lsp_symbols(h.parser->collector.extract_lsp_symbols(),
-            hlasm_ctx->ids().add(hlasm_ctx->processing_stack().back().proc_location.file, true));
-    }
-
     collect_diags_from_child(listener);
 
     for (size_t i = 0; i < line.operands.size(); i++)
@@ -335,7 +328,6 @@ bool parser_impl::process_statement()
     else
         hlasm_ctx->metrics.non_continued_statements++;
 
-    lsp_proc->process_lsp_symbols(collector.extract_lsp_symbols());
     lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
     current_statement = stmt;
 
@@ -635,7 +627,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
 
     h.parser->lookahead_operands_and_remarks();
 
-    h.parser->collector.clear_hl_lsp_symbols();
+    h.parser->collector.clear_hl_symbols();
     collector.append_operand_field(std::move(h.parser->collector));
 
     process_statement();

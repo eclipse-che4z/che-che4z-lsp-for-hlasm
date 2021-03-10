@@ -55,7 +55,6 @@ mac_preproc_c returns [vs_ptr vs]
 	{
 		auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
 		$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add($ORDSYMBOL->getText()), std::vector<ca_expr_ptr>(), r);
-		collector.add_lsp_symbol(hlasm_ctx->ids().add($ORDSYMBOL->getText()),r,symbol_type::var);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
 	| AMPERSAND LPAR
@@ -86,14 +85,13 @@ mac_str returns [concat_chain chain]
 	};
 
 mac_ch returns [concat_chain chain]
-	: common_ch_v									{$chain.push_back(std::move($common_ch_v.point));
-													auto token = $common_ch_v.ctx->getStart();
-													if (token->getType() == lexing::lexer::Tokens::ORDSYMBOL && $common_ch_v.ctx->getStop()->getType() == lexing::lexer::Tokens::ORDSYMBOL)
-													{
-														collector.add_lsp_symbol(hlasm_ctx->ids().add(token->getText()),provider.get_range(token),symbol_type::ord);
-														collector.add_hl_symbol(token_info(provider.get_range( $common_ch_v.ctx), hl_scopes::operand));
-													}
-													;}
+	: common_ch_v
+	{
+		$chain.push_back(std::move($common_ch_v.point));
+		auto token = $common_ch_v.ctx->getStart();
+		if (token->getType() == lexing::lexer::Tokens::ORDSYMBOL && $common_ch_v.ctx->getStop()->getType() == lexing::lexer::Tokens::ORDSYMBOL)
+			collector.add_hl_symbol(token_info(provider.get_range( $common_ch_v.ctx), hl_scopes::operand));
+	}
 	| ATTR											{$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ATTR)));}
 	| mac_str										{$chain = std::move($mac_str.chain);}
 	| mac_sublist									{$chain.push_back(std::move($mac_sublist.point));};

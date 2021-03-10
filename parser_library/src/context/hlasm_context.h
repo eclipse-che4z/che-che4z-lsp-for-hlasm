@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "code_scope.h"
-#include "lsp_context.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
@@ -128,8 +127,7 @@ public:
 
     // field that accessed ordinary assembly context
     ordinary_assembly_context ord_ctx;
-    // field that accessed LSP context
-    lsp_ctx_ptr lsp_ctx;
+
     // performance metrics
     performance_metrics metrics;
 

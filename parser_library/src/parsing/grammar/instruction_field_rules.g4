@@ -29,7 +29,6 @@ instruction returns [id_index instr]
 	| ORDSYMBOL
 	{
 		auto instr_id = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
-		collector.add_lsp_symbol(instr_id,provider.get_range( $ORDSYMBOL),symbol_type::instruction);
 		collector.set_instruction_field(
 			instr_id,
 			provider.get_range($ORDSYMBOL));
