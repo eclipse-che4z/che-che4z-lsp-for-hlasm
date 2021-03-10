@@ -130,12 +130,6 @@ public:
 private:
     impl* impl_;
 };
-struct asm_option
-{
-    std::string sysparm;
-    std::string profile;
-};
-
 } // namespace parser_library
 } // namespace hlasm_plugin
 #endif // !HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H

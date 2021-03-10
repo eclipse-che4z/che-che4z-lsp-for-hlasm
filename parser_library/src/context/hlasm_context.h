@@ -19,13 +19,13 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <workspace_manager.h>
 
 #include "code_scope.h"
 #include "lsp_context.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
+#include <compiler_options.h>
 
 
 namespace hlasm_plugin::parser_library::context {
