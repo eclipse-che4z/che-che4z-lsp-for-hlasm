@@ -18,7 +18,7 @@
 #include <locale>
 #include <regex>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "wildcard.h"
 

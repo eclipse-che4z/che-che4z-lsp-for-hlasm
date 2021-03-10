@@ -19,7 +19,7 @@
 #include <memory>
 #include <unordered_set>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "../common_types.h"
 #include "../server.h"

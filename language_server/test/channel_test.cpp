@@ -16,7 +16,6 @@
 #include <sstream>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 #include "json_queue_channel.h"
 
 #include "base_protocol_channel.h"

@@ -20,7 +20,7 @@
 #include <limits>
 #include <sstream>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"

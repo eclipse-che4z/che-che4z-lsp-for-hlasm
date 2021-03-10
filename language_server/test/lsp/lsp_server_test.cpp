@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "../send_message_provider_mock.h"
 #include "../ws_mngr_mock.h"

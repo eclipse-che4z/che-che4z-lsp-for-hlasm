@@ -21,8 +21,6 @@
 #include <string>
 #include <string_view>
 
-#include "json.hpp"
-
 #include "logger.h"
 
 namespace hlasm_plugin::language_server {

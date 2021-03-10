@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "diagnosable_impl.h"
 #include "file_manager.h"

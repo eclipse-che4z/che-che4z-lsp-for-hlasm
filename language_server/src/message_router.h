@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "json.hpp"
 #include "json_channel.h"
 
 namespace hlasm_plugin::language_server {

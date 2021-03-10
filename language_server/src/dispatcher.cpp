@@ -14,7 +14,7 @@
 
 #include "dispatcher.h"
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "logger.h"
 

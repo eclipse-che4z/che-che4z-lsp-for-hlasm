@@ -17,7 +17,7 @@
 
 #include <optional>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server {
 

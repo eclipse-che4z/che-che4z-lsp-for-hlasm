@@ -10,36 +10,41 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(uri_fetcher CXX)
 INCLUDE(ExternalProject)
 FIND_PACKAGE(Git REQUIRED)
 
-if(WITH_LIBCXX)
-  set(DISABLE_LIBCXX Off)
-else()
-  set(DISABLE_LIBCXX On)
-endif()
+include(FetchContent)
 
 # download runtime environment
-ExternalProject_ADD(
+FetchContent_Declare(
   uri_ext
-  PREFIX             ${CMAKE_BINARY_DIR}/externals/uri
-  GIT_REPOSITORY     "https://github.com/cpp-netlib/uri.git"
-  GIT_TAG            v1.1.0
-  GIT_SHALLOW        ON
-  TIMEOUT            10
-  LOG_DOWNLOAD       ON
-  GIT_PROGRESS       1
-  CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DUri_DISABLE_LIBCXX=${DISABLE_LIBCXX} -DUri_BUILD_DOCS=OFF -DUri_BUILD_TESTS=OFF -DUri_USE_STATIC_CRT=${WITH_STATIC_CRT} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DUri_WARNINGS_AS_ERRORS=OFF
+  GIT_REPOSITORY https://github.com/cpp-netlib/uri.git
+  GIT_TAG        9f477677a1fefa235027a64c47db5fca53e7f61d
+  GIT_SHALLOW    ON
+  LOG_DOWNLOAD   ON
+  GIT_PROGRESS   1
 )
 
-ExternalProject_Get_Property(uri_ext INSTALL_DIR)
+FetchContent_GetProperties(uri_ext)
 
+function(add_uri_ext)
+    if(WITH_LIBCXX)
+      set(Uri_DISABLE_LIBCXX Off)
+    else()
+      set(Uri_DISABLE_LIBCXX On)
+    endif()
+    set(Uri_BUILD_TESTS Off)
+    set(Uri_BUILD_DOCS Off)
+    set(Uri_WARNINGS_AS_ERRORS Off)
 
+    add_subdirectory(${uri_ext_SOURCE_DIR}/src ${uri_ext_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-set(URI_INCLUDE_DIRS ${INSTALL_DIR}/include/)
+    target_include_directories(network-uri PRIVATE ${uri_ext_SOURCE_DIR}/src)
+    target_include_directories(network-uri PUBLIC ${uri_ext_SOURCE_DIR}/include)
+endfunction()
 
-set(URI_LIBS "${INSTALL_DIR}/lib")
-
-
+if(NOT uri_ext_POPULATED)
+    FetchContent_Populate(uri_ext)
+    add_uri_ext()
+endif()

@@ -10,16 +10,13 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-cmake_minimum_required (VERSION 3.10)
-
 project(benchmark)
 
 add_executable(benchmark ${PROJECT_SOURCE_DIR}/benchmark.cpp)
 
-add_dependencies(benchmark json)
+target_link_libraries(benchmark nlohmann_json::nlohmann_json)
 
 target_link_libraries(benchmark parser_library)
 
-if(UNIX)
-	target_link_libraries(benchmark pthread)
-endif()
+target_link_libraries(benchmark Threads::Threads)
+

@@ -19,7 +19,6 @@
 #include <thread>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 
 #include "dap/dap_server.h"
 #include "feature.h"

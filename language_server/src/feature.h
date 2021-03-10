@@ -18,7 +18,7 @@
 #include <map>
 #include <string>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "common_types.h"
 #include "workspace_manager.h"

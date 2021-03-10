@@ -17,7 +17,6 @@
 #include <sstream>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 
 #include "message_router.h"
 

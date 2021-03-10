@@ -14,8 +14,6 @@
 
 #include "dap_session.h"
 
-#include "json.hpp"
-
 #include "../dispatcher.h"
 #include "../request_manager.h"
 #include "../scope_exit.h"
