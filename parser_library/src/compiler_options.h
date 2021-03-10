@@ -15,6 +15,8 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_COMPILER_OPTIONS_H
 #define HLASMPARSER_PARSERLIBRARY_COMPILER_OPTIONS_H
 
+#include <string>
+
 // This file contains assembler compiler options definitions.
 
 namespace hlasm_plugin::parser_library {
