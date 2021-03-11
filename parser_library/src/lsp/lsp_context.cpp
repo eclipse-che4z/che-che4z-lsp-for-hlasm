@@ -190,7 +190,7 @@ completion_list_s lsp_context::complete_seq(const file_info_ptr& file, position 
     for (const auto& sym : seq_syms)
     {
         std::string label = "." + *sym.second->name;
-        items.emplace_back(label, hover(*sym.second), label, "", completion_item_kind::seq_sym);
+        items.emplace_back(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
     }
     return items;
 }
@@ -284,7 +284,7 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     return result;
 }
 
-completion_list_s lsp_context::complete_instr(const file_info_ptr& file, position pos) const
+completion_list_s lsp_context::complete_instr(const file_info_ptr&, position) const
 {
     completion_list_s result = completion_item_s::instruction_completion_items_;
 
@@ -473,12 +473,9 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
                 return hover(*sym);
             break;
         }
-        case lsp::occurence_kind::SEQ: {
-            auto sym = find_definition<lsp::occurence_kind::SEQ>(occ, macro_i, *opencode_, files_);
-            if (sym)
-                return hover(*sym);
-            break;
-        }
+        case lsp::occurence_kind::SEQ:
+            return "Sequence symbol";
+        
         case lsp::occurence_kind::VAR: {
             auto sym = find_definition<lsp::occurence_kind::VAR>(occ, macro_i, *opencode_, files_);
             if (sym)
@@ -489,12 +486,9 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
             auto sym = find_definition<lsp::occurence_kind::INSTR>(occ, macro_i, *opencode_, files_);
             return hover(sym);
         }
-        case lsp::occurence_kind::COPY_OP: {
-            auto sym = find_definition<lsp::occurence_kind::COPY_OP>(occ, macro_i, *opencode_, files_);
-            if (sym)
-                return hover(*sym);
-            break;
-        }
+        case lsp::occurence_kind::COPY_OP:
+            return "";
+        
         default:
             break;
     }
@@ -530,8 +524,6 @@ hover_result lsp_context::hover(const context::symbol& sym) const
 
     return markdown;
 }
-
-hover_result lsp_context::hover(const context::sequence_symbol& sym) const { return "Sequence symbol"; }
 
 hover_result lsp_context::hover(const variable_symbol_definition& sym) const
 {
@@ -575,9 +567,6 @@ hover_result lsp_context::hover(const context::opcode_t& sym) const
             return "";
         return it->detail + "  \n" + it->documentation;
     }
-    return "";
 }
-
-hover_result lsp_context::hover(const context::copy_member& sym) const { return ""; }
 
 } // namespace hlasm_plugin::parser_library::lsp

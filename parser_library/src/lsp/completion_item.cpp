@@ -223,5 +223,11 @@ std::vector<completion_item_s> generate_instruction_completion_items()
 const std::vector<completion_item_s> completion_item_s::instruction_completion_items_ =
     generate_instruction_completion_items();
 
+bool operator==(const completion_item_s& lhs, const completion_item_s& rhs)
+{
+    return lhs.label == rhs.label && lhs.detail == rhs.detail && lhs.insert_text == rhs.insert_text
+        && lhs.documentation == rhs.documentation && lhs.kind == rhs.kind;
+}
+
 
 } // namespace hlasm_plugin::parser_library::lsp

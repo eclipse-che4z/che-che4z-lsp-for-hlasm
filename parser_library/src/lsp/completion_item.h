@@ -35,7 +35,6 @@ public:
         std::string documentation,
         completion_item_kind kind = completion_item_kind::mach_instr);
 
-    std::vector<std::string> get_contents() const;
     // several features of completion item from LSP
     std::string label;
     std::string detail;
@@ -46,6 +45,7 @@ public:
     static const std::vector<completion_item_s> instruction_completion_items_;
 };
 
+bool operator==(const completion_item_s& lhs, const completion_item_s& rhs);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

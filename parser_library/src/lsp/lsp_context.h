@@ -57,10 +57,8 @@ private:
     hover_result find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 
     std::string hover(const context::symbol& sym) const;
-    std::string hover(const context::sequence_symbol& sym) const;
     std::string hover(const variable_symbol_definition& sym) const;
     std::string hover(const context::opcode_t& sym) const;
-    std::string hover(const context::copy_member& sym) const;
 
     completion_list_s complete_var(const file_info_ptr& file, position pos) const;
     completion_list_s complete_seq(const file_info_ptr& file, position pos) const;
