@@ -130,8 +130,6 @@ public:
 private:
     impl* impl_;
 };
-
-
 } // namespace parser_library
 } // namespace hlasm_plugin
 #endif // !HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H

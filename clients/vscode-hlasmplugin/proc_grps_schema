@@ -35,6 +35,22 @@
                                     "required": [ "path" ]
                                 }
                             ]
+                         }
+                     
+                    },
+                    "asm_options": {
+                        "type": "object",
+                        "description": "List of assembler options",
+                        "properties": {
+                             "SYSPARM": {
+                                "type": "string",
+                                "description": "It specifies the character string the assembler assigns to the &SYSPARM system variable symbol. ",
+                                "maxlength" : 255
+                             },
+                            "PROFILE": {
+                                "type": "string",
+                                "description": "Profile Member to be copied into the source program."
+                            }
                         }
                     }
                 },

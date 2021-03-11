@@ -284,6 +284,7 @@ X3 EQU F-E
 
 class loc_mock : public workspaces::parse_lib_provider
 {
+    asm_option asm_options;
     virtual workspaces::parse_result parse_library(
         const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data)
     {
@@ -294,6 +295,8 @@ class loc_mock : public workspaces::parse_lib_provider
     }
 
     virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
+
+    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
 };
 
 TEST(ordinary_symbols, symbol_location)

@@ -57,7 +57,12 @@ public:
           "cache_expire":"",
           "location": "downLibs"
         }
-      ]
+      ],
+                
+                "asm_options": {
+                "SYSPARM": "SEVEN",
+                 "PROFILE": "MAC1"
+                }
     },
     {
       "name": "P2",
@@ -89,7 +94,12 @@ public:
 						"cache_expire":"",
 						"location": "downLibs"
 					}
-				]
+				],
+                
+                "asm_options": {
+                "SYSPARM": "SEVEN",
+                 "PROFILE": "MAC1"
+                }
 			},
 			{
 				"name": "P2",
@@ -246,6 +256,14 @@ TEST(workspace, load_config_synthetic)
         ASSERT_NE(libl, nullptr);
         EXPECT_EQ(expected2[i], libl->get_lib_path());
     }
+    // test of asm_options
+#ifdef _WIN32
+    auto& asm_options = ws.get_asm_options("test_proc_grps_uri\\pgm1");
+#else
+    auto& asm_options = ws.get_asm_options("test_proc_grps_uri/pgm1");
+#endif
+    EXPECT_EQ("SEVEN", asm_options.sysparm);
+    EXPECT_EQ("MAC1", asm_options.profile);
 }
 
 
@@ -267,6 +285,7 @@ TEST(workspace, pgm_conf_malformed)
 TEST(workspace, proc_grps_malformed)
 {
     file_manager_impl fm;
+
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
@@ -303,4 +322,30 @@ TEST(workspace, proc_grps_missing)
 
     ws.collect_diags();
     ASSERT_EQ(ws.diags().size(), 0U);
+}
+TEST(workspace, asm_options_invalid)
+{
+    std::string proc_file = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [ "lib" ],    
+      "asm_options": {
+        "SYSPARM" : 42
+   
+        }
+    }
+  ]
+})";
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(proc_grps_name, 0, proc_file);
+
+    lib_config config;
+    workspace ws(fm, config);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 1U);
+    EXPECT_EQ(ws.diags()[0].code, "W0002");
 }

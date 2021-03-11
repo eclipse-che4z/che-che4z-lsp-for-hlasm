@@ -459,6 +459,7 @@ X EQU =**)-,2
 
 class look_parse_lib_prov : public parse_lib_provider
 {
+    asm_option asm_options;
     std::unique_ptr<analyzer> a;
 
     std::string LIB =
@@ -499,6 +500,7 @@ X EQU 1,2,C'X'
     }
 
     virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; }
+    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)
