@@ -14,15 +14,7 @@
 
 #include <chrono>
 #include <thread>
-#include <variant>
 
-#define ASIO_STANDALONE
-#include "asio.hpp"
-#include "asio/stream_socket_service.hpp"
-#include "asio/system_error.hpp"
-#include "json_queue_channel.h"
-
-#include "base_protocol_channel.h"
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
 #include "dap/dap_session.h"
@@ -32,121 +24,86 @@
 #include "lsp/lsp_server.h"
 #include "message_router.h"
 #include "scope_exit.h"
-#include "stream_helper.h"
+#include "server_streams.h"
 #include "workspace_manager.h"
-
-#ifdef _WIN32 // set binary mode for input on windows
-#    include <fcntl.h>
-#    include <io.h>
-#    define SET_BINARY_MODE(handle) _setmode(_fileno(handle), O_BINARY)
-#else
-#    define SET_BINARY_MODE(handle)
-#endif
-// no need for binary on linux, because it does not change \n into \r\n
 
 using namespace hlasm_plugin::language_server;
 
 namespace {
-struct tcp_setup
-{
-    asio::io_service io_service;
-    asio::ip::tcp::acceptor acceptor;
-    asio::ip::tcp::socket socket;
-    asio::ip::tcp::iostream stream;
-    explicit tcp_setup(uint16_t port)
-        : acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), port))
-        , socket(io_service)
-    {
-        acceptor.accept(stream.socket());
 
-        newline_is_space::imbue_stream(stream);
-    }
-    std::pair<std::istream&, std::ostream&> get_streams()
-    {
-        return std::pair<std::istream&, std::ostream&>(stream, stream);
-    }
-    ~tcp_setup() { stream.close(); }
-};
-struct std_setup
+class main_program : public json_sink
 {
-    std::pair<std::istream&, std::ostream&> get_streams()
+    std::atomic<bool> cancel = false;
+    hlasm_plugin::parser_library::workspace_manager ws_mngr;
+
+    json_queue_channel lsp_queue;
+
+    message_router router;
+
+    std::thread lsp_thread;
+
+    dap::session_manager dap_sessions;
+
+public:
+    main_program(json_sink& json_output, int& ret)
+        : ws_mngr(&cancel)
+        , router(&lsp_queue)
+        , dap_sessions(ws_mngr, json_output)
     {
-        return std::pair<std::istream&, std::ostream&>(std::cin, std::cout);
+        router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
+
+        lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
+            try
+            {
+                request_manager req_mgr(&cancel);
+                scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
+                lsp::server server(ws_mngr);
+
+                dispatcher lsp_dispatcher(io, server, req_mgr);
+                ret = lsp_dispatcher.run_server_loop();
+            }
+            catch (const std::exception& e)
+            {
+                LOG_ERROR(std::string("LSP thread exception: ") + e.what());
+            }
+            catch (...)
+            {
+                LOG_ERROR("LSP thread unknown exception.");
+            }
+        });
     }
+    ~main_program()
+    {
+        cancel = true;
+        lsp_queue.terminate();
+        if (lsp_thread.joinable())
+            lsp_thread.join();
+    }
+    main_program(const main_program&) = delete;
+    main_program(main_program&&) = delete;
+
+    // Inherited via json_sink
+    void write(const nlohmann::json& msg) override { router.write(msg); }
+    void write(nlohmann::json&& msg) override { router.write(std::move(msg)); }
 };
+
 } // namespace
 
 int main(int argc, char** argv)
 {
-    using namespace std;
     using namespace hlasm_plugin::language_server;
 
-    if (argc > 2)
-    {
-        std::cout << "Invalid arguments. Use language_server [<lsp port>]";
+    auto io_setup = server_streams::create(argc, argv);
+    if (!io_setup)
         return 1;
-    }
 
-    const bool use_tcp = argc == 2;
-    int lsp_port = 0;
-    if (use_tcp)
-    {
-        lsp_port = atoi(argv[1]);
-        if (lsp_port <= 0 || lsp_port > 65535)
-        {
-            std::cout << "Wrong port entered.";
-            return 1;
-        }
-    }
-
-    std::atomic<bool> cancel = false;
     try
     {
-        SET_BINARY_MODE(stdin);
-        SET_BINARY_MODE(stdout);
-        newline_is_space::imbue_stream(cin);
+        int ret = 0;
 
-        hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
+        main_program pgm(io_setup->get_response_stream(), ret);
 
-        json_queue_channel lsp_queue;
-
-        message_router router(&lsp_queue);
-
-        std::variant<std_setup, tcp_setup> io_setup;
-        if (use_tcp)
-            io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
-
-        auto [in_stream, out_stream] = std::visit([](auto& p) { return p.get_streams(); }, io_setup);
-        base_protocol_channel channel(in_stream, out_stream);
-
-        std::thread lsp_thread;
-        scope_exit clean_up_threads([&]() {
-            lsp_queue.terminate();
-            if (lsp_thread.joinable())
-                lsp_thread.join();
-        });
-
-        dap::session_manager dap_sessions(ws_mngr, channel);
-        router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
-
-        int ret;
-        lsp_thread = std::thread([&ret, &ws_mngr, &cancel, io = json_channel_adapter(lsp_queue, channel)]() {
-            request_manager req_mgr(&cancel);
-            scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
-            lsp::server server(ws_mngr);
-
-            dispatcher lsp_dispatcher(io, server, req_mgr);
-            ret = lsp_dispatcher.run_server_loop();
-        });
-
-        for (;;)
-        {
-            auto msg = channel.read();
-            if (!msg.has_value())
-                break;
-            router.write(std::move(msg).value());
-        }
-
+        io_setup->feed_requests(pgm);
 
         return ret;
     }

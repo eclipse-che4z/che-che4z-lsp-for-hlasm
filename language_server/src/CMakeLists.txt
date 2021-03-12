@@ -31,6 +31,8 @@ target_sources(language_server_base PRIVATE
 	scope_exit.h
 	server.cpp
 	server.h
+	server_streams.cpp
+	server_streams.h
 	stream_helper.h
 )
 
