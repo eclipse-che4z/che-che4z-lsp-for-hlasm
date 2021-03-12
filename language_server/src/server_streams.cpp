@@ -14,10 +14,6 @@
 
 #include "server_streams.h"
 
-#include <mutex>
-#include <stdexcept>
-
-#include "base_protocol_channel.h"
 #include "stream_helper.h"
 
 #ifndef __EMSCRIPTEN__
@@ -25,12 +21,17 @@
 #    include "asio.hpp"
 #    include "asio/stream_socket_service.hpp"
 #    include "asio/system_error.hpp"
+
+#    include "base_protocol_channel.h"
 #else
 #    include <emscripten.h>
-#    include <streambuf>
+#    include <string>
 
 #    include <emscripten/bind.h>
 #    include <emscripten/val.h>
+
+#    include "blocking_queue.h"
+#    include "logger.h"
 #endif // !__EMSCRIPTEN__
 
 #ifdef _WIN32 // set binary mode for input on windows
@@ -44,6 +45,122 @@
 
 namespace hlasm_plugin::language_server {
 namespace {
+
+#ifdef __EMSCRIPTEN__
+
+class emscripten_std_setup : public server_streams, public json_sink
+{
+    blocking_queue<std::string, blocking_queue_termination_policy::process_elements> queue;
+
+    std::string stdin_buffer;
+
+    intptr_t get_ptr_token() const { return reinterpret_cast<intptr_t>(this); }
+
+public:
+    static emscripten::val get_stdin_buffer(intptr_t ptr_val, ssize_t len)
+    {
+        auto* ptr = reinterpret_cast<emscripten_std_setup*>(ptr_val);
+        ptr->stdin_buffer.resize(len);
+        return emscripten::val(emscripten::typed_memory_view(len, (unsigned char*)ptr->stdin_buffer.data()));
+    }
+
+    static void commit_stdin_buffer(intptr_t ptr_val)
+    {
+        auto* ptr = reinterpret_cast<emscripten_std_setup*>(ptr_val);
+
+        ptr->queue.push(std::move(ptr->stdin_buffer));
+    }
+
+    static void terminate_input(intptr_t ptr_val)
+    {
+        auto* ptr = reinterpret_cast<emscripten_std_setup*>(ptr_val);
+        ptr->queue.terminate();
+    }
+
+    json_sink& get_response_stream() & override { return *this; }
+
+    void feed_requests(json_sink& pgm) override
+    {
+        // this routine runs on the "main()" worker
+        for (;;)
+        {
+            auto msg = queue.pop();
+
+            if (!msg.has_value())
+                break;
+
+            try
+            {
+                pgm.write(nlohmann::json::parse(msg.value()));
+            }
+            catch (const nlohmann::json::exception&)
+            {
+                LOG_WARNING("Could not parse received JSON: " + msg.value());
+            }
+        }
+    }
+
+    void write(const nlohmann::json& msg) override
+    {
+        auto msg_string = msg.dump();
+        auto msg_string_size = msg_string.size();
+        auto msg_to_send = std::string("Content-Length: ") + std::to_string(msg_string_size) + std::string("\r\n\r\n")
+            + std::move(msg_string);
+
+
+        MAIN_THREAD_EM_ASM(
+            { process.stdout.write(HEAPU8.slice($0, $0 + $1)); }, msg_to_send.data(), msg_to_send.size());
+    }
+    void write(nlohmann::json&& msg) override { write(msg); }
+
+    emscripten_std_setup()
+    {
+        MAIN_THREAD_EM_ASM(
+            {
+                const content_length = 'Content-Length: ';
+                var buffer = Buffer.from([]);
+                process.stdin.on(
+                    'close', function() { Module.terminate_input($0); });
+                process.stdin.on(
+                    'data', function(data) {
+                        buffer = Buffer.concat([ buffer, data ]);
+                        while (true)
+                        {
+                            if (buffer.indexOf(content_length) != 0)
+                                return;
+                            const end_of_line = buffer.indexOf('\\x0D\\x0A');
+                            if (end_of_line < 0)
+                                return;
+                            const length = +buffer.slice(content_length.length, end_of_line);
+                            const end_of_headers = buffer.indexOf('\\x0D\\x0A\\x0D\\x0A');
+                            if (end_of_headers < 0)
+                                return;
+                            const data_start = end_of_headers + 4;
+                            const data_end = data_start + length;
+                            if (data_end > buffer.length)
+                                return;
+
+                            const data_to_pass = buffer.slice(data_start, data_end);
+                            buffer = buffer.slice(data_end);
+
+                            const store_buffer = Module.get_stdin_buffer($0, data_to_pass.length);
+                            data_to_pass.copy(store_buffer);
+                            Module.commit_stdin_buffer($0);
+                        }
+                    });
+            },
+            get_ptr_token());
+    }
+};
+
+EMSCRIPTEN_BINDINGS(main_thread)
+{
+    emscripten::function("get_stdin_buffer", &emscripten_std_setup::get_stdin_buffer);
+    emscripten::function("commit_stdin_buffer", &emscripten_std_setup::commit_stdin_buffer);
+    emscripten::function("terminate_input", &emscripten_std_setup::terminate_input);
+}
+
+#else
 
 class std_setup final : public server_streams
 {
@@ -72,7 +189,6 @@ public:
     }
 };
 
-#ifndef __EMSCRIPTEN__
 class tcp_setup final : public server_streams
 {
     asio::io_service io_service;
@@ -124,7 +240,7 @@ std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
         return {};
     }
 
-    return std::make_unique<std_setup>();
+    return std::make_unique<emscripten_std_setup>();
 }
 
 #else
@@ -146,7 +262,7 @@ std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
             std::cerr << "Wrong port entered.";
             return {};
         }
-        return std::make_unique<tcp_setup>(lsp_port);
+        return std::make_unique<tcp_setup>((uint16_t)lsp_port);
     }
     else
         return std::make_unique<std_setup>();

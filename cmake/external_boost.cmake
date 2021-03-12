@@ -23,7 +23,9 @@ FetchContent_Declare(
   GIT_PROGRESS   1
 )
 
-FetchContent_MakeAvailable(boost_ext)
+if(NOT boost_ext_POPULATED)
+    FetchContent_Populate(boost_ext)
+endif()
 
 add_library(boost-asio INTERFACE)
 target_include_directories(boost-asio INTERFACE ${boost_ext_SOURCE_DIR}/asio/include)

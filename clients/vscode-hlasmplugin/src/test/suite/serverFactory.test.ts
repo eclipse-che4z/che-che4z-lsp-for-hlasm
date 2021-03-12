@@ -23,7 +23,7 @@ suite('ServerFactory Test Suite', () => {
      
     test('non TCP server options test', async () => {
         // create standard server options
-        const options = await factory.create(false);
+        const options = await factory.create('native');
         // retrieve executable
         const execOptions = <vscodelc.Executable>(options);
         // check command
