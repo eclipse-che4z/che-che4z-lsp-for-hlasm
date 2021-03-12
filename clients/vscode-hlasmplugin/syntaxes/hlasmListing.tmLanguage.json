@@ -1,0 +1,15 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "IBM HLASM Listing",
+    "scopeName": "source.hlasmListing",
+    "patterns": [
+      {
+        "include": "#listing_syntax"
+      }
+    ],
+    "repository": {
+        "hlasm_include":{
+            "patterns": [{ "include": "source.hlasm#hlasm_syntax"}]
+        }  
+    }
+}
