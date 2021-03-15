@@ -24,7 +24,6 @@ import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory, ServerCommunicationMethod } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 
-const method: ServerCommunicationMethod = 'wasm';
 const offset = 71;
 const continueColumn = 15;
 //export var hlasmpluginClient : vscodelc.LanguageClient;
@@ -52,7 +51,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // create server options
     var factory = new ServerFactory();
-    const serverOptions = await factory.create(method);
+    const commMethod = getConfig<ServerCommunicationMethod>('communicationMethod', 'native');
+    const serverOptions = await factory.create(commMethod);
 
     //client init
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
@@ -66,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
     //give the server some time to start listening when using TCP
     setTimeout(function () {
         hlasmpluginClient.start();
-    }, (method === 'tcp') ? 2000 : 0);
+    }, (commMethod === 'tcp') ? 2000 : 0);
 
     let api = {
         getExtension(): vscodelc.LanguageClient {
