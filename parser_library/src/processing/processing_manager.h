@@ -22,7 +22,7 @@
 #include "opencode_provider.h"
 #include "processing_state_listener.h"
 #include "processing_tracer.h"
-#include "statement_analyzers/statement_analyzer.h"
+#include "statement_analyzers/lsp_analyzer.h"
 #include "statement_fields_parser.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -47,7 +47,9 @@ public:
     // method that starts the processing loop
     void start_processing(std::atomic<bool>* cancel);
 
-    virtual void collect_diags() const override;
+    void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
+
+    void collect_diags() const override;
 
 private:
     analyzing_context ctx_;
@@ -57,7 +59,9 @@ private:
 
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
-    analyzer_ptr stmt_analyzer_;
+    
+    lsp_analyzer lsp_analyzer_;
+    std::vector<statement_analyzer*> stms_analyzers_;
 
     context::source_snapshot lookahead_stop_;
 
@@ -68,18 +72,18 @@ private:
     statement_provider& find_provider();
     void finish_processor();
 
-    virtual void start_macro_definition(macrodef_start_data start) override;
-    virtual void finish_macro_definition(macrodef_processing_result result) override;
-    virtual void start_lookahead(lookahead_start_data start) override;
-    virtual void finish_lookahead(lookahead_processing_result result) override;
-    virtual void start_copy_member(copy_start_data start) override;
-    virtual void finish_copy_member(copy_processing_result result) override;
-    virtual void finish_opencode() override;
+    void start_macro_definition(macrodef_start_data start) override;
+    void finish_macro_definition(macrodef_processing_result result) override;
+    void start_lookahead(lookahead_start_data start) override;
+    void finish_lookahead(lookahead_processing_result result) override;
+    void start_copy_member(copy_start_data start) override;
+    void finish_copy_member(copy_processing_result result) override;
+    void finish_opencode() override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
 
-    virtual void jump_in_statements(context::id_index target, range symbol_range) override;
-    virtual void register_sequence_symbol(context::id_index target, range symbol_range) override;
+    void jump_in_statements(context::id_index target, range symbol_range) override;
+    void register_sequence_symbol(context::id_index target, range symbol_range) override;
     std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(
         context::id_index name, range symbol_range);
 

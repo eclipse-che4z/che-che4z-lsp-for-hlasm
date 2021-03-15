@@ -100,3 +100,8 @@ const performance_metrics& analyzer::get_metrics()
     ctx_.hlasm_ctx->fill_metrics_files();
     return ctx_.hlasm_ctx->metrics;
 }
+
+void analyzer::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
+{
+    mngr_.register_stmt_analyzer(stmt_analyzer);
+}

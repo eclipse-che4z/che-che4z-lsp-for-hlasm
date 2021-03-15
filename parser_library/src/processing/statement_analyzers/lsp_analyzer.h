@@ -41,17 +41,17 @@ class lsp_analyzer : public statement_analyzer
 public:
     lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& lsp_ctx, const std::string& file_text);
 
-    virtual void analyze(const context::hlasm_statement& statement,
+    void analyze(const context::hlasm_statement& statement,
         statement_provider_kind prov_kind,
         processing_kind proc_kind) override;
 
-    virtual void macrodef_started(const macrodef_start_data& data) override;
-    virtual void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result) override;
+    void macrodef_started(const macrodef_start_data& data);
+    void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result);
 
-    virtual void copydef_started(const copy_start_data& data) override;
-    virtual void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result) override;
+    void copydef_started(const copy_start_data& data);
+    void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result);
 
-    virtual void opencode_finished() override;
+    void opencode_finished();
 
 private:
     void assign_statement_occurences();

@@ -68,6 +68,8 @@ public:
     void collect_diags() const override;
     const performance_metrics& get_metrics();
 
+    void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
+
 private:
     analyzer(const std::string& text,
         std::string file_name,

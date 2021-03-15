@@ -41,7 +41,8 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
-    , stmt_analyzer_(std::make_unique<lsp_analyzer>(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text))
+    , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
+    , stms_analyzers_({ &lsp_analyzer_ })
     , tracer_(tracer)
 {
     switch (data.proc_kind)
@@ -116,11 +117,17 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
         if (stmt)
         {
             update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
-            stmt_analyzer_->analyze(*stmt, prov.kind, proc.kind);
+            for (auto& a : stms_analyzers_)
+                a->analyze(*stmt, prov.kind, proc.kind);
 
             proc.process_statement(std::move(stmt));
         }
     }
+}
+
+void processing_manager::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
+{
+    stms_analyzers_.push_back(stmt_analyzer);
 }
 
 bool processing_manager::attr_lookahead_active() const
@@ -172,7 +179,7 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
             std::move(result.sequence_symbols),
             std::move(result.definition_location));
 
-    stmt_analyzer_->macrodef_finished(mac, std::move(result));
+    lsp_analyzer_.macrodef_finished(mac, std::move(result));
 }
 
 void processing_manager::start_lookahead(lookahead_start_data start)
@@ -212,7 +219,7 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
 
 void processing_manager::start_copy_member(copy_start_data start)
 {
-    stmt_analyzer_->copydef_started(start);
+    lsp_analyzer_.copydef_started(start);
 
     hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_file));
     procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
@@ -224,10 +231,10 @@ void processing_manager::finish_copy_member(copy_processing_result result)
         result.invalid_member ? context::statement_block() : std::move(result.definition),
         std::move(result.definition_location));
 
-    stmt_analyzer_->copydef_finished(member, std::move(result));
+    lsp_analyzer_.copydef_finished(member, std::move(result));
 }
 
-void processing_manager::finish_opencode() { stmt_analyzer_->opencode_finished(); }
+void processing_manager::finish_opencode() { lsp_analyzer_.opencode_finished(); }
 
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
 {
@@ -236,7 +243,7 @@ void processing_manager::start_macro_definition(macrodef_start_data start, std::
     else
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
-    stmt_analyzer_->macrodef_started(start);
+    lsp_analyzer_.macrodef_started(start);
     procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
 }
 
