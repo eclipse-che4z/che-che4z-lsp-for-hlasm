@@ -22,7 +22,7 @@ async function main() {
 		// prepare development and tests paths
 		const extensionDevelopmentPath = path.join(__dirname, '../../');
 		const extensionTestsPath = path.join(__dirname, './suite/index');
-		const launchArgs = [path.join(__dirname, './workspace/'),'--disable-extensions'];
+		const launchArgs = [path.join(__dirname, './workspace/'), '--disable-extensions'];
 		var options: TestOptions;
 		if (process.argv.length > 2 && process.argv[2] == 'insiders') {
 			const vscodeExecutablePath = await downloadAndUnzipVSCode('insiders');

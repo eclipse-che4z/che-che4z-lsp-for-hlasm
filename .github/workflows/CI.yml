@@ -55,14 +55,14 @@ jobs:
 
   linux-server:
     name: Linux language server
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install uuid-dev g++-8 ninja-build
+        run: sudo apt-get update && sudo apt-get install uuid-dev ninja-build
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
+        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ../
       - name: Build
         run: cd build && cmake --build .
       - name: Server Test
@@ -81,18 +81,39 @@ jobs:
           name: language_server_linux
           path: build/bin/language_server
 
+  wasm-server:
+    name: WASM language server
+    runs-on: ubuntu-20.04
+    container: emscripten/emsdk:2.0.12
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Requirements install
+        run: sudo apt-get update && sudo apt-get install ninja-build
+      - name: Configure
+        run: mkdir build && cd build && emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_EXE_LINKER_FLAGS="-s NODERAWFS=1" -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -fexceptions -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind" -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory" ../
+      - name: Build
+        run: cd build && cmake --build .
+      - name: Server Test
+        run: cd build/bin && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js
+      - name: Extension Test
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm --prefix clients/vscode-hlasmplugin run test:wasm
+      - name: Actions artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: language_server_wasm
+          path: build/bin/language_server.*
+
   macos-server:
     name: MacOS language server
     runs-on: macos-10.15
 
     steps:
       - uses: actions/checkout@v1
-      - name: Requirements install
-        run: |
-          brew install ninja llvm@8
-          export PATH=~/usr/local/opt/llvm\@8/bin:$PATH
       - name: Configure
-        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_PATH=/usr/local/opt/llvm\@8 ../
+        run: mkdir build && cd build && cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ../
       - name: Build
         run: cd build && cmake --build . -- -v
       - name: Server Test
@@ -109,8 +130,8 @@ jobs:
           path: build/bin/language_server
 
   VSIX:
-    runs-on: ubuntu-18.04
-    needs: [win-server, linux-server, macos-server]
+    runs-on: ubuntu-20.04
+    needs: [win-server, linux-server, wasm-server, macos-server]
 
     steps:
       - uses: actions/checkout@v1
@@ -124,6 +145,11 @@ jobs:
         with:
           name: language_server_linux
           path: clients/vscode-hlasmplugin/bin/linux/
+      - name: Download wasm language server
+        uses: actions/download-artifact@v1
+        with:
+          name: language_server_wasm
+          path: clients/vscode-hlasmplugin/bin/wasm/
       - name: Download MacOS language server
         uses: actions/download-artifact@v1
         with:
@@ -154,7 +180,7 @@ jobs:
 
   alpine-VSIX:
     name: Alpine VSIX
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container:
       image: alpine:3.10
 
@@ -191,7 +217,7 @@ jobs:
 
   release:
     name: Release VSIXs
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release'))
     needs: [alpine-VSIX, VSIX]
 
@@ -265,7 +291,7 @@ jobs:
 
   theia-test:
     name: Theia Integration Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: alpine-VSIX
     strategy:
       matrix:

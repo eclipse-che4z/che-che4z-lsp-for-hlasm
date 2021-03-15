@@ -20,14 +20,14 @@ import * as process from 'process';
 
 export async function run(): Promise<void> {
 	const sourceRoot = path.join(__dirname, '..', '..');
-	
+
 	// initialize nyc code coverage
 	const NYC = require('nyc');
-	const nyc = new NYC({ 
+	const nyc = new NYC({
 		cwd: path.join(sourceRoot, '..'),
 		reporter: ['lcov'],
 		hookRequire: true,
-		exclude: ['**/test/**','.vscode-test/**']
+		exclude: ['**/test/**', '.vscode-test/**']
 	});
 
 	const is_vscode = process.execPath.includes('Code');
@@ -51,25 +51,25 @@ export async function run(): Promise<void> {
 
 	await new Promise((resolve, reject) => {
 		glob((is_vscode) ? '**/**.test.js' : '**/integration.test.js', { cwd: testsPath }, (_, files) => {
-				// Add files to the test suite
-				files.forEach(file => 
-					mocha.addFile(path.resolve(testsPath, file)));
-	
-				try {
-					vscode.workspace.getConfiguration('hlasm').update('continuationHandling',true).then(() => {
-						// Run the mocha test
-						mocha.run(failures => {
-							if (failures > 0) {
-								reject(new Error(`${failures} tests failed.`));
-							} else {
-								resolve();
-							}
-						});
+			// Add files to the test suite
+			files.forEach(file =>
+				mocha.addFile(path.resolve(testsPath, file)));
+
+			try {
+				vscode.workspace.getConfiguration('hlasm').update('continuationHandling', true).then(() => {
+					// Run the mocha test
+					mocha.run(failures => {
+						if (failures > 0) {
+							reject(new Error(`${failures} tests failed.`));
+						} else {
+							resolve();
+						}
 					});
-				} catch (error) {
-					console.error(error);
-					reject(error);
-				}
+				});
+			} catch (error) {
+				console.error(error);
+				reject(error);
+			}
 		});
 	});
 

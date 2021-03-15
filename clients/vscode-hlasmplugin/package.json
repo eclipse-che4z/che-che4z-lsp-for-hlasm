@@ -66,6 +66,7 @@
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
     "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
+    "test:wasm": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js wasm",
     "test:insiders": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
     "test:theia": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
   },

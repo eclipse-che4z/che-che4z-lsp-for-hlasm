@@ -38,16 +38,16 @@ In addition to the prerequisites listed in \[prereq\], the Linux build has two m
 
 -   UUID library
 
-We build the project for Ubuntu 18.04 and for the Alpine Linux.
+We build the project for Ubuntu 20.04 and for the Alpine Linux.
 
 ### Ubuntu
 
-On Ubuntu 18.04 the following commands install all prerequisites and then build the project into the `build` folder:
+On Ubuntu 20.04 the following commands install all prerequisites and then build the project into the `build` folder:
 
-    apt update && sudo apt install cmake g++-8 uuid-dev npm default-jdk
+    apt update && sudo apt install cmake g++-10 uuid-dev npm default-jdk
                            pkg-config maven
     mkdir build && cd build
-    cmake -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
+    cmake -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ../
     cmake --build .
 
 ### Alpine Linux
