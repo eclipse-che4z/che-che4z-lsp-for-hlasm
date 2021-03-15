@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef LSP_INFO_PROC_INFO
-#define LSP_INFO_PROC_INFO
+#ifndef SOURCE_INFO_PROC_INFO
+#define SOURCE_INFO_PROC_INFO
 
 #include <memory>
 #include <regex>
