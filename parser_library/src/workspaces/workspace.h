@@ -22,13 +22,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "nlohmann/json.hpp"
-
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "lib_config.h"
 #include "library.h"
 #include "message_consumer.h"
+#include "nlohmann/json.hpp"
 #include "processor.h"
 #include "processor_group.h"
 

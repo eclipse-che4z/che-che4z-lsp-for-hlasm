@@ -15,6 +15,7 @@
 #include "token.h"
 
 #include <CharStream.h>
+
 #include <misc/Interval.h>
 
 using namespace hlasm_plugin::parser_library::lexing;

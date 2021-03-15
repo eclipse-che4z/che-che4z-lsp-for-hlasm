@@ -19,7 +19,6 @@
 #include <regex>
 
 #include "nlohmann/json.hpp"
-
 #include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {

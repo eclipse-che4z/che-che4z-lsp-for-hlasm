@@ -21,7 +21,6 @@
 #include <sstream>
 
 #include "nlohmann/json.hpp"
-
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
 
