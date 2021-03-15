@@ -32,9 +32,9 @@ analyzer::analyzer(const std::string& text,
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(ctx)
     , listener_(file_name)
-    , lsp_proc_(collect_hl_info)
+    , src_proc_(collect_hl_info)
     , input_(text)
-    , lexer_(&input_, &lsp_proc_, &ctx.hlasm_ctx->metrics)
+    , lexer_(&input_, &src_proc_, &ctx.hlasm_ctx->metrics)
     , tokens_(&lexer_)
     , parser_(new parsing::hlasmparser(&tokens_))
     , mngr_(std::unique_ptr<processing::opencode_provider>(parser_),
@@ -46,7 +46,7 @@ analyzer::analyzer(const std::string& text,
           *parser_,
           tracer)
 {
-    parser_->initialize(ctx, &lsp_proc_, &lib_provider, &mngr_);
+    parser_->initialize(ctx, &src_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);
@@ -81,12 +81,12 @@ context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
 parsing::hlasmparser& analyzer::parser() { return *parser_; }
 
-semantics::lsp_info_processor& analyzer::lsp_processor() { return lsp_proc_; }
+const semantics::source_info_processor& analyzer::source_processor() { return src_proc_; }
 
 void analyzer::analyze(std::atomic<bool>* cancel)
 {
     mngr_.start_processing(cancel);
-    lsp_proc_.finish();
+    src_proc_.finish();
 }
 
 void analyzer::collect_diags() const

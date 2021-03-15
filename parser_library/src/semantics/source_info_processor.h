@@ -22,15 +22,13 @@
 #include "context/hlasm_context.h"
 #include "highlighting_info.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
-// 
-class lsp_info_processor
+// Stores info that are generated during parsing and do not require access to context (currently only highligting)
+class source_info_processor
 {
 public:
-    lsp_info_processor(bool collect_hl_info);
+    source_info_processor(bool collect_hl_info);
 
     // takes vector of highlighting symbols and processes them into highlighting info for further propagation
     void process_hl_symbols(std::vector<token_info> symbols);
@@ -48,9 +46,8 @@ private:
     semantics::highlighting_info hl_info_;
     // specifies whether to generate highlighting information
     bool collect_hl_info_;
-
 };
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::semantics
+
 #endif

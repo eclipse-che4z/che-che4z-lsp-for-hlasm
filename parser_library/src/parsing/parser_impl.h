@@ -24,7 +24,7 @@
 #include "processing/statement_fields_parser.h"
 #include "processing/statement_providers/statement_provider.h"
 #include "semantics/collector.h"
-#include "semantics/lsp_info_processor.h"
+#include "semantics/source_info_processor.h"
 
 namespace hlasm_plugin {
 namespace parser_library {
@@ -52,7 +52,7 @@ public:
     parser_impl(antlr4::TokenStream* input);
 
     void initialize(analyzing_context ctx,
-        semantics::lsp_info_processor* lsp_prc,
+        semantics::source_info_processor* src_prc,
         workspaces::parse_lib_provider* lib_provider,
         processing::processing_state_listener* state_listener);
 
@@ -94,7 +94,7 @@ protected:
     lexing::token_stream& input;
     analyzing_context ctx;
     context::hlasm_context* hlasm_ctx;
-    semantics::lsp_info_processor* lsp_proc;
+    semantics::source_info_processor* src_proc;
     const processing::statement_processor* processor;
     context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;

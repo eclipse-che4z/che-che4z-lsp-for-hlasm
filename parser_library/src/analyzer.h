@@ -35,7 +35,7 @@ class analyzer : public diagnosable_ctx
 
     parsing::parser_error_listener listener_;
 
-    semantics::lsp_info_processor lsp_proc_;
+    semantics::source_info_processor src_proc_;
 
     lexing::input_source input_;
     lexing::lexer lexer_;
@@ -61,7 +61,7 @@ public:
     analyzing_context context();
     context::hlasm_context& hlasm_ctx();
     parsing::hlasmparser& parser();
-    semantics::lsp_info_processor& lsp_processor();
+    const semantics::source_info_processor& source_processor();
 
     void analyze(std::atomic<bool>* cancel = nullptr);
 

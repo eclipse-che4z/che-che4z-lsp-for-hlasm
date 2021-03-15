@@ -19,7 +19,6 @@
 #include "lsp/completion_item.h"
 #include "location.h"
 #include "semantics/highlighting_info.h"
-#include "semantics/lsp_info_processor.h"
 #include "workspaces/processor.h"
 
 namespace hlasm_plugin::parser_library {

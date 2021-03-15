@@ -46,7 +46,7 @@ TEST(highlighting, simple)
     const std::string contents = "A EQU 1";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 1 } }, hl_scopes::label),
         token_info({ { 0, 2 }, { 0, 5 } }, hl_scopes::instruction),
         token_info({ { 0, 6 }, { 0, 7 } }, hl_scopes::number) };
@@ -61,7 +61,7 @@ TEST(highlighting, mach_expr)
     const std::string contents = " LR 1*1+X,L'X";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 3 } }, hl_scopes::instruction),
         token_info({ { 0, 4 }, { 0, 5 } }, hl_scopes::number),
         token_info({ { 0, 5 }, { 0, 6 } }, hl_scopes::operator_symbol),
@@ -83,7 +83,7 @@ TEST(highlighting, mach_expr_2)
     const std::string contents = " L X'F',*";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 2 } }, hl_scopes::instruction),
         token_info({ { 0, 3 }, { 0, 4 } }, hl_scopes::self_def_type),
         token_info({ { 0, 4 }, { 0, 7 } }, hl_scopes::string),
@@ -100,7 +100,7 @@ TEST(highlighting, mach_expr_3)
     const std::string contents = " L 1,=C'1'";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 2 } }, hl_scopes::instruction),
         token_info({ { 0, 3 }, { 0, 4 } }, hl_scopes::number),
         token_info({ { 0, 4 }, { 0, 5 } }, hl_scopes::operator_symbol),
@@ -118,7 +118,7 @@ TEST(highlighting, data_def)
     const std::string contents = " DC 4CAP8L4''";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 3 } }, hl_scopes::instruction),
         token_info({ { 0, 4 }, { 0, 5 } }, hl_scopes::number),
         token_info({ { 0, 5 }, { 0, 7 } }, hl_scopes::data_def_type),
@@ -138,7 +138,7 @@ TEST(highlighting, asm_simple_operand)
     const std::string contents = " AMODE ANY64";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
         token_info({ { 0, 7 }, { 0, 12 } }, hl_scopes::ordinary_symbol) };
 
@@ -152,7 +152,7 @@ TEST(highlighting, asm_list)
     const std::string contents = " AMODE (op2,op3)";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
         token_info({ { 0, 7 }, { 0, 8 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 8 }, { 0, 11 } }, hl_scopes::ordinary_symbol),
@@ -170,7 +170,7 @@ TEST(highlighting, asm_list_2)
     const std::string contents = " AMODE op1(op2,op3)";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
         token_info({ { 0, 7 }, { 0, 10 } }, hl_scopes::operand),
         token_info({ { 0, 10 }, { 0, 11 } }, hl_scopes::operator_symbol),
@@ -191,7 +191,7 @@ TEST(highlighting, continuation)
 IgnoredIgnoredI1 remark)";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 1 } }, hl_scopes::label),
         token_info({ { 0, 2 }, { 0, 5 } }, hl_scopes::instruction),
         token_info({ { 0, 70 }, { 0, 71 } }, hl_scopes::number),
@@ -216,7 +216,7 @@ TEST(highlighting, macro_alternative_continuation)
                OP2 remark2)";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 1, 1 }, { 1, 6 } }, hl_scopes::instruction),
         token_info({ { 2, 1 }, { 2, 4 } }, hl_scopes::instruction),
         token_info({ { 3, 1 }, { 3, 5 } }, hl_scopes::instruction),
@@ -240,7 +240,7 @@ TEST(highlighting, var_sym_array_subscript)
     const std::string contents = "&VARP(31+L'C) SETA 45\n\nC EQU 1";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 5 } }, hl_scopes::var_symbol),
         token_info({ { 0, 5 }, { 0, 6 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 6 }, { 0, 8 } }, hl_scopes::number),
@@ -266,7 +266,7 @@ TEST(highlighting, ca_expr)
     const std::string contents = " AIF (T'&SYSDATC EQ 'C').LOOP";
     analyzer a(contents, source_file, lib_provider, nullptr, true);
     a.analyze();
-    const auto& tokens = a.lsp_processor().semantic_tokens();
+    const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 4 } }, hl_scopes::instruction),
         token_info({ { 0, 5 }, { 0, 6 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 6 }, { 0, 7 } }, hl_scopes::data_attr_type),

@@ -29,7 +29,7 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
     , input(dynamic_cast<lexing::token_stream&>(*input))
     , hlasm_ctx(nullptr)
-    , lsp_proc(nullptr)
+    , src_proc(nullptr)
     , processor(nullptr)
     , current_statement(nullptr)
     , finished_flag(false)
@@ -37,13 +37,13 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
 {}
 
 void parser_impl::initialize(analyzing_context a_ctx,
-    semantics::lsp_info_processor* lsp_prc,
+    semantics::source_info_processor* lsp_prc,
     workspaces::parse_lib_provider* lib_provider,
     processing::processing_state_listener* state_listener)
 {
     ctx = std::move(a_ctx);
     hlasm_ctx = &*ctx.hlasm_ctx;
-    lsp_proc = lsp_prc;
+    src_proc = lsp_prc;
     finished_flag = false;
     lib_provider_ = lib_provider;
     state_listener_ = state_listener;
@@ -328,7 +328,7 @@ bool parser_impl::process_statement()
     else
         hlasm_ctx->metrics.non_continued_statements++;
 
-    lsp_proc->process_hl_symbols(collector.extract_hl_symbols());
+    src_proc->process_hl_symbols(collector.extract_hl_symbols());
     current_statement = stmt;
 
     return false;

@@ -19,7 +19,7 @@
 
 #include "antlr4-runtime.h"
 
-#include "lsp_info_processor.h"
+#include "source_info_processor.h"
 #include "processing/op_code.h"
 #include "statement.h"
 

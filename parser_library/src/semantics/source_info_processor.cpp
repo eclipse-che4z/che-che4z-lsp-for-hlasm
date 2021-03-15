@@ -12,22 +12,18 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "lsp_info_processor.h"
+#include "source_info_processor.h"
 
 #include <algorithm>
-#include <sstream>
-
-#include "context/instruction.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(bool collect_hl_info)
+source_info_processor::source_info_processor(bool collect_hl_info)
     : collect_hl_info_(collect_hl_info)
 {};
 
-void lsp_info_processor::process_hl_symbols(std::vector<token_info> symbols)
+void source_info_processor::process_hl_symbols(std::vector<token_info> symbols)
 {
     for (const auto& symbol : symbols)
     {
@@ -35,11 +31,11 @@ void lsp_info_processor::process_hl_symbols(std::vector<token_info> symbols)
     }
 }
 
-void lsp_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
+void source_info_processor::finish() { std::sort(hl_info_.lines.begin(), hl_info_.lines.end()); }
 
-const lines_info& lsp_info_processor::semantic_tokens() const { return hl_info_.lines; }
+const lines_info& source_info_processor::semantic_tokens() const { return hl_info_.lines; }
 
-void lsp_info_processor::add_hl_symbol(token_info symbol)
+void source_info_processor::add_hl_symbol(token_info symbol)
 {
     // file is open in IDE, get its highlighting
     if (collect_hl_info_)

@@ -81,9 +81,9 @@ EOLLN
 EOF
 )";
 
-    semantics::lsp_info_processor lsp_proc(false);
+    semantics::source_info_processor src_proc(false);
     lexing::input_source input(in);
-    lexing::lexer l(&input, &lsp_proc);
+    lexing::lexer l(&input, &src_proc);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -121,9 +121,9 @@ EOLLN
 EOF
 )";
 
-    semantics::lsp_info_processor lsp_proc(false);
+    semantics::source_info_processor src_proc(false);
     lexing::input_source input("TEST TEST \r\n TEST1 TEST2");
-    lexing::lexer l(&input, &lsp_proc);
+    lexing::lexer l(&input, &src_proc);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -139,13 +139,13 @@ EOF
 
 TEST(lexer_test, new_line_in_ignored)
 {
-    semantics::lsp_info_processor lsp_proc(false);
+    semantics::source_info_processor src_proc(false);
     // test case, when a newline is in the first 15 ignored characters after continuation
     lexing::input_source input(
         R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
         
 label lr 1,1)");
-    lexing::lexer l(&input, &lsp_proc);
+    lexing::lexer l(&input, &src_proc);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -213,9 +213,9 @@ EOLLN
 EOF
 )";
 
-    semantics::lsp_info_processor lsp_proc(false);
+    semantics::source_info_processor src_proc(false);
     lexing::input_source input(in);
-    lexing::lexer l(&input, &lsp_proc);
+    lexing::lexer l(&input, &src_proc);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
     l.set_unlimited_line(true);
@@ -256,8 +256,8 @@ EOLLN
 EOF
 )";
     lexing::input_source input(in);
-    semantics::lsp_info_processor lsp_proc(false);
-    lexing::lexer l(&input, &lsp_proc);
+    semantics::source_info_processor src_proc(false);
+    lexing::lexer l(&input, &src_proc);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -311,8 +311,8 @@ TEST(lexer_test, special_spaces)
 {
     std::string in = "A\v\f\t LR";
     lexing::input_source input(in);
-    semantics::lsp_info_processor lsp_proc(false);
-    lexing::lexer l(&input, &lsp_proc);
+    semantics::source_info_processor src_proc(false);
+    lexing::lexer l(&input, &src_proc);
 
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IDENTIFIER);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::SPACE);
@@ -326,9 +326,9 @@ TEST(lexer_test, attribute_in_continuation)
                'SYMBOL
 )";
 
-    semantics::lsp_info_processor lsp_proc(false);
+    semantics::source_info_processor src_proc(false);
     lexing::input_source input(in);
-    lexing::lexer l(&input, &lsp_proc);
+    lexing::lexer l(&input, &src_proc);
 
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::SPACE);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
