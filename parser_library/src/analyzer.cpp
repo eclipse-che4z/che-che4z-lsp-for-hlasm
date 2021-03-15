@@ -32,7 +32,7 @@ analyzer::analyzer(const std::string& text,
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(ctx)
     , listener_(file_name)
-    , lsp_proc_(file_name, text, &*ctx.hlasm_ctx, collect_hl_info)
+    , lsp_proc_(collect_hl_info)
     , input_(text)
     , lexer_(&input_, &lsp_proc_, &ctx.hlasm_ctx->metrics)
     , tokens_(&lexer_)

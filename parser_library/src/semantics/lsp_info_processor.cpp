@@ -23,22 +23,9 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 using namespace hlasm_plugin::parser_library::context;
 
-lsp_info_processor::lsp_info_processor(
-    std::string file, const std::string& text, context::hlasm_context* ctx, bool collect_hl_info)
-    : file_name(ctx ? ctx->ids().add(file, true) : nullptr)
-    , empty_string(ctx ? ctx->ids().well_known.empty : nullptr)
-    , collect_hl_info_(collect_hl_info)
-{
-    // initialize text vector
-    std::string line;
-    std::stringstream text_ss(text);
-
-    if (!ctx)
-        return;
-
-    hl_info_.document = { *file_name };
-
-};
+lsp_info_processor::lsp_info_processor(bool collect_hl_info)
+    : collect_hl_info_(collect_hl_info)
+{};
 
 void lsp_info_processor::process_hl_symbols(std::vector<token_info> symbols)
 {

@@ -26,25 +26,19 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace semantics {
 
-// lsp info processor processes lsp symbols from parser into symbol definitions and their occurencies used for responses
-// to lsp requests
+// 
 class lsp_info_processor
 {
 public:
-    lsp_info_processor(std::string file, const std::string& text, context::hlasm_context* ctx, bool collect_hl_info);
-
-    // name of file this processor is currently used
-    const std::string* file_name;
-    // common value of an empty string
-    const std::string* empty_string;
+    lsp_info_processor(bool collect_hl_info);
 
     // takes vector of highlighting symbols and processes them into highlighting info for further propagation
     void process_hl_symbols(std::vector<token_info> symbols);
 
-    const lines_info& semantic_tokens() const;
-
     // add one hl symbol to the highlighting info
     void add_hl_symbol(token_info symbol);
+
+    const lines_info& semantic_tokens() const;
 
     // finishes collected data
     void finish();
@@ -54,6 +48,7 @@ private:
     semantics::highlighting_info hl_info_;
     // specifies whether to generate highlighting information
     bool collect_hl_info_;
+
 };
 } // namespace semantics
 } // namespace parser_library
