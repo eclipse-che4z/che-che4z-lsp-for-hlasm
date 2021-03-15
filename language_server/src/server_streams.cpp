@@ -48,7 +48,7 @@ namespace {
 
 #ifdef __EMSCRIPTEN__
 
-class emscripten_std_setup : public server_streams, public json_sink
+class emscripten_std_setup : public server_streams, public json_source, public json_sink
 {
     blocking_queue<std::string, blocking_queue_termination_policy::process_elements> queue;
 
@@ -79,26 +79,7 @@ public:
 
     json_sink& get_response_stream() & override { return *this; }
 
-    void feed_requests(json_sink& pgm) override
-    {
-        // this routine runs on the "main()" worker
-        for (;;)
-        {
-            auto msg = queue.pop();
-
-            if (!msg.has_value())
-                break;
-
-            try
-            {
-                pgm.write(nlohmann::json::parse(msg.value()));
-            }
-            catch (const nlohmann::json::exception&)
-            {
-                LOG_WARNING("Could not parse received JSON: " + msg.value());
-            }
-        }
-    }
+    json_source& get_request_stream() & override { return *this; }
 
     void write(const nlohmann::json& msg) override
     {
@@ -112,6 +93,25 @@ public:
             { process.stdout.write(HEAPU8.slice($0, $0 + $1)); }, msg_to_send.data(), msg_to_send.size());
     }
     void write(nlohmann::json&& msg) override { write(msg); }
+
+    std::optional<nlohmann::json> read() override
+    {
+        while (true)
+        {
+            auto msg = queue.pop();
+            if (!msg.has_value())
+                return std::nullopt;
+
+            try
+            {
+                return nlohmann::json::parse(msg.value());
+            }
+            catch (const nlohmann::json::exception&)
+            {
+                LOG_WARNING("Could not parse received JSON: " + msg.value());
+            }
+        }
+    }
 
     emscripten_std_setup()
     {
@@ -177,16 +177,7 @@ public:
 
     json_sink& get_response_stream() & override { return channel; }
 
-    void feed_requests(json_sink& pgm) override
-    {
-        for (;;)
-        {
-            auto msg = channel.read();
-            if (!msg.has_value())
-                break;
-            pgm.write(std::move(msg).value());
-        }
-    }
+    json_source& get_request_stream() & override { return channel; }
 };
 
 class tcp_setup final : public server_streams
@@ -213,16 +204,7 @@ public:
 
     json_sink& get_response_stream() & override { return channel; }
 
-    void feed_requests(json_sink& pgm) override
-    {
-        for (;;)
-        {
-            auto msg = channel.read();
-            if (!msg.has_value())
-                break;
-            pgm.write(std::move(msg).value());
-        }
-    }
+    json_source& get_request_stream() & override { return channel; }
 };
 
 #endif // !__EMSCRIPTEN__

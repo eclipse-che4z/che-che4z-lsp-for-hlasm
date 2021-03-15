@@ -103,7 +103,22 @@ int main(int argc, char** argv)
 
         main_program pgm(io_setup->get_response_stream(), ret);
 
-        io_setup->feed_requests(pgm);
+        for (auto& source = io_setup->get_request_stream();;)
+        {
+            auto msg = source.read();
+
+            if (!msg.has_value())
+                break;
+
+            try
+            {
+                pgm.write(msg.value());
+            }
+            catch (const nlohmann::json::exception&)
+            {
+                LOG_WARNING("Could not parse received JSON: " + msg.value());
+            }
+        }
 
         return ret;
     }

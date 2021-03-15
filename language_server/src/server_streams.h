@@ -25,7 +25,7 @@ class server_streams
 public:
     virtual ~server_streams() = default;
     virtual json_sink& get_response_stream() & = 0;
-    virtual void feed_requests(json_sink&) = 0;
+    virtual json_source& get_request_stream() & = 0;
 
     static std::unique_ptr<server_streams> create(int argc, char** argv);
 };
