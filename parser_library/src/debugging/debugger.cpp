@@ -54,10 +54,22 @@ void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider
     thread_ = std::make_unique<std::thread>(b, open_code, &provider);
 }
 
-void debugger::statement(range stmt_range)
+void debugger::analyze(const context::hlasm_statement& statement,
+    processing::statement_provider_kind prov_kind,
+    processing::processing_kind proc_kind)
 {
     if (disconnected_)
         return;
+
+    // Continue only for ordinary processing kind (i.e. when the statement is executed, skip
+    // lookahead and copy/macro definitions)
+    if (proc_kind != processing::processing_kind::ORDINARY)
+        return;
+    // Continue only for non-empty statements
+    if (statement.access_resolved()->opcode_ref().value == context::id_storage::empty_id)
+        return;
+
+    range stmt_range = statement.access_resolved()->stmt_range_ref();
 
     bool breakpoint_hit = false;
     auto bps = cfg_.get_breakpoints(ctx_->processing_stack().back().proc_location.file);
@@ -270,8 +282,8 @@ debugger::~debugger()
 void debugger::debug_start(processor_file_ptr open_code, parse_lib_provider* provider)
 {
     std::lock_guard<std::mutex> guard(variable_mtx_);
-    analyzer a(open_code->get_text(), open_code->get_file_name(), *provider, this);
-
+    analyzer a(open_code->get_text(), open_code->get_file_name(), *provider);
+    a.register_stmt_analyzer(this);
     ctx_ = &a.hlasm_ctx();
 
     a.analyze(&cancel_);

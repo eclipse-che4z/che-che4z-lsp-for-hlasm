@@ -21,7 +21,6 @@
 #include "branching_provider.h"
 #include "opencode_provider.h"
 #include "processing_state_listener.h"
-#include "processing_tracer.h"
 #include "statement_analyzers/lsp_analyzer.h"
 #include "statement_fields_parser.h"
 #include "workspaces/parse_lib_provider.h"
@@ -41,8 +40,7 @@ public:
         std::string file_name,
         const std::string & file_text,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser,
-        processing_tracer* tracer);
+        statement_fields_parser& parser);
 
     // method that starts the processing loop
     void start_processing(std::atomic<bool>* cancel);
@@ -64,8 +62,6 @@ private:
     std::vector<statement_analyzer*> stms_analyzers_;
 
     context::source_snapshot lookahead_stop_;
-
-    processing_tracer* tracer_ = nullptr;
 
     bool attr_lookahead_active() const;
 

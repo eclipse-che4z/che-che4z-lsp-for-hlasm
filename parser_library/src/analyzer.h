@@ -55,7 +55,6 @@ public:
     analyzer(const std::string& text,
         std::string file_name = "",
         workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
-        processing::processing_tracer* tracer = nullptr,
         bool collect_hl_info = false);
 
     analyzing_context context();
@@ -69,15 +68,6 @@ public:
     const performance_metrics& get_metrics();
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
-
-private:
-    analyzer(const std::string& text,
-        std::string file_name,
-        analyzing_context ctx,
-        workspaces::parse_lib_provider& lib_provider,
-        const workspaces::library_data data,
-        processing::processing_tracer* tracer,
-        bool collect_hl_info);
 };
 
 } // namespace parser_library

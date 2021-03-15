@@ -42,7 +42,7 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 {
-    analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, nullptr, get_lsp_editing());
+    analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
 
     auto old_dep = dependencies_;
 

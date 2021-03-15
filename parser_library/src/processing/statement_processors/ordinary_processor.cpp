@@ -24,8 +24,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
-    statement_fields_parser& parser,
-    processing_tracer* tracer)
+    statement_fields_parser& parser)
     : statement_processor(processing_kind::ORDINARY, ctx)
     , eval_ctx { ctx, lib_provider }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener)
@@ -34,7 +33,6 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , listener_(state_listener)
-    , tracer_(tracer)
 {}
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
@@ -77,12 +75,6 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr statement)
     bool fatal = check_fatals(range(statement->statement_position()));
     if (fatal)
         return;
-
-    if (tracer_)
-    {
-        if (statement->access_resolved()->opcode_ref().value != context::id_storage::empty_id)
-            tracer_->statement(statement->access_resolved()->stmt_range_ref());
-    }
 
     switch (statement->access_resolved()->opcode_ref().type)
     {

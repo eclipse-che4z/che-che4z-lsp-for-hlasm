@@ -23,7 +23,7 @@
 #include "context/hlasm_context.h"
 #include "debug_lib_provider.h"
 #include "debug_types.h"
-#include "processing/processing_tracer.h"
+#include "processing/statement_analyzers/statement_analyzer.h"
 #include "workspaces/file_manager.h"
 #include "workspaces/processor.h"
 
@@ -54,14 +54,16 @@ private:
 // Implements DAP for macro tracing. Starts analyzer in a separate thread
 // then controls the flow of analyzer by implementing processing_tracer
 // interface.
-class debugger : public processing::processing_tracer
+class debugger : public processing::statement_analyzer
 {
 public:
     debugger(debug_event_consumer_s& event_consumer, debug_config& debug_cfg);
 
     void launch(workspaces::processor_file_ptr open_code, workspaces::parse_lib_provider& provider, bool stop_on_entry);
 
-    virtual void statement(range stmt_range) override;
+    void analyze(const context::hlasm_statement& statement,
+        processing::statement_provider_kind prov_kind,
+        processing::processing_kind proc_kind) override;
 
     // User controls of debugging.
     void next();

@@ -34,8 +34,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     std::string file_name,
     const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
-    statement_fields_parser& parser,
-    processing_tracer* tracer)
+    statement_fields_parser& parser)
     : diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx_(std::move(ctx))
     , hlasm_ctx_(*ctx_.hlasm_ctx)
@@ -43,14 +42,13 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     , opencode_prov_(*base_provider)
     , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
     , stms_analyzers_({ &lsp_analyzer_ })
-    , tracer_(tracer)
 {
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this));
             procs_.emplace_back(
-                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, tracer_));
+                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { data.library_member, std::move(file_name) });
