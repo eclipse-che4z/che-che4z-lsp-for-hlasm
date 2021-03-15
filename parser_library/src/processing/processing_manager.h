@@ -39,7 +39,7 @@ public:
         analyzing_context ctx,
         const workspaces::library_data data,
         std::string file_name,
-       const  std::string & file_text,
+        const std::string & file_text,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         processing_tracer* tracer);

@@ -37,13 +37,13 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
 {}
 
 void parser_impl::initialize(analyzing_context a_ctx,
-    semantics::source_info_processor* lsp_prc,
+    semantics::source_info_processor* src_prc,
     workspaces::parse_lib_provider* lib_provider,
     processing::processing_state_listener* state_listener)
 {
     ctx = std::move(a_ctx);
     hlasm_ctx = &*ctx.hlasm_ctx;
-    src_proc = lsp_prc;
+    src_proc = src_prc;
     finished_flag = false;
     lib_provider_ = lib_provider;
     state_listener_ = state_listener;

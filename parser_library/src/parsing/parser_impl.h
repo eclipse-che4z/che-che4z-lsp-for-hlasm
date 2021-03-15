@@ -57,14 +57,16 @@ public:
         processing::processing_state_listener* state_listener);
 
     bool is_last_line() const;
-    virtual void rewind_input(context::source_position pos) override;
+    void rewind_input(context::source_position pos) override;
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
-    virtual processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
+    processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status) override;
+
+    context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
     void collect_diags() const override;
     std::vector<antlr4::ParserRuleContext*> tree;
@@ -86,8 +88,8 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    virtual context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
-    virtual bool finished() const override;
+    
+    bool finished() const override;
 
     void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
 
