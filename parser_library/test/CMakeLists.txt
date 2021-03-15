@@ -56,5 +56,5 @@ target_link_libraries(library_test nlohmann_json::nlohmann_json)
 add_dependencies(library_test library_tests_copy)
 
 if(DISCOVER_TESTS)
-	gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 30)
+	gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
 endif()

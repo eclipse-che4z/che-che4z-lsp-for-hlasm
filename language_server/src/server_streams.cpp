@@ -119,35 +119,57 @@ public:
             {
                 const content_length = 'Content-Length: ';
                 var buffer = Buffer.from([]);
-                process.stdin.on(
-                    'close', function() { Module.terminate_input($0); });
-                process.stdin.on(
-                    'data', function(data) {
-                        buffer = Buffer.concat([ buffer, data ]);
-                        while (true)
-                        {
-                            if (buffer.indexOf(content_length) != 0)
-                                return;
-                            const end_of_line = buffer.indexOf('\\x0D\\x0A');
-                            if (end_of_line < 0)
-                                return;
-                            const length = +buffer.slice(content_length.length, end_of_line);
-                            const end_of_headers = buffer.indexOf('\\x0D\\x0A\\x0D\\x0A');
-                            if (end_of_headers < 0)
-                                return;
-                            const data_start = end_of_headers + 4;
-                            const data_end = data_start + length;
-                            if (data_end > buffer.length)
-                                return;
 
-                            const data_to_pass = buffer.slice(data_start, data_end);
-                            buffer = buffer.slice(data_end);
+                const ptr = $0;
+                Module["emscripten_std_setup_term"] = Module["emscripten_std_setup_term"] || new Map();
 
-                            const store_buffer = Module.get_stdin_buffer($0, data_to_pass.length);
-                            data_to_pass.copy(store_buffer);
-                            Module.commit_stdin_buffer($0);
-                        }
-                    });
+                function close_event_handler() { Module.terminate_input(ptr); };
+                function data_event_handler(data)
+                {
+                    buffer = Buffer.concat([ buffer, data ]);
+                    while (true)
+                    {
+                        if (buffer.indexOf(content_length) != 0)
+                            return;
+                        const end_of_line = buffer.indexOf('\\x0D\\x0A');
+                        if (end_of_line < 0)
+                            return;
+                        const length = +buffer.slice(content_length.length, end_of_line);
+                        const end_of_headers = buffer.indexOf('\\x0D\\x0A\\x0D\\x0A');
+                        if (end_of_headers < 0)
+                            return;
+                        const data_start = end_of_headers + 4;
+                        const data_end = data_start + length;
+                        if (data_end > buffer.length)
+                            return;
+
+                        const data_to_pass = buffer.slice(data_start, data_end);
+                        buffer = buffer.slice(data_end);
+
+                        const store_buffer = Module.get_stdin_buffer(ptr, data_to_pass.length);
+                        data_to_pass.copy(store_buffer);
+                        Module.commit_stdin_buffer(ptr);
+                    }
+                };
+                process.stdin.on('close', close_event_handler);
+                process.stdin.on('data', data_event_handler);
+
+                Module["emscripten_std_setup_term"][ptr] = function()
+                {
+                    process.stdin.removeListener('close', close_event_handler);
+                    process.stdin.removeListener('data', data_event_handler);
+                };
+            },
+            get_ptr_token());
+    }
+
+    ~emscripten_std_setup()
+    {
+        MAIN_THREAD_EM_ASM(
+            {
+                const ptr = $0;
+                Module["emscripten_std_setup_term"][ptr]();
+                delete Module["emscripten_std_setup_term"][ptr];
             },
             get_ptr_token());
     }
