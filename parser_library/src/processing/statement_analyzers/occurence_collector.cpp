@@ -198,14 +198,18 @@ void occurence_collector::visit(const expressions::ca_function& expr)
         e->apply(*this);
 }
 
-void occurence_collector::visit(const expressions::ca_string&) {}
+void occurence_collector::visit(const expressions::ca_string& expr)
+{
+    if (expr.duplication_factor)
+        expr.duplication_factor->apply(*this);
+}
 
 void occurence_collector::visit(const expressions::ca_symbol& expr) { get_occurence(expr.symbol, expr.expr_range); }
 
 void occurence_collector::visit(const expressions::ca_symbol_attribute& expr)
 {
     if (std::holds_alternative<context::id_index>(expr.symbol))
-        get_occurence(std::get<context::id_index>(expr.symbol), expr.expr_range);
+        get_occurence(std::get<context::id_index>(expr.symbol), expr.symbol_range);
     else
         get_occurence(*std::get<semantics::vs_ptr>(expr.symbol));
 }

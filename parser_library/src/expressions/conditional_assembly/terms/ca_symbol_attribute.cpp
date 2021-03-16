@@ -42,17 +42,20 @@ context::SET_t_enum get_attribute_type(context::data_attr_kind attr)
     }
 }
 
-ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range)
+ca_symbol_attribute::ca_symbol_attribute(
+    context::id_index symbol, context::data_attr_kind attribute, range expr_range, range symbol_rng)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(symbol)
-
+    , symbol_range(symbol_rng)
 {}
 
-ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range)
+ca_symbol_attribute::ca_symbol_attribute(
+    semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_rng)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(std::move(symbol))
+    , symbol_range(symbol_rng)
 {}
 
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const

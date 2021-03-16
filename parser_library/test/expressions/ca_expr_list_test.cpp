@@ -87,7 +87,7 @@ TEST(ca_expr_list, resolve_C_type)
 TEST(ca_expr_list, get_undefined_attributed_symbols)
 {
     std::string name = "X";
-    auto sym = std::make_unique<ca_symbol_attribute>(&name, context::data_attr_kind::L, range());
+    auto sym = std::make_unique<ca_symbol_attribute>(&name, context::data_attr_kind::L, range(), range());
 
     concat_chain value;
     value.push_back(std::make_unique<char_str_conc>("low", range()));

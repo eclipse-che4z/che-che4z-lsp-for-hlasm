@@ -37,7 +37,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     auto vs = std::make_unique<basic_variable_symbol>(&name, std::move(subscript), range());
 
-    ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range());
+    ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 
     auto res = attr.get_undefined_attributed_symbols(eval_ctx);
 
@@ -48,7 +48,7 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 {
     auto vs = std::make_unique<basic_variable_symbol>(name, std::vector<ca_expr_ptr> {}, range());
 
-    return ca_symbol_attribute(std::move(vs), kind, range());
+    return ca_symbol_attribute(std::move(vs), kind, range(), range());
 }
 
 TEST(ca_symbol_attr, evaluate_undef_varsym)

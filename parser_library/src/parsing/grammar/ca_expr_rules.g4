@@ -89,9 +89,9 @@ term returns [ca_expr_ptr ca_expr]
 	{
 		auto r = provider.get_range($data_attribute.ctx);
 		if (std::holds_alternative<id_index>($data_attribute.value))
-			$ca_expr = std::make_unique<ca_symbol_attribute>(std::get<id_index>($data_attribute.value), $data_attribute.attribute, r);
+			$ca_expr = std::make_unique<ca_symbol_attribute>(std::get<id_index>($data_attribute.value), $data_attribute.attribute, r, $data_attribute.value_range);
 		else if (std::holds_alternative<vs_ptr>($data_attribute.value))
-			$ca_expr = std::make_unique<ca_symbol_attribute>(std::move(std::get<vs_ptr>($data_attribute.value)), $data_attribute.attribute, r);
+			$ca_expr = std::make_unique<ca_symbol_attribute>(std::move(std::get<vs_ptr>($data_attribute.value)), $data_attribute.attribute, r, $data_attribute.value_range);
 	}
 	| {is_self_def()}? self_def_term
 	{
@@ -225,16 +225,17 @@ var_symbol returns [vs_ptr vs]
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
 
-data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value]
+data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value, range value_range]
 	: ORDSYMBOL attr data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));
 		$value = std::move($data_attribute_value.value);
+		$value_range = provider.get_range( $data_attribute_value.ctx);
 	};
 
 data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
-	: literal			
+	: literal
 	| var_symbol
 	{
 		$value = std::move($var_symbol.vs);

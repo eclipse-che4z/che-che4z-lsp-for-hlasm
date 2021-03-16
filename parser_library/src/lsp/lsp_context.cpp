@@ -482,7 +482,9 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
         }
         case lsp::occurence_kind::INSTR: {
             auto sym = find_definition<lsp::occurence_kind::INSTR>(occ, macro_i, *opencode_, files_);
-            return hover(sym);
+            if (sym)
+                return hover(sym);
+            break;
         }
         case lsp::occurence_kind::COPY_OP:
             return "";

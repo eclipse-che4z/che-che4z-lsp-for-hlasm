@@ -135,6 +135,43 @@ TEST(occurence_collector, var_expr_simple)
     EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::VAR, oa.get_id("V"), { { 0, 6 }, { 0, 8 } }));
 }
 
+TEST(occurence_collector, var_expr_ca_string_dupl_factor)
+{
+    std::string input = "&V SETC (&D)'STR'";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::VAR);
+
+    ASSERT_EQ(oa.st.size(), 1U);
+    EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::VAR, oa.get_id("D"), { { 0, 9 }, { 0, 11 } }));
+}
+
+
+TEST(occurence_collector, var_expr_ord_symbol)
+{
+    std::string input = " AIF (B EQ 15).HERE";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::ORD);
+
+    ASSERT_EQ(oa.st.size(), 1U);
+    EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::ORD, oa.get_id("B"), { { 0, 6 }, { 0, 7 } }));
+}
+
+TEST(occurence_collector, var_expr_ord_data_attr)
+{
+    std::string input = " AIF (L'B EQ 15).HERE";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::ORD);
+
+    ASSERT_EQ(oa.st.size(), 1U);
+    EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::ORD, oa.get_id("B"), { { 0, 8 }, { 0, 9 } }));
+}
+
+TEST(occurence_collector, var_expr_var_data_attr)
+{
+    std::string input = " AIF (L'&V EQ 15).HERE";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::VAR);
+
+    ASSERT_EQ(oa.st.size(), 1U);
+    EXPECT_EQ(oa.st[0], lsp::symbol_occurence(lsp::occurence_kind::VAR, oa.get_id("V"), { { 0, 8 }, { 0, 10 } }));
+}
+
 
 
 
