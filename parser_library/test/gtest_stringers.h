@@ -21,22 +21,6 @@
 
 // This file contains ostream operator<< overloads to improve GTest error reporting.
 
-namespace hlasm_plugin::parser_library::lsp {
-
-inline std::ostream& operator<<(std::ostream& stream, const symbol_occurence& item)
-{
-    return stream << "{ kind: " << (int)item.kind << "\n name: " << *item.name << "\n range: " << item.occurence_range
-                  << " }";
-}
-
-inline std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)
-{
-    return stream << "{ label: " << item.label << "\n detail: " << item.detail << "\n insert text: " << item.insert_text
-                  << "\n documentation: " << item.documentation << "\n kind: " << (int)item.kind << " }";
-}
-
-} // namespace hlasm_plugin::parser_library::lsp
-
 
 namespace hlasm_plugin::parser_library {
 
@@ -56,5 +40,22 @@ inline std::ostream& operator<<(std::ostream& stream, const location& item)
 }
 
 } // namespace hlasm_plugin::parser_library
+
+namespace hlasm_plugin::parser_library::lsp {
+
+inline std::ostream& operator<<(std::ostream& stream, const symbol_occurence& item)
+{
+    return stream << "{ kind: " << (int)item.kind << "\n name: " << *item.name << "\n range: " << item.occurence_range
+                  << " }";
+}
+
+inline std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)
+{
+    return stream << "{ label: " << item.label << "\n detail: " << item.detail << "\n insert text: " << item.insert_text
+                  << "\n documentation: " << item.documentation << "\n kind: " << (int)item.kind << " }";
+}
+
+} // namespace hlasm_plugin::parser_library::lsp
+
 
 #endif
