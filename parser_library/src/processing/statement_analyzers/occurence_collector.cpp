@@ -184,7 +184,11 @@ void occurence_collector::visit(const expressions::mach_expr_default&) {}
 
 void occurence_collector::visit(const expressions::ca_constant&) {}
 
-void occurence_collector::visit(const expressions::ca_expr_list&) {}
+void occurence_collector::visit(const expressions::ca_expr_list& expr)
+{
+    for (auto& e : expr.expr_list)
+        e->apply(*this);
+}
 
 void occurence_collector::visit(const expressions::ca_function& expr)
 {
