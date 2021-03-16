@@ -28,6 +28,8 @@ target_sources(parser_library PRIVATE
 	lib_config.cpp
 	location.h
 	parser_library.cpp
+	platform.cpp
+	platform.h
 	protocol.cpp
 	workspace_manager.cpp
 	workspace_manager_impl.h

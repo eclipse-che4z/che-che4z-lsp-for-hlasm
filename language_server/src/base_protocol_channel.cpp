@@ -15,7 +15,6 @@
 #include "base_protocol_channel.h"
 
 #include <charconv>
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>

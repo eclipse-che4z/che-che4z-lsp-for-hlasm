@@ -11,8 +11,9 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
-
 #include "server_streams.h"
+
+#include <iostream>
 
 #include "stream_helper.h"
 
@@ -28,7 +29,6 @@
 #    include <string>
 
 #    include <emscripten/bind.h>
-#    include <emscripten/val.h>
 
 #    include "blocking_queue.h"
 #    include "logger.h"

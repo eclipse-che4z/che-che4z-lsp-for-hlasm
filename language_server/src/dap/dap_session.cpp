@@ -18,17 +18,29 @@
 #include "../request_manager.h"
 #include "../scope_exit.h"
 #include "dap_server.h"
+#include "logger.h"
 
 namespace hlasm_plugin::language_server::dap {
 void session::thread_routine()
 {
-    std::atomic<bool> cancel = false;
-    scope_exit indicate_end([this]() { running = false; });
-    request_manager req_mgr(&cancel);
-    scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
-    dap::server server(*ws_mngr);
-    dispatcher dispatcher(json_channel_adapter(msg_unwrapper, msg_wrapper), server, req_mgr);
-    dispatcher.run_server_loop();
+    try
+    {
+        std::atomic<bool> cancel = false;
+        scope_exit indicate_end([this]() { running = false; });
+        request_manager req_mgr(&cancel);
+        scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
+        dap::server server(*ws_mngr);
+        dispatcher dispatcher(json_channel_adapter(msg_unwrapper, msg_wrapper), server, req_mgr);
+        dispatcher.run_server_loop();
+    }
+    catch (const std::exception& ex)
+    {
+        LOG_ERROR(std::string("DAP Thread exception encountered: ") + ex.what());
+    }
+    catch (...)
+    {
+        LOG_ERROR("DAP Thread encountered an unknown exception.");
+    }
 }
 session::session(size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out)
     : session_id(message_wrapper::generate_method_name(s_id))

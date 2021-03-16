@@ -19,6 +19,7 @@ set(GENERATED_FOLDER ${CMAKE_BINARY_DIR}/generated_parser/)
 add_library(parser_library)
 
 add_subdirectory(src)
+add_subdirectory(include)
 
 if(NOT BUILD_SHARED_LIBS)
     target_compile_definitions(parser_library PUBLIC PARSER_LIBRARY_STATIC_DEFINE=1)

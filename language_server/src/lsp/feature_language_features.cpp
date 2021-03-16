@@ -15,8 +15,6 @@
 
 #include "feature_language_features.h"
 
-#include <iostream>
-
 #include "../feature.h"
 
 namespace hlasm_plugin::language_server::lsp {
