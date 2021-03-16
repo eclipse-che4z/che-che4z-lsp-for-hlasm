@@ -170,7 +170,7 @@ void occurence_collector::visit(const expressions::mach_expr_constant&) {}
 
 void occurence_collector::visit(const expressions::mach_expr_data_attr& expr)
 {
-    get_occurence(expr.value, expr.get_range());
+    get_occurence(expr.value, expr.symbol_range);
 }
 
 void occurence_collector::visit(const expressions::mach_expr_symbol& expr)

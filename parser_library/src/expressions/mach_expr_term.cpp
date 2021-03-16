@@ -59,7 +59,7 @@ void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit
 mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng)
     : mach_expression(rng)
     , value(value)
-    , len_expr(value, context::data_attr_kind::L, rng)
+    , len_expr(value, context::data_attr_kind::L, rng, rng)
 {}
 
 context::dependency_collector mach_expr_symbol::get_dependencies(context::dependency_solver& solver) const
@@ -152,10 +152,11 @@ void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(
 
 void mach_expr_default::collect_diags() const {}
 
-mach_expr_data_attr::mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng)
+mach_expr_data_attr::mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
     : mach_expression(rng)
     , value(value)
     , attribute(attribute)
+    , symbol_range(symbol_rng)
 {}
 
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const

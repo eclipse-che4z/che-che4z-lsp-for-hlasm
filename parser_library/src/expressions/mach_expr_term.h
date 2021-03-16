@@ -46,10 +46,11 @@ public:
 class mach_expr_data_attr : public mach_expression
 {
 public:
-    mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng);
+    mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
 
     context::id_index value;
     context::data_attr_kind attribute;
+    range symbol_range;
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 

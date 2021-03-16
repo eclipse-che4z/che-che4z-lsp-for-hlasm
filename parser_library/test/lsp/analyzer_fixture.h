@@ -18,24 +18,9 @@
 #include "gtest/gtest.h"
 
 #include "analyzer.h"
+#include "../gtest_stringers.h"
 
 namespace hlasm_plugin::parser_library {
-
-std::ostream& operator<<(std::ostream& stream, const lsp::completion_item_s& item)
-{
-    return stream << "{ label: " << item.label << "\n detail: " << item.detail << "\n insert text: " << item.insert_text
-                  << "\n documentation: " << item.documentation << "\n kind: " << (int)item.kind << " }";
-}
-
-std::ostream& operator<<(std::ostream& stream, const position& item)
-{
-    return stream << "{ " << item.line << ", " << item.column << " }";
-}
-
-std::ostream& operator<<(std::ostream& stream, const location& item)
-{
-    return stream << "{ file: " << item.file << "\n position: " << item.pos << " }";
-}
 
 struct analyzer_fixture : public ::testing::Test
 {

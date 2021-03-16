@@ -16,19 +16,12 @@
 
 #include "analyzer.h"
 #include "workspaces/parse_lib_provider.h"
-
+#include "../gtest_stringers.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 
 namespace std {
-
-std::ostream& operator<<(std::ostream& os, const position& p)
-{
-    return os << "{ " << p.line << "," << p.column << " }";
-}
-
-std::ostream& operator<<(std::ostream& os, const range& r) { return os << r.start << ", " << r.end; }
 
 inline void PrintTo(const lines_info& tokens, std::ostream* os)
 {

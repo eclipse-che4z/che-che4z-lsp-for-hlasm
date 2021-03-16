@@ -22,7 +22,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT location
+struct location
 {
     location() {}
     location(position pos, std::string file)

@@ -61,9 +61,12 @@ struct symbol_occurence
     {
         return kind == occ.kind && name == occ.name && opcode == occ.opcode;
     }
-
-    bool operator==(const symbol_occurence& oth) { return is_same(oth) && occurence_range == oth.occurence_range; }
 };
+
+inline bool operator==(const symbol_occurence& lhs, const symbol_occurence& rhs)
+{
+    return lhs.is_same(rhs) && lhs.occurence_range == rhs.occurence_range;
+}
 
 using occurence_storage = std::vector<symbol_occurence>;
 

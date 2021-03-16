@@ -75,7 +75,7 @@ mach_term returns [mach_expr_ptr m_e]
 		if(attr == data_attr_kind::UNKNOWN || $mach_data_attribute.data == nullptr)
 			$m_e = std::make_unique<mach_expr_default>(rng);
 		else
-			$m_e = std::make_unique<mach_expr_data_attr>($mach_data_attribute.data,attr,rng);
+			$m_e = std::make_unique<mach_expr_data_attr>($mach_data_attribute.data, attr, rng, $mach_data_attribute.symbol_rng);
 	}
 	| id
 	{
@@ -100,12 +100,13 @@ mach_term returns [mach_expr_ptr m_e]
 literal
 	: equals data_def;
 
-mach_data_attribute returns [std::string attribute, id_index data = nullptr]
+mach_data_attribute returns [std::string attribute, id_index data = nullptr, range symbol_rng]
 	: ORDSYMBOL attr mach_data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = $ORDSYMBOL->getText();
 		$data = $mach_data_attribute_value.data;
+		$symbol_rng = provider.get_range( $mach_data_attribute_value.ctx);
 	};
 
 mach_data_attribute_value returns [id_index data = nullptr]
