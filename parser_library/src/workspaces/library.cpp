@@ -20,7 +20,8 @@
 #include <regex>
 
 #include "nlohmann/json.hpp"
-#include "platform.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -65,7 +66,7 @@ std::shared_ptr<processor> library_local::find_file(const std::string& file_name
     auto found = files_.find(file_name);
     if (found != files_.end())
     {
-        return file_manager_.add_processor_file(platform::join_paths(lib_path_, found->second).string());
+        return file_manager_.add_processor_file(utils::path::join(lib_path_, found->second).string());
     }
     else
         return nullptr;

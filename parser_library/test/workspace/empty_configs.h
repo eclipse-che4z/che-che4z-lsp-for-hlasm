@@ -17,12 +17,10 @@
 
 #include <filesystem>
 
-#include "platform.h"
+#include "utils/path.h"
 
-inline std::string pgm_conf_name =
-    hlasm_plugin::parser_library::platform::join_paths(".hlasmplugin", "pgm_conf.json").string();
-inline std::string proc_grps_name =
-    hlasm_plugin::parser_library::platform::join_paths(".hlasmplugin", "proc_grps.json").string();
+inline std::string pgm_conf_name = hlasm_plugin::utils::path::join(".hlasmplugin", "pgm_conf.json").string();
+inline std::string proc_grps_name = hlasm_plugin::utils::path::join(".hlasmplugin", "proc_grps.json").string();
 inline std::string empty_pgm_conf = R"({ "pgms": []})";
 inline std::string empty_proc_grps = R"({ "pgroups": []})";
 

@@ -22,7 +22,7 @@
 
 #include "dap/dap_server.h"
 #include "feature.h"
-#include "platform.h"
+#include "utils/path.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin;
@@ -122,7 +122,7 @@ struct feature_launch_test : public testing::Test
             "0"_json, R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
         resp_provider.reset();
 
-        file_name = hlasm_plugin::parser_library::platform::absolute_path("to_trace").string();
+        file_name = hlasm_plugin::utils::path::absolute("to_trace").string();
         file_name[0] = (char)std::tolower((char)file_name[0]);
     }
 

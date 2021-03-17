@@ -18,7 +18,8 @@
 
 #include "lib_config.h"
 #include "message_consumer_mock.h"
-#include "platform.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -119,7 +120,7 @@ TEST(workspace_manager, set_message_consumer)
     ASSERT_EQ(msg_consumer.messages.size(), 1U);
     msg_consumer.messages.clear();
 
-    mngr.did_open_file(platform::join_paths("ws1", "no_workspace_file").string().c_str(),
+    mngr.did_open_file(hlasm_plugin::utils::path::join("ws1", "no_workspace_file").string().c_str(),
         0,
         error_file_text.c_str(),
         error_file_text.size());

@@ -19,13 +19,14 @@
 #include "gtest/gtest.h"
 
 #include "empty_configs.h"
-#include "platform.h"
+#include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::platform::is_windows;
 
 class file_proc_grps : public file_impl
 {
@@ -42,8 +43,8 @@ public:
 
     virtual bool update_and_get_bad() override { return false; }
 
-    std::string file = platform::is_windows() ?
-                                              R"({
+    std::string file = is_windows() ?
+                                    R"({
   "pgroups": [
     {
       "name": "P1",
@@ -79,7 +80,7 @@ public:
     }
   ]
 })"
-                                              : R"({
+                                    : R"({
 		"pgroups": [
 			{
 				"name": "P1",
@@ -132,7 +133,7 @@ public:
 
     virtual bool update_and_get_bad() override { return false; }
 
-    std::string file = platform::is_windows() ? R"({
+    std::string file = is_windows() ? R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -144,7 +145,7 @@ public:
     }
   ]
 })"
-                                              : R"({
+                                    : R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -190,7 +191,7 @@ TEST(workspace, load_config_synthetic)
     auto& pg = ws.get_proc_grp("P1");
     EXPECT_EQ("P1", pg.name());
     auto expected = []() -> std::array<std::string, 4> {
-        if (platform::is_windows())
+        if (is_windows())
             return { "C:\\Users\\Desktop\\ASLib\\",
                 "test_proc_grps_uri\\lib\\",
                 "test_proc_grps_uri\\libs\\lib2\\",
@@ -213,7 +214,7 @@ TEST(workspace, load_config_synthetic)
     EXPECT_EQ("P2", pg2.name());
 
     auto expected2 = []() -> std::array<std::string, 3> {
-        if (platform::is_windows())
+        if (is_windows())
             return {
                 "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\"
             };
@@ -231,8 +232,8 @@ TEST(workspace, load_config_synthetic)
 
 
     // test of pgm_conf and workspace::get_proc_grp_by_program
-    auto& pg3 = platform::is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1")
-                                       : ws.get_proc_grp_by_program("test_proc_grps_uri/pgm1");
+    auto& pg3 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1")
+                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgm1");
 
     EXPECT_EQ(pg3.libraries().size(), std::size(expected));
     for (size_t i = 0; i < std::min(std::size(expected), pg3.libraries().size()); ++i)
@@ -243,8 +244,8 @@ TEST(workspace, load_config_synthetic)
     }
 
 
-    auto& pg4 = platform::is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything")
-                                       : ws.get_proc_grp_by_program("test_proc_grps_uri/pgms/anything");
+    auto& pg4 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything")
+                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgms/anything");
 
     EXPECT_EQ(pg4.libraries().size(), std::size(expected2));
     for (size_t i = 0; i < std::min(std::size(expected2), pg4.libraries().size()); ++i)

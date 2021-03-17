@@ -19,34 +19,23 @@
 #include "../ws_mngr_mock.h"
 #include "lib_config.h"
 #include "lsp/feature_workspace_folders.h"
-#include "platform.h"
+#include "utils/platform.h"
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
+using hlasm_plugin::utils::platform::is_windows;
 
-const std::string ws1_uri = hlasm_plugin::parser_library::platform::is_windows() ? "file:///c%3A/path/to/W%20S/OneDrive"
-                                                                                 : "file:///path/to/W%20S/OneDrive";
-const std::string ws2_uri = hlasm_plugin::parser_library::platform::is_windows() ? "file:///c%3A/path/to/W%20S/TwoDrive"
-                                                                                 : "file:///path/to/W%20S/TwoDrive";
-const std::string ws3_uri = hlasm_plugin::parser_library::platform::is_windows()
-    ? "file:///c%3A/path/to/W%20S/ThreeDrive"
-    : "file:///path/to/W%20S/ThreeDrive";
-const std::string ws4_uri = hlasm_plugin::parser_library::platform::is_windows()
-    ? "file:///c%3A/path/to/W%20S/FourDrive"
-    : "file:///path/to/W%20S/FourDrive";
+const std::string ws1_uri = is_windows() ? "file:///c%3A/path/to/W%20S/OneDrive" : "file:///path/to/W%20S/OneDrive";
+const std::string ws2_uri = is_windows() ? "file:///c%3A/path/to/W%20S/TwoDrive" : "file:///path/to/W%20S/TwoDrive";
+const std::string ws3_uri = is_windows() ? "file:///c%3A/path/to/W%20S/ThreeDrive" : "file:///path/to/W%20S/ThreeDrive";
+const std::string ws4_uri = is_windows() ? "file:///c%3A/path/to/W%20S/FourDrive" : "file:///path/to/W%20S/FourDrive";
 
-const std::string ws1_path =
-    hlasm_plugin::parser_library::platform::is_windows() ? R"(c:\path\to\W S\OneDrive)" : R"(/path/to/W S/OneDrive)";
-const std::string ws2_path =
-    hlasm_plugin::parser_library::platform::is_windows() ? R"(c:\path\to\W S\TwoDrive)" : R"(/path/to/W S/TwoDrive)";
-const std::string ws3_path = hlasm_plugin::parser_library::platform::is_windows() ? R"(c:\path\to\W S\ThreeDrive)"
-                                                                                  : R"(/path/to/W S/ThreeDrive)";
-const std::string ws4_path =
-    hlasm_plugin::parser_library::platform::is_windows() ? R"(c:\path\to\W S\FourDrive)" : R"(/path/to/W S/FourDrive)";
+const std::string ws1_path = is_windows() ? R"(c:\path\to\W S\OneDrive)" : R"(/path/to/W S/OneDrive)";
+const std::string ws2_path = is_windows() ? R"(c:\path\to\W S\TwoDrive)" : R"(/path/to/W S/TwoDrive)";
+const std::string ws3_path = is_windows() ? R"(c:\path\to\W S\ThreeDrive)" : R"(/path/to/W S/ThreeDrive)";
+const std::string ws4_path = is_windows() ? R"(c:\path\to\W S\FourDrive)" : R"(/path/to/W S/FourDrive)";
 
-const std::string ws1_path_json_string = hlasm_plugin::parser_library::platform::is_windows()
-    ? R"(c:\\path\\to\\W S\\OneDrive)"
-    : R"(/path/to/W S/OneDrive)";
+const std::string ws1_path_json_string = is_windows() ? R"(c:\\path\\to\\W S\\OneDrive)" : R"(/path/to/W S/OneDrive)";
 
 TEST(workspace_folders, did_change_workspace_folders)
 {

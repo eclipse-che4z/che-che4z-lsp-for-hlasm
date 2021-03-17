@@ -19,13 +19,15 @@
 
 #include "gtest/gtest.h"
 
-#include "platform.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::platform::is_windows;
 
 class workspace_test : public diagnosable_impl, public testing::Test
 {
@@ -60,10 +62,12 @@ public:
 
 TEST_F(workspace_test, parse_lib_provider)
 {
+    using namespace hlasm_plugin::utils;
+
     lib_config config;
     file_manager_impl file_mngr;
 
-    std::string test_wks_path = platform::join_paths(platform::join_paths("test", "library"), "test_wks").string();
+    std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
 
     workspace ws(test_wks_path, file_mngr, config);
 
@@ -223,9 +227,9 @@ public:
     virtual bool update_and_get_bad() override { return false; }
 };
 
-const char* faulty_macro_path = platform::is_windows() ? "lib\\ERROR" : "lib/ERROR";
-const char* correct_macro_path = platform::is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
-std::string hlasmplugin_folder = platform::is_windows() ? ".hlasmplugin\\" : ".hlasmplugin/";
+const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
+const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
+std::string hlasmplugin_folder = is_windows() ? ".hlasmplugin\\" : ".hlasmplugin/";
 
 class file_manager_extended : public file_manager_impl
 {

@@ -14,7 +14,8 @@
 
 #include "dap_feature.h"
 
-#include "platform.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 
 namespace {
 using namespace hlasm_plugin::language_server::dap;
@@ -25,14 +26,14 @@ std::string convert_path(const std::string& path, path_format path_format)
         return hlasm_plugin::language_server::feature::uri_to_path(path);
 
     // Theia sends us relative path (while not accepting it back) change, to absolute
-    std::filesystem::path p = hlasm_plugin::parser_library::platform::absolute_path(path);
+    std::filesystem::path p = hlasm_plugin::utils::path::absolute(path);
 
-    std::string result = hlasm_plugin::parser_library::platform::path_lexically_normal(p).string();
+    std::string result = hlasm_plugin::utils::path::lexically_normal(p).string();
 
     // on windows, VS code sends us path with capital drive letter through DAP and
     // lowercase drive letter through LSP.
     // Remove, once we implement case-insensitive comparison of paths in parser_library for windows
-    if (hlasm_plugin::parser_library::platform::is_windows())
+    if (hlasm_plugin::utils::platform::is_windows())
     {
         if (result[1] == ':')
             result[0] = (char)tolower(result[0]);

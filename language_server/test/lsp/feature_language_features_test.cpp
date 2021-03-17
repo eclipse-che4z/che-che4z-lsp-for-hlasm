@@ -20,9 +20,11 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_language_features.h"
-#include "platform.h"
+#include "utils/platform.h"
 
-const char* path = hlasm_plugin::parser_library::platform::is_windows() ? "c:\\test" : "/home/test";
+using hlasm_plugin::utils::platform::is_windows;
+
+const char* path = is_windows() ? "c:\\test" : "/home/test";
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -36,7 +38,7 @@ TEST(language_features, completion)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = hlasm_plugin::parser_library::platform::is_windows()
+    json params1 = is_windows()
         ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
 
@@ -55,7 +57,7 @@ TEST(language_features, hover)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = hlasm_plugin::parser_library::platform::is_windows()
+    json params1 = is_windows()
         ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
@@ -77,7 +79,7 @@ TEST(language_features, definition)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = hlasm_plugin::parser_library::platform::is_windows()
+    json params1 = is_windows()
         ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
@@ -94,7 +96,7 @@ TEST(language_features, references)
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
-    json params1 = hlasm_plugin::parser_library::platform::is_windows()
+    json params1 = is_windows()
         ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 

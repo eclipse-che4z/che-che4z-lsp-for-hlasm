@@ -19,7 +19,8 @@
 #include "network/uri/uri.hpp"
 
 #include "logger.h"
-#include "platform.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 
 namespace hlasm_plugin::language_server {
 
@@ -46,7 +47,7 @@ std::string feature::uri_to_path(const std::string& uri)
     if (u.has_authority() && u.authority().to_string() != "")
     {
         auth_path = u.authority().to_string() + u.path().to_string();
-        if (hlasm_plugin::parser_library::platform::is_windows())
+        if (utils::platform::is_windows())
         {
             // handle remote locations correctly, like \\server\path
             auth_path = "//" + auth_path;
@@ -54,20 +55,20 @@ std::string feature::uri_to_path(const std::string& uri)
     }
     else
     {
-        if (hlasm_plugin::parser_library::platform::is_windows())
+        if (utils::platform::is_windows())
         {
             // we get path always beginning with / on windows, e.g. /c:/Users/path
             path.remove_prefix(1);
         }
         auth_path = path.to_string();
 
-        if (hlasm_plugin::parser_library::platform::is_windows())
+        if (utils::platform::is_windows())
         {
             auth_path[0] = (char)tolower(auth_path[0]);
         }
     }
 
-    return hlasm_plugin::parser_library::platform::path_lexically_normal(network::detail::decode(auth_path)).string();
+    return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
 }
 
 std::string feature::path_to_uri(std::string_view path)
@@ -86,7 +87,7 @@ std::string feature::path_to_uri(std::string_view path)
         network::detail::encode_char(c, out, "/.%;=");
     }
 
-    if (hlasm_plugin::parser_library::platform::is_windows())
+    if (utils::platform::is_windows())
     {
         // in case of remote address such as \\server\path\to\file
         if (uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')

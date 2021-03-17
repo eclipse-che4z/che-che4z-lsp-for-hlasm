@@ -130,6 +130,8 @@ add_subdirectory(parser_library)
 add_subdirectory(language_server)
 add_subdirectory(benchmark)
 
+add_subdirectory(utils)
+
 if(BUILD_VSIX)
   add_subdirectory(clients)
 endif()

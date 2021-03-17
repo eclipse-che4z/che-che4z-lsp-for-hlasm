@@ -16,8 +16,9 @@
 
 #include <map>
 
-#include "platform.h"
 #include "processor_file_impl.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -125,27 +126,27 @@ std::unordered_map<std::string, std::string> file_manager_impl::list_directory_f
     std::filesystem::path lib_p(path);
     std::unordered_map<std::string, std::string> found_files;
 
-    auto ec = platform::list_directory_regular_files(lib_p, [&found_files](const std::filesystem::path& f) {
-        found_files[platform::path_filename(f).string()] = platform::absolute_path(f).string();
+    auto ec = utils::path::list_directory_regular_files(lib_p, [&found_files](const std::filesystem::path& f) {
+        found_files[utils::path::filename(f).string()] = utils::path::absolute(f).string();
     });
     switch (ec)
     {
-        case hlasm_plugin::parser_library::platform::list_directory_rc::done:
+        case hlasm_plugin::utils::path::list_directory_rc::done:
             break;
-        case hlasm_plugin::parser_library::platform::list_directory_rc::not_exists:
+        case hlasm_plugin::utils::path::list_directory_rc::not_exists:
             if (!optional)
                 add_diagnostic(diagnostic_s { "",
                     {},
                     "L0001",
                     "Unable to load library: " + path + ". Error: The path does not point to directory." });
             break;
-        case hlasm_plugin::parser_library::platform::list_directory_rc::not_a_directory:
+        case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
             add_diagnostic(diagnostic_s { "",
                 {},
                 "L0001",
                 "Unable to load library: " + path + ". Error: The path does not point to directory." });
             break;
-        case hlasm_plugin::parser_library::platform::list_directory_rc::other_failure:
+        case hlasm_plugin::utils::path::list_directory_rc::other_failure:
             add_diagnostic(diagnostic_s { path, {}, "L0001", "Unable to load library: " + path + "." });
             break;
     }
@@ -220,7 +221,7 @@ bool file_manager_impl::file_exists(const std::string& file_name)
 
 bool file_manager_impl::lib_file_exists(const std::string& lib_path, const std::string& file_name)
 {
-    return std::filesystem::exists(platform::join_paths(lib_path, file_name));
+    return std::filesystem::exists(utils::path::join(lib_path, file_name));
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

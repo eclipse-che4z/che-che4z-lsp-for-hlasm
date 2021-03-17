@@ -41,6 +41,7 @@ target_link_libraries(parser_library parser_library_generated)
 target_link_libraries(parser_library nlohmann_json::nlohmann_json)
 target_link_libraries(parser_library ${ANTLR4_RUNTIME})
 target_link_libraries(parser_library std::filesystem)
+target_link_libraries(parser_library hlasm_utils)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

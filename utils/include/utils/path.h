@@ -12,25 +12,24 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_PLATFORM_H
-#define HLASMPLUGIN_PARSERLIBRARY_PLATFORM_H
+#ifndef HLASMPLUGIN_UTILS_PATH_H
+#define HLASMPLUGIN_UTILS_PATH_H
 
 #include <filesystem>
 #include <functional>
 #include <string>
 
-namespace hlasm_plugin::parser_library::platform {
-bool is_windows();
+namespace hlasm_plugin::utils::path {
 
 bool is_relative(const std::filesystem::path&);
 bool is_absolute(const std::filesystem::path&);
 
-std::filesystem::path absolute_path(std::filesystem::path p);
-std::filesystem::path join_paths(const std::filesystem::path& left, const std::filesystem::path& right);
-std::filesystem::path path_lexically_normal(const std::filesystem::path& p);
-std::filesystem::path path_lexically_relative(const std::filesystem::path& p, std::string q);
-std::filesystem::path path_filename(const std::filesystem::path& p);
-bool path_equal(const std::filesystem::path& left, const std::filesystem::path& right);
+std::filesystem::path absolute(std::filesystem::path p);
+std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right);
+std::filesystem::path lexically_normal(const std::filesystem::path& p);
+std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q);
+std::filesystem::path filename(const std::filesystem::path& p);
+bool equal(const std::filesystem::path& left, const std::filesystem::path& right);
 
 enum class list_directory_rc
 {
@@ -42,6 +41,6 @@ enum class list_directory_rc
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
-} // namespace hlasm_plugin::parser_library::platform
+} // namespace hlasm_plugin::utils::path
 
 #endif

@@ -20,13 +20,12 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_text_synchronization.h"
-#include "platform.h"
+#include "utils/platform.h"
 
-const std::string txt_file_uri = hlasm_plugin::parser_library::platform::is_windows()
-    ? R"(file:///c%3A/test/one/blah.txt)"
-    : R"(file:///home/user/somefile)";
+const std::string txt_file_uri =
+    hlasm_plugin::utils::platform::is_windows() ? R"(file:///c%3A/test/one/blah.txt)" : R"(file:///home/user/somefile)";
 const std::string txt_file_path =
-    hlasm_plugin::parser_library::platform::is_windows() ? R"(c:\test\one\blah.txt)" : R"(/home/user/somefile)";
+    hlasm_plugin::utils::platform::is_windows() ? R"(c:\test\one\blah.txt)" : R"(/home/user/somefile)";
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -119,7 +118,7 @@ TEST(feature, uri_to_path)
 {
     using namespace hlasm_plugin::language_server;
 
-    if (hlasm_plugin::parser_library::platform::is_windows())
+    if (hlasm_plugin::utils::platform::is_windows())
     {
         EXPECT_EQ(feature::uri_to_path("file://czprfs50/Public"), "\\\\czprfs50\\Public");
         EXPECT_EQ(feature::uri_to_path("file:///C%3A/Public"), "c:\\Public");
@@ -135,7 +134,7 @@ TEST(feature, path_to_uri)
 {
     using namespace hlasm_plugin::language_server;
 
-    if (hlasm_plugin::parser_library::platform::is_windows())
+    if (hlasm_plugin::utils::platform::is_windows())
     {
         EXPECT_EQ(feature::path_to_uri("\\\\czprfs50\\Public"), "file://czprfs50/Public");
         EXPECT_EQ(feature::path_to_uri("c:\\Public"), "file:///c%3A/Public");

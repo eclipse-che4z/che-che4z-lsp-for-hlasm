@@ -11,8 +11,9 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
+#include "utils/path.h"
 
-#include "platform.h"
+#include "utils/platform.h"
 
 #ifdef __EMSCRIPTEN__
 #    include <algorithm>
@@ -21,20 +22,8 @@
 #    include <emscripten/bind.h>
 #endif
 
-namespace hlasm_plugin::parser_library::platform {
-bool is_windows()
-{
-#ifdef _WIN32
-    return true;
-#elif __EMSCRIPTEN__
-    // clang-format off
-    static const bool windows_flag = []() { return EM_ASM_INT({ return process.platform === "win32" ? 1 : 0; }); }();
-    // clang-format on
-    return windows_flag;
-#else
-    return false;
-#endif
-}
+namespace hlasm_plugin::utils::path {
+using utils::platform::is_windows;
 
 #ifdef __EMSCRIPTEN__
 namespace {
@@ -69,15 +58,18 @@ bool is_absolute(const std::filesystem::path& p)
 #endif
 }
 
-std::filesystem::path absolute_path(std::filesystem::path p)
+std::filesystem::path absolute(std::filesystem::path p)
 {
+    if (p.empty())
+        return p;
+
     if (is_absolute(p))
         return p;
 
-    return join_paths(std::filesystem::current_path(), p);
+    return join(std::filesystem::current_path(), p);
 }
 
-std::filesystem::path join_paths(const std::filesystem::path& left, const std::filesystem::path& right)
+std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
 {
 #ifndef __EMSCRIPTEN__
     return left / right;
@@ -96,7 +88,7 @@ std::filesystem::path join_paths(const std::filesystem::path& left, const std::f
 #endif
 }
 
-std::filesystem::path path_lexically_normal(const std::filesystem::path& p)
+std::filesystem::path lexically_normal(const std::filesystem::path& p)
 {
 #ifndef __EMSCRIPTEN__
     return p.lexically_normal();
@@ -115,7 +107,7 @@ std::filesystem::path path_lexically_normal(const std::filesystem::path& p)
 }
 
 
-std::filesystem::path path_lexically_relative(const std::filesystem::path& p, std::string q)
+std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q)
 {
 #ifndef __EMSCRIPTEN__
     return p.lexically_relative(q);
@@ -130,7 +122,7 @@ std::filesystem::path path_lexically_relative(const std::filesystem::path& p, st
 #endif
 }
 
-std::filesystem::path path_filename(const std::filesystem::path& p)
+std::filesystem::path filename(const std::filesystem::path& p)
 {
 #ifndef __EMSCRIPTEN__
     return p.filename();
@@ -143,7 +135,7 @@ std::filesystem::path path_filename(const std::filesystem::path& p)
 #endif
 }
 
-bool path_equal(const std::filesystem::path& left, const std::filesystem::path& right)
+bool equal(const std::filesystem::path& left, const std::filesystem::path& right)
 {
 #ifndef __EMSCRIPTEN__
     return left == right;
@@ -165,16 +157,37 @@ class directory_listing
     std::string buffer;
     std::function<void(const std::filesystem::path&)> handler;
 
+    static intptr_t get_buffer(intptr_t this_, int size)
+    {
+        auto ptr = reinterpret_cast<directory_listing*>(this_);
+        ptr->buffer.resize(size);
+        return reinterpret_cast<intptr_t>(ptr->buffer.data());
+    }
+
+    static void commit_buffer(intptr_t this_)
+    {
+        auto ptr = reinterpret_cast<directory_listing*>(this_);
+        ptr->handler(ptr->buffer);
+    }
+
 public:
     directory_listing(std::function<void(const std::filesystem::path&)> h)
         : handler(h)
-    {}
+    {
+        static thread_local bool registered = false;
+        if (!registered)
+        {
+            registered = true;
+            emscripten::function("directory_listing_get_buffer", &directory_listing::get_buffer);
+            emscripten::function("directory_listing_commit_buffer", &directory_listing::commit_buffer);
+        }
+    }
 
     list_directory_rc run(const std::filesystem::path& d)
     {
-        auto path = absolute_path(d).string();
+        auto path = path::absolute(d).string();
 
-        int result = MAIN_THREAD_EM_ASM_INT(
+        int result = EM_ASM_INT(
             {
                 let rc = 0;
                 try
@@ -226,26 +239,7 @@ public:
                 throw std::logic_error("unreachable");
         }
     }
-
-    static intptr_t get_buffer(intptr_t this_, int size)
-    {
-        auto ptr = reinterpret_cast<directory_listing*>(this_);
-        ptr->buffer.resize(size);
-        return reinterpret_cast<intptr_t>(ptr->buffer.data());
-    }
-
-    static void commit_buffer(intptr_t this_)
-    {
-        auto ptr = reinterpret_cast<directory_listing*>(this_);
-        ptr->handler(ptr->buffer);
-    }
 };
-
-EMSCRIPTEN_BINDINGS(directory_listing_function)
-{
-    emscripten::function("directory_listing_get_buffer", &directory_listing::get_buffer);
-    emscripten::function("directory_listing_commit_buffer", &directory_listing::commit_buffer);
-}
 #endif
 
 list_directory_rc list_directory_regular_files(
@@ -285,4 +279,4 @@ list_directory_rc list_directory_regular_files(
 #endif
 }
 
-} // namespace hlasm_plugin::parser_library::platform
+} // namespace hlasm_plugin::utils::path

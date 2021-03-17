@@ -14,7 +14,7 @@
 
 #include "wildcard.h"
 
-#include "platform.h"
+#include "utils/platform.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 namespace {
@@ -28,7 +28,7 @@ const std::regex slash("\\/");
 std::regex wildcard2regex(const std::string& wildcard)
 {
     auto regex_str = wildcard;
-    if (platform::is_windows())
+    if (utils::platform::is_windows())
     {
         // change of forward slash to double backslash on windows
         regex_str = std::regex_replace(regex_str, slash, "\\");

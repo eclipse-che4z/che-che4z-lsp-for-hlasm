@@ -33,6 +33,7 @@ target_link_libraries(language_server language_server_base)
 target_link_libraries(language_server nlohmann_json::nlohmann_json)
 target_link_libraries(language_server boost-asio)
 target_link_libraries(language_server Threads::Threads)
+target_link_libraries(language_server hlasm_utils)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
