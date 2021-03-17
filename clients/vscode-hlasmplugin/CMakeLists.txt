@@ -26,8 +26,11 @@ else()
 	set(ANTLR_VERSION_SUFFIX .${ANTLR4CPP_EXTERNAL_TAG})
 endif()
 
-
-if(WIN32)
+set(BIN_EXTRAS "")
+if(EMSCRIPTEN)
+	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/wasm/")
+	list(APPEND BIN_EXTRAS "$<TARGET_FILE_DIR:language_server>/language_server.worker.js" "$<TARGET_FILE_DIR:language_server>/language_server.wasm")
+elseif(WIN32)
 	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/")
 elseif(APPLE)
 	set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/darwin/")
@@ -47,7 +50,7 @@ if(BUILD_SHARED_LIBS)
 			${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${ANTLR_VERSION_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX} ${BIN_FOLDER})
 	else()
 		set(COPY_ANTLR_LIBRARY_COMMAND
-        	${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${BIN_FOLDER})
+			${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${BIN_FOLDER})
 	endif()
 endif()
 
@@ -64,7 +67,7 @@ add_custom_command(
 		COMMAND
 			${COPY_ANTLR_LIBRARY_COMMAND}
 		COMMAND
-			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:language_server> ${BIN_FOLDER}
+			${CMAKE_COMMAND} -E copy  $<TARGET_FILE:language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
 		COMMAND
 			npm run-script package -- -o ${GLOBAL_OUTPUT_PATH}/vscode-hlasmplugin.vsix
 		COMMAND 
