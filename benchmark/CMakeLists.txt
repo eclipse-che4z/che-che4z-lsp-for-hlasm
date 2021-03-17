@@ -19,4 +19,3 @@ target_link_libraries(benchmark nlohmann_json::nlohmann_json)
 target_link_libraries(benchmark parser_library)
 
 target_link_libraries(benchmark Threads::Threads)
-

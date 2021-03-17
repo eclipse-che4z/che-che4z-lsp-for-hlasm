@@ -5,16 +5,16 @@ index 2c5e737..6b968d8 100644
 @@ -25,8 +25,8 @@ file(GLOB libantlrcpp_SRC
  add_library(antlr4_shared SHARED ${libantlrcpp_SRC})
  add_library(antlr4_static STATIC ${libantlrcpp_SRC})
-
+ 
 -set(LIB_OUTPUT_DIR "${CMAKE_HOME_DIRECTORY}/dist") # put generated libraries here.
 -message(STATUS "Output libraries to ${LIB_OUTPUT_DIR}")
 +#set(LIB_OUTPUT_DIR "${CMAKE_HOME_DIRECTORY}/dist") # put generated libraries here.
 +#message(STATUS "Output libraries to ${LIB_OUTPUT_DIR}")
-
+ 
  # make sure 'make' works fine even if ${LIB_OUTPUT_DIR} is deleted.
  add_custom_target(make_lib_output_dir ALL
 diff --git a/runtime/Cpp/runtime/src/NoViableAltException.cpp b/runtime/Cpp/runtime/src/NoViableAltException.cpp
-index ced7f827f..83fb78b3b 100755
+index ced7f82..83fb78b 100755
 --- a/runtime/Cpp/runtime/src/NoViableAltException.cpp
 +++ b/runtime/Cpp/runtime/src/NoViableAltException.cpp
 @@ -16,13 +16,16 @@ NoViableAltException::NoViableAltException(Parser *recognizer)
@@ -46,7 +46,7 @@ index ced7f827f..83fb78b3b 100755
 +  return _deadEndConfigs.get();
  }
 diff --git a/runtime/Cpp/runtime/src/NoViableAltException.h b/runtime/Cpp/runtime/src/NoViableAltException.h
-index 94d43c54c..415a0d9db 100755
+index 94d43c5..415a0d9 100755
 --- a/runtime/Cpp/runtime/src/NoViableAltException.h
 +++ b/runtime/Cpp/runtime/src/NoViableAltException.h
 @@ -27,10 +27,7 @@ namespace antlr4 {
@@ -62,7 +62,7 @@ index 94d43c54c..415a0d9db 100755
      /// The token object at the start index; the input stream might
      /// not be buffering tokens so get a reference to it. (At the
 diff --git a/runtime/Cpp/runtime/src/support/StringUtils.h b/runtime/Cpp/runtime/src/support/StringUtils.h
-index d0a0472a0..49715287e 100644
+index d0a0472..4971528 100644
 --- a/runtime/Cpp/runtime/src/support/StringUtils.h
 +++ b/runtime/Cpp/runtime/src/support/StringUtils.h
 @@ -22,7 +22,7 @@ namespace antlrcpp {
