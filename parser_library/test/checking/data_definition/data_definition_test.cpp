@@ -18,7 +18,8 @@
 void expect_no_errors(const std::string& text)
 {
     using namespace hlasm_plugin::parser_library;
-    analyzer a(text);
+    std::string input = (text);
+    analyzer a(input);
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
@@ -27,7 +28,8 @@ void expect_no_errors(const std::string& text)
 void expect_errors(const std::string& text)
 {
     using namespace hlasm_plugin::parser_library;
-    analyzer a(text);
+    std::string input = (text);
+    analyzer a(input);
     a.analyze();
     a.collect_diags();
     EXPECT_GT(a.diags().size(), (size_t)0);
@@ -128,8 +130,9 @@ TEST(data_definition_grammar, no_nominal)
 TEST(data_definition, duplication_factor)
 {
     using namespace hlasm_plugin::parser_library;
-
-    analyzer a("13C'A'");
+    
+    std::string input = "13C'A'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -143,7 +146,8 @@ TEST(data_definition, duplication_factor_expr)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("(13*2)C'A'");
+    std::string input = "(13*2)C'A'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -157,7 +161,8 @@ TEST(data_definition, duplication_factor_out_of_range)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("1231312123123123123C'A'");
+    std::string input = "1231312123123123123C'A'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -171,7 +176,8 @@ TEST(data_definition, duplication_factor_invalid_number)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("-C'A'");
+    std::string input = "-C'A'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -185,7 +191,8 @@ TEST(data_definition, all_fields)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'");
+    std::string input = "(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -207,7 +214,8 @@ TEST(data_definition, no_nominal)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("0FDL2");
+    std::string input = "0FDL2";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -226,7 +234,8 @@ TEST(data_definition, no_nominal_expr)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("0FDL(2+2)");
+    std::string input = "0FDL(2+2)";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -245,7 +254,8 @@ TEST(data_definition, bit_length)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("(1*8)FDP(123)L.2S-8E(-12*2)'2.25'");
+    std::string input = "(1*8)FDP(123)L.2S-8E(-12*2)'2.25'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -266,7 +276,8 @@ TEST(data_definition, unexpected_dot)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("(1*8)FDL.2S.-8E(-12*2)'2.25'");
+    std::string input = "(1*8)FDL.2S.-8E(-12*2)'2.25'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -287,7 +298,8 @@ TEST(data_definition, unexpected_minus)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("(1*8)FDL.2S.-E(-12*2)'2.25'");
+    std::string input = "(1*8)FDL.2S.-E(-12*2)'2.25'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -298,7 +310,8 @@ TEST(data_definition, wrong_modifier_order)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a("1HL-12P(123)S1'1.25'");
+    std::string input = "1HL-12P(123)S1'1.25'";
+    analyzer a(input);
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -309,7 +322,8 @@ TEST(data_definition, B_wrong_nominal_value)
 {
     using namespace hlasm_plugin::parser_library;
 
-    analyzer a(" DC B'12'");
+    std::string input = " DC B'12'";
+    analyzer a(input);
     a.analyze();
 
     a.collect_diags();
