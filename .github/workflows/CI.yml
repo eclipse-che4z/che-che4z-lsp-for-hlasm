@@ -96,6 +96,8 @@ jobs:
         run: cd build && cmake --build .
       - name: Server Test
         run: cd build/bin && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./server_test.js && node --experimental-wasm-threads --experimental-wasm-bulk-memory ./library_test.js
+      - name: Fake native language_server
+        run: mkdir -p clients/vscode-hlasmplugin/bin/linux && touch clients/vscode-hlasmplugin/bin/linux/language_server.native.fake
       - name: Extension Test
         uses: GabrielBB/xvfb-action@v1.0
         with:
