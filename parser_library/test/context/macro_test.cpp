@@ -516,12 +516,14 @@ TEST(macro, arguments_continuation)
 
 class bad_mock : public parse_lib_provider
 {
+    asm_option asm_options;
+
 public:
     bad_mock(int lib_code)
         : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
     {}
 
-    virtual parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data)
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         (void)library;
 
@@ -530,7 +532,8 @@ public:
         a->collect_diags();
         return true;
     }
-    virtual bool has_library(const std::string&, const std::string&) const { return true; }
+    bool has_library(const std::string&, const std::string&) const override { return true; }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
     std::unique_ptr<analyzer> a;
 
 private:

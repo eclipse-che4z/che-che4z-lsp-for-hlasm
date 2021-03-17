@@ -459,6 +459,7 @@ X EQU =**)-,2
 
 class look_parse_lib_prov : public parse_lib_provider
 {
+    asm_option asm_options;
     std::unique_ptr<analyzer> a;
 
     std::string LIB =
@@ -479,7 +480,7 @@ X EQU 1,2,C'X'
 &AFTER_MAC SETB 1
 )";
 
-    virtual parse_result parse_library(
+    parse_result parse_library(
         const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
@@ -498,7 +499,8 @@ X EQU 1,2,C'X'
         return true;
     }
 
-    virtual bool has_library(const std::string&, const std::string&) const override { return false; }
+    bool has_library(const std::string&, const std::string&) const override { return false; }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)

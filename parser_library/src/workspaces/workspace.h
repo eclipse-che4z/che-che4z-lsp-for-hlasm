@@ -100,10 +100,10 @@ public:
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
 
-    virtual parse_result parse_library(
+    parse_result parse_library(
         const std::string& library, analyzing_context ctx, const library_data data) override;
-    virtual bool has_library(const std::string& library, const std::string& program) const override;
-
+    bool has_library(const std::string& library, const std::string& program) const override;
+    const asm_option& get_asm_options(const std::string& file_name) override;
     const ws_uri& uri();
 
     void open();

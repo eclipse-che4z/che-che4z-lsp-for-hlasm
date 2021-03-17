@@ -106,13 +106,17 @@ std::vector<processor_file*> file_manager_impl::list_updated_files()
     return list;
 }
 
-std::unordered_map<std::string, std::string> file_manager_impl::list_directory_files(const std::string& path)
+std::unordered_map<std::string, std::string> file_manager_impl::list_directory_files(
+    const std::string& path, bool optional)
 {
     std::filesystem::path lib_p(path);
     std::unordered_map<std::string, std::string> found_files;
     try
     {
         std::filesystem::directory_entry dir(lib_p);
+        if (!dir.exists() && optional)
+            return found_files;
+
         if (!dir.is_directory())
         {
             add_diagnostic(diagnostic_s { "",

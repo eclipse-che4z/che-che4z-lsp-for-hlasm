@@ -15,6 +15,7 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
+#include <compiler_options.h>
 #include <deque>
 #include <memory>
 #include <set>
@@ -24,6 +25,7 @@
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
+
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -68,6 +70,9 @@ class hlasm_context
     // all files processes via macro or copy member invocation
     std::set<std::string> visited_files_;
 
+    // Compiler options
+    asm_option asm_options_;
+
     // map of all instruction in HLASM
     const instruction_storage instruction_map_;
     instruction_storage init_instruction_map();
@@ -80,7 +85,7 @@ class hlasm_context
     bool is_opcode(id_index symbol) const;
 
 public:
-    hlasm_context(std::string file_name = "");
+    hlasm_context(std::string file_name = "", asm_option asm_opts = {});
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;

@@ -117,6 +117,59 @@ std::string pgroups_file = R"({
   ]
 })";
 
+std::string pgroups_file_old_school = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [ "missing", "lib" ]
+    }
+  ]
+})";
+
+std::string pgroups_file_default = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing"
+        },
+        "lib"
+      ]
+    }
+  ]
+})";
+
+std::string pgroups_file_required = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": false
+        },
+        "lib"
+      ]
+    }
+  ]
+})";
+
+std::string pgroups_file_optional = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": true
+        },
+        "lib"
+      ]
+    }
+  ]
+})";
+
 std::string pgmconf_file = R"({
   "pgms": [
     {
@@ -192,7 +245,7 @@ public:
         files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
     }
 
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string&) override
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
         if (insert_correct_macro)
             return { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } };
@@ -202,6 +255,53 @@ public:
     bool insert_correct_macro = true;
 };
 
+enum class file_manager_opt_variant
+{
+    old_school,
+    default_to_required,
+    required,
+    optional,
+};
+
+class file_manager_opt : public file_manager_impl
+{
+    std::unique_ptr<file_with_text> generate_proc_grps_file(file_manager_opt_variant variant)
+    {
+        switch (variant)
+        {
+            case file_manager_opt_variant::old_school:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_old_school);
+            case file_manager_opt_variant::default_to_required:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_default);
+            case file_manager_opt_variant::required:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_required);
+            case file_manager_opt_variant::optional:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_optional);
+        }
+        throw std::logic_error("Not implemented");
+    }
+
+public:
+    file_manager_opt(file_manager_opt_variant variant)
+    {
+        files_.emplace(hlasmplugin_folder + "proc_grps.json", generate_proc_grps_file(variant));
+        files_.emplace(
+            hlasmplugin_folder + "pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
+        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error));
+        files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
+    }
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string& path, bool optional) override
+    {
+        if (path == "lib/" || path == "lib\\")
+            return { { "CORRECT", "CORRECT" } };
+
+        if (!optional)
+            add_diagnostic(
+                diagnostic_s { "", {}, "L0001", "Unable to load library - path does not exist and is not optional." });
+
+        return {};
+    }
+};
 
 
 TEST_F(workspace_test, did_close_file)
@@ -270,4 +370,32 @@ TEST_F(workspace_test, did_change_watched_files)
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));
     ws.did_change_file("source3", changes.data(), changes.size());
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+}
+
+TEST_F(workspace_test, missing_library_required)
+{
+    for (auto type : { file_manager_opt_variant::old_school,
+             file_manager_opt_variant::default_to_required,
+             file_manager_opt_variant::required })
+    {
+        file_manager_opt file_manager(type);
+        lib_config config;
+        workspace ws("", "workspace_name", file_manager, config);
+        ws.open();
+
+        ws.did_open_file("source1");
+        EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+        EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
+    }
+}
+
+TEST_F(workspace_test, missing_library_optional)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::optional);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    ws.did_open_file("source1");
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
 }

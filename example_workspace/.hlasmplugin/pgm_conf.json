@@ -11,6 +11,10 @@
     {
       "program": "JULSUB",
       "pgroup": "JULSUB_PG"
+    },
+    {
+      "program": "factorial.hlasm",
+      "pgroup": "P1"
     }
   ],
   "alwaysRecognize": ["*.hlasm"]
