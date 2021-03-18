@@ -49,29 +49,35 @@ export async function run(): Promise<void> {
 	const mocha = new Mocha({ ui: 'tdd', color: true });
 	const testsPath = path.join(__dirname, '..');
 
-	await new Promise((resolve, reject) => {
-		glob((is_vscode) ? '**/**.test.js' : '**/integration.test.js', { cwd: testsPath }, (_, files) => {
-			// Add files to the test suite
-			files.forEach(file =>
-				mocha.addFile(path.resolve(testsPath, file)));
+	let failed = false;
+	try {
+		await new Promise((resolve, reject) => {
+			glob((is_vscode) ? '**/**.test.js' : '**/integration.test.js', { cwd: testsPath }, (_, files) => {
+				// Add files to the test suite
+				files.forEach(file =>
+					mocha.addFile(path.resolve(testsPath, file)));
 
-			try {
-				vscode.workspace.getConfiguration('hlasm').update('continuationHandling', true).then(() => {
-					// Run the mocha test
-					mocha.run(failures => {
-						if (failures > 0) {
-							reject(new Error(`${failures} tests failed.`));
-						} else {
-							resolve();
-						}
+				try {
+					vscode.workspace.getConfiguration('hlasm').update('continuationHandling', true).then(() => {
+						// Run the mocha test
+						mocha.run(failures => {
+							if (failures > 0) {
+								reject(new Error(`${failures} tests failed.`));
+							} else {
+								resolve();
+							}
+						});
 					});
-				});
-			} catch (error) {
-				console.error(error);
-				reject(error);
-			}
+				} catch (error) {
+					reject(error);
+				}
+			});
 		});
-	});
+	}
+	catch (e) {
+		console.error(e);
+		failed = true;
+	}
 
 	if (is_vscode) {
 		// report code coverage
@@ -80,4 +86,6 @@ export async function run(): Promise<void> {
 	}
 
 	console.log('Report created');
+
+	process.exit(failed ? 1 : 0);
 }

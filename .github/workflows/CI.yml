@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Requirements install
-        run: sudo apt-get update && sudo apt-get install -y ninja-build maven libgtk-3-0 libgbm1
+        run: sudo apt-get update && sudo apt-get install -y ninja-build maven libgtk-3-0 libgbm1 xvfb
       - name: Configure
         run: mkdir build && cd build && emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_EXE_LINKER_FLAGS="-s NODERAWFS=1" -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -fexceptions -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind" -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory" -Dgtest_disable_pthreads=On ../
       - name: Build
