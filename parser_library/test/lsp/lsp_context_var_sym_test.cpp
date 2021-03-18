@@ -36,25 +36,25 @@ struct lsp_context_var_symbol_SET : public analyzer_fixture
 
 TEST_F(lsp_context_var_symbol_SET, definition)
 {
-    location res = a.context().lsp_ctx->definition(dummy_file_name, { 2, 7 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    location res = a.context().lsp_ctx->definition(opencode_file_name, { 2, 7 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(1, 0));
 }
 
 TEST_F(lsp_context_var_symbol_SET, references)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].file, opencode_file_name);
     EXPECT_EQ(res[0].pos, position(1, 0));
-    EXPECT_EQ(res[1].file, dummy_file_name);
+    EXPECT_EQ(res[1].file, opencode_file_name);
     EXPECT_EQ(res[1].pos, position(2, 6));
 }
 
 TEST_F(lsp_context_var_symbol_SET, hover)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 2, 7 });
 
 
     EXPECT_EQ(res, "SETA variable");
@@ -63,7 +63,7 @@ TEST_F(lsp_context_var_symbol_SET, hover)
 TEST_F(lsp_context_var_symbol_SET, completion)
 {
     auto res =
-        a.context().lsp_ctx->completion(dummy_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
 
     ASSERT_EQ(res.size(), 1U);
     lsp::completion_item_s expected("&VAR", "SETA variable", "&VAR", "", completion_item_kind::var_sym);
@@ -89,25 +89,25 @@ struct lsp_context_var_symbol_GBL : public analyzer_fixture
 TEST_F(lsp_context_var_symbol_GBL, definition)
 {
 
-    location res = a.context().lsp_ctx->definition(dummy_file_name, { 2, 7 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    location res = a.context().lsp_ctx->definition(opencode_file_name, { 2, 7 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(1, 6));
 }
 
 TEST_F(lsp_context_var_symbol_GBL, references)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].file, opencode_file_name);
     EXPECT_EQ(res[0].pos, position(1, 6));
-    EXPECT_EQ(res[1].file, dummy_file_name);
+    EXPECT_EQ(res[1].file, opencode_file_name);
     EXPECT_EQ(res[1].pos, position(2, 6));
 }
 
 TEST_F(lsp_context_var_symbol_GBL, hover)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 2, 7 });
 
     EXPECT_EQ(res, "SETC variable");
 }
@@ -115,7 +115,7 @@ TEST_F(lsp_context_var_symbol_GBL, hover)
 TEST_F(lsp_context_var_symbol_GBL, completion)
 {
     auto res =
-        a.context().lsp_ctx->completion(dummy_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
 
     ASSERT_EQ(res.size(), 1U);
     lsp::completion_item_s expected("&VAR", "SETC variable", "&VAR", "", completion_item_kind::var_sym);
@@ -139,25 +139,25 @@ struct lsp_context_var_symbol_LCL : public analyzer_fixture
 
 TEST_F(lsp_context_var_symbol_LCL, definition)
 {
-    auto res = a.context().lsp_ctx->definition(dummy_file_name, { 2, 7 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    auto res = a.context().lsp_ctx->definition(opencode_file_name, { 2, 7 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(1, 6));
 }
 
 TEST_F(lsp_context_var_symbol_LCL, references)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 2, 7 });
     ASSERT_EQ(res.size(), 2U);
 
-    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].file, opencode_file_name);
     EXPECT_EQ(res[0].pos, position(1, 6));
-    EXPECT_EQ(res[1].file, dummy_file_name);
+    EXPECT_EQ(res[1].file, opencode_file_name);
     EXPECT_EQ(res[1].pos, position(2, 6));
 }
 
 TEST_F(lsp_context_var_symbol_LCL, hover)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 2, 7 });
 
     EXPECT_EQ(res, "SETB variable");
 }
@@ -165,7 +165,7 @@ TEST_F(lsp_context_var_symbol_LCL, hover)
 TEST_F(lsp_context_var_symbol_LCL, completion)
 {
     auto res =
-        a.context().lsp_ctx->completion(dummy_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_file_name, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
 
     ASSERT_EQ(res.size(), 1U);
     lsp::completion_item_s expected("&VAR", "SETB variable", "&VAR", "", completion_item_kind::var_sym);
@@ -183,44 +183,44 @@ struct lsp_context_var_symbol_no_definition : public analyzer_fixture
 
 TEST_F(lsp_context_var_symbol_no_definition, definition)
 {
-    auto res = a.context().lsp_ctx->definition(dummy_file_name, { 0, 6 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    auto res = a.context().lsp_ctx->definition(opencode_file_name, { 0, 6 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(0, 6));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, references)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 0, 6 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 0, 6 });
     ASSERT_EQ(res.size(), 1U);
 
-    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].file, opencode_file_name);
     EXPECT_EQ(res[0].pos, position(0, 4));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, hover)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 0, 6 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 0, 6 });
 
     EXPECT_EQ(res, "");
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, definition_no_occurence)
 {
-    auto res = a.context().lsp_ctx->definition(dummy_file_name, { 0, 9 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    auto res = a.context().lsp_ctx->definition(opencode_file_name, { 0, 9 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(0, 9));
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, references_no_occurence)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 0, 9 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 0, 9 });
     ASSERT_EQ(res.size(), 0U);
 
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurence)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 0, 9 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 0, 9 });
 
     EXPECT_EQ(res, "");
 }

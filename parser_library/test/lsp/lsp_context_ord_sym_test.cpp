@@ -35,25 +35,25 @@ R1 EQU 1
 
 TEST_F(lsp_context_ord_symbol, definition)
 {
-    location res = a.context().lsp_ctx->definition(dummy_file_name, { 1, 5 });
-    EXPECT_EQ(res.file, dummy_file_name);
+    location res = a.context().lsp_ctx->definition(opencode_file_name, { 1, 5 });
+    EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(2, 0));
 }
 
 TEST_F(lsp_context_ord_symbol, references)
 {
-    auto res = a.context().lsp_ctx->references(dummy_file_name, { 2, 0 });
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 2, 0 });
     ASSERT_EQ(res.size(), 2U);
 
-    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].file, opencode_file_name);
     EXPECT_EQ(res[0].pos, position(1, 4));
-    EXPECT_EQ(res[1].file, dummy_file_name);
+    EXPECT_EQ(res[1].file, opencode_file_name);
     EXPECT_EQ(res[1].pos, position(2, 0));
 }
 
 TEST_F(lsp_context_ord_symbol, hover)
 {
-    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 1, 5 });
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 1, 5 });
 
 
     EXPECT_EQ(res, R"(1
