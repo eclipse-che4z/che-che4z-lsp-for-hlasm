@@ -89,12 +89,7 @@ location_list lsp_context::references(const std::string& document_uri, const pos
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
     if (!occ)
-        return { { pos, document_uri } };
-
-    auto def = find_definition_location(*occ, macro_scope);
-    
-    if (!def)
-        return { { pos, document_uri } };
+        return {};
 
     std::vector<location> scoped_result;
     
@@ -292,10 +287,11 @@ completion_list_s lsp_context::complete_instr(const file_info_ptr&, position) co
     {
         const context::macro_definition& m = *macro_i.second->macro_definition;
 
-        std::string macro_documentation;
-
-        result.emplace_back(
-            *m.id, get_macro_signature(m), *m.id, std::move(macro_documentation), completion_item_kind::macro);
+        result.emplace_back(*m.id,
+            get_macro_signature(m),
+            *m.id,
+            get_macro_documentation(*macro_i.second),
+            completion_item_kind::macro);
     }
 
     return result;

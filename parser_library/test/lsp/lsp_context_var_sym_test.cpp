@@ -171,3 +171,56 @@ TEST_F(lsp_context_var_symbol_LCL, completion)
     lsp::completion_item_s expected("&VAR", "SETB variable", "&VAR", "", completion_item_kind::var_sym);
     EXPECT_EQ(res[0], expected);
 }
+
+struct lsp_context_var_symbol_no_definition : public analyzer_fixture
+{
+    const static inline std::string input = " LR &VAR,1";
+
+    lsp_context_var_symbol_no_definition()
+        : analyzer_fixture(input)
+    {}
+};
+
+TEST_F(lsp_context_var_symbol_no_definition, definition)
+{
+    auto res = a.context().lsp_ctx->definition(dummy_file_name, { 0, 6 });
+    EXPECT_EQ(res.file, dummy_file_name);
+    EXPECT_EQ(res.pos, position(0, 6));
+}
+
+TEST_F(lsp_context_var_symbol_no_definition, references)
+{
+    auto res = a.context().lsp_ctx->references(dummy_file_name, { 0, 6 });
+    ASSERT_EQ(res.size(), 1U);
+
+    EXPECT_EQ(res[0].file, dummy_file_name);
+    EXPECT_EQ(res[0].pos, position(0, 4));
+}
+
+TEST_F(lsp_context_var_symbol_no_definition, hover)
+{
+    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 0, 6 });
+
+    EXPECT_EQ(res, "");
+}
+
+TEST_F(lsp_context_var_symbol_no_definition, definition_no_occurence)
+{
+    auto res = a.context().lsp_ctx->definition(dummy_file_name, { 0, 9 });
+    EXPECT_EQ(res.file, dummy_file_name);
+    EXPECT_EQ(res.pos, position(0, 9));
+}
+
+TEST_F(lsp_context_var_symbol_no_definition, references_no_occurence)
+{
+    auto res = a.context().lsp_ctx->references(dummy_file_name, { 0, 9 });
+    ASSERT_EQ(res.size(), 0U);
+
+}
+
+TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurence)
+{
+    auto res = a.context().lsp_ctx->hover(dummy_file_name, { 0, 9 });
+
+    EXPECT_EQ(res, "");
+}

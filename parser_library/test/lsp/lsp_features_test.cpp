@@ -113,8 +113,8 @@ TEST_F(lsp_features_test, refs)
     // the same as go_to test but with references
     // reference MAC, should appear once in source and once in macro file
     EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 4)).size());
-    // no reference, returns the same line where the references command was called
-    EXPECT_EQ((size_t)1, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 8)).size());
+    // no reference
+    EXPECT_EQ((size_t)0, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 8)).size());
     // source code references for &VAR, appeared three times
     EXPECT_EQ((size_t)3, a.context().lsp_ctx->references(SOURCE_FILE, position(2, 13)).size());
     // source code references for .HERE, appeared twice
@@ -126,69 +126,3 @@ TEST_F(lsp_features_test, refs)
     //  references inside macro def, var symbol &VAR
     EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 15)).size());
 }
-
-/*
-// 4 cases, instruction, sequence, variable and none
-TEST_F(lsp_features_test, hover)
-{
-    // hover for macro MAC, contains description and user documentation
-    auto result = a.lsp_processor().hover(position(18, 8));
-    ASSERT_EQ((size_t)4, result.size());
-    EXPECT_EQ("LABEL VAR", result[0]);
-    EXPECT_EQ("version 1", result[1]);
-    EXPECT_EQ("THIS IS DOCUMENTATION", result[2]);
-    EXPECT_EQ(" line 10", result[3]);
-
-    // hover for sequence symbol, defined even though it is skipped because of the macro parsing (wanted behaviour)
-    result = a.lsp_processor().hover(position(13, 15));
-    ASSERT_EQ((size_t)1, result.size());
-    EXPECT_EQ("Defined at line 15", result[0]);
-
-    // hover for variable symbol, name and type number
-    result = a.lsp_processor().hover(position(2, 13));
-    ASSERT_EQ((size_t)1, result.size());
-    EXPECT_EQ("number", result[0]);
-
-    // hover for variable symbol, name and type string
-    result = a.lsp_processor().hover(position(24, 10));
-    ASSERT_EQ((size_t)1, result.size());
-    EXPECT_EQ("string", result[0]);
-
-    // hover on ord symbol R1, its value
-    result = a.lsp_processor().hover(position(21, 10));
-    ASSERT_EQ((size_t)4, result.size());
-    EXPECT_EQ("1", result[0]);
-    EXPECT_EQ("Absolute Symbol", result[1]);
-    EXPECT_EQ("L: 1", result[2]);
-    EXPECT_EQ("T: U", result[3]);
-
-    // hover on ord symbol R1 definition
-    result = a.lsp_processor().hover(position(22, 1));
-    ASSERT_EQ((size_t)4, result.size());
-    EXPECT_EQ("1", result[0]);
-    EXPECT_EQ("Absolute Symbol", result[1]);
-    EXPECT_EQ("L: 1", result[2]);
-    EXPECT_EQ("T: U", result[3]);
-
-    // hover on COPYFILE, definition file
-    result = a.lsp_processor().hover(position(20, 14));
-    ASSERT_EQ((size_t)1, result.size());
-    EXPECT_EQ("Defined in file: " + std::string(COPY_FILE), result[0]);
-
-    // no hover on remarks
-    result = a.lsp_processor().hover(position(2, 24));
-    ASSERT_EQ((size_t)0, result.size());
-}
-
-// completion for variable symbols (&), sequence syms (.) and instructions ((S*)(s+)(S*))
-TEST_F(lsp_features_test, completion)
-{
-    // all instructions + 2 newly defined macros
-    EXPECT_EQ(instruction_count + 2, a.lsp_processor().completion(position(26, 1), '\0', 1).items.size());
-    // current scope detection missing !
-    // seq symbols
-    EXPECT_EQ((size_t)1, a.lsp_processor().completion(position(6, 0), '.', 2).items.size());
-    // var symbols
-    EXPECT_EQ((size_t)3, a.lsp_processor().completion(position(10, 0), '&', 2).items.size());
-}
-*/

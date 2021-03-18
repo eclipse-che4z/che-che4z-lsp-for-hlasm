@@ -14,10 +14,10 @@
 
 #include "gtest/gtest.h"
 
+#include "../compare_unordered_vectors.h"
 #include "../gtest_stringers.h"
 #include "analyzer.h"
 #include "processing/statement_analyzers/occurence_collector.h"
-
 
 using namespace hlasm_plugin::parser_library;
 
@@ -47,18 +47,6 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
 
     context::id_index get_id(const std::string& s) { return a.context().hlasm_ctx->ids().add(s); }
 };
-
-#define EXPECT_VECTORS_EQ_UNORDERED(actual, expected)                                                                  \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        ASSERT_EQ(actual.size(), expected.size());                                                                     \
-        for (const auto& i : actual)                                                                                   \
-        {                                                                                                              \
-            auto it = std::find(expected.begin(), expected.end(), i);                                                  \
-            EXPECT_NE(it, expected.end()) << "Test returned unexpected value:" << i;                                   \
-        }                                                                                                              \
-    } while (false)
-
 
 TEST(occurence_collector, ord_mach_expr_simple)
 {
