@@ -73,7 +73,7 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
 macro_info_ptr file_info::find_scope(position pos)
 {
     for (const auto& [_, scope] : slices)
-        if (scope.file_lines.begin <= pos.line && scope.file_lines.end >= pos.line)
+        if (scope.file_lines.begin <= pos.line && scope.file_lines.end > pos.line)
             return scope.macro_context;
     return nullptr;
 }
