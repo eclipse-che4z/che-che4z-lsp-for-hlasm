@@ -404,7 +404,7 @@ void macrodef_processor::process_LCL_GBL(const resolved_statement& statement, co
 {
     for (auto& op : statement.operands_ref().value)
     {
-        if (op->type != semantics::operand_type::EMPTY)
+        if (op->type != semantics::operand_type::CA)
             continue;
 
         auto ca_op = op->access_ca();

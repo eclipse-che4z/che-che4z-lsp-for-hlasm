@@ -230,14 +230,15 @@ bool utf8_four_byte_begin(char ch)
     return (ch & 0xF8) == 0xF0; // 11110xxx
 }
 
-// returns the location in text_ that corresponds to utf-16 based location
 size_t file_impl::index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position loc)
 {
     size_t end = (size_t)loc.column;
+    if (loc.line >= line_indices.size())
+        return text.size();
     size_t i = line_indices[(size_t)loc.line];
     size_t utf16_counter = 0;
 
-    while (utf16_counter < end)
+    while (utf16_counter < end && i < text.size())
     {
         if (!utf8_one_byte_begin(text[i]))
         {

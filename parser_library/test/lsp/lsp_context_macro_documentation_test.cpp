@@ -93,3 +93,22 @@ TEST_F(lsp_context_macro_documentation, completion)
     ASSERT_NE(it, res.end()) << "The following item was not found in result: \n" << expected;
     EXPECT_EQ(*it, expected);
 }
+
+TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
+{
+    std::string file_name = "source";
+    std::string input = R"( 
+ MACRO
+ )";
+    analyzer a(input, file_name);
+    a.analyze();
+    auto res = a.context().lsp_ctx->completion(file_name, { 0, 1 }, '\0', completion_trigger_kind::invoked);
+
+    lsp::completion_item_s expected("ASPACE", "ASPACE ", "ASPACE", "```\n \n```\n", completion_item_kind::macro);
+    auto it = std::find_if(res.begin(), res.end(), [&](const auto& item) {
+        return item.label == expected.label && item.kind == completion_item_kind::macro;
+    });
+
+    ASSERT_NE(it, res.end()) << "The following item was not found in result: \n" << expected;
+    EXPECT_EQ(*it, expected);
+}

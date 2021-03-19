@@ -274,7 +274,7 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     result.append(macro_def);
     result.append(doc_before);
     result.append(doc_after);
-    result.append("```\n");
+    result.append("\n```\n");
 
     return result;
 }

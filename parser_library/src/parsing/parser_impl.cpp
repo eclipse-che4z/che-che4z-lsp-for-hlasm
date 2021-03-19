@@ -127,6 +127,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         {
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
+                proc_status = status;
                 parse_macro_operands(line);
                 break;
             case processing::processing_form::ASM:

@@ -51,6 +51,9 @@ public:
 
     static std::string replace_non_utf8_chars(const std::string& text);
     static std::vector<size_t> create_line_indices(const std::string& text);
+
+    // Returns the location in text that corresponds to utf-16 based location
+    // The position may point beyond the last character -> returns text.size()
     static size_t index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position pos);
 
     virtual ~file_impl() = default;
