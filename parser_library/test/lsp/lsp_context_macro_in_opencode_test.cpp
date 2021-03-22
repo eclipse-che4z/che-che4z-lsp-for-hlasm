@@ -67,6 +67,7 @@ TEST_F(lsp_context_macro_in_opencode, hover_macro)
 
     EXPECT_EQ(res, R"(```
 &LABEL MAC &POS_PAR,&KEY_PAR=1
+
 ```
 )");
 }
