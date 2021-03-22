@@ -282,8 +282,8 @@ struct PARSER_LIBRARY_EXPORT stack_frame
     explicit stack_frame(const debugging::stack_frame& frame);
 
     sequence<char> name;
-    source source;
-    range range;
+    source source_file;
+    range source_range;
     uint32_t id;
 };
 
@@ -307,7 +307,7 @@ struct PARSER_LIBRARY_EXPORT scope
 
     sequence<char> name;
     var_reference_t variable_reference;
-    source source;
+    source source_file;
 };
 
 template class PARSER_LIBRARY_EXPORT sequence<scope, const debugging::scope*>;

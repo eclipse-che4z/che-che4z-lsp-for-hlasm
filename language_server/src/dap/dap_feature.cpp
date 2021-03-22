@@ -182,11 +182,11 @@ void dap_feature::on_stack_trace(const json& request_seq, const json&)
         frames_json.push_back(json {
             { "id", frame.id },
             { "name", std::string_view(frame.name) },
-            { "source", source_to_json(frame.source) },
-            { "line", frame.range.start.line + line_1_based_ },
-            { "column", frame.range.start.column + column_1_based_ },
-            { "endLine", frame.range.end.line + line_1_based_ },
-            { "endColumn", frame.range.end.column + column_1_based_ },
+            { "source", source_to_json(frame.source_file) },
+            { "line", frame.source_range.start.line + line_1_based_ },
+            { "column", frame.source_range.start.column + column_1_based_ },
+            { "endLine", frame.source_range.end.line + line_1_based_ },
+            { "endColumn", frame.source_range.end.column + column_1_based_ },
         });
     }
 
@@ -208,7 +208,7 @@ void dap_feature::on_scopes(const json& request_seq, const json& args)
         json scope_json = json { { "name", std::string_view(scope.name) },
             { "variablesReference", scope.variable_reference },
             { "expensive", false },
-            { "source", source_to_json(scope.source) } };
+            { "source", source_to_json(scope.source_file) } };
         scopes_json.push_back(std::move(scope_json));
     }
 

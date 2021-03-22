@@ -137,8 +137,8 @@ token_info::token_info(
 //*********************** stack_frame *************************
 stack_frame::stack_frame(const debugging::stack_frame& frame)
     : name(frame.name)
-    , source(frame.frame_source)
-    , range { { frame.begin_line, 0 }, { frame.end_line, 0 } }
+    , source_file(frame.frame_source)
+    , source_range { { frame.begin_line, 0 }, { frame.end_line, 0 } }
     , id(frame.id)
 {}
 
@@ -159,7 +159,7 @@ source::source(const debugging::source& source)
 scope::scope(const debugging::scope& impl)
     : name(impl.name)
     , variable_reference(impl.var_reference)
-    , source(impl.scope_source)
+    , source_file(impl.scope_source)
 {}
 
 template<>

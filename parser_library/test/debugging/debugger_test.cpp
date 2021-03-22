@@ -49,9 +49,9 @@ TEST(debugger, stopped_on_entry)
     auto frames = d.stack_frames();
     ASSERT_EQ(frames.size(), 1U);
     const auto f = frames.item(0);
-    EXPECT_EQ(std::string_view(f.source.path), file_name);
-    EXPECT_EQ(f.range.start.line, 0U);
-    EXPECT_EQ(f.range.end.line, 0U);
+    EXPECT_EQ(std::string_view(f.source_file.path), file_name);
+    EXPECT_EQ(f.source_range.start.line, 0U);
+    EXPECT_EQ(f.source_range.end.line, 0U);
     EXPECT_EQ(std::string_view(f.name), "OPENCODE");
     auto sc = d.scopes(f.id);
     ASSERT_EQ(sc.size(), 3U);
@@ -210,11 +210,11 @@ bool check_step(
     for (size_t i = 0; i != exp_frames.size(); ++i)
     {
         auto f = frames.item(i);
-        if (exp_frames[i].begin_line != f.range.start.line)
+        if (exp_frames[i].begin_line != f.source_range.start.line)
             return false;
-        if (exp_frames[i].end_line != f.range.end.line)
+        if (exp_frames[i].end_line != f.source_range.end.line)
             return false;
-        if (exp_frames[i].frame_source.path != std::string_view(f.source.path))
+        if (exp_frames[i].frame_source.path != std::string_view(f.source_file.path))
             return false;
         if (exp_frames[i].id != f.id)
             return false;
