@@ -88,7 +88,7 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    
+
     bool finished() const override;
 
     void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);

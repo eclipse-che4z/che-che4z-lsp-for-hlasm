@@ -19,8 +19,8 @@
 
 #include "antlr4-runtime.h"
 
-#include "source_info_processor.h"
 #include "processing/op_code.h"
+#include "source_info_processor.h"
 #include "statement.h"
 
 namespace hlasm_plugin {

@@ -95,7 +95,10 @@ bool processor_file_impl::parse_info_updated()
 
 const std::set<std::string>& processor_file_impl::dependencies() { return dependencies_; }
 
-const semantics::lines_info& processor_file_impl::get_hl_info() { return analyzer_->source_processor().semantic_tokens(); }
+const semantics::lines_info& processor_file_impl::get_hl_info()
+{
+    return analyzer_->source_processor().semantic_tokens();
+}
 
 const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider() { return *analyzer_->context().lsp_ctx; }
 

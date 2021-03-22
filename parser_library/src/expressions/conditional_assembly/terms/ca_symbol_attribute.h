@@ -33,8 +33,10 @@ public:
     ca_attr_variant_t symbol;
     range symbol_range;
 
-    ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
-    ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
+    ca_symbol_attribute(
+        context::id_index symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
+    ca_symbol_attribute(
+        semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
 
     virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 

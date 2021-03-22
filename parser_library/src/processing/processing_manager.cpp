@@ -47,8 +47,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     {
         case processing_kind::ORDINARY:
             provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this));
-            procs_.emplace_back(
-                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser));
+            procs_.emplace_back(std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { data.library_member, std::move(file_name) });

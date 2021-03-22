@@ -35,11 +35,7 @@ class lib_prov_mock : public workspaces::parse_lib_provider
     };
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
-    const asm_option& get_asm_options(const std::string&) override
-    {
-
-        return asm_options;
-    }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 inline std::string big_string(char c = '1')

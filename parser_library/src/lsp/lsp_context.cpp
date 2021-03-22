@@ -92,7 +92,7 @@ location_list lsp_context::references(const std::string& document_uri, const pos
         return {};
 
     std::vector<location> scoped_result;
-    
+
     if (occ->is_scoped())
     {
         if (macro_scope)
@@ -469,7 +469,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
         }
         case lsp::occurence_kind::SEQ:
             return "Sequence symbol";
-        
+
         case lsp::occurence_kind::VAR: {
             auto sym = find_definition<lsp::occurence_kind::VAR>(occ, macro_i, *opencode_, files_);
             if (sym)
@@ -484,7 +484,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
         }
         case lsp::occurence_kind::COPY_OP:
             return "";
-        
+
         default:
             break;
     }

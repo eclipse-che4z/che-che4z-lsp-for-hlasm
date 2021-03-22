@@ -74,8 +74,6 @@ private:
     version_t version_ = 0;
 
     void load_text();
-
-    
 };
 
 #pragma warning(pop)

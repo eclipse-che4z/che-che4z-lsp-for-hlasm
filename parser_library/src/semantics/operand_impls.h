@@ -44,7 +44,7 @@ struct model_operand final : operand
     model_operand(concat_chain chain, const range operand_range);
 
     concat_chain chain;
-    
+
     void apply(operand_visitor& visitor) const override;
 };
 
@@ -115,7 +115,7 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
     bool has_error(expressions::mach_evaluate_info info) const override;
 
     void collect_diags() const override;
-    
+
     void apply(operand_visitor& visitor) const override;
 };
 
@@ -194,6 +194,7 @@ public:
     void collect_diags() const override;
 
     void apply(operand_visitor& visitor) const override;
+
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
         expressions::mach_evaluate_info info, bool can_have_ordsym) const;

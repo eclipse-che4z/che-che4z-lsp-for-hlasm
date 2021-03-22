@@ -16,8 +16,8 @@
 
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
-#include "lsp/completion_item.h"
 #include "location.h"
+#include "lsp/completion_item.h"
 #include "semantics/highlighting_info.h"
 #include "workspaces/processor.h"
 

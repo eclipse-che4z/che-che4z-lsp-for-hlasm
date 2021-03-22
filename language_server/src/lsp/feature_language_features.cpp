@@ -103,7 +103,8 @@ void feature_language_features::references(const json& id, const json& params)
     for (size_t i = 0; i < references.size(); ++i)
     {
         auto ref = references.item(i);
-        to_ret.push_back(json { { "uri", path_to_uri(ref.file()) }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
+        to_ret.push_back(
+            json { { "uri", path_to_uri(ref.file()) }, { "range", range_to_json({ ref.pos(), ref.pos() }) } });
     }
     response_->respond(id, "", to_ret);
 }
@@ -113,10 +114,10 @@ void feature_language_features::hover(const json& id, const json& params)
     auto pos =
         parser_library::position(params["position"]["line"].get<int>(), params["position"]["character"].get<int>());
 
-    
+
     auto hover_list = ws_mngr_.hover(uri_to_path(document_uri).c_str(), pos);
 
-    
+
     /*json hover_arr = json::array();
     for (size_t i = 0; i < hover_list.size(); i++)
     {

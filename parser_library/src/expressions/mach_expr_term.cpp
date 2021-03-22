@@ -152,7 +152,8 @@ void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(
 
 void mach_expr_default::collect_diags() const {}
 
-mach_expr_data_attr::mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
+mach_expr_data_attr::mach_expr_data_attr(
+    context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
     : mach_expression(rng)
     , value(value)
     , attribute(attribute)

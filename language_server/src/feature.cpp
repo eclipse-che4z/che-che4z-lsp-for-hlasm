@@ -73,7 +73,7 @@ std::string feature::path_to_uri(std::string_view path)
     // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
     std::string uri;
     auto out = std::back_inserter(uri);
-    
+
     for (char c : path)
     {
         if (c == '\\')

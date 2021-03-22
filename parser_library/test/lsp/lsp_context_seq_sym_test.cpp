@@ -97,7 +97,7 @@ TEST_F(lsp_context_seq_sym, completion_in_macro)
 {
     auto res = a.context().lsp_ctx->completion(opencode_file_name, { 6, 1 }, '\0', completion_trigger_kind::invoked);
 
-    
+
     lsp::completion_item_s expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
 
     ASSERT_EQ(res.size(), 1U);

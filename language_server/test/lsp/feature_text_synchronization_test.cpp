@@ -76,7 +76,8 @@ TEST(text_synchronization, did_change_file)
     json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"(","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
-    parser_library::document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 }, { { { 1, 12 }, { 1, 14 } }, "", 0 } };
+    parser_library::document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 },
+        { { { 1, 12 }, { 1, 14 } }, "", 0 } };
 
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 2))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));

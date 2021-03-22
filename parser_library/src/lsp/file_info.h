@@ -80,7 +80,7 @@ public:
     const file_type type;
     const owner_t owner;
     const text_data_ref_t data;
-    
+
 
     explicit file_info(std::string name, text_data_ref_t text_data);
     explicit file_info(context::macro_def_ptr owner, text_data_ref_t text_data);

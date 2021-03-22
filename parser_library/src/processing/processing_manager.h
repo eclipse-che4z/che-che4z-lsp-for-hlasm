@@ -38,7 +38,7 @@ public:
         analyzing_context ctx,
         const workspaces::library_data data,
         std::string file_name,
-        const std::string & file_text,
+        const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
@@ -57,7 +57,7 @@ private:
 
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
-    
+
     lsp_analyzer lsp_analyzer_;
     std::vector<statement_analyzer*> stms_analyzers_;
 

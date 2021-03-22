@@ -88,7 +88,6 @@ struct lsp_context_var_symbol_GBL : public analyzer_fixture
 
 TEST_F(lsp_context_var_symbol_GBL, definition)
 {
-
     location res = a.context().lsp_ctx->definition(opencode_file_name, { 2, 7 });
     EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(1, 6));
@@ -215,7 +214,6 @@ TEST_F(lsp_context_var_symbol_no_definition, references_no_occurence)
 {
     auto res = a.context().lsp_ctx->references(opencode_file_name, { 0, 9 });
     ASSERT_EQ(res.size(), 0U);
-
 }
 
 TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurence)

@@ -35,13 +35,7 @@ analyzer::analyzer(const std::string& text,
     , lexer_(&input_, &src_proc_, &ctx.hlasm_ctx->metrics)
     , tokens_(&lexer_)
     , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_),
-          ctx,
-          data,
-          file_name,
-          text,
-          lib_provider,
-          *parser_)
+    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_), ctx, data, file_name, text, lib_provider, *parser_)
 {
     parser_->initialize(ctx, &src_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
@@ -49,13 +43,13 @@ analyzer::analyzer(const std::string& text,
     parser_->addErrorListener(&listener_);
 }
 
-analyzer::analyzer(const std::string& text,
-    std::string file_name,
-    parse_lib_provider& lib_provider,
-    bool collect_hl_info)
+analyzer::analyzer(
+    const std::string& text, std::string file_name, parse_lib_provider& lib_provider, bool collect_hl_info)
     : analyzer(text,
         file_name,
-        analyzing_context { std::make_unique<context::hlasm_context>(file_name, lib_provider.get_asm_options(file_name)), std::make_unique<lsp::lsp_context>() },
+        analyzing_context {
+            std::make_unique<context::hlasm_context>(file_name, lib_provider.get_asm_options(file_name)),
+            std::make_unique<lsp::lsp_context>() },
         lib_provider,
         library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
         collect_hl_info)

@@ -87,7 +87,7 @@ TEST(language_features, definition)
 #else
     json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 #endif
-    
+
     EXPECT_CALL(response_mock, respond(json(""), "", ::testing::_));
     notifs["textDocument/definition"]("", params1);
 }

@@ -480,8 +480,7 @@ X EQU 1,2,C'X'
 &AFTER_MAC SETB 1
 )";
 
-    parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
         if (library == "LIB")

@@ -100,10 +100,8 @@ public:
     virtual position_uri definition(const std::string& document_uri, position pos);
     virtual position_uri_list references(const std::string& document_uri, position pos);
     virtual std::string_view hover(const std::string& document_uri, position pos);
-    virtual completion_list completion(const std::string& document_uri,
-        position pos,
-        char trigger_char,
-        completion_trigger_kind trigger_kind);
+    virtual completion_list completion(
+        const std::string& document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
 
     virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
 

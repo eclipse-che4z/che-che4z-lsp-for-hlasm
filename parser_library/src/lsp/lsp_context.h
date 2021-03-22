@@ -15,11 +15,11 @@
 #ifndef LSP_CONTEXT_H
 #define LSP_CONTEXT_H
 
+#include "completion_item.h"
 #include "feature_provider.h"
 #include "file_info.h"
-#include "opencode_info.h"
-#include "completion_item.h"
 #include "location.h"
+#include "opencode_info.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 

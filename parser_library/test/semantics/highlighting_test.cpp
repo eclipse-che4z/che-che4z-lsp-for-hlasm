@@ -14,9 +14,9 @@
 
 #include "gtest/gtest.h"
 
+#include "../gtest_stringers.h"
 #include "analyzer.h"
 #include "workspaces/parse_lib_provider.h"
-#include "../gtest_stringers.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;

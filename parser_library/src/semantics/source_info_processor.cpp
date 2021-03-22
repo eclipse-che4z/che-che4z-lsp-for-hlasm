@@ -20,8 +20,7 @@ using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 
 source_info_processor::source_info_processor(bool collect_hl_info)
-    : collect_hl_info_(collect_hl_info)
-{};
+    : collect_hl_info_(collect_hl_info) {};
 
 void source_info_processor::process_hl_symbols(std::vector<token_info> symbols)
 {

@@ -17,8 +17,8 @@
 
 #include "gtest/gtest.h"
 
-#include "analyzer.h"
 #include "../gtest_stringers.h"
+#include "analyzer.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -26,7 +26,8 @@ struct analyzer_fixture : public ::testing::Test
 {
     const static inline std::string opencode_file_name = "source";
     analyzer a;
-    analyzer_fixture(const std::string& input, workspaces::parse_lib_provider& provider = workspaces::empty_parse_lib_provider::instance)
+    analyzer_fixture(const std::string& input,
+        workspaces::parse_lib_provider& provider = workspaces::empty_parse_lib_provider::instance)
         : a(input, opencode_file_name, provider)
     {
         a.analyze();

@@ -16,8 +16,8 @@
 #define LSP_FEATURE_PROVIDER_H
 
 #include "completion_item.h"
-#include "protocol.h"
 #include "location.h"
+#include "protocol.h"
 
 
 namespace hlasm_plugin::parser_library::lsp {

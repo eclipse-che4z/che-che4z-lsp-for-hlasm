@@ -726,6 +726,7 @@ public:
     }
     bool has_library(const std::string& lib, const std::string&) const override { return lib == "MAC"; }
     const asm_option& get_asm_options(const std::string&) override { return asm_options; }
+
 private:
     const std::string M =
         R"(   MACRO

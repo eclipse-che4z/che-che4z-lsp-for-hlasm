@@ -130,7 +130,7 @@ TEST(data_definition_grammar, no_nominal)
 TEST(data_definition, duplication_factor)
 {
     using namespace hlasm_plugin::parser_library;
-    
+
     std::string input = "13C'A'";
     analyzer a(input);
     auto res = a.parser().data_def();

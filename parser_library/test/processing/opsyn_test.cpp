@@ -271,8 +271,7 @@ class opsyn_parse_lib_prov : public parse_lib_provider
  LR
  MEND)";
 
-    parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
         if (library == "LR")
