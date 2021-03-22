@@ -62,6 +62,18 @@ processor_file_ptr file_manager_impl::add_processor_file(const file_uri& uri)
         return change_into_processor_file_if_not_already_(ret->second);
 }
 
+processor_file_ptr file_manager_impl::get_processor_file(const file_uri& uri)
+{
+    std::lock_guard guard(files_mutex);
+    auto ret = files_.find(uri);
+    if (ret == files_.end())
+    {
+        return std::make_shared<processor_file_impl>(uri);
+    }
+    else
+        return change_into_processor_file_if_not_already_(ret->second);
+}
+
 void file_manager_impl::remove_file(const file_uri& document_uri)
 {
     std::lock_guard guard(files_mutex);

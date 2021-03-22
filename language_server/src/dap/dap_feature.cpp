@@ -77,10 +77,11 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
 }
 json dap_feature::register_capabilities() { return json(); }
 
-void dap_feature::stopped(const std::string& reason, const std::string&)
+void dap_feature::stopped(
+    hlasm_plugin::parser_library::sequence<char> reason, hlasm_plugin::parser_library::sequence<char>)
 {
-    response_->notify(
-        "stopped", json { { "reason", reason }, { "threadId", THREAD_ID }, { "allThreadsStopped", true } });
+    response_->notify("stopped",
+        json { { "reason", std::string_view(reason) }, { "threadId", THREAD_ID }, { "allThreadsStopped", true } });
 }
 
 void dap_feature::exited(int exit_code)
@@ -97,6 +98,8 @@ void dap_feature::on_initialize(const json& requested_seq, const json& args)
     column_1_based_ = args["columnsStartAt1"].get<bool>() ? 1 : 0;
     path_format_ = args["pathFormat"].get<std::string>() == "path" ? path_format::PATH : path_format::URI;
 
+    debugger.emplace();
+
     response_->notify("initialized", json());
 }
 
@@ -105,29 +108,31 @@ void dap_feature::on_disconnect(const json& request_seq, const json&)
     if (disconnect_listener_)
         disconnect_listener_->disconnected();
 
+    debugger.reset();
+
     response_->respond(request_seq, "disconnect", json());
 }
 
 void dap_feature::on_launch(const json& request_seq, const json& args)
 {
+    if (!debugger)
+        return;
+
     // wait for configurationDone?
     std::string program_path = convert_path(args["program"].get<std::string>(), path_format_);
     bool stop_on_entry = args["stopOnEntry"].get<bool>();
-
-    auto d = ws_mngr_.create_debugger(program_path.c_str());
-
-    debugger = std::move(d.debugger_ptr);
-    debug_lib_provider = std::move(d.debug_lib_provider_ptr);
-
+    auto workspace_id = ws_mngr_.find_workspace(program_path.c_str());
     debugger->set_event_consumer(this);
-    debugger->configure(&debug_cfg);
-    debugger->launch(std::move(d.file_ptr), *debug_lib_provider, stop_on_entry);
+    debugger->launch(program_path.c_str(), *workspace_id, stop_on_entry);
 
     response_->respond(request_seq, "launch", json());
 }
 
 void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
 {
+    if (!debugger)
+        return;
+
     json breakpoints_verified = json::array();
 
     std::string source = convert_path(args["source"]["path"].get<std::string>(), path_format_);
@@ -141,8 +146,7 @@ void dap_feature::on_set_breakpoints(const json& request_seq, const json& args)
             breakpoints_verified.push_back(json { { "verified", true } });
         }
     }
-
-    debug_cfg.set_breakpoints(hlasm_plugin::parser_library::debugging::breakpoints(source, breakpoints));
+    debugger->breakpoints(source, hlasm_plugin::parser_library::sequence(breakpoints));
 
     response_->respond(request_seq, "setBreakpoints", json { { "breakpoints", breakpoints_verified } });
 }
@@ -164,29 +168,28 @@ void dap_feature::on_threads(const json& request_seq, const json&)
         json { { "threads", json::array({ json { { "id", THREAD_ID }, { "name", "main" } } }) } });
 }
 
-json source_to_json(parser_library::source source) { return json { { "path", source.path() } }; }
+json source_to_json(parser_library::source source) { return json { { "path", std::string_view(source.path) } }; }
 
 void dap_feature::on_stack_trace(const json& request_seq, const json&)
 {
+    if (!debugger)
+        return;
+
     nlohmann::json frames_json = json::array();
 
-    if (debugger)
+    for (const auto& frame : debugger->stack_frames())
     {
-        for (const auto& f : debugger->stack_frames())
-        {
-            auto frame = parser_library::stack_frame(f);
-
-            frames_json.push_back(json {
-                { "id", frame.id() },
-                { "name", frame.name() },
-                { "source", source_to_json(frame.get_source()) },
-                { "line", frame.get_range().start.line + line_1_based_ },
-                { "column", frame.get_range().start.column + column_1_based_ },
-                { "endLine", frame.get_range().end.line + line_1_based_ },
-                { "endColumn", frame.get_range().end.column + column_1_based_ },
-            });
-        }
+        frames_json.push_back(json {
+            { "id", frame.id },
+            { "name", std::string_view(frame.name) },
+            { "source", source_to_json(frame.source) },
+            { "line", frame.range.start.line + line_1_based_ },
+            { "column", frame.range.start.column + column_1_based_ },
+            { "endLine", frame.range.end.line + line_1_based_ },
+            { "endColumn", frame.range.end.column + column_1_based_ },
+        });
     }
+
 
     response_->respond(
         request_seq, "stackTrace", json { { "stackFrames", frames_json }, { "totalFrames", frames_json.size() } });
@@ -194,80 +197,83 @@ void dap_feature::on_stack_trace(const json& request_seq, const json&)
 
 void dap_feature::on_scopes(const json& request_seq, const json& args)
 {
+    if (!debugger)
+        return;
+
     nlohmann::json scopes_json = json::array();
 
-    if (debugger)
+    for (const auto& s : debugger->scopes(args["frameId"].get<json::number_unsigned_t>()))
     {
-        for (const auto& s : debugger->scopes(args["frameId"].get<json::number_unsigned_t>()))
-        {
-            auto scope = parser_library::scope(s);
-            json scope_json = json { { "name", scope.name() },
-                { "variablesReference", scope.variable_reference() },
-                { "expensive", false },
-                { "source", source_to_json(scope.get_source()) } };
-            scopes_json.push_back(std::move(scope_json));
-        }
+        auto scope = parser_library::scope(s);
+        json scope_json = json { { "name", std::string_view(scope.name) },
+            { "variablesReference", scope.variable_reference },
+            { "expensive", false },
+            { "source", source_to_json(scope.source) } };
+        scopes_json.push_back(std::move(scope_json));
     }
+
 
     response_->respond(request_seq, "scopes", json { { "scopes", scopes_json } });
 }
 
 void dap_feature::on_next(const json& request_seq, const json&)
 {
-    if (debugger)
-        debugger->next();
+    if (!debugger)
+        return;
+
+    debugger->next();
 
     response_->respond(request_seq, "next", json());
 }
 
 void dap_feature::on_step_in(const json& request_seq, const json&)
 {
-    if (debugger)
-        debugger->step_in();
+    if (!debugger)
+        return;
+
+    debugger->step_in();
     response_->respond(request_seq, "stepIn", json());
 }
 
 void dap_feature::on_variables(const json& request_seq, const json& args)
 {
+    if (!debugger)
+        return;
+
     nlohmann::json variables_json = json::array();
 
-    if (debugger)
+    for (auto var : debugger->variables(args["variablesReference"]))
     {
-        for (const auto& v : debugger->variables(args["variablesReference"]))
+        std::string type;
+        switch (var.type)
         {
-            auto var = parser_library::variable(*v);
-
-            std::string type;
-            switch (var.type())
-            {
-                case parser_library::set_type::A_TYPE:
-                    type = "A_TYPE";
-                    break;
-                case parser_library::set_type::B_TYPE:
-                    type = "B_TYPE";
-                    break;
-                case parser_library::set_type::C_TYPE:
-                    type = "C_TYPE";
-                    break;
-                default:
-                    break;
-            }
-
-            json var_json;
-            if (type == "")
-                var_json = json {
-                    { "name", var.name() },
-                    { "value", var.value() },
-                    { "variablesReference", var.variable_reference() },
-                };
-            else
-                var_json = json { { "name", var.name() },
-                    { "value", var.value() },
-                    { "variablesReference", var.variable_reference() },
-                    { "type", type } };
-
-            variables_json.push_back(std::move(var_json));
+            case parser_library::set_type::A_TYPE:
+                type = "A_TYPE";
+                break;
+            case parser_library::set_type::B_TYPE:
+                type = "B_TYPE";
+                break;
+            case parser_library::set_type::C_TYPE:
+                type = "C_TYPE";
+                break;
+            default:
+                break;
         }
+
+        json var_json;
+        if (type == "")
+            var_json = json {
+                { "name", std::string_view(var.name) },
+                { "value", std::string_view(var.value) },
+                { "variablesReference", var.variable_reference },
+            };
+        else
+            var_json = json { { "name", std::string_view(var.name) },
+                { "value", std::string_view(var.value) },
+                { "variablesReference", var.variable_reference },
+                { "type", type } };
+
+        variables_json.push_back(std::move(var_json));
     }
 
     response_->respond(request_seq, "variables", json { { "variables", variables_json } });
@@ -275,8 +281,10 @@ void dap_feature::on_variables(const json& request_seq, const json& args)
 
 void dap_feature::on_continue(const json& request_seq, const json&)
 {
-    if (debugger)
-        debugger->continue_debug();
+    if (!debugger)
+        return;
+
+    debugger->continue_debug();
 
     response_->respond(request_seq, "continue", json { { "allThreadsContinued", true } });
 }

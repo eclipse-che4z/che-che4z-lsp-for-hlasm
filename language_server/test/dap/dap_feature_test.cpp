@@ -165,7 +165,6 @@ TEST_F(feature_launch_test, stop_on_entry)
 {
     ws_mngr.did_open_file(file_name.c_str(), 0, file_stop_on_entry.c_str(), file_stop_on_entry.size());
 
-
     feature.on_launch("0"_json, nlohmann::json { { "program", file_name }, { "stopOnEntry", true } });
     std::vector<response_mock> expected_resp = { { "0"_json, "launch", json() } };
     EXPECT_EQ(resp_provider.responses, expected_resp);
@@ -176,7 +175,6 @@ TEST_F(feature_launch_test, stop_on_entry)
 
     feature.on_disconnect("2"_json, {});
 }
-
 
 std::string file_step = R"(  LR 1,1
   MACRO
@@ -199,7 +197,6 @@ TEST_F(feature_launch_test, step)
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
-
 
     check_simple_stack_trace("2"_json, 0);
 
@@ -271,7 +268,6 @@ TEST_F(feature_launch_test, breakpoint)
 {
     ws_mngr.did_open_file(file_name.c_str(), 0, file_breakpoint.c_str(), file_breakpoint.size());
 
-
     nlohmann::json bp_args { { "source", { { "path", file_name } } },
         { "breakpoints", R"([{"line":1}, {"line":3}])"_json } };
     feature.on_set_breakpoints("47"_json, bp_args);
@@ -288,7 +284,6 @@ TEST_F(feature_launch_test, breakpoint)
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
-
 
     check_simple_stack_trace("2"_json, 1);
 
@@ -319,7 +314,6 @@ TEST_F(feature_launch_test, variables)
     EXPECT_EQ(resp_provider.responses, expected_resp);
     wait_for_stopped();
     resp_provider.reset();
-
 
     check_simple_stack_trace("2"_json, 0);
 

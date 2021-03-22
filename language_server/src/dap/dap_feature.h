@@ -15,8 +15,10 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H
 #define HLASMPLUGIN_LANGUAGESERVER_DAP_DAP_FEATURE_H
 
+#include <optional>
+
 #include "../feature.h"
-#include "debugging/debugger.h"
+#include "debugger.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::dap {
@@ -38,7 +40,7 @@ public:
 
 // Implements DAP-specific capabilities that are needed for all features:
 // path format (path vs URI) and zero-based vs 1-based line and column numbers
-class dap_feature : public feature, public hlasm_plugin::parser_library::debugging::debug_event_consumer_s
+class dap_feature : public feature, public hlasm_plugin::parser_library::debugging::debug_event_consumer
 {
 public:
     void initialize_feature(const json& client_capabilities) override;
@@ -66,13 +68,12 @@ private:
     void register_methods(std::map<std::string, method>& methods) override;
     json register_capabilities() override;
 
-    // Inherited via debug_event_consumer_s
-    void stopped(const std::string& reason, const std::string& addtl_info) override;
+    // Inherited via debug_event_consumer
+    void stopped(hlasm_plugin::parser_library::sequence<char> reason,
+        hlasm_plugin::parser_library::sequence<char> addtl_info) override;
     void exited(int exit_code) override;
 
-    hlasm_plugin::parser_library::debugging::debug_config debug_cfg;
-    std::unique_ptr<hlasm_plugin::parser_library::debugging::debug_lib_provider> debug_lib_provider;
-    std::unique_ptr<hlasm_plugin::parser_library::debugging::debugger> debugger;
+    std::optional<hlasm_plugin::parser_library::debugging::debugger> debugger;
 
     int column_1_based_ = 0;
     int line_1_based_ = 0;

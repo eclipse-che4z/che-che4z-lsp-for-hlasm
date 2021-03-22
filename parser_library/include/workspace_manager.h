@@ -35,11 +35,9 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace workspaces {
 class workspace;
-}
+class parse_lib_provider;
+} // namespace workspaces
 using ws_id = workspaces::workspace*;
-namespace debugging {
-struct create_debugger_result;
-}
 
 // Interface that can be implemented to be able to get list of
 // diagnostics from workspace manager whenever a file is parsed
@@ -81,6 +79,7 @@ public:
     virtual size_t get_workspaces_count();
 
     virtual void add_workspace(const char* name, const char* uri);
+    virtual ws_id find_workspace(const char* document_uri);
     virtual void remove_workspace(const char* uri);
 
     virtual void did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size);
@@ -102,8 +101,6 @@ public:
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
     virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
-
-    virtual debugging::create_debugger_result create_debugger(const char* file_name);
 
 private:
     impl* impl_;

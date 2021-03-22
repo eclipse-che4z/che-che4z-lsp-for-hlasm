@@ -33,6 +33,8 @@ public:
     {
         std::string result = ss.str();
         ss.clear();
+
+        return result;
     }
 
     // Inherited via json_sink

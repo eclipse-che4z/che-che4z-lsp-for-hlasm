@@ -53,6 +53,8 @@ size_t workspace_manager::get_workspaces_count() { return impl_->get_workspaces_
 
 void workspace_manager::add_workspace(const char* name, const char* uri) { impl_->add_workspace(name, uri); }
 
+ws_id workspace_manager::find_workspace(const char* document_uri) { return impl_->find_workspace(document_uri); }
+
 void workspace_manager::remove_workspace(const char* uri) { impl_->remove_workspace(uri); }
 
 void workspace_manager::did_change_watched_files(const char** paths, size_t size)
@@ -93,11 +95,6 @@ void workspace_manager::register_performance_metrics_consumer(performance_metric
 }
 
 void workspace_manager::set_message_consumer(message_consumer* consumer) { impl_->set_message_consumer(consumer); }
-
-debugging::create_debugger_result workspace_manager::create_debugger(const char* file_name)
-{
-    return impl_->create_debugger(file_name);
-}
 
 position_uri workspace_manager::definition(const char* document_uri, const position pos)
 {

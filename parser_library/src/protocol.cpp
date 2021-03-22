@@ -136,68 +136,52 @@ token_info::token_info(
     , scope(scope) {};
 //*********************** stack_frame *************************
 stack_frame::stack_frame(const debugging::stack_frame& frame)
-    : impl_(frame)
+    : name(frame.name)
+    , source(frame.frame_source)
+    , range { { frame.begin_line, 0 }, { frame.end_line, 0 } }
+    , id(frame.id)
 {}
 
-const char* stack_frame::name() const { return impl_.name.c_str(); }
-
-uint32_t stack_frame::id() const { return impl_.id; }
-
-range stack_frame::get_range() const { return { { impl_.begin_line, 0 }, { impl_.end_line, 0 } }; }
-
-source stack_frame::get_source() const { return impl_.frame_source; }
-
 template<>
-stack_frame c_view_array<stack_frame, debugging::stack_frame>::item(size_t index) const
+stack_frame sequence<stack_frame, const debugging::stack_frame*>::item(size_t index) const
 {
-    return stack_frame(data_[index]);
+    return stack_frame(stor_[index]);
 }
 
 //********************* source **********************
 
 source::source(const debugging::source& source)
-    : source_(source)
+    : path(source.path)
 {}
-
-const char* source::path() const { return source_.path.c_str(); }
 
 //*********************** scope *************************
 
 scope::scope(const debugging::scope& impl)
-    : impl_(impl)
+    : name(impl.name)
+    , variable_reference(impl.var_reference)
+    , source(impl.scope_source)
 {}
 
-const char* scope::name() const { return impl_.name.c_str(); }
-
-var_reference_t scope::variable_reference() const { return impl_.var_reference; }
-
-source scope::get_source() const { return impl_.scope_source; }
-
 template<>
-scope c_view_array<scope, debugging::scope>::item(size_t index) const
+scope sequence<scope, const debugging::scope*>::item(size_t index) const
 {
-    return scope(data_[index]);
+    return scope(stor_[index]);
 }
 
 
 //********************** variable **********************
 
 variable::variable(const debugging::variable& impl)
-    : impl_(impl)
+    : name(impl.get_name())
+    , value(impl.get_value())
+    , variable_reference(impl.var_reference)
+    , type(impl.type())
 {}
 
-const char* variable::name() const { return impl_.get_name().c_str(); }
-
-set_type variable::type() const { return impl_.type(); }
-
-const char* variable::value() const { return impl_.get_value().c_str(); }
-
-var_reference_t variable::variable_reference() const { return impl_.var_reference; }
-
 template<>
-variable c_view_array<variable, debugging::variable*>::item(size_t index) const
+variable sequence<variable, const debugging::variable_store*>::item(size_t index) const
 {
-    return variable(*data_[index]);
+    return variable(*stor_->variables[index]);
 }
 
 

@@ -23,9 +23,9 @@
 #include <cstdint>
 #include <cstring>
 
-#include "c_view_array.h"
 #include "parser_library_export.h"
 #include "range.h"
+#include "sequence.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4661)
@@ -89,15 +89,8 @@ struct stack_frame;
 struct source;
 struct scope;
 class variable;
+struct variable_store;
 } // namespace debugging
-
-namespace workspaces {
-class processor_file;
-}
-
-using file_id = workspaces::processor_file*;
-
-
 
 struct PARSER_LIBRARY_EXPORT completion_item
 {
@@ -281,28 +274,21 @@ struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);
 
-    const char* path() const;
-
-private:
-    const debugging::source& source_;
+    sequence<char> path;
 };
 
 struct PARSER_LIBRARY_EXPORT stack_frame
 {
     explicit stack_frame(const debugging::stack_frame& frame);
 
-    const char* name() const;
-    uint32_t id() const;
-    // problem
-    range get_range() const;
-    // dalsi problem
-    source get_source() const;
-
-    const debugging::stack_frame& impl_;
+    sequence<char> name;
+    source source;
+    range range;
+    uint32_t id;
 };
 
-template class PARSER_LIBRARY_EXPORT c_view_array<stack_frame, debugging::stack_frame>;
-using stack_frames = c_view_array<stack_frame, debugging::stack_frame>;
+template class PARSER_LIBRARY_EXPORT sequence<stack_frame, const debugging::stack_frame*>;
+using stack_frames_t = sequence<stack_frame, const debugging::stack_frame*>;
 
 using frame_id_t = size_t;
 using var_reference_t = size_t;
@@ -319,32 +305,26 @@ struct PARSER_LIBRARY_EXPORT scope
 {
     explicit scope(const debugging::scope& impl);
 
-    const char* name() const;
-    var_reference_t variable_reference() const;
-    source get_source() const;
-
-private:
-    const debugging::scope& impl_;
+    sequence<char> name;
+    var_reference_t variable_reference;
+    source source;
 };
 
-using scopes = c_view_array<scope, debugging::scope>;
-template class PARSER_LIBRARY_EXPORT c_view_array<scope, debugging::scope>;
+template class PARSER_LIBRARY_EXPORT sequence<scope, const debugging::scope*>;
+using scopes_t = sequence<scope, const debugging::scope*>;
 
 struct PARSER_LIBRARY_EXPORT variable
 {
     explicit variable(const debugging::variable& impl);
 
-    const char* name() const;
-    set_type type() const;
-    const char* value() const;
-    var_reference_t variable_reference() const;
-
-private:
-    const debugging::variable& impl_;
+    sequence<char> name;
+    sequence<char> value;
+    var_reference_t variable_reference;
+    set_type type;
 };
 
-using variables = c_view_array<variable, debugging::variable*>;
-template class PARSER_LIBRARY_EXPORT c_view_array<variable, debugging::variable*>;
+template class PARSER_LIBRARY_EXPORT sequence<variable, const debugging::variable_store*>;
+using variables_t = sequence<variable, const debugging::variable_store*>;
 
 struct breakpoint
 {

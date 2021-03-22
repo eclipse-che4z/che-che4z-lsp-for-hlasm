@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 
 #include "debugging/debug_lib_provider.h"
-#include "debugging/debugger.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
@@ -61,6 +60,7 @@ public:
 
         notify_diagnostics_consumers();
     }
+    ws_id find_workspace(const std::string& document_uri) { return &ws_path_match(document_uri); }
     void remove_workspace(std::string uri)
     {
         auto it = workspaces_.find(uri);
@@ -209,16 +209,6 @@ public:
             return file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
 
         return empty_tokens;
-    }
-
-    debugging::create_debugger_result create_debugger(std::string file_name)
-    {
-        workspaces::workspace& ws = ws_path_match(file_name);
-        return debugging::create_debugger_result {
-            file_manager_.add_processor_file(file_name),
-            std::make_unique<debugging::debugger>(),
-            std::make_unique<debugging::debug_lib_provider>(ws),
-        };
     }
 
 private:
