@@ -515,3 +515,24 @@ TEST(debugger, concurrent_next_and_file_change)
 
     t.join();
 }
+
+TEST(debugger, pimpl_moves)
+{
+    debugger d;
+    debugger d2;
+
+    d2 = std::move(d);
+}
+
+TEST(debugger, breakpoints_set_get)
+{
+    debugger d;
+
+    breakpoint bp(5);
+
+    d.breakpoints("file", sequence<breakpoint>(&bp, 1));
+    auto bps = d.breakpoints("file");
+
+    ASSERT_EQ(bps.size(), 1);
+    EXPECT_EQ(bp.line, bps.begin()->line);
+}

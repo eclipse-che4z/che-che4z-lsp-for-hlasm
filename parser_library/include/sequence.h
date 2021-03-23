@@ -18,6 +18,7 @@
 #include <iterator>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace hlasm_plugin::parser_library {
@@ -69,14 +70,28 @@ public:
 template<typename c_type, typename storage = void>
 class sequence
 {
-public:
-    static constexpr bool owns_resources = !std::is_trivially_destructible_v<storage>;
+    class counter
+    {
+        size_t size = 0;
 
-    template<typename U = storage, std::enable_if_t<std::is_default_constructible_v<U>, int> = 0>
-    sequence()
-        : stor_()
-        , size_(0)
-    {}
+    public:
+        counter() = default;
+        counter(size_t s)
+            : size(s)
+        {}
+        counter(const counter&) = default;
+        counter(counter&& r) noexcept
+            : size(std::exchange(r.size, 0))
+        {}
+        operator size_t() const { return size; }
+    };
+    static constexpr bool owns_resources = !std::is_trivially_destructible_v<storage>;
+    using counter_t = std::conditional_t<owns_resources, counter, size_t>;
+
+public:
+    sequence() = default;
+    sequence(const sequence&) = default;
+    sequence(sequence&& s) = default;
     sequence(storage stor, size_t size)
         : stor_(std::move(stor))
         , size_(size)
@@ -84,15 +99,15 @@ public:
     explicit operator std::vector<c_type>() const { return std::vector<c_type>(begin(), end()); }
 
     // needs to be specialized for every type
-    c_type item(size_t index) const;
-    size_t size() const { return size_; }
+    [[nodiscard]] c_type item(size_t index) const;
+    [[nodiscard]] size_t size() const { return size_; }
 
-    auto begin() const { return sequence_iterator(this, 0); }
-    auto end() const { return sequence_iterator(this, size_); }
+    [[nodiscard]] auto begin() const { return sequence_iterator(this, 0); }
+    [[nodiscard]] auto end() const { return sequence_iterator(this, size()); }
 
 private:
-    storage stor_;
-    size_t size_;
+    storage stor_ = storage();
+    counter_t size_ = counter_t();
 };
 
 // Specialization for simple arrays
@@ -101,10 +116,7 @@ template<typename c_type>
 class sequence<c_type, void>
 {
 public:
-    sequence()
-        : data_(nullptr)
-        , size_(0)
-    {}
+    sequence() = default;
     sequence(const c_type* data, size_t size)
         : data_(data)
         , size_(size)
@@ -126,21 +138,19 @@ public:
     explicit operator std::vector<c_type>() const { return std::vector<c_type>(begin(), end()); }
 
 
-    c_type item(size_t index) const { return data_[index]; }
-    size_t size() const { return size_; }
-    const c_type* data() const { return data_; }
+    [[nodiscard]] c_type item(size_t index) const { return data_[index]; }
+    [[nodiscard]] size_t size() const { return size_; }
+    [[nodiscard]] const c_type* data() const { return data_; }
 
-    const c_type* begin() const { return data_; }
-    const c_type* end() const { return data_ + size_; }
+    [[nodiscard]] const c_type* begin() const { return data_; }
+    [[nodiscard]] const c_type* end() const { return data_ + size_; }
 
 private:
-    const c_type* data_;
-    size_t size_;
+    const c_type* data_ = nullptr;
+    size_t size_ = 0;
 };
 template<class T>
 explicit sequence(T &&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
-template<class T, size_t n>
-explicit sequence(const T (&)[n]) -> sequence<T, void>;
 
 } // namespace hlasm_plugin::parser_library
 

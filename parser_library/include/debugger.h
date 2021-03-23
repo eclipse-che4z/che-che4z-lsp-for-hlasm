@@ -51,9 +51,9 @@ public:
     breakpoints_t& operator=(breakpoints_t&&) & noexcept;
     ~breakpoints_t();
 
-    const breakpoint* begin() const;
-    const breakpoint* end() const;
-    std::size_t size() const;
+    [[nodiscard]] const breakpoint* begin() const;
+    [[nodiscard]] const breakpoint* end() const;
+    [[nodiscard]] std::size_t size() const;
 };
 
 // Implements DAP for macro tracing. Starts analyzer in a separate thread

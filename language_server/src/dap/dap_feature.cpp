@@ -170,7 +170,10 @@ void dap_feature::on_threads(const json& request_seq, const json&)
         json { { "threads", json::array({ json { { "id", THREAD_ID }, { "name", "main" } } }) } });
 }
 
-json source_to_json(parser_library::source source) { return json { { "path", std::string_view(source.path) } }; }
+[[nodiscard]] json source_to_json(parser_library::source source)
+{
+    return json { { "path", std::string_view(source.path) } };
+}
 
 void dap_feature::on_stack_trace(const json& request_seq, const json&)
 {
