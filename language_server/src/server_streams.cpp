@@ -123,7 +123,7 @@ public:
                 const ptr = $0;
                 Module["emscripten_std_setup_term"] = Module["emscripten_std_setup_term"] || new Map();
 
-                function close_event_handler() { Module.terminate_input(ptr); };
+                function end_event_handler() { Module.terminate_input(ptr); };
                 function data_event_handler(data)
                 {
                     buffer = Buffer.concat([ buffer, data ]);
@@ -151,13 +151,13 @@ public:
                         Module.commit_stdin_buffer(ptr);
                     }
                 };
-                process.stdin.on('close', close_event_handler);
                 process.stdin.on('data', data_event_handler);
+                process.stdin.on('end', end_event_handler);
 
                 Module["emscripten_std_setup_term"][ptr] = function()
                 {
-                    process.stdin.removeListener('close', close_event_handler);
                     process.stdin.removeListener('data', data_event_handler);
+                    process.stdin.removeListener('end', end_event_handler);
                 };
             },
             get_ptr_token());
