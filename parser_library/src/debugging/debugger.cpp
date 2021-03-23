@@ -50,10 +50,10 @@ class breakpoints_t::impl
 breakpoints_t::breakpoints_t()
     : pimpl(new impl())
 {}
-breakpoints_t::breakpoints_t(breakpoints_t&& b)
+breakpoints_t::breakpoints_t(breakpoints_t&& b) noexcept
     : pimpl(std::exchange(b.pimpl, nullptr))
 {}
-breakpoints_t& breakpoints_t::operator=(breakpoints_t&& b) &
+breakpoints_t& breakpoints_t::operator=(breakpoints_t&& b) & noexcept
 {
     breakpoints_t tmp(std::move(b));
     std::swap(pimpl, tmp.pimpl);
@@ -163,7 +163,7 @@ public:
 
         bool breakpoint_hit = false;
 
-        for (auto& bp : breakpoints(ctx_->processing_stack().back().proc_location.file))
+        for (const auto& bp : breakpoints(ctx_->processing_stack().back().proc_location.file))
         {
             if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
                 breakpoint_hit = true;
@@ -381,10 +381,10 @@ public:
 debugger::debugger()
     : pimpl(new impl())
 {}
-debugger::debugger(debugger&& d)
+debugger::debugger(debugger&& d) noexcept
     : pimpl(std::exchange(d.pimpl, nullptr))
 {}
-debugger& debugger::operator=(debugger&& d) &
+debugger& debugger::operator=(debugger&& d) & noexcept
 {
     debugger tmp(std::move(d));
     std::swap(pimpl, tmp.pimpl);
@@ -416,7 +416,7 @@ void debugger::breakpoints(sequence<char> source, sequence<breakpoint> bps)
 {
     pimpl->breakpoints(std::string_view(source), std::vector<breakpoint>(bps));
 }
-breakpoints_t debugger::breakpoints(sequence<char> source)
+breakpoints_t debugger::breakpoints(sequence<char> source) const
 {
     breakpoints_t result;
 

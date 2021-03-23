@@ -25,6 +25,7 @@ public:
     explicit scope_exit(T&& t)
         : scope_exit_(std::move(t))
     {}
+    scope_exit(const scope_exit&) = delete;
     ~scope_exit() { scope_exit_(); }
 };
 } // namespace hlasm_plugin::language_server

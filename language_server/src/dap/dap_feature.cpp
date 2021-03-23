@@ -14,6 +14,8 @@
 
 #include "dap_feature.h"
 
+#include <filesystem>
+
 namespace {
 using namespace hlasm_plugin::language_server::dap;
 

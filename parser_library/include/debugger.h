@@ -47,8 +47,8 @@ class breakpoints_t
 
 public:
     breakpoints_t();
-    breakpoints_t(breakpoints_t&&);
-    breakpoints_t& operator=(breakpoints_t&&) &;
+    breakpoints_t(breakpoints_t&&) noexcept;
+    breakpoints_t& operator=(breakpoints_t&&) & noexcept;
     ~breakpoints_t();
 
     const breakpoint* begin() const;
@@ -66,8 +66,8 @@ class debugger
 
 public:
     debugger();
-    debugger(debugger&&);
-    debugger& operator=(debugger&&) &;
+    debugger(debugger&&) noexcept;
+    debugger& operator=(debugger&&) & noexcept;
     ~debugger();
 
     void launch(sequence<char> source,
@@ -92,8 +92,8 @@ public:
 
     void breakpoints(sequence<char> source, sequence<breakpoint> bps);
     void breakpoints(std::string_view source, sequence<breakpoint> bps) { breakpoints(sequence(source), bps); }
-    [[nodiscard]] breakpoints_t breakpoints(sequence<char> source);
-    [[nodiscard]] breakpoints_t breakpoints(std::string_view source) { return breakpoints(sequence(source)); }
+    [[nodiscard]] breakpoints_t breakpoints(sequence<char> source) const;
+    [[nodiscard]] breakpoints_t breakpoints(std::string_view source) const { return breakpoints(sequence(source)); }
 
     // Retrieval of current context.
     stack_frames_t stack_frames() const;
