@@ -243,9 +243,9 @@ public:
 
         return false;
     }
-    virtual const asm_option& get_asm_options(const std::string& file_name)
+    virtual const asm_option& get_asm_options(const std::string&)
     {
-        asm_opts = { "SEVEN" };
+        asm_opts = { "SEVEN", "" };
         return asm_opts;
     }
 };

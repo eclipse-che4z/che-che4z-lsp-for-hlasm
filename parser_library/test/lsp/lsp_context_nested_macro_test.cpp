@@ -32,7 +32,7 @@ struct lsp_context_nested_macro : public analyzer_fixture
          MACRO
          NESTED &P
            LCLA &VAR
-           LR &VAR,1
+           LR &VAR,&P
          MEND
        LR &VAR,1
        MEND
@@ -53,9 +53,45 @@ TEST_F(lsp_context_nested_macro, definition_nested)
     EXPECT_EQ(res.pos, position(7, 16));
 }
 
+TEST_F(lsp_context_nested_macro, references_inner_var)
+{
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 8, 15 });
+
+    ASSERT_EQ(res.size(), 2U);
+
+    EXPECT_EQ(res[0].file, opencode_file_name);
+    EXPECT_EQ(res[0].pos, position(7, 16));
+    EXPECT_EQ(res[1].file, opencode_file_name);
+    EXPECT_EQ(res[1].pos, position(8, 14));
+}
+
+TEST_F(lsp_context_nested_macro, references_inner_macro_param)
+{
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 8, 20 });
+
+    ASSERT_EQ(res.size(), 2U);
+
+    EXPECT_EQ(res[0].file, opencode_file_name);
+    EXPECT_EQ(res[0].pos, position(6, 16));
+    EXPECT_EQ(res[1].file, opencode_file_name);
+    EXPECT_EQ(res[1].pos, position(8, 19));
+}
+
 TEST_F(lsp_context_nested_macro, definition_outer)
 {
     location res = a.context().lsp_ctx->definition(opencode_file_name, { 10, 11 });
     EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(3, 12));
+}
+
+TEST_F(lsp_context_nested_macro, references_outer)
+{
+    auto res = a.context().lsp_ctx->references(opencode_file_name, { 10, 11 });
+
+    ASSERT_EQ(res.size(), 2U);
+
+    EXPECT_EQ(res[0].file, opencode_file_name);
+    EXPECT_EQ(res[0].pos, position(3, 12));
+    EXPECT_EQ(res[1].file, opencode_file_name);
+    EXPECT_EQ(res[1].pos, position(10, 10));
 }

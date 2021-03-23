@@ -55,7 +55,7 @@ void debugger::launch(processor_file_ptr open_code, parse_lib_provider& provider
 }
 
 void debugger::analyze(const context::hlasm_statement& statement,
-    processing::statement_provider_kind prov_kind,
+    processing::statement_provider_kind,
     processing::processing_kind proc_kind)
 {
     if (disconnected_)

@@ -31,6 +31,7 @@ class lsp_analyzer : public statement_analyzer
     const std::string& file_text_;
 
     bool in_macro_;
+    size_t macro_nest_;
     lsp::file_occurences_t macro_occurences_;
 
     lsp::file_occurences_t opencode_occurences_;
@@ -71,6 +72,8 @@ private:
     void add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global);
 
     void add_copy_operand(context::id_index name, const range& operand_range);
+
+    void update_macro_nest(const context::hlasm_statement& statement);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

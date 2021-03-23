@@ -26,11 +26,16 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
     , lsp_ctx_(lsp_ctx)
     , file_text_(file_text)
     , in_macro_(false)
+    , macro_nest_(1)
 {}
 
 void lsp_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind)
 {
+    std::string instr;
+    if (statement.access_resolved())
+        instr = *statement.access_resolved()->opcode_ref().value;
+
     switch (proc_kind)
     {
         case processing_kind::ORDINARY:
@@ -45,6 +50,9 @@ void lsp_analyzer::analyze(
             }
             break;
         case processing_kind::MACRO:
+            update_macro_nest(statement);
+            if (macro_nest_ > 1)
+                break; // Do not collect occurences in nested macros to avoid collecting occurences multiple times
             collect_occurences(lsp::occurence_kind::VAR, statement);
             collect_occurences(lsp::occurence_kind::SEQ, statement);
             collect_copy_operands(statement);
@@ -56,7 +64,15 @@ void lsp_analyzer::analyze(
     assign_statement_occurences();
 }
 
-void lsp_analyzer::macrodef_started(const macrodef_start_data&) { in_macro_ = true; }
+void lsp_analyzer::macrodef_started(const macrodef_start_data& data)
+{
+    in_macro_ = true;
+    // For external macros, the macrodef starts before encountering the MACRO statement
+    if (data.is_external)
+        macro_nest_ = 0;
+    else
+        macro_nest_ = 1;
+}
 
 void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result)
 {
@@ -325,6 +341,18 @@ void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand
         ord_sym->kind = lsp::occurence_kind::COPY_OP;
     else
         stmt_occurences_.emplace_back(lsp::occurence_kind::COPY_OP, name, operand_range);
+}
+
+void lsp_analyzer::update_macro_nest(const context::hlasm_statement& statement)
+{
+    auto res_stmt = statement.access_resolved();
+    if (!res_stmt)
+        return;
+
+    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().well_known.MACRO)
+        macro_nest_++;
+    else if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().well_known.MEND)
+        macro_nest_--;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

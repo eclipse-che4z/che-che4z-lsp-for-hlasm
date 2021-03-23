@@ -247,6 +247,7 @@ public:
 
     std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
+        (void)optional;
         if (insert_correct_macro)
             return { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } };
         return { { "ERROR", "ERROR" } };

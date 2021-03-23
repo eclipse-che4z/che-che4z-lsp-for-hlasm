@@ -32,6 +32,7 @@ class file_manager_extension_mock : public file_manager_impl
 {
     std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
+        (void)optional;
         return { { "Mac.hlasm", lib_path + "Mac.hlasm" } };
     }
 };

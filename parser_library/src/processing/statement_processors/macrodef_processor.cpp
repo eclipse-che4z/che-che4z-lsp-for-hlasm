@@ -432,6 +432,8 @@ void macrodef_processor::process_SET(const resolved_statement& statement, contex
 void macrodef_processor::add_SET_sym_to_res(
     const semantics::variable_symbol* var, context::SET_t_enum set_type, bool global)
 {
+    if (macro_nest_ > 1)
+        return;
     if (var->created)
         return;
 
@@ -480,6 +482,7 @@ void macrodef_processor::add_correct_copy_nest()
     const auto& current_file = result_.nests.back().back().file;
     bool in_inner_macro = macro_nest_ > 1;
 
+
     if (result_.file_scopes[current_file].empty())
     {
         if (curr_line_ == 1)
@@ -489,11 +492,20 @@ void macrodef_processor::add_correct_copy_nest()
     }
     else
     {
-        auto& last_scope = result_.file_scopes[current_file].back();
-        last_scope.end_statement = curr_line_;
-        if (last_scope.inner_macro != in_inner_macro) // add new scope
+        bool inner_macro_ended = last_in_inner_macro_ && !in_inner_macro;
+        bool inner_macro_started = !last_in_inner_macro_ && in_inner_macro;
+        if (inner_macro_ended) // add new scope when inner macro ended
             result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+        else if (!in_inner_macro
+            || inner_macro_started) // if we are not in inner macro update the end of old scope. Update also when inner
+                                    // macro just started, since we use half-open intervals.
+        {
+            auto& last_scope = result_.file_scopes[current_file].back();
+            last_scope.end_statement = curr_line_;
+        }
     }
+
+    last_in_inner_macro_ = in_inner_macro;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

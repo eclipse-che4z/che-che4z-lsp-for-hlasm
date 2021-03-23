@@ -39,6 +39,7 @@ class macrodef_processor : public statement_processor
     bool omit_next_;
 
     macrodef_processing_result result_;
+    bool last_in_inner_macro_ = false;
     bool finished_flag_;
 
     using process_table_t = std::unordered_map<context::id_index, std::function<void(const resolved_statement&)>>;

@@ -37,8 +37,8 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
     }
 
     void analyze(const context::hlasm_statement& statement,
-        processing::statement_provider_kind prov_kind,
-        processing::processing_kind proc_kind) override
+        processing::statement_provider_kind,
+        processing::processing_kind) override
     {
         processing::occurence_collector collector(occ_kind, *a.context().hlasm_ctx, st);
         const auto& operands = statement.access_resolved()->operands_ref().value;
