@@ -36,7 +36,7 @@ class blocking_queue
     std::mutex mutex;
     std::condition_variable cond_var;
     std::deque<T> queue;
-    std::atomic<bool> terminated = false;
+    bool terminated = false;
 
 public:
     void push(T&& t)
@@ -87,7 +87,10 @@ public:
 
     void terminate()
     {
+        std::unique_lock g(mutex);
         terminated = true;
+        g.unlock();
+
         cond_var.notify_one();
     }
 };

@@ -60,9 +60,7 @@ public:
     {
         auto msg_string = msg.dump();
         auto msg_string_size = msg_string.size();
-        auto msg_to_send = std::string("Content-Length: ") + std::to_string(msg_string_size) + std::string("\r\n\r\n")
-            + std::move(msg_string);
-
+        auto msg_to_send = "Content-Length: " + std::to_string(msg_string_size) + "\r\n\r\n" + std::move(msg_string);
 
         MAIN_THREAD_EM_ASM(
             { process.stdout.write(HEAPU8.slice($0, $0 + $1)); }, msg_to_send.data(), msg_to_send.size());
