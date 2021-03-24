@@ -31,10 +31,15 @@ target_sources(language_server_base PRIVATE
 	scope_exit.h
 	server.cpp
 	server.h
-	server_streams.cpp
 	server_streams.h
 	stream_helper.h
 )
+
+if(EMSCRIPTEN)
+	target_sources(language_server_base PRIVATE emscripten_server_streams.cpp)
+else()
+	target_sources(language_server_base PRIVATE native_server_streams.cpp)
+endif()
 
 target_sources(language_server PRIVATE 
 	main.cpp
