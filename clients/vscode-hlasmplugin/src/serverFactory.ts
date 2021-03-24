@@ -59,22 +59,16 @@ export class ServerFactory {
             return server;
         }
         else if (method === 'wasm') {
-            return () => {
-                const srvOpt: cp.ForkOptions = {
-                    stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
-                    env: process.env,
-                    execArgv: ['--experimental-wasm-threads', '--experimental-wasm-bulk-memory'],
-                };
-                const srv = cp.fork(
-                    path.join(__dirname, '..', 'bin', 'wasm', 'language_server.js'),
-                    [],
-                    srvOpt
-                );
-                if (!srv.pid)
-                    throw Error("Failed to start the HLASM Language Server");
-                srv.unref();
-                return Promise.resolve(srv);
+            const server: vscodelc.Executable = {
+                command: process.execPath,
+                args: [
+                    '--experimental-wasm-threads',
+                    '--experimental-wasm-bulk-memory',
+                    path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                    ...getConfig<string[]>('arguments')
+                ]
             };
+            return server;
         }
         else {
             throw Error("Invalid method");
