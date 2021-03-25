@@ -83,7 +83,7 @@ std::vector<processor_file_ptr> workspace::find_related_opencodes(const std::str
         if (!f)
             continue;
         if (f->dependencies().find(document_uri) != f->dependencies().end())
-            opencodes.push_back(f);
+            opencodes.push_back(std::move(f));
     }
 
     if (opencodes.size())

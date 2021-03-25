@@ -112,11 +112,10 @@ location_list lsp_context::references(const std::string& document_uri, const pos
 
 hover_result lsp_context::hover(const std::string& document_uri, const position pos) const
 {
-    std::string result;
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
 
     if (!occ)
-        return result;
+        return {};
 
     return find_hover(*occ, macro_scope);
 }
@@ -165,10 +164,7 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     const vardef_storage& var_defs = scope ? scope->var_definitions : opencode_->variable_definitions;
     for (const auto& vardef : var_defs)
     {
-        auto cont = hover(vardef);
-        completion_item_s item(
-            "&" + *vardef.name, std::move(cont), "&" + *vardef.name, "", completion_item_kind::var_sym);
-        items.push_back(std::move(item));
+        items.emplace_back("&" + *vardef.name, hover(vardef), "&" + *vardef.name, "", completion_item_kind::var_sym);
     }
 
     return items;
@@ -225,7 +221,7 @@ std::string get_macro_signature(const context::macro_definition& m)
 
 bool is_comment(std::string_view line)
 {
-    return line.size() > 0 && (line[0] == '*' || (line.size() > 1 && line.substr(0, 2) == ".*"));
+    return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*";
 }
 
 bool is_continued_line(std::string_view line)

@@ -43,7 +43,6 @@ struct continuation_info
 // representation of the information related to the server-side highlighting
 struct highlighting_info
 {
-    highlighting_info() {};
     // tokens in each line
     lines_info lines;
     // continuation information is needed for highlighting as well

@@ -31,7 +31,8 @@ public:
     virtual void visit(const mach_expr_self_def& expr) = 0;
     virtual void visit(const mach_expr_default& expr) = 0;
 
-    virtual ~mach_expr_visitor() = default;
+protected:
+    ~mach_expr_visitor() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

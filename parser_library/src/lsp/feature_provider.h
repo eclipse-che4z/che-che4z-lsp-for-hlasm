@@ -33,6 +33,9 @@ struct feature_provider
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const = 0;
+
+protected:
+    ~feature_provider() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

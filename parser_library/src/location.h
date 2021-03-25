@@ -24,7 +24,7 @@ namespace hlasm_plugin::parser_library {
 
 struct location
 {
-    location() {}
+    location() = default;
     location(position pos, std::string file)
         : pos(pos)
         , file(file)
