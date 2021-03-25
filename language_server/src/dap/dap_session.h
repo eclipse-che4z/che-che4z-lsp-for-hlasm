@@ -28,7 +28,6 @@ namespace hlasm_plugin::language_server::dap {
 class session final : public json_sink
 {
     std::string session_id;
-    std::atomic<bool>* cancel;
     hlasm_plugin::parser_library::workspace_manager* ws_mngr;
     json_queue_channel queue;
     dap::message_wrapper msg_wrapper;
@@ -39,8 +38,7 @@ class session final : public json_sink
     void thread_routine();
 
 public:
-    session(
-        size_t session_id, std::atomic<bool>& c, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
+    session(size_t session_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
     ~session();
 
     message_router::message_predicate get_message_matcher() const;

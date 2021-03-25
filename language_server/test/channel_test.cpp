@@ -19,8 +19,8 @@
 #include "json.hpp"
 #include "json_queue_channel.h"
 
+#include "base_protocol_channel.h"
 #include "dap/dap_message_wrappers.h"
-#include "lsp/channel.h"
 #include "message_router.h"
 #include "stream_helper.h"
 
@@ -70,7 +70,7 @@ TEST_P(channel_fixture, from_strings)
     std::stringstream ss_i(GetParam().lsp_message);
     std::stringstream ss_o;
     newline_is_space::imbue_stream(ss_i);
-    lsp::channel ch(ss_i, ss_o);
+    base_protocol_channel ch(ss_i, ss_o);
 
     for (const auto& msg_e : GetParam().jsons)
     {
@@ -85,7 +85,7 @@ TEST_P(channel_fixture, to_strings)
 {
     std::stringstream ss_i;
     std::stringstream ss_o;
-    lsp::channel ch(ss_i, ss_o);
+    base_protocol_channel ch(ss_i, ss_o);
 
     for (const auto& msg_e : GetParam().jsons)
     {
@@ -130,7 +130,7 @@ TEST_P(channel_bad_fixture, from_strings)
     std::stringstream ss_i(input);
     std::stringstream ss_o;
     newline_is_space::imbue_stream(ss_i);
-    lsp::channel ch(ss_i, ss_o);
+    base_protocol_channel ch(ss_i, ss_o);
 
     ASSERT_FALSE(ch.read().has_value());
 }
@@ -220,7 +220,7 @@ TEST(channel, dap_wrap)
 
     nlohmann::json value = "[1, 2, 3]"_json;
     auto wrapped_value =
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dap_tunnel/0" }, { "params", value } };
+        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "hlasm/dap_tunnel/0" }, { "params", value } };
 
     nlohmann::json lref;
     nlohmann::json rref;
@@ -245,8 +245,7 @@ TEST(channel, dap_unwrap)
     dap::message_unwrapper unwrap(source);
 
     nlohmann::json value = "[1, 2, 3]"_json;
-    auto wrapped_value =
-        nlohmann::json { { "jsonrpc", "2.0" }, { "method", "broadcom/hlasm/dap_tunnel" }, { "params", value } };
+    auto wrapped_value = nlohmann::json { { "jsonrpc", "2.0" }, { "method", "hlasm/dap_tunnel" }, { "params", value } };
 
     EXPECT_CALL(source, read()).WillOnce(Return(wrapped_value));
 

@@ -23,7 +23,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/logger.cpp
 	${PROJECT_SOURCE_DIR}/src/request_manager.cpp
 	${PROJECT_SOURCE_DIR}/src/message_router.cpp
 	${PROJECT_SOURCE_DIR}/src/json_queue_channel.cpp
-	${PROJECT_SOURCE_DIR}/src/lsp/channel.cpp
+	${PROJECT_SOURCE_DIR}/src/base_protocol_channel.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/lsp_server.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_workspace_folders.cpp
 	${PROJECT_SOURCE_DIR}/src/lsp/feature_text_synchronization.cpp

@@ -22,13 +22,13 @@
 #include "asio/system_error.hpp"
 #include "json_queue_channel.h"
 
+#include "base_protocol_channel.h"
 #include "dap/dap_message_wrappers.h"
 #include "dap/dap_server.h"
 #include "dap/dap_session.h"
 #include "dap/dap_session_manager.h"
 #include "dispatcher.h"
 #include "logger.h"
-#include "lsp/channel.h"
 #include "lsp/lsp_server.h"
 #include "message_router.h"
 #include "scope_exit.h"
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
             io_setup.emplace<tcp_setup>((uint16_t)lsp_port);
 
         auto [in_stream, out_stream] = std::visit([](auto& p) { return p.get_streams(); }, io_setup);
-        lsp::channel channel(in_stream, out_stream);
+        base_protocol_channel channel(in_stream, out_stream);
 
         std::thread lsp_thread;
         scope_exit clean_up_threads([&]() {
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
                 lsp_thread.join();
         });
 
-        dap::session_manager dap_sessions(cancel, ws_mngr, channel);
+        dap::session_manager dap_sessions(ws_mngr, channel);
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
 
         int ret;

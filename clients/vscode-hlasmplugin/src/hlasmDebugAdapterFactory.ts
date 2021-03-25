@@ -88,7 +88,7 @@ export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFa
 
 class HLASMDebugAdapter implements vscode.DebugAdapter {
     private static next_session_id: number = 0;
-    private static readonly registration_message_id: string = 'broadcom/hlasm/dap_tunnel';
+    private static readonly registration_message_id: string = 'hlasm/dap_tunnel';
 
     private message_event = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
     private readonly session_id: number = HLASMDebugAdapter.next_session_id++;

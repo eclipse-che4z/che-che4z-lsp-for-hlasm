@@ -12,18 +12,18 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_LSP_CHANNEL_H
-#define HLASMPLUGIN_HLASMLANGUAGESERVER_LSP_CHANNEL_H
+#ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_BASE_PROTOCOL_CHANNEL_H
+#define HLASMPLUGIN_HLASMLANGUAGESERVER_BASE_PROTOCOL_CHANNEL_H
 
 #include <iostream>
 #include <mutex>
 
-#include "../json_channel.h"
+#include "json_channel.h"
 
-namespace hlasm_plugin::language_server::lsp {
+namespace hlasm_plugin::language_server {
 
 // Serializaes and deserializes JSON messages
-class channel final : public json_channel
+class base_protocol_channel final : public json_channel
 {
     std::mutex write_mutex;
 
@@ -37,13 +37,13 @@ class channel final : public json_channel
 
 public:
     // Takes istream to read messages, ostream to write messages
-    channel(std::istream& in, std::ostream& out);
+    base_protocol_channel(std::istream& in, std::ostream& out);
 
     std::optional<nlohmann::json> read() override;
     void write(const nlohmann::json&) override;
     void write(nlohmann::json&&) override;
 };
 
-} // namespace hlasm_plugin::language_server::lsp
+} // namespace hlasm_plugin::language_server
 
 #endif

@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "channel.h"
+#include "base_protocol_channel.h"
 
 #include <charconv>
 #include <iostream>
@@ -23,11 +23,11 @@
 
 #include "json.hpp"
 
-#include "../logger.h"
+#include "logger.h"
 
-namespace hlasm_plugin::language_server::lsp {
+namespace hlasm_plugin::language_server {
 
-channel::channel(std::istream& in, std::ostream& out)
+base_protocol_channel::base_protocol_channel(std::istream& in, std::ostream& out)
     : input(in)
     , output(out)
 {}
@@ -36,7 +36,7 @@ constexpr const std::string_view content_length_string = "Content-Length: ";
 constexpr const size_t message_size_limit = 1 << 30;
 constexpr const std::string_view lsp_header_end = "\r\n\r\n";
 
-void channel::write_message(const std::string& in)
+void base_protocol_channel::write_message(const std::string& in)
 {
     LOG_INFO(in);
     std::lock_guard guard(write_mutex);
@@ -53,11 +53,11 @@ void channel::write_message(const std::string& in)
     output.flush();
 }
 
-void channel::write(const nlohmann::json& message) { write_message(message.dump()); }
+void base_protocol_channel::write(const nlohmann::json& message) { write_message(message.dump()); }
 
-void channel::write(nlohmann::json&& message) { write_message(message.dump()); }
+void base_protocol_channel::write(nlohmann::json&& message) { write_message(message.dump()); }
 
-bool channel::read_message(std::string& out)
+bool base_protocol_channel::read_message(std::string& out)
 {
     // A Language Server Protocol message starts with a set of HTTP headers,
     // delimited  by \r\n, and terminated by an empty line (\r\n).
@@ -142,7 +142,7 @@ bool channel::read_message(std::string& out)
     return true;
 }
 
-std::optional<nlohmann::json> channel::read()
+std::optional<nlohmann::json> base_protocol_channel::read()
 {
     for (;;)
     {
@@ -175,4 +175,4 @@ std::optional<nlohmann::json> channel::read()
     }
 }
 
-} // namespace hlasm_plugin::language_server::lsp
+} // namespace hlasm_plugin::language_server

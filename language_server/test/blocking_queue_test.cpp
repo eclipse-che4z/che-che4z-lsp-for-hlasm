@@ -54,7 +54,7 @@ TEST(blocking_queue, simple_io)
     constexpr const int limit = 1023;
     for (int i = 0; i < limit; ++i)
     {
-        if (i & 1)
+        if (i % 2)
             queue.push(queue_data(i));
         else
         {

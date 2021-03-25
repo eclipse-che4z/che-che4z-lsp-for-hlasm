@@ -48,29 +48,28 @@ TEST(dap_sessions, simple_start_stop)
     std::atomic<bool> term = false;
     ws_mngr_mock mock_ws;
     stream_json_sink session_out;
-    dap::session session(0, term, mock_ws, session_out);
+    dap::session session(term, mock_ws, session_out);
 
     EXPECT_TRUE(session.is_running());
-    EXPECT_EQ(session.get_session_id(), "broadcom/hlasm/dap_tunnel/0");
+    EXPECT_EQ(session.get_session_id(), "hlasm/dap_tunnel/0");
 
     auto session_matcher = session.get_message_matcher();
-    EXPECT_TRUE(session_matcher(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel/0" } }));
-    EXPECT_FALSE(session_matcher(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel" } }));
-    EXPECT_FALSE(session_matcher(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel/1" } }));
+    EXPECT_TRUE(session_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel/0" } }));
+    EXPECT_FALSE(session_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel" } }));
+    EXPECT_FALSE(session_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel/1" } }));
 }
 
 TEST(dap_sessions, session_manager)
 {
-    std::atomic<bool> term = false;
     ws_mngr_mock mock_ws;
     stream_json_sink session_out;
-    dap::session_manager sess_mgr(term, mock_ws, session_out);
+    dap::session_manager sess_mgr(mock_ws, session_out);
 
     auto session_manager_matcher = sess_mgr.get_filtering_predicate();
-    EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel" } }));
-    EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel/0" } }));
+    EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel" } }));
+    EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel/0" } }));
 
-    sess_mgr.write(nlohmann::json { { "method", "broadcom/hlasm/dap_tunnel" }, { "params", 1 } });
+    sess_mgr.write(nlohmann::json { { "method", "hlasm/dap_tunnel" }, { "params", 1 } });
 
     EXPECT_EQ(sess_mgr.registered_sessions_count(), 1);
 }

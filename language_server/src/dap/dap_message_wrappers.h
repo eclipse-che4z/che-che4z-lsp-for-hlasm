@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-constexpr const std::string_view broadcom_tunnel_method = "broadcom/hlasm/dap_tunnel";
+constexpr const std::string_view broadcom_tunnel_method = "hlasm/dap_tunnel";
 
 class message_unwrapper final : public json_source
 {

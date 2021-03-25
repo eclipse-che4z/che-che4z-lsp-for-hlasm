@@ -27,7 +27,6 @@
 namespace hlasm_plugin::language_server::dap {
 class session_manager final : public json_sink
 {
-    std::atomic<bool>* cancel;
     hlasm_plugin::parser_library::workspace_manager* ws_mngr;
     json_sink* out_stream;
     std::map<std::string, std::unique_ptr<dap::session>, std::less<>> sessions;
@@ -36,7 +35,7 @@ class session_manager final : public json_sink
     void handle_registration_request(size_t new_id);
 
 public:
-    session_manager(std::atomic<bool>& c, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
+    session_manager(hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
 
     // Inherited via json_sink
     void write(const nlohmann::json& msg) override;

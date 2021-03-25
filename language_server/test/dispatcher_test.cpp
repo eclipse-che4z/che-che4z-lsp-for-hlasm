@@ -16,8 +16,8 @@
 
 #include "gmock/gmock.h"
 
+#include "base_protocol_channel.h"
 #include "dispatcher.h"
-#include "lsp/channel.h"
 #include "stream_helper.h"
 
 
@@ -127,7 +127,7 @@ TEST_P(dispatcher_fixture, basic)
 
     server_mock dummy_server(GetParam().messages_limit);
 
-    lsp::channel channel(ss_in, ss_out);
+    base_protocol_channel channel(ss_in, ss_out);
     dispatcher disp(json_channel_adapter(channel), dummy_server, rm);
 
     int ret = disp.run_server_loop();
@@ -143,7 +143,7 @@ TEST(dispatcher, write_message)
     server_mock dummy_server(1);
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
-    lsp::channel channel(ss, ss);
+    base_protocol_channel channel(ss, ss);
     dispatcher d(json_channel_adapter(channel), dummy_server, rm);
 
     json message = R"("A json message")"_json;

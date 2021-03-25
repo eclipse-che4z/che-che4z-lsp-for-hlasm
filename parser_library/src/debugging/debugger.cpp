@@ -133,7 +133,8 @@ public:
         stop_on_next_stmt_ = stop_on_entry;
 
         thread_ = std::thread([this, open_code = std::move(open_code), &workspace, lib_provider]() {
-            std::lock_guard<std::mutex> guard(variable_mtx_); // this is odd
+            std::lock_guard<std::mutex> guard(variable_mtx_); // Lock the mutex while analyzer is running, unlock once
+                                                              // it is stopped and waiting in the statement method
 
             std::optional<debug_lib_provider> provider;
             if (!lib_provider)

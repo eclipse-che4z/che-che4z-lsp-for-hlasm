@@ -24,16 +24,16 @@
 namespace hlasm_plugin::language_server::dap {
 void session::thread_routine()
 {
+    std::atomic<bool> cancel = false;
     scope_exit indicate_end([this]() { running = false; });
-    request_manager req_mgr(cancel);
+    request_manager req_mgr(&cancel);
     scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
     dap::server server(*ws_mngr);
     dispatcher dispatcher(json_channel_adapter(msg_unwrapper, msg_wrapper), server, req_mgr);
     dispatcher.run_server_loop();
 }
-session::session(size_t s_id, std::atomic<bool>& c, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out)
+session::session(size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out)
     : session_id(message_wrapper::generate_method_name(s_id))
-    , cancel(&c)
     , ws_mngr(&ws)
     , msg_wrapper(out, s_id)
     , msg_unwrapper(queue)
