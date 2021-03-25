@@ -11,21 +11,17 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
+#include <algorithm>
+#include <emscripten.h>
+
+#include <emscripten/bind.h>
+
 #include "utils/path.h"
-
 #include "utils/platform.h"
-
-#ifdef __EMSCRIPTEN__
-#    include <algorithm>
-#    include <emscripten.h>
-
-#    include <emscripten/bind.h>
-#endif
 
 namespace hlasm_plugin::utils::path {
 using utils::platform::is_windows;
 
-#ifdef __EMSCRIPTEN__
 namespace {
 std::string make_windows_preferred(std::string s)
 {
@@ -38,14 +34,10 @@ std::string make_linux_preferred(std::string s)
     return s;
 }
 } // namespace
-#endif
 
 bool is_relative(const std::filesystem::path& p) { return !is_absolute(p); }
 bool is_absolute(const std::filesystem::path& p)
 {
-#ifndef __EMSCRIPTEN__
-    return p.is_absolute();
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
     {
@@ -55,15 +47,11 @@ bool is_absolute(const std::filesystem::path& p)
     }
     else
         return p.is_absolute();
-#endif
 }
 
-std::filesystem::path absolute(std::filesystem::path p)
+std::filesystem::path absolute(const std::filesystem::path& p)
 {
-    if (p.empty())
-        return p;
-
-    if (is_absolute(p))
+    if (p.empty() || is_absolute(p))
         return p;
 
     return join(std::filesystem::current_path(), p);
@@ -71,9 +59,6 @@ std::filesystem::path absolute(std::filesystem::path p)
 
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
 {
-#ifndef __EMSCRIPTEN__
-    return left / right;
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
     {
@@ -85,14 +70,10 @@ std::filesystem::path join(const std::filesystem::path& left, const std::filesys
     }
     else
         return left / right;
-#endif
 }
 
 std::filesystem::path lexically_normal(const std::filesystem::path& p)
 {
-#ifndef __EMSCRIPTEN__
-    return p.lexically_normal();
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
     {
@@ -103,15 +84,11 @@ std::filesystem::path lexically_normal(const std::filesystem::path& p)
     }
     else
         return p.lexically_normal();
-#endif
 }
 
 
 std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q)
 {
-#ifndef __EMSCRIPTEN__
-    return p.lexically_relative(q);
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
         return std::filesystem::path(make_windows_preferred(std::filesystem::path(make_linux_preferred(p.string()))
@@ -119,38 +96,26 @@ std::filesystem::path lexically_relative(const std::filesystem::path& p, std::st
                                                                 .string()));
     else
         return p.lexically_relative(q);
-#endif
 }
 
 std::filesystem::path filename(const std::filesystem::path& p)
 {
-#ifndef __EMSCRIPTEN__
-    return p.filename();
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
         return std::filesystem::path(make_linux_preferred(p.string())).filename();
     else
         return p.filename();
-#endif
 }
 
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right)
 {
-#ifndef __EMSCRIPTEN__
-    return left == right;
-#else
     // emscripten implementation seems to be broken on windows
     if (is_windows())
         return std::filesystem::path(make_linux_preferred(left.string()))
             == std::filesystem::path(make_linux_preferred(right.string()));
     else
         return left == right;
-#endif
 }
-
-
-#ifdef __EMSCRIPTEN__
 
 class directory_listing
 {
@@ -240,43 +205,13 @@ public:
         }
     }
 };
-#endif
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
-#ifndef __EMSCRIPTEN__
-    std::filesystem::directory_entry dir(d);
-
-    if (!dir.exists())
-        return list_directory_rc::not_exists;
-
-    if (!dir.is_directory())
-        return list_directory_rc::not_a_directory;
-
-    try
-    {
-        std::filesystem::directory_iterator it(dir);
-
-        for (auto& p : it)
-        {
-            if (p.is_regular_file())
-            {
-                h(p.path());
-            }
-        }
-    }
-    catch (const std::filesystem::filesystem_error&)
-    {
-        return list_directory_rc::other_failure;
-    }
-
-    return list_directory_rc::done;
-#else
-    // directory listing seems broken every where
+    // directory listing seems broken everywhere
     directory_listing l(h);
     return l.run(d);
-#endif
 }
 
 } // namespace hlasm_plugin::utils::path

@@ -24,7 +24,7 @@ namespace hlasm_plugin::utils::path {
 bool is_relative(const std::filesystem::path&);
 bool is_absolute(const std::filesystem::path&);
 
-std::filesystem::path absolute(std::filesystem::path p);
+std::filesystem::path absolute(const std::filesystem::path& p);
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right);
 std::filesystem::path lexically_normal(const std::filesystem::path& p);
 std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q);
