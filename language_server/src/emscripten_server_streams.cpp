@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 #include <emscripten.h>
+#include <iostream>
 #include <string>
 
 #include <emscripten/bind.h>
