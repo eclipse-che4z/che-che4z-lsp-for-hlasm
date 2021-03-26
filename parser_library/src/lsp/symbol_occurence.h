@@ -38,13 +38,12 @@ struct symbol_occurence
     range occurence_range;
 
     // in case of INSTR kind, holds potential macro opcode
-    context::macro_def_ptr opcode;
+    context::macro_def_ptr opcode = nullptr;
 
     symbol_occurence(occurence_kind kind, context::id_index name, const range& occurence_range)
         : kind(kind)
         , name(name)
         , occurence_range(occurence_range)
-        , opcode(nullptr)
     {}
 
     symbol_occurence(context::id_index name, context::macro_def_ptr opcode, const range& occurence_range)

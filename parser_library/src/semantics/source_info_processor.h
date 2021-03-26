@@ -28,7 +28,7 @@ namespace hlasm_plugin::parser_library::semantics {
 class source_info_processor
 {
 public:
-    source_info_processor(bool collect_hl_info);
+    explicit source_info_processor(bool collect_hl_info);
 
     // takes vector of highlighting symbols and processes them into highlighting info for further propagation
     void process_hl_symbols(std::vector<token_info> symbols);

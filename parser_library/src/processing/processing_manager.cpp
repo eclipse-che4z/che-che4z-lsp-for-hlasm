@@ -216,8 +216,6 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
 
 void processing_manager::start_copy_member(copy_start_data start)
 {
-    lsp_analyzer_.copydef_started(start);
-
     hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_file));
     procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
 }

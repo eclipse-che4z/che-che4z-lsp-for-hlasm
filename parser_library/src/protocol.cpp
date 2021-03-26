@@ -46,8 +46,8 @@ completion_item sequence<completion_item, const lsp::completion_item_s*>::item(s
 position_uri::position_uri(const location& item)
     : item_(item)
 {}
-position position_uri::pos() { return item_.pos; }
-std::string_view position_uri::file() { return item_.file; }
+position position_uri::pos() const { return item_.pos; }
+std::string_view position_uri::file() const { return item_.file; }
 
 template<>
 position_uri sequence<position_uri, const location*>::item(size_t index) const

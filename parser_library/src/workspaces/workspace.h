@@ -57,7 +57,7 @@ struct program
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl, public parse_lib_provider, lsp::feature_provider
+class workspace : public diagnosable_impl, public parse_lib_provider, public lsp::feature_provider
 {
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
@@ -155,7 +155,7 @@ private:
 
     bool program_id_match(const std::string& filename, const program_id& program) const;
 
-    std::vector<processor_file_ptr> find_related_opencodes(const std::string document_uri) const;
+    std::vector<processor_file_ptr> find_related_opencodes(const std::string& document_uri) const;
     void delete_diags(processor_file_ptr file);
 
     void show_message(const std::string& message);

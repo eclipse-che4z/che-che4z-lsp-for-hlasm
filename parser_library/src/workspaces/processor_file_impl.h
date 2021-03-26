@@ -33,23 +33,22 @@ public:
     void collect_diags() const override;
     bool is_once_only() const override;
     // Starts parser with new (empty) context
-    virtual parse_result parse(parse_lib_provider&) override;
+    parse_result parse(parse_lib_provider&) override;
     // Starts parser with in the context of parameter
-    virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) override;
+    parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) override;
     // Starts parser with in the context of parameter, but does not affect LSP, HL info or parse_info_updated.
     // Used by the macro tracer.
-    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, const library_data) override;
+    parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, const library_data) override;
 
     // Returns true if parsing occured since this method was called last.
     bool parse_info_updated() override;
 
     const std::set<std::string>& dependencies() override;
 
-    virtual ~processor_file_impl() = default;
-    virtual const semantics::lines_info& get_hl_info() override;
-    virtual const lsp::feature_provider& get_lsp_feature_provider() override;
-    virtual const std::set<std::string>& files_to_close() override;
-    virtual const performance_metrics& get_metrics() override;
+    const semantics::lines_info& get_hl_info() override;
+    const lsp::feature_provider& get_lsp_feature_provider() override;
+    const std::set<std::string>& files_to_close() override;
+    const performance_metrics& get_metrics() override;
 
 private:
     std::unique_ptr<analyzer> analyzer_;

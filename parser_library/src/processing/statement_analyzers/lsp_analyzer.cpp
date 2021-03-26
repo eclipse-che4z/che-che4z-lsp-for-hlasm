@@ -25,17 +25,15 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
     : hlasm_ctx_(hlasm_ctx)
     , lsp_ctx_(lsp_ctx)
     , file_text_(file_text)
-    , in_macro_(false)
-    , macro_nest_(1)
-    , LCL_GBL_instructions_ { { hlasm_ctx.ids().well_known.LCLA, context::SET_t_enum::A_TYPE, false },
-        { hlasm_ctx.ids().well_known.LCLB, context::SET_t_enum::B_TYPE, false },
-        { hlasm_ctx.ids().well_known.LCLC, context::SET_t_enum::C_TYPE, false },
-        { hlasm_ctx.ids().well_known.GBLA, context::SET_t_enum::A_TYPE, true },
-        { hlasm_ctx.ids().well_known.GBLB, context::SET_t_enum::B_TYPE, true },
-        { hlasm_ctx.ids().well_known.GBLC, context::SET_t_enum::C_TYPE, true } }
-    , SET_instructions_ { { hlasm_ctx.ids().well_known.SETA, context::SET_t_enum::A_TYPE },
-        { hlasm_ctx.ids().well_known.SETB, context::SET_t_enum::B_TYPE },
-        { hlasm_ctx.ids().well_known.SETC, context::SET_t_enum::C_TYPE } }
+    , LCL_GBL_instructions_ { { { hlasm_ctx.ids().well_known.LCLA, context::SET_t_enum::A_TYPE, false },
+          { hlasm_ctx.ids().well_known.LCLB, context::SET_t_enum::B_TYPE, false },
+          { hlasm_ctx.ids().well_known.LCLC, context::SET_t_enum::C_TYPE, false },
+          { hlasm_ctx.ids().well_known.GBLA, context::SET_t_enum::A_TYPE, true },
+          { hlasm_ctx.ids().well_known.GBLB, context::SET_t_enum::B_TYPE, true },
+          { hlasm_ctx.ids().well_known.GBLC, context::SET_t_enum::C_TYPE, true } } }
+    , SET_instructions_ { { { hlasm_ctx.ids().well_known.SETA, context::SET_t_enum::A_TYPE },
+          { hlasm_ctx.ids().well_known.SETB, context::SET_t_enum::B_TYPE },
+          { hlasm_ctx.ids().well_known.SETC, context::SET_t_enum::C_TYPE } } }
 {}
 
 void lsp_analyzer::analyze(
@@ -107,8 +105,6 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
     in_macro_ = false;
     macro_occurences_.clear();
 }
-
-void lsp_analyzer::copydef_started(const copy_start_data&) {}
 
 void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_processing_result&&)
 {
@@ -206,7 +202,7 @@ void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& oper
 
 
 bool lsp_analyzer::is_LCL_GBL(
-    const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global)
+    const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global) const
 {
     const auto& code = statement.opcode_ref();
 
@@ -225,15 +221,15 @@ bool lsp_analyzer::is_LCL_GBL(
 
 
 
-bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type)
+bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const
 {
     const auto& code = statement.opcode_ref();
 
-    for (const auto& i : SET_instructions_)
+    for (const auto& [name, type] : SET_instructions_)
     {
-        if (code.value == i.first)
+        if (code.value == name)
         {
-            set_type = i.second;
+            set_type = type;
             return true;
         }
     }

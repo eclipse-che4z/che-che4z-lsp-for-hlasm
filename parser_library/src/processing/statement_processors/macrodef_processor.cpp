@@ -332,33 +332,26 @@ macrodef_processor::process_table_t macrodef_processor::create_table()
 {
     process_table_t table;
     table.emplace(hlasm_ctx.ids().add("SETA"),
-        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::A_TYPE));
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::A_TYPE); });
     table.emplace(hlasm_ctx.ids().add("SETB"),
-        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::B_TYPE));
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::B_TYPE); });
     table.emplace(hlasm_ctx.ids().add("SETC"),
-        std::bind(&macrodef_processor::process_SET, this, std::placeholders::_1, context::SET_t_enum::C_TYPE));
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::C_TYPE); });
     table.emplace(hlasm_ctx.ids().add("LCLA"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, false));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
     table.emplace(hlasm_ctx.ids().add("LCLB"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, false));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
     table.emplace(hlasm_ctx.ids().add("LCLC"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, false));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
     table.emplace(hlasm_ctx.ids().add("GBLA"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::A_TYPE, true));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
     table.emplace(hlasm_ctx.ids().add("GBLB"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::B_TYPE, true));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
     table.emplace(hlasm_ctx.ids().add("GBLC"),
-        std::bind(
-            &macrodef_processor::process_LCL_GBL, this, std::placeholders::_1, context::SET_t_enum::C_TYPE, true));
-    table.emplace(hlasm_ctx.ids().add("MACRO"), std::bind(&macrodef_processor::process_MACRO, this));
-    table.emplace(hlasm_ctx.ids().add("MEND"), std::bind(&macrodef_processor::process_MEND, this));
-    table.emplace(
-        hlasm_ctx.ids().add("COPY"), std::bind(&macrodef_processor::process_COPY, this, std::placeholders::_1));
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
+    table.emplace(hlasm_ctx.ids().add("MACRO"), [this](const resolved_statement&) { process_MACRO(); });
+    table.emplace(hlasm_ctx.ids().add("MEND"), [this](const resolved_statement&) { process_MEND(); });
+    table.emplace(hlasm_ctx.ids().add("COPY"), [this](const resolved_statement& stmt) { process_COPY(stmt); });
     return table;
 }
 

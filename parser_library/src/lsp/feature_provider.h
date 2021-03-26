@@ -35,7 +35,7 @@ struct feature_provider
         completion_trigger_kind trigger_kind) const = 0;
 
 protected:
-    ~feature_provider() = default;
+    virtual ~feature_provider() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

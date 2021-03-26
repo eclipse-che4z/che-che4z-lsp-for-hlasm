@@ -47,11 +47,8 @@ class empty_parse_lib_provider : public parse_lib_provider
     asm_option asm_opts;
 
 public:
-    virtual parse_result parse_library(const std::string&, analyzing_context, const library_data) override
-    {
-        return false;
-    };
-    virtual bool has_library(const std::string&, const std::string&) const override { return false; };
+    parse_result parse_library(const std::string&, analyzing_context, const library_data) override { return false; };
+    bool has_library(const std::string&, const std::string&) const override { return false; };
 
     const asm_option& get_asm_options(const std::string&) override { return asm_opts; };
     static empty_parse_lib_provider instance;

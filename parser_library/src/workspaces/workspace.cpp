@@ -73,7 +73,7 @@ bool workspace::program_id_match(const std::string& filename, const program_id& 
     return std::regex_match(filename, prg_regex);
 }
 
-std::vector<processor_file_ptr> workspace::find_related_opencodes(const std::string document_uri) const
+std::vector<processor_file_ptr> workspace::find_related_opencodes(const std::string& document_uri) const
 {
     std::vector<processor_file_ptr> opencodes;
 

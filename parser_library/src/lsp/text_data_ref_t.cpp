@@ -18,10 +18,6 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-text_data_ref_t::text_data_ref_t()
-    : text(&empty_text)
-{}
-
 text_data_ref_t::text_data_ref_t(const std::string& text)
     : text(&text)
     , line_indices(workspaces::file_impl::create_line_indices(text))

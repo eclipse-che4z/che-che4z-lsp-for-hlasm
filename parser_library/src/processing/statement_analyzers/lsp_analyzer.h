@@ -30,8 +30,8 @@ class lsp_analyzer : public statement_analyzer
     // text of the file this analyzer is assigned to
     const std::string& file_text_;
 
-    bool in_macro_;
-    size_t macro_nest_;
+    bool in_macro_ = false;
+    size_t macro_nest_ = 1;
     lsp::file_occurences_t macro_occurences_;
 
     lsp::file_occurences_t opencode_occurences_;
@@ -49,7 +49,6 @@ public:
     void macrodef_started(const macrodef_start_data& data);
     void macrodef_finished(context::macro_def_ptr macrodef, macrodef_processing_result&& result);
 
-    void copydef_started(const copy_start_data& data);
     void copydef_finished(context::copy_member_ptr copydef, copy_processing_result&& result);
 
     void opencode_finished();
@@ -81,10 +80,10 @@ private:
         context::SET_t_enum type;
         bool global;
     };
-    LCL_GBL_instr LCL_GBL_instructions_[6];
-    std::pair<context::id_index, context::SET_t_enum> SET_instructions_[3];
-    bool is_LCL_GBL(const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global);
-    bool is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type);
+    std::array<LCL_GBL_instr, 6> LCL_GBL_instructions_;
+    std::array<std::pair<context::id_index, context::SET_t_enum>, 3> SET_instructions_;
+    bool is_LCL_GBL(const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global) const;
+    bool is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type) const;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

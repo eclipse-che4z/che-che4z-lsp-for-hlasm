@@ -118,8 +118,8 @@ using completion_list = sequence<completion_item, const lsp::completion_item_s*>
 struct PARSER_LIBRARY_EXPORT position_uri
 {
     explicit position_uri(const location& item);
-    position pos();
-    std::string_view file();
+    position pos() const;
+    std::string_view file() const;
 
 private:
     const location& item_;

@@ -146,7 +146,7 @@ public:
     }
 
     location_list references_result;
-    position_uri_list references(std::string document_uri, const position pos)
+    position_uri_list references(const std::string& document_uri, const position pos)
     {
         if (cancel_ && *cancel_)
             return {};
