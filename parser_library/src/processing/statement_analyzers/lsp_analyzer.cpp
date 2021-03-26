@@ -227,7 +227,8 @@ bool lsp_analyzer::is_LCL_GBL(const processing::resolved_statement& statement,
 
 
 
-bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
+bool lsp_analyzer::is_SET(
+    const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
 {
     const auto& code = statement.opcode_ref();
 

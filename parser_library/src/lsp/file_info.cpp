@@ -21,7 +21,10 @@
 namespace hlasm_plugin::parser_library::lsp {
 
 bool operator==(const line_range& lhs, const line_range& rhs) { return lhs.begin == rhs.begin && lhs.end == rhs.end; }
-bool operator<(const line_range& lhs, const line_range& rhs) { return std::tie(lhs.begin, lhs.end) < std::tie(rhs.begin, rhs.end); }
+bool operator<(const line_range& lhs, const line_range& rhs)
+{
+    return std::tie(lhs.begin, lhs.end) < std::tie(rhs.begin, rhs.end);
+}
 
 file_info::file_info(std::string name, text_data_ref_t text_data)
     : name(std::move(name))

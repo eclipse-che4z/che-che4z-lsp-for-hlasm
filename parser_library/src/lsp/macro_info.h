@@ -118,7 +118,6 @@ struct macro_info
         , file_scopes_(std::move(file_scopes))
         , file_occurences_(std::move(file_occurences))
     {}
-
 };
 
 using macro_info_ptr = std::shared_ptr<macro_info>;

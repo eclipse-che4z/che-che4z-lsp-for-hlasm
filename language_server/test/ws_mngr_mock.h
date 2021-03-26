@@ -44,10 +44,7 @@ public:
     MOCK_METHOD(std::string_view, hover, (const char* document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
-        (const char* document_uri,
-            const position pos,
-            const char trigger_char,
-            completion_trigger_kind trigger_kind),
+        (const char* document_uri, const position pos, const char trigger_char, completion_trigger_kind trigger_kind),
         (override));
 };
 

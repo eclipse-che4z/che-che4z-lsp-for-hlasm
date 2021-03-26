@@ -219,10 +219,7 @@ std::string get_macro_signature(const context::macro_definition& m)
 }
 
 
-bool is_comment(std::string_view line)
-{
-    return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*";
-}
+bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*"; }
 
 
 std::string lsp_context::get_macro_documentation(const macro_info& m) const
