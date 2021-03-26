@@ -74,6 +74,21 @@ private:
     void add_copy_operand(context::id_index name, const range& operand_range);
 
     void update_macro_nest(const context::hlasm_statement& statement);
+
+    struct LCL_GBL_instr
+    {
+        context::id_index name;
+        context::SET_t_enum type;
+        bool global;
+    };
+    LCL_GBL_instr LCL_GBL_instructions_[6];
+    std::pair<context::id_index, context::SET_t_enum> SET_instructions_[3];
+    bool is_LCL_GBL(const processing::resolved_statement& statement,
+        context::hlasm_context& ctx,
+        context::SET_t_enum& set_type,
+        bool& global);
+    bool is_SET(
+        const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

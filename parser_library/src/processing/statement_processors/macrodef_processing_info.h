@@ -39,26 +39,16 @@ struct macrodef_start_data
 // data holding info about prototype statement of a macro
 struct macrodef_prototype
 {
-    macrodef_prototype()
-        : macro_name(context::id_storage::empty_id)
-        , name_param(context::id_storage::empty_id)
-    {}
-
-    context::id_index macro_name;
+    context::id_index macro_name = context::id_storage::empty_id;
     range macro_name_range;
 
-    context::id_index name_param;
+    context::id_index name_param = context::id_storage::empty_id;
     std::vector<context::macro_arg> symbolic_params;
 };
 
 // result of macrodef_processor
 struct macrodef_processing_result
 {
-    macrodef_processing_result()
-        : external(false)
-        , invalid(false)
-    {}
-
     macrodef_prototype prototype;
 
     context::statement_block definition;
@@ -70,8 +60,8 @@ struct macrodef_processing_result
 
     location definition_location;
 
-    bool external;
-    bool invalid;
+    bool external = false;
+    bool invalid = false;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

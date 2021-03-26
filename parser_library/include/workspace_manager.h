@@ -97,11 +97,11 @@ public:
     virtual void did_close_file(const char* document_uri);
     virtual void did_change_watched_files(const char** paths, size_t size);
 
-    virtual position_uri definition(const std::string& document_uri, position pos);
-    virtual position_uri_list references(const std::string& document_uri, position pos);
-    virtual std::string_view hover(const std::string& document_uri, position pos);
+    virtual position_uri definition(const char* document_uri, position pos);
+    virtual position_uri_list references(const char* document_uri, position pos);
+    virtual std::string_view hover(const char* document_uri, position pos);
     virtual completion_list completion(
-        const std::string& document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
+        const char* document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
 
     virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
 

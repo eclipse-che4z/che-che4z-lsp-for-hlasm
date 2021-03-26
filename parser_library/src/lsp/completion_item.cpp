@@ -32,9 +32,7 @@ completion_item_s::completion_item_s(std::string label,
     , kind(kind)
 {}
 
-
-std::vector<completion_item_s> generate_instruction_completion_items()
-{
+const std::vector<completion_item_s> completion_item_s::instruction_completion_items_ = [] {
     using namespace context;
 
     std::vector<completion_item_s> result;
@@ -218,10 +216,9 @@ std::vector<completion_item_s> generate_instruction_completion_items()
         result.emplace_back(ca_instr.name, "", ca_instr.name, "Conditional Assembly", completion_item_kind::ca_instr);
     }
     return result;
-}
+}();
 
-const std::vector<completion_item_s> completion_item_s::instruction_completion_items_ =
-    generate_instruction_completion_items();
+
 
 bool operator==(const completion_item_s& lhs, const completion_item_s& rhs)
 {

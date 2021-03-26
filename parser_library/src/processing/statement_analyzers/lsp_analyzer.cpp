@@ -27,6 +27,15 @@ lsp_analyzer::lsp_analyzer(context::hlasm_context& hlasm_ctx, lsp::lsp_context& 
     , file_text_(file_text)
     , in_macro_(false)
     , macro_nest_(1)
+    , LCL_GBL_instructions_ { { hlasm_ctx.ids().well_known.LCLA, context::SET_t_enum::A_TYPE, false },
+        { hlasm_ctx.ids().well_known.LCLB, context::SET_t_enum::B_TYPE, false },
+        { hlasm_ctx.ids().well_known.LCLC, context::SET_t_enum::C_TYPE, false },
+        { hlasm_ctx.ids().well_known.GBLA, context::SET_t_enum::A_TYPE, true },
+        { hlasm_ctx.ids().well_known.GBLB, context::SET_t_enum::B_TYPE, true },
+        { hlasm_ctx.ids().well_known.GBLC, context::SET_t_enum::C_TYPE, true } }
+    , SET_instructions_ { { hlasm_ctx.ids().well_known.SETA, context::SET_t_enum::A_TYPE },
+        { hlasm_ctx.ids().well_known.SETB, context::SET_t_enum::B_TYPE },
+        { hlasm_ctx.ids().well_known.SETC, context::SET_t_enum::C_TYPE } }
 {}
 
 void lsp_analyzer::analyze(
@@ -196,33 +205,16 @@ void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& oper
 
 
 
-bool is_LCL_GBL(const processing::resolved_statement& statement,
+bool lsp_analyzer::is_LCL_GBL(const processing::resolved_statement& statement,
     context::hlasm_context& ctx,
     context::SET_t_enum& set_type,
     bool& global)
 {
-    using namespace context;
-
-    struct LCL_GBL_instr
-    {
-        std::string name;
-        SET_t_enum type;
-        bool global;
-    };
-
-    const static LCL_GBL_instr instructions[6] = { { "LCLA", SET_t_enum::A_TYPE, false },
-        { "LCLB", SET_t_enum::B_TYPE, false },
-        { "LCLC", SET_t_enum::C_TYPE, false },
-        { "GBLA", SET_t_enum::A_TYPE, true },
-        { "GBLB", SET_t_enum::B_TYPE, true },
-        { "GBLC", SET_t_enum::C_TYPE, true } };
-
-
     const auto& code = statement.opcode_ref();
 
-    for (const auto& i : instructions)
+    for (const auto& i : LCL_GBL_instructions_)
     {
-        if (code.value == ctx.ids().add(i.name))
+        if (code.value == i.name)
         {
             set_type = i.type;
             global = i.global;
@@ -235,18 +227,13 @@ bool is_LCL_GBL(const processing::resolved_statement& statement,
 
 
 
-bool is_SET(const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
+bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
 {
-    using namespace context;
     const auto& code = statement.opcode_ref();
 
-    const static std::pair<std::string, SET_t_enum> instructions[3] = {
-        { "SETA", SET_t_enum::A_TYPE }, { "SETB", SET_t_enum::B_TYPE }, { "SETC", SET_t_enum::C_TYPE }
-    };
-
-    for (const auto& i : instructions)
+    for (const auto& i : SET_instructions_)
     {
-        if (code.value == ctx.ids().add(i.first))
+        if (code.value == i.first)
         {
             set_type = i.second;
             return true;

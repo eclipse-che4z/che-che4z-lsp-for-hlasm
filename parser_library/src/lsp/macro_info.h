@@ -102,6 +102,8 @@ struct macro_info
     location definition_location;
     context::macro_def_ptr macro_definition;
     vardef_storage var_definitions;
+    file_scopes_t file_scopes_;
+    file_occurences_t file_occurences_;
 
     macro_info(bool external,
         location definition_location,
@@ -117,11 +119,6 @@ struct macro_info
         , file_occurences_(std::move(file_occurences))
     {}
 
-private:
-    file_scopes_t file_scopes_;
-    file_occurences_t file_occurences_;
-
-    friend lsp_context;
 };
 
 using macro_info_ptr = std::shared_ptr<macro_info>;

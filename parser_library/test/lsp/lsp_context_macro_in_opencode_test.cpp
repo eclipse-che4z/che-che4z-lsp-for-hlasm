@@ -14,7 +14,6 @@
 
 #include "gtest/gtest.h"
 
-#include "../compare_unordered_vectors.h"
 #include "analyzer_fixture.h"
 
 
@@ -154,6 +153,19 @@ TEST_F(lsp_context_macro_in_opencode, references_local_var_same_name)
 }
 
 
+auto tie_completion_item(const lsp::completion_item_s& lhs)
+{
+    return std::tie(lhs.label, lhs.detail, lhs.insert_text, lhs.documentation, lhs.kind);
+}
+
+void sort_occurence_vector(std::vector<lsp::completion_item_s>& v)
+{
+    std::sort(v.begin(), v.end(), [](const lsp::completion_item_s& lhs, const lsp::completion_item_s rhs) {
+        return tie_completion_item(lhs) < tie_completion_item(rhs);
+    });
+}
+
+
 TEST_F(lsp_context_macro_in_opencode, completion_var_in_macro)
 {
     auto res = a.context().lsp_ctx->completion(opencode_file_name, { 4, 1 }, '\0', completion_trigger_kind::invoked);
@@ -164,7 +176,10 @@ TEST_F(lsp_context_macro_in_opencode, completion_var_in_macro)
         { "&KEY_PAR", "MACRO parameter", "&KEY_PAR", "", completion_item_kind::var_sym }
     };
 
-    EXPECT_VECTORS_EQ_UNORDERED(res, expected);
+    sort_occurence_vector(res);
+    sort_occurence_vector(expected);
+
+    EXPECT_EQ(res, expected);
 }
 
 TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
@@ -175,5 +190,8 @@ TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
         { "&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym }
     };
 
-    EXPECT_VECTORS_EQ_UNORDERED(res, expected);
+    sort_occurence_vector(res);
+    sort_occurence_vector(expected);
+
+    EXPECT_EQ(res, expected);
 }

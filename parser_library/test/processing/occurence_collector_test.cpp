@@ -14,7 +14,6 @@
 
 #include "gtest/gtest.h"
 
-#include "../compare_unordered_vectors.h"
 #include "../gtest_stringers.h"
 #include "analyzer.h"
 #include "processing/statement_analyzers/occurence_collector.h"
@@ -48,6 +47,24 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
     context::id_index get_id(const std::string& s) { return a.context().hlasm_ctx->ids().add(s); }
 };
 
+auto tie_occurence(const lsp::symbol_occurence& lhs)
+{
+    return std::tie(*lhs.name,
+        lhs.kind,
+        lhs.occurence_range.start.line,
+        lhs.occurence_range.start.column,
+        lhs.occurence_range.end.line,
+        lhs.occurence_range.end.column);
+}
+
+void sort_occurence_vector(std::vector<lsp::symbol_occurence>& v)
+{
+    std::sort(v.begin(), v.end(), [](const lsp::symbol_occurence& lhs, const lsp::symbol_occurence& rhs) {
+        return tie_occurence(lhs) <= tie_occurence(rhs);
+    });
+}
+
+
 TEST(occurence_collector, ord_mach_expr_simple)
 {
     std::string input = " LR 1,SYM";
@@ -73,7 +90,8 @@ TEST(occurence_collector, ord_mach_expr_operators)
         { lsp::occurence_kind::ORD, oa.get_id("R5"), { { 0, 18 }, { 0, 20 } } }
     };
 
-    EXPECT_VECTORS_EQ_UNORDERED(oa.st, expected);
+    sort_occurence_vector(oa.st);
+    EXPECT_EQ(oa.st, expected);
 }
 
 TEST(occurence_collector, ord_mach_expr_data_attr)
@@ -103,8 +121,8 @@ TEST(occurence_collector, var_created_set_sym)
         { lsp::occurence_kind::VAR, oa.get_id("V1"), { { 0, 6 }, { 0, 9 } } },
         { lsp::occurence_kind::VAR, oa.get_id("V2"), { { 0, 10 }, { 0, 13 } } }
     };
-
-    EXPECT_VECTORS_EQ_UNORDERED(oa.st, expected);
+    sort_occurence_vector(oa.st);
+    EXPECT_EQ(oa.st, expected);
 }
 
 TEST(occurence_collector, var_ca_expr)
@@ -184,7 +202,8 @@ TEST(occurence_collector, ord_dc_operand_modifiers)
         { lsp::occurence_kind::ORD, oa.get_id("S5"), { { 0, 27 }, { 0, 29 } } }
     };
 
-    EXPECT_VECTORS_EQ_UNORDERED(oa.st, expected);
+    sort_occurence_vector(oa.st);
+    EXPECT_EQ(oa.st, expected);
 }
 
 TEST(occurence_collector, ord_dc_operand_nominal_value)
@@ -198,5 +217,6 @@ TEST(occurence_collector, ord_dc_operand_nominal_value)
         { lsp::occurence_kind::ORD, oa.get_id("S3"), { { 0, 12 }, { 0, 14 } } }
     };
 
-    EXPECT_VECTORS_EQ_UNORDERED(oa.st, expected);
+    sort_occurence_vector(oa.st);
+    EXPECT_EQ(oa.st, expected);
 }

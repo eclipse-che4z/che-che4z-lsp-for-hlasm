@@ -201,9 +201,9 @@ bool parser_impl::is_data_attr()
 bool parser_impl::is_var_def()
 {
     auto [_, opcode] = *proc_status;
-    return opcode.value == hlasm_ctx->ids().add("GBLA") || opcode.value == hlasm_ctx->ids().add("GBLB")
-        || opcode.value == hlasm_ctx->ids().add("GBLC") || opcode.value == hlasm_ctx->ids().add("LCLA")
-        || opcode.value == hlasm_ctx->ids().add("LCLB") || opcode.value == hlasm_ctx->ids().add("LCLC");
+    return opcode.value == hlasm_ctx->ids().well_known.GBLA || opcode.value == hlasm_ctx->ids().well_known.GBLB
+        || opcode.value == hlasm_ctx->ids().well_known.GBLC || opcode.value == hlasm_ctx->ids().well_known.LCLA
+        || opcode.value == hlasm_ctx->ids().well_known.LCLB || opcode.value == hlasm_ctx->ids().well_known.LCLC;
 }
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)

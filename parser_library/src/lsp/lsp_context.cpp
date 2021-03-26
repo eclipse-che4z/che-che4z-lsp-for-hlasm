@@ -38,10 +38,7 @@ void lsp_context::add_copy(context::copy_member_ptr copy, text_data_ref_t text_d
 void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
 {
     if (macro_i->external)
-    {
-        assert(text_data.text != "");
         add_file(file_info(macro_i->macro_definition, std::move(text_data)));
-    }
 
     macros_[macro_i->macro_definition] = macro_i;
 }
@@ -91,8 +88,6 @@ location_list lsp_context::references(const std::string& document_uri, const pos
     if (!occ)
         return {};
 
-    std::vector<location> scoped_result;
-
     if (occ->is_scoped())
     {
         if (macro_scope)
@@ -123,14 +118,19 @@ hover_result lsp_context::hover(const std::string& document_uri, const position 
 
 size_t constexpr continuation_column = 71;
 
+bool is_continued_line(std::string_view line)
+{
+    return line.size() > continuation_column && !isspace(line[continuation_column]);
+}
+
 bool should_complete_instr(const text_data_ref_t& text, const position pos)
 {
-    std::string_view line_before = text.get_line(pos.line - 1);
+    bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
+
     std::string_view line_so_far = text.get_line_beginning(pos);
 
     static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
-    return (line_before.size() <= continuation_column || std::isspace(line_before[continuation_column]))
-        && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
+    return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
 }
 
 completion_list_s lsp_context::completion(const std::string& document_uri,
@@ -228,11 +228,6 @@ bool is_comment(std::string_view line)
     return line.size() > 0 && (line[0] == '*' || (line.size() > 1 && line.substr(0, 2) == ".*"));
 }
 
-bool is_continued_line(std::string_view line)
-{
-    return line.size() > continuation_column && !isspace(line[continuation_column]);
-}
-
 
 std::string lsp_context::get_macro_documentation(const macro_info& m) const
 {
@@ -255,7 +250,7 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
 
     // Find the end line of macro definition
     size_t macro_def_end_line = m.definition_location.pos.line;
-    while (macro_def_end_line < text.line_indices.size() && is_continued_line(text.get_line(macro_def_end_line)))
+    while (macro_def_end_line < text.get_number_of_lines() && is_continued_line(text.get_line(macro_def_end_line)))
         ++macro_def_end_line;
     ++macro_def_end_line;
 
@@ -265,7 +260,7 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     // Find the end line of documentation that comes after the macro definition
     size_t doc_after_end_line = macro_def_end_line;
 
-    while (doc_after_end_line < text.line_indices.size() && is_comment(text.get_line(doc_after_end_line)))
+    while (doc_after_end_line < text.get_number_of_lines() && is_comment(text.get_line(doc_after_end_line)))
         ++doc_after_end_line;
 
     std::string_view doc_after = text.get_range_content({ { macro_def_end_line, 0 }, { doc_after_end_line, 0 } });

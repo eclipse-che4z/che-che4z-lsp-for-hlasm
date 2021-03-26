@@ -53,7 +53,7 @@ void copy_processor::process_statement(context::shared_stmt_ptr statement)
             process_MEND();
     }
 
-    result_.definition.push_back(statement);
+    result_.definition.push_back(std::move(statement));
 }
 
 void copy_processor::end_processing()

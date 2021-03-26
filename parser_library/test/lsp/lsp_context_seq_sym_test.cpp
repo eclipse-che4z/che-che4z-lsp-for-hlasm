@@ -14,7 +14,6 @@
 
 #include "gtest/gtest.h"
 
-#include "../compare_unordered_vectors.h"
 #include "analyzer_fixture.h"
 
 

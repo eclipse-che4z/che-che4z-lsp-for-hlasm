@@ -57,7 +57,7 @@ struct symbol_occurence
     // returns true, if this occurence kind depends on a scope
     bool is_scoped() const { return kind == occurence_kind::SEQ || kind == occurence_kind::VAR; }
 
-    bool is_same(const symbol_occurence& occ) const
+    bool is_similar(const symbol_occurence& occ) const
     {
         return kind == occ.kind && name == occ.name && opcode == occ.opcode;
     }
@@ -65,7 +65,7 @@ struct symbol_occurence
 
 inline bool operator==(const symbol_occurence& lhs, const symbol_occurence& rhs)
 {
-    return lhs.is_same(rhs) && lhs.occurence_range == rhs.occurence_range;
+    return lhs.is_similar(rhs) && lhs.occurence_range == rhs.occurence_range;
 }
 
 using occurence_storage = std::vector<symbol_occurence>;

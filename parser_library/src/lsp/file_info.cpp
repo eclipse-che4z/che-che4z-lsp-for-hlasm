@@ -45,8 +45,8 @@ file_info::file_info(context::copy_member_ptr owner, text_data_ref_t text_data)
 
 bool file_info::is_in_range(const position& pos, const range& r)
 {
-    return r.start.line <= pos.line && r.end.line >= pos.line && r.start.column <= pos.column
-        && r.end.column >= pos.column;
+    auto pos_tie = std::tie(pos.line, pos.column);
+    return std::tie(r.start.line, r.start.column) <= pos_tie && pos_tie <= std::tie(r.end.line, r.end.column);
 }
 
 occurence_scope_t file_info::find_occurence_with_scope(position pos)
@@ -83,7 +83,7 @@ std::vector<position> file_info::find_references(
 {
     std::vector<position> result;
     for (const auto& occ : occurences)
-        if (occurence.is_same(occ))
+        if (occurence.is_similar(occ))
             result.emplace_back(occ.occurence_range.start);
     return result;
 }
