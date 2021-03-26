@@ -36,7 +36,8 @@ public:
     virtual void visit(const ca_symbol_attribute& expr) = 0;
     virtual void visit(const ca_var_sym& expr) = 0;
 
-    virtual ~ca_expr_visitor() = default;
+protected:
+    ~ca_expr_visitor() = default;
 };
 
 

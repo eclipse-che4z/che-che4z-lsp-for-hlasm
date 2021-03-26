@@ -33,7 +33,8 @@ public:
     virtual void analyze(
         const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind) = 0;
 
-    virtual ~statement_analyzer() = default;
+protected:
+    ~statement_analyzer() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
