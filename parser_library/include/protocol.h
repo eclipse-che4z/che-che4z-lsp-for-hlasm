@@ -24,9 +24,9 @@
 #include <cstdint>
 #include <cstring>
 
-#include "c_view_array.h"
 #include "parser_library_export.h"
 #include "range.h"
+#include "sequence.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4661)
@@ -34,10 +34,6 @@
 namespace hlasm_plugin::parser_library {
 
 using version_t = uint64_t;
-
-namespace context {
-class completion_item_s;
-}
 
 namespace semantics {
 struct position_uri_s;
@@ -74,22 +70,17 @@ struct stack_frame;
 struct source;
 struct scope;
 class variable;
+struct variable_store;
 } // namespace debugging
-
-namespace workspaces {
-class processor_file;
-}
 
 namespace lsp {
 struct completion_item_s;
 }
 
-struct range_uri_s;
-class diagnostic_s;
-class diagnostic_related_info_s;
 struct location;
-
-using file_id = workspaces::processor_file*;
+struct range_uri_s;
+class diagnostic_related_info_s;
+class diagnostic_s;
 
 enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
 {
@@ -121,7 +112,8 @@ private:
     const lsp::completion_item_s& item_;
 };
 
-using completion_list = c_view_array<completion_item, lsp::completion_item_s>;
+template class PARSER_LIBRARY_EXPORT sequence<completion_item, const lsp::completion_item_s*>;
+using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
@@ -133,7 +125,8 @@ private:
     const location& item_;
 };
 
-using position_uri_list = c_view_array<position_uri, location>;
+template class PARSER_LIBRARY_EXPORT sequence<position_uri, const location*>;
+using position_uri_list = sequence<position_uri, const location*>;
 
 struct PARSER_LIBRARY_EXPORT range_uri
 {
@@ -264,28 +257,21 @@ struct PARSER_LIBRARY_EXPORT source
 {
     source(const debugging::source& source);
 
-    const char* path() const;
-
-private:
-    const debugging::source& source_;
+    sequence<char> path;
 };
 
 struct PARSER_LIBRARY_EXPORT stack_frame
 {
-    stack_frame(const debugging::stack_frame& frame);
+    explicit stack_frame(const debugging::stack_frame& frame);
 
-    const char* name() const;
-    uint32_t id() const;
-    // problem
-    range get_range() const;
-    // dalsi problem
-    source get_source() const;
-
-    const debugging::stack_frame& impl_;
+    sequence<char> name;
+    source source_file;
+    range source_range;
+    uint32_t id;
 };
 
-template class PARSER_LIBRARY_EXPORT c_view_array<stack_frame, debugging::stack_frame>;
-using stack_frames = c_view_array<stack_frame, debugging::stack_frame>;
+template class PARSER_LIBRARY_EXPORT sequence<stack_frame, const debugging::stack_frame*>;
+using stack_frames_t = sequence<stack_frame, const debugging::stack_frame*>;
 
 using frame_id_t = size_t;
 using var_reference_t = size_t;
@@ -300,34 +286,28 @@ enum class set_type
 
 struct PARSER_LIBRARY_EXPORT scope
 {
-    scope(const debugging::scope& impl);
+    explicit scope(const debugging::scope& impl);
 
-    const char* name() const;
-    var_reference_t variable_reference() const;
-    source get_source() const;
-
-private:
-    const debugging::scope& impl_;
+    sequence<char> name;
+    var_reference_t variable_reference;
+    source source_file;
 };
 
-using scopes = c_view_array<scope, debugging::scope>;
-template class PARSER_LIBRARY_EXPORT c_view_array<scope, debugging::scope>;
+template class PARSER_LIBRARY_EXPORT sequence<scope, const debugging::scope*>;
+using scopes_t = sequence<scope, const debugging::scope*>;
 
 struct PARSER_LIBRARY_EXPORT variable
 {
-    variable(const debugging::variable& impl);
+    explicit variable(const debugging::variable& impl);
 
-    const char* name() const;
-    set_type type() const;
-    const char* value() const;
-    var_reference_t variable_reference() const;
-
-private:
-    const debugging::variable& impl_;
+    sequence<char> name;
+    sequence<char> value;
+    var_reference_t variable_reference;
+    set_type type;
 };
 
-using variables = c_view_array<variable, debugging::variable*>;
-template class PARSER_LIBRARY_EXPORT c_view_array<variable, debugging::variable*>;
+template class PARSER_LIBRARY_EXPORT sequence<variable, const debugging::variable_store*>;
+using variables_t = sequence<variable, const debugging::variable_store*>;
 
 struct breakpoint
 {

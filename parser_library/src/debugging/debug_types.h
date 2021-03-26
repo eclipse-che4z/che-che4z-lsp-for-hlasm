@@ -56,17 +56,6 @@ struct stack_frame
     }
 };
 
-struct breakpoints
-{
-    breakpoints(source source, std::vector<breakpoint> breakpoints)
-        : bps_source(std::move(source))
-        , points(std::move(breakpoints))
-    {}
-    source bps_source;
-    std::vector<breakpoint> points;
-};
-
-
 struct scope
 {
     scope(std::string name, var_reference_t ref, source source)
@@ -77,6 +66,11 @@ struct scope
     std::string name;
     source scope_source;
     var_reference_t var_reference;
+};
+
+struct variable_store
+{
+    std::vector<variable_ptr> variables;
 };
 
 } // namespace hlasm_plugin::parser_library::debugging

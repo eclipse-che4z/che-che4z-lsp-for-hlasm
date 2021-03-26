@@ -22,6 +22,8 @@ import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory } from './serverFactory';
+import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
+
 const useTcp = false;
 const offset = 71;
 const continueColumn = 15;
@@ -60,21 +62,21 @@ export async function activate(context: vscode.ExtensionContext) {
     // register highlighting as features
     hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
-    await registerToContext(context, factory.dapPort, highlight);
+    await registerToContext(context, highlight, hlasmpluginClient);
     //give the server some time to start listening when using TCP
     setTimeout(function () {
         hlasmpluginClient.start();
     }, (useTcp) ? 2000 : 0);
-    
+
     let api = {
-        getExtension() : vscodelc.LanguageClient {
+        getExtension(): vscodelc.LanguageClient {
             return hlasmpluginClient;
         }
     };
     return api;
 }
 
-async function registerToContext(context: vscode.ExtensionContext, dapPort: number, highlight: SemanticTokensFeature) {
+async function registerToContext(context: vscode.ExtensionContext, highlight: SemanticTokensFeature, client: vscodelc.LanguageClient) {
     const completeCommand = "editor.action.triggerSuggest";
     var commandList = await vscode.commands.getCommands();
 
@@ -92,7 +94,8 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(handler);
 
     // register provider for all hlasm debug configurations
-    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider(dapPort)));
+    context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('hlasm', new HLASMConfigurationProvider()));
+    context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('hlasm', new HLASMDebugAdapterFactory(client)));
 
     // register continuation handlers
     if (!commandsRegistered) {
@@ -101,7 +104,7 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("removeContinuation",
             (editor, edit) => contHandling.removeContinuation(editor, edit, offset)));
     }
-        
+
     // overrides should happen only if the user wishes
     if (getConfig<boolean>('continuationHandling', false)) {
         context.subscriptions.push(vscode.commands.registerTextEditorCommand("type",
@@ -120,9 +123,9 @@ async function registerToContext(context: vscode.ExtensionContext, dapPort: numb
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e, highlight)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
-    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e,highlight)));
+    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e, highlight)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
-    
+
     // register filename retrieve functions for debug sessions
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getProgramName', () => getProgramName()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.getCurrentProgramName', () => getCurrentProgramName()));

@@ -54,8 +54,8 @@ TEST(dap_server, dap_server)
     serv.message_received(initialize_message);
 
     std::vector<json> expected_response_init = {
-        R"({"body":{"supportsConfigurationDoneRequest":true},"command":"initialize","request_seq":1,"seq":2,"success":true,"type":"response"})"_json,
-        R"({"body":null,"event" : "initialized","seq" : 3,"type" : "event"})"_json
+        R"({"body":{"supportsConfigurationDoneRequest":true},"command":"initialize","request_seq":1,"seq":1,"success":true,"type":"response"})"_json,
+        R"({"body":null,"event" : "initialized","seq" : 2,"type" : "event"})"_json
     };
 
     EXPECT_EQ(smp.replies, expected_response_init);
@@ -66,7 +66,7 @@ TEST(dap_server, dap_server)
         R"({"command":"disconnect","arguments":{"restart":false},"type":"request","seq":10})"_json;
 
     std::vector<json> expected_response_disconnect = {
-        R"({"body":null,"command":"disconnect","request_seq":10,"seq":11,"success":true,"type":"response"})"_json
+        R"({"body":null,"command":"disconnect","request_seq":10,"seq":3,"success":true,"type":"response"})"_json
     };
 
     serv.message_received(disconnect_message);

@@ -53,4 +53,4 @@ bool operator==(const lib_config& lhs, const lib_config& rhs);
 
 
 
-#endif
+#endif // HLASMPLUGIN_PARSERLIBRARY_LIB_CONFIG_H

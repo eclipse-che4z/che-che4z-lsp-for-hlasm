@@ -21,13 +21,12 @@ import { DebugConfigurationMock } from '../mocks';
 suite('Debug Test Suite', () => {
 
     test('Debug Configuration Provider test', () => {
-        const debugProvider = new HLASMConfigurationProvider(0);
+        const debugProvider = new HLASMConfigurationProvider();
 
         // resolve empty configuration
         const emptyDebugConf = new DebugConfigurationMock();
         var result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], emptyDebugConf));
         assert.equal(result.type, 'hlasm');
-        assert.equal(result['debugServer'], 0);
         assert.equal(result.name, 'Macro tracer: current program');
 
         // resolve defined configuration
@@ -37,7 +36,6 @@ suite('Debug Test Suite', () => {
         debugConf.type = 'hlasm';
         result = <vscode.DebugConfiguration>(debugProvider.resolveDebugConfiguration(vscode.workspace.workspaceFolders[0], debugConf));
         assert.equal(result.type, 'hlasm');
-        assert.equal(result['debugServer'], 0);
         assert.equal(result.name, 'Macro tracer: Ask for file name');
     });
 

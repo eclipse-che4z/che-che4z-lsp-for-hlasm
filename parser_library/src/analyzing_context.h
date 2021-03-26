@@ -18,8 +18,8 @@
 #include "context/hlasm_context.h"
 #include "lsp/lsp_context.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
+
 
 struct analyzing_context
 {
@@ -27,6 +27,5 @@ struct analyzing_context
     lsp::lsp_ctx_ptr lsp_ctx;
 };
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 #endif

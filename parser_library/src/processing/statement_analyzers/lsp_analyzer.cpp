@@ -205,10 +205,8 @@ void lsp_analyzer::collect_occurence(const semantics::deferred_operands_si& oper
 
 
 
-bool lsp_analyzer::is_LCL_GBL(const processing::resolved_statement& statement,
-    context::hlasm_context& ctx,
-    context::SET_t_enum& set_type,
-    bool& global)
+bool lsp_analyzer::is_LCL_GBL(
+    const processing::resolved_statement& statement, context::SET_t_enum& set_type, bool& global)
 {
     const auto& code = statement.opcode_ref();
 
@@ -227,8 +225,7 @@ bool lsp_analyzer::is_LCL_GBL(const processing::resolved_statement& statement,
 
 
 
-bool lsp_analyzer::is_SET(
-    const processing::resolved_statement& statement, context::hlasm_context& ctx, context::SET_t_enum& set_type)
+bool lsp_analyzer::is_SET(const processing::resolved_statement& statement, context::SET_t_enum& set_type)
 {
     const auto& code = statement.opcode_ref();
 
@@ -251,9 +248,9 @@ void lsp_analyzer::collect_var_definition(const context::hlasm_statement& statem
 
     bool global;
     context::SET_t_enum type;
-    if (is_SET(*res_stmt, hlasm_ctx_, type))
+    if (is_SET(*res_stmt, type))
         collect_SET_defs(*res_stmt, type);
-    else if (is_LCL_GBL(*res_stmt, hlasm_ctx_, type, global))
+    else if (is_LCL_GBL(*res_stmt, type, global))
         collect_LCL_GBL_defs(*res_stmt, type, global);
 }
 
