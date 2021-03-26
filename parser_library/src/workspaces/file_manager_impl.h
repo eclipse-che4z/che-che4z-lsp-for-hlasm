@@ -42,6 +42,7 @@ public:
 
     file_ptr add_file(const file_uri&) override;
     processor_file_ptr add_processor_file(const file_uri&) override;
+    processor_file_ptr get_processor_file(const file_uri&) override;
     void remove_file(const file_uri&) override;
 
     file_ptr find(const std::string& key) override;

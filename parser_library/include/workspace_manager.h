@@ -35,7 +35,8 @@ namespace hlasm_plugin {
 namespace parser_library {
 namespace workspaces {
 class workspace;
-}
+class parse_lib_provider;
+} // namespace workspaces
 using ws_id = workspaces::workspace*;
 
 // Interface that can be implemented to be able to get list of
@@ -54,17 +55,6 @@ class PARSER_LIBRARY_EXPORT performance_metrics_consumer
 {
 public:
     virtual void consume_performance_metrics(const performance_metrics& metrics) = 0;
-};
-
-// Interface that can be implemented to get DAP events from macro tracer.
-class PARSER_LIBRARY_EXPORT debug_event_consumer
-{
-public:
-    virtual void stopped(const char* reason, const char* additional_info) = 0;
-    virtual void exited(int exit_code) = 0;
-    virtual void terminated() = 0;
-
-    virtual ~debug_event_consumer() {};
 };
 
 // The main class that encapsulates all functionality of parser library.
@@ -89,6 +79,7 @@ public:
     virtual size_t get_workspaces_count();
 
     virtual void add_workspace(const char* name, const char* uri);
+    virtual ws_id find_workspace(const char* document_uri);
     virtual void remove_workspace(const char* uri);
 
     virtual void did_open_file(const char* document_uri, version_t version, const char* text, size_t text_size);
@@ -110,22 +101,6 @@ public:
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
     virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
-
-    // debugger
-    virtual void register_debug_event_consumer(debug_event_consumer& consumer);
-    virtual void unregister_debug_event_consumer(debug_event_consumer& consumer);
-
-    virtual void launch(const char* file_name, bool stop_on_entry);
-    virtual void next();
-    virtual void step_in();
-    virtual void disconnect();
-    virtual void continue_debug();
-
-    virtual stack_frames get_stack_frames();
-    virtual scopes get_scopes(frame_id_t frame_id);
-    virtual variables get_variables(var_reference_t var_reference);
-
-    virtual void set_breakpoints(const char* source_path, breakpoint* breakpoints, size_t br_size);
 
 private:
     impl* impl_;

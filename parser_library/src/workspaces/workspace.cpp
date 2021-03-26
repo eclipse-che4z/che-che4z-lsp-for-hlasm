@@ -524,4 +524,10 @@ const asm_option& workspace::get_asm_options(const std::string& file_name)
 
     return proc_grp.asm_options();
 }
+
+processor_file_ptr workspace::get_processor_file(const std::string& filename)
+{
+    return get_file_manager().get_processor_file(filename);
+}
+
 } // namespace hlasm_plugin::parser_library::workspaces

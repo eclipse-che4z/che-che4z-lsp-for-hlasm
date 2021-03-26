@@ -37,7 +37,9 @@ public:
         int err_code,
         const std::string& err_message,
         const json& error) = 0;
-    virtual ~response_provider() = default;
+
+protected:
+    ~response_provider() = default;
 };
 
 // Abstract class for group of methods that add functionality to server.

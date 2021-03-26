@@ -27,6 +27,7 @@ public:
     MOCK_METHOD2(get_workspaces, size_t(ws_id* workspaces, size_t max_size));
     MOCK_METHOD0(get_workspaces_count, size_t());
     MOCK_METHOD2(add_workspace, void(const char* name, const char* uri));
+    MOCK_METHOD1(find_workspace, ws_id(const char* document_uri));
     MOCK_METHOD1(remove_workspace, void(const char* uri));
 
     MOCK_METHOD4(
