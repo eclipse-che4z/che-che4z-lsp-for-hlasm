@@ -101,7 +101,7 @@ enum class PARSER_LIBRARY_EXPORT completion_item_kind
 
 struct PARSER_LIBRARY_EXPORT completion_item
 {
-    completion_item(const lsp::completion_item_s& item);
+    explicit completion_item(const lsp::completion_item_s& item);
     std::string_view label() const;
     completion_item_kind kind() const;
     std::string_view detail() const;
@@ -117,7 +117,7 @@ using completion_list = sequence<completion_item, const lsp::completion_item_s*>
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
-    position_uri(const location& item);
+    explicit position_uri(const location& item);
     position pos();
     std::string_view file();
 
@@ -130,7 +130,7 @@ using position_uri_list = sequence<position_uri, const location*>;
 
 struct PARSER_LIBRARY_EXPORT range_uri
 {
-    range_uri(range_uri_s& range);
+    explicit range_uri(range_uri_s& range);
     range get_range() const;
     const char* uri() const;
 

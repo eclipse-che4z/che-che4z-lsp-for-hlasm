@@ -38,7 +38,7 @@ std::string_view completion_item::insert_text() const { return item_.insert_text
 template<>
 completion_item sequence<completion_item, const lsp::completion_item_s*>::item(size_t index) const
 {
-    return stor_[index];
+    return completion_item(stor_[index]);
 }
 
 //********************** location **********************
@@ -52,7 +52,7 @@ std::string_view position_uri::file() { return item_.file; }
 template<>
 position_uri sequence<position_uri, const location*>::item(size_t index) const
 {
-    return stor_[index];
+    return position_uri(stor_[index]);
 }
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
@@ -68,7 +68,7 @@ range range_uri::get_range() const { return impl_.rang; }
 const char* range_uri::uri() const { return impl_.uri.c_str(); }
 
 
-range_uri diagnostic_related_info::location() const { return impl_.location; }
+range_uri diagnostic_related_info::location() const { return range_uri(impl_.location); }
 
 const char* diagnostic_related_info::message() const { return impl_.message.c_str(); }
 

@@ -138,11 +138,11 @@ public:
         if (cancel_ && *cancel_)
         {
             definition_result = { pos, document_uri };
-            return definition_result;
+            return position_uri(definition_result);
         }
         definition_result = ws_path_match(document_uri).definition(document_uri, pos);
 
-        return definition_result;
+        return position_uri(definition_result);
     }
 
     location_list references_result;

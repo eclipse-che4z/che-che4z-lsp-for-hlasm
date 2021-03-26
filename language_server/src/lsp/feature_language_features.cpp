@@ -117,13 +117,6 @@ void feature_language_features::hover(const json& id, const json& params)
 
     auto hover_list = ws_mngr_.hover(uri_to_path(document_uri).c_str(), pos);
 
-
-    /*json hover_arr = json::array();
-    for (size_t i = 0; i < hover_list.size(); i++)
-    {
-        hover_arr.push_back(hover_list[i]);
-    }*/
-
     response_->respond(id, "", json { { "contents", hover_list.empty() ? json() : get_markup_content(hover_list) } });
 }
 
@@ -138,7 +131,7 @@ enum class lsp_completion_item_kind
     variable = 6,
     class_v = 7,
     interface = 8,
-    module = 9,
+    module_v = 9,
     property = 10,
     unit = 11,
     value = 12,

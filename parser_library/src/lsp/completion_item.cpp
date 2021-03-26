@@ -38,41 +38,41 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
     std::vector<completion_item_s> result;
 
 
-    for (const auto& machine_instr : instruction::machine_instructions)
+    for (const auto& [_, machine_instr] : instruction::machine_instructions)
     {
-        std::stringstream documentation(" ");
-        std::stringstream detail(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
+        std::stringstream doc_ss(" ");
+        std::stringstream detail_ss(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
         std::stringstream autocomplete(""); // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
-        for (size_t i = 0; i < machine_instr.second->operands.size(); i++)
+        for (size_t i = 0; i < machine_instr->operands.size(); i++)
         {
-            const auto& op = machine_instr.second->operands[i];
-            if (machine_instr.second->no_optional == 1 && machine_instr.second->operands.size() - i == 1)
+            const auto& op = machine_instr->operands[i];
+            if (machine_instr->no_optional == 1 && machine_instr->operands.size() - i == 1)
             {
                 autocomplete << " [";
-                detail << "[";
+                detail_ss << "[";
                 if (i != 0)
                 {
                     autocomplete << ",";
-                    detail << ",";
+                    detail_ss << ",";
                 }
-                detail << op.to_string() << "]";
+                detail_ss << op.to_string() << "]";
                 autocomplete << op.to_string() << "]";
             }
-            else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 2)
+            else if (machine_instr->no_optional == 2 && machine_instr->operands.size() - i == 2)
             {
                 autocomplete << " [";
-                detail << "[";
+                detail_ss << "[";
                 if (i != 0)
                 {
                     autocomplete << ",";
-                    detail << ",";
+                    detail_ss << ",";
                 }
-                detail << op.to_string() << "]";
+                detail_ss << op.to_string() << "]";
                 autocomplete << op.to_string() << "[,";
             }
-            else if (machine_instr.second->no_optional == 2 && machine_instr.second->operands.size() - i == 1)
+            else if (machine_instr->no_optional == 2 && machine_instr->operands.size() - i == 1)
             {
-                detail << op.to_string() << "]]";
+                detail_ss << op.to_string() << "]]";
                 autocomplete << op.to_string() << "]]";
             }
             else
@@ -80,56 +80,56 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
                 if (i != 0)
                 {
                     autocomplete << ",";
-                    detail << ",";
+                    detail_ss << ",";
                 }
-                detail << op.to_string();
+                detail_ss << op.to_string();
                 autocomplete << op.to_string();
             }
         }
-        documentation << "Machine instruction " << std::endl
-                      << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.second->format);
-        result.emplace_back(machine_instr.first,
-            "Operands: " + detail.str(),
-            machine_instr.first + "   " + autocomplete.str(),
-            documentation.str(),
+        doc_ss << "Machine instruction " << std::endl
+               << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr->format);
+        result.emplace_back(machine_instr->instr_name,
+            "Operands: " + detail_ss.str(),
+            machine_instr->instr_name + "   " + autocomplete.str(),
+            doc_ss.str(),
             completion_item_kind::mach_instr);
     }
 
-    for (const auto& asm_instr : instruction::assembler_instructions)
+    for (const auto& [instr_name, asm_instr] : instruction::assembler_instructions)
     {
-        std::stringstream documentation(" ");
-        std::stringstream detail("");
+        std::stringstream doc_ss(" ");
+        std::stringstream detail_ss("");
 
         // int min_op = asm_instr.second.min_operands;
         // int max_op = asm_instr.second.max_operands;
-        std::string description = asm_instr.second.description;
+        std::string description = asm_instr.description;
 
-        detail << asm_instr.first << "   " << description;
-        documentation << "Assembler instruction";
-        result.emplace_back(asm_instr.first,
-            detail.str(),
-            asm_instr.first + "   " /*+ description*/,
-            documentation.str(),
+        detail_ss << instr_name << "   " << description;
+        doc_ss << "Assembler instruction";
+        result.emplace_back(instr_name,
+            detail_ss.str(),
+            instr_name + "   " /*+ description*/,
+            doc_ss.str(),
             completion_item_kind::asm_instr);
     }
 
-    for (const auto& mnemonic_instr : instruction::mnemonic_codes)
+    for (const auto& [mnemonic_name, mnemonic_instr] : instruction::mnemonic_codes)
     {
-        std::stringstream documentation(" ");
-        std::stringstream detail("");
+        std::stringstream doc_ss(" ");
+        std::stringstream detail_ss("");
         std::stringstream subs_ops_mnems(" ");
         std::stringstream subs_ops_nomnems(" ");
 
         // get mnemonic operands
         size_t iter_over_mnem = 0;
 
-        auto instr_name = mnemonic_instr.second.instruction;
+        auto instr_name = mnemonic_instr.instruction;
         auto mach_operands = instruction::machine_instructions[instr_name]->operands;
         auto no_optional = instruction::machine_instructions[instr_name]->no_optional;
         bool first = true;
 
 
-        auto replaces = mnemonic_instr.second.replaced;
+        auto replaces = mnemonic_instr.replaced;
 
         for (size_t i = 0; i < mach_operands.size(); i++)
         {
@@ -199,15 +199,15 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
             subs_ops_nomnems << curr_op_without_mnem;
             first = false;
         }
-        detail << "Operands: " + subs_ops_nomnems.str();
-        documentation << "Mnemonic code for " << instr_name << " instruction" << std::endl
-                      << "Substituted operands: " << subs_ops_mnems.str() << std::endl
-                      << "Instruction format: "
-                      << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
-        result.emplace_back(mnemonic_instr.first,
-            detail.str(),
-            mnemonic_instr.first + "   " + subs_ops_nomnems.str(),
-            documentation.str(),
+        detail_ss << "Operands: " + subs_ops_nomnems.str();
+        doc_ss << "Mnemonic code for " << instr_name << " instruction" << std::endl
+               << "Substituted operands: " << subs_ops_mnems.str() << std::endl
+               << "Instruction format: "
+               << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
+        result.emplace_back(mnemonic_name,
+            detail_ss.str(),
+            mnemonic_name + "   " + subs_ops_nomnems.str(),
+            doc_ss.str(),
             completion_item_kind::mach_instr);
     }
 

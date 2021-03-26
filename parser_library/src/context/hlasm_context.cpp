@@ -752,7 +752,7 @@ void hlasm_context::enter_copy_member(id_index member_name)
     if (tmp == copy_members_.end())
         throw std::runtime_error("unknown copy member");
 
-    auto& [name, member] = *tmp;
+    const auto& [name, member] = *tmp;
 
     source_stack_.back().copy_stack.emplace_back(member->enter());
 }

@@ -38,17 +38,17 @@ public:
     ca_symbol_attribute(
         semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+    void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
-    virtual bool is_character_expression() const override;
+    bool is_character_expression() const override;
 
-    virtual void apply(ca_expr_visitor& visitor) const override;
+    void apply(ca_expr_visitor& visitor) const override;
 
-    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
+    context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     // if expr contains a symbol as a first term, the rest of the string is thrown away
     // used for L'I'S'T' reference of variable symbol

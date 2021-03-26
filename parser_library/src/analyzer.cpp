@@ -28,16 +28,17 @@ analyzer::analyzer(const std::string& text,
     const library_data data,
     bool collect_hl_info)
     : diagnosable_ctx(*ctx.hlasm_ctx)
-    , ctx_(ctx)
+    , ctx_(std::move(ctx))
     , listener_(file_name)
     , src_proc_(collect_hl_info)
     , input_(text)
-    , lexer_(&input_, &src_proc_, &ctx.hlasm_ctx->metrics)
+    , lexer_(&input_, &src_proc_, &ctx_.hlasm_ctx->metrics)
     , tokens_(&lexer_)
     , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_), ctx, data, file_name, text, lib_provider, *parser_)
+    , mngr_(
+          std::unique_ptr<processing::opencode_provider>(parser_), ctx_, data, file_name, text, lib_provider, *parser_)
 {
-    parser_->initialize(ctx, &src_proc_, &lib_provider, &mngr_);
+    parser_->initialize(ctx_, &src_proc_, &lib_provider, &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);
@@ -61,7 +62,7 @@ context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
 parsing::hlasmparser& analyzer::parser() { return *parser_; }
 
-const semantics::source_info_processor& analyzer::source_processor() { return src_proc_; }
+const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 
 void analyzer::analyze(std::atomic<bool>* cancel)
 {
@@ -75,7 +76,7 @@ void analyzer::collect_diags() const
     collect_diags_from_child(listener_);
 }
 
-const performance_metrics& analyzer::get_metrics()
+const performance_metrics& analyzer::get_metrics() const
 {
     ctx_.hlasm_ctx->fill_metrics_files();
     return ctx_.hlasm_ctx->metrics;

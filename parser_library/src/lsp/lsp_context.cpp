@@ -62,9 +62,7 @@ location lsp_context::definition(const std::string& document_uri, const position
     if (!occ)
         return { pos, document_uri };
 
-    auto def = find_definition_location(*occ, macro_scope);
-
-    if (def)
+    if (auto def = find_definition_location(*occ, macro_scope))
         return { def->pos, def->file };
     return { pos, document_uri };
 }
@@ -75,7 +73,7 @@ void collect_references(location_list& refs, const symbol_occurence& occ, const 
     {
         auto file_refs = file_info::find_references(occ, occs);
         for (auto&& ref : file_refs)
-            refs.push_back({ std::move(ref), file });
+            refs.emplace_back(std::move(ref), file);
     }
 }
 
@@ -146,18 +144,18 @@ completion_list_s lsp_context::completion(const std::string& document_uri,
         (trigger_kind == completion_trigger_kind::trigger_character) ? trigger_char : text.get_character_before(pos);
 
     if (last_char == '&')
-        return complete_var(file_it->second, pos);
+        return complete_var(*file_it->second, pos);
     else if (last_char == '.')
-        return complete_seq(file_it->second, pos);
+        return complete_seq(*file_it->second, pos);
     else if (should_complete_instr(text, pos))
-        return complete_instr(file_it->second, pos);
+        return complete_instr(*file_it->second, pos);
 
     return completion_list_s();
 }
 
-completion_list_s lsp_context::complete_var(const file_info_ptr& file, position pos) const
+completion_list_s lsp_context::complete_var(const file_info& file, position pos) const
 {
-    auto scope = file->find_scope(pos);
+    auto scope = file.find_scope(pos);
 
 
     completion_list_s items;
@@ -170,17 +168,17 @@ completion_list_s lsp_context::complete_var(const file_info_ptr& file, position 
     return items;
 }
 
-completion_list_s lsp_context::complete_seq(const file_info_ptr& file, position pos) const
+completion_list_s lsp_context::complete_seq(const file_info& file, position pos) const
 {
-    auto macro_i = file->find_scope(pos);
+    auto macro_i = file.find_scope(pos);
 
     const context::label_storage& seq_syms =
         macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
 
     completion_list_s items;
-    for (const auto& sym : seq_syms)
+    for (const auto& [_, sym] : seq_syms)
     {
-        std::string label = "." + *sym.second->name;
+        std::string label = "." + *sym->name;
         items.emplace_back(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
     }
     return items;
@@ -267,19 +265,16 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     return result;
 }
 
-completion_list_s lsp_context::complete_instr(const file_info_ptr&, position) const
+completion_list_s lsp_context::complete_instr(const file_info&, position) const
 {
     completion_list_s result = completion_item_s::instruction_completion_items_;
 
-    for (const auto& macro_i : macros_)
+    for (const auto& [_, macro_i] : macros_)
     {
-        const context::macro_definition& m = *macro_i.second->macro_definition;
+        const context::macro_definition& m = *macro_i->macro_definition;
 
-        result.emplace_back(*m.id,
-            get_macro_signature(m),
-            *m.id,
-            get_macro_documentation(*macro_i.second),
-            completion_item_kind::macro);
+        result.emplace_back(
+            *m.id, get_macro_signature(m), *m.id, get_macro_documentation(*macro_i), completion_item_kind::macro);
     }
 
     return result;

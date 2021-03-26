@@ -187,8 +187,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
         token_start_state_.char_position_in_line_utf16,
         input_state_->char_position_in_line_utf16));
 
-    auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 1
-                                                         : input_state_->char_position_in_line_utf16;
+    auto stop_position_in_line = last_char_utf16_long_ ? input_state_->char_position_in_line_utf16 - 1
+                                                       : input_state_->char_position_in_line_utf16;
 
     if (src_proc_)
         switch (ttype)

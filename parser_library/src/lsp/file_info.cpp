@@ -52,7 +52,7 @@ bool file_info::is_in_range(const position& pos, const range& r)
     return std::tie(r.start.line, r.start.column) <= pos_tie && pos_tie <= std::tie(r.end.line, r.end.column);
 }
 
-occurence_scope_t file_info::find_occurence_with_scope(position pos)
+occurence_scope_t file_info::find_occurence_with_scope(position pos) const
 {
     const symbol_occurence* found = nullptr;
 
@@ -73,7 +73,7 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos)
     return std::make_pair(found, std::move(macro_i));
 }
 
-macro_info_ptr file_info::find_scope(position pos)
+macro_info_ptr file_info::find_scope(position pos) const
 {
     for (const auto& [_, scope] : slices)
         if (scope.file_lines.begin <= pos.line && scope.file_lines.end > pos.line)

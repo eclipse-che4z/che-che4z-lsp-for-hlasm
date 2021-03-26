@@ -76,10 +76,10 @@ public:
     // first variant is monostate as there is no storing of opencode statements in the code yet
     using owner_t = std::variant<std::monostate, context::macro_def_ptr, context::copy_member_ptr>;
 
-    const std::string name;
-    const file_type type;
-    const owner_t owner;
-    const text_data_ref_t data;
+    std::string name;
+    file_type type;
+    owner_t owner;
+    text_data_ref_t data;
 
 
     explicit file_info(std::string name, text_data_ref_t text_data);
@@ -88,8 +88,8 @@ public:
 
     static bool is_in_range(const position& pos, const range& r);
 
-    occurence_scope_t find_occurence_with_scope(position pos);
-    macro_info_ptr find_scope(position pos);
+    occurence_scope_t find_occurence_with_scope(position pos) const;
+    macro_info_ptr find_scope(position pos) const;
     static std::vector<position> find_references(
         const symbol_occurence& occurence, const std::vector<symbol_occurence>& occurences);
 
