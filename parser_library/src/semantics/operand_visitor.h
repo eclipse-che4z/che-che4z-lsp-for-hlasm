@@ -23,7 +23,7 @@ namespace hlasm_plugin::parser_library::semantics {
 class operand_visitor
 {
 protected:
-    virtual ~operand_visitor() = default;
+    ~operand_visitor() = default;
 
 public:
     virtual void visit(const empty_operand& op) = 0;
