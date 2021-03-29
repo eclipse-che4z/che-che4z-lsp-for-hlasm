@@ -115,12 +115,12 @@ hover_result lsp_context::hover(const std::string& document_uri, const position 
 
 size_t constexpr continuation_column = 71;
 
-bool is_continued_line(std::string_view line)
+bool lsp_context::is_continued_line(std::string_view line) const
 {
     return line.size() > continuation_column && !isspace(line[continuation_column]);
 }
 
-bool should_complete_instr(const text_data_ref_t& text, const position pos)
+bool lsp_context::should_complete_instr(const text_data_ref_t& text, const position pos) const
 {
     bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
 

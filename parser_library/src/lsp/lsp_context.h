@@ -64,6 +64,8 @@ private:
     completion_list_s complete_seq(const file_info& file, position pos) const;
     completion_list_s complete_instr(const file_info& file, position pos) const;
 
+    bool is_continued_line(std::string_view line) const;
+    bool should_complete_instr(const text_data_ref_t& text, const position pos) const;
     std::string get_macro_documentation(const macro_info& m) const;
 };
 

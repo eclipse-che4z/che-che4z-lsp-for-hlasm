@@ -95,6 +95,10 @@
         {
           "name": "comment.hlasm",
           "match": "\\*.*"
+        },
+        {
+          "name": "comment.hlasm",
+          "match": "\\.\\*.*"
         }
       ]
     },
