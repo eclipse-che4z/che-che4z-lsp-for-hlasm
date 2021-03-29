@@ -20,8 +20,8 @@
 // arithmetic SETB expressions
 
 #define SETBEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.context()                                                                                              \
-                  .get_var_sym(a.context().ids().add(X))                                                               \
+    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
+                  .get_var_sym(a.hlasm_ctx().ids().add(X))                                                             \
                   ->access_set_symbol_base()                                                                           \
                   ->access_set_symbol<B_t>()                                                                           \
                   ->get_value(),                                                                                       \

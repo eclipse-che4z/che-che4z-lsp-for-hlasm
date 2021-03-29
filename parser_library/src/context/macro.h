@@ -23,9 +23,7 @@
 #include "statement_cache.h"
 #include "variables/macro_param.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // struct wrapping macro call args
 struct macro_arg
@@ -51,8 +49,8 @@ using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
 using copy_nest_storage = std::vector<std::vector<location>>;
 
 // class representing macro definition
-// contains info about keyword, positional parameters of HLASM mascro as well as derivation tree of the actual code
-// has methods call to represent macro instruction call
+// contains info about keyword, positional parameters of HLASM macro as well as list of statements
+// has the 'call' method to represent macro instruction call
 // serves as prototype for creating macro_invocation objects
 class macro_definition
 {
@@ -90,6 +88,10 @@ public:
 
     // satifying unordered_map needs
     bool operator=(const macro_definition& m);
+
+    const std::vector<std::unique_ptr<positional_param>>& get_positional_params() const;
+    const std::vector<std::unique_ptr<keyword_param>>& get_keyword_params() const;
+    const id_index& get_label_param_name() const;
 };
 
 // represent macro instruction call
@@ -120,7 +122,6 @@ public:
         const location& definition_location);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
+
 #endif

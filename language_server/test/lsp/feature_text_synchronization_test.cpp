@@ -29,12 +29,14 @@ const std::string txt_file_uri = R"(file:///home/user/somefile)";
 const std::string txt_file_path = R"(/home/user/somefile)";
 #endif
 
+using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
+
 
 TEST(text_synchronization, did_open_file)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock response_mock;
     lsp::feature_text_synchronization f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
@@ -65,7 +67,7 @@ MATCHER_P2(PointerAndSizeEqArray, pointer, size, "")
 TEST(text_synchronization, did_change_file)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock response_mock;
     lsp::feature_text_synchronization f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
@@ -74,7 +76,8 @@ TEST(text_synchronization, did_change_file)
     json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"(","version":7},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
-    document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 }, { { { 1, 12 }, { 1, 14 } }, "", 0 } };
+    parser_library::document_change expected1[2] { { { { 0, 0 }, { 0, 8 } }, "sad", 3 },
+        { { { 1, 12 }, { 1, 14 } }, "", 0 } };
 
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 2))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
@@ -82,7 +85,7 @@ TEST(text_synchronization, did_change_file)
 
 
 
-    document_change expected2[1] { { "sad", 3 } };
+    parser_library::document_change expected2[1] { { "sad", 3 } };
     json params2 = json::parse(
         R"({"textDocument":{"uri":")" + txt_file_uri + R"(","version":7},"contentChanges":[{"text":"sad"}]})");
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 1))
@@ -101,7 +104,7 @@ TEST(text_synchronization, did_change_file)
 TEST(text_synchronization, did_close_file)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock response_mock;
     lsp::feature_text_synchronization f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;

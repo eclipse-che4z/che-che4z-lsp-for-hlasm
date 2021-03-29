@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PARSE_LIB_PROVIDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_PARSE_LIB_PROVIDER_H
 
-#include "context/hlasm_context.h"
+#include "analyzing_context.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -32,10 +32,9 @@ class parse_lib_provider
 public:
     // Parses library with specified name and saves it into context.
     // Library data passes information whether COPY or macro is going to be parsed.
-    virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) = 0;
+    virtual parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) = 0;
 
-    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const = 0;
+    virtual bool has_library(const std::string& library, const std::string& program) const = 0;
 
     virtual const asm_option& get_asm_options(const std::string&) = 0;
 
@@ -48,11 +47,8 @@ class empty_parse_lib_provider : public parse_lib_provider
     asm_option asm_opts;
 
 public:
-    virtual parse_result parse_library(const std::string&, context::hlasm_context&, const library_data) override
-    {
-        return false;
-    };
-    virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; };
+    parse_result parse_library(const std::string&, analyzing_context, const library_data) override { return false; };
+    bool has_library(const std::string&, const std::string&) const override { return false; };
 
     const asm_option& get_asm_options(const std::string&) override { return asm_opts; };
     static empty_parse_lib_provider instance;

@@ -26,23 +26,23 @@ class mock_parse_lib_provider : public workspaces::parse_lib_provider
 
 public:
     virtual workspaces::parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
+        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
     {
         (void)library;
 
         if (data.proc_kind == processing::processing_kind::MACRO)
         {
-            analyzer a(macro_contents, MACRO_FILE, hlasm_ctx, *this, data);
+            analyzer a(macro_contents, MACRO_FILE, ctx, *this, data);
             a.analyze();
         }
         else
         {
-            analyzer a(copy_contents, COPY_FILE, hlasm_ctx, *this, data);
+            analyzer a(copy_contents, COPY_FILE, ctx, *this, data);
             a.analyze();
         }
         return true;
     }
-    virtual bool has_library(const std::string&, context::hlasm_context&) const override { return true; }
+    virtual bool has_library(const std::string&, const std::string&) const override { return true; }
 
     virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
 

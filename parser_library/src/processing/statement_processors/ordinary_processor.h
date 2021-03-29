@@ -19,7 +19,6 @@
 #include "processing/instruction_sets/ca_processor.h"
 #include "processing/instruction_sets/mach_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
-#include "processing/processing_tracer.h"
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -40,34 +39,31 @@ class ordinary_processor : public statement_processor
 
     bool finished_flag_;
 
-    processing_tracer* tracer_;
+    processing_state_listener& listener_;
 
 public:
-    ordinary_processor(context::hlasm_context& hlasm_ctx,
+    ordinary_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& state_listener,
-        statement_fields_parser& parser,
-        processing_tracer* tracer);
+        statement_fields_parser& parser);
 
-    virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::shared_stmt_ptr statement) override;
-    virtual void end_processing() override;
-    virtual bool terminal_condition(const statement_provider_kind kind) const override;
-    virtual bool finished() override;
+    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    void process_statement(context::shared_stmt_ptr statement) override;
+    void end_processing() override;
+    bool terminal_condition(const statement_provider_kind kind) const override;
+    bool finished() override;
 
     static std::optional<processing_status> get_instruction_processing_status(
         context::id_index instruction, context::hlasm_context& hlasm_ctx);
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
     void check_postponed_statements(std::vector<context::post_stmt_ptr> stmts);
     bool check_fatals(range line_range);
 
     context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;
-
-    void collect_ordinary_symbol_definitions();
 };
 
 } // namespace hlasm_plugin::parser_library::processing

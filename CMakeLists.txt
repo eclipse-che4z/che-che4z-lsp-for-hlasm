@@ -189,10 +189,11 @@ if(UNIX)
   
   try_run(TEST_LINK_RUN_RESULT TEST_LINK_COMPILE_RESULT ${CMAKE_BINARY_DIR}/try_filesystem_link_test ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp
     CMAKE_FLAGS ${CMAKE_FLAGS_PASS} ${TEST_LINK_LIBS}
+    COMPILE_OUTPUT_VARIABLE COMPILE_OUTPUT_RESULT
     )
 
   if(NOT (TEST_LINK_RUN_RESULT EQUAL "0") OR NOT ${TEST_LINK_COMPILE_RESULT})
-    message(FATAL_ERROR "Filesystem link error: ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp could not be compiled.")
+    message(FATAL_ERROR "Filesystem link error: ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp could not be compiled. Message: \n ${COMPILE_OUTPUT_RESULT}")
   endif()
 endif()
 

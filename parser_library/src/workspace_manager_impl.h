@@ -132,67 +132,54 @@ public:
             wks.second.set_message_consumer(consumer);
     }
 
-    semantics::position_uri_s found_position;
-    position_uri definition(std::string document_uri, const position pos)
+    location definition_result;
+    position_uri definition(const std::string& document_uri, const position pos)
     {
-        found_position = { document_uri, pos };
         if (cancel_ && *cancel_)
-            return found_position;
+        {
+            definition_result = { pos, document_uri };
+            return position_uri(definition_result);
+        }
+        definition_result = ws_path_match(document_uri).definition(document_uri, pos);
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
-
-        return found_position;
+        return position_uri(definition_result);
     }
 
-    std::vector<semantics::position_uri_s> found_refs;
-    position_uris references(std::string document_uri, const position pos)
+    location_list references_result;
+    position_uri_list references(const std::string& document_uri, const position pos)
     {
-        found_refs.clear();
         if (cancel_ && *cancel_)
-            return { found_refs.data(), found_refs.size() };
+            return {};
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
+        references_result = ws_path_match(document_uri).references(document_uri, pos);
 
-        return { found_refs.data(), found_refs.size() };
+        return { references_result.data(), references_result.size() };
     }
 
-    std::vector<std::string> output;
-    std::vector<const char*> coutput;
-    string_array hover(const char* document_uri, const position pos)
+    std::string hover_result;
+    std::string_view hover(const std::string& document_uri, const position pos)
     {
-        coutput.clear();
         if (cancel_ && *cancel_)
-            return { coutput.data(), coutput.size() };
+            return "";
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
-        else
-            output.clear();
-        for (const auto& str : output)
-            coutput.push_back(str.c_str());
+        hover_result = ws_path_match(document_uri).hover(document_uri, pos);
 
-        return { coutput.data(), coutput.size() };
+        return hover_result;
     }
 
-    semantics::completion_list_s completion_result;
-    completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+
+    lsp::completion_list_s completion_result;
+    completion_list completion(const std::string& document_uri,
+        const position pos,
+        const char trigger_char,
+        completion_trigger_kind trigger_kind)
     {
-        completion_result = semantics::completion_list_s();
         if (cancel_ && *cancel_)
-            return completion_result;
+            return completion_list { nullptr, 0 };
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            completion_result = file_manager_.find_processor_file(document_uri)
-                                    ->get_lsp_info()
-                                    .completion(pos, trigger_char, trigger_kind);
+        completion_result = ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
 
-        return completion_result;
+        return completion_list(completion_result.data(), completion_result.size());
     }
 
     lib_config global_config_;
@@ -206,7 +193,7 @@ public:
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            return file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
+            return file_manager_.find_processor_file(document_uri)->get_hl_info();
 
         return empty_tokens;
     }

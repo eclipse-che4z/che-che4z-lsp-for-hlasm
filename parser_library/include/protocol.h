@@ -20,6 +20,7 @@
 // Most of them use pimpl to hide their implementation somewhere
 // in the library.
 // Most of the types are C++ representation of LSP/DAP data types.
+
 #include <cstdint>
 #include <cstring>
 
@@ -32,27 +33,7 @@
 
 namespace hlasm_plugin::parser_library {
 
-struct PARSER_LIBRARY_EXPORT string_array
-{
-    string_array(const char** arr, size_t size);
-
-    const char** arr;
-    size_t size;
-};
-
-struct PARSER_LIBRARY_EXPORT num_array
-{
-    num_array(size_t* arr, size_t size);
-
-    size_t* arr;
-    size_t size;
-};
-
 using version_t = uint64_t;
-
-namespace context {
-class completion_item_s;
-}
 
 namespace semantics {
 struct position_uri_s;
@@ -92,59 +73,64 @@ class variable;
 struct variable_store;
 } // namespace debugging
 
+namespace lsp {
+struct completion_item_s;
+}
+
+struct location;
+struct range_uri_s;
+class diagnostic_related_info_s;
+class diagnostic_s;
+
+enum class PARSER_LIBRARY_EXPORT completion_trigger_kind
+{
+    invoked = 1,
+    trigger_character = 2,
+    trigger_for_incomplete_completions = 3
+};
+
+enum class PARSER_LIBRARY_EXPORT completion_item_kind
+{
+    mach_instr = 0,
+    asm_instr = 1,
+    ca_instr = 2,
+    macro = 3,
+    var_sym = 4,
+    seq_sym = 5
+};
+
 struct PARSER_LIBRARY_EXPORT completion_item
 {
-    completion_item(context::completion_item_s& info);
-
-    const char* label() const;
-    size_t kind() const;
-    const char* detail() const;
-    const char* documentation();
-    bool deprecated() const;
-    const char* insert_text() const;
+    explicit completion_item(const lsp::completion_item_s& item);
+    std::string_view label() const;
+    completion_item_kind kind() const;
+    std::string_view detail() const;
+    std::string_view documentation() const;
+    std::string_view insert_text() const;
 
 private:
-    context::completion_item_s& impl_;
+    const lsp::completion_item_s& item_;
 };
 
-struct PARSER_LIBRARY_EXPORT completion_list
-{
-    completion_list(semantics::completion_list_s& info);
-    bool is_incomplete() const;
-    completion_item item(size_t index);
-    size_t count() const;
-
-private:
-    semantics::completion_list_s& impl_;
-};
+template class PARSER_LIBRARY_EXPORT sequence<completion_item, const lsp::completion_item_s*>;
+using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {
-    position_uri(semantics::position_uri_s&);
+    explicit position_uri(const location& item);
     position pos() const;
-    const char* uri() const;
+    std::string_view file() const;
 
 private:
-    semantics::position_uri_s& impl_;
+    const location& item_;
 };
 
-struct PARSER_LIBRARY_EXPORT position_uris
-{
-    position_uris(semantics::position_uri_s* data, size_t size);
-
-    position_uri get_position_uri(size_t index);
-    size_t size() const;
-
-private:
-    semantics::position_uri_s* data_;
-    size_t size_;
-};
-
-struct range_uri_s;
+template class PARSER_LIBRARY_EXPORT sequence<position_uri, const location*>;
+using position_uri_list = sequence<position_uri, const location*>;
 
 struct PARSER_LIBRARY_EXPORT range_uri
 {
-    range_uri(range_uri_s& range);
+    explicit range_uri(range_uri_s& range);
     range get_range() const;
     const char* uri() const;
 
@@ -193,9 +179,6 @@ enum class PARSER_LIBRARY_EXPORT diagnostic_severity
     hint = 4,
     unspecified = 5
 };
-
-class diagnostic_s;
-class diagnostic_related_info_s;
 
 struct PARSER_LIBRARY_EXPORT diagnostic_related_info
 {

@@ -20,7 +20,9 @@
 #include "lib_config.h"
 #include "lsp/feature_workspace_folders.h"
 
+using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
+
 #ifdef _WIN32
 const std::string ws1_uri = "file:///c%3A/path/to/W%20S/OneDrive";
 const std::string ws2_uri = "file:///c%3A/path/to/W%20S/TwoDrive";
@@ -49,7 +51,7 @@ const std::string ws1_path_json_string = R"(/path/to/W S/OneDrive)";
 
 TEST(workspace_folders, did_change_workspace_folders)
 {
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock rpm;
 
     lsp::feature_workspace_folders f(ws_mngr, rpm);
@@ -83,7 +85,7 @@ TEST(workspace_folders, did_change_workspace_folders)
 
 TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
 {
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
@@ -97,7 +99,7 @@ TEST(workspace_folders, did_change_watchedfiles_invalid_uri)
 TEST(workspace_folders, initialize_folders)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
@@ -164,7 +166,7 @@ TEST(workspace_folders, initialize_folders)
 TEST(workspace_folders, did_change_configuration)
 {
     using namespace lsp;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
 
     response_provider_mock provider;
     feature_workspace_folders feat(ws_mngr, provider);
@@ -183,7 +185,7 @@ TEST(workspace_folders, did_change_configuration)
 
     methods["workspace/didChangeConfiguration"]("did_change_configuration_id", "{}"_json);
 
-    lib_config expected_config;
+    parser_library::lib_config expected_config;
     expected_config.diag_supress_limit = 42;
 
     EXPECT_CALL(ws_mngr, configuration_changed(::testing::Eq(expected_config)));
@@ -195,7 +197,7 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
 {
     using namespace lsp;
 
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
 
     response_provider_mock provider;
     feature_workspace_folders feat(ws_mngr, provider);

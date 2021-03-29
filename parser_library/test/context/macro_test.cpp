@@ -35,31 +35,31 @@ TEST(macro, macro_def)
     analyzer a(input);
     a.analyze();
 
-    id_index id = a.context().ids().add("m1");
-    auto& macros = a.context().macros();
+    id_index id = a.hlasm_ctx().ids().add("m1");
+    auto& macros = a.hlasm_ctx().macros();
 
     auto tmp = macros.find(id);
     ASSERT_TRUE(tmp != macros.end());
 
     auto& m = tmp->second;
 
-    auto op = a.context().ids().add("op");
+    auto op = a.hlasm_ctx().ids().add("op");
 
     EXPECT_EQ(m->named_params().find(op)->second->access_positional_param()->position, (size_t)1);
 
-    auto op2 = a.context().ids().add("op2");
+    auto op2 = a.hlasm_ctx().ids().add("op2");
 
     EXPECT_EQ(m->named_params().find(op2)->second->access_positional_param()->position, (size_t)2);
 
-    auto l = a.context().ids().add("l");
+    auto l = a.hlasm_ctx().ids().add("l");
 
     EXPECT_EQ(m->named_params().find(l)->second->access_positional_param()->position, (size_t)0);
 
-    auto k = a.context().ids().add("k");
+    auto k = a.hlasm_ctx().ids().add("k");
 
     EXPECT_EQ(m->named_params().find(k)->second->access_keyword_param()->get_value(), "5");
 
-    auto k2 = a.context().ids().add("k2");
+    auto k2 = a.hlasm_ctx().ids().add("k2");
 
     EXPECT_EQ(m->named_params().find(k2)->second->access_keyword_param()->get_value(), "(1,2,3)");
 
@@ -88,15 +88,15 @@ TEST(macro, macro_def_count)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.context().macros().size(), (size_t)2);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
 
     id_index id;
 
-    id = a.context().ids().add("M1");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("M1");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 
-    id = a.context().ids().add("m2");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("m2");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 }
 
 TEST(macro, macro_def_count_inner)
@@ -124,18 +124,18 @@ TEST(macro, macro_def_count_inner)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.context().macros().size(), (size_t)3);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)3);
 
     id_index id;
 
-    id = a.context().ids().add("M1");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("M1");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 
-    id = a.context().ids().add("M2");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("M2");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 
-    id = a.context().ids().add("INNER_M");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("INNER_M");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 }
 
 TEST(macro, macro_lookahead_pass)
@@ -159,12 +159,12 @@ TEST(macro, macro_lookahead_pass)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.context().macros().size(), (size_t)1);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
 
     id_index id;
 
-    id = a.context().ids().add("M1");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("M1");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 }
 
 TEST(macro, macro_lookahead_fail)
@@ -188,15 +188,15 @@ TEST(macro, macro_lookahead_fail)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.context().macros().size(), (size_t)2);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
 
     id_index id;
 
-    id = a.context().ids().add("M1");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("M1");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 
-    id = a.context().ids().add("INNER_M");
-    EXPECT_TRUE(a.context().macros().find(id) != a.context().macros().end());
+    id = a.hlasm_ctx().ids().add("INNER_M");
+    EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
 }
 
 TEST(macro, macro_positional_param_subs)
@@ -352,18 +352,18 @@ TEST(macro, macro_name_param_repetition)
     EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)3);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    auto& m1 = a.context().macros().find(a.context().ids().add("m1"))->second;
-    auto& m2 = a.context().macros().find(a.context().ids().add("m2"))->second;
-    auto& m3 = a.context().macros().find(a.context().ids().add("m3"))->second;
+    auto& m1 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m1"))->second;
+    auto& m2 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m2"))->second;
+    auto& m3 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m3"))->second;
 
     {
         std::vector<macro_arg> args;
         args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
         args.push_back({ std::make_unique<macro_param_data_single>("3"), nullptr });
-        auto invo =
-            m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args), a.context().ids().add("SYSLIST"));
-        auto n = a.context().ids().add("n");
-        auto b = a.context().ids().add("b");
+        auto invo = m1->call(
+            std::make_unique<macro_param_data_single>("1"), std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
+        auto n = a.hlasm_ctx().ids().add("n");
+        auto b = a.hlasm_ctx().ids().add("b");
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "3");
     }
@@ -372,12 +372,12 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.push_back({ std::make_unique<macro_param_data_single>("1"), nullptr });
         args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
-        auto invo = m2->call(nullptr, std::move(args), a.context().ids().add("SYSLIST"));
-        auto n = a.context().ids().add("a");
-        auto b = a.context().ids().add("b");
+        auto invo = m2->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
+        auto n = a.hlasm_ctx().ids().add("a");
+        auto b = a.hlasm_ctx().ids().add("b");
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
-        EXPECT_EQ(invo->named_params.find(a.context().ids().add("SYSLIST"))->second->get_value(1), "1");
+        EXPECT_EQ(invo->named_params.find(a.hlasm_ctx().ids().add("SYSLIST"))->second->get_value(1), "1");
     }
 
     {
@@ -385,9 +385,9 @@ TEST(macro, macro_name_param_repetition)
         args.push_back({ std::make_unique<macro_param_data_single>("1"), nullptr });
         args.push_back({ std::make_unique<macro_param_data_single>("2"), nullptr });
         args.push_back({ std::make_unique<macro_param_data_single>("3"), nullptr });
-        auto invo = m3->call(nullptr, std::move(args), a.context().ids().add("SYSLIST"));
-        auto n = a.context().ids().add("a");
-        auto b = a.context().ids().add("b");
+        auto invo = m3->call(nullptr, std::move(args), a.hlasm_ctx().ids().add("SYSLIST"));
+        auto n = a.hlasm_ctx().ids().add("a");
+        auto b = a.hlasm_ctx().ids().add("b");
         EXPECT_EQ(invo->named_params.find(n)->second->access_keyword_param()->get_value(), "5");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
     }
@@ -472,9 +472,9 @@ TEST(macro, arguments_concatenation)
     a.analyze();
     a.collect_diags();
 
-    auto it = a.context().globals().find(a.context().ids().add("V"));
+    auto it = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("V"));
 
-    ASSERT_NE(it, a.context().globals().end());
+    ASSERT_NE(it, a.hlasm_ctx().globals().end());
 
     EXPECT_EQ(it->second->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
 
@@ -501,11 +501,11 @@ TEST(macro, arguments_continuation)
     a.analyze();
     a.collect_diags();
 
-    auto Q = a.context().globals().find(a.context().ids().add("Q"));
-    auto W = a.context().globals().find(a.context().ids().add("W"));
+    auto Q = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("Q"));
+    auto W = a.hlasm_ctx().globals().find(a.hlasm_ctx().ids().add("W"));
 
-    ASSERT_NE(Q, a.context().globals().end());
-    ASSERT_NE(W, a.context().globals().end());
+    ASSERT_NE(Q, a.hlasm_ctx().globals().end());
+    ASSERT_NE(W, a.hlasm_ctx().globals().end());
 
     EXPECT_EQ(Q->second->access_set_symbol<C_t>()->get_value(), "X");
     EXPECT_EQ(W->second->access_set_symbol<C_t>()->get_value(), "Y");
@@ -523,18 +523,17 @@ public:
         : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
     {}
 
-    virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data)
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         (void)library;
 
-        a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", hlasm_ctx, *this, data);
+        a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", std::move(ctx), *this, data);
         a->analyze();
         a->collect_diags();
         return true;
     }
-    virtual bool has_library(const std::string&, context::hlasm_context&) const { return true; }
-    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
+    bool has_library(const std::string&, const std::string&) const override { return true; }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
     std::unique_ptr<analyzer> a;
 
 private:

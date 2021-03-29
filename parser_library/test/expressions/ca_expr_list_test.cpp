@@ -30,9 +30,10 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_expr_list, unknown_function_to_operator)
 {
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
@@ -58,15 +59,16 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
 TEST(ca_expr_list, resolve_C_type)
 {
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     std::string name = "UPPER";
     auto sym = std::make_unique<ca_symbol>(&name, range());
 
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("low"));
+    value.push_back(std::make_unique<char_str_conc>("low", range()));
     auto str = std::make_unique<ca_string>(std::move(value), nullptr, ca_string::substring_t(), range());
 
     std::vector<ca_expr_ptr> list;
@@ -85,10 +87,10 @@ TEST(ca_expr_list, resolve_C_type)
 TEST(ca_expr_list, get_undefined_attributed_symbols)
 {
     std::string name = "X";
-    auto sym = std::make_unique<ca_symbol_attribute>(&name, context::data_attr_kind::L, range());
+    auto sym = std::make_unique<ca_symbol_attribute>(&name, context::data_attr_kind::L, range(), range());
 
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("low"));
+    value.push_back(std::make_unique<char_str_conc>("low", range()));
     auto str = std::make_unique<ca_string>(std::move(value), nullptr, ca_string::substring_t(), range());
 
     std::vector<ca_expr_ptr> list;
@@ -97,9 +99,10 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range());
 
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_TRUE(res.size());
@@ -108,7 +111,7 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
 TEST(ca_expr_list, is_character_expression)
 {
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("low"));
+    value.push_back(std::make_unique<char_str_conc>("low", range()));
     auto str = std::make_unique<ca_string>(std::move(value), nullptr, ca_string::substring_t(), range());
 
     std::vector<ca_expr_ptr> list;

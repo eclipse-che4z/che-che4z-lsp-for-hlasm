@@ -25,7 +25,7 @@
 #include "input_source.h"
 #include "parser_library_export.h"
 #include "range.h"
-#include "semantics/lsp_info_processor.h"
+#include "semantics/source_info_processor.h"
 #include "token.h"
 #include "token_factory.h"
 
@@ -46,7 +46,7 @@ public:
         size_t line;
         size_t offset;
     };
-    lexer(input_source*, semantics::lsp_info_processor* lsp_proc, performance_metrics* metrics = nullptr);
+    lexer(input_source*, semantics::source_info_processor* lsp_proc, performance_metrics* metrics = nullptr);
 
     lexer(const lexer&) = delete;
     lexer& operator=(const lexer&) = delete;
@@ -176,7 +176,7 @@ private:
 
     std::unique_ptr<token_factory> factory_;
     antlr4::CharStream* input_;
-    semantics::lsp_info_processor* lsp_proc_;
+    semantics::source_info_processor* src_proc_;
     performance_metrics* metrics_;
 
     struct input_state

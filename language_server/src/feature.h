@@ -70,7 +70,7 @@ public:
     // Converts URI (RFC3986) to common filesystem path.
     static std::string uri_to_path(const std::string& uri);
     // Converts from filesystem path to URI
-    static std::string path_to_uri(std::string path);
+    static std::string path_to_uri(std::string_view path);
 
     // Converts LSP json representation of range into parse_library::range.
     static parser_library::range parse_range(const json& range_json);

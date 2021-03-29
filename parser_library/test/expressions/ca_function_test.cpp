@@ -67,6 +67,8 @@ public:
 
     virtual bool is_character_expression() const override { return false; }
 
+    virtual void apply(ca_expr_visitor&) const override {}
+
     virtual context::SET_t evaluate(const evaluation_context&) const override { return value; }
 
     virtual void collect_diags() const override {}
@@ -75,9 +77,10 @@ public:
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     context::SET_t get_result()
     {

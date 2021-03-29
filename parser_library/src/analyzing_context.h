@@ -12,20 +12,20 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSING_TRACER_H
-#define HLASMPLUGIN_PARSERLIBRARY_PROCESSING_TRACER_H
+#ifndef HLASMPARSER_PARSERLIBRARY_ANALYZING_CONTEXT_H
+#define HLASMPARSER_PARSERLIBRARY_ANALYZING_CONTEXT_H
 
-namespace hlasm_plugin::parser_library::processing {
+#include "context/hlasm_context.h"
+#include "lsp/lsp_context.h"
 
-class processing_tracer
+namespace hlasm_plugin::parser_library {
+
+
+struct analyzing_context
 {
-protected:
-    ~processing_tracer() = default;
-
-public:
-    virtual void statement(range statement_range) = 0;
+    context::hlasm_ctx_ptr hlasm_ctx;
+    lsp::lsp_ctx_ptr lsp_ctx;
 };
 
-} // namespace hlasm_plugin::parser_library::processing
-
+} // namespace hlasm_plugin::parser_library
 #endif

@@ -16,6 +16,7 @@
 
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
 #include "processing/context_manager.h"
@@ -41,17 +42,20 @@ context::SET_t_enum get_attribute_type(context::data_attr_kind attr)
     }
 }
 
-ca_symbol_attribute::ca_symbol_attribute(context::id_index symbol, context::data_attr_kind attribute, range expr_range)
+ca_symbol_attribute::ca_symbol_attribute(
+    context::id_index symbol, context::data_attr_kind attribute, range expr_range, range symbol_rng)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(symbol)
-
+    , symbol_range(symbol_rng)
 {}
 
-ca_symbol_attribute::ca_symbol_attribute(semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range)
+ca_symbol_attribute::ca_symbol_attribute(
+    semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_rng)
     : ca_expression(get_attribute_type(attribute), std::move(expr_range))
     , attribute(attribute)
     , symbol(std::move(symbol))
+    , symbol_range(symbol_rng)
 {}
 
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
@@ -119,6 +123,8 @@ bool ca_symbol_attribute::is_character_expression() const
 {
     return get_attribute_type(attribute) == context::SET_t_enum::C_TYPE;
 }
+
+void ca_symbol_attribute::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx) const
 {
@@ -218,7 +224,7 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
     else if (attribute == context::data_attr_kind::O)
     {
         auto tmp = eval_ctx.hlasm_ctx.get_attribute_value_ca(attribute, name);
-        if (tmp.access_c() == "U" && eval_ctx.lib_provider.has_library(*name, eval_ctx.hlasm_ctx))
+        if (tmp.access_c() == "U" && eval_ctx.lib_provider.has_library(*name, eval_ctx.hlasm_ctx.opencode_file_name()))
             return std::string("S");
         return tmp;
     }

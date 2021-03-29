@@ -71,7 +71,7 @@ std::size_t breakpoints_t::size() const { return pimpl->m_breakpoints.size(); }
 // Implements DAP for macro tracing. Starts analyzer in a separate thread
 // then controls the flow of analyzer by implementing processing_tracer
 // interface.
-class debugger::impl final : public processing::processing_tracer
+class debugger::impl final : public processing::statement_analyzer
 {
     mutable std::mutex control_mtx;
     mutable std::mutex variable_mtx_;
@@ -144,8 +144,9 @@ public:
                 open_code->get_file_name(),
                 lib_provider ? *lib_provider : provider.value(),
                 this);
+            a.register_stmt_analyzer(this);
 
-            ctx_ = &a.context();
+            ctx_ = a.context().hlasm_ctx.get();
 
             a.analyze(&cancel_);
 
@@ -157,10 +158,22 @@ public:
 
     void set_event_consumer(debug_event_consumer* event) { event_ = event; }
 
-    void statement(range stmt_range) override
+    void analyze(const context::hlasm_statement& statement,
+        processing::statement_provider_kind,
+        processing::processing_kind proc_kind) override
     {
         if (disconnected_)
             return;
+
+        // Continue only for ordinary processing kind (i.e. when the statement is executed, skip
+        // lookahead and copy/macro definitions)
+        if (proc_kind != processing::processing_kind::ORDINARY)
+            return;
+        // Continue only for non-empty statements
+        if (statement.access_resolved()->opcode_ref().value == context::id_storage::empty_id)
+            return;
+
+        range stmt_range = statement.access_resolved()->stmt_range_ref();
 
         bool breakpoint_hit = false;
 
@@ -422,6 +435,7 @@ breakpoints_t debugger::breakpoints(sequence<char> source) const
     breakpoints_t result;
 
     result.pimpl->m_breakpoints = pimpl->breakpoints(std::string_view(source));
+
 
     return result;
 }

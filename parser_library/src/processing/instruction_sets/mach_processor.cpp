@@ -22,11 +22,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-mach_processor::mach_processor(context::hlasm_context& hlasm_ctx,
+mach_processor::mach_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : low_language_processor(hlasm_ctx, branch_provider, lib_provider, parser)
+    : low_language_processor(std::move(ctx), branch_provider, lib_provider, parser)
 {}
 
 void mach_processor::process(context::shared_stmt_ptr stmt)

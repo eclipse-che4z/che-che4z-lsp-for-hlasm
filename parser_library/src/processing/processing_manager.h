@@ -21,35 +21,36 @@
 #include "branching_provider.h"
 #include "opencode_provider.h"
 #include "processing_state_listener.h"
-#include "processing_tracer.h"
+#include "statement_analyzers/lsp_analyzer.h"
 #include "statement_fields_parser.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // main class for processing of the opencode
 // is constructed with base statement provider and has stack of statement processors which take statements from
 // providers and go through the code creating other providers and processors it holds those providers and processors and
 // manages the whole processing
-class processing_manager : public processing_state_listener, public branching_provider, public diagnosable_ctx
+class processing_manager final : public processing_state_listener, public branching_provider, public diagnosable_ctx
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         const workspaces::library_data data,
         std::string file_name,
+        const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
-        statement_fields_parser& parser,
-        processing_tracer* tracer);
+        statement_fields_parser& parser);
 
     // method that starts the processing loop
     void start_processing(std::atomic<bool>* cancel);
 
-    virtual void collect_diags() const override;
+    void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
+
+    void collect_diags() const override;
 
 private:
+    analyzing_context ctx_;
     context::hlasm_context& hlasm_ctx_;
     workspaces::parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;
@@ -57,31 +58,34 @@ private:
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;
 
-    context::source_snapshot lookahead_stop_;
+    lsp_analyzer lsp_analyzer_;
+    std::vector<statement_analyzer*> stms_analyzers_;
 
-    processing_tracer* tracer_ = nullptr;
+    context::source_snapshot lookahead_stop_;
 
     bool attr_lookahead_active() const;
 
     statement_provider& find_provider();
     void finish_processor();
 
-    virtual void start_macro_definition(macrodef_start_data start) override;
-    virtual void finish_macro_definition(macrodef_processing_result result) override;
-    virtual void start_lookahead(lookahead_start_data start) override;
-    virtual void finish_lookahead(lookahead_processing_result result) override;
-    virtual void start_copy_member(copy_start_data start) override;
-    virtual void finish_copy_member(copy_processing_result result) override;
+    void start_macro_definition(macrodef_start_data start) override;
+    void finish_macro_definition(macrodef_processing_result result) override;
+    void start_lookahead(lookahead_start_data start) override;
+    void finish_lookahead(lookahead_processing_result result) override;
+    void start_copy_member(copy_start_data start) override;
+    void finish_copy_member(copy_processing_result result) override;
+    void finish_opencode() override;
 
-    virtual void jump_in_statements(context::id_index target, range symbol_range) override;
-    virtual void register_sequence_symbol(context::id_index target, range symbol_range) override;
+    void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
+
+    void jump_in_statements(context::id_index target, range symbol_range) override;
+    void register_sequence_symbol(context::id_index target, range symbol_range) override;
     std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(
         context::id_index name, range symbol_range);
 
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

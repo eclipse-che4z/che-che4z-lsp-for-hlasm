@@ -21,6 +21,9 @@
 #include <utility>
 #include <vector>
 
+#pragma warning(push)
+#pragma warning(disable : 4661)
+
 namespace hlasm_plugin::parser_library {
 
 template<typename T>
@@ -153,5 +156,7 @@ template<class T>
 explicit sequence(T &&) -> sequence<std::decay_t<decltype(*std::declval<T>().data())>, void>;
 
 } // namespace hlasm_plugin::parser_library
+
+#pragma warning(pop)
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_SEQUENCE_H

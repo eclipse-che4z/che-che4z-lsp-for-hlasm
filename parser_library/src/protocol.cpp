@@ -16,49 +16,44 @@
 
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
+#include "location.h"
+#include "lsp/completion_item.h"
 #include "semantics/highlighting_info.h"
-#include "semantics/lsp_info_processor.h"
 #include "workspaces/processor.h"
 
 namespace hlasm_plugin::parser_library {
-string_array::string_array(const char** arr, size_t size)
-    : arr(arr)
-    , size(size) {};
 
-num_array::num_array(size_t* arr, size_t size)
-    : arr(arr)
-    , size(size) {};
+//********************** completion item **********************
 
-completion_item::completion_item(context::completion_item_s& info)
-    : impl_(info)
+completion_item::completion_item(const lsp::completion_item_s& item)
+    : item_(item)
 {}
 
-const char* completion_item::label() const { return impl_.label.c_str(); }
-size_t completion_item::kind() const { return impl_.kind; }
-const char* completion_item::detail() const { return impl_.detail.c_str(); }
-const char* completion_item::documentation()
+std::string_view completion_item::label() const { return item_.label; }
+completion_item_kind completion_item::kind() const { return item_.kind; }
+std::string_view completion_item::detail() const { return item_.detail; }
+std::string_view completion_item::documentation() const { return item_.documentation; }
+std::string_view completion_item::insert_text() const { return item_.insert_text; }
+
+template<>
+completion_item sequence<completion_item, const lsp::completion_item_s*>::item(size_t index) const
 {
-    impl_.implode_contents();
-    return impl_.content_string.c_str();
+    return completion_item(stor_[index]);
 }
-bool completion_item::deprecated() const { return impl_.deprecated; }
-const char* completion_item::insert_text() const { return impl_.insert_text.c_str(); }
 
-completion_list::completion_list(semantics::completion_list_s& info)
-    : impl_(info)
+//********************** location **********************
+
+position_uri::position_uri(const location& item)
+    : item_(item)
 {}
+position position_uri::pos() const { return item_.pos; }
+std::string_view position_uri::file() const { return item_.file; }
 
-bool completion_list::is_incomplete() const { return impl_.is_incomplete; }
-completion_item completion_list::item(size_t index) { return impl_.items[index]; }
-size_t completion_list::count() const { return impl_.items.size(); }
-
-position_uri::position_uri(semantics::position_uri_s& info)
-    : impl_(info)
-{}
-
-position position_uri::pos() const { return impl_.pos; }
-
-const char* position_uri::uri() const { return impl_.uri.c_str(); }
+template<>
+position_uri sequence<position_uri, const location*>::item(size_t index) const
+{
+    return position_uri(stor_[index]);
+}
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
     : impl_(info)
@@ -73,7 +68,7 @@ range range_uri::get_range() const { return impl_.rang; }
 const char* range_uri::uri() const { return impl_.uri.c_str(); }
 
 
-range_uri diagnostic_related_info::location() const { return impl_.location; }
+range_uri diagnostic_related_info::location() const { return range_uri(impl_.location); }
 
 const char* diagnostic_related_info::message() const { return impl_.message.c_str(); }
 
@@ -118,14 +113,6 @@ diagnostic_list::diagnostic_list(diagnostic_s* begin, size_t size)
 diagnostic diagnostic_list::diagnostics(size_t index) { return begin_[index]; }
 
 size_t diagnostic_list::diagnostics_size() const { return size_; }
-
-position_uris::position_uris(semantics::position_uri_s* data, size_t size)
-    : data_(data)
-    , size_(size)
-{}
-
-position_uri position_uris::get_position_uri(size_t index) { return data_[index]; }
-size_t position_uris::size() const { return size_; }
 
 token_info::token_info(const range& token_range, semantics::hl_scopes scope)
     : token_range(token_range)

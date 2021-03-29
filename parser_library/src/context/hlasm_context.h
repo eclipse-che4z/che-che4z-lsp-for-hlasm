@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "code_scope.h"
-#include "lsp_context.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
@@ -31,7 +30,7 @@
 namespace hlasm_plugin::parser_library::context {
 
 class hlasm_context;
-using ctx_ptr = std::unique_ptr<hlasm_context>;
+using hlasm_ctx_ptr = std::shared_ptr<hlasm_context>;
 
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one
@@ -40,7 +39,7 @@ using ctx_ptr = std::unique_ptr<hlasm_context>;
 class hlasm_context
 {
     using macro_storage = std::unordered_map<id_index, macro_def_ptr>;
-    using copy_member_storage = std::unordered_map<id_index, copy_member>;
+    using copy_member_storage = std::unordered_map<id_index, copy_member_ptr>;
     using instruction_storage = std::unordered_map<id_index, instruction::instruction_array>;
     using opcode_map = std::unordered_map<id_index, opcode_t>;
 
@@ -66,6 +65,8 @@ class hlasm_context
     // stack of nested copy member invocations
     std::vector<copy_member_invocation> copy_stack_;
 
+    // path to the opencode
+    std::string opencode_file_name_;
     // all files processes via macro or copy member invocation
     std::set<std::string> visited_files_;
 
@@ -112,6 +113,7 @@ public:
 
     // gets stack of locations of all currently processed files
     processing_stack_t processing_stack() const;
+    location current_statement_location() const;
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;
     // gets copy nest of current statement processing
@@ -130,8 +132,7 @@ public:
 
     // field that accessed ordinary assembly context
     ordinary_assembly_context ord_ctx;
-    // field that accessed LSP context
-    lsp_ctx_ptr lsp_ctx;
+
     // performance metrics
     performance_metrics metrics;
 
@@ -181,7 +182,7 @@ public:
     // returns macro we are currently in or empty shared_ptr if in open code
     macro_invo_ptr this_macro() const;
     // registers new macro
-    const macro_definition& add_macro(id_index name,
+    macro_def_ptr add_macro(id_index name,
         id_index label_param_name,
         std::vector<macro_arg> params,
         statement_block definition,
@@ -196,7 +197,7 @@ public:
     // gets copy member storage
     const copy_member_storage& copy_members();
     // registers new copy member
-    void add_copy_member(id_index member, statement_block definition, location definition_location);
+    copy_member_ptr add_copy_member(id_index member, statement_block definition, location definition_location);
     // enters a copy member
     void enter_copy_member(id_index member);
     // leaves current copy member
@@ -243,4 +244,5 @@ public:
 };
 
 } // namespace hlasm_plugin::parser_library::context
+
 #endif

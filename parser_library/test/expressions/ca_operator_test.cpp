@@ -58,9 +58,10 @@ struct stringer
 class ca_op : public ::testing::TestWithParam<op_test_param>
 {
 protected:
-    hlasm_context ctx;
-    lib_prov_mock prov;
-    evaluation_context eval_ctx { ctx, prov };
+    lib_prov_mock lib;
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     SET_t get_result()
     {

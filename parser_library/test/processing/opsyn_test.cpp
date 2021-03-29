@@ -271,8 +271,7 @@ class opsyn_parse_lib_prov : public parse_lib_provider
  LR
  MEND)";
 
-    virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
         if (library == "LR")
@@ -280,14 +279,14 @@ class opsyn_parse_lib_prov : public parse_lib_provider
         else
             return false;
 
-        a = std::make_unique<analyzer>(*content, library, hlasm_ctx, *this, data);
+        a = std::make_unique<analyzer>(*content, library, std::move(ctx), *this, data);
         a->analyze();
         a->collect_diags();
         return true;
     }
 
-    virtual bool has_library(const std::string&, context::hlasm_context&) const override { return false; }
-    virtual const asm_option& get_asm_options(const std::string&) { return asm_options; }
+    bool has_library(const std::string&, const std::string&) const override { return false; }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 TEST(OPSYN, macro_after_delete)

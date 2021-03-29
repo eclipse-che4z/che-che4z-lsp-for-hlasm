@@ -75,14 +75,16 @@ TEST_F(workspace_test, parse_lib_provider)
 
     file_mngr.add_processor_file("test\\library\\test_wks\\correct");
 
+    context::hlasm_ctx_ptr ctx_1, ctx_2;
+    lsp::lsp_ctx_ptr lsp_ptr = std::make_shared<lsp::lsp_context>();
 #if _WIN32
     ws.did_open_file("test\\library\\test_wks\\correct");
-    context::hlasm_context ctx_1("test\\library\\test_wks\\correct");
-    context::hlasm_context ctx_2("test\\library\\test_wks\\correct");
+    ctx_1 = std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct");
+    ctx_2 = std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct");
 #else
     ws.did_open_file("test/library/test_wks/correct");
-    context::hlasm_context ctx_1("test/library/test_wks/correct");
-    context::hlasm_context ctx_2("test/library/test_wks/correct");
+    ctx_1 = std::make_shared<context::hlasm_context>("test/library/test_wks/correct");
+    ctx_2 = std::make_shared<context::hlasm_context>("test/library/test_wks/correct");
 #endif
 
     collect_diags_from_child(file_mngr);
@@ -90,15 +92,18 @@ TEST_F(workspace_test, parse_lib_provider)
 
     diags().clear();
 
-    ws.parse_library("MACRO1", ctx_1, library_data { processing::processing_kind::MACRO, ctx_1.ids().add("MACRO1") });
+    ws.parse_library("MACRO1",
+        analyzing_context { ctx_1, lsp_ptr },
+        library_data { processing::processing_kind::MACRO, ctx_1->ids().add("MACRO1") });
 
     // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
     collect_diags_from_child(ws);
     EXPECT_EQ(diags().size(), (size_t)0);
 
-    ws.parse_library(
-        "not_existing", ctx_2, library_data { processing::processing_kind::MACRO, ctx_1.ids().add("not_existing") });
+    ws.parse_library("not_existing",
+        analyzing_context { ctx_2, lsp_ptr },
+        library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
 }
 
 
@@ -242,6 +247,7 @@ public:
 
     std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
+        (void)optional;
         if (insert_correct_macro)
             return { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } };
         return { { "ERROR", "ERROR" } };

@@ -34,7 +34,7 @@ namespace parser_library {
 // Used for testing purposes.
 void parser_library::parse(const std::string& src)
 {
-    analyzer a(src, "", workspaces::empty_parse_lib_provider::instance, nullptr, true);
+    analyzer a(src, "", workspaces::empty_parse_lib_provider::instance, true);
 
     auto l = new antlr4::DiagnosticErrorListener();
     a.parser().addErrorListener(l);

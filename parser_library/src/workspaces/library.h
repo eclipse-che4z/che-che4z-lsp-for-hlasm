@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 #define HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

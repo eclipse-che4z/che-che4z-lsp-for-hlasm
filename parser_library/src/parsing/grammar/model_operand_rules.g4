@@ -29,10 +29,10 @@ op_ch_c returns [std::string value]
 
 op_ch_v returns [concat_point_ptr point]
 	: common_ch_v							{$point = std::move($common_ch_v.point);}
-	| lpar									{$point = std::make_unique<char_str_conc>("("); }
-	| rpar									{$point = std::make_unique<char_str_conc>(")"); }
-	| comma									{$point = std::make_unique<char_str_conc>(","); }
-	| ATTR									{$point = std::make_unique<char_str_conc>("'"); };
+	| lpar									{$point = std::make_unique<char_str_conc>("(", provider.get_range($lpar.ctx->getStart())); }
+	| rpar									{$point = std::make_unique<char_str_conc>(")", provider.get_range($rpar.ctx->getStart())); }
+	| comma									{$point = std::make_unique<char_str_conc>(",", provider.get_range($comma.ctx->getStart())); }
+	| ATTR									{$point = std::make_unique<char_str_conc>("'", provider.get_range($ATTR)); };
 
 op_ch_v_c returns [concat_chain chain]
 	:
@@ -78,7 +78,7 @@ model_op returns [std::optional<concat_chain> chain_opt]
 		else
 		{
 			concat_chain chain;
-			chain.push_back(std::make_unique<char_str_conc>(std::move($before_var_sym_model.value)));
+			chain.push_back(std::make_unique<char_str_conc>(std::move($before_var_sym_model.value), provider.get_range($before_var_sym_model.ctx)));
 			chain.insert(chain.end(), 
 				std::make_move_iterator($var_sym_model.chain.begin()), 
 				std::make_move_iterator($var_sym_model.chain.end())
@@ -99,7 +99,7 @@ model_string_ch returns [std::string value]
 
 model_string_ch_v returns [concat_point_ptr point]
 	: l_sp_ch_v								{$point = std::move($l_sp_ch_v.point);}
-	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("''");};
+	| l=(APOSTROPHE|ATTR) r=(APOSTROPHE|ATTR)	{$point = std::make_unique<char_str_conc>("''", provider.get_range($l, $r));};
 
 model_string_ch_v_c returns [concat_chain chain]
 	:
@@ -112,25 +112,25 @@ model_string_ch_c returns [std::string value]
 string_v_actual returns [concat_chain chain]
 	: ap1=(APOSTROPHE|ATTR)	 model_string_ch_c var_symbol model_string_ch_v_c ap2=(APOSTROPHE|ATTR)	
 	{ 
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
-		$chain.push_back(std::make_unique<char_str_conc>(std::move($model_string_ch_c.value)));
+		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap1)));
+		$chain.push_back(std::make_unique<char_str_conc>(std::move($model_string_ch_c.value), provider.get_range($model_string_ch_c.ctx)));
 		$chain.push_back(std::make_unique<var_sym_conc>(std::move($var_symbol.vs)));
 		$chain.insert($chain.end(), 
 			std::make_move_iterator($model_string_ch_v_c.chain.begin()), 
 			std::make_move_iterator($model_string_ch_v_c.chain.end())
 		);
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap2)));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
 
 model_string_v returns [concat_chain chain]
 	: ap1=(APOSTROPHE|ATTR) string_ch_v_c ap2=(APOSTROPHE|ATTR)	
 	{ 
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap1)));
 		$chain.insert($chain.end(), 
 			std::make_move_iterator($string_ch_v_c.chain.begin()), 
 			std::make_move_iterator($string_ch_v_c.chain.end())
 		);
-		$chain.push_back(std::make_unique<char_str_conc>("'"));
+		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap2)));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};

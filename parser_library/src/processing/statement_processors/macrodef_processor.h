@@ -21,9 +21,7 @@
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor that creates macro definition from provided statements
 class macrodef_processor : public statement_processor
@@ -41,10 +39,15 @@ class macrodef_processor : public statement_processor
     bool omit_next_;
 
     macrodef_processing_result result_;
+    bool last_in_inner_macro_ = false;
     bool finished_flag_;
 
+    using process_table_t = std::unordered_map<context::id_index, std::function<void(const resolved_statement&)>>;
+
+    const process_table_t table_;
+
 public:
-    macrodef_processor(context::hlasm_context& hlasm_ctx,
+    macrodef_processor(analyzing_context ctx,
         processing_state_listener& listener,
         workspaces::parse_lib_provider& provider,
         macrodef_start_data start);
@@ -73,17 +76,21 @@ private:
         range op_range,
         bool add_empty);
 
+    process_table_t create_table();
 
     void process_MACRO();
     void process_MEND();
     void process_COPY(const resolved_statement& statement);
+    void process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global);
+    void process_SET(const resolved_statement& statement, context::SET_t_enum set_type);
+
+    void add_SET_sym_to_res(const semantics::variable_symbol* sym, context::SET_t_enum set_type, bool global);
 
     void process_sequence_symbol(const semantics::label_si& label);
 
     void add_correct_copy_nest();
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

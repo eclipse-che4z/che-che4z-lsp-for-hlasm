@@ -15,8 +15,8 @@
  //rules for deferred operand
 parser grammar deferred_operand_rules;
 
-deferred_entry 
-	: mac_preproc_c
+deferred_entry returns [vs_ptr vs]
+	: mac_preproc_c					{$vs = std::move($mac_preproc_c.vs);}
 	| apostrophe
 	| comma
 	| AMPERSAND
@@ -35,6 +35,10 @@ def_string returns [concat_chain chain]
 	finally
 	{concatenation_point::clear_concat_chain($chain);}
 
-deferred_op_rem returns [remark_list remarks]
-	: deferred_entry* remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
-		(CONTINUATION deferred_entry* remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);})*;
+deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
+	: (deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
+	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
+	(CONTINUATION 
+	(deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
+	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
+	)*;

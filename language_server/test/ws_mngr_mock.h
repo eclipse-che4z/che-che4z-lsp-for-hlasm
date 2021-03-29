@@ -19,7 +19,9 @@
 
 #include "workspace_manager.h"
 
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::language_server::test {
+
+using namespace parser_library;
 
 class ws_mngr_mock : public workspace_manager
 {
@@ -39,12 +41,13 @@ public:
     MOCK_METHOD1(configuration_changed, void(const lib_config& new_config));
 
     MOCK_METHOD(position_uri, definition, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(position_uris, references, (const char* document_uri, const position pos), (override));
-    MOCK_METHOD(string_array, hover, (const char* document_uri, const position pos), (override));
+    MOCK_METHOD(position_uri_list, references, (const char* document_uri, const position pos), (override));
+    MOCK_METHOD(std::string_view, hover, (const char* document_uri, const position pos), (override));
     MOCK_METHOD(completion_list,
         completion,
-        (const char* document_uri, const position pos, const char trigger_char, int trigger_kind),
+        (const char* document_uri, const position pos, const char trigger_char, completion_trigger_kind trigger_kind),
         (override));
 };
 
+} // namespace hlasm_plugin::language_server::test
 #endif // !HLASMPLUGIN_LANGUAGESERVER_TEST_WS_MNGR_MOCK_H

@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "id_storage.h"
-#include "range.h"
+#include "location.h"
 
 namespace hlasm_plugin::parser_library::context {
 

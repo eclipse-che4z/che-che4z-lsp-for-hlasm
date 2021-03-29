@@ -26,12 +26,12 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_string, undefined_attributes)
 {
-    context::hlasm_context ctx;
+    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("gfds"));
+    value.push_back(std::make_unique<char_str_conc>("gfds", range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(1, range());
 
@@ -75,15 +75,16 @@ INSTANTIATE_TEST_SUITE_P(param_suite,
 TEST(ca_string, test)
 {
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>("gfds"));
+    value.push_back(std::make_unique<char_str_conc>("gfds", range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(0, range());
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     auto res = s.evaluate(eval_ctx);
 
@@ -95,15 +96,16 @@ TEST(ca_string, test)
 TEST_P(ca_string_suite, dupl)
 {
     concat_chain value;
-    value.push_back(std::make_unique<char_str_conc>(GetParam().value));
+    value.push_back(std::make_unique<char_str_conc>(GetParam().value, range()));
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(GetParam().factor, range());
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     auto res = s.evaluate(eval_ctx);
 

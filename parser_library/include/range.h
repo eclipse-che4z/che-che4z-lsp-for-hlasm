@@ -74,18 +74,6 @@ struct PARSER_LIBRARY_EXPORT file_range
     const std::string* file;
 };
 
-struct PARSER_LIBRARY_EXPORT location
-{
-    location() {}
-    location(position pos, std::string file)
-        : pos(pos)
-        , file(file)
-    {}
-    bool operator==(const location& oth) const { return pos == oth.pos && file == oth.file; }
-    position pos;
-    std::string file;
-};
-
 } // namespace parser_library
 } // namespace hlasm_plugin
 #endif

@@ -22,7 +22,6 @@ asm_op returns [operand_ptr op]
 			*$id.name,std::move($asm_op_comma_c.asm_ops),
 			provider.get_range($id.ctx->getStart(),$rpar.ctx->getStop())
 			);
-		collector.add_lsp_symbol($id.name,provider.get_range($id.ctx->getStart(),$rpar.ctx->getStop()),symbol_type::ord);
 		collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
 	}
 	| lpar id1=end_instr_word comma id2=end_instr_word comma id3=end_instr_word rpar
@@ -71,7 +70,6 @@ asm_op_inner returns [std::unique_ptr<complex_assembler_operand::component_value
 		$op = std::make_unique<complex_assembler_operand::string_value_t>(
 			*$id.name,
 			provider.get_range($id.ctx));
-		collector.add_lsp_symbol($id.name,provider.get_range($id.ctx),symbol_type::ord);
 		collector.add_hl_symbol(token_info(provider.get_range($id.ctx),hl_scopes::operand));
 	}
 	| num

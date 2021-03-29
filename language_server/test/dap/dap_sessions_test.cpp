@@ -46,7 +46,7 @@ public:
 TEST(dap_sessions, simple_start_stop)
 {
     std::atomic<bool> term = false;
-    ws_mngr_mock mock_ws;
+    test::ws_mngr_mock mock_ws;
     stream_json_sink session_out;
     dap::session session(term, mock_ws, session_out);
 
@@ -61,7 +61,7 @@ TEST(dap_sessions, simple_start_stop)
 
 TEST(dap_sessions, session_manager)
 {
-    ws_mngr_mock mock_ws;
+    test::ws_mngr_mock mock_ws;
     stream_json_sink session_out;
     dap::session_manager sess_mgr(mock_ws, session_out);
 

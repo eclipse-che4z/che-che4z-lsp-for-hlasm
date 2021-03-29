@@ -17,18 +17,18 @@
 namespace hlasm_plugin::parser_library::processing {
 
 members_statement_provider::members_statement_provider(const statement_provider_kind kind,
-    context::hlasm_context& hlasm_ctx,
+    analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener)
     : statement_provider(kind)
-    , hlasm_ctx(hlasm_ctx)
+    , ctx(std::move(ctx))
     , parser(parser)
     , lib_provider(lib_provider)
     , listener(listener)
 {}
 
-void members_statement_provider::process_next(statement_processor& processor)
+context::shared_stmt_ptr members_statement_provider::get_next(const statement_processor& processor)
 {
     if (finished())
         throw std::runtime_error("provider already finished");
@@ -36,11 +36,11 @@ void members_statement_provider::process_next(statement_processor& processor)
     auto cache = get_next();
 
     if (!cache)
-        return;
+        return nullptr;
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { hlasm_ctx, lib_provider }, listener))
-        return;
+        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { ctx, lib_provider }, listener))
+        return nullptr;
 
     context::shared_stmt_ptr stmt;
 
@@ -59,10 +59,10 @@ void members_statement_provider::process_next(statement_processor& processor)
 
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { hlasm_ctx, lib_provider }, listener))
-        return;
+        && try_trigger_attribute_lookahead(*stmt, { ctx, lib_provider }, listener))
+        return nullptr;
 
-    processor.process_statement(std::move(stmt));
+    return stmt;
 }
 
 const semantics::instruction_si& members_statement_provider::retrieve_instruction(
@@ -89,17 +89,16 @@ void members_statement_provider::fill_cache(
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {
-        semantics::operands_si op(def_stmt.deferred_range_ref(), semantics::operand_list());
-        semantics::remarks_si rem(def_stmt.deferred_range_ref(), {});
+        semantics::operands_si op(def_stmt.deferred_ref().field_range, semantics::operand_list());
+        semantics::remarks_si rem(def_stmt.deferred_ref().field_range, {});
 
         ptr = std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
     }
     else
     {
-        auto [op, rem] = parser.parse_operand_field(&hlasm_ctx,
-            def_stmt.deferred_ref(),
+        auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
-            semantics::range_provider(def_stmt.deferred_range_ref(), semantics::adjusting_state::NONE),
+            semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status);
 
         ptr = std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
