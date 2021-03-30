@@ -218,6 +218,7 @@ public:
     vnot_instruction(
         const std::string& name, mach_format format, std::vector<machine_operand_format> operands, size_t page_no)
         : machine_instruction(name, format, operands, page_no, (size_t)0)
+
     {}
 
     virtual bool check(const std::string& name_of_instruction,
@@ -253,6 +254,7 @@ public:
 
 //#define(instr_name, format, )
 
+
 void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result,
     const std::string& instruction_name,
     mach_format format,
@@ -260,7 +262,7 @@ void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& res
     size_t page_no)
 {
     result.insert(std::pair<const std::string, machine_instruction_ptr>(
-        instruction_name, std::make_unique<machine_instruction>(instruction_name, format, op_format, page_no)));
+        instruction_name, std::make_unique<machine_instruction>(instruction_name, format, op_format,page_no)));
 }
 void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result,
     const std::string& instruction_name,
@@ -272,6 +274,7 @@ void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& res
     result.insert(std::pair<const std::string, machine_instruction_ptr>(instruction_name,
         std::make_unique<machine_instruction>(instruction_name, format, std::move(op_format), optional, page_no)));
 }
+
 
 std::map<const std::string, machine_instruction_ptr>
 hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
@@ -445,7 +448,6 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, reg_imm_16_S }, 620);
     add_machine_instr(result, "CGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, reg_imm_16_S }, 620);
     add_machine_instr(result, "CFC", mach_format::S, { db_12_4_U }, 621);
-    add_machine_instr(result, "CONCS", mach_format::S, { db_12_4_U }, 263);
     add_machine_instr(result, "CS", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 628);
     add_machine_instr(result, "CSY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
     add_machine_instr(result, "CSG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 628);
@@ -519,7 +521,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CLHHR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
     add_machine_instr(result, "CLHLR", mach_format::RRE, { reg_4_U, reg_4_U }, 641);
     add_machine_instr(result, "CLHF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 641);
-    add_machine_instr(result, "CLCL", mach_format::RR, { reg_4_U, reg_4_U }, 16, 642);
+    add_machine_instr(result, "CLCL", mach_format::RR, { reg_4_U, reg_4_U }, 642);
     add_machine_instr(result, "CLIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 642);
     add_machine_instr(result, "CLCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 644);
     add_machine_instr(result, "CLCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 647);
@@ -544,7 +546,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CU12", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 728);
     add_machine_instr(result, "CU14", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 732);
     add_machine_instr(result, "CPYA", mach_format::RRE, { reg_4_U, reg_4_U }, 736);
-    add_machine_instr(result, "DR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 736);
+    add_machine_instr(result, "DR", mach_format::RR, { reg_4_U, reg_4_U }, 736);
     add_machine_instr(result, "D", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 736);
     add_machine_instr(result, "DLR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
     add_machine_instr(result, "DLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 737);
@@ -554,7 +556,19 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "DSGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
     add_machine_instr(result, "DSG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
     add_machine_instr(result, "DSGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "XR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 738);
+    add_machine_instr(result, "HIO", mach_format::S, { db_12_4_U }, 129);
+    add_machine_instr(result, "HDV", mach_format::S, { db_12_4_U },  129);
+    add_machine_instr(result, "SIO", mach_format::S, { db_12_4_U },  129);
+    add_machine_instr(result, "SIOF", mach_format::S, { db_12_4_U },  129);
+    add_machine_instr(result, "STIDC", mach_format::S, { db_12_4_U },  129);
+    add_machine_instr(result, "CLRCH", mach_format::S, { db_12_4_U },  367);
+    add_machine_instr(result, "CLRIO", mach_format::S, { db_12_4_U },  368);
+    add_machine_instr(result, "TCH", mach_format::S, { db_12_4_U },  384);
+    add_machine_instr(result, "TIO", mach_format::S, { db_12_4_U },  385);
+    add_machine_instr(result, "RRB", mach_format::S, { db_12_4_U },  295);
+    add_machine_instr(result, "CONCS", mach_format::S, { db_12_4_U }, 263);
+    add_machine_instr(result, "DISCS", mach_format::S, { db_12_4_U },  265);
+    add_machine_instr(result, "XR", mach_format::RR, { reg_4_U, reg_4_U }, 738);
     add_machine_instr(result, "XGR", mach_format::RRE, { reg_4_U, reg_4_U }, 738);
     add_machine_instr(result, "XRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
     add_machine_instr(result, "XGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 738);
@@ -586,17 +600,17 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "IILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
     add_machine_instr(result, "IILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 747);
     add_machine_instr(result, "IPM", mach_format::RRE, { reg_4_U }, 748);
-    add_machine_instr(result, "LR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 748);
-    add_machine_instr(result, "LGR", mach_format::RRE, { reg_4_U, reg_4_U }, 16, 748);
-    add_machine_instr(result, "LGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 16, 748);
-    add_machine_instr(result, "L", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 16, 748);
-    add_machine_instr(result, "LY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 16, 748);
-    add_machine_instr(result, "LG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 16, 748);
-    add_machine_instr(result, "LGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 16, 748);
-    add_machine_instr(result, "LGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 16, 748);
-    add_machine_instr(result, "LRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 16, 748);
-    add_machine_instr(result, "LGRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 16, 748);
-    add_machine_instr(result, "LGFRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 16, 748);
+    add_machine_instr(result, "LR", mach_format::RR, { reg_4_U, reg_4_U }, 748);
+    add_machine_instr(result, "LGR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
+    add_machine_instr(result, "LGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 748);
+    add_machine_instr(result, "L", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 748);
+    add_machine_instr(result, "LY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
+    add_machine_instr(result, "LG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
+    add_machine_instr(result, "LGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 748);
+    add_machine_instr(result, "LGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 748);
+    add_machine_instr(result, "LRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 748);
+    add_machine_instr(result, "LGRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 748);
+    add_machine_instr(result, "LGFRL", mach_format::RIL_b, { reg_4_U, reg_imm_32_S }, 748);
     add_machine_instr(result, "LAM", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 749);
     add_machine_instr(result, "LAMY", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 749);
     add_machine_instr(result, "LA", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 750);
@@ -614,7 +628,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LAXG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 753);
     add_machine_instr(result, "LAO", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
     add_machine_instr(result, "LAOG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 754);
-    add_machine_instr(result, "LTR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 754);
+    add_machine_instr(result, "LTR", mach_format::RR, { reg_4_U, reg_4_U }, 754);
     add_machine_instr(result, "LTGR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
     add_machine_instr(result, "LTGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 754);
     add_machine_instr(result, "LT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 755);
@@ -629,7 +643,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
     add_machine_instr(result, "LGB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
     add_machine_instr(result, "LBH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 756);
-    add_machine_instr(result, "LCR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 756);
+    add_machine_instr(result, "LCR", mach_format::RR, { reg_4_U, reg_4_U }, 756);
     add_machine_instr(result, "LCGR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
     add_machine_instr(result, "LCGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 757);
     add_machine_instr(result, "LCBB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U, mask_4_U }, 757);
@@ -682,7 +696,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LMG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 766);
     add_machine_instr(result, "LMD", mach_format::SS_e, { reg_4_U, reg_4_U, db_12_4_U, db_12_4_U }, 767);
     add_machine_instr(result, "LMH", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 767);
-    add_machine_instr(result, "LNR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 767);
+    add_machine_instr(result, "LNR", mach_format::RR, { reg_4_U, reg_4_U }, 767);
     add_machine_instr(result, "LNGR", mach_format::RRE, { reg_4_U, reg_4_U }, 767);
     add_machine_instr(result, "LNGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 768);
     add_machine_instr(result, "LOCFHR", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 768);
@@ -694,7 +708,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LPD", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
     add_machine_instr(result, "LPDG", mach_format::SSF, { reg_4_U, db_12_4_U, db_12_4_U }, 769);
     add_machine_instr(result, "LPQ", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 770);
-    add_machine_instr(result, "LPR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 771);
+    add_machine_instr(result, "LPR", mach_format::RR, { reg_4_U, reg_4_U }, 771);
     add_machine_instr(result, "LPGR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
     add_machine_instr(result, "LPGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
     add_machine_instr(result, "LRVR", mach_format::RRE, { reg_4_U, reg_4_U }, 771);
@@ -704,21 +718,21 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 771);
     add_machine_instr(result, "MC", mach_format::SI, { db_12_4_U, imm_8_S }, 772);
     add_machine_instr(result, "MVC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 773);
-    add_machine_instr(result, "MVCRL", mach_format::SSE, { db_12_4_U, db_12_4_U }, 48, 788);
+    add_machine_instr(result, "MVCRL", mach_format::SSE, { db_12_4_U, db_12_4_U }, 788);
     add_machine_instr(result, "MVHHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
     add_machine_instr(result, "MVHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
     add_machine_instr(result, "MVGHI", mach_format::SIL, { db_12_4_U, imm_16_S }, 773);
     add_machine_instr(result, "MVI", mach_format::SI, { db_12_4_U, imm_8_U }, 773);
     add_machine_instr(result, "MVIY", mach_format::SIY, { db_12_4_U, imm_8_U }, 773);
     add_machine_instr(result, "MVCIN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 774);
-    add_machine_instr(result, "MVCL", mach_format::RR, { reg_4_U, reg_4_U }, 16, 774);
+    add_machine_instr(result, "MVCL", mach_format::RR, { reg_4_U, reg_4_U }, 774);
     add_machine_instr(result, "MVCLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 778);
     add_machine_instr(result, "MVCLU", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 781);
     add_machine_instr(result, "MVN", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 785);
     add_machine_instr(result, "MVST", mach_format::RRE, { reg_4_U, reg_4_U }, 785);
     add_machine_instr(result, "MVO", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 786);
     add_machine_instr(result, "MVZ", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 787);
-    add_machine_instr(result, "MR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 788);
+    add_machine_instr(result, "MR", mach_format::RR, { reg_4_U, reg_4_U }, 788);
     add_machine_instr(result, "MGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 788);
     add_machine_instr(result, "M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 788);
     add_machine_instr(result, "MFY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
@@ -747,9 +761,19 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "MSGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 791);
     add_machine_instr(result, "NIAI", mach_format::IE, { imm_4_U, imm_4_U }, 792);
     add_machine_instr(result, "NTSTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
+    add_machine_instr(result, "NCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  522);
+    add_machine_instr(result, "NCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  522);
+    add_machine_instr(result, "NNRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  796);
+    add_machine_instr(result, "NNGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  796);
+    add_machine_instr(result, "NOGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  799);
+    add_machine_instr(result, "NORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  799);
+    add_machine_instr(result, "NXRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  799); 
+    add_machine_instr(result, "NXGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799); 
     add_machine_instr(result, "OR", mach_format::RR, { reg_4_U, reg_4_U }, 794);
     add_machine_instr(result, "OGR", mach_format::RRE, { reg_4_U, reg_4_U }, 794);
     add_machine_instr(result, "ORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
+    add_machine_instr(result, "OCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802); 
+    add_machine_instr(result, "OCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U },  802); 
     add_machine_instr(result, "OGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 794);
     add_machine_instr(result, "O", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 794);
     add_machine_instr(result, "OY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 794);
@@ -771,7 +795,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "PPA", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 829);
     add_machine_instr(result, "PRNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
     add_machine_instr(result, "PPNO", mach_format::RRE, { reg_4_U, reg_4_U }, 830);
-    add_machine_instr(result, "POPCNT", mach_format::RRE, { reg_4_U, reg_4_U }, 843);
+    add_machine_instr(result, "POPCNT", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 853); 
     add_machine_instr(result, "PFD", mach_format::RXY_b, { mask_4_U, dxb_20_4x4_S }, 843);
     add_machine_instr(result, "PFDRL", mach_format::RIL_c, { mask_4_U, reg_imm_32_S }, 843);
     add_machine_instr(result, "RLL", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 845);
@@ -783,14 +807,20 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "RISBGN", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 847);
     add_machine_instr(result, "RISBHG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 848);
     add_machine_instr(result, "RISBLG", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 849);
+    add_machine_instr(result, "RNSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 845);
+    add_machine_instr(result, "RXSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 846);
+    add_machine_instr(result, "ROSBGT", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 858);
+    add_machine_instr(result, "RISBGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 858);
+    add_machine_instr(result, "RISBGNZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
+    add_machine_instr(result, "RISBHGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
+    add_machine_instr(result, "RISBLGZ", mach_format::RIE_f, { reg_4_U, reg_4_U, imm_8_S, imm_8_S, imm_8_S }, 1, 860);
     add_machine_instr(result, "SRST", mach_format::RRE, { reg_4_U, reg_4_U }, 850);
     add_machine_instr(result, "SRSTU", mach_format::RRE, { reg_4_U, reg_4_U }, 852);
     add_machine_instr(result, "SAR", mach_format::RRE, { reg_4_U, reg_4_U }, 854);
-    add_machine_instr(result, "SAM24", mach_format::E, {}, 16, 854);
-    add_machine_instr(result, "SAM31", mach_format::E, {}, 16, 854);
-    add_machine_instr(result, "SAM64", mach_format::E, {}, 16, 854);
-    add_machine_instr(result, "SIE", mach_format::S, { db_12_4_U }, 7);
-    add_machine_instr(result, "SPM", mach_format::RR, { reg_4_U }, 16, 855);
+    add_machine_instr(result, "SAM24", mach_format::E, {}, 854);
+    add_machine_instr(result, "SAM31", mach_format::E, {}, 854);
+    add_machine_instr(result, "SAM64", mach_format::E, {}, 854);
+    add_machine_instr(result, "SPM", mach_format::RR, { reg_4_U }, 855);
     add_machine_instr(result, "SLDA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 855);
     add_machine_instr(result, "SLA", mach_format::RS_a, { reg_4_U, db_12_4_U }, 856);
     add_machine_instr(result, "SLAK", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 856);
@@ -841,7 +871,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "STRVH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
     add_machine_instr(result, "STRV", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
     add_machine_instr(result, "STRVG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 871);
-    add_machine_instr(result, "SR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 871);
+    add_machine_instr(result, "SR", mach_format::RR, { reg_4_U, reg_4_U }, 871);
     add_machine_instr(result, "SGR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
     add_machine_instr(result, "SGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 871);
     add_machine_instr(result, "SRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 871);
@@ -855,7 +885,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "SGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 872);
     add_machine_instr(result, "SHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
     add_machine_instr(result, "SHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
-    add_machine_instr(result, "SLR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 873);
+    add_machine_instr(result, "SLR", mach_format::RR, { reg_4_U, reg_4_U }, 873);
     add_machine_instr(result, "SLGR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
     add_machine_instr(result, "SLGFR", mach_format::RRE, { reg_4_U, reg_4_U }, 873);
     add_machine_instr(result, "SLRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 873);
@@ -872,9 +902,9 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "SLBGR", mach_format::RRE, { reg_4_U, reg_4_U }, 875);
     add_machine_instr(result, "SLB", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
     add_machine_instr(result, "SLBG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 875);
-    add_machine_instr(result, "SVC", mach_format::I, { imm_8_U }, 16, 876);
+    add_machine_instr(result, "SVC", mach_format::I, { imm_8_U }, 876);
     add_machine_instr(result, "TS", mach_format::SI, { db_12_4_U }, 876);
-    add_machine_instr(result, "TAM", mach_format::E, {}, 16, 876);
+    add_machine_instr(result, "TAM", mach_format::E, {}, 876);
     add_machine_instr(result, "TM", mach_format::SI, { db_12_4_U, imm_8_U }, 877);
     add_machine_instr(result, "TMY", mach_format::SIY, { db_20_4_S, imm_8_U }, 877);
     add_machine_instr(result, "TMHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 877);
@@ -900,10 +930,11 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "UNPK", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 900);
     add_machine_instr(result, "UNPKA", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 901);
     add_machine_instr(result, "UNPKU", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 902);
-    add_machine_instr(result, "UPT", mach_format::E, {}, 16, 903);
+    add_machine_instr(result, "UPT", mach_format::E, {}, 903);
     add_machine_instr(result, "AP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 920);
     add_machine_instr(result, "CP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
     add_machine_instr(result, "DP", mach_format::SS_b, { db_12_4x4L_U, db_12_4x4L_U }, 921);
+    add_machine_instr(result, "DFLTCC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1714);
     add_machine_instr(result, "ED", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 922);
     add_machine_instr(result, "EDMK", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 925);
     add_machine_instr(result, "SRP", mach_format::SS_c, { db_12_4x4L_U, db_12_4_U, imm_4_U }, 926);
@@ -917,8 +948,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "TBDR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 956);
     add_machine_instr(result, "CPSDR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U }, 958);
     add_machine_instr(result, "EFPC", mach_format::RRE, { reg_4_U }, 958);
-    add_machine_instr(result, "LER", mach_format::RR, { reg_4_U, reg_4_U }, 16, 959);
-    add_machine_instr(result, "LDR", mach_format::RR, { reg_4_U, reg_4_U }, 16, 959);
+    add_machine_instr(result, "LER", mach_format::RR, { reg_4_U, reg_4_U }, 959);
+    add_machine_instr(result, "LDR", mach_format::RR, { reg_4_U, reg_4_U }, 959);
     add_machine_instr(result, "LXR", mach_format::RRE, { reg_4_U, reg_4_U }, 959);
     add_machine_instr(result, "LE", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
     add_machine_instr(result, "LD", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 959);
@@ -934,7 +965,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LZER", mach_format::RRE, { reg_4_U }, 963);
     add_machine_instr(result, "LZXR", mach_format::RRE, { reg_4_U }, 963);
     add_machine_instr(result, "LZDR", mach_format::RRE, { reg_4_U }, 963);
-    add_machine_instr(result, "PFPO", mach_format::E, {}, 16, 963);
+    add_machine_instr(result, "PFPO", mach_format::E, {}, 963);
     add_machine_instr(result, "SRNM", mach_format::S, { db_12_4_U }, 975);
     add_machine_instr(result, "SRNMB", mach_format::S, { db_12_4_U }, 975);
     add_machine_instr(result, "SRNMT", mach_format::S, { db_12_4_U }, 975);
@@ -962,6 +993,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "IAC", mach_format::RRE, { reg_4_U }, 1011);
     add_machine_instr(result, "IPK", mach_format::S, {}, 1012);
     add_machine_instr(result, "IRBM", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
+    add_machine_instr(result, "ISK", mach_format::RR, { reg_4_U, reg_4_U },  268);
     add_machine_instr(result, "ISKE", mach_format::RRE, { reg_4_U, reg_4_U }, 1012);
     add_machine_instr(result, "IVSK", mach_format::RRE, { reg_4_U, reg_4_U }, 1013);
     add_machine_instr(result, "IDTE", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1, 1014);
@@ -989,10 +1021,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "PGOUT", mach_format::RRE, { reg_4_U, reg_4_U }, 1055);
     add_machine_instr(result, "PCKMO", mach_format::RRE, {}, 1056);
     add_machine_instr(result, "PFMF", mach_format::RRE, { reg_4_U, reg_4_U }, 1059);
-    add_machine_instr(result, "PTFF", mach_format::E, {}, 16, 1063);
+    add_machine_instr(result, "PTFF", mach_format::E, {}, 1063);
     add_machine_instr(result, "PTF", mach_format::RRE, { reg_4_U }, 1071);
     add_machine_instr(result, "PC", mach_format::S, { db_12_4_U }, 1072);
-    add_machine_instr(result, "PR", mach_format::E, {}, 16, 1085);
+    add_machine_instr(result, "PR", mach_format::E, {}, 1085);
     add_machine_instr(result, "PTI", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
     add_machine_instr(result, "PT", mach_format::RRE, { reg_4_U, reg_4_U }, 1089);
     add_machine_instr(result, "PALB", mach_format::RRE, {}, 1098);
@@ -1004,12 +1036,13 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "SACF", mach_format::S, { db_12_4_U }, 1102);
     add_machine_instr(result, "SCK", mach_format::S, { db_12_4_U }, 1103);
     add_machine_instr(result, "SCKC", mach_format::S, { db_12_4_U }, 1104);
-    add_machine_instr(result, "SCKPF", mach_format::E, {}, 16, 1105);
+    add_machine_instr(result, "SCKPF", mach_format::E, {}, 1105);
     add_machine_instr(result, "SPX", mach_format::S, { db_12_4_U }, 1105);
     add_machine_instr(result, "SPT", mach_format::S, { db_12_4_U }, 1105);
     add_machine_instr(result, "SPKA", mach_format::S, { db_12_4_U }, 1106);
     add_machine_instr(result, "SSAR", mach_format::RRE, { reg_4_U }, 1107);
     add_machine_instr(result, "SSAIR", mach_format::RRE, { reg_4_U }, 1107);
+    add_machine_instr(result, "SSK", mach_format::RR, { reg_4_U, reg_4_U }, 304);
     add_machine_instr(result, "SSKE", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 1112);
     add_machine_instr(result, "SSM", mach_format::SI, { db_12_4_U }, 1115);
     add_machine_instr(result, "SIGP", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1115);
@@ -1033,7 +1066,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "TPROT", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1152);
     add_machine_instr(result, "TRACE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 1155);
     add_machine_instr(result, "TRACG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 1155);
-    add_machine_instr(result, "TRAP2", mach_format::E, {}, 16, 1156);
+    add_machine_instr(result, "TRAP2", mach_format::E, {}, 1156);
     add_machine_instr(result, "TRAP4", mach_format::S, { db_12_4_U }, 1156);
     add_machine_instr(result, "XSCH", mach_format::S, {}, 1215);
     add_machine_instr(result, "CSCH", mach_format::S, {}, 1217);
@@ -1140,20 +1173,6 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "MY", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
     add_machine_instr(result, "MYH", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
     add_machine_instr(result, "MYL", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1426);
-    add_machine_instr(result, "NCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr(result, "NCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 522);
-    add_machine_instr(result, "NNRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr(result, "NNGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 796);
-    add_machine_instr(result, "NOGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NORK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NXRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "NXGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 799);
-    add_machine_instr(result, "OCGRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr(result, "OCRK", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 802);
-    add_machine_instr(result, "SELFHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SELR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SELGR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 864);
-    add_machine_instr(result, "SORTL", mach_format::RRE, { reg_4_U, reg_4_U }, 19);
     add_machine_instr(result, "SQER", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
     add_machine_instr(result, "SQDR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
     add_machine_instr(result, "SQXR", mach_format::RRE, { reg_4_U, reg_4_U }, 1427);
@@ -1180,9 +1199,9 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1447);
     add_machine_instr(result, "KEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
     add_machine_instr(result, "KDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
+    add_machine_instr(result, "KDSA", mach_format::RRE, { reg_4_U, reg_4_U }, 1700);
     add_machine_instr(result, "KXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1448);
     add_machine_instr(result, "KDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
-    add_machine_instr(result, "KDSA", mach_format::RRE, { reg_4_U, reg_4_U }, 32, 1700);
     add_machine_instr(result, "KEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1448);
     add_machine_instr(result, "CEFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
     add_machine_instr(result, "CDFBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1449);
@@ -1224,28 +1243,29 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "DDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
     add_machine_instr(result, "DXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1457);
     add_machine_instr(result, "DEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
-    add_machine_instr(result, "DFLTCC", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 1714);
     add_machine_instr(result, "DDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1457);
     add_machine_instr(result, "DIEBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
     add_machine_instr(result, "DIDBR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1458);
-    add_machine_instr(result, "DISCS", mach_format::S, { db_12_4_U }, 265);
-    add_machine_instr(result, "ECPGA", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr(result, "ECCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
-    add_machine_instr(result, "EPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
     add_machine_instr(result, "LTEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
     add_machine_instr(result, "LTDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
     add_machine_instr(result, "LTXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
     add_machine_instr(result, "LCEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
     add_machine_instr(result, "LCDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
     add_machine_instr(result, "LCXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1461);
+    add_machine_instr(result, "ECCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
+    add_machine_instr(result, "EPCTR", mach_format::RRE, { reg_4_U, reg_4_U }, 39);
+    add_machine_instr(result, "ECPGA", mach_format::RRE, { reg_4_U, reg_4_U },  39);
     add_machine_instr(result, "FIEBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
     add_machine_instr(result, "FIDBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
     add_machine_instr(result, "FIXBR", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U }, 1462);
     add_machine_instr(result, "FIEBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
     add_machine_instr(result, "FIDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
     add_machine_instr(result, "FIXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1462);
+    add_machine_instr(result, "LSCTL", mach_format::S, { db_12_4_U }, 42);
     add_machine_instr(result, "LDEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
     add_machine_instr(result, "LXDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
+    add_machine_instr(result, "LPCTL", mach_format::S, { db_12_4_U }, 41);
+    add_machine_instr(result, "LCCTL", mach_format::S, { db_12_4_U }, 40);
     add_machine_instr(result, "LXEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1463);
     add_machine_instr(result, "LDEB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
     add_machine_instr(result, "LXDB", mach_format::RRE, { reg_4_U, reg_4_U }, 1464);
@@ -1262,6 +1282,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LEDBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
     add_machine_instr(result, "LDXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
     add_machine_instr(result, "LEXBRA", mach_format::RRF_e, { reg_4_U, mask_4_U, reg_4_U, mask_4_U }, 1465);
+    add_machine_instr(result, "LPP", mach_format::S, { db_12_4_U }, 11);
     add_machine_instr(result, "MEEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
     add_machine_instr(result, "MDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
     add_machine_instr(result, "MXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1467);
@@ -1279,6 +1300,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "MSDBR", mach_format::RRD, { reg_4_U, reg_4_U, reg_4_U }, 1468);
     add_machine_instr(result, "MSEB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
     add_machine_instr(result, "MSDB", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1468);
+    add_machine_instr(result, "QCTRI", mach_format::S, { db_12_4_U }, 43);
+    add_machine_instr(result, "QSI", mach_format::S, { db_12_4_U },  45);
+    add_machine_instr(result, "SCCTR", mach_format::RRE, { reg_4_U, reg_4_U },  46);
+    add_machine_instr(result, "SPCTR", mach_format::RRE, { reg_4_U, reg_4_U },  47);
     add_machine_instr(result, "SQEBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
     add_machine_instr(result, "SQDBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
     add_machine_instr(result, "SQXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
@@ -1289,6 +1314,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "SXBR", mach_format::RRE, { reg_4_U, reg_4_U }, 1470);
     add_machine_instr(result, "SEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
     add_machine_instr(result, "SDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1470);
+    add_machine_instr(result, "SORTL", mach_format::RRE, { reg_4_U, reg_4_U }, 19);
     add_machine_instr(result, "TCEB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
     add_machine_instr(result, "TCDB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
     add_machine_instr(result, "TCXB", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1471);
@@ -1364,6 +1390,9 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "QAXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1521);
     add_machine_instr(result, "RRDTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
     add_machine_instr(result, "RRXTR", mach_format::RRF_b, { reg_4_U, reg_4_U, reg_4_U, mask_4_U }, 1524);
+    add_machine_instr(result, "SELFHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U },  864);
+    add_machine_instr(result, "SELGR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U },  864);
+    add_machine_instr(result, "SELR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U, mask_4_U },  864);
     add_machine_instr(result, "SLDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
     add_machine_instr(result, "SLXT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
     add_machine_instr(result, "SRDT", mach_format::RXF, { reg_4_U, reg_4_U, dxb_12_4x4_U }, 1526);
@@ -1379,21 +1408,26 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "TDGDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
     add_machine_instr(result, "TDGXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
     add_machine_instr(result, "VBPERM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1536);
-    add_machine_instr(
-        result, "VCFPS", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1641);
     add_machine_instr(result, "VGEF", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1536);
+    add_machine_instr(
+        result, "VCFPS", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },1641);
+    add_machine_instr(
+        result, "VCLFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },  1611);
     add_machine_instr(result, "VGEG", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1536);
     add_machine_instr(result, "VGBM", mach_format::VRI_a, { vec_reg_4_U, imm_16_U }, 1537);
     add_machine_instr(result, "VGM", mach_format::VRI_b, { vec_reg_4_U, imm_8_U, imm_8_U, mask_4_U }, 1537);
     add_machine_instr(result, "VL", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1, 1538);
-    add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1563);
-    add_machine_instr(result, "VLBRREP", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1562);
+    add_machine_instr(result, "VSTEBRF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VSTEBRG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VLLEBRZ", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U },  1562);
     add_machine_instr(result, "VLREP", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1538);
     add_machine_instr(result, "VLR", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U }, 1538);
     add_machine_instr(result, "VLEB", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1538);
     add_machine_instr(result, "VLEBRH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VLEBRF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1561);
     add_machine_instr(result, "VLEBRG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1561);
+    add_machine_instr(result, "VLBRREP", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1562);
+    add_machine_instr(result, "VLER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1564);
+    add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1563);
     add_machine_instr(result, "VLEH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1539);
     add_machine_instr(result, "VLEIH", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1539);
     add_machine_instr(result, "VLEF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1539);
@@ -1426,15 +1460,15 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VSCEG", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1548);
     add_machine_instr(result, "VSEL", mach_format::VRR_e, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1549);
     add_machine_instr(result, "VSEG", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1549);
+    add_machine_instr(result, "VSTBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
     add_machine_instr(result, "VST", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1, 1550);
     add_machine_instr(result, "VSTEB", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTEBRH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
     add_machine_instr(result, "VSTEH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
     add_machine_instr(result, "VSTEF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
     add_machine_instr(result, "VSTEG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1578);
     add_machine_instr(result, "VSTM", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1, 1551);
-    add_machine_instr(result, "VSTEBRH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEBRF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEBRG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
     add_machine_instr(result, "VSTRLR", mach_format::VRS_d, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1551);
     add_machine_instr(result, "VSTRL", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1551);
     add_machine_instr(result, "VSTL", mach_format::VRS_b, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1552);
@@ -1446,31 +1480,12 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VACC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1558);
     add_machine_instr(
         result, "VAC", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1558);
-    add_machine_instr(result, "VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result,
         "VACCC",
         mach_format::VRR_d,
         { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
 
         1559);
-    add_machine_instr(result, "VADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-
-    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VAS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VMS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VNS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VOS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VXS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VCS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(
-        result, "VCFPL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 43);
     add_machine_instr(result, "VN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1559);
     add_machine_instr(result, "VNC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1559);
     add_machine_instr(result, "VAVG", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1560);
@@ -1484,8 +1499,6 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         result, "VCH", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1562);
     add_machine_instr(
         result, "VCHL", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1563);
-    add_machine_instr(
-        result, "VCLFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
     add_machine_instr(result, "VCLZ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1564);
     add_machine_instr(result, "VCTZ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1564);
     add_machine_instr(result, "VGFM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1565);
@@ -1539,6 +1552,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         "VMSL",
         mach_format::VRR_d,
         { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
+
         1573);
     add_machine_instr(result, "VNN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
     add_machine_instr(result, "VNO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
@@ -1546,6 +1560,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         std::make_unique<vnot_instruction>("VNOT",
             mach_format::VRR_c,
             std::vector<machine_operand_format> { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U },
+
             1574)));
     add_machine_instr(result, "VNX", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
     add_machine_instr(result, "VO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
@@ -1561,17 +1576,19 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VESRA", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1577);
     add_machine_instr(result, "VESRLV", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1578);
     add_machine_instr(result, "VESRL", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VSLDB", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1579);
     add_machine_instr(result, "VSLD", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1607);
+    add_machine_instr(result, "VSRD", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1608);
+    add_machine_instr(result, "VSLDB", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1579);
     add_machine_instr(result, "VSL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
     add_machine_instr(result, "VSLB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
     add_machine_instr(result, "VSRA", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
     add_machine_instr(result, "VSRAB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
     add_machine_instr(result, "VSRL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
-    add_machine_instr(result, "VSRD", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1608);
     add_machine_instr(result, "VSRLB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
     add_machine_instr(result, "VS", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1580);
     add_machine_instr(result, "VSCBI", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1581);
+    add_machine_instr(
+        result, "VCSFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },  1644);
     add_machine_instr(
         result, "VSBI", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1581);
     add_machine_instr(result,
@@ -1588,16 +1605,21 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         result, "VFAE", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1585);
     add_machine_instr(
         result, "VFEE", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1587);
-    add_machine_instr(
-        result, "VFENE", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1588);
+    add_machine_instr(result,
+        "VFENE",
+        mach_format::VRR_b,
+        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
+        1,
+
+        1588);
     add_machine_instr(result, "VISTR", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1589);
     add_machine_instr(result,
         "VSTRC",
         mach_format::VRR_d,
         { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
         1,
+
         1590);
-    add_machine_instr(result, "VSTBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
     add_machine_instr(result,
         "VSTRS",
         mach_format::VRR_d,
@@ -1612,6 +1634,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         "VFCE",
         mach_format::VRR_c,
         { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
+
         1601);
     add_machine_instr(result,
         "VFCH",
@@ -1625,6 +1648,12 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
 
         1605);
+    add_machine_instr(
+        result, "VCFPS", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1607);
+    add_machine_instr(
+        result, "VCFPL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1643);
+    add_machine_instr(
+        result, "VCLGD", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
     add_machine_instr(
         result, "VFD", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1613);
     add_machine_instr(
@@ -1671,22 +1700,21 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
 
         1633);
     add_machine_instr(
-        result, "VFPSO", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 35);
-    add_machine_instr(result, "VFSQ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 36);
+        result, "VFPSO", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1635);
+    add_machine_instr(result, "VFSQ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1636);
     add_machine_instr(
-        result, "VFS", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 37);
+        result, "VFS", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1637);
     add_machine_instr(
-        result, "VFTCI", mach_format::VRI_e, { vec_reg_4_U, vec_reg_4_U, imm_12_S, mask_4_U, mask_4_U }, 38);
+        result, "VFTCI", mach_format::VRI_e, { vec_reg_4_U, vec_reg_4_U, imm_12_S, mask_4_U, mask_4_U }, 1638);
     add_machine_instr(
-        result, "VAP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 43);
-    add_machine_instr(result, "VCP", mach_format::VRR_h, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 44);
-    add_machine_instr(result, "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 45);
-    add_machine_instr(result, "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 45);
-    add_machine_instr(result, "VCVD", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 46);
-    add_machine_instr(result, "VCVDG", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 46);
+        result, "VAP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1643);
+    add_machine_instr(result, "VCP", mach_format::VRR_h, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1644);
+    add_machine_instr(result, "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U }, 1645);
+    add_machine_instr(result, "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U }, 1645);
+    add_machine_instr(result, "VCVD", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
+    add_machine_instr(result, "VCVDG", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
     add_machine_instr(
-        result, "VDP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 48);
-    add_machine_instr(result, "VLLEBRZ", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1562);
+        result, "VDP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1648);
     add_machine_instr(
         result, "VMP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1650);
     add_machine_instr(
@@ -1703,11 +1731,24 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         result, "VPSOP", mach_format::VRI_g, { vec_reg_4_U, vec_reg_4_U, imm_8_U, imm_8_U, mask_4_U }, 1653);
     add_machine_instr(
         result, "VSRP", mach_format::VRI_g, { vec_reg_4_U, vec_reg_4_U, imm_8_U, imm_8_S, mask_4_U }, 1657);
-    add_machine_instr(result, "VTP", mach_format::VRR_g, { vec_reg_4_U }, 1660);
-    add_machine_instr(result, "VUPKZ", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1660);
-    add_machine_instr(
-        result, "VCSFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1644);
-
+    add_machine_instr(result, "SIE", mach_format::S, { db_12_4_U }, 7);
+    add_machine_instr(result, "VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VMDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VMADS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VMSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VCDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VAS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VMS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VNS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VOS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VXS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VCS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
@@ -1716,23 +1757,6 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VDDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VDE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VDES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VLER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTKD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VSTH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLY", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VLYD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
-    add_machine_instr(result, "VM", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMXAD", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VMXAE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VMXSE", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
@@ -1777,6 +1801,23 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VCZVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VCOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
+    add_machine_instr(result, "VTP", mach_format::VRR_g, { vec_reg_4_U }, 1660);
+    add_machine_instr(result, "VUPKZ", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1660);
+    add_machine_instr(result, "VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSDS", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSTD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSTKD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSTMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VSTH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VLD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VLH", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VLMD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VLY", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VLYD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+    add_machine_instr(result, "VM", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMAES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VMCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
@@ -1791,6 +1832,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VCES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+	
     return result;
 }
 
@@ -1841,6 +1883,15 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "JNZ", { "BRC", { { 0, 7 } } });
     add_mnemonic_code(result, "BNO", { "BC", { { 0, 14 } } });
     add_mnemonic_code(result, "JNO", { "BRC", { { 0, 14 } } });
+    add_mnemonic_code(result, "XHLR", { "RXSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "XHHR", { "RXSBG", { { 2, 0 }, { 3, 31 } } });
+    add_mnemonic_code(result, "XLHR", { "RXSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });    
+    add_mnemonic_code(result, "OHLR", { "ROSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "OHHR", { "ROSBG", { { 2, 0 }, { 3, 31 } } });
+    add_mnemonic_code(result, "OLHR", { "ROSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
+    add_mnemonic_code(result, "NHLR", { "RNSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "NHHR", { "RNSBG", { { 2, 0 }, { 3, 31 } } });
+    add_mnemonic_code(result, "NLHR", { "RNSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
     add_mnemonic_code(result, "BO", { "BC", { { 0, 1 } } });
     add_mnemonic_code(result, "BOR", { "BCR", { { 0, 1 } } });
     add_mnemonic_code(result, "BM", { "BC", { { 0, 4 } } });
@@ -1877,7 +1928,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "BRNL", { "BRC", { { 0, 11 } } });
     add_mnemonic_code(result, "BRNM", { "BRC", { { 0, 11 } } });
     add_mnemonic_code(result, "BRNH", { "BRC", { { 0, 13 } } });
-    add_mnemonic_code(result, "BRNP", { "BRC", { { 0, 13 } } });
+    add_mnemonic_code(result, "BRNP", { "BRC", { { 0, 13 } } });    
     add_mnemonic_code(result, "BRNO", { "BRC", { { 0, 14 } } });
     add_mnemonic_code(result, "BRU", { "BRC", { { 0, 15 } } });
     add_mnemonic_code(result, "JLU", { "BRCL", { { 0, 15 } } });
@@ -1905,27 +1956,12 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "JXHG", { "BRXHG", {} });
     add_mnemonic_code(result, "JXLE", { "BRXLE", {} });
     add_mnemonic_code(result, "JXLEG", { "BRXLG", {} });
-    add_mnemonic_code(result, "LHHR", { "RISBHGZ", { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LHLR", { "RISBHGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHHHR", { "RISBHGZ", { { 2, 16 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LLHHLR", { "RISBHGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLCHHR", { "RISBHGZ", { { 2, 24 }, { 3, 31 } } });
-    add_mnemonic_code(result, "LLCHLR", { "RISBHGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHFR", { "RISBLGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLHLHR", { "RISBLGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "LLCLHR", { "RISBLGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "NHLR", { "RNSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "NHHR", { "RNSBG", { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "NLHR", { "RNSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
-    add_mnemonic_code(result, "OHLR", { "ROSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "OHHR", { "ROSBG", { { 2, 0 }, { 3, 31 } } });
-    add_mnemonic_code(result, "OLHR", { "ROSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
+    add_mnemonic_code(result, "VCDG", { "VCFPS", {} });
+    add_mnemonic_code(result, "VCGD", { "VCSFP", {  } });
     add_mnemonic_code(result, "BIO", { "BIC", { { 0, 1 } } });
     add_mnemonic_code(result, "BIP", { "BIC", { { 0, 2 } } });
     add_mnemonic_code(result, "BIH", { "BIC", { { 0, 2 } } });
     add_mnemonic_code(result, "BIM", { "BIC", { { 0, 4 } } });
-    add_mnemonic_code(result, "LDRV", { "VLLEBRZ", { { 2, 3 } } });
-    add_mnemonic_code(result, "LERV", { "VLLEBRZ", { { 2, 6 } } });
     add_mnemonic_code(result, "BIL", { "BIC", { { 0, 4 } } });
     add_mnemonic_code(result, "BINZ", { "BIC", { { 0, 7 } } });
     add_mnemonic_code(result, "BINE", { "BIC", { { 0, 7 } } });
@@ -1937,6 +1973,13 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "BINH", { "BIC", { { 0, 13 } } });
     add_mnemonic_code(result, "BINO", { "BIC", { { 0, 14 } } });
     add_mnemonic_code(result, "BI", { "BIC", { { 0, 15 } } });
+    add_mnemonic_code(result, "VSTBRH", { "VSTBR", { { 2, 1 } } });
+    add_mnemonic_code(result, "VSTBRF", { "VSTBR", { { 2, 2 } } });
+    add_mnemonic_code(result, "VSTBRG", { "VSTBR", { { 2, 3 } } });
+    add_mnemonic_code(result, "VSTBRQ", { "VSTBR", { { 2, 4 } } });
+    add_mnemonic_code(result, "VSTERH", { "VSTER", { { 2, 1 } } });
+    add_mnemonic_code(result, "VSTERF", { "VSTER", { { 2, 2 } } });
+    add_mnemonic_code(result, "VSTERG", { "VSTER", { { 2, 3 } } });
     add_mnemonic_code(result, "STERV", { "VSTEBRF", { { 2, 0 } } });
     add_mnemonic_code(result, "STDRV", { "VSTEBRG", { { 2, 0 } } });
     add_mnemonic_code(result, "SELFHRE", { "SELFHR", { { 3, 8 } } });
@@ -1947,7 +1990,75 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "SELFHRNL", { "SELFHR", { { 3, 11 } } });
     add_mnemonic_code(result, "SELFHRNO", { "SELFHR", { { 3, 14 } } });
     add_mnemonic_code(result, "SELFHRO", { "SELFHR", { { 3, 1 } } });
-
+    add_mnemonic_code(result, "LHHR", { "RISBHGZ", { { 2, 0 }, { 3, 31 } } });
+    add_mnemonic_code(result, "LHLR", { "RISBHGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LLHHHR", { "RISBHGZ", { { 2, 16 }, { 3, 31 } } });
+    add_mnemonic_code(result, "LLHHLR", { "RISBHGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LLCHHR", { "RISBHGZ", { { 2, 24 }, { 3, 31 } } });
+    add_mnemonic_code(result, "LLCHLR", { "RISBHGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LLHFR", { "RISBLGZ", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LLHLHR", { "RISBLGZ", { { 2, 16 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LLCLHR", { "RISBLGZ", { { 2, 24 }, { 3, 31 }, { 4, 32 } } });
+    add_mnemonic_code(result, "LOCO", { "LOC", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCNO", { "LOC", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCGO", { "LOCG", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCGNO", { "LOCG", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCGHIH", { "LOCGHI", { { 2, 2 } } });
+    add_mnemonic_code(result, "LOCGHIL", { "LOCGHI", { { 2, 4 } } });
+    add_mnemonic_code(result, "LOCGHIE", { "LOCGHI", { { 2, 8 } } });
+    add_mnemonic_code(result, "LOCGHINE", { "LOCGHI", { { 2, 7 } } });
+    add_mnemonic_code(result, "LOCGHINL", { "LOCGHI", { { 2, 11 } } });
+    add_mnemonic_code(result, "LOCGHINH", { "LOCGHI", { { 2, 13 } } });
+    add_mnemonic_code(result, "LOCGHINO", { "LOCGHI", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCGHIO", { "LOCGHI", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCGRO", { "LOCGR", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCGRNO", { "LOCGR", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCHHIE", { "LOCHHI", { { 2, 8 } } });
+    add_mnemonic_code(result, "LOCHHIH", { "LOCHHI", { { 2, 2 } } });
+    add_mnemonic_code(result, "LOCHHIL", { "LOCHHI", { { 2, 4 } } });
+    add_mnemonic_code(result, "LOCHHINE", { "LOCHHI", { { 2, 7 } } });
+    add_mnemonic_code(result, "LOCHHINH", { "LOCHHI", { { 2, 13 } } });
+    add_mnemonic_code(result, "LOCHHINL", { "LOCHHI", { { 2, 11 } } });
+    add_mnemonic_code(result, "LOCHHINO", { "LOCHHI", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCHHIO", { "LOCHHI", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCHIE", { "LOCHI", { { 2, 8 } } });
+    add_mnemonic_code(result, "LOCHIH", { "LOCHI", { { 2, 2 } } });
+    add_mnemonic_code(result, "LOCHIL", { "LOCHI", { { 2, 4 } } });
+    add_mnemonic_code(result, "LOCHINE", { "LOCHI", { { 2, 7 } } });
+    add_mnemonic_code(result, "LOCHINH", { "LOCHI", { { 2, 13 } } });
+    add_mnemonic_code(result, "LOCHINL", { "LOCHI", { { 2, 11 } } });
+    add_mnemonic_code(result, "LOCHINO", { "LOCHI", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCHIO", { "LOCHI", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCRNO", { "LOCR", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCRO", { "LOCR", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCFHE", { "LOCFH", { { 2, 8 } } });
+    add_mnemonic_code(result, "LOCFHH", { "LOCFH", { { 2, 2 } } });
+    add_mnemonic_code(result, "LOCFHL", { "LOCFH", { { 2, 4 } } });
+    add_mnemonic_code(result, "LOCFHNE", { "LOCFH", { { 2, 7 } } });
+    add_mnemonic_code(result, "LOCFHNH", { "LOCFH", { { 2, 13 } } });
+    add_mnemonic_code(result, "LOCFHNL", { "LOCFH", { { 2, 11 } } });
+    add_mnemonic_code(result, "LOCFHNO", { "LOCFH", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCFHO", { "LOCFH", { { 2, 1 } } });
+    add_mnemonic_code(result, "LOCFHRH", { "LOCFHR", { { 2, 2 } } });
+    add_mnemonic_code(result, "LOCFHRL", { "LOCFHR", { { 2, 4 } } });
+    add_mnemonic_code(result, "LOCFHRE", { "LOCFHR", { { 2, 8 } } });
+    add_mnemonic_code(result, "LOCFHRNE", { "LOCFHR", { { 2, 7 } } });
+    add_mnemonic_code(result, "LOCFHRNH", { "LOCFHR", { { 2, 13 } } });
+    add_mnemonic_code(result, "LOCFHRNL", { "LOCFHR", { { 2, 11 } } });
+    add_mnemonic_code(result, "LOCFHRNO", { "LOCFHR", { { 2, 14 } } });
+    add_mnemonic_code(result, "LOCFHRO", { "LOCFHR", { { 2, 1 } } });
+    add_mnemonic_code(result, "STOCFHE", { "STOCFH", { { 2, 8 } } });
+    add_mnemonic_code(result, "STOCFHH", { "STOCFH", { { 2, 2 } } });
+    add_mnemonic_code(result, "STOCFHL", { "STOCFH", { { 2, 4 } } });
+    add_mnemonic_code(result, "STOCFHNE", { "STOCFH", { { 2, 7 } } });
+    add_mnemonic_code(result, "STOCFHNH", { "STOCFH", { { 2, 13 } } });
+    add_mnemonic_code(result, "STOCFHNL", { "STOCFH", { { 2, 11 } } });
+    add_mnemonic_code(result, "STOCFHNO", { "STOCFH", { { 2, 14 } } });
+    add_mnemonic_code(result, "STOCFHO", { "STOCFH", { { 2, 1 } } });
+    add_mnemonic_code(result, "STOCGNO", { "STOCG", { { 2, 14 } } });
+    add_mnemonic_code(result, "STOCGO", { "STOCG", { { 2, 1 } } });
+    add_mnemonic_code(result, "STOCNO", { "STOC", { { 2, 14 } } });
+    add_mnemonic_code(result, "STOCO", { "STOC", { { 2, 1 } } });
     add_mnemonic_code(result, "SELGRE", { "SELGR", { { 3, 8 } } });
     add_mnemonic_code(result, "SELGRH", { "SELGR", { { 3, 2 } } });
     add_mnemonic_code(result, "SELGRL", { "SELGR", { { 3, 4 } } });
@@ -1983,10 +2094,10 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VLLEZF", { "VLLEZ", { { 2, 2 } } });
     add_mnemonic_code(result, "VLLEZG", { "VLLEZ", { { 2, 3 } } });
     add_mnemonic_code(result, "VLLEZLF", { "VLLEZ", { { 2, 6 } } });
-    add_mnemonic_code(result, "VLLEBRZH", { "VLLEBRZ", { { 2, 1 } } });
-    add_mnemonic_code(result, "VLLEBRZF", { "VLLEBRZ", { { 2, 2 } } });
-    add_mnemonic_code(result, "VLLEBRZG", { "VLLEBRZ", { { 2, 3 } } });
     add_mnemonic_code(result, "VLLEBRZE", { "VLLEBRZ", { { 2, 6 } } });
+    add_mnemonic_code(result, "VLLEBRZG", { "VLLEBRZ", { { 2, 3 } } });
+    add_mnemonic_code(result, "VLLEBRZF", { "VLLEBRZ", { { 2, 2 } } });
+    add_mnemonic_code(result, "VLLEBRZH", { "VLLEBRZ", { { 2, 1 } } });
     add_mnemonic_code(result, "VLVGB", { "VLVG", { { 3, 0 } } });
     add_mnemonic_code(result, "VLVGH", { "VLVG", { { 3, 1 } } });
     add_mnemonic_code(result, "VLVGF", { "VLVG", { { 3, 2 } } });
@@ -1999,9 +2110,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VMRLH", { "VMRL", { { 3, 1 } } });
     add_mnemonic_code(result, "VMRLF", { "VMRL", { { 3, 2 } } });
     add_mnemonic_code(result, "VMRLG", { "VMRL", { { 3, 3 } } });
-    add_mnemonic_code(result, "VPKF", { "VPK", { { 3, 2 } } });
-    add_mnemonic_code(result, "VPKG", { "VPK", { { 3, 3 } } });
-    add_mnemonic_code(result, "VPKH", { "VPK", { { 3, 1 } } });
     add_mnemonic_code(result, "VPKSH", { "VPKS", { { 3, 1 }, { 4, 0 } } });
     add_mnemonic_code(result, "VPKSF", { "VPKS", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "VPKSG", { "VPKS", { { 3, 3 }, { 4, 0 } } });
@@ -2029,7 +2137,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VUPHH", { "VUPH", { { 2, 1 } } });
     add_mnemonic_code(result, "VUPHF", { "VUPH", { { 2, 2 } } });
     add_mnemonic_code(result, "VUPLHB", { "VUPLH", { { 2, 0 } } });
-    add_mnemonic_code(result, "VUPLHH", { "VUPLH", { { 2, 1 } } });
+    add_mnemonic_code(result, "VUPLHG", { "VUPLH", { { 2, 1 } } });
     add_mnemonic_code(result, "VUPLHF", { "VUPLH", { { 2, 2 } } });
     add_mnemonic_code(result, "VUPLB", { "VUPL", { { 2, 0 } } });
     add_mnemonic_code(result, "VUPLHW", { "VUPL", { { 2, 1 } } });
@@ -2074,7 +2182,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VCEQFS", { "VCEQ", { { 3, 2 }, { 4, 1 } } });
     add_mnemonic_code(result, "VCEQGS", { "VCEQ", { { 3, 3 }, { 4, 1 } } });
     add_mnemonic_code(result, "VCHB", { "VCH", { { 3, 0 }, { 4, 0 } } });
-    add_mnemonic_code(result, "VCELFB", { "VCFPL", { { 2, 0 } } });
     add_mnemonic_code(result, "VCHH", { "VCH", { { 3, 1 }, { 4, 0 } } });
     add_mnemonic_code(result, "VCHF", { "VCH", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "VCHG", { "VCH", { { 3, 3 }, { 4, 0 } } });
@@ -2090,8 +2197,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VCHLHS", { "VCHL", { { 3, 1 }, { 4, 1 } } });
     add_mnemonic_code(result, "VCHLFS", { "VCHL", { { 3, 2 }, { 4, 1 } } });
     add_mnemonic_code(result, "VCHLGS", { "VCHL", { { 3, 3 }, { 4, 1 } } });
-    add_mnemonic_code(result, "VCFEB", { "VCSFP", { { 2, 2 } } });
-    add_mnemonic_code(result, "VCLFEB", { "VCLFP", { { 2, 0 } } });
     add_mnemonic_code(result, "VCLZB", { "VCLZ", { { 2, 0 } } });
     add_mnemonic_code(result, "VCLZH", { "VCLZ", { { 2, 1 } } });
     add_mnemonic_code(result, "VCLZF", { "VCLZ", { { 2, 2 } } });
@@ -2211,12 +2316,17 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VESRLH", { "VESRL", { { 3, 1 } } });
     add_mnemonic_code(result, "VESRLF", { "VESRL", { { 3, 2 } } });
     add_mnemonic_code(result, "VESRLG", { "VESRL", { { 3, 3 } } });
+    add_mnemonic_code(result, "VCEFB", { "VCFPS", { { 2, 0 } } });
     add_mnemonic_code(result, "VSB", { "VS", { { 3, 0 } } });
     add_mnemonic_code(result, "VSH", { "VS", { { 3, 1 } } });
     add_mnemonic_code(result, "VSF", { "VS", { { 3, 2 } } });
     add_mnemonic_code(result, "VSG", { "VS", { { 3, 3 } } });
     add_mnemonic_code(result, "VSQ", { "VS", { { 3, 4 } } });
+    add_mnemonic_code(result, "VLERH", { "VLER", { { 2, 1 } } });
+    add_mnemonic_code(result, "VLERF", { "VLER", { { 2, 2 } } });
+    add_mnemonic_code(result, "VLERG", { "VLER", { { 2, 3 } } });
     add_mnemonic_code(result, "VSCBIB", { "VSCBI", { { 3, 0 } } });
+    add_mnemonic_code(result, "VCFEB", { "VCSFP", { { 2, 2 } } });
     add_mnemonic_code(result, "VSCBIH", { "VSCBI", { { 3, 1 } } });
     add_mnemonic_code(result, "VSCBIF", { "VSCBI", { { 3, 2 } } });
     add_mnemonic_code(result, "VSCBIG", { "VSCBI", { { 3, 3 } } });
@@ -2229,19 +2339,16 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VSUMGF", { "VSUMG", { { 3, 2 } } });
     add_mnemonic_code(result, "VSUMB", { "VSUM", { { 3, 0 } } });
     add_mnemonic_code(result, "VSUMH", { "VSUM", { { 3, 1 } } });
-    add_mnemonic_code(result, "VSTERH", { "VSTER", { { 2, 1 } } });
-    add_mnemonic_code(result, "VSTERF", { "VSTER", { { 2, 2 } } });
-    add_mnemonic_code(result, "VSTERG", { "VSTER", { { 2, 3 } } });
-    add_mnemonic_code(result, "VSTBRF", { "VSTBR", { { 2, 2 } } });
-    add_mnemonic_code(result, "VSTBRH", { "VSTBR", { { 2, 1 } } });
-    add_mnemonic_code(result, "VSTBRG", { "VSTBR", { { 2, 3 } } });
-    add_mnemonic_code(result, "VSTBRQ", { "VSTBR", { { 2, 4 } } });
     add_mnemonic_code(result, "VFAEB", { "VFAE", { { 3, 0 } } });
     add_mnemonic_code(result, "VFAEH", { "VFAE", { { 3, 1 } } });
     add_mnemonic_code(result, "VFAEF", { "VFAE", { { 3, 2 } } });
     add_mnemonic_code(result, "VFEEB", { "VFEE", { { 3, 0 } } });
     add_mnemonic_code(result, "VFEEH", { "VFEE", { { 3, 1 } } });
     add_mnemonic_code(result, "VFEEF", { "VFEE", { { 3, 2 } } });
+    add_mnemonic_code(result, "VLBRH", { "VLBR", { { 2, 1 } } });
+    add_mnemonic_code(result, "VLBRF", { "VLBR", { { 2, 2 } } });
+    add_mnemonic_code(result, "VLBRG", { "VLBR", { { 2, 3 } } });
+    add_mnemonic_code(result, "VLBRQ", { "VLBR", { { 2, 4 } } });
     add_mnemonic_code(result, "VFEEBS", { "VFEE", { { 3, 0 }, { 4, 1 } } });
     add_mnemonic_code(result, "VFEEGS", { "VFEE", { { 3, 1 }, { 4, 1 } } });
     add_mnemonic_code(result, "VFEEFS", { "VFEE", { { 3, 2 }, { 4, 1 } } });
@@ -2272,14 +2379,12 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VSTRCB", { "VSTRC", { { 4, 0 } } });
     add_mnemonic_code(result, "VSTRCH", { "VSTRC", { { 4, 1 } } });
     add_mnemonic_code(result, "VSTRCF", { "VSTRC", { { 4, 2 } } });
-    add_mnemonic_code(result, "VSTRSB", { "VSTRS", { { 4, 0 } } });
-    add_mnemonic_code(result, "VSTRSH", { "VSTRS", { { 4, 1 } } });
-    add_mnemonic_code(result, "VSTRSF", { "VSTRS", { { 4, 2 } } });
-    add_mnemonic_code(result, "VSTRSZB", { "VSTRS", { { 4, 0 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VSTRSZH", { "VSTRS", { { 4, 1 }, { 5, 2 } } });
-    add_mnemonic_code(result, "VSTRSZF", { "VSTRS", { { 4, 2 }, { 5, 2 } } });
+    add_mnemonic_code(result, "VLBRREPH", { "VLBRREP", { { 2, 1 } } });
+    add_mnemonic_code(result, "VLBRREPF", { "VLBRREP", { { 2, 2 } } });
+    add_mnemonic_code(result, "VLBRREPG", { "VLBRREP", { { 2, 3 } } });
     add_mnemonic_code(result, "VFASB", { "VFA", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "VFADB", { "VFA", { { 3, 3 }, { 4, 0 } } });
+    add_mnemonic_code(result, "WCDGB", { "VCFPS", { { 2, 2 } } });
     add_mnemonic_code(result, "WFASB", { "VFA", { { 3, 2 }, { 4, 8 } } });
     add_mnemonic_code(result, "WFADB", { "VFA", { { 3, 3 }, { 4, 8 } } });
     add_mnemonic_code(result, "WFAXB", { "VFA", { { 3, 4 }, { 4, 8 } } });
@@ -2288,7 +2393,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFCXB", { "WFC", { { 3, 4 }, { 4, 0 } } });
     add_mnemonic_code(result, "WFKSB", { "WFK", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "WFKDB", { "WFK", { { 3, 3 }, { 4, 0 } } });
-    add_mnemonic_code(result, "WFKXc", { "WFK", { { 3, 4 }, { 4, 0 } } });
+    add_mnemonic_code(result, "WFKXB", { "WFK", { { 3, 4 }, { 4, 0 } } });
     add_mnemonic_code(result, "VFCESB", { "VFCE", { { 3, 2 }, { 4, 0 }, { 5, 0 } } });
     add_mnemonic_code(result, "VFCESBS", { "VFCE", { { 3, 2 }, { 4, 0 }, { 5, 1 } } });
     add_mnemonic_code(result, "VFCEDB", { "VFCE", { { 3, 3 }, { 4, 0 }, { 5, 0 } } });
@@ -2309,6 +2414,11 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFKEDBS", { "VFCE", { { 3, 3 }, { 4, 12 }, { 5, 1 } } });
     add_mnemonic_code(result, "WFKEXB", { "VFCE", { { 3, 4 }, { 4, 12 }, { 5, 0 } } });
     add_mnemonic_code(result, "WFKEXBS", { "VFCE", { { 3, 4 }, { 4, 12 }, { 5, 1 } } });
+    add_mnemonic_code(result, "VSTRSB", { "VSTRS", { { 4, 0 } } });
+    add_mnemonic_code(result, "VSTRSH", { "VSTRS", { { 4, 1 } } });
+    add_mnemonic_code(result, "VSTRSF", { "VSTRS", { { 4, 2 } } });
+    add_mnemonic_code(result, "VSTRSZB", {
+        "VSTRS", { { 4, 0 } , { 5, 2 } }});
     add_mnemonic_code(result, "VFCHSB", { "VFCH", { { 3, 2 }, { 4, 0 }, { 5, 0 } } });
     add_mnemonic_code(result, "VFCHSBS", { "VFCH", { { 3, 2 }, { 4, 0 }, { 5, 1 } } });
     add_mnemonic_code(result, "VFCHDB", { "VFCH", { { 3, 3 }, { 4, 0 }, { 5, 0 } } });
@@ -2350,9 +2460,11 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFKHEXB", { "VFCHE", { { 3, 4 }, { 4, 12 }, { 5, 0 } } });
     add_mnemonic_code(result, "WFKHEXBS", { "VFCHE", { { 3, 4 }, { 4, 12 }, { 5, 1 } } });
     add_mnemonic_code(result, "VCDGB", { "VCFPS", { { 2, 3 } } });
+    add_mnemonic_code(result, "VCDLG", { "VCFPL", { } });
     add_mnemonic_code(result, "VCDLGB", { "VCFPL", { { 2, 3 } } });
     add_mnemonic_code(result, "VCGDB", { "VCSFP", { { 2, 3 } } });
-    add_mnemonic_code(result, "VCLGDB", { "VCLFP", { { 2, 3 } } });
+    add_mnemonic_code(result, "VCLGDB", { "VCLGD", { { 2, 3 } } });
+    add_mnemonic_code(result, "VCLFEB", { "VCLFP", { { 2, 0 } } });
     add_mnemonic_code(result, "VFDSB", { "VFD", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "WFDSB", { "VFD", { { 3, 2 }, { 4, 8 } } });
     add_mnemonic_code(result, "VFDDB", { "VFD", { { 3, 3 }, { 4, 0 } } });
@@ -2360,13 +2472,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFDXB", { "VFD", { { 3, 4 }, { 4, 8 } } });
     add_mnemonic_code(result, "VFISB", { "VFI", { { 2, 2 } } });
     add_mnemonic_code(result, "VFIDB", { "VFI", { { 2, 3 } } });
-    add_mnemonic_code(result, "VLBRH", { "VLBR", { { 2, 1 } } });
-    add_mnemonic_code(result, "VLBRF", { "VLBR", { { 2, 2 } } });
-    add_mnemonic_code(result, "VLBRG", { "VLBR", { { 2, 3 } } });
-    add_mnemonic_code(result, "VLBRQ", { "VLBR", { { 2, 4 } } });
-    add_mnemonic_code(result, "VLBRREPH", { "VLBRREP", { { 2, 1 } } });
-    add_mnemonic_code(result, "VLBRREPF", { "VLBRREP", { { 2, 2 } } });
-    add_mnemonic_code(result, "VLBRREPG", { "VLBRREP", { { 2, 3 } } });
     add_mnemonic_code(result, "VLDE", { "VFLL", {} });
     add_mnemonic_code(result, "VLDEB", { "VFLL", { { 2, 2 }, { 3, 0 } } });
     add_mnemonic_code(result, "WLDEB", { "VFLL", { { 2, 2 }, { 3, 8 } } });
@@ -2375,9 +2480,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFLLD", { "VFLL", { { 2, 3 }, { 3, 8 } } });
     add_mnemonic_code(result, "VLED", { "VFLR", {} });
     add_mnemonic_code(result, "VLEDB", { "VFLR", { { 2, 3 } } });
-    add_mnemonic_code(result, "VLERH", { "VLER", { { 2, 1 } } });
-    add_mnemonic_code(result, "VLERF", { "VLER", { { 2, 2 } } });
-    add_mnemonic_code(result, "VLERG", { "VLER", { { 2, 3 } } });
     add_mnemonic_code(result, "VFLRD", { "VFLR", { { 2, 3 } } });
     add_mnemonic_code(result, "VFMAXSB", { "VFMAX", { { 3, 2 }, { 4, 0 } } });
     add_mnemonic_code(result, "VFMAXDB", { "VFMAX", { { 3, 3 }, { 4, 0 } } });
@@ -2417,10 +2519,21 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VFPSOSB", { "VFPSO", { { 2, 2 }, { 3, 0 } } });
     add_mnemonic_code(result, "WFPSOSB", { "VFPSO", { { 2, 2 }, { 3, 8 } } });
     add_mnemonic_code(result, "VFLCSB", { "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 0 } } });
+    add_mnemonic_code(result, "VCELFB", { "VCFPL", { { 2, 0 } } });
+    add_mnemonic_code(result, "VLLEBRZH", { "VLLEBRZ", { { 2, 1 } } });
+    add_mnemonic_code(result, "VLLEBRZF", { "VLLEBRZ", { { 2, 2 } } });
+    add_mnemonic_code(result, "VLLEBRZG", { "VLLEBRZ", { { 2, 3 } } });
+    add_mnemonic_code(result, "VLLEBRZE", { "VLLEBRZ", { { 2, 6 } } });
+    add_mnemonic_code(result, "LDRV", { "VLLEBRZ", { { 2, 3 } } });
+    add_mnemonic_code(result, "LERV", { "VLLEBRZ", { { 2, 6 } } });
+    add_mnemonic_code(result, "VPKF", { "VPK", { { 3, 2 } } });
+    add_mnemonic_code(result, "VPKG", { "VPK", { { 3, 3 } } });
+    add_mnemonic_code(result, "VPKH", { "VPK", { { 3, 1 } } });
     add_mnemonic_code(result, "WFLCSB", { "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 0 } } });
     add_mnemonic_code(result, "VFLNSB", { "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 1 } } });
     add_mnemonic_code(result, "WFLNSB", { "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 1 } } });
     add_mnemonic_code(result, "VFLPSB", { "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 2 } } });
+   
     add_mnemonic_code(result, "WFLPSB", { "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 2 } } });
     add_mnemonic_code(result, "VFPSODB", { "VFPSO", { { 2, 3 }, { 3, 0 } } });
     add_mnemonic_code(result, "WFPSODB", { "VFPSO", { { 2, 3 }, { 3, 8 } } });
@@ -2449,10 +2562,10 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFTCISB", { "VFTCI", { { 3, 2 }, { 4, 8 } } });
     add_mnemonic_code(result, "WFTCIDB", { "VFTCI", { { 3, 3 }, { 4, 8 } } });
     add_mnemonic_code(result, "WFTCIXB", { "VFTCI", { { 3, 4 }, { 4, 8 } } });
-    add_mnemonic_code(result, "VCEFB", { "VCFPS", { { 2, 0 } } });
-    add_mnemonic_code(result, "XHLR", { "RXSBG", { { 2, 0 }, { 3, 31 }, { 4, 32 } } });
-    add_mnemonic_code(result, "XLHR", { "RXSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
+   
+  
     add_mnemonic_code(result, "XHHR", { "RXSBG", { { 2, 0 }, { 3, 31 } } });
+    add_mnemonic_code(result, "XLHR", { "RXSBG", { { 2, 32 }, { 3, 63 }, { 4, 32 } } });
     // instruction under this position contain an OR operation not marked in this list
 
     // in case the operand is ommited, the OR number should be assigned to the value of the ommited operand
@@ -2478,30 +2591,19 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "WFISB", { "VFI", { { 2, 2 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WFIDB", { "VFI", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WFIXB", { "VFI", { { 2, 4 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCDGB", { "VCFPS", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WCDLGB", { "VCFPL", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WCGDB", { "VCSFP", { { 2, 3 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCLGDB", { "VCLFP", { { 2, 3 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCELFB", { "VCFPL", { { 2, 2 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCLFEB", { "VCLFP", { { 2, 2 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCEFB", { "VCFPS", { { 2, 2 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCDGB", { "VCFPS", { { 2, 3 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCFEB", { "VCSFP", { { 2, 2 } } }); // operand with index 3 ORed with 8
+    add_mnemonic_code(result, "WCLGDB", { "VCLGD", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WLEDB", { "VFLR", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WFLRD", { "VFLR", { { 2, 3 } } }); // operand with index 3 ORed with 8
     add_mnemonic_code(result, "WFLRX", { "VFLR", { { 2, 4 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCEFB", { "VCFPS", { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCELFB", { "VCFPL", { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCLFEB", { "VCLFP", { { 2, 2 } } }); // operand with index 3 ORed with 8
-    add_mnemonic_code(result, "WCFEB", { "VCSFP", { { 2, 2 } } }); // operand with index 3 ORed with 8
-
-    // instruction under this position contain an add operation not marked in this list
-    add_mnemonic_code(result,
-        "RISBGZ",
-        { "RISBG", {} }); // operand with index 3 added with 128(RISBGZ R1,R2,I3,I4,I5 RISBG R1,R2,I3,I4+128,I5)
-    add_mnemonic_code(result, "RISBGNZ", { "RISBGN", {} }); // operand with index 3 added with 128
-    add_mnemonic_code(result, "RISBHGZ", { "RISBHG", {} }); // operand with index 3 added with 128
-    add_mnemonic_code(result, "RISBLGZ", { "RISBLG", {} }); // operand with index 3 added with 128
-    add_mnemonic_code(result, "RNSBGT", { "RNSBG", {} }); // operand with index 3 added with 128
-    add_mnemonic_code(result, "ROSBGT", { "ROSBG", {} }); // operand with index 3 added with 128
-    add_mnemonic_code(result, "RXSBGT", { "RXSBGT", {} }); // operand with index 3 added with 128
-
-    // mnemonics not in principles
+                                                                                                                                    
+     // mnemonics not in principles
     add_mnemonic_code(result, "CIJE", { "CIJ", { { 2, 8 } } });
     add_mnemonic_code(result, "CIJH", { "CIJ", { { 2, 2 } } });
     add_mnemonic_code(result, "CIJL", { "CIJ", { { 2, 4 } } });
@@ -2658,66 +2760,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "CRTNE", { "CRT", { { 2, 6 } } });
     add_mnemonic_code(result, "CRTNH", { "CRT", { { 2, 12 } } });
     add_mnemonic_code(result, "CRTNL", { "CRT", { { 2, 10 } } });
-    add_mnemonic_code(result, "LOCO", { "LOC", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCNO", { "LOC", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGO", { "LOCG", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGNO", { "LOCG", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGHIH", { "LOCGHI", { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCGHIL", { "LOCGHI", { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCGHIE", { "LOCGHI", { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCGHINE", { "LOCGHI", { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCGHINL", { "LOCGHI", { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCGHINH", { "LOCGHI", { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCGHINO", { "LOCGHI", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCGHIO", { "LOCGHI", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGRO", { "LOCGR", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCGRNO", { "LOCGR", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHHIE", { "LOCHHI", { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCHHIH", { "LOCHHI", { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCHHIL", { "LOCHHI", { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCHHINE", { "LOCHHI", { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCHHINH", { "LOCHHI", { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCHHINL", { "LOCHHI", { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCHHINO", { "LOCHHI", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHHIO", { "LOCHHI", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCHIE", { "LOCHI", { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCHIH", { "LOCHI", { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCHIL", { "LOCHI", { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCHINE", { "LOCHI", { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCHINH", { "LOCHI", { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCHINL", { "LOCHI", { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCHINO", { "LOCHI", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCHIO", { "LOCHI", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCRNO", { "LOCR", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCRO", { "LOCR", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCFHE", { "LOCFH", { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCFHH", { "LOCFH", { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCFHL", { "LOCFH", { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCFHNE", { "LOCFH", { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCFHNH", { "LOCFH", { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCFHNL", { "LOCFH", { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCFHNO", { "LOCFH", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCFHO", { "LOCFH", { { 2, 1 } } });
-    add_mnemonic_code(result, "LOCFHRH", { "LOCFHR", { { 2, 2 } } });
-    add_mnemonic_code(result, "LOCFHRL", { "LOCFHR", { { 2, 4 } } });
-    add_mnemonic_code(result, "LOCFHRE", { "LOCFHR", { { 2, 8 } } });
-    add_mnemonic_code(result, "LOCFHRNE", { "LOCFHR", { { 2, 7 } } });
-    add_mnemonic_code(result, "LOCFHRNH", { "LOCFHR", { { 2, 13 } } });
-    add_mnemonic_code(result, "LOCFHRNL", { "LOCFHR", { { 2, 11 } } });
-    add_mnemonic_code(result, "LOCFHRNO", { "LOCFHR", { { 2, 14 } } });
-    add_mnemonic_code(result, "LOCFHRO", { "LOCFHR", { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCFHE", { "STOCFH", { { 2, 8 } } });
-    add_mnemonic_code(result, "STOCFHH", { "STOCFH", { { 2, 2 } } });
-    add_mnemonic_code(result, "STOCFHL", { "STOCFH", { { 2, 4 } } });
-    add_mnemonic_code(result, "STOCFHNE", { "STOCFH", { { 2, 7 } } });
-    add_mnemonic_code(result, "STOCFHNH", { "STOCFH", { { 2, 13 } } });
-    add_mnemonic_code(result, "STOCFHNL", { "STOCFH", { { 2, 11 } } });
-    add_mnemonic_code(result, "STOCFHNO", { "STOCFH", { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCFHO", { "STOCFH", { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCGNO", { "STOCG", { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCGO", { "STOCG", { { 2, 1 } } });
-    add_mnemonic_code(result, "STOCNO", { "STOC", { { 2, 14 } } });
-    add_mnemonic_code(result, "STOCO", { "STOC", { { 2, 1 } } });
     add_mnemonic_code(result, "LOCGE", { "LOCG", { { 2, 8 } } });
     add_mnemonic_code(result, "LOCGH", { "LOCG", { { 2, 2 } } });
     add_mnemonic_code(result, "LOCGL", { "LOCG", { { 2, 4 } } });

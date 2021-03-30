@@ -185,11 +185,12 @@ public:
         mach_format format,
         std::vector<checking::machine_operand_format> operands,
         int no_optional,
+
         size_t page_no)
         : instr_name(name)
         , format(format)
         , operands(operands)
-        , size_for_alloc((size_t)format)
+        , size_for_alloc(get_length_by_format(format))
         , no_optional(no_optional)
         , page_no(page_no) {};
     machine_instruction(const std::string& name,
@@ -200,7 +201,11 @@ public:
     {}
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
-
+    const int& get_length_by_format(mach_format instruction_format)
+    {
+        int value = static_cast<int>(instruction_format);
+        return value;
+    }
     virtual bool check(const std::string& name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
