@@ -252,8 +252,9 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name, asm_option asm_options)
-    : opencode_file_name_(file_name)
+hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, id_storage init_ids)
+    : ids_(std::move(init_ids))
+    , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
@@ -335,6 +336,8 @@ void hlasm_context::pop_statement_processing()
 }
 
 id_storage& hlasm_context::ids() { return ids_; }
+
+id_storage hlasm_context::move_ids() { return std::move(ids_); };
 
 const hlasm_context::instruction_storage& hlasm_context::instruction_map() const { return instruction_map_; }
 
@@ -744,6 +747,14 @@ copy_member_ptr hlasm_context::add_copy_member(
     visited_files_.insert(std::move(definition_location.file));
 
     return copydef;
+}
+
+
+copy_member_ptr hlasm_context::get_copy_member(id_index member) const
+{
+    if (auto it = copy_members_.find(member); it != copy_members_.end())
+        return it->second;
+    return nullptr;
 }
 
 void hlasm_context::enter_copy_member(id_index member_name)

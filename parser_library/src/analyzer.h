@@ -55,7 +55,8 @@ public:
     analyzer(const std::string& text,
         std::string file_name = "",
         workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
-        bool collect_hl_info = false);
+        bool collect_hl_info = false,
+        context::id_storage ids_init = {});
 
     analyzing_context context();
     context::hlasm_context& hlasm_ctx();

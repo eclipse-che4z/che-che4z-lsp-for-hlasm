@@ -42,7 +42,12 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 {
-    analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
+    if (analyzer_)
+        analyzer_ = std::make_unique<analyzer>(
+            get_text(), get_file_name(), lib_provider, get_lsp_editing(), analyzer_->hlasm_ctx().move_ids());
+    else
+        analyzer_ = std::make_unique<analyzer>(
+            get_text(), get_file_name(), lib_provider, get_lsp_editing());
 
     auto old_dep = dependencies_;
 
@@ -67,13 +72,20 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
     return res;
 }
 
+struct macro_cache_key
+{
+    library_data data;
+    std::string opencode_name;
+    version_t file_version;
+    std::vector<context::opcode_t> opsyn_state;
+};
 
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
-
+    analyzer_ = std::make_unique<analyzer>(
+        get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    
     return parse_inner(*analyzer_);
 }
 

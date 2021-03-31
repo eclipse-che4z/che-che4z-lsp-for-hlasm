@@ -85,7 +85,7 @@ class hlasm_context
     bool is_opcode(id_index symbol) const;
 
 public:
-    hlasm_context(std::string file_name = "", asm_option asm_opts = {});
+    hlasm_context(std::string file_name = "", asm_option asm_opts = {}, id_storage init_ids = {});
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;
@@ -126,6 +126,7 @@ public:
 
     // index storage
     id_storage& ids();
+    id_storage move_ids();
 
     // map of instructions
     const instruction_storage& instruction_map() const;
@@ -198,6 +199,7 @@ public:
     const copy_member_storage& copy_members();
     // registers new copy member
     copy_member_ptr add_copy_member(id_index member, statement_block definition, location definition_location);
+    copy_member_ptr get_copy_member(id_index member) const;
     // enters a copy member
     void enter_copy_member(id_index member);
     // leaves current copy member

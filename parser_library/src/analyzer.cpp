@@ -44,12 +44,15 @@ analyzer::analyzer(const std::string& text,
     parser_->addErrorListener(&listener_);
 }
 
-analyzer::analyzer(
-    const std::string& text, std::string file_name, parse_lib_provider& lib_provider, bool collect_hl_info)
+analyzer::analyzer(const std::string& text,
+    std::string file_name,
+    parse_lib_provider& lib_provider,
+    bool collect_hl_info,
+    id_storage ids_init)
     : analyzer(text,
         file_name,
-        analyzing_context {
-            std::make_unique<context::hlasm_context>(file_name, lib_provider.get_asm_options(file_name)),
+        analyzing_context { std::make_unique<context::hlasm_context>(
+                                file_name, lib_provider.get_asm_options(file_name), std::move(ids_init)),
             std::make_unique<lsp::lsp_context>() },
         lib_provider,
         library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
