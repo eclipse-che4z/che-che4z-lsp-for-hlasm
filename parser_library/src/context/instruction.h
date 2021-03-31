@@ -24,7 +24,6 @@
 #include "checking/instr_operand.h"
 #include "diagnostic.h"
 #include "id_storage.h"
-
 namespace hlasm_plugin {
 namespace parser_library {
 namespace context {
@@ -32,84 +31,88 @@ namespace context {
 // all mach_format types for operands of machine instructions:
 enum class mach_format
 {
-    E = 16,
-    I = 16,
-    IE = 32,
-    MII = 48,
-    RI_a = 32,
-    RI_b = 32,
-    RI_c = 32,
-    RIE_a = 48,
-    RIE_b = 48,
-    RIE_c = 48,
-    RIE_d = 48,
-    RIE_e = 48,
-    RIE_f = 48,
-    RIE_g = 48,
-    RIL_a = 48,
-    RIL_b = 48,
-    RIL_c = 48,
-    RIS = 48,
-    RR = 16,
-    RRD = 32,
-    RRE = 32,
-    RRF_a = 32,
-    RRF_b = 32,
-    RRF_c = 32,
-    RRF_d = 32,
-    RRF_e = 32,
-    RRS = 48,
-    RS_a = 32,
-    RS_b = 32,
-    RSI = 32,
-    RSL_a = 48,
-    RSL_b = 48,
-    RSY_a = 48,
-    RSY_b = 48,
-    RX_a = 32,
-    RX_b = 32,
-    RXE = 48,
-    RXF = 48,
-    RXY_a = 48,
-    RXY_b = 48,
-    S = 32,
-    SI = 32,
-    SIL = 48,
-    SIY = 48,
-    SMI = 48,
-    SS_a = 48,
-    SS_b = 48,
-    SS_c = 48,
-    SS_d = 48,
-    SS_e = 48,
-    SS_f = 48,
-    SSE = 48,
-    SSF = 48,
-    VRI_a = 48,
-    VRI_b = 48,
-    VRI_c = 48,
-    VRI_d = 48,
-    VRI_e = 48,
-    VRI_f = 48,
-    VRR_a = 48,
-    VRR_b = 48,
-    VRR_c = 48,
-    VRR_d = 48,
-    VRR_e = 48,
-    VRR_f = 48,
-    VRS_a = 48,
-    VRS_b = 48,
+    E,
+    I,
+    RR,
+
+
+    IE,
+    RRD,
+    RRE,
+    RRF_a,
+    RRF_b,
+    RRF_c,
+    RRF_d,
+    RRF_e,
+    RI_a,
+    RI_b,
+    RI_c,
+    RS_a,
+    RS_b,
+    RSI,
+    RX_a,
+    RX_b,
+    S,
+    SI,
+
+
+    MII,
+    RIE_a,
+    RIE_b,
+    RIE_c,
+    RIE_d,
+    RIE_e,
+    RIE_f,
+    RIE_g,
+    RIL_a,
+    RIL_b,
+    RIL_c,
+    RIS,
+    RRS,
+    RSL_a,
+    RSL_b,
+    RSY_a,
+    RSY_b,
+    RXE,
+    RXF,
+    RXY_a,
+    RXY_b,
+    SIL,
+    SIY,
+    SMI,
+    SS_a,
+    SS_b,
+    SS_c,
+    SS_d,
+    SS_e,
+    SS_f,
+    SSE,
+    SSF,
+    VRI_a,
+    VRI_b,
+    VRI_c,
+    VRI_d,
+    VRI_e,
+    VRI_f,
+    VRR_a,
+    VRR_b,
+    VRR_c,
+    VRR_d,
+    VRR_e,
+    VRR_f,
+    VRS_a,
+    VRS_b,
     VRS_c,
-    VRV = 48,
-    VRX = 48,
-    VRI_g = 48,
-    VRI_h = 48,
-    VRI_i = 48,
-    VRR_g = 48,
-    VRR_h = 48,
-    VRR_i = 48,
-    VRS_d = 48,
-    VSI = 48
+    VRV,
+    VRX,
+    VRI_g,
+    VRI_h,
+    VRI_i,
+    VRR_g,
+    VRR_h,
+    VRR_i,
+    VRS_d,
+    VSI
 };
 
 const checking::parameter empty = { false, 0, checking::machine_operand_type::NONE };
@@ -169,7 +172,9 @@ const checking::machine_operand_format reg_imm_12_S = checking::machine_operand_
 const checking::machine_operand_format reg_imm_16_S = checking::machine_operand_format(reg_imm_16s, empty, empty);
 const checking::machine_operand_format reg_imm_24_S = checking::machine_operand_format(reg_imm_24s, empty, empty);
 const checking::machine_operand_format reg_imm_32_S = checking::machine_operand_format(reg_imm_32s, empty, empty);
-
+const int length_sixteen_interval = 3;
+const int length_thirtytwo_interval = 21;
+const int length_fortyeight_interval = 78;
 // machine instruction representation for checking
 class machine_instruction
 {
@@ -201,10 +206,21 @@ public:
     {}
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
-    const int& get_length_by_format(mach_format instruction_format)
+    int get_length_by_format(mach_format instruction_format)
     {
-        int value = static_cast<int>(instruction_format);
-        return value;
+        auto interval = (int)(instruction_format);
+        if (interval < length_sixteen_interval)
+        {
+            return 16;
+        }
+        if (interval < length_thirtytwo_interval)
+        {
+            return 32;
+        }
+        if (interval < length_fortyeight_interval)
+        {
+            return 48;
+        }
     }
     virtual bool check(const std::string& name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
