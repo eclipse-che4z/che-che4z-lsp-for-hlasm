@@ -2532,7 +2532,6 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "VFLNSB", { "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 1 } } });
     add_mnemonic_code(result, "WFLNSB", { "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 1 } } });
     add_mnemonic_code(result, "VFLPSB", { "VFPSO", { { 2, 2 }, { 3, 0 }, { 4, 2 } } });
-
     add_mnemonic_code(result, "WFLPSB", { "VFPSO", { { 2, 2 }, { 3, 8 }, { 4, 2 } } });
     add_mnemonic_code(result, "VFPSODB", { "VFPSO", { { 2, 3 }, { 3, 0 } } });
     add_mnemonic_code(result, "WFPSODB", { "VFPSO", { { 2, 3 }, { 3, 8 } } });

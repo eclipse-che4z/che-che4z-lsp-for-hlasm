@@ -206,7 +206,8 @@ public:
     {}
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
-    int get_length_by_format(mach_format instruction_format)
+
+    int get_length_by_format(mach_format instruction_format) const
     {
         auto interval = (int)(instruction_format);
         if (interval < length_sixteen_interval)
