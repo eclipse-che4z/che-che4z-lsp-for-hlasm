@@ -72,15 +72,6 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(WITH_LIBCXX Off)
 endif()
 
-if(APPLE)
-  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-endif()
-
-#Check whether maven is installed and in path
-find_program(MVN_RETURN mvn)
-if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
-    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
-endif()
 #Check whether npm is installed and in path
 find_program(NPM_RETURN npm)
 if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")

@@ -18,6 +18,16 @@ FIND_PACKAGE(Git REQUIRED)
 # only JRE required
 FIND_PACKAGE(Java COMPONENTS Runtime REQUIRED)
 
+if(APPLE)
+  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+endif()
+
+#Check whether maven is installed and in path
+find_program(MVN_RETURN mvn)
+if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
+    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
+endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(UUID REQUIRED uuid)
