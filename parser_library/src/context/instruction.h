@@ -170,7 +170,7 @@ const checking::machine_operand_format reg_imm_12_S = checking::machine_operand_
 const checking::machine_operand_format reg_imm_16_S = checking::machine_operand_format(reg_imm_16s, empty, empty);
 const checking::machine_operand_format reg_imm_24_S = checking::machine_operand_format(reg_imm_24s, empty, empty);
 const checking::machine_operand_format reg_imm_32_S = checking::machine_operand_format(reg_imm_32s, empty, empty);
-//intervals dividing formats based on length
+// intervals dividing formats based on length
 const int length_sixteen_interval = 3;
 const int length_thirtytwo_interval = 21;
 const int length_fortyeight_interval = 78;
