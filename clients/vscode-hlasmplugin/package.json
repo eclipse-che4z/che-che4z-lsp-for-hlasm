@@ -314,7 +314,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "HLASM plugin configuration",
+      "title": "HLASM language support configuration",
       "properties": {
         "hlasm.arguments": {
           "type": "array",
