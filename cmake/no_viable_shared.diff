@@ -15,13 +15,13 @@ index 2c5e737..6b968d8 100644
  add_custom_target(make_lib_output_dir ALL
 @@ -74,7 +74,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
  endif()
-
+ 
  set(static_lib_suffix "")
 -if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 +if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR EMSCRIPTEN)
    set(static_lib_suffix "-static")
  endif()
-
+ 
 diff --git a/runtime/Cpp/runtime/src/NoViableAltException.cpp b/runtime/Cpp/runtime/src/NoViableAltException.cpp
 index ced7f82..83fb78b 100755
 --- a/runtime/Cpp/runtime/src/NoViableAltException.cpp
