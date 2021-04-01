@@ -29,13 +29,13 @@ namespace parser_library {
 namespace context {
 
 // all mach_format types for operands of machine instructions:
+// formats with length 16 are arranged in range (0,3),formats with length 32 are arranged in range(4,20),formats with
+// length 48 are arranged in range (21,77)
 enum class mach_format
 {
     E,
     I,
     RR,
-
-
     IE,
     RRD,
     RRE,
@@ -54,8 +54,6 @@ enum class mach_format
     RX_b,
     S,
     SI,
-
-
     MII,
     RIE_a,
     RIE_b,
@@ -172,6 +170,7 @@ const checking::machine_operand_format reg_imm_12_S = checking::machine_operand_
 const checking::machine_operand_format reg_imm_16_S = checking::machine_operand_format(reg_imm_16s, empty, empty);
 const checking::machine_operand_format reg_imm_24_S = checking::machine_operand_format(reg_imm_24s, empty, empty);
 const checking::machine_operand_format reg_imm_32_S = checking::machine_operand_format(reg_imm_32s, empty, empty);
+//intervals dividing formats based on length
 const int length_sixteen_interval = 3;
 const int length_thirtytwo_interval = 21;
 const int length_fortyeight_interval = 78;

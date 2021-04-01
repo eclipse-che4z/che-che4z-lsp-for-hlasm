@@ -2756,6 +2756,10 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "CRTNE", { "CRT", { { 2, 6 } } });
     add_mnemonic_code(result, "CRTNH", { "CRT", { { 2, 12 } } });
     add_mnemonic_code(result, "CRTNL", { "CRT", { { 2, 10 } } });
+    // operand with index 2 was omitted for the below instruction
+    add_mnemonic_code(result, "NOTR", { "NORK", { { 2, 0 } } });
+    // operand with index 2 was omitted for the below instruction
+    add_mnemonic_code(result, "NOTGR", { "NOGRK", { { 2, 0 } } });
     add_mnemonic_code(result, "LOCGE", { "LOCG", { { 2, 8 } } });
     add_mnemonic_code(result, "LOCGH", { "LOCG", { { 2, 2 } } });
     add_mnemonic_code(result, "LOCGL", { "LOCG", { { 2, 4 } } });
