@@ -29,7 +29,7 @@ namespace parser_library {
 namespace context {
 
 // all mach_format types for operands of machine instructions:
-// formats with length 16 are arranged in range (0,3),formats with length 32 are arranged in range(4,20),formats with
+// formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
 // length 48 are arranged in range (21,77)
 enum class mach_format
 {
