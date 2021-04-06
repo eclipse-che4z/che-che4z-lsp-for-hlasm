@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Broadcom.
+# Copyright (c) 2021 Broadcom.
 # The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 #
 # This program and the accompanying materials are made
@@ -10,10 +10,10 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-foreach( src_file ${GENERATED_SRC} )
-      set_source_files_properties(
-          ${src_file}
-          PROPERTIES
-          GENERATED TRUE
-          )
-endforeach( src_file ${GENERATED_SRC} )
+target_sources(parser_library PRIVATE
+	lsp_analyzer.cpp
+	lsp_analyzer.h
+	occurence_collector.cpp
+	occurence_collector.h
+	statement_analyzer.h
+)

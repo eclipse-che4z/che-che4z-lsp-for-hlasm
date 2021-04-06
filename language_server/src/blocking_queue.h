@@ -22,13 +22,21 @@
 #include <optional>
 
 namespace hlasm_plugin::language_server {
-template<typename T>
+
+enum class blocking_queue_termination_policy : bool
+{
+    drop_elements,
+    process_elements,
+};
+
+template<typename T,
+    blocking_queue_termination_policy termination_policy = blocking_queue_termination_policy::drop_elements>
 class blocking_queue
 {
     std::mutex mutex;
     std::condition_variable cond_var;
     std::deque<T> queue;
-    std::atomic<bool> terminated = false;
+    bool terminated = false;
 
 public:
     void push(T&& t)
@@ -62,10 +70,15 @@ public:
 
     std::optional<T> pop()
     {
+        constexpr const auto drop = blocking_queue_termination_policy::drop_elements;
+        constexpr const auto process = blocking_queue_termination_policy::process_elements;
+
         std::unique_lock g(mutex);
         cond_var.wait(g, [this] { return queue.size() || terminated; });
-        if (terminated)
+
+        if ((termination_policy == drop && terminated) || (termination_policy == process && queue.size() == 0))
             return std::nullopt;
+
         std::optional<T> result = std::move(queue.front());
         queue.pop_front();
 
@@ -74,7 +87,10 @@ public:
 
     void terminate()
     {
+        std::unique_lock g(mutex);
         terminated = true;
+        g.unlock();
+
         cond_var.notify_one();
     }
 };

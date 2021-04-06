@@ -18,9 +18,8 @@
 #include <map>
 #include <string>
 
-#include "json.hpp"
-
 #include "common_types.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {

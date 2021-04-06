@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_JSON_QUEUE_CHANNEL_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_JSON_QUEUE_CHANNEL_H
 
-#include "json.hpp"
 #include "json_channel.h"
 
 #include "blocking_queue.h"

@@ -10,7 +10,8 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 PROJECT(HlasmServer)
 
@@ -71,85 +72,15 @@ if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(WITH_LIBCXX Off)
 endif()
 
-
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(UUID REQUIRED uuid)
-endif()
-if(APPLE)
-  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-endif()
-
-#Check whether maven is installed and in path
-find_program(MVN_RETURN mvn)
-if(MVN_RETURN MATCHES "MVN_RETURN-NOTFOUND")
-    message(FATAL_ERROR "Cannot find mvn. Are you sure maven is installed and in the path?" )
-endif()
 #Check whether npm is installed and in path
 find_program(NPM_RETURN npm)
 if(NPM_RETURN MATCHES "NPM_RETURN-NOTFOUND")
     message(FATAL_ERROR "Cannot find npm. Are you sure npm is installed and in the path?" )
 endif()
 
-if (MSVC_VERSION)
-  string(REGEX REPLACE " /W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4251 /wd4996")
-  set(MY_CXX_WARNING_FLAGS "  /w35038")
-else()
-  set(MY_CXX_WARNING_FLAGS "  -Wall -Wextra -Wno-attributes -Wno-unknown-pragmas")
-endif()
+LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-set(CMAKE_CXX_FLAGS                  "${CMAKE_CXX_FLAGS} ${MY_CXX_WARNING_FLAGS}")
-string(REGEX REPLACE " /Ob[0-4]" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-string(REGEX REPLACE " /Ob[0-4]" "" CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}")
-string(REGEX REPLACE " /Ob[0-4]" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-string(REGEX REPLACE " /Ob[0-4]" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-
-if (MSVC_VERSION)
-  if(WITH_STATIC_CRT)
-    set(CompilerFlags
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELEASE
-        )
-    foreach(CompilerFlag ${CompilerFlags})
-      string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-
-      string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-    endforeach()
-  endif()
-
-  string(REPLACE "/ZI" "/Zi" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-  string(REPLACE "/ZI" "/Zi" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-  
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} /Od /MP ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} /O1 /Oi /Ob2 /Gy /MP /DNDEBUG ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ob2 /Gy /MP /DNDEBUG ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Oi /Ob2 /Gy /MP ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ")
-else()
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -DNDEBUG ${MY_CXX_WARNING_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG ${MY_CXX_WARNING_FLGAS}")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2 -g ${MY_CXX_WARNING_FLAGS}")
-endif()
-
-if(WITH_LIBCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
-if(BUILD_FUZZER)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer-no-link")
-endif()
-
-if(APPLE)
-  if(WITH_STATIC_CRT)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++abi ${LLVM_PATH}/lib/libc++.a")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++abi ${LLVM_PATH}/lib/libc++.a")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdlib++")
-  endif()
-endif()
+include(compiler_flags)
 
 if(BUILD_SHARED_LIBS)
   SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
@@ -162,104 +93,35 @@ if(BUILD_SHARED_LIBS)
   endif()
 endif()
 
-set(CMAKE_FLAGS_PASS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS} -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS})
-#indicates whether we have to link filesystem library explicitly
-if(UNIX)
-  try_run(TRY_LINK_RUN_RESULT TRY_LINK_COMPILE_RESULT ${CMAKE_BINARY_DIR}/try_filesystem_link ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp
-  CMAKE_FLAGS ${CMAKE_FLAGS_PASS}
-  )
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
 
-  #if the program ended with non-zero or a compile error occured
-  if(NOT (TRY_LINK_RUN_RESULT EQUAL "0") OR NOT ${TRY_LINK_COMPILE_RESULT})
-    set(FILESYSTEM_LINK On)
-    if(APPLE)
-      set(FILESYSTEM_LIBRARY "${LLVM_PATH}/lib/libc++fs.a")
-    elseif(WITH_LIBCXX)
-      set(FILESYSTEM_LIBRARY c++fs)
-    else()
-      set(FILESYSTEM_LIBRARY stdc++fs)
-    endif()
-  endif()
-
-  #test filesystem setup
-  set(TEST_LINK_LIBS "")
-  if(FILESYSTEM_LINK)
-    set(TEST_LINK_LIBS "-DLINK_LIBRARIES=${FILESYSTEM_LIBRARY}")
-  endif()
-  
-  try_run(TEST_LINK_RUN_RESULT TEST_LINK_COMPILE_RESULT ${CMAKE_BINARY_DIR}/try_filesystem_link_test ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp
-    CMAKE_FLAGS ${CMAKE_FLAGS_PASS} ${TEST_LINK_LIBS}
-    COMPILE_OUTPUT_VARIABLE COMPILE_OUTPUT_RESULT
-    )
-
-  if(NOT (TEST_LINK_RUN_RESULT EQUAL "0") OR NOT ${TEST_LINK_COMPILE_RESULT})
-    message(FATAL_ERROR "Filesystem link error: ${CMAKE_SOURCE_DIR}/cmake/try_filesystem_link.cpp could not be compiled. Message: \n ${COMPILE_OUTPUT_RESULT}")
-  endif()
-endif()
+find_package(Filesystem REQUIRED)
 
 include(CTest)
 
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
-  include( external_antlr4cpp )
-  include_directories( ${ANTLR4CPP_INCLUDE_DIRS} )
-  link_directories( ${ANTLR4CPP_LIBS} )
+include(external_antlr4cpp)
 
-include( external_json )
-include_directories( ${JSON_INCLUDE_DIRS} )
+include(external_json)
 
 include(external_uri)
-include_directories( ${URI_INCLUDE_DIRS} )
-link_directories( ${URI_LIBS} )
 
 include(external_boost)
-include_directories( ${BOOST_INCLUDE_DIRS} )
-
 
 #Testing setup
 if(BUILD_TESTING)
-  set(GTEST_SHARED_CRT NOT ${WITH_STATIC_CRT})
-  # Download and unpack googletest at configure time
-  configure_file(cmake/external_gtest.cmake googletest-download/CMakeLists.txt)
-  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-  if(result)
-    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-  endif()
-  execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-  if(result)
-    message(FATAL_ERROR "Build step for googletest failed: ${result}")
-  endif()
-
-  # Prevent overriding the parent project's compiler/linker
-  # settings on Windows
-  set(gtest_force_shared_crt ${GTEST_SHARED_CRT} CACHE BOOL "" FORCE)
-
-  #we want to link google test staticly under all circumstances
-  set(BUILD_SHARED_LIBS_TMP ${BUILD_SHARED_LIBS})
-  set(BUILD_SHARED_LIBS Off)
-  # Add googletest directly to our build. This defines
-  # the gtest and gtest_main targets.
-  add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-           ${CMAKE_BINARY_DIR}/googletest-build
-           EXCLUDE_FROM_ALL)
-  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_TMP})
+    include(external_gtest)
 endif()
-
-# Global link directories
-link_directories(${GLOBAL_OUTPUT_PATH} ${ANTLR4CPP_LIBS})
 
 # Libraries (+ their includes)
 add_subdirectory(parser_library)
-include_directories(parser_library/include)
-
 
 # Applications
 add_subdirectory(language_server)
-add_subdirectory(dummy)
 add_subdirectory(benchmark)
+
+add_subdirectory(utils)
 
 if(BUILD_VSIX)
   add_subdirectory(clients)
@@ -282,7 +144,7 @@ file(GLOB_RECURSE executables "${GLOBAL_OUTPUT_PATH}/*${EXECUTABLE}" )
 install(FILES ${executables} DESTINATION "bin")
 
 
-file(GLOB_RECURSE libraries "${GLOBAL_OUTPUT_PATH}/*${LIBRARY}" "${ANTLR4CPP_LIBS}/*${LIBRARY}")
+file(GLOB_RECURSE libraries "${GLOBAL_OUTPUT_PATH}/*${LIBRARY}")
 install(FILES ${libraries} DESTINATION "bin")
 
 

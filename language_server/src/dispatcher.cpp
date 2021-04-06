@@ -14,9 +14,8 @@
 
 #include "dispatcher.h"
 
-#include "json.hpp"
-
 #include "logger.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server {
 

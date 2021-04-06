@@ -19,12 +19,11 @@
 #include <thread>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 
 #include "dap/dap_server.h"
 #include "feature.h"
+#include "utils/path.h"
 #include "workspace_manager.h"
-
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -123,7 +122,7 @@ struct feature_launch_test : public testing::Test
             "0"_json, R"({"linesStartAt1":false, "columnsStartAt1":false, "pathFormat":"path"})"_json);
         resp_provider.reset();
 
-        file_name = std::filesystem::absolute("to_trace").string();
+        file_name = hlasm_plugin::utils::path::absolute("to_trace").string();
         file_name[0] = (char)std::tolower((char)file_name[0]);
     }
 

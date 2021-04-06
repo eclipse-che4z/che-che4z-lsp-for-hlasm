@@ -10,38 +10,25 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(JSON_fetcher)
-INCLUDE(ExternalProject)
-FIND_PACKAGE(Git REQUIRED)
 
-############ Download and Generate runtime #################
-set(JSON_EXTERNAL_ROOT ${CMAKE_BINARY_DIR}/externals/json)
+INCLUDE(FetchContent)
 
-# external repository
-set(JSON_EXTERNAL_REPO "https://github.com/nlohmann/json.git")
-set(JSON_EXTERNAL_TAG  "v3.3.0")
-
-
-# download runtime environment
-ExternalProject_ADD(
+FetchContent_Declare(
   json
-  PREFIX             ${JSON_EXTERNAL_ROOT}
-  GIT_REPOSITORY     ${JSON_EXTERNAL_REPO}
-  GIT_TAG            ${JSON_EXTERNAL_TAG}
-  GIT_SHALLOW        ON
-  TIMEOUT            10
-  LOG_DOWNLOAD       ON
-  GIT_PROGRESS       1
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  TEST_COMMAND      ""
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG        v3.3.0
+  GIT_SHALLOW    ON
+  LOG_DOWNLOAD   ON
+  GIT_PROGRESS   1
 )
 
-ExternalProject_Get_Property(json INSTALL_DIR)
+set(JSON_BuildTests Off)
 
-set(JSON_INCLUDE_DIRS ${INSTALL_DIR}/src/json/single_include/nlohmann)
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+  FetchContent_Populate(json)
+  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 

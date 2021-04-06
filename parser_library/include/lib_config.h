@@ -18,9 +18,9 @@
 #include <memory>
 #include <optional>
 
-#include "json.hpp"
-
+#include "nlohmann/json.hpp"
 #include "parser_library_export.h"
+
 namespace hlasm_plugin::parser_library {
 
 // Encapsulates user defined settings of library and individual workspaces

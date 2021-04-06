@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Broadcom.
+# Copyright (c) 2021 Broadcom.
 # The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 #
 # This program and the accompanying materials are made
@@ -10,18 +10,19 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-cmake_minimum_required (VERSION 3.10)
+target_sources(parser_library PRIVATE
+	attribute_variable.cpp
+	attribute_variable.h
+	debug_lib_provider.h
+	debug_types.h
+	debugger.cpp
+	macro_param_variable.cpp
+	macro_param_variable.h
+	ordinary_symbol_variable.cpp
+	ordinary_symbol_variable.h
+	set_symbol_variable.cpp
+	set_symbol_variable.h
+	variable.cpp
+	variable.h
+)
 
-PROJECT(dummy)
-
-# compile sources to the executable
-add_executable(dummy 
-	${PROJECT_SOURCE_DIR}/src/main.cpp
-	)
-
-# link executable with libraries
-target_link_libraries(dummy  parser_library)
-
-if(BUILD_TESTING)
-	add_dependencies(dummy library_tests_copy)
-endif()

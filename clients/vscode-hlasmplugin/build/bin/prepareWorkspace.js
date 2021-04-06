@@ -15,15 +15,31 @@
 const fs = require('fs')
 const path = require('path')
 
-recursiveRemoveSync(path.join(__dirname,'..','..','lib/test/workspace/'));
-recursiveCopySync(path.join(__dirname,'..','..','src/test/workspace/'),path.join(__dirname,'..','..','lib/test/workspace/'));
+const workspace_dir = path.join(__dirname, '..', '..', 'lib/test/workspace/');
+const workspace_vscode = path.join(workspace_dir, '.vscode');
+recursiveRemoveSync(workspace_dir);
+recursiveCopySync(path.join(__dirname, '..', '..', 'src/test/workspace/'), workspace_dir);
+
+const source_settings_file = (function () {
+    if (process.argv.indexOf('wasm') !== -1) {
+        console.log('Preparing WASM');
+        return 'settings.wasm.json';
+    }
+    else {
+        console.log('Preparing native');
+        return 'settings.native.json';
+    }
+})();
+
+recursiveCopySync(path.join(workspace_vscode, source_settings_file), path.join(workspace_vscode, 'settings.json'));
+
 console.log('Test workspace ready')
 
 function recursiveCopySync(origin, dest) {
     if (fs.existsSync(origin)) {
         if (fs.statSync(origin).isDirectory()) {
             fs.mkdirSync(dest);
-            fs.readdirSync(origin).forEach(file => 
+            fs.readdirSync(origin).forEach(file =>
                 recursiveCopySync(path.join(origin, file), path.join(dest, file)));
         }
         else {
@@ -35,13 +51,13 @@ function recursiveCopySync(origin, dest) {
 function recursiveRemoveSync(dest) {
     if (fs.existsSync(dest)) {
         fs.readdirSync(dest).forEach(file => {
-        const currPath = path.join(dest, file);
-        if (fs.statSync(currPath).isDirectory()) {
-            recursiveRemoveSync(currPath);
-        } 
-        else { 
-            fs.unlinkSync(currPath);
-        }
+            const currPath = path.join(dest, file);
+            if (fs.statSync(currPath).isDirectory()) {
+                recursiveRemoveSync(currPath);
+            }
+            else {
+                fs.unlinkSync(currPath);
+            }
         });
         fs.rmdirSync(dest);
     }

@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 
 #include <fstream>
+#include <mutex>
 #include <string>
 
 namespace hlasm_plugin::language_server {
@@ -62,6 +63,7 @@ private:
 
     // File to write the log into.
     std::ofstream file_;
+    std::mutex mutex_;
 };
 
 } // namespace hlasm_plugin::language_server

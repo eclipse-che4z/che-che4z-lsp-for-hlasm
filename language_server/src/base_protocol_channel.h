@@ -15,8 +15,9 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_BASE_PROTOCOL_CHANNEL_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_BASE_PROTOCOL_CHANNEL_H
 
-#include <iostream>
+#include <iosfwd>
 #include <mutex>
+#include <string>
 
 #include "json_channel.h"
 

@@ -14,8 +14,6 @@
 
 #include "parser_library.h"
 
-#include <iostream>
-
 #include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "hlasmparser.h"
