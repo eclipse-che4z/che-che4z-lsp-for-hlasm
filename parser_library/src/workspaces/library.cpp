@@ -15,11 +15,13 @@
 #include "library.h"
 
 #include <filesystem>
+#include <iostream>
 #include <locale>
 #include <regex>
 
-#include "json.hpp"
-
+#include "nlohmann/json.hpp"
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "wildcard.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -64,13 +66,11 @@ std::shared_ptr<processor> library_local::find_file(const std::string& file_name
     auto found = files_.find(file_name);
     if (found != files_.end())
     {
-        std::filesystem::path lib_path(lib_path_);
-        return file_manager_.add_processor_file((lib_path / found->second).string());
+        return file_manager_.add_processor_file(utils::path::join(lib_path_, found->second).string());
     }
     else
         return nullptr;
 }
-
 
 void library_local::load_files()
 {
@@ -88,6 +88,7 @@ void library_local::load_files()
             {
                 files_[context::to_upper_copy(file.first.substr(0, file.first.size() - extension.first.size()))] =
                     file.second;
+                // TODO: the stored value is a full path, yet we try to interpret it as a relative one later on
                 added = true;
                 break;
             }

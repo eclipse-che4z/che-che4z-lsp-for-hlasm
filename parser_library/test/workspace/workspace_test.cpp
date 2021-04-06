@@ -19,12 +19,15 @@
 
 #include "gtest/gtest.h"
 
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::platform::is_windows;
 
 class workspace_test : public diagnosable_impl, public testing::Test
 {
@@ -59,11 +62,12 @@ public:
 
 TEST_F(workspace_test, parse_lib_provider)
 {
+    using namespace hlasm_plugin::utils;
+
     lib_config config;
     file_manager_impl file_mngr;
 
-    std::string test_wks_path = (std::filesystem::path("test") / "library" / "test_wks").string();
-
+    std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
 
     workspace ws(test_wks_path, file_mngr, config);
 
@@ -75,17 +79,21 @@ TEST_F(workspace_test, parse_lib_provider)
 
     file_mngr.add_processor_file("test\\library\\test_wks\\correct");
 
-    context::hlasm_ctx_ptr ctx_1, ctx_2;
     lsp::lsp_ctx_ptr lsp_ptr = std::make_shared<lsp::lsp_context>();
-#if _WIN32
-    ws.did_open_file("test\\library\\test_wks\\correct");
-    ctx_1 = std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct");
-    ctx_2 = std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct");
-#else
-    ws.did_open_file("test/library/test_wks/correct");
-    ctx_1 = std::make_shared<context::hlasm_context>("test/library/test_wks/correct");
-    ctx_2 = std::make_shared<context::hlasm_context>("test/library/test_wks/correct");
-#endif
+    auto [ctx_1, ctx_2] = [&ws]() {
+        if (platform::is_windows())
+        {
+            ws.did_open_file("test\\library\\test_wks\\correct");
+            return std::make_pair(std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"),
+                std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
+        }
+        else
+        {
+            ws.did_open_file("test/library/test_wks/correct");
+            return std::make_pair(std::make_shared<context::hlasm_context>("test/library/test_wks/correct"),
+                std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
+        }
+    }();
 
     collect_diags_from_child(file_mngr);
     EXPECT_EQ(diags().size(), (size_t)0);
@@ -219,15 +227,9 @@ public:
     virtual bool update_and_get_bad() override { return false; }
 };
 
-#ifdef _WIN32
-constexpr const char* faulty_macro_path = "lib\\ERROR";
-constexpr const char* correct_macro_path = "lib\\CORRECT";
-std::string hlasmplugin_folder = ".hlasmplugin\\";
-#else
-constexpr const char* faulty_macro_path = "lib/ERROR";
-constexpr const char* correct_macro_path = "lib/CORRECT";
-std::string hlasmplugin_folder = ".hlasmplugin/";
-#endif // _WIN32
+const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
+const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
+std::string hlasmplugin_folder = is_windows() ? ".hlasmplugin\\" : ".hlasmplugin/";
 
 class file_manager_extended : public file_manager_impl
 {

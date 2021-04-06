@@ -20,12 +20,11 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_language_features.h"
+#include "utils/platform.h"
 
-#ifdef _WIN32
-constexpr const char* path = "c:\\test";
-#else
-constexpr const char* path = "/home/test";
-#endif
+using hlasm_plugin::utils::platform::is_windows;
+
+const char* path = is_windows() ? "c:\\test" : "/home/test";
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -38,13 +37,10 @@ TEST(language_features, completion)
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 =
-        R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
-#else
-    json params1 =
-        R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
-#endif
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
 
     EXPECT_CALL(ws_mngr,
         completion(
@@ -60,11 +56,11 @@ TEST(language_features, hover)
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
+
     std::string s("test");
     std::string_view ret(s);
     EXPECT_CALL(ws_mngr, hover(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(ret));
@@ -82,11 +78,10 @@ TEST(language_features, definition)
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
     EXPECT_CALL(response_mock, respond(json(""), "", ::testing::_));
     notifs["textDocument/definition"]("", params1);
@@ -100,11 +95,10 @@ TEST(language_features, references)
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
     EXPECT_CALL(ws_mngr, references(StrEq(path), parser_library::position(0, 1)));
     notifs["textDocument/references"]("", params1);

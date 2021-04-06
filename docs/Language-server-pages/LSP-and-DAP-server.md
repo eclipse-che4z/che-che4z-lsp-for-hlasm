@@ -21,12 +21,11 @@ The following table shows the list of all implemented LSP methods and the classe
 |Language feature| textDocument/definition <br> textDocument/references <br> textDocument/hover <br> textDocument/completion|
 |
 
-The DAP server uses only one feature — the launch feature, which handles stepping through the code and retrieving information about both variables and stack trace. The following table shows the list of all implemented DAP methods:
+The DAP server uses only one feature — the dap feature, which handles stepping through the code and retrieving information about both variables and stack trace. The following table shows the list of all implemented DAP methods:
 
 | **Class** | **DAP Method Name**              |
 |:----------|:---------------------------------|
-|`dap_server`| `initialize` <br> `disconnect` <br> `launch`|
-|`feature_launch`| `setBreakpoints` <br> `configurationDone` <br> `threads` <br> `stackTrace` <br> `scopes` <br> `next` <br> `stepIn` <br> `variables` <br> `continue` <br> `stopped` <br> `exited` <br> `terminated`|
+|`dap_feature`| `initialize` <br> `disconnect` <br> `launch` <br> `setBreakpoints` <br> `configurationDone` <br> `threads` <br> `stackTrace` <br> `scopes` <br> `next` <br> `stepIn` <br> `variables` <br> `continue` <br> `stopped` <br> `exited` <br> `terminated`|
 |
 
 Response With Result

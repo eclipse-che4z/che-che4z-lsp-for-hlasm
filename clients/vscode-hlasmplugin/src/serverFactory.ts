@@ -14,9 +14,12 @@
 
 import * as vscodelc from 'vscode-languageclient';
 import * as net from 'net';
-import * as fork from 'child_process'
+import * as cp from 'child_process'
 import * as path from 'path'
 import { getConfig } from './eventsHandler'
+import { SourceBreakpoint } from 'vscode';
+
+export type ServerCommunicationMethod = "tcp" | "native" | "wasm";
 
 /**
  * factory to create server options
@@ -29,13 +32,13 @@ export class ServerFactory {
         this.usedPorts = new Set();
     }
 
-    async create(useTcp: boolean): Promise<vscodelc.ServerOptions> {
+    async create(method: ServerCommunicationMethod): Promise<vscodelc.ServerOptions> {
         const langServerFolder = process.platform;
-        if (useTcp) {
+        if (method === 'tcp') {
             const lspPort = await this.getPort();
 
             //spawn the server
-            fork.execFile(
+            cp.execFile(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
                 [lspPort.toString()]);
 
@@ -48,12 +51,27 @@ export class ServerFactory {
                 return Promise.resolve(result);
             };
         }
-        else {
+        else if (method === 'native') {
             const server: vscodelc.Executable = {
                 command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
                 args: getConfig<string[]>('arguments')
             };
             return server;
+        }
+        else if (method === 'wasm') {
+            const server: vscodelc.Executable = {
+                command: process.execPath,
+                args: [
+                    '--experimental-wasm-threads',
+                    '--experimental-wasm-bulk-memory',
+                    path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                    ...getConfig<string[]>('arguments')
+                ]
+            };
+            return server;
+        }
+        else {
+            throw Error("Invalid method");
         }
     }
 

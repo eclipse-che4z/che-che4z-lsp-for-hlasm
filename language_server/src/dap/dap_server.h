@@ -19,11 +19,10 @@
 #include <memory>
 #include <unordered_set>
 
-#include "json.hpp"
-
 #include "../common_types.h"
 #include "../server.h"
 #include "dap_feature.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server::dap {
 

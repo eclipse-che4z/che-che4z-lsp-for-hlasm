@@ -21,6 +21,8 @@
 #include "gmock/gmock.h"
 
 #include "dap/dap_server.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "workspace_manager.h"
 
 using namespace hlasm_plugin;
@@ -36,7 +38,7 @@ struct send_message_provider_mock : public send_message_provider
 
 TEST(dap_server, dap_server)
 {
-    std::string file_name = std::filesystem::absolute("to_trace").string();
+    std::string file_name = utils::path::absolute("to_trace").string();
     file_name[0] = (char)std::tolower((char)file_name[0]);
 
     std::string file_text = " LR 1,1";

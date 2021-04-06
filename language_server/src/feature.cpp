@@ -19,6 +19,8 @@
 #include "network/uri/uri.hpp"
 
 #include "logger.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 
 namespace hlasm_plugin::language_server {
 
@@ -45,24 +47,28 @@ std::string feature::uri_to_path(const std::string& uri)
     if (u.has_authority() && u.authority().to_string() != "")
     {
         auth_path = u.authority().to_string() + u.path().to_string();
-#ifdef _WIN32 // handle remote locations correctly, like \\server\path
-        auth_path = "//" + auth_path;
-#endif
+        if (utils::platform::is_windows())
+        {
+            // handle remote locations correctly, like \\server\path
+            auth_path = "//" + auth_path;
+        }
     }
     else
     {
-#ifdef _WIN32 // we get path always beginning with / on windows, e.g. /c:/Users/path
-        path.remove_prefix(1);
-#endif
+        if (utils::platform::is_windows())
+        {
+            // we get path always beginning with / on windows, e.g. /c:/Users/path
+            path.remove_prefix(1);
+        }
         auth_path = path.to_string();
 
-#ifdef _WIN32
-        auth_path[0] = (char)tolower(auth_path[0]);
-#endif
+        if (utils::platform::is_windows())
+        {
+            auth_path[0] = (char)tolower(auth_path[0]);
+        }
     }
 
-    std::filesystem::path p(network::detail::decode(auth_path));
-    return p.lexically_normal().string();
+    return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
 }
 
 std::string feature::path_to_uri(std::string_view path)
@@ -81,15 +87,18 @@ std::string feature::path_to_uri(std::string_view path)
         network::detail::encode_char(c, out, "/.%;=");
     }
 
-#ifdef _WIN32
-    // in case of remote address such as \\server\path\to\file
-    if (uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')
-        uri.insert(0, "file:");
+    if (utils::platform::is_windows())
+    {
+        // in case of remote address such as \\server\path\to\file
+        if (uri.size() >= 2 && uri[0] == '/' && uri[1] == '/')
+            uri.insert(0, "file:");
+        else
+            uri.insert(0, "file:///");
+    }
     else
-        uri.insert(0, "file:///");
-#else
-    uri.insert(0, "file://");
-#endif // _WIN32
+    {
+        uri.insert(0, "file://");
+    }
 
     return uri;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2021 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,12 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <filesystem>
+#ifndef HLASMPLUGIN_UTILS_PLATFORM_H
+#define HLASMPLUGIN_UTILS_PLATFORM_H
 
+namespace hlasm_plugin::utils::platform {
+bool is_windows();
+} // namespace hlasm_plugin::utils::platform
 
-int main()
-{
-    std::filesystem::path p("/home/");
-    p.stem();
-    return 0;
-}
+#endif

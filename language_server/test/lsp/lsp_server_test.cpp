@@ -15,7 +15,6 @@
 #include <memory>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 
 #include "../send_message_provider_mock.h"
 #include "../ws_mngr_mock.h"
@@ -23,6 +22,7 @@
 #include "lsp/feature_text_synchronization.h"
 #include "lsp/feature_workspace_folders.h"
 #include "lsp/lsp_server.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace nlohmann {
