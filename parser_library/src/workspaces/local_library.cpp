@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "library.h"
+#include "local_library.h"
 
 #include <filesystem>
 #include <iostream>

@@ -22,6 +22,7 @@
 #include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
+#include "workspaces/local_library.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;

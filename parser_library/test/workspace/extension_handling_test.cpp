@@ -16,6 +16,7 @@
 
 #include "utils/platform.h"
 #include "workspaces/file_manager_impl.h"
+#include "workspaces/local_library.h"
 #include "workspaces/wildcard.h"
 #include "workspaces/workspace.h"
 
