@@ -19,7 +19,6 @@
 #include <locale>
 #include <regex>
 
-#include "nlohmann/json.hpp"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "wildcard.h"
