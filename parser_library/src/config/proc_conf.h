@@ -26,6 +26,7 @@ namespace hlasm_plugin::parser_library::config {
 struct library
 {
     std::string path;
+    std::vector<std::string> macro_extensions;
     bool optional = false;
 };
 void to_json(nlohmann::json& j, const library& p);
@@ -53,6 +54,7 @@ void from_json(const nlohmann::json& j, processor_group& p);
 struct proc_conf
 {
     std::vector<processor_group> pgroups;
+    std::vector<std::string> macro_extensions;
 };
 void to_json(nlohmann::json& j, const proc_conf& p);
 void from_json(const nlohmann::json& j, proc_conf& p);

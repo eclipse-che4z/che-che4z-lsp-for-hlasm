@@ -21,6 +21,8 @@ namespace hlasm_plugin::parser_library::config {
 void to_json(nlohmann::json& j, const library& p)
 {
     j = nlohmann::json { { "path", p.path }, { "optional", p.optional } };
+    if (auto m = nlohmann::json(p.macro_extensions); !m.empty())
+        j["macro_extensions"] = std::move(m);
 }
 void from_json(const nlohmann::json& j, library& p)
 {
@@ -31,6 +33,8 @@ void from_json(const nlohmann::json& j, library& p)
         j.at("path").get_to(p.path);
         if (auto it = j.find("optional"); it != j.end())
             p.optional = it->get_to(p.optional);
+        if (auto it = j.find("macro_extensions"); it != j.end())
+            it->get_to(p.macro_extensions);
     }
     else
         throw nlohmann::json::other_error::create(501, "Unexpected JSON type.");
@@ -58,8 +62,7 @@ void from_json(const nlohmann::json& j, assembler_options& p)
 void to_json(nlohmann::json& j, const processor_group& p)
 {
     j = nlohmann::json { { "name", p.name }, { "libs", p.libs } };
-    auto opts = nlohmann::json(p.asm_options);
-    if (!opts.empty())
+    if (auto opts = nlohmann::json(p.asm_options); !opts.empty())
         j["asm_options"] = std::move(opts);
 }
 void from_json(const nlohmann::json& j, processor_group& p)
@@ -70,7 +73,17 @@ void from_json(const nlohmann::json& j, processor_group& p)
         it->get_to(p.asm_options);
 }
 
-void to_json(nlohmann::json& j, const proc_conf& p) { j = nlohmann::json { { "pgroups", p.pgroups } }; }
-void from_json(const nlohmann::json& j, proc_conf& p) { j.at("pgroups").get_to(p.pgroups); }
+void to_json(nlohmann::json& j, const proc_conf& p)
+{
+    j = nlohmann::json { { "pgroups", p.pgroups } };
+    if (auto m = nlohmann::json(p.macro_extensions); !m.empty())
+        j["macro_extensions"] = std::move(m);
+}
+void from_json(const nlohmann::json& j, proc_conf& p)
+{
+    j.at("pgroups").get_to(p.pgroups);
+    if (auto it = j.find("macro_extensions"); it != j.end())
+        it->get_to(p.macro_extensions);
+}
 
 } // namespace hlasm_plugin::parser_library::config
