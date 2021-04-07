@@ -12,12 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "config/proc_conf.h"
-
 #include <utility>
 
 #include "gtest/gtest.h"
 
+#include "config/proc_conf.h"
 #include "nlohmann/json.hpp"
 
 using namespace hlasm_plugin::parser_library::config;
