@@ -414,6 +414,9 @@ bool workspace::load_config(config::proc_conf& proc_groups, config::pgm_conf& pg
     {
         nlohmann::json::parse(proc_grps_file->get_text()).get_to(proc_groups);
         proc_grps_.clear();
+        for (const auto& pg : proc_groups.pgroups)
+            if (!pg.asm_options.valid())
+                config_diags_.push_back(diagnostic_s::error_W005(proc_grps_file->get_file_name(), pg.name));
     }
     catch (const nlohmann::json::exception&)
     {

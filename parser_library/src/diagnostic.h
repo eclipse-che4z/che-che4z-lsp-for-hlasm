@@ -708,6 +708,8 @@ public:
 
     static diagnostic_s error_W004(const std::string& file_name, const std::string& ws_name);
 
+    static diagnostic_s error_W005(const std::string& file_name, const std::string& proc_group);
+
     /*
     E01x - wrong format
     - E010 - unknown name

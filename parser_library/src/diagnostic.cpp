@@ -1958,6 +1958,16 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
         {});
 }
 
+diagnostic_s diagnostic_s::error_W005(const std::string& file_name, const std::string& proc_group)
+{
+    return diagnostic_s(file_name,
+        {},
+        diagnostic_severity::warning,
+        "W0005",
+        "The processor group '" + proc_group + "' from '" + file_name + "' defines invalid assembler options.",
+        {});
+}
+
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {
     return diagnostic_s(
