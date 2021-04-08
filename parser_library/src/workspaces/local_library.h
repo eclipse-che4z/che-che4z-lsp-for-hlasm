@@ -15,10 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LOCAL_LIBRARY_H
 #define HLASMPLUGIN_PARSERLIBRARY_LOCAL_LIBRARY_H
 
-#include <regex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <vector>
 
 #include "diagnosable_impl.h"
 #include "file_manager.h"
@@ -26,21 +25,23 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-using extension_regex_map = std::unordered_multimap<std::string, std::regex>;
-
 #pragma warning(push)
 #pragma warning(disable : 4250)
 
+struct library_local_options
+{
+    std::vector<std::string> extensions;
+    bool extensions_from_deprecated_source = false;
+    bool optional_library = false;
+};
+
 // library holds absolute path to a directory and finds macro files in it
-class library_local : public library, public diagnosable_impl
+class library_local final : public library, public diagnosable_impl
 {
 public:
     // takes reference to file manager that provides access to the files
     // and normalised path to directory that it wraps.
-    library_local(file_manager& file_manager,
-        std::string lib_path,
-        std::shared_ptr<const extension_regex_map> extensions,
-        bool optional = false);
+    library_local(file_manager& file_manager, std::string lib_path, library_local_options options);
 
     library_local(const library_local&) = delete;
     library_local& operator=(const library_local&) = delete;
@@ -61,10 +62,11 @@ private:
 
     std::string lib_path_;
     std::unordered_map<std::string, std::string> files_;
-    std::shared_ptr<const extension_regex_map> extensions_;
+    std::vector<std::string> extensions_;
     // indicates whether load_files function was called (not whether it was succesful)
     bool files_loaded_ = false;
     bool optional_ = false;
+    bool extensions_from_deprecated_source = false;
 
     void load_files();
 };

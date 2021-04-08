@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "diagnostic.h"
 #include "utils/platform.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/local_library.h"
@@ -54,23 +55,70 @@ TEST(extension_handling_test, wildcard)
 TEST(extension_handling_test, extension_removal)
 {
     file_manager_extension_mock file_mngr;
-    // file must end with hlasm, true for lib/Mac.hlasm
-    extension_regex_map map { { ".hlasm", wildcard2regex("*.hlasm") } };
-    library_local lib(file_mngr, "lib", std::make_shared<const extension_regex_map>(map));
+    // file must end with hlasm
+    library_local lib(file_mngr, "lib", { { ".hlasm" } });
     EXPECT_NE(lib.find_file("MAC"), nullptr);
 
-    // file must end with hlasm and be in folder lib, true for lib/Mac.hlasm
-    map = { { ".hlasm", wildcard2regex("*" + lib_path + "*.hlasm") } };
-    library_local lib2(file_mngr, "lib", std::make_shared<const extension_regex_map>(map));
+    // file must end with hlasm
+    library_local lib2(file_mngr, "lib", { { ".hlasm" } });
     EXPECT_NE(lib2.find_file("MAC"), nullptr);
 
-    // file must end with asm, false for lib/Mac.hlasm
-    map = { { ".asm", wildcard2regex("*.asm") } };
-    library_local lib3(file_mngr, "lib", std::make_shared<const extension_regex_map>(map));
+    // file must end with asm
+    library_local lib3(file_mngr, "lib", { { ".asm" } });
     EXPECT_EQ(lib3.find_file("MAC"), nullptr);
 
-    // file must end with hlasm and be in folder lib2, false for lib/Mac.hlasm
-    extension_regex_map map2 { { ".hlasm", wildcard2regex("*" + lib_path2 + "*.hlasm") } };
-    library_local lib4(file_mngr, "lib2", std::make_shared<const extension_regex_map>(map2));
-    EXPECT_EQ(lib4.find_file("MAC"), nullptr);
+    // test multiple extensions
+    library_local lib4(file_mngr, "lib2", { { ".hlasm", ".asm" } });
+    EXPECT_NE(lib4.find_file("MAC"), nullptr);
+
+    // test no extensions
+    library_local lib5(file_mngr, "lib2", { {} });
+    EXPECT_EQ(lib5.find_file("MAC"), nullptr);
+
+    // test no extensions
+    library_local lib6(file_mngr, "lib2", { { "" } });
+    EXPECT_EQ(lib6.find_file("MAC"), nullptr);
+
+    // tolerate missing dot
+    library_local lib7(file_mngr, "lib", { { "hlasm", "asm" } });
+    EXPECT_NE(lib7.find_file("MAC"), nullptr);
+}
+
+TEST(extension_handling_test, legacy_extension_selection)
+{
+    file_manager_extension_mock file_mngr;
+    library_local lib(file_mngr, "lib", { { ".hlasm" }, true });
+    EXPECT_NE(lib.find_file("MAC"), nullptr);
+    lib.collect_diags();
+    const auto& diags = lib.diags();
+    EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0003"; }));
+}
+
+class file_manager_extension_mock2 : public file_manager_impl
+{
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
+    {
+        (void)optional;
+        return { { "Mac.hlasm", lib_path + "Mac.hlasm" }, { "Mac", lib_path + "Mac" } };
+    }
+};
+
+TEST(extension_handling_test, multiple_macro_definitions)
+{
+    file_manager_extension_mock2 file_mngr;
+    library_local lib(file_mngr, "lib", { { ".hlasm", "" } });
+    EXPECT_NE(lib.find_file("MAC"), nullptr);
+    lib.collect_diags();
+    const auto& diags = lib.diags();
+    EXPECT_TRUE(std::any_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0004"; }));
+}
+
+TEST(extension_handling_test, no_multiple_macro_definitions)
+{
+    file_manager_extension_mock2 file_mngr;
+    library_local lib(file_mngr, "lib", { { ".hlasm" } });
+    EXPECT_NE(lib.find_file("MAC"), nullptr);
+    lib.collect_diags();
+    const auto& diags = lib.diags();
+    EXPECT_TRUE(std::none_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0004"; }));
 }

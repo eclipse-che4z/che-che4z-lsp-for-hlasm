@@ -17,10 +17,12 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <regex>
 #include <string>
 
 #include "lib_config.h"
+#include "local_library.h"
 #include "nlohmann/json.hpp"
 #include "processor.h"
 #include "utils/path.h"
@@ -337,21 +339,24 @@ bool workspace::load_and_process_config()
     if (!load_ok)
         return false;
 
-    // get extensions from pgm conf
-    extension_regex_map extensions;
-    std::regex extension_regex("^(.*\\*)(\\.\\w+)$");
+    // Extract extension list for compatibility reasons
+    std::vector<std::string> macro_extensions_compatibility_list;
     for (const auto& wildcard : pgm_config.always_recognize)
     {
-        // extension wildcard
-        if (std::regex_match(wildcard, extension_regex))
-            extensions.insert({ std::regex_replace(wildcard, extension_regex, "$2"),
-                wildcard2regex(utils::path::join(ws_path, wildcard).string()) });
+        std::string_view wc(wildcard);
+        if (const auto ext_pattern = wc.rfind("*."); ext_pattern != std::string_view::npos)
+        {
+            wc.remove_prefix(ext_pattern + 1);
+            macro_extensions_compatibility_list.push_back(std::string(wc));
+        }
     }
-
+    std::sort(macro_extensions_compatibility_list.begin(), macro_extensions_compatibility_list.end());
+    macro_extensions_compatibility_list.erase(
+        std::unique(macro_extensions_compatibility_list.begin(), macro_extensions_compatibility_list.end()),
+        macro_extensions_compatibility_list.end());
 
     local_config_ = lib_config::load_from_json(pgm_config);
 
-    auto extensions_ptr = std::make_shared<const extension_regex_map>(std::move(extensions));
     // process processor groups
     for (auto& pg : proc_groups.pgroups)
     {
@@ -364,15 +369,21 @@ bool workspace::load_and_process_config()
                     return utils::path::join(path, "");
                 return std::filesystem::path {};
             }();
+            if (!utils::path::is_absolute(lib_path))
+                lib_path = utils::path::join(ws_path, lib_path);
+            lib_path = utils::path::lexically_normal(lib_path);
 
-            if (utils::path::is_absolute(lib_path))
-                prc_grp.add_library(std::make_unique<library_local>(
-                    file_manager_, utils::path::lexically_normal(lib_path).string(), extensions_ptr, lib.optional));
-            else
-                prc_grp.add_library(std::make_unique<library_local>(file_manager_,
-                    utils::path::lexically_normal(utils::path::join(ws_path, lib_path)).string(),
-                    extensions_ptr,
-                    lib.optional));
+            library_local_options opts;
+            opts.optional_library = lib.optional;
+            if (!lib.macro_extensions.empty())
+                opts.extensions = lib.macro_extensions;
+            else if (!proc_groups.macro_extensions.empty())
+                opts.extensions = proc_groups.macro_extensions;
+            else if (!macro_extensions_compatibility_list.empty())
+                opts.extensions = macro_extensions_compatibility_list, opts.extensions_from_deprecated_source = true;
+
+
+            prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.string(), std::move(opts)));
         }
 
         add_proc_grp(std::move(prc_grp));

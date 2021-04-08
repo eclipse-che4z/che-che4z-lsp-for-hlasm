@@ -709,7 +709,7 @@ public:
 
     static diagnostic_s error_L0002(const std::string& path);
 
-    static diagnostic_s warning_L0003(const std::string& path, const std::string& macro_name);
+    static diagnostic_s warning_L0003(const std::string& path);
 
     static diagnostic_s warning_L0004(const std::string& path, const std::string& macro_name);
 

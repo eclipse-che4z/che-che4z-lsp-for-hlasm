@@ -18,8 +18,10 @@
 #include <atomic>
 #include <filesystem>
 #include <memory>
+#include <regex>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "config/pgm_conf.h"
