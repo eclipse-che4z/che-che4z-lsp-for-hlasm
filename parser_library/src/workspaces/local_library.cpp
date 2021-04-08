@@ -101,8 +101,24 @@ std::shared_ptr<processor> library_local::find_file(const std::string& file_name
 
 void library_local::load_files()
 {
-    auto files_list = file_manager_.list_directory_files(lib_path_, optional_);
+    auto [files_list, rc] = file_manager_.list_directory_files(lib_path_);
     files_.clear();
+
+    switch (rc)
+    {
+        case hlasm_plugin::utils::path::list_directory_rc::done:
+            break;
+        case hlasm_plugin::utils::path::list_directory_rc::not_exists:
+            if (!optional_)
+                add_diagnostic(diagnostic_s::error_L0002(lib_path_));
+            break;
+        case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
+            add_diagnostic(diagnostic_s::error_L0002(lib_path_));
+            break;
+        case hlasm_plugin::utils::path::list_directory_rc::other_failure:
+            add_diagnostic(diagnostic_s::error_L0001(lib_path_));
+            break;
+    }
 
     bool extension_removed = true;
     for (const auto& file : files_list)

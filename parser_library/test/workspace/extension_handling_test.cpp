@@ -28,10 +28,9 @@ const std::string lib_path2 = hlasm_plugin::utils::platform::is_windows() ? "lib
 
 class file_manager_extension_mock : public file_manager_impl
 {
-    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
+    list_directory_result list_directory_files(const std::string&) override
     {
-        (void)optional;
-        return { { "Mac.hlasm", lib_path + "Mac.hlasm" } };
+        return { { { "Mac.hlasm", lib_path + "Mac.hlasm" } }, hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
 
@@ -96,10 +95,10 @@ TEST(extension_handling_test, legacy_extension_selection)
 
 class file_manager_extension_mock2 : public file_manager_impl
 {
-    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
+    list_directory_result list_directory_files(const std::string&) override
     {
-        (void)optional;
-        return { { "Mac.hlasm", lib_path + "Mac.hlasm" }, { "Mac", lib_path + "Mac" } };
+        return { { { "Mac.hlasm", lib_path + "Mac.hlasm" }, { "Mac", lib_path + "Mac" } },
+            hlasm_plugin::utils::path::list_directory_rc::done };
     }
 };
 

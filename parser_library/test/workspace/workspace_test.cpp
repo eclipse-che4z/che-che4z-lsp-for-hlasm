@@ -247,12 +247,12 @@ public:
         files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
     }
 
-    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
+    list_directory_result list_directory_files(const std::string&) override
     {
-        (void)optional;
         if (insert_correct_macro)
-            return { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } };
-        return { { "ERROR", "ERROR" } };
+            return { { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } },
+                hlasm_plugin::utils::path::list_directory_rc::done };
+        return { { { "ERROR", "ERROR" } }, hlasm_plugin::utils::path::list_directory_rc::done };
     }
 
     bool insert_correct_macro = true;
@@ -293,15 +293,13 @@ public:
         files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error));
         files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
     }
-    std::unordered_map<std::string, std::string> list_directory_files(const std::string& path, bool optional) override
+
+    list_directory_result list_directory_files(const std::string& path) override
     {
         if (path == "lib/" || path == "lib\\")
-            return { { "CORRECT", "CORRECT" } };
+            return { { { "CORRECT", "CORRECT" } }, hlasm_plugin::utils::path::list_directory_rc::done };
 
-        if (!optional)
-            add_diagnostic(diagnostic_s::error_L0002(path));
-
-        return {};
+        return { {}, hlasm_plugin::utils::path::list_directory_rc::not_exists };
     }
 };
 
