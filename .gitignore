@@ -1,0 +1,59 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+parser_library/src/generated/*
+.vs/
+/build/
+/out
+/debug/
+.antlr/
+parser_library/src/grammar/.antlr/
+
+#just a playground, ignore changes
+dummy/src/
+
+#testing purposes
+parser_library/test/res/input/test.in
+parser_library/test/res/input/correctness.in
+parser_library/test/res/output/tokens/correctness.output
+
+#vscode ignore
+/.vscode/
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
+
+parser_library/jni/generated/
+/example_workspace/example.hlasm
