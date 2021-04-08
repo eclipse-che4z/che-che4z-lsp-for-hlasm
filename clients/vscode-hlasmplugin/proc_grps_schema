@@ -29,6 +29,13 @@
                                         "optional": {
                                             "type": "boolean",
                                             "description": "Specifies if it is acceptable not to be able locate the folder."
+                                        },
+                                        "macro_extensions": {
+                                            "type": "array",
+                                            "description": "Files with macro definitions may have an extension defined in this list (overrides the top level list).\nNo extension is represented by an empty string.",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
@@ -44,7 +51,7 @@
                         "properties": {
                             "SYSPARM": {
                                 "type": "string",
-                                "description": "It specifies the character string the assembler assigns to the &SYSPARM system variable symbol. ",
+                                "description": "It specifies the character string the assembler assigns to the &SYSPARM system variable symbol.",
                                 "maxlength": 255
                             },
                             "PROFILE": {
@@ -58,6 +65,13 @@
                     "name",
                     "libs"
                 ]
+            }
+        },
+        "macro_extensions": {
+            "type": "array",
+            "description": "Files with macro definitions may have an extension defined in this list.\nNo extension is represented by an empty string.",
+            "items": {
+                "type": "string"
             }
         }
     },
