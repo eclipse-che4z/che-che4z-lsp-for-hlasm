@@ -299,8 +299,7 @@ public:
             return { { "CORRECT", "CORRECT" } };
 
         if (!optional)
-            add_diagnostic(
-                diagnostic_s { "", {}, "L0001", "Unable to load library - path does not exist and is not optional." });
+            add_diagnostic(diagnostic_s::error_L0002(path));
 
         return {};
     }
@@ -388,7 +387,7 @@ TEST_F(workspace_test, missing_library_required)
 
         ws.did_open_file("source1");
         EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
-        EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
+        EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0002"; }));
     }
 }
 

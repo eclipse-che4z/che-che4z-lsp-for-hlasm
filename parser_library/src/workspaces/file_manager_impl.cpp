@@ -135,19 +135,13 @@ std::unordered_map<std::string, std::string> file_manager_impl::list_directory_f
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_exists:
             if (!optional)
-                add_diagnostic(diagnostic_s { "",
-                    {},
-                    "L0001",
-                    "Unable to load library: " + path + ". Error: The path does not point to directory." });
+                add_diagnostic(diagnostic_s::error_L0002(path));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::not_a_directory:
-            add_diagnostic(diagnostic_s { "",
-                {},
-                "L0001",
-                "Unable to load library: " + path + ". Error: The path does not point to directory." });
+            add_diagnostic(diagnostic_s::error_L0002(path));
             break;
         case hlasm_plugin::utils::path::list_directory_rc::other_failure:
-            add_diagnostic(diagnostic_s { path, {}, "L0001", "Unable to load library: " + path + "." });
+            add_diagnostic(diagnostic_s::error_L0001(path));
             break;
     }
     return found_files;
