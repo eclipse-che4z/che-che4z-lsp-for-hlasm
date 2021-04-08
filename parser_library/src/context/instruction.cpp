@@ -212,46 +212,6 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
 
 void hlasm_plugin::parser_library::context::machine_instruction::clear_diagnostics() { diagnostics.clear(); }
 
-class vnot_instruction : public machine_instruction
-{
-public:
-    vnot_instruction(
-        const std::string& name, mach_format format, std::vector<machine_operand_format> operands, size_t page_no)
-        : machine_instruction(name, format, operands, page_no, (size_t)0)
-
-    {}
-
-    virtual bool check(const std::string& name_of_instruction,
-        const std::vector<const hlasm_plugin::parser_library::checking::machine_operand*> to_check,
-        const range& stmt_range,
-        const diagnostic_collector& add_diagnostic) override
-    {
-        if (!machine_instruction::check(name_of_instruction, to_check, stmt_range, add_diagnostic))
-            return false;
-        if (to_check.size() == 3)
-        {
-            try
-            {
-                auto&& second = dynamic_cast<const one_operand&>(*to_check[1]);
-                auto&& third = dynamic_cast<const one_operand&>(*to_check[2]);
-                if (second.value == third.value)
-                    return true;
-                else
-                {
-                    add_diagnostic(diagnostic_op::error_M200(name_of_instruction, stmt_range));
-                    return false;
-                }
-            }
-            catch (...)
-            {
-                assert(false);
-            }
-        }
-        add_diagnostic(diagnostic_op::error_M000(name_of_instruction, (int)operands.size(), stmt_range));
-        return false;
-    }
-};
-
 //#define(instr_name, format, )
 
 
@@ -1556,12 +1516,6 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         1573);
     add_machine_instr(result, "VNN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
     add_machine_instr(result, "VNO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
-    result.insert(std::pair<const std::string, machine_instruction_ptr>("VNOT",
-        std::make_unique<vnot_instruction>("VNOT",
-            mach_format::VRR_c,
-            std::vector<machine_operand_format> { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U },
-
-            1574)));
     add_machine_instr(result, "VNX", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
     add_machine_instr(result, "VO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
     add_machine_instr(result, "VOC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1575);
@@ -2796,6 +2750,8 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     add_mnemonic_code(result, "STOCNE", { "STOC", { { 2, 6 } } });
     add_mnemonic_code(result, "STOCNH", { "STOC", { { 2, 12 } } });
     add_mnemonic_code(result, "STOCNL", { "STOC", { { 2, 10 } } });
+    // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
+    add_mnemonic_code(result, "VNOT", { "VNO", { { 2, 0 } } });
     return result;
 }
 
