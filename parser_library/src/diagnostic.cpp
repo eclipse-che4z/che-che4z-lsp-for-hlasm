@@ -1968,6 +1968,33 @@ diagnostic_s diagnostic_s::error_W005(const std::string& file_name, const std::s
         {});
 }
 
+diagnostic_s diagnostic_s::error_L0001(const std::string& path)
+{
+    return diagnostic_s(path, {}, "L0001", "Unable to load library: " + path + ".");
+}
+
+diagnostic_s diagnostic_s::error_L0002(const std::string& path)
+{
+    return diagnostic_s(
+        "", {}, "L0002", "Unable to load library: " + path + ". Error: The path does not point to directory.");
+}
+
+diagnostic_s diagnostic_s::warning_L0003(const std::string& path, const std::string& macro_name)
+{
+    return diagnostic_s("",
+        {},
+        "L0003",
+        "Macro '" + macro_name + "' from library '" + path
+            + "' was selected by a deprecated mechanism to specify file extensions (alwaysRecognize in "
+              "pgm_conf.json).");
+}
+
+diagnostic_s diagnostic_s::warning_L0004(const std::string& path, const std::string& macro_name)
+{
+    return diagnostic_s(
+        "", {}, "L0003", "Library '" + path + "' contains multiple definitions of the macro '" + macro_name + "'.");
+}
+
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
 {
     return diagnostic_s(

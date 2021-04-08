@@ -698,6 +698,21 @@ public:
     std::string message;
     std::vector<diagnostic_related_info_s> related;
 
+    /*
+    Lxxxx - local library messages
+    - L0001 - Error loading library
+    - L0002 - Library does not exist
+    - L0003 - Deprecated file extension specification was used
+    - L0004 - Macro with multiple definitions
+    */
+    static diagnostic_s error_L0001(const std::string& path);
+
+    static diagnostic_s error_L0002(const std::string& path);
+
+    static diagnostic_s warning_L0003(const std::string& path, const std::string& macro_name);
+
+    static diagnostic_s warning_L0004(const std::string& path, const std::string& macro_name);
+
     static diagnostic_s error_S100(const std::string& filename, const std::string& message, const range& range);
 
     static diagnostic_s error_S101(const std::string& filename, const std::string& message, const range& range);
