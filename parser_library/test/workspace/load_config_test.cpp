@@ -80,7 +80,6 @@ public:
 					"lib",
 					"libs/lib2/",
 			""
-					}
 				],
                 
                 "asm_options": {
