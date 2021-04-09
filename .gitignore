@@ -56,4 +56,3 @@ parser_library/test/res/output/tokens/correctness.output
 !/.vscode/extensions.json
 
 parser_library/jni/generated/
-/example_workspace/example.hlasm
