@@ -17,8 +17,10 @@
 
 #include <filesystem>
 
-inline std::string pgm_conf_name = (std::filesystem::path(".hlasmplugin") / "pgm_conf.json").string();
-inline std::string proc_grps_name = (std::filesystem::path(".hlasmplugin") / "proc_grps.json").string();
+#include "utils/path.h"
+
+inline std::string pgm_conf_name = hlasm_plugin::utils::path::join(".hlasmplugin", "pgm_conf.json").string();
+inline std::string proc_grps_name = hlasm_plugin::utils::path::join(".hlasmplugin", "proc_grps.json").string();
 inline std::string empty_pgm_conf = R"({ "pgms": []})";
 inline std::string empty_proc_grps = R"({ "pgroups": []})";
 

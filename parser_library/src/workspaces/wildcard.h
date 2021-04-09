@@ -18,13 +18,6 @@
 #include <regex>
 
 namespace hlasm_plugin::parser_library::workspaces {
-
-// used for wildcard to regex conversions
-
-static const std::regex escape("(\\(|\\[|\\{|\\\\|\\^|\\-|\\=|\\$|\\!|\\||\\]|\\}|\\)|\\.)");
-static const std::regex question("\\?");
-static const std::regex nongreedy("(\\*|\\+)");
-static const std::regex slash("\\/");
 // Returns a regex that can be used for wildcard matching.
 std::regex wildcard2regex(const std::string& wildcard);
 

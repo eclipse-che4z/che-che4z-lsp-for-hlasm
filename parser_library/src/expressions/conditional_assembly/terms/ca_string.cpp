@@ -14,6 +14,7 @@
 
 #include "ca_string.h"
 
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -61,6 +62,8 @@ void ca_string::collect_diags() const
 }
 
 bool ca_string::is_character_expression() const { return duplication_factor == nullptr; }
+
+void ca_string::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
 {

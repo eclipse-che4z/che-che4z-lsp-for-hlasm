@@ -17,7 +17,6 @@
 
 #include "diagnosable_impl.h"
 #include "library.h"
-
 namespace hlasm_plugin::parser_library::workspaces {
 
 // Represents a named set of libraries (processor_group)
@@ -38,14 +37,23 @@ public:
 
     void add_library(std::unique_ptr<library> library) { libs_.push_back(std::move(library)); }
 
+    void add_asm_options(std::map<std::string, std::string> asm_options)
+    {
+        asm_optns.sysparm = asm_options.count("SYSPARM") ? asm_options.at("SYSPARM") : "";
+        asm_optns.profile = asm_options.count("PROFILE") ? asm_options.at("PROFILE") : "";
+    }
+
     const std::string& name() const { return name_; }
 
     const std::vector<std::unique_ptr<library>>& libraries() const { return libs_; }
 
+    const asm_option& asm_options() const { return asm_optns; }
+
+
 private:
     std::vector<std::unique_ptr<library>> libs_;
     std::string name_;
+    asm_option asm_optns;
 };
-
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

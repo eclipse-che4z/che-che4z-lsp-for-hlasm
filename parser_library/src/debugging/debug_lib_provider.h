@@ -32,22 +32,22 @@ public:
     {}
 
     virtual workspaces::parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const workspaces::library_data data) override
+        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
     {
-        auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+        auto& proc_grp = ws_.get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
         for (auto&& lib : proc_grp.libraries())
         {
             std::shared_ptr<workspaces::processor> found = lib->find_file(library);
             if (found)
-                return found->parse_no_lsp_update(*this, hlasm_ctx, data);
+                return found->parse_no_lsp_update(*this, std::move(ctx), data);
         }
 
         return false;
     }
 
-    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override
+    virtual bool has_library(const std::string& library, const std::string& program) const override
     {
-        auto& proc_grp = ws_.get_proc_grp_by_program(hlasm_ctx.opencode_file_name());
+        auto& proc_grp = ws_.get_proc_grp_by_program(program);
         for (auto&& lib : proc_grp.libraries())
         {
             std::shared_ptr<workspaces::processor> found = lib->find_file(library);
@@ -56,6 +56,12 @@ public:
         }
 
         return false;
+    }
+    const asm_option& get_asm_options(const std::string& file_name) override
+    {
+        auto& proc_grp = ws_.get_proc_grp_by_program(file_name);
+
+        return proc_grp.asm_options();
     }
 };
 

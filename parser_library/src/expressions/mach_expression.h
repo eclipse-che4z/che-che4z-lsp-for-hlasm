@@ -26,6 +26,7 @@ namespace hlasm_plugin::parser_library::expressions {
 
 using mach_evaluate_info = context::dependency_solver&;
 
+class mach_expr_visitor;
 class mach_expression;
 using mach_expr_ptr = std::unique_ptr<mach_expression>;
 using mach_expr_list = std::vector<mach_expr_ptr>;
@@ -49,6 +50,8 @@ public:
     virtual void fill_location_counter(context::address addr) = 0;
 
     virtual const mach_expression* leftmost_term() const = 0;
+
+    virtual void apply(mach_expr_visitor& visitor) const = 0;
 
     range get_range() const;
     virtual ~mach_expression() {}

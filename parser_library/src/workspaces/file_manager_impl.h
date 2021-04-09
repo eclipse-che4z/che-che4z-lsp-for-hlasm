@@ -38,26 +38,27 @@ public:
     file_manager_impl(file_manager_impl&&) = delete;
     file_manager_impl& operator=(file_manager_impl&&) = delete;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
-    virtual file_ptr add_file(const file_uri&) override;
-    virtual processor_file_ptr add_processor_file(const file_uri&) override;
-    virtual void remove_file(const file_uri&) override;
+    file_ptr add_file(const file_uri&) override;
+    processor_file_ptr add_processor_file(const file_uri&) override;
+    processor_file_ptr get_processor_file(const file_uri&) override;
+    void remove_file(const file_uri&) override;
 
-    virtual file_ptr find(const std::string& key) override;
-    virtual processor_file_ptr find_processor_file(const std::string& key) override;
+    file_ptr find(const std::string& key) override;
+    processor_file_ptr find_processor_file(const std::string& key) override;
 
     // Returns array of files that were updated since this method was last called
     virtual std::vector<processor_file*> list_updated_files();
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string& path) override;
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string& path, bool optional) override;
 
-    virtual void did_open_file(const std::string& document_uri, version_t version, std::string text) override;
-    virtual void did_change_file(
+    void did_open_file(const std::string& document_uri, version_t version, std::string text) override;
+    void did_change_file(
         const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size) override;
-    virtual void did_close_file(const std::string& document_uri) override;
+    void did_close_file(const std::string& document_uri) override;
 
-    virtual bool file_exists(const std::string& file_name) override;
-    virtual bool lib_file_exists(const std::string& lib_path, const std::string& file_name) override;
+    bool file_exists(const std::string& file_name) override;
+    bool lib_file_exists(const std::string& lib_path, const std::string& file_name) override;
 
     virtual ~file_manager_impl() = default;
 

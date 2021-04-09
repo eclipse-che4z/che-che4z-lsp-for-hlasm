@@ -16,7 +16,7 @@
 #define CONTEXT_COPY_MEMBER_H
 
 #include "id_storage.h"
-#include "range.h"
+#include "location.h"
 #include "statement_cache.h"
 
 namespace hlasm_plugin {
@@ -38,6 +38,9 @@ struct copy_member_invocation
         , current_statement(-1)
     {}
 };
+
+struct copy_member;
+using copy_member_ptr = std::shared_ptr<copy_member>;
 
 // structure represents COPY member in HLASM macro library
 struct copy_member

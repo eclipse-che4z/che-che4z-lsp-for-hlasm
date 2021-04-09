@@ -18,9 +18,9 @@
 #include <memory>
 #include <optional>
 
-#include "json.hpp"
-
+#include "nlohmann/json.hpp"
 #include "parser_library_export.h"
+
 namespace hlasm_plugin::parser_library {
 
 // Encapsulates user defined settings of library and individual workspaces
@@ -53,4 +53,4 @@ bool operator==(const lib_config& lhs, const lib_config& rhs);
 
 
 
-#endif HLASMPLUGIN_PARSERLIBRARY_LIB_CONFIG_H
+#endif // HLASMPLUGIN_PARSERLIBRARY_LIB_CONFIG_H

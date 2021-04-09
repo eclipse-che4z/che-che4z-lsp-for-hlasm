@@ -42,6 +42,7 @@ public:
     // If such processor file already exists, it is returned.
     // If such file already exists, it is changed into processor file.
     virtual processor_file_ptr add_processor_file(const file_uri&) = 0;
+    virtual processor_file_ptr get_processor_file(const file_uri&) = 0;
 
     virtual void remove_file(const file_uri&) = 0;
 
@@ -53,7 +54,8 @@ public:
     virtual processor_file_ptr find_processor_file(const std::string& key) = 0;
 
     // Returns list of all files in a directory. Returns associative array with pairs file path - file name.
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string& path) = 0;
+    virtual std::unordered_map<std::string, std::string> list_directory_files(
+        const std::string& path, bool optional) = 0;
 
     virtual bool file_exists(const std::string& file_name) = 0;
     virtual bool lib_file_exists(const std::string& lib_path, const std::string& file_name) = 0;

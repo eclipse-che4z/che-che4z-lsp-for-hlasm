@@ -42,7 +42,7 @@ class lookahead_processor : public statement_processor
 public:
     const lookahead_action action;
 
-    lookahead_processor(context::hlasm_context& hlasm_ctx,
+    lookahead_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         processing_state_listener& listener,
         workspaces::parse_lib_provider& lib_provider,
@@ -62,7 +62,7 @@ private:
     void process_COPY(const resolved_statement& statement);
 
     process_table_t asm_proc_table_;
-    process_table_t create_table(context::hlasm_context& ctx);
+    process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement);

@@ -27,13 +27,15 @@ class dep_sol_mock : public context::dependency_solver
 
 class lib_prov_mock : public workspaces::parse_lib_provider
 {
-    virtual workspaces::parse_result parse_library(
-        const std::string&, context::hlasm_context&, const workspaces::library_data)
+    asm_option asm_options;
+    workspaces::parse_result parse_library(
+        const std::string&, analyzing_context, const workspaces::library_data) override
     {
         return false;
     };
 
-    virtual bool has_library(const std::string&, context::hlasm_context&) const { return false; }
+    bool has_library(const std::string&, const std::string&) const override { return false; }
+    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 inline std::string big_string(char c = '1')

@@ -18,9 +18,10 @@
 
 namespace hlasm_plugin::parser_library::semantics {
 
-char_str_conc::char_str_conc(std::string value)
+char_str_conc::char_str_conc(std::string value, const range& conc_range)
     : concatenation_point(concat_type::STR)
     , value(std::move(value))
+    , conc_range(conc_range)
 {}
 
 std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }

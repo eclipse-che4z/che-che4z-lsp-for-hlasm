@@ -21,7 +21,6 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		collector.set_label_field($seq_symbol.ss,provider.get_range($seq_symbol.ctx));
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));
 		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
-		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		set_source_indices($seq_symbol.ctx->getStart(), $EOLLN);
 	}
 	| ORDSYMBOL? SPACE instruction operand_field_rest EOLLN
@@ -29,10 +28,9 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		if ($ORDSYMBOL)
 		{
 			auto r = provider.get_range($ORDSYMBOL);
-			auto id = ctx->ids().add($ORDSYMBOL->getText());
+			auto id = hlasm_ctx->ids().add($ORDSYMBOL->getText());
 			collector.set_label_field(id,nullptr,r); 
 		}
-		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		
 		if ($ORDSYMBOL)
 			set_source_indices($ORDSYMBOL, $EOLLN);
@@ -47,7 +45,6 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		collector.set_label_field(provider.get_range(_localctx));
 		collector.set_instruction_field(provider.get_range(_localctx));
 		collector.set_operand_remark_field(provider.get_range(_localctx));
-		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		set_source_indices($bad_look.ctx->getStart(), $EOLLN);
 	}
 	| EOF	{finished_flag=true;};

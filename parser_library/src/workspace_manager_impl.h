@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 
 #include "debugging/debug_lib_provider.h"
-#include "debugging/debugger.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
@@ -26,7 +25,7 @@ namespace hlasm_plugin::parser_library {
 // Implementation of workspace manager (Implementation part of the pimpl idiom)
 // Holds workspaces, file manager and macro tracer and handles LSP and DAP
 // notifications and requests.
-class workspace_manager::impl : public diagnosable_impl, public debugging::debug_event_consumer_s
+class workspace_manager::impl : public diagnosable_impl
 {
 public:
     impl(std::atomic<bool>* cancel = nullptr)
@@ -61,6 +60,7 @@ public:
 
         notify_diagnostics_consumers();
     }
+    ws_id find_workspace(const std::string& document_uri) { return &ws_path_match(document_uri); }
     void remove_workspace(std::string uri)
     {
         auto it = workspaces_.find(uri);
@@ -132,67 +132,54 @@ public:
             wks.second.set_message_consumer(consumer);
     }
 
-    semantics::position_uri_s found_position;
-    position_uri definition(std::string document_uri, const position pos)
+    location definition_result;
+    position_uri definition(const std::string& document_uri, const position pos)
     {
-        found_position = { document_uri, pos };
         if (cancel_ && *cancel_)
-            return found_position;
+        {
+            definition_result = { pos, document_uri };
+            return position_uri(definition_result);
+        }
+        definition_result = ws_path_match(document_uri).definition(document_uri, pos);
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_position = file_manager_.find_processor_file(document_uri)->get_lsp_info().go_to_definition(pos);
-
-        return found_position;
+        return position_uri(definition_result);
     }
 
-    std::vector<semantics::position_uri_s> found_refs;
-    position_uris references(std::string document_uri, const position pos)
+    location_list references_result;
+    position_uri_list references(const std::string& document_uri, const position pos)
     {
-        found_refs.clear();
         if (cancel_ && *cancel_)
-            return { found_refs.data(), found_refs.size() };
+            return {};
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            found_refs = file_manager_.find_processor_file(document_uri)->get_lsp_info().references(pos);
+        references_result = ws_path_match(document_uri).references(document_uri, pos);
 
-        return { found_refs.data(), found_refs.size() };
+        return { references_result.data(), references_result.size() };
     }
 
-    std::vector<std::string> output;
-    std::vector<const char*> coutput;
-    string_array hover(const char* document_uri, const position pos)
+    std::string hover_result;
+    std::string_view hover(const std::string& document_uri, const position pos)
     {
-        coutput.clear();
         if (cancel_ && *cancel_)
-            return { coutput.data(), coutput.size() };
+            return "";
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            output = file_manager_.find_processor_file(document_uri)->get_lsp_info().hover(pos);
-        else
-            output.clear();
-        for (const auto& str : output)
-            coutput.push_back(str.c_str());
+        hover_result = ws_path_match(document_uri).hover(document_uri, pos);
 
-        return { coutput.data(), coutput.size() };
+        return hover_result;
     }
 
-    semantics::completion_list_s completion_result;
-    completion_list completion(const char* document_uri, const position pos, const char trigger_char, int trigger_kind)
+
+    lsp::completion_list_s completion_result;
+    completion_list completion(const std::string& document_uri,
+        const position pos,
+        const char trigger_char,
+        completion_trigger_kind trigger_kind)
     {
-        completion_result = semantics::completion_list_s();
         if (cancel_ && *cancel_)
-            return completion_result;
+            return completion_list { nullptr, 0 };
 
-        auto file = file_manager_.find(document_uri);
-        if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            completion_result = file_manager_.find_processor_file(document_uri)
-                                    ->get_lsp_info()
-                                    .completion(pos, trigger_char, trigger_kind);
+        completion_result = ws_path_match(document_uri).completion(document_uri, pos, trigger_char, trigger_kind);
 
-        return completion_result;
+        return completion_list(completion_result.data(), completion_result.size());
     }
 
     lib_config global_config_;
@@ -206,128 +193,38 @@ public:
 
         auto file = file_manager_.find(document_uri);
         if (dynamic_cast<workspaces::processor_file*>(file.get()) != nullptr)
-            return file_manager_.find_processor_file(document_uri)->get_lsp_info().semantic_tokens();
+            return file_manager_.find_processor_file(document_uri)->get_hl_info();
 
         return empty_tokens;
     }
 
-    void launch(std::string file_name, bool stop_on_entry)
-    {
-        workspaces::workspace& ws = ws_path_match(file_name);
-        workspaces::processor_file_ptr file = file_manager_.add_processor_file(file_name);
-        debugger_ = std::make_unique<debugging::debugger>(*this, debug_cfg_);
-        debug_lib_provider_ = std::make_unique<debugging::debug_lib_provider>(ws);
-        debugger_->launch(file, *debug_lib_provider_, stop_on_entry);
-    }
-
-    void register_debug_event_consumer(debug_event_consumer& consumer) { debug_event_consumers_.insert(&consumer); }
-
-    void unregister_debug_event_consumer(debug_event_consumer& consumer) { debug_event_consumers_.erase(&consumer); }
-
-    void next() const
-    {
-        if (!debugger_)
-            return;
-
-        debugger_->next();
-    }
-
-    void step_in() const
-    {
-        if (!debugger_)
-            return;
-
-        debugger_->step_in();
-    }
-
-    void disconnect()
-    {
-        if (!debugger_)
-            return;
-
-        debugger_->disconnect();
-
-        debugger_ = nullptr;
-    }
-
-    stack_frames get_stack_frames() const
-    {
-        if (!debugger_)
-            return { nullptr, 0 };
-
-        auto& res = debugger_->stack_frames();
-
-        return { res.data(), res.size() };
-    }
-
-    scopes get_scopes(frame_id_t frame_id) const
-    {
-        if (!debugger_)
-            return { nullptr, 0 };
-
-        auto& res = debugger_->scopes(frame_id);
-
-        return { res.data(), res.size() };
-    }
-
-
-    variables get_variables(var_reference_t var_reference)
-    {
-        if (!debugger_)
-            return { nullptr, 0 };
-
-        auto& res = debugger_->variables(var_reference);
-        temp_variables_.resize(res.size());
-        for (size_t i = 0; i < res.size(); ++i)
-            temp_variables_[i] = res[i].get();
-
-        return { temp_variables_.data(), temp_variables_.size() };
-    }
-
-    void set_breakpoints(std::string source_path, std::vector<breakpoint> brs)
-    {
-        debug_cfg_.set_breakpoints(
-            debugging::breakpoints { debugging::source(std::move(source_path)), std::move(brs) });
-    }
-
-    void continue_debug() const
-    {
-        if (!debugger_)
-            return;
-
-        debugger_->continue_debug();
-    }
-
 private:
-    debugging::debug_config debug_cfg_;
-    std::set<debug_event_consumer*> debug_event_consumers_;
-    std::unique_ptr<debugging::debug_lib_provider> debug_lib_provider_;
-    std::unique_ptr<debugging::debugger> debugger_;
-
-    // Inherited via debug_event_consumer_s
-    virtual void stopped(const std::string& reason, const std::string& addtl_info) override
-    {
-        for (auto c : debug_event_consumers_)
-        {
-            c->stopped(reason.c_str(), addtl_info.c_str());
-        }
-    }
-
-    virtual void exited(int exit_code) override
-    {
-        for (auto c : debug_event_consumers_)
-        {
-            c->exited(exit_code);
-            c->terminated();
-        }
-    }
-
     virtual void collect_diags() const override
     {
         collect_diags_from_child(file_manager_);
 
         for (auto& it : workspaces_)
             collect_diags_from_child(it.second);
+    }
+
+    // returns implicit workspace, if the file does not belong to any workspace
+    workspaces::workspace& ws_path_match(const std::string& document_uri)
+    {
+        size_t max = 0;
+        workspaces::workspace* max_ws = nullptr;
+        for (auto& ws : workspaces_)
+        {
+            size_t match = prefix_match(document_uri, ws.second.uri());
+            if (match > max && match >= ws.first.size())
+            {
+                max = match;
+                max_ws = &ws.second;
+            }
+        }
+        if (max_ws == nullptr)
+            return implicit_workspace_;
+        else
+            return *max_ws;
     }
 
     void notify_diagnostics_consumers() const
@@ -367,26 +264,6 @@ private:
             ++match;
         }
         return match;
-    }
-
-    // returns implicit workspace, if the file does not belong to any workspace
-    workspaces::workspace& ws_path_match(const std::string& document_uri)
-    {
-        size_t max = 0;
-        workspaces::workspace* max_ws = nullptr;
-        for (auto& ws : workspaces_)
-        {
-            size_t match = prefix_match(document_uri, ws.second.uri());
-            if (match > max && match >= ws.first.size())
-            {
-                max = match;
-                max_ws = &ws.second;
-            }
-        }
-        if (max_ws == nullptr)
-            return implicit_workspace_;
-        else
-            return *max_ws;
     }
     std::vector<debugging::variable*> temp_variables_;
 

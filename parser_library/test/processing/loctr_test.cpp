@@ -40,11 +40,11 @@ Z EQU Y-X
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_value_kind::ABS);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->kind() == symbol_value_kind::ABS);
 
-    ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->value().get_abs(), 16);
+    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 16);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)2);
@@ -68,11 +68,11 @@ Z EQU Y-X
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("X"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->kind() == symbol_value_kind::ABS);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->kind() == symbol_value_kind::ABS);
 
-    ASSERT_EQ(a.context().ord_ctx.get_symbol(a.context().ids().add("Z"))->value().get_abs(), 2);
+    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

@@ -26,12 +26,11 @@
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 struct evaluation_context;
 }
-namespace semantics {
+
+namespace hlasm_plugin::parser_library::semantics {
 
 enum class concat_type
 {
@@ -88,7 +87,6 @@ struct concatenation_point
     virtual ~concatenation_point() = default;
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
+
 #endif

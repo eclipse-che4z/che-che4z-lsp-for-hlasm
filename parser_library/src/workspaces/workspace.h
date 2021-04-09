@@ -22,13 +22,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "json.hpp"
-
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "lib_config.h"
 #include "library.h"
 #include "message_consumer.h"
+#include "nlohmann/json.hpp"
 #include "processor.h"
 #include "processor_group.h"
 
@@ -57,7 +56,7 @@ struct program
 // Represents a LSP workspace. It solves all dependencies between files -
 // implements parse lib provider and decides which files are to be parsed
 // when a particular file has been changed in the editor.
-class workspace : public diagnosable_impl, public parse_lib_provider
+class workspace : public diagnosable_impl, public parse_lib_provider, public lsp::feature_provider
 {
 public:
     // Creates just a dummy workspace with no libraries - no dependencies
@@ -92,16 +91,25 @@ public:
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
 
-    virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override;
-    virtual bool has_library(const std::string& library, context::hlasm_context& hlasm_ctx) const override;
+    location definition(const std::string& document_uri, position pos) const override;
+    location_list references(const std::string& document_uri, position pos) const override;
+    lsp::hover_result hover(const std::string& document_uri, position pos) const override;
+    lsp::completion_list_s completion(const std::string& document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind) const override;
 
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override;
+    bool has_library(const std::string& library, const std::string& program) const override;
+    const asm_option& get_asm_options(const std::string& file_name) override;
     const ws_uri& uri();
 
     void open();
     void close();
 
     void set_message_consumer(message_consumer* consumer);
+
+    processor_file_ptr get_processor_file(const std::string& filename);
 
 protected:
     file_manager& get_file_manager();
@@ -146,6 +154,7 @@ private:
 
     bool program_id_match(const std::string& filename, const program_id& program) const;
 
+    std::vector<processor_file_ptr> find_related_opencodes(const std::string& document_uri) const;
     void delete_diags(processor_file_ptr file);
 
     void show_message(const std::string& message);

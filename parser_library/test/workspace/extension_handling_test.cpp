@@ -14,24 +14,21 @@
 
 #include "gtest/gtest.h"
 
+#include "utils/platform.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/wildcard.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library::workspaces;
 
-#ifdef _WIN32
-const std::string lib_path = "lib\\";
-const std::string lib_path2 = "lib2\\";
-#else
-const std::string lib_path = "lib/";
-const std::string lib_path2 = "lib2/";
-#endif
+const std::string lib_path = hlasm_plugin::utils::platform::is_windows() ? "lib\\" : "lib/";
+const std::string lib_path2 = hlasm_plugin::utils::platform::is_windows() ? "lib2\\" : "lib2/";
 
 class file_manager_extension_mock : public file_manager_impl
 {
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string&) override
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
+        (void)optional;
         return { { "Mac.hlasm", lib_path + "Mac.hlasm" } };
     }
 };

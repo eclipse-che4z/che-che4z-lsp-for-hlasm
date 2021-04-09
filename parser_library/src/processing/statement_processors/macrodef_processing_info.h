@@ -16,10 +16,9 @@
 #define PROCESSING_MACRODEF_PROCESSING_INFO_H
 
 #include "context/macro.h"
+#include "lsp/macro_info.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // data to start macrodef_processor
 struct macrodef_start_data
@@ -40,36 +39,31 @@ struct macrodef_start_data
 // data holding info about prototype statement of a macro
 struct macrodef_prototype
 {
-    macrodef_prototype()
-        : macro_name(context::id_storage::empty_id)
-        , name_param(context::id_storage::empty_id)
-    {}
+    context::id_index macro_name = context::id_storage::empty_id;
+    range macro_name_range;
 
-    context::id_index macro_name;
-
-    context::id_index name_param;
+    context::id_index name_param = context::id_storage::empty_id;
     std::vector<context::macro_arg> symbolic_params;
 };
 
 // result of macrodef_processor
 struct macrodef_processing_result
 {
-    macrodef_processing_result()
-        : invalid(false)
-    {}
-
     macrodef_prototype prototype;
 
     context::statement_block definition;
     context::copy_nest_storage nests;
     context::label_storage sequence_symbols;
 
+    lsp::vardef_storage variable_symbols;
+    lsp::file_scopes_t file_scopes;
+
     location definition_location;
 
-    bool invalid;
+    bool external = false;
+    bool invalid = false;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

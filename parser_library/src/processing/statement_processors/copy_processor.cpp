@@ -19,9 +19,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-copy_processor::copy_processor(
-    context::hlasm_context& hlasm_ctx, processing_state_listener& listener, copy_start_data start)
-    : statement_processor(processing_kind::COPY, hlasm_ctx)
+copy_processor::copy_processor(analyzing_context ctx, processing_state_listener& listener, copy_start_data start)
+    : statement_processor(processing_kind::COPY, std::move(ctx))
     , listener_(listener)
     , start_(std::move(start))
     , macro_nest_(0)

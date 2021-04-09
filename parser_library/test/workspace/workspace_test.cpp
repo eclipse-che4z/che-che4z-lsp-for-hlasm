@@ -19,12 +19,15 @@
 
 #include "gtest/gtest.h"
 
+#include "utils/path.h"
+#include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::platform::is_windows;
 
 class workspace_test : public diagnosable_impl, public testing::Test
 {
@@ -59,11 +62,12 @@ public:
 
 TEST_F(workspace_test, parse_lib_provider)
 {
+    using namespace hlasm_plugin::utils;
+
     lib_config config;
     file_manager_impl file_mngr;
 
-    std::string test_wks_path = (std::filesystem::path("test") / "library" / "test_wks").string();
-
+    std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
 
     workspace ws(test_wks_path, file_mngr, config);
 
@@ -75,30 +79,39 @@ TEST_F(workspace_test, parse_lib_provider)
 
     file_mngr.add_processor_file("test\\library\\test_wks\\correct");
 
-#if _WIN32
-    ws.did_open_file("test\\library\\test_wks\\correct");
-    context::hlasm_context ctx_1("test\\library\\test_wks\\correct");
-    context::hlasm_context ctx_2("test\\library\\test_wks\\correct");
-#else
-    ws.did_open_file("test/library/test_wks/correct");
-    context::hlasm_context ctx_1("test/library/test_wks/correct");
-    context::hlasm_context ctx_2("test/library/test_wks/correct");
-#endif
+    lsp::lsp_ctx_ptr lsp_ptr = std::make_shared<lsp::lsp_context>();
+    auto [ctx_1, ctx_2] = [&ws]() {
+        if (platform::is_windows())
+        {
+            ws.did_open_file("test\\library\\test_wks\\correct");
+            return std::make_pair(std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"),
+                std::make_shared<context::hlasm_context>("test\\library\\test_wks\\correct"));
+        }
+        else
+        {
+            ws.did_open_file("test/library/test_wks/correct");
+            return std::make_pair(std::make_shared<context::hlasm_context>("test/library/test_wks/correct"),
+                std::make_shared<context::hlasm_context>("test/library/test_wks/correct"));
+        }
+    }();
 
     collect_diags_from_child(file_mngr);
     EXPECT_EQ(diags().size(), (size_t)0);
 
     diags().clear();
 
-    ws.parse_library("MACRO1", ctx_1, library_data { processing::processing_kind::MACRO, ctx_1.ids().add("MACRO1") });
+    ws.parse_library("MACRO1",
+        analyzing_context { ctx_1, lsp_ptr },
+        library_data { processing::processing_kind::MACRO, ctx_1->ids().add("MACRO1") });
 
     // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
 
     collect_diags_from_child(ws);
     EXPECT_EQ(diags().size(), (size_t)0);
 
-    ws.parse_library(
-        "not_existing", ctx_2, library_data { processing::processing_kind::MACRO, ctx_1.ids().add("not_existing") });
+    ws.parse_library("not_existing",
+        analyzing_context { ctx_2, lsp_ptr },
+        library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
 }
 
 
@@ -108,6 +121,59 @@ std::string pgroups_file = R"({
     {
       "name": "P1",
       "libs": [ "lib" ]
+    }
+  ]
+})";
+
+std::string pgroups_file_old_school = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [ "missing", "lib" ]
+    }
+  ]
+})";
+
+std::string pgroups_file_default = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing"
+        },
+        "lib"
+      ]
+    }
+  ]
+})";
+
+std::string pgroups_file_required = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": false
+        },
+        "lib"
+      ]
+    }
+  ]
+})";
+
+std::string pgroups_file_optional = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": true
+        },
+        "lib"
+      ]
     }
   ]
 })";
@@ -161,15 +227,9 @@ public:
     virtual bool update_and_get_bad() override { return false; }
 };
 
-#ifdef _WIN32
-constexpr const char* faulty_macro_path = "lib\\ERROR";
-constexpr const char* correct_macro_path = "lib\\CORRECT";
-std::string hlasmplugin_folder = ".hlasmplugin\\";
-#else
-constexpr const char* faulty_macro_path = "lib/ERROR";
-constexpr const char* correct_macro_path = "lib/CORRECT";
-std::string hlasmplugin_folder = ".hlasmplugin/";
-#endif // _WIN32
+const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
+const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
+std::string hlasmplugin_folder = is_windows() ? ".hlasmplugin\\" : ".hlasmplugin/";
 
 class file_manager_extended : public file_manager_impl
 {
@@ -187,8 +247,9 @@ public:
         files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
     }
 
-    virtual std::unordered_map<std::string, std::string> list_directory_files(const std::string&) override
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string&, bool optional) override
     {
+        (void)optional;
         if (insert_correct_macro)
             return { { "ERROR", "ERROR" }, { "CORRECT", "CORRECT" } };
         return { { "ERROR", "ERROR" } };
@@ -197,6 +258,53 @@ public:
     bool insert_correct_macro = true;
 };
 
+enum class file_manager_opt_variant
+{
+    old_school,
+    default_to_required,
+    required,
+    optional,
+};
+
+class file_manager_opt : public file_manager_impl
+{
+    std::unique_ptr<file_with_text> generate_proc_grps_file(file_manager_opt_variant variant)
+    {
+        switch (variant)
+        {
+            case file_manager_opt_variant::old_school:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_old_school);
+            case file_manager_opt_variant::default_to_required:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_default);
+            case file_manager_opt_variant::required:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_required);
+            case file_manager_opt_variant::optional:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_optional);
+        }
+        throw std::logic_error("Not implemented");
+    }
+
+public:
+    file_manager_opt(file_manager_opt_variant variant)
+    {
+        files_.emplace(hlasmplugin_folder + "proc_grps.json", generate_proc_grps_file(variant));
+        files_.emplace(
+            hlasmplugin_folder + "pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
+        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error));
+        files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
+    }
+    std::unordered_map<std::string, std::string> list_directory_files(const std::string& path, bool optional) override
+    {
+        if (path == "lib/" || path == "lib\\")
+            return { { "CORRECT", "CORRECT" } };
+
+        if (!optional)
+            add_diagnostic(
+                diagnostic_s { "", {}, "L0001", "Unable to load library - path does not exist and is not optional." });
+
+        return {};
+    }
+};
 
 
 TEST_F(workspace_test, did_close_file)
@@ -265,4 +373,32 @@ TEST_F(workspace_test, did_change_watched_files)
     changes.push_back(document_change({ { 0, 0 }, { 0, 0 } }, new_text.c_str(), new_text.size()));
     ws.did_change_file("source3", changes.data(), changes.size());
     ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+}
+
+TEST_F(workspace_test, missing_library_required)
+{
+    for (auto type : { file_manager_opt_variant::old_school,
+             file_manager_opt_variant::default_to_required,
+             file_manager_opt_variant::required })
+    {
+        file_manager_opt file_manager(type);
+        lib_config config;
+        workspace ws("", "workspace_name", file_manager, config);
+        ws.open();
+
+        ws.did_open_file("source1");
+        EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+        EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
+    }
+}
+
+TEST_F(workspace_test, missing_library_optional)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::optional);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    ws.did_open_file("source1");
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
 }

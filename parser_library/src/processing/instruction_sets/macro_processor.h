@@ -33,9 +33,9 @@ struct macro_arguments
 class macro_processor : public instruction_processor
 {
 public:
-    macro_processor(context::hlasm_context& hlasm_ctx,
-        branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider);
+    macro_processor(
+        analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider);
+
     virtual void process(context::shared_stmt_ptr stmt) override;
 
     static context::macro_data_ptr string_to_macrodata(std::string data);

@@ -260,7 +260,7 @@ TEST(context_macro, add_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    auto& m = ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -292,7 +292,7 @@ TEST(context_macro, call_and_leave_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
@@ -593,32 +593,32 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("v1"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("v1"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<context::A_t>()
                   ->get_value(),
         2);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("v2"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("v2"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<context::C_t>()
                   ->get_value(),
         "OPEN CODE");
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("v3"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("v3"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<context::C_t>()
                   ->get_value(),
         "M2");
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("v4"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("v4"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<context::A_t>()
                   ->get_value(),
         1);
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("v5"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("v5"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<context::C_t>()
                   ->get_value(),

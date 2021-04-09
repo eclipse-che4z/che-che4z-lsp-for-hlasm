@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 #define HLASMPLUGIN_PARSERLIBRARY_LIBRARY_H
 
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -44,22 +45,24 @@ class library_local : public library, public diagnosable_impl
 public:
     // takes reference to file manager that provides access to the files
     // and normalised path to directory that it wraps.
-    library_local(
-        file_manager& file_manager, std::string lib_path, std::shared_ptr<const extension_regex_map> extensions);
+    library_local(file_manager& file_manager,
+        std::string lib_path,
+        std::shared_ptr<const extension_regex_map> extensions,
+        bool optional = false);
 
     library_local(const library_local&) = delete;
     library_local& operator=(const library_local&) = delete;
 
-    library_local(library_local&& l) noexcept;
+    library_local(library_local&&) noexcept;
 
     void collect_diags() const override;
 
     const std::string& get_lib_path() const;
 
-    virtual std::shared_ptr<processor> find_file(const std::string& file) override;
+    std::shared_ptr<processor> find_file(const std::string& file) override;
 
     // this function should be called from workspace, once watchedFilesChanged request is implemented
-    virtual void refresh() override;
+    void refresh() override;
 
 private:
     file_manager& file_manager_;
@@ -69,6 +72,7 @@ private:
     std::shared_ptr<const extension_regex_map> extensions_;
     // indicates whether load_files function was called (not whether it was succesful)
     bool files_loaded_ = false;
+    bool optional_ = false;
 
     void load_files();
 };
