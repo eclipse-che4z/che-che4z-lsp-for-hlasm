@@ -46,8 +46,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
         analyzer_ = std::make_unique<analyzer>(
             get_text(), get_file_name(), lib_provider, get_lsp_editing(), analyzer_->hlasm_ctx().move_ids());
     else
-        analyzer_ = std::make_unique<analyzer>(
-            get_text(), get_file_name(), lib_provider, get_lsp_editing());
+        analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
 
     auto old_dep = dependencies_;
 
@@ -72,6 +71,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
     return res;
 }
 
+// Contains all the context that affects parsing an external file (macro or copy member)
 struct macro_cache_key
 {
     library_data data;
@@ -80,12 +80,23 @@ struct macro_cache_key
     std::vector<context::opcode_t> opsyn_state;
 };
 
+
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    analyzer_ = std::make_unique<analyzer>(
-        get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
-    
+    analyzer_ =
+        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+
+    std::variant<lsp::macro_info_ptr, context::copy_member_ptr> external_dep;
+    assert(data.proc_kind == processing::processing_kind::MACRO || data.proc_kind == processing::processing_kind::COPY);
+    if (data.proc_kind == processing::processing_kind::MACRO)
+        external_dep = ctx.lsp_ctx->get_macro_info(ctx.hlasm_ctx->get_macro_definition(data.library_member));
+    else if (data.proc_kind == processing::processing_kind::COPY)
+        external_dep = ctx.hlasm_ctx->get_copy_member(data.library_member);
+
+    //std::vector<std::pair<macro_cache_key, version_t>>
+
+
     return parse_inner(*analyzer_);
 }
 
