@@ -154,7 +154,7 @@ lsp_info_processor::lsp_info_processor(
                         }
                         // replace current for mnemonic
                         if (i != 0)
-                            subs_ops_mnems << ",";                 
+                            subs_ops_mnems << ",";
                         if (std::find(mnemonic_with_operand_ommited.begin(),
                                 mnemonic_with_operand_ommited.end(),
                                 mnemonic_instr.first)
