@@ -54,7 +54,6 @@ public:
 
     std::shared_ptr<processor> find_file(const std::string& file) override;
 
-    // this function should be called from workspace, once watchedFilesChanged request is implemented
     void refresh() override;
 
 private:

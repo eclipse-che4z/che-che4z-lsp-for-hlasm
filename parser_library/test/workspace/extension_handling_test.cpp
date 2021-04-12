@@ -17,7 +17,7 @@
 #include "diagnostic.h"
 #include "utils/platform.h"
 #include "workspaces/file_manager_impl.h"
-#include "workspaces/local_library.h"
+#include "workspaces/library_local.h"
 #include "workspaces/wildcard.h"
 #include "workspaces/workspace.h"
 

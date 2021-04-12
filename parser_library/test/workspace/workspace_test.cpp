@@ -178,6 +178,24 @@ std::string pgroups_file_optional = R"({
   ]
 })";
 
+std::string pgroups_file_invalid_assembler_options = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [
+        {
+          "path": "missing",
+          "optional": true
+        },
+        "lib"
+      ],
+      "asm_options": {
+        "SYSPARM": "AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJAAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJAAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFFGGGGGGGGGGHHHHHHHHHHIIIIIIIIIIJJJJJJJJJJ"
+      }
+    }
+  ]
+})";
+
 std::string pgmconf_file = R"({
   "pgms": [
     {
@@ -264,6 +282,7 @@ enum class file_manager_opt_variant
     default_to_required,
     required,
     optional,
+    invalid_assembler_options,
 };
 
 class file_manager_opt : public file_manager_impl
@@ -280,6 +299,8 @@ class file_manager_opt : public file_manager_impl
                 return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_required);
             case file_manager_opt_variant::optional:
                 return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_optional);
+            case file_manager_opt_variant::invalid_assembler_options:
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_invalid_assembler_options);
         }
         throw std::logic_error("Not implemented");
     }
@@ -398,4 +419,43 @@ TEST_F(workspace_test, missing_library_optional)
 
     ws.did_open_file("source1");
     EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)0);
+}
+
+TEST_F(workspace_test, invalid_assembler_options)
+{
+    file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "W0005"; }));
+}
+
+class file_manager_list_dir_failed : public file_manager_opt
+{
+public:
+    file_manager_list_dir_failed()
+        : file_manager_opt(file_manager_opt_variant::old_school)
+    {}
+
+    list_directory_result list_directory_files(const std::string& path) override
+    {
+        if (path == "lib/" || path == "lib\\")
+            return { {}, hlasm_plugin::utils::path::list_directory_rc::other_failure };
+
+        return { {}, hlasm_plugin::utils::path::list_directory_rc::not_exists };
+    }
+};
+
+TEST_F(workspace_test, library_list_failure)
+{
+    file_manager_list_dir_failed file_manager;
+    lib_config config;
+    workspace ws("", "workspace_name", file_manager, config);
+    ws.open();
+
+    ws.did_open_file("source1");
+    EXPECT_GE(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_TRUE(std::any_of(diags().begin(), diags().end(), [](const auto& d) { return d.code == "L0001"; }));
 }

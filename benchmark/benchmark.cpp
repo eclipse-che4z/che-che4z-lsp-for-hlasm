@@ -288,7 +288,7 @@ int main(int argc, char** argv)
     try
     {
         // parse pgm_conf.json
-        program_config = json::parse(conf).get<decltype(program_config)>();
+        json::parse(conf).get_to(program_config);
     }
     catch (...)
     {

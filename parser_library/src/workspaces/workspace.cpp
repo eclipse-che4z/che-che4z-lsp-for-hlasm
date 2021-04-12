@@ -22,7 +22,7 @@
 #include <string>
 
 #include "lib_config.h"
-#include "local_library.h"
+#include "library_local.h"
 #include "nlohmann/json.hpp"
 #include "processor.h"
 #include "utils/path.h"
@@ -380,7 +380,10 @@ bool workspace::load_and_process_config()
             else if (!proc_groups.macro_extensions.empty())
                 opts.extensions = proc_groups.macro_extensions;
             else if (!macro_extensions_compatibility_list.empty())
-                opts.extensions = macro_extensions_compatibility_list, opts.extensions_from_deprecated_source = true;
+            {
+                opts.extensions = macro_extensions_compatibility_list;
+                opts.extensions_from_deprecated_source = true;
+            }
 
 
             prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.string(), std::move(opts)));
