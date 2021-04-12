@@ -120,7 +120,7 @@ void library_local::load_files()
             break;
     }
 
-    bool extension_removed = true;
+    bool extension_removed = false;
     for (const auto& file : files_list)
     {
         if (extensions_.empty())

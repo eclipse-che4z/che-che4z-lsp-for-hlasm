@@ -121,3 +121,21 @@ TEST(extension_handling_test, no_multiple_macro_definitions)
     const auto& diags = lib.diags();
     EXPECT_TRUE(std::none_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0004"; }));
 }
+
+class file_manager_extension_mock_no_ext : public file_manager_impl
+{
+    list_directory_result list_directory_files(const std::string&) override
+    {
+        return { { { "Mac", lib_path + "Mac" } }, hlasm_plugin::utils::path::list_directory_rc::done };
+    }
+};
+
+TEST(extension_handling_test, legacy_extension_selection_file_without_ext)
+{
+    file_manager_extension_mock_no_ext file_mngr;
+    library_local lib(file_mngr, "lib", { { ".hlasm" }, true });
+    EXPECT_NE(lib.find_file("MAC"), nullptr);
+    lib.collect_diags();
+    const auto& diags = lib.diags();
+    EXPECT_TRUE(std::none_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "L0003"; }));
+}
