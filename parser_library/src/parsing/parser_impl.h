@@ -137,7 +137,7 @@ private:
     void parse_operands(const std::string& text, range text_range);
     void parse_lookahead_operands(const std::string& text, range text_range);
 
-    virtual antlr4::misc::IntervalSet getExpectedTokens() override;
+    antlr4::misc::IntervalSet getExpectedTokens() override;
 };
 
 // structure containing parser components

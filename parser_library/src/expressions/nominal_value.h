@@ -36,7 +36,7 @@ using nominal_value_ptr = std::unique_ptr<nominal_value_t>;
 
 struct nominal_value_string final : public nominal_value_t
 {
-    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
     nominal_value_string(std::string value, range rng);
     std::string value;
@@ -46,7 +46,7 @@ struct nominal_value_string final : public nominal_value_t
 // Represents address in the form D(B)
 struct address_nominal : public context::dependable
 {
-    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
     address_nominal();
     address_nominal(mach_expr_ptr displacement, mach_expr_ptr base);
     mach_expr_ptr displacement;
@@ -58,7 +58,7 @@ using expr_or_address_list = std::vector<expr_or_address>;
 
 struct nominal_value_exprs final : public nominal_value_t
 {
-    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
     nominal_value_exprs(expr_or_address_list exprs);
     expr_or_address_list exprs;

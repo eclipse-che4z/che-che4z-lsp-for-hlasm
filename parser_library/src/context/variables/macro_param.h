@@ -48,9 +48,9 @@ public:
     virtual const macro_param_data_component* get_data(const std::vector<size_t>& offset) const;
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t> offset) const override;
+    A_t number(std::vector<size_t> offset) const override;
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset) const override;
+    A_t count(std::vector<size_t> offset) const override;
 
     virtual size_t size(std::vector<size_t> offset) const;
 
@@ -73,7 +73,7 @@ public:
     const macro_data_shared_ptr default_data;
 
 protected:
-    virtual const macro_param_data_component* real_data() const override;
+    const macro_param_data_component* real_data() const override;
 };
 
 // represents macro param with default value, name and no position, keyword param
@@ -87,7 +87,7 @@ public:
     positional_param(id_index name, size_t position, const macro_param_data_component& assigned_value);
 
 protected:
-    virtual const macro_param_data_component* real_data() const override;
+    const macro_param_data_component* real_data() const override;
 };
 
 } // namespace context

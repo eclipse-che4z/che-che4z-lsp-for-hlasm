@@ -42,7 +42,7 @@ public:
     input_source& operator=(input_source&&) = delete;
     input_source(input_source&&) = delete;
 
-    virtual std::string getText(const antlr4::misc::Interval& interval) override;
+    std::string getText(const antlr4::misc::Interval& interval) override;
 
     virtual ~input_source() = default;
 };

@@ -38,7 +38,7 @@ struct evaluation_context : diagnosable_ctx
 
     evaluation_context(const evaluation_context&) = delete;
 
-    virtual void collect_diags() const override
+    void collect_diags() const override
     {
         // nothing to collect
     }

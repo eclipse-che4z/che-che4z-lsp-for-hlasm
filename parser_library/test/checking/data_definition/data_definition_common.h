@@ -34,7 +34,7 @@ public:
         : diagnosable_ctx(ctx)
     {}
     // Inherited via diagnosable_ctx
-    virtual void collect_diags() const override {};
+    void collect_diags() const override {};
 
     context::hlasm_context ctx;
 };

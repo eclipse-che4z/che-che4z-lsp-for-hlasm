@@ -48,13 +48,13 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         lookahead_start_data start);
 
-    virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::shared_stmt_ptr statement) override;
-    virtual void end_processing() override;
-    virtual bool terminal_condition(const statement_provider_kind kind) const override;
-    virtual bool finished() override;
+    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    void process_statement(context::shared_stmt_ptr statement) override;
+    void end_processing() override;
+    bool terminal_condition(const statement_provider_kind kind) const override;
+    bool finished() override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
     void process_MACRO();

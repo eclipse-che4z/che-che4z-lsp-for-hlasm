@@ -43,7 +43,7 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
     processing_format format_ref() const override { return stmt.format_ref(); }
 
-    const context::processing_stack_t& location_stack() const { return stmt_location_stack; }
+    const context::processing_stack_t& location_stack() const override { return stmt_location_stack; }
 };
 
 

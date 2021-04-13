@@ -111,17 +111,17 @@ public:
     }
 
     // N' attribute of the symbol
-    virtual A_t number(std::vector<size_t>) const override
+    A_t number(std::vector<size_t>) const override
     {
         return (A_t)(is_scalar || data.empty() ? 0 : data.rbegin()->first + 1);
     }
 
     // K' attribute of the symbol
-    virtual A_t count(std::vector<size_t> offset) const override;
+    A_t count(std::vector<size_t> offset) const override;
 
-    virtual size_t size() const override { return data.size(); };
+    size_t size() const override { return data.size(); };
 
-    virtual std::vector<size_t> keys() const override
+    std::vector<size_t> keys() const override
     {
         std::vector<size_t> keys;
         keys.reserve(data.size());

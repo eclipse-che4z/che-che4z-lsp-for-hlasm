@@ -54,16 +54,16 @@ public:
 
     void rewind_input(lexer::stream_position pos);
 
-    virtual void reset() override;
+    void reset() override;
     // prepares this object to append more tokens
     void append();
 
 protected:
-    virtual ssize_t adjustSeekIndex(size_t i) override;
+    ssize_t adjustSeekIndex(size_t i) override;
 
-    virtual antlr4::Token* LB(size_t k) override;
+    antlr4::Token* LB(size_t k) override;
 
-    virtual void setup() override;
+    void setup() override;
 
     bool is_on_channel(antlr4::Token* token);
 

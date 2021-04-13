@@ -35,7 +35,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    virtual void process(context::shared_stmt_ptr stmt) override;
+    void process(context::shared_stmt_ptr stmt) override;
 
     static void process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,

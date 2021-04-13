@@ -52,16 +52,16 @@ public:
         workspaces::parse_lib_provider& provider,
         macrodef_start_data start);
 
-    virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::shared_stmt_ptr statement) override;
-    virtual void end_processing() override;
-    virtual bool terminal_condition(const statement_provider_kind kind) const override;
-    virtual bool finished() override;
+    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    void process_statement(context::shared_stmt_ptr statement) override;
+    void end_processing() override;
+    bool terminal_condition(const statement_provider_kind kind) const override;
+    bool finished() override;
 
     static processing_status get_macro_processing_status(
         const semantics::instruction_si& instruction, context::hlasm_context& hlasm_ctx);
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
     void process_statement(const context::hlasm_statement& statement);

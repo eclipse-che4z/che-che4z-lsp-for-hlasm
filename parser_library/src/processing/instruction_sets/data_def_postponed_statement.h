@@ -33,7 +33,7 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
 
 
     // Inherited via resolvable
-    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override
     {
         context::dependency_collector conjunction;
         for (const auto& op : operands_ref().value)
@@ -65,7 +65,7 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
             return (int32_t)len;
     }
 
-    virtual context::symbol_value resolve(context::dependency_solver& solver) const override
+    context::symbol_value resolve(context::dependency_solver& solver) const override
     {
         return get_operands_length(operands_ref().value, solver);
     }
