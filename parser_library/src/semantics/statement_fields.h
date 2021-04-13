@@ -24,9 +24,7 @@
 
 // this file contains structures representing each statement field
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 enum class label_si_type
 {
@@ -163,9 +161,5 @@ struct remarks_si
     std::vector<range> value;
 };
 
-
-
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 #endif

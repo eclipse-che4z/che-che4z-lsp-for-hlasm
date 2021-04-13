@@ -16,9 +16,8 @@
 
 #include "lexing/lexer.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace parsing {
+namespace hlasm_plugin::parser_library::parsing {
+
 std::vector<antlr4::tree::ParseTree*> get_sub_trees(antlr4::tree::ParseTree* tree, size_t type)
 {
     std::vector<antlr4::tree::ParseTree*> return_trees;
@@ -89,6 +88,5 @@ void useful_tree::out_tree_rec(antlr4::ParserRuleContext* tree, std::string inde
         }
     }
 }
-} // namespace parsing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::parsing

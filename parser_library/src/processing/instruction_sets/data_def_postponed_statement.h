@@ -20,9 +20,7 @@
 #include "checking/data_definition/data_definition_operand.h"
 #include "postponed_statement_impl.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 template<checking::data_instr_type instr_type>
 struct data_def_postponed_statement : public postponed_statement_impl, public context::resolvable
@@ -71,9 +69,5 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
     }
 };
 
-
-
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

@@ -18,9 +18,7 @@
 #include "dependency_collector.h"
 #include "symbol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // interface for obtaining symbol from its name
 class dependency_solver
@@ -45,8 +43,5 @@ public:
     virtual symbol_value resolve(dependency_solver& solver) const = 0;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

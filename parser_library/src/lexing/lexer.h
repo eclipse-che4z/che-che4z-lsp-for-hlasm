@@ -30,9 +30,7 @@
 #include "token_factory.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
 class input_source;
 
@@ -239,7 +237,6 @@ private:
 
     bool is_process() const;
 };
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

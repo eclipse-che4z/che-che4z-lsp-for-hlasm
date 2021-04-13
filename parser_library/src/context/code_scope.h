@@ -19,9 +19,7 @@
 #include "variables/set_symbol.h"
 #include "variables/system_variable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // helper struct for HLASM code scopes
 // contains locally valid set symbols, sequence symbols and pointer to macro class (if code is in any)
@@ -60,7 +58,5 @@ private:
     macro_def_ptr this_macro_def_;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

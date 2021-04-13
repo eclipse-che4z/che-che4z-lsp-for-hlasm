@@ -18,9 +18,7 @@
 #include "address.h"
 #include "dependable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 struct address_resolver_base : public resolvable
 {};
@@ -80,8 +78,6 @@ private:
     const resolvable* dependency_source_;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

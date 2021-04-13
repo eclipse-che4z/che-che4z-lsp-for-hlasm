@@ -24,9 +24,7 @@
 #include "checking/instr_operand.h"
 #include "diagnostic.h"
 #include "id_storage.h"
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
@@ -303,9 +301,6 @@ public:
     static const std::map<mach_format, const std::string> mach_format_to_string;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

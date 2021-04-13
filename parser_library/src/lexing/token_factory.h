@@ -23,9 +23,7 @@
 #include "parser_library_export.h"
 #include "token.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
 class token_factory
 {
@@ -52,7 +50,5 @@ public:
         size_t end_of_token_in_line_utf16);
 };
 
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

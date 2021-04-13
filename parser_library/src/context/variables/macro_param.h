@@ -18,9 +18,7 @@
 #include "context/macro_param_data.h"
 #include "variable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class keyword_param;
 class positional_param;
@@ -90,8 +88,6 @@ protected:
     const macro_param_data_component* real_data() const override;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

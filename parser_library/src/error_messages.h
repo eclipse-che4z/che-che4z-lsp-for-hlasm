@@ -20,8 +20,7 @@
 
 #include "diagnostic.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 class error_messages
 {
@@ -180,7 +179,6 @@ public:
     }
 };
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 
 #endif

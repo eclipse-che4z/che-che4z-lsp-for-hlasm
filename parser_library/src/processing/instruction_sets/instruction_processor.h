@@ -24,9 +24,7 @@
 #include "processing/statement.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // interface for processing instructions
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
@@ -55,7 +53,5 @@ protected:
     {}
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

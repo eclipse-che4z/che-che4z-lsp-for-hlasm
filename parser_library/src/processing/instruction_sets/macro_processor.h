@@ -19,9 +19,7 @@
 #include "diagnostic_adder.h"
 #include "instruction_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 struct macro_arguments
 {
@@ -60,7 +58,5 @@ private:
         range op_range) const;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

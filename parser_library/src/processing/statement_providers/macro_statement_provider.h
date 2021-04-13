@@ -17,9 +17,7 @@
 
 #include "members_statement_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // statement provider providing statements of macro defintion
 class macro_statement_provider : public members_statement_provider
@@ -36,8 +34,6 @@ protected:
     context::statement_cache* get_next() override;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 
 #endif

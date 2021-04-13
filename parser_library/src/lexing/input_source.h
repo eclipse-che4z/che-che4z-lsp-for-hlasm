@@ -19,9 +19,7 @@
 
 #include "parser_library_export.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 /*
         custom ANTLRInputStream
         supports input rewinding, appending and resetting
@@ -46,8 +44,7 @@ public:
 
     virtual ~input_source() = default;
 };
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::lexing
 
 #endif

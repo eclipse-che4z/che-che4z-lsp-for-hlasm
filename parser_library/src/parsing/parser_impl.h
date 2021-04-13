@@ -26,16 +26,13 @@
 #include "semantics/collector.h"
 #include "semantics/source_info_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 class input_source;
 class lexer;
 class token_stream;
-} // namespace lexing
+} // namespace hlasm_plugin::parser_library::lexing
 
-namespace parsing {
+namespace hlasm_plugin::parser_library::parsing {
 
 using self_def_t = std::int32_t;
 
@@ -154,9 +151,6 @@ struct parser_holder
     ~parser_holder();
 };
 
-
-} // namespace parsing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::parsing
 
 #endif

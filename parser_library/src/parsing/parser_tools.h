@@ -19,9 +19,7 @@
 
 #include "antlr4-runtime.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace parsing {
+namespace hlasm_plugin::parser_library::parsing {
 // returns first subtree of specific type of the given tree
 // will not work properly with empty rules in grammar
 std::vector<antlr4::tree::ParseTree*> get_sub_trees(antlr4::tree::ParseTree* tree, size_t type);
@@ -47,6 +45,5 @@ private:
 
     void out_tree_rec(antlr4::ParserRuleContext* tree, std::string indent, std::ostream& stream);
 };
-} // namespace parsing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::parsing

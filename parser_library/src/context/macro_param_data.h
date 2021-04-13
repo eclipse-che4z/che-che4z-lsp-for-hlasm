@@ -20,9 +20,7 @@
 
 #include "common_types.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class macro_param_data_component;
 using macro_data_ptr = std::unique_ptr<macro_param_data_component>;
@@ -103,7 +101,5 @@ public:
     macro_param_data_composite(std::vector<macro_data_ptr> value);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

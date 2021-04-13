@@ -22,8 +22,7 @@
 
 #include "parser_library_export.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 using position_t = uint64_t;
 
@@ -74,6 +73,5 @@ struct PARSER_LIBRARY_EXPORT file_range
     const std::string* file;
 };
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 #endif

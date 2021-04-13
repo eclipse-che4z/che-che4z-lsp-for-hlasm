@@ -19,9 +19,7 @@
 
 #include "context/common_types.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // enumeration of all data attributes
 enum class data_attr_kind
@@ -108,7 +106,5 @@ private:
     len_attr integer_;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

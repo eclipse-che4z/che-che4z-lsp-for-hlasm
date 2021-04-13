@@ -18,9 +18,7 @@
 #include "diagnosable_ctx.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 // structure holding required objects to correcly perform evaluation of expressions
 struct evaluation_context : diagnosable_ctx
@@ -44,8 +42,6 @@ struct evaluation_context : diagnosable_ctx
     }
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

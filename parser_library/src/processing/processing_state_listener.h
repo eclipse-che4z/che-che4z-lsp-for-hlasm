@@ -19,9 +19,7 @@
 #include "statement_processors/lookahead_processing_info.h"
 #include "statement_processors/macrodef_processing_info.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // interface for listening that a statement processor needs to be started or has finished
 class processing_state_listener
@@ -41,7 +39,5 @@ public:
     virtual ~processing_state_listener() = default;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

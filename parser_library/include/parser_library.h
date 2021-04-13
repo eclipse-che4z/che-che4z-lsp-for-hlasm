@@ -25,8 +25,7 @@
 #include "parser_library_export.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 class PARSER_LIBRARY_EXPORT parser_library
 {
@@ -34,8 +33,8 @@ public:
     parser_library() {};
     void parse(const std::string&);
 };
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library
 
 
 #endif

@@ -23,9 +23,7 @@
 #include "alignment.h"
 #include "context/id_storage.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class location_counter;
 class section;
@@ -138,9 +136,6 @@ private:
     bool resolved_;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

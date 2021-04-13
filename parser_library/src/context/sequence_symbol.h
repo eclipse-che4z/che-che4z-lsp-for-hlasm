@@ -19,9 +19,7 @@
 
 #include "source_snapshot.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 struct sequence_symbol;
 struct opencode_sequence_symbol;
@@ -75,8 +73,6 @@ struct macro_sequence_symbol : public sequence_symbol
     macro_sequence_symbol(id_index name, location symbol_location, size_t statement_offset);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

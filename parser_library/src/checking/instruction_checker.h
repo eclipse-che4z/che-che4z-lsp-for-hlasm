@@ -20,9 +20,7 @@
 #include "asm_instr_check.h"
 #include "context/instruction.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking {
 
 // interface for unified checking
 class instruction_checker
@@ -62,8 +60,6 @@ public:
         const diagnostic_collector& add_diagnostic) const override;
 };
 
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking
 
 #endif

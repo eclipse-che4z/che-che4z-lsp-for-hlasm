@@ -17,9 +17,7 @@
 
 #include "macro_param.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class system_variable;
 using sys_sym_ptr = std::shared_ptr<system_variable>;
@@ -53,8 +51,6 @@ protected:
     const macro_param_data_component* real_data() const override;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

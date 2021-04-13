@@ -19,9 +19,7 @@
 #include "context/ordinary_assembly/dependant.h"
 #include "range.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // interface for registering and using sequence symbols
 class branching_provider
@@ -33,7 +31,5 @@ public:
     virtual ~branching_provider() = default;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

@@ -17,9 +17,7 @@
 
 #include "statement_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor ignoring provided statements
 class empty_processor : public statement_processor
@@ -35,7 +33,5 @@ public:
     void collect_diags() const override;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

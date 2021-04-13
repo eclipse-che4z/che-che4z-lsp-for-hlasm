@@ -23,9 +23,7 @@
 #include "lexer.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
 // custom implementation of antlr token stream
 // helps to control the filtering of the token stream
@@ -75,7 +73,5 @@ private:
     std::vector<decltype(_tokens)> tokens_;
 };
 
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

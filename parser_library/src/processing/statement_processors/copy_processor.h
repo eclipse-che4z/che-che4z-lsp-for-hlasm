@@ -20,9 +20,7 @@
 #include "processing/processing_state_listener.h"
 #include "statement_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor that processes copy members
 class copy_processor : public statement_processor
@@ -51,7 +49,5 @@ private:
     void process_MEND();
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

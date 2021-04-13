@@ -19,10 +19,7 @@
 #include "instruction.h"
 #include "macro.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
-
+namespace hlasm_plugin::parser_library::context {
 
 // structure that represents operation code of an instruction
 struct opcode_t
@@ -41,9 +38,7 @@ struct opcode_t
     explicit operator bool() const { return macro_opcode || machine_opcode; }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 
 #endif

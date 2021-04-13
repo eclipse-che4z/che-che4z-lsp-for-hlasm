@@ -23,9 +23,7 @@
 
 // this file contains inherited structures from hlasm_statement that are used during the processing
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // statement that contains resolved operation code and also all semantic fields
 struct resolved_statement : public context::hlasm_statement, public semantics::complete_statement
@@ -89,8 +87,5 @@ struct rebuilt_statement : public resolved_statement
     processing_format format_ref() const override { return base_stmt->format_ref(); }
 };
 
-
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif
