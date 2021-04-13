@@ -103,6 +103,7 @@ void library_local::load_files()
 {
     auto [files_list, rc] = file_manager_.list_directory_files(lib_path_);
     files_.clear();
+    diags().clear();
 
     switch (rc)
     {

@@ -56,6 +56,8 @@ public:
 
     void refresh() override;
 
+    bool is_once_only() const override { return false; }
+
 private:
     file_manager& file_manager_;
 

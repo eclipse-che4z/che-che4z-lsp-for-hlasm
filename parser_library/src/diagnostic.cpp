@@ -1983,16 +1983,22 @@ diagnostic_s diagnostic_s::warning_L0003(const std::string& path)
 {
     return diagnostic_s("",
         {},
+        diagnostic_severity::warning,
         "L0003",
         "Macros from library '" + path
             + "' were selected by a deprecated mechanism to specify file extensions (alwaysRecognize in "
-              "pgm_conf.json).");
+              "pgm_conf.json).",
+        {});
 }
 
 diagnostic_s diagnostic_s::warning_L0004(const std::string& path, const std::string& macro_name)
 {
-    return diagnostic_s(
-        "", {}, "L0004", "Library '" + path + "' contains multiple definitions of the macro '" + macro_name + "'.");
+    return diagnostic_s("",
+        {},
+        diagnostic_severity::warning,
+        "L0004",
+        "Library '" + path + "' contains multiple definitions of the macro '" + macro_name + "'.",
+        {});
 }
 
 diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
