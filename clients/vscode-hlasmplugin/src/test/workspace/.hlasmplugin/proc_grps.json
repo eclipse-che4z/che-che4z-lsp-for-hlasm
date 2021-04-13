@@ -9,5 +9,9 @@
         "copy"
       ]
     }
+  ],
+  "macro_extensions": [
+    "",
+    ".asm"
   ]
 }
