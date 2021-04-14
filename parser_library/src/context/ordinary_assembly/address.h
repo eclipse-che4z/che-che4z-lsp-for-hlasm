@@ -109,8 +109,8 @@ struct space
     // previous address values
     // for LOCTR_UNKNOWN space kind
     address previous_loctr_value;
-    size_t previous_boundary;
-    int previous_offset;
+    size_t previous_boundary = 0;
+    int previous_offset = 0;
 
     location_counter& owner;
 

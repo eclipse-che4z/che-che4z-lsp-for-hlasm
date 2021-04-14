@@ -203,7 +203,7 @@ bool data_definition::check_single_symbol_ok(const diagnostic_collector& add_dia
         auto symbol = dynamic_cast<const mach_expr_symbol*>(expr);
         if (!symbol)
         {
-            add_diagnostic(diagnostic_op::error_D030(expr->get_range(), &type));
+            add_diagnostic(diagnostic_op::error_D030(expr->get_range(), std::string(1, type)));
             ret = false;
         }
     }
