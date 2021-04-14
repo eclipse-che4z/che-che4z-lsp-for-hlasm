@@ -17,6 +17,10 @@
 
 #include <regex>
 
+namespace {
+const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
+}
+
 namespace hlasm_plugin::parser_library::checking {
 
 xattr::xattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)

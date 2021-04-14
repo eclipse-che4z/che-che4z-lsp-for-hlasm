@@ -67,8 +67,6 @@ public:
     virtual ~assembler_instruction() {};
 
 protected:
-    const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
-
     bool is_param_in_vector(const std::string& parameter, const std::vector<std::string>& options) const;
 
     bool operands_size_corresponding(const std::vector<const asm_operand*>& to_check,
