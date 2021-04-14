@@ -140,10 +140,9 @@ public:
             if (!lib_provider)
                 provider.emplace(workspace);
 
-            analyzer a(open_code->get_text(),
-                open_code->get_file_name(),
-                lib_provider ? *lib_provider : provider.value(),
-                this);
+            analyzer a(
+                open_code->get_text(), open_code->get_file_name(), lib_provider ? *lib_provider : provider.value());
+
             a.register_stmt_analyzer(this);
 
             ctx_ = a.context().hlasm_ctx.get();
