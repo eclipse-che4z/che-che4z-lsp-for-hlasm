@@ -137,6 +137,10 @@ const checking::parameter reg_imm_12s = { true, 12, checking::machine_operand_ty
 const checking::parameter reg_imm_16s = { true, 16, checking::machine_operand_type::REG_IMM };
 const checking::parameter reg_imm_24s = { true, 24, checking::machine_operand_type::REG_IMM };
 const checking::parameter reg_imm_32s = { true, 32, checking::machine_operand_type::REG_IMM };
+const checking::parameter reladdr_imm_12s = { true, 12, checking::machine_operand_type::RELOC_IMM };
+const checking::parameter reladdr_imm_16s = { true, 16, checking::machine_operand_type::RELOC_IMM };
+const checking::parameter reladdr_imm_24s = { true, 24, checking::machine_operand_type::RELOC_IMM };
+const checking::parameter reladdr_imm_32s = { true, 32, checking::machine_operand_type::RELOC_IMM };
 
 /*
 Rules for displacement operands:
@@ -170,6 +174,10 @@ const checking::machine_operand_format reg_imm_12_S = checking::machine_operand_
 const checking::machine_operand_format reg_imm_16_S = checking::machine_operand_format(reg_imm_16s, empty, empty);
 const checking::machine_operand_format reg_imm_24_S = checking::machine_operand_format(reg_imm_24s, empty, empty);
 const checking::machine_operand_format reg_imm_32_S = checking::machine_operand_format(reg_imm_32s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_12_S = checking::machine_operand_format(reladdr_imm_12s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_16_S = checking::machine_operand_format(reladdr_imm_16s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_24_S = checking::machine_operand_format(reladdr_imm_24s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_32_S = checking::machine_operand_format(reladdr_imm_32s, empty, empty);
 // intervals dividing formats based on length
 const int length_sixteen_interval = 3;
 const int length_thirtytwo_interval = 21;
