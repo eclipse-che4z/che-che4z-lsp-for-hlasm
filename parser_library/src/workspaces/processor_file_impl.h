@@ -21,15 +21,17 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
+class file_manager;
+
 // Implementation of the processor_file interface. Uses analyzer to parse the file
 // Then stores it until the next parsing so it is possible to retrieve parsing
 // information from it.
 class processor_file_impl : public virtual file_impl, public virtual processor_file
 {
 public:
-    processor_file_impl(std::string file_uri, std::atomic<bool>* cancel = nullptr);
-    processor_file_impl(file_impl&&, std::atomic<bool>* cancel = nullptr);
-    processor_file_impl(const file_impl& file, std::atomic<bool>* cancel = nullptr);
+    processor_file_impl(std::string file_uri, const file_manager & file_mngr, std::atomic<bool>* cancel = nullptr);
+    processor_file_impl(file_impl&&, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
+    processor_file_impl(const file_impl& file, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
     void collect_diags() const override;
     bool is_once_only() const override;
     // Starts parser with new (empty) context
@@ -51,6 +53,8 @@ public:
     const performance_metrics& get_metrics() override;
 
 private:
+    const file_manager* file_manager_;
+
     std::unique_ptr<analyzer> analyzer_;
 
     bool parse_inner(analyzer&);
