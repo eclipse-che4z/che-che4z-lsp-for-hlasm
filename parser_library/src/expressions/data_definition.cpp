@@ -195,7 +195,7 @@ bool data_definition::check_single_symbol_ok(const diagnostic_collector& add_dia
             add_diagnostic(
                 diagnostic_op::error_D030({ std::get<address_nominal>(expr_or_addr).base->get_range().start,
                                               std::get<address_nominal>(expr_or_addr).base->get_range().end },
-                    &type));
+                    std::string(1, type)));
             ret = false;
             continue;
         }
