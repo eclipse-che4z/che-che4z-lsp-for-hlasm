@@ -1235,6 +1235,7 @@ diagnostic_op diagnostic_op::error_M113(const std::string& instr_name, const ran
         range);
 }
 
+
 diagnostic_op diagnostic_op::error_M114(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
@@ -1242,7 +1243,13 @@ diagnostic_op diagnostic_op::error_M114(const std::string& instr_name, const ran
         "Error at " + instr_name + " instruction: operand must be an absolute vector register value",
         range);
 }
-
+diagnostic_op diagnostic_op::error_M115(const std::string& instr_name, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "M115",
+        "Error at " + instr_name + " instruction: operand must be relocatable symbol or an absolute  immediate value",
+        range);
+}
 diagnostic_op diagnostic_op::error_M120(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
@@ -1285,6 +1292,14 @@ diagnostic_op diagnostic_op::error_M124(const std::string& instr_name, const ran
         range);
 }
 
+diagnostic_op diagnostic_op::error_M125(const std::string& instr_name, long long from, long long to, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "M125",
+        "Error at " + instr_name + " instruction: relocatable symbol or immediate operand absolute value must be between "
+            + std::to_string(from) + " and " + std::to_string(to),
+        range);
+}
 diagnostic_op diagnostic_op::error_M130(const std::string& instr_name, long long from, long long to, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
@@ -1476,6 +1491,14 @@ diagnostic_op diagnostic_op::warn_D025(const range& range, const std::string& ty
 {
     return diagnostic_op(
         diagnostic_severity::warning, "D025", "The " + modifier + " modifier is ignored with type " + type, range);
+}
+diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& instr)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D031",
+         " Operand value must be relocatable symbol with instruction " + instr,
+        
+        range);
 }
 
 diagnostic_op diagnostic_op::error_D026(const range& range)

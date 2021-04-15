@@ -216,6 +216,8 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
             return diagnostic_op::error_M113(instr_name, operand_range);
         case machine_operand_type::VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
+        case machine_operand_type::RELOC_IMM: // RI
+           return diagnostic_op::error_M115(instr_name, operand_range);
     }
     assert(false);
     return diagnostic_op::error_I999(instr_name, stmt_range);
@@ -286,9 +288,18 @@ bool one_operand::check(
             return false;
         }
         return true;
+    } 
+    else
+    {
+        if (to_check.identifier.type == machine_operand_type::RELOC_IMM && operand_identifier != "RELOC") {
+            diag = diagnostic_op::warn_D031(operand_range, instr_name);
+            return false;
+        }
     }
 
     // it is a simple operand
+   
+
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
         auto boundary = 1ll << (to_check.identifier.size - 1);
@@ -300,9 +311,12 @@ bool one_operand::check(
             case machine_operand_type::REG_IMM:
                 diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
                 break;
+            case machine_operand_type::RELOC_IMM:
+                diag = diagnostic_op::error_M125(instr_name, -boundary, boundary - 1, operand_range);
+                break;
             default:
                 assert(false);
-        }
+        }   
         return false;
     }
     if (!to_check.identifier.is_signed && !is_size_corresponding_unsigned(value, to_check.identifier.size))
@@ -321,6 +335,9 @@ bool one_operand::check(
                 break;
             case machine_operand_type::VEC_REG:
                 diag = diagnostic_op::error_M124(instr_name, operand_range);
+                break;
+            case machine_operand_type::RELOC_IMM:
+                diag = diagnostic_op::error_M125(instr_name, 0, boundary, operand_range);
                 break;
             default:
                 assert(false);
@@ -368,6 +385,10 @@ std::string parameter::to_string() const
             return "B";
         case machine_operand_type::LENGTH: {
             ret_val = "L";
+            break;
+        }
+        case machine_operand_type::RELOC_IMM: {
+            ret_val = "RI";
             break;
         }
         case machine_operand_type::VEC_REG:
