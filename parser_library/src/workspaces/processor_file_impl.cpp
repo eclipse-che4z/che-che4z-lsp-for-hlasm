@@ -117,13 +117,6 @@ parse_result processor_file_impl::parse_no_lsp_update(
     return true;
 }
 
-bool processor_file_impl::parse_info_updated()
-{
-    bool ret = parse_info_updated_;
-    parse_info_updated_ = false;
-    return ret;
-}
-
 const std::set<std::string>& processor_file_impl::dependencies() { return dependencies_; }
 
 const semantics::lines_info& processor_file_impl::get_hl_info()
@@ -144,10 +137,6 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
     new_analyzer.analyze(cancel_);
 
     collect_diags_from_child(new_analyzer);
-
-    // collect semantic info if the file is open in IDE
-    if (get_lsp_editing())
-        parse_info_updated_ = true;
 
     if (cancel_ && *cancel_)
         return false;

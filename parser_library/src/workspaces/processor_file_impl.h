@@ -42,9 +42,6 @@ public:
     // Used by the macro tracer.
     parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, const library_data) override;
 
-    // Returns true if parsing occured since this method was called last.
-    bool parse_info_updated() override;
-
     const std::set<std::string>& dependencies() override;
 
     const semantics::lines_info& get_hl_info() override;
@@ -59,7 +56,6 @@ private:
 
     bool parse_inner(analyzer&);
 
-    bool parse_info_updated_ = false;
     std::atomic<bool>* cancel_;
 
     std::set<std::string> dependencies_;

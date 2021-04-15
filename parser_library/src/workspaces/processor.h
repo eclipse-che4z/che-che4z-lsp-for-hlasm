@@ -30,8 +30,6 @@ namespace hlasm_plugin::parser_library::workspaces {
 class processor : public virtual diagnosable
 {
 public:
-    virtual bool parse_info_updated() = 0;
-
     // starts parser with new (empty) context
     virtual parse_result parse(parse_lib_provider&) = 0;
     // starts parser with in the context of parameter

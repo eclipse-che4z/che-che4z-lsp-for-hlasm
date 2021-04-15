@@ -107,19 +107,6 @@ processor_file_ptr file_manager_impl::find_processor_file(const std::string& key
     return change_into_processor_file_if_not_already_(ret->second);
 }
 
-
-std::vector<processor_file*> file_manager_impl::list_updated_files()
-{
-    std::vector<processor_file*> list;
-    for (auto& item : files_)
-    {
-        auto p = dynamic_cast<processor_file*>(item.second.get());
-        if (p && p->parse_info_updated())
-            list.push_back(p);
-    }
-    return list;
-}
-
 list_directory_result file_manager_impl::list_directory_files(const std::string& path)
 {
     std::filesystem::path lib_p(path);
