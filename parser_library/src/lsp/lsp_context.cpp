@@ -55,6 +55,11 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
     distribute_file_occurences(opencode_->file_occurences);
 }
 
+macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
+{
+    return macros_.at(opencode_->hlasm_ctx.get_macro_definition(macro_name));
+}
+
 location lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);

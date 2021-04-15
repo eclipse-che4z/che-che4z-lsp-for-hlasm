@@ -169,6 +169,17 @@ const std::vector<std::unique_ptr<keyword_param>>& macro_definition::get_keyword
 
 const id_index& macro_definition::get_label_param_name() const { return label_param_name_; }
 
+std::unordered_set<std::string> macro_definition::get_copy_files() const
+{
+    std::unordered_set<std::string> result;
+    for (const auto& stmt_nest : copy_nests)
+    {
+        for (const auto& copy_file_name : stmt_nest)
+            result.insert(copy_file_name.file);
+    }
+    return result;
+}
+
 macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,
     const copy_nest_storage& copy_nests,

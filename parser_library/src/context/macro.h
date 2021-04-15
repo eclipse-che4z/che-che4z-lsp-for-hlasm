@@ -92,6 +92,9 @@ public:
     const std::vector<std::unique_ptr<positional_param>>& get_positional_params() const;
     const std::vector<std::unique_ptr<keyword_param>>& get_keyword_params() const;
     const id_index& get_label_param_name() const;
+
+    // Returns a set of all COPY files that were expanded in the macro definition
+    std::unordered_set<std::string> get_copy_files() const;
 };
 
 // represent macro instruction call
