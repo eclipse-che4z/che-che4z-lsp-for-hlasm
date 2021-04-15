@@ -45,6 +45,7 @@ function(add_uri_ext)
 endfunction()
 
 if(NOT uri_ext_POPULATED)
+    message("Populating netlib uri")
     FetchContent_Populate(uri_ext)
     add_uri_ext()
 endif()
