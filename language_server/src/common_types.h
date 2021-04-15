@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 // Types that are used throughout the language server component
 namespace hlasm_plugin::language_server {
 

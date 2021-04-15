@@ -70,7 +70,6 @@ void collector::set_label_field(const std::string* label, antlr4::ParserRuleCont
         || (parser_ctx->getStart() == parser_ctx->getStop()
             && parser_ctx->getStart()->getType() == lexing::lexer::Tokens::ORDSYMBOL))
     {
-        add_lsp_symbol(label, symbol_range, context::symbol_type::ord);
         lbl_.emplace(symbol_range, *label);
     }
     // otherwise it is macro label parameter
@@ -123,23 +122,23 @@ void collector::set_operand_remark_field(range symbol_range)
         throw std::runtime_error("field already assigned");
     op_.emplace(symbol_range, operand_list());
     rem_.emplace(symbol_range, std::vector<range>());
-    def_.emplace("", symbol_range);
-
-    add_operand_remark_hl_symbols();
-}
-
-void collector::set_operand_remark_field(std::string deferred, std::vector<range> remarks, range symbol_range)
-{
-    if (op_ || rem_ || def_)
-        throw std::runtime_error("field already assigned");
-    def_.emplace(std::move(deferred), symbol_range);
-    rem_.emplace(symbol_range, std::move(remarks));
+    def_.emplace(symbol_range, "", std::vector<vs_ptr>());
 
     add_operand_remark_hl_symbols();
 }
 
 void collector::set_operand_remark_field(
-    std::vector<operand_ptr> operands, std::vector<range> remarks, range symbol_range)
+    std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range)
+{
+    if (op_ || rem_ || def_)
+        throw std::runtime_error("field already assigned");
+    def_.emplace(symbol_range, std::move(deferred), std::move(vars));
+    rem_.emplace(symbol_range, std::move(remarks));
+
+    add_operand_remark_hl_symbols();
+}
+
+void collector::set_operand_remark_field(operand_list operands, remark_list remarks, range symbol_range)
 {
     if (op_ || rem_ || def_)
         throw std::runtime_error("field already assigned");
@@ -151,18 +150,9 @@ void collector::set_operand_remark_field(
     add_operand_remark_hl_symbols();
 }
 
-void collector::add_lsp_symbol(const std::string* name, range symbol_range, context::symbol_type type)
-{
-    lsp_symbols_.push_back({ name, symbol_range, type });
-}
-
 void collector::add_hl_symbol(token_info symbol) { hl_symbols_.push_back(std::move(symbol)); }
 
-void collector::clear_hl_lsp_symbols()
-{
-    lsp_symbols_.clear();
-    hl_symbols_.clear();
-}
+void collector::clear_hl_symbols() { hl_symbols_.clear(); }
 
 void collector::add_operand_remark_hl_symbols()
 {
@@ -184,8 +174,6 @@ void collector::append_operand_field(collector&& c)
 
     for (auto& symbol : c.hl_symbols_)
         hl_symbols_.push_back(std::move(symbol));
-    for (auto& symbol : c.lsp_symbols_)
-        lsp_symbols_.push_back(std::move(symbol));
 }
 
 const instruction_si& collector::peek_instruction() { return *instr_; }
@@ -206,13 +194,12 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     if (deferred_hint)
     {
         if (!def_)
-            def_.emplace("", instr_.value().field_range);
+            def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
         return std::make_shared<statement_si_deferred>(
-            range_provider::union_range(lbl_.value().field_range, def_->second),
+            range_provider::union_range(lbl_->field_range, def_->field_range),
             std::move(*lbl_),
             std::move(*instr_),
-            std::move(def_.value().first),
-            def_.value().second);
+            std::move(*def_));
     }
     else
     {
@@ -233,15 +220,6 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     }
 }
 
-std::vector<context::lsp_symbol> collector::extract_lsp_symbols()
-{
-    if (lsp_symbols_extracted_)
-        throw std::runtime_error("data already extracted");
-
-    lsp_symbols_extracted_ = true;
-    return std::move(lsp_symbols_);
-}
-
 std::vector<token_info> collector::extract_hl_symbols()
 {
     if (hl_symbols_extracted_)
@@ -259,7 +237,6 @@ void collector::prepare_for_next_statement()
     rem_.reset();
     def_.reset();
 
-    lsp_symbols_.clear();
     hl_symbols_.clear();
     lsp_symbols_extracted_ = false;
     hl_symbols_extracted_ = false;

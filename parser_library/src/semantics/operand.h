@@ -62,10 +62,14 @@ struct seq_sym
     range symbol_range;
 };
 
+class operand_visitor;
+
 // struct representing operand of instruction
 struct operand
 {
     operand(const operand_type type, const range operand_range);
+
+    virtual void apply(operand_visitor& visitor) const = 0;
 
     model_operand* access_model();
     ca_operand* access_ca();
@@ -79,7 +83,6 @@ struct operand
 
     virtual ~operand() = default;
 };
-
 
 } // namespace hlasm_plugin::parser_library::semantics
 

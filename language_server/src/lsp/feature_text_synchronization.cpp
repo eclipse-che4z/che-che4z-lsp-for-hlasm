@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-
 #include "feature_text_synchronization.h"
 
 #include "../logger.h"

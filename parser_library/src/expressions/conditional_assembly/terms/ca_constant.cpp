@@ -15,6 +15,7 @@
 #include "ca_constant.h"
 
 #include "ca_function.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -37,6 +38,8 @@ void ca_constant::collect_diags() const
 }
 
 bool ca_constant::is_character_expression() const { return false; }
+
+void ca_constant::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_constant::evaluate(const evaluation_context&) const { return value; }
 

@@ -38,5 +38,4 @@ using post_stmt_ptr = std::unique_ptr<postponed_statement>;
 
 } // namespace hlasm_plugin::parser_library::context
 
-
 #endif

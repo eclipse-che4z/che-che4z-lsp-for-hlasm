@@ -30,7 +30,7 @@ class asm_processor : public low_language_processor
     checking::assembler_checker checker_;
 
 public:
-    asm_processor(context::hlasm_context& hlasm_ctx,
+    asm_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
@@ -38,7 +38,7 @@ public:
     virtual void process(context::shared_stmt_ptr stmt) override;
 
     static void process_copy(const semantics::complete_statement& stmt,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
         diagnosable_ctx* diagnoser);
 

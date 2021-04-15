@@ -38,16 +38,16 @@ In addition to the prerequisites listed in \[prereq\], the Linux build has two m
 
 -   UUID library
 
-We build the project for Ubuntu 18.04 and for the Alpine Linux.
+We build the project for Ubuntu 20.04 and for the Alpine Linux.
 
 ### Ubuntu
 
-On Ubuntu 18.04 the following commands install all prerequisites and then build the project into the `build` folder:
+On Ubuntu 20.04 the following commands install all prerequisites and then build the project into the `build` folder:
 
-    apt update && sudo apt install cmake g++-8 uuid-dev npm default-jdk
+    apt update && sudo apt install cmake g++-10 uuid-dev npm default-jdk
                            pkg-config maven
     mkdir build && cd build
-    cmake -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 ../
+    cmake -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ../
     cmake --build .
 
 ### Alpine Linux
@@ -60,10 +60,24 @@ The build works on Alpine linux version 3.10. The following commands install all
     cmake ../
     cmake --build .
 
+WASM
+----
+
+The project can be built for the WASM target using the Emscripten SDK. Currently the only verified docker image is emscripten/emsdk:2.0.12, also utilized in the CI pipeline.
+
+    apt update && apt-get install -y ninja-build maven
+    mkdir build && cd build
+    emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDISCOVER_TESTS=Off -DWITH_LIBCXX=Off -DWITH_STATIC_CRT=Off -DCMAKE_EXE_LINKER_FLAGS="-s NODERAWFS=1" -DCMAKE_CXX_FLAGS="-s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 -s TOTAL_MEMORY=268435456 -s PROXY_TO_PTHREAD=1 -fexceptions -s NODERAWFS=1 -s EXIT_RUNTIME=1 --bind" -DCMAKE_CROSSCOMPILING_EMULATOR="node;--experimental-wasm-threads;--experimental-wasm-bulk-memory" -Dgtest_disable_pthreads=On ../
+    cmake --build .
+
+The project tests or the language server itself then needs to be run in the Node with several experimental features enabled.
+
+    node --experimental-wasm-threads --experimental-wasm-bulk-memory language_server.js
+
 Mac OS
 ------
 
-We have only built the project on MacOS 10.14. In order to successfully build, first install LLVM 8 using homebrew.
+We have only built the project on MacOS 10.14. In order to successfully build, first install LLVM 8 or 10+ using homebrew.
 
 The project can be built with a snippet like this:
 
@@ -72,7 +86,7 @@ The project can be built with a snippet like this:
           -DLLVM_PATH=<path-to-llvm-installation> ../
     cmake --build .
 
-For instance, a possible path to LLVM is `/usr/local/opt/llvm8`
+For instance, a possible path to LLVM is `/usr/local/opt/llvm8`. You may use `$(brew --prefix llvm)` as the path to the LLVM installation directory.
 
 Running Tests
 -------------

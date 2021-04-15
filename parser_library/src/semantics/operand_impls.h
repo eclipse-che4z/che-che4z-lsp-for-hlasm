@@ -32,6 +32,8 @@ namespace hlasm_plugin::parser_library::semantics {
 struct empty_operand final : operand
 {
     empty_operand(const range operand_range);
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -42,6 +44,8 @@ struct model_operand final : operand
     model_operand(concat_chain chain, const range operand_range);
 
     concat_chain chain;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -111,6 +115,8 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
     bool has_error(expressions::mach_evaluate_info info) const override;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -137,6 +143,8 @@ struct address_machine_operand final : machine_operand
         expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -185,6 +193,8 @@ public:
 
     void collect_diags() const override;
 
+    void apply(operand_visitor& visitor) const override;
+
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
         expressions::mach_evaluate_info info, bool can_have_ordsym) const;
@@ -208,6 +218,8 @@ struct using_instr_assembler_operand final : assembler_operand
     expressions::mach_expr_ptr end;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -286,6 +298,8 @@ struct complex_assembler_operand final : assembler_operand
     composite_value_t value;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -304,6 +318,8 @@ struct string_assembler_operand : assembler_operand
     std::string value;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 // data definition operand
@@ -324,6 +340,8 @@ struct data_def_operand final : evaluable_operand
     std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
 
     void collect_diags() const override;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -368,6 +386,8 @@ struct var_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     vs_ptr variable_symbol;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 // CA expression operand
@@ -380,6 +400,8 @@ struct expr_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     expressions::ca_expr_ptr expression;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 // CA sequence symbol operand
@@ -392,6 +414,8 @@ struct seq_ca_operand final : ca_operand
         const expressions::evaluation_context& eval_ctx) override;
 
     seq_sym sequence_symbol;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 // CA branching operand (i.e. (5).here)
@@ -405,6 +429,8 @@ struct branch_ca_operand final : ca_operand
 
     seq_sym sequence_symbol;
     expressions::ca_expr_ptr expression;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 
@@ -434,6 +460,8 @@ struct macro_operand_chain final : macro_operand
     macro_operand_chain(concat_chain chain, const range operand_range);
 
     concat_chain chain;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 // macro instruction operand
@@ -442,6 +470,8 @@ struct macro_operand_string final : macro_operand
     macro_operand_string(std::string value, const range operand_range);
 
     std::string value;
+
+    void apply(operand_visitor& visitor) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

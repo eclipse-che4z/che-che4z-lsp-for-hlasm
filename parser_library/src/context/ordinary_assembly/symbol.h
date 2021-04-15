@@ -19,7 +19,7 @@
 #include <variant>
 
 #include "address.h"
-#include "range.h"
+#include "location.h"
 #include "symbol_attributes.h"
 
 namespace hlasm_plugin {

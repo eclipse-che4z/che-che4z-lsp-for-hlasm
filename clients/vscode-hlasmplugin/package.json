@@ -66,6 +66,7 @@
     "clean": "node ./build/bin/clean.js",
     "package": "vsce package",
     "test": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js",
+    "test:wasm": "npm run compile && node ./build/bin/prepareWorkspace.js wasm && node ./lib/test/runTest.js",
     "test:insiders": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./lib/test/runTest.js insiders",
     "test:theia": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
   },
@@ -313,7 +314,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "hlasmplugin configuration",
+      "title": "HLASM language support configuration",
       "properties": {
         "hlasm.arguments": {
           "type": "array",
@@ -337,6 +338,16 @@
           "type": "integer",
           "default": 10,
           "description": "This option limits number of diagnostics shown for an open code when there is no configuration in pgm_conf.json."
+        },
+        "hlasm.communicationMethod": {
+          "type": "string",
+          "default": "native",
+          "description": "Select language server variant - native, wasm, tcp.",
+          "enum": [
+            "native",
+            "tcp",
+            "wasm"
+          ]
         }
       }
     }

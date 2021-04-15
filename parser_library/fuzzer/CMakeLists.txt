@@ -13,27 +13,22 @@
 
 Project(fuzzer)
 
-if(BUILD_FUZZER)
-	add_executable(library_fuzzer fuzzer.cpp
-	)
-    target_link_libraries(library_fuzzer parser_library)
+add_executable(library_fuzzer)
 
+target_sources(library_fuzzer PRIVATE
+    fuzzer.cpp
+)
 
-    set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
-	set_target_properties(library_fuzzer PROPERTIES COMPILE_FLAGS "-DANTLR4CPP_STATIC")
+set_target_properties(library_fuzzer PROPERTIES LINK_FLAGS "-fsanitize=fuzzer")
     
-	configure_file(
-                ${PROJECT_SOURCE_DIR}/fuzzer.dict
-                ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
-				COPYONLY)
+configure_file(
+            fuzzer.dict
+            ${CMAKE_BINARY_DIR}/bin/fuzzer.dict
+			COPYONLY)
 
-    if(UNIX)
-	    target_link_libraries(library_fuzzer pthread)
-    endif()
-	target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
-	if(FILESYSTEM_LINK)
-		target_link_libraries(library_fuzzer ${FILESYSTEM_LIBRARY})
-    endif()
-    
-	add_dependencies(library_fuzzer antlr4jar json)
-endif()
+target_link_libraries(library_fuzzer parser_library)
+target_link_libraries(library_fuzzer Threads::Threads)
+target_link_libraries(library_fuzzer ${ANTLR4_RUNTIME})
+target_link_libraries(library_fuzzer std::filesystem)
+target_link_libraries(library_fuzzer nlohmann_json::nlohmann_json)
+

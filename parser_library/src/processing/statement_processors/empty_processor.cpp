@@ -19,8 +19,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-empty_processor::empty_processor(context::hlasm_context& hlasm_ctx)
-    : statement_processor(processing_kind::ORDINARY, hlasm_ctx)
+empty_processor::empty_processor(analyzing_context ctx)
+    : statement_processor(processing_kind::ORDINARY, std::move(ctx))
 {}
 
 processing_status empty_processor::get_processing_status(const semantics::instruction_si&) const

@@ -28,15 +28,15 @@ class members_statement_provider : public statement_provider
 {
 public:
     members_statement_provider(const statement_provider_kind kind,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
 
-    virtual void process_next(statement_processor& processor) override;
+    virtual context::shared_stmt_ptr get_next(const statement_processor& processor) override;
 
 protected:
-    context::hlasm_context& hlasm_ctx;
+    analyzing_context ctx;
     statement_fields_parser& parser;
     workspaces::parse_lib_provider& lib_provider;
     processing::processing_state_listener& listener;

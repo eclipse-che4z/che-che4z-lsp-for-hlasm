@@ -25,7 +25,7 @@ namespace processing {
 class empty_processor : public statement_processor
 {
 public:
-    empty_processor(context::hlasm_context& hlasm_ctx);
+    empty_processor(analyzing_context ctx);
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
     virtual void process_statement(context::shared_stmt_ptr statement) override;
     virtual void end_processing() override;

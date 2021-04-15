@@ -26,9 +26,10 @@ namespace hlasm_plugin::parser_library::semantics {
 // concatenation point representing character string
 struct char_str_conc : concatenation_point
 {
-    explicit char_str_conc(std::string value);
+    explicit char_str_conc(std::string value, const range& conc_range);
 
     std::string value;
+    range conc_range;
 
     virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 };

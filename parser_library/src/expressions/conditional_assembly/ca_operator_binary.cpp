@@ -56,6 +56,12 @@ void ca_binary_operator::collect_diags() const
 
 bool ca_binary_operator::is_character_expression() const { return left_expr->is_character_expression(); }
 
+void ca_binary_operator::apply(ca_expr_visitor& visitor) const
+{
+    left_expr->apply(visitor);
+    right_expr->apply(visitor);
+}
+
 context::SET_t ca_binary_operator::evaluate(const evaluation_context& eval_ctx) const
 {
     return operation(left_expr->evaluate(eval_ctx), right_expr->evaluate(eval_ctx), eval_ctx);

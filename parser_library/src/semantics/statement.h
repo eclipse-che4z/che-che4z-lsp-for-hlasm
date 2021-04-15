@@ -20,9 +20,7 @@
 
 // this file contains inherited structures from hlasm_statement that are used during the parsing
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 // structure representing core fields of statmenent
 struct core_statement
@@ -44,10 +42,9 @@ struct complete_statement : public core_statement
 // statement with deferred operand and remark field
 struct deferred_statement : public core_statement, public context::hlasm_statement
 {
-    virtual const std::string& deferred_ref() const = 0;
-    virtual const range& deferred_range_ref() const = 0;
+    virtual const deferred_operands_si& deferred_ref() const = 0;
 
-    virtual position statement_position() const override { return stmt_range_ref().start; }
+    position statement_position() const override { return stmt_range_ref().start; }
 
 protected:
     deferred_statement()
@@ -60,26 +57,23 @@ protected:
 struct statement_si_deferred : public deferred_statement
 {
     statement_si_deferred(
-        range stmt_range, label_si label, instruction_si instruction, std::string deferred_field, range deferred_range)
+        range stmt_range, label_si label, instruction_si instruction, deferred_operands_si deferred_operands)
         : stmt_range(std::move(stmt_range))
         , label(std::move(label))
         , instruction(std::move(instruction))
-        , deferred_field(std::move(deferred_field))
-        , deferred_range(deferred_range)
+        , deferred_operands(std::move(deferred_operands))
     {}
 
     range stmt_range;
 
     label_si label;
     instruction_si instruction;
-    std::string deferred_field;
-    range deferred_range;
+    deferred_operands_si deferred_operands;
 
-    virtual const label_si& label_ref() const override { return label; };
-    virtual const instruction_si& instruction_ref() const override { return instruction; };
-    virtual const std::string& deferred_ref() const override { return deferred_field; };
-    virtual const range& deferred_range_ref() const override { return deferred_range; };
-    virtual const range& stmt_range_ref() const override { return stmt_range; };
+    const label_si& label_ref() const override { return label; };
+    const instruction_si& instruction_ref() const override { return instruction; };
+    const deferred_operands_si& deferred_ref() const override { return deferred_operands; };
+    const range& stmt_range_ref() const override { return stmt_range; };
 };
 
 // struct holding full semantic information (si) about whole instruction statement, whole logical line
@@ -100,11 +94,11 @@ struct statement_si : public complete_statement
     operands_si operands;
     remarks_si remarks;
 
-    virtual const label_si& label_ref() const override { return label; }
-    virtual const instruction_si& instruction_ref() const override { return instruction; }
-    virtual const operands_si& operands_ref() const override { return operands; }
-    virtual const remarks_si& remarks_ref() const override { return remarks; }
-    virtual const range& stmt_range_ref() const override { return stmt_range; }
+    const label_si& label_ref() const override { return label; }
+    const instruction_si& instruction_ref() const override { return instruction; }
+    const operands_si& operands_ref() const override { return operands; }
+    const remarks_si& remarks_ref() const override { return remarks; }
+    const range& stmt_range_ref() const override { return stmt_range; }
 };
 
 // structure holding deferred statement that is now complete
@@ -122,14 +116,13 @@ struct statement_si_defer_done : public complete_statement
     operands_si operands;
     remarks_si remarks;
 
-    virtual const label_si& label_ref() const override { return deferred_stmt->label_ref(); }
-    virtual const instruction_si& instruction_ref() const override { return deferred_stmt->instruction_ref(); }
-    virtual const operands_si& operands_ref() const override { return operands; }
-    virtual const remarks_si& remarks_ref() const override { return remarks; }
-    virtual const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
+    const label_si& label_ref() const override { return deferred_stmt->label_ref(); }
+    const instruction_si& instruction_ref() const override { return deferred_stmt->instruction_ref(); }
+    const operands_si& operands_ref() const override { return operands; }
+    const remarks_si& remarks_ref() const override { return remarks; }
+    const range& stmt_range_ref() const override { return deferred_stmt->stmt_range_ref(); }
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
+
 #endif

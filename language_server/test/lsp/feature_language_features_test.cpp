@@ -20,13 +20,11 @@
 #include "../response_provider_mock.h"
 #include "../ws_mngr_mock.h"
 #include "lsp/feature_language_features.h"
-#include "semantics/lsp_info_processor.h"
+#include "utils/platform.h"
 
-#ifdef _WIN32
-constexpr const char* path = "c:\\test";
-#else
-constexpr const char* path = "/home/test";
-#endif
+using hlasm_plugin::utils::platform::is_windows;
+
+const char* path = is_windows() ? "c:\\test" : "/home/test";
 
 using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
@@ -34,80 +32,75 @@ using namespace hlasm_plugin::language_server;
 TEST(language_features, completion)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 =
-        R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
-#else
-    json params1 =
-        R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
-#endif
-    std::vector<context::completion_item_s> item_list = { context::completion_item_s(
-        "LR", "machine", "LR", std::vector<std::string> { "machine doc" }) };
-    auto list_s = semantics::completion_list_s(false, item_list);
-    EXPECT_CALL(ws_mngr, completion(StrEq(path), position(0, 1), '\0', 1)).WillOnce(Return(completion_list(list_s)));
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1},"context":{"triggerKind":1}})"_json;
+
+    EXPECT_CALL(ws_mngr,
+        completion(
+            StrEq(path), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked));
     notifs["textDocument/completion"]("", params1);
 }
 
 TEST(language_features, hover)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
+
     std::string s("test");
-    std::vector<const char*> coutput = { s.c_str() };
-    const string_array ret({ coutput.data(), coutput.size() });
-    EXPECT_CALL(ws_mngr, hover(StrEq(path), position(0, 1))).WillOnce(Return(ret));
+    std::string_view ret(s);
+    EXPECT_CALL(ws_mngr, hover(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(ret));
     notifs["textDocument/hover"]("", params1);
 }
 
 TEST(language_features, definition)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+
+
+    parser_library::workspace_manager ws_mngr;
+
     NiceMock<response_provider_mock> response_mock;
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
 
-    semantics::position_uri_s pos_s(path, position(0, 1));
-    EXPECT_CALL(ws_mngr, definition(StrEq(path), position(0, 1))).WillOnce(Return(position_uri(pos_s)));
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
+
+    EXPECT_CALL(response_mock, respond(json(""), "", ::testing::_));
     notifs["textDocument/definition"]("", params1);
 }
 
 TEST(language_features, references)
 {
     using namespace ::testing;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
     lsp::feature_language_features f(ws_mngr, response_mock);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
-#ifdef _WIN32
-    json params1 = R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json;
-#else
-    json params1 = R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
-#endif
-    std::vector<semantics::position_uri_s> ret = { semantics::position_uri_s(path, position(0, 1)) };
-    EXPECT_CALL(ws_mngr, references(StrEq(path), position(0, 1)))
-        .WillOnce(Return(position_uris(ret.data(), ret.size())));
+
+    json params1 = is_windows()
+        ? R"({"textDocument":{"uri":"file:///c%3A/test"},"position":{"line":0,"character":1}})"_json
+        : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
+
+    EXPECT_CALL(ws_mngr, references(StrEq(path), parser_library::position(0, 1)));
     notifs["textDocument/references"]("", params1);
 }
 

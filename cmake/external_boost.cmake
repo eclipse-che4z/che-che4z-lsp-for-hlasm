@@ -10,24 +10,22 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-cmake_minimum_required (VERSION 3.10)
-
 project(boost-asio)
 
-include(ExternalProject)
+include(FetchContent)
 
-FIND_PACKAGE(Git REQUIRED)
-ExternalProject_Add(boost_ext
-  PREFIX            ${CMAKE_BINARY_DIR}/externals/boost
-  GIT_REPOSITORY    https://github.com/chriskohlhoff/asio.git
-  GIT_TAG           asio-1-12-2
-  GIT_SHALLOW       ON
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  TEST_COMMAND      ""
+FetchContent_Declare(
+  boost_ext
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+  GIT_TAG        asio-1-12-2
+  GIT_SHALLOW    ON
+  LOG_DOWNLOAD   ON
+  GIT_PROGRESS   1
 )
 
+if(NOT boost_ext_POPULATED)
+    FetchContent_Populate(boost_ext)
+endif()
 
-ExternalProject_Get_Property(boost_ext INSTALL_DIR)
-set(BOOST_INCLUDE_DIRS ${INSTALL_DIR}/src/boost_ext/asio/include/)
+add_library(boost-asio INTERFACE)
+target_include_directories(boost-asio INTERFACE ${boost_ext_SOURCE_DIR}/asio/include)

@@ -44,6 +44,8 @@ void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr);
 
 bool ca_unary_operator::is_character_expression() const { return false; }
 
+void ca_unary_operator::apply(ca_expr_visitor& visitor) const { expr->apply(visitor); }
+
 context::SET_t ca_unary_operator::evaluate(const evaluation_context& eval_ctx) const
 {
     return operation(expr->evaluate(eval_ctx), eval_ctx);

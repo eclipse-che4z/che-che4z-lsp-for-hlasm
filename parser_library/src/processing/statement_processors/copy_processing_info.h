@@ -26,6 +26,7 @@ namespace processing {
 struct copy_start_data
 {
     context::id_index member_name;
+    std::string member_file;
 };
 
 // result of copy_processor

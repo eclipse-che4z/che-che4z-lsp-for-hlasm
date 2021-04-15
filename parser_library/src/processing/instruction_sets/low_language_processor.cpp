@@ -23,11 +23,11 @@ using namespace hlasm_plugin::parser_library;
 using namespace processing;
 using namespace workspaces;
 
-low_language_processor::low_language_processor(context::hlasm_context& hlasm_ctx,
+low_language_processor::low_language_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser)
-    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
+    : instruction_processor(std::move(ctx), branch_provider, lib_provider)
     , parser(parser)
 {}
 
@@ -105,8 +105,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         std::string field(
             semantics::concatenation_point::evaluate(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
         operands.emplace(parser
-                             .parse_operand_field(&hlasm_ctx,
-                                 std::move(field),
+                             .parse_operand_field(std::move(field),
                                  true,
                                  semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
                                      semantics::adjusting_state::SUBSTITUTION),

@@ -25,7 +25,7 @@ namespace processing {
 class macro_statement_provider : public members_statement_provider
 {
 public:
-    macro_statement_provider(context::hlasm_context& hlasm_ctx,
+    macro_statement_provider(analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
