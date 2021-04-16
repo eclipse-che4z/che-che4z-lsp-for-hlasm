@@ -84,7 +84,7 @@ context::SET_t ca_var_sym::convert_return_types(
         {
             case context::SET_t_enum::A_TYPE:
                 // empty string is convertible to 0, but it is not a self-def term
-                if (auto& val_c = retval.access_c(); val_c.size())
+                if (const auto& val_c = retval.access_c(); val_c.size())
                     return ca_constant::self_defining_term(val_c, add_diags);
                 else
                     return 0;
