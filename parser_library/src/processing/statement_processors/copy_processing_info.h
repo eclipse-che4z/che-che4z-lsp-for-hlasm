@@ -18,9 +18,7 @@
 #include "context/hlasm_statement.h"
 #include "context/id_storage.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // data to start copy_processor
 struct copy_start_data
@@ -39,7 +37,5 @@ struct copy_processing_result
     bool invalid_member;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

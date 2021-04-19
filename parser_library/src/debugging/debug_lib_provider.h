@@ -31,7 +31,7 @@ public:
         : ws_(ws)
     {}
 
-    virtual workspaces::parse_result parse_library(
+    workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
     {
         auto& proc_grp = ws_.get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
@@ -45,7 +45,7 @@ public:
         return false;
     }
 
-    virtual bool has_library(const std::string& library, const std::string& program) const override
+    bool has_library(const std::string& library, const std::string& program) const override
     {
         auto& proc_grp = ws_.get_proc_grp_by_program(program);
         for (auto&& lib : proc_grp.libraries())

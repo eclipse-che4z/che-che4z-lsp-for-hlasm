@@ -23,9 +23,7 @@
 #include "alignment.h"
 #include "context/id_storage.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class location_counter;
 class section;
@@ -111,8 +109,8 @@ struct space
     // previous address values
     // for LOCTR_UNKNOWN space kind
     address previous_loctr_value;
-    size_t previous_boundary;
-    int previous_offset;
+    size_t previous_boundary = 0;
+    int previous_offset = 0;
 
     location_counter& owner;
 
@@ -138,9 +136,6 @@ private:
     bool resolved_;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

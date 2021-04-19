@@ -20,9 +20,7 @@
 #include "semantics/range_provider.h"
 #include "semantics/statement_fields.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
@@ -41,7 +39,5 @@ public:
     virtual ~statement_fields_parser() = default;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

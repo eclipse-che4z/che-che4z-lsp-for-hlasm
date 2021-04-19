@@ -31,7 +31,7 @@ public:
         checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
 
-    virtual void resolve_unknown_loctr_dependency(
+    void resolve_unknown_loctr_dependency(
         context::space_ptr sp, const context::address& addr, range err_range) override;
 
 protected:

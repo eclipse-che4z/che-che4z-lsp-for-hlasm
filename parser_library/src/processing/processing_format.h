@@ -17,9 +17,7 @@
 
 #include <stdint.h>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 enum class processing_kind : uint8_t
 {
@@ -67,7 +65,5 @@ struct processing_format
     operand_occurence occurence;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

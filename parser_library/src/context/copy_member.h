@@ -19,9 +19,7 @@
 #include "location.h"
 #include "statement_cache.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // structure represents invocation of COPY member in HLASM macro library
 struct copy_member_invocation
@@ -63,7 +61,5 @@ struct copy_member
     copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

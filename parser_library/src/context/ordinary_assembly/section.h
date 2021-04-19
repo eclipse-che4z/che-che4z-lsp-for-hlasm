@@ -19,9 +19,7 @@
 
 #include "location_counter.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 enum class section_kind
 {
@@ -61,7 +59,5 @@ public:
     location_counter& current_location_counter() const;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

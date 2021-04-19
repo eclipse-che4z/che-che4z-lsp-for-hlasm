@@ -62,7 +62,7 @@ using json = nlohmann::json;
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
@@ -81,7 +81,7 @@ public:
 class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
 {
 public:
-    virtual void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
+    void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
     {
         metrics_ = metrics;
     }

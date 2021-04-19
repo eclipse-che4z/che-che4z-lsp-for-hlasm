@@ -36,7 +36,7 @@ TEST(ca_constant, undefined_attributes)
 
 class collectable_mock : public diagnosable_op_impl
 {
-    virtual void collect_diags() const override {}
+    void collect_diags() const override {}
 };
 
 TEST(ca_constant, self_def_term_invalid_input)

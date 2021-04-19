@@ -17,9 +17,7 @@
 
 #include "low_language_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // processor of machine instructions
 class mach_processor : public low_language_processor
@@ -32,10 +30,8 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    virtual void process(context::shared_stmt_ptr stmt) override;
+    void process(context::shared_stmt_ptr stmt) override;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

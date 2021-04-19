@@ -20,9 +20,7 @@
 #include "asm_instr_check.h"
 #include "context/instruction.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking {
 
 // interface for unified checking
 class instruction_checker
@@ -40,7 +38,7 @@ class assembler_checker : public instruction_checker
 {
 public:
     assembler_checker();
-    virtual bool check(const std::string& instruction_name,
+    bool check(const std::string& instruction_name,
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
@@ -56,14 +54,12 @@ protected:
 class machine_checker : public instruction_checker
 {
 public:
-    virtual bool check(const std::string& instruction_name,
+    bool check(const std::string& instruction_name,
         const std::vector<const operand*>& operand_vector,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
 };
 
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking
 
 #endif

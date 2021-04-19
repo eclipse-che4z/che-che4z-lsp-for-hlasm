@@ -20,9 +20,7 @@
 #include "context/ordinary_assembly/postponed_statement.h"
 #include "processing/statement.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // implementation of postponed_statement interface
 struct postponed_statement_impl : public context::postponed_statement, public resolved_statement
@@ -43,12 +41,8 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     const op_code& opcode_ref() const override { return stmt.opcode_ref(); }
     processing_format format_ref() const override { return stmt.format_ref(); }
 
-    const context::processing_stack_t& location_stack() const { return stmt_location_stack; }
+    const context::processing_stack_t& location_stack() const override { return stmt_location_stack; }
 };
 
-
-
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

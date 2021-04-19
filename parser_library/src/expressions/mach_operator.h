@@ -50,7 +50,7 @@ public:
         right_->fill_location_counter(std::move(addr));
     }
 
-    virtual void apply(mach_expr_visitor& visitor) const override
+    void apply(mach_expr_visitor& visitor) const override
     {
         left_->apply(visitor);
         right_->apply(visitor);
@@ -83,16 +83,13 @@ public:
 
     context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override
-    {
-        child_->fill_location_counter(std::move(addr));
-    }
+    void fill_location_counter(context::address addr) override { child_->fill_location_counter(std::move(addr)); }
 
-    virtual void apply(mach_expr_visitor& visitor) const override { child_->apply(visitor); }
+    void apply(mach_expr_visitor& visitor) const override { child_->apply(visitor); }
 
-    virtual const mach_expression* leftmost_term() const override { return child_->leftmost_term(); }
+    const mach_expression* leftmost_term() const override { return child_->leftmost_term(); }
 
     void collect_diags() const override { collect_diags_from_child(*child_); }
 };

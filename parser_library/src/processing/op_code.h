@@ -21,9 +21,7 @@
 #include "context/instruction_type.h"
 #include "processing_format.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // structure holding resolved operation code of the instruction (solving OPSYNs and so on)
 struct op_code
@@ -43,7 +41,5 @@ struct op_code
 
 using processing_status = std::pair<processing_format, op_code>;
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

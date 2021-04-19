@@ -26,7 +26,7 @@ using namespace hlasm_plugin::parser_library;
 class metrics_mock : public performance_metrics_consumer
 {
 public:
-    virtual void consume_performance_metrics(const performance_metrics& metrics) { metrics_ = metrics; }
+    void consume_performance_metrics(const performance_metrics& metrics) override { metrics_ = metrics; }
 
     performance_metrics metrics_;
 };
@@ -34,7 +34,7 @@ public:
 class diagnostic_counter_mock : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
@@ -54,8 +54,8 @@ class benchmark_test : public testing::Test
 {
 public:
     benchmark_test() {};
-    virtual void SetUp() {}
-    virtual void TearDown() {}
+    void SetUp() override {}
+    void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
         a = std::make_unique<analyzer>(content, SOURCE_FILE, lib_provider);

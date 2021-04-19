@@ -72,7 +72,7 @@ struct data_definition : public diagnosable_op_impl, public context::dependable
         position begin);
 
     // Returns conjunction of all dependencies of all expression in data_definition.
-    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
     // Returns conjunction of dependencies of length modifier and duplication factor, which are the only ones
     // that matter when determining how much space DC needs.
     context::dependency_collector get_length_dependencies(context::dependency_solver& solver) const;

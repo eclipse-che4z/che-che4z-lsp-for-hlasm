@@ -63,7 +63,7 @@ private:
     // the request manager invalidates older requests on the
     // same file, when a new request to the same file comes
     std::string currently_running_file_;
-    std::atomic<server*> currently_running_server_;
+    std::atomic<server*> currently_running_server_ = nullptr;
 
     void handle_request_(const std::atomic<bool>* end_loop);
     std::string get_request_file_(json r, bool* is_parsing_required = nullptr) const;

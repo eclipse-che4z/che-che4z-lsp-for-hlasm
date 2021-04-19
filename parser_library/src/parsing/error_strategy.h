@@ -29,7 +29,7 @@ enum tokens
 // copied from antlr4::DefaultErrorStrategy.
 class error_strategy : public antlr4::DefaultErrorStrategy
 {
-    virtual void reportError(antlr4::Parser* recognizer, const antlr4::RecognitionException& e) override
+    void reportError(antlr4::Parser* recognizer, const antlr4::RecognitionException& e) override
     {
         if (inErrorRecoveryMode(recognizer))
         {
@@ -61,7 +61,7 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         }
     }
 
-    virtual antlr4::Token* getMissingSymbol(antlr4::Parser* recognizer) override
+    antlr4::Token* getMissingSymbol(antlr4::Parser* recognizer) override
     {
         using namespace antlr4;
 
@@ -104,9 +104,9 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         return _errorSymbols.back().get();
     }
 
-    virtual antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
+    antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
 
-    virtual bool singleTokenInsertion(antlr4::Parser*) override { return false; }
+    bool singleTokenInsertion(antlr4::Parser*) override { return false; }
 
     std::vector<std::unique_ptr<antlr4::Token>> _errorSymbols;
 };

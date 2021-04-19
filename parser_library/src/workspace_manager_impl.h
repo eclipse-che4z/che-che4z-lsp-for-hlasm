@@ -199,7 +199,7 @@ public:
     }
 
 private:
-    virtual void collect_diags() const override
+    void collect_diags() const override
     {
         collect_diags_from_child(file_manager_);
 

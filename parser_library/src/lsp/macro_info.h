@@ -31,10 +31,10 @@ struct variable_symbol_definition
     // type of SET symbol
     context::SET_t_enum type;
     // flag whether SET symbol is global
-    bool global;
+    bool global = false;
 
     // statement number in macro
-    size_t def_location;
+    size_t def_location = 0;
     // file in opencode
     std::string file;
 

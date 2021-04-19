@@ -24,19 +24,20 @@
 #include "checking/instr_operand.h"
 #include "diagnostic.h"
 #include "id_storage.h"
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
 // length 48 are arranged in range (21,77)
-enum class mach_format
+enum class mach_format : unsigned char
 {
-    E,
+    length_16,
+    E = length_16,
     I,
     RR,
-    IE,
+
+    length_32,
+    IE = length_32,
     RRD,
     RRE,
     RRF_a,
@@ -54,7 +55,9 @@ enum class mach_format
     RX_b,
     S,
     SI,
-    MII,
+
+    length_48,
+    MII = length_48,
     RIE_a,
     RIE_b,
     RIE_c,
@@ -178,10 +181,8 @@ const checking::machine_operand_format rel_addr_imm_12_S = checking::machine_ope
 const checking::machine_operand_format rel_addr_imm_16_S = checking::machine_operand_format(reladdr_imm_16s, empty, empty);
 const checking::machine_operand_format rel_addr_imm_24_S = checking::machine_operand_format(reladdr_imm_24s, empty, empty);
 const checking::machine_operand_format rel_addr_imm_32_S = checking::machine_operand_format(reladdr_imm_32s, empty, empty);
-// intervals dividing formats based on length
-const int length_sixteen_interval = 3;
-const int length_thirtytwo_interval = 21;
-const int length_fortyeight_interval = 78;
+
+
 // machine instruction representation for checking
 class machine_instruction
 {
@@ -214,21 +215,16 @@ public:
 
     bool check_nth_operand(size_t place, const checking::machine_operand* operand);
 
-    int get_length_by_format(mach_format instruction_format) const
+    static int get_length_by_format(mach_format instruction_format)
     {
         auto interval = (int)(instruction_format);
-        if (interval < length_sixteen_interval)
-        {
-            return 16;
-        }
-        if (interval < length_thirtytwo_interval)
-        {
-            return 32;
-        }
-        if (interval < length_fortyeight_interval)
-        {
+        if (interval >= (int)mach_format::length_48)
             return 48;
-        }
+        if (interval >= (int)mach_format::length_32)
+            return 32;
+        if (interval >= (int)mach_format::length_16)
+            return 16;
+        return 0;
     }
     virtual bool check(const std::string& name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
@@ -311,9 +307,6 @@ public:
     static const std::map<mach_format, const std::string> mach_format_to_string;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

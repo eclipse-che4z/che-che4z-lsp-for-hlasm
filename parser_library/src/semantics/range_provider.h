@@ -19,9 +19,7 @@
 
 #include "range.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 // state of range adjusting
 enum class adjusting_state
@@ -57,7 +55,5 @@ private:
     position adjust_position(position pos);
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 #endif

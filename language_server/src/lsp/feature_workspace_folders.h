@@ -34,9 +34,9 @@ public:
     // Adds workspace/* methods to the map.
     void register_methods(std::map<std::string, method>&) override;
     // Returns workspaces capability.
-    json virtual register_capabilities() override;
+    json register_capabilities() override;
     // Opens workspace specified in the initialize request.
-    void virtual initialize_feature(const json& initialise_params) override;
+    void initialize_feature(const json& initialise_params) override;
 
 private:
     // Handles workspace/didChangeWorkspaceFolders notification.
