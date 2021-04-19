@@ -138,12 +138,12 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr ctx) 
     version_stamp result;
     auto copy_files = ctx->get_copy_files();
     
-    for (std::string& file_name : copy_files)
+    for (auto it = copy_files.begin(); it != copy_files.end();)
     {
-        auto file = file_mngr_->find(file_name);
+        auto file = file_mngr_->find(*it);
         if (!file)
             throw std::runtime_error("Dependencies of a macro must be open right after parsing the macro.");
-        result.emplace(std::move(file_name), file->get_version());
+        result.emplace(std::move(copy_files.extract(it++).value()), file->get_version());
     }
     return result;
 }
