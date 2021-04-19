@@ -15,6 +15,7 @@ target_sources(library_test PRIVATE
 	empty_configs.h
 	extension_handling_test.cpp
 	load_config_test.cpp
+	macro_cache_test.cpp
 	text_synchronization_test.cpp
 	workspace_test.cpp
 )

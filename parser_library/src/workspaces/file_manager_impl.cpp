@@ -87,7 +87,7 @@ void file_manager_impl::remove_file(const file_uri& document_uri)
     files_.erase(document_uri);
 }
 
-file_ptr file_manager_impl::find(const std::string& key)
+file_ptr file_manager_impl::find(const std::string& key) const
 {
     std::lock_guard guard(files_mutex);
     auto ret = files_.find(key);

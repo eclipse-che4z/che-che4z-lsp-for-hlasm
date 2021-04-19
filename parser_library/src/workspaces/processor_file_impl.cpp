@@ -26,12 +26,14 @@ processor_file_impl::processor_file_impl(
     : file_impl(std::move(file_name))
     , file_manager_(&file_mngr)
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
 processor_file_impl::processor_file_impl(file_impl&& f_impl, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(std::move(f_impl))
     , file_manager_(&file_mngr)
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
 processor_file_impl::processor_file_impl(
@@ -39,6 +41,7 @@ processor_file_impl::processor_file_impl(
     : file_impl(file)
     , file_manager_(&file_mngr)
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
 void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
@@ -76,18 +79,6 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
     return res;
 }
 
-// Contains all the context that affects parsing an external file (macro or copy member)
-struct macro_cache_key
-{
-    library_data data;
-    std::string opencode_name;
-    std::vector<context::opcode_t> opsyn_state;
-};
-
-
-
-using version_stamp = std::vector<std::pair<std::string, version_t>>;
-
 
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
@@ -95,17 +86,12 @@ parse_result processor_file_impl::parse_macro(
     analyzer_ =
         std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
 
-    /*std::variant<lsp::macro_info_ptr, context::copy_member_ptr> external_dep;
-    assert(data.proc_kind == processing::processing_kind::MACRO || data.proc_kind == processing::processing_kind::COPY);
-    if (data.proc_kind == processing::processing_kind::MACRO)
-        external_dep = ctx.lsp_ctx->get_macro_info(data.library_member);
-    else if (data.proc_kind == processing::processing_kind::COPY)
-        external_dep = ctx.hlasm_ctx->get_copy_member(data.library_member);
-        */
-    //std::vector<std::pair<macro_cache_key, version_t>>
-    
+    if (macro_cache_.load_from_cache(ctx, data))
+        return true;
 
-    return parse_inner(*analyzer_);
+    auto ret = parse_inner(*analyzer_);
+
+    return ret;
 }
 
 parse_result processor_file_impl::parse_no_lsp_update(

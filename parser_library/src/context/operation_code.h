@@ -27,18 +27,14 @@ namespace context {
 // structure that represents operation code of an instruction
 struct opcode_t
 {
-    macro_def_ptr macro_opcode;
+    macro_def_ptr macro_opcode = nullptr;
 
-    id_index machine_opcode;
-    instruction::instruction_array machine_source;
-
-    opcode_t()
-        : macro_opcode(nullptr)
-        , machine_opcode(nullptr)
-        , machine_source(instruction::instruction_array::CA)
-    {}
+    id_index machine_opcode = nullptr;
+    instruction::instruction_array machine_source = instruction::instruction_array::CA;
 
     explicit operator bool() const { return macro_opcode || machine_opcode; }
+
+    id_index get_instr_id() const { return macro_opcode ? macro_opcode->id : machine_opcode; }
 };
 
 } // namespace context

@@ -57,7 +57,12 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
 {
-    return macros_.at(opencode_->hlasm_ctx.get_macro_definition(macro_name));
+    // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
+    auto it = opencode_->hlasm_ctx.macros().find(macro_name);
+    if (it == opencode_->hlasm_ctx.macros().end())
+        return nullptr;
+    else
+        return macros_.at(it->second);
 }
 
 location lsp_context::definition(const std::string& document_uri, const position pos) const

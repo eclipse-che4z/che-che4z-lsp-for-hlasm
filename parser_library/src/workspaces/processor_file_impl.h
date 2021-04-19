@@ -18,6 +18,7 @@
 #include "analyzer.h"
 #include "file_impl.h"
 #include "processor.h"
+#include "macro_cache.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -60,6 +61,8 @@ private:
 
     std::set<std::string> dependencies_;
     std::set<std::string> files_to_close_;
+
+    macro_cache macro_cache_;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

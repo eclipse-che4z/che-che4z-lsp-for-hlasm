@@ -58,7 +58,7 @@ public:
         bool collect_hl_info = false,
         context::id_storage ids_init = {});
 
-    analyzing_context context();
+    analyzing_context context() const;
     context::hlasm_context& hlasm_ctx();
     parsing::hlasmparser& parser();
     const semantics::source_info_processor& source_processor() const;

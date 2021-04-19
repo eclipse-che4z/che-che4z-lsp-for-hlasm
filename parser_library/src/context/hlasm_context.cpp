@@ -691,7 +691,11 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
         .first->second;
 }
 
+void hlasm_context::add_macro(macro_def_ptr macro) { macros_[macro->id] = std::move(macro); };
+
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
+
+const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() { return opcode_mnemo_; }
 
 macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {
@@ -747,6 +751,12 @@ copy_member_ptr hlasm_context::add_copy_member(
     visited_files_.insert(std::move(definition_location.file));
 
     return copydef;
+}
+
+void hlasm_context::add_copy_member(copy_member_ptr member)
+{
+    visited_files_.insert(member->definition_location.file);
+    copy_members_[member->name] = std::move(member);
 }
 
 

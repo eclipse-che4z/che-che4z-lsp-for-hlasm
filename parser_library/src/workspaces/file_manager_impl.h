@@ -45,7 +45,7 @@ public:
     processor_file_ptr get_processor_file(const file_uri&) override;
     void remove_file(const file_uri&) override;
 
-    file_ptr find(const std::string& key) override;
+    file_ptr find(const std::string& key) const override;
     processor_file_ptr find_processor_file(const std::string& key) override;
 
     list_directory_result list_directory_files(const std::string& path) override;
@@ -64,7 +64,7 @@ protected:
     std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
 
 private:
-    std::mutex files_mutex;
+    mutable std::mutex files_mutex;
 
     std::atomic<bool>* cancel_;
 

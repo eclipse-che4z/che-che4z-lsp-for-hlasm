@@ -59,7 +59,7 @@ analyzer::analyzer(const std::string& text,
         collect_hl_info)
 {}
 
-analyzing_context analyzer::context() { return ctx_; }
+analyzing_context analyzer::context() const { return ctx_; }
 
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
