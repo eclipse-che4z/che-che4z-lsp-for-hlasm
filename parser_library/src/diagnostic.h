@@ -439,7 +439,6 @@ struct diagnostic_op
     static diagnostic_op error_D023(const range& range);
     static diagnostic_op error_D024(const range& range, const std::string& type);
     static diagnostic_op warn_D025(const range& range, const std::string& type, const std::string& modifier);
-   
     static diagnostic_op warn_D031(const range& range, const std::string& modifier);
     static diagnostic_op error_D026(const range& range);
     static diagnostic_op error_D027(const range& range);

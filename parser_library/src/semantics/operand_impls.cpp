@@ -90,8 +90,9 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     {
         return std::make_unique<checking::one_operand>(res.get_abs());
     }
-    else if ((res.value_kind() == context::symbol_value_kind::RELOC)) {
-        return std::make_unique<checking::one_operand>("RELOC", 0);
+    else if ((res.value_kind() == context::symbol_value_kind::RELOC))
+    {
+        return std::make_unique<checking::one_operand>("RELOC", res.get_reloc().offset());
     }
     else
     {
@@ -99,7 +100,7 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
         {
             return std::make_unique<checking::one_operand>(0);
         }
-  
+
         else
         {
             return std::make_unique<checking::address_operand>(

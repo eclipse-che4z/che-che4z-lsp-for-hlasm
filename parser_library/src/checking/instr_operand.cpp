@@ -217,7 +217,7 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
         case machine_operand_type::VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
         case machine_operand_type::RELOC_IMM: // RI
-           return diagnostic_op::error_M115(instr_name, operand_range);
+            return diagnostic_op::error_M115(instr_name, operand_range);
     }
     assert(false);
     return diagnostic_op::error_I999(instr_name, stmt_range);
@@ -288,17 +288,18 @@ bool one_operand::check(
             return false;
         }
         return true;
-    } 
-    else
+    }
+    // simple operand with relocatable symbol or immediate value
+
+    if (to_check.identifier.type == machine_operand_type::RELOC_IMM && operand_identifier != "RELOC")
     {
-        if (to_check.identifier.type == machine_operand_type::RELOC_IMM && operand_identifier != "RELOC") {
-            diag = diagnostic_op::warn_D031(operand_range, instr_name);
-            return false;
-        }
+        diag = diagnostic_op::warn_D031(operand_range, instr_name);
+        return false;
     }
 
+
     // it is a simple operand
-   
+
 
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
@@ -316,7 +317,7 @@ bool one_operand::check(
                 break;
             default:
                 assert(false);
-        }   
+        }
         return false;
     }
     if (!to_check.identifier.is_signed && !is_size_corresponding_unsigned(value, to_check.identifier.size))
@@ -335,9 +336,6 @@ bool one_operand::check(
                 break;
             case machine_operand_type::VEC_REG:
                 diag = diagnostic_op::error_M124(instr_name, operand_range);
-                break;
-            case machine_operand_type::RELOC_IMM:
-                diag = diagnostic_op::error_M125(instr_name, 0, boundary, operand_range);
                 break;
             default:
                 assert(false);
