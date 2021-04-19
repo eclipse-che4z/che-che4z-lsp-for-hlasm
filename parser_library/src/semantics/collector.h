@@ -23,9 +23,7 @@
 #include "source_info_processor.h"
 #include "statement.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 // class containing methods for collecting parsed statement fields
 class collector
@@ -77,7 +75,5 @@ private:
     void add_operand_remark_hl_symbols();
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 #endif

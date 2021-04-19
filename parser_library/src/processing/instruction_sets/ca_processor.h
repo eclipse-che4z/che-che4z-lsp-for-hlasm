@@ -36,7 +36,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& listener);
 
-    virtual void process(context::shared_stmt_ptr stmt) override;
+    void process(context::shared_stmt_ptr stmt) override;
 
 private:
     process_table_t create_table(context::hlasm_context& hlasm_ctx);

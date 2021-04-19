@@ -38,11 +38,11 @@ public:
 
     file_uri uri = "test_uri";
 
-    virtual const file_uri& get_file_name() override { return uri; }
+    const file_uri& get_file_name() override { return uri; }
 
-    virtual const std::string& get_text() override { return file; }
+    const std::string& get_text() override { return file; }
 
-    virtual bool update_and_get_bad() override { return false; }
+    bool update_and_get_bad() override { return false; }
 
     std::string file = is_windows() ?
                                     R"({
@@ -108,11 +108,11 @@ public:
 
     file_uri uri = "test_uri";
 
-    virtual const file_uri& get_file_name() override { return uri; }
+    const file_uri& get_file_name() override { return uri; }
 
-    virtual const std::string& get_text() override { return file; }
+    const std::string& get_text() override { return file; }
 
-    virtual bool update_and_get_bad() override { return false; }
+    bool update_and_get_bad() override { return false; }
 
     std::string file = is_windows() ? R"({
   "pgms": [
@@ -156,9 +156,9 @@ public:
 
 
     // Inherited via file_manager
-    virtual void did_open_file(const std::string&, version_t, std::string) override {}
-    virtual void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
-    virtual void did_close_file(const std::string&) override {}
+    void did_open_file(const std::string&, version_t, std::string) override {}
+    void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
+    void did_close_file(const std::string&) override {}
 };
 
 TEST(workspace, load_config_synthetic)

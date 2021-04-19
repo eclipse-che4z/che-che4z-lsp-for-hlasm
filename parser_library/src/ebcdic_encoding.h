@@ -17,8 +17,7 @@
 
 #include <string>
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 // Class that provides support for EBCDIC encoding.
 class ebcdic_encoding
@@ -82,7 +81,6 @@ public:
 
 inline unsigned char operator""_ebcdic(char c) { return ebcdic_encoding::a2e[static_cast<unsigned char>(c)]; }
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 
 #endif

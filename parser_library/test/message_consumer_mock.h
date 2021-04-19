@@ -22,7 +22,7 @@ namespace hlasm_plugin::parser_library {
 class message_consumer_mock : public hlasm_plugin::parser_library::message_consumer
 {
 public:
-    virtual void show_message(const std::string& message, message_type type) override
+    void show_message(const std::string& message, message_type type) override
     {
         messages.push_back(std::make_pair(message, type));
     }

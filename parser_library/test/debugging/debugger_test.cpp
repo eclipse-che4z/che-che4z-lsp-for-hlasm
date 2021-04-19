@@ -252,8 +252,7 @@ public:
         : workspace(file_mngr, config)
     {}
 
-    virtual parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::shared_ptr<processor> found = get_file_manager().add_processor_file(library);
         if (found)
@@ -261,7 +260,7 @@ public:
 
         return false;
     }
-    virtual const asm_option& get_asm_options(const std::string&)
+    const asm_option& get_asm_options(const std::string&) override
     {
         asm_opts = { "SEVEN", "" };
         return asm_opts;

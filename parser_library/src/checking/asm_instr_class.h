@@ -25,9 +25,7 @@
 #include "diagnosable.h"
 #include "instr_operand.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking {
 
 // defining label types before instruction, used as parameter in assembler_instruction class
 enum label_types
@@ -69,8 +67,6 @@ public:
     virtual ~assembler_instruction() {};
 
 protected:
-    const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
-
     bool is_param_in_vector(const std::string& parameter, const std::vector<std::string>& options) const;
 
     bool operands_size_corresponding(const std::vector<const asm_operand*>& to_check,
@@ -127,9 +123,6 @@ protected:
     bool check_assembler_process_operand(const asm_operand* input, const diagnostic_collector& add_diagnostic) const;
 };
 
-
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking
 
 #endif

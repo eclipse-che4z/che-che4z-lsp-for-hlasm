@@ -240,9 +240,9 @@ public:
         did_open(text, 1);
     }
 
-    virtual const std::string& get_text() override { return get_text_ref(); }
+    const std::string& get_text() override { return get_text_ref(); }
 
-    virtual bool update_and_get_bad() override { return false; }
+    bool update_and_get_bad() override { return false; }
 };
 
 const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";

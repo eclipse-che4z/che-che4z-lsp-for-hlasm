@@ -21,9 +21,7 @@
 #include "address.h"
 #include "symbol_attributes.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // helper structure that holds dependencies throughout whole process of getting dependencies
 struct dependency_collector
@@ -65,7 +63,5 @@ private:
     static void adjust_address(address& addr);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

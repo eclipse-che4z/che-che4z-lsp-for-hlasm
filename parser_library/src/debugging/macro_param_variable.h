@@ -26,16 +26,16 @@ class macro_param_variable : public variable
 {
 public:
     macro_param_variable(const context::macro_param_base& param, std::vector<size_t> index);
-    virtual set_type type() const override;
+    set_type type() const override;
 
-    virtual bool is_scalar() const override;
+    bool is_scalar() const override;
 
-    virtual std::vector<variable_ptr> values() const override;
-    virtual size_t size() const override;
+    std::vector<variable_ptr> values() const override;
+    size_t size() const override;
 
 protected:
-    virtual const std::string& get_string_value() const override;
-    virtual const std::string& get_string_name() const override;
+    const std::string& get_string_value() const override;
+    const std::string& get_string_name() const override;
 
 private:
     const context::macro_param_base& macro_param_;

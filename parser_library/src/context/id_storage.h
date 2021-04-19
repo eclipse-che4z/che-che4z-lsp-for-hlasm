@@ -18,9 +18,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 
 // storage for identifiers
@@ -71,9 +69,7 @@ public:
 
 using id_index = id_storage::const_pointer;
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 
 #endif

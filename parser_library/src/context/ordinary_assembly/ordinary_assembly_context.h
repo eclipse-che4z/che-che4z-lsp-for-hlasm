@@ -62,7 +62,7 @@ public:
     const symbol* get_symbol_reference(context::id_index name) const;
 
     // gets symbol by name
-    virtual const symbol* get_symbol(id_index name) const override;
+    const symbol* get_symbol(id_index name) const override;
     symbol* get_symbol(id_index name);
 
     // access current section
