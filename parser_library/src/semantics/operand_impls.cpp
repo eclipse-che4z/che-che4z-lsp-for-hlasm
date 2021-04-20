@@ -97,8 +97,8 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     }
     else
     {
-       return std::make_unique<checking::address_operand>(
-       checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);       
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
     }
 }
 

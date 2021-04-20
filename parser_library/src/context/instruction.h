@@ -169,10 +169,14 @@ const checking::machine_operand_format imm_32_U = checking::machine_operand_form
 const checking::machine_operand_format vec_reg_4_U = checking::machine_operand_format(vec_reg, empty, empty);
 const checking::machine_operand_format db_12_8x4L_U = checking::machine_operand_format(dis_12u, length_8, base_);
 const checking::machine_operand_format db_12_4x4L_U = checking::machine_operand_format(dis_12u, length_4, base_);
-const checking::machine_operand_format rel_addr_imm_12_S = checking::machine_operand_format(reladdr_imm_12s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_16_S = checking::machine_operand_format(reladdr_imm_16s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_24_S = checking::machine_operand_format(reladdr_imm_24s, empty, empty);
-const checking::machine_operand_format rel_addr_imm_32_S = checking::machine_operand_format(reladdr_imm_32s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_12_S =
+    checking::machine_operand_format(reladdr_imm_12s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_16_S =
+    checking::machine_operand_format(reladdr_imm_16s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_24_S =
+    checking::machine_operand_format(reladdr_imm_24s, empty, empty);
+const checking::machine_operand_format rel_addr_imm_32_S =
+    checking::machine_operand_format(reladdr_imm_32s, empty, empty);
 
 
 // machine instruction representation for checking
