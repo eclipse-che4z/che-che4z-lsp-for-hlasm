@@ -91,7 +91,7 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
         return std::make_unique<checking::one_operand>(res.get_abs());
     }
     else if (res.value_kind() == context::symbol_value_kind::RELOC && type_hint
-                 && *type_hint == checking::machine_operand_type::RELOC_IMM)
+        && *type_hint == checking::machine_operand_type::RELOC_IMM)
     {
         return std::make_unique<checking::one_operand>("RELOC", res.get_reloc().offset());
     }
