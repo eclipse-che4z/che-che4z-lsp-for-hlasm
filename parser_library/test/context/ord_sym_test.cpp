@@ -225,9 +225,6 @@ Y2 LR 1,1
 C CSECT
 U EQU X1+X2
 V EQU Y1+Y2
-
-
-
 F EQU V-U
 
  LR F,F

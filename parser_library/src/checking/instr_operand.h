@@ -67,7 +67,6 @@ enum class machine_operand_type : uint8_t
 {
     MASK,
     REG,
-    REG_IMM,
     IMM,
     NONE,
     DISPLC,
