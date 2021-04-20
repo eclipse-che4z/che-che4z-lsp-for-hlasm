@@ -458,8 +458,6 @@ struct diagnostic_op
 
     static diagnostic_op error_M112(const std::string& instr_name, const range& range);
 
-    static diagnostic_op error_M113(const std::string& instr_name, const range& range);
-
     static diagnostic_op error_M114(const std::string& instr_name, const range& range);
 
     static diagnostic_op error_M115(const std::string& instr_name, const range& range);
@@ -469,8 +467,6 @@ struct diagnostic_op
     static diagnostic_op error_M121(const std::string& instr_name, const range& range);
 
     static diagnostic_op error_M122(const std::string& instr_name, long long from, long long to, const range& range);
-
-    static diagnostic_op error_M123(const std::string& instr_name, long long from, long long to, const range& range);
 
     static diagnostic_op error_M124(const std::string& instr_name, const range& range);
 

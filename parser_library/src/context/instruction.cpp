@@ -347,7 +347,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
         },
 
         526);
-    add_machine_instr(result, "BPP", mach_format::SMI, { mask_4_U, reg_imm_16_S, db_12_4_U }, 527);
+    add_machine_instr(result, "BPP", mach_format::SMI, { mask_4_U, rel_addr_imm_16_S, db_12_4_U }, 527);
     add_machine_instr(result, "BPRP", mach_format::MII, { mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S }, 527);
     add_machine_instr(result, "BRAS", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 530);
     add_machine_instr(result, "BRASL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 530);

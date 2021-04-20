@@ -212,8 +212,6 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
             return diagnostic_op::error_M111(instr_name, operand_range);
         case machine_operand_type::IMM: // I
             return diagnostic_op::error_M112(instr_name, operand_range);
-        case machine_operand_type::REG_IMM: // RI
-            return diagnostic_op::error_M113(instr_name, operand_range);
         case machine_operand_type::VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
         case machine_operand_type::RELOC_IMM: // RI
@@ -297,10 +295,7 @@ bool one_operand::check(
         return false;
     }
 
-
     // it is a simple operand
-
-
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
         auto boundary = 1ll << (to_check.identifier.size - 1);
@@ -308,9 +303,6 @@ bool one_operand::check(
         {
             case machine_operand_type::IMM:
                 diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
-                break;
-            case machine_operand_type::REG_IMM:
-                diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             case machine_operand_type::RELOC_IMM:
                 diag = diagnostic_op::error_M125(instr_name, -boundary, boundary - 1, operand_range);
@@ -365,10 +357,6 @@ std::string parameter::to_string() const
             return "M";
         case machine_operand_type::REG:
             return "R";
-        case machine_operand_type::REG_IMM: {
-            ret_val = "RI";
-            break;
-        }
         case machine_operand_type::IMM: {
             ret_val = "I";
             break;

@@ -90,22 +90,15 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     {
         return std::make_unique<checking::one_operand>(res.get_abs());
     }
-    else if ((res.value_kind() == context::symbol_value_kind::RELOC))
+    else if ((res.value_kind() == context::symbol_value_kind::RELOC && type_hint
+                 && *type_hint == checking::machine_operand_type::RELOC_IMM))
     {
         return std::make_unique<checking::one_operand>("RELOC", res.get_reloc().offset());
     }
     else
     {
-        if (type_hint && *type_hint == checking::machine_operand_type::REG_IMM)
-        {
-            return std::make_unique<checking::one_operand>(0);
-        }
-
-        else
-        {
-            return std::make_unique<checking::address_operand>(
-                checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
-        }
+       return std::make_unique<checking::address_operand>(
+       checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);       
     }
 }
 

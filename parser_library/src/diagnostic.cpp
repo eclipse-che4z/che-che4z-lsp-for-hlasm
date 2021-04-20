@@ -1227,15 +1227,6 @@ diagnostic_op diagnostic_op::error_M112(const std::string& instr_name, const ran
         range);
 }
 
-diagnostic_op diagnostic_op::error_M113(const std::string& instr_name, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error,
-        "M113",
-        "Error at " + instr_name + " instruction: operand must be an absolute register immediate value",
-        range);
-}
-
-
 diagnostic_op diagnostic_op::error_M114(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
@@ -1275,15 +1266,6 @@ diagnostic_op diagnostic_op::error_M122(const std::string& instr_name, long long
         range);
 }
 
-diagnostic_op diagnostic_op::error_M123(const std::string& instr_name, long long from, long long to, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error,
-        "M123",
-        "Error at " + instr_name + " instruction: register immediate operand absolute value must be between "
-            + std::to_string(from) + " and " + std::to_string(to),
-        range);
-}
-
 diagnostic_op diagnostic_op::error_M124(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
@@ -1296,7 +1278,7 @@ diagnostic_op diagnostic_op::error_M125(const std::string& instr_name, long long
 {
     return diagnostic_op(diagnostic_severity::error,
         "M125",
-        "Error at " + instr_name + " instruction: relocatable symbol or immediate operand absolute value must be between "
+        "Error at " + instr_name + " instruction: relocatable symbol or immediate absolute value must be between "
             + std::to_string(from) + " and " + std::to_string(to),
         range);
 }

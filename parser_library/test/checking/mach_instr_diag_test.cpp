@@ -224,18 +224,20 @@ TEST(diagnostics, immS_out_of_range)
     ASSERT_EQ(a.diags().at(0).code, "M122");
 }
 
-TEST(diagnostics, regImmS_out_of_range)
+TEST(diagnostics, reloc_ImmS_out_of_range)
 {
     std::string input(
         R"( 
-  BPRP 1,2333,3
+ BRAS 1,DISP
+LEN123   DS CL(64444)
+DISP     MVC 0(1),1  
 )");
     analyzer a(input);
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M123");
+    ASSERT_EQ(a.diags().at(0).code, "M125");
 }
 
 TEST(diagnostics, mask_out_of_range)
@@ -307,21 +309,19 @@ TEST(diagnostics, imm_expected)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M112");
 }
-
-TEST(diagnostics, regImm_expected)
+TEST(diagnostics, relocImm_expected)
 {
     std::string input(
         R"( 
- BPP 1,2(2,2),111
+          EXRL 1,0(1)
 )");
     analyzer a(input);
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M113");
+    ASSERT_EQ(a.diags().at(0).code, "M115");
 }
-
 TEST(diagnostics, vecReg_expected)
 {
     std::string input(

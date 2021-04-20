@@ -36,7 +36,7 @@ TEST(diagnostics, overall_correctness)
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
 }
 
 TEST(diagnostics, string_substitution)
@@ -236,7 +236,7 @@ TEST(diagnostics, mnemonics)
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)20);
 }
 
 TEST(diagnostics,
