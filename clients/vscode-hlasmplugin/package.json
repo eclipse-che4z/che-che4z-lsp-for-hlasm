@@ -348,6 +348,11 @@
             "tcp",
             "wasm"
           ]
+        },
+        "hlasm.useAutodetection": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enables autodetection of HLASM source code for automatic setting of Language Mode."
         }
       }
     }
