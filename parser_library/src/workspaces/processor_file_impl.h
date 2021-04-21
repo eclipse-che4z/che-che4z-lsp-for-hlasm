@@ -53,7 +53,8 @@ public:
 private:
     const file_manager* file_manager_;
 
-    std::unique_ptr<analyzer> analyzer_;
+    std::unique_ptr<analyzer> opencode_analyzer_;
+    const analyzer* last_analyzer_;
 
     bool parse_inner(analyzer&);
 

@@ -50,20 +50,20 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 {
-    if (analyzer_)
-        analyzer_ = std::make_unique<analyzer>(
-            get_text(), get_file_name(), lib_provider, get_lsp_editing(), analyzer_->hlasm_ctx().move_ids());
+    if (opencode_analyzer_)
+        opencode_analyzer_ = std::make_unique<analyzer>(
+            get_text(), get_file_name(), lib_provider, get_lsp_editing(), opencode_analyzer_->hlasm_ctx().move_ids());
     else
-        analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
+        opencode_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
 
     auto old_dep = dependencies_;
 
-    auto res = parse_inner(*analyzer_);
+    auto res = parse_inner(*opencode_analyzer_);
 
     if (!cancel_ || !*cancel_)
     {
         dependencies_.clear();
-        for (auto& file : analyzer_->hlasm_ctx().get_visited_files())
+        for (auto& file : opencode_analyzer_->hlasm_ctx().get_visited_files())
             if (file != get_file_name())
                 dependencies_.insert(file);
     }
@@ -76,6 +76,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
             files_to_close_.insert(file);
     }
 
+    last_analyzer_ = opencode_analyzer_.get();
     return res;
 }
 
@@ -83,14 +84,21 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    auto a =
+        std::make_unique<analyzer>(get_text(), get_file_name(), ctx, lib_provider, data, get_lsp_editing());
 
-    if (macro_cache_.load_from_cache(ctx, data))
+    auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
+
+    if (macro_cache_.load_from_cache(cache_key, ctx))
         return true;
 
-    auto ret = parse_inner(*analyzer_);
+    auto ret = parse_inner(*a);
 
+    if (cancel_ && *cancel_)
+        return ret;
+
+    last_analyzer_ = a.get();
+    macro_cache_.save_analyzer(cache_key, std::move(a));
     return ret;
 }
 
@@ -107,14 +115,17 @@ const std::set<std::string>& processor_file_impl::dependencies() { return depend
 
 const semantics::lines_info& processor_file_impl::get_hl_info()
 {
-    return analyzer_->source_processor().semantic_tokens();
+    return last_analyzer_->source_processor().semantic_tokens();
 }
 
-const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider() { return *analyzer_->context().lsp_ctx; }
+const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider()
+{
+    return *last_analyzer_->context().lsp_ctx;
+}
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }
 
-const performance_metrics& processor_file_impl::get_metrics() { return analyzer_->get_metrics(); }
+const performance_metrics& processor_file_impl::get_metrics() { return last_analyzer_->get_metrics(); }
 
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 {

@@ -32,7 +32,7 @@ struct cached_opsyn_mnemo
 // Contains all the context that affects parsing an external file (macro or copy member)
 struct macro_cache_key
 {
-    [[nodiscard]] static macro_cache_key create_from_context(analyzing_context ctx, library_data data);
+    [[nodiscard]] static macro_cache_key create_from_context(context::hlasm_context& hlasm_ctx, library_data data);
     library_data data;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 };
@@ -63,8 +63,10 @@ using version_stamp = std::unordered_map<std::string, version_t>;
 // Pair of version stamp and analyzer that parsed the version of file(s)
 struct macro_cache_data
 {
+    // Versions of respective macro (copy member) with all dependencies (COPY instruction is evaluated during macro
+    // definition and the statements are part of macro definition)
     version_stamp stamps;
-    analyzer cached_analyzer;
+    std::unique_ptr<analyzer> cached_analyzer;
 };
 
 class macro_cache : public diagnosable_impl
@@ -77,7 +79,7 @@ public:
     macro_cache(const file_manager& file_mngr, file& macro_file);
     // Checks whether any dependencies with specified macro cache key (macro context) have changed. If not, loads the
     // cached macro to the specified context. Returns true, if the macro was loaded.
-    bool load_from_cache(const macro_cache_key& key, analyzing_context ctx);
+    bool load_from_cache(const macro_cache_key& key, const analyzing_context& ctx);
     void save_analyzer(const macro_cache_key& key, std::unique_ptr<analyzer> analyzer);
 
 

@@ -24,6 +24,7 @@
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
+#include "file_with_text.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -229,21 +230,6 @@ label
 )";
 
 std::string source_using_macro_file_no_error = R"( CORRECT)";
-
-class file_with_text : public processor_file_impl
-{
-public:
-    file_with_text(const std::string& name, const std::string& text, const file_manager& file_mngr)
-        : file_impl(name)
-        , processor_file_impl(name, file_mngr)
-    {
-        did_open(text, 1);
-    }
-
-    virtual const std::string& get_text() override { return get_text_ref(); }
-
-    virtual bool update_and_get_bad() override { return false; }
-};
 
 const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
 const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
