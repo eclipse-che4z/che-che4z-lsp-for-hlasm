@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigurationsHandler } from './configurationsHandler'
+import { getConfig } from './eventsHandler';
 
 /**
  * Runs automatic HLASM language detection on given files
@@ -53,6 +54,9 @@ export class HLASMLanguageDetection {
 
         const text = document.getText();
         if (text.length == 0)
+            return false;
+
+        if (!getConfig<boolean>('useAutodetection', false))
             return false;
 
         var score = 0;

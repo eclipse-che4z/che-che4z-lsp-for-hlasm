@@ -21,11 +21,15 @@ import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } fro
 import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
-import { ServerFactory, ServerCommunicationMethod } from './serverFactory';
+import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 
 const offset = 71;
 const continueColumn = 15;
+
+const sleep = (ms: number) => {
+    return new Promise((resolve) => { setTimeout(resolve, ms) });
+};
 //export var hlasmpluginClient : vscodelc.LanguageClient;
 /**
  * ACTIVATION
@@ -51,8 +55,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // create server options
     var factory = new ServerFactory();
-    const commMethod = getConfig<ServerCommunicationMethod>('communicationMethod', 'native');
-    const serverOptions = await factory.create(commMethod);
+    const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
+    const serverOptions = await factory.create(serverVariant);
 
     //client init
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
@@ -63,10 +67,15 @@ export async function activate(context: vscode.ExtensionContext) {
     hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
     await registerToContext(context, highlight, hlasmpluginClient);
+
     //give the server some time to start listening when using TCP
-    setTimeout(function () {
-        hlasmpluginClient.start();
-    }, (commMethod === 'tcp') ? 2000 : 0);
+    if (serverVariant === 'tcp')
+        await sleep(2000);
+
+    context.subscriptions.push(hlasmpluginClient.start());
+
+    if (serverVariant === 'native')
+        startCheckingNativeClient(hlasmpluginClient);
 
     let api = {
         getExtension(): vscodelc.LanguageClient {
@@ -74,6 +83,30 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     };
     return api;
+}
+
+function startCheckingNativeClient(hlasmpluginClient: vscodelc.LanguageClient) {
+    const timeout = setTimeout(() => {
+        const use_wasm = 'Switch to WASM version';
+        vscode.window.showWarningMessage('The language server did not start.', ...[use_wasm, 'Ignore']).then((value) => {
+            if (value === use_wasm) {
+                vscode.workspace.getConfiguration('hlasm').update('serverVariant', 'wasm', vscode.ConfigurationTarget.Global).then(
+                    () => {
+                        const reload = 'Reload window';
+                        vscode.window.showInformationMessage('User settings updated.', ...[reload]).then((value) => {
+                            if (value === reload)
+                                vscode.commands.executeCommand('workbench.action.reloadWindow');
+                        })
+                    },
+                    (error) => {
+                        vscode.window.showErrorMessage(error);
+                    });
+            }
+        })
+    }, 15000);
+    hlasmpluginClient.onReady().then(() => {
+        clearTimeout(timeout);
+    });
 }
 
 async function registerToContext(context: vscode.ExtensionContext, highlight: SemanticTokensFeature, client: vscodelc.LanguageClient) {

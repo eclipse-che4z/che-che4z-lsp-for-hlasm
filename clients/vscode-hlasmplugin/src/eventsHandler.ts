@@ -35,8 +35,7 @@ export class EventsHandler {
      * @param completeCommand Used to invoke complete manually in continuationHandling mode
      * @param highlight Shows/hides parsing progress
      */
-    constructor(completeCommand: string, highlight: SemanticTokensFeature)
-    {
+    constructor(completeCommand: string, highlight: SemanticTokensFeature) {
         this.isInstruction = new RegExp("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)$");
         this.isTrigger = new RegExp("^[a-zA-Z\*\@\#\$\_]+$");
         this.completeCommand = completeCommand;
@@ -45,11 +44,10 @@ export class EventsHandler {
         this.initialize(highlight);
     }
 
-    dispose() {}
+    dispose() { }
 
     // invoked on extension activation
-    private initialize(highlight: SemanticTokensFeature)
-    {
+    private initialize(highlight: SemanticTokensFeature) {
         // initialize wildcards
         this.configSetup.updateWildcards();
         // first run, simulate ondidopen
@@ -75,8 +73,8 @@ export class EventsHandler {
                 new vscode.Range(
                     new vscode.Position(
                         change.range.start.line, 0),
-                        change.range.start));
-                        
+                    change.range.start));
+
             const notContinued = change.range.start.line == 0 ||
                 !isLineContinued(event.document, change.range.start.line, continuationOffset);
 
@@ -137,7 +135,7 @@ export class EventsHandler {
  * @param option name of the option (e.g. for hlasmplugin.path should be path)
  * @param defaultValue default value to return if option is not set
  */
-export function getConfig<T>(option: string, defaultValue?: any): T {
+export function getConfig<T>(option: string, defaultValue?: T): T {
     const config = vscode.workspace.getConfiguration('hlasm');
     return config.get<T>(option, defaultValue);
 }

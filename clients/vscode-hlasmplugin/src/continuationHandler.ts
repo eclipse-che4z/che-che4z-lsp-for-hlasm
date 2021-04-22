@@ -25,29 +25,26 @@ export class ContinuationHandler {
 
     // insert continuation character X to the current line
     insertContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number, continueColumn: number) {
-        if (!getConfig<boolean>('continuationHandling', false))
-            return;
+        const sel = editor.selection;
 
         // retrieve continuation information
-        const isContinued = isLineContinued(editor.document, editor.selection.active.line, continuationOffset);
+        const isContinued = isLineContinued(editor.document, sel.active.line, continuationOffset);
 
         if (!isContinued) {
-            if (editor.selection.active.character < continuationOffset) {
+            if (sel.active.character < continuationOffset) {
                 const lastChar =
-                    (editor.selection.active.character < continuationOffset)
-                        ? editor.document.lineAt(editor.selection.active).text.length
+                    (sel.active.character < continuationOffset)
+                        ? editor.document.lineAt(sel.active).text.length
                         : continuationOffset;
 
                 edit.insert(
-                    new vscode.Position(editor.selection.active.line, lastChar),
+                    new vscode.Position(sel.active.line, lastChar),
                     " ".repeat(continuationOffset - lastChar));
             }
-            const continuationPosition = new vscode.Position(editor.selection.active.line, continuationOffset);
-            edit.replace(
-                new vscode.Range(
-                    continuationPosition,
-                    new vscode.Position(editor.selection.active.line, continuationOffset + 1)),
-                'X\r\n' + ' '.repeat(continueColumn));
+            const continuationPosition = new vscode.Position(sel.active.line, continuationOffset);
+            // see https://github.com/microsoft/vscode/issues/32058 why replace does not work
+            edit.delete(new vscode.Range(continuationPosition, new vscode.Position(sel.active.line, continuationOffset + 1)));
+            edit.insert(continuationPosition, 'X\r\n' + ' '.repeat(continueColumn));
         }
         // add extra continuation on already continued line
         else
@@ -59,18 +56,16 @@ export class ContinuationHandler {
 
     // remove continuation from previous line
     removeContinuation(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, continuationOffset: number) {
-        if (!getConfig<boolean>('continuationHandling', false))
-            return;
+        const isThisContinued = isLineContinued(editor.document, editor.selection.active.line, continuationOffset);
+        const isPrevContinued = isLineContinued(editor.document, editor.selection.active.line - 1, continuationOffset);
 
-        const wasLastContinued = isLineContinued(editor.document, editor.selection.active.line - 1, continuationOffset);
-
-        if (editor.selection.active.line > 0 && wasLastContinued) {
+        if (editor.selection.active.line > 0 && isPrevContinued) {
             const continuationPosition = new vscode.Position(
                 editor.selection.active.line - 1, continuationOffset);
             edit.delete(
                 new vscode.Range(
                     new vscode.Position(editor.selection.active.line, editor.document.lineAt(editor.selection.active).text.length),
-                    new vscode.Position(editor.selection.active.line - 1, continuationOffset)));
+                    new vscode.Position(editor.selection.active.line - 1, continuationOffset + (isThisContinued ? 1 : 0))));
 
             setCursor(editor, continuationPosition);
         }
