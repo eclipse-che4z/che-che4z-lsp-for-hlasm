@@ -37,8 +37,11 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
        COPY COPYFILE
        LR &VAR,1
        L 1,SYM
+       
+       AIF (&VAR EQ 1).HERE
+       error
+.HERE  ANOP
 
-       COPY NOTEXIST
 )";
     const static inline std::string macro_file_name = "lib/MAC";
     const static inline std::string macro_text =
@@ -55,7 +58,7 @@ SYM    LR &VAR,1
     const static inline std::string copyfile_text =
         R"(
        
-       LR &PARAM,1
+       LR 15,1
 &VAR   SETA 1
 
 )";
@@ -67,11 +70,23 @@ SYM    LR &VAR,1
 
     file_ptr find(const std::string& key) const override
     {
-        if (key.substr(lib_prefix_length) == opencode_file_name)
+        if (key == opencode_file_name)
             return opencode;
-        else if (key.substr(lib_prefix_length) == macro_file_name)
+        else if (key == macro_file_name)
             return macro;
-        else if (key.substr(lib_prefix_length) == copyfile_file_name)
+        else if (key == copyfile_file_name)
+            return copyfile;
+        else
+            return nullptr;
+    };
+
+    processor_file_ptr get_proc_file_from_library(const std::string& library) const
+    {
+        if (library == opencode_file_name.substr(lib_prefix_length))
+            return opencode;
+        else if (library == macro_file_name.substr(lib_prefix_length))
+            return macro;
+        else if (library == copyfile_file_name.substr(lib_prefix_length))
             return copyfile;
         else
             return nullptr;
@@ -82,15 +97,16 @@ SYM    LR &VAR,1
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
     {
-        auto file = find(library);
-        auto proc_file_ptr = dynamic_cast<processor_file_impl*>(file.get());
-        return proc_file_ptr->parse_macro(*this, ctx, data);
+        auto file = get_proc_file_from_library(library);
+        if (!file)
+            return false;
+        return file->parse_macro(*this, ctx, data);
     };
 
     bool has_library(const std::string& library, const std::string&) const override
     {
-        return library.substr(lib_prefix_length) == copyfile_file_name
-            || library.substr(lib_prefix_length) == macro_file_name;
+        return library == copyfile_file_name.substr(lib_prefix_length)
+            || library == macro_file_name.substr(lib_prefix_length);
     };
 
     asm_option empty_options;
@@ -110,5 +126,13 @@ TEST(macro_cache_test, testtest)
 {
     file_manager_cache_test_mock file_mngr;
     file_mngr.opencode->parse(file_mngr);
+    file_mngr.opencode->collect_diags();
+    int i = 0;
 
+    EXPECT_EQ(file_mngr.opencode->diags().size(), 0U);
+
+    file_mngr.opencode->parse(file_mngr);
+    file_mngr.opencode->collect_diags();
+
+    EXPECT_EQ(file_mngr.opencode->diags().size(), 0U);
 }

@@ -84,13 +84,12 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    auto a =
-        std::make_unique<analyzer>(get_text(), get_file_name(), ctx, lib_provider, data, get_lsp_editing());
-
     auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
 
     if (macro_cache_.load_from_cache(cache_key, ctx))
         return true;
+
+    auto a = std::make_unique<analyzer>(get_text(), get_file_name(), ctx, lib_provider, data, get_lsp_editing());
 
     auto ret = parse_inner(*a);
 
