@@ -18,7 +18,8 @@ using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
-const std::map<mach_format, const std::string> instruction::mach_format_to_string = { { mach_format::E, "E" },
+const std::map<mach_format, std::string> instruction::mach_format_to_string = {
+    { mach_format::E, "E" },
     { mach_format::I, "I" },
     { mach_format::IE, "IE" },
     { mach_format::MII, "MII" },
@@ -95,9 +96,11 @@ const std::map<mach_format, const std::string> instruction::mach_format_to_strin
     { mach_format::VRS_d, "VRS-d" },
     { mach_format::VSI, "VSI" },
     { mach_format::VRV, "VRV" },
-    { mach_format::VRX, "VRX" } };
+    { mach_format::VRX, "VRX" },
+};
 
-const std::vector<ca_instruction> instruction::ca_instructions = { { "AIF", false },
+const std::vector<ca_instruction> instruction::ca_instructions = {
+    { "AIF", false },
     { "AGO", false },
     { "ACTR", false },
     { "SETA", false },
@@ -115,61 +118,62 @@ const std::vector<ca_instruction> instruction::ca_instructions = { { "AIF", fals
     { "MEXIT", true },
     { "AEJECT", true },
     { "AREAD", false },
-    { "ASPACE", false } };
+    { "ASPACE", false },
+};
 
-const std::map<const std::string, assembler_instruction> instruction::assembler_instructions = {
-    { { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
-        { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
-        { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
-        { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
-        { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
-        { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
-        { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
-        { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
-        { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
-        { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
-        { "COM", assembler_instruction(0, 0, false, "") },
-        { "COPY", assembler_instruction(1, 1, false, "member") },
-        { "CSECT", assembler_instruction(0, 0, false, "") },
-        { "CXD", assembler_instruction(0, 0, false, "") },
-        { "DC", assembler_instruction(1, -1, true, "<operand>+") },
-        { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
-        { "DS", assembler_instruction(1, -1, true, "<operand>+") },
-        { "DSECT", assembler_instruction(0, 0, false, "") },
-        { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
-        { "EJECT", assembler_instruction(0, 0, false, "") },
-        { "END", assembler_instruction(0, 2, true, "?expression,?language") },
-        { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
-        { "EQU",
-            assembler_instruction(1,
-                5,
-                true,
-                "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
-                "value>") },
-        { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
-        { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-        { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
-        { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
-        { "LOCTR", assembler_instruction(0, 0, false, "") },
-        { "LTORG", assembler_instruction(0, 0, false, "") },
-        { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
-        { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
-        { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
-        { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-        { "PRINT", assembler_instruction(1, -1, false, "operand+") },
-        { "PUNCH", assembler_instruction(1, 1, false, "string") },
-        { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
-        { "REPRO", assembler_instruction(0, 0, false, "") },
-        { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
-        { "RSECT", assembler_instruction(0, 0, false, "") },
-        { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
-        { "START", assembler_instruction(0, 1, true, "?expression") },
-        { "TITLE", assembler_instruction(1, 1, false, "title_string") },
-        { "USING", assembler_instruction(2, -1, true, "operand+") },
-        { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
-        { "XATTR", assembler_instruction(1, -1, false, "attribute+") } }
+const std::map<std::string, assembler_instruction> instruction::assembler_instructions = {
+    { "*PROCESS", assembler_instruction(1, -1, true, "") }, // TO DO
+    { "ACONTROL", assembler_instruction(1, -1, false, "<selection>+") },
+    { "ADATA", assembler_instruction(5, 5, false, "value1,value2,value3,value4,character_string") },
+    { "AINSERT", assembler_instruction(2, 2, false, "'record',BACK|FRONT") },
+    { "ALIAS", assembler_instruction(1, 1, false, "alias_string") },
+    { "AMODE", assembler_instruction(1, 1, false, "amode_option") },
+    { "CATTR", assembler_instruction(1, -1, false, "attribute+") },
+    { "CCW", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+    { "CCW0", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+    { "CCW1", assembler_instruction(4, 4, true, "command_code,data_address,flags,data_count") },
+    { "CEJECT", assembler_instruction(0, 1, true, "?number_of_lines") },
+    { "CNOP", assembler_instruction(2, 2, true, "byte,boundary") },
+    { "COM", assembler_instruction(0, 0, false, "") },
+    { "COPY", assembler_instruction(1, 1, false, "member") },
+    { "CSECT", assembler_instruction(0, 0, false, "") },
+    { "CXD", assembler_instruction(0, 0, false, "") },
+    { "DC", assembler_instruction(1, -1, true, "<operand>+") },
+    { "DROP", assembler_instruction(0, -1, true, "?<<base_register|label>+>") },
+    { "DS", assembler_instruction(1, -1, true, "<operand>+") },
+    { "DSECT", assembler_instruction(0, 0, false, "") },
+    { "DXD", assembler_instruction(1, -1, true, "<operand>+") },
+    { "EJECT", assembler_instruction(0, 0, false, "") },
+    { "END", assembler_instruction(0, 2, true, "?expression,?language") },
+    { "ENTRY", assembler_instruction(1, -1, true, "entry_point+") },
+    { "EQU",
+        assembler_instruction(1,
+            5,
+            true,
+            "value,?<length_attribute_value>,?<type_attribute_value>,?<program_type_value>,?<assembler_type_"
+            "value>") },
+    { "EXITCTL", assembler_instruction(2, 5, false, "exit_type,control_value+") },
+    { "EXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+    { "ICTL", assembler_instruction(1, 3, false, "begin,?<end>,?<continue>") },
+    { "ISEQ", assembler_instruction(0, 2, false, "?<left,right>") },
+    { "LOCTR", assembler_instruction(0, 0, false, "") },
+    { "LTORG", assembler_instruction(0, 0, false, "") },
+    { "MNOTE", assembler_instruction(1, 2, false, "?<<severity|*|>,>message") },
+    { "OPSYN", assembler_instruction(0, 1, false, "?operation_code_2") },
+    { "ORG", assembler_instruction(0, 3, true, "expression?<,boundary?<,offset>>") },
+    { "POP", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+    { "PRINT", assembler_instruction(1, -1, false, "operand+") },
+    { "PUNCH", assembler_instruction(1, 1, false, "string") },
+    { "PUSH", assembler_instruction(1, 4, false, "<PRINT|USING|ACONTROL>+,?NOPRINT") },
+    { "REPRO", assembler_instruction(0, 0, false, "") },
+    { "RMODE", assembler_instruction(1, 1, false, "rmode_option") },
+    { "RSECT", assembler_instruction(0, 0, false, "") },
+    { "SPACE", assembler_instruction(0, 1, true, "?number_of_lines") },
+    { "START", assembler_instruction(0, 1, true, "?expression") },
+    { "TITLE", assembler_instruction(1, 1, false, "title_string") },
+    { "USING", assembler_instruction(2, -1, true, "operand+") },
+    { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
+    { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
 };
 
 
@@ -186,7 +190,7 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_opera
 bool hlasm_plugin::parser_library::context::machine_instruction::check(const std::string& name_of_instruction,
     const std::vector<const checking::machine_operand*> to_check,
     const range& stmt_range,
-    const diagnostic_collector& add_diagnostic)
+    const diagnostic_collector& add_diagnostic) const
 {
     // check size of operands
     int diff = (int)operands.size() - (int)to_check.size();
@@ -210,36 +214,31 @@ bool hlasm_plugin::parser_library::context::machine_instruction::check(const std
     return (!error);
 }
 
-void hlasm_plugin::parser_library::context::machine_instruction::clear_diagnostics() { diagnostics.clear(); }
-
-//#define(instr_name, format, )
-
-
-void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result,
+void add_machine_instr(std::map<std::string, machine_instruction>& result,
     const std::string& instruction_name,
     mach_format format,
     std::vector<machine_operand_format> op_format,
     size_t page_no)
 {
-    result.insert(std::pair<const std::string, machine_instruction_ptr>(
-        instruction_name, std::make_unique<machine_instruction>(instruction_name, format, op_format, page_no)));
+    result.insert(std::pair<std::string, machine_instruction>(
+        instruction_name, machine_instruction(instruction_name, format, op_format, page_no)));
 }
-void add_machine_instr(std::map<const std::string, machine_instruction_ptr>& result,
+void add_machine_instr(std::map<std::string, machine_instruction>& result,
     const std::string& instruction_name,
     mach_format format,
     std::vector<machine_operand_format> op_format,
     int optional,
     size_t page_no)
 {
-    result.insert(std::pair<const std::string, machine_instruction_ptr>(instruction_name,
-        std::make_unique<machine_instruction>(instruction_name, format, std::move(op_format), optional, page_no)));
+    result.insert(std::pair<std::string, machine_instruction>(
+        instruction_name, machine_instruction(instruction_name, format, std::move(op_format), optional, page_no)));
 }
 
 
-std::map<const std::string, machine_instruction_ptr>
+std::map<std::string, machine_instruction>
 hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
 {
-    std::map<const std::string, machine_instruction_ptr> result;
+    std::map<std::string, machine_instruction> result;
     add_machine_instr(result, "AR", mach_format::RR, { reg_4_U, reg_4_U }, 510);
     add_machine_instr(result, "ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7);
     add_machine_instr(result, "AGR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
@@ -1790,14 +1789,14 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     return result;
 }
 
-void add_mnemonic_code(std::map<const std::string, mnemonic_code>& result, std::string instr, mnemonic_code code)
+void add_mnemonic_code(std::map<std::string, mnemonic_code>& result, std::string instr, mnemonic_code code)
 {
-    result.insert(std::make_pair<const std::string, mnemonic_code>(std::move(instr), std::move(code)));
+    result.insert(std::make_pair<std::string, mnemonic_code>(std::move(instr), std::move(code)));
 }
 
-std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context::instruction::get_mnemonic_codes()
+std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::instruction::get_mnemonic_codes()
 {
-    std::map<const std::string, mnemonic_code> result;
+    std::map<std::string, mnemonic_code> result;
     add_mnemonic_code(result, "B", { "BC", { { 0, 15 } } });
     add_mnemonic_code(result, "BR", { "BCR", { { 0, 15 } } });
     add_mnemonic_code(result, "J", { "BRC", { { 0, 15 } } });
@@ -2755,7 +2754,7 @@ std::map<const std::string, mnemonic_code> hlasm_plugin::parser_library::context
     return result;
 }
 
-std::map<const std::string, machine_instruction_ptr> instruction::machine_instructions =
+const std::map<std::string, machine_instruction> instruction::machine_instructions =
     instruction::get_machine_instructions();
 
-const std::map<const std::string, mnemonic_code> instruction::mnemonic_codes = instruction::get_mnemonic_codes();
+const std::map<std::string, mnemonic_code> instruction::mnemonic_codes = instruction::get_mnemonic_codes();

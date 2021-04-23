@@ -164,7 +164,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             break;
         case context::instruction::instruction_array::MACH:
             f = processing_form::MACH;
-            o = context::instruction::machine_instructions.find(*id)->second->operands.empty()
+            o = context::instruction::machine_instructions.find(*id)->second.operands.empty()
                 ? operand_occurence::ABSENT
                 : operand_occurence::PRESENT;
             t = context::instruction_type::MACH;
@@ -181,12 +181,11 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             break;
         case context::instruction::instruction_array::MNEM:
             f = processing_form::MACH;
-            o = (context::instruction::machine_instructions
-                            .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                            ->operands.size()
+            o = (context::instruction::machine_instructions.at(context::instruction::mnemonic_codes.at(*id).instruction)
+                            .operands.size()
                         + context::instruction::machine_instructions
                               .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                              ->no_optional
+                              .no_optional
                         - context::instruction::mnemonic_codes.at(*id).replaced.size()
                     == 0) // counting  number of operands in mnemonic
                 ? operand_occurence::ABSENT

@@ -59,7 +59,7 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
                 label_name,
                 addr,
                 context::symbol_attributes::make_machine_attrs(
-                    (context::symbol_attributes::len_attr)instr->size_for_alloc / 8));
+                    (context::symbol_attributes::len_attr)instr.size_for_alloc / 8));
         }
     }
 
@@ -83,7 +83,7 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
     else
         check(rebuilt_stmt, hlasm_ctx, checker, *this);
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(instr->size_for_alloc / 8, context::halfword);
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(instr.size_for_alloc / 8, context::halfword);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -217,18 +217,11 @@ public:
             return 16;
         return 0;
     }
-    virtual bool check(const std::string& name_of_instruction,
+    bool check(const std::string& name_of_instruction,
         const std::vector<const checking::machine_operand*> operands,
         const range& stmt_range,
-        const diagnostic_collector& add_diagnostic); // input vector is the vector of the actual incoming values
-
-    // std::vector<diag_range> & get_diagnostics()
-    void clear_diagnostics();
-    std::vector<diagnostic_op> diagnostics;
-    virtual ~machine_instruction() = default;
+        const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
 };
-
-using machine_instruction_ptr = std::unique_ptr<machine_instruction>;
 
 struct ca_instruction
 {
@@ -276,9 +269,9 @@ public:
         MNEM
     };
 
-    static std::map<const std::string, machine_instruction_ptr> get_machine_instructions();
+    static std::map<std::string, machine_instruction> get_machine_instructions();
 
-    static std::map<const std::string, mnemonic_code> get_mnemonic_codes();
+    static std::map<std::string, mnemonic_code> get_mnemonic_codes();
 
     /*
     min_operands - minimal number of operands, non-negative integer, always defined
@@ -287,15 +280,15 @@ public:
 
     static const std::vector<ca_instruction> ca_instructions;
 
-    static const std::map<const std::string, assembler_instruction> assembler_instructions;
+    static const std::map<std::string, assembler_instruction> assembler_instructions;
 
     // static const std::vector<std::string> macro_processing_instructions;
 
-    static std::map<const std::string, machine_instruction_ptr> machine_instructions;
+    static const std::map<std::string, machine_instruction> machine_instructions;
 
-    static const std::map<const std::string, mnemonic_code> mnemonic_codes;
+    static const std::map<std::string, mnemonic_code> mnemonic_codes;
 
-    static const std::map<mach_format, const std::string> mach_format_to_string;
+    static const std::map<mach_format, std::string> mach_format_to_string;
 };
 
 } // namespace hlasm_plugin::parser_library::context
