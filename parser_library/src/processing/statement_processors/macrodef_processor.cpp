@@ -116,7 +116,7 @@ processing_status macrodef_processor::get_macro_processing_status(
             id = code.machine_opcode;
             auto operandless = std::find_if(context::instruction::ca_instructions.begin(),
                 context::instruction::ca_instructions.end(),
-                [&](auto& instr) {
+                [id](const auto& instr) {
                     return instr.name == *id;
                 })->operandless;
 

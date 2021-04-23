@@ -173,7 +173,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             f = processing_form::CA;
             o = std::find_if(context::instruction::ca_instructions.begin(),
                     context::instruction::ca_instructions.end(),
-                    [&](auto& instr) { return instr.name == *id; })
+                    [id](const auto& instr) { return instr.name == *id; })
                     ->operandless
                 ? operand_occurence::ABSENT
                 : operand_occurence::PRESENT;
