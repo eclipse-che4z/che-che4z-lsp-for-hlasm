@@ -92,9 +92,9 @@ protected:
 
     lexing::token_stream& input;
     analyzing_context ctx;
-    context::hlasm_context* hlasm_ctx;
-    semantics::source_info_processor* src_proc;
-    const processing::statement_processor* processor;
+    context::hlasm_context* hlasm_ctx = nullptr;
+    semantics::source_info_processor* src_proc = nullptr;
+    const processing::statement_processor* processor = nullptr;
     context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
     bool finished_flag;
@@ -114,8 +114,8 @@ protected:
 
 private:
     std::unique_ptr<parser_holder> rest_parser_;
-    workspaces::parse_lib_provider* lib_provider_;
-    processing::processing_state_listener* state_listener_;
+    workspaces::parse_lib_provider* lib_provider_ = nullptr;
+    processing::processing_state_listener* state_listener_ = nullptr;
 
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
