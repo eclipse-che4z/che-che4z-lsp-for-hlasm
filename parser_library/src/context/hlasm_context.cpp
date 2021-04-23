@@ -677,7 +677,8 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
     statement_block definition,
     copy_nest_storage copy_nests,
     label_storage labels,
-    location definition_location)
+    location definition_location,
+    std::unordered_set<copy_member_ptr> used_copy_members)
 {
     return macros_
         .insert_or_assign(name,
@@ -687,7 +688,8 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
                 std::move(definition),
                 std::move(copy_nests),
                 std::move(labels),
-                std::move(definition_location)))
+                std::move(definition_location),
+                std::move(used_copy_members)))
         .first->second;
 }
 
@@ -775,7 +777,7 @@ void hlasm_context::enter_copy_member(id_index member_name)
 
     const auto& [name, member] = *tmp;
 
-    source_stack_.back().copy_stack.emplace_back(member->enter());
+    source_stack_.back().copy_stack.emplace_back(copy_member_invocation(member));
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return copy_members_; }
@@ -795,7 +797,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 
     for (auto& frame : snapshot.copy_frames)
     {
-        auto invo = copy_members_.at(frame.copy_member)->enter();
+        copy_member_invocation invo(copy_members_.at(frame.copy_member));
         invo.current_statement = (int)frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }

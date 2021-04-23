@@ -190,7 +190,8 @@ public:
         statement_block definition,
         copy_nest_storage copy_nests,
         label_storage labels,
-        location definition_location);
+        location definition_location,
+        std::unordered_set<copy_member_ptr> used_copy_members);
     void add_macro(macro_def_ptr macro);
     // enters a macro with actual params
     macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);

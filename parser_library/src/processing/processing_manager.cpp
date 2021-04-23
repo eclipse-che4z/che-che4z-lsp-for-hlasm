@@ -174,7 +174,8 @@ void processing_manager::finish_macro_definition(macrodef_processing_result resu
             std::move(result.definition),
             std::move(result.nests),
             std::move(result.sequence_symbols),
-            std::move(result.definition_location));
+            std::move(result.definition_location),
+            std::move(result.used_copy_members));
 
     lsp_analyzer_.macrodef_finished(mac, std::move(result));
 }

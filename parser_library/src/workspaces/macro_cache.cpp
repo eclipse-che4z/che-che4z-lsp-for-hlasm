@@ -125,17 +125,16 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
     return false;
 }
 
-version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr ctx) const
+version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro) const
 {
     version_stamp result;
-    auto copy_files = ctx->get_copy_files();
 
-    for (auto it = copy_files.begin(); it != copy_files.end();)
+    for (const auto & copy_ptr : macro->used_copy_members)
     {
-        auto file = file_mngr_->find(*it);
+        auto file = file_mngr_->find(copy_ptr->definition_location.file);
         if (!file)
             throw std::runtime_error("Dependencies of a macro must be open right after parsing the macro.");
-        result.emplace(std::move(copy_files.extract(it++).value()), file->get_version());
+        result.emplace(file->get_file_name(), file->get_version());
     }
     return result;
 }

@@ -35,12 +35,14 @@ macro_definition::macro_definition(id_index name,
     statement_block definition,
     copy_nest_storage copy_nests,
     label_storage labels,
-    location definition_location)
+    location definition_location,
+    std::unordered_set<copy_member_ptr> used_copy_members)
     : label_param_name_(label_param_name)
     , id(name)
     , copy_nests(std::move(copy_nests))
     , labels(std::move(labels))
     , definition_location(std::move(definition_location))
+    , used_copy_members(std::move(used_copy_members))
 {
     for (auto&& stmt : definition)
         cached_definition.emplace_back(std::move(stmt));
@@ -168,17 +170,6 @@ const std::vector<std::unique_ptr<keyword_param>>& macro_definition::get_keyword
 }
 
 const id_index& macro_definition::get_label_param_name() const { return label_param_name_; }
-
-std::unordered_set<std::string> macro_definition::get_copy_files() const
-{
-    std::unordered_set<std::string> result;
-    for (const auto& stmt_nest : copy_nests)
-    {
-        for (const auto& copy_file_name : stmt_nest)
-            result.insert(copy_file_name.file);
-    }
-    return result;
-}
 
 macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,

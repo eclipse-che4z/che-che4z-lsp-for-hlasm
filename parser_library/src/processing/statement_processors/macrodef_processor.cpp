@@ -469,9 +469,11 @@ void macrodef_processor::add_correct_copy_nest()
     {
         auto& nest = hlasm_ctx.current_copy_stack()[i];
         auto pos = nest.cached_definition[nest.current_statement].get_base()->statement_position();
-        auto loc = location(pos, nest.definition_location.file);
-        result_.nests.back().push_back(std::move(loc));
+        result_.nests.back().emplace_back(pos, nest.definition_location.file);
     }
+
+    if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
+        result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
     const auto& current_file = result_.nests.back().back().file;
     bool in_inner_macro = macro_nest_ > 1;
@@ -491,7 +493,7 @@ void macrodef_processor::add_correct_copy_nest()
         if (inner_macro_ended) // add new scope when inner macro ended
             result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
         else if (!in_inner_macro
-            || inner_macro_started) // if we are not in inner macro update the end of old scope. Update also when inner
+            || inner_macro_started) // if we are not in inner macro, update the end of old scope. Update also when inner
                                     // macro just started, since we use half-open intervals.
         {
             auto& last_scope = result_.file_scopes[current_file].back();
