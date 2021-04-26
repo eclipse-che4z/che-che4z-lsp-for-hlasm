@@ -113,7 +113,7 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
             ctx.hlasm_ctx->add_macro(info->macro_definition);
             ctx.lsp_ctx->add_macro(info, lsp::text_data_ref_t(macro_file_->get_text()));
 
-            // Add all copy members dependant on this macro
+            // Add all copy members on which this macro is dependant
             for (const auto& copy_ptr : info->macro_definition->used_copy_members)
             {
                 auto copy_file = file_mngr_->find(copy_ptr->definition_location.file);
