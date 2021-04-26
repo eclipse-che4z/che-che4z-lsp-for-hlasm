@@ -200,7 +200,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the associated mnemonic structure with the given name
     auto mnemonic = context::instruction::mnemonic_codes.at(instr_name);
     // the machine instruction structure associated with the given instruction name
-    auto curr_instr = &context::instruction::machine_instructions.at(mnemonic.instruction);
+    auto curr_instr = mnemonic.instruction;
 
     // check whether substituted mnemonic values are ok
 
@@ -242,7 +242,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
             }
             else // if operand is not empty
             {
-                auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic.instruction);
+                auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic);
                 if (!uniq)
                     return std::nullopt; // contains dependencies
 
@@ -284,7 +284,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     diagnostic_collector add_diagnostic,
     const resolved_statement& stmt,
     size_t op_position,
-    const std::string* mnemonic)
+    const context::mnemonic_code* mnemonic)
 {
     auto ev_op = dynamic_cast<const semantics::evaluable_operand*>(op);
     assert(ev_op);
@@ -303,13 +303,11 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
     if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(ev_op))
     {
-        if (context::instruction::machine_instructions.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)
-                .operands.size()
-            > op_position)
+        const auto* instr =
+            mnemonic ? mnemonic->instruction : &context::instruction::machine_instructions.at(*stmt.opcode_ref().value);
+        if (instr->operands.size() > op_position)
         {
-            auto type = context::instruction::machine_instructions.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)
-                            .operands[op_position]
-                            .identifier.type;
+            auto type = instr->operands[op_position].identifier.type;
             uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
         }
         else

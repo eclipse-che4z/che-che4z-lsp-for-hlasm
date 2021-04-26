@@ -22,7 +22,6 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
 
-
 namespace hlasm_plugin::parser_library::context {
 
 code_scope* hlasm_context::curr_scope() { return &scope_stack_.back(); }
@@ -35,22 +34,22 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
     for (auto& [name, instr] : instruction::machine_instructions)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::MACH);
+        instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::assembler_instructions)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::ASM);
+        instr_map.emplace(id, &instr);
     }
     for (auto& instr : instruction::ca_instructions)
     {
         auto id = ids_.add(instr.name);
-        instr_map.emplace(id, instruction::instruction_array::CA);
+        instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::mnemonic_codes)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::MNEM);
+        instr_map.emplace(id, &instr);
     }
     return instr_map;
 }
@@ -499,17 +498,13 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
     }
     else
     {
-        opcode_t value;
+        opcode_t value = { op_code };
 
-        if (auto it = instruction_map_.find(op_code); it != instruction_map_.end())
-        {
-            value.machine_opcode = it->first;
-            value.machine_source = it->second;
-        }
-        if (auto it = macros_.find(op_code); it != macros_.end())
-            value.macro_opcode = it->second;
-
-        if (!value)
+        if (auto mac_it = macros_.find(op_code); mac_it != macros_.end())
+            value.opcode_detail = mac_it->second;
+        else if (auto instr_it = instruction_map_.find(op_code); instr_it != instruction_map_.end())
+            value.opcode_detail = instr_it->second;
+        else
             throw std::invalid_argument("undefined operation code");
 
         opcode_mnemo_.insert_or_assign(mnemo, std::move(value));
@@ -531,13 +526,10 @@ opcode_t hlasm_context::get_operation_code(id_index symbol) const
 
     opcode_t value;
 
-    if (auto it = instruction_map_.find(symbol); it != instruction_map_.end())
-    {
-        value.machine_opcode = it->first;
-        value.machine_source = it->second;
-    }
-    if (auto it = macros_.find(symbol); it != macros_.end())
-        value.macro_opcode = it->second;
+    if (auto mac_it = macros_.find(symbol); mac_it != macros_.end())
+        value = opcode_t { symbol, mac_it->second };
+    else if (auto instr_it = instruction_map_.find(symbol); instr_it != instruction_map_.end())
+        value = opcode_t { symbol, instr_it->second };
 
     return value;
 }
@@ -639,6 +631,19 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     return "U";
 }
 
+struct opcode_attr_visitor
+{
+    std::string operator()(const assembler_instruction*) { return "A"; }
+    std::string operator()(const ca_instruction*) { return "A"; }
+    std::string operator()(const mnemonic_code*) { return "E"; }
+    std::string operator()(const machine_instruction*) { return "O"; }
+    template<typename T>
+    std::string operator()(const T&)
+    {
+        return "U";
+    }
+};
+
 C_t hlasm_context::get_opcode_attr(id_index symbol)
 {
     auto it = instruction_map_.find(symbol);
@@ -650,19 +655,8 @@ C_t hlasm_context::get_opcode_attr(id_index symbol)
 
     if (it != instruction_map_.end())
     {
-        auto& [opcode, type] = *it;
-        switch (type)
-        {
-            case instruction::instruction_array::ASM:
-            case instruction::instruction_array::CA:
-                return "A";
-            case instruction::instruction_array::MNEM:
-                return "E";
-            case instruction::instruction_array::MACH:
-                return "O";
-            default:
-                break;
-        }
+        auto& [opcode, detail] = *it;
+        return std::visit(opcode_attr_visitor(), detail);
     }
 
     return "U";
@@ -694,8 +688,9 @@ macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {
     macro_def_ptr macro_def;
 
-    if (auto mnem = opcode_mnemo_.find(name); mnem != opcode_mnemo_.end() && mnem->second.macro_opcode)
-        macro_def = mnem->second.macro_opcode;
+    if (auto mnem = opcode_mnemo_.find(name);
+        mnem != opcode_mnemo_.end() && std::holds_alternative<context::macro_def_ptr>(mnem->second.opcode_detail))
+        macro_def = std::get<context::macro_def_ptr>(mnem->second.opcode_detail);
     else
     {
         auto tmp = macros_.find(name);

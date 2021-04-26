@@ -434,7 +434,8 @@ bool machine_checker::check(const std::string& instruction_name,
     // instruction is a mnemonic instruction
     if (hlasm_plugin::parser_library::context::instruction::mnemonic_codes.find(instruction_name)
         != hlasm_plugin::parser_library::context::instruction::mnemonic_codes.end())
-        mach_name = hlasm_plugin::parser_library::context::instruction::mnemonic_codes.at(instruction_name).instruction;
+        mach_name = hlasm_plugin::parser_library::context::instruction::mnemonic_codes.at(instruction_name)
+                        .instruction->instr_name;
 
     return hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mach_name).check(
         instruction_name, ops, stmt_range, add_diagnostic);

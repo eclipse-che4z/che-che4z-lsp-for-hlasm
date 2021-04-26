@@ -87,7 +87,7 @@ private:
         diagnostic_collector collector,
         const resolved_statement& stmt,
         size_t op_position,
-        const std::string* mnemonic = nullptr);
+        const context::mnemonic_code* mnemonic = nullptr);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -243,15 +243,16 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*statement.opcode_ref().value);
-
-    auto tmp_instr = mnem_tmp != context::instruction::mnemonic_codes.end()
-        ? context::instruction::machine_instructions.find(mnem_tmp->second.instruction)
-        : context::instruction::machine_instructions.find(*statement.opcode_ref().value);
+    const auto& instr = [](const std::string& opcode) {
+        if (auto mnemonic = context::instruction::mnemonic_codes.find(opcode);
+            mnemonic != context::instruction::mnemonic_codes.end())
+            return *mnemonic->second.instruction;
+        else
+            return context::instruction::machine_instructions.at(opcode);
+    }(*statement.opcode_ref().value);
 
     register_attr_ref(symbol_name,
-        context::symbol_attributes::make_machine_attrs(
-            (context::symbol_attributes::len_attr)tmp_instr->second.size_for_alloc / 8));
+        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_for_alloc / 8));
 }
 
 void lookahead_processor::assign_assembler_attributes(

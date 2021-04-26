@@ -233,13 +233,16 @@ struct ca_instruction
 struct mnemonic_code
 {
 public:
-    mnemonic_code(std::string instr, std::vector<std::pair<size_t, size_t>> replaced)
+    mnemonic_code(const machine_instruction* instr, std::vector<std::pair<size_t, size_t>> replaced)
         : instruction(instr)
         , replaced(replaced) {};
 
-    std::string instruction;
+    const machine_instruction* instruction;
+
     // first goes place, then value
     std::vector<std::pair<size_t, size_t>> replaced;
+
+    size_t operand_count() const { return instruction->operands.size() + instruction->no_optional - replaced.size(); }
 };
 
 // machine instruction common representation
@@ -261,17 +264,9 @@ struct assembler_instruction
 class instruction
 {
 public:
-    enum class instruction_array
-    {
-        CA,
-        ASM,
-        MACH,
-        MNEM
-    };
-
     static std::map<std::string, machine_instruction> get_machine_instructions();
 
-    static std::map<std::string, mnemonic_code> get_mnemonic_codes();
+    static std::map<std::string, mnemonic_code> get_mnemonic_codes(const std::map<std::string, machine_instruction>&);
 
     /*
     min_operands - minimal number of operands, non-negative integer, always defined
