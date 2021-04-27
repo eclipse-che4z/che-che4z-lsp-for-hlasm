@@ -61,35 +61,15 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
     return true;
 }
 
-void symbol_dependency_tables::resolve_dependant(
-    dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver)
+struct resolve_dependant_visitor
 {
-    symbol_value val = dep_src->resolve(sym_ctx_);
+    symbol_value& val;
+    loctr_dependency_resolver* resolver;
+    ordinary_assembly_context& sym_ctx_;
+    std::unordered_map<dependant, statement_ref>& dependency_source_stmts_;
 
-    if (target.kind() == dependant_kind::SPACE)
+    void operator()(const attr_ref& ref) const
     {
-        int length = 0;
-        auto sp = std::get<space_ptr>(target.value);
-        if (sp->kind == space_kind::ORDINARY || sp->kind == space_kind::LOCTR_MAX || sp->kind == space_kind::LOCTR_SET)
-            length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
-        else if (sp->kind == space_kind::ALIGNMENT)
-            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
-
-        if (sp->kind == space_kind::LOCTR_UNKNOWN)
-            resolver->resolve_unknown_loctr_dependency(sp,
-                val.get_reloc(),
-                dependency_source_stmts_.find(sp)->second.stmt_ref->get()->impl()->stmt_range_ref());
-        else
-            space::resolve(sp, length);
-    }
-    else if (target.kind() == dependant_kind::SYMBOL)
-    {
-        auto symbol = std::get<id_index>(target.value);
-        sym_ctx_.get_symbol(symbol)->set_value(val);
-    }
-    else if (target.kind() == dependant_kind::SYMBOL_ATTR)
-    {
-        auto ref = std::get<attr_ref>(target.value);
         assert(ref.attribute == data_attr_kind::L || ref.attribute == data_attr_kind::S);
 
         auto tmp_sym = sym_ctx_.get_symbol(ref.symbol_id);
@@ -104,22 +84,38 @@ void symbol_dependency_tables::resolve_dependant(
         if (ref.attribute == data_attr_kind::S)
             tmp_sym->set_scale(value);
     }
+    void operator()(id_index symbol) const { sym_ctx_.get_symbol(symbol)->set_value(val); }
+    void operator()(const space_ptr& sp) const
+    {
+        int length = 0;
+        if (sp->kind == space_kind::ORDINARY || sp->kind == space_kind::LOCTR_MAX || sp->kind == space_kind::LOCTR_SET)
+            length = (val.value_kind() == symbol_value_kind::ABS && val.get_abs() >= 0) ? val.get_abs() : 0;
+        else if (sp->kind == space_kind::ALIGNMENT)
+            length = val.value_kind() == symbol_value_kind::RELOC ? val.get_reloc().offset() : 0;
+
+        if (sp->kind == space_kind::LOCTR_UNKNOWN)
+            resolver->resolve_unknown_loctr_dependency(sp,
+                val.get_reloc(),
+                dependency_source_stmts_.find(sp)->second.stmt_ref->get()->impl()->stmt_range_ref());
+        else
+            space::resolve(sp, length);
+    }
+};
+
+void symbol_dependency_tables::resolve_dependant(
+    dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver)
+{
+    symbol_value val = dep_src->resolve(sym_ctx_);
+
+    std::visit(resolve_dependant_visitor { val, resolver, sym_ctx_, dependency_source_stmts_ }, target);
 }
 
-void symbol_dependency_tables::resolve_dependant_default(dependant target)
+struct resolve_dependant_default_visitor
 {
-    if (target.kind() == dependant_kind::SPACE)
+    ordinary_assembly_context& sym_ctx_;
+
+    void operator()(const attr_ref& ref) const
     {
-        space::resolve(std::get<space_ptr>(target.value), 1);
-    }
-    else if (target.kind() == dependant_kind::SYMBOL)
-    {
-        auto tmp_sym = sym_ctx_.get_symbol(std::get<id_index>(target.value));
-        tmp_sym->set_value(0);
-    }
-    else if (target.kind() == dependant_kind::SYMBOL_ATTR)
-    {
-        auto ref = std::get<attr_ref>(target.value);
         assert(ref.attribute == data_attr_kind::L || ref.attribute == data_attr_kind::S);
         auto tmp_sym = sym_ctx_.get_symbol(ref.symbol_id);
         assert(!tmp_sym->attributes().is_defined(ref.attribute));
@@ -128,6 +124,17 @@ void symbol_dependency_tables::resolve_dependant_default(dependant target)
         if (ref.attribute == data_attr_kind::S)
             tmp_sym->set_scale(0);
     }
+    void operator()(id_index symbol) const
+    {
+        auto tmp_sym = sym_ctx_.get_symbol(symbol);
+        tmp_sym->set_value(0);
+    }
+    void operator()(const space_ptr& sp) const { space::resolve(sp, 1); }
+};
+
+void symbol_dependency_tables::resolve_dependant_default(dependant target)
+{
+    std::visit(resolve_dependant_default_visitor { sym_ctx_ }, target);
 }
 
 void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
@@ -141,7 +148,7 @@ void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
         for (auto& [target, dep_src] : dependencies_)
         {
             // resolve only symbol dependencies when resolver is not present
-            if (resolver == nullptr && target.kind() == dependant_kind::SPACE)
+            if (resolver == nullptr && std::holds_alternative<space_ptr>(target))
                 continue;
 
             if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
@@ -347,16 +354,16 @@ bool symbol_dependency_tables::check_loctr_cycle()
     // create graph
     for (auto& [target, dep_src] : dependencies_)
     {
-        if (target.kind() == dependant_kind::SPACE)
+        if (std::holds_alternative<space_ptr>(target))
         {
             auto new_deps = extract_dependencies(dep_src);
-            if (!new_deps.empty() && new_deps.front().kind() == dependant_kind::SYMBOL)
+            if (!new_deps.empty() && std::holds_alternative<id_index>(new_deps.front()))
                 continue;
             else
             {
                 std::vector<dependant> space_deps;
                 for (auto& entry : new_deps)
-                    if (entry.kind() == dependant_kind::SPACE)
+                    if (std::holds_alternative<space_ptr>(entry))
                         space_deps.push_back(std::move(entry));
 
                 if (!space_deps.empty())
@@ -483,7 +490,7 @@ bool dependency_adder::add_dependency(id_index target, const resolvable* depende
 
 bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source)
 {
-    bool added = owner_.add_dependency(dependant({ attr, target }), dependency_source, true);
+    bool added = owner_.add_dependency(dependant(attr_ref { attr, target }), dependency_source, true);
 
     if (added)
     {

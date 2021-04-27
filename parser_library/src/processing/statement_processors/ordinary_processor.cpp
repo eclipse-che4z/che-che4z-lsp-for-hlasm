@@ -164,7 +164,7 @@ struct processing_status_visitor
     template<typename T>
     processing_status operator()(const T&)
     {
-        std::abort(); // opcode should already be found
+        // opcode should already be found
         throw std::logic_error("processing_status_visitor: unexpected instruction type");
     }
 };
