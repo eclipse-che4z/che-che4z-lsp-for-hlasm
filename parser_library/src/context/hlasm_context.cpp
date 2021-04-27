@@ -633,12 +633,12 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
 
 struct opcode_attr_visitor
 {
-    std::string operator()(const assembler_instruction*) { return "A"; }
-    std::string operator()(const ca_instruction*) { return "A"; }
-    std::string operator()(const mnemonic_code*) { return "E"; }
-    std::string operator()(const machine_instruction*) { return "O"; }
+    std::string operator()(const assembler_instruction*) const { return "A"; }
+    std::string operator()(const ca_instruction*) const { return "A"; }
+    std::string operator()(const mnemonic_code*) const { return "E"; }
+    std::string operator()(const machine_instruction*) const { return "O"; }
     template<typename T>
-    std::string operator()(const T&)
+    std::string operator()(const T&) const
     {
         return "U";
     }
