@@ -22,7 +22,7 @@
 
 namespace hlasm_plugin::parser_library::checking {
 // Represents evaluated (resolved machine expressions) data definition operand suitable for checking.
-class data_definition_operand : public asm_operand
+class data_definition_operand final : public asm_operand
 {
 public:
     using num_t = int32_t;

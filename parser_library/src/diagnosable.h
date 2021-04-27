@@ -46,11 +46,9 @@ public:
     // when collecting from this object.
     virtual bool is_once_only() const = 0;
 
-    virtual ~collectable() = 0;
+protected:
+    ~collectable() = default;
 };
-
-template<typename T>
-inline collectable<T>::~collectable() {};
 
 using diagnosable = collectable<diagnostic_s>;
 
