@@ -222,15 +222,15 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
     auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-    auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+    auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
     if (!data_op->value->length || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        len = value->get_length_attribute();
+        len = value.get_length_attribute();
     }
     if (data_op->value->scale && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        scale = value->get_scale_attribute();
+        scale = value.get_scale_attribute();
     }
 
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));

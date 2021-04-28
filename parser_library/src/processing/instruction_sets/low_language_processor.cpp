@@ -286,22 +286,21 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     size_t op_position,
     const context::mnemonic_code* mnemonic)
 {
-    auto ev_op = dynamic_cast<const semantics::evaluable_operand*>(op);
-    assert(ev_op);
+    const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
     auto tmp = context::instruction::assembler_instructions.find(*stmt.opcode_ref().value);
     bool can_have_ord_syms =
         tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
 
-    if (can_have_ord_syms && ev_op->has_dependencies(hlasm_ctx.ord_ctx))
+    if (can_have_ord_syms && ev_op.has_dependencies(hlasm_ctx.ord_ctx))
     {
-        add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op->operand_range));
+        add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op.operand_range));
         return nullptr;
     }
 
     checking::check_op_ptr uniq;
 
-    if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(ev_op))
+    if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
         const auto* instr =
             mnemonic ? mnemonic->instruction : &context::instruction::machine_instructions.at(*stmt.opcode_ref().value);
@@ -311,21 +310,21 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
             uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
         }
         else
-            uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+            uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
     }
-    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(ev_op))
+    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
     {
         uniq = expr_op->get_operand_value(hlasm_ctx.ord_ctx, can_have_ord_syms);
     }
     else
     {
-        uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+        uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
     }
 
-    ev_op->collect_diags();
-    for (auto& diag : ev_op->diags())
+    ev_op.collect_diags();
+    for (auto& diag : ev_op.diags())
         add_diagnostic(std::move(diag));
-    ev_op->diags().clear();
+    ev_op.diags().clear();
 
     return uniq;
 }
