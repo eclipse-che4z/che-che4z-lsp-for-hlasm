@@ -31,12 +31,13 @@
 #include "parser_library_export.h"
 #include "protocol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
+
 namespace workspaces {
 class workspace;
 class parse_lib_provider;
 } // namespace workspaces
+
 using ws_id = workspaces::workspace*;
 
 // Interface that can be implemented to be able to get list of
@@ -106,6 +107,6 @@ public:
 private:
     impl* impl_;
 };
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library
 #endif // !HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_H

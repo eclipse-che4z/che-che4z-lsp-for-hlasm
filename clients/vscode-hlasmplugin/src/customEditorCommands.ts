@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
  * Overrides text editor commands of VSCode to handle continuations
  */
 export class CustomEditorCommands {
-    dispose() {}
+    dispose() { }
 
     /**
      * Overriden cut to handle continuations
@@ -64,9 +64,9 @@ export class CustomEditorCommands {
             editor.selection.active.character - ((selectionSize >= -1) ? selectionSize : 0));
 
         // there is a continuation and it is after our position, handle it
-        if (isLineContinued(editor.document,editor.selection.active.line, continuationOffset) && 
-        editor.selection.active.character < continuationOffset && 
-        editor.selection.isSingleLine) {
+        if (isLineContinued(editor.document, editor.selection.active.line, continuationOffset) &&
+            editor.selection.active.character < continuationOffset &&
+            editor.selection.isSingleLine) {
             const beforeContinuationChars =
                 new vscode.Range(editor.selection.active.line,
                     continuationOffset - Math.abs(selectionSize),
@@ -94,7 +94,7 @@ export class CustomEditorCommands {
      * @param editor 
      * @param edit 
      */
-    insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: {text: string}, continuationOffset: number) {
+    insertChars(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: { text: string }, continuationOffset: number) {
         // typing with multiple characters selected
         if (editor.selection.active.line != editor.selection.anchor.line || editor.selection.active.character != editor.selection.anchor.character) {
             //simulate delete function for the selected characters
@@ -117,7 +117,7 @@ export class CustomEditorCommands {
         // there is a continuation, prepare space for new characters
         if (continuationOffset && editor.selection.active.character < continuationOffset) {
             // find free space in front of it
-            const spaceRange = this.findSpace(editor.document.lineAt(editor.selection.active), args.text.length, editor,continuationOffset);
+            const spaceRange = this.findSpace(editor.document.lineAt(editor.selection.active), args.text.length, editor, continuationOffset);
             // if there is, delete it
             if (spaceRange)
                 edit.delete(spaceRange);
@@ -144,9 +144,9 @@ export class CustomEditorCommands {
                 : editor.selection.active.character;
 
         // there is a continuation and it is after our position, handle it
-        if (isLineContinued(editor.document,editor.selection.active.line, continuationOffset) && 
-            endPos < continuationOffset && 
-            (editor.selection.active.character > 0 || selectionSize > 0) && 
+        if (isLineContinued(editor.document, editor.selection.active.line, continuationOffset) &&
+            endPos < continuationOffset &&
+            (editor.selection.active.character > 0 || selectionSize > 0) &&
             editor.selection.isSingleLine) {
             const beforeContinuationChars = new vscode.Range(
                 editor.selection.active.line, continuationOffset - Math.abs(selectionSize),
@@ -195,5 +195,6 @@ export function isLineContinued(document: vscode.TextDocument, line: number, off
         return false;
     const continuationPosition = new vscode.Position(line, offset);
     return document.validatePosition(continuationPosition) == continuationPosition &&
+        offset < document.lineAt(line).text.length &&
         document.lineAt(line).text[offset] != " ";
 }

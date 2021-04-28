@@ -19,10 +19,7 @@
 #include "instruction.h"
 #include "macro.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
-
+namespace hlasm_plugin::parser_library::context {
 
 // structure that represents operation code of an instruction
 struct opcode_t
@@ -37,9 +34,7 @@ struct opcode_t
     id_index get_instr_id() const { return macro_opcode ? macro_opcode->id : machine_opcode; }
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 
 #endif

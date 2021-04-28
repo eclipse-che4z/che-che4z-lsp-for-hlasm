@@ -17,9 +17,8 @@ import * as net from 'net';
 import * as cp from 'child_process'
 import * as path from 'path'
 import { getConfig } from './eventsHandler'
-import { SourceBreakpoint } from 'vscode';
 
-export type ServerCommunicationMethod = "tcp" | "native" | "wasm";
+export type ServerVariant = "tcp" | "native" | "wasm";
 
 /**
  * factory to create server options
@@ -32,7 +31,7 @@ export class ServerFactory {
         this.usedPorts = new Set();
     }
 
-    async create(method: ServerCommunicationMethod): Promise<vscodelc.ServerOptions> {
+    async create(method: ServerVariant): Promise<vscodelc.ServerOptions> {
         const langServerFolder = process.platform;
         if (method === 'tcp') {
             const lspPort = await this.getPort();

@@ -31,8 +31,8 @@ public:
               + context::instruction::assembler_instructions.size() + context::instruction::ca_instructions.size()
               + context::instruction::mnemonic_codes.size()) {};
 
-    virtual void SetUp() { a.analyze(); }
-    virtual void TearDown() {}
+    void SetUp() override { a.analyze(); }
+    void TearDown() override {}
 
 protected:
     const std::string contents =

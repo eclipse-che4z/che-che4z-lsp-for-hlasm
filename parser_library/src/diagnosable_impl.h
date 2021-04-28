@@ -25,7 +25,7 @@ template<typename T>
 class collectable_impl : public virtual collectable<T>
 {
 public:
-    virtual typename collectable<T>::diagnostic_container& diags() const override { return container; }
+    typename collectable<T>::diagnostic_container& diags() const override { return container; }
 
 protected:
     // Collects diagnostics from one collectable: calls its collect_diags
@@ -46,9 +46,9 @@ protected:
         }
     }
 
-    virtual void add_diagnostic(T diagnostic) const override { container.push_back(std::move(diagnostic)); }
+    void add_diagnostic(T diagnostic) const override { container.push_back(std::move(diagnostic)); }
 
-    virtual bool is_once_only() const override { return true; }
+    bool is_once_only() const override { return true; }
 
     virtual ~collectable_impl<T>() {};
 

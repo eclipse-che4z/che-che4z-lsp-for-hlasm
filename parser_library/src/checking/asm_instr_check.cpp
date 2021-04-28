@@ -17,9 +17,11 @@
 
 #include <regex>
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace {
+const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
+}
+
+namespace hlasm_plugin::parser_library::checking {
 
 xattr::xattr(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
@@ -1445,6 +1447,4 @@ bool acontrol::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking

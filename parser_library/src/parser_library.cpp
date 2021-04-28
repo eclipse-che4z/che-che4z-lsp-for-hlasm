@@ -25,8 +25,7 @@
 using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 // Parses specified string and outputs analysis to standard out.
 // Used for testing purposes.
@@ -74,5 +73,5 @@ void parser_library::parse(const std::string& src)
         std::cout << diag.diag_range.start.line << ": " << diag.message << "\n";
     }
 }
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library

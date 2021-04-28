@@ -61,17 +61,17 @@ public:
         , value(std::move(value))
     {}
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
+    undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
-    virtual void resolve_expression_tree(context::SET_t_enum) override {}
+    void resolve_expression_tree(context::SET_t_enum) override {}
 
-    virtual bool is_character_expression() const override { return false; }
+    bool is_character_expression() const override { return false; }
 
-    virtual void apply(ca_expr_visitor&) const override {}
+    void apply(ca_expr_visitor&) const override {}
 
-    virtual context::SET_t evaluate(const evaluation_context&) const override { return value; }
+    context::SET_t evaluate(const evaluation_context&) const override { return value; }
 
-    virtual void collect_diags() const override {}
+    void collect_diags() const override {}
 };
 
 class ca_func : public ::testing::TestWithParam<func_test_param>

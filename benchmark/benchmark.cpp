@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
@@ -19,6 +20,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <unordered_map>
 
 #include "config/pgm_conf.h"
 #include "nlohmann/json.hpp"
@@ -62,7 +64,7 @@ using json = nlohmann::json;
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
@@ -71,17 +73,20 @@ public:
                 error_count++;
             else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
                 warning_count++;
+            message_counts[diagnostics.diagnostics(i).code()]++;
         }
     }
 
     size_t error_count = 0;
     size_t warning_count = 0;
+
+    std::unordered_map<std::string, unsigned> message_counts;
 };
 
 class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
 {
 public:
-    virtual void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
+    void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
     {
         metrics_ = metrics;
     }
@@ -100,6 +105,21 @@ struct all_file_stats
     size_t reparsing_crashes = 0;
     size_t failed_file_opens = 0;
 };
+
+json get_top_messages(const std::unordered_map<std::string, unsigned>& msgs, size_t limit = 3)
+{
+    std::vector<std::pair<std::string, unsigned>> top_msgs(limit);
+
+    constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
+
+    const auto last = std::partial_sort_copy(msgs.begin(), msgs.end(), top_msgs.begin(), top_msgs.end(), cmp_msg);
+    top_msgs.erase(last, top_msgs.end());
+
+    json result = json::object();
+    for (auto&& [key, value] : top_msgs)
+        result[std::move(key)] = value;
+    return result;
+}
 
 json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
@@ -163,6 +183,8 @@ json parse_one_file(const std::string& source_file,
     s.all_files += collector.metrics_.files;
     s.whole_time += time;
 
+    auto top_messages = get_top_messages(diag_counter.message_counts);
+
     json result({ { "File", source_file },
         { "Success", true },
         { "Errors", diag_counter.error_count },
@@ -182,7 +204,8 @@ json parse_one_file(const std::string& source_file,
         { "Lines", collector.metrics_.lines },
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files } });
+        { "Files", collector.metrics_.files },
+        { "Top messages", std::move(top_messages) } });
 
     auto first_parse_metrics = collector.metrics_;
     auto first_diag_counter = diag_counter;
@@ -241,7 +264,9 @@ json parse_one_file(const std::string& source_file,
                   << "Lines: " << collector.metrics_.lines << '\n'
                   << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
                   << "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
-                  << "Files: " << collector.metrics_.files << "\n\n"
+                  << "Files: " << collector.metrics_.files << "\n"
+                  << "Top messages: " << top_messages.dump() << '\n'
+                  << '\n'
                   << std::endl;
 
     return result;

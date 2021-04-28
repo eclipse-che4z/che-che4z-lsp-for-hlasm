@@ -27,14 +27,14 @@ namespace hlasm_plugin::parser_library::parsing {
 class parser_error_listener_base : public antlr4::ANTLRErrorListener
 {
 public:
-    virtual void syntaxError(antlr4::Recognizer* recognizer,
+    void syntaxError(antlr4::Recognizer* recognizer,
         antlr4::Token* offendingSymbol,
         size_t line,
         size_t charPositionInLine,
         const std::string& msg,
         std::exception_ptr e) override;
 
-    virtual void reportAmbiguity(antlr4::Parser* recognizer,
+    void reportAmbiguity(antlr4::Parser* recognizer,
         const antlr4::dfa::DFA& dfa,
         size_t startIndex,
         size_t stopIndex,
@@ -42,14 +42,14 @@ public:
         const antlrcpp::BitSet& ambigAlts,
         antlr4::atn::ATNConfigSet* configs) override;
 
-    virtual void reportAttemptingFullContext(antlr4::Parser* recognizer,
+    void reportAttemptingFullContext(antlr4::Parser* recognizer,
         const antlr4::dfa::DFA& dfa,
         size_t startIndex,
         size_t stopIndex,
         const antlrcpp::BitSet& conflictingAlts,
         antlr4::atn::ATNConfigSet* configs) override;
 
-    virtual void reportContextSensitivity(antlr4::Parser* recognizer,
+    void reportContextSensitivity(antlr4::Parser* recognizer,
         const antlr4::dfa::DFA& dfa,
         size_t startIndex,
         size_t stopIndex,
@@ -66,10 +66,10 @@ class parser_error_listener : public parser_error_listener_base, public diagnosa
 public:
     parser_error_listener(std::string file_name);
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 protected:
-    virtual void add_parser_diagnostic(
+    void add_parser_diagnostic(
         range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
 
 private:

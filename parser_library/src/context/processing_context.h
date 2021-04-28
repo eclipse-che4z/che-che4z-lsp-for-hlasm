@@ -19,9 +19,7 @@
 #include "processing/processing_format.h"
 #include "source_snapshot.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // structure holding information about currently processed source
 struct source_context
@@ -73,7 +71,5 @@ struct processing_frame
 
 using processing_stack_t = std::vector<processing_frame>;
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

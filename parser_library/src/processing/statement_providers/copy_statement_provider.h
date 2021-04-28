@@ -28,10 +28,10 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
 
-    virtual bool finished() const override;
+    bool finished() const override;
 
 protected:
-    virtual context::statement_cache* get_next() override;
+    context::statement_cache* get_next() override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

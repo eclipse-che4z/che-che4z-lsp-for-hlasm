@@ -25,8 +25,7 @@
 #include "processing/processing_manager.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 // this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context
 class analyzer : public diagnosable_ctx
@@ -71,6 +70,5 @@ public:
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 };
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 #endif

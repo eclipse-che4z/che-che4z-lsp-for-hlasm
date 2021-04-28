@@ -23,9 +23,7 @@
 #include "lexer.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
 // custom implementation of antlr token stream
 // helps to control the filtering of the token stream
@@ -54,16 +52,16 @@ public:
 
     void rewind_input(lexer::stream_position pos);
 
-    virtual void reset() override;
+    void reset() override;
     // prepares this object to append more tokens
     void append();
 
 protected:
-    virtual ssize_t adjustSeekIndex(size_t i) override;
+    ssize_t adjustSeekIndex(size_t i) override;
 
-    virtual antlr4::Token* LB(size_t k) override;
+    antlr4::Token* LB(size_t k) override;
 
-    virtual void setup() override;
+    void setup() override;
 
     bool is_on_channel(antlr4::Token* token);
 
@@ -75,7 +73,5 @@ private:
     std::vector<decltype(_tokens)> tokens_;
 };
 
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

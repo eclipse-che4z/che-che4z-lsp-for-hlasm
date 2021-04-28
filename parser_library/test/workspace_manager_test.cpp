@@ -29,7 +29,7 @@ class diag_consumer_mock : public diagnostics_consumer
 {
 public:
     // Inherited via diagnostics_consumer
-    virtual void consume_diagnostics(diagnostic_list diagnostics) override { diags = diagnostics; }
+    void consume_diagnostics(diagnostic_list diagnostics) override { diags = diagnostics; }
 
     diagnostic_list diags;
 };

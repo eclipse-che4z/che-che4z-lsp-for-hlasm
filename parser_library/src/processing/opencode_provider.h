@@ -18,9 +18,7 @@
 #include "context/source_snapshot.h"
 #include "statement_providers/statement_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // interface for hiding parser implementation
 class opencode_provider : public statement_provider
@@ -36,7 +34,5 @@ public:
     virtual ~opencode_provider() = default;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

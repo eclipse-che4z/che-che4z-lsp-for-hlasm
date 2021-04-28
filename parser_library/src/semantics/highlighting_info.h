@@ -22,9 +22,7 @@
 
 #include "protocol.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 
 // vector of tokens
 using lines_info = std::vector<token_info>;
@@ -49,8 +47,6 @@ struct highlighting_info
     continuation_info cont_info;
 };
 
-} // namespace semantics
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::semantics
 
 #endif

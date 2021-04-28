@@ -29,7 +29,7 @@ using server_notification = std::pair<std::string, json>;
 class message_provider_mock : public send_message_provider
 {
 public:
-    virtual void reply(const json& result) override { notfs.push_back(result); }
+    void reply(const json& result) override { notfs.push_back(result); }
 
     std::vector<json> notfs;
 };

@@ -44,13 +44,13 @@
     "@types/glob": "^5.0.35",
     "@types/mocha": "^7.0.2",
     "@types/vscode": "^1.32.3",
-    "conventional-changelog-conventionalcommits": "^4.3.0",
+    "conventional-changelog-conventionalcommits": "^4.5.0",
     "decache": "^4.5.1",
     "glob": "^7.1.6",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
     "puppeteer": "^4.0.0",
-    "semantic-release": "^17.0.7",
+    "semantic-release": "^17.4.2",
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.5.3",
@@ -339,7 +339,7 @@
           "default": 10,
           "description": "This option limits number of diagnostics shown for an open code when there is no configuration in pgm_conf.json."
         },
-        "hlasm.communicationMethod": {
+        "hlasm.serverVariant": {
           "type": "string",
           "default": "native",
           "description": "Select language server variant - native, wasm, tcp.",
@@ -348,6 +348,11 @@
             "tcp",
             "wasm"
           ]
+        },
+        "hlasm.useAutodetection": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enables autodetection of HLASM source code for automatic setting of Language Mode."
         }
       }
     }

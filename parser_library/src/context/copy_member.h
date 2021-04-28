@@ -19,9 +19,7 @@
 #include "location.h"
 #include "statement_cache.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 struct copy_member;
 using copy_member_ptr = std::shared_ptr<copy_member>;
@@ -66,8 +64,5 @@ struct copy_member_invocation
     {}
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

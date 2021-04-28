@@ -20,9 +20,7 @@
 
 #include "common_types.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class macro_param_data_component;
 using macro_data_ptr = std::unique_ptr<macro_param_data_component>;
@@ -64,7 +62,7 @@ public:
     // gets this dummy
     const macro_param_data_component* get_ith(size_t idx) const override;
 
-    virtual size_t size() const override;
+    size_t size() const override;
 };
 
 // class representing data of macro parameters holding only single string (=C_t)
@@ -74,13 +72,13 @@ class macro_param_data_single : public macro_param_data_component
 
 public:
     // returns whole data, here the only string
-    virtual const C_t& get_value() const override;
+    const C_t& get_value() const override;
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
     // get_ith(0) returns this to mimic HLASM
-    virtual const macro_param_data_component* get_ith(size_t idx) const override;
+    const macro_param_data_component* get_ith(size_t idx) const override;
 
-    virtual size_t size() const override;
+    size_t size() const override;
 
     macro_param_data_single(C_t value);
 };
@@ -93,17 +91,15 @@ class macro_param_data_composite : public macro_param_data_component
 
 public:
     // returns data of all nested classes in brackets separated by comma
-    virtual const C_t& get_value() const override;
+    const C_t& get_value() const override;
 
     // gets value of the idx-th value, when exceeds size of data, returns default value
-    virtual const macro_param_data_component* get_ith(size_t idx) const override;
+    const macro_param_data_component* get_ith(size_t idx) const override;
 
-    virtual size_t size() const override;
+    size_t size() const override;
 
     macro_param_data_composite(std::vector<macro_data_ptr> value);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

@@ -24,9 +24,7 @@
 #include "processing/statement.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // interface for processing instructions
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
@@ -34,7 +32,7 @@ class instruction_processor : public diagnosable_ctx
 {
     virtual void process(context::shared_stmt_ptr stmt) = 0;
 
-    virtual void collect_diags() const override { collect_diags_from_child(eval_ctx); }
+    void collect_diags() const override { collect_diags_from_child(eval_ctx); }
 
 protected:
     analyzing_context ctx;
@@ -55,7 +53,5 @@ protected:
     {}
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

@@ -48,10 +48,10 @@ public:
     bool test_symbol_for_read(
         const context::var_sym_ptr& var, const std::vector<context::A_t>& subscript, range symbol_range) const;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
-    virtual void add_diagnostic(diagnostic_s diagnostic) const override;
+    void add_diagnostic(diagnostic_s diagnostic) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
