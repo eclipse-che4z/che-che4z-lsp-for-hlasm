@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "IBM HLASM",
+  "scopeName": "source.hlasm",
   "patterns": [
     {
       "include": "#hlasm_syntax"
@@ -315,6 +316,5 @@
       "name": "constant.numeric.hlasm",
       "match": ".*"
     }
-  },
-  "scopeName": "source.hlasm"
+  }
 }
