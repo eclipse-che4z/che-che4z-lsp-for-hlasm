@@ -22,7 +22,7 @@
 
 namespace hlasm_plugin::parser_library::checking {
 // Represents evaluated (resolved machine expressions) data definition operand suitable for checking.
-class data_definition_operand : public asm_operand
+class data_definition_operand final : public asm_operand
 {
 public:
     using num_t = int32_t;
@@ -53,7 +53,7 @@ public:
 
 
 private:
-    bool check_type_and_extension(const diagnostic_collector& add_diagnostic) const;
+    std::pair<const data_def_type*, bool> check_type_and_extension(const diagnostic_collector& add_diagnostic) const;
 };
 
 
@@ -91,10 +91,12 @@ uint64_t data_definition_operand::get_operands_length(const std::vector<const da
 template<data_instr_type instr_type>
 bool data_definition_operand::check(const diagnostic_collector& add_diagnostic) const
 {
-    if (!check_type_and_extension(add_diagnostic))
+    const auto [data_def, exact_match] = check_type_and_extension(add_diagnostic);
+
+    if (!exact_match)
         return false;
 
-    return access_data_def_type()->check<instr_type>(*this, add_diagnostic);
+    return data_def->check<instr_type>(*this, add_diagnostic);
 }
 
 

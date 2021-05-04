@@ -43,19 +43,24 @@ using ws_id = workspaces::workspace*;
 // Interface that can be implemented to be able to get list of
 // diagnostics from workspace manager whenever a file is parsed
 // Passes list of all diagnostics that are in all currently opened files.
-class PARSER_LIBRARY_EXPORT diagnostics_consumer
+class diagnostics_consumer
 {
 public:
     virtual void consume_diagnostics(diagnostic_list diagnostics) = 0;
-    virtual ~diagnostics_consumer() {};
+
+protected:
+    ~diagnostics_consumer() = default;
 };
 
 // Interface that can be implemented to be able to get performance metrics
 //(time that parsing took, number of parsed lines, etc)
-class PARSER_LIBRARY_EXPORT performance_metrics_consumer
+class performance_metrics_consumer
 {
 public:
     virtual void consume_performance_metrics(const performance_metrics& metrics) = 0;
+
+protected:
+    ~performance_metrics_consumer() = default;
 };
 
 // The main class that encapsulates all functionality of parser library.

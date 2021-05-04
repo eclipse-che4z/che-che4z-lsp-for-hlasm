@@ -47,7 +47,7 @@ public:
     // access list of location counters
     const std::vector<loctr_ptr>& location_counters() const;
 
-    section(id_index name, const section_kind kind, id_storage& ids);
+    section(id_index name, section_kind kind, id_storage& ids);
 
     // sets current location counter
     void set_location_counter(id_index loctr_name);

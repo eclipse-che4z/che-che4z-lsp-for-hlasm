@@ -87,7 +87,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
     {
         // add instruction occurence of macro name
         const auto& macro_file = macrodef->definition_location.file;
-        macro_occurences_[macro_file].emplace_back(nullptr, macrodef, result.prototype.macro_name_range);
+        macro_occurences_[macro_file].emplace_back(macrodef->id, macrodef, result.prototype.macro_name_range);
 
         auto m_i = std::make_shared<lsp::macro_info>(result.external,
             location(result.prototype.macro_name_range.start, macro_file),
@@ -185,7 +185,9 @@ void lsp_analyzer::collect_occurence(const semantics::instruction_si& instructio
         && collector.collector_kind == lsp::occurence_kind::INSTR)
     {
         auto opcode = hlasm_ctx_.get_operation_code(std::get<context::id_index>(instruction.value));
-        collector.occurences.emplace_back(opcode.machine_opcode, opcode.macro_opcode, instruction.field_range);
+        auto* macro_def = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail);
+        collector.occurences.emplace_back(
+            opcode.opcode, macro_def ? std::move(*macro_def) : context::macro_def_ptr {}, instruction.field_range);
     }
 }
 

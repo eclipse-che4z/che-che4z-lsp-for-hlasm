@@ -87,48 +87,20 @@ TEST_F(machine_instr_test, checker_test)
     std::string clc_name = "CLC";
     std::string a_name = "A";
 
-    auto balr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(balr_name))
-                         ->get()
-                         ->check(balr_name, test_balr_true, range(), collector);
-    EXPECT_TRUE(balr_true);
-    auto lr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(lr_name))
-                       ->get()
-                       ->check(lr_name, test_lr_true, range(), collector);
-    EXPECT_TRUE(lr_true);
-    auto mvcl_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mvcl_name))
-                         ->get()
-                         ->check(mvcl_name, test_mvcl_true, range(), collector);
-    EXPECT_TRUE(mvcl_true);
-    auto xr_true = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(xr_name))
-                       ->get()
-                       ->check(xr_name, test_xr_true, range(), collector);
-    EXPECT_TRUE(xr_true);
-    auto clc_true_one = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(clc_name))
-                            ->get()
-                            ->check(clc_name, test_clc_true, range(), collector);
-    EXPECT_TRUE(clc_true_one);
-    auto bal_valid = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(bal_name))
-                         ->get()
-                         ->check(bal_name, test_bal_valid, range(), collector);
-    EXPECT_TRUE(bal_valid);
-    auto a_invalid = (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(a_name))
-                         ->get()
-                         ->check(a_name, test_a_invalid, range(), collector);
-    EXPECT_FALSE(a_invalid);
+    const auto& mi = hlasm_plugin::parser_library::context::instruction::machine_instructions;
 
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(balr_name))
-        ->get()
-        ->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(lr_name))->get()->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mvcl_name))
-        ->get()
-        ->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(xr_name))->get()->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(clc_name))
-        ->get()
-        ->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(bal_name))
-        ->get()
-        ->clear_diagnostics();
-    (&hlasm_plugin::parser_library::context::instruction::machine_instructions.at(a_name))->get()->clear_diagnostics();
+    auto balr_true = mi.at(balr_name).check(balr_name, test_balr_true, range(), collector);
+    EXPECT_TRUE(balr_true);
+    auto lr_true = mi.at(lr_name).check(lr_name, test_lr_true, range(), collector);
+    EXPECT_TRUE(lr_true);
+    auto mvcl_true = mi.at(mvcl_name).check(mvcl_name, test_mvcl_true, range(), collector);
+    EXPECT_TRUE(mvcl_true);
+    auto xr_true = mi.at(xr_name).check(xr_name, test_xr_true, range(), collector);
+    EXPECT_TRUE(xr_true);
+    auto clc_true_one = mi.at(clc_name).check(clc_name, test_clc_true, range(), collector);
+    EXPECT_TRUE(clc_true_one);
+    auto bal_valid = mi.at(bal_name).check(bal_name, test_bal_valid, range(), collector);
+    EXPECT_TRUE(bal_valid);
+    auto a_invalid = mi.at(a_name).check(a_name, test_a_invalid, range(), collector);
+    EXPECT_FALSE(a_invalid);
 }

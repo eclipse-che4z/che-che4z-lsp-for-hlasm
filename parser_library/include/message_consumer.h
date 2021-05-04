@@ -17,8 +17,6 @@
 
 #include <string>
 
-#include "parser_library_export.h"
-
 namespace hlasm_plugin::parser_library {
 
 enum class message_type
@@ -29,11 +27,13 @@ enum class message_type
     MT_LOG = 4
 };
 
-class PARSER_LIBRARY_EXPORT message_consumer
+class message_consumer
 {
 public:
     virtual void show_message(const std::string& message, message_type type) = 0;
-    virtual ~message_consumer() = default;
+
+protected:
+    ~message_consumer() = default;
 };
 
 } // namespace hlasm_plugin::parser_library
