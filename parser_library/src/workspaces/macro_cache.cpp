@@ -110,6 +110,8 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
         if (key.data.proc_kind == processing::processing_kind::MACRO)
         {
             lsp::macro_info_ptr info = cached_analyzer->context().lsp_ctx->get_macro_info(key.data.library_member);
+            if (!info)
+                return true; // The file for which the analyzer is cached does not contain definition of macro
             ctx.hlasm_ctx->add_macro(info->macro_definition);
             ctx.lsp_ctx->add_macro(info, lsp::text_data_ref_t(macro_file_->get_text()));
 
@@ -154,7 +156,10 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
     {
         // Add stamps for all macro dependencies
         auto parsed_macro = analyzer->context().hlasm_ctx->get_macro_definition(key.data.library_member);
-        cache_data.stamps = get_copy_member_versions(std::move(parsed_macro));
+        if (parsed_macro)
+            cache_data.stamps = get_copy_member_versions(std::move(parsed_macro));
+        else
+            cache_data.stamps.clear();
     }
     else // Copy members do not have additional dependencies
         cache_data.stamps.clear();
