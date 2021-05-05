@@ -47,12 +47,11 @@ void parser_impl::initialize(analyzing_context a_ctx,
     finished_flag = false;
     lib_provider_ = lib_provider;
     state_listener_ = state_listener;
+
+    input_lexer = &dynamic_cast<lexing::lexer&>(*_input->getTokenSource());
 }
 
-bool parser_impl::is_last_line() const
-{
-    return dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).is_last_line();
-}
+bool parser_impl::is_last_line() const { return input_lexer->is_last_line(); }
 
 void parser_impl::rewind_input(context::source_position pos)
 {
@@ -61,15 +60,28 @@ void parser_impl::rewind_input(context::source_position pos)
     input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset });
 }
 
+std::string parser_impl::aread()
+{
+    std::string line = input_lexer->aread();
+
+    if (input_lexer->eof_generated())
+        finished_flag = true;
+    input.reset();
+
+    if (!line.empty())
+        line.resize(80, ' ');
+    return line;
+}
+
 context::source_position parser_impl::statement_start() const
 {
-    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_begin_position();
+    auto pos = input_lexer->last_lln_begin_position();
     return { pos.line, pos.offset };
 }
 
 context::source_position parser_impl::statement_end() const
 {
-    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_end_position();
+    auto pos = input_lexer->last_lln_end_position();
     return { pos.line, pos.offset };
 }
 

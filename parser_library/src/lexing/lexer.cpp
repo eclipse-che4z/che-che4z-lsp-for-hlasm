@@ -786,15 +786,30 @@ std::string lexer::aread()
 
     switch_input_streams();
 
-    start_token();
+    if (eof())
+        return "";
 
-    while (!eof() && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1) && str.length() < 80)
+    if (input_state_ == &file_input_state_)
+        rewind_input(stream_position {
+            last_lln_end_pos_.line + 1, last_lln_end_pos_.offset }); // make sure we read the WHOLE line
+
+    start_token();
+    while (!eof() && input_state_->c != '\r' && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1))
     {
         str.append(converter.to_bytes(input_state_->c));
         consume();
     }
-    create_token(AREAD, HIDDEN_CHANNEL);
-    lex_end(false);
+    consume_new_line();
+
+    if (input_state_ == &file_input_state_)
+        set_last_line_pos(input_state_->char_position, token_start_state_.line);
+
+    if (eof())
+        create_token(Token::EOF);
+
+    if (str.empty())
+        str = " ";
+
     return str;
 }
 

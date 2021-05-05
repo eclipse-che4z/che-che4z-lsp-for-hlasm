@@ -26,84 +26,9 @@
 using namespace hlasm_plugin::parser_library;
 
 // tests lexer class:
-// AREAD, continuation statements, rewinding, token creation
+// continuation statements, rewinding, token creation
 
 using parser = parsing::hlasmparser;
-
-TEST(lexer_test, aread)
-{
-    std::string tcase = "aread";
-    std::string in =
-        R"(        AINSERT 'test string1',FRONT
-        AINSERT 'test string2',BACK
-&SYMBOL AREAD
-This does not go to symbol
-     INSTR 1,2,3)";
-
-    std::string out =
-        R"(AREAD
-IGNORED
-AREAD
-IGNORED
-AREAD
-IGNORED
-AREAD
-IGNORED
-AREAD
-IGNORED
-AMPERSAND
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-EOLLN
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-EOLLN
-SPACE
-ORDSYMBOL
-SPACE
-NUM
-COMMA
-NUM
-COMMA
-NUM
-EOLLN
-EOF
-)";
-
-    semantics::source_info_processor src_proc(false);
-    lexing::input_source input(in);
-    lexing::lexer l(&input, &src_proc);
-    lexing::token_stream tokens(&l);
-    parser parser(&tokens);
-
-    l.ainsert_back("INSERTED BACK 1");
-    l.aread();
-    l.ainsert_back("INSERTED BACK 2");
-    l.ainsert_front("INSERTED FRONT 1");
-    l.aread();
-    l.aread();
-    l.aread();
-    l.aread();
-
-    tokens.fill();
-
-    std::stringstream token_stream;
-    for (auto token : tokens.getTokens())
-        token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-    auto token_string = token_stream.str();
-
-    ASSERT_EQ(token_string, out);
-}
 
 TEST(lexer_test, rntest)
 {
