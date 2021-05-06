@@ -19,6 +19,65 @@
 // tests for
 // AREAD handling
 
+namespace {
+template<typename T>
+std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
+{
+    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    if (!var)
+        return std::nullopt;
+
+    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
+        return std::nullopt;
+    auto var_ = var->access_set_symbol_base();
+    if (var_->type != object_traits<T>::type_enum || !var_->is_scalar)
+        return std::nullopt;
+
+    auto symbol = var_->template access_set_symbol<T>();
+    if (!symbol)
+        return std::nullopt;
+
+    return symbol->get_value();
+}
+
+template<typename T>
+std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name)
+{
+    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    if (!var)
+        return std::nullopt;
+
+    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
+        return std::nullopt;
+    auto var_ = var->access_set_symbol_base();
+    if (var_->type != object_traits<T>::type_enum || var_->is_scalar)
+        return std::nullopt;
+
+    auto symbol = var_->template access_set_symbol<T>();
+    if (!symbol)
+        return std::nullopt;
+
+    auto keys = symbol->keys();
+
+    std::vector<T> result;
+    result.reserve(keys.size());
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        if (i != keys[i])
+            return std::nullopt;
+        result.push_back(symbol->get_value(i));
+    }
+
+    return result;
+}
+
+std::string aread_pad(std::string s)
+{
+    s.resize(80, ' ');
+    return s;
+}
+} // namespace
+
 TEST(aread, only_from_macro)
 {
     std::string input("&VAR AREAD");
@@ -54,22 +113,7 @@ This is a raw text
 
     auto& ctx = a.hlasm_ctx();
 
-    auto it = ctx.ids().find("var");
-
-    auto var = ctx.get_var_sym(it);
-    ASSERT_TRUE(var);
-
-    ASSERT_EQ(var->var_kind, context::variable_kind::SET_VAR_KIND);
-    auto var_ = var->access_set_symbol_base();
-    ASSERT_EQ(var_->type, context::SET_t_enum::C_TYPE);
-    ASSERT_TRUE(var_->is_scalar);
-    auto symbol = var_->access_set_symbol<C_t>();
-    ASSERT_TRUE(symbol);
-    auto var_value = symbol->get_value();
-    std::string expected_value = "This is a raw text";
-    expected_value.resize(80, ' ');
-
-    EXPECT_EQ(var_value, expected_value);
+    EXPECT_EQ(get_var_value<C_t>(ctx, "var").value_or(""), aread_pad("This is a raw text"));
 }
 
 TEST(aread, array_test)
@@ -97,38 +141,13 @@ This is a raw text 2
 
     auto& ctx = a.hlasm_ctx();
 
+    EXPECT_EQ(get_var_value<A_t>(ctx, "PROCESSED").value_or(0), 1);
 
-    auto processed_id = ctx.ids().find("PROCESSED");
-    auto processed = ctx.get_var_sym(processed_id);
-    ASSERT_TRUE(processed);
-    ASSERT_EQ(processed->var_kind, context::variable_kind::SET_VAR_KIND);
-    auto processed_ = processed->access_set_symbol_base();
-    ASSERT_TRUE(processed_->is_scalar);
-    EXPECT_EQ(processed_->access_set_symbol<A_t>()->get_value(), 1);
-
-
-
-    auto it = ctx.ids().find("var");
-    auto var = ctx.get_var_sym(it);
-    ASSERT_TRUE(var);
-
-    ASSERT_EQ(var->var_kind, context::variable_kind::SET_VAR_KIND);
-    auto var_ = var->access_set_symbol_base();
-    ASSERT_EQ(var_->type, context::SET_t_enum::C_TYPE);
-    ASSERT_FALSE(var_->is_scalar);
-    auto symbol = var_->access_set_symbol<C_t>();
-    ASSERT_TRUE(symbol);
-    ASSERT_EQ(symbol->size(), 2);
-
-    auto var_value_1 = symbol->get_value(1 - 1);
-    auto var_value_2 = symbol->get_value(2 - 1);
-    std::string expected_value_1 = "This is a raw text 1";
-    expected_value_1.resize(80, ' ');
-    std::string expected_value_2 = "This is a raw text 2";
-    expected_value_2.resize(80, ' ');
-
-    EXPECT_EQ(var_value_1, expected_value_1);
-    EXPECT_EQ(var_value_2, expected_value_2);
+    const auto expected = std::vector<C_t> {
+        aread_pad("This is a raw text 1"),
+        aread_pad("This is a raw text 2"),
+    };
+    EXPECT_EQ(get_var_vector<C_t>(ctx, "var"), expected);
 }
 
 TEST(aread, operand_support)
@@ -157,31 +176,13 @@ This is a raw text 2
 
     auto& ctx = a.hlasm_ctx();
 
-    auto it = ctx.ids().find("var");
-    auto var = ctx.get_var_sym(it);
-    ASSERT_TRUE(var);
+    auto var = get_var_vector<C_t>(ctx, "var").value_or(std::vector<C_t> {});
 
-    ASSERT_EQ(var->var_kind, context::variable_kind::SET_VAR_KIND);
-    auto var_ = var->access_set_symbol_base();
-    ASSERT_EQ(var_->type, context::SET_t_enum::C_TYPE);
-    ASSERT_FALSE(var_->is_scalar);
-    auto symbol = var_->access_set_symbol<C_t>();
-    ASSERT_TRUE(symbol);
-    ASSERT_EQ(symbol->size(), 4);
-
-    auto var_value_1 = symbol->get_value(1 - 1);
-    auto var_value_2 = symbol->get_value(2 - 1);
-    auto var_value_3 = symbol->get_value(3 - 1);
-    auto var_value_4 = symbol->get_value(4 - 1);
-    std::string expected_value_1 = "This is a raw text 1";
-    expected_value_1.resize(80, ' ');
-    std::string expected_value_2 = "This is a raw text 2";
-    expected_value_2.resize(80, ' ');
-
-    EXPECT_EQ(var_value_1, expected_value_1);
-    EXPECT_EQ(var_value_2, expected_value_2);
-    EXPECT_EQ(var_value_3.size(), 8);
-    EXPECT_EQ(var_value_4.size(), 8);
+    ASSERT_EQ(var.size(), 4);
+    EXPECT_EQ(var[0], aread_pad("This is a raw text 1"));
+    EXPECT_EQ(var[1], aread_pad("This is a raw text 2"));
+    EXPECT_EQ(var[2].size(), 8);
+    EXPECT_EQ(var[3].size(), 8);
 }
 
 TEST(aread, empty_input)
@@ -205,18 +206,10 @@ TEST(aread, empty_input)
 
     auto& ctx = a.hlasm_ctx();
 
-    auto it = ctx.ids().find("var");
-    auto var = ctx.get_var_sym(it);
-    ASSERT_TRUE(var);
+    auto var = get_var_value<C_t>(ctx, "var");
 
-    ASSERT_EQ(var->var_kind, context::variable_kind::SET_VAR_KIND);
-    auto var_ = var->access_set_symbol_base();
-    ASSERT_EQ(var_->type, context::SET_t_enum::C_TYPE);
-    ASSERT_TRUE(var_->is_scalar);
-    auto symbol = var_->access_set_symbol<C_t>();
-    ASSERT_TRUE(symbol);
-
-    EXPECT_EQ(symbol->get_value(), "");
+    ASSERT_TRUE(var.has_value());
+    EXPECT_EQ(var.value(), "");
 }
 
 TEST(aread, invalid_operands)
@@ -243,4 +236,61 @@ TEST(aread, invalid_operands)
     ASSERT_EQ(diags.size(), 5);
 
     EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "E070"; }));
+}
+
+TEST(aread, from_ainsert_buffer)
+{
+    std::string input(R"(
+          MACRO
+          M
+          GBLC &VAR1
+          GBLC &VAR2
+&VAR1     AREAD
+&VAR2     AREAD
+          MEND
+
+          MACRO
+          M2
+          AINSERT 'test string 2',BACK
+          AINSERT 'test string 1',FRONT
+          AINSERT ' M',FRONT
+          MEND
+
+          GBLC &VAR1
+          GBLC &VAR2
+
+          M2
+&PROCESSED SETA 1
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    EXPECT_EQ(get_var_value<A_t>(ctx, "PROCESSED").value_or(0), 1);
+
+    EXPECT_EQ(get_var_value<C_t>(ctx, "var1").value_or(""), aread_pad("test string 1"));
+    EXPECT_EQ(get_var_value<C_t>(ctx, "var2").value_or(""), aread_pad("test string 2"));
+}
+
+TEST(aread, ainsert_with_substitution)
+{
+    std::string input(R"(
+&VAR SETC '1'
+          AINSERT '&&PROCESSED SETA &VAR',FRONT
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    EXPECT_EQ(get_var_value<A_t>(ctx, "PROCESSED").value_or(0), 1);
 }

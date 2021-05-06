@@ -32,7 +32,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     , eval_ctx { ctx, lib_provider }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)
-    , asm_proc_(ctx, branch_provider, lib_provider, parser)
+    , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)
     , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , listener_(state_listener)

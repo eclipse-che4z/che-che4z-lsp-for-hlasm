@@ -66,11 +66,26 @@ std::string parser_impl::aread()
 
     if (input_lexer->eof_generated())
         finished_flag = true;
-    input.reset();
+    input_tokens_invalidated = true;
 
     if (!line.empty())
         line.resize(80, ' ');
     return line;
+}
+
+void parser_impl::ainsert(const std::string& record, processing::ainsert_destination dest)
+{
+    switch (dest)
+    {
+        case ainsert_destination::back:
+            input_lexer->ainsert_back(record);
+            break;
+        case ainsert_destination::front:
+            input_lexer->ainsert_front(record);
+            break;
+    }
+    // TODO: this needs to be really reworked...
+    input_tokens_invalidated = true;
 }
 
 context::source_position parser_impl::statement_start() const
@@ -349,6 +364,13 @@ bool parser_impl::process_statement()
 
 context::shared_stmt_ptr parser_impl::get_next(const statement_processor& proc)
 {
+    if (input_tokens_invalidated)
+    {
+        input_tokens_invalidated = false;
+
+        input.reset();
+        reset();
+    }
     processor = &proc;
 
     if (proc.kind == processing::processing_kind::LOOKAHEAD)
