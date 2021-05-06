@@ -114,6 +114,46 @@ TEST_F(workspace_test, parse_lib_provider)
         library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
 }
 
+TEST_F(workspace_test, did_open_file_with_deps)
+{
+    using namespace hlasm_plugin::utils;
+
+    lib_config config;
+    file_manager_impl file_mngr;
+
+    auto wks_path = path::absolute(path::join(path::join("test", "library"), "test_wks")).string();
+    if (platform::is_windows())
+        wks_path[0] = std::tolower(wks_path[0]); // LSP gives us lowercase drive letters
+    
+    workspace ws(wks_path, file_mngr, config);
+
+    ws.open();
+
+    collect_diags_from_child(ws);
+    collect_diags_from_child(file_mngr);
+    EXPECT_EQ(diags().size(), (size_t)0);
+
+    auto call_macro_path = path::join(wks_path, "call_macro");
+    auto macro2_path = path::join(path::join(path::join(wks_path, "libs"), "lib1"), "macro2");
+
+    file_mngr.did_open_file(macro2_path.string(), 1, R"( MACRO
+ MACRO2
+
+ MEND)");
+    ws.did_open_file(macro2_path.string());
+
+    file_mngr.did_open_file(call_macro_path.string(), 1, " MACRO2");
+    ws.did_open_file(call_macro_path.string());
+
+    ASSERT_EQ(file_mngr.size(), 4U);
+
+    auto macro_ptr = file_mngr.find_processor_file(macro2_path.string());
+    ASSERT_TRUE(macro_ptr);
+
+    auto call_macro_ptr = file_mngr.find_processor_file(call_macro_path.string());
+    ASSERT_TRUE(call_macro_ptr);
+}
+
 
 
 std::string pgroups_file = R"({

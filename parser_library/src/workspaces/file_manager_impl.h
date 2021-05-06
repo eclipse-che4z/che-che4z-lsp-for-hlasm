@@ -60,6 +60,8 @@ public:
     bool file_exists(const std::string& file_name) override;
     bool lib_file_exists(const std::string& lib_path, const std::string& file_name) override;
 
+    size_t size() const;
+
     virtual ~file_manager_impl() = default;
 
 protected:

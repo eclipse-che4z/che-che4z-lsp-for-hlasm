@@ -126,7 +126,10 @@ list_directory_result file_manager_impl::list_directory_files(const std::string&
     list_directory_result result;
 
     result.second = utils::path::list_directory_regular_files(lib_p, [&result](const std::filesystem::path& f) {
-        result.first[utils::path::filename(f).string()] = utils::path::absolute(f).string();
+        std::string path = utils::path::absolute(f).string();
+        if (utils::platform::is_windows() && path.size() > 1 && std::isalpha(path[0]))
+            path[0] = std::tolower(path[0]);
+        result.first[utils::path::filename(f).string()] = std::move(path);
     });
     return result;
 }
@@ -201,5 +204,7 @@ bool file_manager_impl::lib_file_exists(const std::string& lib_path, const std::
 {
     return std::filesystem::exists(utils::path::join(lib_path, file_name));
 }
+
+size_t file_manager_impl::size() const { return files_.size(); }
 
 } // namespace hlasm_plugin::parser_library::workspaces
