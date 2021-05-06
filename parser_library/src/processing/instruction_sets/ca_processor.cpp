@@ -519,19 +519,13 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
     }
 
     auto& ops = stmt.operands_ref();
-    if (ops.value.size() > 1)
-    {
-        add_diagnostic(diagnostic_op::error_E070(ops.field_range));
-        return;
-    }
-
     enum class aread_variant
     {
         invalid,
         reader,
         clockb,
         clockd,
-    } const variant = [&eval_ctx = eval_ctx, &ops = stmt.operands_ref()]() {
+    } const variant = [&eval_ctx = eval_ctx, &ops]() {
         if (ops.value.size() > 1)
             return aread_variant::invalid;
         if (ops.value.size() == 0)
@@ -566,12 +560,6 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
     int index;
     context::id_index name;
     context::set_symbol_base* set_symbol;
-    if (stmt.label_ref().type != semantics::label_si_type::VAR)
-    {
-        add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
-        return;
-    }
-
 
     bool ok = prepare_SET_symbol(stmt, context::SET_t_enum::C_TYPE, index, set_symbol, name);
 

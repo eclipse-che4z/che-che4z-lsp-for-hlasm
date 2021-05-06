@@ -36,7 +36,7 @@ class input_source;
 
 using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
-class lexer : public antlr4::TokenSource
+class lexer final : public antlr4::TokenSource
 {
 public:
     struct stream_position

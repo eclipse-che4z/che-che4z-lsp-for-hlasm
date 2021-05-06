@@ -229,6 +229,7 @@ TEST(aread, invalid_operands)
 &VAR      AREAD 1
 &VAR      AREAD &VAR
 &VAR      AREAD 'A'
+&VAR      AREAD NOSTMT,NOSTMT
           MEND
 
           GBLC &VAR
@@ -239,7 +240,7 @@ TEST(aread, invalid_operands)
 
     a.collect_diags();
     auto& diags = a.diags();
-    ASSERT_EQ(diags.size(), 4);
+    ASSERT_EQ(diags.size(), 5);
 
     EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "E070"; }));
 }
