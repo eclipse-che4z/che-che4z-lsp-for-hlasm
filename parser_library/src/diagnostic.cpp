@@ -1782,7 +1782,7 @@ diagnostic_op diagnostic_op::error_E069(const range& range)
 diagnostic_op diagnostic_op::error_E070(const range& range)
 {
     return diagnostic_op(
-        diagnostic_severity::error, "E070", "Invalid AREAD oprands. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
+        diagnostic_severity::error, "E070", "Invalid AREAD operand. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
 }
 
 diagnostic_op diagnostic_op::error_E044(const range& range)
