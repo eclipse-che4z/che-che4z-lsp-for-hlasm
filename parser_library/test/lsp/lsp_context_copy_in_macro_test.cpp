@@ -52,7 +52,6 @@ SYM    LR &VAR,1
 )";
     class lib_provider_mock : public workspaces::parse_lib_provider
     {
-        asm_option empty_options;
         workspaces::parse_result parse_library(
             const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
         {
@@ -73,8 +72,6 @@ SYM    LR &VAR,1
         {
             return library == copyfile_file_name || library == macro_file_name;
         };
-
-        const asm_option& get_asm_options(const std::string&) override { return empty_options; };
     };
     static inline lib_provider_mock lib_prov_instance;
     lsp_context_copy_in_macro()

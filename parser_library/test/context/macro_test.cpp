@@ -516,16 +516,12 @@ TEST(macro, arguments_continuation)
 
 class bad_mock : public parse_lib_provider
 {
-    asm_option asm_options;
-
 public:
     bad_mock(int lib_code)
-        : current_content(lib_code == 0 ? &content_bad_name
-                : lib_code == 1         ? &content_bad_begin
-                                        : &content_comment)
+        : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
     {}
 
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
         (void)library;
 
@@ -535,7 +531,6 @@ public:
         return true;
     }
     bool has_library(const std::string&, const std::string&) const override { return true; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
     std::unique_ptr<analyzer> a;
 
 private:
@@ -572,7 +567,7 @@ TEST(external_macro, bad_library)
     for (int i = 0; i < 2; ++i)
     {
         bad_mock m(i);
-        analyzer a(input, analyzer_options { "", &m, m.get_asm_options("") });
+        analyzer a(input, analyzer_options { "", &m });
         a.analyze();
         a.collect_diags();
         EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
@@ -589,7 +584,7 @@ TEST(external_macro, library_with_begin_comment)
  MAC 1
 )";
     bad_mock m(2);
-    analyzer a(input, analyzer_options { "", &m, m.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &m });
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);

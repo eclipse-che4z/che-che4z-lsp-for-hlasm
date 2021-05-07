@@ -459,7 +459,6 @@ X EQU =**)-,2
 
 class look_parse_lib_prov : public parse_lib_provider
 {
-    asm_option asm_options;
     std::unique_ptr<analyzer> a;
 
     std::string LIB =
@@ -481,7 +480,7 @@ X EQU 1,2,C'X'
 )";
 
 public:
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
         std::string* content;
         if (library == "LIB")
@@ -500,7 +499,6 @@ public:
     }
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)
@@ -514,7 +512,7 @@ TEST(attribute_lookahead, lookup_to_copy)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
 
@@ -557,7 +555,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
 
@@ -605,7 +603,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
 
@@ -636,7 +634,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
          GETMAIN   b=svc)");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
 
@@ -654,7 +652,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
 

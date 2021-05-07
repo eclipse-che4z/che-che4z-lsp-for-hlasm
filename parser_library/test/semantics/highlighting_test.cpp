@@ -35,9 +35,8 @@ inline void PrintTo(const lines_info& tokens, std::ostream* os)
 TEST(highlighting, simple)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = "A EQU 1";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -52,9 +51,8 @@ TEST(highlighting, simple)
 TEST(highlighting, mach_expr)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " LR 1*1+X,L'X";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -76,9 +74,8 @@ TEST(highlighting, mach_expr)
 TEST(highlighting, mach_expr_2)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " L X'F',*";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -95,9 +92,8 @@ TEST(highlighting, mach_expr_2)
 TEST(highlighting, mach_expr_3)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " L 1,=C'1'";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -115,9 +111,8 @@ TEST(highlighting, mach_expr_3)
 TEST(highlighting, data_def)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " DC 4CAP8L4''";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -137,9 +132,8 @@ TEST(highlighting, data_def)
 TEST(highlighting, asm_simple_operand)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " AMODE ANY64";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -153,9 +147,8 @@ TEST(highlighting, asm_simple_operand)
 TEST(highlighting, asm_list)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " AMODE (op2,op3)";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -173,9 +166,8 @@ TEST(highlighting, asm_list)
 TEST(highlighting, asm_list_2)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " AMODE op1(op2,op3)";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -194,11 +186,10 @@ TEST(highlighting, asm_list_2)
 TEST(highlighting, continuation)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents =
         R"(D EQU                                                                 1Xignored
 IgnoredIgnoredI1 remark)";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -218,14 +209,13 @@ IgnoredIgnoredI1 remark)";
 TEST(highlighting, macro_alternative_continuation)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = R"(
  MACRO
  MAC
  MEND
  MAC OP1, remark                                                       X
                OP2 remark2)";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -249,9 +239,8 @@ TEST(highlighting, macro_alternative_continuation)
 TEST(highlighting, var_sym_array_subscript)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = "&VARP(31+L'C) SETA 45\n\nC EQU 1";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();
@@ -277,9 +266,8 @@ TEST(highlighting, var_sym_array_subscript)
 TEST(highlighting, ca_expr)
 {
     std::string source_file = "file_name";
-    workspaces::empty_parse_lib_provider lib_provider;
     const std::string contents = " AIF (T'&SYSDATC EQ 'C').LOOP";
-    analyzer_options opts { source_file, &lib_provider, lib_provider.get_asm_options(source_file) };
+    analyzer_options opts { source_file };
     opts.collect_hl_info = true;
     analyzer a(contents, std::move(opts));
     a.analyze();

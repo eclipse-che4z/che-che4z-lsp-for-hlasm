@@ -160,7 +160,7 @@ void workspace::parse_file(const std::string& file_uri)
             {
                 auto found = file_manager_.find_processor_file(fname);
                 if (found)
-                    found->parse(*this);
+                    found->parse(*this, get_asm_options(fname));
             }
 
             for (auto fname : dependants_)
@@ -199,7 +199,7 @@ void workspace::parse_file(const std::string& file_uri)
 
     for (auto f : files_to_parse)
     {
-        f->parse(*this);
+        f->parse(*this, get_asm_options(f->get_file_name()));
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
 
@@ -512,7 +512,7 @@ bool workspace::is_dependency_(const std::string& file_uri)
     return false;
 }
 
-parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, const library_data data)
+parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, library_data data)
 {
     auto& proc_grp = get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
     for (auto&& lib : proc_grp.libraries())
@@ -538,7 +538,7 @@ bool workspace::has_library(const std::string& library, const std::string& progr
     return false;
 }
 
-const asm_option& workspace::get_asm_options(const std::string& file_name)
+asm_option workspace::get_asm_options(const std::string& file_name) const
 {
     auto& proc_grp = get_proc_grp_by_program(file_name);
 

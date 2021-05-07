@@ -22,8 +22,6 @@ namespace hlasm_plugin::parser_library {
 
 class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
-    asm_option asm_options;
-
 public:
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
@@ -42,8 +40,6 @@ public:
         return true;
     }
     bool has_library(const std::string&, const std::string&) const override { return true; }
-
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 
 private:
     const std::string macro_contents =

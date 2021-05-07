@@ -711,8 +711,6 @@ TEST(data_attributes, O_opencode_var)
 
 class O_mock : public workspaces::parse_lib_provider
 {
-    asm_option asm_options;
-
 public:
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
@@ -725,7 +723,6 @@ public:
         return true;
     }
     bool has_library(const std::string& lib, const std::string&) const override { return lib == "MAC"; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 
 private:
     const std::string M =
@@ -746,7 +743,7 @@ TEST(data_attributes, O_libraries)
 
 )";
     O_mock prov;
-    analyzer a(input, analyzer_options { "", &prov, prov.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &prov });
     a.analyze();
 
     EXPECT_EQ(a.hlasm_ctx()

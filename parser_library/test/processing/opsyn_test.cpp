@@ -263,7 +263,6 @@ X OPSYN LR
 
 class opsyn_parse_lib_prov : public parse_lib_provider
 {
-    asm_option asm_options;
     std::unique_ptr<analyzer> a;
 
     std::string LIB =
@@ -272,7 +271,7 @@ class opsyn_parse_lib_prov : public parse_lib_provider
  MEND)";
 
 public:
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
         std::string* content;
         if (library == "LR")
@@ -287,7 +286,6 @@ public:
     }
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 TEST(OPSYN, macro_after_delete)
@@ -297,7 +295,7 @@ LR OPSYN
    LR
 )");
     opsyn_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
+    analyzer a(input, analyzer_options { "", &mock });
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
