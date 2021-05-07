@@ -15,6 +15,8 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
+#include <variant>
+
 #include "analyzing_context.h"
 #include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
@@ -26,6 +28,18 @@
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library {
+struct analyzer_options
+{
+    std::string file_name = "";
+    workspaces::parse_lib_provider* lib_provider = nullptr;
+    std::variant<asm_option, analyzing_context> ctx_source;
+    workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
+    bool collect_hl_info = false;
+
+    context::hlasm_context& get_hlasm_context();
+    analyzing_context& get_context();
+    workspaces::parse_lib_provider& get_lib_provider();
+};
 
 // this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context
 class analyzer : public diagnosable_ctx
@@ -44,17 +58,7 @@ class analyzer : public diagnosable_ctx
     processing::processing_manager mngr_;
 
 public:
-    analyzer(const std::string& text,
-        std::string file_name,
-        analyzing_context ctx,
-        workspaces::parse_lib_provider& lib_provider,
-        const workspaces::library_data data,
-        bool collect_hl_info = false);
-
-    analyzer(const std::string& text,
-        std::string file_name = "",
-        workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
-        bool collect_hl_info = false);
+    analyzer(const std::string& text, analyzer_options opts = { "", nullptr, asm_option {} });
 
     analyzing_context context();
     context::hlasm_context& hlasm_ctx();

@@ -21,40 +21,51 @@ using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
 using namespace hlasm_plugin::parser_library::workspaces;
 
-analyzer::analyzer(const std::string& text,
-    std::string file_name,
-    analyzing_context ctx,
-    parse_lib_provider& lib_provider,
-    const library_data data,
-    bool collect_hl_info)
-    : diagnosable_ctx(*ctx.hlasm_ctx)
-    , ctx_(std::move(ctx))
-    , listener_(file_name)
-    , src_proc_(collect_hl_info)
+
+analyzing_context& analyzer_options::get_context()
+{
+    if (std::holds_alternative<asm_option>(ctx_source))
+    {
+        ctx_source = analyzing_context {
+            std::make_unique<context::hlasm_context>(file_name, std::move(std::get<asm_option>(ctx_source))),
+            std::make_unique<lsp::lsp_context>(),
+        };
+    }
+    return std::get<analyzing_context>(ctx_source);
+}
+
+context::hlasm_context& analyzer_options::get_hlasm_context() { return *get_context().hlasm_ctx; }
+
+workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
+{
+    if (lib_provider)
+        return *lib_provider;
+    else
+        return workspaces::empty_parse_lib_provider::instance;
+}
+
+analyzer::analyzer(const std::string& text, analyzer_options opts)
+    : diagnosable_ctx(opts.get_hlasm_context())
+    , ctx_(std::move(opts.get_context()))
+    , listener_(opts.file_name)
+    , src_proc_(opts.collect_hl_info)
     , input_(text)
     , lexer_(&input_, &src_proc_, &ctx_.hlasm_ctx->metrics)
     , tokens_(&lexer_)
     , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(
-          std::unique_ptr<processing::opencode_provider>(parser_), ctx_, data, file_name, text, lib_provider, *parser_)
+    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_),
+          ctx_,
+          opts.library_data,
+          opts.file_name,
+          text,
+          opts.get_lib_provider(),
+          *parser_)
 {
-    parser_->initialize(ctx_, &src_proc_, &lib_provider, &mngr_);
+    parser_->initialize(ctx_, &src_proc_, &opts.get_lib_provider(), &mngr_);
     parser_->setErrorHandler(std::make_shared<error_strategy>());
     parser_->removeErrorListeners();
     parser_->addErrorListener(&listener_);
 }
-
-analyzer::analyzer(
-    const std::string& text, std::string file_name, parse_lib_provider& lib_provider, bool collect_hl_info)
-    : analyzer(text,
-        file_name,
-        analyzing_context {
-            std::make_unique<context::hlasm_context>(file_name, lib_provider.get_asm_options(file_name)),
-            std::make_unique<lsp::lsp_context>() },
-        lib_provider,
-        library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
-        collect_hl_info)
-{}
 
 analyzing_context analyzer::context() { return ctx_; }
 

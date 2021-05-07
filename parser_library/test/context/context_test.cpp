@@ -586,7 +586,7 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
  M2
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();

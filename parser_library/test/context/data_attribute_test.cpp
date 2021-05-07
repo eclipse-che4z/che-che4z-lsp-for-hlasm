@@ -720,7 +720,7 @@ public:
         if (!has_library(library, ctx.hlasm_ctx->opencode_file_name()))
             return false;
 
-        analyzer a(M, library, std::move(ctx), *this, data);
+        analyzer a(M, analyzer_options { library, this, std::move(ctx), data });
         a.analyze();
         return true;
     }
@@ -746,7 +746,7 @@ TEST(data_attributes, O_libraries)
 
 )";
     O_mock prov;
-    analyzer a(input, "", prov);
+    analyzer a(input, analyzer_options { "", &prov, prov.get_asm_options("") });
     a.analyze();
 
     EXPECT_EQ(a.hlasm_ctx()

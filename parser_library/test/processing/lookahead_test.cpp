@@ -480,6 +480,7 @@ X EQU 1,2,C'X'
 &AFTER_MAC SETB 1
 )";
 
+public:
     parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
@@ -492,7 +493,7 @@ X EQU 1,2,C'X'
         else
             return false;
 
-        a = std::make_unique<analyzer>(*content, library, std::move(ctx), *this, data);
+        a = std::make_unique<analyzer>(*content, analyzer_options { library, this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         return true;
@@ -513,7 +514,7 @@ TEST(attribute_lookahead, lookup_to_copy)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
 
@@ -556,7 +557,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
 
@@ -604,7 +605,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
 
@@ -635,7 +636,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
          GETMAIN   b=svc)");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
 
@@ -653,7 +654,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
 

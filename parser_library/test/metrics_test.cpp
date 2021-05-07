@@ -58,7 +58,8 @@ public:
     void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
-        a = std::make_unique<analyzer>(content, SOURCE_FILE, lib_provider);
+        a = std::make_unique<analyzer>(
+            content, analyzer_options { SOURCE_FILE, &lib_provider, lib_provider.get_asm_options(SOURCE_FILE) });
         a->analyze();
     }
 

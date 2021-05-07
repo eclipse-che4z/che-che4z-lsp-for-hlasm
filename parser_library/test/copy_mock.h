@@ -65,7 +65,7 @@ public:
             return false;
 
         holder.push_back(std::move(a));
-        a = std::make_unique<analyzer>(*current_content, library, std::move(ctx), *this, data);
+        a = std::make_unique<analyzer>(*current_content, analyzer_options { library, this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         return true;

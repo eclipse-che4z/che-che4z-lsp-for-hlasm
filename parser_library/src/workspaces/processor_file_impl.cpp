@@ -42,7 +42,9 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 {
-    analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
+    analyzer_options opts = { get_file_name(), &lib_provider, lib_provider.get_asm_options(get_file_name()) };
+    opts.collect_hl_info = get_lsp_editing();
+    analyzer_ = std::make_unique<analyzer>(get_text(), std::move(opts));
 
     auto old_dep = dependencies_;
 
@@ -71,8 +73,8 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    analyzer_ = std::make_unique<analyzer>(
+        get_text(), analyzer_options { get_file_name(), &lib_provider, std::move(ctx), data, get_lsp_editing() });
 
     return parse_inner(*analyzer_);
 }
@@ -80,8 +82,8 @@ parse_result processor_file_impl::parse_macro(
 parse_result processor_file_impl::parse_no_lsp_update(
     parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
 {
-    auto no_update_analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    auto no_update_analyzer_ = std::make_unique<analyzer>(
+        get_text(), analyzer_options { get_file_name(), &lib_provider, std::move(ctx), data, get_lsp_editing() });
     no_update_analyzer_->analyze();
     return true;
 }

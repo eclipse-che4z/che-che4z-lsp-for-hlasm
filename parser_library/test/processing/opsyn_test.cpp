@@ -271,6 +271,7 @@ class opsyn_parse_lib_prov : public parse_lib_provider
  LR
  MEND)";
 
+public:
     parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::string* content;
@@ -279,7 +280,7 @@ class opsyn_parse_lib_prov : public parse_lib_provider
         else
             return false;
 
-        a = std::make_unique<analyzer>(*content, library, std::move(ctx), *this, data);
+        a = std::make_unique<analyzer>(*content, analyzer_options { library, this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         return true;
@@ -296,7 +297,7 @@ LR OPSYN
    LR
 )");
     opsyn_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

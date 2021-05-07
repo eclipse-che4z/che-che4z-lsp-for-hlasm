@@ -28,7 +28,7 @@ struct analyzer_fixture : public ::testing::Test
     analyzer a;
     analyzer_fixture(const std::string& input,
         workspaces::parse_lib_provider& provider = workspaces::empty_parse_lib_provider::instance)
-        : a(input, opencode_file_name, provider)
+        : a(input, analyzer_options { opencode_file_name, &provider, provider.get_asm_options(opencode_file_name) })
     {
         a.analyze();
     }

@@ -285,11 +285,13 @@ X3 EQU F-E
 class loc_mock : public workspaces::parse_lib_provider
 {
     asm_option asm_options;
+
+public:
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
     {
         std::string lib_data("XXX EQU 1");
-        analyzer a(lib_data, library, std::move(ctx), *this, data);
+        analyzer a(lib_data, analyzer_options { library, this, std::move(ctx), data });
         a.analyze();
         return true;
     }
@@ -312,7 +314,7 @@ X EQU 1
 
 )";
     loc_mock tmp;
-    analyzer a(input, "test", tmp);
+    analyzer a(input, analyzer_options { "test", &tmp, tmp.get_asm_options("test") });
     a.analyze();
     a.collect_diags();
 

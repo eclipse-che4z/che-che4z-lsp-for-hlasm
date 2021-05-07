@@ -30,16 +30,15 @@ public:
     {
         (void)library;
 
-        if (data.proc_kind == processing::processing_kind::MACRO)
-        {
-            analyzer a(macro_contents, MACRO_FILE, ctx, *this, data);
-            a.analyze();
-        }
-        else
-        {
-            analyzer a(copy_contents, COPY_FILE, ctx, *this, data);
-            a.analyze();
-        }
+        analyzer a(data.proc_kind == processing::processing_kind::MACRO ? macro_contents : copy_contents,
+            analyzer_options {
+                data.proc_kind == processing::processing_kind::MACRO ? MACRO_FILE : COPY_FILE,
+                this,
+                std::move(ctx),
+                data,
+            });
+
+        a.analyze();
         return true;
     }
     bool has_library(const std::string&, const std::string&) const override { return true; }

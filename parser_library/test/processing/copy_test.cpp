@@ -26,7 +26,7 @@ TEST(copy, copy_enter_fail)
  COPY UNKNOWN
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -44,7 +44,7 @@ TEST(copy, copy_enter_success)
  COPY COPYR
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -65,7 +65,7 @@ TEST(copy, copy_enter_diag_test)
  COPY COPYD
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -93,7 +93,7 @@ TEST(copy, copy_jump)
  AIF (&VAR LT 4).A
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -123,7 +123,7 @@ TEST(copy, copy_unbalanced_macro)
  COPY COPYU
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -143,7 +143,7 @@ TEST(copy, copy_twice)
  COPY COPYR
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -162,7 +162,7 @@ TEST(copy, macro_call_from_copy_enter)
  M2
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -188,7 +188,7 @@ TEST(copy, copy_enter_from_macro_call)
  M
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -224,7 +224,7 @@ TEST(copy, copy_enter_from_lookahead)
  
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -255,7 +255,7 @@ TEST(copy, nested_macro_copy_call)
  
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -286,7 +286,7 @@ TEST(copy, macro_from_copy_call)
  
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -314,7 +314,7 @@ TEST(copy, inner_copy_jump)
  
 )";
     copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { "", &mock, mock.get_asm_options("") });
     a.analyze();
 
     a.collect_diags();
@@ -332,7 +332,7 @@ TEST(copy, jump_from_copy_fail)
  COPY COPYJF
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -367,7 +367,7 @@ TEST(copy, jump_in_macro_from_copy_fail)
  m
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -399,7 +399,7 @@ TEST(copy, macro_nested_diagnostics)
  MAC  
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();
@@ -429,7 +429,7 @@ TEST(copy, copy_call_with_jump_before_comment)
  ANOP
 )";
     copy_mock mock;
-    analyzer a(input, "start", mock);
+    analyzer a(input, analyzer_options { "start", &mock, mock.get_asm_options("start") });
     a.analyze();
 
     a.collect_diags();

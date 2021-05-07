@@ -64,7 +64,7 @@ SYM    LR &VAR,1
             else
                 return false;
 
-            analyzer lib_analyzer(*text, library, ctx, *this, data);
+            analyzer lib_analyzer(*text, analyzer_options { library, this, ctx, data });
             lib_analyzer.analyze();
             return true;
         };
