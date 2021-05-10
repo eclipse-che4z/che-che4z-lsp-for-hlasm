@@ -219,23 +219,23 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
             auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-            auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+            auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
             if (!data_op->value->length
                 || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                len = value->get_length_attribute();
+                len = value.get_length_attribute();
             }
             if (data_op->value->scale
                 && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                scale = value->get_scale_attribute();
+                scale = value.get_scale_attribute();
             }
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 std::move(adr),
                 context::symbol_attributes(
-                    context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
+                    context::symbol_origin::DAT, type, len, scale, value.get_integer_attribute()));
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));

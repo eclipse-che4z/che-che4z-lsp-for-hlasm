@@ -58,10 +58,6 @@ private:
     std::optional<location> find_definition_location(const symbol_occurence& occ, macro_info_ptr macro_i) const;
     hover_result find_hover(const symbol_occurence& occ, macro_info_ptr macro_i) const;
 
-    std::string hover(const context::symbol& sym) const;
-    std::string hover(const variable_symbol_definition& sym) const;
-    std::string hover(const context::opcode_t& sym) const;
-
     completion_list_s complete_var(const file_info& file, position pos) const;
     completion_list_s complete_seq(const file_info& file, position pos) const;
     completion_list_s complete_instr(const file_info& file, position pos) const;

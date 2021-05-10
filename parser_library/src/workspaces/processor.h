@@ -36,6 +36,9 @@ public:
     virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) = 0;
     // starts parser to parse macro but does not update parse info or diagnostics
     virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context, const library_data) = 0;
+
+protected:
+    ~processor() = default;
 };
 
 // Interface that represents a file that can be parsed.
@@ -47,6 +50,9 @@ public:
     virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
     virtual const std::set<std::string>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
+
+protected:
+    ~processor_file() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

@@ -65,7 +65,7 @@ class error_strategy : public antlr4::DefaultErrorStrategy
     {
         using namespace antlr4;
 
-        lexing::token* currentSymbol = dynamic_cast<lexing::token*>(recognizer->getCurrentToken());
+        auto* currentSymbol = recognizer->getCurrentToken();
         assert(currentSymbol);
 
         misc::IntervalSet expecting = getExpectedTokens(recognizer);
@@ -79,27 +79,28 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         {
             tokenText = "<missing " + recognizer->getVocabulary().getDisplayName(expectedTokenType) + ">";
         }
-        lexing::token* current = currentSymbol;
+        auto* current = currentSymbol;
         // Get parser_library::token instead of antlr4::Token
-        lexing::token* lookback = dynamic_cast<lexing::token*>(recognizer->getTokenStream()->LT(-1));
+        auto* lookback = recognizer->getTokenStream()->LT(-1);
         if (current->getType() == Token::EOF && lookback != nullptr)
         {
             current = lookback;
         }
 
-        lexing::lexer* lex = dynamic_cast<lexing::lexer*>(recognizer->getTokenStream()->getTokenSource());
+        auto& lex = dynamic_cast<lexing::lexer&>(*recognizer->getTokenStream()->getTokenSource());
+        auto& lexing_token = dynamic_cast<lexing::token&>(*current);
         // return specialized tokens
-        _errorSymbols.push_back(lex->get_token_factory()->create(current->getTokenSource(),
-            current->getInputStream(),
+        _errorSymbols.push_back(lex.get_token_factory()->create(current->getTokenSource(),
+            lexing_token.getInputStream(),
             expectedTokenType,
             Token::DEFAULT_CHANNEL,
             INVALID_INDEX,
             INVALID_INDEX,
-            current->getLine(),
-            current->getCharPositionInLine(),
+            lexing_token.getLine(),
+            lexing_token.getCharPositionInLine(),
             (size_t)-1,
-            current->get_char_position_in_line_16(),
-            current->get_end_of_token_in_line_utf16()));
+            lexing_token.get_char_position_in_line_16(),
+            lexing_token.get_end_of_token_in_line_utf16()));
 
         return _errorSymbols.back().get();
     }

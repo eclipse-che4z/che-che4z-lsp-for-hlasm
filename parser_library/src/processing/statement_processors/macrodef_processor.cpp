@@ -111,26 +111,19 @@ processing_status macrodef_processor::get_macro_processing_status(
     {
         auto id = std::get<context::id_index>(instruction.value);
         auto code = hlasm_ctx.get_operation_code(id);
-        if (code.machine_opcode && code.machine_source == context::instruction::instruction_array::CA)
+        if (auto** ca_instr = std::get_if<const context::ca_instruction*>(&code.opcode_detail); ca_instr)
         {
-            id = code.machine_opcode;
-            auto operandless = std::find_if(context::instruction::ca_instructions.begin(),
-                context::instruction::ca_instructions.end(),
-                [&](auto& instr) {
-                    return instr.name == *id;
-                })->operandless;
-
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,
-                operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
+                (*ca_instr)->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
 
-            return std::make_pair(format, op_code(id, context::instruction_type::CA));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.machine_opcode == hlasm_ctx.ids().add("COPY"))
+        else if (code.opcode == hlasm_ctx.ids().add("COPY"))
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
 
-            return std::make_pair(format, op_code(code.machine_opcode, context::instruction_type::ASM));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM));
         }
     }
 

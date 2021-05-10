@@ -33,6 +33,8 @@ struct cached_opsyn_mnemo
 struct macro_cache_key
 {
     [[nodiscard]] static macro_cache_key create_from_context(context::hlasm_context& hlasm_ctx, library_data data);
+    static void sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state);
+    static std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& hlasm_ctx);
     library_data data;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 };

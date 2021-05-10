@@ -33,15 +33,13 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
 
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*stmt->access_resolved()->opcode_ref().value);
-
-    auto tmp = mnem_tmp != context::instruction::mnemonic_codes.end()
-        ? context::instruction::machine_instructions.find(mnem_tmp->second.instruction)
-        : context::instruction::machine_instructions.find(*stmt->access_resolved()->opcode_ref().value);
-
-    assert(tmp != context::instruction::machine_instructions.end());
-
-    auto& [name, instr] = *tmp;
+    const auto& mach_instr = [](const std::string& name) {
+        if (auto mnemonic = context::instruction::mnemonic_codes.find(name);
+            mnemonic != context::instruction::mnemonic_codes.end())
+            return *mnemonic->second.instruction;
+        else
+            return context::instruction::machine_instructions.at(name);
+    }(*stmt->access_resolved()->opcode_ref().value);
 
     auto label_name = find_label_symbol(rebuilt_stmt);
 
@@ -59,7 +57,7 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
                 label_name,
                 addr,
                 context::symbol_attributes::make_machine_attrs(
-                    (context::symbol_attributes::len_attr)instr->size_for_alloc / 8));
+                    (context::symbol_attributes::len_attr)mach_instr.size_for_alloc / 8));
         }
     }
 
@@ -83,7 +81,7 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
     else
         check(rebuilt_stmt, hlasm_ctx, checker, *this);
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(instr->size_for_alloc / 8, context::halfword);
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_for_alloc / 8, context::halfword);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

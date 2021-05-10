@@ -29,8 +29,7 @@ class library : public virtual diagnosable
 public:
     virtual std::shared_ptr<processor> find_file(const std::string& file) = 0;
     virtual void refresh() = 0;
-
-private:
+    virtual ~library() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

@@ -31,27 +31,8 @@ struct attr_ref
     bool operator==(const attr_ref& oth) const;
 };
 
-enum class dependant_kind
-{
-    SYMBOL = 0,
-    SYMBOL_ATTR = 1,
-    SPACE = 2
-};
-
 // structure representing objects with dependencies
-struct dependant
-{
-    using value_t = std::variant<id_index, attr_ref, space_ptr>;
-
-    dependant(id_index symbol_id);
-    dependant(attr_ref attribute_reference);
-    dependant(space_ptr space_id);
-
-    bool operator==(const dependant& oth) const;
-    dependant_kind kind() const;
-
-    value_t value;
-};
+using dependant = std::variant<id_index, attr_ref, space_ptr>;
 
 } // namespace hlasm_plugin::parser_library::context
 
@@ -65,14 +46,6 @@ struct hash<hlasm_plugin::parser_library::context::attr_ref>
     }
 };
 
-template<>
-struct hash<hlasm_plugin::parser_library::context::dependant>
-{
-    std::size_t operator()(const hlasm_plugin::parser_library::context::dependant& k) const
-    {
-        return hash<hlasm_plugin::parser_library::context::dependant::value_t>()(k.value);
-    }
-};
 } // namespace std
 
 #endif

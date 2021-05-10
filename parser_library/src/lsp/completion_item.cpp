@@ -43,10 +43,10 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
         std::stringstream doc_ss(" ");
         std::stringstream detail_ss(""); // operands used for hover - e.g. V,D12U(X,B)[,M]
         std::stringstream autocomplete(""); // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
-        for (size_t i = 0; i < machine_instr->operands.size(); i++)
+        for (size_t i = 0; i < machine_instr.operands.size(); i++)
         {
-            const auto& op = machine_instr->operands[i];
-            if (machine_instr->no_optional == 1 && machine_instr->operands.size() - i == 1)
+            const auto& op = machine_instr.operands[i];
+            if (machine_instr.no_optional == 1 && machine_instr.operands.size() - i == 1)
             {
                 autocomplete << " [";
                 detail_ss << "[";
@@ -58,7 +58,7 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
                 detail_ss << op.to_string() << "]";
                 autocomplete << op.to_string() << "]";
             }
-            else if (machine_instr->no_optional == 2 && machine_instr->operands.size() - i == 2)
+            else if (machine_instr.no_optional == 2 && machine_instr.operands.size() - i == 2)
             {
                 autocomplete << " [";
                 detail_ss << "[";
@@ -70,7 +70,7 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
                 detail_ss << op.to_string() << "]";
                 autocomplete << op.to_string() << "[,";
             }
-            else if (machine_instr->no_optional == 2 && machine_instr->operands.size() - i == 1)
+            else if (machine_instr.no_optional == 2 && machine_instr.operands.size() - i == 1)
             {
                 detail_ss << op.to_string() << "]]";
                 autocomplete << op.to_string() << "]]";
@@ -87,10 +87,10 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
             }
         }
         doc_ss << "Machine instruction " << std::endl
-               << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr->format);
-        result.emplace_back(machine_instr->instr_name,
+               << "Instruction format: " << instruction::mach_format_to_string.at(machine_instr.format);
+        result.emplace_back(machine_instr.instr_name,
             "Operands: " + detail_ss.str(),
-            machine_instr->instr_name + "   " + autocomplete.str(),
+            machine_instr.instr_name + "   " + autocomplete.str(),
             doc_ss.str(),
             completion_item_kind::mach_instr);
     }
@@ -123,9 +123,8 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
         // get mnemonic operands
         size_t iter_over_mnem = 0;
 
-        auto instr_name = mnemonic_instr.instruction;
-        auto mach_operands = instruction::machine_instructions[instr_name]->operands;
-        auto no_optional = instruction::machine_instructions[instr_name]->no_optional;
+        const auto& mach_operands = mnemonic_instr.instruction->operands;
+        auto no_optional = mnemonic_instr.instruction->no_optional;
         bool first = true;
         std::vector<std::string> mnemonic_with_operand_ommited = { "VNOT", "NOTR", "NOTGR" };
 
@@ -208,10 +207,9 @@ const std::vector<completion_item_s> completion_item_s::instruction_completion_i
             first = false;
         }
         detail_ss << "Operands: " + subs_ops_nomnems.str();
-        doc_ss << "Mnemonic code for " << instr_name << " instruction" << std::endl
+        doc_ss << "Mnemonic code for " << mnemonic_instr.instruction->instr_name << " instruction" << std::endl
                << "Substituted operands: " << subs_ops_mnems.str() << std::endl
-               << "Instruction format: "
-               << instruction::mach_format_to_string.at(instruction::machine_instructions[instr_name]->format);
+               << "Instruction format: " << instruction::mach_format_to_string.at(mnemonic_instr.instruction->format);
         result.emplace_back(mnemonic_name,
             detail_ss.str(),
             mnemonic_name + "   " + subs_ops_nomnems.str(),

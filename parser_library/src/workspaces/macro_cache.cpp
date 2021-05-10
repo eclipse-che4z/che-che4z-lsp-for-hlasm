@@ -27,7 +27,7 @@ macro_cache::macro_cache(const file_manager& file_mngr, file& macro_file)
     , macro_file_(&macro_file)
 {}
 
-std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& ctx)
+std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_context& ctx)
 {
     auto& wn = ctx.ids().well_known;
     // List of instructions that are resolved during macro definition - therefore are affected by OPSYN
@@ -56,8 +56,13 @@ std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& ctx)
     for (const auto& [from, opcode] : ctx.opcode_mnemo_storage())
     {
         // If there is an opsyn, that aliases an instruction to be CA instruction, add it to result
-        if (std::find(cached_instr.begin(), cached_instr.end(), opcode.get_instr_id()) != cached_instr.end())
-            result.push_back({ from, opcode.get_instr_id(), opcode.macro_opcode != nullptr });
+        if (std::find(cached_instr.begin(), cached_instr.end(), opcode.opcode) != cached_instr.end())
+            result.push_back(
+                { from, opcode.opcode, std::holds_alternative<context::macro_def_ptr>(opcode.opcode_detail) });
+
+        if (std::find(cached_instr.begin(), cached_instr.end(), from) != cached_instr.end())
+            result.push_back(
+                { from, opcode.opcode, std::holds_alternative<context::macro_def_ptr>(opcode.opcode_detail) });
     }
 
     // Also macros with the same name as CA instructions may alias the instructions
@@ -65,8 +70,9 @@ std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& ctx)
     {
         if (!macro)
             continue;
+        auto opcode = ctx.get_operation_code(id);
         // Macros for which there is an opsyn in effect are already captured
-        if (ctx.get_operation_code(id).macro_opcode != macro)
+        if (auto pval = std::get_if<context::macro_def_ptr>(&opcode.opcode_detail); !pval || *pval != macro)
             continue;
 
         // If there is an opsyn, that aliases an instruction to be CA instruction, add it to result
@@ -74,12 +80,22 @@ std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& ctx)
             result.push_back({ id, id, true });
     }
 
-    std::sort(result.begin(), result.end(), [](const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs) {
+    sort_opsyn_state(result);
+
+    return result;
+}
+
+macro_cache_key macro_cache_key::create_from_context(context::hlasm_context& hlasm_ctx, library_data data)
+{
+    return { data, get_opsyn_state(hlasm_ctx) };
+}
+
+void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state)
+{
+    std::sort(opsyn_state.begin(), opsyn_state.end(), [](const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs) {
         return std::tie(lhs.from_instr, lhs.to_instr, lhs.is_macro)
             < std::tie(rhs.from_instr, rhs.to_instr, rhs.is_macro);
     });
-
-    return result;
 }
 
 const analyzer* macro_cache::find_cached_analyzer(const macro_cache_key& key) const
@@ -166,12 +182,6 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
 
     cache_data.stamps.emplace(macro_file_->get_file_name(), macro_file_->get_version());
     cache_data.cached_analyzer = std::move(analyzer);
-}
-
-
-macro_cache_key macro_cache_key::create_from_context(context::hlasm_context& hlasm_ctx, library_data data)
-{
-    return { data, get_opsyn_state(hlasm_ctx) };
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces
