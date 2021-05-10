@@ -222,7 +222,6 @@ TEST(aread, invalid_operands)
 &VAR      AREAD 1
 &VAR      AREAD &VAR
 &VAR      AREAD 'A'
-&VAR      AREAD NOSTMT,NOSTMT
           MEND
 
           GBLC &VAR
@@ -233,7 +232,7 @@ TEST(aread, invalid_operands)
 
     a.collect_diags();
     auto& diags = a.diags();
-    ASSERT_EQ(diags.size(), 5);
+    ASSERT_EQ(diags.size(), 4);
 
     EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "E070"; }));
 }
@@ -293,4 +292,30 @@ TEST(aread, ainsert_with_substitution)
     auto& ctx = a.hlasm_ctx();
 
     EXPECT_EQ(get_var_value<A_t>(ctx, "PROCESSED").value_or(0), 1);
+}
+
+TEST(aread, tolerate_extra_operands)
+{
+    std::string input(R"(
+    MACRO
+    M
+&S  AREAD ,
+&S  AREAD NOSTMT,
+&S  AREAD NOSTMT,,
+&S  AREAD NOSTMT,AAA,
+&S  AREAD NOSTMT,AAA,,
+    MEND
+    M
+Line1
+Line2
+Line3
+Line4
+Line5
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
 }

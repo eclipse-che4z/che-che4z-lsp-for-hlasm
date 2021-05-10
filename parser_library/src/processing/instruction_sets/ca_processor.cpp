@@ -526,9 +526,10 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         clockb,
         clockd,
     } const variant = [&eval_ctx = eval_ctx, &ops]() {
-        if (ops.value.size() > 1)
-            return aread_variant::invalid;
         if (ops.value.size() == 0)
+            return aread_variant::reader;
+        if (ops.value.size() == 2 && ops.value[0]->type == semantics::operand_type::EMPTY
+            && ops.value[1]->type == semantics::operand_type::EMPTY)
             return aread_variant::reader;
 
         AREAD_operand_visitor op(&eval_ctx);
