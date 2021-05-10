@@ -97,7 +97,8 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
 
 analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
 {
-    analyzing_context new_ctx { std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids)),
+    analyzing_context new_ctx { std::make_shared<context::hlasm_context>(
+                                    std::move(file_name), asm_option(), std::move(ids)),
         std::make_shared<lsp::lsp_context>() };
     lsp::opencode_info_ptr oip =
         std::make_unique<lsp::opencode_info>(*new_ctx.hlasm_ctx, lsp::vardef_storage(), lsp::file_occurences_t {});
@@ -141,8 +142,7 @@ TEST(macro_cache_test, copy_from_macro)
                                  analyzing_context ctx,
                                  const workspaces::library_data data) {
         auto m = mngr->get_proc_file_from_library(library);
-        auto a =
-            std::make_unique<analyzer>(m->get_text(), m->get_file_name(), ctx, *mngr, data);
+        auto a = std::make_unique<analyzer>(m->get_text(), m->get_file_name(), ctx, *mngr, data);
         a->analyze();
         auto key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
         auto& cache = m == macro ? macro_c : copy_c;
@@ -164,7 +164,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
 
-    
+
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
 
     EXPECT_NE(new_ctx.hlasm_ctx->get_macro_definition(macro_id), nullptr);
@@ -188,8 +188,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     copyfile->did_change({}, " ");
 
-    analyzing_context ctx_copy_changed =
-        create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
+    analyzing_context ctx_copy_changed = create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
 
     // Macro depends on the copyfile, so none should be cached.
     EXPECT_FALSE(macro_c.load_from_cache(macro_key, ctx_copy_changed));
@@ -197,7 +196,7 @@ TEST(macro_cache_test, copy_from_macro)
 }
 
 
-TEST(macro_cache_test, macro_opsyn)
+TEST(macro_cache_test, opsyn)
 {
     std::string opencode_file_name = "opencode";
     std::string opencode_text =
@@ -213,7 +212,6 @@ SETA   OPSYN LR
 )";
 
     file_manager_cache_test_mock file_mngr;
-    // file_mngr.add_macro_or_copy()
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto macro = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
@@ -236,11 +234,37 @@ SETA   OPSYN LR
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
+
     auto macro_id = hlasm_ctx->ids().add("MAC");
 
-    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
+    macro_cache_key macro_key_one_opsyn { { processing::processing_kind::MACRO, macro_id },
+        { cached_opsyn_mnemo { hlasm_ctx->ids().well_known.SETA, hlasm_ctx->ids().add("LR"), false } } };
+
+
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, hlasm_ctx->ids());
 
 
     macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_FALSE(macro_c.load_from_cache(macro_key, new_ctx));
+    EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, new_ctx));
+
+
+
+    opencode->did_change({}, "L OPSYN SETB\n");
+    opencode->parse(file_mngr);
+
+    analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, hlasm_ctx->ids());
+    EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, ctx_second_opsyn1));
+
+
+    macro_cache_key macro_key_two_opsyns = macro_key_one_opsyn;
+    macro_key_two_opsyns.opsyn_state.push_back(
+        cached_opsyn_mnemo { hlasm_ctx->ids().add("L"), hlasm_ctx->ids().well_known.SETB, false });
+
+    macro_cache_key::sort_opsyn_state(macro_key_two_opsyns.opsyn_state);
+
+    analyzing_context ctx_second_opsyn2 =
+        create_analyzing_context(opencode_file_name, ctx_second_opsyn1.hlasm_ctx->ids());
+    EXPECT_TRUE(macro_c.load_from_cache(macro_key_two_opsyns, ctx_second_opsyn2));
+
 }
