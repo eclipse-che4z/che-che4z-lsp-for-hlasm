@@ -95,42 +95,36 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     const asm_option& get_asm_options(const std::string&) override { return empty_options; };
 };
 
+analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
+{
+    analyzing_context new_ctx { std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids)),
+        std::make_shared<lsp::lsp_context>() };
+    lsp::opencode_info_ptr oip =
+        std::make_unique<lsp::opencode_info>(*new_ctx.hlasm_ctx, lsp::vardef_storage(), lsp::file_occurences_t {});
+    new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_ref_t(""));
 
+    return new_ctx;
+}
 
-TEST(macro_cache_test, testtest)
+TEST(macro_cache_test, copy_from_macro)
 {
     std::string opencode_file_name = "opencode";
     std::string opencode_text =
         R"(
        MAC 1
 
-       COPY COPYFILE
-       LR &VAR,1
-       L 1,SYM
-       
-       AIF (&VAR EQ 1).HERE
-       error
-.HERE  ANOP
-
 )";
     std::string macro_file_name = "lib/MAC";
     std::string macro_text =
         R"( MACRO
        MAC &PARAM
-
        COPY COPYFILE
-
-SYM    LR &VAR,1
-
        MEND
 )";
     std::string copyfile_file_name = "lib/COPYFILE";
     std::string copyfile_text =
         R"(
-       
        LR 15,1
-&VAR   SETA 1
-
 )";
 
     file_manager_cache_test_mock file_mngr;
@@ -139,8 +133,8 @@ SYM    LR &VAR,1
     auto macro = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
     auto copyfile = file_mngr.add_macro_or_copy(copyfile_file_name, copyfile_text);
 
-
-    macro_cache c(file_mngr, *macro);
+    macro_cache macro_c(file_mngr, *macro);
+    macro_cache copy_c(file_mngr, *copyfile);
     context::hlasm_ctx_ptr hlasm_ctx;
     file_mngr.parse_lib_cb = [&](file_manager_cache_test_mock* mngr,
                                  const std::string& library,
@@ -151,7 +145,8 @@ SYM    LR &VAR,1
             std::make_unique<analyzer>(m->get_text(), m->get_file_name(), ctx, *mngr, data);
         a->analyze();
         auto key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
-        c.save_analyzer(key, std::move(a));
+        auto& cache = m == macro ? macro_c : copy_c;
+        cache.save_analyzer(key, std::move(a));
         hlasm_ctx = ctx.hlasm_ctx;
         return true;
     };
@@ -159,25 +154,93 @@ SYM    LR &VAR,1
 
     opencode->parse(file_mngr);
     opencode->collect_diags();
-    int i = 0;
     EXPECT_EQ(opencode->diags().size(), 0U);
 
     auto macro_id = hlasm_ctx->ids().add("MAC");
     auto copy_id = hlasm_ctx->ids().add("COPYFILE");
 
-    analyzing_context new_ctx { std::make_shared<context::hlasm_context>(macro_file_name, asm_option(), hlasm_ctx->move_ids()),
-        std::make_shared<lsp::lsp_context>() };
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
 
 
     macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
 
     
-    bool load_res = c.load_from_cache(macro_key, new_ctx);
-    lsp::opencode_info_ptr oip = std::make_unique<lsp::opencode_info>(*new_ctx.hlasm_ctx, lsp::vardef_storage(), lsp::file_occurences_t{});
-    new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_ref_t(opencode_text));
-    ASSERT_TRUE(load_res);
+    EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
 
-    ASSERT_NE(new_ctx.hlasm_ctx->get_macro_definition(macro_id), nullptr);
-    ASSERT_NE(new_ctx.lsp_ctx->get_macro_info(macro_id), nullptr);
-    ASSERT_NE(new_ctx.hlasm_ctx->get_copy_member(copy_id), nullptr);
+    EXPECT_NE(new_ctx.hlasm_ctx->get_macro_definition(macro_id), nullptr);
+    EXPECT_NE(new_ctx.lsp_ctx->get_macro_info(macro_id), nullptr);
+    EXPECT_NE(new_ctx.hlasm_ctx->get_copy_member(copy_id), nullptr);
+
+
+    macro->did_change({}, " ");
+
+    analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->move_ids());
+
+    macro_cache_key copy_key { { processing::processing_kind::COPY, copy_id }, {} };
+    // After macro change, copy should still be cached
+    EXPECT_TRUE(copy_c.load_from_cache(copy_key, ctx_macro_changed));
+    EXPECT_NE(ctx_macro_changed.hlasm_ctx->get_copy_member(copy_id), nullptr);
+    EXPECT_FALSE(macro_c.load_from_cache(macro_key, ctx_macro_changed));
+
+
+    // Reparse the change so everything is cached again
+    opencode->parse(file_mngr);
+
+    copyfile->did_change({}, " ");
+
+    analyzing_context ctx_copy_changed =
+        create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
+
+    // Macro depends on the copyfile, so none should be cached.
+    EXPECT_FALSE(macro_c.load_from_cache(macro_key, ctx_copy_changed));
+    EXPECT_FALSE(copy_c.load_from_cache(copy_key, ctx_copy_changed));
+}
+
+
+TEST(macro_cache_test, macro_opsyn)
+{
+    std::string opencode_file_name = "opencode";
+    std::string opencode_text =
+        R"(
+SETA   OPSYN LR
+       MAC 1
+)";
+    std::string macro_file_name = "lib/MAC";
+    std::string macro_text =
+        R"( MACRO
+       MAC &PARAM
+       MEND
+)";
+
+    file_manager_cache_test_mock file_mngr;
+    // file_mngr.add_macro_or_copy()
+    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    auto macro = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
+
+    macro_cache macro_c(file_mngr, *macro);
+    context::hlasm_ctx_ptr hlasm_ctx;
+    file_mngr.parse_lib_cb = [&](file_manager_cache_test_mock* mngr,
+                                 const std::string& library,
+                                 analyzing_context ctx,
+                                 const workspaces::library_data data) {
+        auto m = mngr->get_proc_file_from_library(library);
+        auto a = std::make_unique<analyzer>(m->get_text(), m->get_file_name(), ctx, *mngr, data);
+        a->analyze();
+        auto key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
+        macro_c.save_analyzer(key, std::move(a));
+        hlasm_ctx = ctx.hlasm_ctx;
+        return true;
+    };
+
+    opencode->parse(file_mngr);
+    opencode->collect_diags();
+    EXPECT_EQ(opencode->diags().size(), 0U);
+
+    auto macro_id = hlasm_ctx->ids().add("MAC");
+
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, hlasm_ctx->move_ids());
+
+
+    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    EXPECT_FALSE(macro_c.load_from_cache(macro_key, new_ctx));
 }
