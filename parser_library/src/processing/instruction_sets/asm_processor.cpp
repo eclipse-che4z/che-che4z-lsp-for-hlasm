@@ -612,7 +612,7 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
 }
 
 namespace {
-class AINSERT_operand_visitor : public expressions::mach_expr_visitor
+class AINSERT_operand_visitor final : public expressions::mach_expr_visitor
 {
 public:
     // Inherited via mach_expr_visitor
@@ -634,9 +634,9 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
     if (!check(stmt, hlasm_ctx, checker_, *this))
         return;
 
-    const auto& record = dynamic_cast<const semantics::string_assembler_operand&>(*ops.value[0].get()).value;
+    const auto& record = dynamic_cast<const semantics::string_assembler_operand&>(*ops.value[0]).value;
     AINSERT_operand_visitor visitor;
-    dynamic_cast<const semantics::expr_assembler_operand&>(*ops.value[1].get()).expression->apply(visitor);
+    dynamic_cast<const semantics::expr_assembler_operand&>(*ops.value[1]).expression->apply(visitor);
     auto [value] = visitor;
 
     if (!value)

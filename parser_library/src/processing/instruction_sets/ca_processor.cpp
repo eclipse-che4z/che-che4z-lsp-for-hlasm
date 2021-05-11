@@ -476,7 +476,7 @@ void ca_processor::process_ASPACE(const semantics::complete_statement& stmt)
 namespace {
 struct AREAD_operand_visitor final : public semantics::operand_visitor
 {
-    AREAD_operand_visitor(expressions::evaluation_context* ectx)
+    explicit AREAD_operand_visitor(expressions::evaluation_context* ectx)
         : eval_ctx(ectx)
     {}
 
