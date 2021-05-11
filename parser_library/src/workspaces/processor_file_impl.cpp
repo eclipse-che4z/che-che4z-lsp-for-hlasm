@@ -93,8 +93,8 @@ parse_result processor_file_impl::parse_macro(
 
     auto ret = parse_inner(*a);
 
-    if (cancel_ && *cancel_)
-        return ret;
+    if (!ret) // Parsing was interrupted by cancellation token, do not save the result into cache
+        return false;
 
     last_analyzer_ = a.get();
     macro_cache_.save_analyzer(cache_key, std::move(a));

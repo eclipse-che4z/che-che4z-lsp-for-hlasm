@@ -160,7 +160,7 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro
         auto file = file_mngr_->find(copy_ptr->definition_location.file);
         if (!file)
             throw std::runtime_error("Dependencies of a macro must be open right after parsing the macro.");
-        result.emplace(file->get_file_name(), file->get_version());
+        result.try_emplace(file->get_file_name(), file->get_version());
     }
     return result;
 }

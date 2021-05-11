@@ -58,7 +58,10 @@ bool inline operator<(const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& r
 
     return tie_cached_opsyn_mnemo(lhs) < tie_cached_opsyn_mnemo(rhs);
 }
-
+bool inline operator==(const cached_opsyn_mnemo& lhs, const cached_opsyn_mnemo& rhs)
+{
+    return lhs.from_instr == rhs.from_instr && lhs.to_instr == rhs.to_instr && lhs.is_macro == rhs.is_macro;
+}
 
 using version_stamp = std::unordered_map<std::string, version_t>;
 
