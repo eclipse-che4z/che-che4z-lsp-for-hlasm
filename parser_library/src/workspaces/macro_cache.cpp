@@ -119,7 +119,7 @@ const analyzer* macro_cache::find_cached_analyzer(const macro_cache_key& key) co
     return cached_data.cached_analyzer.get();
 }
 
-bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context & ctx)
+bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context& ctx)
 {
     if (auto cached_analyzer = find_cached_analyzer(key))
     {
@@ -145,7 +145,7 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
             ctx.hlasm_ctx->add_copy_member(copy_member);
             ctx.lsp_ctx->add_copy(copy_member, lsp::text_data_ref_t(macro_file_->get_text()));
         }
-        
+
         return true;
     }
     return false;
@@ -155,7 +155,7 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro
 {
     version_stamp result;
 
-    for (const auto & copy_ptr : macro->used_copy_members)
+    for (const auto& copy_ptr : macro->used_copy_members)
     {
         auto file = file_mngr_->find(copy_ptr->definition_location.file);
         if (!file)

@@ -288,3 +288,45 @@ MAC OPSYN AREAD
 
     EXPECT_EQ(state, expected);
 }
+
+TEST(macro_cache_test, overwrite_by_inline)
+{
+    std::string opencode_file_name = "opencode";
+    std::string opencode_text =
+        R"(
+       MAC
+
+       MACRO
+       MAC
+       LR 1,16
+       MEND
+       
+       MAC
+)";
+    std::string macro_file_name = "lib/MAC";
+    std::string macro_text =
+        R"( MACRO
+       MAC
+       LR 1,16
+       MEND
+)";
+
+    file_manager_cache_test_mock file_mngr;
+    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
+
+    opencode->parse(file_mngr);
+    opencode->collect_diags();
+    EXPECT_EQ(opencode->diags().size(), 2U);
+
+
+    auto macro_diag = std::find_if(opencode->diags().begin(), opencode->diags().end(), [&](const diagnostic_s& d) {
+        return d.file_name == macro_file_name;
+    });
+    EXPECT_NE(macro_diag, opencode->diags().end());
+
+    auto opencode_diag = std::find_if(opencode->diags().begin(), opencode->diags().end(), [&](const diagnostic_s& d) {
+        return d.file_name == opencode_file_name;
+    });
+    EXPECT_NE(opencode_diag, opencode->diags().end());
+}

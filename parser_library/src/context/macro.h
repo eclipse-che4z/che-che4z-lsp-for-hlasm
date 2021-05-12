@@ -19,10 +19,10 @@
 #include <unordered_map>
 
 #include "common_types.h"
+#include "copy_member.h"
 #include "sequence_symbol.h"
 #include "statement_cache.h"
 #include "variables/macro_param.h"
-#include "copy_member.h"
 
 namespace hlasm_plugin::parser_library::context {
 

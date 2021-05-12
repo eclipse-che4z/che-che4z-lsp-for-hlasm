@@ -38,12 +38,11 @@ struct copy_member
         : name(name)
         , definition_location(std::move(definition_location))
     {
-        
         for (auto&& stmt : definition)
             cached_definition.emplace_back(std::move(stmt));
     }
 
-    //copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
+    // copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
 };
 
 // structure represents invocation of COPY member in HLASM macro library

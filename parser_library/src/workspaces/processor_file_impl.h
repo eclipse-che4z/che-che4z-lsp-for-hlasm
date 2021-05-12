@@ -17,8 +17,8 @@
 
 #include "analyzer.h"
 #include "file_impl.h"
-#include "processor.h"
 #include "macro_cache.h"
+#include "processor.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -30,7 +30,7 @@ class file_manager;
 class processor_file_impl : public virtual file_impl, public virtual processor_file
 {
 public:
-    processor_file_impl(std::string file_uri, const file_manager & file_mngr, std::atomic<bool>* cancel = nullptr);
+    processor_file_impl(std::string file_uri, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
     processor_file_impl(file_impl&&, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
     processor_file_impl(const file_impl& file, const file_manager& file_mngr, std::atomic<bool>* cancel = nullptr);
     void collect_diags() const override;

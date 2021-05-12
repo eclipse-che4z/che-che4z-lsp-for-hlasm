@@ -213,8 +213,6 @@ TEST(copy, copy_enter_from_macro_call)
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
     EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)5);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
-
-    
 }
 
 TEST(copy, copy_enter_from_lookahead)
