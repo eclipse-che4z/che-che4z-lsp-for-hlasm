@@ -691,7 +691,7 @@ void hlasm_context::add_macro(macro_def_ptr macro) { macros_[macro->id] = std::m
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
 
-const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() { return opcode_mnemo_; }
+const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() const { return opcode_mnemo_; }
 
 macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {

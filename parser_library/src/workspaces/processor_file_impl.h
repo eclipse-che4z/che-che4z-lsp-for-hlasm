@@ -53,8 +53,6 @@ public:
     void erase_cache_of_opencode(const std::string& opencode_file_name) override;
 
 private:
-    const file_manager* file_manager_;
-
     std::unique_ptr<analyzer> opencode_analyzer_;
     const analyzer* last_analyzer_;
 

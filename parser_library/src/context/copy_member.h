@@ -54,7 +54,7 @@ struct copy_member_invocation
     const copy_member_ptr copy_member_definition;
     int current_statement;
 
-    copy_member_invocation(copy_member_ptr copy_member)
+    explicit copy_member_invocation(copy_member_ptr copy_member)
         : name(copy_member->name)
         , cached_definition(copy_member->cached_definition)
         , definition_location(copy_member->definition_location)

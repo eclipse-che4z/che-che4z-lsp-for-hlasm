@@ -162,7 +162,7 @@ public:
     void add_mnemonic(id_index mnemo, id_index op_code);
     // removes opsyn mnemonic
     void remove_mnemonic(id_index mnemo);
-    const opcode_map& opcode_mnemo_storage();
+    const opcode_map& opcode_mnemo_storage() const;
 
     // checks wheter the symbol is an operation code (is a valid instruction or a mnemonic)
     opcode_t get_operation_code(id_index symbol) const;

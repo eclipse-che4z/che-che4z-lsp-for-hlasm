@@ -20,7 +20,10 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-void macro_cache::collect_diags() const {}
+void macro_cache::collect_diags() const
+{
+    // No collectible children
+}
 
 macro_cache::macro_cache(const file_manager& file_mngr, file& macro_file)
     : file_mngr_(&file_mngr)
@@ -180,7 +183,7 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
     else // Copy members do not have additional dependencies
         cache_data.stamps.clear();
 
-    cache_data.stamps.emplace(macro_file_->get_file_name(), macro_file_->get_version());
+    cache_data.stamps.try_emplace(macro_file_->get_file_name(), macro_file_->get_version());
     cache_data.cached_analyzer = std::move(analyzer);
 }
 
