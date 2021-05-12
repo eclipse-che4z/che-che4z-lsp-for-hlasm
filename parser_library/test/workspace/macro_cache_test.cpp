@@ -142,7 +142,7 @@ TEST(macro_cache_test, copy_from_macro)
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
 
 
-    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key macro_key { opencode_file_name, { processing::processing_kind::MACRO, macro_id }, {} };
 
 
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
@@ -156,7 +156,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids());
 
-    macro_cache_key copy_key { { processing::processing_kind::COPY, copy_id }, {} };
+    macro_cache_key copy_key { opencode_file_name, { processing::processing_kind::COPY, copy_id }, {} };
     // After macro change, copy should still be cached
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, ctx_macro_changed));
     EXPECT_NE(ctx_macro_changed.hlasm_ctx->get_copy_member(copy_id), nullptr);
@@ -202,14 +202,15 @@ SETA   OPSYN LR
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
     auto& ids = file_mngr.hlasm_ctx->ids();
 
-    macro_cache_key macro_key_one_opsyn { { processing::processing_kind::MACRO, macro_id },
+    macro_cache_key macro_key_one_opsyn { opencode_file_name,
+        { processing::processing_kind::MACRO, macro_id },
         { cached_opsyn_mnemo { ids.well_known.SETA, ids.add("LR"), false } } };
 
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
 
 
-    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key macro_key { opencode_file_name, { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_FALSE(macro_c.load_from_cache(macro_key, new_ctx));
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, new_ctx));
 
@@ -249,7 +250,7 @@ TEST(macro_cache_test, empty_macro)
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
 
-    macro_cache_key macro_key { { processing::processing_kind::MACRO, macro_id }, {} };
+    macro_cache_key macro_key { opencode_file_name, { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
     EXPECT_EQ(new_ctx.hlasm_ctx->macros().count(macro_id), 0U);
 }

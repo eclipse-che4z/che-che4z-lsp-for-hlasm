@@ -87,7 +87,7 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
 
 macro_cache_key macro_cache_key::create_from_context(context::hlasm_context& hlasm_ctx, library_data data)
 {
-    return { data, get_opsyn_state(hlasm_ctx) };
+    return { hlasm_ctx.opencode_file_name(), data, get_opsyn_state(hlasm_ctx) };
 }
 
 void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state)
@@ -182,6 +182,18 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
 
     cache_data.stamps.emplace(macro_file_->get_file_name(), macro_file_->get_version());
     cache_data.cached_analyzer = std::move(analyzer);
+}
+
+void macro_cache::erase_cache_of_opencode(const std::string opencode_file_name)
+{
+    auto it = cache_.begin();
+    while (it != cache_.end())
+    {
+        if (it->first.opencode_file_name == opencode_file_name)
+            it = cache_.erase(it);
+        else
+            ++it;
+    }
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

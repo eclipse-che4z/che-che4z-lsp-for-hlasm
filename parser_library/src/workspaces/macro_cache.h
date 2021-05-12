@@ -35,6 +35,7 @@ struct macro_cache_key
     [[nodiscard]] static macro_cache_key create_from_context(context::hlasm_context& hlasm_ctx, library_data data);
     static void sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_state);
     static std::vector<cached_opsyn_mnemo> get_opsyn_state(context::hlasm_context& hlasm_ctx);
+    std::string opencode_file_name;
     library_data data;
     std::vector<cached_opsyn_mnemo> opsyn_state;
 };
@@ -86,7 +87,7 @@ public:
     // cached macro to the specified context. Returns true, if the macro was loaded.
     bool load_from_cache(const macro_cache_key& key, const analyzing_context& ctx);
     void save_analyzer(const macro_cache_key& key, std::unique_ptr<analyzer> analyzer);
-
+    void erase_cache_of_opencode(const std::string opencode_file_name);
 
 private:
     [[nodiscard]] const analyzer* find_cached_analyzer(const macro_cache_key& key) const;

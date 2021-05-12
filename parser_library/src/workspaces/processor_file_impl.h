@@ -50,6 +50,8 @@ public:
     const std::set<std::string>& files_to_close() override;
     const performance_metrics& get_metrics() override;
 
+    void erase_cache_of_opencode(const std::string& opencode_file_name) override;
+
 private:
     const file_manager* file_manager_;
 

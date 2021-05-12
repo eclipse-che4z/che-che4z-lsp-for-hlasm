@@ -126,6 +126,11 @@ const std::set<std::string>& processor_file_impl::files_to_close() { return file
 
 const performance_metrics& processor_file_impl::get_metrics() { return last_analyzer_->get_metrics(); }
 
+void processor_file_impl::erase_cache_of_opencode(const std::string& opencode_file_name)
+{
+    macro_cache_.erase_cache_of_opencode(opencode_file_name);
+}
+
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 {
     diags().clear();
