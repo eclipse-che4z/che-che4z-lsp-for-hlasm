@@ -215,7 +215,7 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
         case machine_operand_type::VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
         case machine_operand_type::RELOC_IMM: // RI
-            return diagnostic_op::error_M115(instr_name, operand_range);
+            return diagnostic_op::error_M113(instr_name, operand_range);
     }
     assert(false);
     return diagnostic_op::error_I999(instr_name, stmt_range);
@@ -265,7 +265,6 @@ one_operand::one_operand(const one_operand& op)
     value = op.value;
     is_default = op.is_default;
 };
-
 bool one_operand::check(
     diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range&) const
 {
@@ -287,17 +286,10 @@ bool one_operand::check(
         }
         return true;
     }
-    // simple operand with relocatable symbol or immediate value
-
-    if (to_check.identifier.type == machine_operand_type::RELOC_IMM && operand_identifier != "RELOC")
-    {
-        diag = diagnostic_op::warn_D031(operand_range, instr_name);
-        return false;
-    }
-
     // it is a simple operand
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
+        
         auto boundary = 1ll << (to_check.identifier.size - 1);
         switch (to_check.identifier.type)
         {
@@ -305,7 +297,7 @@ bool one_operand::check(
                 diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             case machine_operand_type::RELOC_IMM:
-                diag = diagnostic_op::error_M125(instr_name, -boundary, boundary - 1, operand_range);
+                diag = diagnostic_op::error_M123(std::to_string(value), -boundary, boundary - 1, operand_range);
                 break;
             default:
                 assert(false);

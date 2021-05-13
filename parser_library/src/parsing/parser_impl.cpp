@@ -503,6 +503,24 @@ void parser_impl::process_lookahead()
             parse_lookahead_operands(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
     }
 }
+void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index instruction)
+{
+    auto opernds = &col.current_operands().value;
+    int position = 0;
+    for (auto& operand : *opernds)
+    {
+        auto type = context::instruction::machine_instructions.at(*instruction)->operands[position].identifier.type;
+        if (type == checking::machine_operand_type::RELOC_IMM && operand.get()->access_mach() != nullptr
+            && operand.get()->access_mach()->kind == mach_kind::EXPR)
+        {
+            auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();
+            mach_expr_ptr& transformed_exp = operand.get()->access_mach()->access_expr()->expression;
+            transformed_exp = std::make_unique<mach_expr_binary<rel_addr>>(
+                std::make_unique<mach_expr_location_counter>(range), std::move(transformed_exp), range);
+        }
+        position++;
+    }
+}
 
 void parser_impl::parse_operands(const std::string& text, range text_range)
 {
@@ -561,6 +579,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
                 break;
             case processing::processing_form::MACH:
                 h.parser->op_rem_body_mach();
+                transform_imm_reg_operands(h.parser->collector, opcode.value);
                 break;
             case processing::processing_form::DAT:
                 h.parser->op_rem_body_dat();

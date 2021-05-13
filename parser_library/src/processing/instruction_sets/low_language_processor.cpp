@@ -201,7 +201,6 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     auto mnemonic = context::instruction::mnemonic_codes.at(instr_name);
     // the machine instruction structure associated with the given instruction name
     auto curr_instr = &context::instruction::machine_instructions.at(mnemonic.instruction);
-
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands

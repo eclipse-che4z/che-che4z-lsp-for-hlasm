@@ -14,9 +14,12 @@
 
 #include "operand_impls.h"
 
+#include <expressions/mach_operator.h>
+
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
 #include "operand_visitor.h"
+using namespace hlasm_plugin::parser_library::expressions;
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -90,10 +93,19 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     {
         return std::make_unique<checking::one_operand>(res.get_abs());
     }
-    else if (res.value_kind() == context::symbol_value_kind::RELOC && type_hint
-        && *type_hint == checking::machine_operand_type::RELOC_IMM)
+    else
     {
-        return std::make_unique<checking::one_operand>("RELOC", res.get_reloc().offset());
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
+    }
+}
+std::unique_ptr<checking::operand> check_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+{
+    auto res = expr.evaluate(info);
+    if (res.value_kind() == context::symbol_value_kind::ABS)
+    {
+        return std::make_unique<checking::one_operand>(std::to_string(res.get_abs()), res.get_abs());
     }
     else
     {
@@ -101,7 +113,6 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
             checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
     }
 }
-
 //***************** expr_machine_operand *********************
 
 expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, range operand_range)
@@ -118,6 +129,10 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expre
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
 {
+    if (type_hint == checking::machine_operand_type::RELOC_IMM)
+    {
+        return check_operand(info, *expression);
+    }
     return make_check_operand(info, *expression, type_hint);
 }
 
