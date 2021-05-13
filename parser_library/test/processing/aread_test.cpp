@@ -319,3 +319,15 @@ Line5
     auto& diags = a.diags();
     ASSERT_EQ(diags.size(), 0);
 }
+
+TEST(aread, empty_ainsert_record)
+{
+    std::string input(R"( AINSERT '',BACK)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 1);
+    EXPECT_EQ(diags.front().code, "A021");
+}
