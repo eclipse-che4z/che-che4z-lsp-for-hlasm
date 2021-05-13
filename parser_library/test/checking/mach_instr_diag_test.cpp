@@ -237,7 +237,7 @@ DISP     MVC 0(1),1
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M125");
+    ASSERT_EQ(a.diags().at(0).code, "M123");
 }
 
 TEST(diagnostics, mask_out_of_range)
@@ -320,7 +320,7 @@ TEST(diagnostics, relocImm_expected)
     a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
-    ASSERT_EQ(a.diags().at(0).code, "M115");
+    ASSERT_EQ(a.diags().at(0).code, "M113");
 }
 TEST(diagnostics, vecReg_expected)
 {
