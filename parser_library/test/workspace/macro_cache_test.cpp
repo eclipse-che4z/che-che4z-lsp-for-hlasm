@@ -236,7 +236,11 @@ SETA   OPSYN LR
 TEST(macro_cache_test, empty_macro)
 {
     std::string opencode_file_name = "opencode";
-    std::string opencode_text = " MAC";
+    // This tests a caveat where parse_library is called twice for the same macro, if the macro is not defined in its
+    // file.
+    std::string opencode_text = R"(
+ MAC
+ MAC)";
     std::string macro_file_name = "lib/MAC";
     std::string macro_text = "";
 
