@@ -297,7 +297,7 @@ bool one_operand::check(
                 diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             case machine_operand_type::RELOC_IMM:
-                diag = diagnostic_op::error_M123(std::to_string(value), -boundary, boundary - 1, operand_range);
+                diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             default:
                 assert(false);
