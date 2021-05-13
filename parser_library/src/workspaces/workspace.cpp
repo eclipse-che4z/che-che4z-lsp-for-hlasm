@@ -253,9 +253,9 @@ void workspace::did_close_file(const std::string& file_uri)
         // filter the dependencies that should not be closed
         filter_and_close_dependencies_(file->dependencies(), file);
         // Erase macros cached for this opencode from all its dependencies
-        for (auto it = file->dependencies().begin(); it != file->dependencies().end(); ++it)
+        for (const std::string& dep_name : file->dependencies())
         {
-            auto proc_file = file_manager_.get_processor_file(*it);
+            auto proc_file = file_manager_.get_processor_file(dep_name);
             if (proc_file)
                 proc_file->erase_cache_of_opencode(file_uri);
         }
