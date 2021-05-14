@@ -77,6 +77,13 @@ public:
         }
     }
 
+    void clear_counters()
+    {
+        error_count = 0;
+        warning_count = 0;
+        message_counts.clear();
+    }
+
     size_t error_count = 0;
     size_t warning_count = 0;
 
@@ -213,8 +220,7 @@ json parse_one_file(const std::string& source_file,
     // Reparse to benchmark macro caching
     if (do_reparse)
     {
-        diag_counter.error_count = 0;
-        diag_counter.warning_count = 0;
+        diag_counter.clear_counters();
 
         auto c_start_reparse = std::clock();
         auto start_reparse = std::chrono::high_resolution_clock::now();
@@ -264,7 +270,7 @@ json parse_one_file(const std::string& source_file,
                   << "Lines: " << first_parse_metrics.lines << '\n'
                   << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
                   << "Line/ms: " << first_parse_metrics.lines / (double)time << '\n'
-                  << "Files: " << first_parse_metrics.files << "\n"
+                  << "Files: " << first_parse_metrics.files << '\n'
                   << "Top messages: " << top_messages.dump() << '\n'
                   << '\n'
                   << std::endl;

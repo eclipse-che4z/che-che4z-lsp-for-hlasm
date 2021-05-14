@@ -597,7 +597,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
         {
             context::id_index tmp;
             tmp = std::get<context::id_index>(collector.current_instruction().value);
-            if (tmp != hlasm_ctx->ids().add("COPY"))
+            if (tmp != hlasm_ctx->ids().well_known.COPY)
             {
                 process_statement();
                 return;

@@ -336,8 +336,6 @@ void hlasm_context::pop_statement_processing()
 
 id_storage& hlasm_context::ids() { return ids_; }
 
-id_storage hlasm_context::move_ids() { return std::move(ids_); };
-
 const hlasm_context::instruction_storage& hlasm_context::instruction_map() const { return instruction_map_; }
 
 processing_stack_t hlasm_context::processing_stack() const

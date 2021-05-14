@@ -126,7 +126,6 @@ public:
 
     // index storage
     id_storage& ids();
-    id_storage move_ids();
 
     // map of instructions
     const instruction_storage& instruction_map() const;

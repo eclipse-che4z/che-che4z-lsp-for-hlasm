@@ -108,6 +108,8 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
 {
+    // Opencode may be empty, if parsing was interrupted by cancellation token, or when this function is called in the
+    // middle of processing
     if (!opencode_)
         return nullptr;
     // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition

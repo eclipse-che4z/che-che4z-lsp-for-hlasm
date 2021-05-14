@@ -258,7 +258,7 @@ void lsp_analyzer::collect_copy_operands(const context::hlasm_statement& stateme
     if (!res_stmt)
         return;
 
-    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().add("COPY") && res_stmt->operands_ref().value.size() == 1
+    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().well_known.COPY && res_stmt->operands_ref().value.size() == 1
         && res_stmt->operands_ref().value.front()->access_asm())
     {
         auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(

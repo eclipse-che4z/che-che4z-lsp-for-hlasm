@@ -49,7 +49,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 {
     if (opencode_analyzer_)
         opencode_analyzer_ = std::make_unique<analyzer>(
-            get_text(), get_file_name(), lib_provider, get_lsp_editing(), opencode_analyzer_->hlasm_ctx().move_ids());
+            get_text(), get_file_name(), lib_provider, get_lsp_editing(), std::move(opencode_analyzer_->hlasm_ctx().ids()));
     else
         opencode_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
 
