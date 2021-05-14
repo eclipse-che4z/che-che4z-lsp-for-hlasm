@@ -585,7 +585,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("EQU"), std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("DC"), std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("COPY"), std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().well_known.COPY, std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));

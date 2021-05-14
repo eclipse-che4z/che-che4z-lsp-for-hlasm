@@ -15,7 +15,7 @@
 #include "analyzer.h"
 
 #ifndef HLASMPLUGIN_PARSERLIBRARY_MACRO_CACHE_H
-#    define HLASMPLUGIN_PARSERLIBRARY_MACRO_CACHE_H
+#define HLASMPLUGIN_PARSERLIBRARY_MACRO_CACHE_H
 
 namespace hlasm_plugin::parser_library::workspaces {
 

@@ -45,14 +45,13 @@ std::vector<cached_opsyn_mnemo> macro_cache_key::get_opsyn_state(context::hlasm_
         wn.SETA,
         wn.SETB,
         wn.SETC,
-        ctx.ids().add("AIF"),
         wn.MEND,
         wn.MACRO,
-        ctx.ids().add("MEXIT"),
-        ctx.ids().add("AIF"),
-        ctx.ids().add("AREAD"),
-        ctx.ids().add("ACTR"),
-        ctx.ids().add("AGO") };
+        wn.MEXIT,
+        wn.AIF,
+        wn.AREAD,
+        wn.ACTR,
+        wn.AGO };
 
     std::vector<cached_opsyn_mnemo> result;
 

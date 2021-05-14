@@ -27,6 +27,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
 
+namespace {
+
 struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib_provider
 {
     const static inline size_t lib_prefix_length = 4;
@@ -103,6 +105,8 @@ analyzing_context create_analyzing_context(std::string file_name, context::id_st
 
     return new_ctx;
 }
+
+} // namespace
 
 TEST(macro_cache_test, copy_from_macro)
 {
@@ -334,4 +338,45 @@ TEST(macro_cache_test, overwrite_by_inline)
         return d.file_name == opencode_file_name;
     });
     EXPECT_NE(opencode_diag, opencode->diags().end());
+}
+
+TEST(macro_cache_test, inline_depends_on_copy)
+{
+    std::string opencode_file_name = "opencode";
+    std::string opencode_text =
+        R"(
+       MACRO 
+       MAC
+       COPY COPYFILE
+       MEND
+
+       MAC
+)";
+    std::string copy_file_name = "lib/COPYFILE";
+    std::string copy_text =
+        R"( LR 1,1 arbitrary instruction)";
+
+    file_manager_cache_test_mock file_mngr;
+    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
+    auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copy_file_name, copy_text);
+
+    opencode->parse(file_mngr);
+    opencode->collect_diags();
+    EXPECT_EQ(opencode->diags().size(), 0U);
+
+
+    auto copy_id = file_mngr.hlasm_ctx->ids().add("COPYFILE");
+    auto& ids = file_mngr.hlasm_ctx->ids();
+
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
+
+
+    macro_cache_key copy_key { opencode_file_name, { processing::processing_kind::COPY, copy_id }, {} };
+    EXPECT_TRUE(copy_c.load_from_cache(copy_key, new_ctx));
+
+    copyfile->did_change({ { 0, 4 }, { 0, 5 } }, "16");
+    opencode->parse(file_mngr);
+    opencode->collect_diags();
+    ASSERT_EQ(opencode->diags().size(), 1U);
+    EXPECT_EQ(opencode->diags()[0].code, "M120");
 }

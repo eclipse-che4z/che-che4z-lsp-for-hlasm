@@ -69,6 +69,11 @@ hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_know
     , LCLC(&*ptr.emplace("LCLC").first)
     , MACRO(&*ptr.emplace("MACRO").first)
     , MEND(&*ptr.emplace("MEND").first)
+    , MEXIT(&*ptr.emplace("MEXIT").first)
     , ASPACE(&*ptr.emplace("ASPACE").first)
+    , AIF(&*ptr.emplace("AIF").first)
+    , ACTR(&*ptr.emplace("ACTR").first)
+    , AREAD(&*ptr.emplace("AREAD").first)
+    , AGO(&*ptr.emplace("AGO").first)
     , empty(&*ptr.emplace("").first)
 {}

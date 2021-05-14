@@ -286,14 +286,14 @@ void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
     auto [_, opcode] = *proc_status;
-    if (opcode.value == hlasm_ctx->ids().well_known.SETA || opcode.value == hlasm_ctx->ids().add("ACTR")
-        || opcode.value == hlasm_ctx->ids().well_known.ASPACE || opcode.value == hlasm_ctx->ids().add("AGO"))
+    if (opcode.value == hlasm_ctx->ids().well_known.SETA || opcode.value == hlasm_ctx->ids().well_known.ACTR
+        || opcode.value == hlasm_ctx->ids().well_known.ASPACE || opcode.value == hlasm_ctx->ids().well_known.AGO)
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().well_known.SETB || opcode.value == hlasm_ctx->ids().add("AIF"))
+    else if (opcode.value == hlasm_ctx->ids().well_known.SETB || opcode.value == hlasm_ctx->ids().well_known.AIF)
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     else if (opcode.value == hlasm_ctx->ids().well_known.SETC)
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().add("AREAD"))
+    else if (opcode.value == hlasm_ctx->ids().well_known.AREAD)
     {
         // aread operand is just enumeration
     }
