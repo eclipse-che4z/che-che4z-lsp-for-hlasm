@@ -262,6 +262,9 @@ void lexer::start_token() { token_start_state_ = *input_state_; }
 
 void lexer::switch_input_streams()
 {
+    if (ainsert_stream_->LA(1) != ainsert_stream_->EOF)
+        return;
+
     if (!ainsert_buffer_.empty())
     {
         UTF32String f = ainsert_buffer_.front();
@@ -786,42 +789,74 @@ std::string lexer::aread()
 
     switch_input_streams();
 
-    start_token();
+    if (eof())
+        return "";
 
-    while (!eof() && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1) && str.length() < 80)
+    if (file_input_state_.char_position_in_line)
+        rewind_input(stream_position { file_input_state_.line,
+            file_input_state_.char_position
+                - file_input_state_.char_position_in_line }); // make sure we read the WHOLE line
+    if (from_buffer() && buffer_input_state_.char_position_in_line)
+    {
+        buffer_input_state_.char_position -= buffer_input_state_.char_position_in_line;
+        buffer_input_state_.char_position_in_line = 0;
+        buffer_input_state_.char_position_in_line_utf16 = 0;
+        buffer_input_state_.input->rewind_input(buffer_input_state_.char_position);
+        input_state_->c = buffer_input_state_.input->LA(1);
+    }
+
+    start_token();
+    while (!eof() && input_state_->c != '\r' && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1))
     {
         str.append(converter.to_bytes(input_state_->c));
         consume();
     }
-    create_token(AREAD, HIDDEN_CHANNEL);
-    lex_end(false);
+    consume_new_line();
+
+    if (input_state_ == &file_input_state_)
+        set_last_line_pos(input_state_->char_position, token_start_state_.line);
+
+    if (eof())
+        create_token(Token::EOF);
+
+    if (str.empty())
+        str = " ";
+
     return str;
 }
 
 std::unique_ptr<input_source>& lexer::get_ainsert_stream() { return ainsert_stream_; }
 
-void lexer::ainsert_back(const std::string& back) { ainsert(back, true); }
+void lexer::ainsert_back(const std::string& back) { ainsert(back, false); }
 
-void lexer::ainsert_front(const std::string& back) { ainsert(back, false); }
+void lexer::ainsert_front(const std::string& back) { ainsert(back, true); }
 
 void lexer::ainsert(const std::string& inp, bool front)
 {
-    auto len = length_utf16(inp);
     auto s = converter.from_bytes(inp);
     UTF32String str(s.begin(), s.end());
-    if (len > 0)
+    if (str.size())
     {
-        for (; len < 80; ++len)
-            str.push_back(' ');
+        if (str.size() < 80)
+            str.resize(80, ' ');
         str.push_back('\n');
         if (front)
             ainsert_buffer_.push_front(str);
         else
             ainsert_buffer_.push_back(str);
+
+        if (file_input_state_.char_position_in_line)
+            rewind_input(stream_position { file_input_state_.line,
+                file_input_state_.char_position
+                    - file_input_state_.char_position_in_line }); // make sure we read the WHOLE line
+
+        while (token_queue_.size())
+            token_queue_.pop();
+        eof_generated_ = false;
     }
     else
     {
-        throw std::runtime_error("invalid insertion - empty string");
+        throw std::logic_error("invalid insertion - empty string");
     }
 }
 

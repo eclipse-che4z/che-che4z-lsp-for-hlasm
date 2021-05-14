@@ -20,12 +20,20 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+enum class ainsert_destination
+{
+    back,
+    front,
+};
+
 // interface for hiding parser implementation
 class opencode_provider : public statement_provider
 {
 public:
     // rewinds position in file
     virtual void rewind_input(context::source_position pos) = 0;
+    virtual std::string aread() = 0;
+    virtual void ainsert(const std::string& rec, ainsert_destination dest) = 0;
 
     opencode_provider()
         : statement_provider(processing::statement_provider_kind::OPEN)

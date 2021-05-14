@@ -11,6 +11,8 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
+	aread_time.cpp
+	aread_time.h
 	analyzer.cpp
 	analyzer.h
 	analyzing_context.h

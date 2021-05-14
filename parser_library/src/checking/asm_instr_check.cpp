@@ -1263,6 +1263,11 @@ bool ainsert::check(const std::vector<const asm_operand*>& to_check,
             diagnostic_op::error_A301_op_apostrophes_missing(name_of_instruction, to_check[0]->operand_range));
         return false;
     }
+    if (first->operand_identifier.size() == 2) // empty string
+    {
+        add_diagnostic(diagnostic_op::error_A021_cannot_be_empty(name_of_instruction, to_check[0]->operand_range));
+        return false;
+    }
     // check second operand
     if (second == nullptr || (second->operand_identifier != "BACK" && second->operand_identifier != "FRONT"))
     {
