@@ -1481,8 +1481,7 @@ diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& op
 {
     return diagnostic_op(diagnostic_severity::warning,
         "D031",
-        " Operand value " + operand_value + " should be relocatable symbol. ",
-
+        "Operand value " + operand_value + " should be a relocatable symbol",
         range);
 }
 
