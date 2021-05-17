@@ -107,12 +107,6 @@ public:
     // insert EOLLN token to the token queue
     void insert_EOLLN();
 
-    void ainsert_front(const std::string&);
-    void ainsert_back(const std::string&);
-    // executes AREAD instruction; consumes line from input
-    std::string aread();
-    std::unique_ptr<input_source>& get_ainsert_stream();
-
     static bool ord_char(char_t c);
 
     // is next input char an ord char?
@@ -143,11 +137,6 @@ private:
     bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
     bool creating_attr_ref_ = false;
-    // insert string to the ainsert stream; to the front=True or to the end (front=False)
-    void ainsert(const std::string& inp, bool front);
-    std::unique_ptr<input_source> ainsert_stream_;
-    // must be dequeue - inserting & poping from both ends
-    std::deque<UTF32String> ainsert_buffer_;
 
     std::set<size_t> tokens_after_continuation_;
     size_t last_token_id_ = 0;
@@ -188,9 +177,7 @@ private:
     };
 
     input_state file_input_state_;
-    input_state buffer_input_state_;
     input_state* input_state_ = &file_input_state_;
-    bool from_buffer() const;
 
     // captures lexer state at the beginning of a token
     input_state token_start_state_;
@@ -203,8 +190,6 @@ private:
 
     // captures lexer state at the beginning of a token
     void start_token();
-    // switches to AINSERT buffer if not empty, otherwise back to the file input
-    void switch_input_streams();
     // lex beginning of the line
     void lex_begin();
     // lex last part of line; eolln==true creates EOLLN token
