@@ -12,10 +12,10 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "analyzer.h"
-
 #ifndef HLASMPLUGIN_PARSERLIBRARY_MACRO_CACHE_H
 #define HLASMPLUGIN_PARSERLIBRARY_MACRO_CACHE_H
+
+#include "analyzer.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 

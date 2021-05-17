@@ -55,8 +55,7 @@ id_storage::const_pointer id_storage::add(std::string value, bool is_uri)
     return &*lit_.insert(std::move(value)).first;
 }
 
-hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_known_strings(
-    std::unordered_set<std::string>& ptr)
+id_storage::well_known_strings::well_known_strings(std::unordered_set<std::string>& ptr)
     : COPY(&*ptr.emplace("COPY").first)
     , SETA(&*ptr.emplace("SETA").first)
     , SETB(&*ptr.emplace("SETB").first)
@@ -72,8 +71,8 @@ hlasm_plugin::parser_library::context::id_storage::well_known_strings::well_know
     , MEXIT(&*ptr.emplace("MEXIT").first)
     , ASPACE(&*ptr.emplace("ASPACE").first)
     , AIF(&*ptr.emplace("AIF").first)
+    , AGO(&*ptr.emplace("AGO").first)
     , ACTR(&*ptr.emplace("ACTR").first)
     , AREAD(&*ptr.emplace("AREAD").first)
-    , AGO(&*ptr.emplace("AGO").first)
     , empty(&*ptr.emplace("").first)
 {}

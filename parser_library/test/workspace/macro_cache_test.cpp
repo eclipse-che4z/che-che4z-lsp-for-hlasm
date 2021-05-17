@@ -353,8 +353,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
        MAC
 )";
     std::string copy_file_name = "lib/COPYFILE";
-    std::string copy_text =
-        R"( LR 1,1 arbitrary instruction)";
+    std::string copy_text = R"( LR 1,1 arbitrary instruction)";
 
     file_manager_cache_test_mock file_mngr;
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
