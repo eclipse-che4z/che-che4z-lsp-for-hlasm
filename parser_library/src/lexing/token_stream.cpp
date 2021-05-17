@@ -41,14 +41,10 @@ void token_stream::rewind_input(lexer::stream_position pos)
 
     lexer_tmp.rewind_input(pos);
 
-    if (_tokens.back()->getType() != lexer::EOLLN
-        || (_tokens.size() > 1 && _tokens[_tokens.size() - 2]->getType() == lexer::EOLLN))
-    {
-        auto index_tmp = _tokens.back()->getTokenIndex();
-        _tokens.pop_back();
-        lexer_tmp.delete_token(index_tmp);
-        _p = _tokens.size();
-    }
+    auto index_tmp = _tokens.back()->getTokenIndex();
+    _tokens.pop_back();
+    lexer_tmp.delete_token(index_tmp);
+    _p = _tokens.size();
 
     _fetchedEOF = false;
     sync(_p);

@@ -81,8 +81,6 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
-
     lexing::token_stream& input;
     analyzing_context* ctx = nullptr;
     context::hlasm_context* hlasm_ctx = nullptr;

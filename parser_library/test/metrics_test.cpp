@@ -72,13 +72,13 @@ TEST_F(benchmark_test, lines)
     setUpAnalyzer("a\nb\nc\nd");
     EXPECT_EQ(a->get_metrics().lines, (size_t)4);
 
-    setUpAnalyzer("\n");
+    setUpAnalyzer("\n\n");
     // also counts empty lines as lines
     EXPECT_EQ(a->get_metrics().lines, (size_t)2);
 
     setUpAnalyzer(" LR 1,1\n MAC 1\n COPY COPYFILE");
-    // 3 open code + 2 copy + 5 macro
-    EXPECT_EQ(a->get_metrics().lines, (size_t)10);
+    // 3 open code + 2 copy + 4 macro
+    EXPECT_EQ(a->get_metrics().lines, (size_t)9);
 }
 
 TEST_F(benchmark_test, macro_statements)

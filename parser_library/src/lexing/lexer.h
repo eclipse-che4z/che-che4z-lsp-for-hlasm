@@ -104,8 +104,6 @@ public:
     void set_continuation_enabled(bool);
     // enable ictl
     void set_ictl();
-    // insert EOLLN token to the token queue
-    void insert_EOLLN();
 
     static bool ord_char(char_t c);
 
@@ -192,8 +190,8 @@ private:
     void start_token();
     // lex beginning of the line
     void lex_begin();
-    // lex last part of line; eolln==true creates EOLLN token
-    void lex_end(bool);
+    // lex last part of line
+    void lex_end();
     void lex_comment();
     // lex continuation & everything until the EOL (which is lexed as IGNORED token)
     void lex_continuation();

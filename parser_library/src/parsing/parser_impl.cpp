@@ -181,19 +181,6 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     }
 }
 
-void parser_impl::set_source_indices(const antlr4::Token* start, const antlr4::Token* stop)
-{
-    assert(stop);
-    size_t start_offset;
-
-    if (start)
-        start_offset = start->getStartIndex();
-    else
-        start_offset = stop->getStartIndex();
-    // TODO: just keep hlasm_ctx???
-    ctx->hlasm_ctx->set_source_indices(start_offset, stop->getStopIndex() + 1, stop->getLine());
-}
-
 bool parser_impl::deferred()
 {
     auto& [format, opcode] = *proc_status;

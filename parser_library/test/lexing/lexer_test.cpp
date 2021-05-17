@@ -36,12 +36,10 @@ TEST(lexer_test, rntest)
 SPACE
 ORDSYMBOL
 SPACE
-EOLLN
 SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 EOF
 )";
 
@@ -59,31 +57,6 @@ EOF
     auto token_string = token_stream.str();
 
     ASSERT_EQ(token_string, out);
-}
-
-TEST(lexer_test, new_line_in_ignored)
-{
-    semantics::source_info_processor src_proc(false);
-    // test case, when a newline is in the first 15 ignored characters after continuation
-    lexing::input_source input(
-        R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
-        
-label lr 1,1)");
-    lexing::lexer l(&input, &src_proc);
-    lexing::token_stream tokens(&l);
-    parser parser(&tokens);
-
-    tokens.fill();
-
-    std::stringstream token_stream;
-    size_t eolln_count = 0;
-    for (auto token : tokens.getTokens())
-    {
-        if (parser.getVocabulary().getSymbolicName(token->getType()) == "EOLLN")
-            ++eolln_count;
-    }
-
-    EXPECT_EQ(eolln_count, (size_t)2);
 }
 
 TEST(lexer_test, unlimited_line)
@@ -110,7 +83,6 @@ SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 IGNORED
 SPACE
 ORDSYMBOL
@@ -118,7 +90,6 @@ SPACE
 NUM
 SPACE
 ORDSYMBOL
-EOLLN
 IGNORED
 SPACE
 ORDSYMBOL
@@ -133,7 +104,6 @@ SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 EOF
 )";
 
@@ -164,19 +134,14 @@ REWIND2
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 ORDSYMBOL
 ORDSYMBOL
-EOLLN
 ORDSYMBOL
-EOLLN
 SPACE
 ORDSYMBOL
 ORDSYMBOL
-EOLLN
 SPACE
 ORDSYMBOL
-EOLLN
 EOF
 )";
     lexing::input_source input(in);

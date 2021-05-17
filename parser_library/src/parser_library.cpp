@@ -48,8 +48,7 @@ void parser_library::parse(const std::string& src)
     {
         auto type = token->getType();
         std::cout << vocab.getSymbolicName(type);
-        if (type != lexer::Tokens::EOLLN && type != lexer::Tokens::SPACE && type != lexer::Tokens::CONTINUATION
-            && type != lexer::Tokens::IGNORED)
+        if (type != lexer::Tokens::SPACE && type != lexer::Tokens::CONTINUATION && type != lexer::Tokens::IGNORED)
             std::cout << "---"
                       << "\"" << token->getText() << "\"";
         std::cout << std::endl;

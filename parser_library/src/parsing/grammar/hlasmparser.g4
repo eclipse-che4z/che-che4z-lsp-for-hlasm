@@ -86,7 +86,7 @@ options {
 /*
 program :  ictl? prcs*  program_block  EOF;
 
-ictl: { _input->LT(2)->getText() == "ICTL" }? SPACE ORDSYMBOL SPACE ictl_begin EOLLN{ analyzer.get_lexer()->set_ictl(); };
+ictl: { _input->LT(2)->getText() == "ICTL" }? SPACE ORDSYMBOL SPACE ictl_begin EOF{ analyzer.get_lexer()->set_ictl(); };
 
 ictl_begin: IDENTIFIER ictl_end? 
 				{ 
@@ -125,7 +125,7 @@ ictl_continue:  { analyzer.get_lexer()->set_continuation_enabled(false); }
 
 
 prcs: PROCESS SPACE (assembler_options
-									| (ORDSYMBOL { $ORDSYMBOL.text == "OVERRIDE" }? LPAR assembler_options RPAR)) EOLLN;
+									| (ORDSYMBOL { $ORDSYMBOL.text == "OVERRIDE" }? LPAR assembler_options RPAR)) EOF;
 
 
 assembler_options: assembler_option (COMMA assembler_option)*;
@@ -162,26 +162,23 @@ first_part
 	};
 
 operand_field_rest
-	: ~EOLLN*;
+	: .*?;
 
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOLLN
+	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOF
 	{
-		set_source_indices($first_part.ctx->getStart(), $EOLLN);
 		if (!$first_part.ctx->exception)
 		{
 			$op_text = $operand_field_rest.ctx->getText();
 			$op_range = provider.get_range($operand_field_rest.ctx);
 		}
 	}
-	| SPACE? EOLLN
+	| SPACE? EOF
 	{
 		collector.set_label_field(provider.get_range( _localctx));
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
-		set_source_indices($SPACE, $EOLLN);
-	}
-	| EOF	{finished_flag=true;};
+	};
 
 num_ch
 	: NUM+;
@@ -271,14 +268,3 @@ minus
 	: MINUS {collector.add_hl_symbol(token_info(provider.get_range( $MINUS),hl_scopes::operator_symbol)); };
 plus 
 	: PLUS {collector.add_hl_symbol(token_info(provider.get_range( $PLUS),hl_scopes::operator_symbol)); };
-
-
-
-
-expr_statement
-	: expr
-	| tmp=expr_statement EOLLN expr
-	;
-
-expr_test
-	:  expr_statement EOLLN EOF	;

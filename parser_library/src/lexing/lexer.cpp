@@ -151,8 +151,8 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
         assert(!eof_generated_);
         eof_generated_ = true;
     }
-    /* do not generate empty tokens (except EOF and EOLLN */
-    if (token_start_state_.char_position == token_start_state_.input->index() && ttype != Token::EOF && ttype != EOLLN)
+    /* do not generate empty tokens (except EOF) */
+    if (token_start_state_.char_position == token_start_state_.input->index() && ttype != Token::EOF)
         return;
 
     /* mark first token after continuation */
@@ -218,8 +218,6 @@ void lexer::consume()
 {
     if (input_state_->c == '\n')
     {
-        if (metrics_)
-            metrics_->lines++;
         input_state_->line++;
         input_state_->char_position_in_line = static_cast<size_t>(-1);
         input_state_->char_position_in_line_utf16 = static_cast<size_t>(-1);
@@ -267,8 +265,6 @@ token_ptr lexer::nextToken()
         if (!token_queue_.empty())
         {
             auto t = move(token_queue_.front());
-            if (t->getType() == EOLLN)
-                set_last_line_pos(t->getStopIndex() + 1, t->getLine());
             token_queue_.pop();
             return t;
         }
@@ -279,7 +275,6 @@ token_ptr lexer::nextToken()
 
         if (eof())
         {
-            create_token(EOLLN);
             create_token(Token::EOF);
         }
 
@@ -292,7 +287,7 @@ token_ptr lexer::nextToken()
 
         else if ((unlimited_line_ && (input_state_->c == '\r' || input_state_->c == '\n'))
             || (!unlimited_line_ && input_state_->char_position_in_line >= end_))
-            lex_end(true);
+            lex_end();
 
         else if (input_state_->char_position_in_line < begin_)
             lex_begin();
@@ -414,11 +409,9 @@ void lexer::lex_tokens()
             consume();
             if (input_state_->c == '\n')
                 consume();
-            create_token(EOLLN);
             break;
         case '\n':
             consume();
-            create_token(EOLLN);
             break;
 
         case '|':
@@ -464,7 +457,7 @@ void lexer::lex_begin()
     create_token(IGNORED, HIDDEN_CHANNEL);
 }
 
-void lexer::lex_end(bool eolln)
+void lexer::lex_end()
 {
     start_token();
     while (input_state_->c != '\n' && !eof() && input_state_->c != (char_t)-1)
@@ -474,8 +467,6 @@ void lexer::lex_end(bool eolln)
     {
         last_line_pos_ = input_state_->char_position_in_line;
         consume();
-        if (eolln)
-            create_token(EOLLN);
     }
     if (double_byte_enabled_)
         check_continuation();
@@ -495,7 +486,7 @@ void lexer::lex_comment()
             lex_continuation();
         else
         {
-            lex_end(false);
+            lex_end();
             set_last_line_pos(input_state_->char_position, token_start_state_.line);
 
             break;
@@ -526,7 +517,7 @@ void lexer::lex_continuation()
 
     create_token(CONTINUATION, HIDDEN_CHANNEL);
 
-    lex_end(false);
+    lex_end();
     lex_begin();
 
     /* lex continuation */
@@ -674,25 +665,6 @@ bool lexer::is_process() const
 
 void lexer::set_ictl() { ictl_ = true; }
 
-void lexer::insert_EOLLN()
-{
-    last_token_id_++;
-
-    token_queue_.push(factory_->create(this,
-        token_start_state_.input,
-        EOLLN,
-        DEFAULT_CHANNEL,
-        token_start_state_.char_position,
-        input_state_->char_position - 1,
-        token_start_state_.line,
-        token_start_state_.char_position_in_line,
-        last_token_id_ - 1,
-        token_start_state_.char_position_in_line_utf16,
-        input_state_->char_position_in_line_utf16));
-
-    eof_generated_ = false;
-}
-
 void lexer::lex_process()
 {
     /* lex *PROCESS */
@@ -713,7 +685,7 @@ void lexer::lex_process()
         lex_tokens();
     }
     end_--;
-    lex_end(true);
+    lex_end();
 }
 
 

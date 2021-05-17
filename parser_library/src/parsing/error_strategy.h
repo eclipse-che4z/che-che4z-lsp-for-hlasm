@@ -39,7 +39,6 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         // recovery strategy
         antlr4::misc::IntervalSet endTokens;
 
-        endTokens.addItems(tokens::EOLLN);
         consumeUntil(recognizer, endTokens);
 
         beginErrorCondition(recognizer);

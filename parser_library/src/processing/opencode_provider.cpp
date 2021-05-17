@@ -107,6 +107,7 @@ bool opencode_provider::feed_line()
 
     m_parser->input->reset("");
     bool first_line = true;
+    m_current_logical_line.segments.back().eol = lexing::logical_line_segment_eol::none; // do not add the last EOL
     for (auto& s : m_current_logical_line.segments)
     {
         if (!first_line)
@@ -149,6 +150,8 @@ bool opencode_provider::feed_line()
 
     m_parser->parser->get_collector().prepare_for_next_statement();
 
+    m_ctx->hlasm_ctx->metrics.lines += m_current_logical_line.segments.size();
+
     return true;
 }
 bool opencode_provider::process_comment()
@@ -184,6 +187,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
         return nullptr;
 
     auto& collector = m_parser->parser->get_collector();
+
+    collector.prepare_for_next_statement();
 
     parsing::shared_stmt_ptr result;
     if (proc.kind == processing::processing_kind::LOOKAHEAD)
@@ -368,8 +373,6 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
             m_src_proc->process_hl_symbols(collector.extract_hl_symbols());
         }
     }
-
-    collector.prepare_for_next_statement();
 
     return result;
 }

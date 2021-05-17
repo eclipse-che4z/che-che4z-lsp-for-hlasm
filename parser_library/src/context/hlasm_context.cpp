@@ -412,12 +412,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
     return ret;
 }
 
-void hlasm_context::fill_metrics_files()
-{
-    metrics.files = visited_files_.size();
-    // for each line without '\n' at the end of the files
-    metrics.lines += metrics.files;
-}
+void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size(); }
 
 const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_; }
 
