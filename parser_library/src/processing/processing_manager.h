@@ -49,6 +49,9 @@ public:
 
     void collect_diags() const override;
 
+    auto& opencode_parser() { return opencode_prov_.parser(); }
+    bool feed_opencode_line() { return opencode_prov_.feed_line(); }
+
 private:
     analyzing_context ctx_;
     context::hlasm_context& hlasm_ctx_;

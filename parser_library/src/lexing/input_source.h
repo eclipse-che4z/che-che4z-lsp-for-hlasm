@@ -30,7 +30,7 @@ public:
     input_source(const std::string& input);
 
     void append(const UTF32String& str);
-    void append(const std::string& str);
+    void append(std::string_view str);
     using antlr4::ANTLRInputStream::reset;
     void reset(const std::string& str);
     void rewind_input(size_t index);

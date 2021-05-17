@@ -24,10 +24,11 @@ auto parse_model(std::string s, range r, bool after_substitution = false)
 {
     std::string input(" LR &var,1");
     analyzer a(input);
-    return a.parser().parse_operand_field(std::move(s),
-        after_substitution,
-        range_provider(r, adjusting_state::NONE),
-        std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()));
+    return statement_fields_parser(a.context().hlasm_ctx.get())
+        .parse_operand_field(std::move(s),
+            after_substitution,
+            range_provider(r, adjusting_state::NONE),
+            std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()));
 }
 
 TEST(parser, parse_model)

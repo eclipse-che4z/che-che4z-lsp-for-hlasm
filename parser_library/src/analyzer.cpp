@@ -49,29 +49,23 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
     , ctx_(std::move(opts.get_context()))
     , listener_(opts.file_name)
     , src_proc_(opts.collect_hl_info)
-    , input_(text)
-    , lexer_(&input_, &src_proc_, &ctx_.hlasm_ctx->metrics)
-    , tokens_(&lexer_)
-    , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(std::unique_ptr<processing::opencode_provider>(parser_),
+    , field_parser_(ctx_.hlasm_ctx.get())
+    , mngr_(std::make_unique<processing::opencode_provider>(
+                text, ctx_, opts.get_lib_provider(), mngr_, src_proc_, listener_),
           ctx_,
           opts.library_data,
           opts.file_name,
           text,
           opts.get_lib_provider(),
-          *parser_)
-{
-    parser_->initialize(ctx_, &src_proc_, &opts.get_lib_provider(), &mngr_);
-    parser_->setErrorHandler(std::make_shared<error_strategy>());
-    parser_->removeErrorListeners();
-    parser_->addErrorListener(&listener_);
-}
+          field_parser_)
+{}
 
 analyzing_context analyzer::context() { return ctx_; }
 
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
-parsing::hlasmparser& analyzer::parser() { return *parser_; }
+parsing::hlasmparser& analyzer::parser() { return mngr_.opencode_parser(); }
+bool analyzer::feed_line() { return mngr_.feed_opencode_line(); }
 
 const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 

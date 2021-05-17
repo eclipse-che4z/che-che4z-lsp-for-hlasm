@@ -115,7 +115,7 @@ TEST_F(benchmark_test, copy_statements)
 
 TEST_F(benchmark_test, open_code_statements)
 {
-    setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n");
+    setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n\n");
     // 2 actual statements and 1 empty
     EXPECT_EQ(a->get_metrics().open_code_statements, (size_t)3);
 }

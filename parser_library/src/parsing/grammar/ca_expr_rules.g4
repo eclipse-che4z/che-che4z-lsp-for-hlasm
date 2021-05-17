@@ -175,11 +175,12 @@ expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
 	{
 		$ca_exprs.push_back(std::move($expr.ca_expr));
 	}
-	| tmp=expr_comma_c comma expr
-	{
-		$tmp.ca_exprs.push_back(std::move($expr.ca_expr));
-		$ca_exprs = std::move($tmp.ca_exprs);
-	};
+	(
+		comma next=expr
+		{
+			$ca_exprs.push_back(std::move($next.ca_expr));
+		}
+	)*;
 
 
 

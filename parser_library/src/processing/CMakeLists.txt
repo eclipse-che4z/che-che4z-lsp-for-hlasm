@@ -15,12 +15,14 @@ target_sources(parser_library PRIVATE
 	context_manager.cpp
 	context_manager.h
 	op_code.h
+	opencode_provider.cpp
 	opencode_provider.h
 	processing_format.h
 	processing_manager.cpp
 	processing_manager.h
 	processing_state_listener.h
 	statement.h
+	statement_fields_parser.cpp
 	statement_fields_parser.h
 )
 

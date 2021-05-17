@@ -24,6 +24,7 @@ using namespace hlasm_plugin::parser_library;
 std::unique_ptr<semantics::operand> data_def_op_from_string(std::string input)
 {
     analyzer a(input);
+    a.feed_line();
     auto f = a.parser().data_def();
     return std::make_unique<semantics::data_def_operand>(std::move(f->value), range());
 }

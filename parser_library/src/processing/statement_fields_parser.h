@@ -20,6 +20,10 @@
 #include "semantics/range_provider.h"
 #include "semantics/statement_fields.h"
 
+namespace hlasm_plugin::parser_library::parsing {
+struct parser_holder;
+} // namespace hlasm_plugin::parser_library::parsing
+
 namespace hlasm_plugin::parser_library::processing {
 
 class statement_provider;
@@ -28,15 +32,19 @@ using provider_ptr = std::unique_ptr<statement_provider>;
 // interface for objects parsing deferred statement fields
 class statement_fields_parser
 {
+    std::unique_ptr<parsing::parser_holder> m_parser;
+    context::hlasm_context* m_hlasm_ctx;
+
 public:
     using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;
 
-    virtual parse_result parse_operand_field(std::string field,
+    parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
-        processing::processing_status status) = 0;
+        processing::processing_status status);
 
-    virtual ~statement_fields_parser() = default;
+    statement_fields_parser(context::hlasm_context* hlasm_ctx);
+    ~statement_fields_parser();
 };
 
 } // namespace hlasm_plugin::parser_library::processing

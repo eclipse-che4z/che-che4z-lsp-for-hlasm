@@ -133,6 +133,7 @@ TEST(data_definition, duplication_factor)
 
     std::string input = "13C'A'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -148,6 +149,7 @@ TEST(data_definition, duplication_factor_expr)
 
     std::string input = "(13*2)C'A'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -163,6 +165,7 @@ TEST(data_definition, duplication_factor_out_of_range)
 
     std::string input = "1231312123123123123C'A'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -178,6 +181,7 @@ TEST(data_definition, duplication_factor_invalid_number)
 
     std::string input = "-C'A'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -193,6 +197,7 @@ TEST(data_definition, all_fields)
 
     std::string input = "(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -216,6 +221,7 @@ TEST(data_definition, no_nominal)
 
     std::string input = "0FDL2";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -236,6 +242,7 @@ TEST(data_definition, no_nominal_expr)
 
     std::string input = "0FDL(2+2)";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -256,6 +263,7 @@ TEST(data_definition, bit_length)
 
     std::string input = "(1*8)FDP(123)L.2S-8E(-12*2)'2.25'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -278,6 +286,7 @@ TEST(data_definition, unexpected_dot)
 
     std::string input = "(1*8)FDL.2S.-8E(-12*2)'2.25'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -300,6 +309,7 @@ TEST(data_definition, unexpected_minus)
 
     std::string input = "(1*8)FDL.2S.-E(-12*2)'2.25'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);
@@ -312,6 +322,7 @@ TEST(data_definition, wrong_modifier_order)
 
     std::string input = "1HL-12P(123)S1'1.25'";
     analyzer a(input);
+    a.feed_line();
     auto res = a.parser().data_def();
 
     auto parsed = std::move(res->value);

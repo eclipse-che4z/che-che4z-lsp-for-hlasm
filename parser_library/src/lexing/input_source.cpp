@@ -25,7 +25,7 @@ input_source::input_source(const std::string& input)
 
 void input_source::append(const UTF32String& str) { _data.append(str); }
 
-void input_source::append(const std::string& str)
+void input_source::append(std::string_view str)
 {
     p = _data.size();
     _data.append(antlrcpp::utf8_to_utf32(str.data(), str.data() + str.size()));
