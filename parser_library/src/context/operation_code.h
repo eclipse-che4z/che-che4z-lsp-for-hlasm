@@ -15,6 +15,8 @@
 #ifndef CONTEXT_OPERATION_CODE_H
 #define CONTEXT_OPERATION_CODE_H
 
+#include <variant>
+
 #include "id_storage.h"
 #include "instruction.h"
 #include "macro.h"
@@ -24,18 +26,17 @@ namespace hlasm_plugin::parser_library::context {
 // structure that represents operation code of an instruction
 struct opcode_t
 {
-    macro_def_ptr macro_opcode;
+    using opcode_variant = std::variant<std::monostate,
+        const ca_instruction*,
+        const assembler_instruction*,
+        const machine_instruction*,
+        const mnemonic_code*,
+        macro_def_ptr>;
 
-    id_index machine_opcode;
-    instruction::instruction_array machine_source;
+    id_index opcode = nullptr;
+    opcode_variant opcode_detail;
 
-    opcode_t()
-        : macro_opcode(nullptr)
-        , machine_opcode(nullptr)
-        , machine_source(instruction::instruction_array::CA)
-    {}
-
-    explicit operator bool() const { return macro_opcode || machine_opcode; }
+    explicit operator bool() const { return !std::holds_alternative<std::monostate>(opcode_detail); }
 };
 
 } // namespace hlasm_plugin::parser_library::context

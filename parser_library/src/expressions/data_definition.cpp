@@ -220,8 +220,8 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     for (const auto& expr_or_addr : nominal_value->access_exprs()->exprs)
     {
         const mach_expression* expr = std::get<mach_expr_ptr>(expr_or_addr).get();
-        auto symbol = dynamic_cast<const mach_expr_symbol*>(expr);
-        symbols.push_back(symbol->value);
+        const auto& symbol = dynamic_cast<const mach_expr_symbol&>(*expr);
+        symbols.push_back(symbol.value);
     }
     return symbols;
 }

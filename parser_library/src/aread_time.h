@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2021 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,30 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
-#define HLASMPLUGIN_PARSERLIBRARY_MESSAGE_CONSUMER_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_AREAD_TIME_H
+#define HLASMPLUGIN_PARSERLIBRARY_AREAD_TIME_H
 
+#include <chrono>
 #include <string>
 
 namespace hlasm_plugin::parser_library {
-
-enum class message_type
-{
-    MT_ERROR = 1,
-    MT_WARNING = 2,
-    MT_INFO = 3,
-    MT_LOG = 4
-};
-
-class message_consumer
-{
-public:
-    virtual void show_message(const std::string& message, message_type type) = 0;
-
-protected:
-    ~message_consumer() = default;
-};
-
+std::string time_to_clockb(std::chrono::nanoseconds d);
+std::string time_to_clockd(std::chrono::nanoseconds d);
 } // namespace hlasm_plugin::parser_library
 
-#endif
+#endif // HLASMPLUGIN_PARSERLIBRARY_AREAD_TIME_H

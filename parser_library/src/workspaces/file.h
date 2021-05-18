@@ -48,6 +48,9 @@ public:
     virtual void did_change(std::string new_text) = 0;
     virtual void did_change(range range, std::string new_text) = 0;
     virtual void did_close() = 0;
+
+protected:
+    ~file() = default;
 };
 
 

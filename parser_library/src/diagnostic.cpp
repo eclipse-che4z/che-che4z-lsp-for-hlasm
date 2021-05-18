@@ -1780,6 +1780,18 @@ diagnostic_op diagnostic_op::error_E068(const range& range)
         diagnostic_severity::error, "E068", "Operand value falls outside of current section/LOCTR", range);
 }
 
+diagnostic_op diagnostic_op::error_E069(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E069", "AREAD instruction can only be called from within a macro", range);
+}
+
+diagnostic_op diagnostic_op::error_E070(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E070", "Invalid AREAD operand. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);

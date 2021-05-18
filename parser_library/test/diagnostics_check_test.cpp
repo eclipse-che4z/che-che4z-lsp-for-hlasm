@@ -25,8 +25,8 @@ TEST(diagnostics, overall_correctness)
  ACONTROL COMPAT(CASE)
  CATTR DEFLOAD,FILL(3)
  CATTR FILL(3)
- AINSERT 'abc',BACK
-&x setc 'abc'
+ AINSERT ' sam64',BACK
+&x setc ' sam64'
  AINSERT '&x',BACK
 )");
     analyzer a(input);
@@ -43,7 +43,7 @@ TEST(diagnostics, string_substitution)
 {
     std::string input(
         R"( 
-&x setc '10'
+&x setc '* 10'
  AINSERT '&x',BACK
 
 &a seta 31
@@ -143,7 +143,7 @@ TEST(diagnostics, case_insensitivity)
         R"( 
  AcOnTROL NoAfPR,compat(CaSe,cASE),FLAG(USING0),OPTABLE(zs5,LIsT)
  ADATA -300,2*100,2,3,'TEST'
- AINSERT 'test',bacK
+ AINSERT ' sAm31 this needs to be valid code',bacK
  AMODE any31
  CATTR rMODE(31),ALIgn(2)
 )");
@@ -247,7 +247,7 @@ TEST(diagnostics,
  ACONTROL NOAFPR,COMPAT(CASE,NOCASE),FLAG(USING0,AL),OPTABLE(ZS5,LIST)
  ACONTROL NOTYPECHECK,TYPECHECK(MAGNITUDE,NOREG),OPTABLE(DOS)
  ADATA -300,2*100,2,3,'test'
- AINSERT 'test',BACK
+ AINSERT ' sam24 this must be valid code',BACK
  AMODE ANY31
  CATTR RMODE(31),ALIGN(2)
  CATTR ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PRIORITY(2)

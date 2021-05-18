@@ -55,6 +55,9 @@ public:
 
     bool is_last_line() const;
     void rewind_input(context::source_position pos) override;
+    std::string aread() override;
+    void ainsert(const std::string& record, processing::ainsert_destination front) override;
+
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
@@ -92,9 +95,9 @@ protected:
 
     lexing::token_stream& input;
     analyzing_context ctx;
-    context::hlasm_context* hlasm_ctx;
-    semantics::source_info_processor* src_proc;
-    const processing::statement_processor* processor;
+    context::hlasm_context* hlasm_ctx = nullptr;
+    semantics::source_info_processor* src_proc = nullptr;
+    const processing::statement_processor* processor = nullptr;
     context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
     bool finished_flag;
@@ -114,8 +117,9 @@ protected:
 
 private:
     std::unique_ptr<parser_holder> rest_parser_;
-    workspaces::parse_lib_provider* lib_provider_;
-    processing::processing_state_listener* state_listener_;
+    workspaces::parse_lib_provider* lib_provider_ = nullptr;
+    processing::processing_state_listener* state_listener_ = nullptr;
+    lexing::lexer* input_lexer = nullptr;
 
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
@@ -136,6 +140,8 @@ private:
     void transform_imm_reg_operands(semantics::collector& col, context::id_index instruction);
 
     antlr4::misc::IntervalSet getExpectedTokens() override;
+
+    bool input_tokens_invalidated = false;
 };
 
 // structure containing parser components

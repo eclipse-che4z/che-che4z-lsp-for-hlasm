@@ -107,15 +107,15 @@ TEST(context, OPSYN)
     auto mv = ctx.ids().add("MV");
 
     ctx.add_mnemonic(lr, st);
-    EXPECT_EQ(ctx.get_operation_code(lr).machine_opcode, st);
+    EXPECT_EQ(ctx.get_operation_code(lr).opcode, st);
 
     ctx.add_mnemonic(mv, lr);
-    EXPECT_EQ(ctx.get_operation_code(mv).machine_opcode, st);
+    EXPECT_EQ(ctx.get_operation_code(mv).opcode, st);
 
     ctx.remove_mnemonic(lr);
-    EXPECT_EQ(ctx.get_operation_code(lr).machine_opcode, nullptr);
+    EXPECT_EQ(ctx.get_operation_code(lr).opcode, nullptr);
 
-    EXPECT_EQ(ctx.get_operation_code(mvc).machine_opcode, mvc);
+    EXPECT_EQ(ctx.get_operation_code(mvc).opcode, mvc);
 }
 
 TEST(context_set_vars, set_scalar)

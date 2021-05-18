@@ -26,7 +26,7 @@ namespace hlasm_plugin::parser_library::processing {
 class low_language_processor : public instruction_processor, public context::loctr_dependency_resolver
 {
 public:
-    static void check(const resolved_statement& stmt,
+    static bool check(const resolved_statement& stmt,
         context::hlasm_context& hlasm_ctx,
         checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
@@ -87,7 +87,7 @@ private:
         diagnostic_collector collector,
         const resolved_statement& stmt,
         size_t op_position,
-        const std::string* mnemonic = nullptr);
+        const context::mnemonic_code* mnemonic = nullptr);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

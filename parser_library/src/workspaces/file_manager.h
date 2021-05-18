@@ -66,6 +66,9 @@ public:
     virtual void did_change_file(
         const std::string& document_uri, version_t version, const document_change* changes, size_t ch_size) = 0;
     virtual void did_close_file(const std::string& document_uri) = 0;
+
+protected:
+    ~file_manager() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::workspaces

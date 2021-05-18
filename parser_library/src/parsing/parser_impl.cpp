@@ -47,12 +47,11 @@ void parser_impl::initialize(analyzing_context a_ctx,
     finished_flag = false;
     lib_provider_ = lib_provider;
     state_listener_ = state_listener;
+
+    input_lexer = &dynamic_cast<lexing::lexer&>(*_input->getTokenSource());
 }
 
-bool parser_impl::is_last_line() const
-{
-    return dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).is_last_line();
-}
+bool parser_impl::is_last_line() const { return input_lexer->is_last_line(); }
 
 void parser_impl::rewind_input(context::source_position pos)
 {
@@ -61,15 +60,43 @@ void parser_impl::rewind_input(context::source_position pos)
     input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset });
 }
 
+std::string parser_impl::aread()
+{
+    std::string line = input_lexer->aread();
+
+    if (input_lexer->eof_generated())
+        finished_flag = true;
+    input_tokens_invalidated = true;
+
+    if (!line.empty())
+        line.resize(80, ' ');
+    return line;
+}
+
+void parser_impl::ainsert(const std::string& record, processing::ainsert_destination dest)
+{
+    switch (dest)
+    {
+        case ainsert_destination::back:
+            input_lexer->ainsert_back(record);
+            break;
+        case ainsert_destination::front:
+            input_lexer->ainsert_front(record);
+            break;
+    }
+    // TODO: this needs to be really reworked...
+    input_tokens_invalidated = true;
+}
+
 context::source_position parser_impl::statement_start() const
 {
-    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_begin_position();
+    auto pos = input_lexer->last_lln_begin_position();
     return { pos.line, pos.offset };
 }
 
 context::source_position parser_impl::statement_end() const
 {
-    auto pos = dynamic_cast<lexing::lexer&>(*_input->getTokenSource()).last_lln_end_position();
+    auto pos = input_lexer->last_lln_end_position();
     return { pos.line, pos.offset };
 }
 
@@ -337,6 +364,13 @@ bool parser_impl::process_statement()
 
 context::shared_stmt_ptr parser_impl::get_next(const statement_processor& proc)
 {
+    if (input_tokens_invalidated)
+    {
+        input_tokens_invalidated = false;
+
+        input.reset();
+        reset();
+    }
     processor = &proc;
 
     if (proc.kind == processing::processing_kind::LOOKAHEAD)

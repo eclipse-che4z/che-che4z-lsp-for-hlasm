@@ -44,6 +44,19 @@ TEST(logical_expressions, valid_assignment)
     SETBEQ("A2", 0);
 }
 
+TEST(logical_expressions, empty_string_conversion)
+{
+    std::string input = R"(
+&C1 SETC ''
+&B1 SETB &C1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+}
+
 TEST(logical_expressions, invalid_assignment)
 {
     std::string input =

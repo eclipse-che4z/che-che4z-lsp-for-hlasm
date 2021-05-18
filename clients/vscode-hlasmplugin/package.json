@@ -339,7 +339,7 @@
           "default": 10,
           "description": "This option limits number of diagnostics shown for an open code when there is no configuration in pgm_conf.json."
         },
-        "hlasm.communicationMethod": {
+        "hlasm.serverVariant": {
           "type": "string",
           "default": "native",
           "description": "Select language server variant - native, wasm, tcp.",
@@ -348,6 +348,11 @@
             "tcp",
             "wasm"
           ]
+        },
+        "hlasm.useAutodetection": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enables autodetection of HLASM source code for automatic setting of Language Mode."
         }
       }
     }

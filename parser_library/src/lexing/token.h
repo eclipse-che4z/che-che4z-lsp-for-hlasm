@@ -24,7 +24,7 @@
 
 namespace hlasm_plugin::parser_library::lexing {
 
-class token : public antlr4::Token
+class token final : public antlr4::Token
 {
 public:
     token(antlr4::TokenSource* source,
