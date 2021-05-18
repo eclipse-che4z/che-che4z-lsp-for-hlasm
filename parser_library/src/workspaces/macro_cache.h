@@ -75,7 +75,7 @@ struct macro_cache_data
     std::unique_ptr<analyzer> cached_analyzer;
 };
 
-class macro_cache : public diagnosable_impl
+class macro_cache final : public diagnosable_impl
 {
     std::map<macro_cache_key, macro_cache_data> cache_;
     const file_manager* file_mngr_;
