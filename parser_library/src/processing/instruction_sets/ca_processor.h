@@ -15,9 +15,12 @@
 #ifndef PROCESSING_CA_PROCESSOR_H
 #define PROCESSING_CA_PROCESSOR_H
 
+#include "aread_time.h"
 #include "instruction_processor.h"
 #include "processing/context_manager.h"
+#include "processing/opencode_provider.h"
 #include "processing/processing_state_listener.h"
+#include "semantics/operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -34,11 +37,14 @@ public:
     ca_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
-        processing_state_listener& listener);
+        processing_state_listener& listener,
+        opencode_provider& open_code);
 
     void process(context::shared_stmt_ptr stmt) override;
 
 private:
+    opencode_provider* open_code_;
+
     process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void register_seq_sym(const semantics::complete_statement& stmt);

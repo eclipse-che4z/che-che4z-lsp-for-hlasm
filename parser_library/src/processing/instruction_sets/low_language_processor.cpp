@@ -329,7 +329,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     return uniq;
 }
 
-void low_language_processor::check(const resolved_statement& stmt,
+bool low_language_processor::check(const resolved_statement& stmt,
     context::hlasm_context& hlasm_ctx,
     checking::instruction_checker& checker,
     const diagnosable_ctx& diagnoser)
@@ -357,10 +357,10 @@ void low_language_processor::check(const resolved_statement& stmt,
     }
 
     if (!operand_vector)
-        return;
+        return false;
 
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 
-    checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    return checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }

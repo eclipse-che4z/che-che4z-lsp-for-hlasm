@@ -55,6 +55,9 @@ public:
 
     bool is_last_line() const;
     void rewind_input(context::source_position pos) override;
+    std::string aread() override;
+    void ainsert(const std::string& record, processing::ainsert_destination front) override;
+
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
@@ -116,6 +119,7 @@ private:
     std::unique_ptr<parser_holder> rest_parser_;
     workspaces::parse_lib_provider* lib_provider_ = nullptr;
     processing::processing_state_listener* state_listener_ = nullptr;
+    lexing::lexer* input_lexer = nullptr;
 
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
@@ -135,6 +139,8 @@ private:
     void parse_lookahead_operands(const std::string& text, range text_range);
 
     antlr4::misc::IntervalSet getExpectedTokens() override;
+
+    bool input_tokens_invalidated = false;
 };
 
 // structure containing parser components

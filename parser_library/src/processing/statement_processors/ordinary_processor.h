@@ -19,6 +19,7 @@
 #include "processing/instruction_sets/ca_processor.h"
 #include "processing/instruction_sets/mach_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
+#include "processing/opencode_provider.h"
 #include "statement_processor.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -46,7 +47,8 @@ public:
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         processing_state_listener& state_listener,
-        statement_fields_parser& parser);
+        statement_fields_parser& parser,
+        opencode_provider& open_code);
 
     processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
     void process_statement(context::shared_stmt_ptr statement) override;
