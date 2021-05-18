@@ -21,7 +21,9 @@
 namespace hlasm_plugin::parser_library::context {
 
 struct address_resolver_base : public resolvable
-{};
+{
+    virtual ~address_resolver_base() = default;
+};
 
 using addr_res_ptr = std::unique_ptr<address_resolver_base>;
 

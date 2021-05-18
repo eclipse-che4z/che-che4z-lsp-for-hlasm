@@ -18,6 +18,7 @@
 #include "data_def_postponed_statement.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
+#include "expressions/mach_expr_visitor.h"
 #include "postponed_statement_impl.h"
 #include "processing/context_manager.h"
 
@@ -219,23 +220,23 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
             auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-            auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+            auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
             if (!data_op->value->length
                 || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                len = value->get_length_attribute();
+                len = value.get_length_attribute();
             }
             if (data_op->value->scale
                 && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
             {
-                scale = value->get_scale_attribute();
+                scale = value.get_scale_attribute();
             }
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 std::move(adr),
                 context::symbol_attributes(
-                    context::symbol_origin::DAT, type, len, scale, value->get_integer_attribute()));
+                    context::symbol_origin::DAT, type, len, scale, value.get_integer_attribute()));
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -495,9 +496,11 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
 asm_processor::asm_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
-    statement_fields_parser& parser)
+    statement_fields_parser& parser,
+    opencode_provider& open_code)
     : low_language_processor(ctx, branch_provider, lib_provider, parser)
     , table_(create_table(*ctx.hlasm_ctx))
+    , open_code_(&open_code)
 {}
 
 void asm_processor::process(context::shared_stmt_ptr stmt)
@@ -589,6 +592,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("AINSERT"), std::bind(&asm_processor::process_AINSERT, this, std::placeholders::_1));
 
     return table;
 }
@@ -605,6 +609,41 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
         default:
             return context::id_storage::empty_id;
     }
+}
+
+namespace {
+class AINSERT_operand_visitor final : public expressions::mach_expr_visitor
+{
+public:
+    // Inherited via mach_expr_visitor
+    void visit(const expressions::mach_expr_constant&) override {}
+    void visit(const expressions::mach_expr_data_attr&) override {}
+    void visit(const expressions::mach_expr_symbol& expr) override { value = expr.value; }
+    void visit(const expressions::mach_expr_location_counter&) override {}
+    void visit(const expressions::mach_expr_self_def&) override {}
+    void visit(const expressions::mach_expr_default&) override {}
+
+    context::id_index value = nullptr;
+};
+} // namespace
+
+void asm_processor::process_AINSERT(rebuilt_statement stmt)
+{
+    const auto& ops = stmt.operands_ref();
+
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
+
+    const auto& record = dynamic_cast<const semantics::string_assembler_operand&>(*ops.value[0]).value;
+    AINSERT_operand_visitor visitor;
+    dynamic_cast<const semantics::expr_assembler_operand&>(*ops.value[1]).expression->apply(visitor);
+    auto [value] = visitor;
+
+    if (!value)
+        return;
+    auto dest = *value == "FRONT" ? processing::ainsert_destination::front : processing::ainsert_destination::back;
+
+    open_code_->ainsert(record, dest);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

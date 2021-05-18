@@ -50,7 +50,8 @@ protected:
 
     bool is_once_only() const override { return true; }
 
-    virtual ~collectable_impl<T>() {};
+protected:
+    ~collectable_impl() = default;
 
 private:
     mutable typename collectable<T>::diagnostic_container container;

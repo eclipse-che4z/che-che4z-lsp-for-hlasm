@@ -123,7 +123,7 @@ public:
     // Returns type corresponding to specified type and extension.
     static const data_def_type* access_data_def_type(char type, char extension);
 
-    static const std::map<char, std::set<char>> types_extensions;
+    static const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> types_and_extensions;
 
     virtual ~data_def_type() = 0;
 

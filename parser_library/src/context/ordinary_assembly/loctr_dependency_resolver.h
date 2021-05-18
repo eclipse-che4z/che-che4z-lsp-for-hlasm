@@ -24,7 +24,8 @@ class loctr_dependency_resolver
 public:
     virtual void resolve_unknown_loctr_dependency(space_ptr sp, const context::address& addr, range err_range) = 0;
 
-    virtual ~loctr_dependency_resolver() = default;
+protected:
+    ~loctr_dependency_resolver() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::context

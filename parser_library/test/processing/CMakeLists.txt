@@ -11,6 +11,7 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
+	aread_test.cpp
 	ca_instr_test.cpp
 	copy_test.cpp
 	dc_test.cpp

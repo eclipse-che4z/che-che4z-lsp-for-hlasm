@@ -412,29 +412,7 @@ int32_t data_def_type::get_integer_attribute(
     return get_integer_attribute_impl(L, S);
 }
 
-const std::map<char, std::set<char>> data_def_type::types_extensions = {
-    { 'C', { 'A', 'E', 'U' } },
-    { 'G', {} },
-    { 'X', {} },
-    { 'B', {} },
-    { 'F', { 'D' } },
-    { 'H', {} },
-    { 'E', { 'H', 'B', 'D' } },
-    { 'D', { 'H', 'B', 'D' } },
-    { 'L', { 'H', 'B', 'D', 'Q' } },
-    { 'P', {} },
-    { 'Z', {} },
-    { 'A', { 'D' } },
-    { 'Y', {} },
-    { 'S', { 'Y' } },
-    { 'V', { 'D' } },
-    { 'J', { 'D' } },
-    { 'Q', { 'D', 'Y' } },
-    { 'R', { 'D' } },
-};
-
-std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> get_data_def_types()
-{
+const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> data_def_type::types_and_extensions = []() {
     std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> ret;
     ret.emplace(std::make_pair('B', '\0'), std::make_unique<data_def_type_B>());
     ret.emplace(std::make_pair('C', '\0'), std::make_unique<data_def_type_C>());
@@ -476,13 +454,12 @@ std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> get_data_d
     ret.emplace(std::make_pair('L', 'D'), std::make_unique<data_def_type_LD>());
     ret.emplace(std::make_pair('L', 'B'), std::make_unique<data_def_type_LB>());
     return ret;
-}
+}();
 
 const data_def_type* data_def_type::access_data_def_type(char type, char extension)
 {
-    const static std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> types = get_data_def_types();
-    auto found = types.find({ type, extension });
-    return found == types.end() ? nullptr : found->second.get();
+    auto found = types_and_extensions.find({ type, extension });
+    return found == types_and_extensions.end() ? nullptr : found->second.get();
 }
 
 data_def_type::~data_def_type() {}

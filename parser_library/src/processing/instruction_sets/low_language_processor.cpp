@@ -200,16 +200,18 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the associated mnemonic structure with the given name
     auto mnemonic = context::instruction::mnemonic_codes.at(instr_name);
     // the machine instruction structure associated with the given instruction name
-    auto curr_instr = &context::instruction::machine_instructions.at(mnemonic.instruction);
+
+    auto curr_instr = mnemonic.instruction;
+  
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
-    int diff = (int)curr_instr->get()->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
-    if (std::abs(diff) > curr_instr->get()->no_optional)
+    int diff = (int)curr_instr->operands.size() - (int)operands.size() - (int)mnemonic.replaced.size();
+    if (std::abs(diff) > curr_instr->no_optional)
     {
         auto curr_diag = diagnostic_op::error_optional_number_of_operands(instr_name,
-            curr_instr->get()->no_optional,
-            (int)curr_instr->get()->operands.size() - (int)mnemonic.replaced.size(),
+            curr_instr->no_optional,
+            (int)curr_instr->operands.size() - (int)mnemonic.replaced.size(),
             stmt.stmt_range_ref());
 
         add_diagnostic(curr_diag);
@@ -222,7 +224,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 
     std::vector<checking::check_op_ptr> operand_vector;
     // create vector of empty operands
-    for (size_t i = 0; i < curr_instr->get()->operands.size() + curr_instr->get()->no_optional; i++)
+    for (size_t i = 0; i < curr_instr->operands.size() + curr_instr->no_optional; i++)
         operand_vector.push_back(nullptr);
     // add substituted
     for (size_t i = 0; i < mnemonic.replaced.size(); i++)
@@ -241,7 +243,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
             }
             else // if operand is not empty
             {
-                auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic.instruction);
+                auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic);
                 if (!uniq)
                     return std::nullopt; // contains dependencies
 
@@ -283,55 +285,52 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     diagnostic_collector add_diagnostic,
     const resolved_statement& stmt,
     size_t op_position,
-    const std::string* mnemonic)
+    const context::mnemonic_code* mnemonic)
 {
-    auto ev_op = dynamic_cast<const semantics::evaluable_operand*>(op);
-    assert(ev_op);
+    const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
     auto tmp = context::instruction::assembler_instructions.find(*stmt.opcode_ref().value);
     bool can_have_ord_syms =
         tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
 
-    if (can_have_ord_syms && ev_op->has_dependencies(hlasm_ctx.ord_ctx))
+    if (can_have_ord_syms && ev_op.has_dependencies(hlasm_ctx.ord_ctx))
     {
-        add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op->operand_range));
+        add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op.operand_range));
         return nullptr;
     }
 
     checking::check_op_ptr uniq;
 
-    if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(ev_op))
+    if (auto mach_op = dynamic_cast<const semantics::machine_operand*>(&ev_op))
     {
-        if (context::instruction::machine_instructions.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)
-                ->operands.size()
-            > op_position)
+        const auto* instr =
+            mnemonic ? mnemonic->instruction : &context::instruction::machine_instructions.at(*stmt.opcode_ref().value);
+        if (instr->operands.size() > op_position)
         {
-            auto type = context::instruction::machine_instructions.at(mnemonic ? *mnemonic : *stmt.opcode_ref().value)
-                            ->operands[op_position]
-                            .identifier.type;
+            auto type = instr->operands[op_position].identifier.type;
             uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
         }
         else
-            uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+            uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
     }
-    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(ev_op))
+    else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
     {
         uniq = expr_op->get_operand_value(hlasm_ctx.ord_ctx, can_have_ord_syms);
     }
     else
     {
-        uniq = ev_op->get_operand_value(hlasm_ctx.ord_ctx);
+        uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
     }
 
-    ev_op->collect_diags();
-    for (auto& diag : ev_op->diags())
+    ev_op.collect_diags();
+    for (auto& diag : ev_op.diags())
         add_diagnostic(std::move(diag));
-    ev_op->diags().clear();
+    ev_op.diags().clear();
 
     return uniq;
 }
 
-void low_language_processor::check(const resolved_statement& stmt,
+bool low_language_processor::check(const resolved_statement& stmt,
     context::hlasm_context& hlasm_ctx,
     checking::instruction_checker& checker,
     const diagnosable_ctx& diagnoser)
@@ -359,10 +358,10 @@ void low_language_processor::check(const resolved_statement& stmt,
     }
 
     if (!operand_vector)
-        return;
+        return false;
 
     for (const auto& op : *operand_vector)
         operand_ptr_vector.push_back(op.get());
 
-    checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
+    return checker.check(*instruction_name, operand_ptr_vector, stmt.stmt_range_ref(), collector);
 }

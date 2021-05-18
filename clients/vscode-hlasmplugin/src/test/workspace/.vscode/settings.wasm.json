@@ -1,4 +1,5 @@
 {
     "hlasm.continuationHandling": true,
-    "hlasm.communicationMethod": "wasm"
+    "hlasm.useAutodetection": true,
+    "hlasm.serverVariant": "wasm"
 }

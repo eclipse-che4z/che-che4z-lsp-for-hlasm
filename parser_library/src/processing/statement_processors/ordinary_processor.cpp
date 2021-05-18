@@ -14,6 +14,8 @@
 
 #include "ordinary_processor.h"
 
+#include <stdexcept>
+
 #include "checking/instruction_checker.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
@@ -24,12 +26,13 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
-    statement_fields_parser& parser)
+    statement_fields_parser& parser,
+    opencode_provider& open_code)
     : statement_processor(processing_kind::ORDINARY, ctx)
     , eval_ctx { ctx, lib_provider }
-    , ca_proc_(ctx, branch_provider, lib_provider, state_listener)
+    , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)
-    , asm_proc_(ctx, branch_provider, lib_provider, parser)
+    , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)
     , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
     , listener_(state_listener)
@@ -124,18 +127,61 @@ bool ordinary_processor::terminal_condition(const statement_provider_kind prov_k
 
 bool ordinary_processor::finished() { return finished_flag_; }
 
+struct processing_status_visitor
+{
+    context::id_index id;
+    context::hlasm_context& hlasm_ctx;
+
+    processing_status return_value(processing_form f, operand_occurence o, context::instruction_type t) const
+    {
+        return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
+    }
+
+    processing_status operator()(const context::assembler_instruction* i) const
+    {
+        const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
+                                                                                          : processing_form::ASM;
+        const auto o = i->max_operands == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+        return return_value(f, o, context::instruction_type::ASM);
+    }
+    processing_status operator()(const context::machine_instruction* i) const
+    {
+        return return_value(processing_form::MACH,
+            i->operands.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::MACH);
+    }
+    processing_status operator()(const context::ca_instruction* i) const
+    {
+        return return_value(processing_form::CA,
+            i->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::CA);
+    }
+    processing_status operator()(const context::mnemonic_code* i) const
+    {
+        return return_value(processing_form::MACH,
+            i->operand_count() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::MACH);
+    }
+    template<typename T>
+    processing_status operator()(const T&) const
+    {
+        // opcode should already be found
+        throw std::logic_error("processing_status_visitor: unexpected instruction type");
+    }
+};
+
 std::optional<processing_status> ordinary_processor::get_instruction_processing_status(
     context::id_index instruction, context::hlasm_context& hlasm_ctx)
 {
     auto code = hlasm_ctx.get_operation_code(instruction);
 
-    if (code.macro_opcode)
+    if (std::holds_alternative<context::macro_def_ptr>(code.opcode_detail))
     {
         return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
             op_code(instruction, context::instruction_type::MAC));
     }
 
-    if (!code.machine_opcode)
+    if (!code.opcode)
     {
         if (instruction == context::id_storage::empty_id)
             return std::make_pair(
@@ -145,60 +191,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             return std::nullopt;
     }
 
-    auto id = code.machine_opcode;
-    auto arr = code.machine_source;
-    processing_form f = processing_form::UNKNOWN;
-    operand_occurence o = operand_occurence::PRESENT;
-    context::instruction_type t = context::instruction_type::UNDEF;
-    switch (arr)
-    {
-        case context::instruction::instruction_array::ASM:
-            if (id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS"))
-                f = processing_form::DAT;
-            else
-                f = processing_form::ASM;
-            o = context::instruction::assembler_instructions.find(*id)->second.max_operands == 0
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::ASM;
-            break;
-        case context::instruction::instruction_array::MACH:
-            f = processing_form::MACH;
-            o = context::instruction::machine_instructions.find(*id)->second->operands.empty()
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::MACH;
-            break;
-        case context::instruction::instruction_array::CA:
-            f = processing_form::CA;
-            o = std::find_if(context::instruction::ca_instructions.begin(),
-                    context::instruction::ca_instructions.end(),
-                    [&](auto& instr) { return instr.name == *id; })
-                    ->operandless
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::CA;
-            break;
-        case context::instruction::instruction_array::MNEM:
-            f = processing_form::MACH;
-            o = (context::instruction::machine_instructions
-                            .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                            ->operands.size()
-                        + context::instruction::machine_instructions
-                              .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                              ->no_optional
-                        - context::instruction::mnemonic_codes.at(*id).replaced.size()
-                    == 0) // counting  number of operands in mnemonic
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::MACH;
-            break;
-        default:
-            assert(false); // opcode should already be found
-            break;
-    }
-
-    return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
+    return std::visit(processing_status_visitor { code.opcode, hlasm_ctx }, code.opcode_detail);
 }
 
 void ordinary_processor::collect_diags() const

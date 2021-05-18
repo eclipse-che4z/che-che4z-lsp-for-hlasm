@@ -1481,8 +1481,7 @@ diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& op
 {
     return diagnostic_op(diagnostic_severity::warning,
         "D031",
-        " Operand value " + operand_value + " should be relocatable symbol. ",
-
+        "Operand value " + operand_value + " should be a relocatable symbol",
         range);
 }
 
@@ -1779,6 +1778,18 @@ diagnostic_op diagnostic_op::error_E068(const range& range)
 {
     return diagnostic_op(
         diagnostic_severity::error, "E068", "Operand value falls outside of current section/LOCTR", range);
+}
+
+diagnostic_op diagnostic_op::error_E069(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E069", "AREAD instruction can only be called from within a macro", range);
+}
+
+diagnostic_op diagnostic_op::error_E070(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E070", "Invalid AREAD operand. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
 }
 
 diagnostic_op diagnostic_op::error_E044(const range& range)

@@ -29,7 +29,8 @@ struct variable_symbol_definition
     bool macro_param;
 
     // type of SET symbol
-    context::SET_t_enum type;
+    context::SET_t_enum type = context::SET_t_enum::UNDEF_TYPE;
+
     // flag whether SET symbol is global
     bool global = false;
 

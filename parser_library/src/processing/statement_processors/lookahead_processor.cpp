@@ -222,15 +222,15 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
     auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-    auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+    auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
     if (!data_op->value->length || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        len = value->get_length_attribute();
+        len = value.get_length_attribute();
     }
     if (data_op->value->scale && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        scale = value->get_scale_attribute();
+        scale = value.get_scale_attribute();
     }
 
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));
@@ -243,15 +243,16 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*statement.opcode_ref().value);
-
-    auto tmp_instr = mnem_tmp != context::instruction::mnemonic_codes.end()
-        ? context::instruction::machine_instructions.find(mnem_tmp->second.instruction)
-        : context::instruction::machine_instructions.find(*statement.opcode_ref().value);
+    const auto& instr = [](const std::string& opcode) {
+        if (auto mnemonic = context::instruction::mnemonic_codes.find(opcode);
+            mnemonic != context::instruction::mnemonic_codes.end())
+            return *mnemonic->second.instruction;
+        else
+            return context::instruction::machine_instructions.at(opcode);
+    }(*statement.opcode_ref().value);
 
     register_attr_ref(symbol_name,
-        context::symbol_attributes::make_machine_attrs(
-            (context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8));
+        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_for_alloc / 8));
 }
 
 void lookahead_processor::assign_assembler_attributes(
