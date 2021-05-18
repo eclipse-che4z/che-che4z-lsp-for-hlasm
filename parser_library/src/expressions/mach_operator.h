@@ -149,7 +149,7 @@ inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evalua
     auto target = right_->evaluate(info);
     if (target.value_kind() == context::symbol_value_kind::ABS)
     {
-        add_diagnostic(diagnostic_op::warn_D031(get_range(), std::to_string(right_->evaluate(info).get_abs())));
+        add_diagnostic(diagnostic_op::warn_D031(get_range(), std::to_string(target.get_abs())));
         return target;
     }
     return target - location;
