@@ -289,7 +289,6 @@ bool one_operand::check(
     // it is a simple operand
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
-        
         auto boundary = 1ll << (to_check.identifier.size - 1);
         switch (to_check.identifier.type)
         {

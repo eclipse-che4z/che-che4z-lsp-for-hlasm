@@ -202,7 +202,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
     // the machine instruction structure associated with the given instruction name
 
     auto curr_instr = mnemonic.instruction;
-  
+
     // check whether substituted mnemonic values are ok
 
     // check size of mnemonic operands
