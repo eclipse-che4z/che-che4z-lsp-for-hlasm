@@ -505,11 +505,27 @@ void parser_impl::process_lookahead()
 }
 void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index instruction)
 {
+    std::string instruction_name;
+    instruction_name = *instruction;
+    std::vector<std::pair<size_t, size_t>> replaced;
     auto opernds = &col.current_operands().value;
+    auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
+    if (mnem_tmp != context::instruction::mnemonic_codes.end())
+    {
+        instruction_name = context::instruction::mnemonic_codes.at(*instruction).instruction;
+        replaced = context::instruction::mnemonic_codes.at(*instruction).replaced;
+    }
     int position = 0;
     for (auto& operand : *opernds)
     {
-        auto type = context::instruction::machine_instructions.at(*instruction)->operands[position].identifier.type;
+        // replaced operands are skipped being immediate values
+        if (replaced.size() != 0 && replaced.at(position).first == position)
+        {
+            position++;
+        }
+
+        auto type = context::instruction::machine_instructions.at(instruction_name)->operands[position].identifier.type;
+
         if (type == checking::machine_operand_type::RELOC_IMM && operand.get()->access_mach() != nullptr
             && operand.get()->access_mach()->kind == mach_kind::EXPR)
         {

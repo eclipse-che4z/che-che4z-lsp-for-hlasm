@@ -145,20 +145,14 @@ inline mach_expression::value_t mach_expr_binary<sub>::evaluate(mach_evaluate_in
 template<>
 inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evaluate_info info) const
 {
-    auto lc = left_->evaluate(info);
-    auto symb = right_->evaluate(info);
-    if (symb.value_kind() == context::symbol_value_kind::ABS)
+    auto location = left_->evaluate(info);
+    auto target = right_->evaluate(info);
+    if (target.value_kind() == context::symbol_value_kind::ABS)
     {
         add_diagnostic(diagnostic_op::warn_D031(get_range(), std::to_string(right_->evaluate(info).get_abs())));
-        return right_->evaluate(info);
+        return target;
     }
-    else
-    {
-        if (lc.get_reloc().offset() > symb.get_reloc().offset())
-            return (left_->evaluate(info) - right_->evaluate(info));
-        else
-            return (right_->evaluate(info) - left_->evaluate(info));
-    }
+    return target - location;
 }
 template<>
 inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_info info) const
