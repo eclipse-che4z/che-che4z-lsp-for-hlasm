@@ -153,7 +153,7 @@ inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evalua
         return target;
     }
 
-    if ((target - location).get_abs() % 2 != 0)
+    if ((target - location).value_kind() == context::symbol_value_kind::ABS && (target - location).get_abs() % 2 != 0)
         add_diagnostic(diagnostic_op::error_ME003(get_range()));
     return target - location;
 }
