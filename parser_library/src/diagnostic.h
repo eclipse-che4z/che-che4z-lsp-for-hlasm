@@ -93,7 +93,7 @@ M1xx - format problems
 
 M2xx - custom instruction problems
          - M200 - VNOT instruction, last too operands are not equal
-
+         - M201 - RI operand instructions, relative_address not aligned to halfword
 I999 - should never happen
          - implementation problem
 */
@@ -591,6 +591,8 @@ struct diagnostic_op
     static diagnostic_op error_ME001(const range& range);
 
     static diagnostic_op error_ME002(const range& range);
+
+    static diagnostic_op error_ME003(const range& range);
 
     static diagnostic_op error_CE001(const range& range);
 
