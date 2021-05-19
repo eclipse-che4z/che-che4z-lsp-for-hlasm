@@ -152,10 +152,10 @@ inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evalua
         add_diagnostic(diagnostic_op::warn_D031(get_range(), std::to_string(target.get_abs())));
         return target;
     }
-  
+
     if ((target - location).get_abs() % 2 != 0)
         add_diagnostic(diagnostic_op::error_ME003(get_range()));
-        return target - location;
+    return target - location;
 }
 template<>
 inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_info info) const

@@ -1866,7 +1866,10 @@ diagnostic_op diagnostic_op::error_ME002(const range& range)
 
 diagnostic_op diagnostic_op::error_ME003(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "ME003", "Relative Immediate Operand value must be signed number of halfwords.", range);
+    return diagnostic_op(diagnostic_severity::error,
+        "ME003",
+        "Relative Immediate Operand value must be signed number of halfwords.",
+        range);
 }
 diagnostic_op diagnostic_op::error_CE001(const range& range)
 {
