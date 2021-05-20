@@ -93,7 +93,6 @@ M1xx - format problems
 
 M2xx - custom instruction problems
          - M200 - VNOT instruction, last too operands are not equal
-         - M201 - RI operand instructions, relative_address not aligned to halfword
 I999 - should never happen
          - implementation problem
 */
