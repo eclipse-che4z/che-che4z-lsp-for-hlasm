@@ -546,7 +546,7 @@ void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index
     auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
     if (mnem_tmp != context::instruction::mnemonic_codes.end())
     {
-        instruction_name = context::instruction::mnemonic_codes.at(*instruction).instruction->instr_name;      
+        instruction_name = context::instruction::mnemonic_codes.at(*instruction).instruction->instr_name;
         replaced = context::instruction::mnemonic_codes.at(*instruction).replaced;
     }
     int position = 0;
