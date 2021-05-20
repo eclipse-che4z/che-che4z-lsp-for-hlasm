@@ -79,6 +79,7 @@ void analyzer::collect_diags() const
 {
     collect_diags_from_child(mngr_);
     collect_diags_from_child(listener_);
+    collect_diags_from_child(field_parser_);
 }
 
 const performance_metrics& analyzer::get_metrics() const

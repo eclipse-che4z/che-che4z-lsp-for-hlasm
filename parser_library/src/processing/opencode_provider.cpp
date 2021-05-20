@@ -226,6 +226,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
             h.parser->get_collector().clear_hl_symbols();
             collector.append_operand_field(std::move(h.parser->get_collector()));
+            // lookahead ignores messages collect_diags_from_child(listener);
         }
         range statement_range(position(m_current_line, 0)); // assign default
         result = collector.extract_statement(proc_status, statement_range);

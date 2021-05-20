@@ -102,7 +102,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
                     h.lex->reset();
                     h.lex->set_file_offset(tmp_provider.original_range.start);
-                    h.lex->set_unlimited_line(after_substitution);
+                    h.lex->set_unlimited_line(true);
 
                     h.stream->reset();
 
@@ -115,7 +115,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     h.parser->get_collector().prepare_for_next_statement();
                     line.operands = std::move(h.parser->macro_ops()->list);
 
-                    // collect_diags_from_child(listener);
+                    collect_diags_from_child(listener);
                 }
                 break;
             case processing::processing_form::ASM:
@@ -132,7 +132,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         }
     }
 
-    // TODO: collect_diags_from_child(listener);
+    collect_diags_from_child(listener);
 
     for (size_t i = 0; i < line.operands.size(); i++)
     {
@@ -157,4 +157,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     return std::make_pair(semantics::operands_si(op_range, std::move(line.operands)),
         semantics::remarks_si(rem_range, std::move(line.remarks)));
 }
+
+void statement_fields_parser::collect_diags() const { collect_diags_from_child(*m_parser->parser); }
+
 } // namespace hlasm_plugin::parser_library::processing
