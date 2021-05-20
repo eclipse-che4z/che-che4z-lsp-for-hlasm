@@ -720,3 +720,22 @@ TEST(macro, seq_numbers)
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
+
+TEST(macro, apostrophe_in_substitution)
+{
+    std::string input = R"(
+         MACRO                                                          00010000
+         M     &VAR                                    Comment          00020000
+         MNOTE 8,'Message that uses the variable''s VAR value ''&VAR'' X00030000
+               and is continued '' .'                                   00040000
+         MEND                                                           00050000
+                                                                        00060000
+         M     TEST                                                     00070000
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
