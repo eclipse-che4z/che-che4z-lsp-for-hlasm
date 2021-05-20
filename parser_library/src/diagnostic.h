@@ -93,6 +93,7 @@ M1xx - format problems
 
 M2xx - custom instruction problems
          - M200 - VNOT instruction, last too operands are not equal
+
 I999 - should never happen
          - implementation problem
 */
