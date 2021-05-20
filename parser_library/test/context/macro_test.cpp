@@ -703,3 +703,20 @@ TEST(macro, parse_args)
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
+
+TEST(macro, seq_numbers)
+{
+    std::string input = R"(
+         MACRO                                                          00010000
+         M                                                              00020000
+         MNOTE 8,'Long continued string spanning multiple lines of the X00030000
+               file with sequence symbols.'                             00040000
+         MEND                                                           00050000
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
