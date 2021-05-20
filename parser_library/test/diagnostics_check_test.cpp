@@ -28,7 +28,7 @@ TEST(diagnostics, overall_correctness)
  AINSERT ' sam64',BACK
 &x setc ' sam64'
  AINSERT '&x',BACK
-LABEL EQU *+1
+LABEL EQU *+2
 )");
     analyzer a(input);
     a.analyze();
