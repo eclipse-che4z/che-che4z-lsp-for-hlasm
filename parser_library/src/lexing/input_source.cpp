@@ -16,6 +16,8 @@
 
 #include <exception>
 
+#include "logical_line.h"
+
 namespace hlasm_plugin::parser_library::lexing {
 
 
@@ -23,15 +25,50 @@ input_source::input_source(const std::string& input)
     : ANTLRInputStream(input)
 {}
 
+namespace {
+void append_utf8_to_utf32(UTF32String& t, std::string_view s)
+{
+    while (!s.empty())
+    {
+        unsigned char c = (unsigned char)s.front();
+        if (c < 0x80)
+        {
+            t.append(1, c);
+            s.remove_prefix(1);
+            continue;
+        }
+        const auto cs = utf8_prefix_sizes[c];
+        if (cs.utf8 && cs.utf8 <= s.size())
+        {
+            uint32_t v = c & 0b0111'1111u >> cs.utf8;
+            for (int i = 1; i < cs.utf8; ++i)
+                v = v << 6 | s[i] & 0b0011'1111u;
+            t.append(1, v);
+            s.remove_prefix(cs.utf8);
+        }
+        else
+        {
+            t.append(1, substitute_character);
+            s.remove_prefix(1);
+        }
+    }
+}
+} // namespace
+
 void input_source::append(const UTF32String& str) { _data.append(str); }
 
 void input_source::append(std::string_view str)
 {
     p = _data.size();
-    _data.append(antlrcpp::utf8_to_utf32(str.data(), str.data() + str.size()));
+    append_utf8_to_utf32(_data, str);
 }
 
-void input_source::reset(const std::string& str) { load(str); }
+void input_source::reset(const std::string& str)
+{
+    p = 0;
+    _data.clear();
+    append_utf8_to_utf32(_data, str);
+}
 
 std::string input_source::getText(const antlr4::misc::Interval& interval)
 {
