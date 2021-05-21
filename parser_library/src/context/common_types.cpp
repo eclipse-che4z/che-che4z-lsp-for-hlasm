@@ -21,14 +21,14 @@ namespace hlasm_plugin::parser_library::context {
 std::string& to_upper(std::string& s)
 {
     for (auto& c : s)
-        c = static_cast<char>(std::toupper(c));
+        c = static_cast<char>(std::toupper((unsigned char)c));
     return s;
 }
 
 std::string to_upper_copy(std::string s)
 {
     for (auto& c : s)
-        c = static_cast<char>(std::toupper(c));
+        c = static_cast<char>(std::toupper((unsigned char)c));
     return s;
 }
 

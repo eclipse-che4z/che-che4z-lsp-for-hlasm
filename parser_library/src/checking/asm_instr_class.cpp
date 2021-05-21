@@ -209,7 +209,7 @@ bool assembler_instruction::check_codepage_parameter(
         std::string value = "";
         for (size_t i = 2; i < input_str.size() - 1; i++)
         {
-            if (!isxdigit(input_str[i]))
+            if (!isxdigit((unsigned char)input_str[i]))
             {
                 add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
                 return false;
@@ -235,7 +235,7 @@ bool assembler_instruction::check_codepage_parameter(
     // decimal value
     else
     {
-        if (!std::all_of(input_str.cbegin(), input_str.cend(), ::isdigit))
+        if (!std::all_of(input_str.cbegin(), input_str.cend(), [](unsigned char c) { return std::isdigit(c); }))
         {
             add_diagnostic(diagnostic_op::error_A215_CODEPAGE_format(name_of_instruction, input.operand_range));
             return false;

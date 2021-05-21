@@ -378,11 +378,11 @@ data_definition::parser::parser(
     , p_(0)
     , exprs_i_(0)
 {
-    for (char& c : format_)
+    for (unsigned char c : format_)
         c = (char)toupper(c);
 }
 
-bool is_number_char(char c) { return isdigit(c) || c == '-'; }
+bool is_number_char(unsigned char c) { return isdigit(c) || c == '-'; }
 
 size_t data_definition::parser::get_number_end(size_t begin)
 {

@@ -64,7 +64,7 @@ std::string feature::uri_to_path(const std::string& uri)
 
         if (utils::platform::is_windows())
         {
-            auth_path[0] = (char)tolower(auth_path[0]);
+            auth_path[0] = (char)tolower((unsigned char)auth_path[0]);
         }
     }
 

@@ -126,7 +126,7 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 {
     if (attr_data.size() == 1)
     {
-        auto c = (char)std::toupper(attr_data[0]);
+        auto c = (char)std::toupper((unsigned char)attr_data[0]);
         return context::symbol_attributes::transform_attr(c);
     }
 

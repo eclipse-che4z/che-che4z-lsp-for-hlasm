@@ -168,7 +168,7 @@ size_t constexpr continuation_column = 71;
 
 bool lsp_context::is_continued_line(std::string_view line) const
 {
-    return line.size() > continuation_column && !isspace(line[continuation_column]);
+    return line.size() > continuation_column && !isspace((unsigned char)line[continuation_column]);
 }
 
 bool lsp_context::should_complete_instr(const text_data_ref_t& text, const position pos) const

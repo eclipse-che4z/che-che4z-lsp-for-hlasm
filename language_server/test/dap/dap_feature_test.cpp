@@ -123,7 +123,7 @@ struct feature_launch_test : public testing::Test
         resp_provider.reset();
 
         file_name = hlasm_plugin::utils::path::absolute("to_trace").string();
-        file_name[0] = (char)std::tolower((char)file_name[0]);
+        file_name[0] = (char)std::tolower((unsigned char)file_name[0]);
     }
 
     void check_simple_stack_trace(json id, size_t expected_line)
