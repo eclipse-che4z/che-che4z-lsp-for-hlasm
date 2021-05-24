@@ -378,8 +378,7 @@ data_definition::parser::parser(
     , p_(0)
     , exprs_i_(0)
 {
-    for (unsigned char c : format_)
-        c = (char)toupper(c);
+    context::to_upper(format_);
 }
 
 bool is_number_char(unsigned char c) { return isdigit(c) || c == '-'; }
