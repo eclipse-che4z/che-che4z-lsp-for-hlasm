@@ -27,14 +27,6 @@ using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace lexing;
 
-
-/* UTF8 <-> UTF32 */
-#ifdef __GNUG__
-thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
-#elif _MSC_VER
-thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> converter;
-#endif
-
 lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
     : input_(input)
     , src_proc_(lsp_proc)
@@ -47,34 +39,6 @@ lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
     input_state_->c = static_cast<char_t>(input_->LA(1));
 
     dummy_factory = make_shared<antlr4::CommonTokenFactory>();
-}
-
-void lexer::rewind_input(stream_position pos)
-{
-    auto inp = file_input_state_.input;
-
-    if (pos.offset >= input_->size()) // we are rewinding from the end, so limit offset by input size
-        pos.offset = input_->size() - 1;
-
-    inp->rewind_input(pos.offset);
-    eof_generated_ = false;
-
-    if (!token_queue_.empty())
-        delete_token(token_queue_.front()->getTokenIndex());
-
-    file_input_state_.char_position = pos.offset;
-    file_input_state_.line = pos.line;
-    file_input_state_.char_position_in_line = 0;
-    file_input_state_.char_position_in_line_utf16 = 0;
-
-    if (pos.line == 0)
-        last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
-    else
-        last_lln_end_pos_ = { pos.line - 1, pos.offset };
-
-    last_lln_begin_pos_ = { pos.line, pos.offset };
-
-    file_input_state_.c = static_cast<char_t>(inp->LA(1));
 }
 
 bool lexer::is_last_line() const

@@ -114,11 +114,7 @@ public:
     void set_unlimited_line(bool unlimited_lines);
     // set lexer's input state to file position
     void set_file_offset(position file_offset);
-    /*
-    rewinds input to the given position
-    updates lexer state (unsets eof generated)
-    */
-    void rewind_input(stream_position pos);
+
     bool is_last_line() const;
     bool eof_generated() const;
     stream_position last_lln_begin_position() const;

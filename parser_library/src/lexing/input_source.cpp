@@ -133,10 +133,4 @@ std::string input_source::getText(const antlr4::misc::Interval& interval)
     return n;
 }
 
-void input_source::rewind_input(size_t position)
-{
-    assert(position < _data.length());
-    p = position;
-}
-
 } // namespace hlasm_plugin::parser_library::lexing

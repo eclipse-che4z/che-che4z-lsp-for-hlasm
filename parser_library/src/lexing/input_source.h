@@ -33,7 +33,6 @@ public:
     void append(std::string_view str);
     using antlr4::ANTLRInputStream::reset;
     void reset(const std::string& str);
-    void rewind_input(size_t index);
 
     input_source(const input_source&) = delete;
     input_source& operator=(const input_source&) = delete;
