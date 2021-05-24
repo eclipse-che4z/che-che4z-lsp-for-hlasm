@@ -295,7 +295,7 @@ LR OPSYN
    LR
 )");
     opsyn_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

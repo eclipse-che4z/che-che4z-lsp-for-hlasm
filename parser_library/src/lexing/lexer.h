@@ -44,7 +44,7 @@ public:
         size_t line;
         size_t offset;
     };
-    lexer(input_source*, semantics::source_info_processor* lsp_proc, performance_metrics* metrics = nullptr);
+    lexer(input_source*, semantics::source_info_processor* lsp_proc);
 
     lexer(const lexer&) = delete;
     lexer& operator=(const lexer&) = delete;
@@ -157,12 +157,9 @@ private:
     size_t end_ = 71;
     size_t continue_ = 15;
 
-    size_t tab_size_ = 1;
-
     std::unique_ptr<token_factory> factory_;
     antlr4::CharStream* input_;
     semantics::source_info_processor* src_proc_;
-    performance_metrics* metrics_;
 
     struct input_state
     {

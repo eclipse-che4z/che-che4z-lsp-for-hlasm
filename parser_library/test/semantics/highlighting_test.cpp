@@ -36,9 +36,7 @@ TEST(highlighting, simple)
 {
     std::string source_file = "file_name";
     const std::string contents = "A EQU 1";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 1 } }, hl_scopes::label),
@@ -52,9 +50,7 @@ TEST(highlighting, mach_expr)
 {
     std::string source_file = "file_name";
     const std::string contents = " LR 1*1+X,L'X";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 3 } }, hl_scopes::instruction),
@@ -75,9 +71,7 @@ TEST(highlighting, mach_expr_2)
 {
     std::string source_file = "file_name";
     const std::string contents = " L X'F',*";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 2 } }, hl_scopes::instruction),
@@ -93,9 +87,7 @@ TEST(highlighting, mach_expr_3)
 {
     std::string source_file = "file_name";
     const std::string contents = " L 1,=C'1'";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 2 } }, hl_scopes::instruction),
@@ -112,9 +104,7 @@ TEST(highlighting, data_def)
 {
     std::string source_file = "file_name";
     const std::string contents = " DC 4CAP8L4''";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 3 } }, hl_scopes::instruction),
@@ -133,9 +123,7 @@ TEST(highlighting, asm_simple_operand)
 {
     std::string source_file = "file_name";
     const std::string contents = " AMODE ANY64";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
@@ -148,9 +136,7 @@ TEST(highlighting, asm_list)
 {
     std::string source_file = "file_name";
     const std::string contents = " AMODE (op2,op3)";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
@@ -167,9 +153,7 @@ TEST(highlighting, asm_list_2)
 {
     std::string source_file = "file_name";
     const std::string contents = " AMODE op1(op2,op3)";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
@@ -189,9 +173,7 @@ TEST(highlighting, continuation)
     const std::string contents =
         R"(D EQU                                                                 1Xignored
 IgnoredIgnoredI1 remark)";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 1 } }, hl_scopes::label),
@@ -215,9 +197,7 @@ TEST(highlighting, macro_alternative_continuation)
  MEND
  MAC OP1, remark                                                       X
                OP2 remark2)";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 1, 1 }, { 1, 6 } }, hl_scopes::instruction),
@@ -240,9 +220,7 @@ TEST(highlighting, var_sym_array_subscript)
 {
     std::string source_file = "file_name";
     const std::string contents = "&VARP(31+L'C) SETA 45\n\nC EQU 1";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 0 }, { 0, 5 } }, hl_scopes::var_symbol),
@@ -267,9 +245,7 @@ TEST(highlighting, ca_expr)
 {
     std::string source_file = "file_name";
     const std::string contents = " AIF (T'&SYSDATC EQ 'C').LOOP";
-    analyzer_options opts { source_file };
-    opts.collect_hl_info = true;
-    analyzer a(contents, std::move(opts));
+    analyzer a(contents, analyzer_options { source_file, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.source_processor().semantic_tokens();
     semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 4 } }, hl_scopes::instruction),

@@ -48,7 +48,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
     : diagnosable_ctx(opts.get_hlasm_context())
     , ctx_(std::move(opts.get_context()))
     , listener_(opts.file_name)
-    , src_proc_(opts.collect_hl_info)
+    , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
     , mngr_(std::make_unique<processing::opencode_provider>(
                 text, ctx_, opts.get_lib_provider(), mngr_, src_proc_, listener_),

@@ -33,14 +33,14 @@ opencode_provider::opencode_provider(std::string_view text,
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_current_text(text)
-    , m_parser(parsing::parser_holder::create(&src_proc, &ctx.hlasm_ctx->metrics))
-    , m_second_parser(parsing::parser_holder::create(nullptr, nullptr))
+    , m_parser(parsing::parser_holder::create(&src_proc))
+    , m_second_parser(parsing::parser_holder::create(nullptr))
     , m_ctx(&ctx)
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
 {
-    m_parser->parser->initialize(*m_ctx, m_src_proc, m_lib_provider, m_state_listener);
+    m_parser->parser->initialize(*m_ctx, m_src_proc);
     m_parser->parser->setErrorHandler(std::make_shared<parsing::error_strategy>());
     m_parser->parser->removeErrorListeners();
     m_parser->parser->addErrorListener(&err_listener);
@@ -214,13 +214,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
             parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
             semantics::range_provider range_prov;
-            const auto& h = prepare_second_parser(*look_lab_instr->op_text,
-                *m_ctx->hlasm_ctx,
-                listener,
-                range_prov,
-                look_lab_instr->op_range,
-                proc_status,
-                true);
+            const auto& h =
+                prepare_second_parser(text, *m_ctx->hlasm_ctx, listener, range_prov, text_range, proc_status, true);
 
             h.parser->lookahead_operands_and_remarks();
 

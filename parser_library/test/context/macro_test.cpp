@@ -516,9 +516,45 @@ TEST(macro, arguments_continuation)
 
 class bad_mock : public parse_lib_provider
 {
+    static const std::string* content_variant(int i)
+    {
+        static const std::string content_bad_name =
+            R"(   MACRO
+       MACC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+        static const std::string content_bad_begin =
+            R"(  aMACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+        static const std::string content_comment =
+            R"(**********  
+       MACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+        switch (i)
+        {
+            case 0:
+                return &content_bad_name;
+            case 1:
+                return &content_bad_begin;
+            case 2:
+                return &content_comment;
+            default:
+                throw std::invalid_argument("Unknown variant");
+        }
+    }
+
+    const std::string* current_content;
+
 public:
     bad_mock(int lib_code)
-        : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
+        : current_content(content_variant(lib_code))
     {}
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
@@ -532,29 +568,6 @@ public:
     }
     bool has_library(const std::string&, const std::string&) const override { return true; }
     std::unique_ptr<analyzer> a;
-
-private:
-    const std::string* current_content;
-
-    const std::string content_bad_name =
-        R"(   MACRO
-       MACC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-    const std::string content_bad_begin =
-        R"(  aMACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-    const std::string content_comment =
-        R"(**********  
-       MACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
 };
 
 TEST(external_macro, bad_library)
@@ -567,7 +580,7 @@ TEST(external_macro, bad_library)
     for (int i = 0; i < 2; ++i)
     {
         bad_mock m(i);
-        analyzer a(input, analyzer_options { "", &m });
+        analyzer a(input, analyzer_options { &m });
         a.analyze();
         a.collect_diags();
         EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
@@ -584,7 +597,7 @@ TEST(external_macro, library_with_begin_comment)
  MAC 1
 )";
     bad_mock m(2);
-    analyzer a(input, analyzer_options { "", &m });
+    analyzer a(input, analyzer_options { &m });
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);

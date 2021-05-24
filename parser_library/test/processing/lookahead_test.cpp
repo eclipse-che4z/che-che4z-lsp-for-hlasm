@@ -517,7 +517,7 @@ TEST(attribute_lookahead, lookup_to_copy)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -560,7 +560,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -608,7 +608,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -639,7 +639,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
          GETMAIN   b=svc)");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -657,7 +657,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 

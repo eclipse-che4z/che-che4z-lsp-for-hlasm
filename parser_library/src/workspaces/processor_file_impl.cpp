@@ -42,9 +42,11 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts)
 {
-    analyzer_options opts = { get_file_name(), &lib_provider, std::move(asm_opts) };
-    opts.collect_hl_info = get_lsp_editing();
-    analyzer_ = std::make_unique<analyzer>(get_text(), std::move(opts));
+    analyzer_ = std::make_unique<analyzer>(get_text(),
+        analyzer_options { get_file_name(),
+            &lib_provider,
+            std::move(asm_opts),
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no });
 
     auto old_dep = dependencies_;
 
@@ -73,8 +75,14 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
 parse_result processor_file_impl::parse_macro(
     parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
-    analyzer_ = std::make_unique<analyzer>(
-        get_text(), analyzer_options { get_file_name(), &lib_provider, std::move(ctx), data, get_lsp_editing() });
+    analyzer_ = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
 
     return parse_inner(*analyzer_);
 }
@@ -82,8 +90,14 @@ parse_result processor_file_impl::parse_macro(
 parse_result processor_file_impl::parse_no_lsp_update(
     parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
-    auto no_update_analyzer_ = std::make_unique<analyzer>(
-        get_text(), analyzer_options { get_file_name(), &lib_provider, std::move(ctx), data, get_lsp_editing() });
+    auto no_update_analyzer_ = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
     no_update_analyzer_->analyze();
     return true;
 }

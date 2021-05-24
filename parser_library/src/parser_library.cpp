@@ -31,9 +31,7 @@ namespace hlasm_plugin::parser_library {
 // Used for testing purposes.
 void parser_library::parse(const std::string& src)
 {
-    analyzer_options opts;
-    opts.collect_hl_info = true;
-    analyzer a(src, std::move(opts));
+    analyzer a(src, analyzer_options { collect_highlighting_info::yes });
 
     auto l = new antlr4::DiagnosticErrorListener();
     a.parser().addErrorListener(l);

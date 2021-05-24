@@ -36,16 +36,12 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , provider()
 {}
 
-void parser_impl::initialize(analyzing_context& a_ctx,
-    semantics::source_info_processor* src_prc,
-    workspaces::parse_lib_provider* lib_provider,
-    processing::processing_state_listener* state_listener)
+void parser_impl::initialize(analyzing_context& a_ctx, semantics::source_info_processor* src_prc)
 {
     ctx = &a_ctx;
     hlasm_ctx = ctx->hlasm_ctx.get();
     src_proc = src_prc;
     finished_flag = false;
-    // TODO: remove lib_provider and state_listener arguments
 
     input_lexer = &dynamic_cast<lexing::lexer&>(*_input->getTokenSource());
 }
@@ -64,13 +60,12 @@ context::source_position parser_impl::statement_end() const
     return { pos.line, pos.offset };
 }
 
-std::unique_ptr<parser_holder> parser_holder::create(
-    semantics::source_info_processor* lsp_proc, performance_metrics* metrics)
+std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc)
 {
     std::string s;
     auto h = std::make_unique<parser_holder>();
     h->input = std::make_unique<lexing::input_source>(s);
-    h->lex = std::make_unique<lexing::lexer>(h->input.get(), lsp_proc, metrics);
+    h->lex = std::make_unique<lexing::lexer>(h->input.get(), lsp_proc);
     h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
     h->parser = std::make_unique<hlasmparser>(h->stream.get());
     return h;

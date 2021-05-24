@@ -743,7 +743,7 @@ TEST(data_attributes, O_libraries)
 
 )";
     O_mock prov;
-    analyzer a(input, analyzer_options { "", &prov });
+    analyzer a(input, analyzer_options { &prov });
     a.analyze();
 
     EXPECT_EQ(a.hlasm_ctx()

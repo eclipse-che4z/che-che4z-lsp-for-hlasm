@@ -45,10 +45,7 @@ class parser_impl : public antlr4::Parser, public diagnosable_impl
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(analyzing_context& ctx,
-        semantics::source_info_processor* src_prc,
-        workspaces::parse_lib_provider* lib_provider,
-        processing::processing_state_listener* state_listener);
+    void initialize(analyzing_context& ctx, semantics::source_info_processor* src_prc);
 
     void reinitialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
@@ -122,8 +119,7 @@ struct parser_holder
 
     ~parser_holder();
 
-    static std::unique_ptr<parser_holder> create(
-        semantics::source_info_processor* lsp_proc, performance_metrics* metrics);
+    static std::unique_ptr<parser_holder> create(semantics::source_info_processor* lsp_proc);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

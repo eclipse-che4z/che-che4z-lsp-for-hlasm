@@ -26,7 +26,7 @@ TEST(copy, copy_enter_fail)
  COPY UNKNOWN
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -44,7 +44,7 @@ TEST(copy, copy_enter_success)
  COPY COPYR
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -93,7 +93,7 @@ TEST(copy, copy_jump)
  AIF (&VAR LT 4).A
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -123,7 +123,7 @@ TEST(copy, copy_unbalanced_macro)
  COPY COPYU
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -143,7 +143,7 @@ TEST(copy, copy_twice)
  COPY COPYR
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -162,7 +162,7 @@ TEST(copy, macro_call_from_copy_enter)
  M2
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -255,7 +255,7 @@ TEST(copy, nested_macro_copy_call)
  
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
@@ -314,7 +314,7 @@ TEST(copy, inner_copy_jump)
  
 )";
     copy_mock mock;
-    analyzer a(input, analyzer_options { "", &mock });
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
 
     a.collect_diags();
