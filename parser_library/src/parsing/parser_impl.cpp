@@ -539,29 +539,32 @@ void parser_impl::process_lookahead()
 }
 void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index instruction)
 {
-    std::string instruction_name;
-    instruction_name = *instruction;
+    const machine_instruction* instr;
     std::vector<std::pair<size_t, size_t>> replaced;
     auto opernds = &col.current_operands().value;
     if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
         mnem_tmp != context::instruction::mnemonic_codes.end())
     {
-        instruction_name = context::instruction::mnemonic_codes.at(*instruction).instruction->instr_name;
-        replaced = context::instruction::mnemonic_codes.at(*instruction).replaced;
+        auto mnemonic = context::instruction::mnemonic_codes.at(*instruction);
+        instr = mnemonic.instruction;
+        replaced = mnemonic.replaced;
+    }
+    else
+    {
+        instr = &context::instruction::machine_instructions.at(*instruction);
     }
     int position = 0;
     for (const auto& operand : *opernds)
     {
-        // replaced operands are skipped being immediate values
-        if (!replaced.empty() && replaced.at(position).first == position)
+        for (int index = 0; index < replaced.size(); index++)
         {
-            position++;
+            if (replaced.at(index).first == position)
+            {
+                position++;
+            }
         }
-
-        if (auto type =
-                context::instruction::machine_instructions.at(instruction_name).operands[position].identifier.type;
-            type == checking::machine_operand_type::RELOC_IMM && operand.get()->access_mach() != nullptr
-            && operand.get()->access_mach()->kind == mach_kind::EXPR)
+        if (auto type = instr->operands[position].identifier.type; type == checking::machine_operand_type::RELOC_IMM
+            && operand.get()->access_mach() != nullptr && operand.get()->access_mach()->kind == mach_kind::EXPR)
         {
             auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();
             mach_expr_ptr& transformed_exp = operand.get()->access_mach()->access_expr()->expression;
