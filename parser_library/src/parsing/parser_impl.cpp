@@ -64,10 +64,12 @@ std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_proc
 {
     std::string s;
     auto h = std::make_unique<parser_holder>();
+    h->error_handler = std::make_shared<parsing::error_strategy>();
     h->input = std::make_unique<lexing::input_source>(s);
     h->lex = std::make_unique<lexing::lexer>(h->input.get(), lsp_proc);
     h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
     h->parser = std::make_unique<hlasmparser>(h->stream.get());
+    h->parser->setErrorHandler(h->error_handler);
     return h;
 }
 

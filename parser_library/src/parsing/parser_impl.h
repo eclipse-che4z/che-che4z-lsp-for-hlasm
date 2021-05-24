@@ -36,6 +36,7 @@ namespace hlasm_plugin::parser_library::parsing {
 
 using self_def_t = std::int32_t;
 
+class error_strategy;
 struct parser_holder;
 class hlasmparser;
 
@@ -112,6 +113,7 @@ private:
 // structure containing parser components
 struct parser_holder
 {
+    std::shared_ptr<parsing::error_strategy> error_handler;
     std::unique_ptr<lexing::input_source> input;
     std::unique_ptr<lexing::lexer> lex;
     std::unique_ptr<lexing::token_stream> stream;

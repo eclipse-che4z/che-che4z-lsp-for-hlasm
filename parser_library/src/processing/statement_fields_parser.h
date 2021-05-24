@@ -21,6 +21,7 @@
 #include "semantics/statement_fields.h"
 
 namespace hlasm_plugin::parser_library::parsing {
+class parser_error_listener_ctx;
 struct parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 
@@ -34,6 +35,12 @@ class statement_fields_parser : public diagnosable_impl
 {
     std::unique_ptr<parsing::parser_holder> m_parser;
     context::hlasm_context* m_hlasm_ctx;
+
+    const parsing::parser_holder& prepare_parser(const std::string& text,
+        bool unlimited_line,
+        semantics::range_provider field_range,
+        processing::processing_status status,
+        parsing::parser_error_listener_ctx& err_listener);
 
 public:
     using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;

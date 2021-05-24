@@ -29,34 +29,45 @@ statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_c
 
 statement_fields_parser::~statement_fields_parser() = default;
 
+
+const parsing::parser_holder& statement_fields_parser::prepare_parser(const std::string& text,
+    bool unlimited_line,
+    semantics::range_provider field_range,
+    processing::processing_status status,
+    parsing::parser_error_listener_ctx& err_listener)
+{
+    m_parser->input->reset(text);
+
+    m_parser->lex->reset();
+    m_parser->lex->set_file_offset(field_range.original_range.start);
+    m_parser->lex->set_unlimited_line(unlimited_line);
+
+    m_parser->stream->reset();
+
+    m_parser->parser->reinitialize(m_hlasm_ctx, field_range, status);
+    m_parser->parser->removeErrorListeners();
+    m_parser->parser->addErrorListener(&err_listener);
+
+    m_parser->parser->reset();
+
+    m_parser->parser->get_collector().prepare_for_next_statement();
+
+    return *m_parser;
+}
+
 std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status)
 {
     m_hlasm_ctx->metrics.reparsed_statements++;
-    const auto& h = *m_parser;
 
     std::optional<std::string> sub;
     if (after_substitution)
         sub = field;
     parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
 
-    h.input->reset(field);
-
-    h.lex->reset();
-    h.lex->set_file_offset(field_range.original_range.start);
-    h.lex->set_unlimited_line(after_substitution);
-
-    h.stream->reset();
-
-    h.parser->reinitialize(m_hlasm_ctx, field_range, status);
-    h.parser->setErrorHandler(std::make_shared<parsing::error_strategy>());
-    h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&listener);
-    h.parser->reset();
-
-    h.parser->get_collector().prepare_for_next_statement();
+    const auto& h = prepare_parser(field, after_substitution, field_range, status, listener);
 
     semantics::op_rem line;
     auto& [format, opcode] = status;
@@ -98,21 +109,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
                     parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
 
-                    h.input->reset(std::move(to_parse));
+                    const auto& h = prepare_parser(to_parse, true, tmp_provider, status, listener);
 
-                    h.lex->reset();
-                    h.lex->set_file_offset(tmp_provider.original_range.start);
-                    h.lex->set_unlimited_line(true);
-
-                    h.stream->reset();
-
-                    h.parser->reinitialize(m_hlasm_ctx, tmp_provider, status);
-                    h.parser->setErrorHandler(std::make_shared<parsing::error_strategy>());
-                    h.parser->removeErrorListeners();
-                    h.parser->addErrorListener(&listener);
-                    h.parser->reset();
-
-                    h.parser->get_collector().prepare_for_next_statement();
                     line.operands = std::move(h.parser->macro_ops()->list);
 
                     collect_diags_from_child(listener);

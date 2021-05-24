@@ -41,7 +41,6 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_src_proc(&src_proc)
 {
     m_parser->parser->initialize(*m_ctx, m_src_proc);
-    m_parser->parser->setErrorHandler(std::make_shared<parsing::error_strategy>());
     m_parser->parser->removeErrorListeners();
     m_parser->parser->addErrorListener(&err_listener);
 }
@@ -450,7 +449,6 @@ const parsing::parser_holder& opencode_provider::prepare_second_parser(const std
     h.stream->reset();
 
     h.parser->reinitialize(&hlasm_ctx, range_prov, proc_status);
-    h.parser->setErrorHandler(std::make_shared<parsing::error_strategy>());
     h.parser->removeErrorListeners();
     h.parser->addErrorListener(&err_listener);
 
