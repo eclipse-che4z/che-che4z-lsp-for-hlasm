@@ -543,24 +543,24 @@ void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index
     instruction_name = *instruction;
     std::vector<std::pair<size_t, size_t>> replaced;
     auto opernds = &col.current_operands().value;
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
-    if (mnem_tmp != context::instruction::mnemonic_codes.end())
+    if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
+        mnem_tmp != context::instruction::mnemonic_codes.end())
     {
         instruction_name = context::instruction::mnemonic_codes.at(*instruction).instruction->instr_name;
         replaced = context::instruction::mnemonic_codes.at(*instruction).replaced;
     }
     int position = 0;
-    for (auto& operand : *opernds)
+    for (const auto& operand : *opernds)
     {
         // replaced operands are skipped being immediate values
-        if (replaced.size() != 0 && replaced.at(position).first == position)
+        if (!replaced.empty() && replaced.at(position).first == position)
         {
             position++;
         }
 
-        auto type = context::instruction::machine_instructions.at(instruction_name).operands[position].identifier.type;
-
-        if (type == checking::machine_operand_type::RELOC_IMM && operand.get()->access_mach() != nullptr
+        if (auto type =
+                context::instruction::machine_instructions.at(instruction_name).operands[position].identifier.type;
+            type == checking::machine_operand_type::RELOC_IMM && operand.get()->access_mach() != nullptr
             && operand.get()->access_mach()->kind == mach_kind::EXPR)
         {
             auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();

@@ -322,6 +322,56 @@ TEST(diagnostics, relocImm_expected)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M113");
 }
+
+TEST(diagnostics, invalid_reloc_operand)
+{
+    std::string input(
+        R"( 
+SIZE EQU 5          
+ EXRL 1,LENGTH+LENGTH
+LENGTH DS CL(SIZE)
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "M113");
+}
+
+TEST(diagnostics, valid_reloc_operand)
+{
+    std::string input(
+        R"( 
+SIZE EQU 5          
+ EXRL 1,LENGTH+4
+LENGTH DS CL(SIZE)
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(diagnostics, reloc_operand_halfword_o_error)
+{
+    std::string input(
+        R"(          
+ EXRL 1,LEN120
+LENGTH DS CL(5)
+LEN120 DS CL1
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "ME003");
+}
 TEST(diagnostics, vecReg_expected)
 {
     std::string input(

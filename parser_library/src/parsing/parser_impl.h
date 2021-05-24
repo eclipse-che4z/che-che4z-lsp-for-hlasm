@@ -137,7 +137,7 @@ private:
 
     void parse_operands(const std::string& text, range text_range);
     void parse_lookahead_operands(const std::string& text, range text_range);
-    void transform_imm_reg_operands(semantics::collector& col, context::id_index instruction);
+    static void transform_imm_reg_operands(semantics::collector& col, context::id_index instruction);
 
     antlr4::misc::IntervalSet getExpectedTokens() override;
 

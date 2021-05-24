@@ -84,9 +84,8 @@ address_machine_operand* machine_operand::access_address()
     return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
-std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
-    const expressions::mach_expression& expr,
-    std::optional<checking::machine_operand_type> type_hint = std::nullopt)
+std::unique_ptr<checking::operand> make_check_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -133,7 +132,7 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     {
         return check_operand(info, *expression);
     }
-    return make_check_operand(info, *expression, type_hint);
+    return make_check_operand(info, *expression);
 }
 
 // suppress MSVC warning 'inherits via dominance'
