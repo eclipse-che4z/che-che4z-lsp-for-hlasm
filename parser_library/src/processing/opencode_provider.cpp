@@ -40,7 +40,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
 {
-    m_parser->parser->initialize(*m_ctx, m_src_proc);
+    m_parser->parser->initialize(m_ctx->hlasm_ctx.get());
     m_parser->parser->removeErrorListeners();
     m_parser->parser->addErrorListener(&err_listener);
 }

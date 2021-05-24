@@ -29,36 +29,10 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
     , input(dynamic_cast<lexing::token_stream&>(*input))
     , hlasm_ctx(nullptr)
-    , src_proc(nullptr)
-    , processor(nullptr)
-    , current_statement(nullptr)
-    , finished_flag(false)
     , provider()
 {}
 
-void parser_impl::initialize(analyzing_context& a_ctx, semantics::source_info_processor* src_prc)
-{
-    ctx = &a_ctx;
-    hlasm_ctx = ctx->hlasm_ctx.get();
-    src_proc = src_prc;
-    finished_flag = false;
-
-    input_lexer = &dynamic_cast<lexing::lexer&>(*_input->getTokenSource());
-}
-
-bool parser_impl::is_last_line() const { return input_lexer->is_last_line(); }
-
-context::source_position parser_impl::statement_start() const
-{
-    auto pos = input_lexer->last_lln_begin_position();
-    return { pos.line, pos.offset };
-}
-
-context::source_position parser_impl::statement_end() const
-{
-    auto pos = input_lexer->last_lln_end_position();
-    return { pos.line, pos.offset };
-}
+void parser_impl::initialize(context::hlasm_context* hl_ctx) { hlasm_ctx = hl_ctx; }
 
 std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc)
 {
@@ -73,11 +47,7 @@ std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_proc
     return h;
 }
 
-void parser_impl::collect_diags() const
-{
-    if (rest_parser_)
-        collect_diags_from_child(*rest_parser_->parser);
-}
+void parser_impl::collect_diags() const {}
 
 void parser_impl::enable_continuation() { input.enable_continuation(); }
 

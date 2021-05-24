@@ -40,7 +40,7 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		collector.set_instruction_field(provider.get_range(_localctx));
 		collector.set_operand_remark_field(provider.get_range(_localctx));
 	}
-	| EOF	{finished_flag=true;};
+	| EOF;
 
 bad_look
 	: ~(ORDSYMBOL|DOT|SPACE) .*?

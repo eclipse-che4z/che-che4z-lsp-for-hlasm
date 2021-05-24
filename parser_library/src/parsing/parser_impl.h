@@ -46,19 +46,13 @@ class parser_impl : public antlr4::Parser, public diagnosable_impl
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(analyzing_context& ctx, semantics::source_info_processor* src_prc);
+    void initialize(context::hlasm_context* hlasm_ctx);
 
     void reinitialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
 
-    bool is_last_line() const;
-
-    context::source_position statement_start() const;
-    context::source_position statement_end() const;
-
     void collect_diags() const override;
-    std::vector<antlr4::ParserRuleContext*> tree;
 
     semantics::collector& get_collector() { return collector; }
 
@@ -73,20 +67,14 @@ protected:
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data, range data_range);
     context::id_index parse_identifier(std::string value, range id_range);
-    void parse_macro_operands(semantics::op_rem& line);
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
     lexing::token_stream& input;
-    analyzing_context* ctx = nullptr;
     context::hlasm_context* hlasm_ctx = nullptr;
-    semantics::source_info_processor* src_proc = nullptr;
-    const processing::statement_processor* processor = nullptr;
-    context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
-    bool finished_flag;
     semantics::collector collector;
     semantics::range_provider provider;
 
@@ -102,12 +90,7 @@ protected:
     bool UNKNOWN();
 
 private:
-    std::unique_ptr<parser_holder> rest_parser_;
-    lexing::lexer* input_lexer = nullptr;
-
     antlr4::misc::IntervalSet getExpectedTokens() override;
-
-    bool input_tokens_invalidated = false;
 };
 
 // structure containing parser components
