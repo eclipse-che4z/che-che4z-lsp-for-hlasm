@@ -43,10 +43,13 @@ bool processor_file_impl::is_once_only() const { return false; }
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts)
 {
     analyzer_ = std::make_unique<analyzer>(get_text(),
-        analyzer_options { get_file_name(),
+        analyzer_options {
+            get_file_name(),
             &lib_provider,
             std::move(asm_opts),
-            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no });
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+            file_is_opencode::yes,
+        });
 
     auto old_dep = dependencies_;
 

@@ -43,6 +43,20 @@ enum class ainsert_destination
     front,
 };
 
+struct opencode_provider_options
+{
+    bool ictl_allowed;
+    int process_remaining;
+};
+
+enum class extract_next_logical_line_result
+{
+    failed,
+    normal,
+    ictl,
+    process,
+};
+
 // interface for hiding parser implementation
 class opencode_provider final : public diagnosable_impl, public statement_provider
 {
@@ -75,6 +89,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     processing::processing_state_listener* m_state_listener;
     semantics::source_info_processor* m_src_proc;
 
+    opencode_provider_options m_opts;
+
 public:
     // rewinds position in file
     void rewind_input(context::source_position pos);
@@ -86,9 +102,10 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         semantics::source_info_processor& src_proc,
-        parsing::parser_error_listener& err_listener);
+        parsing::parser_error_listener& err_listener,
+        opencode_provider_options opts);
 
-    bool feed_line();
+    extract_next_logical_line_result feed_line();
     bool process_comment();
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
@@ -99,7 +116,9 @@ public:
     void collect_diags() const override;
 
 private:
-    bool extract_next_logical_line();
+    bool is_next_line_ictl() const;
+    bool is_next_line_process() const;
+    extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_second_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,

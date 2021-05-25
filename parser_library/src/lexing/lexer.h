@@ -97,7 +97,7 @@ public:
     bool is_data_attribute() const;
     void set_unlimited_line(bool unlimited_lines);
     // set lexer's input state to file position
-    void set_file_offset(position file_offset);
+    void set_file_offset(position file_offset, bool process_allowed = false);
 
 protected:
     // creates token and inserts to input stream
@@ -109,6 +109,7 @@ private:
     bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
     bool creating_attr_ref_ = false;
+    bool process_allowed_ = false;
 
     size_t last_token_id_ = 0;
 

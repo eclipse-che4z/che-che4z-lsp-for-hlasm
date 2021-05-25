@@ -29,7 +29,8 @@ opencode_provider::opencode_provider(std::string_view text,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
-    parsing::parser_error_listener& err_listener)
+    parsing::parser_error_listener& err_listener,
+    opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
@@ -39,6 +40,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
+    , m_opts(opts)
 {
     m_parser->parser->initialize(m_ctx->hlasm_ctx.get());
     m_parser->parser->removeErrorListeners();
@@ -98,10 +100,11 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
     }
 }
 
-bool opencode_provider::feed_line()
+extract_next_logical_line_result opencode_provider::feed_line()
 {
-    if (!extract_next_logical_line())
-        return false;
+    auto ll_res = extract_next_logical_line();
+    if (ll_res == extract_next_logical_line_result::failed)
+        return ll_res;
     line_fed = true;
 
     m_parser->input->reset("");
@@ -139,7 +142,8 @@ bool opencode_provider::feed_line()
     }
     m_parser->input->reset();
 
-    m_parser->lex->set_file_offset({ m_current_line, 0 }); // lexing::default_ictl.begin-1 really
+    m_parser->lex->set_file_offset({ m_current_line, 0 },
+        ll_res == extract_next_logical_line_result::process); // lexing::default_ictl.begin-1 really
     m_parser->lex->set_unlimited_line(false);
     m_parser->lex->reset();
 
@@ -151,8 +155,9 @@ bool opencode_provider::feed_line()
 
     m_ctx->hlasm_ctx->metrics.lines += m_current_logical_line.segments.size();
 
-    return true;
+    return ll_res;
 }
+
 bool opencode_provider::process_comment()
 {
     auto prefix = m_current_logical_line.segments.front().code.substr(0, 2);
@@ -179,10 +184,11 @@ bool opencode_provider::process_comment()
 
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
 {
-    if (!feed_line())
+    auto feed_line_res = feed_line();
+    if (feed_line_res == extract_next_logical_line_result::failed)
         return nullptr;
 
-    if (process_comment())
+    if (feed_line_res != extract_next_logical_line_result::process && process_comment())
         return nullptr;
 
     auto& collector = m_parser->parser->get_collector();
@@ -400,9 +406,49 @@ void opencode_provider::apply_pending_line_changes()
     m_lines_to_remove = {};
 }
 
-bool opencode_provider::extract_next_logical_line()
+bool opencode_provider::is_next_line_ictl() const
+{
+    if (m_next_line_text.empty() || m_next_line_text.front() != ' ')
+        return false;
+    auto test_ictl = m_next_line_text;
+    if (auto non_blank = test_ictl.find_first_not_of(' '); non_blank == std::string_view::npos)
+        return false;
+    else
+        test_ictl.remove_prefix(non_blank);
+
+    static constexpr std::string_view ICTL_LITERAL = "ICTL ";
+    if (test_ictl.size() < ICTL_LITERAL.size() - 1)
+        return false;
+
+    auto possible_ictl = test_ictl.substr(0, ICTL_LITERAL.size());
+    return std::equal(
+        possible_ictl.cbegin(), possible_ictl.cend(), ICTL_LITERAL.cbegin(), [](unsigned char l, unsigned char r) {
+            return std::toupper(l) == r;
+        });
+}
+
+bool opencode_provider::is_next_line_process() const
+{
+    static constexpr std::string_view PROCESS_LITERAL = "*PROCESS ";
+    if (m_next_line_text.size() < PROCESS_LITERAL.size() - 1)
+        return false;
+    auto test_process = m_next_line_text.substr(0, PROCESS_LITERAL.size());
+    return std::equal(
+        test_process.cbegin(), test_process.cend(), PROCESS_LITERAL.cbegin(), [](unsigned char l, unsigned char r) {
+            return std::toupper(l) == r;
+        });
+}
+
+extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 {
     apply_pending_line_changes();
+
+    bool ictl_allowed = false;
+    if (m_opts.ictl_allowed)
+    {
+        m_opts.ictl_allowed = false;
+        ictl_allowed = true;
+    }
 
     m_current_logical_line.clear();
 
@@ -415,10 +461,27 @@ bool opencode_provider::extract_next_logical_line()
                 break;
         }
         finish_logical_line(m_current_logical_line, lexing::default_ictl_copy);
-        return true;
+        return extract_next_logical_line_result::normal;
     }
 
     // TODO: other sources
+
+    if (ictl_allowed)
+        ictl_allowed = is_next_line_ictl();
+
+    if (!ictl_allowed && m_opts.process_remaining)
+    {
+        if (!is_next_line_process())
+            m_opts.process_remaining = 0;
+        else
+        {
+            ++m_lines_to_remove.current_text_lines;
+            append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl);
+            finish_logical_line(m_current_logical_line, lexing::default_ictl);
+            --m_opts.process_remaining;
+            return extract_next_logical_line_result::process;
+        }
+    }
 
     while (m_next_line_text.size())
     {
@@ -428,7 +491,12 @@ bool opencode_provider::extract_next_logical_line()
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);
 
-    return !m_current_logical_line.segments.empty();
+    if (m_current_logical_line.segments.empty())
+        return extract_next_logical_line_result::failed;
+    if (ictl_allowed)
+        return extract_next_logical_line_result::ictl;
+
+    return extract_next_logical_line_result::normal;
 }
 
 const parsing::parser_holder& opencode_provider::prepare_second_parser(const std::string& text,

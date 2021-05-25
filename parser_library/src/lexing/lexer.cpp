@@ -42,11 +42,12 @@ lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
 }
 
 void lexer::set_unlimited_line(bool unlimited_lines) { unlimited_line_ = unlimited_lines; }
-void lexer::set_file_offset(position file_offset)
+void lexer::set_file_offset(position file_offset, bool process_allowed)
 {
     input_state_->line = (size_t)file_offset.line;
     input_state_->char_position_in_line = (size_t)file_offset.column;
     input_state_->char_position_in_line_utf16 = (size_t)file_offset.column;
+    process_allowed_ = process_allowed;
 }
 
 void lexer::reset()
@@ -549,8 +550,7 @@ void lexer::set_continuation_enabled(bool enabled) { continuation_enabled_ = ena
 
 bool lexer::is_process() const
 {
-    return ((ictl_ && input_state_->line <= 11) || (!ictl_ && input_state_->line <= 10))
-        && toupper(static_cast<int>(input_state_->input->LA(2))) == 'P'
+    return process_allowed_ && toupper(static_cast<int>(input_state_->input->LA(2))) == 'P'
         && toupper(static_cast<int>(input_state_->input->LA(3))) == 'R'
         && toupper(static_cast<int>(input_state_->input->LA(4))) == 'O'
         && toupper(static_cast<int>(input_state_->input->LA(5))) == 'C'

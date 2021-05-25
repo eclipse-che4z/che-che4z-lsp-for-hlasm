@@ -50,8 +50,14 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
     , listener_(opts.file_name)
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
-    , mngr_(std::make_unique<processing::opencode_provider>(
-                text, ctx_, opts.get_lib_provider(), mngr_, src_proc_, listener_),
+    , mngr_(std::make_unique<processing::opencode_provider>(text,
+                ctx_,
+                opts.get_lib_provider(),
+                mngr_,
+                src_proc_,
+                listener_,
+                opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
+                                                               : opencode_provider_options {}),
           ctx_,
           opts.library_data,
           opts.file_name,
@@ -65,7 +71,7 @@ analyzing_context analyzer::context() { return ctx_; }
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
 parsing::hlasmparser& analyzer::parser() { return mngr_.opencode_parser(); }
-bool analyzer::feed_line() { return mngr_.feed_opencode_line(); }
+bool analyzer::feed_line() { return mngr_.feed_opencode_line() != extract_next_logical_line_result::failed; }
 
 const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 

@@ -35,6 +35,12 @@ enum class collect_highlighting_info : bool
     yes,
 };
 
+enum class file_is_opencode : bool
+{
+    no,
+    yes,
+};
+
 class analyzer_options
 {
     std::string file_name = "";
@@ -42,6 +48,7 @@ class analyzer_options
     std::variant<asm_option, analyzing_context> ctx_source;
     workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
+    file_is_opencode parsing_opencode = file_is_opencode::no;
 
     void set(std::string fn) { file_name = std::move(fn); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -49,6 +56,7 @@ class analyzer_options
     void set(analyzing_context ac) { ctx_source = std::move(ac); }
     void set(workspaces::library_data ld) { library_data = std::move(ld); }
     void set(collect_highlighting_info hi) { collect_hl_info = hi; }
+    void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -72,6 +80,7 @@ public:
         constexpr const auto ac_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, analyzing_context>);
         constexpr const auto lib_data_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::library_data>);
         constexpr const auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
+        constexpr const auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
 
         static_assert(string_cnt <= 1, "Duplicate argument provided");
         static_assert(lib_cnt <= 1, "Duplicate argument provided");
@@ -79,6 +88,7 @@ public:
         static_assert(ac_cnt <= 1, "Duplicate argument provided");
         static_assert(hi_cnt <= 1, "Duplicate argument provided");
         static_assert(lib_data_cnt <= 1, "Duplicate argument provided");
+        static_assert(f_oc_cnt <= 1, "Duplicate argument provided");
         static_assert(!(ao_cnt && ac_cnt), "Do not specify both asm_option and analyzing_context");
 
         (set(std::forward<Args>(args)), ...);

@@ -14,6 +14,7 @@ target_sources(library_test PRIVATE
 	parser_model_test.cpp
 	parser_range_test.cpp
 	parser_test.cpp
+	special_test.cpp
 	string_test.cpp
 )
 
