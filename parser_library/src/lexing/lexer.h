@@ -33,7 +33,6 @@
 namespace hlasm_plugin::parser_library::lexing {
 
 class input_source;
-
 using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
 class lexer final : public antlr4::TokenSource
@@ -53,14 +52,11 @@ public:
 
     // resets lexer's state, goes to the source beginning
     void reset();
-    void append();
 
     virtual ~lexer() = default;
 
     // generates next token, main lexer logic
     token_ptr nextToken() override;
-
-    void delete_token(ssize_t index);
 
     size_t getLine() const override;
 
@@ -71,18 +67,6 @@ public:
     std::string getSourceName() override;
 
     Ref<antlr4::TokenFactory<antlr4::CommonToken>> getTokenFactory() override { return dummy_factory; };
-
-    token_factory* get_token_factory() { return factory_.get(); }
-
-    bool double_byte_enabled() const;
-
-    void set_double_byte_enabled(bool);
-
-    /*
-     * check if token is after continuation
-     * token is unmarked after the call
-     */
-    bool continuation_before_token(size_t token_index);
 
     enum Tokens
     {
@@ -115,11 +99,6 @@ public:
     // set lexer's input state to file position
     void set_file_offset(position file_offset);
 
-    bool is_last_line() const;
-    bool eof_generated() const;
-    stream_position last_lln_begin_position() const;
-    stream_position last_lln_end_position() const;
-
 protected:
     // creates token and inserts to input stream
     void create_token(size_t ttype, size_t channel);
@@ -127,18 +106,12 @@ protected:
     void consume();
 
 private:
-    bool eof_generated_ = false;
     bool last_char_utf16_long_ = false;
     bool creating_var_symbol_ = false;
     bool creating_attr_ref_ = false;
 
-    std::set<size_t> tokens_after_continuation_;
     size_t last_token_id_ = 0;
-    size_t last_continuation_ = static_cast<size_t>(-1);
 
-    // positions of the last line
-    stream_position last_lln_begin_pos_ = { 0, 0 };
-    stream_position last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
     size_t last_line_pos_ = 0;
 
     std::queue<token_ptr> token_queue_;
@@ -173,8 +146,6 @@ private:
     // captures lexer state at the beginning of a token
     input_state token_start_state_;
 
-    // appostroph couter, used in process instruction
-    size_t apostrophes_ = 0;
 
     bool eof() const;
     bool identifier_divider() const;
@@ -204,12 +175,6 @@ private:
     void consume_new_line();
     // lexes PROCESS instruction
     void lex_process();
-    void set_last_line_pos(size_t idx, size_t line);
-    // check if the c is the first byte of a UTF8 encoded character
-    static bool char_start_utf8(unsigned c);
-    // returns UTF16-encoded length of str encoded in UTF8
-    static size_t length_utf16(const std::string& str);
-
 
     bool is_process() const;
 };

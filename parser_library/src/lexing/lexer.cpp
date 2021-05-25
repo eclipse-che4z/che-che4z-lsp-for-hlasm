@@ -41,22 +41,6 @@ lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
     dummy_factory = make_shared<antlr4::CommonTokenFactory>();
 }
 
-bool lexer::is_last_line() const
-{
-    for (size_t i = 1; input_->LA(i) != antlr4::CharStream::EOF && i < 100; i++)
-    {
-        if (input_->LA(i) == '\n' || input_->LA(i) == '\r')
-            return false;
-    }
-    return true;
-}
-
-lexer::stream_position lexer::last_lln_begin_position() const { return last_lln_begin_pos_; }
-
-lexer::stream_position lexer::last_lln_end_position() const { return last_lln_end_pos_; }
-
-bool lexer::eof_generated() const { return eof_generated_; }
-
 void lexer::set_unlimited_line(bool unlimited_lines) { unlimited_line_ = unlimited_lines; }
 void lexer::set_file_offset(position file_offset)
 {
@@ -71,13 +55,6 @@ void lexer::reset()
     last_token_id_ = 0;
     input_state_->char_position = 0;
     file_input_state_.c = static_cast<char_t>(input_->LA(1));
-    eof_generated_ = false;
-}
-
-void lexer::append()
-{
-    file_input_state_.c = static_cast<char_t>(input_->LA(1));
-    eof_generated_ = false;
 }
 
 
@@ -89,45 +66,11 @@ antlr4::CharStream* lexer::getInputStream() { return input_; }
 
 std::string lexer::getSourceName() { return input_->getSourceName(); }
 
-bool lexer::double_byte_enabled() const { return double_byte_enabled_; }
-
-void lexer::set_double_byte_enabled(bool dbe) { double_byte_enabled_ = dbe; }
-
-/*
- * check if token is after continuation
- * token is unmarked after the call
- */
-bool lexer::continuation_before_token(size_t token_index)
-{
-    if (tokens_after_continuation_.find(token_index) != tokens_after_continuation_.end())
-    {
-        tokens_after_continuation_.erase(token_index);
-        return true;
-    }
-    return false;
-}
-
 void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL)
 {
-    if (ttype == Token::EOF)
-    {
-        assert(!eof_generated_);
-        eof_generated_ = true;
-    }
     /* do not generate empty tokens (except EOF) */
     if (token_start_state_.char_position == token_start_state_.input->index() && ttype != Token::EOF)
         return;
-
-    /* mark first token after continuation */
-    if (channel == DEFAULT_CHANNEL && last_continuation_ != static_cast<size_t>(-1))
-    {
-        last_continuation_ = static_cast<size_t>(-1);
-        tokens_after_continuation_.emplace(last_token_id_);
-    }
-
-    /* record last continuation */
-    if (ttype == CONTINUATION)
-        last_continuation_ = last_token_id_;
 
     creating_var_symbol_ = ttype == AMPERSAND;
     if (creating_attr_ref_)
@@ -261,14 +204,6 @@ token_ptr lexer::nextToken()
     }
 }
 
-void lexer::delete_token(ssize_t index)
-{
-    eof_generated_ = false;
-    last_token_id_ = index;
-    token_queue_ = {};
-}
-
-
 void lexer::lex_tokens()
 {
     switch (input_state_->c)
@@ -351,7 +286,6 @@ void lexer::lex_tokens()
             consume();
             if (!creating_attr_ref_)
             {
-                apostrophes_++;
                 create_token(APOSTROPHE);
             }
             else
@@ -450,7 +384,6 @@ void lexer::lex_comment()
         else
         {
             lex_end();
-            set_last_line_pos(input_state_->char_position, token_start_state_.line);
 
             break;
         }
@@ -639,57 +572,14 @@ void lexer::lex_process()
     start_token();
     lex_space();
 
-    apostrophes_ = 0;
+    size_t apostrophes = 0;
     end_++; /* including END column */
     while (!eof() && before_end() && input_state_->c != '\n' && input_state_->c != '\r'
-        && (apostrophes_ % 2 == 1 || (apostrophes_ % 2 == 0 && input_state_->c != ' ')))
+        && (apostrophes % 2 == 1 || (apostrophes % 2 == 0 && input_state_->c != ' ')))
     {
         start_token();
         lex_tokens();
     }
     end_--;
     lex_end();
-}
-
-
-bool lexer::char_start_utf8(unsigned c)
-{
-    /* https://en.wikipedia.org/wiki/UTF-8#Description */
-    return !(c & (1 << 7))
-
-        || (!(c & (1 << 5)) && (c & (3 << 6)))
-
-        || (!(c & (1 << 4)) && (c & (7 << 5)))
-
-        || (!(c & (1 << 3)) && (c & (15 << 4)));
-}
-
-size_t lexer::length_utf16(const std::string& str)
-{
-    if (str.length() == 0)
-        return 0;
-
-    size_t l = 0;
-    size_t ll = 1;
-    for (auto i = str.cbegin() + 1; i != str.cend(); ++i)
-    {
-        if (char_start_utf8(*i))
-        {
-            /* 4B in UTF8 = 2x UTF16 otherwise 1x UTF16 */
-            l += (ll == 4) ? 2 : 1;
-            ll = 0;
-        }
-        ++ll;
-    }
-    l += (ll == 4) ? 2 : 1;
-    return l;
-}
-
-void lexer::set_last_line_pos(size_t idx, size_t line)
-{
-    if (!(last_lln_end_pos_.line == static_cast<size_t>(-1) && last_lln_end_pos_.offset == static_cast<size_t>(-1)))
-    {
-        last_lln_begin_pos_ = { last_lln_end_pos_.line + 1, last_lln_end_pos_.offset };
-    }
-    last_lln_end_pos_ = { line, idx };
 }

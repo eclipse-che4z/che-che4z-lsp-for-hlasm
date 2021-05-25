@@ -67,7 +67,9 @@ struct logical_line_segment
     std::string_view ignore;
 
     std::string_view line;
-    size_t line_utf16;
+
+    size_t code_offset;
+    size_t code_offset_utf16;
 
     bool continuation_error;
     bool so_si_continuation;

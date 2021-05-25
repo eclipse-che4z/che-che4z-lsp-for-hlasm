@@ -57,9 +57,9 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     std::string_view m_original_text;
 
-    std::string_view m_current_text;
-    size_t m_current_line = 0;
+    std::string_view m_next_line_text;
 
+    size_t m_current_line = 0;
     lexing::logical_line m_current_logical_line;
 
     std::deque<std::string> m_ainsert_buffer;

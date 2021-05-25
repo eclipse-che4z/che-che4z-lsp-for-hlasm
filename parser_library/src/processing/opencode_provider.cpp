@@ -32,7 +32,7 @@ opencode_provider::opencode_provider(std::string_view text,
     parsing::parser_error_listener& err_listener)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
-    , m_current_text(text)
+    , m_next_line_text(text)
     , m_parser(parsing::parser_holder::create(&src_proc))
     , m_second_parser(parsing::parser_holder::create(nullptr))
     , m_ctx(&ctx)
@@ -50,7 +50,7 @@ void opencode_provider::rewind_input(context::source_position pos)
     apply_pending_line_changes();
 
     m_ainsert_buffer.clear(); // this needs to be tested, but apparently AGO clears AINSERT buffer
-    m_current_text = m_original_text.substr(pos.file_offset);
+    m_next_line_text = m_original_text.substr(pos.file_offset);
     m_current_line = pos.file_line;
 }
 
@@ -77,7 +77,7 @@ std::string opencode_provider::aread()
     }
     else
     {
-        result = lexing::extract_line(m_current_text).first;
+        result = lexing::extract_line(m_next_line_text).first;
     }
 
     if (!result.empty())
@@ -196,7 +196,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
         m_ctx->hlasm_ctx->set_source_indices(
             m_current_logical_line.segments.front().code.data() - m_original_text.data(),
-            m_current_text.size() ? m_current_text.data() - m_original_text.data() : m_original_text.size(),
+            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size(),
             m_current_line + m_current_logical_line.segments.size() - 1);
         m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
         auto proc_status = proc.get_processing_status(collector.peek_instruction());
@@ -238,7 +238,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
         m_ctx->hlasm_ctx->set_source_indices(
             m_current_logical_line.segments.front().code.data() - m_original_text.data(),
-            m_current_text.size() ? m_current_text.data() - m_original_text.data() : m_original_text.size(),
+            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size(),
             m_current_line + m_current_logical_line.segments.size() - 1);
 
         if (collector.has_instruction())
@@ -374,7 +374,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
 bool opencode_provider::finished() const
 {
-    return m_current_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty() && m_preprocessor_buffer.empty();
+    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty()
+        && m_preprocessor_buffer.empty();
 }
 
 parsing::hlasmparser& opencode_provider::parser()
@@ -419,10 +420,10 @@ bool opencode_provider::extract_next_logical_line()
 
     // TODO: other sources
 
-    while (m_current_text.size())
+    while (m_next_line_text.size())
     {
         ++m_lines_to_remove.current_text_lines;
-        if (!append_to_logical_line(m_current_logical_line, m_current_text, lexing::default_ictl))
+        if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
             break;
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);

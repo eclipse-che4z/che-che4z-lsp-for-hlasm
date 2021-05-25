@@ -44,18 +44,23 @@ std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_v
     }
 }
 
-std::string_view skip_chars(std::string_view s, size_t count)
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
 {
+    size_t utf16_skipped = 0;
     for (; count; --count)
     {
         if (s.empty())
             break;
-        const auto cs = utf8_prefix_sizes[(unsigned char)s.front()];
+        unsigned char c = s.front();
+
+        const auto cs = utf8_prefix_sizes[c];
         if (!cs.utf8 || s.size() < cs.utf8)
             throw hlasm_plugin::parser_library::lexing::utf8_error();
+
         s.remove_prefix(cs.utf8);
+        utf16_skipped += cs.utf16;
     }
-    return s;
+    return std::pair(s, utf16_skipped);
 }
 
 std::pair<size_t, bool> length_utf16(std::string_view s)
@@ -64,7 +69,9 @@ std::pair<size_t, bool> length_utf16(std::string_view s)
     size_t len = 0;
     for (; !s.empty();)
     {
-        const auto cs = utf8_prefix_sizes[(unsigned char)s.front()];
+        unsigned char c = s.front();
+
+        const auto cs = utf8_prefix_sizes[c];
         if (!cs.utf8 || s.size() < cs.utf8)
             throw hlasm_plugin::parser_library::lexing::utf8_error();
         s.remove_prefix(cs.utf8);
@@ -79,13 +86,15 @@ std::pair<size_t, bool> length_utf16(std::string_view s)
 bool append_to_logical_line(logical_line& out, std::string_view& input, const logical_line_extractor_args& opts)
 {
     auto [line, eol] = extract_line(input);
-    auto code_start = skip_chars(line, opts.begin - 1);
-    auto after_code = skip_chars(code_start, opts.end + 1 - opts.begin);
+    auto [code_start, utf16_begin_offset] = skip_chars(line, opts.begin - 1);
+    auto after_code = skip_chars(code_start, opts.end + 1 - opts.begin).first;
 
     logical_line_segment& segment = out.segments.emplace_back();
     segment.eol = eol;
     segment.line = line;
     segment.code = code_start.substr(0, after_code.data() - code_start.data());
+    segment.code_offset = code_start.data() - line.data();
+    segment.code_offset_utf16 = utf16_begin_offset;
     if (after_code.empty())
         return false;
 
@@ -96,7 +105,7 @@ bool append_to_logical_line(logical_line& out, std::string_view& input, const lo
     }
 
     // line is continued
-    segment.ignore = skip_chars(after_code, 1);
+    segment.ignore = skip_chars(after_code, 1).first;
     segment.continuation = after_code.substr(0, segment.ignore.data() - after_code.data());
 
     if (opts.dbcs)
@@ -137,7 +146,10 @@ void finish_logical_line(logical_line& out, const logical_line_extractor_args& o
         const auto should_be_space = s.code.substr(0, cont_size);
         const bool contains_non_space = should_be_space.find_first_not_of(' ') != std::string_view::npos;
         out.continuation_error |= s.continuation_error = contains_non_space;
-        s.code = skip_chars(s.code, cont_size);
+        auto [code_without_cont, utf16_skipped] = skip_chars(s.code, cont_size);
+        s.code_offset += code_without_cont.data() - s.code.data();
+        s.code_offset_utf16 += utf16_skipped;
+        s.code = code_without_cont;
     }
     if (!opts.eof_copy_rules)
     {
