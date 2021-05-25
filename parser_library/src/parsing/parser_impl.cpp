@@ -556,9 +556,9 @@ void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index
     int position = 0;
     for (const auto& operand : *opernds)
     {
-        for (const auto& replaced_member : replaced)
+        for (const auto& [index, value] : replaced)
         {
-            if (replaced_member.first == position)
+            if (index == position)
             {
                 position++;
             }
