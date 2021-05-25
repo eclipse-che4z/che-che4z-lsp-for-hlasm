@@ -545,7 +545,7 @@ void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index
     if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
         mnem_tmp != context::instruction::mnemonic_codes.end())
     {
-        auto mnemonic = context::instruction::mnemonic_codes.at(*instruction);
+        const auto& mnemonic = context::instruction::mnemonic_codes.at(*instruction);
         instr = mnemonic.instruction;
         replaced = mnemonic.replaced;
     }
@@ -556,9 +556,9 @@ void parser_impl::transform_imm_reg_operands(semantics::collector& col, id_index
     int position = 0;
     for (const auto& operand : *opernds)
     {
-        for (int index = 0; index < replaced.size(); index++)
+        for (const auto& replaced_member : replaced)
         {
-            if (replaced.at(index).first == position)
+            if (replaced_member.first == position)
             {
                 position++;
             }
