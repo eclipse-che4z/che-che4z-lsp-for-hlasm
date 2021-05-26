@@ -18,6 +18,7 @@
 #include "antlr4-runtime.h"
 #include "gtest/gtest.h"
 
+#include "analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/lexer.h"
@@ -158,4 +159,24 @@ TEST(lexer_test, attribute_in_continuation)
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IGNORED);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ATTR);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
+}
+
+TEST(lexer_test, bad_continuation)
+{
+    std::string in =
+        R"( SAM31                                                                 X
+ err
+)";
+    analyzer a(in);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+
+    ASSERT_EQ(diags.size(), (size_t)1);
+    EXPECT_EQ(diags[0].code, "E001");
+    EXPECT_EQ(diags[0].diag_range.start.line, 1);
+    EXPECT_EQ(diags[0].diag_range.start.column, 0);
+    EXPECT_EQ(diags[0].diag_range.end.line, 1);
+    EXPECT_EQ(diags[0].diag_range.end.column, 3);
 }

@@ -1595,6 +1595,11 @@ diagnostic_op diagnostic_op::error_M200(const std::string& instr_name, const ran
 }
 
 // diagnostic_s errors
+diagnostic_op diagnostic_op::error_E001(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E001", "Continued line does not begin with required number of blanks", range);
+}
 
 diagnostic_op diagnostic_op::error_E010(const std::string& message, const range& range)
 {

@@ -182,11 +182,31 @@ bool opencode_provider::process_comment()
     return true;
 }
 
+void opencode_provider::generate_continuation_error_messages() const
+{
+    auto line_no = m_current_line;
+    for (const auto& s : m_current_logical_line.segments)
+    {
+        if (s.continuation_error)
+        {
+            parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
+            listener.add_diagnostic(diagnostic_op::error_E001(
+                range { { line_no, 0 }, { line_no, s.code_offset_utf16 - !!s.code_offset_utf16 } }));
+            collect_diags_from_child(listener);
+            break;
+        }
+        ++line_no;
+    }
+}
+
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
 {
     auto feed_line_res = feed_line();
     if (feed_line_res == extract_next_logical_line_result::failed)
         return nullptr;
+
+    if (m_current_logical_line.continuation_error)
+        generate_continuation_error_messages();
 
     if (feed_line_res != extract_next_logical_line_result::process && process_comment())
         return nullptr;

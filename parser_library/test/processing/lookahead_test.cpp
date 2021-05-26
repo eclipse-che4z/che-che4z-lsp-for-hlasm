@@ -176,7 +176,7 @@ TEST(lookahead, forward_jump_before_continued_comment)
  AGO .A
  BAD_INSTR
 *COMMENT                                                               X IGNORED
- IGNORED         COMMENT
+                 COMMENT
 .A ANOP
 )");
 

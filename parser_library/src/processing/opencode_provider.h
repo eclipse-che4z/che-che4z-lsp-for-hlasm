@@ -118,6 +118,7 @@ public:
 private:
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
+    void generate_continuation_error_messages() const;
     extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_second_parser(const std::string& text,
