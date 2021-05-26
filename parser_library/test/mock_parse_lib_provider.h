@@ -24,10 +24,8 @@ class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
 public:
     workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
+        const std::string&, analyzing_context ctx, workspaces::library_data data) override
     {
-        (void)library;
-
         analyzer a(data.proc_kind == processing::processing_kind::MACRO ? macro_contents : copy_contents,
             analyzer_options {
                 data.proc_kind == processing::processing_kind::MACRO ? MACRO_FILE : COPY_FILE,

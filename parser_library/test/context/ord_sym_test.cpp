@@ -286,7 +286,7 @@ class loc_mock : public workspaces::parse_lib_provider
 {
 public:
     workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
+        const std::string& library, analyzing_context ctx, workspaces::library_data data) override
     {
         std::string lib_data("XXX EQU 1");
         analyzer a(lib_data, analyzer_options { library, this, std::move(ctx), data });

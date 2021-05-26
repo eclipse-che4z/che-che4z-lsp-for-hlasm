@@ -53,7 +53,7 @@ SYM    LR &VAR,1
     class lib_provider_mock : public workspaces::parse_lib_provider
     {
         workspaces::parse_result parse_library(
-            const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
+            const std::string& library, analyzing_context ctx, workspaces::library_data data) override
         {
             const std::string* text;
             if (library == copyfile_file_name)

@@ -57,7 +57,7 @@ class copy_mock : public workspaces::parse_lib_provider
 
 public:
     workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
+        const std::string& library, analyzing_context ctx, workspaces::library_data data) override
     {
         current_content = find_content(library);
         if (!current_content)

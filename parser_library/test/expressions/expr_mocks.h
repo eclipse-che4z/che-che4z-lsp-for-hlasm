@@ -28,8 +28,7 @@ class dep_sol_mock : public context::dependency_solver
 class lib_prov_mock : public workspaces::parse_lib_provider
 {
 public:
-    workspaces::parse_result parse_library(
-        const std::string&, analyzing_context, const workspaces::library_data) override
+    workspaces::parse_result parse_library(const std::string&, analyzing_context, workspaces::library_data) override
     {
         return false;
     };

@@ -713,7 +713,7 @@ class O_mock : public workspaces::parse_lib_provider
 {
 public:
     workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
+        const std::string& library, analyzing_context ctx, workspaces::library_data data) override
     {
         if (!has_library(library, ctx.hlasm_ctx->opencode_file_name()))
             return false;
