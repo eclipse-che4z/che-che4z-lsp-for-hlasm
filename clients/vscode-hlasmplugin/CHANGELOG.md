@@ -2,6 +2,19 @@
 
 ## ****Unreleased****
 
+#### Added
+- Support for specifying the SYSPARM option
+- AREAD instruction support (AREAD in macros called from COPY member not correctly supported yet)
+- Option to tolerate unavailable directories in the macro library configuration (`proc_grps.json`)
+- Support for running under node.js, particularly when native binaries cannot be run
+- Support for approximately 300 missing machine instructions
+
+#### Changed
+- `AlwaysRecognize` option is deprecated in favour of standard VS Code setting `file.associations`. New configuration for macro libraries has been added - option `macro_extensions` specified either for all libraries or for each library separately in `proc_grps.json`.
+
+#### Fixed
+- Conversion of empty string into a number in conditional assembly expressions
+
 ## [0.12.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.11.1...0.12.0) (2020-12-18)
 
 #### Added

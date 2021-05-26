@@ -200,6 +200,7 @@
       {
         "type": "hlasm",
         "label": "HLASM Macro tracer",
+        "languages": ["hlasm"],
         "configurationAttributes": {
           "launch": {
             "required": [
