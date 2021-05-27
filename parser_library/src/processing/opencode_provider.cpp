@@ -68,6 +68,7 @@ std::string opencode_provider::aread()
     }
     else if (!m_copy_files.empty())
     {
+        // TODO: provide an actual implementation
         result = lexing::extract_line(m_copy_files.back()).first;
         if (m_copy_files.back().empty())
             m_copy_files.pop_back();
@@ -484,7 +485,15 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         return extract_next_logical_line_result::normal;
     }
 
-    // TODO: other sources
+    if (!m_copy_files.empty())
+    {
+        // TODO: other sources
+    }
+
+    if (!m_preprocessor_buffer.empty())
+    {
+        // TODO: other sources
+    }
 
     if (ictl_allowed)
         ictl_allowed = is_next_line_ictl();
