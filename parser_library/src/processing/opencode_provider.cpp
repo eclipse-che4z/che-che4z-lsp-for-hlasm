@@ -428,16 +428,14 @@ void opencode_provider::apply_pending_line_changes()
 
 bool opencode_provider::is_next_line_ictl() const
 {
-    if (m_next_line_text.empty() || m_next_line_text.front() != ' ')
-        return false;
-    auto test_ictl = m_next_line_text;
-    if (auto non_blank = test_ictl.find_first_not_of(' '); non_blank == std::string_view::npos)
-        return false;
-    else
-        test_ictl.remove_prefix(non_blank);
+    static constexpr std::string_view ICTL_LITERAL = "ICTL";
 
-    static constexpr std::string_view ICTL_LITERAL = "ICTL ";
-    if (test_ictl.size() < ICTL_LITERAL.size() - 1)
+    const auto non_blank = m_next_line_text.find_first_not_of(' ');
+    if (non_blank == std::string_view::npos || non_blank == 0)
+        return false;
+    const auto test_ictl = m_next_line_text.substr(non_blank);
+
+    if (test_ictl.size() > ICTL_LITERAL.size() && test_ictl[ICTL_LITERAL.size()] != ' ')
         return false;
 
     auto possible_ictl = test_ictl.substr(0, ICTL_LITERAL.size());
@@ -449,10 +447,12 @@ bool opencode_provider::is_next_line_ictl() const
 
 bool opencode_provider::is_next_line_process() const
 {
-    static constexpr std::string_view PROCESS_LITERAL = "*PROCESS ";
-    if (m_next_line_text.size() < PROCESS_LITERAL.size() - 1)
+    static constexpr std::string_view PROCESS_LITERAL = "*PROCESS";
+
+    if (m_next_line_text.size() > PROCESS_LITERAL.size() && m_next_line_text[PROCESS_LITERAL.size()] != ' ')
         return false;
-    auto test_process = m_next_line_text.substr(0, PROCESS_LITERAL.size());
+
+    const auto test_process = m_next_line_text.substr(0, PROCESS_LITERAL.size());
     return std::equal(
         test_process.cbegin(), test_process.cend(), PROCESS_LITERAL.cbegin(), [](unsigned char l, unsigned char r) {
             return std::toupper(l) == r;
