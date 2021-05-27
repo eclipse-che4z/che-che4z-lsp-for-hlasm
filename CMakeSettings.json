@@ -34,7 +34,13 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "CMAKE_VS_JUST_MY_CODE_DEBUGGING",
+          "value": "On",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Release",
