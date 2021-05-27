@@ -273,7 +273,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
             if (proc.kind == processing::processing_kind::ORDINARY
                 && try_trigger_attribute_lookahead(
                     collector.current_instruction(), { *m_ctx, *m_lib_provider }, *m_state_listener))
-                return result;
+                return nullptr;
 
             m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
             auto proc_status = proc.get_processing_status(collector.peek_instruction());
