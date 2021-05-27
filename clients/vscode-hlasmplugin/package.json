@@ -286,8 +286,7 @@
       {
         "language": "hlasm",
         "scopeName": "source.hlasm",
-        "path": "./syntaxes/hlasm.tmLanguage.json",
-        "injectTo": ["source.hlasm", "source.hlasmListing"]
+        "path": "./syntaxes/hlasm.tmLanguage.json"
       },
       {
         "language": "hlasmListing",
