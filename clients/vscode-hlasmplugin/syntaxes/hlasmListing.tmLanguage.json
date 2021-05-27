@@ -4,42 +4,37 @@
   "scopeName": "source.hlasmListing",
   "patterns": [
     {
-      "include": "#listing_syntax_long"
+      "begin": "  Loc    Object Code      Addr1    Addr2    Stmt  Source Statement",
+      "end": "                                                 Relocation Dictionary",
+      "patterns": [ {"include": "#lines_to_ignore"}, {"include" : "#listing_syntax_long"}]
     },
     {
-      "include": "#listing_syntax"
+      "begin": "  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement",
+      "end": "                                                 Relocation Dictionary",
+      "patterns": [ {"include": "#lines_to_ignore"}, {"include" : "#listing_syntax"}]
     }
   ],
   "repository": {
     "listing_syntax":{
-      "match": "^(\\h{6}\\s)(.{9})(.{21})(\\d\\d|.\\d|.[+])(.{72,72}).*$",
+      "match": "^(.{7})(.{9})(.{21})(\\d\\d|.\\d|.[+]|.)(.{72,72}).*$",
       "captures":
       {
         "2":{"patterns": [ {"include": "#param_syntax"}]},
         "5":{"patterns" :[ {"include": "#hlasm_syntax"}]}
       }
-
     },
-
     "listing_syntax_long":{
-      "match": "^(\\h{8}\\s)(.{9})(.{28})(\\d\\d|.\\d|.[+])(.{72,72}).*$",
+      "match": "^(.{9})(.{9})(.{28})(\\d\\d|.\\d|.[+]|.)(.{72,72}).*$",
       "captures":
       {
         "2":{"patterns": [ {"include": "#param_syntax"}]},
         "5":{"patterns" :[ {"include": "#hlasm_syntax"}]}
       }
-
     },
-
-    "hlasm_syntax_": {
-      "match": "(\\S*) *(\\S*) .*",
-      "captures":{
-        "1":{"name": "support.class.hlasm"},
-        "2":{"name": "support.function.hlasm"}
-      }
-
+    "lines_to_ignore":{
+      "match": "^  Active|^  Loc|^D-Loc  |^ {111}Page",
+      "name": "placeholder_f8Gc"
     },
-
     "hlasm_syntax": {
       "patterns": [
         {
@@ -115,6 +110,10 @@
     },
     "lineComment": {
       "patterns": [
+        {
+          "begin": "\\*.{70,70}X",
+          "end": ""
+        },
         {
           "name": "comment.hlasm",
           "match": "(\\*.{70,70})(.*)",
