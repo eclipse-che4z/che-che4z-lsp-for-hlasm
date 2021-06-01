@@ -70,11 +70,26 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     lines_to_remove m_lines_to_remove = {};
 
     std::string_view m_original_text;
+    size_t m_current_line = 0;
 
     std::string_view m_next_line_text;
 
-    size_t m_current_line = 0;
     lexing::logical_line m_current_logical_line;
+    struct logical_line_origin
+    {
+        size_t begin_offset;
+        size_t end_offset;
+        size_t begin_line;
+        size_t end_line;
+        enum class source_type
+        {
+            none,
+            file,
+            preprocessor,
+            copy,
+            ainsert,
+        } source;
+    } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
     std::vector<std::string_view> m_copy_files;

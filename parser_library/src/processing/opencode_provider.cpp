@@ -143,8 +143,9 @@ extract_next_logical_line_result opencode_provider::feed_line()
     }
     m_parser->input->reset();
 
-    m_parser->lex->set_file_offset({ m_current_line, 0 },
-        ll_res == extract_next_logical_line_result::process); // lexing::default_ictl.begin-1 really
+    m_parser->lex->set_file_offset(
+        { m_current_logical_line_source.begin_line, 0 /*lexing::default_ictl.begin-1 really*/ },
+        ll_res == extract_next_logical_line_result::process);
     m_parser->lex->set_unlimited_line(false);
     m_parser->lex->reset();
 
@@ -173,10 +174,10 @@ bool opencode_provider::process_comment()
             auto [skip_len, _] = lexing::length_utf16(l.line.substr(0, l.code.data() - l.line.data()));
             auto [code_len, last_big] = lexing::length_utf16(l.code);
 
-            m_src_proc->add_hl_symbol(
-                token_info(range(position(m_current_line + i, skip_len),
-                               position(m_current_line + i, skip_len + code_len - !!code_len - last_big)),
-                    semantics::hl_scopes::comment));
+            m_src_proc->add_hl_symbol(token_info(range(position(m_current_logical_line_source.begin_line + i, skip_len),
+                                                     position(m_current_logical_line_source.begin_line + i,
+                                                         skip_len + code_len - !!code_len - last_big)),
+                semantics::hl_scopes::comment));
         }
         ++i;
     }
@@ -185,7 +186,7 @@ bool opencode_provider::process_comment()
 
 void opencode_provider::generate_continuation_error_messages() const
 {
-    auto line_no = m_current_line;
+    auto line_no = m_current_logical_line_source.begin_line;
     for (const auto& s : m_current_logical_line.segments)
     {
         if (s.continuation_error)
@@ -221,10 +222,9 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     {
         auto look_lab_instr = m_parser->parser->look_lab_instr();
 
-        m_ctx->hlasm_ctx->set_source_indices(
-            m_current_logical_line.segments.front().code.data() - m_original_text.data(),
-            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size(),
-            m_current_line + m_current_logical_line.segments.size() - 1);
+        m_ctx->hlasm_ctx->set_source_indices(m_current_logical_line_source.begin_offset,
+            m_current_logical_line_source.end_offset,
+            m_current_logical_line_source.end_line);
         m_ctx->hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
         auto proc_status = proc.get_processing_status(collector.peek_instruction());
 
@@ -249,7 +249,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
             collector.append_operand_field(std::move(h.parser->get_collector()));
             // lookahead ignores messages collect_diags_from_child(listener);
         }
-        range statement_range(position(m_current_line, 0)); // assign default
+        range statement_range(position(m_current_logical_line_source.begin_line, 0)); // assign default
         result = collector.extract_statement(proc_status, statement_range);
 
         if (m_current_logical_line.segments.size() > 1)
@@ -263,10 +263,9 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     {
         auto lab_instr = m_parser->parser->lab_instr();
 
-        m_ctx->hlasm_ctx->set_source_indices(
-            m_current_logical_line.segments.front().code.data() - m_original_text.data(),
-            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size(),
-            m_current_line + m_current_logical_line.segments.size() - 1);
+        m_ctx->hlasm_ctx->set_source_indices(m_current_logical_line_source.begin_offset,
+            m_current_logical_line_source.end_offset,
+            m_current_logical_line_source.end_line);
 
         if (collector.has_instruction())
         {
@@ -380,7 +379,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
                 }
                 collect_diags_from_child(listener);
             }
-            range statement_range(position(m_current_line, 0)); // assign default
+            range statement_range(position(m_current_logical_line_source.begin_line, 0)); // assign default
             result = collector.extract_statement(proc_status, statement_range);
 
             if (proc.kind == processing::processing_kind::ORDINARY
@@ -472,6 +471,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     }
 
     m_current_logical_line.clear();
+    m_current_logical_line_source = {};
 
     if (m_ainsert_buffer.size())
     {
@@ -482,6 +482,13 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
                 break;
         }
         finish_logical_line(m_current_logical_line, lexing::default_ictl_copy);
+
+        m_current_logical_line_source.begin_line = 0;
+        m_current_logical_line_source.end_line = m_current_logical_line.segments.size() - 1;
+        m_current_logical_line_source.begin_offset = 0;
+        m_current_logical_line_source.end_offset = 0;
+        m_current_logical_line_source.source = logical_line_origin::source_type::ainsert;
+
         return extract_next_logical_line_result::normal;
     }
 
@@ -508,6 +515,15 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl);
             finish_logical_line(m_current_logical_line, lexing::default_ictl);
             --m_opts.process_remaining;
+
+            m_current_logical_line_source.begin_line = m_current_line;
+            m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
+            m_current_logical_line_source.begin_offset =
+                m_current_logical_line.segments.front().code.data() - m_original_text.data();
+            m_current_logical_line_source.end_offset =
+                m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+            m_current_logical_line_source.source = logical_line_origin::source_type::file;
+
             return extract_next_logical_line_result::process;
         }
     }
@@ -522,6 +538,15 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
     if (m_current_logical_line.segments.empty())
         return extract_next_logical_line_result::failed;
+
+    m_current_logical_line_source.begin_line = m_current_line;
+    m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
+    m_current_logical_line_source.begin_offset =
+        m_current_logical_line.segments.front().code.data() - m_original_text.data();
+    m_current_logical_line_source.end_offset =
+        m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+    m_current_logical_line_source.source = logical_line_origin::source_type::file;
+
     if (ictl_allowed)
         return extract_next_logical_line_result::ictl;
 
