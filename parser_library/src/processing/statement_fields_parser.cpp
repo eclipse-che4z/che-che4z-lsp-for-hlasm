@@ -107,13 +107,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
 
-                    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
+                    parsing::parser_error_listener_ctx tmp_listener(*m_hlasm_ctx, std::move(sub));
 
-                    const auto& h = prepare_parser(to_parse, true, tmp_provider, status, listener);
+                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, tmp_listener);
 
-                    line.operands = std::move(h.parser->macro_ops()->list);
+                    line.operands = std::move(h_second.parser->macro_ops()->list);
 
-                    collect_diags_from_child(listener);
+                    collect_diags_from_child(tmp_listener);
                 }
                 break;
             case processing::processing_form::ASM:
