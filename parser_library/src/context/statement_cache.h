@@ -17,6 +17,7 @@
 
 #include "hlasm_statement.h"
 #include "processing/processing_format.h"
+#include "diagnostic.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 struct complete_statement;
@@ -29,8 +30,11 @@ namespace hlasm_plugin::parser_library::context {
 class statement_cache
 {
 public:
-    using cached_statement_t = std::shared_ptr<semantics::complete_statement>;
-
+    struct cached_statement_t
+    {
+        std::shared_ptr<semantics::complete_statement> stmt;
+        std::vector<diagnostic_op> diags;
+    };
     // pair of processing format and reparsed statement
     // processing format serves as an identifier of reparsing kind
     using cache_t = std::pair<processing::processing_form, cached_statement_t>;
@@ -46,7 +50,7 @@ public:
 
     void insert(processing::processing_form format, cached_statement_t statement);
 
-    cached_statement_t get(processing::processing_form format) const;
+    const cached_statement_t & get(processing::processing_form format) const;
 
     shared_stmt_ptr get_base() const;
 };

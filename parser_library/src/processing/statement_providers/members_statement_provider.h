@@ -24,7 +24,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // common class for copy and macro statement providers (provider of copy and macro members)
-class members_statement_provider : public statement_provider
+class members_statement_provider : public statement_provider, public diagnosable_ctx
 {
 public:
     members_statement_provider(const statement_provider_kind kind,
@@ -34,6 +34,7 @@ public:
         processing::processing_state_listener& listener);
 
     context::shared_stmt_ptr get_next(const statement_processor& processor) override;
+
 
 protected:
     analyzing_context ctx;
@@ -51,6 +52,9 @@ private:
         const processing_status& status);
 
     context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);
+
+    // Inherited via diagnosable_ctx
+    virtual void collect_diags() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -109,7 +109,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
                                  true,
                                  semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
                                      semantics::adjusting_state::SUBSTITUTION),
-                                 processing_status(stmt.format_ref(), stmt.opcode_ref()))
+                                 processing_status(stmt.format_ref(), stmt.opcode_ref()),
+                                 [this](diagnostic_op diag) { this->add_diagnostic(std::move(diag)); })
                              .first);
     }
 

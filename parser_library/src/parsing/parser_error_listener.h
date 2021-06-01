@@ -76,6 +76,19 @@ private:
     std::string file_name_;
 };
 
+class parser_error_listener_proxy : public parser_error_listener_base
+{
+public:
+    parser_error_listener_proxy(std::function<void(diagnostic_op)> add_diag);
+
+protected:
+    void add_parser_diagnostic(
+        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
+
+private:
+    std::function<void(diagnostic_op)> add_diag_;
+};
+
 } // namespace hlasm_plugin::parser_library::parsing
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_ERROR_STRATEGY_H

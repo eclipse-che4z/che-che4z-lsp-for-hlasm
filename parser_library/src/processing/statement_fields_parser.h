@@ -34,7 +34,8 @@ public:
     virtual parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
-        processing::processing_status status) = 0;
+        processing::processing_status status,
+        std::function<void(diagnostic_op)> add_diag) = 0;
 
     virtual ~statement_fields_parser() = default;
 };

@@ -64,7 +64,8 @@ public:
     processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
-        processing::processing_status status) override;
+        processing::processing_status status,
+        std::function<void(diagnostic_op)> add_diag) override;
 
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 

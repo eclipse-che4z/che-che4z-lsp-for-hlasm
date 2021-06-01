@@ -111,10 +111,11 @@ std::unique_ptr<parser_holder> create_parser_holder()
     return h;
 }
 
-std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(std::string field,
+statement_fields_parser::parse_result parser_impl::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
-    processing::processing_status status)
+    processing::processing_status status,
+    std::function<void(diagnostic_op)> add_diag)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -125,7 +126,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     std::optional<std::string> sub;
     if (after_substitution)
         sub = field;
-    parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
+    parser_error_listener_proxy listener(add_diag);
 
     h.input->reset(field);
 
@@ -171,8 +172,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         }
     }
 
-    collect_diags_from_child(listener);
-
     for (size_t i = 0; i < line.operands.size(); i++)
     {
         if (!line.operands[i])
@@ -193,8 +192,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         ? range(op_range.end)
         : semantics::range_provider::union_range(line.remarks.front(), line.remarks.back());
 
-    return std::make_pair(semantics::operands_si(op_range, std::move(line.operands)),
-        semantics::remarks_si(rem_range, std::move(line.remarks)));
+    return { semantics::operands_si(op_range, std::move(line.operands)),
+        semantics::remarks_si(rem_range, std::move(line.remarks)) };
 }
 
 void parser_impl::collect_diags() const
