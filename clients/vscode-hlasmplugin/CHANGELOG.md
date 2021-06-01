@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [0.13.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.12.0...0.13.0) (2021-06-01)
 
 #### Added
 - Support for specifying the SYSPARM option

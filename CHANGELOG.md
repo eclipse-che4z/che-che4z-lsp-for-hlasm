@@ -1,3 +1,31 @@
+## [0.13.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.12.0...0.13.0) (2021-06-01)
+
+
+### Features
+
+* AREAD support ([#125](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/125)) ([052c844](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/052c84463cdd2bb390877ae682abca385a4c05ca))
+* Provide users ability to use compiler option SYSPARM ([#108](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/108)) ([ccb3a0a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ccb3a0a38ef562cbee9ae2348ef278d352ced74a))
+* Support for macro file extensions ([#117](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/117)) ([d5b21d2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/d5b21d2f37b815da3a6bc9dfaa3da3ee5ad87c68))
+* Support missing instruction ([#113](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/113)) ([ec547cf](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ec547cf29a071167e6acffed3eac1900daf8df66))
+* Support running under Node.js ([#111](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/111)) ([dc0c47b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/dc0c47bd756e293c0724c6e4a25b85a632aa3f46))
+* UI enhancement for the WASM server variant ([#120](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/120)) ([2d73b0d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2d73b0db89b522e8b53fc39b0ed1fc526edd5fe3)), closes [eclipse/che-che4z-lsp-for-hlasm#122](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/122)
+
+
+### Fixes
+
+* conversion of an empty string to a number ([#119](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/119)) ([b5e6989](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/b5e69896f9daed795e3c0ea62c89dd5eeec3a1bd))
+* Fix crash when hovering over non-existing instruction ([3fbb22e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3fbb22ee1837fc38ef2709cb5252c447b67e60b2))
+* Refactor the way of collecting LSP information ([#110](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/110)) ([d767b6d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/d767b6d2860fbe90e25d9d5e9e876a1fa8fff4cd))
+
+
+### Other changes
+
+* Coverity scan ([#123](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/123)) ([daa662e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/daa662ee8e02f1e5fd41f912c2ab099225faee1b))
+* DAP via LSP messages ([#109](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/109)) ([044acad](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/044acad3e5a57610d19492f79b90d759bb7d10d4))
+* Implement suggestions from tools ([#118](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/118)) ([b6f231b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/b6f231b01a8862eb415f6f00a2105fccc5a78934))
+* Remove mention of unimplemented PROFILE option ([5f4ce87](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/5f4ce87e653e700331455c04c9307297d633910a))
+* Statement refactor ([#93](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/93)) ([0f41701](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/0f41701b3a23405d0e4e63f66700efe2eac22c46))
+
 ## [0.12.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.11.1...0.12.0) (2020-12-18)
 
 
