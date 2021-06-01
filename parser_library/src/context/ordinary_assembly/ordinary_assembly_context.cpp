@@ -15,6 +15,7 @@
 #include "ordinary_assembly_context.h"
 
 #include <algorithm>
+#include <cassert>
 #include <stdexcept>
 
 #include "alignment.h"
@@ -79,10 +80,11 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 
 const section* ordinary_assembly_context::current_section() const { return curr_section_; }
 
-void ordinary_assembly_context::set_section(id_index name, const section_kind kind, location symbol_location)
+void ordinary_assembly_context::set_section(id_index name, section_kind kind, location symbol_location)
 {
-    auto tmp = std::find_if(
-        sections_.begin(), sections_.end(), [&](auto& sect) { return sect->name == name && sect->kind == kind; });
+    auto tmp = std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
+        return sect->name == name && sect->kind == kind;
+    });
 
     if (tmp != sections_.end())
         curr_section_ = &**tmp;
@@ -187,9 +189,9 @@ void ordinary_assembly_context::set_available_location_counter_value(size_t boun
 
 bool ordinary_assembly_context::symbol_defined(id_index name) { return symbols_.find(name) != symbols_.end(); }
 
-bool ordinary_assembly_context::section_defined(id_index name, const section_kind kind)
+bool ordinary_assembly_context::section_defined(id_index name, section_kind kind)
 {
-    return std::find_if(sections_.begin(), sections_.end(), [&](auto& sect) {
+    return std::find_if(sections_.begin(), sections_.end(), [name, kind](const auto& sect) {
         return sect->name == name && sect->kind == kind;
     }) != sections_.end();
 }

@@ -18,12 +18,12 @@
 #include "address.h"
 #include "dependable.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 struct address_resolver_base : public resolvable
-{};
+{
+    virtual ~address_resolver_base() = default;
+};
 
 using addr_res_ptr = std::unique_ptr<address_resolver_base>;
 
@@ -80,8 +80,6 @@ private:
     const resolvable* dependency_source_;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

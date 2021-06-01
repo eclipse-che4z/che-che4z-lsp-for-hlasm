@@ -15,14 +15,13 @@
 #ifndef PROCESSING_STATEMENT_PROCESSOR_H
 #define PROCESSING_STATEMENT_PROCESSOR_H
 
-#include "context/hlasm_context.h"
+#include "analyzing_context.h"
 #include "diagnosable_ctx.h"
-#include "processing/processing_format.h"
+#include "processing/op_code.h"
+#include "processing/statement.h"
 #include "processing/statement_providers/statement_provider_kind.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_processor;
 
@@ -35,10 +34,11 @@ using processor_ptr = std::unique_ptr<statement_processor>;
 class statement_processor : public diagnosable_ctx
 {
 public:
-    statement_processor(const processing_kind kind, context::hlasm_context& hlasm_ctx)
-        : diagnosable_ctx(hlasm_ctx)
+    statement_processor(const processing_kind kind, analyzing_context ctx)
+        : diagnosable_ctx(*ctx.hlasm_ctx)
         , kind(kind)
-        , hlasm_ctx(hlasm_ctx)
+        , ctx(ctx)
+        , hlasm_ctx(*ctx.hlasm_ctx)
         , macro_id(hlasm_ctx.ids().add("MACRO"))
         , mend_id(hlasm_ctx.ids().add("MEND"))
         , copy_id(hlasm_ctx.ids().add("COPY"))
@@ -47,7 +47,6 @@ public:
     // infers processing status of rest of the statement from instruction field
     // used for statement providers to correctly provide statement
     virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const = 0;
-    virtual void process_statement(context::unique_stmt_ptr statement) = 0;
     virtual void process_statement(context::shared_stmt_ptr statement) = 0;
     virtual void end_processing() = 0;
     virtual bool terminal_condition(const statement_provider_kind kind) const = 0;
@@ -58,11 +57,11 @@ public:
     virtual ~statement_processor() = default;
 
 protected:
+    analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     const context::id_index macro_id, mend_id, copy_id;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
+
 #endif

@@ -14,9 +14,11 @@
 
 import * as vscodelc from 'vscode-languageclient';
 import * as net from 'net';
-import * as fork from 'child_process'
+import * as cp from 'child_process'
 import * as path from 'path'
 import { getConfig } from './eventsHandler'
+
+export type ServerVariant = "tcp" | "native" | "wasm";
 
 /**
  * factory to create server options
@@ -24,25 +26,23 @@ import { getConfig } from './eventsHandler'
  */
 export class ServerFactory {
     private usedPorts: Set<number>;
-    dapPort: number;
 
     constructor() {
         this.usedPorts = new Set();
     }
-    
-    async create(useTcp: boolean) : Promise<vscodelc.ServerOptions> {
+
+    async create(method: ServerVariant): Promise<vscodelc.ServerOptions> {
         const langServerFolder = process.platform;
-        this.dapPort = await this.getPort();
-        if (useTcp) {
+        if (method === 'tcp') {
             const lspPort = await this.getPort();
 
             //spawn the server
-            fork.execFile(
+            cp.execFile(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                ["-p", this.dapPort.toString(), lspPort.toString()]);
+                [lspPort.toString()]);
 
             return () => {
-                let socket = net.connect(lspPort,'localhost');
+                let socket = net.connect(lspPort, 'localhost');
                 let result: vscodelc.StreamInfo = {
                     writer: socket,
                     reader: socket
@@ -50,16 +50,31 @@ export class ServerFactory {
                 return Promise.resolve(result);
             };
         }
-        else {
+        else if (method === 'native') {
             const server: vscodelc.Executable = {
                 command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                args: getConfig<string[]>('arguments').concat(["-p", this.dapPort.toString()])
+                args: getConfig<string[]>('arguments')
             };
             return server;
         }
+        else if (method === 'wasm') {
+            const server: vscodelc.Executable = {
+                command: process.execPath,
+                args: [
+                    '--experimental-wasm-threads',
+                    '--experimental-wasm-bulk-memory',
+                    path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                    ...getConfig<string[]>('arguments')
+                ]
+            };
+            return server;
+        }
+        else {
+            throw Error("Invalid method");
+        }
     }
 
-    private async getPort() : Promise<number> {
+    private async getPort(): Promise<number> {
         while (true) {
             const port = await this.getRandomPort();
             if (!this.usedPorts.has(port)) {

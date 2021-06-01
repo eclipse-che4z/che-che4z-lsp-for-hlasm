@@ -1773,6 +1773,18 @@ diagnostic_op diagnostic_op::error_E068(const range& range)
         diagnostic_severity::error, "E068", "Operand value falls outside of current section/LOCTR", range);
 }
 
+diagnostic_op diagnostic_op::error_E069(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E069", "AREAD instruction can only be called from within a macro", range);
+}
+
+diagnostic_op diagnostic_op::error_E070(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E070", "Invalid AREAD operand. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
+}
+
 diagnostic_op diagnostic_op::error_E044(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
@@ -1955,6 +1967,49 @@ diagnostic_s diagnostic_s::error_W004(const std::string& file_name, const std::s
         "W0004",
         "The configuration file pgm_conf for workspace " + ws_name
             + " refers to a processor group, that is not defined in proc_grps",
+        {});
+}
+
+diagnostic_s diagnostic_s::error_W005(const std::string& file_name, const std::string& proc_group)
+{
+    return diagnostic_s(file_name,
+        {},
+        diagnostic_severity::warning,
+        "W0005",
+        "The processor group '" + proc_group + "' from '" + file_name + "' defines invalid assembler options.",
+        {});
+}
+
+diagnostic_s diagnostic_s::error_L0001(const std::string& path)
+{
+    return diagnostic_s(path, {}, "L0001", "Unable to load library: " + path + ".");
+}
+
+diagnostic_s diagnostic_s::error_L0002(const std::string& path)
+{
+    return diagnostic_s(
+        "", {}, "L0002", "Unable to load library: " + path + ". Error: The path does not point to directory.");
+}
+
+diagnostic_s diagnostic_s::warning_L0003(const std::string& path)
+{
+    return diagnostic_s("",
+        {},
+        diagnostic_severity::warning,
+        "L0003",
+        "Macros from library '" + path
+            + "' were selected by a deprecated mechanism to specify file extensions (alwaysRecognize in "
+              "pgm_conf.json).",
+        {});
+}
+
+diagnostic_s diagnostic_s::warning_L0004(const std::string& path, const std::string& macro_name)
+{
+    return diagnostic_s("",
+        {},
+        diagnostic_severity::warning,
+        "L0004",
+        "Library '" + path + "' contains multiple definitions of the macro '" + macro_name + "'.",
         {});
 }
 

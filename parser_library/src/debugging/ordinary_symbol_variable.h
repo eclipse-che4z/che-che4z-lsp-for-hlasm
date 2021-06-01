@@ -28,16 +28,16 @@ public:
     ordinary_symbol_variable(const context::symbol& symbol);
 
 
-    virtual set_type type() const override;
+    set_type type() const override;
 
-    virtual bool is_scalar() const override;
+    bool is_scalar() const override;
 
-    virtual std::vector<variable_ptr> values() const override;
-    virtual size_t size() const override;
+    std::vector<variable_ptr> values() const override;
+    size_t size() const override;
 
 protected:
-    virtual const std::string& get_string_value() const override;
-    virtual const std::string& get_string_name() const override;
+    const std::string& get_string_value() const override;
+    const std::string& get_string_name() const override;
 
 private:
     const context::symbol& symbol_;

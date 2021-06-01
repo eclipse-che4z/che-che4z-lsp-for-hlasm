@@ -31,11 +31,13 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
 };
@@ -44,18 +46,21 @@ public:
 class mach_expr_data_attr : public mach_expression
 {
 public:
-    mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range rng);
+    mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
 
     context::id_index value;
     context::data_attr_kind attribute;
+    range symbol_range;
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
 };
@@ -69,15 +74,15 @@ public:
     context::id_index value;
     mach_expr_data_attr len_expr;
 
-    static mach_expr_ptr from_id(context::id_index id, range rng);
-
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
 };
@@ -92,11 +97,13 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
 };
@@ -111,11 +118,13 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
 };
@@ -129,13 +138,15 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(mach_evaluate_info info) const override;
 
-    virtual void fill_location_counter(context::address addr) override;
+    void fill_location_counter(context::address addr) override;
 
-    virtual const mach_expression* leftmost_term() const override;
+    const mach_expression* leftmost_term() const override;
 
-    virtual void collect_diags() const override;
+    void apply(mach_expr_visitor& visitor) const override;
+
+    void collect_diags() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

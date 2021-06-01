@@ -22,11 +22,9 @@
 #include "input_source.h"
 #include "parser_library_export.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
-class token : public antlr4::Token
+class token final : public antlr4::Token
 {
 public:
     token(antlr4::TokenSource* source,
@@ -79,7 +77,6 @@ private:
     size_t char_position_in_line_16_;
     size_t end_of_token_in_line_utf16_;
 };
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

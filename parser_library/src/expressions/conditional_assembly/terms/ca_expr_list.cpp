@@ -20,6 +20,7 @@
 #include "../ca_operator_unary.h"
 #include "ca_function.h"
 #include "ca_symbol.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 
@@ -38,7 +39,7 @@ undef_sym_set ca_expr_list::get_undefined_attributed_symbols(const evaluation_co
 
 bool is_symbol(const ca_expr_ptr& expr) { return dynamic_cast<const ca_symbol*>(expr.get()) != nullptr; }
 
-const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol*>(expr.get())->symbol; }
+const std::string& get_symbol(const ca_expr_ptr& expr) { return *dynamic_cast<const ca_symbol&>(*expr).symbol; }
 
 void ca_expr_list::resolve_expression_tree(context::SET_t_enum kind)
 {
@@ -65,6 +66,8 @@ void ca_expr_list::collect_diags() const
 
 bool ca_expr_list::is_character_expression() const { return false; }
 
+void ca_expr_list::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
+
 context::SET_t ca_expr_list::evaluate(const evaluation_context& eval_ctx) const
 {
     assert(expr_list.size() <= 1);
@@ -82,28 +85,28 @@ void ca_expr_list::unknown_functions_to_operators()
             expr_func && expr_func->function == ca_expr_funcs::UNKNOWN && expr_func->parameters.size() == 1)
         {
             auto holder = std::move(expr_list[idx]);
-            auto true_func = dynamic_cast<ca_function*>(holder.get());
-            if (true_func->duplication_factor)
+            auto& true_func = dynamic_cast<ca_function&>(*holder);
+            if (true_func.duplication_factor)
             {
-                auto expr_r = true_func->duplication_factor->expr_range;
-                expr_list[idx] = std::make_unique<ca_par_operator>(std::move(true_func->duplication_factor), expr_r);
+                auto expr_r = true_func.duplication_factor->expr_range;
+                expr_list[idx] = std::make_unique<ca_par_operator>(std::move(true_func.duplication_factor), expr_r);
 
-                expr_r = true_func->parameters.front()->expr_range;
+                expr_r = true_func.parameters.front()->expr_range;
                 expr_list.insert(expr_list.begin() + idx + 1,
-                    std::make_unique<ca_par_operator>(std::move(true_func->parameters.front()), expr_r));
+                    std::make_unique<ca_par_operator>(std::move(true_func.parameters.front()), expr_r));
 
-                expr_r = true_func->expr_range;
+                expr_r = true_func.expr_range;
                 expr_list.insert(
-                    expr_list.begin() + idx + 1, std::make_unique<ca_symbol>(true_func->function_name, expr_r));
+                    expr_list.begin() + idx + 1, std::make_unique<ca_symbol>(true_func.function_name, expr_r));
             }
             else
             {
-                auto expr_r = true_func->expr_range;
-                expr_list[idx] = std::make_unique<ca_symbol>(true_func->function_name, expr_r);
+                auto expr_r = true_func.expr_range;
+                expr_list[idx] = std::make_unique<ca_symbol>(true_func.function_name, expr_r);
 
-                expr_r = true_func->parameters.front()->expr_range;
+                expr_r = true_func.parameters.front()->expr_range;
                 expr_list.insert(expr_list.begin() + idx + 1,
-                    std::make_unique<ca_par_operator>(std::move(true_func->parameters.front()), expr_r));
+                    std::make_unique<ca_par_operator>(std::move(true_func.parameters.front()), expr_r));
             }
         }
     }

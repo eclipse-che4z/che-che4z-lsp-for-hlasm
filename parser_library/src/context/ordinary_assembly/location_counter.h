@@ -17,9 +17,7 @@
 
 #include "location_counter_data.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class section;
 class location_counter;
@@ -107,8 +105,5 @@ private:
     bool check_if_higher_value(size_t idx) const;
 };
 
-
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

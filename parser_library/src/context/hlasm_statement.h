@@ -20,20 +20,18 @@
 
 #include "range.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
-struct resolved_statement;
-}
-namespace semantics {
+namespace hlasm_plugin::parser_library::semantics {
 struct deferred_statement;
-}
-namespace context {
+} // namespace hlasm_plugin::parser_library::semantics
+namespace hlasm_plugin::parser_library::processing {
+struct resolved_statement;
+} // namespace hlasm_plugin::parser_library::processing
+
+namespace hlasm_plugin::parser_library::context {
 
 struct hlasm_statement;
 
 using shared_stmt_ptr = std::shared_ptr<const hlasm_statement>;
-using unique_stmt_ptr = std::unique_ptr<hlasm_statement>;
 
 using statement_block = std::vector<shared_stmt_ptr>;
 
@@ -63,8 +61,6 @@ protected:
 };
 
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

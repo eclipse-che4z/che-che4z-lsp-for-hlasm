@@ -26,11 +26,12 @@ namespace hlasm_plugin::parser_library::semantics {
 // concatenation point representing character string
 struct char_str_conc : concatenation_point
 {
-    explicit char_str_conc(std::string value);
+    explicit char_str_conc(std::string value, const range& conc_range);
 
     std::string value;
+    range conc_range;
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing variable symbol
@@ -40,7 +41,7 @@ struct var_sym_conc : concatenation_point
 
     vs_ptr symbol;
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 
     static std::string evaluate(context::SET_t varsym_value);
 };
@@ -50,7 +51,7 @@ struct dot_conc : concatenation_point
 {
     dot_conc();
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing equals sign
@@ -58,7 +59,7 @@ struct equals_conc : concatenation_point
 {
     equals_conc();
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 // concatenation point representing macro operand sublist
@@ -68,7 +69,7 @@ struct sublist_conc : concatenation_point
 
     std::vector<concat_chain> list;
 
-    virtual std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
+    std::string evaluate(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

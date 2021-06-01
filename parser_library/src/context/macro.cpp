@@ -111,10 +111,9 @@ macro_invo_ptr macro_definition::call(
             if (tmp == named_params_.end() || tmp->second->param_type == macro_param_type::POS_PAR_TYPE)
                 throw std::invalid_argument("use of undefined keyword parameter");
 
-            auto key_par = dynamic_cast<const keyword_param*>(tmp->second);
-            assert(key_par);
+            const auto& key_par = dynamic_cast<const keyword_param&>(*tmp->second);
             named_cpy.emplace(
-                param.id, std::make_unique<keyword_param>(param.id, key_par->default_data, std::move(param.data)));
+                param.id, std::make_unique<keyword_param>(param.id, key_par.default_data, std::move(param.data)));
         }
         else
         {
@@ -156,6 +155,18 @@ macro_invo_ptr macro_definition::call(
 }
 
 bool macro_definition::operator=(const macro_definition& m) { return id == m.id; }
+
+const std::vector<std::unique_ptr<positional_param>>& macro_definition::get_positional_params() const
+{
+    return positional_params_;
+}
+
+const std::vector<std::unique_ptr<keyword_param>>& macro_definition::get_keyword_params() const
+{
+    return keyword_params_;
+}
+
+const id_index& macro_definition::get_label_param_name() const { return label_param_name_; }
 
 macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,

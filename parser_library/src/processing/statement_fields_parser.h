@@ -16,11 +16,11 @@
 #define PROCESSING_STATEMENT_FIELDS_PARSER_H
 
 #include "context/hlasm_context.h"
+#include "processing/op_code.h"
 #include "semantics/range_provider.h"
+#include "semantics/statement_fields.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
@@ -31,8 +31,7 @@ class statement_fields_parser
 public:
     using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;
 
-    virtual parse_result parse_operand_field(context::hlasm_context* hlasm_ctx,
-        std::string field,
+    virtual parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status) = 0;
@@ -40,7 +39,5 @@ public:
     virtual ~statement_fields_parser() = default;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

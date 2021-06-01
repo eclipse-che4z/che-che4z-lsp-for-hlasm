@@ -20,8 +20,8 @@
 // arithmetic SETB expressions
 
 #define SETBEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.context()                                                                                              \
-                  .get_var_sym(a.context().ids().add(X))                                                               \
+    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
+                  .get_var_sym(a.hlasm_ctx().ids().add(X))                                                             \
                   ->access_set_symbol_base()                                                                           \
                   ->access_set_symbol<B_t>()                                                                           \
                   ->get_value(),                                                                                       \
@@ -42,6 +42,19 @@ TEST(logical_expressions, valid_assignment)
 
     SETBEQ("A1", 1);
     SETBEQ("A2", 0);
+}
+
+TEST(logical_expressions, empty_string_conversion)
+{
+    std::string input = R"(
+&C1 SETC ''
+&B1 SETB &C1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
 TEST(logical_expressions, invalid_assignment)

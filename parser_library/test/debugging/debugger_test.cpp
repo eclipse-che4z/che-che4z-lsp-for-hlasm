@@ -13,6 +13,7 @@
  */
 
 #include <optional>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -20,7 +21,9 @@
 #include "gtest/gtest.h"
 
 #include "debug_event_consumer_s_mock.h"
-#include "debugging/debugger.h"
+#include "debugger.h"
+#include "debugging/debug_types.h"
+#include "protocol.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/workspace.h"
 
@@ -33,31 +36,31 @@ TEST(debugger, stopped_on_entry)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws("test_workspace", file_manager, config);
+    workspace ws(file_manager, config);
 
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string file_name = "test_workspace\\test";
     file_manager.did_open_file(file_name, 0, "   LR 1,2");
-    d.launch(file_manager.find_processor_file(file_name), ws, true);
+    d.launch(file_name.c_str(), ws, true);
     m.wait_for_stopped();
 
     auto frames = d.stack_frames();
     ASSERT_EQ(frames.size(), 1U);
-    const auto& f = frames.at(0);
-    EXPECT_EQ(f.frame_source.path, file_name);
-    EXPECT_EQ(f.begin_line, 0U);
-    EXPECT_EQ(f.end_line, 0U);
-    EXPECT_EQ(f.name, "OPENCODE");
-    auto& sc = d.scopes(f.id);
+    const auto f = frames.item(0);
+    EXPECT_EQ(std::string_view(f.source_file.path), file_name);
+    EXPECT_EQ(f.source_range.start.line, 0U);
+    EXPECT_EQ(f.source_range.end.line, 0U);
+    EXPECT_EQ(std::string_view(f.name), "OPENCODE");
+    auto sc = d.scopes(f.id);
     ASSERT_EQ(sc.size(), 3U);
-    EXPECT_EQ(sc.at(0).name, "Globals");
-    EXPECT_EQ(sc.at(1).name, "Locals");
-    EXPECT_EQ(sc.at(2).name, "Ordinary symbols");
-    auto& globs = d.variables(sc.at(0).var_reference);
+    EXPECT_EQ(std::string_view(sc.item(0).name), "Globals");
+    EXPECT_EQ(std::string_view(sc.item(1).name), "Locals");
+    EXPECT_EQ(std::string_view(sc.item(2).name), "Ordinary symbols");
+    auto globs = d.variables(sc.item(0).variable_reference);
     EXPECT_EQ(globs.size(), 5U);
-    auto& locs = d.variables(sc.at(1).var_reference);
+    auto locs = d.variables(sc.item(1).variable_reference);
     EXPECT_EQ(locs.size(), 0U);
 
     d.next();
@@ -68,14 +71,14 @@ TEST(debugger, disconnect)
 {
     file_manager_impl file_manager;
     lib_config config;
-    workspace ws("test_workspace", file_manager, config);
+    workspace ws(file_manager, config);
 
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string file_name = "test_workspace\\test";
     file_manager.did_open_file(file_name, 0, "   LR 1,2");
-    d.launch(file_manager.find_processor_file(file_name), ws, true);
+    d.launch(file_name.c_str(), ws, true);
     m.wait_for_stopped();
 
     d.disconnect();
@@ -123,36 +126,36 @@ public:
         : data_(str)
     {}
 
-    bool check(debugger& d, const debugging::variable& var) const
+    bool check(debugger& d, const hlasm_plugin::parser_library::variable& var) const
     {
         if (ignore_)
             return true;
 
         if (!children_.empty())
         {
-            if (var.is_scalar())
+            auto child_vars = var.variable_reference;
+            if (!child_vars)
                 return false;
-            if (var.size() != children_.size())
-                return false;
-            auto& actual_children = d.variables(var.var_reference);
+            auto actual_children = d.variables(child_vars);
             if (actual_children.size() != children_.size())
                 return false;
-            for (auto& actual_ch : actual_children)
+            for (auto actual_ch : actual_children)
             {
-                auto found = children_.find(actual_ch->get_name());
+                std::string actual_ch_name(actual_ch.name);
+                auto found = children_.find(actual_ch_name);
                 if (found == children_.end())
                     return false;
-                if (found->first != actual_ch->get_name())
+                if (found->first != actual_ch_name)
                     return false;
-                if (!found->second->check(d, *actual_ch))
+                if (!found->second->check(d, actual_ch))
                     return false;
             }
         }
 
         if (data_)
-            return *data_ == var.get_value();
+            return *data_ == std::string_view(var.value);
         else
-            return var.get_value() == "";
+            return var.value.size() == 0;
     }
 
 private:
@@ -182,17 +185,17 @@ struct frame_vars
 };
 
 bool check_vars(debugger& d,
-    const std::vector<debugging::variable_ptr>& vars,
+    const std::vector<hlasm_plugin::parser_library::variable>& vars,
     const std::unordered_map<std::string, test_var_value>& exp_vars)
 {
     if (vars.size() != exp_vars.size())
         return false;
-    for (size_t i = 0; i < vars.size(); ++i)
+    for (auto var : vars)
     {
-        auto it = exp_vars.find(vars[i]->get_name());
+        auto it = exp_vars.find(std::string(var.name));
         if (it == exp_vars.end())
             return false;
-        if (!it->second.check(d, *vars[i]))
+        if (!it->second.check(d, var))
             return false;
     }
     return true;
@@ -202,22 +205,37 @@ bool check_step(
     debugger& d, const std::vector<debugging::stack_frame>& exp_frames, const std::vector<frame_vars>& exp_frame_vars)
 {
     auto frames = d.stack_frames();
-    if (frames != exp_frames)
+    if (frames.size() != exp_frames.size())
         return false;
+    for (size_t i = 0; i != exp_frames.size(); ++i)
+    {
+        auto f = frames.item(i);
+        if (exp_frames[i].begin_line != f.source_range.start.line)
+            return false;
+        if (exp_frames[i].end_line != f.source_range.end.line)
+            return false;
+        if (exp_frames[i].frame_source.path != std::string_view(f.source_file.path))
+            return false;
+        if (exp_frames[i].id != f.id)
+            return false;
+        if (exp_frames[i].name != std::string_view(f.name))
+            return false;
+    }
     if (frames.size() != exp_frame_vars.size())
         return false;
     for (size_t i = 0; i < frames.size(); ++i)
     {
-        auto& sc = d.scopes(frames.at(i).id);
+        auto sc = d.scopes(frames.item(i).id);
         if (sc.size() != 3U)
             return false;
-        auto& globs = d.variables(sc.at(0).var_reference);
+        using variables = std::vector<hlasm_plugin::parser_library::variable>;
+        variables globs(d.variables(sc.item(0).variable_reference));
         if (!check_vars(d, globs, exp_frame_vars[i].globals))
             return false;
-        auto& locs = d.variables(sc.at(1).var_reference);
+        variables locs(d.variables(sc.item(1).variable_reference));
         if (!check_vars(d, locs, exp_frame_vars[i].locals))
             return false;
-        auto& ords = d.variables(sc.at(2).var_reference);
+        variables ords(d.variables(sc.item(2).variable_reference));
         if (!check_vars(d, ords, exp_frame_vars[i].ord_syms))
             return false;
     }
@@ -227,20 +245,25 @@ bool check_step(
 class workspace_mock : public workspace
 {
     lib_config config;
+    asm_option asm_opts;
 
 public:
     workspace_mock(file_manager& file_mngr)
         : workspace(file_mngr, config)
     {}
 
-    virtual parse_result parse_library(
-        const std::string& library, context::hlasm_context& hlasm_ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
     {
         std::shared_ptr<processor> found = get_file_manager().add_processor_file(library);
         if (found)
-            return found->parse_no_lsp_update(*this, hlasm_ctx, data);
+            return found->parse_no_lsp_update(*this, std::move(ctx), data);
 
         return false;
+    }
+    const asm_option& get_asm_options(const std::string&) override
+    {
+        asm_opts = { "SEVEN", "" };
+        return asm_opts;
     }
 };
 
@@ -281,11 +304,11 @@ TEST(debugger, test)
     workspace_mock lib_provider(file_manager);
 
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
-    d.launch(file_manager.find_processor_file(filename), lib_provider, true);
+    d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
     std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -316,9 +339,12 @@ TEST(debugger, test)
 
     d.step_in();
     m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 0, "MACRO", filename));
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        frame_vars(std::unordered_map<std::string, test_var_value> {}, // empty globals
+        frame_vars(std::unordered_map<std::string, test_var_value> { {
+                       "&SYSPARM",
+                       test_var_value("SEVEN"),
+                   } },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
                 { "&SYSLIST",
@@ -344,13 +370,13 @@ TEST(debugger, test)
 
     d.step_in();
     m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(1, 1, 0, "COPY", copy1_filename));
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(1, 1, 2, "COPY", copy1_filename));
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
     d.step_in();
     m.wait_for_stopped();
-    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(2, 2, 0, "COPY", copy2_filename));
+    exp_frames.insert(exp_frames.begin(), debugging::stack_frame(2, 2, 3, "COPY", copy2_filename));
     exp_frame_vars.insert(exp_frame_vars.begin(), exp_frame_vars[0]);
     EXPECT_TRUE(check_step(d, exp_frames, exp_frame_vars));
 
@@ -384,12 +410,12 @@ TEST(debugger, var_symbol_array)
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
 
-    d.launch(file_manager.find_processor_file(filename), lib_provider, true);
+    d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
     std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -422,12 +448,12 @@ B EQU A
     file_manager_impl file_manager;
     workspace_mock lib_provider(file_manager);
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string filename = "ws\\test";
     file_manager.did_open_file(filename, 0, open_code);
 
-    d.launch(file_manager.find_processor_file(filename), lib_provider, true);
+    d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
     std::vector<debugging::stack_frame> exp_frames { { 1, 1, 0, "OPENCODE", filename } };
     std::vector<frame_vars> exp_frame_vars { { {}, {}, {} } };
@@ -466,12 +492,12 @@ TEST(debugger, concurrent_next_and_file_change)
     workspace_mock lib_provider(file_manager);
 
     debug_event_consumer_s_mock m;
-    debug_config cfg;
-    debugger d(m, cfg);
+    debugger d;
+    d.set_event_consumer(&m);
     std::string filename = "ws\\test";
 
     file_manager.did_open_file(filename, 0, open_code);
-    d.launch(file_manager.find_processor_file(filename), lib_provider, true);
+    d.launch(filename, lib_provider, true, &lib_provider);
     m.wait_for_stopped();
     std::string new_string = "SOME NEW FILE DOES NOT MATTER";
     std::vector<document_change> chs;
@@ -487,4 +513,25 @@ TEST(debugger, concurrent_next_and_file_change)
     d.disconnect();
 
     t.join();
+}
+
+TEST(debugger, pimpl_moves)
+{
+    debugger d;
+    debugger d2;
+
+    d2 = std::move(d);
+}
+
+TEST(debugger, breakpoints_set_get)
+{
+    debugger d;
+
+    breakpoint bp(5);
+
+    d.breakpoints("file", sequence<breakpoint>(&bp, 1));
+    auto bps = d.breakpoints("file");
+
+    ASSERT_EQ(bps.size(), 1);
+    EXPECT_EQ(bp.line, bps.begin()->line);
 }

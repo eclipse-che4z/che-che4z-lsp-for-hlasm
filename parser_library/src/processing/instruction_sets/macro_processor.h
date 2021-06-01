@@ -19,9 +19,7 @@
 #include "diagnostic_adder.h"
 #include "instruction_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 struct macro_arguments
 {
@@ -33,11 +31,10 @@ struct macro_arguments
 class macro_processor : public instruction_processor
 {
 public:
-    macro_processor(context::hlasm_context& hlasm_ctx,
-        branching_provider& branch_provider,
-        workspaces::parse_lib_provider& lib_provider);
-    virtual void process(context::unique_stmt_ptr stmt) override;
-    virtual void process(context::shared_stmt_ptr stmt) override;
+    macro_processor(
+        analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider);
+
+    void process(context::shared_stmt_ptr stmt) override;
 
     static context::macro_data_ptr string_to_macrodata(std::string data);
 
@@ -61,7 +58,5 @@ private:
         range op_range) const;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 #endif

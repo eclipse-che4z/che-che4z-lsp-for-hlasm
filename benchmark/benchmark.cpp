@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
@@ -19,9 +20,10 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <unordered_map>
 
-#include "json.hpp"
-
+#include "config/pgm_conf.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
 
@@ -62,7 +64,7 @@ using json = nlohmann::json;
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
@@ -71,17 +73,20 @@ public:
                 error_count++;
             else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
                 warning_count++;
+            message_counts[diagnostics.diagnostics(i).code()]++;
         }
     }
 
     size_t error_count = 0;
     size_t warning_count = 0;
+
+    std::unordered_map<std::string, unsigned> message_counts;
 };
 
 class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
 {
 public:
-    virtual void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
+    void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
     {
         metrics_ = metrics;
     }
@@ -99,6 +104,21 @@ struct all_file_stats
     size_t parsing_crashes = 0;
     size_t failed_file_opens = 0;
 };
+
+json get_top_messages(const std::unordered_map<std::string, unsigned>& msgs, size_t limit = 3)
+{
+    std::vector<std::pair<std::string, unsigned>> top_msgs(limit);
+
+    constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
+
+    const auto last = std::partial_sort_copy(msgs.begin(), msgs.end(), top_msgs.begin(), top_msgs.end(), cmp_msg);
+    top_msgs.erase(last, top_msgs.end());
+
+    json result = json::object();
+    for (auto&& [key, value] : top_msgs)
+        result[std::move(key)] = value;
+    return result;
+}
 
 json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
@@ -161,6 +181,8 @@ json parse_one_file(const std::string& source_file,
     s.all_files += collector.metrics_.files;
     s.whole_time += time;
 
+    auto top_messages = get_top_messages(consumer.message_counts);
+
     if (write_details)
         std::clog << "Time: " << time << " ms" << '\n'
                   << "Errors: " << consumer.error_count << '\n'
@@ -176,10 +198,13 @@ json parse_one_file(const std::string& source_file,
                   << "Lines: " << collector.metrics_.lines << '\n'
                   << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
                   << "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
-                  << "Files: " << collector.metrics_.files << "\n\n"
+                  << "Files: " << collector.metrics_.files << '\n'
+                  << "Top messages: " << top_messages.dump() << '\n'
+                  << '\n'
                   << std::endl;
 
-    return json({ { "File", source_file },
+    return json({
+        { "File", source_file },
         { "Success", true },
         { "Errors", consumer.error_count },
         { "Warnings", consumer.warning_count },
@@ -198,7 +223,9 @@ json parse_one_file(const std::string& source_file,
         { "Lines", collector.metrics_.lines },
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files } });
+        { "Files", collector.metrics_.files },
+        { "Top messages", std::move(top_messages) },
+    });
 }
 
 std::string get_file_message(size_t iter, size_t begin, size_t end, const std::string& base_message)
@@ -284,13 +311,11 @@ int main(int argc, char** argv)
     // configuration contents
     std::string conf((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
 
-    json programs;
+    hlasm_plugin::parser_library::config::pgm_conf program_config;
     try
     {
-        // parsed to json
-        json conf_json = json::parse(conf);
-        // list of programs
-        programs = conf_json["pgms"];
+        // parse pgm_conf.json
+        json::parse(conf).get_to(program_config);
     }
     catch (...)
     {
@@ -317,7 +342,7 @@ int main(int argc, char** argv)
         std::cout.flush();
         size_t current_iter = 0;
         bool not_first = false;
-        for (auto program : programs)
+        for (const auto& pgm : program_config.pgms)
         {
             if (current_iter >= end_range && end_range > 0)
                 break;
@@ -326,16 +351,7 @@ int main(int argc, char** argv)
                 current_iter++;
                 continue;
             }
-            std::string source_file;
-            // program file
-            if (program.find("program") != program.end())
-                source_file = program["program"].get<std::string>();
-            else
-            {
-                ++s.failed_file_opens;
-                std::clog << "Malformed json" << std::endl;
-                continue;
-            }
+            const std::string& source_file = pgm.program;
 
             json j = parse_one_file(source_file,
                 ws_folder,
@@ -358,8 +374,8 @@ int main(int argc, char** argv)
                   << "Analyzer crashes: " << s.parsing_crashes << '\n'
                   << "Failed program opens: " << s.failed_file_opens << '\n'
                   << "Benchmark time: " << s.whole_time << " ms" << '\n'
-                  << "Average statement/ms: " << s.average_stmt_ms / (double)programs.size() << '\n'
-                  << "Average line/ms: " << s.average_line_ms / (double)programs.size() << "\n\n"
+                  << "Average statement/ms: " << s.average_stmt_ms / (double)program_config.pgms.size() << '\n'
+                  << "Average line/ms: " << s.average_line_ms / (double)program_config.pgms.size() << "\n\n"
                   << std::endl;
 
         std::cout << json({ { "Programs", s.program_count },
@@ -367,8 +383,8 @@ int main(int argc, char** argv)
                               { "Benchmark time(ms)", s.whole_time },
                               { "Analyzer crashes", s.parsing_crashes },
                               { "Failed program opens", s.failed_file_opens },
-                              { "Average statement/ms", s.average_stmt_ms / (double)programs.size() },
-                              { "Average line/ms", s.average_line_ms / (double)programs.size() } })
+                              { "Average statement/ms", s.average_stmt_ms / (double)program_config.pgms.size() },
+                              { "Average line/ms", s.average_line_ms / (double)program_config.pgms.size() } })
                          .dump(2);
         std::cout << "}\n";
         std::clog << "Parse finished\n\n" << std::endl;

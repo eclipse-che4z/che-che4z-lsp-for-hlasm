@@ -26,7 +26,7 @@ using namespace hlasm_plugin::parser_library;
 class metrics_mock : public performance_metrics_consumer
 {
 public:
-    virtual void consume_performance_metrics(const performance_metrics& metrics) { metrics_ = metrics; }
+    void consume_performance_metrics(const performance_metrics& metrics) override { metrics_ = metrics; }
 
     performance_metrics metrics_;
 };
@@ -34,7 +34,7 @@ public:
 class diagnostic_counter_mock : public hlasm_plugin::parser_library::diagnostics_consumer
 {
 public:
-    virtual void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
@@ -54,8 +54,8 @@ class benchmark_test : public testing::Test
 {
 public:
     benchmark_test() {};
-    virtual void SetUp() {}
-    virtual void TearDown() {}
+    void SetUp() override {}
+    void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
         a = std::make_unique<analyzer>(content, SOURCE_FILE, lib_provider);
@@ -85,12 +85,12 @@ TEST_F(benchmark_test, macro_statements)
 {
     setUpAnalyzer(" MAC 1");
     // executed macro statements do not include MACRO at the beginning
-    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)3);
+    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)2);
     // macro def statement do
     EXPECT_EQ(a->get_metrics().macro_def_statements, (size_t)4);
 
     setUpAnalyzer(" MAC 1\n MAC 2\n");
-    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)6);
+    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)4);
     EXPECT_EQ(a->get_metrics().macro_def_statements, (size_t)4);
 
     setUpAnalyzer(" LR 1,1");
@@ -101,13 +101,12 @@ TEST_F(benchmark_test, macro_statements)
 TEST_F(benchmark_test, copy_statements)
 {
     setUpAnalyzer(" COPY COPYFILE");
-    // 2 actual statements and 1 last ending statement
-    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)3);
-    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)3);
+    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)2);
+    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)2);
 
     setUpAnalyzer(" COPY COPYFILE\n COPY COPYFILE");
-    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)6);
-    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)3);
+    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)4);
+    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)2);
 
     setUpAnalyzer(" LR 1,1");
     EXPECT_EQ(a->get_metrics().copy_statements, (size_t)0);
@@ -117,8 +116,8 @@ TEST_F(benchmark_test, copy_statements)
 TEST_F(benchmark_test, open_code_statements)
 {
     setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n");
-    // 2 actual statements and 1 empty and 1 ending statements
-    EXPECT_EQ(a->get_metrics().open_code_statements, (size_t)4);
+    // 2 actual statements and 1 empty
+    EXPECT_EQ(a->get_metrics().open_code_statements, (size_t)3);
 }
 
 TEST_F(benchmark_test, continued_statements)

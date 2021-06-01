@@ -21,6 +21,7 @@
 
 #include "ca_string.h"
 #include "ebcdic_encoding.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
 
@@ -80,6 +81,8 @@ void ca_function::collect_diags() const
 }
 
 bool ca_function::is_character_expression() const { return false; }
+
+void ca_function::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
 context::SET_t ca_function::evaluate(const evaluation_context& eval_ctx) const
 {

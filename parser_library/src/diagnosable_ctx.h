@@ -28,7 +28,7 @@ class diagnosable_ctx : public diagnosable_impl
     context::hlasm_context& ctx_;
 
 public:
-    virtual void add_diagnostic(diagnostic_s diagnostic) const override
+    void add_diagnostic(diagnostic_s diagnostic) const override
     {
         add_diagnostic_inner(
             diagnostic_op(

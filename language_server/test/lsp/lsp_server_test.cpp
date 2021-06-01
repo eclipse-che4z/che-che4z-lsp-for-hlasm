@@ -15,7 +15,6 @@
 #include <memory>
 
 #include "gmock/gmock.h"
-#include "json.hpp"
 
 #include "../send_message_provider_mock.h"
 #include "../ws_mngr_mock.h"
@@ -23,6 +22,7 @@
 #include "lsp/feature_text_synchronization.h"
 #include "lsp/feature_workspace_folders.h"
 #include "lsp/lsp_server.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace nlohmann {
@@ -38,7 +38,7 @@ TEST(lsp_server, initialize)
     // this is json params actually sent by vscode LSP client
     json j =
         R"({"jsonrpc":"2.0","id":47,"method":"initialize","params":{"processId":5236,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,"workspaceFolders":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true}}},"trace":"off","workspaceFolders":null}})"_json;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     send_message_provider_mock smpm;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
@@ -89,7 +89,7 @@ TEST(lsp_server, initialize)
 TEST(lsp_server, not_implemented_method)
 {
     json j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     send_message_provider_mock smpm;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
@@ -200,7 +200,7 @@ TEST(lsp_server, request_error_no_message)
 
 TEST(lsp_server_test, wrong_message_received)
 {
-    ws_mngr_mock ws_mngr;
+    test::ws_mngr_mock ws_mngr;
     send_message_provider_mock smpm;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);

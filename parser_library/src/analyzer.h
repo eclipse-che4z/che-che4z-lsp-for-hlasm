@@ -15,26 +15,26 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
+#include "analyzing_context.h"
 #include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
+#include "lsp/lsp_context.h"
 #include "parsing/parser_error_listener.h"
 #include "processing/processing_manager.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
+namespace hlasm_plugin::parser_library {
 
 // this class analyzes provided text and produces diagnostics and highlighting info with respect to provided context
 class analyzer : public diagnosable_ctx
 {
-    context::ctx_ptr hlasm_ctx_;
-    context::hlasm_context& hlasm_ctx_ref_;
+    analyzing_context ctx_;
 
     parsing::parser_error_listener listener_;
 
-    semantics::lsp_info_processor lsp_proc_;
+    semantics::source_info_processor src_proc_;
 
     lexing::input_source input_;
     lexing::lexer lexer_;
@@ -46,7 +46,7 @@ class analyzer : public diagnosable_ctx
 public:
     analyzer(const std::string& text,
         std::string file_name,
-        context::hlasm_context& hlasm_ctx,
+        analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
         const workspaces::library_data data,
         bool collect_hl_info = false);
@@ -54,29 +54,20 @@ public:
     analyzer(const std::string& text,
         std::string file_name = "",
         workspaces::parse_lib_provider& lib_provider = workspaces::empty_parse_lib_provider::instance,
-        processing::processing_tracer* tracer = nullptr,
         bool collect_hl_info = false);
 
-    context::hlasm_context& context();
+    analyzing_context context();
+    context::hlasm_context& hlasm_ctx();
     parsing::hlasmparser& parser();
-    semantics::lsp_info_processor& lsp_processor();
+    const semantics::source_info_processor& source_processor() const;
 
     void analyze(std::atomic<bool>* cancel = nullptr);
 
     void collect_diags() const override;
-    const performance_metrics& get_metrics();
+    const performance_metrics& get_metrics() const;
 
-private:
-    analyzer(const std::string& text,
-        std::string file_name,
-        workspaces::parse_lib_provider& lib_provider,
-        context::hlasm_context* hlasm_ctx,
-        const workspaces::library_data data,
-        bool own_ctx,
-        processing::processing_tracer* tracer,
-        bool collect_hl_info);
+    void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 };
 
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library
 #endif

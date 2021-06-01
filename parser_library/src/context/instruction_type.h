@@ -15,9 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_TYPE_H
 #define HLASMPLUGIN_PARSERLIBRARY_CONTEXT_INSTRUCTION_TYPE_H
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 // enum class for all instruction types
 enum class instruction_type
@@ -29,8 +27,6 @@ enum class instruction_type
     UNDEF
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

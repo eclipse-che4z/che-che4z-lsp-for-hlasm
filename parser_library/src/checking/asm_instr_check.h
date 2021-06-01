@@ -21,9 +21,7 @@
 #include "asm_instr_class.h"
 #include "data_definition/data_def_type_base.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace checking {
+namespace hlasm_plugin::parser_library::checking {
 /*
 TO DO - notes
 - dxd, dc, ds instructions - if evaluation and control takes places before checker, these instructions need only one
@@ -369,8 +367,6 @@ public:
         const diagnostic_collector& add_diagnostic) const override;
 };
 
-} // namespace checking
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::checking
 
 #endif

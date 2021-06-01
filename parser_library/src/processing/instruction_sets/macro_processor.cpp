@@ -18,25 +18,16 @@
 #include <memory>
 
 #include "processing/context_manager.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
-macro_processor::macro_processor(context::hlasm_context& hlasm_ctx,
-    branching_provider& branch_provider,
-    workspaces::parse_lib_provider& lib_provider)
-    : instruction_processor(hlasm_ctx, branch_provider, lib_provider)
+macro_processor::macro_processor(
+    analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider)
+    : instruction_processor(std::move(ctx), branch_provider, lib_provider)
 {}
 
 void macro_processor::process(context::shared_stmt_ptr stmt)
-{
-    auto args = get_args(*stmt->access_resolved());
-
-    hlasm_ctx.enter_macro(
-        stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
-}
-
-
-void macro_processor::process(context::unique_stmt_ptr stmt)
 {
     auto args = get_args(*stmt->access_resolved());
 

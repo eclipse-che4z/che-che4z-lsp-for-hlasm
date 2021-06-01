@@ -36,20 +36,25 @@ public:
     file_impl(file_impl&&) = default;
     file_impl& operator=(file_impl&&) = default;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
-    virtual const file_uri& get_file_name() override;
-    virtual const std::string& get_text() override;
-    virtual version_t get_version() override;
-    virtual bool update_and_get_bad() override;
-    virtual bool get_lsp_editing() override;
+    const file_uri& get_file_name() override;
+    const std::string& get_text() override;
+    version_t get_version() override;
+    bool update_and_get_bad() override;
+    bool get_lsp_editing() override;
 
-    virtual void did_open(std::string new_text, version_t version) override;
-    virtual void did_change(std::string new_text) override;
-    virtual void did_change(range range, std::string new_text) override;
-    virtual void did_close() override;
+    void did_open(std::string new_text, version_t version) override;
+    void did_change(std::string new_text) override;
+    void did_change(range range, std::string new_text) override;
+    void did_close() override;
 
     static std::string replace_non_utf8_chars(const std::string& text);
+    static std::vector<size_t> create_line_indices(const std::string& text);
+
+    // Returns the location in text that corresponds to utf-16 based location
+    // The position may point beyond the last character -> returns text.size()
+    static size_t index_from_position(const std::string& text, const std::vector<size_t>& line_indices, position pos);
 
     virtual ~file_impl() = default;
 
@@ -69,8 +74,6 @@ private:
     version_t version_ = 0;
 
     void load_text();
-
-    size_t index_from_location(position pos) const;
 };
 
 #pragma warning(pop)

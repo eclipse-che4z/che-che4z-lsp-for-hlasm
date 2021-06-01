@@ -43,9 +43,29 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
     return std::make_pair(processing_format(processing_kind::LOOKAHEAD, processing_form::IGNORED), op_code());
 }
 
-void lookahead_processor::process_statement(context::shared_stmt_ptr statement) { process_statement(*statement); }
+void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
+{
+    if (macro_nest_ == 0)
+    {
+        find_seq(static_cast<const resolved_statement&>(*statement));
+        find_ord(static_cast<const resolved_statement&>(*statement));
+    }
 
-void lookahead_processor::process_statement(context::unique_stmt_ptr statement) { process_statement(*statement); }
+    auto resolved = statement->access_resolved();
+
+    if (resolved->opcode_ref().value == macro_id)
+    {
+        process_MACRO();
+    }
+    else if (resolved->opcode_ref().value == mend_id)
+    {
+        process_MEND();
+    }
+    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
+    {
+        process_COPY(*resolved);
+    }
+}
 
 void lookahead_processor::end_processing()
 {
@@ -68,12 +88,12 @@ bool lookahead_processor::finished() { return finished_flag_; }
 
 void lookahead_processor::collect_diags() const {}
 
-lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx,
+lookahead_processor::lookahead_processor(analyzing_context ctx,
     branching_provider& branch_provider,
     processing_state_listener& listener,
     workspaces::parse_lib_provider& lib_provider,
     lookahead_start_data start)
-    : statement_processor(processing_kind::LOOKAHEAD, hlasm_ctx)
+    : statement_processor(processing_kind::LOOKAHEAD, ctx)
     , finished_flag_(start.action == lookahead_action::ORD && start.targets.empty())
     , result_(std::move(start))
     , macro_nest_(0)
@@ -83,7 +103,7 @@ lookahead_processor::lookahead_processor(context::hlasm_context& hlasm_ctx,
     , to_find_(std::move(start.targets))
     , target_(start.target)
     , action(start.action)
-    , asm_proc_table_(create_table(hlasm_ctx))
+    , asm_proc_table_(create_table(*ctx.hlasm_ctx))
 {}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
@@ -92,31 +112,31 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
 {
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
-        asm_processor::process_copy(statement, hlasm_ctx, lib_provider_, nullptr);
+        asm_processor::process_copy(statement, ctx, lib_provider_, nullptr);
     }
 }
 
-lookahead_processor::process_table_t lookahead_processor::create_table(context::hlasm_context& ctx)
+lookahead_processor::process_table_t lookahead_processor::create_table(context::hlasm_context& h_ctx)
 {
     process_table_t table;
-    table.emplace(ctx.ids().add("CSECT"),
+    table.emplace(h_ctx.ids().add("CSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("DSECT"),
+    table.emplace(h_ctx.ids().add("DSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("RSECT"),
+    table.emplace(h_ctx.ids().add("RSECT"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("COM"),
+    table.emplace(h_ctx.ids().add("COM"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("DXD"),
+    table.emplace(h_ctx.ids().add("DXD"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("LOCTR"),
+    table.emplace(h_ctx.ids().add("LOCTR"),
         std::bind(&lookahead_processor::assign_section_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("EQU"),
+    table.emplace(h_ctx.ids().add("EQU"),
         std::bind(&lookahead_processor::assign_EQU_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("DC"),
+    table.emplace(h_ctx.ids().add("DC"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
-    table.emplace(ctx.ids().add("DS"),
+    table.emplace(h_ctx.ids().add("DS"),
         std::bind(
             &lookahead_processor::assign_data_def_attributes, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -202,15 +222,15 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
     auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
-    auto value = dynamic_cast<checking::data_definition_operand*>(tmp.get());
+    auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
     if (!data_op->value->length || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        len = value->get_length_attribute();
+        len = value.get_length_attribute();
     }
     if (data_op->value->scale && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
     {
-        scale = value->get_scale_attribute();
+        scale = value.get_scale_attribute();
     }
 
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));
@@ -223,15 +243,16 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
 
 void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    auto mnem_tmp = context::instruction::mnemonic_codes.find(*statement.opcode_ref().value);
-
-    auto tmp_instr = mnem_tmp != context::instruction::mnemonic_codes.end()
-        ? context::instruction::machine_instructions.find(mnem_tmp->second.instruction)
-        : context::instruction::machine_instructions.find(*statement.opcode_ref().value);
+    const auto& instr = [](const std::string& opcode) {
+        if (auto mnemonic = context::instruction::mnemonic_codes.find(opcode);
+            mnemonic != context::instruction::mnemonic_codes.end())
+            return *mnemonic->second.instruction;
+        else
+            return context::instruction::machine_instructions.at(opcode);
+    }(*statement.opcode_ref().value);
 
     register_attr_ref(symbol_name,
-        context::symbol_attributes::make_machine_attrs(
-            (context::symbol_attributes::len_attr)tmp_instr->second->size_for_alloc / 8));
+        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)instr.size_for_alloc / 8));
 }
 
 void lookahead_processor::assign_assembler_attributes(
@@ -245,33 +266,6 @@ void lookahead_processor::assign_assembler_attributes(
     }
     else
         register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
-}
-
-void lookahead_processor::process_statement(const context::hlasm_statement& statement)
-{
-    if (macro_nest_ == 0)
-    {
-        find_seq(dynamic_cast<const semantics::core_statement&>(statement));
-        find_ord(dynamic_cast<const resolved_statement&>(statement));
-    }
-
-    auto resolved = statement.access_resolved();
-
-    if (!resolved)
-        return;
-
-    if (resolved->opcode_ref().value == macro_id)
-    {
-        process_MACRO();
-    }
-    else if (resolved->opcode_ref().value == mend_id)
-    {
-        process_MEND();
-    }
-    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
-    {
-        process_COPY(*resolved);
-    }
 }
 
 void lookahead_processor::find_seq(const semantics::core_statement& statement)

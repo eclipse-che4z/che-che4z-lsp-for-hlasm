@@ -17,6 +17,7 @@
 #include <assert.h>
 
 #include "parsing/parser_impl.h"
+#include "statement_analyzers/lsp_analyzer.h"
 #include "statement_processors/copy_processor.h"
 #include "statement_processors/empty_processor.h"
 #include "statement_processors/lookahead_processor.h"
@@ -28,41 +29,38 @@
 namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
-    context::hlasm_context& hlasm_ctx,
+    analyzing_context ctx,
     const workspaces::library_data data,
     std::string file_name,
+    const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
-    statement_fields_parser& parser,
-    processing_tracer* tracer)
-    : diagnosable_ctx(hlasm_ctx)
-    , hlasm_ctx_(hlasm_ctx)
+    statement_fields_parser& parser)
+    : diagnosable_ctx(*ctx.hlasm_ctx)
+    , ctx_(std::move(ctx))
+    , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
-    , tracer_(tracer)
-
+    , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
+    , stms_analyzers_({ &lsp_analyzer_ })
 {
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
-            provs_.emplace_back(std::make_unique<macro_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
+            provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this));
             procs_.emplace_back(
-                std::make_unique<ordinary_processor>(hlasm_ctx, *this, lib_provider, *this, parser, tracer_));
+                std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_));
             break;
         case processing_kind::COPY:
-            hlasm_ctx.push_statement_processing(processing_kind::COPY, std::move(file_name));
-            procs_.emplace_back(
-                std::make_unique<copy_processor>(hlasm_ctx, *this, copy_start_data { data.library_member }));
+            start_copy_member(copy_start_data { data.library_member, std::move(file_name) });
             break;
         case processing_kind::MACRO:
-            hlasm_ctx.push_statement_processing(processing_kind::MACRO, std::move(file_name));
-            procs_.emplace_back(std::make_unique<macrodef_processor>(
-                hlasm_ctx, *this, lib_provider, macrodef_start_data(data.library_member)));
+            start_macro_definition(macrodef_start_data(data.library_member), std::move(file_name));
             break;
         default:
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(hlasm_ctx, parser, lib_provider, *this));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this));
     provs_.emplace_back(std::move(base_provider));
 }
 
@@ -112,9 +110,22 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
             continue;
         }
 
-        update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
-        prov.process_next(proc);
+        auto stmt = prov.get_next(proc);
+
+        if (stmt)
+        {
+            update_metrics(proc.kind, prov.kind, hlasm_ctx_.metrics);
+            for (auto& a : stms_analyzers_)
+                a->analyze(*stmt, prov.kind, proc.kind);
+
+            proc.process_statement(std::move(stmt));
+        }
     }
+}
+
+void processing_manager::register_stmt_analyzer(statement_analyzer* stmt_analyzer)
+{
+    stms_analyzers_.push_back(stmt_analyzer);
 }
 
 bool processing_manager::attr_lookahead_active() const
@@ -149,22 +160,24 @@ void processing_manager::finish_processor()
     procs_.pop_back();
 }
 
-void processing_manager::start_macro_definition(const macrodef_start_data start)
+void processing_manager::start_macro_definition(macrodef_start_data start)
 {
-    hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
-    procs_.emplace_back(std::make_unique<macrodef_processor>(hlasm_ctx_, *this, lib_provider_, start));
+    start_macro_definition(std::move(start), std::nullopt);
 }
 
 void processing_manager::finish_macro_definition(macrodef_processing_result result)
 {
+    context::macro_def_ptr mac;
     if (!result.invalid)
-        hlasm_ctx_.add_macro(result.prototype.macro_name,
+        mac = hlasm_ctx_.add_macro(result.prototype.macro_name,
             result.prototype.name_param,
             std::move(result.prototype.symbolic_params),
             std::move(result.definition),
             std::move(result.nests),
             std::move(result.sequence_symbols),
             std::move(result.definition_location));
+
+    lsp_analyzer_.macrodef_finished(mac, std::move(result));
 }
 
 void processing_manager::start_lookahead(lookahead_start_data start)
@@ -175,8 +188,7 @@ void processing_manager::start_lookahead(lookahead_start_data start)
             context::source_position(lookahead_stop_.end_line + 1, lookahead_stop_.end_index), lookahead_stop_);
 
     hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
-    procs_.emplace_back(
-        std::make_unique<lookahead_processor>(hlasm_ctx_, *this, *this, lib_provider_, std::move(start)));
+    procs_.emplace_back(std::make_unique<lookahead_processor>(ctx_, *this, *this, lib_provider_, std::move(start)));
 }
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
@@ -205,14 +217,30 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
 
 void processing_manager::start_copy_member(copy_start_data start)
 {
-    procs_.emplace_back(std::make_unique<copy_processor>(hlasm_ctx_, *this, std::move(start)));
+    hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_file));
+    procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
 }
 
 void processing_manager::finish_copy_member(copy_processing_result result)
 {
-    hlasm_ctx_.add_copy_member(result.member_name,
+    auto member = hlasm_ctx_.add_copy_member(result.member_name,
         result.invalid_member ? context::statement_block() : std::move(result.definition),
         std::move(result.definition_location));
+
+    lsp_analyzer_.copydef_finished(member, std::move(result));
+}
+
+void processing_manager::finish_opencode() { lsp_analyzer_.opencode_finished(); }
+
+void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
+{
+    if (file)
+        hlasm_ctx_.push_statement_processing(processing_kind::MACRO, std::move(*file));
+    else
+        hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
+
+    lsp_analyzer_.macrodef_started(start);
+    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, lib_provider_, std::move(start)));
 }
 
 void processing_manager::jump_in_statements(context::id_index target, range symbol_range)

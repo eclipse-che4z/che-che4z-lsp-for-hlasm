@@ -22,20 +22,26 @@ const data_def_type* data_definition_operand::access_data_def_type() const
     return data_def_type::access_data_def_type(type.value, extension.value);
 }
 
-bool data_definition_operand::check_type_and_extension(const diagnostic_collector& add_diagnostic) const
+std::pair<const data_def_type*, bool> data_definition_operand::check_type_and_extension(
+    const diagnostic_collector& add_diagnostic) const
 {
-    auto found = data_def_type::types_extensions.find(type.value);
-    if (found == data_def_type::types_extensions.end())
+    auto found = data_def_type::types_and_extensions.find({ type.value, extension.present ? extension.value : '\0' });
+
+    if (found != data_def_type::types_and_extensions.end())
+        return { found->second.get(), true };
+
+    if (extension.present)
     {
-        add_diagnostic(diagnostic_op::error_D012(type.rng));
-        return false;
+        found = data_def_type::types_and_extensions.find({ type.value, '\0' });
+        if (found != data_def_type::types_and_extensions.end())
+        {
+            add_diagnostic(diagnostic_op::error_D013(extension.rng, std::string(1, type.value)));
+            return { found->second.get(), false };
+        }
     }
-    if (extension.present && found->second.find(extension.value) == found->second.end())
-    {
-        add_diagnostic(diagnostic_op::error_D013(extension.rng, std::string(1, type.value)));
-        return false;
-    }
-    return true;
+
+    add_diagnostic(diagnostic_op::error_D012(type.rng));
+    return { nullptr, false };
 }
 
 uint64_t data_definition_operand::get_length() const

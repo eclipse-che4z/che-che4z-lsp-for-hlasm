@@ -20,8 +20,8 @@
 // arithmetic SETA expressions
 
 #define SETAEQ(X, Y)                                                                                                   \
-    EXPECT_EQ(a.context()                                                                                              \
-                  .get_var_sym(a.context().ids().add(X))                                                               \
+    EXPECT_EQ(a.hlasm_ctx()                                                                                            \
+                  .get_var_sym(a.hlasm_ctx().ids().add(X))                                                             \
                   ->access_set_symbol_base()                                                                           \
                   ->access_set_symbol<A_t>()                                                                           \
                   ->get_value(),                                                                                       \
@@ -47,6 +47,21 @@ TEST(arithmetic_expressions, valid_self_defining_term)
     SETAEQ("A2", 196);
     SETAEQ("A3", 386);
     SETAEQ("A4", 0);
+}
+
+TEST(arithmetic_expressions, empty_string_conversion)
+{
+    std::string input = R"(
+&C1 SETC ''
+&A1 SETA &C1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETAEQ("A1", 0);
 }
 
 TEST(arithmetic_expressions, invalid_self_defining_term)
@@ -78,15 +93,15 @@ TEST(arithmetic_expressions, substitution_to_character_expression)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C1"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("C1"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<C_t>()
                   ->get_value(),
         "5-10*10");
 
-    EXPECT_EQ(a.context()
-                  .get_var_sym(a.context().ids().add("C2"))
+    EXPECT_EQ(a.hlasm_ctx()
+                  .get_var_sym(a.hlasm_ctx().ids().add("C2"))
                   ->access_set_symbol_base()
                   ->access_set_symbol<C_t>()
                   ->get_value(),

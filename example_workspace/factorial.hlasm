@@ -30,3 +30,6 @@ LEN120     DS CL(&RES)
 * than 12 because it does not fit into 32 bit variable.
            FACT 6
 LEN720     DS CL(&RES)
+            AIF ('&SYSPARM' EQ 'SEVEN').HERE
+            ANOP
+.HERE      FACT 7             

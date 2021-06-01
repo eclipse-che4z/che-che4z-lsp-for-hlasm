@@ -29,15 +29,17 @@ public:
 
     ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range);
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+    void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
-    virtual bool is_character_expression() const override;
+    bool is_character_expression() const override;
 
-    virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
+    void apply(ca_expr_visitor& visitor) const override;
+
+    context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
     virtual context::SET_t operation(
         context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const = 0;
@@ -52,8 +54,7 @@ public:
         : ca_binary_operator(std::move(left_expr), std::move(right_expr), OP::type, std::move(expr_range))
     {}
 
-    virtual context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override
+    context::SET_t operation(context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override
     {
         return OP::operation(std::move(lhs), std::move(rhs), expr_range, eval_ctx);
     }
@@ -71,10 +72,9 @@ public:
         context::SET_t_enum expr_kind,
         range expr_range);
 
-    virtual void resolve_expression_tree(context::SET_t_enum kind) override;
+    void resolve_expression_tree(context::SET_t_enum kind) override;
 
-    virtual context::SET_t operation(
-        context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override;
+    context::SET_t operation(context::SET_t lhs, context::SET_t rhs, const evaluation_context& eval_ctx) const override;
 
     static int compare_string(const context::C_t& lhs, const context::C_t& rhs);
     static int compare_relational(const context::SET_t& lhs, const context::SET_t& rhs, context::SET_t_enum type);

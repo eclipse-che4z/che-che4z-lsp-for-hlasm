@@ -19,12 +19,15 @@
 #include "gtest/gtest.h"
 
 #include "empty_configs.h"
+#include "utils/platform.h"
 #include "workspaces/file_impl.h"
 #include "workspaces/file_manager_impl.h"
+#include "workspaces/library_local.h"
 #include "workspaces/workspace.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
+using hlasm_plugin::utils::platform::is_windows;
 
 class file_proc_grps : public file_impl
 {
@@ -35,14 +38,14 @@ public:
 
     file_uri uri = "test_uri";
 
-    virtual const file_uri& get_file_name() override { return uri; }
+    const file_uri& get_file_name() override { return uri; }
 
-    virtual const std::string& get_text() override { return file; }
+    const std::string& get_text() override { return file; }
 
-    virtual bool update_and_get_bad() override { return false; }
+    bool update_and_get_bad() override { return false; }
 
-#ifdef _WIN32
-    std::string file = R"({
+    std::string file = is_windows() ?
+                                    R"({
   "pgroups": [
     {
       "name": "P1",
@@ -50,31 +53,25 @@ public:
         "C:\\Users\\Desktop\\ASLib",
         "lib",
         "libs\\lib2\\",
-		"",
-        {
-          "run": "ftp \\192.168.12.145\\MyASLib",
-          "list": "",
-          "cache_expire":"",
-          "location": "downLibs"
-        }
-      ]
+		""
+      ],
+                
+                "asm_options": {
+                "SYSPARM": "SEVEN",
+                 "PROFILE": "MAC1"
+                }
     },
     {
       "name": "P2",
       "libs": [
         "C:\\Users\\Desktop\\ASLib",
         "P2lib",
-        "P2libs\\libb",
-        {
-          "run": "ftp \\192.168.12.145\\MyASLib",
-          "location": "\\downLibs"
-        }
+        "P2libs\\libb"
       ]
     }
   ]
-})";
-#else
-    std::string file = R"({
+})"
+                                    : R"({
 		"pgroups": [
 			{
 				"name": "P1",
@@ -82,30 +79,24 @@ public:
 					"/home/user/ASLib",
 					"lib",
 					"libs/lib2/",
-			"",
-					{
-						"run": "ftp /192.168.12.145/MyASLib",
-						"list": "",
-						"cache_expire":"",
-						"location": "downLibs"
-					}
-				]
+			""
+				],
+                
+                "asm_options": {
+                "SYSPARM": "SEVEN",
+                 "PROFILE": "MAC1"
+                }
 			},
 			{
 				"name": "P2",
 				"libs": [
 					"/home/user/ASLib",
 					"P2lib",
-					"P2libs/libb",
-					{
-						"run": "ftp /192.168.12.145/MyASLib",
-						"location": "downLibs"
-					}
+					"P2libs/libb"
 				]
 			}
 		]
 	})";
-#endif //_WIN32
 };
 
 class file_pgm_conf : public file_impl
@@ -117,14 +108,13 @@ public:
 
     file_uri uri = "test_uri";
 
-    virtual const file_uri& get_file_name() override { return uri; }
+    const file_uri& get_file_name() override { return uri; }
 
-    virtual const std::string& get_text() override { return file; }
+    const std::string& get_text() override { return file; }
 
-    virtual bool update_and_get_bad() override { return false; }
+    bool update_and_get_bad() override { return false; }
 
-#if _WIN32
-    std::string file = R"({
+    std::string file = is_windows() ? R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -135,9 +125,8 @@ public:
       "pgroup": "P2"
     }
   ]
-})";
-#else
-    std::string file = R"({
+})"
+                                    : R"({
   "pgms": [
     {
       "program": "pgm1",
@@ -149,7 +138,6 @@ public:
     }
   ]
 })";
-#endif
 };
 
 class file_manager_proc_grps_test : public file_manager_impl
@@ -168,9 +156,9 @@ public:
 
 
     // Inherited via file_manager
-    virtual void did_open_file(const std::string&, version_t, std::string) override {}
-    virtual void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
-    virtual void did_close_file(const std::string&) override {}
+    void did_open_file(const std::string&, version_t, std::string) override {}
+    void did_change_file(const std::string&, version_t, const document_change*, size_t) override {}
+    void did_close_file(const std::string&) override {}
 };
 
 TEST(workspace, load_config_synthetic)
@@ -183,16 +171,18 @@ TEST(workspace, load_config_synthetic)
 
     auto& pg = ws.get_proc_grp("P1");
     EXPECT_EQ("P1", pg.name());
-#ifdef _WIN32
-    std::string expected[4] { "C:\\Users\\Desktop\\ASLib\\",
-        "test_proc_grps_uri\\lib\\",
-        "test_proc_grps_uri\\libs\\lib2\\",
-        "test_proc_grps_uri\\" };
-#else
-    std::string expected[4] {
-        "/home/user/ASLib/", "test_proc_grps_uri/lib/", "test_proc_grps_uri/libs/lib2/", "test_proc_grps_uri/"
-    };
-#endif // _WIN32
+    auto expected = []() -> std::array<std::string, 4> {
+        if (is_windows())
+            return { "C:\\Users\\Desktop\\ASLib\\",
+                "test_proc_grps_uri\\lib\\",
+                "test_proc_grps_uri\\libs\\lib2\\",
+                "test_proc_grps_uri\\" };
+        else
+            return {
+                "/home/user/ASLib/", "test_proc_grps_uri/lib/", "test_proc_grps_uri/libs/lib2/", "test_proc_grps_uri/"
+            };
+    }();
+
     EXPECT_EQ(std::size(expected), pg.libraries().size());
     for (size_t i = 0; i < std::min(std::size(expected), pg.libraries().size()); ++i)
     {
@@ -203,13 +193,16 @@ TEST(workspace, load_config_synthetic)
 
     auto& pg2 = ws.get_proc_grp("P2");
     EXPECT_EQ("P2", pg2.name());
-#ifdef _WIN32
-    std::string expected2[3] {
-        "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\"
-    };
-#else
-    std::string expected2[3] { "/home/user/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
-#endif // _WIN32
+
+    auto expected2 = []() -> std::array<std::string, 3> {
+        if (is_windows())
+            return {
+                "C:\\Users\\Desktop\\ASLib\\", "test_proc_grps_uri\\P2lib\\", "test_proc_grps_uri\\P2libs\\libb\\"
+            };
+        else
+            return { "/home/user/ASLib/", "test_proc_grps_uri/P2lib/", "test_proc_grps_uri/P2libs/libb/" };
+    }();
+
     EXPECT_EQ(std::size(expected2), pg2.libraries().size());
     for (size_t i = 0; i < std::min(std::size(expected2), pg2.libraries().size()); ++i)
     {
@@ -220,11 +213,9 @@ TEST(workspace, load_config_synthetic)
 
 
     // test of pgm_conf and workspace::get_proc_grp_by_program
-#ifdef _WIN32
-    auto& pg3 = ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1");
-#else
-    auto& pg3 = ws.get_proc_grp_by_program("test_proc_grps_uri/pgm1");
-#endif
+    auto& pg3 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgm1")
+                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgm1");
+
     EXPECT_EQ(pg3.libraries().size(), std::size(expected));
     for (size_t i = 0; i < std::min(std::size(expected), pg3.libraries().size()); ++i)
     {
@@ -234,11 +225,9 @@ TEST(workspace, load_config_synthetic)
     }
 
 
-#ifdef _WIN32
-    auto& pg4 = ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything");
-#else
-    auto& pg4 = ws.get_proc_grp_by_program("test_proc_grps_uri/pgms/anything");
-#endif
+    auto& pg4 = is_windows() ? ws.get_proc_grp_by_program("test_proc_grps_uri\\pgms\\anything")
+                             : ws.get_proc_grp_by_program("test_proc_grps_uri/pgms/anything");
+
     EXPECT_EQ(pg4.libraries().size(), std::size(expected2));
     for (size_t i = 0; i < std::min(std::size(expected2), pg4.libraries().size()); ++i)
     {
@@ -246,6 +235,11 @@ TEST(workspace, load_config_synthetic)
         ASSERT_NE(libl, nullptr);
         EXPECT_EQ(expected2[i], libl->get_lib_path());
     }
+    // test of asm_options
+    const auto& asm_options = ws.get_asm_options(is_windows() ? "test_proc_grps_uri\\pgm1" : "test_proc_grps_uri/pgm1");
+
+    EXPECT_EQ("SEVEN", asm_options.sysparm);
+    EXPECT_EQ("MAC1", asm_options.profile);
 }
 
 
@@ -267,6 +261,7 @@ TEST(workspace, pgm_conf_malformed)
 TEST(workspace, proc_grps_malformed)
 {
     file_manager_impl fm;
+
     fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
     fm.did_open_file(proc_grps_name, 0, R"({ "pgroups" []})");
 
@@ -303,4 +298,30 @@ TEST(workspace, proc_grps_missing)
 
     ws.collect_diags();
     ASSERT_EQ(ws.diags().size(), 0U);
+}
+TEST(workspace, asm_options_invalid)
+{
+    std::string proc_file = R"({
+  "pgroups": [
+    {
+      "name": "P1",
+      "libs": [ "lib" ],    
+      "asm_options": {
+        "SYSPARM" : 42
+   
+        }
+    }
+  ]
+})";
+    file_manager_impl fm;
+    fm.did_open_file(pgm_conf_name, 0, empty_pgm_conf);
+    fm.did_open_file(proc_grps_name, 0, proc_file);
+
+    lib_config config;
+    workspace ws(fm, config);
+    ws.open();
+
+    ws.collect_diags();
+    ASSERT_EQ(ws.diags().size(), 1U);
+    EXPECT_EQ(ws.diags()[0].code, "W0002");
 }

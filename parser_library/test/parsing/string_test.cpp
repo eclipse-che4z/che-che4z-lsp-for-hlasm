@@ -24,7 +24,7 @@ TEST(parser, mach_string_double_ampersand)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("A");
 
@@ -37,7 +37,7 @@ TEST(parser, ca_string_double_ampersand)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.context();
+    auto& ctx = a.hlasm_ctx();
 
     auto it = ctx.ids().find("A");
 

@@ -34,22 +34,22 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
     for (auto& [name, instr] : instruction::machine_instructions)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::MACH);
+        instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::assembler_instructions)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::ASM);
+        instr_map.emplace(id, &instr);
     }
     for (auto& instr : instruction::ca_instructions)
     {
         auto id = ids_.add(instr.name);
-        instr_map.emplace(id, instruction::instruction_array::CA);
+        instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::mnemonic_codes)
     {
         auto id = ids_.add(name);
-        instr_map.emplace(id, instruction::instruction_array::MNEM);
+        instr_map.emplace(id, &instr);
     }
     return instr_map;
 }
@@ -223,6 +223,9 @@ void hlasm_context::add_global_system_vars()
 
         {
             auto val = std::make_shared<set_symbol<C_t>>(SYSPARM, true, true);
+
+            val->set_value(asm_options_.sysparm);
+
             globals_.insert({ SYSPARM, std::move(val) });
         }
         {
@@ -248,11 +251,12 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name)
-    : instruction_map_(init_instruction_map())
+hlasm_context::hlasm_context(std::string file_name, asm_option asm_options)
+    : opencode_file_name_(file_name)
+    , asm_options_(std::move(asm_options))
+    , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
     , ord_ctx(ids_)
-    , lsp_ctx(std::make_shared<lsp_context>())
 {
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
@@ -364,6 +368,28 @@ processing_stack_t hlasm_context::processing_stack() const
     return res;
 }
 
+location hlasm_context::current_statement_location() const
+{
+    if (source_stack_.size() > 1 || scope_stack_.size() == 1)
+    {
+        if (source_stack_.back().copy_stack.size())
+        {
+            const auto& member = source_stack_.back().copy_stack.back();
+
+            auto pos = member.cached_definition[member.current_statement].get_base()->statement_position();
+            return location(pos, member.definition_location.file);
+        }
+        else
+            return source_stack_.back().current_instruction;
+    }
+    else
+    {
+        const auto& mac_invo = scope_stack_.back().this_macro;
+
+        return mac_invo->copy_nests[mac_invo->current_statement].back();
+    }
+}
+
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }
@@ -472,17 +498,13 @@ void hlasm_context::add_mnemonic(id_index mnemo, id_index op_code)
     }
     else
     {
-        opcode_t value;
+        opcode_t value = { op_code };
 
-        if (auto it = instruction_map_.find(op_code); it != instruction_map_.end())
-        {
-            value.machine_opcode = it->first;
-            value.machine_source = it->second;
-        }
-        if (auto it = macros_.find(op_code); it != macros_.end())
-            value.macro_opcode = it->second;
-
-        if (!value)
+        if (auto mac_it = macros_.find(op_code); mac_it != macros_.end())
+            value.opcode_detail = mac_it->second;
+        else if (auto instr_it = instruction_map_.find(op_code); instr_it != instruction_map_.end())
+            value.opcode_detail = instr_it->second;
+        else
             throw std::invalid_argument("undefined operation code");
 
         opcode_mnemo_.insert_or_assign(mnemo, std::move(value));
@@ -504,13 +526,10 @@ opcode_t hlasm_context::get_operation_code(id_index symbol) const
 
     opcode_t value;
 
-    if (auto it = instruction_map_.find(symbol); it != instruction_map_.end())
-    {
-        value.machine_opcode = it->first;
-        value.machine_source = it->second;
-    }
-    if (auto it = macros_.find(symbol); it != macros_.end())
-        value.macro_opcode = it->second;
+    if (auto mac_it = macros_.find(symbol); mac_it != macros_.end())
+        value = opcode_t { symbol, mac_it->second };
+    else if (auto instr_it = instruction_map_.find(symbol); instr_it != instruction_map_.end())
+        value = opcode_t { symbol, instr_it->second };
 
     return value;
 }
@@ -612,6 +631,19 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     return "U";
 }
 
+struct opcode_attr_visitor
+{
+    std::string operator()(const assembler_instruction*) const { return "A"; }
+    std::string operator()(const ca_instruction*) const { return "A"; }
+    std::string operator()(const mnemonic_code*) const { return "E"; }
+    std::string operator()(const machine_instruction*) const { return "O"; }
+    template<typename T>
+    std::string operator()(const T&) const
+    {
+        return "U";
+    }
+};
+
 C_t hlasm_context::get_opcode_attr(id_index symbol)
 {
     auto it = instruction_map_.find(symbol);
@@ -623,25 +655,14 @@ C_t hlasm_context::get_opcode_attr(id_index symbol)
 
     if (it != instruction_map_.end())
     {
-        auto& [opcode, type] = *it;
-        switch (type)
-        {
-            case instruction::instruction_array::ASM:
-            case instruction::instruction_array::CA:
-                return "A";
-            case instruction::instruction_array::MNEM:
-                return "E";
-            case instruction::instruction_array::MACH:
-                return "O";
-            default:
-                break;
-        }
+        auto& [opcode, detail] = *it;
+        return std::visit(opcode_attr_visitor(), detail);
     }
 
     return "U";
 }
 
-const macro_definition& hlasm_context::add_macro(id_index name,
+macro_def_ptr hlasm_context::add_macro(id_index name,
     id_index label_param_name,
     std::vector<macro_arg> params,
     statement_block definition,
@@ -649,16 +670,16 @@ const macro_definition& hlasm_context::add_macro(id_index name,
     label_storage labels,
     location definition_location)
 {
-    return *macros_
-                .insert_or_assign(name,
-                    std::make_shared<macro_definition>(name,
-                        label_param_name,
-                        std::move(params),
-                        std::move(definition),
-                        std::move(copy_nests),
-                        std::move(labels),
-                        std::move(definition_location)))
-                .first->second.get();
+    return macros_
+        .insert_or_assign(name,
+            std::make_shared<macro_definition>(name,
+                label_param_name,
+                std::move(params),
+                std::move(definition),
+                std::move(copy_nests),
+                std::move(labels),
+                std::move(definition_location)))
+        .first->second;
 }
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
@@ -667,8 +688,9 @@ macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {
     macro_def_ptr macro_def;
 
-    if (auto mnem = opcode_mnemo_.find(name); mnem != opcode_mnemo_.end() && mnem->second.macro_opcode)
-        macro_def = mnem->second.macro_opcode;
+    if (auto mnem = opcode_mnemo_.find(name);
+        mnem != opcode_mnemo_.end() && std::holds_alternative<context::macro_def_ptr>(mnem->second.opcode_detail))
+        macro_def = std::get<context::macro_def_ptr>(mnem->second.opcode_detail);
     else
     {
         auto tmp = macros_.find(name);
@@ -704,14 +726,19 @@ macro_invo_ptr hlasm_context::this_macro() const
     return macro_invo_ptr();
 }
 
-const std::string& hlasm_context::opencode_file_name() const { return source_stack_.front().current_instruction.file; }
+const std::string& hlasm_context::opencode_file_name() const { return opencode_file_name_; }
 
 const std::set<std::string>& hlasm_context::get_visited_files() { return visited_files_; }
 
-void hlasm_context::add_copy_member(id_index member, statement_block definition, location definition_location)
+copy_member_ptr hlasm_context::add_copy_member(
+    id_index member, statement_block definition, location definition_location)
 {
-    copy_members_.try_emplace(member, member, std::move(definition), definition_location);
+    auto& copydef = copy_members_[member];
+    if (!copydef)
+        copydef = std::make_shared<copy_member>(member, std::move(definition), definition_location);
     visited_files_.insert(std::move(definition_location.file));
+
+    return copydef;
 }
 
 void hlasm_context::enter_copy_member(id_index member_name)
@@ -720,9 +747,9 @@ void hlasm_context::enter_copy_member(id_index member_name)
     if (tmp == copy_members_.end())
         throw std::runtime_error("unknown copy member");
 
-    auto& [name, member] = *tmp;
+    const auto& [name, member] = *tmp;
 
-    source_stack_.back().copy_stack.emplace_back(member.enter());
+    source_stack_.back().copy_stack.emplace_back(member->enter());
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return copy_members_; }
@@ -742,7 +769,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 
     for (auto& frame : snapshot.copy_frames)
     {
-        auto invo = copy_members_.at(frame.copy_member).enter();
+        auto invo = copy_members_.at(frame.copy_member)->enter();
         invo.current_statement = (int)frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }

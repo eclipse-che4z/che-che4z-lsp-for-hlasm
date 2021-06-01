@@ -25,20 +25,18 @@
 #include "input_source.h"
 #include "parser_library_export.h"
 #include "range.h"
-#include "semantics/lsp_info_processor.h"
+#include "semantics/source_info_processor.h"
 #include "token.h"
 #include "token_factory.h"
 
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 
 class input_source;
 
 using token_ptr = std::unique_ptr<antlr4::Token>;
 using char_t = char32_t;
-class lexer : public antlr4::TokenSource
+class lexer final : public antlr4::TokenSource
 {
 public:
     struct stream_position
@@ -46,7 +44,7 @@ public:
         size_t line;
         size_t offset;
     };
-    lexer(input_source*, semantics::lsp_info_processor* lsp_proc, performance_metrics* metrics = nullptr);
+    lexer(input_source*, semantics::source_info_processor* lsp_proc, performance_metrics* metrics = nullptr);
 
     lexer(const lexer&) = delete;
     lexer& operator=(const lexer&) = delete;
@@ -158,7 +156,7 @@ private:
     // positions of the last line
     stream_position last_lln_begin_pos_ = { 0, 0 };
     stream_position last_lln_end_pos_ = { static_cast<size_t>(-1), static_cast<size_t>(-1) };
-    size_t last_line_pos_;
+    size_t last_line_pos_ = 0;
 
     std::queue<token_ptr> token_queue_;
     Ref<antlr4::CommonTokenFactory> dummy_factory;
@@ -176,7 +174,7 @@ private:
 
     std::unique_ptr<token_factory> factory_;
     antlr4::CharStream* input_;
-    semantics::lsp_info_processor* lsp_proc_;
+    semantics::source_info_processor* src_proc_;
     performance_metrics* metrics_;
 
     struct input_state
@@ -239,7 +237,6 @@ private:
 
     bool is_process() const;
 };
-} // namespace lexing
-} // namespace parser_library
-} // namespace hlasm_plugin
+
+} // namespace hlasm_plugin::parser_library::lexing
 #endif

@@ -17,17 +17,14 @@
 #include "processing/context_manager.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
-#include "processing/statement.h"
-#include "semantics/concatenation.h"
-#include "semantics/statement.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
-macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
+macrodef_processor::macrodef_processor(analyzing_context ctx,
     processing_state_listener& listener,
     workspaces::parse_lib_provider& provider,
     macrodef_start_data start)
-    : statement_processor(processing_kind::MACRO, hlasm_context)
+    : statement_processor(processing_kind::MACRO, std::move(ctx))
     , listener_(listener)
     , provider_(provider)
     , start_(std::move(start))
@@ -38,8 +35,10 @@ macrodef_processor::macrodef_processor(context::hlasm_context& hlasm_context,
     , expecting_MACRO_(start_.is_external)
     , omit_next_(false)
     , finished_flag_(false)
+    , table_(create_table())
 {
     result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
+    result_.external = start_.is_external;
     if (start_.is_external)
         result_.prototype.macro_name = start_.external_name;
 }
@@ -84,19 +83,6 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
     }
 }
 
-void macrodef_processor::process_statement(context::unique_stmt_ptr statement)
-{
-    bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
-
-    process_statement(*statement);
-
-    if (!expecting_tmp && !omit_next_)
-    {
-        result_.definition.push_back(std::move(statement));
-        add_correct_copy_nest();
-    }
-}
-
 void macrodef_processor::end_processing()
 {
     if (!finished_flag_)
@@ -125,26 +111,19 @@ processing_status macrodef_processor::get_macro_processing_status(
     {
         auto id = std::get<context::id_index>(instruction.value);
         auto code = hlasm_ctx.get_operation_code(id);
-        if (code.machine_opcode && code.machine_source == context::instruction::instruction_array::CA)
+        if (auto** ca_instr = std::get_if<const context::ca_instruction*>(&code.opcode_detail); ca_instr)
         {
-            id = code.machine_opcode;
-            auto operandless = std::find_if(context::instruction::ca_instructions.begin(),
-                context::instruction::ca_instructions.end(),
-                [&](auto& instr) {
-                    return instr.name == *id;
-                })->operandless;
-
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,
-                operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
+                (*ca_instr)->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT);
 
-            return std::make_pair(format, op_code(id, context::instruction_type::CA));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.machine_opcode == hlasm_ctx.ids().add("COPY"))
+        else if (code.opcode == hlasm_ctx.ids().add("COPY"))
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
 
-            return std::make_pair(format, op_code(code.machine_opcode, context::instruction_type::ASM));
+            return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM));
         }
     }
 
@@ -200,12 +179,11 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         {
             process_sequence_symbol(res_stmt->label_ref());
 
-            if (res_stmt->opcode_ref().value == macro_id)
-                process_MACRO();
-            else if (res_stmt->opcode_ref().value == mend_id)
-                process_MEND();
-            else if (res_stmt->opcode_ref().value == copy_id)
-                process_COPY(*res_stmt);
+            if (auto found = table_.find(res_stmt->opcode_ref().value); found != table_.end())
+            {
+                auto& [key, func] = *found;
+                func(*res_stmt);
+            }
         }
         else if (auto def_stmt = statement.access_deferred())
         {
@@ -240,6 +218,7 @@ void macrodef_processor::process_prototype_label(
         else
         {
             result_.prototype.name_param = var->access_basic()->name;
+            result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -258,13 +237,12 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
         return;
     }
     result_.prototype.macro_name = statement.opcode_ref().value;
+    result_.prototype.macro_name_range = statement.instruction_ref().field_range;
 }
 
 void macrodef_processor::process_prototype_operand(
     const resolved_statement& statement, std::vector<context::id_index>& param_names)
 {
-    processing::context_manager mngr(hlasm_ctx);
-
     for (auto& op : statement.operands_ref().value)
     {
         if (op->type == semantics::operand_type::EMPTY)
@@ -287,6 +265,7 @@ void macrodef_processor::process_prototype_operand(
                 auto var_id = var->access_basic()->name;
                 param_names.push_back(var_id);
                 result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
+                result_.variable_symbols.emplace_back(var->access_basic()->name, curr_line_, var->symbol_range.start);
             }
         }
         else if (tmp_chain.size() > 1)
@@ -306,6 +285,8 @@ void macrodef_processor::process_prototype_operand(
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
+                    result_.variable_symbols.emplace_back(
+                        var->access_basic()->name, curr_line_, var->symbol_range.start);
                 }
             }
             else
@@ -314,8 +295,6 @@ void macrodef_processor::process_prototype_operand(
         else if (tmp_chain.empty()) // if operand is empty
             result_.prototype.symbolic_params.emplace_back(nullptr, nullptr);
     }
-
-    collect_diags_from_child(mngr);
 }
 
 bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* var,
@@ -342,6 +321,33 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
     return true;
 }
 
+macrodef_processor::process_table_t macrodef_processor::create_table()
+{
+    process_table_t table;
+    table.emplace(hlasm_ctx.ids().add("SETA"),
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::A_TYPE); });
+    table.emplace(hlasm_ctx.ids().add("SETB"),
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::B_TYPE); });
+    table.emplace(hlasm_ctx.ids().add("SETC"),
+        [this](const resolved_statement& stmt) { process_SET(stmt, context::SET_t_enum::C_TYPE); });
+    table.emplace(hlasm_ctx.ids().add("LCLA"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
+    table.emplace(hlasm_ctx.ids().add("LCLB"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
+    table.emplace(hlasm_ctx.ids().add("LCLC"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
+    table.emplace(hlasm_ctx.ids().add("GBLA"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
+    table.emplace(hlasm_ctx.ids().add("GBLB"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
+    table.emplace(hlasm_ctx.ids().add("GBLC"),
+        [this](const resolved_statement& stmt) { process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
+    table.emplace(hlasm_ctx.ids().add("MACRO"), [this](const resolved_statement&) { process_MACRO(); });
+    table.emplace(hlasm_ctx.ids().add("MEND"), [this](const resolved_statement&) { process_MEND(); });
+    table.emplace(hlasm_ctx.ids().add("COPY"), [this](const resolved_statement& stmt) { process_COPY(stmt); });
+    return table;
+}
+
 void macrodef_processor::process_MACRO() { ++macro_nest_; }
 
 void macrodef_processor::process_MEND()
@@ -356,24 +362,75 @@ void macrodef_processor::process_MEND()
 void macrodef_processor::process_COPY(const resolved_statement& statement)
 {
     // substitute copy for anop to not be processed again
-    result_.definition.push_back(
-        std::make_unique<resolved_statement_impl>(semantics::statement_si(statement.stmt_range_ref(),
-                                                      semantics::label_si(statement.stmt_range_ref()),
-                                                      semantics::instruction_si(statement.stmt_range_ref()),
-                                                      semantics::operands_si(statement.stmt_range_ref(), {}),
-                                                      semantics::remarks_si(statement.stmt_range_ref(), {})),
-            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA),
-            processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT)));
+
+    auto empty_sem = std::make_shared<semantics::statement_si>(statement.stmt_range_ref(),
+        semantics::label_si(statement.stmt_range_ref()),
+        semantics::instruction_si(statement.stmt_range_ref()),
+        semantics::operands_si(statement.stmt_range_ref(), {}),
+        semantics::remarks_si(statement.stmt_range_ref(), {}));
+
+    auto empty = std::make_unique<resolved_statement_impl>(std::move(empty_sem),
+        processing_status(processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurence::ABSENT),
+            op_code(hlasm_ctx.ids().add("ANOP"), context::instruction_type::CA)));
+
+    result_.definition.push_back(std::move(empty));
     add_correct_copy_nest();
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
-        asm_processor::process_copy(statement, hlasm_ctx, provider_, this);
+        asm_processor::process_copy(statement, ctx, provider_, this);
     }
     else
         add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
 
     omit_next_ = true;
+}
+
+void macrodef_processor::process_LCL_GBL(const resolved_statement& statement, context::SET_t_enum set_type, bool global)
+{
+    for (auto& op : statement.operands_ref().value)
+    {
+        if (op->type != semantics::operand_type::CA)
+            continue;
+
+        auto ca_op = op->access_ca();
+        assert(ca_op);
+
+        if (ca_op->kind == semantics::ca_kind::VAR)
+        {
+            auto var = ca_op->access_var()->variable_symbol.get();
+
+            add_SET_sym_to_res(var, set_type, global);
+        }
+    }
+}
+
+void macrodef_processor::process_SET(const resolved_statement& statement, context::SET_t_enum set_type)
+{
+    if (statement.label_ref().type != semantics::label_si_type::VAR)
+        return;
+
+    auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
+
+    add_SET_sym_to_res(var, set_type, false);
+}
+
+void macrodef_processor::add_SET_sym_to_res(
+    const semantics::variable_symbol* var, context::SET_t_enum set_type, bool global)
+{
+    if (macro_nest_ > 1)
+        return;
+    if (var->created)
+        return;
+
+    if (std::find_if(result_.variable_symbols.begin(),
+            result_.variable_symbols.end(),
+            [&](const auto& def) { return def.name == var->access_basic()->name; })
+        != result_.variable_symbols.end())
+        return;
+
+    result_.variable_symbols.emplace_back(
+        var->access_basic()->name, set_type, global, curr_line_, var->symbol_range.start);
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
@@ -388,9 +445,11 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
         }
         else
         {
-            result_.sequence_symbols.emplace(seq.name,
-                std::make_unique<context::macro_sequence_symbol>(
-                    seq.name, hlasm_ctx.processing_stack().back().proc_location, curr_line_));
+            auto& sym = result_.sequence_symbols[seq.name];
+            if (!sym)
+                sym = std::make_unique<context::macro_sequence_symbol>(seq.name,
+                    location(label.field_range.start, hlasm_ctx.current_statement_location().file),
+                    curr_line_);
         }
     }
 }
@@ -406,6 +465,34 @@ void macrodef_processor::add_correct_copy_nest()
         auto loc = location(pos, nest.definition_location.file);
         result_.nests.back().push_back(std::move(loc));
     }
+
+    const auto& current_file = result_.nests.back().back().file;
+    bool in_inner_macro = macro_nest_ > 1;
+
+
+    if (result_.file_scopes[current_file].empty())
+    {
+        if (curr_line_ == 1)
+            result_.file_scopes[current_file].emplace_back(0, curr_line_, in_inner_macro);
+        else
+            result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+    }
+    else
+    {
+        bool inner_macro_ended = last_in_inner_macro_ && !in_inner_macro;
+        bool inner_macro_started = !last_in_inner_macro_ && in_inner_macro;
+        if (inner_macro_ended) // add new scope when inner macro ended
+            result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
+        else if (!in_inner_macro
+            || inner_macro_started) // if we are not in inner macro update the end of old scope. Update also when inner
+                                    // macro just started, since we use half-open intervals.
+        {
+            auto& last_scope = result_.file_scopes[current_file].back();
+            last_scope.end_statement = curr_line_;
+        }
+    }
+
+    last_in_inner_macro_ = in_inner_macro;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

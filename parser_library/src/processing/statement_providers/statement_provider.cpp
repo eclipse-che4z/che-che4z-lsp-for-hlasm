@@ -15,6 +15,7 @@
 #include "statement_provider.h"
 
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

@@ -26,23 +26,22 @@ namespace hlasm_plugin::parser_library::processing {
 class low_language_processor : public instruction_processor, public context::loctr_dependency_resolver
 {
 public:
-    static void check(const resolved_statement& stmt,
+    static bool check(const resolved_statement& stmt,
         context::hlasm_context& hlasm_ctx,
         checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
 
-    virtual void resolve_unknown_loctr_dependency(
+    void resolve_unknown_loctr_dependency(
         context::space_ptr sp, const context::address& addr, range err_range) override;
 
 protected:
     statement_fields_parser& parser;
 
-    low_language_processor(context::hlasm_context& hlasm_ctx,
+    low_language_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    rebuilt_statement preprocess(context::unique_stmt_ptr stmt);
     rebuilt_statement preprocess(context::shared_stmt_ptr stmt);
 
     // adds dependency and also check for cyclic dependency and adds diagnostics if so
@@ -73,7 +72,7 @@ protected:
 
 private:
     using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
-    preprocessed_part preprocess_inner(const resolved_statement_impl& stmt);
+    preprocessed_part preprocess_inner(const resolved_statement& stmt);
 
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
     // transform semantic operands to checking operands - machine mnemonics instructions
@@ -88,7 +87,7 @@ private:
         diagnostic_collector collector,
         const resolved_statement& stmt,
         size_t op_position,
-        const std::string* mnemonic = nullptr);
+        const context::mnemonic_code* mnemonic = nullptr);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

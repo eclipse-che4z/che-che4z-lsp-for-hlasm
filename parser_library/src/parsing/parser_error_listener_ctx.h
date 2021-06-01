@@ -30,10 +30,10 @@ public:
         std::optional<std::string> substituted,
         semantics::range_provider provider = semantics::range_provider());
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 protected:
-    virtual void add_parser_diagnostic(
+    void add_parser_diagnostic(
         range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
 
 private:

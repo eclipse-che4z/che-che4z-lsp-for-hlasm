@@ -61,23 +61,26 @@ public:
         , value(std::move(value))
     {}
 
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
+    undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
 
-    virtual void resolve_expression_tree(context::SET_t_enum) override {}
+    void resolve_expression_tree(context::SET_t_enum) override {}
 
-    virtual bool is_character_expression() const override { return false; }
+    bool is_character_expression() const override { return false; }
 
-    virtual context::SET_t evaluate(const evaluation_context&) const override { return value; }
+    void apply(ca_expr_visitor&) const override {}
 
-    virtual void collect_diags() const override {}
+    context::SET_t evaluate(const evaluation_context&) const override { return value; }
+
+    void collect_diags() const override {}
 };
 
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    context::hlasm_context ctx;
     lib_prov_mock lib;
-    evaluation_context eval_ctx { ctx, lib };
+    evaluation_context eval_ctx {
+        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    };
 
     context::SET_t get_result()
     {

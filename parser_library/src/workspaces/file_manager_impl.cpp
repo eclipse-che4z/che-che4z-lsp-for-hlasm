@@ -17,6 +17,8 @@
 #include <map>
 
 #include "processor_file_impl.h"
+#include "utils/path.h"
+#include "utils/platform.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -57,6 +59,18 @@ processor_file_ptr file_manager_impl::add_processor_file(const file_uri& uri)
         auto ptr = std::make_shared<processor_file_impl>(uri, cancel_);
         files_.emplace(uri, ptr);
         return ptr;
+    }
+    else
+        return change_into_processor_file_if_not_already_(ret->second);
+}
+
+processor_file_ptr file_manager_impl::get_processor_file(const file_uri& uri)
+{
+    std::lock_guard guard(files_mutex);
+    auto ret = files_.find(uri);
+    if (ret == files_.end())
+    {
+        return std::make_shared<processor_file_impl>(uri);
     }
     else
         return change_into_processor_file_if_not_already_(ret->second);
@@ -106,35 +120,15 @@ std::vector<processor_file*> file_manager_impl::list_updated_files()
     return list;
 }
 
-std::unordered_map<std::string, std::string> file_manager_impl::list_directory_files(const std::string& path)
+list_directory_result file_manager_impl::list_directory_files(const std::string& path)
 {
     std::filesystem::path lib_p(path);
-    std::unordered_map<std::string, std::string> found_files;
-    try
-    {
-        std::filesystem::directory_entry dir(lib_p);
-        if (!dir.is_directory())
-        {
-            add_diagnostic(diagnostic_s { "",
-                {},
-                "L0001",
-                "Unable to load library: " + path + ". Error: The path does not point to directory." });
-            return found_files;
-        }
+    list_directory_result result;
 
-        std::filesystem::directory_iterator it(lib_p);
-
-        for (auto& p : it)
-        {
-            if (p.is_regular_file())
-                found_files[p.path().filename().string()] = p.path().string();
-        }
-    }
-    catch (const std::filesystem::filesystem_error& e)
-    {
-        add_diagnostic(diagnostic_s { path, {}, "L0001", "Unable to load library: " + path + ". Error: " + e.what() });
-    }
-    return found_files;
+    result.second = utils::path::list_directory_regular_files(lib_p, [&result](const std::filesystem::path& f) {
+        result.first[utils::path::filename(f).string()] = utils::path::absolute(f).string();
+    });
+    return result;
 }
 
 void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& file)
@@ -205,9 +199,7 @@ bool file_manager_impl::file_exists(const std::string& file_name)
 
 bool file_manager_impl::lib_file_exists(const std::string& lib_path, const std::string& file_name)
 {
-    std::filesystem::path lib_path_p(lib_path);
-    std::filesystem::path file_path(lib_path_p / file_name);
-    return std::filesystem::exists(file_path);
+    return std::filesystem::exists(utils::path::join(lib_path, file_name));
 }
 
 } // namespace hlasm_plugin::parser_library::workspaces

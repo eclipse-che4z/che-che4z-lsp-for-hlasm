@@ -21,9 +21,7 @@
 #include "context/common_types.h"
 #include "context/id_storage.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
+namespace hlasm_plugin::parser_library::context {
 
 class set_symbol_base;
 class macro_param_base;
@@ -61,8 +59,6 @@ protected:
     variable_symbol(variable_kind var_kind, id_index name, bool is_global);
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 
 #endif

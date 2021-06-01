@@ -15,36 +15,33 @@
 #ifndef HLASMPLUGIN_PARSER_HLASM_EVALUATION_CONTEXT_H
 #define HLASMPLUGIN_PARSER_HLASM_EVALUATION_CONTEXT_H
 
-#include "context/hlasm_context.h"
 #include "diagnosable_ctx.h"
 #include "workspaces/parse_lib_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace expressions {
+namespace hlasm_plugin::parser_library::expressions {
 
 // structure holding required objects to correcly perform evaluation of expressions
 struct evaluation_context : diagnosable_ctx
 {
+    analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     workspaces::parse_lib_provider& lib_provider;
 
-    evaluation_context(context::hlasm_context& hlasm_ctx, workspaces::parse_lib_provider& lib_provider)
-        : diagnosable_ctx(hlasm_ctx)
-        , hlasm_ctx(hlasm_ctx)
+    evaluation_context(analyzing_context ctx, workspaces::parse_lib_provider& lib_provider)
+        : diagnosable_ctx(*ctx.hlasm_ctx)
+        , ctx(ctx)
+        , hlasm_ctx(*ctx.hlasm_ctx)
         , lib_provider(lib_provider)
     {}
 
     evaluation_context(const evaluation_context&) = delete;
 
-    virtual void collect_diags() const override
+    void collect_diags() const override
     {
         // nothing to collect
     }
 };
 
-} // namespace expressions
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::expressions
 
 #endif

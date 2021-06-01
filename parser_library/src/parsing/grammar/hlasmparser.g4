@@ -46,6 +46,7 @@ deferred_operand_rules;
 	#include "expressions/mach_expr_term.h"
 	#include "expressions/mach_operator.h"
 	#include "expressions/data_definition.h"
+	#include "semantics/operand_impls.h"
 
 	namespace hlasm_plugin::parser_library::parsing
 	{
@@ -166,7 +167,6 @@ operand_field_rest
 lab_instr returns [std::optional<std::string> op_text, range op_range]
 	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOLLN
 	{
-		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		set_source_indices($first_part.ctx->getStart(), $EOLLN);
 		if (!$first_part.ctx->exception)
 		{
@@ -179,7 +179,6 @@ lab_instr returns [std::optional<std::string> op_text, range op_range]
 		collector.set_label_field(provider.get_range( _localctx));
 		collector.set_instruction_field(provider.get_range( _localctx));
 		collector.set_operand_remark_field(provider.get_range( _localctx));
-		//ctx->set_source_indices(statement_start().file_offset, statement_end().file_offset, statement_end().file_line);
 		set_source_indices($SPACE, $EOLLN);
 	}
 	| EOF	{finished_flag=true;};

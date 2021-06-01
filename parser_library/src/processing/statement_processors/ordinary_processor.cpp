@@ -14,28 +14,28 @@
 
 #include "ordinary_processor.h"
 
-#include "../statement.h"
+#include <stdexcept>
+
 #include "checking/instruction_checker.h"
 #include "ebcdic_encoding.h"
+#include "processing/instruction_sets/postponed_statement_impl.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::processing;
-using namespace hlasm_plugin::parser_library::workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
-ordinary_processor::ordinary_processor(context::hlasm_context& hlasm_ctx,
+ordinary_processor::ordinary_processor(analyzing_context ctx,
     branching_provider& branch_provider,
-    parse_lib_provider& lib_provider,
+    workspaces::parse_lib_provider& lib_provider,
     processing_state_listener& state_listener,
     statement_fields_parser& parser,
-    processing_tracer* tracer)
-    : statement_processor(processing_kind::ORDINARY, hlasm_ctx)
-    , eval_ctx { hlasm_ctx, lib_provider }
-    , ca_proc_(hlasm_ctx, branch_provider, lib_provider, state_listener)
-    , mac_proc_(hlasm_ctx, branch_provider, lib_provider)
-    , asm_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
-    , mach_proc_(hlasm_ctx, branch_provider, lib_provider, parser)
+    opencode_provider& open_code)
+    : statement_processor(processing_kind::ORDINARY, ctx)
+    , eval_ctx { ctx, lib_provider }
+    , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
+    , mac_proc_(ctx, branch_provider, lib_provider)
+    , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)
+    , mach_proc_(ctx, branch_provider, lib_provider, parser)
     , finished_flag_(false)
-    , tracer_(tracer)
+    , listener_(state_listener)
 {}
 
 processing_status ordinary_processor::get_processing_status(const semantics::instruction_si& instruction) const
@@ -50,7 +50,8 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
     if (!status)
     {
-        auto found = eval_ctx.lib_provider.parse_library(*id, hlasm_ctx, library_data { processing_kind::MACRO, id });
+        auto found =
+            eval_ctx.lib_provider.parse_library(*id, ctx, workspaces::library_data { processing_kind::MACRO, id });
         processing_form f;
         context::instruction_type t;
         if (found)
@@ -70,11 +71,36 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
         return *status;
 }
 
-void ordinary_processor::process_statement(context::shared_stmt_ptr statement) { process_statement_base(statement); }
-
-void ordinary_processor::process_statement(context::unique_stmt_ptr statement)
+void ordinary_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    process_statement_base(std::move(statement));
+    assert(statement->kind == context::statement_kind::RESOLVED);
+
+    bool fatal = check_fatals(range(statement->statement_position()));
+    if (fatal)
+        return;
+
+    switch (statement->access_resolved()->opcode_ref().type)
+    {
+        case context::instruction_type::UNDEF:
+            add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value,
+                statement->access_resolved()->instruction_ref().field_range));
+            return;
+        case context::instruction_type::CA:
+            ca_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::MAC:
+            mac_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::ASM:
+            asm_proc_.process(std::move(statement));
+            return;
+        case context::instruction_type::MACH:
+            mach_proc_.process(std::move(statement));
+            return;
+        default:
+            assert(false);
+            return;
+    }
 }
 
 void ordinary_processor::end_processing()
@@ -86,9 +112,11 @@ void ordinary_processor::end_processing()
     hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
     check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
-    collect_ordinary_symbol_definitions();
 
     hlasm_ctx.pop_statement_processing();
+
+    listener_.finish_opencode();
+
     finished_flag_ = true;
 }
 
@@ -99,18 +127,61 @@ bool ordinary_processor::terminal_condition(const statement_provider_kind prov_k
 
 bool ordinary_processor::finished() { return finished_flag_; }
 
+struct processing_status_visitor
+{
+    context::id_index id;
+    context::hlasm_context& hlasm_ctx;
+
+    processing_status return_value(processing_form f, operand_occurence o, context::instruction_type t) const
+    {
+        return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
+    }
+
+    processing_status operator()(const context::assembler_instruction* i) const
+    {
+        const auto f = id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS") ? processing_form::DAT
+                                                                                          : processing_form::ASM;
+        const auto o = i->max_operands == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT;
+        return return_value(f, o, context::instruction_type::ASM);
+    }
+    processing_status operator()(const context::machine_instruction* i) const
+    {
+        return return_value(processing_form::MACH,
+            i->operands.empty() ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::MACH);
+    }
+    processing_status operator()(const context::ca_instruction* i) const
+    {
+        return return_value(processing_form::CA,
+            i->operandless ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::CA);
+    }
+    processing_status operator()(const context::mnemonic_code* i) const
+    {
+        return return_value(processing_form::MACH,
+            i->operand_count() == 0 ? operand_occurence::ABSENT : operand_occurence::PRESENT,
+            context::instruction_type::MACH);
+    }
+    template<typename T>
+    processing_status operator()(const T&) const
+    {
+        // opcode should already be found
+        throw std::logic_error("processing_status_visitor: unexpected instruction type");
+    }
+};
+
 std::optional<processing_status> ordinary_processor::get_instruction_processing_status(
     context::id_index instruction, context::hlasm_context& hlasm_ctx)
 {
     auto code = hlasm_ctx.get_operation_code(instruction);
 
-    if (code.macro_opcode)
+    if (std::holds_alternative<context::macro_def_ptr>(code.opcode_detail))
     {
         return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
             op_code(instruction, context::instruction_type::MAC));
     }
 
-    if (!code.machine_opcode)
+    if (!code.opcode)
     {
         if (instruction == context::id_storage::empty_id)
             return std::make_pair(
@@ -120,60 +191,7 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
             return std::nullopt;
     }
 
-    auto id = code.machine_opcode;
-    auto arr = code.machine_source;
-    processing_form f = processing_form::UNKNOWN;
-    operand_occurence o = operand_occurence::PRESENT;
-    context::instruction_type t = context::instruction_type::UNDEF;
-    switch (arr)
-    {
-        case context::instruction::instruction_array::ASM:
-            if (id == hlasm_ctx.ids().add("DC") || id == hlasm_ctx.ids().add("DS"))
-                f = processing_form::DAT;
-            else
-                f = processing_form::ASM;
-            o = context::instruction::assembler_instructions.find(*id)->second.max_operands == 0
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::ASM;
-            break;
-        case context::instruction::instruction_array::MACH:
-            f = processing_form::MACH;
-            o = context::instruction::machine_instructions.find(*id)->second->operands.empty()
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::MACH;
-            break;
-        case context::instruction::instruction_array::CA:
-            f = processing_form::CA;
-            o = std::find_if(context::instruction::ca_instructions.begin(),
-                    context::instruction::ca_instructions.end(),
-                    [&](auto& instr) { return instr.name == *id; })
-                    ->operandless
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::CA;
-            break;
-        case context::instruction::instruction_array::MNEM:
-            f = processing_form::MACH;
-            o = (context::instruction::machine_instructions
-                            .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                            ->operands.size()
-                        + context::instruction::machine_instructions
-                              .at(context::instruction::mnemonic_codes.at(*id).instruction)
-                              ->no_optional
-                        - context::instruction::mnemonic_codes.at(*id).replaced.size()
-                    == 0) // counting  number of operands in mnemonic
-                ? operand_occurence::ABSENT
-                : operand_occurence::PRESENT;
-            t = context::instruction_type::MACH;
-            break;
-        default:
-            assert(false); // opcode should already be found
-            break;
-    }
-
-    return std::make_pair(processing_format(processing_kind::ORDINARY, f, o), op_code(id, t));
+    return std::visit(processing_status_visitor { code.opcode, hlasm_ctx }, code.opcode_detail);
 }
 
 void ordinary_processor::collect_diags() const
@@ -195,13 +213,14 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
         if (!stmt)
             continue;
 
-        assert(stmt->opcode_ref().type == context::instruction_type::ASM
-            || stmt->opcode_ref().type == context::instruction_type::MACH);
 
-        if (stmt->opcode_ref().type == context::instruction_type::ASM)
-            low_language_processor::check(*stmt, hlasm_ctx, asm_checker, *this);
+        assert(stmt->impl()->opcode_ref().type == context::instruction_type::ASM
+            || stmt->impl()->opcode_ref().type == context::instruction_type::MACH);
+
+        if (stmt->impl()->opcode_ref().type == context::instruction_type::ASM)
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, asm_checker, *this);
         else
-            low_language_processor::check(*stmt, hlasm_ctx, mach_checker, *this);
+            low_language_processor::check(*stmt->impl(), hlasm_ctx, mach_checker, *this);
     }
 }
 
@@ -261,61 +280,4 @@ context::id_index ordinary_processor::resolve_instruction(
     return hlasm_ctx.ids().add(std::move(tmp));
 }
 
-void ordinary_processor::collect_ordinary_symbol_definitions()
-{
-    // for all collected ordinary symbol definitions
-    for (const auto& symbol : hlasm_ctx.lsp_ctx->deferred_ord_defs)
-    {
-        // get the symbol id
-        auto id = hlasm_ctx.ids().find(*symbol.name);
-        // find symbol in ord context
-        auto ord_symbol = hlasm_ctx.ord_ctx.get_symbol(id);
-        // if not found, skip it
-        if (!ord_symbol)
-            continue;
-
-        // add new definition
-        auto file = hlasm_ctx.ids().add(ord_symbol->symbol_location.file, true);
-        auto occurences = &hlasm_ctx.lsp_ctx->ord_symbols[context::ord_definition(
-            symbol.name, file, symbol.definition_range, ord_symbol->value(), ord_symbol->attributes())];
-        occurences->push_back({ symbol.definition_range, file });
-
-        // adds all its occurences
-        for (auto& occurence : hlasm_ctx.lsp_ctx->deferred_ord_occs)
-        {
-            if (occurence.first.name == symbol.name)
-            {
-                occurences->push_back({ occurence.first.definition_range, occurence.first.file_name });
-                occurence.second = true;
-            }
-        }
-    }
-
-    std::vector<std::pair<context::ord_definition, bool>> temp_occs;
-    // if there are still some symbols in occurences, check if they are defined in context
-    for (const auto& occurence : hlasm_ctx.lsp_ctx->deferred_ord_occs)
-    {
-        if (occurence.second)
-            continue;
-        // get the symbol id
-        auto id = hlasm_ctx.ids().find(*occurence.first.name);
-        // find symbol in ord context
-        auto ord_symbol = hlasm_ctx.ord_ctx.get_symbol(id);
-        // if not found, skip it
-        if (!ord_symbol)
-        {
-            temp_occs.push_back(occurence);
-            continue;
-        }
-
-        // add
-        hlasm_ctx.lsp_ctx
-            ->ord_symbols[context::ord_definition(occurence.first.name,
-                hlasm_ctx.ids().add(ord_symbol->symbol_location.file, true),
-                { ord_symbol->symbol_location.pos, ord_symbol->symbol_location.pos },
-                ord_symbol->value(),
-                ord_symbol->attributes())]
-            .push_back({ occurence.first.definition_range, occurence.first.file_name });
-    }
-    hlasm_ctx.lsp_ctx->deferred_ord_occs = std::move(temp_occs);
-}
+} // namespace hlasm_plugin::parser_library::processing

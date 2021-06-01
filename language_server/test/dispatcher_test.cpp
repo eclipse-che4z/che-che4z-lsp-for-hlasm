@@ -16,6 +16,7 @@
 
 #include "gmock/gmock.h"
 
+#include "base_protocol_channel.h"
 #include "dispatcher.h"
 #include "stream_helper.h"
 
@@ -36,11 +37,11 @@ public:
 
     std::vector<json> messages;
 
-    virtual void request(const json&, const std::string&, const json&, method) override {}
-    virtual void respond(const json&, const std::string&, const json&) override {}
-    virtual void notify(const std::string&, const json&) override {}
-    virtual void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
-    virtual void message_received(const json& message) override
+    void request(const json&, const std::string&, const json&, method) override {}
+    void respond(const json&, const std::string&, const json&) override {}
+    void notify(const std::string&, const json&) override {}
+    void respond_error(const json&, const std::string&, int, const std::string&, const json&) override {}
+    void message_received(const json& message) override
     {
         ++counter;
         if (counter == messages_limit)
@@ -126,8 +127,8 @@ TEST_P(dispatcher_fixture, basic)
 
     server_mock dummy_server(GetParam().messages_limit);
 
-
-    dispatcher disp(ss_in, ss_out, dummy_server, rm);
+    base_protocol_channel channel(ss_in, ss_out);
+    dispatcher disp(json_channel_adapter(channel), dummy_server, rm);
 
     int ret = disp.run_server_loop();
 
@@ -142,7 +143,8 @@ TEST(dispatcher, write_message)
     server_mock dummy_server(1);
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
-    dispatcher d(ss, ss, dummy_server, rm);
+    base_protocol_channel channel(ss, ss);
+    dispatcher d(json_channel_adapter(channel), dummy_server, rm);
 
     json message = R"("A json message")"_json;
     d.reply(message);

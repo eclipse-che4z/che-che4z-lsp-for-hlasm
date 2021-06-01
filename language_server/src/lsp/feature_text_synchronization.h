@@ -42,9 +42,9 @@ public:
     // Adds the implemented methods into the map.
     void register_methods(std::map<std::string, method>& methods) override;
     // Returns set capabilities connected with text synchonization
-    json virtual register_capabilities() override;
+    json register_capabilities() override;
     // Does nothing, not needed.
-    void virtual initialize_feature(const json& initialise_params) override;
+    void initialize_feature(const json& initialise_params) override;
 
 private:
     // Handles textDocument/didOpen notification.

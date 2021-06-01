@@ -21,7 +21,7 @@ using namespace hlasm_plugin::parser_library::context;
 
 const std::vector<loctr_ptr>& section::location_counters() const { return loctrs_; }
 
-section::section(id_index name, const section_kind kind, id_storage& ids)
+section::section(id_index name, section_kind kind, id_storage& ids)
     : ids_(ids)
     , name(name)
     , kind(kind)
@@ -32,7 +32,8 @@ section::section(id_index name, const section_kind kind, id_storage& ids)
 
 void section::set_location_counter(id_index loctr_name)
 {
-    auto tmp = std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto& loctr) { return loctr->name == loctr_name; });
+    auto tmp = std::find_if(
+        loctrs_.begin(), loctrs_.end(), [loctr_name](const auto& loctr) { return loctr->name == loctr_name; });
 
     if (tmp != loctrs_.end())
         curr_loctr_ = &**tmp;
@@ -45,8 +46,9 @@ void section::set_location_counter(id_index loctr_name)
 
 bool section::counter_defined(id_index loctr_name)
 {
-    return std::find_if(loctrs_.begin(), loctrs_.end(), [&](auto& loctr) { return loctr->name == loctr_name; })
-        != loctrs_.end();
+    return std::find_if(loctrs_.begin(), loctrs_.end(), [loctr_name](const auto& loctr) {
+        return loctr->name == loctr_name;
+    }) != loctrs_.end();
 }
 
 location_counter& section::current_location_counter() const { return *curr_loctr_; }

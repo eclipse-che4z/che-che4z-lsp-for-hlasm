@@ -34,12 +34,12 @@ public:
 
     bool is_scalar() const override;
 
-    virtual std::vector<variable_ptr> values() const override;
+    std::vector<variable_ptr> values() const override;
     size_t size() const override;
 
 protected:
-    virtual const std::string& get_string_value() const override;
-    virtual const std::string& get_string_name() const override;
+    const std::string& get_string_value() const override;
+    const std::string& get_string_name() const override;
 
 private:
     template<typename T>

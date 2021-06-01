@@ -66,7 +66,7 @@ struct basic_variable_symbol : variable_symbol
 
     const context::id_index name;
 
-    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const;
+    context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 struct created_variable_symbol : variable_symbol
@@ -76,7 +76,7 @@ struct created_variable_symbol : variable_symbol
 
     const concat_chain created_name;
 
-    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const;
+    context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

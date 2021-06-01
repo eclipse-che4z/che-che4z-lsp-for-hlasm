@@ -42,20 +42,19 @@ class lookahead_processor : public statement_processor
 public:
     const lookahead_action action;
 
-    lookahead_processor(context::hlasm_context& hlasm_ctx,
+    lookahead_processor(analyzing_context ctx,
         branching_provider& branch_provider,
         processing_state_listener& listener,
         workspaces::parse_lib_provider& lib_provider,
         lookahead_start_data start);
 
-    virtual processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
-    virtual void process_statement(context::unique_stmt_ptr statement) override;
-    virtual void process_statement(context::shared_stmt_ptr statement) override;
-    virtual void end_processing() override;
-    virtual bool terminal_condition(const statement_provider_kind kind) const override;
-    virtual bool finished() override;
+    processing_status get_processing_status(const semantics::instruction_si& instruction) const override;
+    void process_statement(context::shared_stmt_ptr statement) override;
+    void end_processing() override;
+    bool terminal_condition(const statement_provider_kind kind) const override;
+    bool finished() override;
 
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 
 private:
     void process_MACRO();
@@ -63,7 +62,7 @@ private:
     void process_COPY(const resolved_statement& statement);
 
     process_table_t asm_proc_table_;
-    process_table_t create_table(context::hlasm_context& ctx);
+    process_table_t create_table(context::hlasm_context& hlasm_ctx);
 
     void assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement);
@@ -71,8 +70,6 @@ private:
 
     void assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_assembler_attributes(context::id_index symbol_name, const resolved_statement& statement);
-
-    void process_statement(const context::hlasm_statement& statement);
 
     void find_seq(const semantics::core_statement& statement);
     void find_ord(const resolved_statement& statement);

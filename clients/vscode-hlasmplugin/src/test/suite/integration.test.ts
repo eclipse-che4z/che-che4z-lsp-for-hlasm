@@ -17,189 +17,173 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 suite('Integration Test Suite', () => {
-	var openFileEditor: vscode.TextEditor = null;
 	const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-	
-	// open 'open' file, should be recognized as hlasm
-	test('HLASM file open test', (done) => {
-		
-		// 'open' should be in workspace
-		vscode.workspace.findFiles('open').then(files => {
-			assert.ok(files && files[0]);
-			const file = files[0];
-			// open the file
-			vscode.workspace.openTextDocument(file).then(document => {
-				vscode.window.showTextDocument(document).then(editor => {
-					openFileEditor = editor;
-					// setting a language takes a while but shouldn't take longer than a second
-					setTimeout(function () {
-						if (document.languageId != 'hlasm')
-							done('Wrong language');
-						else
-							done();
-					}, 1000);
 
-				});
-			});
-		});
+	const workspace_file = 'open';
+	const get_editor = () => {
+		const editor = vscode.window.activeTextEditor;
+		assert.equal(editor.document.uri.fsPath, path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, workspace_file));
+
+		return editor;
+	}
+	const sleep = (ms: number) => {
+		return new Promise((resolve) => { setTimeout(resolve, ms) });
+	};
+
+	suiteSetup(async function () {
+		this.timeout(10000);
+		// 'open' should be in workspace
+		const files = await vscode.workspace.findFiles(workspace_file);
+
+		assert.ok(files && files[0]);
+		const file = files[0];
+
+		// open the file
+		const document = await vscode.workspace.openTextDocument(file);
+
+		await vscode.window.showTextDocument(document);
+	});
+
+	// open 'open' file, should be recognized as hlasm
+	test('HLASM file open test', async () => {
+		const editor = get_editor();
+
+		// setting a language takes a while but shouldn't take longer than a second
+		await sleep(1000);
+		assert.ok(editor.document.languageId === 'hlasm');
 	}).timeout(10000).slow(4000);
 
 	// change 'open' file to create diagnostic
-	test('Diagnostic test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
+	test('Diagnostic test', async () => {
+		const editor = get_editor();
 		// register callback to check for the correctness of the diagnostic
-		const listener = vscode.languages.onDidChangeDiagnostics(_ => {
-			const allDiags = vscode.languages.getDiagnostics();
-			listener.dispose();
-			var openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
-			
-			if (openDiags.length == 1 && openDiags[0].code == 'M003')
-				done();
-			else
-				done('Wrong diagnostic'); 
-		})
-		// remove second parameter from LR instruction
-		openFileEditor.edit(edit => {
-			edit.delete(new vscode.Range(new vscode.Position(2,6), new vscode.Position(2,7)));
+		var diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
+			const listener = vscode.languages.onDidChangeDiagnostics((_) => {
+				listener.dispose();
+				resolve(vscode.languages.getDiagnostics());
+			});
 		});
+		// remove second parameter from LR instruction
+		await editor.edit(edit => {
+			edit.delete(new vscode.Range(new vscode.Position(2, 6), new vscode.Position(2, 7)));
+		});
+
+		const allDiags = await diagnostic_event;
+		var openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+
+		assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
 	}).timeout(10000).slow(1000);
 
 	// test completion for instructions
-	test('Completion Instructions test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-		openFileEditor.edit(edit => {
-			edit.insert(new vscode.Position(7,1),'L');
-		}).then(_ => {
-			const movePosition = new vscode.Position(7,2);
-			openFileEditor.selection = new vscode.Selection(movePosition,movePosition);
-			vscode.commands.executeCommand('editor.action.triggerSuggest')
-			.then(() => {
-				setTimeout(() => {
-					vscode.commands.executeCommand('acceptSelectedSuggestion').then(result => {
-						setTimeout(() => {
-							const text = openFileEditor.document.getText();
-							const acceptedLine = text.split('\n')[7];
-							if (acceptedLine.includes('L   R,D12U(X,B)'))
-								done();
-							else
-								done('Wrong suggestion result' + acceptedLine)
-						}, 1000)
-					})
-				},1000);
-			});
-		})
+	test('Completion Instructions test', async () => {
+		const editor = get_editor();
+		await editor.edit(edit => {
+			edit.insert(new vscode.Position(7, 1), 'L');
+		});
+		const movePosition = new vscode.Position(7, 2);
+		editor.selection = new vscode.Selection(movePosition, movePosition);
+
+		await vscode.commands.executeCommand('editor.action.triggerSuggest');
+		await sleep(1000);
+
+		await vscode.commands.executeCommand('acceptSelectedSuggestion');
+		await sleep(1000);
+
+		const text = editor.document.getText();
+		const acceptedLine = text.split('\n')[7];
+
+		assert.ok(acceptedLine.includes('L   R,D12U(X,B)'), 'Wrong suggestion result' + acceptedLine);
 	}).timeout(10000).slow(4000);
 
 	// test completion for variable symbols
-	test('Completion Variable symbol test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
+	test('Completion Variable symbol test', async () => {
+		const editor = get_editor();
 		// add '&' to simulate start of a variable symbol
-		openFileEditor.edit(edit => {
-			edit.insert(new vscode.Position(8,0),'&');
-		}).then(_ => {
-			const movePosition = new vscode.Position(8,1);
-			openFileEditor.selection = new vscode.Selection(movePosition,movePosition);
-			vscode.commands.executeCommand('editor.action.triggerSuggest')
-			.then(() => {
-				setTimeout(() => {
-					vscode.commands.executeCommand('acceptSelectedSuggestion').then(result => {
-						setTimeout(() => {
-							const text = openFileEditor.document.getText();
-							const acceptedLine = text.split('\n')[8];
-							if (acceptedLine.includes('&VAR'))
-								done();
-							else
-								done('Wrong suggestion result' + acceptedLine)
-						}, 1000)
-					})
-				},1000);
-			});
-		})
+		await editor.edit(edit => {
+			edit.insert(new vscode.Position(8, 0), '&');
+		});
+		const movePosition = new vscode.Position(8, 1);
+		editor.selection = new vscode.Selection(movePosition, movePosition);
+
+		await vscode.commands.executeCommand('editor.action.triggerSuggest');
+		await sleep(1000);
+
+		await vscode.commands.executeCommand('acceptSelectedSuggestion')
+		await sleep(1000);
+
+		const text = editor.document.getText();
+		const acceptedLine = text.split('\n')[8];
+
+		assert.ok(acceptedLine.includes('&VAR'), 'Wrong suggestion result' + acceptedLine);
 	}).timeout(10000).slow(4000);
 
 	// go to definition for ordinary symbol
-	test('Definition Ordinary symbol test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-		vscode.commands.executeCommand('vscode.executeDefinitionProvider',openFileEditor.document.uri,new vscode.Position(1,7))
-			.then((result: vscode.Location[]) => {
-				if (result.length == 1 
-					&& result[0].uri.fsPath == openFileEditor.document.fileName
-					&& result[0].range.start.line == 9
-					&& result[0].range.start.character == 0)
-					done();
-				else
-					done('Wrong ordinary symbol definition location');
-			});
+	test('Definition Ordinary symbol test', async () => {
+		const editor = get_editor();
+		const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(1, 7));
+
+		assert.ok(result.length == 1
+			&& result[0].uri.fsPath == editor.document.fileName
+			&& result[0].range.start.line == 9
+			&& result[0].range.start.character == 0, 'Wrong ordinary symbol definition location');
 	}).timeout(10000).slow(1000);
 
 	// hover for variable symbol
-	test('Hover Variable symbol test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-		vscode.commands.executeCommand('vscode.executeHoverProvider',openFileEditor.document.uri,new vscode.Position(6,8))
-			.then((result: vscode.Hover[]) => {
-				if (result.length == 1
-					&& result[0].contents.length == 1
-					&& (result[0].contents[0] as vscode.MarkdownString).value == 'number')
-					done();
-				else
-					done('Wrong variable symbol hover contents');
-			});
+	test('Hover Variable symbol test', async () => {
+		const editor = get_editor();
+		const result: vscode.Hover[] = await vscode.commands.executeCommand('vscode.executeHoverProvider', editor.document.uri, new vscode.Position(6, 8));
+
+		assert.ok(result.length == 1
+			&& result[0].contents.length == 1
+			&& (result[0].contents[0] as vscode.MarkdownString).value == 'SETA variable', 'Wrong variable symbol hover contents');
 	}).timeout(10000).slow(1000);
 
 	// go to definition for macros
-	test('Definition Macro test', (done) => {
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
-		vscode.commands.executeCommand('vscode.executeDefinitionProvider',openFileEditor.document.uri,new vscode.Position(6,2))
-			.then((result: vscode.Location[]) => {
-				if (result.length == 1 
-					&& result[0].uri.fsPath == path.join(workspacePath, 'libs','mac.asm')
-					&& result[0].range.start.line == 1
-					&& result[0].range.start.character == 4)
-					done();
-				else
-					done('Wrong macro definition location');
-			});
-	}).timeout(10000).slow(1000);	
+	test('Definition Macro test', async () => {
+		const editor = get_editor();
+		const result: vscode.Location[] = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', editor.document.uri, new vscode.Position(6, 2));
+		assert.ok(result.length == 1
+			&& result[0].uri.fsPath == path.join(workspacePath, 'libs', 'mac.asm')
+			&& result[0].range.start.line == 1
+			&& result[0].range.start.character == 4, 'Wrong macro definition location');
+	}).timeout(10000).slow(1000);
 
 	// debug open code test
-	test('Debug test', (done) => {
+	test('Debug test', async () => {
 		// simulates basic debugging procedure
-		assert.equal(vscode.window.activeTextEditor, openFileEditor);
+		const editor = get_editor();
 
-		// when the debug session starts
-		const disposable = vscode.debug.onDidStartDebugSession(session => {
-			// step over once
-			// wait a second to let the debug session complete
-			setTimeout(() => {
-				vscode.commands.executeCommand('workbench.action.debug.stepOver') 
-				// wait 1 more second to let step over take place
-				// then check for VAR2 variable
-				setTimeout(() => {
-					session.customRequest('scopes',{frameId:0}).then(scopesResult => {
-					const noBody = scopesResult.body == undefined;
-					var scopes;
-					if (noBody)
-						scopes = scopesResult.scopes;
-					else
-						scopes = scopesResult.body.scopes;
-					const reference = scopes.find((scope : {name:string}) => scope.name == 'Locals').variablesReference;
-					session.customRequest('variables',{variablesReference: reference}).then(variablesResult => {
-						disposable.dispose();
-						vscode.commands.executeCommand('workbench.action.debug.stop');
-						var variables;
-						if (noBody)
-							variables = variablesResult.variables;
-						else
-							variables = variablesResult.body.variables;
-						if (variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2')
-							done();
-						else
-							done('Wrong debug variable &VAR2');
-					});
-				})}, 1000);
-			}, 1000)
+		const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
+			// when the debug session starts
+			const disposable = vscode.debug.onDidStartDebugSession((session) => {
+				disposable.dispose();
+				resolve(session);
+			});
 		});
 		// start debugging
-		vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0],'Macro tracer: current program');
+		if (!await vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], 'Macro tracer: current program'))
+			throw new Error("Failed to start a debugging session");
+
+		const session = await session_started_event;
+
+		// wait a second to let the debug session complete
+		await sleep(1000);
+		// step over once
+		await vscode.commands.executeCommand('workbench.action.debug.stepOver');
+		// wait 1 more second to let step over take place
+		await sleep(1000);
+		// then check for VAR2 variable
+		const scopesResult = await session.customRequest('scopes', { frameId: 0 });
+
+		const scopes = scopesResult.body ? scopesResult.body.scopes : scopesResult.scopes;
+
+		const reference = scopes.find((scope: { name: string }) => scope.name == 'Locals').variablesReference;
+		const variablesResult = await session.customRequest('variables', { variablesReference: reference });
+
+		await vscode.commands.executeCommand('workbench.action.debug.stop');
+
+		const variables = variablesResult.body ? variablesResult.body.variables : variablesResult.variables;
+
+		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
 	}).timeout(10000).slow(4000);
 });

@@ -1,0 +1,4 @@
+{
+    "hlasm.continuationHandling": true,
+    "hlasm.useAutodetection": true
+}

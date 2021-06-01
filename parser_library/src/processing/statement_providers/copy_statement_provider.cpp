@@ -16,23 +16,23 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-copy_statement_provider::copy_statement_provider(context::hlasm_context& hlasm_ctx,
+copy_statement_provider::copy_statement_provider(analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener)
-    : members_statement_provider(statement_provider_kind::COPY, hlasm_ctx, parser, lib_provider, listener)
+    : members_statement_provider(statement_provider_kind::COPY, std::move(ctx), parser, lib_provider, listener)
 {}
 
-bool copy_statement_provider::finished() const { return hlasm_ctx.current_copy_stack().empty(); }
+bool copy_statement_provider::finished() const { return ctx.hlasm_ctx->current_copy_stack().empty(); }
 
-context::cached_statement_storage* copy_statement_provider::get_next()
+context::statement_cache* copy_statement_provider::get_next()
 {
-    auto& invo = hlasm_ctx.current_copy_stack().back();
+    auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
 
     ++invo.current_statement;
     if ((size_t)invo.current_statement == invo.cached_definition.size())
     {
-        hlasm_ctx.leave_copy_member();
+        ctx.hlasm_ctx->leave_copy_member();
         return nullptr;
     }
 

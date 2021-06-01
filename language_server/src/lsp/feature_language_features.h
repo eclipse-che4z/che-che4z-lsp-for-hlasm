@@ -30,9 +30,9 @@ class feature_language_features : public feature
 public:
     feature_language_features(parser_library::workspace_manager& ws_mngr, response_provider& response_provider);
 
-    void virtual register_methods(std::map<std::string, method>& methods) override;
-    json virtual register_capabilities() override;
-    void virtual initialize_feature(const json& initialise_params) override;
+    void register_methods(std::map<std::string, method>& methods) override;
+    json register_capabilities() override;
+    void initialize_feature(const json& initialise_params) override;
 
 private:
     void definition(const json& id, const json& params);
@@ -40,6 +40,8 @@ private:
     void hover(const json& id, const json& params);
     void completion(const json& id, const json& params);
     void semantic_tokens(const json& id, const json& params);
+
+    static json get_markup_content(std::string_view content);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

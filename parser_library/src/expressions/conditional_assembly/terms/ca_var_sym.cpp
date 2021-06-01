@@ -15,6 +15,7 @@
 #include "ca_var_sym.h"
 
 #include "ca_constant.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "processing/context_manager.h"
 #include "semantics/concatenation_term.h"
 
@@ -66,6 +67,8 @@ void ca_var_sym::collect_diags() const
 
 bool ca_var_sym::is_character_expression() const { return false; }
 
+void ca_var_sym::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
+
 context::SET_t ca_var_sym::evaluate(const evaluation_context& eval_ctx) const
 {
     return convert_return_types(symbol->evaluate(eval_ctx), expr_kind, eval_ctx);
@@ -80,6 +83,11 @@ context::SET_t ca_var_sym::convert_return_types(
         switch (type)
         {
             case context::SET_t_enum::A_TYPE:
+                // empty string is convertible to 0, but it is not a self-def term
+                if (const auto& val_c = retval.access_c(); val_c.size())
+                    return ca_constant::self_defining_term(val_c, add_diags);
+                else
+                    return 0;
             case context::SET_t_enum::B_TYPE:
                 return ca_constant::self_defining_term(retval.access_c(), add_diags);
             case context::SET_t_enum::C_TYPE:

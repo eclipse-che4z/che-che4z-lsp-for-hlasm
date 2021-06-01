@@ -19,9 +19,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-copy_processor::copy_processor(
-    context::hlasm_context& hlasm_ctx, processing_state_listener& listener, copy_start_data start)
-    : statement_processor(processing_kind::COPY, hlasm_ctx)
+copy_processor::copy_processor(analyzing_context ctx, processing_state_listener& listener, copy_start_data start)
+    : statement_processor(processing_kind::COPY, std::move(ctx))
     , listener_(listener)
     , start_(std::move(start))
     , macro_nest_(0)
@@ -40,14 +39,19 @@ processing_status copy_processor::get_processing_status(const semantics::instruc
 
 void copy_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    process_statement(*statement);
+    if (first_statement_)
+    {
+        result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
+        first_statement_ = false;
+    }
 
-    result_.definition.push_back(statement);
-}
-
-void copy_processor::process_statement(context::unique_stmt_ptr statement)
-{
-    process_statement(*statement);
+    if (auto res_stmt = statement->access_resolved())
+    {
+        if (res_stmt->opcode_ref().value == macro_id)
+            process_MACRO();
+        else if (res_stmt->opcode_ref().value == mend_id)
+            process_MEND();
+    }
 
     result_.definition.push_back(std::move(statement));
 }
@@ -74,23 +78,6 @@ bool copy_processor::terminal_condition(const statement_provider_kind prov_kind)
 bool copy_processor::finished() { return false; }
 
 void copy_processor::collect_diags() const {}
-
-void copy_processor::process_statement(const context::hlasm_statement& statement)
-{
-    if (first_statement_)
-    {
-        result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
-        first_statement_ = false;
-    }
-
-    if (auto res_stmt = statement.access_resolved())
-    {
-        if (res_stmt->opcode_ref().value == macro_id)
-            process_MACRO();
-        else if (res_stmt->opcode_ref().value == mend_id)
-            process_MEND();
-    }
-}
 
 void copy_processor::process_MACRO() { ++macro_nest_; }
 

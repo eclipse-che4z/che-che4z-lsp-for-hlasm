@@ -24,18 +24,15 @@
 #include "processing/statement_fields_parser.h"
 #include "processing/statement_providers/statement_provider.h"
 #include "semantics/collector.h"
-#include "semantics/lsp_info_processor.h"
+#include "semantics/source_info_processor.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-
-namespace lexing {
+namespace hlasm_plugin::parser_library::lexing {
 class input_source;
 class lexer;
 class token_stream;
-} // namespace lexing
+} // namespace hlasm_plugin::parser_library::lexing
 
-namespace parsing {
+namespace hlasm_plugin::parser_library::parsing {
 
 using self_def_t = std::int32_t;
 
@@ -51,21 +48,25 @@ class parser_impl : public antlr4::Parser,
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx,
-        semantics::lsp_info_processor* lsp_prc,
+    void initialize(analyzing_context ctx,
+        semantics::source_info_processor* src_prc,
         workspaces::parse_lib_provider* lib_provider,
         processing::processing_state_listener* state_listener);
 
     bool is_last_line() const;
-    virtual void rewind_input(context::source_position pos) override;
+    void rewind_input(context::source_position pos) override;
+    std::string aread() override;
+    void ainsert(const std::string& record, processing::ainsert_destination front) override;
+
     context::source_position statement_start() const;
     context::source_position statement_end() const;
 
-    virtual processing::statement_fields_parser::parse_result parse_operand_field(context::hlasm_context* hlasm_ctx,
-        std::string field,
+    processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status) override;
+
+    context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
     void collect_diags() const override;
     std::vector<antlr4::ParserRuleContext*> tree;
@@ -87,19 +88,17 @@ protected:
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-    // process methods return true if attribute lookahead needed
-    bool process_instruction();
-    bool process_statement();
 
-    virtual void process_next(processing::statement_processor& processor) override;
-    virtual bool finished() const override;
+    bool finished() const override;
 
     void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
 
     lexing::token_stream& input;
-    context::hlasm_context* ctx;
-    semantics::lsp_info_processor* lsp_proc;
-    processing::statement_processor* processor;
+    analyzing_context ctx;
+    context::hlasm_context* hlasm_ctx = nullptr;
+    semantics::source_info_processor* src_proc = nullptr;
+    const processing::statement_processor* processor = nullptr;
+    context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
     bool finished_flag;
     semantics::collector collector;
@@ -118,8 +117,9 @@ protected:
 
 private:
     std::unique_ptr<parser_holder> rest_parser_;
-    workspaces::parse_lib_provider* lib_provider_;
-    processing::processing_state_listener* state_listener_;
+    workspaces::parse_lib_provider* lib_provider_ = nullptr;
+    processing::processing_state_listener* state_listener_ = nullptr;
+    lexing::lexer* input_lexer = nullptr;
 
     void initialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
@@ -128,13 +128,19 @@ private:
     semantics::operand_list parse_macro_operands(
         std::string operands, range field_range, std::vector<range> operand_ranges);
 
+    // process methods return true if attribute lookahead needed
+    bool process_instruction();
+    bool process_statement();
+
     void process_ordinary();
     void process_lookahead();
 
     void parse_operands(const std::string& text, range text_range);
     void parse_lookahead_operands(const std::string& text, range text_range);
 
-    virtual antlr4::misc::IntervalSet getExpectedTokens() override;
+    antlr4::misc::IntervalSet getExpectedTokens() override;
+
+    bool input_tokens_invalidated = false;
 };
 
 // structure containing parser components
@@ -151,9 +157,6 @@ struct parser_holder
     ~parser_holder();
 };
 
-
-} // namespace parsing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::parsing
 
 #endif

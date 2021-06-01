@@ -15,102 +15,110 @@
 #include <chrono>
 #include <thread>
 
-#define ASIO_STANDALONE
-#include "asio.hpp"
-#include "asio/stream_socket_service.hpp"
-#include "asio/system_error.hpp"
-
-#include "dap/tcp_handler.h"
+#include "dap/dap_message_wrappers.h"
+#include "dap/dap_server.h"
+#include "dap/dap_session.h"
+#include "dap/dap_session_manager.h"
 #include "dispatcher.h"
 #include "logger.h"
 #include "lsp/lsp_server.h"
-#include "stream_helper.h"
+#include "message_router.h"
+#include "scope_exit.h"
+#include "server_streams.h"
 #include "workspace_manager.h"
-
-
-#ifdef _WIN32 // set binary mode for input on windows
-#    include <fcntl.h>
-#    include <io.h>
-#    define SET_BINARY_MODE(handle) _setmode(_fileno(handle), O_BINARY)
-#else
-#    define SET_BINARY_MODE(handle)
-#endif
-// no need for binary on linux, because it does not change \n into \r\n
 
 using namespace hlasm_plugin::language_server;
 
+namespace {
+
+class main_program : public json_sink
+{
+    std::atomic<bool> cancel = false;
+    hlasm_plugin::parser_library::workspace_manager ws_mngr;
+
+    json_queue_channel lsp_queue;
+
+    message_router router;
+
+    std::thread lsp_thread;
+
+    dap::session_manager dap_sessions;
+
+public:
+    main_program(json_sink& json_output, int& ret)
+        : ws_mngr(&cancel)
+        , router(&lsp_queue)
+        , dap_sessions(ws_mngr, json_output)
+    {
+        router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
+
+        lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
+            try
+            {
+                request_manager req_mgr(&cancel);
+                scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
+                lsp::server server(ws_mngr);
+
+                dispatcher lsp_dispatcher(io, server, req_mgr);
+                ret = lsp_dispatcher.run_server_loop();
+            }
+            catch (const std::exception& e)
+            {
+                LOG_ERROR(std::string("LSP thread exception: ") + e.what());
+            }
+            catch (...)
+            {
+                LOG_ERROR("LSP thread unknown exception.");
+            }
+        });
+    }
+    ~main_program()
+    {
+        cancel = true;
+        lsp_queue.terminate();
+        if (lsp_thread.joinable())
+            lsp_thread.join();
+    }
+    main_program(const main_program&) = delete;
+    main_program(main_program&&) = delete;
+
+    // Inherited via json_sink
+    void write(const nlohmann::json& msg) override { router.write(msg); }
+    void write(nlohmann::json&& msg) override { router.write(std::move(msg)); }
+};
+
+} // namespace
+
 int main(int argc, char** argv)
 {
-    using namespace std;
     using namespace hlasm_plugin::language_server;
-    // user must define at least one port for dap, e.g. "-p 4745"
-    if (argc < 3 || strcmp(argv[1], "-p") != 0)
-    {
-        std::cout << "Invalid arguments. Use language_server -p <debug port> <lsp port>";
-        return 1;
-    }
 
-    int dap_port, lsp_port;
-    dap_port = atoi(argv[2]);
-    if (dap_port <= 0 || dap_port > 65535)
-    {
-        std::cout << "Wrong port entered.";
+    auto io_setup = server_streams::create(argc, argv);
+    if (!io_setup)
         return 1;
-    }
 
-    std::atomic<bool> cancel = false;
     try
     {
-        SET_BINARY_MODE(stdin);
-        SET_BINARY_MODE(stdout);
+        int ret = 0;
 
-        hlasm_plugin::parser_library::workspace_manager ws_mngr(&cancel);
-        request_manager req_mngr(&cancel);
+        main_program pgm(io_setup->get_response_stream(), ret);
 
-        dap::tcp_handler dap_handler(ws_mngr, req_mngr, (uint16_t)dap_port);
-        dap_handler.async_accept();
-        std::thread dap_thread([&dap_handler]() { dap_handler.run_dap(); });
-
-        newline_is_space::imbue_stream(cin);
-
-        lsp::server server(ws_mngr);
-        int ret;
-
-        if (argc > 3)
+        for (auto& source = io_setup->get_request_stream();;)
         {
-            // if second port is defined, it is used for tcp lsp communication
-            lsp_port = atoi(argv[3]);
-            if (lsp_port <= 0 || lsp_port > 65535)
+            auto msg = source.read();
+
+            if (!msg.has_value())
+                break;
+
+            try
             {
-                std::cout << "Wrong port entered.";
-                return 1;
+                pgm.write(msg.value());
             }
-
-            // setup tcp
-            asio::io_service io_service_;
-            asio::ip::tcp::acceptor acceptor_(
-                io_service_, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), (uint16_t)lsp_port));
-            asio::ip::tcp::socket socket_(io_service_);
-            asio::ip::tcp::iostream stream;
-            acceptor_.accept(stream.socket());
-
-            newline_is_space::imbue_stream(stream);
-
-            dispatcher lsp_dispatcher(stream, stream, server, req_mngr);
-            ret = lsp_dispatcher.run_server_loop();
-            stream.close();
+            catch (const nlohmann::json::exception&)
+            {
+                LOG_WARNING("Could not parse received JSON: " + msg.value());
+            }
         }
-        else
-        {
-            // communicate with standard IO
-            dispatcher lsp_dispatcher(std::cin, std::cout, server, req_mngr);
-            ret = lsp_dispatcher.run_server_loop();
-        }
-
-
-        dap_handler.cancel();
-        dap_thread.join();
-        req_mngr.end_worker();
 
         return ret;
     }

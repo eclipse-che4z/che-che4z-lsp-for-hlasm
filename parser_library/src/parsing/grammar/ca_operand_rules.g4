@@ -20,7 +20,6 @@ ca_op returns [operand_ptr op]
 	: expr_list seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 
 		resolve_expression($expr_list.ca_expr);
 		auto r = provider.get_range($expr_list.ctx->getStart(),$seq_symbol.ctx->getStop());
@@ -29,7 +28,6 @@ ca_op returns [operand_ptr op]
 	| seq_symbol
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($seq_symbol.ctx),hl_scopes::seq_symbol));
-		collector.add_lsp_symbol($seq_symbol.ss.name,provider.get_range($seq_symbol.ctx),symbol_type::seq);
 		$op = std::make_unique<seq_ca_operand>(std::move($seq_symbol.ss),provider.get_range($seq_symbol.ctx));
 	}
 	| {!is_var_def()}? expr

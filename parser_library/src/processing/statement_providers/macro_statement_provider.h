@@ -17,27 +17,23 @@
 
 #include "members_statement_provider.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace processing {
+namespace hlasm_plugin::parser_library::processing {
 
 // statement provider providing statements of macro defintion
 class macro_statement_provider : public members_statement_provider
 {
 public:
-    macro_statement_provider(context::hlasm_context& hlasm_ctx,
+    macro_statement_provider(analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& listener);
 
-    virtual bool finished() const override;
+    bool finished() const override;
 
 protected:
-    virtual context::cached_statement_storage* get_next() override;
+    context::statement_cache* get_next() override;
 };
 
-} // namespace processing
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::processing
 
 #endif

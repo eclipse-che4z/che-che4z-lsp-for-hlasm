@@ -35,9 +35,9 @@ thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert
 thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> converter;
 #endif
 
-lexer::lexer(input_source* input, semantics::lsp_info_processor* lsp_proc, performance_metrics* metrics)
+lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc, performance_metrics* metrics)
     : input_(input)
-    , lsp_proc_(lsp_proc)
+    , src_proc_(lsp_proc)
     , metrics_(metrics)
 {
     factory_ = std::make_unique<token_factory>();
@@ -187,14 +187,14 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
         token_start_state_.char_position_in_line_utf16,
         input_state_->char_position_in_line_utf16));
 
-    auto stop_position_in_line = (last_char_utf16_long_) ? input_state_->char_position_in_line_utf16 - 1
-                                                         : input_state_->char_position_in_line_utf16;
+    auto stop_position_in_line = last_char_utf16_long_ ? input_state_->char_position_in_line_utf16 - 1
+                                                       : input_state_->char_position_in_line_utf16;
 
-    if (lsp_proc_)
+    if (src_proc_)
         switch (ttype)
         {
             case CONTINUATION:
-                lsp_proc_->add_hl_symbol(
+                src_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
                                    position(input_state_->line, stop_position_in_line)),
                         semantics::hl_scopes::continuation));
@@ -202,14 +202,14 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
             case IGNORED: {
                 auto line_pos =
                     (token_start_state_.line != input_state_->line) ? last_line_pos_ : stop_position_in_line;
-                lsp_proc_->add_hl_symbol(
+                src_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
                                    position(token_start_state_.line, line_pos)),
                         semantics::hl_scopes::ignored));
             }
             break;
             case COMMENT:
-                lsp_proc_->add_hl_symbol(
+                src_proc_->add_hl_symbol(
                     token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
                                    position(input_state_->line, stop_position_in_line)),
                         semantics::hl_scopes::comment));
@@ -262,6 +262,9 @@ void lexer::start_token() { token_start_state_ = *input_state_; }
 
 void lexer::switch_input_streams()
 {
+    if (ainsert_stream_->LA(1) != ainsert_stream_->EOF)
+        return;
+
     if (!ainsert_buffer_.empty())
     {
         UTF32String f = ainsert_buffer_.front();
@@ -786,42 +789,74 @@ std::string lexer::aread()
 
     switch_input_streams();
 
-    start_token();
+    if (eof())
+        return "";
 
-    while (!eof() && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1) && str.length() < 80)
+    if (file_input_state_.char_position_in_line)
+        rewind_input(stream_position { file_input_state_.line,
+            file_input_state_.char_position
+                - file_input_state_.char_position_in_line }); // make sure we read the WHOLE line
+    if (from_buffer() && buffer_input_state_.char_position_in_line)
+    {
+        buffer_input_state_.char_position -= buffer_input_state_.char_position_in_line;
+        buffer_input_state_.char_position_in_line = 0;
+        buffer_input_state_.char_position_in_line_utf16 = 0;
+        buffer_input_state_.input->rewind_input(buffer_input_state_.char_position);
+        input_state_->c = buffer_input_state_.input->LA(1);
+    }
+
+    start_token();
+    while (!eof() && input_state_->c != '\r' && input_state_->c != '\n' && input_state_->c != static_cast<char_t>(-1))
     {
         str.append(converter.to_bytes(input_state_->c));
         consume();
     }
-    create_token(AREAD, HIDDEN_CHANNEL);
-    lex_end(false);
+    consume_new_line();
+
+    if (input_state_ == &file_input_state_)
+        set_last_line_pos(input_state_->char_position, token_start_state_.line);
+
+    if (eof())
+        create_token(Token::EOF);
+
+    if (str.empty())
+        str = " ";
+
     return str;
 }
 
 std::unique_ptr<input_source>& lexer::get_ainsert_stream() { return ainsert_stream_; }
 
-void lexer::ainsert_back(const std::string& back) { ainsert(back, true); }
+void lexer::ainsert_back(const std::string& back) { ainsert(back, false); }
 
-void lexer::ainsert_front(const std::string& back) { ainsert(back, false); }
+void lexer::ainsert_front(const std::string& back) { ainsert(back, true); }
 
 void lexer::ainsert(const std::string& inp, bool front)
 {
-    auto len = length_utf16(inp);
     auto s = converter.from_bytes(inp);
     UTF32String str(s.begin(), s.end());
-    if (len > 0)
+    if (str.size())
     {
-        for (; len < 80; ++len)
-            str.push_back(' ');
+        if (str.size() < 80)
+            str.resize(80, ' ');
         str.push_back('\n');
         if (front)
             ainsert_buffer_.push_front(str);
         else
             ainsert_buffer_.push_back(str);
+
+        if (file_input_state_.char_position_in_line)
+            rewind_input(stream_position { file_input_state_.line,
+                file_input_state_.char_position
+                    - file_input_state_.char_position_in_line }); // make sure we read the WHOLE line
+
+        while (token_queue_.size())
+            token_queue_.pop();
+        eof_generated_ = false;
     }
     else
     {
-        throw std::runtime_error("invalid insertion - empty string");
+        throw std::logic_error("invalid insertion - empty string");
     }
 }
 

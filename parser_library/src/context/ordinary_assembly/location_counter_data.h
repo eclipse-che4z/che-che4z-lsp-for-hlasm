@@ -20,10 +20,7 @@
 #include "address.h"
 #include "alignment.h"
 
-namespace hlasm_plugin {
-namespace parser_library {
-namespace context {
-
+namespace hlasm_plugin::parser_library::context {
 
 /*
    to satisfy the requirements of ORG instructions, multuple location counter data are needed
@@ -111,7 +108,5 @@ struct location_counter_data
     space_storage spaces() const;
 };
 
-} // namespace context
-} // namespace parser_library
-} // namespace hlasm_plugin
+} // namespace hlasm_plugin::parser_library::context
 #endif

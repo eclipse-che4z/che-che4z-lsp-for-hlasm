@@ -18,9 +18,8 @@
 #include <map>
 #include <string>
 
-#include "json.hpp"
-
 #include "common_types.h"
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
@@ -37,7 +36,9 @@ public:
         int err_code,
         const std::string& err_message,
         const json& error) = 0;
-    virtual ~response_provider() = default;
+
+protected:
+    ~response_provider() = default;
 };
 
 // Abstract class for group of methods that add functionality to server.
@@ -68,7 +69,7 @@ public:
     // Converts URI (RFC3986) to common filesystem path.
     static std::string uri_to_path(const std::string& uri);
     // Converts from filesystem path to URI
-    static std::string path_to_uri(std::string path);
+    static std::string path_to_uri(std::string_view path);
 
     // Converts LSP json representation of range into parse_library::range.
     static parser_library::range parse_range(const json& range_json);

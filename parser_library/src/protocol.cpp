@@ -16,49 +16,44 @@
 
 #include "debugging/debug_types.h"
 #include "diagnosable.h"
+#include "location.h"
+#include "lsp/completion_item.h"
 #include "semantics/highlighting_info.h"
-#include "semantics/lsp_info_processor.h"
 #include "workspaces/processor.h"
 
 namespace hlasm_plugin::parser_library {
-string_array::string_array(const char** arr, size_t size)
-    : arr(arr)
-    , size(size) {};
 
-num_array::num_array(size_t* arr, size_t size)
-    : arr(arr)
-    , size(size) {};
+//********************** completion item **********************
 
-completion_item::completion_item(context::completion_item_s& info)
-    : impl_(info)
+completion_item::completion_item(const lsp::completion_item_s& item)
+    : item_(item)
 {}
 
-const char* completion_item::label() const { return impl_.label.c_str(); }
-size_t completion_item::kind() const { return impl_.kind; }
-const char* completion_item::detail() const { return impl_.detail.c_str(); }
-const char* completion_item::documentation()
+std::string_view completion_item::label() const { return item_.label; }
+completion_item_kind completion_item::kind() const { return item_.kind; }
+std::string_view completion_item::detail() const { return item_.detail; }
+std::string_view completion_item::documentation() const { return item_.documentation; }
+std::string_view completion_item::insert_text() const { return item_.insert_text; }
+
+template<>
+completion_item sequence<completion_item, const lsp::completion_item_s*>::item(size_t index) const
 {
-    impl_.implode_contents();
-    return impl_.content_string.c_str();
+    return completion_item(stor_[index]);
 }
-bool completion_item::deprecated() const { return impl_.deprecated; }
-const char* completion_item::insert_text() const { return impl_.insert_text.c_str(); }
 
-completion_list::completion_list(semantics::completion_list_s& info)
-    : impl_(info)
+//********************** location **********************
+
+position_uri::position_uri(const location& item)
+    : item_(item)
 {}
+position position_uri::pos() const { return item_.pos; }
+std::string_view position_uri::file() const { return item_.file; }
 
-bool completion_list::is_incomplete() const { return impl_.is_incomplete; }
-completion_item completion_list::item(size_t index) { return impl_.items[index]; }
-size_t completion_list::count() const { return impl_.items.size(); }
-
-position_uri::position_uri(semantics::position_uri_s& info)
-    : impl_(info)
-{}
-
-position position_uri::pos() const { return impl_.pos; }
-
-const char* position_uri::uri() const { return impl_.uri.c_str(); }
+template<>
+position_uri sequence<position_uri, const location*>::item(size_t index) const
+{
+    return position_uri(stor_[index]);
+}
 
 diagnostic_related_info::diagnostic_related_info(diagnostic_related_info_s& info)
     : impl_(info)
@@ -73,7 +68,7 @@ range range_uri::get_range() const { return impl_.rang; }
 const char* range_uri::uri() const { return impl_.uri.c_str(); }
 
 
-range_uri diagnostic_related_info::location() const { return impl_.location; }
+range_uri diagnostic_related_info::location() const { return range_uri(impl_.location); }
 
 const char* diagnostic_related_info::message() const { return impl_.message.c_str(); }
 
@@ -119,14 +114,6 @@ diagnostic diagnostic_list::diagnostics(size_t index) { return begin_[index]; }
 
 size_t diagnostic_list::diagnostics_size() const { return size_; }
 
-position_uris::position_uris(semantics::position_uri_s* data, size_t size)
-    : data_(data)
-    , size_(size)
-{}
-
-position_uri position_uris::get_position_uri(size_t index) { return data_[index]; }
-size_t position_uris::size() const { return size_; }
-
 token_info::token_info(const range& token_range, semantics::hl_scopes scope)
     : token_range(token_range)
     , scope(scope) {};
@@ -136,68 +123,52 @@ token_info::token_info(
     , scope(scope) {};
 //*********************** stack_frame *************************
 stack_frame::stack_frame(const debugging::stack_frame& frame)
-    : impl_(frame)
+    : name(frame.name)
+    , source_file(frame.frame_source)
+    , source_range { { frame.begin_line, 0 }, { frame.end_line, 0 } }
+    , id(frame.id)
 {}
 
-const char* stack_frame::name() const { return impl_.name.c_str(); }
-
-uint32_t stack_frame::id() const { return impl_.id; }
-
-range stack_frame::get_range() const { return { { impl_.begin_line, 0 }, { impl_.end_line, 0 } }; }
-
-source stack_frame::get_source() const { return impl_.frame_source; }
-
 template<>
-stack_frame c_view_array<stack_frame, debugging::stack_frame>::item(size_t index)
+stack_frame sequence<stack_frame, const debugging::stack_frame*>::item(size_t index) const
 {
-    return data_[index];
+    return stack_frame(stor_[index]);
 }
 
 //********************* source **********************
 
 source::source(const debugging::source& source)
-    : source_(source)
+    : path(source.path)
 {}
-
-const char* source::path() const { return source_.path.c_str(); }
 
 //*********************** scope *************************
 
 scope::scope(const debugging::scope& impl)
-    : impl_(impl)
+    : name(impl.name)
+    , variable_reference(impl.var_reference)
+    , source_file(impl.scope_source)
 {}
 
-const char* scope::name() const { return impl_.name.c_str(); }
-
-var_reference_t scope::variable_reference() const { return impl_.var_reference; }
-
-source scope::get_source() const { return impl_.scope_source; }
-
 template<>
-scope c_view_array<scope, debugging::scope>::item(size_t index)
+scope sequence<scope, const debugging::scope*>::item(size_t index) const
 {
-    return data_[index];
+    return scope(stor_[index]);
 }
 
 
 //********************** variable **********************
 
 variable::variable(const debugging::variable& impl)
-    : impl_(impl)
+    : name(impl.get_name())
+    , value(impl.get_value())
+    , variable_reference(impl.var_reference)
+    , type(impl.type())
 {}
 
-const char* variable::name() const { return impl_.get_name().c_str(); }
-
-set_type variable::type() const { return impl_.type(); }
-
-const char* variable::value() const { return impl_.get_value().c_str(); }
-
-var_reference_t variable::variable_reference() const { return impl_.var_reference; }
-
 template<>
-variable c_view_array<variable, debugging::variable*>::item(size_t index)
+variable sequence<variable, const debugging::variable_store*>::item(size_t index) const
 {
-    return *data_[index];
+    return variable(*stor_->variables[index]);
 }
 
 
