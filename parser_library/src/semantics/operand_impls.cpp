@@ -14,12 +14,9 @@
 
 #include "operand_impls.h"
 
-#include <expressions/mach_operator.h>
-
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
 #include "operand_visitor.h"
-using namespace hlasm_plugin::parser_library::expressions;
 
 namespace hlasm_plugin::parser_library::semantics {
 
