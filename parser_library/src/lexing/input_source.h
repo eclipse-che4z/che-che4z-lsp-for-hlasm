@@ -25,7 +25,7 @@ struct logical_line;
     custom ANTLRInputStream
     supports input rewinding, appending and resetting
 */
-class input_source : public antlr4::ANTLRInputStream
+class input_source final : public antlr4::ANTLRInputStream
 {
 public:
     input_source(const std::string& input);

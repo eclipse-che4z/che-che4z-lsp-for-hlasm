@@ -31,7 +31,7 @@ class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
 
 // interface for objects parsing deferred statement fields
-class statement_fields_parser : public diagnosable_impl
+class statement_fields_parser final : public diagnosable_impl
 {
     std::unique_ptr<parsing::parser_holder> m_parser;
     context::hlasm_context* m_hlasm_ctx;

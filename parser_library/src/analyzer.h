@@ -72,7 +72,7 @@ public:
     analyzer_options& operator=(analyzer_options&&) = default;
 
     template<typename... Args>
-    analyzer_options(Args&&... args)
+    explicit analyzer_options(Args&&... args)
     {
         constexpr const auto string_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, std::string>);
         constexpr const auto lib_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::parse_lib_provider*>);

@@ -190,8 +190,8 @@ void opencode_provider::generate_continuation_error_messages() const
         if (s.continuation_error)
         {
             parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
-            listener.add_diagnostic(diagnostic_op::error_E001(
-                range { { line_no, 0 }, { line_no, s.code_offset_utf16 - !!s.code_offset_utf16 } }));
+            listener.add_diagnostic(
+                diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
             collect_diags_from_child(listener);
             break;
         }

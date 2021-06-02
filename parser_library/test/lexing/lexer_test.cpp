@@ -178,5 +178,5 @@ TEST(lexer_test, bad_continuation)
     EXPECT_EQ(diags[0].diag_range.start.line, 1);
     EXPECT_EQ(diags[0].diag_range.start.column, 0);
     EXPECT_EQ(diags[0].diag_range.end.line, 1);
-    EXPECT_EQ(diags[0].diag_range.end.column, 3);
+    EXPECT_EQ(diags[0].diag_range.end.column, 4);
 }
