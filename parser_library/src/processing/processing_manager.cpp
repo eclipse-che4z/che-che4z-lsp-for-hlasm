@@ -321,7 +321,14 @@ void processing_manager::collect_diags() const
     for (auto& proc : procs_)
         collect_diags_from_child(*proc);
 
+    
+    collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[0]));
+    if (provs_.size() > 2)
+        collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[1]));
     collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
+    
+    
+
 }
 
 } // namespace hlasm_plugin::parser_library::processing

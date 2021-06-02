@@ -123,10 +123,14 @@ statement_fields_parser::parse_result parser_impl::parse_operand_field(std::stri
     hlasm_ctx->metrics.reparsed_statements++;
     const parser_holder& h = *rest_parser_;
 
-    std::optional<std::string> sub;
-    if (after_substitution)
-        sub = field;
-    parser_error_listener_proxy listener(add_diag);
+    // If we are parsing after substitution, add the information to diagnostic messages
+    auto add_diag_with_sub = !after_substitution ? std::move(add_diag) : [&add_diag, &field](diagnostic_op diag) {
+        diag.message = "While substituting to '" + field + "' => " + diag.message;
+        add_diag(std::move(diag));
+    };
+
+
+    parser_error_listener_proxy listener(std::move(add_diag_with_sub));
 
     h.input->reset(field);
 
