@@ -397,3 +397,50 @@ TEST(diagnostics, relocSymbol_expected)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "D031");
 }
+TEST(diagnostics, setc_variable_mnemonic_reloc_operand)
+{
+    std::string input(
+        R"( 
+&RRR SETC 'NAME'
+ J &RRR
+&RRR DS 0H
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+TEST(diagnostics, setc_variable_reloc_operand)
+{
+    std::string input(
+        R"( 
+TEST CSECT        
+&OPS SETC '0,TEST'
+     LARL &OPS    
+     END TEST
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+TEST(diagnostics, setc_variable_reloc_symbol_expected_warn)
+{
+    std::string input(
+        R"( 
+TEST CSECT        
+&OPS SETC '0,1'
+     LARL &OPS    
+     END TEST
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "D031");
+}
