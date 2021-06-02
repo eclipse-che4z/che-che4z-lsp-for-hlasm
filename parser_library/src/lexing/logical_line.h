@@ -113,6 +113,8 @@ bool extract_logical_line(logical_line& out, std::string_view& input, const logi
 bool append_to_logical_line(logical_line& out, std::string_view& input, const logical_line_extractor_args& opts);
 void finish_logical_line(logical_line& out, const logical_line_extractor_args& opts);
 
+
+std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count);
 std::pair<size_t, bool> length_utf16(std::string_view text);
 
 } // namespace hlasm_plugin::parser_library::lexing
