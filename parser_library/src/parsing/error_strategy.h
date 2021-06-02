@@ -60,7 +60,7 @@ class error_strategy final : public antlr4::DefaultErrorStrategy
         }
     }
 
-    antlr4::Token* getMissingSymbol(antlr4::Parser* recognizer) override
+    antlr4::Token* getMissingSymbol(antlr4::Parser*) override
     {
         assert(false);
         throw std::logic_error("unreachable - singleTokenInsertion returns false");
