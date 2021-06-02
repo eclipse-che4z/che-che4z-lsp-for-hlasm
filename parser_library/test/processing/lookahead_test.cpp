@@ -973,3 +973,19 @@ A DC AL(*-B+2)(*)
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
     EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)5);
 }
+
+TEST(attribute_lookahead, ignore_invalid_code)
+{
+    std::string input = R"(
+      AIF (L'C GT 0).SKIP
+      'invalid
+.SKIP ANOP
+C     DC C'STH'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}
