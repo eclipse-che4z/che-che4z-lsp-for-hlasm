@@ -160,6 +160,8 @@ bool lexer::eof() const { return input_->LA(1) == CharStream::EOF; }
 /* set start token info */
 void lexer::start_token() { token_start_state_ = *input_state_; }
 
+bool isspace32(char_t c) { return c <= 255 && isspace((unsigned char)c); }
+
 /*
 main logic
 returns already lexed token from token queue
@@ -188,7 +190,7 @@ token_ptr lexer::nextToken()
         else if (double_byte_enabled_)
             check_continuation();
 
-        else if (!unlimited_line_ && input_state_->char_position_in_line == end_ && !isspace(input_state_->c)
+        else if (!unlimited_line_ && input_state_->char_position_in_line == end_ && !isspace32(input_state_->c)
             && continuation_enabled_)
             lex_continuation();
 
@@ -380,7 +382,7 @@ void lexer::lex_comment()
             consume();
         create_token(COMMENT, HIDDEN_CHANNEL);
 
-        if (!isspace(input_state_->c) && !eof() && continuation_enabled_)
+        if (!isspace32(input_state_->c) && !eof() && continuation_enabled_)
             lex_continuation();
         else
         {
@@ -430,7 +432,7 @@ void lexer::check_continuation()
     end_ = end_default_;
 
     auto cc = input_->LA(end_default_ + 1);
-    if (cc != CharStream::EOF && !isspace(static_cast<int>(cc)))
+    if (cc != CharStream::EOF && !isspace32(static_cast<char_t>(cc)))
     {
         do
         {
