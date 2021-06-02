@@ -28,6 +28,7 @@ class parser_error_listener_ctx;
 struct parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 namespace hlasm_plugin::parser_library::semantics {
+class collector;
 struct range_provider;
 class source_info_processor;
 } // namespace hlasm_plugin::parser_library::semantics
@@ -97,7 +98,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     std::vector<std::string> m_preprocessor_buffer;
 
     std::unique_ptr<parsing::parser_holder> m_parser;
-    std::unique_ptr<parsing::parser_holder> m_second_parser;
+    std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
+    std::unique_ptr<parsing::parser_holder> m_operand_parser;
 
     analyzing_context* m_ctx;
     workspaces::parse_lib_provider* m_lib_provider;
@@ -105,6 +107,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     semantics::source_info_processor* m_src_proc;
 
     opencode_provider_options m_opts;
+
+    bool line_fed = false;
 
 public:
     // rewinds position in file
@@ -120,29 +124,41 @@ public:
         parsing::parser_error_listener& err_listener,
         opencode_provider_options opts);
 
-    extract_next_logical_line_result feed_line();
-    bool process_comment();
+    extract_next_logical_line_result feed_line(); // for testing only
+    parsing::hlasmparser& parser(); // for testing only
+
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
     bool finished() const override;
-    bool line_fed = false;
-    parsing::hlasmparser& parser();
 
     void collect_diags() const override;
 
 private:
+    extract_next_logical_line_result feed_line(parsing::parser_holder& p);
+    bool is_comment();
+    void process_comment();
+    void generate_aread_highlighting(std::string_view text, size_t line_no) const;
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
     void generate_continuation_error_messages() const;
     extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
-    const parsing::parser_holder& prepare_second_parser(const std::string& text,
+    const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
         parsing::parser_error_listener_ctx& err_listener,
         semantics::range_provider& range_prov,
         range text_range,
         const processing_status& proc_status,
         bool unlimited_line);
+
+    std::shared_ptr<const context::hlasm_statement> process_lookahead(const statement_processor& proc,
+        semantics::collector& collector,
+        const std::optional<std::string>& op_text,
+        const range& op_range);
+    std::shared_ptr<const context::hlasm_statement> process_ordinary(const statement_processor& proc,
+        semantics::collector& collector,
+        const std::optional<std::string>& op_text,
+        const range& op_range);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
