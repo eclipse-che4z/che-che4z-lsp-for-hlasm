@@ -240,7 +240,6 @@ TEST(highlighting, var_sym_array_subscript)
     EXPECT_EQ(tokens, expected);
 }
 
-
 TEST(highlighting, ca_expr)
 {
     std::string source_file = "file_name";
@@ -257,6 +256,33 @@ TEST(highlighting, ca_expr)
         token_info({ { 0, 20 }, { 0, 23 } }, hl_scopes::string),
         token_info({ { 0, 23 }, { 0, 24 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 24 }, { 0, 29 } }, hl_scopes::seq_symbol) };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, aread)
+{
+    const std::string contents = R"(
+ MACRO
+ MAC
+&C AREAD
+ MEND
+ MAC
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
+)";
+    analyzer a(contents, analyzer_options { collect_highlighting_info::yes });
+    a.analyze();
+    const auto& tokens = a.source_processor().semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 1 }, { 1, 6 } }, hl_scopes::instruction),
+        token_info({ { 2, 1 }, { 2, 4 } }, hl_scopes::instruction),
+        token_info({ { 3, 0 }, { 3, 2 } }, hl_scopes::var_symbol),
+        token_info({ { 3, 3 }, { 3, 8 } }, hl_scopes::instruction),
+        token_info({ { 4, 1 }, { 4, 5 } }, hl_scopes::instruction),
+        token_info({ { 5, 1 }, { 5, 4 } }, hl_scopes::instruction),
+        token_info({ { 6, 0 }, { 6, 80 } }, hl_scopes::string),
+        token_info({ { 6, 80 }, { 6, 90 } }, hl_scopes::ignored),
+    };
 
     EXPECT_EQ(tokens, expected);
 }
