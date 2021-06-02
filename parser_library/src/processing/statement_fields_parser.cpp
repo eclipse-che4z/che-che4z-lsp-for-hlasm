@@ -44,7 +44,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
 
     m_parser->stream->reset();
 
-    m_parser->parser->reinitialize(m_hlasm_ctx, field_range, status);
+    m_parser->parser->reinitialize(m_hlasm_ctx, field_range, status, &err_listener);
     m_parser->parser->removeErrorListeners();
     m_parser->parser->addErrorListener(&err_listener);
 
@@ -156,6 +156,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         semantics::remarks_si(rem_range, std::move(line.remarks)));
 }
 
-void statement_fields_parser::collect_diags() const { collect_diags_from_child(*m_parser->parser); }
+void statement_fields_parser::collect_diags() const {}
 
 } // namespace hlasm_plugin::parser_library::processing
