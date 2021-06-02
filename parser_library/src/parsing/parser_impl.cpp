@@ -32,7 +32,11 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , provider()
 {}
 
-void parser_impl::initialize(context::hlasm_context* hl_ctx) { hlasm_ctx = hl_ctx; }
+void parser_impl::initialize(context::hlasm_context* hl_ctx, collectable<diagnostic_s>* d)
+{
+    hlasm_ctx = hl_ctx;
+    diags = d;
+}
 
 std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc)
 {
@@ -46,8 +50,6 @@ std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_proc
     h->parser->setErrorHandler(h->error_handler);
     return h;
 }
-
-void parser_impl::collect_diags() const {}
 
 void parser_impl::enable_continuation() { input.enable_continuation(); }
 
@@ -81,11 +83,11 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    diagnostic_adder add_diagnostic(this, term_range);
+    diagnostic_adder add_diagnostic(diags, term_range);
     auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
-    if (add_diagnostic.diagnostics_present)
-        diags().back().file_name = hlasm_ctx->processing_stack().back().proc_location.file;
+    if (add_diagnostic.diagnostics_present && diags)
+        diags->diags().back().file_name = hlasm_ctx->processing_stack().back().proc_location.file;
     return val;
 }
 
@@ -97,16 +99,17 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
         return context::symbol_attributes::transform_attr(c);
     }
 
-    add_diagnostic(
-        diagnostic_s::error_S101(hlasm_ctx->processing_stack().back().proc_location.file, attr_data, data_range));
+    if (diags)
+        diags->add_diagnostic(
+            diagnostic_s::error_S101(hlasm_ctx->processing_stack().back().proc_location.file, attr_data, data_range));
 
     return context::data_attr_kind::UNKNOWN;
 }
 
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
-    if (value.size() > 63)
-        add_diagnostic(
+    if (value.size() > 63 && diags)
+        diags->add_diagnostic(
             diagnostic_s::error_S100(hlasm_ctx->processing_stack().back().proc_location.file, value, id_range));
 
     return hlasm_ctx->ids().add(std::move(value));
@@ -116,8 +119,9 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SE
 {
     expr->resolve_expression_tree(type);
     expr->collect_diags();
-    for (auto& d : expr->diags())
-        add_diagnostic(diagnostic_s(hlasm_ctx->processing_stack().back().proc_location.file, std::move(d)));
+    if (diags)
+        for (auto& d : expr->diags())
+            diags->add_diagnostic(diagnostic_s(hlasm_ctx->processing_stack().back().proc_location.file, std::move(d)));
     expr->diags().clear();
 }
 
@@ -209,12 +213,15 @@ bool parser_impl::UNKNOWN()
     return format.form == processing::processing_form::UNKNOWN;
 }
 
-void parser_impl::reinitialize(
-    context::hlasm_context* h_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
+void parser_impl::reinitialize(context::hlasm_context* h_ctx,
+    semantics::range_provider range_prov,
+    processing::processing_status proc_stat,
+    collectable<diagnostic_s>* d)
 {
     hlasm_ctx = h_ctx;
     provider = range_prov;
     proc_status = proc_stat;
+    diags = d;
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
@@ -225,6 +232,6 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return antlr4::Parser::getExpectedTokens();
 }
 
-parser_holder::~parser_holder() {}
+parser_holder::~parser_holder() = default;
 
 } // namespace hlasm_plugin::parser_library::parsing

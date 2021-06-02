@@ -41,18 +41,17 @@ struct parser_holder;
 class hlasmparser;
 
 // class providing methods helpful for parsing and methods modifying parsing process
-class parser_impl : public antlr4::Parser, public diagnosable_impl
+class parser_impl : public antlr4::Parser
 {
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx);
+    void initialize(context::hlasm_context* hlasm_ctx, collectable<diagnostic_s>* d);
 
     void reinitialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
-        processing::processing_status proc_stat);
-
-    void collect_diags() const override;
+        processing::processing_status proc_stat,
+        collectable<diagnostic_s>* d);
 
     semantics::collector& get_collector() { return collector; }
 
@@ -91,6 +90,7 @@ protected:
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
+    collectable<diagnostic_s>* diags = nullptr;
 };
 
 // structure containing parser components
