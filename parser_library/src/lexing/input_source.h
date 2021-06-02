@@ -20,9 +20,10 @@
 #include "parser_library_export.h"
 
 namespace hlasm_plugin::parser_library::lexing {
+struct logical_line;
 /*
-        custom ANTLRInputStream
-        supports input rewinding, appending and resetting
+    custom ANTLRInputStream
+    supports input rewinding, appending and resetting
 */
 class input_source : public antlr4::ANTLRInputStream
 {
@@ -32,7 +33,8 @@ public:
     void append(const UTF32String& str);
     void append(std::string_view str);
     using antlr4::ANTLRInputStream::reset;
-    void reset(const std::string& str);
+    void reset(std::string_view str);
+    void reset(const logical_line& l);
 
     input_source(const input_source&) = delete;
     input_source& operator=(const input_source&) = delete;

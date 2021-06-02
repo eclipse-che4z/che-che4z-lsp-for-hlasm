@@ -63,11 +63,47 @@ void input_source::append(std::string_view str)
     append_utf8_to_utf32(_data, str);
 }
 
-void input_source::reset(const std::string& str)
+void input_source::reset(std::string_view str)
 {
     p = 0;
     _data.clear();
     append_utf8_to_utf32(_data, str);
+}
+
+// TODO: this is a compatibility mechanism, ideally we want use logical_line directly
+void input_source::reset(const logical_line& l)
+{
+    reset("");
+    for (size_t i = 0; i < l.segments.size(); ++i)
+    {
+        const auto& s = l.segments[i];
+        if (i > 0)
+            _data.append(s.code.data() - s.line.data(), s.continuation_error ? 'X' : ' ');
+
+        append(s.code);
+        append(s.continuation);
+        append(s.ignore);
+
+        if (i + 1 < l.segments.size())
+        {
+            // do not add the last EOL
+            switch (s.eol)
+            {
+                case hlasm_plugin::parser_library::lexing::logical_line_segment_eol::none:
+                    break;
+                case hlasm_plugin::parser_library::lexing::logical_line_segment_eol::lf:
+                    append("\n");
+                    break;
+                case hlasm_plugin::parser_library::lexing::logical_line_segment_eol::crlf:
+                    append("\r\n");
+                    break;
+                case hlasm_plugin::parser_library::lexing::logical_line_segment_eol::cr:
+                    append("\r");
+                    break;
+            }
+        }
+    }
+    reset();
 }
 
 std::string input_source::getText(const antlr4::misc::Interval& interval)
