@@ -65,7 +65,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     std::optional<std::string> sub;
     if (after_substitution)
         sub = field;
-    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, sub);
+    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
 
     const auto original_range = field_range.original_range;
 
@@ -109,13 +109,9 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
 
-                    parsing::parser_error_listener_ctx tmp_listener(*m_hlasm_ctx, std::move(sub));
-
-                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, tmp_listener);
+                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, listener);
 
                     line.operands = std::move(h_second.parser->macro_ops()->list);
-
-                    collect_diags_from_child(tmp_listener);
                 }
                 break;
             case processing::processing_form::ASM:
