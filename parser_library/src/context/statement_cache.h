@@ -15,9 +15,9 @@
 #ifndef CONTEXT_PROCESSING_STATEMENT_CACHE_H
 #define CONTEXT_PROCESSING_STATEMENT_CACHE_H
 
+#include "diagnostic.h"
 #include "hlasm_statement.h"
 #include "processing/processing_format.h"
-#include "diagnostic.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 struct complete_statement;
@@ -50,7 +50,7 @@ public:
 
     void insert(processing::processing_form format, cached_statement_t statement);
 
-    const cached_statement_t & get(processing::processing_form format) const;
+    const cached_statement_t* get(processing::processing_form format) const;
 
     shared_stmt_ptr get_base() const;
 };

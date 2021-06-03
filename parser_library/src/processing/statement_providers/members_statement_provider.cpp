@@ -98,7 +98,6 @@ void members_statement_provider::fill_cache(
     }
     else
     {
-        
         auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
             semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
@@ -124,12 +123,12 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
     if (!cache.contains(status.first.form))
         fill_cache(cache, def_stmt, status);
 
-    const auto & cache_item = cache.get(status.first.form);
+    const auto& cache_item = cache.get(status.first.form);
 
-    for (const diagnostic_op& diag : cache_item.diags)
+    for (const diagnostic_op& diag : cache_item->diags)
         add_diagnostic(diag);
 
-    return std::make_shared<resolved_statement_impl>(cache_item.stmt, status);
+    return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
 }
 
 void members_statement_provider::collect_diags() const {}
