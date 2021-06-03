@@ -131,14 +131,13 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
             break;
     }
 }
-extract_next_logical_line_result opencode_provider::feed_line() { return feed_line(*m_parser); }
 
 extract_next_logical_line_result opencode_provider::feed_line(parsing::parser_holder& p)
 {
     auto ll_res = extract_next_logical_line();
     if (ll_res == extract_next_logical_line_result::failed)
         return ll_res;
-    line_fed = true;
+    m_line_fed = true;
 
     p.input->reset(m_current_logical_line);
 
@@ -408,7 +407,9 @@ bool opencode_provider::finished() const
 
 parsing::hlasmparser& opencode_provider::parser()
 {
-    assert(line_fed);
+    if (!m_line_fed)
+        feed_line(*m_parser);
+    assert(m_line_fed);
     return *m_parser->parser;
 }
 

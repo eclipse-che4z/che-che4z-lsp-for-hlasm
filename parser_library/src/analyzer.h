@@ -113,8 +113,6 @@ public:
 
     analyzing_context context();
     context::hlasm_context& hlasm_ctx();
-    parsing::hlasmparser& parser();
-    bool feed_line();
     const semantics::source_info_processor& source_processor() const;
 
     void analyze(std::atomic<bool>* cancel = nullptr);
@@ -123,6 +121,8 @@ public:
     const performance_metrics& get_metrics() const;
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
+
+    parsing::hlasmparser& parser(); // for testing only
 };
 
 } // namespace hlasm_plugin::parser_library

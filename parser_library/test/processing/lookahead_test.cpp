@@ -191,7 +191,6 @@ TEST(attribute_lookahead, lookup_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    a.feed_line();
     auto& expr = a.parser().expr()->ca_expr;
 
     lib_prov_mock lib;
@@ -206,7 +205,6 @@ TEST(attribute_lookahead, nested_lookup_triggered)
 {
     std::string input("L'&V1(L'&V2)");
     analyzer a(input);
-    a.feed_line();
     auto& expr = a.parser().expr()->ca_expr;
 
     lib_prov_mock lib;
@@ -237,7 +235,6 @@ TEST(attribute_lookahead, lookup_not_triggered)
 {
     std::string input("L'X");
     analyzer a(input);
-    a.feed_line();
     auto& expr = a.parser().expr()->ca_expr;
 
     lib_prov_mock lib;
@@ -258,7 +255,6 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 {
     std::string input("L'X+L'Y");
     analyzer a(input);
-    a.feed_line();
     auto& expr = a.parser().expr()->ca_expr;
 
     lib_prov_mock lib;
@@ -273,7 +269,6 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 {
     std::string input("S'X+L'X");
     analyzer a(input);
-    a.feed_line();
     auto& expr = a.parser().expr()->ca_expr;
 
     lib_prov_mock lib;

@@ -49,8 +49,7 @@ public:
 
     void collect_diags() const override;
 
-    auto& opencode_parser() { return opencode_prov_.parser(); }
-    auto feed_opencode_line() { return opencode_prov_.feed_line(); }
+    auto& opencode_parser() { return opencode_prov_.parser(); } // for testing only
 
 private:
     analyzing_context ctx_;

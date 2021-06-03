@@ -71,7 +71,6 @@ analyzing_context analyzer::context() { return ctx_; }
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
 parsing::hlasmparser& analyzer::parser() { return mngr_.opencode_parser(); }
-bool analyzer::feed_line() { return mngr_.feed_opencode_line() != extract_next_logical_line_result::failed; }
 
 const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 

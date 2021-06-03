@@ -108,7 +108,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     opencode_provider_options m_opts;
 
-    bool line_fed = false;
+    bool m_line_fed = false;
 
 public:
     // rewinds position in file
@@ -124,7 +124,6 @@ public:
         parsing::parser_error_listener& err_listener,
         opencode_provider_options opts);
 
-    extract_next_logical_line_result feed_line(); // for testing only
     parsing::hlasmparser& parser(); // for testing only
 
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
