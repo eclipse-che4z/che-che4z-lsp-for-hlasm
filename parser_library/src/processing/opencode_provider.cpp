@@ -248,7 +248,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, listener, {}, op_range, proc_status, false);
 
-        auto& [format, opcode] = proc_status;
+        const auto& [format, opcode] = proc_status;
         if (format.occurence == processing::operand_occurence::ABSENT
             || format.form == processing::processing_form::UNKNOWN)
             h.parser->op_rem_body_noop();
@@ -275,7 +275,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         size_t string_size = line.operands.size();
                         std::vector<range> ranges;
 
-                        for (auto& op : line.operands)
+                        for (const auto& op : line.operands)
                             if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
                                 string_size += m_op->value.size();
 

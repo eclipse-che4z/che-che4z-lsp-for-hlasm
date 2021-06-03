@@ -42,8 +42,6 @@ public:
     input_source(input_source&&) = delete;
 
     std::string getText(const antlr4::misc::Interval& interval) override;
-
-    virtual ~input_source() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::lexing

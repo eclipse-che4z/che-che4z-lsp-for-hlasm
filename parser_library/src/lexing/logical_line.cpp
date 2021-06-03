@@ -52,6 +52,12 @@ std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
         if (s.empty())
             break;
         unsigned char c = s.front();
+        if (c < 0x80)
+        {
+            s.remove_prefix(1);
+            utf16_skipped++;
+            continue;
+        }
 
         const auto cs = utf8_prefix_sizes[c];
         if (!cs.utf8 || s.size() < cs.utf8)
@@ -67,9 +73,16 @@ std::pair<size_t, bool> length_utf16(std::string_view s)
 {
     bool last = false;
     size_t len = 0;
-    for (; !s.empty();)
+    while (!s.empty())
     {
         unsigned char c = s.front();
+        if (c < 0x80)
+        {
+            s.remove_prefix(1);
+            len++;
+            last = false;
+            continue;
+        }
 
         const auto cs = utf8_prefix_sizes[c];
         if (!cs.utf8 || s.size() < cs.utf8)

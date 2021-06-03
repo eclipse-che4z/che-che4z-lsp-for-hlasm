@@ -65,14 +65,14 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     std::optional<std::string> sub;
     if (after_substitution)
         sub = field;
-    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
+    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, sub);
 
     const auto original_range = field_range.original_range;
 
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, listener);
 
     semantics::op_rem line;
-    auto& [format, opcode] = status;
+    const auto& [format, opcode] = status;
     if (format.occurence == processing::operand_occurence::ABSENT
         || format.form == processing::processing_form::UNKNOWN)
         h.parser->op_rem_body_noop();
@@ -82,13 +82,13 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         {
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
-                // proc_status = status;
+
                 if (line.operands.size())
                 {
                     size_t string_size = line.operands.size();
                     std::vector<range> ranges;
 
-                    for (auto& op : line.operands)
+                    for (const auto& op : line.operands)
                         if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
                             string_size += m_op->value.size();
 
@@ -134,10 +134,10 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
     collect_diags_from_child(listener);
 
-    for (size_t i = 0; i < line.operands.size(); i++)
+    for (auto& op : line.operands)
     {
-        if (!line.operands[i])
-            line.operands[i] = std::make_unique<semantics::empty_operand>(original_range);
+        if (!op)
+            op = std::make_unique<semantics::empty_operand>(original_range);
     }
 
     if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)

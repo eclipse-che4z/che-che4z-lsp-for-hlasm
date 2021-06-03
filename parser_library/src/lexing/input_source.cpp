@@ -30,7 +30,7 @@ void append_utf8_to_utf32(UTF32String& t, std::string_view s)
 {
     while (!s.empty())
     {
-        unsigned char c = (unsigned char)s.front();
+        unsigned char c = s.front();
         if (c < 0x80)
         {
             t.append(1, c);
