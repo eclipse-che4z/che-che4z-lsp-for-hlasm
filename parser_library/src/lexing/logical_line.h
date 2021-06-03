@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_HLASMPARSERLIBRARY_LOGICAL_LINE_H
 
 #include <array>
+#include <limits>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
