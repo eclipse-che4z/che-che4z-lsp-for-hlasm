@@ -41,8 +41,6 @@ public:
     range_provider(range original_field_range, std::vector<range> original_operand_ranges, adjusting_state state);
     range_provider();
 
-    static range union_range(const range& lhs, const range& rhs);
-
     range get_range(const antlr4::Token* start, const antlr4::Token* stop);
     range get_range(const antlr4::Token* terminal);
     range get_range(antlr4::ParserRuleContext* non_terminal);

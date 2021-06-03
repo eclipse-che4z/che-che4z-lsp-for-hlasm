@@ -84,6 +84,15 @@ struct operand
     virtual ~operand() = default;
 };
 
+struct join_operands_result
+{
+    std::string text;
+    std::vector<range> ranges;
+    range total_range;
+};
+
+join_operands_result join_operands(const operand_list&);
+
 } // namespace hlasm_plugin::parser_library::semantics
 
 

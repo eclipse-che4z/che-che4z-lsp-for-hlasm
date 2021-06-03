@@ -85,26 +85,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
                 if (line.operands.size())
                 {
-                    size_t string_size = line.operands.size();
-                    std::vector<range> ranges;
-
-                    for (const auto& op : line.operands)
-                        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
-                            string_size += m_op->value.size();
-
-                    std::string to_parse;
-                    to_parse.reserve(string_size);
-
-                    for (size_t i = 0; i < line.operands.size(); ++i)
-                    {
-                        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(line.operands[i].get()))
-                            to_parse.append(m_op->value);
-                        if (i != line.operands.size() - 1)
-                            to_parse.push_back(',');
-                        ranges.push_back(line.operands[i]->operand_range);
-                    }
-                    auto r = semantics::range_provider::union_range(
-                        line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
+                    auto [to_parse, ranges, r] = join_operands(line.operands);
 
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
@@ -144,11 +125,9 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
     range op_range = line.operands.empty()
         ? original_range
-        : semantics::range_provider::union_range(
-            line.operands.front()->operand_range, line.operands.back()->operand_range);
-    range rem_range = line.remarks.empty()
-        ? range(op_range.end)
-        : semantics::range_provider::union_range(line.remarks.front(), line.remarks.back());
+        : union_range(line.operands.front()->operand_range, line.operands.back()->operand_range);
+    range rem_range =
+        line.remarks.empty() ? range(op_range.end) : union_range(line.remarks.front(), line.remarks.back());
 
     return std::make_pair(semantics::operands_si(op_range, std::move(line.operands)),
         semantics::remarks_si(rem_range, std::move(line.remarks)));

@@ -607,4 +607,35 @@ macro_operand::macro_operand(mac_kind kind, range operand_range)
     , kind(kind)
 {}
 
+
+join_operands_result join_operands(const operand_list& operands)
+{
+    if (operands.empty())
+        return {};
+
+    join_operands_result result;
+    size_t string_size = operands.size();
+
+    for (const auto& op : operands)
+        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+            string_size += m_op->value.size();
+
+    result.text.reserve(string_size);
+
+    bool insert_comma = false;
+    for (const auto& op : operands)
+    {
+        if (std::exchange(insert_comma, true))
+            result.text.push_back(',');
+
+        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+            result.text.append(m_op->value);
+
+        result.ranges.push_back(op->operand_range);
+    }
+    result.total_range = union_range(operands.front()->operand_range, operands.back()->operand_range);
+
+    return result;
+}
+
 } // namespace hlasm_plugin::parser_library::semantics
