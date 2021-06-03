@@ -50,7 +50,7 @@ public:
         semantics::range_provider field_range,
         processing::processing_status status);
 
-    statement_fields_parser(context::hlasm_context* hlasm_ctx);
+    explicit statement_fields_parser(context::hlasm_context* hlasm_ctx);
     ~statement_fields_parser();
 
     void collect_diags() const override;

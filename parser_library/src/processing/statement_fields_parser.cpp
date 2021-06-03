@@ -44,7 +44,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
 
     m_parser->stream->reset();
 
-    m_parser->parser->reinitialize(m_hlasm_ctx, field_range, status, &err_listener);
+    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &err_listener);
     m_parser->parser->removeErrorListeners();
     m_parser->parser->addErrorListener(&err_listener);
 
@@ -67,7 +67,9 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         sub = field;
     parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
 
-    const auto& h = prepare_parser(field, after_substitution, field_range, status, listener);
+    const auto original_range = field_range.original_range;
+
+    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, listener);
 
     semantics::op_rem line;
     auto& [format, opcode] = status;
@@ -135,7 +137,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     for (size_t i = 0; i < line.operands.size(); i++)
     {
         if (!line.operands[i])
-            line.operands[i] = std::make_unique<semantics::empty_operand>(field_range.original_range);
+            line.operands[i] = std::make_unique<semantics::empty_operand>(original_range);
     }
 
     if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)
@@ -145,7 +147,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
         line.operands.clear();
 
     range op_range = line.operands.empty()
-        ? field_range.original_range
+        ? original_range
         : semantics::range_provider::union_range(
             line.operands.front()->operand_range, line.operands.back()->operand_range);
     range rem_range = line.remarks.empty()

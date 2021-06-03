@@ -219,7 +219,7 @@ void parser_impl::reinitialize(context::hlasm_context* h_ctx,
     collectable<diagnostic_s>* d)
 {
     hlasm_ctx = h_ctx;
-    provider = range_prov;
+    provider = std::move(range_prov);
     proc_status = proc_stat;
     diags = d;
 }
