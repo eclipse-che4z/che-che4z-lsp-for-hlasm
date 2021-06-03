@@ -290,7 +290,7 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (param.size() <= 32 && std ::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
+    if (param.size() <= 32 && std::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
         return 1;
     return 0;
 }

@@ -74,22 +74,24 @@ public:
     template<typename... Args>
     explicit analyzer_options(Args&&... args)
     {
-        constexpr const auto string_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, std::string>);
-        constexpr const auto lib_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::parse_lib_provider*>);
-        constexpr const auto ao_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, asm_option>);
-        constexpr const auto ac_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, analyzing_context>);
-        constexpr const auto lib_data_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::library_data>);
-        constexpr const auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
-        constexpr const auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
+        constexpr auto string_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, std::string>);
+        constexpr auto lib_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, workspaces::parse_lib_provider*>);
+        constexpr auto ao_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, asm_option>);
+        constexpr auto ac_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, analyzing_context>);
+        constexpr auto lib_data_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::library_data>);
+        constexpr auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
+        constexpr auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
+        constexpr auto cnt = string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt;
 
-        static_assert(string_cnt <= 1, "Duplicate argument provided");
-        static_assert(lib_cnt <= 1, "Duplicate argument provided");
-        static_assert(ao_cnt <= 1, "Duplicate argument provided");
-        static_assert(ac_cnt <= 1, "Duplicate argument provided");
-        static_assert(hi_cnt <= 1, "Duplicate argument provided");
-        static_assert(lib_data_cnt <= 1, "Duplicate argument provided");
-        static_assert(f_oc_cnt <= 1, "Duplicate argument provided");
+        static_assert(string_cnt <= 1, "Duplicate file_name");
+        static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
+        static_assert(ao_cnt <= 1, "Duplicate asm_option");
+        static_assert(ac_cnt <= 1, "Duplicate analyzing_context");
+        static_assert(lib_data_cnt <= 1, "Duplicate library_data");
+        static_assert(hi_cnt <= 1, "Duplicate collect_highlighting_info");
+        static_assert(f_oc_cnt <= 1, "Duplicate file_is_opencode");
         static_assert(!(ao_cnt && ac_cnt), "Do not specify both asm_option and analyzing_context");
+        static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");
 
         (set(std::forward<Args>(args)), ...);
     }

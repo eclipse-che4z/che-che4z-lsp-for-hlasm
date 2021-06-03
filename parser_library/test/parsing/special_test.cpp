@@ -48,7 +48,7 @@ TEST(special_lines, process_after_code_encountered)
 {
     std::string input(R"(
 *PROCESS)");
-    analyzer a(input, analyzer_options { file_is_opencode ::yes });
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
     a.collect_diags();
@@ -61,7 +61,7 @@ TEST(special_lines, process_multiple)
 {
     std::string input(R"(*PROCESS override(using(nowarn))
 *PROCESS)");
-    analyzer a(input, analyzer_options { file_is_opencode ::yes });
+    analyzer a(input, analyzer_options { file_is_opencode::yes });
     a.analyze();
 
     a.collect_diags();
