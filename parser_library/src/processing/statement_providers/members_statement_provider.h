@@ -54,7 +54,7 @@ private:
     context::shared_stmt_ptr preprocess_deferred(const statement_processor& processor, context::statement_cache& cache);
 
     // Inherited via diagnosable_ctx
-    virtual void collect_diags() const override;
+    void collect_diags() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

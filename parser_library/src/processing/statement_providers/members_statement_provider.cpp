@@ -131,6 +131,9 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
     return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
 }
 
-void members_statement_provider::collect_diags() const {}
+void members_statement_provider::collect_diags() const
+{
+    // No diagnosable children
+}
 
 } // namespace hlasm_plugin::parser_library::processing

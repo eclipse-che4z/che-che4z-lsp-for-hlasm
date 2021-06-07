@@ -276,14 +276,4 @@ void parser_error_listener::add_parser_diagnostic(
     add_diagnostic(diagnostic_s(file_name_, diagnostic_range, severity, std::move(code), std::move(message), {}));
 }
 
-parser_error_listener_proxy::parser_error_listener_proxy(std::function<void(diagnostic_op)> add_diag)
-    : add_diag_(add_diag)
-{}
-
-void parser_error_listener_proxy::add_parser_diagnostic(
-    range diagnostic_range, diagnostic_severity severity, std::string code, std::string message)
-{
-    add_diag_(diagnostic_op(severity, std::move(code), std::move(message), diagnostic_range));
-}
-
 } // namespace hlasm_plugin::parser_library::parsing

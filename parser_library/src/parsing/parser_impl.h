@@ -65,7 +65,7 @@ public:
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status,
-        std::function<void(diagnostic_op)> add_diag) override;
+        const std::function<void(diagnostic_op)>& add_diag) override;
 
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
@@ -83,7 +83,7 @@ protected:
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data, range data_range);
     context::id_index parse_identifier(std::string value, range id_range);
-    void parse_macro_operands(semantics::op_rem& line);
+    void parse_macro_operands(semantics::op_rem& line, const std::function<void(diagnostic_op)>& add_diag);
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
@@ -126,8 +126,10 @@ private:
         semantics::range_provider range_prov,
         processing::processing_status proc_stat);
 
-    semantics::operand_list parse_macro_operands(
-        std::string operands, range field_range, std::vector<range> operand_ranges);
+    semantics::operand_list parse_macro_operands(std::string operands,
+        range field_range,
+        std::vector<range> operand_ranges,
+        const std::function<void(diagnostic_op)>& add_diag);
 
     // process methods return true if attribute lookahead needed
     bool process_instruction();

@@ -186,7 +186,7 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
     cache_data.cached_analyzer = std::move(analyzer);
 }
 
-void macro_cache::erase_cache_of_opencode(const std::string opencode_file_name)
+void macro_cache::erase_cache_of_opencode(const std::string& opencode_file_name)
 {
     auto it = cache_.begin();
     while (it != cache_.end())

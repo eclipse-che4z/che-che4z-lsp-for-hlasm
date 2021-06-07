@@ -115,7 +115,7 @@ statement_fields_parser::parse_result parser_impl::parse_operand_field(std::stri
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status,
-    std::function<void(diagnostic_op)> add_diag)
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -123,14 +123,7 @@ statement_fields_parser::parse_result parser_impl::parse_operand_field(std::stri
     hlasm_ctx->metrics.reparsed_statements++;
     const parser_holder& h = *rest_parser_;
 
-    // If we are parsing after substitution, add the information to diagnostic messages
-    auto add_diag_with_sub = !after_substitution ? std::move(add_diag) : [&add_diag, &field](diagnostic_op diag) {
-        diag.message = "While substituting to '" + field + "' => " + diag.message;
-        add_diag(std::move(diag));
-    };
-
-
-    parser_error_listener_proxy listener(std::move(add_diag_with_sub));
+    parser_error_listener_substitution listener(add_diag, after_substitution ? &field : nullptr, field_range);
 
     h.input->reset(field);
 
@@ -160,7 +153,7 @@ statement_fields_parser::parse_result parser_impl::parse_operand_field(std::stri
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
                 proc_status = status;
-                parse_macro_operands(line);
+                parse_macro_operands(line, add_diag);
                 break;
             case processing::processing_form::ASM:
                 line = std::move(h.parser->op_rem_body_asm_r()->line);
@@ -269,7 +262,7 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
     return hlasm_ctx->ids().add(std::move(value));
 }
 
-void parser_impl::parse_macro_operands(semantics::op_rem& line)
+void parser_impl::parse_macro_operands(semantics::op_rem& line, const std::function<void(diagnostic_op)>& add_diag)
 {
     if (line.operands.size())
     {
@@ -294,7 +287,7 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
         auto r = semantics::range_provider::union_range(
             line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
 
-        line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges));
+        line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges), add_diag);
     }
 }
 
@@ -474,8 +467,10 @@ void parser_impl::initialize(
     proc_status = proc_stat;
 }
 
-semantics::operand_list parser_impl::parse_macro_operands(
-    std::string operands, range field_range, std::vector<range> operand_ranges)
+semantics::operand_list parser_impl::parse_macro_operands(std::string operands,
+    range field_range,
+    std::vector<range> operand_ranges,
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -484,7 +479,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt, tmp_provider);
+    parser_error_listener_substitution listener(add_diag, nullptr, tmp_provider);
 
     h.input->reset(operands);
 
@@ -504,8 +499,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
     h.parser->collector.prepare_for_next_statement();
 
     auto list = std::move(h.parser->macro_ops()->list);
-
-    collect_diags_from_child(listener);
 
     return list;
 }
@@ -548,7 +541,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
 
     parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
 
     h.input->reset(text);
 
@@ -588,7 +581,8 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
                 auto rule = h.parser->op_rem_body_mac();
                 auto line = std::move(rule->line);
                 auto line_range = rule->line_range;
-                parse_macro_operands(line);
+                parse_macro_operands(
+                    line, [&listener](diagnostic_op diag) { listener.add_diagnostic(std::move(diag)); });
                 h.parser->collector.set_operand_remark_field(
                     std::move(line.operands), std::move(line.remarks), line_range);
             }
@@ -644,7 +638,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
 
     const parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
 
     h.input->reset(text);
 
