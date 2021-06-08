@@ -69,7 +69,7 @@ public:
         const std::string* empty;
         well_known_strings(std::unordered_set<std::string>& ptr);
 
-    } well_known;
+    } const well_known;
 };
 
 using id_index = id_storage::const_pointer;

@@ -15,6 +15,7 @@
 #ifndef HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 #define HLASMPARSER_PARSERLIBRARY_ANALYZER_H
 
+#include <optional>
 #include <variant>
 
 #include "analyzing_context.h"
@@ -49,7 +50,7 @@ class analyzer_options
     workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
     file_is_opencode parsing_opencode = file_is_opencode::no;
-    context::id_storage ids_init;
+    std::optional<context::id_storage> ids_init;
 
     void set(std::string fn) { file_name = std::move(fn); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -58,7 +59,7 @@ class analyzer_options
     void set(workspaces::library_data ld) { library_data = std::move(ld); }
     void set(collect_highlighting_info hi) { collect_hl_info = hi; }
     void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
-    void set(context::id_storage ids) { ids_init = std::move(ids); }
+    void set(context::id_storage ids) { ids_init.emplace(std::move(ids)); }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();

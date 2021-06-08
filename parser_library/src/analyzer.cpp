@@ -27,8 +27,9 @@ analyzing_context& analyzer_options::get_context()
     if (std::holds_alternative<asm_option>(ctx_source))
     {
         ctx_source = analyzing_context {
-            std::make_unique<context::hlasm_context>(
-                file_name, std::move(std::get<asm_option>(ctx_source)), std::move(ids_init)),
+            std::make_unique<context::hlasm_context>(file_name,
+                std::move(std::get<asm_option>(ctx_source)),
+                ids_init.has_value() ? std::move(*ids_init) : id_storage {}),
             std::make_unique<lsp::lsp_context>(),
         };
     }
