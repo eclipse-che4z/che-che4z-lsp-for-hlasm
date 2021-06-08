@@ -17,7 +17,7 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 
-range range_provider::get_range(const antlr4::Token* start, const antlr4::Token* stop)
+range range_provider::get_range(const antlr4::Token* start, const antlr4::Token* stop) const
 {
     range ret;
 
@@ -36,14 +36,14 @@ range range_provider::get_range(const antlr4::Token* start, const antlr4::Token*
     return adjust_range(ret);
 }
 
-range range_provider::get_range(const antlr4::Token* terminal) { return get_range(terminal, terminal); }
+range range_provider::get_range(const antlr4::Token* terminal) const { return get_range(terminal, terminal); }
 
-range range_provider::get_range(antlr4::ParserRuleContext* non_terminal)
+range range_provider::get_range(antlr4::ParserRuleContext* non_terminal) const
 {
     return get_range(non_terminal->getStart(), non_terminal->getStop());
 }
 
-range range_provider::get_empty_range(const antlr4::Token* start)
+range range_provider::get_empty_range(const antlr4::Token* start) const
 {
     range ret;
     ret.start.line = start->getLine();
@@ -52,7 +52,7 @@ range range_provider::get_empty_range(const antlr4::Token* start)
     return adjust_range(ret);
 }
 
-range range_provider::adjust_range(range r)
+range range_provider::adjust_range(range r) const
 {
     if (state == adjusting_state::MACRO_REPARSE)
         return range(adjust_position(r.start), adjust_position(r.end));
@@ -64,7 +64,7 @@ range range_provider::adjust_range(range r)
     return r;
 }
 
-position range_provider::adjust_position(position pos)
+position range_provider::adjust_position(position pos) const
 {
     size_t idx = 1;
     auto orig_range = original_operand_ranges.empty() ? original_range : original_operand_ranges.front();

@@ -58,14 +58,13 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
 std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
-    processing::processing_status status)
+    processing::processing_status status,
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     m_hlasm_ctx->metrics.reparsed_statements++;
 
-    std::optional<std::string> sub;
-    if (after_substitution)
-        sub = field;
-    parsing::parser_error_listener_ctx listener(*m_hlasm_ctx, std::move(sub));
+    parsing::parser_error_listener_ctx listener(
+        *m_hlasm_ctx, after_substitution ? &field : nullptr, add_diag, field_range);
 
     const auto original_range = field_range.original_range;
 

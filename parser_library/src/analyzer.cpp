@@ -27,7 +27,8 @@ analyzing_context& analyzer_options::get_context()
     if (std::holds_alternative<asm_option>(ctx_source))
     {
         ctx_source = analyzing_context {
-            std::make_unique<context::hlasm_context>(file_name, std::move(std::get<asm_option>(ctx_source))),
+            std::make_unique<context::hlasm_context>(
+                file_name, std::move(std::get<asm_option>(ctx_source)), std::move(ids_init)),
             std::make_unique<lsp::lsp_context>(),
         };
     }
@@ -66,7 +67,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
           field_parser_)
 {}
 
-analyzing_context analyzer::context() { return ctx_; }
+analyzing_context analyzer::context() const { return ctx_; }
 
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 

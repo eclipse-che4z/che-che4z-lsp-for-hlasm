@@ -49,6 +49,7 @@ class analyzer_options
     workspaces::library_data library_data = { processing::processing_kind::ORDINARY, context::id_storage::empty_id };
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
     file_is_opencode parsing_opencode = file_is_opencode::no;
+    context::id_storage ids_init;
 
     void set(std::string fn) { file_name = std::move(fn); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -57,6 +58,7 @@ class analyzer_options
     void set(workspaces::library_data ld) { library_data = std::move(ld); }
     void set(collect_highlighting_info hi) { collect_hl_info = hi; }
     void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
+    void set(context::id_storage ids) { ids_init = std::move(ids); }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -81,7 +83,8 @@ public:
         constexpr auto lib_data_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, workspaces::library_data>);
         constexpr auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
         constexpr auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
-        constexpr auto cnt = string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt;
+        constexpr auto ids_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, context::id_storage>);
+        constexpr auto cnt = string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt;
 
         static_assert(string_cnt <= 1, "Duplicate file_name");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -90,7 +93,9 @@ public:
         static_assert(lib_data_cnt <= 1, "Duplicate library_data");
         static_assert(hi_cnt <= 1, "Duplicate collect_highlighting_info");
         static_assert(f_oc_cnt <= 1, "Duplicate file_is_opencode");
-        static_assert(!(ao_cnt && ac_cnt), "Do not specify both asm_option and analyzing_context");
+        static_assert(ids_cnt <= 1, "Duplicate id_storage");
+        static_assert(
+            !(ac_cnt && (ao_cnt || ids_cnt)), "Do not specify both analyzing_context and asm_option or id_storage");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");
 
         (set(std::forward<Args>(args)), ...);
@@ -113,7 +118,7 @@ class analyzer : public diagnosable_ctx
 public:
     analyzer(const std::string& text, analyzer_options opts = {});
 
-    analyzing_context context();
+    analyzing_context context() const;
     context::hlasm_context& hlasm_ctx();
     const semantics::source_info_processor& source_processor() const;
 

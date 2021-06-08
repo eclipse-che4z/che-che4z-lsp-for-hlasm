@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 
+#include "file_with_text.h"
 #include "utils/path.h"
 #include "utils/platform.h"
 #include "workspaces/file_impl.h"
@@ -230,21 +231,6 @@ label
 
 std::string source_using_macro_file_no_error = R"( CORRECT)";
 
-class file_with_text : public processor_file_impl
-{
-public:
-    file_with_text(const std::string& name, const std::string& text)
-        : file_impl(name)
-        , processor_file_impl(name)
-    {
-        did_open(text, 1);
-    }
-
-    const std::string& get_text() override { return get_text_ref(); }
-
-    bool update_and_get_bad() override { return false; }
-};
-
 const char* faulty_macro_path = is_windows() ? "lib\\ERROR" : "lib/ERROR";
 const char* correct_macro_path = is_windows() ? "lib\\CORRECT" : "lib/CORRECT";
 std::string hlasmplugin_folder = is_windows() ? ".hlasmplugin\\" : ".hlasmplugin/";
@@ -254,15 +240,17 @@ class file_manager_extended : public file_manager_impl
 public:
     file_manager_extended()
     {
+        files_.emplace(hlasmplugin_folder + "proc_grps.json",
+            std::make_unique<file_with_text>("proc_grps.json", pgroups_file, *this));
+        files_.emplace(hlasmplugin_folder + "pgm_conf.json",
+            std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file, *this));
+        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file, *this));
+        files_.emplace("source2", std::make_unique<file_with_text>("source2", source_using_macro_file, *this));
+        files_.emplace("source3", std::make_unique<file_with_text>("source3", source_using_macro_file_no_error, *this));
         files_.emplace(
-            hlasmplugin_folder + "proc_grps.json", std::make_unique<file_with_text>("proc_grps.json", pgroups_file));
+            faulty_macro_path, std::make_unique<file_with_text>(faulty_macro_path, faulty_macro_file, *this));
         files_.emplace(
-            hlasmplugin_folder + "pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
-        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file));
-        files_.emplace("source2", std::make_unique<file_with_text>("source2", source_using_macro_file));
-        files_.emplace("source3", std::make_unique<file_with_text>("source3", source_using_macro_file_no_error));
-        files_.emplace(faulty_macro_path, std::make_unique<file_with_text>(faulty_macro_path, faulty_macro_file));
-        files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
+            correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file, *this));
     }
 
     list_directory_result list_directory_files(const std::string&) override
@@ -292,15 +280,16 @@ class file_manager_opt : public file_manager_impl
         switch (variant)
         {
             case file_manager_opt_variant::old_school:
-                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_old_school);
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_old_school, *this);
             case file_manager_opt_variant::default_to_required:
-                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_default);
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_default, *this);
             case file_manager_opt_variant::required:
-                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_required);
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_required, *this);
             case file_manager_opt_variant::optional:
-                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_optional);
+                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_optional, *this);
             case file_manager_opt_variant::invalid_assembler_options:
-                return std::make_unique<file_with_text>("proc_grps.json", pgroups_file_invalid_assembler_options);
+                return std::make_unique<file_with_text>(
+                    "proc_grps.json", pgroups_file_invalid_assembler_options, *this);
         }
         throw std::logic_error("Not implemented");
     }
@@ -309,10 +298,11 @@ public:
     file_manager_opt(file_manager_opt_variant variant)
     {
         files_.emplace(hlasmplugin_folder + "proc_grps.json", generate_proc_grps_file(variant));
+        files_.emplace(hlasmplugin_folder + "pgm_conf.json",
+            std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file, *this));
+        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error, *this));
         files_.emplace(
-            hlasmplugin_folder + "pgm_conf.json", std::make_unique<file_with_text>("pgm_conf.json", pgmconf_file));
-        files_.emplace("source1", std::make_unique<file_with_text>("source1", source_using_macro_file_no_error));
-        files_.emplace(correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file));
+            correct_macro_path, std::make_unique<file_with_text>(correct_macro_path, correct_macro_file, *this));
     }
 
     list_directory_result list_directory_files(const std::string& path) override

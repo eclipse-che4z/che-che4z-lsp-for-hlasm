@@ -30,8 +30,6 @@ namespace hlasm_plugin::parser_library::workspaces {
 class processor : public virtual diagnosable
 {
 public:
-    virtual bool parse_info_updated() = 0;
-
     // starts parser with new (empty) context
     virtual parse_result parse(parse_lib_provider&, asm_option) = 0;
     // starts parser with in the context of parameter
@@ -52,6 +50,7 @@ public:
     virtual const lsp::feature_provider& get_lsp_feature_provider() = 0;
     virtual const std::set<std::string>& files_to_close() = 0;
     virtual const performance_metrics& get_metrics() = 0;
+    virtual void erase_cache_of_opencode(const std::string& opencode_file_name) = 0;
 
 protected:
     ~processor_file() = default;

@@ -20,7 +20,11 @@
 // various invalid statements parsing
 // checking correct ranges
 
-auto parse_model(std::string s, range r, bool after_substitution = false)
+auto parse_model(
+    std::string s,
+    range r,
+    bool after_substitution = false,
+    const std::function<void(diagnostic_op)>& add_diag = [](diagnostic_op d) {})
 {
     std::string input(" LR &var,1");
     analyzer a(input);
@@ -28,7 +32,8 @@ auto parse_model(std::string s, range r, bool after_substitution = false)
         .parse_operand_field(std::move(s),
             after_substitution,
             range_provider(r, adjusting_state::NONE),
-            std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()));
+            std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()),
+            add_diag);
 }
 
 TEST(parser, parse_model)
@@ -136,9 +141,28 @@ TEST(parser, parse_model_with_apostrophe_escaping)
 
 TEST(parser, parse_bad_model)
 {
+    std::vector<diagnostic_op> diags;
     range r(position(0, 4), position(0, 5));
-    auto [op, rem] = parse_model("'", r, true);
+    auto [op, rem] = parse_model("'", r, true, [&diags](diagnostic_op diag) { diags.push_back(std::move(diag)); });
 
-    ASSERT_EQ(op.value.size(), (size_t)0);
-    ASSERT_EQ(rem.value.size(), (size_t)0);
+    ASSERT_EQ(op.value.size(), 0U);
+    ASSERT_EQ(rem.value.size(), 0U);
+
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].message, "While substituting to ''' => Unexpected end of statement");
+
+    range expected_range = { { 0, 5 }, { 0, 5 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
+}
+
+TEST(parser, parse_bad_model_no_substitution)
+{
+    std::vector<diagnostic_op> diags;
+    range r(position(0, 4), position(0, 5));
+    auto [op, rem] = parse_model("'", r, false, [&diags](diagnostic_op diag) { diags.push_back(std::move(diag)); });
+
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].message, "Unexpected end of statement");
+    range expected_range = { { 0, 5 }, { 0, 5 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
 }

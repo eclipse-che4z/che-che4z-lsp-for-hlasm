@@ -48,7 +48,8 @@ public:
     parse_result parse_operand_field(std::string field,
         bool after_substitution,
         semantics::range_provider field_range,
-        processing::processing_status status);
+        processing::processing_status status,
+        const std::function<void(diagnostic_op)>& add_diag);
 
     explicit statement_fields_parser(context::hlasm_context* hlasm_ctx);
     ~statement_fields_parser();

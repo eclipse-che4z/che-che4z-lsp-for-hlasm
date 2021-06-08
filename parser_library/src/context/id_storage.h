@@ -60,11 +60,16 @@ public:
         const std::string* LCLC;
         const std::string* MACRO;
         const std::string* MEND;
+        const std::string* MEXIT;
         const std::string* ASPACE;
+        const std::string* AIF;
+        const std::string* AGO;
+        const std::string* ACTR;
+        const std::string* AREAD;
         const std::string* empty;
         well_known_strings(std::unordered_set<std::string>& ptr);
 
-    } const well_known;
+    } well_known;
 };
 
 using id_index = id_storage::const_pointer;

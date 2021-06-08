@@ -39,7 +39,7 @@ public:
 
     void process(context::shared_stmt_ptr stmt) override;
 
-    static void process_copy(const semantics::complete_statement& stmt,
+    static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
         diagnosable_ctx* diagnoser);

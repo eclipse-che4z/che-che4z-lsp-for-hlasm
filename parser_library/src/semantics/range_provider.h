@@ -41,16 +41,16 @@ public:
     range_provider(range original_field_range, std::vector<range> original_operand_ranges, adjusting_state state);
     range_provider();
 
-    range get_range(const antlr4::Token* start, const antlr4::Token* stop);
-    range get_range(const antlr4::Token* terminal);
-    range get_range(antlr4::ParserRuleContext* non_terminal);
+    range get_range(const antlr4::Token* start, const antlr4::Token* stop) const;
+    range get_range(const antlr4::Token* terminal) const;
+    range get_range(antlr4::ParserRuleContext* non_terminal) const;
 
-    range get_empty_range(const antlr4::Token* start);
+    range get_empty_range(const antlr4::Token* start) const;
 
-    range adjust_range(range r);
+    range adjust_range(range r) const;
 
 private:
-    position adjust_position(position pos);
+    position adjust_position(position pos) const;
 };
 
 } // namespace hlasm_plugin::parser_library::semantics

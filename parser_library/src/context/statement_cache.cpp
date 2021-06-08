@@ -35,14 +35,15 @@ void statement_cache::insert(processing::processing_form format, cached_statemen
     cache_.emplace_back(format, std::move(statement));
 }
 
-statement_cache::cached_statement_t statement_cache::get(processing::processing_form format) const
+const statement_cache::cached_statement_t* statement_cache::get(processing::processing_form format) const
 {
     for (const auto& entry : cache_)
         if (entry.first == format)
-            return entry.second;
+            return &entry.second;
     return nullptr;
 }
 
 shared_stmt_ptr statement_cache::get_base() const { return base_stmt_; }
+
 
 } // namespace hlasm_plugin::parser_library::context

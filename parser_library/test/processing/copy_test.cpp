@@ -203,6 +203,9 @@ TEST(copy, copy_enter_from_macro_call)
     EXPECT_TRUE(mac->second->labels.find(a.hlasm_ctx().ids().add("A")) != mac->second->labels.end());
     EXPECT_TRUE(mac->second->labels.find(a.hlasm_ctx().ids().add("B")) != mac->second->labels.end());
 
+    ASSERT_EQ(mac->second->used_copy_members.size(), 1U);
+    EXPECT_EQ(mac->second->used_copy_members.begin()->get()->name, a.hlasm_ctx().ids().add("COPYR"));
+
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
     EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)16);
@@ -438,4 +441,44 @@ TEST(copy, copy_call_with_jump_before_comment)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(copy, copy_empty_file)
+{
+    std::string input =
+        R"(
+ MACRO
+ M
+ COPY COPYEMPTY
+ MEND
+
+ MACRO
+ M2
+ COPY EMPTY
+ MEND
+)";
+    copy_mock mock;
+    analyzer a(input, analyzer_options { "start", &mock });
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
+
+    EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+
+    auto mac = a.hlasm_ctx().get_macro_definition(a.hlasm_ctx().ids().add("M"));
+    ASSERT_TRUE(mac != nullptr);
+
+    ASSERT_EQ(mac->used_copy_members.size(), 2U);
+    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("EMPTY"))), 1U);
+    EXPECT_EQ(mac->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("COPYEMPTY"))), 1U);
+
+    auto mac2 = a.hlasm_ctx().get_macro_definition(a.hlasm_ctx().ids().add("M2"));
+    ASSERT_TRUE(mac2 != nullptr);
+
+    ASSERT_EQ(mac2->used_copy_members.size(), 1U);
+    EXPECT_EQ(mac2->used_copy_members.count(a.hlasm_ctx().get_copy_member(a.hlasm_ctx().ids().add("EMPTY"))), 1U);
+
+    ASSERT_EQ(a.diags().size(), 0U);
 }

@@ -188,7 +188,7 @@ void opencode_provider::generate_continuation_error_messages() const
     {
         if (s.continuation_error)
         {
-            parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
+            parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
             listener.add_diagnostic(
                 diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
             collect_diags_from_child(listener);
@@ -212,7 +212,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
             || std::get<context::id_index>(collector.current_instruction().value)
                 == m_ctx->hlasm_ctx->ids().well_known.COPY))
     {
-        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
+        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, listener, {}, op_range, proc_status, true);
 
         h.parser->lookahead_operands_and_remarks();
@@ -245,7 +245,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (op_text)
     {
-        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, std::nullopt);
+        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, listener, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
@@ -275,7 +275,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         auto [to_parse, ranges, r] = join_operands(line.operands);
 
                         semantics::range_provider tmp_provider(r, ranges, semantics::adjusting_state::MACRO_REPARSE);
-                        parsing::parser_error_listener_ctx tmp_listener(*m_ctx->hlasm_ctx, std::nullopt, tmp_provider);
+                        parsing::parser_error_listener_ctx tmp_listener(*m_ctx->hlasm_ctx, nullptr, tmp_provider);
 
                         const auto& h_second = prepare_operand_parser(
                             to_parse, *m_ctx->hlasm_ctx, tmp_listener, std::move(tmp_provider), r, proc_status, true);

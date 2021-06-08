@@ -16,29 +16,34 @@
 #define HLASMPLUGIN_PARSERLIBRARY_ERROR_LISTENER_CTX_H
 
 #include "context/hlasm_context.h"
-#include "parser_error_listener.h"
-#include "semantics/range_provider.h"
+#include "parser_error_listener_substitution.h"
 
 // implementation of parser error listener that provide additional error handling
 // used during recursed parsing when nested diagnostic is needed
 namespace hlasm_plugin::parser_library::parsing {
 
-class parser_error_listener_ctx : public parser_error_listener_base, public diagnosable_ctx
+class parser_error_listener_ctx : public diagnosable_ctx, public parser_error_listener_substitution
 {
 public:
     parser_error_listener_ctx(context::hlasm_context& hlasm_ctx,
-        std::optional<std::string> substituted,
-        semantics::range_provider provider = semantics::range_provider());
-
-    void collect_diags() const override;
-
-protected:
-    void add_parser_diagnostic(
-        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
+        const std::string* substituted,
+        semantics::range_provider provider = semantics::range_provider())
+        : diagnosable_ctx(hlasm_ctx)
+        , parser_error_listener_substitution(add_diag_with_ctx, substituted, std::move(provider))
+    {}
+    parser_error_listener_ctx(context::hlasm_context& hlasm_ctx,
+        const std::string* substituted,
+        const std::function<void(diagnostic_op)>& add_op_diag,
+        semantics::range_provider provider = semantics::range_provider())
+        : diagnosable_ctx(hlasm_ctx)
+        , parser_error_listener_substitution(add_op_diag, substituted, std::move(provider))
+    {}
+    void collect_diags() const override {};
 
 private:
-    std::optional<std::string> substituted_;
-    semantics::range_provider provider_;
+    std::function<void(diagnostic_op)> add_diag_with_ctx = [this](diagnostic_op diag) {
+        this->add_diagnostic(std::move(diag));
+    };
 };
 
 } // namespace hlasm_plugin::parser_library::parsing
