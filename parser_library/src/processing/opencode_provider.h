@@ -58,7 +58,7 @@ enum class extract_next_logical_line_result
     process,
 };
 
-// interface for hiding parser implementation
+// uses the parser implementation to produce statements in the opencode(-like) scenario
 class opencode_provider final : public diagnosable_impl, public statement_provider
 {
     struct lines_to_remove

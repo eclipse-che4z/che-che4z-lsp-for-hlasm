@@ -23,12 +23,14 @@
 
 namespace hlasm_plugin::parser_library::lexing {
 
+// Length of Unicode character in 8/16-bit chunks
 struct char_size
 {
     uint8_t utf8 : 4;
     uint8_t utf16 : 4;
 };
 
+// Map first byte of UTF-8 encoded Unicode character to char_size
 constexpr const auto utf8_prefix_sizes = []() {
     std::array<char_size, 256> sizes = {};
     static_assert(std::numeric_limits<unsigned char>::max() < sizes.size());
@@ -53,6 +55,7 @@ public:
     {}
 };
 
+// termination character of a line in a file
 enum class logical_line_segment_eol : uint8_t
 {
     none,
@@ -61,6 +64,12 @@ enum class logical_line_segment_eol : uint8_t
     cr,
 };
 
+// HLASM logical line/statment representation
+// segment 1: <code..............................><continuation><ignore...><logical_line_segment_eol>
+// segment 2:              <code.................><continuation><ignore...><logical_line_segment_eol>
+// segment 3:              <code.................><ignore.................><logical_line_segment_eol>
+
+// a single line in a file that is a part of the logical (continued) HLASM line/statement.
 struct logical_line_segment
 {
     std::string_view code;
@@ -78,6 +87,7 @@ struct logical_line_segment
     logical_line_segment_eol eol;
 };
 
+// represents a single (possibly continued) HLASM line/statement
 struct logical_line
 {
     std::vector<logical_line_segment> segments;
@@ -94,6 +104,7 @@ struct logical_line
     }
 };
 
+// defines the layout of the hlasm source file and options to follow for line extraction
 struct logical_line_extractor_args
 {
     std::size_t begin; // 1-40
@@ -108,14 +119,25 @@ constexpr const logical_line_extractor_args default_ictl_dbcs = { 1, 71, 16, tru
 constexpr const logical_line_extractor_args default_ictl_copy = { 1, 71, 16, false, true };
 constexpr const logical_line_extractor_args default_ictl_dbcs_copy = { 1, 71, 16, true, true };
 
+// remove and return a single line from the input (terminated by LF, CRLF, CR, EOF)
 std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_view& input);
+
+// extract a logical line (extacting lines while continued and not EOF)
+// returns true when a logical line was extracted
 bool extract_logical_line(logical_line& out, std::string_view& input, const logical_line_extractor_args& opts);
-// returns "need more", input must be non-empty
+
+// appends a logical line segment to the logical line extracted from the input
+// returns "need more" (appended line was continued), input must be non-empty
 bool append_to_logical_line(logical_line& out, std::string_view& input, const logical_line_extractor_args& opts);
+
+// logical line post-processing
 void finish_logical_line(logical_line& out, const logical_line_extractor_args& opts);
 
-
+// skip <count> UTF-8 characters
+// returns the remaining string and size of the skipped length in utf-16 encoding
 std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count);
+
+// returns the length of the string in utf-16 symbols and info if the last character is two-byte
 std::pair<size_t, bool> length_utf16(std::string_view text);
 
 } // namespace hlasm_plugin::parser_library::lexing

@@ -30,7 +30,7 @@ namespace hlasm_plugin::parser_library::processing {
 class statement_provider;
 using provider_ptr = std::unique_ptr<statement_provider>;
 
-// interface for objects parsing deferred statement fields
+// (re-)parsing of deferred statement fields
 class statement_fields_parser final : public diagnosable_impl
 {
     std::unique_ptr<parsing::parser_holder> m_parser;
