@@ -62,6 +62,7 @@ function(add_antlr4)
 endfunction()
 
 if(NOT antlr4cpp_POPULATED)
+    message("Populating antlr4")
     FetchContent_Populate(antlr4cpp)
     add_antlr4()
 

@@ -52,6 +52,10 @@ class copy_mock : public workspaces::parse_lib_provider
             return &content_COPYND2;
         else if (library == "COPYBM")
             return &content_COPYBM;
+        else if (library == "EMPTY")
+            return &content_EMPTY;
+        else if (library == "COPYEMPTY")
+            return &content_COPYEMPTY;
         else
             return nullptr;
     }
@@ -193,6 +197,8 @@ private:
  LR 1
  MEND
 )";
+    const std::string content_EMPTY = "";
+    const std::string content_COPYEMPTY = " COPY EMPTY";
 };
 
 } // namespace hlasm_plugin::parser_library

@@ -35,12 +35,14 @@ macro_definition::macro_definition(id_index name,
     statement_block definition,
     copy_nest_storage copy_nests,
     label_storage labels,
-    location definition_location)
+    location definition_location,
+    std::unordered_set<copy_member_ptr> used_copy_members)
     : label_param_name_(label_param_name)
     , id(name)
     , copy_nests(std::move(copy_nests))
     , labels(std::move(labels))
     , definition_location(std::move(definition_location))
+    , used_copy_members(std::move(used_copy_members))
 {
     for (auto&& stmt : definition)
         cached_definition.emplace_back(std::move(stmt));

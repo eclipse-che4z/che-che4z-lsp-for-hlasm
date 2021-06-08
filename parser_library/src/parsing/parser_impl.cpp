@@ -111,10 +111,11 @@ std::unique_ptr<parser_holder> create_parser_holder()
     return h;
 }
 
-std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_operand_field(std::string field,
+statement_fields_parser::parse_result parser_impl::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
-    processing::processing_status status)
+    processing::processing_status status,
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -122,10 +123,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
     hlasm_ctx->metrics.reparsed_statements++;
     const parser_holder& h = *rest_parser_;
 
-    std::optional<std::string> sub;
-    if (after_substitution)
-        sub = field;
-    parser_error_listener_ctx listener(*hlasm_ctx, std::move(sub));
+    parser_error_listener_substitution listener(add_diag, after_substitution ? &field : nullptr, field_range);
 
     h.input->reset(field);
 
@@ -155,7 +153,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
             case processing::processing_form::MAC:
                 line = std::move(h.parser->op_rem_body_mac_r()->line);
                 proc_status = status;
-                parse_macro_operands(line);
+                parse_macro_operands(line, add_diag);
                 break;
             case processing::processing_form::ASM:
                 line = std::move(h.parser->op_rem_body_asm_r()->line);
@@ -170,8 +168,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
                 break;
         }
     }
-
-    collect_diags_from_child(listener);
 
     for (size_t i = 0; i < line.operands.size(); i++)
     {
@@ -193,8 +189,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
         ? range(op_range.end)
         : semantics::range_provider::union_range(line.remarks.front(), line.remarks.back());
 
-    return std::make_pair(semantics::operands_si(op_range, std::move(line.operands)),
-        semantics::remarks_si(rem_range, std::move(line.remarks)));
+    return { semantics::operands_si(op_range, std::move(line.operands)),
+        semantics::remarks_si(rem_range, std::move(line.remarks)) };
 }
 
 void parser_impl::collect_diags() const
@@ -266,7 +262,7 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
     return hlasm_ctx->ids().add(std::move(value));
 }
 
-void parser_impl::parse_macro_operands(semantics::op_rem& line)
+void parser_impl::parse_macro_operands(semantics::op_rem& line, const std::function<void(diagnostic_op)>& add_diag)
 {
     if (line.operands.size())
     {
@@ -291,7 +287,7 @@ void parser_impl::parse_macro_operands(semantics::op_rem& line)
         auto r = semantics::range_provider::union_range(
             line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
 
-        line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges));
+        line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges), add_diag);
     }
 }
 
@@ -313,14 +309,14 @@ void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
     auto [_, opcode] = *proc_status;
-    if (opcode.value == hlasm_ctx->ids().add("SETA") || opcode.value == hlasm_ctx->ids().add("ACTR")
-        || opcode.value == hlasm_ctx->ids().add("ASPACE") || opcode.value == hlasm_ctx->ids().add("AGO"))
+    if (opcode.value == hlasm_ctx->ids().well_known.SETA || opcode.value == hlasm_ctx->ids().well_known.ACTR
+        || opcode.value == hlasm_ctx->ids().well_known.ASPACE || opcode.value == hlasm_ctx->ids().well_known.AGO)
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().add("SETB") || opcode.value == hlasm_ctx->ids().add("AIF"))
+    else if (opcode.value == hlasm_ctx->ids().well_known.SETB || opcode.value == hlasm_ctx->ids().well_known.AIF)
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().add("SETC"))
+    else if (opcode.value == hlasm_ctx->ids().well_known.SETC)
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().add("AREAD"))
+    else if (opcode.value == hlasm_ctx->ids().well_known.AREAD)
     {
         // aread operand is just enumeration
     }
@@ -471,8 +467,10 @@ void parser_impl::initialize(
     proc_status = proc_stat;
 }
 
-semantics::operand_list parser_impl::parse_macro_operands(
-    std::string operands, range field_range, std::vector<range> operand_ranges)
+semantics::operand_list parser_impl::parse_macro_operands(std::string operands,
+    range field_range,
+    std::vector<range> operand_ranges,
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     if (!rest_parser_)
         rest_parser_ = create_parser_holder();
@@ -481,7 +479,7 @@ semantics::operand_list parser_impl::parse_macro_operands(
 
     semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt, tmp_provider);
+    parser_error_listener_substitution listener(add_diag, nullptr, tmp_provider);
 
     h.input->reset(operands);
 
@@ -501,8 +499,6 @@ semantics::operand_list parser_impl::parse_macro_operands(
     h.parser->collector.prepare_for_next_statement();
 
     auto list = std::move(h.parser->macro_ops()->list);
-
-    collect_diags_from_child(listener);
 
     return list;
 }
@@ -545,7 +541,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
 
     parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
 
     h.input->reset(text);
 
@@ -585,7 +581,8 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
                 auto rule = h.parser->op_rem_body_mac();
                 auto line = std::move(rule->line);
                 auto line_range = rule->line_range;
-                parse_macro_operands(line);
+                parse_macro_operands(
+                    line, [&listener](diagnostic_op diag) { listener.add_diagnostic(std::move(diag)); });
                 h.parser->collector.set_operand_remark_field(
                     std::move(line.operands), std::move(line.remarks), line_range);
             }
@@ -631,7 +628,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
         {
             context::id_index tmp;
             tmp = std::get<context::id_index>(collector.current_instruction().value);
-            if (tmp != hlasm_ctx->ids().add("COPY"))
+            if (tmp != hlasm_ctx->ids().well_known.COPY)
             {
                 process_statement();
                 return;
@@ -641,7 +638,7 @@ void parser_impl::parse_lookahead_operands(const std::string& text, range text_r
 
     const parser_holder& h = *rest_parser_;
 
-    parser_error_listener_ctx listener(*hlasm_ctx, std::nullopt);
+    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
 
     h.input->reset(text);
 

@@ -215,7 +215,7 @@ void parser_error_listener_base::syntaxError(
             add_parser_diagnostic(range(position(line, char_pos_in_line)),
                 diagnostic_severity::error,
                 "S0006",
-                "Unexpected sign in an epxression");
+                "Unexpected sign in an expression");
         // apostrophe expected
         else if (odd_apostrophes && is_expected(APOSTROPHE, expected_tokens))
             add_parser_diagnostic(

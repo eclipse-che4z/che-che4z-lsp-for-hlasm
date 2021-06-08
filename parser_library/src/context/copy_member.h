@@ -21,22 +21,6 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-// structure represents invocation of COPY member in HLASM macro library
-struct copy_member_invocation
-{
-    const id_index name;
-    cached_block& cached_definition;
-    const location& definition_location;
-    int current_statement;
-
-    copy_member_invocation(const id_index name, cached_block& cached_definition, const location& definition_location)
-        : name(name)
-        , cached_definition(cached_definition)
-        , definition_location(definition_location)
-        , current_statement(-1)
-    {}
-};
-
 struct copy_member;
 using copy_member_ptr = std::shared_ptr<copy_member>;
 
@@ -58,7 +42,25 @@ struct copy_member
             cached_definition.emplace_back(std::move(stmt));
     }
 
-    copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
+    // copy_member_invocation enter() { return copy_member_invocation(name, cached_definition, definition_location); }
+};
+
+// structure represents invocation of COPY member in HLASM macro library
+struct copy_member_invocation
+{
+    const id_index name;
+    cached_block& cached_definition;
+    const location& definition_location;
+    const copy_member_ptr copy_member_definition;
+    int current_statement;
+
+    explicit copy_member_invocation(copy_member_ptr copy_member)
+        : name(copy_member->name)
+        , cached_definition(copy_member->cached_definition)
+        , definition_location(copy_member->definition_location)
+        , copy_member_definition(std::move(copy_member))
+        , current_statement(-1)
+    {}
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -50,7 +50,7 @@ public:
     virtual void remove_file(const file_uri&) = 0;
 
     // Finds file with specified file name, return nullptr if not found.
-    virtual file_ptr find(const std::string& key) = 0;
+    virtual file_ptr find(const std::string& key) const = 0;
     // Finds processor file with specified file name.
     // If there is a file with the file name, it is changed to processor_file.
     // Returns nullptr if there is no such file.

@@ -85,7 +85,7 @@ class hlasm_context
     bool is_opcode(id_index symbol) const;
 
 public:
-    hlasm_context(std::string file_name = "", asm_option asm_opts = {});
+    hlasm_context(std::string file_name = "", asm_option asm_opts = {}, id_storage init_ids = {});
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;
@@ -161,6 +161,7 @@ public:
     void add_mnemonic(id_index mnemo, id_index op_code);
     // removes opsyn mnemonic
     void remove_mnemonic(id_index mnemo);
+    const opcode_map& opcode_mnemo_storage() const;
 
     // checks wheter the symbol is an operation code (is a valid instruction or a mnemonic)
     opcode_t get_operation_code(id_index symbol) const;
@@ -188,7 +189,9 @@ public:
         statement_block definition,
         copy_nest_storage copy_nests,
         label_storage labels,
-        location definition_location);
+        location definition_location,
+        std::unordered_set<copy_member_ptr> used_copy_members);
+    void add_macro(macro_def_ptr macro);
     // enters a macro with actual params
     macro_invo_ptr enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
     // leaves current macro
@@ -198,6 +201,8 @@ public:
     const copy_member_storage& copy_members();
     // registers new copy member
     copy_member_ptr add_copy_member(id_index member, statement_block definition, location definition_location);
+    void add_copy_member(copy_member_ptr member);
+    copy_member_ptr get_copy_member(id_index member) const;
     // enters a copy member
     void enter_copy_member(id_index member);
     // leaves current copy member
