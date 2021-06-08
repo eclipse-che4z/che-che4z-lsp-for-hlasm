@@ -162,10 +162,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> parser_impl::parse_oper
                 break;
             case processing::processing_form::MACH:
                 line = std::move(h.parser->op_rem_body_mach_r()->line);
-                if (after_substitution)
-                {
-                    transform_imm_reg_operands(line.operands, opcode.value);
-                }
+                  transform_imm_reg_operands(line.operands, opcode.value);
                 break;
             case processing::processing_form::DAT:
                 line = std::move(h.parser->op_rem_body_dat_r()->line);
