@@ -444,3 +444,56 @@ TEST CSECT
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "D031");
 }
+TEST(diagnostics, reloc_parsed_in_macro_valid)
+{
+    std::string input(
+        R"( 
+        MACRO                                                          
+        CALLRIOPERAND
+LABEL   BRAS  0,*+12                                                   
+        MEND                                           
+        CALLRIOPERAND 
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+}
+TEST(diagnostics, reloc_parsed_in_macro_with_immValue)
+{
+    std::string input(
+        R"( 
+       MACRO                                                          
+       CALLRIOPERAND
+LABEL  BRAS  0,12                                                   
+       MEND                                           
+       CALLRIOPERAND 
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "D031");
+}
+TEST(diagnostics, reloc_parsed_in_macro_alignment_error)
+{
+    std::string input(
+        R"( 
+    MACRO                                                          
+    CALLRIOPERAND
+    EXRL 1,LEN120
+LENGTH DS CL(5)
+LEN120 DS CL1                                                
+        MEND                                           
+    CALLRIOPERAND 
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "ME003");
+}
