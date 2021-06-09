@@ -212,10 +212,10 @@ hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_
             return diagnostic_op::error_M111(instr_name, operand_range);
         case machine_operand_type::IMM: // I
             return diagnostic_op::error_M112(instr_name, operand_range);
-        case machine_operand_type::REG_IMM: // RI
-            return diagnostic_op::error_M113(instr_name, operand_range);
         case machine_operand_type::VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
+        case machine_operand_type::RELOC_IMM: // RI
+            return diagnostic_op::error_M113(instr_name, operand_range);
     }
     assert(false);
     return diagnostic_op::error_I999(instr_name, stmt_range);
@@ -265,7 +265,6 @@ one_operand::one_operand(const one_operand& op)
     value = op.value;
     is_default = op.is_default;
 };
-
 bool one_operand::check(
     diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range&) const
 {
@@ -287,7 +286,6 @@ bool one_operand::check(
         }
         return true;
     }
-
     // it is a simple operand
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
@@ -297,7 +295,7 @@ bool one_operand::check(
             case machine_operand_type::IMM:
                 diag = diagnostic_op::error_M122(instr_name, -boundary, boundary - 1, operand_range);
                 break;
-            case machine_operand_type::REG_IMM:
+            case machine_operand_type::RELOC_IMM:
                 diag = diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
                 break;
             default:
@@ -350,10 +348,6 @@ std::string parameter::to_string() const
             return "M";
         case machine_operand_type::REG:
             return "R";
-        case machine_operand_type::REG_IMM: {
-            ret_val = "RI";
-            break;
-        }
         case machine_operand_type::IMM: {
             ret_val = "I";
             break;
@@ -368,6 +362,10 @@ std::string parameter::to_string() const
             return "B";
         case machine_operand_type::LENGTH: {
             ret_val = "L";
+            break;
+        }
+        case machine_operand_type::RELOC_IMM: {
+            ret_val = "RI";
             break;
         }
         case machine_operand_type::VEC_REG:

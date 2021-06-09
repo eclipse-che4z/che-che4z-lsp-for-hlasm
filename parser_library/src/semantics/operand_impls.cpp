@@ -81,9 +81,8 @@ address_machine_operand* machine_operand::access_address()
     return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
-std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
-    const expressions::mach_expression& expr,
-    std::optional<checking::machine_operand_type> type_hint = std::nullopt)
+std::unique_ptr<checking::operand> make_check_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -92,18 +91,24 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     }
     else
     {
-        if (type_hint && *type_hint == checking::machine_operand_type::REG_IMM)
-        {
-            return std::make_unique<checking::one_operand>(0);
-        }
-        else
-        {
-            return std::make_unique<checking::address_operand>(
-                checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
-        }
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
     }
 }
-
+std::unique_ptr<checking::operand> make_rel_imm_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+{
+    auto res = expr.evaluate(info);
+    if (res.value_kind() == context::symbol_value_kind::ABS)
+    {
+        return std::make_unique<checking::one_operand>(std::to_string(res.get_abs()), res.get_abs());
+    }
+    else
+    {
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
+    }
+}
 //***************** expr_machine_operand *********************
 
 expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, range operand_range)
@@ -120,7 +125,11 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expre
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
 {
-    return make_check_operand(info, *expression, type_hint);
+    if (type_hint == checking::machine_operand_type::RELOC_IMM)
+    {
+        return make_rel_imm_operand(info, *expression);
+    }
+    return make_check_operand(info, *expression);
 }
 
 // suppress MSVC warning 'inherits via dominance'

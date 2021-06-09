@@ -67,14 +67,14 @@ enum class machine_operand_type : uint8_t
 {
     MASK,
     REG,
-    REG_IMM,
     IMM,
     NONE,
     DISPLC,
     BASE,
     LENGTH,
     VEC_REG,
-    DIS_REG
+    DIS_REG,
+    RELOC_IMM
 };
 
 // Describes a component of machine operand format. Specifies allowed values.

@@ -160,6 +160,7 @@ statement_fields_parser::parse_result parser_impl::parse_operand_field(std::stri
                 break;
             case processing::processing_form::MACH:
                 line = std::move(h.parser->op_rem_body_mach_r()->line);
+                transform_imm_reg_operands(line.operands, opcode.value);
                 break;
             case processing::processing_form::DAT:
                 line = std::move(h.parser->op_rem_body_dat_r()->line);
@@ -533,6 +534,44 @@ void parser_impl::process_lookahead()
             parse_lookahead_operands(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
     }
 }
+void parser_impl::transform_imm_reg_operands(semantics::operand_list& op_list, id_index instruction)
+{
+    if (instruction->empty())
+        return;
+    const machine_instruction* instr;
+    std::vector<std::pair<size_t, size_t>> replaced;
+    if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
+        mnem_tmp != context::instruction::mnemonic_codes.end())
+    {
+        const auto& mnemonic = context::instruction::mnemonic_codes.at(*instruction);
+        instr = mnemonic.instruction;
+        replaced = mnemonic.replaced;
+    }
+    else
+    {
+        instr = &context::instruction::machine_instructions.at(*instruction);
+    }
+    int position = 0;
+    for (const auto& operand : op_list)
+    {
+        for (const auto& [index, value] : replaced)
+        {
+            if (index == position)
+            {
+                position++;
+            }
+        }
+        if (auto type = instr->operands[position].identifier.type; type == checking::machine_operand_type::RELOC_IMM
+            && operand.get()->access_mach() != nullptr && operand.get()->access_mach()->kind == mach_kind::EXPR)
+        {
+            auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();
+            mach_expr_ptr& transformed_exp = operand.get()->access_mach()->access_expr()->expression;
+            transformed_exp = std::make_unique<mach_expr_binary<rel_addr>>(
+                std::make_unique<mach_expr_location_counter>(range), std::move(transformed_exp), range);
+        }
+        position++;
+    }
+}
 
 void parser_impl::parse_operands(const std::string& text, range text_range)
 {
@@ -592,6 +631,7 @@ void parser_impl::parse_operands(const std::string& text, range text_range)
                 break;
             case processing::processing_form::MACH:
                 h.parser->op_rem_body_mach();
+                transform_imm_reg_operands(h.parser->collector.current_operands().value, opcode.value);
                 break;
             case processing::processing_form::DAT:
                 h.parser->op_rem_body_dat();
