@@ -144,7 +144,7 @@ private:
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
-        parsing::parser_error_listener_ctx& err_listener,
+        parsing::parser_error_listener_ctx* err_listener,
         semantics::range_provider range_prov,
         range text_range,
         const processing_status& proc_status,

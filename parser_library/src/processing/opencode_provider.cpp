@@ -212,8 +212,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
             || std::get<context::id_index>(collector.current_instruction().value)
                 == m_ctx->hlasm_ctx->ids().well_known.COPY))
     {
-        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, listener, {}, op_range, proc_status, true);
+        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, nullptr, {}, op_range, proc_status, true);
 
         h.parser->lookahead_operands_and_remarks();
 
@@ -246,7 +245,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     if (op_text)
     {
         parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, listener, {}, op_range, proc_status, false);
+        const auto& h =
+            prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, &listener, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
         if (format.occurence == processing::operand_occurence::ABSENT
@@ -278,7 +278,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         parsing::parser_error_listener_ctx tmp_listener(*m_ctx->hlasm_ctx, nullptr, tmp_provider);
 
                         const auto& h_second = prepare_operand_parser(
-                            to_parse, *m_ctx->hlasm_ctx, tmp_listener, std::move(tmp_provider), r, proc_status, true);
+                            to_parse, *m_ctx->hlasm_ctx, &tmp_listener, std::move(tmp_provider), r, proc_status, true);
 
                         line.operands = std::move(h_second.parser->macro_ops()->list);
 
@@ -529,7 +529,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
 const parsing::parser_holder& opencode_provider::prepare_operand_parser(const std::string& text,
     context::hlasm_context& hlasm_ctx,
-    parsing::parser_error_listener_ctx& err_listener,
+    parsing::parser_error_listener_ctx* err_listener,
     semantics::range_provider range_prov,
     range text_range,
     const processing_status& proc_status,
@@ -545,9 +545,10 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
 
     h.stream->reset();
 
-    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, &err_listener);
+    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, err_listener);
     h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&err_listener);
+    if (err_listener)
+        h.parser->addErrorListener(err_listener);
 
     h.parser->reset();
 
