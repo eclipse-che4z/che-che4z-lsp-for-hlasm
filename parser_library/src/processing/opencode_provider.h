@@ -19,6 +19,7 @@
 
 #include "context/source_snapshot.h"
 #include "lexing/logical_line.h"
+#include "parsing/parser_error_listener.h"
 #include "statement_providers/statement_provider.h"
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -108,6 +109,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     opencode_provider_options m_opts;
 
+    parsing::parser_error_listener m_listener;
+
     bool m_line_fed = false;
 
 public:
@@ -121,7 +124,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         semantics::source_info_processor& src_proc,
-        parsing::parser_error_listener& err_listener,
+        const std::string& filename,
         opencode_provider_options opts);
 
     parsing::hlasmparser& parser(); // for testing only

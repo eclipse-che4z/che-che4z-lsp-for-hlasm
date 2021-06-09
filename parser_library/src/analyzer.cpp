@@ -49,7 +49,6 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
 analyzer::analyzer(const std::string& text, analyzer_options opts)
     : diagnosable_ctx(opts.get_hlasm_context())
     , ctx_(std::move(opts.get_context()))
-    , listener_(opts.file_name)
     , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
     , field_parser_(ctx_.hlasm_ctx.get())
     , mngr_(std::make_unique<processing::opencode_provider>(text,
@@ -57,7 +56,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                 opts.get_lib_provider(),
                 mngr_,
                 src_proc_,
-                listener_,
+                opts.file_name,
                 opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
                                                                : opencode_provider_options {}),
           ctx_,
@@ -85,7 +84,6 @@ void analyzer::analyze(std::atomic<bool>* cancel)
 void analyzer::collect_diags() const
 {
     collect_diags_from_child(mngr_);
-    collect_diags_from_child(listener_);
     collect_diags_from_child(field_parser_);
 }
 

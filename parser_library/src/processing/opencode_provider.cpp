@@ -29,7 +29,7 @@ opencode_provider::opencode_provider(std::string_view text,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
-    parsing::parser_error_listener& err_listener,
+    const std::string& filename,
     opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
@@ -42,10 +42,11 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
     , m_opts(opts)
+    , m_listener(filename)
 {
-    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &err_listener);
+    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &m_listener);
     m_parser->parser->removeErrorListeners();
-    m_parser->parser->addErrorListener(&err_listener);
+    m_parser->parser->addErrorListener(&m_listener);
 
     m_lookahead_parser->parser->initialize(m_ctx->hlasm_ctx.get(), nullptr);
     m_lookahead_parser->parser->removeErrorListeners();
@@ -390,7 +391,7 @@ parsing::hlasmparser& opencode_provider::parser()
 }
 
 
-void opencode_provider::collect_diags() const {}
+void opencode_provider::collect_diags() const { collect_diags_from_child(m_listener); }
 
 void opencode_provider::apply_pending_line_changes()
 {

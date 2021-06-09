@@ -108,8 +108,6 @@ class analyzer : public diagnosable_ctx
 {
     analyzing_context ctx_;
 
-    parsing::parser_error_listener listener_;
-
     semantics::source_info_processor src_proc_;
 
     processing::statement_fields_parser field_parser_;
