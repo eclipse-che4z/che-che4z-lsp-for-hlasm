@@ -24,6 +24,7 @@ FetchContent_Declare(
 )
 
 if(NOT boost_ext_POPULATED)
+    message("Populating ASIO")
     FetchContent_Populate(boost_ext)
 endif()
 

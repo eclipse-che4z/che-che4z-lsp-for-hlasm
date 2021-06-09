@@ -77,6 +77,13 @@ public:
         }
     }
 
+    void clear_counters()
+    {
+        error_count = 0;
+        warning_count = 0;
+        message_counts.clear();
+    }
+
     size_t error_count = 0;
     size_t warning_count = 0;
 
@@ -102,6 +109,7 @@ struct all_file_stats
     long long whole_time = 0;
     size_t program_count = 0;
     size_t parsing_crashes = 0;
+    size_t reparsing_crashes = 0;
     size_t failed_file_opens = 0;
 };
 
@@ -124,7 +132,8 @@ json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
     all_file_stats& s,
     bool write_details,
-    const std::string& message)
+    const std::string& message,
+    bool do_reparse)
 {
     auto source_path = ws_folder + "/" + source_file;
     std::ifstream in(source_path);
@@ -141,8 +150,8 @@ json parse_one_file(const std::string& source_file,
 
     // new workspace manager
     hlasm_plugin::parser_library::workspace_manager ws;
-    diagnostic_counter consumer;
-    ws.register_diagnostics_consumer(&consumer);
+    diagnostic_counter diag_counter;
+    ws.register_diagnostics_consumer(&diag_counter);
     metrics_collector collector;
     ws.register_performance_metrics_consumer(&collector);
     // input folder as new workspace
@@ -181,33 +190,12 @@ json parse_one_file(const std::string& source_file,
     s.all_files += collector.metrics_.files;
     s.whole_time += time;
 
-    auto top_messages = get_top_messages(consumer.message_counts);
+    auto top_messages = get_top_messages(diag_counter.message_counts);
 
-    if (write_details)
-        std::clog << "Time: " << time << " ms" << '\n'
-                  << "Errors: " << consumer.error_count << '\n'
-                  << "Open Code Statements: " << collector.metrics_.open_code_statements << '\n'
-                  << "Copy Statements: " << collector.metrics_.copy_statements << '\n'
-                  << "Macro Statements: " << collector.metrics_.macro_statements << '\n'
-                  << "Copy Def Statements: " << collector.metrics_.copy_def_statements << '\n'
-                  << "Macro Def Statements: " << collector.metrics_.macro_def_statements << '\n'
-                  << "Lookahead Statements: " << collector.metrics_.lookahead_statements << '\n'
-                  << "Reparsed Statements: " << collector.metrics_.reparsed_statements << '\n'
-                  << "Continued Statements: " << collector.metrics_.continued_statements << '\n'
-                  << "Non-continued Statements: " << collector.metrics_.non_continued_statements << '\n'
-                  << "Lines: " << collector.metrics_.lines << '\n'
-                  << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
-                  << "Line/ms: " << collector.metrics_.lines / (double)time << '\n'
-                  << "Files: " << collector.metrics_.files << '\n'
-                  << "Top messages: " << top_messages.dump() << '\n'
-                  << '\n'
-                  << std::endl;
-
-    return json({
-        { "File", source_file },
+    json result({ { "File", source_file },
         { "Success", true },
-        { "Errors", consumer.error_count },
-        { "Warnings", consumer.warning_count },
+        { "Errors", diag_counter.error_count },
+        { "Warnings", diag_counter.warning_count },
         { "Wall Time (ms)", time },
         { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
         { "Open Code Statements", collector.metrics_.open_code_statements },
@@ -224,8 +212,70 @@ json parse_one_file(const std::string& source_file,
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", collector.metrics_.lines / (double)time },
         { "Files", collector.metrics_.files },
-        { "Top messages", std::move(top_messages) },
-    });
+        { "Top messages", std::move(top_messages) } });
+
+    auto first_parse_metrics = collector.metrics_;
+    auto first_diag_counter = diag_counter;
+    long long reparse_time = 0;
+    // Reparse to benchmark macro caching
+    if (do_reparse)
+    {
+        diag_counter.clear_counters();
+
+        auto c_start_reparse = std::clock();
+        auto start_reparse = std::chrono::high_resolution_clock::now();
+        std::clog << message << "Reparsing file: " << source_file << std::endl;
+        // open file/parse
+        try
+        {
+            ws.did_change_file(source_path.c_str(), 1, nullptr, 0);
+        }
+        catch (const std::exception& e)
+        {
+            ++s.reparsing_crashes;
+            std::clog << message << "Reparse error: " << e.what() << std::endl;
+            return json({ { "File", source_file }, { "Success", false }, { "Reason", "Crash" }, { "Reparse", true } });
+        }
+        catch (...)
+        {
+            ++s.reparsing_crashes;
+            std::clog << message << "Reparse failed\n\n" << std::endl;
+            return json({ { "File", source_file }, { "Success", false }, { "Reason", "Crash" }, { "Reparse", true } });
+        }
+
+        auto c_end_reparse = std::clock();
+        reparse_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now() - start_reparse)
+                           .count();
+        result["Reparse Wall Time (ms)"] = reparse_time;
+        result["Reparse CPU Time (ms/n)"] = 1000.0 * (c_end_reparse - c_start_reparse) / CLOCKS_PER_SEC;
+        result["Reparse errors"] = diag_counter.error_count;
+        result["Reparse warnings"] = diag_counter.warning_count;
+    }
+
+    if (write_details)
+        std::clog << "Time: " << time << " ms" << '\n'
+                  << "Reparse time: " << reparse_time << " ms" << '\n'
+                  << "Errors: " << first_diag_counter.error_count << '\n'
+                  << "Reparse errors: " << diag_counter.error_count << '\n'
+                  << "Open Code Statements: " << first_parse_metrics.open_code_statements << '\n'
+                  << "Copy Statements: " << first_parse_metrics.copy_statements << '\n'
+                  << "Macro Statements: " << first_parse_metrics.macro_statements << '\n'
+                  << "Copy Def Statements: " << first_parse_metrics.copy_def_statements << '\n'
+                  << "Macro Def Statements: " << first_parse_metrics.macro_def_statements << '\n'
+                  << "Lookahead Statements: " << first_parse_metrics.lookahead_statements << '\n'
+                  << "Reparsed Statements: " << first_parse_metrics.reparsed_statements << '\n'
+                  << "Continued Statements: " << first_parse_metrics.continued_statements << '\n'
+                  << "Non-continued Statements: " << first_parse_metrics.non_continued_statements << '\n'
+                  << "Lines: " << first_parse_metrics.lines << '\n'
+                  << "Executed Statement/ms: " << exec_statements / (double)time << '\n'
+                  << "Line/ms: " << first_parse_metrics.lines / (double)time << '\n'
+                  << "Files: " << first_parse_metrics.files << '\n'
+                  << "Top messages: " << top_messages.dump() << '\n'
+                  << '\n'
+                  << std::endl;
+
+    return result;
 }
 
 std::string get_file_message(size_t iter, size_t begin, size_t end, const std::string& base_message)
@@ -243,6 +293,7 @@ int main(int argc, char** argv)
     std::string single_file = "";
     size_t start_range = 0, end_range = 0;
     bool write_details = true;
+    bool do_reparse = true;
     std::string message;
     for (int i = 1; i < argc - 1; i++)
     {
@@ -286,6 +337,9 @@ int main(int argc, char** argv)
         {
             write_details = false;
         }
+        // When specified, skip reparsing each program to test out macro caching
+        else if (arg == "-r")
+            do_reparse = false;
         // When specified, the scpecified string will be shown at the beginning of each "Parsing <file>" message
         else if (arg == "-m")
         {
@@ -330,8 +384,12 @@ int main(int argc, char** argv)
             end_range = std::numeric_limits<long long int>::max();
         for (size_t i = 0; i < end_range; ++i)
         {
-            json j = parse_one_file(
-                single_file, ws_folder, s, write_details, get_file_message(i, start_range, end_range, message));
+            json j = parse_one_file(single_file,
+                ws_folder,
+                s,
+                write_details,
+                get_file_message(i, start_range, end_range, message),
+                do_reparse);
             std::cout << j.dump(2);
             std::cout.flush();
         }
@@ -357,7 +415,8 @@ int main(int argc, char** argv)
                 ws_folder,
                 s,
                 write_details,
-                get_file_message(current_iter, start_range, end_range, message));
+                get_file_message(current_iter, start_range, end_range, message),
+                do_reparse);
 
             if (not_first)
                 std::cout << ",\n";

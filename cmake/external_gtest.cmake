@@ -32,6 +32,7 @@ function(add_googletest)
 endfunction()
 
 if(NOT googletest_POPULATED)
+    message("Populating GTest")
     FetchContent_Populate(googletest)
     add_googletest()
 endif()

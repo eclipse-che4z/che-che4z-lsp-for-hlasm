@@ -19,6 +19,7 @@
 #include <unordered_map>
 
 #include "common_types.h"
+#include "copy_member.h"
 #include "sequence_symbol.h"
 #include "statement_cache.h"
 #include "variables/macro_param.h"
@@ -74,6 +75,7 @@ public:
     const label_storage labels;
     // location of the macro definition in code
     const location definition_location;
+    const std::unordered_set<copy_member_ptr> used_copy_members;
     // initializes macro with its name and params - positional or keyword
     macro_definition(id_index name,
         id_index label_param_name,
@@ -81,7 +83,8 @@ public:
         statement_block definition,
         copy_nest_storage copy_nests,
         label_storage labels,
-        location definition_location);
+        location definition_location,
+        std::unordered_set<copy_member_ptr> used_copy_members);
 
     // returns object with parameters' data set to actual parameters in macro call
     macro_invo_ptr call(macro_data_ptr label_param_data, std::vector<macro_arg> actual_params, id_index syslist_name);
