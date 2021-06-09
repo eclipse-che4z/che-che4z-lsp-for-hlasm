@@ -95,7 +95,7 @@ std::unique_ptr<checking::operand> make_check_operand(
             checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
     }
 }
-std::unique_ptr<checking::operand> check_operand(
+std::unique_ptr<checking::operand> make_rel_imm_operand(
     expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
@@ -127,7 +127,7 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
 {
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
-        return check_operand(info, *expression);
+        return make_rel_imm_operand(info, *expression);
     }
     return make_check_operand(info, *expression);
 }
