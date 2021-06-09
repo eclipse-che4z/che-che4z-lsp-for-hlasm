@@ -92,6 +92,7 @@ struct join_operands_result
 };
 
 join_operands_result join_operands(const operand_list&);
+void transform_imm_reg_operands(semantics::operand_list& op_list, context::id_index instruction);
 
 } // namespace hlasm_plugin::parser_library::semantics
 

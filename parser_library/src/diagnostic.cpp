@@ -1231,7 +1231,7 @@ diagnostic_op diagnostic_op::error_M113(const std::string& instr_name, const ran
 {
     return diagnostic_op(diagnostic_severity::error,
         "M113",
-        "Error at " + instr_name + " instruction: operand must be an absolute register immediate value",
+        "Error at " + instr_name + " instruction: operand must be relocatable symbol or an absolute  immediate value",
         range);
 }
 
@@ -1272,7 +1272,7 @@ diagnostic_op diagnostic_op::error_M123(const std::string& instr_name, long long
 {
     return diagnostic_op(diagnostic_severity::error,
         "M123",
-        "Error at " + instr_name + " instruction: register immediate operand absolute value must be between "
+        "Error at " + instr_name + " instruction: relocatable symbol or immediate absolute value must be between "
             + std::to_string(from) + " and " + std::to_string(to),
         range);
 }
@@ -1476,6 +1476,14 @@ diagnostic_op diagnostic_op::warn_D025(const range& range, const std::string& ty
 {
     return diagnostic_op(
         diagnostic_severity::warning, "D025", "The " + modifier + " modifier is ignored with type " + type, range);
+}
+
+diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D031",
+        "Using absolute value '" + operand_value + "' as relative immediate value",
+        range);
 }
 
 diagnostic_op diagnostic_op::error_D026(const range& range)
@@ -1860,6 +1868,12 @@ diagnostic_op diagnostic_op::error_ME001(const range& range)
 diagnostic_op diagnostic_op::error_ME002(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "ME002", "multiplication or division of address", range);
+}
+
+diagnostic_op diagnostic_op::error_ME003(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "ME003", "Relative Immediate operand must evaluate into an even offset.", range);
 }
 
 diagnostic_op diagnostic_op::error_CE001(const range& range)

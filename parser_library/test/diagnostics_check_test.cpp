@@ -21,13 +21,14 @@ TEST(diagnostics, overall_correctness)
 {
     std::string input(
         R"( 
- J 5
+ J LABEL
  ACONTROL COMPAT(CASE)
  CATTR DEFLOAD,FILL(3)
  CATTR FILL(3)
  AINSERT ' sam64',BACK
 &x setc ' sam64'
  AINSERT '&x',BACK
+LABEL EQU *+2
 )");
     analyzer a(input);
     a.analyze();
@@ -189,44 +190,46 @@ TEST(diagnostics, mnemonics)
         R"( 
   B 10(2,2)
   BR 4 
-  J 30000
+  J LABEL1
   NOP 10(2,2)
   NOPR 4
-  JNOP 30000
+  JNOP LABEL1
   BH 10(2,2)
   BHR 4
-  JH 30000
+  JH LABEL1
   BL 10(2,2)
   BLR 4
-  JL 30000
+  JL LABEL1
   BE 10(2,2)
   BER 4
-  JE 30000
+  JE LABEL1
   BNH 10(2,2)
   BNHR 4
-  JNH 30000
+  JNH LABEL1
   BNL 10(2,2)
   BNLR 4
-  JNL 30000
+  JNL LABEL1
   BNE 10(2,2)
   BNER 4
-  JNE 30000
+  JNE LABEL1
   BO 10(2,2)
   BOR 4
-  JO 30000
+  JO LABEL1
   BNO 10(2,2)
   BNOR 4 
-  JNO 30000
-  BRUL 80000
-  BRHL 80000
-  BRLL 80000
-  BREL 80000
-  BRNHL 80000
-  BRNLL 80000
-  BRNEL 80000
-  BROL 80000
-  BRNOL 80000
-  JLNOP 80000
+  JNO LABEL1
+  BRUL LABEL2
+  BRHL LABEL2
+  BRLL LABEL2
+  BREL LABEL2
+  BRNHL LABEL2
+  BRNLL LABEL2
+  BRNEL LABEL2
+  BROL LABEL2
+  BRNOL LABEL2
+  JLNOP LABEL2
+LABEL1 EQU *+19000
+LABEL2 equ *+79000
 )");
 
     analyzer a(input);

@@ -36,7 +36,11 @@ const instruction_si& collector::current_instruction() { return *instr_; }
 
 bool collector::has_instruction() const { return instr_.has_value(); }
 
-const operands_si& collector::current_operands() { return *op_; }
+
+const operands_si& collector::current_operands() const { return *op_; }
+operands_si& collector::current_operands() { return *op_; }
+
+bool collector::has_operands() const { return op_.has_value(); }
 
 const remarks_si& collector::current_remarks() { return *rem_; }
 
