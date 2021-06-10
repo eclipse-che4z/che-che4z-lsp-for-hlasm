@@ -99,7 +99,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                 break;
             case processing::processing_form::MACH:
                 line = std::move(h.parser->op_rem_body_mach_r()->line);
-                transform_imm_reg_operands(line.operands, opcode.value);
+                transform_reloc_imm_operands(line.operands, opcode.value);
                 break;
             case processing::processing_form::DAT:
                 line = std::move(h.parser->op_rem_body_dat_r()->line);

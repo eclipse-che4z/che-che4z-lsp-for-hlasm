@@ -296,7 +296,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                 case processing::processing_form::MACH:
                     h.parser->op_rem_body_mach();
                     if (auto& collector = h.parser->get_collector(); collector.has_operands())
-                        transform_imm_reg_operands(collector.current_operands().value, opcode.value);
+                        transform_reloc_imm_operands(collector.current_operands().value, opcode.value);
                     break;
                 case processing::processing_form::DAT:
                     h.parser->op_rem_body_dat();

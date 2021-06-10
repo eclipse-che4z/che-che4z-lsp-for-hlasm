@@ -14,6 +14,8 @@
 
 #include "instruction.h"
 
+#include <algorithm>
+
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
@@ -1791,6 +1793,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
 
 void add_mnemonic_code(std::map<std::string, mnemonic_code>& result, std::string instr, mnemonic_code code)
 {
+    assert(std::is_sorted(
+        code.replaced.begin(), code.replaced.end(), [](const auto& l, const auto& r) { return l.first < r.first; }));
     result.insert(std::make_pair<std::string, mnemonic_code>(std::move(instr), std::move(code)));
 }
 

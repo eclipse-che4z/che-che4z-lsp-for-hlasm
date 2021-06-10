@@ -650,46 +650,53 @@ join_operands_result join_operands(const operand_list& operands)
     return result;
 }
 
-void transform_imm_reg_operands(semantics::operand_list& op_list, context::id_index instruction)
+void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction)
 {
     if (instruction->empty())
         return;
-    static const std::vector<std::pair<size_t, size_t>> replaced_instr;
 
     const context::machine_instruction* instr;
-    const std::vector<std::pair<size_t, size_t>>* replaced;
+    const std::pair<size_t, size_t>* replaced_b = nullptr;
+    const std::pair<size_t, size_t>* replaced_e = nullptr;
 
     if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
         mnem_tmp != context::instruction::mnemonic_codes.end())
     {
         const auto& mnemonic = mnem_tmp->second;
         instr = mnemonic.instruction;
-        replaced = &mnemonic.replaced;
+        replaced_b = mnemonic.replaced.data();
+        replaced_e = replaced_b + mnemonic.replaced.size();
     }
     else
     {
         instr = &context::instruction::machine_instructions.at(*instruction);
-        replaced = &replaced_instr;
     }
-    int position = 0;
+
+    size_t position = 0;
     for (const auto& operand : op_list)
     {
-        for (const auto& [index, value] : *replaced)
+        while (replaced_b != replaced_e)
         {
-            if (index == position)
-            {
-                position++;
-            }
+            const auto index = replaced_b->first;
+            if (position < index)
+                break;
+            if (position++ == index)
+                ++replaced_b;
         }
-        if (auto type = instr->operands[position].identifier.type; type == checking::machine_operand_type::RELOC_IMM
-            && operand.get()->access_mach() != nullptr && operand.get()->access_mach()->kind == mach_kind::EXPR)
+
+        if (position >= instr->operands.size())
+            break;
+
+        if (instr->operands[position++].identifier.type != checking::machine_operand_type::RELOC_IMM)
+            continue;
+
+        if (auto* mach_op = operand->access_mach(); mach_op != nullptr && mach_op->kind == mach_kind::EXPR)
         {
-            auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();
-            auto& transformed_exp = operand.get()->access_mach()->access_expr()->expression;
-            transformed_exp = std::make_unique<expressions::mach_expr_binary<expressions::rel_addr>>(
-                std::make_unique<expressions::mach_expr_location_counter>(range), std::move(transformed_exp), range);
+            auto& mach_expr = mach_op->access_expr()->expression;
+            auto range = mach_expr->get_range();
+            mach_expr = std::make_unique<expressions::mach_expr_binary<expressions::rel_addr>>(
+                std::make_unique<expressions::mach_expr_location_counter>(range), std::move(mach_expr), range);
         }
-        position++;
     }
 }
 
