@@ -69,10 +69,7 @@ class analyzer_options
 
 public:
     analyzer_options() = default;
-    analyzer_options(const analyzer_options&) = default;
     analyzer_options(analyzer_options&&) = default;
-    analyzer_options& operator=(const analyzer_options&) = default;
-    analyzer_options& operator=(analyzer_options&&) = default;
 
     template<typename... Args>
     explicit analyzer_options(Args&&... args)
