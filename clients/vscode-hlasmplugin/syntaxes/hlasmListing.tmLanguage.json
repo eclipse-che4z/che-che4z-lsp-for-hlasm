@@ -16,12 +16,12 @@
     {
       "begin": "(.)  Loc    Object Code      Addr1    Addr2    Stmt  Source Statement",
       "end": "                                                 Relocation Dictionary",
-      "patterns": [ {"include": "#lines_to_ignore"}, {"include" : "#listing_syntax_endevor_long"}]
+      "patterns": [ {"include": "#lines_to_ignore_endevor"}, {"include" : "#listing_syntax_endevor_long"}]
     },
     {
       "begin": "(.)  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement",
       "end": "                                                 Relocation Dictionary",
-      "patterns": [ {"include": "#lines_to_ignore"}, {"include" : "#listing_syntax_endevor"}]
+      "patterns": [ {"include": "#lines_to_ignore_endevor"}, {"include" : "#listing_syntax_endevor"}]
     }
   ],
   "repository": {
@@ -60,6 +60,10 @@
     },
     "lines_to_ignore":{
       "match": "^  Active|^  Loc|^D-Loc  |^ {111}Page",
+      "name": "placeholder_f8Gc"
+    },
+    "lines_to_ignore_endevor":{
+      "match": "^(.)  Active|^(.)  Loc|^(.)D-Loc  |^(.) {111}Page",
       "name": "placeholder_f8Gc"
     },
     "hlasm_syntax": {
