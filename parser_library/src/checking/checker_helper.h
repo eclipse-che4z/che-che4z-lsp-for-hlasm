@@ -59,7 +59,10 @@ inline bool has_one_comma(const std::vector<const asm_operand*> to_check)
     return to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]);
 }
 
-inline static bool has_all_digits(const std::string& str) { return std::all_of(str.begin(), str.end(), ::isdigit); }
+inline static bool has_all_digits(const std::string& str)
+{
+    return std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); });
+}
 
 inline static bool is_positive_number(int to_test) { return to_test > 0; }
 
@@ -79,7 +82,8 @@ inline static std::string dec_to_hexa(int to_convert)
 
 inline static bool is_value_hexa(const std::string& to_test)
 {
-    return !to_test.empty() && std::all_of(to_test.cbegin(), to_test.cend(), ::isxdigit);
+    return !to_test.empty()
+        && std::all_of(to_test.cbegin(), to_test.cend(), [](unsigned char c) { return std::isxdigit(c); });
 }
 
 inline static bool is_byte_value(const int to_test) { return (to_test <= 255 && to_test >= 0); }
@@ -94,8 +98,8 @@ inline static bool is_power_of_two(int to_check)
 inline static bool is_ord_symbol(const std::string& to_test)
 {
     assert(!to_test.empty());
-    return !to_test.empty() && to_test.size() <= 63 && isalpha(to_test.front())
-        && std::all_of(to_test.cbegin(), to_test.cend(), ::isalnum);
+    return !to_test.empty() && to_test.size() <= 63 && isalpha((unsigned char)to_test.front())
+        && std::all_of(to_test.cbegin(), to_test.cend(), [](unsigned char c) { return std::isalnum(c); });
 }
 
 inline static bool is_var_symbol(const std::string& to_test)

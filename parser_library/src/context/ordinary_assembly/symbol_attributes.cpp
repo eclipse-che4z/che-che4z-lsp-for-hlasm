@@ -45,7 +45,7 @@ symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make
     return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('U'));
 }
 
-data_attr_kind symbol_attributes::transform_attr(char c)
+data_attr_kind symbol_attributes::transform_attr(unsigned char c)
 {
     c = (char)std::toupper(c);
     switch (c)

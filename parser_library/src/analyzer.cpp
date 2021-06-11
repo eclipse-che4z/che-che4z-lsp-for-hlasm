@@ -21,49 +21,57 @@ using namespace hlasm_plugin::parser_library::lexing;
 using namespace hlasm_plugin::parser_library::parsing;
 using namespace hlasm_plugin::parser_library::workspaces;
 
-analyzer::analyzer(const std::string& text,
-    std::string file_name,
-    analyzing_context ctx,
-    parse_lib_provider& lib_provider,
-    const library_data data,
-    bool collect_hl_info)
-    : diagnosable_ctx(*ctx.hlasm_ctx)
-    , ctx_(std::move(ctx))
-    , listener_(file_name)
-    , src_proc_(collect_hl_info)
-    , input_(text)
-    , lexer_(&input_, &src_proc_, &ctx_.hlasm_ctx->metrics)
-    , tokens_(&lexer_)
-    , parser_(new parsing::hlasmparser(&tokens_))
-    , mngr_(
-          std::unique_ptr<processing::opencode_provider>(parser_), ctx_, data, file_name, text, lib_provider, *parser_)
+
+analyzing_context& analyzer_options::get_context()
 {
-    parser_->initialize(ctx_, &src_proc_, &lib_provider, &mngr_);
-    parser_->setErrorHandler(std::make_shared<error_strategy>());
-    parser_->removeErrorListeners();
-    parser_->addErrorListener(&listener_);
+    if (std::holds_alternative<asm_option>(ctx_source))
+    {
+        ctx_source = analyzing_context {
+            std::make_unique<context::hlasm_context>(file_name,
+                std::move(std::get<asm_option>(ctx_source)),
+                ids_init.has_value() ? std::move(*ids_init) : id_storage {}),
+            std::make_unique<lsp::lsp_context>(),
+        };
+    }
+    return std::get<analyzing_context>(ctx_source);
 }
 
-analyzer::analyzer(const std::string& text,
-    std::string file_name,
-    parse_lib_provider& lib_provider,
-    bool collect_hl_info,
-    id_storage ids_init)
-    : analyzer(text,
-        file_name,
-        analyzing_context { std::make_unique<context::hlasm_context>(
-                                file_name, lib_provider.get_asm_options(file_name), std::move(ids_init)),
-            std::make_unique<lsp::lsp_context>() },
-        lib_provider,
-        library_data { processing::processing_kind::ORDINARY, context::id_storage::empty_id },
-        collect_hl_info)
+context::hlasm_context& analyzer_options::get_hlasm_context() { return *get_context().hlasm_ctx; }
+
+workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
+{
+    if (lib_provider)
+        return *lib_provider;
+    else
+        return workspaces::empty_parse_lib_provider::instance;
+}
+
+analyzer::analyzer(const std::string& text, analyzer_options opts)
+    : diagnosable_ctx(opts.get_hlasm_context())
+    , ctx_(std::move(opts.get_context()))
+    , src_proc_(opts.collect_hl_info == collect_highlighting_info::yes)
+    , field_parser_(ctx_.hlasm_ctx.get())
+    , mngr_(std::make_unique<processing::opencode_provider>(text,
+                ctx_,
+                opts.get_lib_provider(),
+                mngr_,
+                src_proc_,
+                opts.file_name,
+                opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
+                                                               : opencode_provider_options {}),
+          ctx_,
+          opts.library_data,
+          opts.file_name,
+          text,
+          opts.get_lib_provider(),
+          field_parser_)
 {}
 
 analyzing_context analyzer::context() const { return ctx_; }
 
 context::hlasm_context& analyzer::hlasm_ctx() { return *ctx_.hlasm_ctx; }
 
-parsing::hlasmparser& analyzer::parser() { return *parser_; }
+parsing::hlasmparser& analyzer::parser() { return mngr_.opencode_parser(); }
 
 const semantics::source_info_processor& analyzer::source_processor() const { return src_proc_; }
 
@@ -76,7 +84,7 @@ void analyzer::analyze(std::atomic<bool>* cancel)
 void analyzer::collect_diags() const
 {
     collect_diags_from_child(mngr_);
-    collect_diags_from_child(listener_);
+    collect_diags_from_child(field_parser_);
 }
 
 const performance_metrics& analyzer::get_metrics() const

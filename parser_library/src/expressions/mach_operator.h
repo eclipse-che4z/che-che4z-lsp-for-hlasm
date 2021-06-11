@@ -107,12 +107,14 @@ struct sub
     static std::string sign_char_begin() { return "-"; }
     static std::string sign_char_end() { return ""; }
 };
+
 struct rel_addr
 {
     static std::string sign_char() { return "-"; }
     static std::string sign_char_begin() { return "-"; }
     static std::string sign_char_end() { return ""; }
 };
+
 struct mul
 {
     static std::string sign_char() { return "*"; }
@@ -142,6 +144,7 @@ inline mach_expression::value_t mach_expr_binary<sub>::evaluate(mach_evaluate_in
 {
     return left_->evaluate(info) - right_->evaluate(info);
 }
+
 template<>
 inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evaluate_info info) const
 {
@@ -153,10 +156,12 @@ inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evalua
         return target;
     }
 
-    if ((target - location).value_kind() == context::symbol_value_kind::ABS && (target - location).get_abs() % 2 != 0)
+    auto result = target - location;
+    if (result.value_kind() == context::symbol_value_kind::ABS && result.get_abs() % 2 != 0)
         add_diagnostic(diagnostic_op::error_ME003(get_range()));
-    return target - location;
+    return result;
 }
+
 template<>
 inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_info info) const
 {
@@ -217,11 +222,13 @@ inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(mac
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
+
 template<>
 inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(mach_evaluate_info info) const
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
+
 template<>
 inline context::dependency_collector mach_expr_binary<mul>::get_dependencies(mach_evaluate_info info) const
 {

@@ -29,175 +29,26 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     : Parser(input)
     , input(dynamic_cast<lexing::token_stream&>(*input))
     , hlasm_ctx(nullptr)
-    , src_proc(nullptr)
-    , processor(nullptr)
-    , current_statement(nullptr)
-    , finished_flag(false)
     , provider()
 {}
 
-void parser_impl::initialize(analyzing_context a_ctx,
-    semantics::source_info_processor* src_prc,
-    workspaces::parse_lib_provider* lib_provider,
-    processing::processing_state_listener* state_listener)
+void parser_impl::initialize(context::hlasm_context* hl_ctx, collectable<diagnostic_s>* d)
 {
-    ctx = std::move(a_ctx);
-    hlasm_ctx = &*ctx.hlasm_ctx;
-    src_proc = src_prc;
-    finished_flag = false;
-    lib_provider_ = lib_provider;
-    state_listener_ = state_listener;
-
-    input_lexer = &dynamic_cast<lexing::lexer&>(*_input->getTokenSource());
+    hlasm_ctx = hl_ctx;
+    diags = d;
 }
 
-bool parser_impl::is_last_line() const { return input_lexer->is_last_line(); }
-
-void parser_impl::rewind_input(context::source_position pos)
-{
-    finished_flag = false;
-    _matchedEOF = false;
-    input.rewind_input(lexing::lexer::stream_position { pos.file_line, pos.file_offset });
-}
-
-std::string parser_impl::aread()
-{
-    std::string line = input_lexer->aread();
-
-    if (input_lexer->eof_generated())
-        finished_flag = true;
-    input_tokens_invalidated = true;
-
-    if (!line.empty())
-        line.resize(80, ' ');
-    return line;
-}
-
-void parser_impl::ainsert(const std::string& record, processing::ainsert_destination dest)
-{
-    switch (dest)
-    {
-        case ainsert_destination::back:
-            input_lexer->ainsert_back(record);
-            break;
-        case ainsert_destination::front:
-            input_lexer->ainsert_front(record);
-            break;
-    }
-    // TODO: this needs to be really reworked...
-    input_tokens_invalidated = true;
-}
-
-context::source_position parser_impl::statement_start() const
-{
-    auto pos = input_lexer->last_lln_begin_position();
-    return { pos.line, pos.offset };
-}
-
-context::source_position parser_impl::statement_end() const
-{
-    auto pos = input_lexer->last_lln_end_position();
-    return { pos.line, pos.offset };
-}
-
-std::unique_ptr<parser_holder> create_parser_holder()
+std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc)
 {
     std::string s;
     auto h = std::make_unique<parser_holder>();
+    h->error_handler = std::make_shared<parsing::error_strategy>();
     h->input = std::make_unique<lexing::input_source>(s);
-    h->lex = std::make_unique<lexing::lexer>(h->input.get(), nullptr);
+    h->lex = std::make_unique<lexing::lexer>(h->input.get(), lsp_proc);
     h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
     h->parser = std::make_unique<hlasmparser>(h->stream.get());
+    h->parser->setErrorHandler(h->error_handler);
     return h;
-}
-
-statement_fields_parser::parse_result parser_impl::parse_operand_field(std::string field,
-    bool after_substitution,
-    semantics::range_provider field_range,
-    processing::processing_status status,
-    const std::function<void(diagnostic_op)>& add_diag)
-{
-    if (!rest_parser_)
-        rest_parser_ = create_parser_holder();
-
-    hlasm_ctx->metrics.reparsed_statements++;
-    const parser_holder& h = *rest_parser_;
-
-    parser_error_listener_substitution listener(add_diag, after_substitution ? &field : nullptr, field_range);
-
-    h.input->reset(field);
-
-    h.lex->reset();
-    h.lex->set_file_offset(field_range.original_range.start);
-    h.lex->set_unlimited_line(after_substitution);
-
-    h.stream->reset();
-
-    h.parser->initialize(hlasm_ctx, field_range, status);
-    h.parser->setErrorHandler(std::make_shared<error_strategy>());
-    h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&listener);
-    h.parser->reset();
-
-    h.parser->collector.prepare_for_next_statement();
-
-    semantics::op_rem line;
-    auto& [format, opcode] = status;
-    if (format.occurence == processing::operand_occurence::ABSENT
-        || format.form == processing::processing_form::UNKNOWN)
-        h.parser->op_rem_body_noop();
-    else
-    {
-        switch (format.form)
-        {
-            case processing::processing_form::MAC:
-                line = std::move(h.parser->op_rem_body_mac_r()->line);
-                proc_status = status;
-                parse_macro_operands(line, add_diag);
-                break;
-            case processing::processing_form::ASM:
-                line = std::move(h.parser->op_rem_body_asm_r()->line);
-                break;
-            case processing::processing_form::MACH:
-                line = std::move(h.parser->op_rem_body_mach_r()->line);
-                transform_imm_reg_operands(line.operands, opcode.value);
-                break;
-            case processing::processing_form::DAT:
-                line = std::move(h.parser->op_rem_body_dat_r()->line);
-                break;
-            default:
-                break;
-        }
-    }
-
-    for (size_t i = 0; i < line.operands.size(); i++)
-    {
-        if (!line.operands[i])
-            line.operands[i] = std::make_unique<semantics::empty_operand>(field_range.original_range);
-    }
-
-    if (line.operands.size() == 1 && line.operands.front()->type == semantics::operand_type::EMPTY)
-        line.operands.clear();
-
-    if (after_substitution && line.operands.size() && line.operands.front()->type == semantics::operand_type::MODEL)
-        line.operands.clear();
-
-    range op_range = line.operands.empty()
-        ? field_range.original_range
-        : semantics::range_provider::union_range(
-            line.operands.front()->operand_range, line.operands.back()->operand_range);
-    range rem_range = line.remarks.empty()
-        ? range(op_range.end)
-        : semantics::range_provider::union_range(line.remarks.front(), line.remarks.back());
-
-    return { semantics::operands_si(op_range, std::move(line.operands)),
-        semantics::remarks_si(rem_range, std::move(line.remarks)) };
-}
-
-void parser_impl::collect_diags() const
-{
-    if (rest_parser_)
-        collect_diags_from_child(*rest_parser_->parser);
 }
 
 void parser_impl::enable_continuation() { input.enable_continuation(); }
@@ -232,11 +83,11 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    diagnostic_adder add_diagnostic(this, term_range);
+    diagnostic_adder add_diagnostic(diags, term_range);
     auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
-    if (add_diagnostic.diagnostics_present)
-        diags().back().file_name = hlasm_ctx->processing_stack().back().proc_location.file;
+    if (add_diagnostic.diagnostics_present && diags)
+        diags->diags().back().file_name = hlasm_ctx->processing_stack().back().proc_location.file;
     return val;
 }
 
@@ -244,60 +95,33 @@ context::data_attr_kind parser_impl::get_attribute(std::string attr_data, range 
 {
     if (attr_data.size() == 1)
     {
-        auto c = (char)std::toupper(attr_data[0]);
+        auto c = (char)std::toupper((unsigned char)attr_data[0]);
         return context::symbol_attributes::transform_attr(c);
     }
 
-    add_diagnostic(
-        diagnostic_s::error_S101(hlasm_ctx->processing_stack().back().proc_location.file, attr_data, data_range));
+    if (diags)
+        diags->add_diagnostic(
+            diagnostic_s::error_S101(hlasm_ctx->processing_stack().back().proc_location.file, attr_data, data_range));
 
     return context::data_attr_kind::UNKNOWN;
 }
 
 context::id_index parser_impl::parse_identifier(std::string value, range id_range)
 {
-    if (value.size() > 63)
-        add_diagnostic(
+    if (value.size() > 63 && diags)
+        diags->add_diagnostic(
             diagnostic_s::error_S100(hlasm_ctx->processing_stack().back().proc_location.file, value, id_range));
 
     return hlasm_ctx->ids().add(std::move(value));
-}
-
-void parser_impl::parse_macro_operands(semantics::op_rem& line, const std::function<void(diagnostic_op)>& add_diag)
-{
-    if (line.operands.size())
-    {
-        size_t string_size = line.operands.size();
-        std::vector<range> ranges;
-
-        for (auto& op : line.operands)
-            if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
-                string_size += m_op->value.size();
-
-        std::string to_parse;
-        to_parse.reserve(string_size);
-
-        for (size_t i = 0; i < line.operands.size(); ++i)
-        {
-            if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(line.operands[i].get()))
-                to_parse.append(m_op->value);
-            if (i != line.operands.size() - 1)
-                to_parse.push_back(',');
-            ranges.push_back(line.operands[i]->operand_range);
-        }
-        auto r = semantics::range_provider::union_range(
-            line.operands.begin()->get()->operand_range, line.operands.back()->operand_range);
-
-        line.operands = parse_macro_operands(std::move(to_parse), r, std::move(ranges), add_diag);
-    }
 }
 
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
     expr->resolve_expression_tree(type);
     expr->collect_diags();
-    for (auto& d : expr->diags())
-        add_diagnostic(diagnostic_s(hlasm_ctx->processing_stack().back().proc_location.file, std::move(d)));
+    if (diags)
+        for (auto& d : expr->diags())
+            diags->add_diagnostic(diagnostic_s(hlasm_ctx->processing_stack().back().proc_location.file, std::move(d)));
     expr->diags().clear();
 }
 
@@ -326,77 +150,6 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
         assert(false);
         resolve_expression(expr, context::SET_t_enum::UNDEF_TYPE);
     }
-}
-
-bool parser_impl::process_instruction()
-{
-    if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(collector.current_instruction(), { ctx, *lib_provider_ }, *state_listener_))
-        return true;
-
-    hlasm_ctx->set_source_position(collector.current_instruction().field_range.start);
-    proc_status = processor->get_processing_status(collector.peek_instruction());
-    return false;
-}
-
-bool parser_impl::process_statement()
-{
-    range statement_range(position(statement_start().file_line, 0)); // assign default
-    auto stmt = collector.extract_statement(*proc_status, statement_range);
-
-    if (processor->kind == processing::processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { ctx, *lib_provider_ }, *state_listener_))
-        return true;
-
-    if (statement_range.start.line < statement_range.end.line)
-        hlasm_ctx->metrics.continued_statements++;
-    else
-        hlasm_ctx->metrics.non_continued_statements++;
-
-    src_proc->process_hl_symbols(collector.extract_hl_symbols());
-    current_statement = stmt;
-
-    return false;
-}
-
-context::shared_stmt_ptr parser_impl::get_next(const statement_processor& proc)
-{
-    if (input_tokens_invalidated)
-    {
-        input_tokens_invalidated = false;
-
-        input.reset();
-        reset();
-    }
-    processor = &proc;
-
-    if (proc.kind == processing::processing_kind::LOOKAHEAD)
-        process_lookahead();
-    else
-        process_ordinary();
-
-    auto ret_stmt = current_statement;
-
-    processor = nullptr;
-    current_statement = nullptr;
-    collector.prepare_for_next_statement();
-    proc_status.reset();
-
-    return ret_stmt;
-}
-
-bool parser_impl::finished() const { return finished_flag; }
-
-void parser_impl::set_source_indices(const antlr4::Token* start, const antlr4::Token* stop)
-{
-    assert(stop);
-    size_t start_offset;
-
-    if (start)
-        start_offset = start->getStartIndex();
-    else
-        start_offset = stop->getStartIndex();
-    ctx.hlasm_ctx->set_source_indices(start_offset, stop->getStopIndex() + 1, stop->getLine());
 }
 
 bool parser_impl::deferred()
@@ -460,249 +213,15 @@ bool parser_impl::UNKNOWN()
     return format.form == processing::processing_form::UNKNOWN;
 }
 
-void parser_impl::initialize(
-    context::hlasm_context* h_ctx, semantics::range_provider range_prov, processing::processing_status proc_stat)
+void parser_impl::reinitialize(context::hlasm_context* h_ctx,
+    semantics::range_provider range_prov,
+    processing::processing_status proc_stat,
+    collectable<diagnostic_s>* d)
 {
     hlasm_ctx = h_ctx;
-    provider = range_prov;
+    provider = std::move(range_prov);
     proc_status = proc_stat;
-}
-
-semantics::operand_list parser_impl::parse_macro_operands(std::string operands,
-    range field_range,
-    std::vector<range> operand_ranges,
-    const std::function<void(diagnostic_op)>& add_diag)
-{
-    if (!rest_parser_)
-        rest_parser_ = create_parser_holder();
-
-    const parser_holder& h = *rest_parser_;
-
-    semantics::range_provider tmp_provider(field_range, operand_ranges, semantics::adjusting_state::MACRO_REPARSE);
-
-    parser_error_listener_substitution listener(add_diag, nullptr, tmp_provider);
-
-    h.input->reset(operands);
-
-    h.lex->reset();
-    h.lex->set_file_offset(field_range.start);
-    h.lex->set_unlimited_line(true);
-
-    h.stream->reset();
-
-    h.parser->initialize(hlasm_ctx, tmp_provider, *proc_status);
-    h.parser->setErrorHandler(std::make_shared<error_strategy>());
-    h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&listener);
-
-    h.parser->reset();
-
-    h.parser->collector.prepare_for_next_statement();
-
-    auto list = std::move(h.parser->macro_ops()->list);
-
-    return list;
-}
-
-void parser_impl::process_ordinary()
-{
-    auto lab_instr = dynamic_cast<hlasmparser&>(*this).lab_instr();
-
-    if (!finished_flag && collector.has_instruction())
-    {
-        bool attr_look_needed = process_instruction();
-
-        if (attr_look_needed)
-            return;
-
-        if (!lab_instr->op_text)
-            process_statement();
-        else
-            parse_operands(std::move(*lab_instr->op_text), lab_instr->op_range);
-    }
-}
-
-void parser_impl::process_lookahead()
-{
-    auto look_lab_instr = dynamic_cast<hlasmparser&>(*this).look_lab_instr();
-    if (!finished_flag)
-    {
-        process_instruction();
-        if (!look_lab_instr->op_text)
-            process_statement();
-        else
-            parse_lookahead_operands(std::move(*look_lab_instr->op_text), look_lab_instr->op_range);
-    }
-}
-void parser_impl::transform_imm_reg_operands(semantics::operand_list& op_list, id_index instruction)
-{
-    if (instruction->empty())
-        return;
-    const machine_instruction* instr;
-    std::vector<std::pair<size_t, size_t>> replaced;
-    if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
-        mnem_tmp != context::instruction::mnemonic_codes.end())
-    {
-        const auto& mnemonic = context::instruction::mnemonic_codes.at(*instruction);
-        instr = mnemonic.instruction;
-        replaced = mnemonic.replaced;
-    }
-    else
-    {
-        instr = &context::instruction::machine_instructions.at(*instruction);
-    }
-    int position = 0;
-    for (const auto& operand : op_list)
-    {
-        for (const auto& [index, value] : replaced)
-        {
-            if (index == position)
-            {
-                position++;
-            }
-        }
-        if (auto type = instr->operands[position].identifier.type; type == checking::machine_operand_type::RELOC_IMM
-            && operand.get()->access_mach() != nullptr && operand.get()->access_mach()->kind == mach_kind::EXPR)
-        {
-            auto range = operand.get()->access_mach()->access_expr()->expression.get()->get_range();
-            mach_expr_ptr& transformed_exp = operand.get()->access_mach()->access_expr()->expression;
-            transformed_exp = std::make_unique<mach_expr_binary<rel_addr>>(
-                std::make_unique<mach_expr_location_counter>(range), std::move(transformed_exp), range);
-        }
-        position++;
-    }
-}
-
-void parser_impl::parse_operands(const std::string& text, range text_range)
-{
-    if (!rest_parser_)
-        rest_parser_ = create_parser_holder();
-
-    parser_holder& h = *rest_parser_;
-
-    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
-
-    h.input->reset(text);
-
-    h.lex->reset();
-    h.lex->set_file_offset(text_range.start);
-    h.lex->set_unlimited_line(false);
-
-    h.stream->reset();
-
-    h.parser->initialize(hlasm_ctx, provider, *proc_status);
-    h.parser->setErrorHandler(std::make_shared<error_strategy>());
-    h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&listener);
-
-    h.parser->reset();
-
-    h.parser->collector.prepare_for_next_statement();
-
-    auto& [format, opcode] = *proc_status;
-    if (format.occurence == processing::operand_occurence::ABSENT
-        || format.form == processing::processing_form::UNKNOWN)
-        h.parser->op_rem_body_noop();
-    else
-    {
-        switch (format.form)
-        {
-            case processing::processing_form::IGNORED:
-                h.parser->op_rem_body_ignored();
-                break;
-            case processing::processing_form::DEFERRED:
-                h.parser->op_rem_body_deferred();
-                break;
-            case processing::processing_form::CA:
-                h.parser->op_rem_body_ca();
-                break;
-            case processing::processing_form::MAC: {
-                auto rule = h.parser->op_rem_body_mac();
-                auto line = std::move(rule->line);
-                auto line_range = rule->line_range;
-                parse_macro_operands(
-                    line, [&listener](diagnostic_op diag) { listener.add_diagnostic(std::move(diag)); });
-                h.parser->collector.set_operand_remark_field(
-                    std::move(line.operands), std::move(line.remarks), line_range);
-            }
-            break;
-            case processing::processing_form::ASM:
-                h.parser->op_rem_body_asm();
-                break;
-            case processing::processing_form::MACH:
-                h.parser->op_rem_body_mach();
-                transform_imm_reg_operands(h.parser->collector.current_operands().value, opcode.value);
-                break;
-            case processing::processing_form::DAT:
-                h.parser->op_rem_body_dat();
-                break;
-            default:
-                break;
-        }
-    }
-
-    if (format.form != processing::processing_form::IGNORED)
-    {
-        collector.append_operand_field(std::move(h.parser->collector));
-        process_statement();
-    }
-
-    collect_diags_from_child(listener);
-}
-
-void parser_impl::parse_lookahead_operands(const std::string& text, range text_range)
-{
-    if (!rest_parser_)
-        rest_parser_ = create_parser_holder();
-
-    if (proc_status->first.form == processing::processing_form::IGNORED)
-    {
-        process_statement();
-        return;
-    }
-
-    // optimization : if statement has no label and is not COPY, do not even parse operands
-    if (!collector.has_label())
-    {
-        if (collector.current_instruction().type == semantics::instruction_si_type::ORD)
-        {
-            context::id_index tmp;
-            tmp = std::get<context::id_index>(collector.current_instruction().value);
-            if (tmp != hlasm_ctx->ids().well_known.COPY)
-            {
-                process_statement();
-                return;
-            }
-        }
-    }
-
-    const parser_holder& h = *rest_parser_;
-
-    parser_error_listener_ctx listener(*hlasm_ctx, nullptr);
-
-    h.input->reset(text);
-
-    h.lex->reset();
-    h.lex->set_file_offset(text_range.start);
-    h.lex->set_unlimited_line(true);
-
-    h.stream->reset();
-
-    h.parser->initialize(hlasm_ctx, provider, *proc_status);
-    h.parser->setErrorHandler(std::make_shared<error_strategy>());
-    h.parser->removeErrorListeners();
-    h.parser->addErrorListener(&listener);
-
-    h.parser->reset();
-
-    h.parser->collector.prepare_for_next_statement();
-
-    h.parser->lookahead_operands_and_remarks();
-
-    h.parser->collector.clear_hl_symbols();
-    collector.append_operand_field(std::move(h.parser->collector));
-
-    process_statement();
+    diags = d;
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
@@ -713,6 +232,6 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return antlr4::Parser::getExpectedTokens();
 }
 
-parser_holder::~parser_holder() {}
+parser_holder::~parser_holder() = default;
 
 } // namespace hlasm_plugin::parser_library::parsing

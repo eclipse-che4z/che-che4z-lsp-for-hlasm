@@ -35,6 +35,7 @@ LAB    MAC 1,KEY_PAR=1
  LCLA &KEY_PAR
  LR &KEY_PAR,1
 &
+       UNKNOWN
 )";
 
     lsp_context_macro_in_opencode()
@@ -194,4 +195,11 @@ TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
     sort_occurence_vector(expected);
 
     EXPECT_EQ(res, expected);
+}
+
+TEST_F(lsp_context_macro_in_opencode, hover_unknown_macro)
+{
+    auto res = a.context().lsp_ctx->hover(opencode_file_name, { 12, 10 });
+
+    EXPECT_EQ(res, "");
 }

@@ -331,3 +331,31 @@ TEST(aread, empty_ainsert_record)
     ASSERT_EQ(diags.size(), 1);
     EXPECT_EQ(diags.front().code, "A021");
 }
+
+TEST(aread, correct_line_counting)
+{
+    std::string input(R"(
+    MACRO
+    M
+&S  AREAD
+&S  AREAD
+&S  AREAD
+&S  AREAD
+&S  AREAD
+    MEND
+    M
+Line1
+Line2
+Line3
+Line4
+Line5
+    UNDEF
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 1);
+    EXPECT_EQ(diags[0].diag_range.start.line, 15);
+}

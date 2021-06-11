@@ -40,6 +40,8 @@ bool collector::has_instruction() const { return instr_.has_value(); }
 const operands_si& collector::current_operands() const { return *op_; }
 operands_si& collector::current_operands() { return *op_; }
 
+bool collector::has_operands() const { return op_.has_value(); }
+
 const remarks_si& collector::current_remarks() { return *rem_; }
 
 void collector::set_label_field(range symbol_range)
@@ -198,10 +200,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
         if (!def_)
             def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
         return std::make_shared<statement_si_deferred>(
-            range_provider::union_range(lbl_->field_range, def_->field_range),
-            std::move(*lbl_),
-            std::move(*instr_),
-            std::move(*def_));
+            union_range(lbl_->field_range, def_->field_range), std::move(*lbl_), std::move(*instr_), std::move(*def_));
     }
     else
     {
@@ -215,7 +214,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
                 op_->value[i] = std::make_unique<empty_operand>(instr_.value().field_range);
         }
 
-        statement_range = range_provider::union_range(lbl_->field_range, op_->field_range);
+        statement_range = union_range(lbl_->field_range, op_->field_range);
         auto stmt_si = std::make_shared<statement_si>(
             statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
         return std::make_shared<processing::resolved_statement_impl>(std::move(stmt_si), std::move(status));

@@ -29,7 +29,6 @@ target_sources(parser_library PRIVATE
 	error_messages.h
 	lib_config.cpp
 	location.h
-	parser_library.cpp
 	protocol.cpp
 	workspace_manager.cpp
 	workspace_manager_impl.h

@@ -92,3 +92,11 @@ TEST(stability_test, entry_6)
     analyzer a(input);
     a.analyze();
 }
+
+TEST(stability_test, entry_7)
+{
+    std::string input(R"(T J  , @g+')");
+
+    analyzer a(input);
+    a.analyze();
+}

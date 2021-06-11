@@ -80,7 +80,7 @@ TEST_F(workspace_test, parse_lib_provider)
 
     file_mngr.add_processor_file("test\\library\\test_wks\\correct");
 
-    lsp::lsp_ctx_ptr lsp_ptr = std::make_shared<lsp::lsp_context>();
+    auto lsp_ptr = std::make_shared<lsp::lsp_context>();
     auto [ctx_1, ctx_2] = [&ws]() {
         if (platform::is_windows())
         {

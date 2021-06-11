@@ -516,48 +516,58 @@ TEST(macro, arguments_continuation)
 
 class bad_mock : public parse_lib_provider
 {
-    asm_option asm_options;
-
-public:
-    bad_mock(int lib_code)
-        : current_content(lib_code == 0 ? &content_bad_name : lib_code == 1 ? &content_bad_begin : &content_comment)
-    {}
-
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+    static const std::string* content_variant(int i)
     {
-        (void)library;
-
-        a = std::make_unique<analyzer>(*current_content, "/tmp/MAC", std::move(ctx), *this, data);
-        a->analyze();
-        a->collect_diags();
-        return true;
-    }
-    bool has_library(const std::string&, const std::string&) const override { return true; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
-    std::unique_ptr<analyzer> a;
-
-private:
-    const std::string* current_content;
-
-    const std::string content_bad_name =
-        R"(   MACRO
+        static const std::string content_bad_name =
+            R"(   MACRO
        MACC   &VAR
        LR    &VAR,&VAR
        MEND
 )";
-    const std::string content_bad_begin =
-        R"(  aMACRO
+        static const std::string content_bad_begin =
+            R"(  aMACRO
        MAC   &VAR
        LR    &VAR,&VAR
        MEND
 )";
-    const std::string content_comment =
-        R"(**********  
+        static const std::string content_comment =
+            R"(**********  
        MACRO
        MAC   &VAR
        LR    &VAR,&VAR
        MEND
 )";
+        switch (i)
+        {
+            case 0:
+                return &content_bad_name;
+            case 1:
+                return &content_bad_begin;
+            case 2:
+                return &content_comment;
+            default:
+                throw std::invalid_argument("Unknown variant");
+        }
+    }
+
+    const std::string* current_content;
+
+public:
+    bad_mock(int lib_code)
+        : current_content(content_variant(lib_code))
+    {}
+
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
+    {
+        (void)library;
+
+        a = std::make_unique<analyzer>(*current_content, analyzer_options { "/tmp/MAC", this, std::move(ctx), data });
+        a->analyze();
+        a->collect_diags();
+        return true;
+    }
+    bool has_library(const std::string&, const std::string&) const override { return true; }
+    std::unique_ptr<analyzer> a;
 };
 
 TEST(external_macro, bad_library)
@@ -570,7 +580,7 @@ TEST(external_macro, bad_library)
     for (int i = 0; i < 2; ++i)
     {
         bad_mock m(i);
-        analyzer a(input, "", m);
+        analyzer a(input, analyzer_options { &m });
         a.analyze();
         a.collect_diags();
         EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
@@ -587,7 +597,7 @@ TEST(external_macro, library_with_begin_comment)
  MAC 1
 )";
     bad_mock m(2);
-    analyzer a(input, "", m);
+    analyzer a(input, analyzer_options { &m });
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);
@@ -698,6 +708,42 @@ TEST(macro, parse_args)
 
          IF    PXXXXXS+L'PXXXXXS-1,O,X'01',TM
 		 if    =d'01'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, seq_numbers)
+{
+    std::string input = R"(
+         MACRO                                                          00010000
+         M                                                              00020000
+         MNOTE 8,'Long continued string spanning multiple lines of the X00030000
+               file with sequence symbols.'                             00040000
+         MEND                                                           00050000
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, apostrophe_in_substitution)
+{
+    std::string input = R"(
+         MACRO                                                          00010000
+         M     &VAR                                    Comment          00020000
+         MNOTE 8,'Message that uses the variable''s VAR value ''&VAR'' X00030000
+               and is continued '' .'                                   00040000
+         MEND                                                           00050000
+                                                                        00060000
+         M     TEST                                                     00070000
 )";
     analyzer a(input);
     a.analyze();

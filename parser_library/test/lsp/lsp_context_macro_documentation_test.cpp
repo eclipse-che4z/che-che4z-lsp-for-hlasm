@@ -100,7 +100,7 @@ TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
     std::string input = R"( 
  MACRO
  )";
-    analyzer a(input, file_name);
+    analyzer a(input, analyzer_options { file_name });
     a.analyze();
     auto res = a.context().lsp_ctx->completion(file_name, { 0, 1 }, '\0', completion_trigger_kind::invoked);
 

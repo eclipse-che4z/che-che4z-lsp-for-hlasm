@@ -135,13 +135,14 @@ public:
         thread_ = std::thread([this, open_code = std::move(open_code), &workspace, lib_provider]() {
             std::lock_guard<std::mutex> guard(variable_mtx_); // Lock the mutex while analyzer is running, unlock once
                                                               // it is stopped and waiting in the statement method
+            debug_lib_provider debug_provider(workspace);
 
-            std::optional<debug_lib_provider> provider;
-            if (!lib_provider)
-                provider.emplace(workspace);
-
-            analyzer a(
-                open_code->get_text(), open_code->get_file_name(), lib_provider ? *lib_provider : provider.value());
+            analyzer a(open_code->get_text(),
+                analyzer_options {
+                    open_code->get_file_name(),
+                    lib_provider ? lib_provider : &debug_provider,
+                    workspace.get_asm_options(open_code->get_file_name()),
+                });
 
             a.register_stmt_analyzer(this);
 

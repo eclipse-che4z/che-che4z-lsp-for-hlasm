@@ -98,7 +98,7 @@ context::id_index context_manager::get_symbol_name(const std::string& symbol, ra
 
 context_manager::name_result context_manager::try_get_symbol_name(const std::string& symbol) const
 {
-    if (symbol.empty() || symbol.size() > 63 || isdigit(symbol.front()))
+    if (symbol.empty() || symbol.size() > 63 || isdigit((unsigned char)symbol.front()))
         return std::make_pair(false, context::id_storage::empty_id);
 
     for (const auto& c : symbol)

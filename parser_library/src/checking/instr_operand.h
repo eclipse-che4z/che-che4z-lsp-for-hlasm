@@ -74,7 +74,7 @@ enum class machine_operand_type : uint8_t
     LENGTH,
     VEC_REG,
     DIS_REG,
-    RELOC_IMM
+    RELOC_IMM,
 };
 
 // Describes a component of machine operand format. Specifies allowed values.

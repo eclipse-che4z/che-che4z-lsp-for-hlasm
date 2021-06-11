@@ -30,7 +30,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
     analyzing_context ctx,
-    const workspaces::library_data data,
+    workspaces::library_data data,
     std::string file_name,
     const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
@@ -322,10 +322,10 @@ void processing_manager::collect_diags() const
         collect_diags_from_child(*proc);
 
 
-    collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[0]));
+    collect_diags_from_child(dynamic_cast<diagnosable&>(*provs_[0]));
     if (provs_.size() > 2)
-        collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[1]));
-    collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
+        collect_diags_from_child(dynamic_cast<diagnosable&>(*provs_[1]));
+    collect_diags_from_child(dynamic_cast<diagnosable&>(*provs_.back()));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

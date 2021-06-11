@@ -27,7 +27,7 @@ enum tokens
 // Overrides default ANTLR error strategy, so it returns our specialized
 // tokens instead of ANTLR abstract tokens. The rest of implementation is
 // copied from antlr4::DefaultErrorStrategy.
-class error_strategy : public antlr4::DefaultErrorStrategy
+class error_strategy final : public antlr4::DefaultErrorStrategy
 {
     void reportError(antlr4::Parser* recognizer, const antlr4::RecognitionException& e) override
     {
@@ -39,7 +39,6 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         // recovery strategy
         antlr4::misc::IntervalSet endTokens;
 
-        endTokens.addItems(tokens::EOLLN);
         consumeUntil(recognizer, endTokens);
 
         beginErrorCondition(recognizer);
@@ -61,55 +60,15 @@ class error_strategy : public antlr4::DefaultErrorStrategy
         }
     }
 
-    antlr4::Token* getMissingSymbol(antlr4::Parser* recognizer) override
+    antlr4::Token* getMissingSymbol(antlr4::Parser*) override
     {
-        using namespace antlr4;
-
-        auto* currentSymbol = recognizer->getCurrentToken();
-        assert(currentSymbol);
-
-        misc::IntervalSet expecting = getExpectedTokens(recognizer);
-        size_t expectedTokenType = expecting.getMinElement(); // get any element
-        std::string tokenText;
-        if (expectedTokenType == Token::EOF)
-        {
-            tokenText = "Unexpected end of file";
-        }
-        else
-        {
-            tokenText = "<missing " + recognizer->getVocabulary().getDisplayName(expectedTokenType) + ">";
-        }
-        auto* current = currentSymbol;
-        // Get parser_library::token instead of antlr4::Token
-        auto* lookback = recognizer->getTokenStream()->LT(-1);
-        if (current->getType() == Token::EOF && lookback != nullptr)
-        {
-            current = lookback;
-        }
-
-        auto& lex = dynamic_cast<lexing::lexer&>(*recognizer->getTokenStream()->getTokenSource());
-        auto& lexing_token = dynamic_cast<lexing::token&>(*current);
-        // return specialized tokens
-        _errorSymbols.push_back(lex.get_token_factory()->create(current->getTokenSource(),
-            lexing_token.getInputStream(),
-            expectedTokenType,
-            Token::DEFAULT_CHANNEL,
-            INVALID_INDEX,
-            INVALID_INDEX,
-            lexing_token.getLine(),
-            lexing_token.getCharPositionInLine(),
-            (size_t)-1,
-            lexing_token.get_char_position_in_line_16(),
-            lexing_token.get_end_of_token_in_line_utf16()));
-
-        return _errorSymbols.back().get();
+        assert(false);
+        throw std::logic_error("unreachable - singleTokenInsertion returns false");
     }
 
     antlr4::Token* singleTokenDeletion(antlr4::Parser*) override { return nullptr; }
 
     bool singleTokenInsertion(antlr4::Parser*) override { return false; }
-
-    std::vector<std::unique_ptr<antlr4::Token>> _errorSymbols;
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

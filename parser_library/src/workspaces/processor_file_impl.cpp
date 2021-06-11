@@ -45,16 +45,27 @@ void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
 
 bool processor_file_impl::is_once_only() const { return false; }
 
-parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
+parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts)
 {
     if (opencode_analyzer_)
         opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
-            get_file_name(),
-            lib_provider,
-            get_lsp_editing(),
-            std::move(opencode_analyzer_->hlasm_ctx().ids()));
+            analyzer_options {
+                get_file_name(),
+                &lib_provider,
+                std::move(asm_opts),
+                get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+                file_is_opencode::yes,
+                std::move(opencode_analyzer_->hlasm_ctx().ids()),
+            });
     else
-        opencode_analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
+        opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
+            analyzer_options {
+                get_file_name(),
+                &lib_provider,
+                std::move(asm_opts),
+                get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+                file_is_opencode::yes,
+            });
 
     auto old_dep = dependencies_;
 
@@ -82,14 +93,21 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
 
 
 parse_result processor_file_impl::parse_macro(
-    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
     auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
 
     if (macro_cache_.load_from_cache(cache_key, ctx))
         return true;
 
-    auto a = std::make_unique<analyzer>(get_text(), get_file_name(), ctx, lib_provider, data, get_lsp_editing());
+    auto a = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
 
     auto ret = parse_inner(*a);
 
@@ -102,10 +120,16 @@ parse_result processor_file_impl::parse_macro(
 }
 
 parse_result processor_file_impl::parse_no_lsp_update(
-    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
-    auto no_update_analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    auto no_update_analyzer_ = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
     no_update_analyzer_->analyze();
     return true;
 }

@@ -64,6 +64,7 @@ bool low_language_processor::create_symbol(
     return ok;
 }
 
+constexpr bool is_empty_or_space(std::string_view s) { return s.find_first_not_of(' ') == std::string_view::npos; }
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
@@ -75,14 +76,17 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     switch (stmt.label_ref().type)
     {
         case semantics::label_si_type::CONC:
-            label.emplace(stmt.label_ref().field_range,
-                semantics::concatenation_point::evaluate(
-                    std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx));
+            new_label = semantics::concatenation_point::evaluate(
+                std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx);
+            if (is_empty_or_space(new_label))
+                label.emplace(stmt.label_ref().field_range);
+            else
+                label.emplace(stmt.label_ref().field_range, std::move(new_label));
             break;
         case semantics::label_si_type::VAR:
             new_label = semantics::var_sym_conc::evaluate(
                 std::get<semantics::vs_ptr>(stmt.label_ref().value)->evaluate(eval_ctx));
-            if (new_label.empty() || new_label[0] == ' ')
+            if (is_empty_or_space(new_label))
                 label.emplace(stmt.label_ref().field_range);
             else
                 label.emplace(stmt.label_ref().field_range, std::move(new_label));

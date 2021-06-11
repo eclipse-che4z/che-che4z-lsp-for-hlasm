@@ -26,7 +26,7 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_string, undefined_attributes)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 

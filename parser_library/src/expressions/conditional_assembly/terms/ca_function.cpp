@@ -290,7 +290,7 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (param.size() <= 32 && std ::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
+    if (param.size() <= 32 && std::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
         return 1;
     return 0;
 }
@@ -322,7 +322,8 @@ context::SET_t ca_function::ISHEX(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (param.size() <= 8 && std::all_of(param.cbegin(), param.cend(), [](char c) { return std::isxdigit(c); }))
+    if (param.size() <= 8
+        && std::all_of(param.cbegin(), param.cend(), [](unsigned char c) { return std::isxdigit(c); }))
         return 1;
     return 0;
 }
@@ -332,7 +333,7 @@ context::SET_t ca_function::ISSYM(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    if (!std::isdigit(param.front()) && param.size() < 64
+    if (!std::isdigit((unsigned char)param.front()) && param.size() < 64
         && std::all_of(param.cbegin(), param.cend(), lexing::lexer::ord_char))
         return 1;
     return 0;
@@ -612,7 +613,7 @@ context::SET_t ca_function::ESYM(const context::C_t&) { return context::SET_t();
 
 context::SET_t ca_function::LOWER(context::C_t param)
 {
-    std::transform(param.begin(), param.end(), param.begin(), [](char c) { return (char)tolower(c); });
+    std::transform(param.begin(), param.end(), param.begin(), [](unsigned char c) { return (char)tolower(c); });
     return param;
 }
 
@@ -624,7 +625,7 @@ context::SET_t ca_function::SYSATTRP(const context::C_t&) { return context::SET_
 
 context::SET_t ca_function::UPPER(context::C_t param)
 {
-    std::transform(param.begin(), param.end(), param.begin(), [](char c) { return (char)toupper(c); });
+    std::transform(param.begin(), param.end(), param.begin(), [](unsigned char c) { return (char)toupper(c); });
     return param;
 }
 
@@ -641,7 +642,7 @@ context::SET_t ca_function::X2B(const context::C_t& param, diagnostic_adder& add
     for (auto c = param.c_str(); c != param.c_str() + param.size(); ++c)
     {
         unsigned char value = 0;
-        if (std::isxdigit(*c))
+        if (std::isxdigit((unsigned char)*c))
             std::from_chars(c, c + 1, value, 16);
         else
             RET_ERRPARM;
@@ -667,7 +668,7 @@ context::SET_t ca_function::X2C(const context::C_t& param, diagnostic_adder& add
     for (auto c = new_string.c_str(); c != new_string.c_str() + new_string.size(); c += 2)
     {
         unsigned char value = 0;
-        if (std::isxdigit(*c))
+        if (std::isxdigit((unsigned char)*c))
             std::from_chars(c, c + 2, value, 16);
         else
             RET_ERRPARM;

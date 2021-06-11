@@ -39,7 +39,7 @@ struct send_message_provider_mock : public send_message_provider
 TEST(dap_server, dap_server)
 {
     std::string file_name = utils::path::absolute("to_trace").string();
-    file_name[0] = (char)std::tolower((char)file_name[0]);
+    file_name[0] = (char)std::tolower((unsigned char)file_name[0]);
 
     std::string file_text = " LR 1,1";
     parser_library::workspace_manager ws_mngr;

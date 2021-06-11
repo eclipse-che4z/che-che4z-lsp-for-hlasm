@@ -36,12 +36,12 @@ public:
     void collect_diags() const override;
     bool is_once_only() const override;
     // Starts parser with new (empty) context
-    parse_result parse(parse_lib_provider&) override;
+    parse_result parse(parse_lib_provider&, asm_option) override;
     // Starts parser with in the context of parameter
-    parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) override;
+    parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) override;
     // Starts parser with in the context of parameter, but does not affect LSP, HL info or parse_info_updated.
     // Used by the macro tracer.
-    parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, const library_data) override;
+    parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context ctx, library_data) override;
 
     const std::set<std::string>& dependencies() override;
 

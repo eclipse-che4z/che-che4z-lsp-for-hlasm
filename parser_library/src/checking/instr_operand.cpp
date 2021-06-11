@@ -265,6 +265,7 @@ one_operand::one_operand(const one_operand& op)
     value = op.value;
     is_default = op.is_default;
 };
+
 bool one_operand::check(
     diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range&) const
 {
@@ -286,6 +287,7 @@ bool one_operand::check(
         }
         return true;
     }
+
     // it is a simple operand
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {

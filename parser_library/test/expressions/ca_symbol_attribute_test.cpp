@@ -26,7 +26,7 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol_attr, undefined_attributes)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
@@ -53,7 +53,7 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 
 TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
@@ -65,7 +65,7 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
@@ -82,7 +82,7 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
@@ -119,7 +119,7 @@ struct stringer
 class ca_attr : public ::testing::TestWithParam<attr_test_param>
 {
 protected:
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
+    std::shared_ptr<context::hlasm_context> hlasm_ctx = std::make_shared<context::hlasm_context>();
     lib_prov_mock lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 };

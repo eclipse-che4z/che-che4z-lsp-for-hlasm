@@ -493,6 +493,7 @@ struct diagnostic_op
 
     static diagnostic_op error_M200(const std::string& instr_name, const range& range);
 
+    static diagnostic_op error_E001(const range& range);
 
     static diagnostic_op error_E010(const std::string& message, const range& range);
 

@@ -31,6 +31,13 @@ public:
         : diagnosable_ctx(hlasm_ctx)
         , parser_error_listener_substitution(add_diag_with_ctx, substituted, std::move(provider))
     {}
+    parser_error_listener_ctx(context::hlasm_context& hlasm_ctx,
+        const std::string* substituted,
+        const std::function<void(diagnostic_op)>& add_op_diag,
+        semantics::range_provider provider = semantics::range_provider())
+        : diagnosable_ctx(hlasm_ctx)
+        , parser_error_listener_substitution(add_op_diag, substituted, std::move(provider))
+    {}
     void collect_diags() const override {};
 
 private:

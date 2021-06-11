@@ -18,6 +18,7 @@
 #include "antlr4-runtime.h"
 #include "gtest/gtest.h"
 
+#include "analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/input_source.h"
 #include "lexing/lexer.h"
@@ -36,12 +37,10 @@ TEST(lexer_test, rntest)
 SPACE
 ORDSYMBOL
 SPACE
-EOLLN
 SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 EOF
 )";
 
@@ -59,31 +58,6 @@ EOF
     auto token_string = token_stream.str();
 
     ASSERT_EQ(token_string, out);
-}
-
-TEST(lexer_test, new_line_in_ignored)
-{
-    semantics::source_info_processor src_proc(false);
-    // test case, when a newline is in the first 15 ignored characters after continuation
-    lexing::input_source input(
-        R"(NAME1 OP1      OPERAND1,OPERAND2,OPERAND3   This is the normal         X
-        
-label lr 1,1)");
-    lexing::lexer l(&input, &src_proc);
-    lexing::token_stream tokens(&l);
-    parser parser(&tokens);
-
-    tokens.fill();
-
-    std::stringstream token_stream;
-    size_t eolln_count = 0;
-    for (auto token : tokens.getTokens())
-    {
-        if (parser.getVocabulary().getSymbolicName(token->getType()) == "EOLLN")
-            ++eolln_count;
-    }
-
-    EXPECT_EQ(eolln_count, (size_t)2);
 }
 
 TEST(lexer_test, unlimited_line)
@@ -110,7 +84,6 @@ SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 IGNORED
 SPACE
 ORDSYMBOL
@@ -118,7 +91,6 @@ SPACE
 NUM
 SPACE
 ORDSYMBOL
-EOLLN
 IGNORED
 SPACE
 ORDSYMBOL
@@ -133,7 +105,6 @@ SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-EOLLN
 EOF
 )";
 
@@ -149,83 +120,6 @@ EOF
     std::stringstream token_stream;
     for (auto token : tokens.getTokens())
         token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-    auto token_string = token_stream.str();
-
-    ASSERT_EQ(token_string, out);
-}
-
-TEST(lexer_test, rewind_input)
-{
-    std::string in =
-        R"(    REWIND1
-REWIND2
-    REWIND3)";
-    std::string out = R"(SPACE
-ORDSYMBOL
-SPACE
-ORDSYMBOL
-EOLLN
-ORDSYMBOL
-ORDSYMBOL
-EOLLN
-ORDSYMBOL
-EOLLN
-SPACE
-ORDSYMBOL
-ORDSYMBOL
-EOLLN
-SPACE
-ORDSYMBOL
-EOLLN
-EOF
-)";
-    lexing::input_source input(in);
-    semantics::source_info_processor src_proc(false);
-    lexing::lexer l(&input, &src_proc);
-    lexing::token_stream tokens(&l);
-    parser parser(&tokens);
-
-    std::stringstream token_stream;
-    lexing::token_ptr token;
-    do
-    {
-        token = l.nextToken();
-        token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-        if (token->getText() == "REWIND1")
-        {
-            l.rewind_input({ 0, 0 });
-            break;
-        }
-    } while (token->getType() != antlr4::Token::EOF);
-
-    do
-    {
-        token = l.nextToken();
-        token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-        if (token->getText() == "REWIND2")
-        {
-            l.rewind_input({ 0, 4 });
-            break;
-        }
-    } while (token->getType() != antlr4::Token::EOF);
-
-    do
-    {
-        token = l.nextToken();
-        token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-        if (token->getText() == "REWIND3")
-        {
-            l.rewind_input({ 1, 17 });
-            break;
-        }
-    } while (token->getType() != antlr4::Token::EOF);
-
-    do
-    {
-        token = l.nextToken();
-        token_stream << parser.getVocabulary().getSymbolicName(token->getType()) << std::endl;
-    } while (token->getType() != antlr4::Token::EOF);
-
     auto token_string = token_stream.str();
 
     ASSERT_EQ(token_string, out);
@@ -265,4 +159,24 @@ TEST(lexer_test, attribute_in_continuation)
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::IGNORED);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ATTR);
     ASSERT_EQ(l.nextToken()->getType(), lexing::lexer::ORDSYMBOL);
+}
+
+TEST(lexer_test, bad_continuation)
+{
+    std::string in =
+        R"( SAM31                                                                 X
+ err
+)";
+    analyzer a(in);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+
+    ASSERT_EQ(diags.size(), (size_t)1);
+    EXPECT_EQ(diags[0].code, "E001");
+    EXPECT_EQ(diags[0].diag_range.start.line, 1);
+    EXPECT_EQ(diags[0].diag_range.start.column, 0);
+    EXPECT_EQ(diags[0].diag_range.end.line, 1);
+    EXPECT_EQ(diags[0].diag_range.end.column, 4);
 }

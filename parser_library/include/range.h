@@ -40,6 +40,21 @@ struct PARSER_LIBRARY_EXPORT position
     bool operator!=(const position& oth) const { return !(*this == oth); }
     position_t line;
     position_t column;
+
+    static inline position min(const position& lhs, const position& rhs)
+    {
+        if (lhs.line == rhs.line)
+            return position(lhs.line, std::min(lhs.column, rhs.column));
+        else
+            return (lhs.line < rhs.line) ? lhs : rhs;
+    }
+    static inline position max(const position& lhs, const position& rhs)
+    {
+        if (lhs.line == rhs.line)
+            return position(lhs.line, std::max(lhs.column, rhs.column));
+        else
+            return (lhs.line > rhs.line) ? lhs : rhs;
+    }
 };
 
 struct PARSER_LIBRARY_EXPORT range
@@ -57,6 +72,11 @@ struct PARSER_LIBRARY_EXPORT range
     position start;
     position end;
 };
+
+inline range union_range(const range& lhs, const range& rhs)
+{
+    return range(position::min(lhs.start, rhs.start), position::max(lhs.end, rhs.end));
+}
 
 struct PARSER_LIBRARY_EXPORT file_range
 {

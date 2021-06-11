@@ -41,6 +41,8 @@ macrodef_processor::macrodef_processor(analyzing_context ctx,
     result_.external = start_.is_external;
     if (start_.is_external)
         result_.prototype.macro_name = start_.external_name;
+
+    result_.invalid = true; // result starts invalid until mandatory statements are encountered
 }
 
 processing_status macrodef_processor::get_processing_status(const semantics::instruction_si& instruction) const
@@ -166,6 +168,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else if (expecting_prototype_)
     {
+        result_.invalid = false;
         assert(statement.access_resolved());
         process_prototype(*statement.access_resolved());
         expecting_prototype_ = false;
@@ -378,7 +381,10 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
-        asm_processor::process_copy(statement, ctx, provider_, this);
+        if (asm_processor::process_copy(statement, ctx, provider_, this))
+        {
+            result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
+        }
     }
     else
         add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));

@@ -176,7 +176,7 @@ TEST(lookahead, forward_jump_before_continued_comment)
  AGO .A
  BAD_INSTR
 *COMMENT                                                               X IGNORED
- IGNORED         COMMENT
+                 COMMENT
 .A ANOP
 )");
 
@@ -459,7 +459,6 @@ X EQU =**)-,2
 
 class look_parse_lib_prov : public parse_lib_provider
 {
-    asm_option asm_options;
     std::unique_ptr<analyzer> a;
 
     std::string LIB =
@@ -480,7 +479,8 @@ X EQU 1,2,C'X'
 &AFTER_MAC SETB 1
 )";
 
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+public:
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
         std::string* content;
         if (library == "LIB")
@@ -492,14 +492,13 @@ X EQU 1,2,C'X'
         else
             return false;
 
-        a = std::make_unique<analyzer>(*content, library, std::move(ctx), *this, data);
+        a = std::make_unique<analyzer>(*content, analyzer_options { library, this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
         return true;
     }
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)
@@ -513,7 +512,7 @@ TEST(attribute_lookahead, lookup_to_copy)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -556,7 +555,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -604,7 +603,7 @@ X EQU 1,2
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -635,7 +634,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
          GETMAIN   b=svc)");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -653,7 +652,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
 )");
 
     look_parse_lib_prov mock;
-    analyzer a(input, "", mock);
+    analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
 
@@ -968,4 +967,20 @@ A DC AL(*-B+2)(*)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
     EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)5);
+}
+
+TEST(attribute_lookahead, ignore_invalid_code)
+{
+    std::string input = R"(
+      AIF (L'C GT 0).SKIP
+      'invalid
+.SKIP ANOP
+C     DC C'STH'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
 }

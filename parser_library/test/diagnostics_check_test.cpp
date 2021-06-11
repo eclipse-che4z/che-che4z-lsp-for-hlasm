@@ -228,7 +228,7 @@ TEST(diagnostics, mnemonics)
   BROL LABEL2
   BRNOL LABEL2
   JLNOP LABEL2
-LABEL1 EQU *+19000     
+LABEL1 EQU *+19000
 LABEL2 equ *+79000
 )");
 

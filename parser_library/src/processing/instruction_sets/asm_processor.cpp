@@ -530,7 +530,7 @@ void asm_processor::process(context::shared_stmt_ptr stmt)
     }
 }
 
-void asm_processor::process_copy(const semantics::complete_statement& stmt,
+bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
     diagnosable_ctx* diagnoser)
@@ -542,7 +542,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-        return;
+        return false;
     }
 
     auto tmp = ctx.hlasm_ctx->copy_members().find(sym_expr->value);
@@ -556,7 +556,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
         {
             if (diagnoser)
                 diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-            return;
+            return false;
         }
     }
     auto whole_copy_stack = ctx.hlasm_ctx->whole_copy_stack();
@@ -567,10 +567,12 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
-        return;
+        return false;
     }
 
     ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
+
+    return true;
 }
 
 asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& h_ctx)
