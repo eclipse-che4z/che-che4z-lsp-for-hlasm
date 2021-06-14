@@ -61,6 +61,24 @@ protected:
         range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) = 0;
 };
 
+class parser_error_listener_proxy : public parser_error_listener_base
+{
+public:
+    parser_error_listener_proxy() {};
+    const std::function<void(diagnostic_op)>* add_diag = nullptr;
+
+protected:
+    void add_parser_diagnostic(
+        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override
+    {
+        if (add_diag)
+            (*add_diag)(diagnostic_op(severity, std::move(code), std::move(message), std::move(diagnostic_range)));
+    }
+    
+private:
+    
+};
+
 class parser_error_listener : public parser_error_listener_base, public diagnosable_impl
 {
 public:

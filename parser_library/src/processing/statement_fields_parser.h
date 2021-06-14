@@ -40,7 +40,7 @@ class statement_fields_parser final : public diagnosable_impl
         bool unlimited_line,
         semantics::range_provider field_range,
         processing::processing_status status,
-        parsing::parser_error_listener_ctx& err_listener);
+        const std::function<void(diagnostic_op)>& add_diag);
 
 public:
     using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;

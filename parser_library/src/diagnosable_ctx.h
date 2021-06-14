@@ -41,6 +41,8 @@ public:
         add_diagnostic_inner(std::move(diagnostic), ctx_.processing_stack());
     }
 
+    void operator()(diagnostic_op d) const {add_diagnostic(std::move(d)); }
+
 protected:
     diagnosable_ctx(context::hlasm_context& ctx)
         : ctx_(ctx)

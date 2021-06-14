@@ -26,22 +26,26 @@ namespace hlasm_plugin::parser_library {
 // class that simplyfies adding of diagnostics
 // holds both range and collectable object
 // hence, there is no need to specify range in a diagnostic creation, just pass diagnostic function
+
 class diagnostic_adder
 {
-    const collectable<diagnostic_s>* s_diagnoser_;
-    const collectable<diagnostic_op>* op_diagnoser_;
+    const std::function<void(diagnostic_op)>* op_diagnoser_ = nullptr;
     range diag_range_;
 
 public:
     bool diagnostics_present;
 
-    diagnostic_adder(const collectable<diagnostic_s>* diagnoser, range diag_range);
+    diagnostic_adder(const std::function<void(diagnostic_op)>& diagnoser, range diag_range)
+        : op_diagnoser_(&diagnoser)
+        , diag_range_(diag_range) {};
 
-    diagnostic_adder(const collectable<diagnostic_op>* diagnoser, range diag_range);
+    diagnostic_adder() {}
 
-    diagnostic_adder();
-
-    void operator()(const std::function<diagnostic_op(range)>& f);
+    void operator()(const std::function<diagnostic_op(range)>& f)
+    {
+        if (op_diagnoser_)
+            (*op_diagnoser_)(f(diag_range_));
+    }
 };
 
 } // namespace hlasm_plugin::parser_library

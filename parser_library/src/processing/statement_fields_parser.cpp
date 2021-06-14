@@ -34,7 +34,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     bool unlimited_line,
     semantics::range_provider field_range,
     processing::processing_status status,
-    parsing::parser_error_listener_ctx& err_listener)
+    const std::function<void(diagnostic_op)>& add_diag)
 {
     m_parser->input->reset(text);
 
@@ -44,9 +44,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
 
     m_parser->stream->reset();
 
-    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &err_listener);
-    m_parser->parser->removeErrorListeners();
-    m_parser->parser->addErrorListener(&err_listener);
+    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &add_diag);
 
     m_parser->parser->reset();
 
@@ -63,12 +61,17 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 {
     m_hlasm_ctx->metrics.reparsed_statements++;
 
-    parsing::parser_error_listener_ctx listener(
-        *m_hlasm_ctx, after_substitution ? &field : nullptr, add_diag, field_range);
+    parsing::parser_error_listener_substitution listener(add_diag,
+        after_substitution ? &field : nullptr, field_range);
 
     const auto original_range = field_range.original_range;
 
-    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, listener);
+    auto add_diag_subst = [&](diagnostic_op diag) {
+        if (after_substitution)
+            diag.message = "While substituting to '" + field + "' => " + diag.message;
+        add_diag(std::move(diag));
+    };
+    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);
 
     semantics::op_rem line;
     const auto& [format, opcode] = status;
@@ -89,7 +92,8 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
 
-                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, listener);
+                    const auto& h_second =
+                        prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
 
                     line.operands = std::move(h_second.parser->macro_ops()->list);
                 }
@@ -108,8 +112,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                 break;
         }
     }
-
-    collect_diags_from_child(listener);
 
     for (auto& op : line.operands)
     {

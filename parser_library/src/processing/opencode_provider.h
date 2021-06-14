@@ -60,7 +60,7 @@ enum class extract_next_logical_line_result
 };
 
 // uses the parser implementation to produce statements in the opencode(-like) scenario
-class opencode_provider final : public diagnosable_impl, public statement_provider
+class opencode_provider final : public diagnosable_ctx, public statement_provider
 {
     struct lines_to_remove
     {
@@ -109,7 +109,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     opencode_provider_options m_opts;
 
-    parsing::parser_error_listener m_listener;
+    std::function<void(diagnostic_op)> add_parser_diag = [this](diagnostic_op diag) { this->add_diagnostic(diag); };
 
     bool m_line_fed = false;
 
@@ -161,6 +161,8 @@ private:
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
         const range& op_range);
+
+
 };
 
 } // namespace hlasm_plugin::parser_library::processing

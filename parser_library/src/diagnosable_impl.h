@@ -48,6 +48,8 @@ protected:
 
     void add_diagnostic(T diagnostic) const override { container.push_back(std::move(diagnostic)); }
 
+    void operator()(T diagnostic) const { add_diagnostic(std::move(diagnostic)); }
+
     bool is_once_only() const override { return true; }
 
 protected:

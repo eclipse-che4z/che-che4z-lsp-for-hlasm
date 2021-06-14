@@ -46,12 +46,12 @@ class parser_impl : public antlr4::Parser
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx, collectable<diagnostic_s>* d);
+    void initialize(context::hlasm_context* hlasm_ctx, const std::function<void(diagnostic_op)>* add_diag);
 
     void reinitialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat,
-        collectable<diagnostic_s>* d);
+        const std::function<void(diagnostic_op)>* add_diag);
 
     semantics::collector& get_collector() { return collector; }
 
@@ -90,7 +90,8 @@ protected:
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
-    collectable<diagnostic_s>* diags = nullptr;
+    const std::function<void(diagnostic_op)>* add_diag_ = nullptr;
+    parser_error_listener_proxy err_listener_;
 };
 
 // structure containing parser components

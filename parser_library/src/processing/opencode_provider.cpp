@@ -32,6 +32,7 @@ opencode_provider::opencode_provider(std::string_view text,
     const std::string& filename,
     opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
+    , diagnosable_ctx(*ctx.hlasm_ctx)
     , m_original_text(text)
     , m_next_line_text(text)
     , m_parser(parsing::parser_holder::create(&src_proc))
@@ -42,11 +43,8 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
     , m_opts(opts)
-    , m_listener(filename)
 {
-    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &m_listener);
-    m_parser->parser->removeErrorListeners();
-    m_parser->parser->addErrorListener(&m_listener);
+    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &add_parser_diag);
 
     m_lookahead_parser->parser->initialize(m_ctx->hlasm_ctx.get(), nullptr);
     m_lookahead_parser->parser->removeErrorListeners();
@@ -393,7 +391,7 @@ parsing::hlasmparser& opencode_provider::parser()
 }
 
 
-void opencode_provider::collect_diags() const { collect_diags_from_child(m_listener); }
+void opencode_provider::collect_diags() const { }
 
 void opencode_provider::apply_pending_line_changes()
 {
@@ -548,10 +546,9 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
 
     h.stream->reset();
 
-    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, err_listener);
-    h.parser->removeErrorListeners();
-    if (err_listener)
-        h.parser->addErrorListener(err_listener);
+
+    h.parser->reinitialize(
+        &hlasm_ctx, std::move(range_prov), proc_status, &add_parser_diag);
 
     h.parser->reset();
 
