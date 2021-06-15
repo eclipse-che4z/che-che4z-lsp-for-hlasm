@@ -359,3 +359,52 @@ Line5
     ASSERT_EQ(diags.size(), 1);
     EXPECT_EQ(diags[0].diag_range.start.line, 15);
 }
+
+TEST(aread, macro_called_in_copybook)
+{
+    std::string input = " COPY  COPYBOOK";
+    class asm_options_invalid_lib_provider : public parse_lib_provider
+    {
+        std::string copybook = R"(
+          MACRO
+          M
+&VAR      AREAD
+          MEND
+          M
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)";
+
+    public:
+        parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
+        {
+            if (library != "COPYBOOK")
+                return false;
+
+            auto a = std::make_unique<analyzer>(copybook, analyzer_options { library, this, std::move(ctx), data });
+            a->analyze();
+            a->collect_diags();
+            return true;
+        }
+
+        bool has_library(const std::string& library, const std::string&) const override
+        {
+            return library == "COPYBOOK";
+        }
+    } lib_provider;
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
