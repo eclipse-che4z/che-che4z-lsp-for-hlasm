@@ -30,13 +30,13 @@ context::statement_cache* copy_statement_provider::get_next()
     auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
 
     ++invo.current_statement;
-    if ((size_t)invo.current_statement == invo.cached_definition.size())
+    if ((size_t)invo.current_statement == invo.cached_definition->size())
     {
         ctx.hlasm_ctx->leave_copy_member();
         return nullptr;
     }
 
-    return &invo.cached_definition[invo.current_statement];
+    return &invo.cached_definition->at(invo.current_statement);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
