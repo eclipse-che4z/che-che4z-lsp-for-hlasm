@@ -120,6 +120,14 @@ macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
         return macros_.at(it->second);
 }
 
+const file_info* lsp_context::get_file_info(const std::string& file_name) const
+{
+    if (auto it = files_.find(file_name); it != files_.end())
+        return it->second.get();
+    else
+        return nullptr;
+}
+
 location lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
