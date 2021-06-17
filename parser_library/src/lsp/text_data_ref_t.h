@@ -43,6 +43,9 @@ public:
     // Returns a string_view beginning at specified position and ending at specified position
     std::string_view get_range_content(range pos) const;
 
+    // Returns a string_view beginning at specified line
+    std::string_view get_lines_beginning(position pos) const;
+
     // Returns a character before the specified position
     // If the position points to the first character, returns '\0'
     char get_character_before(position pos) const;
