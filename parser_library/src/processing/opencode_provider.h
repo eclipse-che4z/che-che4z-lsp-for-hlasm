@@ -94,7 +94,15 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
-    std::vector<std::string_view> m_copy_files;
+
+    struct copy_member_state
+    {
+        std::string_view text;
+        size_t line_no;
+        const lsp::file_info* copy_file;
+    };
+
+    std::vector<copy_member_state> m_copy_files;
 
     std::vector<std::string> m_preprocessor_buffer;
 
@@ -112,6 +120,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     parsing::parser_error_listener m_listener;
 
     bool m_line_fed = false;
+    bool m_copy_files_aread_ready = false;
+    bool m_copy_suspend_called = false;
 
 public:
     // rewinds position in file
@@ -161,6 +171,8 @@ private:
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
         const range& op_range);
+
+    bool fill_copy_buffer_for_aread();
 };
 
 } // namespace hlasm_plugin::parser_library::processing
