@@ -78,8 +78,8 @@ private:
     void finish_copy_member(copy_processing_result result) override;
     void finish_opencode() override;
 
-    void suspend_top_level_copy_processing() override;
-    bool resume_top_level_copy_processing_at(size_t line_no, resume_copy resume_opts) override;
+    void suspend_opencode_copy_processing() override;
+    bool resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts) override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
 

@@ -100,7 +100,7 @@ std::string opencode_provider::aread()
         while (!m_copy_files.empty() && m_copy_files.back().text.empty())
         {
             m_copy_files.pop_back();
-            m_ctx->hlasm_ctx->top_level_copy_stack().pop_back();
+            m_ctx->hlasm_ctx->opencode_copy_stack().pop_back();
         }
     }
     else if (!m_preprocessor_buffer.empty())
@@ -335,7 +335,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
 bool opencode_provider::fill_copy_buffer_for_aread()
 {
-    auto& opencode_stack = m_ctx->hlasm_ctx->top_level_copy_stack();
+    auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
     if (opencode_stack.empty())
         return false;
 
@@ -364,7 +364,7 @@ bool opencode_provider::fill_copy_buffer_for_aread()
     if (m_copy_files.empty())
         return false;
 
-    m_state_listener->suspend_top_level_copy_processing();
+    m_state_listener->suspend_opencode_copy_processing();
     m_copy_suspend_called = true;
 
     return true;
@@ -514,14 +514,14 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     {
         m_copy_files_aread_ready = false;
 
-        assert(&m_ctx->hlasm_ctx->current_copy_stack() == &m_ctx->hlasm_ctx->top_level_copy_stack());
+        assert(&m_ctx->hlasm_ctx->current_copy_stack() == &m_ctx->hlasm_ctx->opencode_copy_stack());
 
         if (m_copy_suspend_called)
         {
             m_copy_suspend_called = false;
             if (m_copy_files.empty())
-                m_state_listener->resume_top_level_copy_processing_at(0, resume_copy::ignore_line);
-            else if (m_state_listener->resume_top_level_copy_processing_at(
+                m_state_listener->resume_opencode_copy_processing_at(0, resume_copy::ignore_line);
+            else if (m_state_listener->resume_opencode_copy_processing_at(
                          m_copy_files.back().line_no, resume_copy::exact_line_match))
                 return extract_next_logical_line_result::failed;
         }
@@ -529,7 +529,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
     if (!m_copy_files.empty())
     {
-        auto& opencode_copy_stack = m_ctx->hlasm_ctx->top_level_copy_stack();
+        auto& opencode_copy_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
         assert(&opencode_copy_stack == &m_ctx->hlasm_ctx->current_copy_stack());
 
         auto& copy_file = m_copy_files.back();
@@ -551,7 +551,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         while (!m_copy_files.empty()
             && (m_copy_files.back().text.empty()
                 || false
-                    == (restarted = m_state_listener->resume_top_level_copy_processing_at(
+                    == (restarted = m_state_listener->resume_opencode_copy_processing_at(
                             m_copy_files.back().line_no, resume_copy::exact_or_next_line))))
         {
             m_copy_files.pop_back();
@@ -559,7 +559,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         }
 
         if (m_copy_files.empty())
-            restarted = m_state_listener->resume_top_level_copy_processing_at(0, resume_copy::ignore_line);
+            restarted = m_state_listener->resume_opencode_copy_processing_at(0, resume_copy::ignore_line);
 
         assert(restarted);
 

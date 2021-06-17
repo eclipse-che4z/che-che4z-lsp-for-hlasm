@@ -26,7 +26,7 @@ copy_statement_provider::copy_statement_provider(analyzing_context ctx,
 bool copy_statement_provider::finished() const
 {
     return ctx.hlasm_ctx->current_copy_stack().empty()
-        || m_suspended && &ctx.hlasm_ctx->current_copy_stack() == &ctx.hlasm_ctx->top_level_copy_stack();
+        || m_suspended && &ctx.hlasm_ctx->current_copy_stack() == &ctx.hlasm_ctx->opencode_copy_stack();
 }
 
 void copy_statement_provider::suspend()
@@ -46,7 +46,7 @@ bool copy_statement_provider::resume_at(size_t line_no, resume_copy resume_opts)
     }
 
     auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
-    assert(&ctx.hlasm_ctx->top_level_copy_stack().back() == &invo);
+    assert(&ctx.hlasm_ctx->opencode_copy_stack().back() == &invo);
 
     invo.current_statement = -1;
 

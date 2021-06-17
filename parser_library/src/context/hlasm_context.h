@@ -117,7 +117,7 @@ public:
     const std::vector<copy_member_invocation>& current_copy_stack() const;
     std::vector<copy_member_invocation>& current_copy_stack();
     // gets top level copy stack
-    std::vector<copy_member_invocation>& top_level_copy_stack();
+    std::vector<copy_member_invocation>& opencode_copy_stack();
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 
