@@ -274,7 +274,7 @@ size_t file_impl::index_from_position(const std::string& text, const std::vector
     return i;
 }
 
-std::string file_impl::replace_non_utf8_chars(const std::string& text)
+std::string file_impl::replace_non_utf8_chars(std::string_view text)
 {
     std::string ret;
     ret.reserve(text.size());
@@ -305,6 +305,14 @@ std::string file_impl::replace_non_utf8_chars(const std::string& text)
                     break;
                 }
             }
+        }
+
+        if (OK && ch_len == 4)
+        {
+            // Unicode limit 0x10FFFF
+            unsigned char c0 = text[i];
+            unsigned char c1 = text[i + 1];
+            OK = ((c0 & 0b0000'0111) << 6 | (c1 & 0b00111111)) <= 0x10f;
         }
 
         if (OK)
