@@ -648,7 +648,7 @@ TEST(aread, copy_in_macro)
         { "MAC", R"(*
           MACRO
           MAC
-          AINSERT '&A1       SETA  1    removed by the macro',FRONT
+          AINSERT '&&A1       SETA  1    removed by the macro',FRONT
           COPY MACINNER
           MEND
 )" },
