@@ -603,3 +603,40 @@ TEST(aread, last_statements_in_copy)
     EXPECT_FALSE(a1.has_value());
     EXPECT_EQ(a2, 2);
 }
+
+TEST(aread, interleave_aread_ainsert)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    asm_options_invalid_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC &CALL=1
+&VAR      AREAD
+          AIF (&CALL EQ 0).SKIPCALL
+          AINSERT ' MAC CALL=0',FRONT
+.SKIPCALL ANOP ,
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+removed on first call                                                  X
+&A1       SETA  1                                                      X removed by the second call
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
