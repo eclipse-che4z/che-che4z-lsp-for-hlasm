@@ -402,6 +402,12 @@ const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() c
 
 std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
 
+const std::vector<copy_member_invocation>&
+hlasm_plugin::parser_library::context::hlasm_context::opencode_copy_stack() const
+{
+    return source_stack_.front().copy_stack;
+}
+
 std::vector<copy_member_invocation>& hlasm_plugin::parser_library::context::hlasm_context::opencode_copy_stack()
 {
     return source_stack_.front().copy_stack;

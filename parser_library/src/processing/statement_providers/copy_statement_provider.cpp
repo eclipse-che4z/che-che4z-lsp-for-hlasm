@@ -45,12 +45,11 @@ bool copy_statement_provider::resume_at(size_t line_no, resume_copy resume_opts)
         return true;
     }
 
-    auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
-    assert(&ctx.hlasm_ctx->opencode_copy_stack().back() == &invo);
+    auto& opencode_copy_stack = ctx.hlasm_ctx->opencode_copy_stack().back();
 
-    invo.current_statement = -1;
+    opencode_copy_stack.current_statement = -1;
 
-    for (const auto& stmt : *invo.cached_definition)
+    for (const auto& stmt : *opencode_copy_stack.cached_definition)
     {
         const auto stmt_line_no = stmt.get_base()->statement_position().line;
         if (stmt_line_no == line_no)
@@ -70,7 +69,7 @@ bool copy_statement_provider::resume_at(size_t line_no, resume_copy resume_opts)
             }
         }
 
-        ++invo.current_statement;
+        ++opencode_copy_stack.current_statement;
     }
     return false;
 }
