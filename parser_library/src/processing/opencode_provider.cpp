@@ -91,6 +91,10 @@ std::string opencode_provider::aread()
     {
         result = std::move(m_ainsert_buffer.front());
         m_ainsert_buffer.pop_front();
+        // resume normal copy processing if the last line from ainsert buffer was removed
+        // AND no modifications were done to sources on the copy stack
+        if (m_ainsert_buffer.empty() && m_copy_suspended && !m_copy_files_aread_ready)
+            resume_copy(0, resume_copy::ignore_line);
     }
     else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread())
     {
@@ -135,6 +139,10 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
             m_ainsert_buffer.push_front(rec);
             break;
     }
+    // ainsert buffer may contains macro call that will remove code lines from copybooks
+    // this prevents copybook unwinding
+    if (!m_copy_suspended)
+        suspend_copy();
 }
 
 extract_next_logical_line_result opencode_provider::feed_line(parsing::parser_holder& p)
@@ -505,6 +513,12 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         m_current_logical_line_source.begin_offset = 0;
         m_current_logical_line_source.end_offset = 0;
         m_current_logical_line_source.source = logical_line_origin::source_type::ainsert;
+
+        // resume normal copy processing if the last line from ainsert buffer was removed
+        // AND no modifications were done to sources on the copy stack
+        if (m_lines_to_remove.ainsert_buffer == m_ainsert_buffer.size() && m_copy_suspended
+            && !m_copy_files_aread_ready)
+            resume_copy(0, resume_copy::ignore_line);
 
         return extract_next_logical_line_result::normal;
     }
