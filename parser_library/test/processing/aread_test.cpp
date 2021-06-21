@@ -360,12 +360,39 @@ Line5
     EXPECT_EQ(diags[0].diag_range.start.line, 15);
 }
 
+namespace {
+class asm_options_invalid_lib_provider : public parse_lib_provider
+{
+    std::unordered_map<std::string, std::string> m_files;
+
+public:
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
+    {
+        auto it = m_files.find(library);
+        if (it == m_files.end())
+            return false;
+
+        auto a = std::make_unique<analyzer>(it->second, analyzer_options { library, this, std::move(ctx), data });
+        a->analyze();
+        a->collect_diags();
+        return true;
+    }
+
+    bool has_library(const std::string& library, const std::string&) const override { return m_files.count(library); }
+
+    asm_options_invalid_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
+    {
+        for (const auto& e : entries)
+            m_files.insert(e);
+    }
+};
+} // namespace
+
 TEST(aread, macro_called_in_copybook)
 {
     std::string input = " COPY  COPYBOOK";
-    class asm_options_invalid_lib_provider : public parse_lib_provider
-    {
-        std::string copybook = R"(
+    asm_options_invalid_lib_provider lib_provider {
+        { "COPYBOOK", R"(
           MACRO
           M
 &VAR      AREAD
@@ -373,25 +400,8 @@ TEST(aread, macro_called_in_copybook)
           M
 &A1       SETA  1                                                      X this line is removed by the macro
 &A2       SETA  2
-)";
-
-    public:
-        parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-        {
-            if (library != "COPYBOOK")
-                return false;
-
-            auto a = std::make_unique<analyzer>(copybook, analyzer_options { library, this, std::move(ctx), data });
-            a->analyze();
-            a->collect_diags();
-            return true;
-        }
-
-        bool has_library(const std::string& library, const std::string&) const override
-        {
-            return library == "COPYBOOK";
-        }
-    } lib_provider;
+)" },
+    };
 
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
