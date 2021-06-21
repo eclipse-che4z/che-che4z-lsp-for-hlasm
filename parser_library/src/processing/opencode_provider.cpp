@@ -364,8 +364,7 @@ bool opencode_provider::fill_copy_buffer_for_aread()
     if (m_copy_files.empty())
         return false;
 
-    m_state_listener->suspend_opencode_copy_processing();
-    m_copy_suspend_called = true;
+    suspend_copy();
 
     return true;
 }
@@ -516,13 +515,11 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
         assert(&m_ctx->hlasm_ctx->current_copy_stack() == &m_ctx->hlasm_ctx->opencode_copy_stack());
 
-        if (m_copy_suspend_called)
+        if (m_copy_suspended)
         {
-            m_copy_suspend_called = false;
             if (m_copy_files.empty())
-                m_state_listener->resume_opencode_copy_processing_at(0, resume_copy::ignore_line);
-            else if (m_state_listener->resume_opencode_copy_processing_at(
-                         m_copy_files.back().line_no, resume_copy::exact_line_match))
+                resume_copy(0, resume_copy::ignore_line);
+            else if (resume_copy(m_copy_files.back().line_no, resume_copy::exact_line_match))
                 return extract_next_logical_line_result::failed;
         }
     }
@@ -550,16 +547,14 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         bool restarted = false;
         while (!m_copy_files.empty()
             && (m_copy_files.back().text.empty()
-                || false
-                    == (restarted = m_state_listener->resume_opencode_copy_processing_at(
-                            m_copy_files.back().line_no, resume_copy::exact_or_next_line))))
+                || false == (restarted = resume_copy(m_copy_files.back().line_no, resume_copy::exact_or_next_line))))
         {
             m_copy_files.pop_back();
             opencode_copy_stack.pop_back();
         }
 
         if (m_copy_files.empty())
-            restarted = m_state_listener->resume_opencode_copy_processing_at(0, resume_copy::ignore_line);
+            restarted = resume_copy(0, resume_copy::ignore_line);
 
         assert(restarted);
 
@@ -652,6 +647,23 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
     h.parser->get_collector().prepare_for_next_statement();
 
     return h;
+}
+
+void opencode_provider::suspend_copy()
+{
+    m_state_listener->suspend_opencode_copy_processing();
+    m_copy_suspended = true;
+}
+
+bool opencode_provider::resume_copy(size_t line_no, processing::resume_copy resume_opts)
+{
+    if (m_state_listener->resume_opencode_copy_processing_at(line_no, resume_opts))
+    {
+        m_copy_suspended = false;
+        return true;
+    }
+    else
+        return false;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

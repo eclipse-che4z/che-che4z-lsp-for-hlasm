@@ -121,7 +121,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     bool m_line_fed = false;
     bool m_copy_files_aread_ready = false;
-    bool m_copy_suspend_called = false;
+    bool m_copy_suspended = false;
 
 public:
     // rewinds position in file
@@ -173,6 +173,9 @@ private:
         const range& op_range);
 
     bool fill_copy_buffer_for_aread();
+
+    void suspend_copy();
+    bool resume_copy(size_t line_no, processing::resume_copy resume_opts);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
