@@ -35,7 +35,7 @@ void copy_statement_provider::suspend()
     m_suspended = true;
 }
 
-bool copy_statement_provider::resume_at(size_t line_no, resume_copy resume_opts)
+bool copy_statement_provider::resume_at(position_t line_no, resume_copy resume_opts)
 {
     assert(m_suspended);
 

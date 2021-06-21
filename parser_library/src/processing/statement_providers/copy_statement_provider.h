@@ -33,7 +33,7 @@ public:
     bool finished() const override;
 
     void suspend();
-    bool resume_at(size_t line_no, resume_copy resume_opts);
+    bool resume_at(position_t line_no, resume_copy resume_opts);
 
 protected:
     context::statement_cache* get_next() override;
