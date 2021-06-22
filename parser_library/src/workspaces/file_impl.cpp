@@ -278,51 +278,38 @@ std::string file_impl::replace_non_utf8_chars(std::string_view text)
 {
     std::string ret;
     ret.reserve(text.size());
-    size_t i = 0;
-    while (i < text.size())
+    while (!text.empty())
     {
-        bool OK = true;
         size_t ch_len = 0;
-        if (utf8_one_byte_begin(text[i]))
+        if (utf8_one_byte_begin(text.front()))
             ch_len = 1;
-        else if (utf8_two_byte_begin(text[i]))
+        else if (utf8_two_byte_begin(text.front()))
             ch_len = 2;
-        else if (utf8_three_byte_begin(text[i]))
+        else if (utf8_three_byte_begin(text.front()))
             ch_len = 3;
-        else if (utf8_four_byte_begin(text[i]))
+        else if (utf8_four_byte_begin(text.front()))
             ch_len = 4;
-        else
-            OK = false;
+
+        bool OK = ch_len != 0 && ch_len <= text.size();
 
         // check whether all subsequent bytes of one character begin with 10
+        // otherwise we consider the first byte a wrong character
         if (OK)
-        {
-            for (size_t j = 1; j < ch_len; ++j)
-            {
-                if (i + j >= text.size() || !utf8_continue_byte(text[i + j]))
-                {
-                    OK = false; // we consider the first byte of character wrong
-                    break;
-                }
-            }
-        }
+            OK = std::all_of(text.begin() + 1, text.begin() + ch_len, utf8_continue_byte);
 
         if (OK && ch_len == 4)
         {
             // Unicode limit 0x10FFFF
-            unsigned char c0 = text[i];
-            unsigned char c1 = text[i + 1];
+            unsigned char c0 = text[0];
+            unsigned char c1 = text[1];
             OK = ((c0 & 0b0000'0111) << 6 | (c1 & 0b00111111)) <= 0x10f;
         }
 
         if (OK)
         {
             // copy the character to output
-            for (size_t j = 0; j < ch_len; ++j)
-            {
-                ret.push_back(text[i + j]);
-            }
-            i += ch_len;
+            ret.append(text.substr(0, ch_len));
+            text.remove_prefix(ch_len);
         }
         else
         {
@@ -330,7 +317,7 @@ std::string file_impl::replace_non_utf8_chars(std::string_view text)
             ret.push_back((uint8_t)0xEF);
             ret.push_back((uint8_t)0xBF);
             ret.push_back((uint8_t)0xBD);
-            ++i;
+            text.remove_prefix(1);
         }
     }
     return ret;

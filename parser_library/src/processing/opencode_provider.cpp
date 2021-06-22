@@ -484,6 +484,75 @@ bool opencode_provider::is_next_line_process() const
         });
 }
 
+
+extract_next_logical_line_result opencode_provider::extract_next_logical_line_from_ainsert_buffer()
+{
+    for (std::string_view line : m_ainsert_buffer)
+    {
+        ++m_lines_to_remove.ainsert_buffer;
+        if (!lexing::append_to_logical_line(m_current_logical_line, line, lexing::default_ictl_copy))
+            break;
+    }
+    finish_logical_line(m_current_logical_line, lexing::default_ictl_copy);
+
+    m_current_logical_line_source.begin_line = 0;
+    m_current_logical_line_source.end_line = m_current_logical_line.segments.size() - 1;
+    m_current_logical_line_source.begin_offset = 0;
+    m_current_logical_line_source.end_offset = 0;
+    m_current_logical_line_source.source = logical_line_origin::source_type::ainsert;
+
+    // resume normal copy processing if the last line from ainsert buffer was removed
+    // AND no modifications were done to sources on the copy stack
+    if (m_lines_to_remove.ainsert_buffer == m_ainsert_buffer.size() && m_copy_suspended && !m_copy_files_aread_ready)
+        resume_copy(0, resume_copy::ignore_line);
+
+    return extract_next_logical_line_result::normal;
+}
+
+
+extract_next_logical_line_result opencode_provider::extract_next_logical_line_from_copy_buffer()
+{
+    auto& opencode_copy_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+    assert(&opencode_copy_stack == &m_ctx->hlasm_ctx->current_copy_stack());
+
+    auto& copy_file = m_copy_files.back();
+    if (!lexing::extract_logical_line(m_current_logical_line, copy_file.text, lexing::default_ictl_copy))
+        return extract_next_logical_line_result::failed;
+
+    const auto copy_start = copy_file.copy_file->data.get_lines_beginning({ 0, 0 });
+    m_current_logical_line_source.begin_line = copy_file.line_no;
+    m_current_logical_line_source.end_line = copy_file.line_no + m_current_logical_line.segments.size() - 1;
+    m_current_logical_line_source.begin_offset =
+        m_current_logical_line.segments.front().code.data() - copy_start.data();
+    m_current_logical_line_source.end_offset =
+        copy_file.text.size() ? copy_file.text.data() - copy_start.data() : copy_start.size();
+    m_current_logical_line_source.source = logical_line_origin::source_type::copy;
+
+    copy_file.line_no += m_current_logical_line.segments.size() - 1;
+
+    bool restarted = false;
+    while (!m_copy_files.empty())
+    {
+        if (!m_copy_files.back().text.empty())
+        {
+            restarted = resume_copy(m_copy_files.back().line_no, resume_copy::exact_or_next_line);
+            if (restarted)
+                break;
+        }
+        m_copy_files.pop_back();
+        opencode_copy_stack.pop_back();
+    }
+
+    if (m_copy_files.empty())
+        restarted = resume_copy(0, resume_copy::ignore_line);
+
+    assert(restarted);
+
+    m_copy_files.clear();
+
+    return extract_next_logical_line_result::normal;
+}
+
 extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 {
     apply_pending_line_changes();
@@ -499,29 +568,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     m_current_logical_line_source = {};
 
     if (m_ainsert_buffer.size())
-    {
-        for (std::string_view line : m_ainsert_buffer)
-        {
-            ++m_lines_to_remove.ainsert_buffer;
-            if (!lexing::append_to_logical_line(m_current_logical_line, line, lexing::default_ictl_copy))
-                break;
-        }
-        finish_logical_line(m_current_logical_line, lexing::default_ictl_copy);
-
-        m_current_logical_line_source.begin_line = 0;
-        m_current_logical_line_source.end_line = m_current_logical_line.segments.size() - 1;
-        m_current_logical_line_source.begin_offset = 0;
-        m_current_logical_line_source.end_offset = 0;
-        m_current_logical_line_source.source = logical_line_origin::source_type::ainsert;
-
-        // resume normal copy processing if the last line from ainsert buffer was removed
-        // AND no modifications were done to sources on the copy stack
-        if (m_lines_to_remove.ainsert_buffer == m_ainsert_buffer.size() && m_copy_suspended
-            && !m_copy_files_aread_ready)
-            resume_copy(0, resume_copy::ignore_line);
-
-        return extract_next_logical_line_result::normal;
-    }
+        return extract_next_logical_line_from_ainsert_buffer();
 
     if (m_copy_files_aread_ready)
     {
@@ -539,43 +586,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     }
 
     if (!m_copy_files.empty())
-    {
-        auto& opencode_copy_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
-        assert(&opencode_copy_stack == &m_ctx->hlasm_ctx->current_copy_stack());
-
-        auto& copy_file = m_copy_files.back();
-        if (!lexing::extract_logical_line(m_current_logical_line, copy_file.text, lexing::default_ictl_copy))
-            return extract_next_logical_line_result::failed;
-
-        const auto copy_start = copy_file.copy_file->data.get_lines_beginning({ 0, 0 });
-        m_current_logical_line_source.begin_line = copy_file.line_no;
-        m_current_logical_line_source.end_line = copy_file.line_no + m_current_logical_line.segments.size() - 1;
-        m_current_logical_line_source.begin_offset =
-            m_current_logical_line.segments.front().code.data() - copy_start.data();
-        m_current_logical_line_source.end_offset =
-            copy_file.text.size() ? copy_file.text.data() - copy_start.data() : copy_start.size();
-        m_current_logical_line_source.source = logical_line_origin::source_type::copy;
-
-        copy_file.line_no += m_current_logical_line.segments.size() - 1;
-
-        bool restarted = false;
-        while (!m_copy_files.empty()
-            && (m_copy_files.back().text.empty()
-                || false == (restarted = resume_copy(m_copy_files.back().line_no, resume_copy::exact_or_next_line))))
-        {
-            m_copy_files.pop_back();
-            opencode_copy_stack.pop_back();
-        }
-
-        if (m_copy_files.empty())
-            restarted = resume_copy(0, resume_copy::ignore_line);
-
-        assert(restarted);
-
-        m_copy_files.clear();
-
-        return extract_next_logical_line_result::normal;
-    }
+        return extract_next_logical_line_from_copy_buffer();
 
     if (!m_preprocessor_buffer.empty())
     {
