@@ -674,3 +674,70 @@ TEST(aread, copy_in_macro)
     EXPECT_FALSE(a1.has_value());
     EXPECT_EQ(a2, 2);
 }
+
+TEST(aread, normal_processing_recovery)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    asm_options_invalid_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+&A1       SETA  1 removed by the macro
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, normal_processing_recovery_line_skipped)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    asm_options_invalid_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+&A1       SETA  1 removed by the macro
+*
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}

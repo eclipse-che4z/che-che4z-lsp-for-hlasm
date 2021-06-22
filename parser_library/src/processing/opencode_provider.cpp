@@ -581,7 +581,11 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
             if (m_copy_files.empty())
                 resume_copy(0, resume_copy::ignore_line);
             else if (resume_copy(m_copy_files.back().line_no, resume_copy::exact_line_match))
+            {
+                // copy processing was resumed, pre-parsed statements will be executed
+                m_copy_files.clear();
                 return extract_next_logical_line_result::failed;
+            }
         }
     }
 
