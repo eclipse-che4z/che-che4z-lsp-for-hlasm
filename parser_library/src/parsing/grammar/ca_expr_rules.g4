@@ -110,8 +110,11 @@ term returns [ca_expr_ptr ca_expr]
 		
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
 		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
-		auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
-		resolve_expression($subscript_ne.value, param_kind);
+		if (func != expressions::ca_expr_funcs::UNKNOWN)
+		{
+			auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
+			resolve_expression($subscript_ne.value, param_kind);
+		}
 
 		$ca_expr = std::make_unique<ca_function>($id_no_dot.name, func, std::move($subscript_ne.value), std::move($ca_dupl_factor.value), r);
 	}
