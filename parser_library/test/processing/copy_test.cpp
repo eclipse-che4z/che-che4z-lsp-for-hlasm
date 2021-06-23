@@ -76,10 +76,10 @@ TEST(copy, copy_enter_diag_test)
 
     auto diag = a.diags()[0];
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)2);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)2);
     EXPECT_EQ(a.diags()[0].file_name, "COPYD");
     EXPECT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
 }
 
@@ -208,10 +208,10 @@ TEST(copy, copy_enter_from_macro_call)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)16);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)16);
     EXPECT_EQ(a.diags()[0].file_name, "COPYR");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)5);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)5);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
 }
 
@@ -243,10 +243,10 @@ TEST(copy, copy_enter_from_lookahead)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)6);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)6);
     EXPECT_EQ(a.diags()[0].file_name, "COPYL");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)4);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)4);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
 }
 
@@ -301,10 +301,10 @@ TEST(copy, macro_from_copy_call)
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)3);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)3);
     EXPECT_EQ(a.diags()[0].file_name, "COPYBM");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)2);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)2);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
 }
 
@@ -345,16 +345,16 @@ TEST(copy, jump_from_copy_fail)
     EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[1].diag_range.start.line, (position_t)2);
+    EXPECT_EQ(a.diags()[1].diag_range.start.line, (size_t)2);
     EXPECT_EQ(a.diags()[1].file_name, "COPYJF");
     ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[1].related[0].location.rang.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[1].related[0].location.rang.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[1].related[0].location.uri, "start");
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
 }
 
@@ -380,12 +380,12 @@ TEST(copy, jump_in_macro_from_copy_fail)
     EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].file_name, "COPYJF");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)3);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)3);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "start");
-    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (position_t)6);
+    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (size_t)6);
     EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
 }
 
@@ -412,14 +412,14 @@ TEST(copy, macro_nested_diagnostics)
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    EXPECT_EQ(a.diags()[0].diag_range.start.line, (position_t)4);
+    EXPECT_EQ(a.diags()[0].diag_range.start.line, (size_t)4);
     EXPECT_EQ(a.diags()[0].file_name, "COPYND2");
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
-    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (position_t)1);
+    EXPECT_EQ(a.diags()[0].related[0].location.rang.start.line, (size_t)1);
     EXPECT_EQ(a.diags()[0].related[0].location.uri, "COPYND1");
-    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (position_t)3);
+    EXPECT_EQ(a.diags()[0].related[1].location.rang.start.line, (size_t)3);
     EXPECT_EQ(a.diags()[0].related[1].location.uri, "start");
-    EXPECT_EQ(a.diags()[0].related[2].location.rang.start.line, (position_t)7);
+    EXPECT_EQ(a.diags()[0].related[2].location.rang.start.line, (size_t)7);
     EXPECT_EQ(a.diags()[0].related[2].location.uri, "start");
 }
 

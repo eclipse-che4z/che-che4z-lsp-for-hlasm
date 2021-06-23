@@ -42,7 +42,7 @@ public:
     virtual void finish_copy_member(copy_processing_result result) = 0;
 
     virtual void suspend_opencode_copy_processing() = 0;
-    virtual bool resume_opencode_copy_processing_at(position_t line_no, resume_copy resume_opts) = 0;
+    virtual bool resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts) = 0;
 
     virtual void finish_opencode() = 0;
 

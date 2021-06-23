@@ -24,22 +24,20 @@
 
 namespace hlasm_plugin::parser_library {
 
-using position_t = uint64_t;
-
 struct PARSER_LIBRARY_EXPORT position
 {
     position()
         : line(0)
         , column(0)
     {}
-    position(position_t line, position_t column)
+    position(size_t line, size_t column)
         : line(line)
         , column(column)
     {}
     bool operator==(const position& oth) const { return line == oth.line && column == oth.column; }
     bool operator!=(const position& oth) const { return !(*this == oth); }
-    position_t line;
-    position_t column;
+    size_t line;
+    size_t column;
 
     static inline position min(const position& lhs, const position& rhs)
     {

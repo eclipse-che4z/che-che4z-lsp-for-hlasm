@@ -72,7 +72,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     lines_to_remove m_lines_to_remove = {};
 
     std::string_view m_original_text;
-    position_t m_current_line = 0;
+    size_t m_current_line = 0;
 
     std::string_view m_next_line_text;
 
@@ -81,8 +81,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     {
         size_t begin_offset;
         size_t end_offset;
-        position_t begin_line;
-        position_t end_line;
+        size_t begin_line;
+        size_t end_line;
         enum class source_type
         {
             none,
@@ -99,7 +99,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     {
         std::string_view text;
         std::string_view full_text;
-        position_t line_no;
+        size_t line_no;
     };
 
     std::vector<copy_member_state> m_copy_files;
@@ -149,7 +149,7 @@ private:
     extract_next_logical_line_result feed_line(parsing::parser_holder& p);
     bool is_comment();
     void process_comment();
-    void generate_aread_highlighting(std::string_view text, position_t line_no) const;
+    void generate_aread_highlighting(std::string_view text, size_t line_no) const;
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
     void generate_continuation_error_messages() const;
@@ -177,7 +177,7 @@ private:
     bool fill_copy_buffer_for_aread();
 
     void suspend_copy();
-    bool resume_copy(position_t line_no, processing::resume_copy resume_opts);
+    bool resume_copy(size_t line_no, processing::resume_copy resume_opts);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

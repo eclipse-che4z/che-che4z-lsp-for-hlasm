@@ -241,7 +241,7 @@ void processing_manager::suspend_opencode_copy_processing()
     static_cast<copy_statement_provider&>(copy_prov).suspend();
 }
 
-bool processing_manager::resume_opencode_copy_processing_at(position_t line_no, resume_copy resume_opts)
+bool processing_manager::resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts)
 {
     auto& copy_prov = **(provs_.end() - 2);
     assert(copy_prov.kind == statement_provider_kind::COPY);

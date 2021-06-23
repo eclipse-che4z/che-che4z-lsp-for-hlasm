@@ -61,7 +61,7 @@ void opencode_provider::rewind_input(context::source_position pos)
     m_current_line = pos.file_line;
 }
 
-void opencode_provider::generate_aread_highlighting(std::string_view text, position_t line_no) const
+void opencode_provider::generate_aread_highlighting(std::string_view text, size_t line_no) const
 {
     if (text.empty())
         return;
@@ -684,7 +684,7 @@ void opencode_provider::suspend_copy()
     m_copy_suspended = true;
 }
 
-bool opencode_provider::resume_copy(position_t line_no, processing::resume_copy resume_opts)
+bool opencode_provider::resume_copy(size_t line_no, processing::resume_copy resume_opts)
 {
     if (m_state_listener->resume_opencode_copy_processing_at(line_no, resume_opts))
     {
