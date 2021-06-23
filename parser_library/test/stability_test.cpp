@@ -101,7 +101,6 @@ TEST(stability_test, entry_7)
     a.analyze();
 }
 
-#if 0
 TEST(stability_test, entry_8)
 {
     std::string input(R"(T&STSSSS(&())))())");
@@ -159,4 +158,3 @@ TEST(stability_test, entry_12)
     a.analyze();
     a.collect_diags();
 }
-#endif
