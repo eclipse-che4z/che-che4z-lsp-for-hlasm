@@ -351,13 +351,14 @@ bool opencode_provider::fill_copy_buffer_for_aread()
         const auto pos = copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
         const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
 
+        std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });
         std::string_view remaining_text = copy_content->data.get_lines_beginning_at(pos);
 
         // remove line being processed
         lexing::logical_line ll = {};
         lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
 
-        return copy_member_state { remaining_text, pos.line + ll.segments.size(), copy_content };
+        return copy_member_state { remaining_text, full_text, pos.line + ll.segments.size() };
     };
     std::transform(opencode_stack.begin(), opencode_stack.end(), std::back_inserter(m_copy_files), cmi_to_cms);
 
@@ -519,13 +520,12 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
     if (!lexing::extract_logical_line(m_current_logical_line, copy_file.text, lexing::default_ictl_copy))
         return extract_next_logical_line_result::failed;
 
-    const auto copy_start = copy_file.copy_file->data.get_lines_beginning_at({ 0, 0 });
     m_current_logical_line_source.begin_line = copy_file.line_no;
     m_current_logical_line_source.end_line = copy_file.line_no + m_current_logical_line.segments.size() - 1;
     m_current_logical_line_source.begin_offset =
-        m_current_logical_line.segments.front().code.data() - copy_start.data();
+        m_current_logical_line.segments.front().code.data() - copy_file.full_text.data();
     m_current_logical_line_source.end_offset =
-        copy_file.text.size() ? copy_file.text.data() - copy_start.data() : copy_start.size();
+        copy_file.text.size() ? copy_file.text.data() - copy_file.full_text.data() : copy_file.full_text.size();
     m_current_logical_line_source.source = logical_line_origin::source_type::copy;
 
     copy_file.line_no += m_current_logical_line.segments.size() - 1;

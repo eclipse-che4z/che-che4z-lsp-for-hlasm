@@ -98,8 +98,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     struct copy_member_state
     {
         std::string_view text;
+        std::string_view full_text;
         position_t line_no;
-        const lsp::file_info* copy_file;
     };
 
     std::vector<copy_member_state> m_copy_files;
