@@ -94,7 +94,15 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
-    std::vector<std::string_view> m_copy_files;
+
+    struct copy_member_state
+    {
+        std::string_view text;
+        std::string_view full_text;
+        size_t line_no;
+    };
+
+    std::vector<copy_member_state> m_copy_files;
 
     std::vector<std::string> m_preprocessor_buffer;
 
@@ -112,6 +120,8 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     parsing::parser_error_listener m_listener;
 
     bool m_line_fed = false;
+    bool m_copy_files_aread_ready = false;
+    bool m_copy_suspended = false;
 
 public:
     // rewinds position in file
@@ -143,6 +153,8 @@ private:
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
     void generate_continuation_error_messages() const;
+    extract_next_logical_line_result extract_next_logical_line_from_ainsert_buffer();
+    extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
@@ -161,6 +173,11 @@ private:
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
         const range& op_range);
+
+    bool fill_copy_buffer_for_aread();
+
+    void suspend_copy();
+    bool resume_copy(size_t line_no, processing::resume_copy resume_opts);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
