@@ -110,8 +110,9 @@ parser_library::range feature::parse_range(const json& range_json)
 
 parser_library::position feature::parse_position(const json& position_json)
 {
-    return { position_json["line"].get<nlohmann::json::number_unsigned_t>(),
-        position_json["character"].get<nlohmann::json::number_unsigned_t>() };
+    // TODO: rewrite message parsing
+    return { (size_t)position_json["line"].get<nlohmann::json::number_unsigned_t>(),
+        (size_t)position_json["character"].get<nlohmann::json::number_unsigned_t>() };
 }
 
 json feature::range_to_json(const parser_library::range& range)
