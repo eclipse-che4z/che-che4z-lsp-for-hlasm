@@ -197,7 +197,7 @@ bool lsp_context::should_complete_instr(const text_data_ref_t& text, const posit
 {
     bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
 
-    std::string_view line_so_far = text.get_line_beginning(pos);
+    std::string_view line_so_far = text.get_line_beginning_at(pos);
 
     static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
     return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);

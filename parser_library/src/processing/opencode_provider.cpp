@@ -139,7 +139,7 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
             m_ainsert_buffer.push_front(rec);
             break;
     }
-    // ainsert buffer may contains macro call that will remove code lines from copybooks
+    // ainsert buffer may contain macro call that will remove code lines from copybooks
     // this prevents copybook unwinding
     if (!m_copy_suspended)
         suspend_copy();
@@ -351,7 +351,7 @@ bool opencode_provider::fill_copy_buffer_for_aread()
         const auto pos = copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
         const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
 
-        std::string_view remaining_text = copy_content->data.get_lines_beginning(pos);
+        std::string_view remaining_text = copy_content->data.get_lines_beginning_at(pos);
 
         // remove line being processed
         lexing::logical_line ll = {};
@@ -519,7 +519,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
     if (!lexing::extract_logical_line(m_current_logical_line, copy_file.text, lexing::default_ictl_copy))
         return extract_next_logical_line_result::failed;
 
-    const auto copy_start = copy_file.copy_file->data.get_lines_beginning({ 0, 0 });
+    const auto copy_start = copy_file.copy_file->data.get_lines_beginning_at({ 0, 0 });
     m_current_logical_line_source.begin_line = copy_file.line_no;
     m_current_logical_line_source.end_line = copy_file.line_no + m_current_logical_line.segments.size() - 1;
     m_current_logical_line_source.begin_offset =

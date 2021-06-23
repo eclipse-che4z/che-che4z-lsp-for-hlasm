@@ -246,7 +246,7 @@ bool processing_manager::resume_opencode_copy_processing_at(position_t line_no, 
     auto& copy_prov = **(provs_.end() - 2);
     assert(copy_prov.kind == statement_provider_kind::COPY);
 
-    return static_cast<copy_statement_provider&>(copy_prov).resume_at(line_no, resume_opts);
+    return static_cast<copy_statement_provider&>(copy_prov).try_resume_at(line_no, resume_opts);
 }
 
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
