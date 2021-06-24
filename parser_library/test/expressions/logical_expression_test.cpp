@@ -224,3 +224,24 @@ TEST(logical_expressions, bad_number_of_operands)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().code, "CE006");
 }
+
+TEST(logical_expressions, is_functions)
+{
+    std::string input =
+        R"(
+&A SETB (ISBIN('0000'))
+&B SETB (ISBIN('a0a0'))
+&C SETB (ISHEX('abcd'))
+&D SETB (ISHEX('hhhh'))
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETBEQ("A", 1);
+    SETBEQ("B", 0);
+    SETBEQ("C", 1);
+    SETBEQ("D", 0);
+}
