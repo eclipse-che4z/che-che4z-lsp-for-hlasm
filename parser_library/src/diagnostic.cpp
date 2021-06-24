@@ -1952,6 +1952,12 @@ diagnostic_op diagnostic_op::error_CE015(const range& range)
     return diagnostic_op(diagnostic_severity::error, "CE015", "Invalid self-defining term", range);
 }
 
+diagnostic_op diagnostic_op::error_CE016_logical_expression_parenthesis(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "CE016", "Logical expression must be enclosed in parenthesis.", range);
+}
+
 diagnostic_op diagnostic_op::error_CW001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);

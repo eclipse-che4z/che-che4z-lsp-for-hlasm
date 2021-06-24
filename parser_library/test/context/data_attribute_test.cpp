@@ -411,15 +411,15 @@ TEST(data_attributes, D)
     std::string input = R"(
 A EQU 11,
 B LR 1,1
-&V1 SETB D'A
-&V2 SETB D'B
-&V3 SETB D'C
+&V1 SETB (D'A)
+&V2 SETB (D'B)
+&V3 SETB (D'C)
 
 &SYM SETC 'A'
 &BAD_SYM SETC 'C'
 
-&V4 SETB D'&SYM
-&V5 SETB D'&BAD_SYM
+&V4 SETB (D'&SYM)
+&V5 SETB (D'&BAD_SYM)
 )";
 
     analyzer a(input);
