@@ -17,7 +17,6 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
-#include "parsing/parser_error_listener_ctx.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

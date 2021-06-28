@@ -261,17 +261,4 @@ void parser_error_listener_base::reportContextSensitivity(
     antlr4::Parser*, const antlr4::dfa::DFA&, size_t, size_t, size_t, antlr4::atn::ATNConfigSet*)
 {}
 
-
-parser_error_listener::parser_error_listener(std::string file_name)
-    : file_name_(std::move(file_name))
-{}
-
-void parser_error_listener::collect_diags() const {}
-
-void parser_error_listener::add_parser_diagnostic(
-    range diagnostic_range, diagnostic_severity severity, std::string code, std::string message)
-{
-    add_diagnostic(diagnostic_s(file_name_, diagnostic_range, severity, std::move(code), std::move(message), {}));
-}
-
 } // namespace hlasm_plugin::parser_library::parsing

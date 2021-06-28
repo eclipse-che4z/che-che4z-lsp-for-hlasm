@@ -98,12 +98,13 @@ void members_statement_provider::fill_cache(
     }
     else
     {
+        diagnostic_op_consumer_transform diag_consumer(
+            [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
         auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,
             semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status,
-            diagnostic_op_consumer_transform([&reparsed_stmt](
-                diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); }));
+            diag_consumer);
 
         reparsed_stmt.stmt =
             std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));

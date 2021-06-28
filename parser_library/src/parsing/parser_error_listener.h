@@ -62,13 +62,13 @@ protected:
         range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) = 0;
 };
 
-class parser_error_listener_proxy : public parser_error_listener_base
+class parser_error_listener final : public parser_error_listener_base
 {
     const semantics::range_provider* provider = nullptr;
 
 public:
-    parser_error_listener_proxy() {};
-    parser_error_listener_proxy(const semantics::range_provider* prov)
+    parser_error_listener() {};
+    parser_error_listener(const semantics::range_provider* prov)
         : provider(prov) {};
     diagnostic_op_consumer* diagnoser = nullptr;
 
@@ -82,21 +82,6 @@ protected:
                 std::move(message),
                 provider ? provider->adjust_range(diagnostic_range) : std::move(diagnostic_range)));
     }
-};
-
-class parser_error_listener : public parser_error_listener_base, public diagnosable_impl
-{
-public:
-    parser_error_listener(std::string file_name);
-
-    void collect_diags() const override;
-
-protected:
-    void add_parser_diagnostic(
-        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
-
-private:
-    std::string file_name_;
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

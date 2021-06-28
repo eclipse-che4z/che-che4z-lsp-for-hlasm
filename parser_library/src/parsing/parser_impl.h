@@ -91,7 +91,7 @@ protected:
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;
-    parser_error_listener_proxy err_listener_;
+    parser_error_listener err_listener_;
 };
 
 // structure containing parser components
