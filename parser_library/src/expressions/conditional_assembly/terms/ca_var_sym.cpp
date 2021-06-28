@@ -88,8 +88,14 @@ context::SET_t ca_var_sym::convert_return_types(
                     return ca_constant::self_defining_term(val_c, add_diags);
                 else
                     return 0;
+
             case context::SET_t_enum::B_TYPE:
-                return ca_constant::self_defining_term(retval.access_c(), add_diags);
+                // empty string is convertible to false, but it is not a self-def term
+                if (const auto& val_c = retval.access_c(); val_c.size())
+                    return !!ca_constant::self_defining_term(val_c, add_diags);
+                else
+                    return false;
+
             case context::SET_t_enum::C_TYPE:
                 return retval;
             default:
