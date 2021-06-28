@@ -29,13 +29,13 @@ namespace hlasm_plugin::parser_library {
 
 class diagnostic_adder
 {
-    const std::function<void(diagnostic_op)>* op_diagnoser_ = nullptr;
+    const diagnostic_op_consumer* op_diagnoser_ = nullptr;
     range diag_range_;
 
 public:
-    bool diagnostics_present;
+    bool diagnostics_present = false;
 
-    diagnostic_adder(const std::function<void(diagnostic_op)>& diagnoser, range diag_range)
+    diagnostic_adder(const diagnostic_op_consumer& diagnoser, range diag_range)
         : op_diagnoser_(&diagnoser)
         , diag_range_(diag_range) {};
 
@@ -43,8 +43,9 @@ public:
 
     void operator()(const std::function<diagnostic_op(range)>& f)
     {
+        diagnostics_present = true;
         if (op_diagnoser_)
-            (*op_diagnoser_)(f(diag_range_));
+            op_diagnoser_->add_diagnostic(f(diag_range_));
     }
 };
 

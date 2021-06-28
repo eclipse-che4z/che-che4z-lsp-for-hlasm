@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) 2019 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
+
+#ifndef HLASMPARSER_PARSERLIBRARY_DIAGNOSTIC_CONSUMER_H
+#define HLASMPARSER_PARSERLIBRARY_DIAGNOSTIC_CONSUMER_H
+
+#include <functional>
+
+#include "diagnostic.h"
+
+// Interface that allows to consume diagnostics regardless of how are they processed afterwards
+
+namespace hlasm_plugin::parser_library {
+
+// Interface that allows to collect objects (diagnostics)
+// from a tree structure of objects.
+template<typename T>
+class diagnostic_consumer
+{
+    // TODO The reason why this function is const is that all current implementations have mutable containters where
+    // the diagnostics are stored and large parts of the project depend on that constness of the function
+public:
+    virtual void add_diagnostic(T diagnostic) const = 0;
+
+protected:
+    ~diagnostic_consumer() = default;
+};
+
+using diagnostic_s_consumer = diagnostic_consumer<diagnostic_s>;
+using diagnostic_op_consumer = diagnostic_consumer<diagnostic_op>;
+
+template<typename T>
+class diagnostic_consumer_transform : public diagnostic_consumer<T>
+{
+    std::function<void(T)> consumer;
+
+public:
+    explicit diagnostic_consumer_transform(std::function<void(T)> f)
+        : consumer(std::move(f))
+    {}
+    void add_diagnostic(T diagnostic) const override { consumer(std::move(diagnostic)); };
+};
+
+using diagnostic_op_consumer_transform = diagnostic_consumer_transform<diagnostic_op>;
+
+} // namespace hlasm_plugin::parser_library
+
+#endif

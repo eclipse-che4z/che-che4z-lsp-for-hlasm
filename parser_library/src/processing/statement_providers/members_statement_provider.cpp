@@ -102,7 +102,8 @@ void members_statement_provider::fill_cache(
             false,
             semantics::range_provider(def_stmt.deferred_ref().field_range, semantics::adjusting_state::NONE),
             status,
-            [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
+            diagnostic_op_consumer_transform([&reparsed_stmt](
+                diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); }));
 
         reparsed_stmt.stmt =
             std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));

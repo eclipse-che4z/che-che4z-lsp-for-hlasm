@@ -109,8 +109,6 @@ class opencode_provider final : public diagnosable_ctx, public statement_provide
 
     opencode_provider_options m_opts;
 
-    std::function<void(diagnostic_op)> add_parser_diag = [this](diagnostic_op diag) { this->add_diagnostic(diag); };
-
     bool m_line_fed = false;
 
 public:
@@ -147,7 +145,7 @@ private:
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
-        parsing::parser_error_listener_ctx* err_listener,
+        bool do_collect_diags,
         semantics::range_provider range_prov,
         range text_range,
         const processing_status& proc_status,

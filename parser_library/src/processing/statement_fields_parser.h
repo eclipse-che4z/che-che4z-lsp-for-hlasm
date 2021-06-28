@@ -40,7 +40,7 @@ class statement_fields_parser final : public diagnosable_impl
         bool unlimited_line,
         semantics::range_provider field_range,
         processing::processing_status status,
-        const std::function<void(diagnostic_op)>& add_diag);
+        diagnostic_op_consumer& add_diag);
 
 public:
     using parse_result = std::pair<semantics::operands_si, semantics::remarks_si>;
@@ -49,7 +49,7 @@ public:
         bool after_substitution,
         semantics::range_provider field_range,
         processing::processing_status status,
-        const std::function<void(diagnostic_op)>& add_diag);
+        diagnostic_op_consumer& add_diag);
 
     explicit statement_fields_parser(context::hlasm_context* hlasm_ctx);
     ~statement_fields_parser();

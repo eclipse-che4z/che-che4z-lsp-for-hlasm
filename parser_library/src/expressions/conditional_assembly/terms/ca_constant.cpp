@@ -79,6 +79,7 @@ context::A_t ca_constant::self_defining_term(const std::string& value, diagnosti
 
 std::optional<context::A_t> ca_constant::try_self_defining_term(const std::string& value)
 {
+
     auto empty_add = diagnostic_adder();
     auto ret = self_defining_term(value, empty_add);
     if (empty_add.diagnostics_present)

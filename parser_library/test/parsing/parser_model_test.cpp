@@ -24,16 +24,17 @@ auto parse_model(
     std::string s,
     range r,
     bool after_substitution = false,
-    const std::function<void(diagnostic_op)>& add_diag = [](diagnostic_op d) {})
+    std::function<void(diagnostic_op)> add_diag = [](diagnostic_op d) {})
 {
     std::string input(" LR &var,1");
     analyzer a(input);
+    diagnostic_op_consumer_transform cons(add_diag);
     return statement_fields_parser(a.context().hlasm_ctx.get())
         .parse_operand_field(std::move(s),
             after_substitution,
             range_provider(r, adjusting_state::NONE),
             std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()),
-            add_diag);
+            cons);
 }
 
 TEST(parser, parse_model)

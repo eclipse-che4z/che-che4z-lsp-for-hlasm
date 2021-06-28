@@ -34,7 +34,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     bool unlimited_line,
     semantics::range_provider field_range,
     processing::processing_status status,
-    const std::function<void(diagnostic_op)>& add_diag)
+    diagnostic_op_consumer& add_diag)
 {
     m_parser->input->reset(text);
 
@@ -53,24 +53,35 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     return *m_parser;
 }
 
+class diagnostic_op_transform_substitution : public diagnostic_op_consumer
+{
+public:
+    diagnostic_op_consumer* diagnoser;
+    std::string* field;
+    void add_diagnostic(diagnostic_op diag) const override
+    {
+        if (field)
+            diag.message = "While substituting to '" + *field + "' => " + diag.message;
+        diagnoser->add_diagnostic(std::move(diag));
+    }
+};
+
 std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status,
-    const std::function<void(diagnostic_op)>& add_diag)
+    diagnostic_op_consumer& add_diag)
 {
     m_hlasm_ctx->metrics.reparsed_statements++;
 
-    parsing::parser_error_listener_substitution listener(add_diag,
-        after_substitution ? &field : nullptr, field_range);
-
     const auto original_range = field_range.original_range;
 
-    auto add_diag_subst = [&](diagnostic_op diag) {
+
+    diagnostic_op_consumer_transform add_diag_subst([&](diagnostic_op diag) {
         if (after_substitution)
             diag.message = "While substituting to '" + field + "' => " + diag.message;
-        add_diag(std::move(diag));
-    };
+        add_diag.add_diagnostic(std::move(diag));
+    });
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);
 
     semantics::op_rem line;
