@@ -17,6 +17,7 @@
 
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "nlohmann/json_fwd.hpp"
@@ -42,11 +43,20 @@ struct assembler_options
 void to_json(nlohmann::json& j, const assembler_options& p);
 void from_json(const nlohmann::json& j, assembler_options& p);
 
+struct db2_preprocessor
+{};
+inline bool operator==(const db2_preprocessor&, const db2_preprocessor&) { return true; }
+inline bool operator!=(const db2_preprocessor& l, const db2_preprocessor& r) { return !(l == r); }
+
+void to_json(nlohmann::json& j, const db2_preprocessor& p);
+void from_json(const nlohmann::json& j, db2_preprocessor& p);
+
 struct processor_group
 {
     std::string name;
     std::vector<library> libs;
     assembler_options asm_options;
+    std::variant<std::monostate, db2_preprocessor> preprocessor;
 };
 void to_json(nlohmann::json& j, const processor_group& p);
 void from_json(const nlohmann::json& j, processor_group& p);
