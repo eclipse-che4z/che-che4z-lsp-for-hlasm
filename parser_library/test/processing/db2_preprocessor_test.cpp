@@ -45,13 +45,17 @@ TEST(db2_preprocessor, last_line)
     buffer.clear();
     text.remove_prefix(1);
 
+    std::string_view original_text = text;
     EXPECT_TRUE(p->fill_buffer(text, 1, buffer));
     EXPECT_GT(buffer.size(), 0);
+    EXPECT_EQ(original_text, text); // END should remain in the text
 
     EXPECT_TRUE(std::any_of(
         buffer.begin(), buffer.end(), [](const std::string& s) { return s.find("***$$$ SQL WORKING STORAGE") == 0; }));
 
-    EXPECT_FALSE(p->fill_buffer(text, 2, buffer));
+    buffer.clear();
+    EXPECT_FALSE(p->fill_buffer(text, 1, buffer)); // but should not be processed again
+    EXPECT_EQ(buffer.size(), 0);
 }
 
 TEST(db2_preprocessor, include)
@@ -69,7 +73,9 @@ TEST(db2_preprocessor, include)
     buffer.clear();
     text.remove_prefix(1);
 
+    std::string_view original_text = text;
     EXPECT_TRUE(p->fill_buffer(text, 1, buffer));
+    EXPECT_NE(original_text, text); // INCLUDE should be removed
     EXPECT_GT(buffer.size(), 0);
 
     EXPECT_TRUE(std::any_of(buffer.begin(), buffer.end(), [](const std::string& s) { return s == "member content"; }));
@@ -93,7 +99,9 @@ TEST(db2_preprocessor, include_sqlca)
     buffer.clear();
     text.remove_prefix(1);
 
+    std::string_view original_text = text;
     EXPECT_TRUE(p->fill_buffer(text, 1, buffer));
+    EXPECT_NE(original_text, text); // INCLUDE should be removed
     EXPECT_GT(buffer.size(), 0);
 
     EXPECT_FALSE(called);
@@ -119,7 +127,9 @@ TEST(db2_preprocessor, include_sqlda)
     buffer.clear();
     text.remove_prefix(1);
 
+    std::string_view original_text = text;
     EXPECT_TRUE(p->fill_buffer(text, 1, buffer));
+    EXPECT_NE(original_text, text); // INCLUDE should be removed
     EXPECT_GT(buffer.size(), 0);
 
     EXPECT_FALSE(called);
@@ -145,7 +155,9 @@ TEST(db2_preprocessor, sql_like)
     buffer.clear();
     text.remove_prefix(1);
 
+    std::string_view original_text = text;
     EXPECT_TRUE(p->fill_buffer(text, 1, buffer));
+    EXPECT_NE(original_text, text); // SQL should be removed
     ASSERT_GE(buffer.size(), 2);
 
     EXPECT_FALSE(called);
