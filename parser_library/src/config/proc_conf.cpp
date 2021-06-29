@@ -78,8 +78,8 @@ void to_json(nlohmann::json& j, const processor_group& p)
     if (auto opts = nlohmann::json(p.asm_options); !opts.empty())
         j["asm_options"] = std::move(opts);
 
-    if (!std::holds_alternative<std::monostate>(p.preprocessor))
-        std::visit(preprocessor_visitor { j["preprocessor"] }, p.preprocessor);
+    if (!std::holds_alternative<std::monostate>(p.preprocessor.options))
+        std::visit(preprocessor_visitor { j["preprocessor"] }, p.preprocessor.options);
 }
 void from_json(const nlohmann::json& j, processor_group& p)
 {
@@ -100,7 +100,7 @@ void from_json(const nlohmann::json& j, processor_group& p)
 
         std::transform(p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
         if (p_name == "DB2")
-            it->get_to(p.preprocessor.emplace<db2_preprocessor>());
+            it->get_to(p.preprocessor.options.emplace<db2_preprocessor>());
         else
             throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.");
     }

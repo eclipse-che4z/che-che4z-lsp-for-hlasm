@@ -14,9 +14,9 @@
 
 #include <cassert>
 
-#include "config/proc_conf.h"
 #include "lexing/logical_line.h"
 #include "preprocessor.h"
+#include "preprocessor_options.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -365,7 +365,7 @@ public:
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(
-    const config::db2_preprocessor&, library_fetched libs, diag_reported diags)
+    const db2_preprocessor_options&, library_fetched libs, diag_reported diags)
 {
     return std::make_unique<db2_preprocessor>(std::move(libs), std::move(diags));
 }

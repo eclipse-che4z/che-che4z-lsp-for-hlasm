@@ -15,9 +15,15 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H
 
-#include "config/proc_conf.h"
+#include "compiler_options.h"
 #include "diagnosable_impl.h"
 #include "library.h"
+#include "preprocessor_options.h"
+
+namespace hlasm_plugin::parser_library::config {
+struct assembler_options;
+struct preprocessor_options;
+} // namespace hlasm_plugin::parser_library::config
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -25,20 +31,12 @@ namespace hlasm_plugin::parser_library::workspaces {
 class processor_group : public diagnosable_impl
 {
 public:
-    processor_group(const std::string& name, const config::assembler_options& asm_options)
-        : name_(name)
-        , asm_optns { asm_options.sysparm, asm_options.profile }
-    {}
+    processor_group(
+        const std::string& name, const config::assembler_options& asm_options, const config::preprocessor_options& pp);
 
-    void collect_diags() const override
-    {
-        for (auto&& lib : libs_)
-        {
-            collect_diags_from_child(*lib);
-        }
-    }
+    void collect_diags() const override;
 
-    void add_library(std::unique_ptr<library> library) { libs_.push_back(std::move(library)); }
+    void add_library(std::unique_ptr<library> library);
 
     const std::string& name() const { return name_; }
 
@@ -46,11 +44,13 @@ public:
 
     const asm_option& asm_options() const { return asm_optns; }
 
+    const preprocessor_options& preprocessor() const { return prep_opts; }
 
 private:
     std::vector<std::unique_ptr<library>> libs_;
     std::string name_;
     asm_option asm_optns;
+    preprocessor_options prep_opts;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

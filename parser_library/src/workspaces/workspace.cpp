@@ -42,7 +42,7 @@ workspace::workspace(const ws_uri& uri,
     , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
-    , implicit_proc_grp("pg_implicit", {})
+    , implicit_proc_grp("pg_implicit", {}, {})
     , ws_path_(uri)
     , global_config_(global_config)
 {
@@ -367,7 +367,7 @@ bool workspace::load_and_process_config()
     // process processor groups
     for (auto& pg : proc_groups.pgroups)
     {
-        processor_group prc_grp(pg.name, pg.asm_options);
+        processor_group prc_grp(pg.name, pg.asm_options, pg.preprocessor);
 
         for (const auto& lib : pg.libs)
         {

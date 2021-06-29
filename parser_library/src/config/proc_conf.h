@@ -51,12 +51,19 @@ inline bool operator!=(const db2_preprocessor& l, const db2_preprocessor& r) { r
 void to_json(nlohmann::json& j, const db2_preprocessor& p);
 void from_json(const nlohmann::json& j, db2_preprocessor& p);
 
+struct preprocessor_options
+{
+    std::variant<std::monostate, db2_preprocessor> options;
+};
+inline bool operator==(const preprocessor_options& l, const preprocessor_options& r) { return l.options == r.options; }
+inline bool operator!=(const preprocessor_options& l, const preprocessor_options& r) { return !(l == r); }
+
 struct processor_group
 {
     std::string name;
     std::vector<library> libs;
     assembler_options asm_options;
-    std::variant<std::monostate, db2_preprocessor> preprocessor;
+    preprocessor_options preprocessor;
 };
 void to_json(nlohmann::json& j, const processor_group& p);
 void from_json(const nlohmann::json& j, processor_group& p);

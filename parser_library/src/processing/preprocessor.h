@@ -21,12 +21,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include "diagnostic.h"
 
-namespace hlasm_plugin::parser_library::config {
-struct db2_preprocessor;
-} // namespace hlasm_plugin::parser_library::config
+namespace hlasm_plugin::parser_library {
+struct db2_preprocessor_options;
+} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -40,7 +41,7 @@ public:
 
     virtual bool fill_buffer(std::string_view& input, size_t lineno, std::deque<std::string>& buffer) = 0;
 
-    static std::unique_ptr<preprocessor> create(const config::db2_preprocessor&, library_fetched, diag_reported);
+    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&, library_fetched, diag_reported);
 };
 } // namespace hlasm_plugin::parser_library::processing
 

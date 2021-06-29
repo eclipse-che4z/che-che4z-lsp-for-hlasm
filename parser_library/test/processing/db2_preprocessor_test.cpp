@@ -13,7 +13,7 @@
  */
 
 #include "../common_testing.h"
-#include "config/proc_conf.h"
+#include "preprocessor_options.h"
 #include "processing/preprocessor.h"
 
 // test db2 preprocessor emulator
@@ -22,7 +22,7 @@ using namespace hlasm_plugin::parser_library::processing;
 
 TEST(db2_preprocessor, first_line)
 {
-    auto p = preprocessor::create(config::db2_preprocessor {}, [](std::string_view) { return std::nullopt; }, {});
+    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, {});
     std::string_view text = "";
     std::deque<std::string> buffer;
 
@@ -37,7 +37,7 @@ TEST(db2_preprocessor, first_line)
 
 TEST(db2_preprocessor, last_line)
 {
-    auto p = preprocessor::create(config::db2_preprocessor {}, [](std::string_view) { return std::nullopt; }, {});
+    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, {});
     std::string_view text = "\n END ";
     std::deque<std::string> buffer;
 
@@ -56,7 +56,7 @@ TEST(db2_preprocessor, last_line)
 
 TEST(db2_preprocessor, include)
 {
-    auto p = preprocessor::create(config::db2_preprocessor {},
+    auto p = preprocessor::create(db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return "member content";
@@ -80,7 +80,7 @@ TEST(db2_preprocessor, include)
 TEST(db2_preprocessor, include_sqlca)
 {
     bool called = false;
-    auto p = preprocessor::create(config::db2_preprocessor {},
+    auto p = preprocessor::create(db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
@@ -106,7 +106,7 @@ TEST(db2_preprocessor, include_sqlca)
 TEST(db2_preprocessor, include_sqlda)
 {
     bool called = false;
-    auto p = preprocessor::create(config::db2_preprocessor {},
+    auto p = preprocessor::create(db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
@@ -132,7 +132,7 @@ TEST(db2_preprocessor, include_sqlda)
 TEST(db2_preprocessor, sql_like)
 {
     bool called = false;
-    auto p = preprocessor::create(config::db2_preprocessor {},
+    auto p = preprocessor::create(db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
@@ -157,7 +157,7 @@ TEST(db2_preprocessor, sql_like)
 
 TEST(db2_preprocessor, with_label)
 {
-    auto p = preprocessor::create(config::db2_preprocessor {}, [](std::string_view s) { return std::nullopt; }, {});
+    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, {});
     std::string_view text = "\nABC EXEC SQL WHATEVER";
     std::deque<std::string> buffer;
 
@@ -179,7 +179,7 @@ TEST(db2_preprocessor, missing_member)
 {
     bool called = false;
     auto p = preprocessor::create(
-        config::db2_preprocessor {},
+        db2_preprocessor_options {},
         [](std::string_view s) { return std::nullopt; },
         [&called](diagnostic_op d) {
             called = true;
@@ -197,7 +197,7 @@ TEST(db2_preprocessor, bad_continuation)
 {
     bool called = false;
     auto p = preprocessor::create(
-        config::db2_preprocessor {},
+        db2_preprocessor_options {},
         [](std::string_view s) { return std::nullopt; },
         [&called](diagnostic_op d) {
             called = true;
@@ -216,7 +216,7 @@ TEST(db2_preprocessor, no_nested_include)
 {
     bool called = false;
     auto p = preprocessor::create(
-        config::db2_preprocessor {},
+        db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return " EXEC SQL INCLUDE MEMBER";
