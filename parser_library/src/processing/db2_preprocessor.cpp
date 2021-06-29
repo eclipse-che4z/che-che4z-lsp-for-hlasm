@@ -26,8 +26,8 @@ class db2_preprocessor : public preprocessor
     const char* m_last_position = nullptr;
     lexing::logical_line m_logical_line;
     std::string m_operands;
-    library_fetched m_libs;
-    diag_reported m_diags;
+    library_fetcher m_libs;
+    diag_reporter m_diags;
 
     static bool remove_non_space(std::string_view& s)
     {
@@ -357,7 +357,7 @@ class db2_preprocessor : public preprocessor
     }
 
 public:
-    db2_preprocessor(library_fetched libs, diag_reported diags)
+    db2_preprocessor(library_fetcher libs, diag_reporter diags)
         : m_libs(std::move(libs))
         , m_diags(std::move(diags))
     {}
@@ -365,7 +365,7 @@ public:
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(
-    const db2_preprocessor_options&, library_fetched libs, diag_reported diags)
+    const db2_preprocessor_options&, library_fetcher libs, diag_reporter diags)
 {
     return std::make_unique<db2_preprocessor>(std::move(libs), std::move(diags));
 }

@@ -31,8 +31,8 @@ struct db2_preprocessor_options;
 
 namespace hlasm_plugin::parser_library::processing {
 
-using library_fetched = std::function<std::optional<std::string>(std::string_view)>;
-using diag_reported = std::function<void(diagnostic_op)>;
+using library_fetcher = std::function<std::optional<std::string>(std::string_view)>;
+using diag_reporter = std::function<void(diagnostic_op)>;
 
 class preprocessor
 {
@@ -41,7 +41,7 @@ public:
 
     virtual bool fill_buffer(std::string_view& input, size_t lineno, std::deque<std::string>& buffer) = 0;
 
-    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&, library_fetched, diag_reported);
+    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&, library_fetcher, diag_reporter);
 };
 } // namespace hlasm_plugin::parser_library::processing
 
