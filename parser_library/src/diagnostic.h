@@ -623,8 +623,6 @@ struct diagnostic_op
     static diagnostic_op error_CW001(const range& range);
 
     static diagnostic_op error_S100(const std::string& message, const range& range);
-
-    static diagnostic_op error_S101(const std::string& message, const range& range);
 };
 
 struct range_uri_s

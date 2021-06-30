@@ -2037,10 +2037,4 @@ diagnostic_op diagnostic_op::error_S100(const std::string& message, const range&
     return diagnostic_op(diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, range);
 }
 
-diagnostic_op diagnostic_op::error_S101(const std::string& message, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "S101", "Illegal attribute reference - " + message, range);
-}
-
-
 } // namespace hlasm_plugin::parser_library
