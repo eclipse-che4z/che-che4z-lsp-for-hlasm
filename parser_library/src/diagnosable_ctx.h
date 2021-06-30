@@ -36,7 +36,7 @@ public:
             ctx_.processing_stack());
     }
 
-    void add_diagnostic(diagnostic_op diagnostic) const override 
+    void add_diagnostic(diagnostic_op diagnostic) const override
     {
         add_diagnostic_inner(std::move(diagnostic), ctx_.processing_stack());
     }

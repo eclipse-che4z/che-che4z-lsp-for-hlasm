@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-#include "diagnostic_consumer.h"
 #include "diagnostic.h"
+#include "diagnostic_consumer.h"
 #include "protocol.h"
 
 // Interface that allows to collect objects (diagnostics)

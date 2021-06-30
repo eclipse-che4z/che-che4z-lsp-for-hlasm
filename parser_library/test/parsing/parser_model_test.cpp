@@ -176,8 +176,7 @@ TEST(parser, invalid_self_def)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 5), position(0, 12));
-    auto [op, rem] =
-        parse_model("1,A'10'", r, false, &diag_container);
+    auto [op, rem] = parse_model("1,A'10'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
     ASSERT_EQ(diags.size(), 1U);

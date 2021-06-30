@@ -159,8 +159,6 @@ private:
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
         const range& op_range);
-
-
 };
 
 } // namespace hlasm_plugin::parser_library::processing

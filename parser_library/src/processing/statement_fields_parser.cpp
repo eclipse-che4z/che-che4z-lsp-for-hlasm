@@ -102,8 +102,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
 
-                    const auto& h_second =
-                        prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
+                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
 
                     line.operands = std::move(h_second.parser->macro_ops()->list);
                 }
