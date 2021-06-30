@@ -26,7 +26,8 @@ public:
     macro_statement_provider(analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
-        processing::processing_state_listener& listener);
+        processing::processing_state_listener& listener,
+        diagnostic_op_consumer& diag_consumer);
 
     bool finished() const override;
 

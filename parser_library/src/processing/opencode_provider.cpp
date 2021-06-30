@@ -29,9 +29,9 @@ opencode_provider::opencode_provider(std::string_view text,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
     const std::string& filename,
+    diagnostic_op_consumer& diag_consumer,
     opencode_provider_options opts)
-    : diagnosable_ctx(*ctx.hlasm_ctx)
-    , statement_provider(processing::statement_provider_kind::OPEN)
+    : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
     , m_parser(parsing::parser_holder::create(&src_proc))
@@ -41,9 +41,10 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
+    , m_diagnoser(&diag_consumer)
     , m_opts(opts)
 {
-    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), this);
+    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), m_diagnoser);
 
     m_lookahead_parser->parser->initialize(m_ctx->hlasm_ctx.get(), nullptr);
     m_lookahead_parser->parser->removeErrorListeners();
@@ -198,7 +199,8 @@ void opencode_provider::generate_continuation_error_messages() const
     {
         if (s.continuation_error)
         {
-            add_diagnostic(diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
+            m_diagnoser->add_diagnostic(
+                diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
 
             break;
         }
@@ -430,9 +432,6 @@ parsing::hlasmparser& opencode_provider::parser()
     return *m_parser->parser;
 }
 
-
-void opencode_provider::collect_diags() const {}
-
 void opencode_provider::apply_pending_line_changes()
 {
     m_ainsert_buffer.erase(m_ainsert_buffer.begin(), m_ainsert_buffer.begin() + m_lines_to_remove.ainsert_buffer);
@@ -656,7 +655,7 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
     h.stream->reset();
 
 
-    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, do_collect_diags ? this : nullptr);
+    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, do_collect_diags ? m_diagnoser : nullptr);
 
     h.parser->reset();
 

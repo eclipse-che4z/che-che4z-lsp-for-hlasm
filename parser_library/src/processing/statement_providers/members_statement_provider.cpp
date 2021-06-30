@@ -20,13 +20,14 @@ members_statement_provider::members_statement_provider(const statement_provider_
     analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
-    processing::processing_state_listener& listener)
+    processing::processing_state_listener& listener,
+    diagnostic_op_consumer& diag_consumer)
     : statement_provider(kind)
-    , diagnosable_ctx(*ctx.hlasm_ctx)
     , ctx(std::move(ctx))
     , parser(parser)
     , lib_provider(lib_provider)
     , listener(listener)
+    , diagnoser(diag_consumer)
 {}
 
 context::shared_stmt_ptr members_statement_provider::get_next(const statement_processor& processor)
@@ -128,14 +129,9 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
     const auto& cache_item = cache.get(status.first.form);
 
     for (const diagnostic_op& diag : cache_item->diags)
-        add_diagnostic(diag);
+        diagnoser.add_diagnostic(diag);
 
     return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
-}
-
-void members_statement_provider::collect_diags() const
-{
-    // No diagnosable children
 }
 
 } // namespace hlasm_plugin::parser_library::processing
