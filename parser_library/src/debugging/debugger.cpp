@@ -142,6 +142,7 @@ public:
                     open_code->get_file_name(),
                     lib_provider ? lib_provider : &debug_provider,
                     workspace.get_asm_options(open_code->get_file_name()),
+                    workspace.get_preprocessor_options(open_code->get_file_name()),
                 });
 
             a.register_stmt_analyzer(this);

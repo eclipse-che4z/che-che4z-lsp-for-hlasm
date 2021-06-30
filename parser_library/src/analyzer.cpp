@@ -15,6 +15,7 @@
 #include "analyzer.h"
 
 #include "parsing/error_strategy.h"
+#include "processing/preprocessor.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lexing;
@@ -46,6 +47,19 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
         return workspaces::empty_parse_lib_provider::instance;
 }
 
+std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
+    processing::library_fetcher lf, processing::diag_reporter dr)
+{
+    return std::visit(
+        [&lf, &dr](auto&& p) -> std::unique_ptr<processing::preprocessor> {
+            if constexpr (std::is_same_v<std::decay_t<decltype(p)>, std::monostate>)
+                return {};
+            else
+                return processing::preprocessor::create(p, std::move(lf), std::move(dr));
+        },
+        preprocessor_args);
+}
+
 analyzer::analyzer(const std::string& text, analyzer_options opts)
     : diagnosable_ctx(opts.get_hlasm_context())
     , ctx_(std::move(opts.get_context()))
@@ -57,6 +71,18 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                 mngr_,
                 src_proc_,
                 opts.file_name,
+                opts.get_preprocessor(
+                    [libs = &opts.get_lib_provider(), program = opts.file_name, &ctx = ctx_](std::string_view library) {
+                        std::string uri;
+
+                        auto result = libs->get_library(std::string(library), program, &uri);
+
+                        if (!uri.empty())
+                            ctx.hlasm_ctx->add_preprocessor_dependency(uri);
+
+                        return result;
+                    },
+                    [this](diagnostic_op d) { this->add_diagnostic(std::move(d)); }),
                 opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
                                                                : opencode_provider_options {}),
           ctx_,

@@ -30,6 +30,7 @@ opencode_provider::opencode_provider(std::string_view text,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
     const std::string& filename,
+    std::unique_ptr<preprocessor> preprocessor,
     opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
@@ -43,6 +44,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_src_proc(&src_proc)
     , m_opts(opts)
     , m_listener(filename)
+    , m_preprocessor(std::move(preprocessor))
 {
     m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &m_listener);
     m_parser->parser->removeErrorListeners();
@@ -107,7 +109,8 @@ std::string opencode_provider::aread()
             m_ctx->hlasm_ctx->opencode_copy_stack().pop_back();
         }
     }
-    else if (!m_preprocessor_buffer.empty())
+    else if (!m_preprocessor_buffer.empty()
+        || m_preprocessor && m_preprocessor->fill_buffer(m_next_line_text, m_current_line, m_preprocessor_buffer))
     {
         result = std::move(m_preprocessor_buffer.back());
         m_preprocessor_buffer.pop_back();
@@ -447,6 +450,8 @@ void opencode_provider::collect_diags() const { collect_diags_from_child(m_liste
 void opencode_provider::apply_pending_line_changes()
 {
     m_ainsert_buffer.erase(m_ainsert_buffer.begin(), m_ainsert_buffer.begin() + m_lines_to_remove.ainsert_buffer);
+    m_preprocessor_buffer.erase(
+        m_preprocessor_buffer.begin(), m_preprocessor_buffer.begin() + m_lines_to_remove.preprocessor_buffer);
     m_current_line += m_lines_to_remove.current_text_lines;
 
     m_lines_to_remove = {};
@@ -592,11 +597,6 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (!m_copy_files.empty())
         return extract_next_logical_line_from_copy_buffer();
 
-    if (!m_preprocessor_buffer.empty())
-    {
-        // TODO: other sources
-    }
-
     if (ictl_allowed)
         ictl_allowed = is_next_line_ictl();
 
@@ -623,10 +623,24 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         }
     }
 
-    while (m_next_line_text.size())
+    while (true)
     {
-        ++m_lines_to_remove.current_text_lines;
-        if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
+        if (!ictl_allowed
+            && (m_lines_to_remove.preprocessor_buffer < m_preprocessor_buffer.size()
+                || m_preprocessor
+                    && m_preprocessor->fill_buffer(m_next_line_text, m_current_line, m_preprocessor_buffer)))
+        {
+            std::string_view s = m_preprocessor_buffer[m_lines_to_remove.preprocessor_buffer++];
+            if (!append_to_logical_line(m_current_logical_line, s, lexing::default_ictl))
+                break;
+        }
+        else if (!m_next_line_text.empty())
+        {
+            ++m_lines_to_remove.current_text_lines;
+            if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
+                break;
+        }
+        else
             break;
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);
@@ -634,13 +648,22 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (m_current_logical_line.segments.empty())
         return extract_next_logical_line_result::failed;
 
-    m_current_logical_line_source.begin_line = m_current_line;
-    m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
-    m_current_logical_line_source.begin_offset =
-        m_current_logical_line.segments.front().code.data() - m_original_text.data();
-    m_current_logical_line_source.end_offset =
-        m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
-    m_current_logical_line_source.source = logical_line_origin::source_type::file;
+    if (m_lines_to_remove.preprocessor_buffer)
+    {
+        // if at least one line was supplied by the pre-processor then consider the whole thing as supplied from the
+        // preprocessor
+        m_current_logical_line_source.source = logical_line_origin::source_type::preprocessor;
+    }
+    else
+    {
+        m_current_logical_line_source.begin_line = m_current_line;
+        m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
+        m_current_logical_line_source.begin_offset =
+            m_current_logical_line.segments.front().code.data() - m_original_text.data();
+        m_current_logical_line_source.end_offset =
+            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+        m_current_logical_line_source.source = logical_line_origin::source_type::file;
+    }
 
     if (ictl_allowed)
         return extract_next_logical_line_result::ictl;

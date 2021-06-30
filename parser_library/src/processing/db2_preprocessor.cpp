@@ -209,7 +209,7 @@ class db2_preprocessor : public preprocessor
 
         while (!include.empty())
         {
-            if (fill_buffer(include, lineno, queue, false))
+            if (fill_buffer(include, lineno, queue, false) != (size_t)-1)
                 continue;
             while (true)
             {
@@ -222,23 +222,27 @@ class db2_preprocessor : public preprocessor
         }
     }
 
-    virtual bool fill_buffer(
-        std::string_view& input, size_t lineno, std::deque<std::string>& queue, bool include_allowed)
+    /* returns number of consumed lines or -1 when nothing was inserted */
+    size_t fill_buffer(std::string_view& input, size_t lineno, std::deque<std::string>& queue, bool include_allowed)
     {
         using namespace std::literals;
-        if (input.data() == m_last_position)
-            return false;
+        size_t result = (size_t)-1;
 
-        bool injected = false;
-        if (std::exchange(m_last_position, input.data()) == nullptr)
+        if (include_allowed)
         {
-            // injected right after ICTL or *PROCESS
-            inject_SQLSECT(queue);
-            injected = true;
+            if (input.data() == m_last_position)
+                return result;
+
+            if (std::exchange(m_last_position, input.data()) == nullptr)
+            {
+                // injected right after ICTL or *PROCESS
+                inject_SQLSECT(queue);
+                result = 0;
+            }
         }
 
         if (input.size() < lexing::default_ictl.begin - 1)
-            return injected;
+            return result;
 
         std::string_view line_preview =
             input.substr(lexing::default_ictl.begin - 1, lexing::default_ictl.end - (lexing::default_ictl.begin - 1));
@@ -248,41 +252,45 @@ class db2_preprocessor : public preprocessor
             line_preview = line_preview.substr(0, rn);
 
         if (line_preview.empty())
-            return injected;
+            return result;
 
         std::string label;
         if (line_preview.front() != ' ')
         {
+            if (line_preview.front() == '*' || line_preview.substr(0, 2) == ".*")
+                return result;
             if (!remove_non_space(line_preview))
-                return injected;
+                return result;
             label = std::string_view(input.data(), line_preview.data() - input.data());
         }
         if (!remove_space(line_preview))
-            return injected;
+            return result;
 
         constexpr const auto END_literal = "END"sv;
-        constexpr const auto EXEC_literal = "EXEC"sv;
-        constexpr const auto SQL_literal = "SQL"sv;
-        constexpr const auto INCLUDE_literal = "INCLUDE"sv;
-
         if (consume(line_preview, END_literal))
         {
             if (line_preview.empty() || line_preview.front() == ' ')
             {
                 push_sql_working_storage(queue);
-                return true;
+                if (include_allowed)
+                    result = 0;
+                // else keep result = -1 and  push the included end onto the stack
             }
-            return injected;
+            return result;
         }
 
+        constexpr const auto EXEC_literal = "EXEC"sv;
+        constexpr const auto SQL_literal = "SQL"sv;
+        constexpr const auto INCLUDE_literal = "INCLUDE"sv;
+
         if (!consume(line_preview, EXEC_literal))
-            return injected;
+            return result;
         if (!remove_space(line_preview))
-            return injected;
+            return result;
         if (!consume(line_preview, SQL_literal))
-            return injected;
+            return result;
         if (line_preview.empty() || line_preview.front() != ' ')
-            return injected;
+            return result;
         remove_space(line_preview);
         const auto skipped = line_preview.data() - input.data();
 
@@ -347,13 +355,17 @@ class db2_preprocessor : public preprocessor
         else
             queue.push_back("***$$$");
 
-        return true;
+        return m_logical_line.segments.size();
     }
 
     // Inherited via preprocessor
-    virtual bool fill_buffer(std::string_view& input, size_t lineno, std::deque<std::string>& queue) override
+    virtual bool fill_buffer(std::string_view& input, size_t& lineno, std::deque<std::string>& queue) override
     {
-        return fill_buffer(input, lineno, queue, true);
+        const auto result = fill_buffer(input, lineno, queue, true);
+        if (result == (size_t)-1)
+            return false;
+        lineno += result;
+        return true;
     }
 
 public:

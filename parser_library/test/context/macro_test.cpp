@@ -567,6 +567,11 @@ public:
         return true;
     }
     bool has_library(const std::string&, const std::string&) const override { return true; }
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string*) const override
+    {
+        return *current_content;
+    }
     std::unique_ptr<analyzer> a;
 };
 

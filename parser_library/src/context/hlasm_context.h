@@ -208,6 +208,9 @@ public:
     // leaves current copy member
     void leave_copy_member();
 
+    // register preprocessor dependency
+    void add_preprocessor_dependency(const std::string& file);
+
     // creates specified global set symbol
     template<typename T>
     set_sym_ptr create_global_variable(id_index id, bool is_scalar)

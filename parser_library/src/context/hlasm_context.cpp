@@ -783,6 +783,8 @@ const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return
 
 void hlasm_context::leave_copy_member() { source_stack_.back().copy_stack.pop_back(); }
 
+void hlasm_context::add_preprocessor_dependency(const std::string& file) { visited_files_.emplace(file); }
+
 void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
     assert(proc_stack_.size() == 1);

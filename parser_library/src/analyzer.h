@@ -25,6 +25,7 @@
 #include "lexing/token_stream.h"
 #include "lsp/lsp_context.h"
 #include "parsing/parser_error_listener.h"
+#include "preprocessor_options.h"
 #include "processing/processing_manager.h"
 #include "workspaces/parse_lib_provider.h"
 
@@ -51,6 +52,7 @@ class analyzer_options
     collect_highlighting_info collect_hl_info = collect_highlighting_info::no;
     file_is_opencode parsing_opencode = file_is_opencode::no;
     std::optional<context::id_storage> ids_init;
+    preprocessor_options preprocessor_args;
 
     void set(std::string fn) { file_name = std::move(fn); }
     void set(workspaces::parse_lib_provider* lp) { lib_provider = lp; }
@@ -60,10 +62,12 @@ class analyzer_options
     void set(collect_highlighting_info hi) { collect_hl_info = hi; }
     void set(file_is_opencode f_oc) { parsing_opencode = f_oc; }
     void set(context::id_storage ids) { ids_init.emplace(std::move(ids)); }
+    void set(preprocessor_options pp) { preprocessor_args = std::move(pp); }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
     workspaces::parse_lib_provider& get_lib_provider();
+    std::unique_ptr<processing::preprocessor> get_preprocessor(processing::library_fetcher, processing::diag_reporter);
 
     friend class analyzer;
 
@@ -82,7 +86,9 @@ public:
         constexpr auto hi_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, collect_highlighting_info>);
         constexpr auto f_oc_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, file_is_opencode>);
         constexpr auto ids_cnt = (0 + ... + std::is_same_v<std::decay_t<Args>, context::id_storage>);
-        constexpr auto cnt = string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt;
+        constexpr auto pp_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, preprocessor_options>);
+        constexpr auto cnt =
+            string_cnt + lib_cnt + ao_cnt + ac_cnt + lib_data_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt;
 
         static_assert(string_cnt <= 1, "Duplicate file_name");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -92,8 +98,9 @@ public:
         static_assert(hi_cnt <= 1, "Duplicate collect_highlighting_info");
         static_assert(f_oc_cnt <= 1, "Duplicate file_is_opencode");
         static_assert(ids_cnt <= 1, "Duplicate id_storage");
-        static_assert(
-            !(ac_cnt && (ao_cnt || ids_cnt)), "Do not specify both analyzing_context and asm_option or id_storage");
+        static_assert(pp_cnt <= 1, "Duplicate preprocessor_args");
+        static_assert(!(ac_cnt && (ao_cnt || ids_cnt || pp_cnt)),
+            "Do not specify both analyzing_context and asm_option, id_storage or preprocessor_args");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");
 
         (set(std::forward<Args>(args)), ...);

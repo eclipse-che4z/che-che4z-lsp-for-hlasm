@@ -499,6 +499,18 @@ public:
     }
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string*) const override
+    {
+        if (library == "LIB")
+            return LIB;
+        else if (library == "LIB2")
+            return LIB2;
+        else if (library == "LIB3")
+            return LIB3;
+        else
+            return std::nullopt;
+    }
 };
 
 TEST(attribute_lookahead, lookup_to_copy)
