@@ -16,6 +16,7 @@
 #define HLASMPARSER_PARSERLIBRARY_DIAGNOSTIC_CONSUMER_H
 
 #include <functional>
+#include <vector>
 
 #include "diagnostic.h"
 
@@ -53,6 +54,16 @@ public:
 };
 
 using diagnostic_op_consumer_transform = diagnostic_consumer_transform<diagnostic_op>;
+
+template<typename T>
+class diagnostic_consumer_container : public diagnostic_consumer<T>
+{
+public:
+    mutable std::vector<T> diags;
+    void add_diagnostic(T diagnostic) const override { diags.push_back(std::move(diagnostic)); };
+};
+
+using diagnostic_op_consumer_container = diagnostic_consumer_container<diagnostic_op>;
 
 } // namespace hlasm_plugin::parser_library
 
