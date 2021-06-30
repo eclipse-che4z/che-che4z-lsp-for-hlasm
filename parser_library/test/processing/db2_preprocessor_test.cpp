@@ -379,3 +379,45 @@ TEST(db2_preprocessor, continuation_in_buffer)
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
 }
+
+TEST(db2_preprocessor, include_empty)
+{
+    struct feed_member final : public parse_lib_provider
+    {
+    public:
+        parse_result parse_library(const std::string&, analyzing_context, library_data) override { return false; };
+        bool has_library(const std::string& lib, const std::string&) const override { return lib == "MEMBER"; };
+        std::optional<std::string> get_library(
+            const std::string& l, const std::string&, std::string* uri) const override
+        {
+            if (l == "MEMBER")
+            {
+                if (uri)
+                    *uri = "MEMBER";
+
+                return "";
+            }
+            return std::nullopt;
+        }
+    } libs;
+    std::string input = " EXEC SQL INCLUDE MEMBER ";
+
+    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+}
+
+TEST(db2_preprocessor, include_nonexistent)
+{
+    std::string input = " EXEC SQL INCLUDE MEMBER ";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)1);
+}

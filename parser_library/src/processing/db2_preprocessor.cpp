@@ -209,7 +209,7 @@ class db2_preprocessor : public preprocessor
 
         while (!include.empty())
         {
-            if (fill_buffer(include, lineno, queue, false) != (size_t)-1)
+            if (fill_buffer(include, lineno, queue, false).removed_lines_from_input)
                 continue;
             while (true)
             {
@@ -222,11 +222,18 @@ class db2_preprocessor : public preprocessor
         }
     }
 
+    struct fill_buffer_result
+    {
+        size_t removed_lines_from_input = 0;
+        bool lines_inserted = false;
+    };
+
     /* returns number of consumed lines or -1 when nothing was inserted */
-    size_t fill_buffer(std::string_view& input, size_t lineno, std::deque<std::string>& queue, bool include_allowed)
+    fill_buffer_result fill_buffer(
+        std::string_view& input, size_t lineno, std::deque<std::string>& queue, bool include_allowed)
     {
         using namespace std::literals;
-        size_t result = (size_t)-1;
+        fill_buffer_result result;
 
         if (include_allowed)
         {
@@ -237,7 +244,7 @@ class db2_preprocessor : public preprocessor
             {
                 // injected right after ICTL or *PROCESS
                 inject_SQLSECT(queue);
-                result = 0;
+                result.lines_inserted = true;
             }
         }
 
@@ -272,9 +279,7 @@ class db2_preprocessor : public preprocessor
             if (line_preview.empty() || line_preview.front() == ' ')
             {
                 push_sql_working_storage(queue);
-                if (include_allowed)
-                    result = 0;
-                // else keep result = -1 and  push the included end onto the stack
+                result.lines_inserted = true;
             }
             return result;
         }
@@ -300,6 +305,7 @@ class db2_preprocessor : public preprocessor
         m_logical_line.clear();
         bool extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
         assert(extracted);
+        result.removed_lines_from_input = m_logical_line.segments.size();
 
         if (m_logical_line.continuation_error && m_diags)
             m_diags(diagnostic_op::error_P0001(range(position(lineno, 0))));
@@ -308,6 +314,8 @@ class db2_preprocessor : public preprocessor
             queue.emplace_back(label) += " DS 0H";
 
         queue.push_back("***$$$");
+        result.lines_inserted = true;
+
         bool first_line = true;
         for (const auto& segment : m_logical_line.segments)
         {
@@ -323,8 +331,7 @@ class db2_preprocessor : public preprocessor
             }
             else
             {
-                l.append(lexing::default_ictl.continuation - lexing::default_ictl.begin,
-                    segment.continuation_error ? 'X' : ' ');
+                l.append(segment.line.data(), segment.code.data() - segment.line.data());
                 l.append(segment.code);
                 m_operands.append(segment.code);
             }
@@ -355,17 +362,15 @@ class db2_preprocessor : public preprocessor
         else
             queue.push_back("***$$$");
 
-        return m_logical_line.segments.size();
+        return result;
     }
 
     // Inherited via preprocessor
     virtual bool fill_buffer(std::string_view& input, size_t& lineno, std::deque<std::string>& queue) override
     {
         const auto result = fill_buffer(input, lineno, queue, true);
-        if (result == (size_t)-1)
-            return false;
-        lineno += result;
-        return true;
+        lineno += result.removed_lines_from_input;
+        return result.lines_inserted;
     }
 
 public:
