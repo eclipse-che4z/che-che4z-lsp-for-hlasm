@@ -552,17 +552,17 @@ std::optional<std::string> workspace::get_library(
     for (auto&& lib : proc_grp.libraries())
     {
         std::shared_ptr<processor> found = lib->find_file(library);
-        if (found)
-        {
-            if (auto f = dynamic_cast<file*>(found.get()); f) // for now
-            {
-                if (uri)
-                    *uri = f->get_file_name();
-                return f->get_text();
-            }
-            else
-                return std::nullopt;
-        }
+        if (!found)
+            continue;
+
+        auto f = dynamic_cast<file*>(found.get());
+        if (!f) // for now
+            return std::nullopt;
+
+        if (uri)
+            *uri = f->get_file_name();
+
+        return f->get_text();
     }
     return std::nullopt;
 }

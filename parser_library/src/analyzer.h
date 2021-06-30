@@ -66,8 +66,9 @@ class analyzer_options
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
-    workspaces::parse_lib_provider& get_lib_provider();
-    std::unique_ptr<processing::preprocessor> get_preprocessor(processing::library_fetcher, processing::diag_reporter);
+    workspaces::parse_lib_provider& get_lib_provider() const;
+    std::unique_ptr<processing::preprocessor> get_preprocessor(
+        processing::library_fetcher, processing::diag_reporter) const;
 
     friend class analyzer;
 

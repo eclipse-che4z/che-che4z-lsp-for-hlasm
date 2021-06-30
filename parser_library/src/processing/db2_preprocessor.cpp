@@ -19,6 +19,18 @@
 #include "preprocessor_options.h"
 #include "workspaces/parse_lib_provider.h"
 
+namespace {
+constexpr std::string_view trim_right(std::string_view s)
+{
+    const auto i = s.find_last_not_of(' ');
+
+    if (i == std::string_view::npos)
+        return s;
+
+    return s.substr(0, i + 1);
+}
+} // namespace
+
 namespace hlasm_plugin::parser_library::processing {
 namespace {
 class db2_preprocessor : public preprocessor
@@ -66,119 +78,119 @@ class db2_preprocessor : public preprocessor
 
     void push_sql_working_storage(std::deque<std::string>& queue)
     {
-        queue.push_back("***$$$ SQL WORKING STORAGE                      ");
-        queue.push_back("SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         ");
-        queue.push_back("SQLDSECT DSECT                                  ");
-        queue.push_back("SQLTEMP  DS    CL128     TEMPLATE               ");
-        queue.push_back("DSNTEMP  DS    F         INT SCROLL VALUE       ");
-        queue.push_back("DSNTMP2  DS    PL16      DEC SCROLL VALUE       ");
-        queue.push_back("DSNNROWS DS    F         MULTI-ROW N-ROWS VALUE ");
-        queue.push_back("DSNNTYPE DS    H         MULTI-ROW N-ROWS TYPE  ");
-        queue.push_back("DSNNLEN  DS    H         MULTI-ROW N-ROWS LENGTH");
-        queue.push_back("DSNPARMS DS    4F        DSNHMLTR PARM LIST     ");
-        queue.push_back("DSNPNM   DS    CL386     PROCEDURE NAME         ");
-        queue.push_back("DSNCNM   DS    CL128     CURSOR NAME            ");
-        queue.push_back("SQL_FILE_READ      EQU 2                        ");
-        queue.push_back("SQL_FILE_CREATE    EQU 8                        ");
-        queue.push_back("SQL_FILE_OVERWRITE EQU 16                       ");
-        queue.push_back("SQL_FILE_APPEND    EQU 32                       ");
-        queue.push_back("         DS    0D                               ");
-        queue.push_back("SQLPLIST DS    F                                ");
-        queue.push_back("SQLPLLEN DS    H         PLIST LENGTH           ");
-        queue.push_back("SQLFLAGS DS    XL2       FLAGS                  ");
-        queue.push_back("SQLCTYPE DS    H         CALL-TYPE              ");
-        queue.push_back("SQLPROGN DS    CL8       PROGRAM NAME           ");
-        queue.push_back("SQLTIMES DS    CL8       TIMESTAMP              ");
-        queue.push_back("SQLSECTN DS    H         SECTION                ");
-        queue.push_back("SQLCODEP DS    A         CODE POINTER           ");
-        queue.push_back("SQLVPARM DS    A         VPARAM POINTER         ");
-        queue.push_back("SQLAPARM DS    A         AUX PARAM PTR          ");
-        queue.push_back("SQLSTNM7 DS    H         PRE_V8 STATEMENT NUMBER");
-        queue.push_back("SQLSTYPE DS    H         STATEMENT TYPE         ");
-        queue.push_back("SQLSTNUM DS    F         STATEMENT NUMBER       ");
-        queue.push_back("SQLFLAG2 DS    H         internal flags         ");
-        queue.push_back("SQLRSRVD DS    CL18      RESERVED               ");
-        queue.push_back("SQLPVARS DS    CL8,F,2H,0CL44                   ");
-        queue.push_back("SQLAVARS DS    CL8,F,2H,0CL44                   ");
-        queue.push_back("         DS    0D                               ");
-        queue.push_back("SQLDLEN  EQU   *-SQLDSECT                       ");
+        queue.emplace_back("***$$$ SQL WORKING STORAGE                      ");
+        queue.emplace_back("SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         ");
+        queue.emplace_back("SQLDSECT DSECT                                  ");
+        queue.emplace_back("SQLTEMP  DS    CL128     TEMPLATE               ");
+        queue.emplace_back("DSNTEMP  DS    F         INT SCROLL VALUE       ");
+        queue.emplace_back("DSNTMP2  DS    PL16      DEC SCROLL VALUE       ");
+        queue.emplace_back("DSNNROWS DS    F         MULTI-ROW N-ROWS VALUE ");
+        queue.emplace_back("DSNNTYPE DS    H         MULTI-ROW N-ROWS TYPE  ");
+        queue.emplace_back("DSNNLEN  DS    H         MULTI-ROW N-ROWS LENGTH");
+        queue.emplace_back("DSNPARMS DS    4F        DSNHMLTR PARM LIST     ");
+        queue.emplace_back("DSNPNM   DS    CL386     PROCEDURE NAME         ");
+        queue.emplace_back("DSNCNM   DS    CL128     CURSOR NAME            ");
+        queue.emplace_back("SQL_FILE_READ      EQU 2                        ");
+        queue.emplace_back("SQL_FILE_CREATE    EQU 8                        ");
+        queue.emplace_back("SQL_FILE_OVERWRITE EQU 16                       ");
+        queue.emplace_back("SQL_FILE_APPEND    EQU 32                       ");
+        queue.emplace_back("         DS    0D                               ");
+        queue.emplace_back("SQLPLIST DS    F                                ");
+        queue.emplace_back("SQLPLLEN DS    H         PLIST LENGTH           ");
+        queue.emplace_back("SQLFLAGS DS    XL2       FLAGS                  ");
+        queue.emplace_back("SQLCTYPE DS    H         CALL-TYPE              ");
+        queue.emplace_back("SQLPROGN DS    CL8       PROGRAM NAME           ");
+        queue.emplace_back("SQLTIMES DS    CL8       TIMESTAMP              ");
+        queue.emplace_back("SQLSECTN DS    H         SECTION                ");
+        queue.emplace_back("SQLCODEP DS    A         CODE POINTER           ");
+        queue.emplace_back("SQLVPARM DS    A         VPARAM POINTER         ");
+        queue.emplace_back("SQLAPARM DS    A         AUX PARAM PTR          ");
+        queue.emplace_back("SQLSTNM7 DS    H         PRE_V8 STATEMENT NUMBER");
+        queue.emplace_back("SQLSTYPE DS    H         STATEMENT TYPE         ");
+        queue.emplace_back("SQLSTNUM DS    F         STATEMENT NUMBER       ");
+        queue.emplace_back("SQLFLAG2 DS    H         internal flags         ");
+        queue.emplace_back("SQLRSRVD DS    CL18      RESERVED               ");
+        queue.emplace_back("SQLPVARS DS    CL8,F,2H,0CL44                   ");
+        queue.emplace_back("SQLAVARS DS    CL8,F,2H,0CL44                   ");
+        queue.emplace_back("         DS    0D                               ");
+        queue.emplace_back("SQLDLEN  EQU   *-SQLDSECT                       ");
     }
 
     void inject_SQLCA(std::deque<std::string>& queue)
     {
-        queue.push_back("***$$$ SQLCA                          ");
-        queue.push_back("SQLCA    DS    0F                     ");
-        queue.push_back("SQLCAID  DS    CL8      ID            ");
-        queue.push_back("SQLCABC  DS    F        BYTE COUNT    ");
-        queue.push_back("SQLCODE  DS    F        RETURN CODE   ");
-        queue.push_back("SQLERRM  DS    H,CL70   ERR MSG PARMS ");
-        queue.push_back("SQLERRP  DS    CL8      IMPL-DEPENDENT");
-        queue.push_back("SQLERRD  DS    6F                     ");
-        queue.push_back("SQLWARN  DS    0C       WARNING FLAGS ");
-        queue.push_back("SQLWARN0 DS    C'W' IF ANY            ");
-        queue.push_back("SQLWARN1 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN2 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN3 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN4 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN5 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN6 DS    C'W' = WARNING         ");
-        queue.push_back("SQLWARN7 DS    C'W' = WARNING         ");
-        queue.push_back("SQLEXT   DS    0CL8                   ");
-        queue.push_back("SQLWARN8 DS    C                      ");
-        queue.push_back("SQLWARN9 DS    C                      ");
-        queue.push_back("SQLWARNA DS    C                      ");
-        queue.push_back("SQLSTATE DS    CL5                    ");
-        queue.push_back("***$$$");
+        queue.emplace_back("***$$$ SQLCA                          ");
+        queue.emplace_back("SQLCA    DS    0F                     ");
+        queue.emplace_back("SQLCAID  DS    CL8      ID            ");
+        queue.emplace_back("SQLCABC  DS    F        BYTE COUNT    ");
+        queue.emplace_back("SQLCODE  DS    F        RETURN CODE   ");
+        queue.emplace_back("SQLERRM  DS    H,CL70   ERR MSG PARMS ");
+        queue.emplace_back("SQLERRP  DS    CL8      IMPL-DEPENDENT");
+        queue.emplace_back("SQLERRD  DS    6F                     ");
+        queue.emplace_back("SQLWARN  DS    0C       WARNING FLAGS ");
+        queue.emplace_back("SQLWARN0 DS    C'W' IF ANY            ");
+        queue.emplace_back("SQLWARN1 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN2 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN3 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN4 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN5 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN6 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLWARN7 DS    C'W' = WARNING         ");
+        queue.emplace_back("SQLEXT   DS    0CL8                   ");
+        queue.emplace_back("SQLWARN8 DS    C                      ");
+        queue.emplace_back("SQLWARN9 DS    C                      ");
+        queue.emplace_back("SQLWARNA DS    C                      ");
+        queue.emplace_back("SQLSTATE DS    CL5                    ");
+        queue.emplace_back("***$$$");
     }
     void inject_SQLDA(std::deque<std::string>& queue)
     {
-        queue.push_back("***$$$ SQLDA                                            ");
-        queue.push_back("SQLTRIPL EQU    C'3'                                    ");
-        queue.push_back("SQLDOUBL EQU    C'2'                                    ");
-        queue.push_back("SQLSINGL EQU    C' '                                    ");
-        queue.push_back("*                                                       ");
-        queue.push_back("         SQLSECT SAVE                                   ");
-        queue.push_back("*                                                       ");
-        queue.push_back("SQLDA    DSECT                                          ");
-        queue.push_back("SQLDAID  DS    CL8      ID                              ");
-        queue.push_back("SQLDABC  DS    F        BYTE COUNT                      ");
-        queue.push_back("SQLN     DS    H        COUNT SQLVAR/SQLVAR2 ENTRIES    ");
-        queue.push_back("SQLD     DS    H        COUNT VARS (TWICE IF USING BOTH)");
-        queue.push_back("*                                                       ");
-        queue.push_back("SQLVAR   DS    0F       BEGIN VARS                      ");
-        queue.push_back("SQLVARN  DSECT ,        NTH VARIABLE                    ");
-        queue.push_back("SQLTYPE  DS    H        DATA TYPE CODE                  ");
-        queue.push_back("SQLLEN   DS    0H       LENGTH                          ");
-        queue.push_back("SQLPRCSN DS    X        DEC PRECISION                   ");
-        queue.push_back("SQLSCALE DS    X        DEC SCALE                       ");
-        queue.push_back("SQLDATA  DS    A        ADDR OF VAR                     ");
-        queue.push_back("SQLIND   DS    A        ADDR OF IND                     ");
-        queue.push_back("SQLNAME  DS    H,CL30   DESCRIBE NAME                   ");
-        queue.push_back("SQLVSIZ  EQU   *-SQLDATA                                ");
-        queue.push_back("SQLSIZV  EQU   *-SQLVARN                                ");
-        queue.push_back("*                                                       ");
-        queue.push_back("SQLDA    DSECT                                          ");
-        queue.push_back("SQLVAR2  DS     0F      BEGIN EXTENDED FIELDS OF VARS   ");
-        queue.push_back("SQLVAR2N DSECT  ,       EXTENDED FIELDS OF NTH VARIABLE ");
-        queue.push_back("SQLLONGL DS     F       LENGTH                          ");
-        queue.push_back("SQLRSVDL DS     F       RESERVED                        ");
-        queue.push_back("SQLDATAL DS     A       ADDR OF LENGTH IN BYTES         ");
-        queue.push_back("SQLTNAME DS     H,CL30  DESCRIBE NAME                   ");
-        queue.push_back("*                                                       ");
-        queue.push_back("         SQLSECT RESTORE                                ");
-        queue.push_back("***$$$");
+        queue.emplace_back("***$$$ SQLDA                                            ");
+        queue.emplace_back("SQLTRIPL EQU    C'3'                                    ");
+        queue.emplace_back("SQLDOUBL EQU    C'2'                                    ");
+        queue.emplace_back("SQLSINGL EQU    C' '                                    ");
+        queue.emplace_back("*                                                       ");
+        queue.emplace_back("         SQLSECT SAVE                                   ");
+        queue.emplace_back("*                                                       ");
+        queue.emplace_back("SQLDA    DSECT                                          ");
+        queue.emplace_back("SQLDAID  DS    CL8      ID                              ");
+        queue.emplace_back("SQLDABC  DS    F        BYTE COUNT                      ");
+        queue.emplace_back("SQLN     DS    H        COUNT SQLVAR/SQLVAR2 ENTRIES    ");
+        queue.emplace_back("SQLD     DS    H        COUNT VARS (TWICE IF USING BOTH)");
+        queue.emplace_back("*                                                       ");
+        queue.emplace_back("SQLVAR   DS    0F       BEGIN VARS                      ");
+        queue.emplace_back("SQLVARN  DSECT ,        NTH VARIABLE                    ");
+        queue.emplace_back("SQLTYPE  DS    H        DATA TYPE CODE                  ");
+        queue.emplace_back("SQLLEN   DS    0H       LENGTH                          ");
+        queue.emplace_back("SQLPRCSN DS    X        DEC PRECISION                   ");
+        queue.emplace_back("SQLSCALE DS    X        DEC SCALE                       ");
+        queue.emplace_back("SQLDATA  DS    A        ADDR OF VAR                     ");
+        queue.emplace_back("SQLIND   DS    A        ADDR OF IND                     ");
+        queue.emplace_back("SQLNAME  DS    H,CL30   DESCRIBE NAME                   ");
+        queue.emplace_back("SQLVSIZ  EQU   *-SQLDATA                                ");
+        queue.emplace_back("SQLSIZV  EQU   *-SQLVARN                                ");
+        queue.emplace_back("*                                                       ");
+        queue.emplace_back("SQLDA    DSECT                                          ");
+        queue.emplace_back("SQLVAR2  DS     0F      BEGIN EXTENDED FIELDS OF VARS   ");
+        queue.emplace_back("SQLVAR2N DSECT  ,       EXTENDED FIELDS OF NTH VARIABLE ");
+        queue.emplace_back("SQLLONGL DS     F       LENGTH                          ");
+        queue.emplace_back("SQLRSVDL DS     F       RESERVED                        ");
+        queue.emplace_back("SQLDATAL DS     A       ADDR OF LENGTH IN BYTES         ");
+        queue.emplace_back("SQLTNAME DS     H,CL30  DESCRIBE NAME                   ");
+        queue.emplace_back("*                                                       ");
+        queue.emplace_back("         SQLSECT RESTORE                                ");
+        queue.emplace_back("***$$$");
     }
     void inject_SQLSECT(std::deque<std::string>& queue)
     {
-        queue.push_back("         MACRO                          ");
-        queue.push_back("         SQLSECT &TYPE                  ");
-        queue.push_back("         GBLC  &SQLSECT                 ");
-        queue.push_back("         AIF ('&TYPE' EQ 'RESTORE').REST");
-        queue.push_back("&SQLSECT SETC  '&SYSECT'                ");
-        queue.push_back("         MEXIT                          ");
-        queue.push_back(".REST    ANOP                           ");
-        queue.push_back("&SQLSECT CSECT                          ");
-        queue.push_back("         MEND                           ");
+        queue.emplace_back("         MACRO                          ");
+        queue.emplace_back("         SQLSECT &TYPE                  ");
+        queue.emplace_back("         GBLC  &SQLSECT                 ");
+        queue.emplace_back("         AIF ('&TYPE' EQ 'RESTORE').REST");
+        queue.emplace_back("&SQLSECT SETC  '&SYSECT'                ");
+        queue.emplace_back("         MEXIT                          ");
+        queue.emplace_back(".REST    ANOP                           ");
+        queue.emplace_back("&SQLSECT CSECT                          ");
+        queue.emplace_back("         MEND                           ");
     }
 
     void process_include(std::string_view operands, size_t lineno, std::deque<std::string>& queue)
@@ -193,7 +205,7 @@ class db2_preprocessor : public preprocessor
             inject_SQLDA(queue);
             return;
         }
-        queue.push_back("***$$$");
+        queue.emplace_back("***$$$");
 
         std::optional<std::string> include_text;
         if (m_libs)
@@ -254,8 +266,7 @@ class db2_preprocessor : public preprocessor
         std::string_view line_preview =
             input.substr(lexing::default_ictl.begin - 1, lexing::default_ictl.end - (lexing::default_ictl.begin - 1));
 
-        const auto rn = line_preview.find_first_of("\r\n"sv);
-        if (rn != std::string_view::npos)
+        if (const auto rn = line_preview.find_first_of("\r\n"sv); rn != std::string_view::npos)
             line_preview = line_preview.substr(0, rn);
 
         if (line_preview.empty())
@@ -313,7 +324,7 @@ class db2_preprocessor : public preprocessor
         if (!label.empty())
             queue.emplace_back(label) += " DS 0H";
 
-        queue.push_back("***$$$");
+        queue.emplace_back("***$$$");
         result.lines_inserted = true;
 
         bool first_line = true;
@@ -345,10 +356,7 @@ class db2_preprocessor : public preprocessor
         {
             if (remove_space(operands))
             {
-                // trim right spaces
-                const auto end_of_operands = operands.find_last_not_of(' ');
-                if (end_of_operands != std::string_view::npos)
-                    operands = operands.substr(0, end_of_operands + 1);
+                operands = trim_right(operands);
 
                 if (include_allowed)
                     is_include = true;
@@ -360,7 +368,7 @@ class db2_preprocessor : public preprocessor
         if (is_include)
             process_include(operands, lineno, queue);
         else
-            queue.push_back("***$$$");
+            queue.emplace_back("***$$$");
 
         return result;
     }

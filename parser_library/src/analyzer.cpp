@@ -39,7 +39,7 @@ analyzing_context& analyzer_options::get_context()
 
 context::hlasm_context& analyzer_options::get_hlasm_context() { return *get_context().hlasm_ctx; }
 
-workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
+workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 {
     if (lib_provider)
         return *lib_provider;
@@ -48,10 +48,10 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider()
 }
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
-    processing::library_fetcher lf, processing::diag_reporter dr)
+    processing::library_fetcher lf, processing::diag_reporter dr) const
 {
     return std::visit(
-        [&lf, &dr](auto&& p) -> std::unique_ptr<processing::preprocessor> {
+        [&lf, &dr](const auto& p) -> std::unique_ptr<processing::preprocessor> {
             if constexpr (std::is_same_v<std::decay_t<decltype(p)>, std::monostate>)
                 return {};
             else
