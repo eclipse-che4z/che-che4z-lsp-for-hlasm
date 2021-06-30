@@ -69,11 +69,13 @@ enum class ca_expr_funcs
     DCLEN,
     FIND,
     INDEX,
+    X2A,
+
+    // binary
     ISBIN,
     ISDEC,
     ISHEX,
     ISSYM,
-    X2A,
 
     // character
     A2B,

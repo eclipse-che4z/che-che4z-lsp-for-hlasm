@@ -263,3 +263,20 @@ TEST(arithmetic_expressions, multiple_operand_with_spaces)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)3);
 }
+
+TEST(arithmetic_expressions, conversion_from_binary)
+{
+    std::string input =
+        R"(
+&A SETA ISBIN('0000')
+&B SETA ISBIN('a0a0')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETAEQ("A", 1);
+    SETAEQ("B", 0);
+}

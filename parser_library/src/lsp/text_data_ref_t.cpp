@@ -32,7 +32,7 @@ std::string_view text_data_ref_t::get_line(size_t line) const
     return { &text->at(line_indices[line]), line_len };
 }
 
-std::string_view text_data_ref_t::get_line_beginning(position pos) const
+std::string_view text_data_ref_t::get_line_beginning_at(position pos) const
 {
     if (pos.line >= line_indices.size())
         return "";
@@ -40,8 +40,6 @@ std::string_view text_data_ref_t::get_line_beginning(position pos) const
     size_t line_len = line_end_i - line_indices[pos.line];
     return { &text->at(line_indices[pos.line]), line_len };
 }
-
-
 
 char text_data_ref_t::get_character_before(position pos) const
 {
@@ -58,6 +56,13 @@ std::string_view text_data_ref_t::get_range_content(range r) const
     if (start_i >= text->size())
         return empty_text;
     return std::string_view(&text->at(start_i), end_i - start_i);
+}
+
+std::string_view text_data_ref_t::get_lines_beginning_at(position pos) const
+{
+    if (pos.line >= line_indices.size())
+        return {};
+    return std::string_view(*text).substr(line_indices[pos.line]);
 }
 
 size_t text_data_ref_t::get_number_of_lines() const { return line_indices.size(); }

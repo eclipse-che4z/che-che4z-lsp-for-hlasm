@@ -35,6 +35,7 @@ public:
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
     [[nodiscard]] macro_info_ptr get_macro_info(context::id_index macro_name) const;
+    [[nodiscard]] const file_info* get_file_info(const std::string& file_name) const;
 
     location definition(const std::string& document_uri, position pos) const override;
     location_list references(const std::string& document_uri, position pos) const override;

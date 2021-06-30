@@ -37,15 +37,15 @@ struct source
 
 struct stack_frame
 {
-    stack_frame(position_t begin_line, position_t end_line, uint32_t id, std::string name, source source)
+    stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, source source)
         : begin_line(begin_line)
         , end_line(end_line)
         , id(id)
         , name(std::move(name))
         , frame_source(std::move(source))
     {}
-    position_t begin_line;
-    position_t end_line;
+    size_t begin_line;
+    size_t end_line;
     uint32_t id;
     std::string name;
     source frame_source;

@@ -58,7 +58,7 @@ undef_sym_set ca_function::get_undefined_attributed_symbols(const evaluation_con
 
 void ca_function::resolve_expression_tree(context::SET_t_enum kind)
 {
-    if (kind != expr_kind)
+    if (kind != expr_kind && !(kind == context::SET_t_enum::A_TYPE && expr_kind == context::SET_t_enum::B_TYPE))
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (duplication_factor && expr_kind != context::SET_t_enum::C_TYPE)
         add_diagnostic(diagnostic_op::error_CE005(duplication_factor->expr_range));
@@ -291,8 +291,8 @@ context::SET_t ca_function::ISBIN(const context::C_t& param, diagnostic_adder& a
         RET_ERRPARM;
 
     if (param.size() <= 32 && std::all_of(param.cbegin(), param.cend(), [](char c) { return c == '0' || c == '1'; }))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 context::SET_t ca_function::ISDEC(const context::C_t& param, diagnostic_adder& add_diagnostic)
@@ -300,19 +300,19 @@ context::SET_t ca_function::ISDEC(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    context::A_t ret;
+    context::B_t ret;
 
     if (param.size() > 10 || param.front() == '-')
-        ret = 0;
+        ret = false;
     else
     {
         context::A_t tmp;
         auto conv = std::from_chars(param.c_str(), param.c_str() + param.size(), tmp, 10);
 
         if (conv.ec != std::errc() || conv.ptr != param.c_str() + param.size())
-            ret = 0;
+            ret = false;
         else
-            ret = 1;
+            ret = true;
     }
     return ret;
 }
@@ -324,8 +324,8 @@ context::SET_t ca_function::ISHEX(const context::C_t& param, diagnostic_adder& a
 
     if (param.size() <= 8
         && std::all_of(param.cbegin(), param.cend(), [](unsigned char c) { return std::isxdigit(c); }))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 context::SET_t ca_function::ISSYM(const context::C_t& param, diagnostic_adder& add_diagnostic)
@@ -335,8 +335,8 @@ context::SET_t ca_function::ISSYM(const context::C_t& param, diagnostic_adder& a
 
     if (!std::isdigit((unsigned char)param.front()) && param.size() < 64
         && std::all_of(param.cbegin(), param.cend(), lexing::lexer::ord_char))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 context::SET_t ca_function::X2A(std::string_view param, diagnostic_adder& add_diagnostic)

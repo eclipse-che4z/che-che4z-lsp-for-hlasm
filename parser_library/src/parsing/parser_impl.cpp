@@ -17,6 +17,7 @@
 #include <cctype>
 
 #include "error_strategy.h"
+#include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
@@ -143,8 +144,20 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     if (opcode.value == hlasm_ctx->ids().well_known.SETA || opcode.value == hlasm_ctx->ids().well_known.ACTR
         || opcode.value == hlasm_ctx->ids().well_known.ASPACE || opcode.value == hlasm_ctx->ids().well_known.AGO)
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().well_known.SETB || opcode.value == hlasm_ctx->ids().well_known.AIF)
+    else if (opcode.value == hlasm_ctx->ids().well_known.SETB)
+    {
+        if (!expr->is_compatible(ca_expression_compatibility::setb))
+            expr->diags().push_back(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
+    }
+    else if (opcode.value == hlasm_ctx->ids().well_known.AIF)
+    {
+        if (!expr->is_compatible(ca_expression_compatibility::aif))
+            expr->diags().push_back(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+
+        resolve_expression(expr, context::SET_t_enum::B_TYPE);
+    }
     else if (opcode.value == hlasm_ctx->ids().well_known.SETC)
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
     else if (opcode.value == hlasm_ctx->ids().well_known.AREAD)

@@ -110,8 +110,11 @@ term returns [ca_expr_ptr ca_expr]
 		
 		auto r = provider.get_range($ca_dupl_factor.ctx->getStart(), $subscript_ne.ctx->getStop());
 		auto func = ca_common_expr_policy::get_function(*$id_no_dot.name);
-		auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
-		resolve_expression($subscript_ne.value, param_kind);
+		if (func != expressions::ca_expr_funcs::UNKNOWN)
+		{
+			auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(func, ca_common_expr_policy::get_function_type(func));
+			resolve_expression($subscript_ne.value, param_kind);
+		}
 
 		$ca_expr = std::make_unique<ca_function>($id_no_dot.name, func, std::move($subscript_ne.value), std::move($ca_dupl_factor.value), r);
 	}
@@ -208,12 +211,11 @@ created_set_body_c returns [concat_chain concat_list]
 	{concatenation_point::clear_concat_chain($concat_list);}
 
 created_set_symbol returns [vs_ptr vs]
-	: AMPERSAND lpar clc=created_set_body_c rpar subscript 	
+	: AMPERSAND lpar (clc=created_set_body_c)? rpar subscript 	
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $AMPERSAND),hl_scopes::var_symbol));
-		$vs = std::make_unique<created_variable_symbol>(std::move($clc.concat_list),std::move($subscript.value),provider.get_range($AMPERSAND,$subscript.ctx->getStop()));
-	}
-	| ampersand lpar rpar subscript; 	//empty set symbol err TODO
+		$vs = std::make_unique<created_variable_symbol>($clc.ctx ? std::move($clc.concat_list) : concat_chain{},std::move($subscript.value),provider.get_range($AMPERSAND,$subscript.ctx->getStop()));
+	};
 
 var_symbol returns [vs_ptr vs]
 	: AMPERSAND vs_id tmp=subscript

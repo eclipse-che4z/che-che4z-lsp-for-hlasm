@@ -23,7 +23,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // represents unresolved list of terms in logical CA expression
-class ca_expr_list : public ca_expression
+class ca_expr_list final : public ca_expression
 {
 public:
     std::vector<ca_expr_ptr> expr_list;
@@ -41,6 +41,11 @@ public:
     void apply(ca_expr_visitor& visitor) const override;
 
     context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
+
+    bool is_compatible(ca_expression_compatibility i) const override
+    {
+        return i == ca_expression_compatibility::aif || i == ca_expression_compatibility::setb;
+    }
 
 private:
     // this function is present due to the fact that in hlasm you can omit space between operator and operands if

@@ -193,7 +193,7 @@ data_def_type_P::data_def_type_P()
 
 uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
 {
-    if (!op.present)
+    if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
 
     const std::string& s = std::get<std::string>(op.value);
@@ -220,7 +220,7 @@ uint64_t data_def_type_P::get_nominal_length(const nominal_value_t& op) const
 uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_length_attribute(
     const nominal_value_t& op) const
 {
-    if (!op.present)
+    if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
 
     const std::string& s = std::get<std::string>(op.value);
@@ -250,7 +250,7 @@ data_def_type_Z::data_def_type_Z()
 
 uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
 {
-    if (!op.present)
+    if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
 
     const std::string& s = std::get<std::string>(op.value);
@@ -262,7 +262,7 @@ uint64_t data_def_type_Z::get_nominal_length(const nominal_value_t& op) const
 
 uint32_t data_def_type_Z::get_nominal_length_attribute(const nominal_value_t& op) const
 {
-    if (!op.present)
+    if (!op.present || !std::holds_alternative<std::string>(op.value))
         return 1;
 
     uint32_t first_value_len = 0;

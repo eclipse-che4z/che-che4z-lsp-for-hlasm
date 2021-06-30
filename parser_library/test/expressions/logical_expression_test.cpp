@@ -48,23 +48,25 @@ TEST(logical_expressions, empty_string_conversion)
 {
     std::string input = R"(
 &C1 SETC ''
-&B1 SETB &C1
+&B1 SETB (&C1)
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), 0);
+
+    SETBEQ("B1", false);
 }
 
 TEST(logical_expressions, invalid_assignment)
 {
     std::string input =
         R"(
-&A1 SETB C'D'
-&A2 SETB &A2
-&A3 SETB 10
-&A4 SETB -1
+&A1 SETB (C'D')
+&A2 SETB (&A2)
+&A3 SETB (10)
+&A4 SETB (-1)
 )";
     analyzer a(input);
     a.analyze();
@@ -223,4 +225,43 @@ TEST(logical_expressions, bad_number_of_operands)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().code, "CE006");
+}
+
+TEST(logical_expressions, is_functions)
+{
+    std::string input =
+        R"(
+&A SETB (ISBIN('0000'))
+&B SETB (ISBIN('a0a0'))
+&C SETB (ISHEX('abcd'))
+&D SETB (ISHEX('hhhh'))
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETBEQ("A", 1);
+    SETBEQ("B", 0);
+    SETBEQ("C", 1);
+    SETBEQ("D", 0);
+}
+
+TEST(logical_expressions, parenthesis_around_expressions)
+{
+    std::string input =
+        R"(
+&A SETB 0
+&B SETB &A
+&B SETB (&A)
+&C SETB ISBIN('0000')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    const auto& diags = a.diags();
+    EXPECT_EQ(diags.size(), (size_t)2);
+    EXPECT_TRUE(std::all_of(diags.begin(), diags.end(), [](const auto& d) { return d.code == "CE016"; }));
 }
