@@ -41,19 +41,6 @@ class db2_preprocessor : public preprocessor
     library_fetcher m_libs;
     diag_reporter m_diags;
 
-    static bool remove_non_space(std::string_view& s)
-    {
-        if (s.empty() || s.front() == ' ')
-            return false;
-        const auto space = s.find(' ');
-
-        if (space == std::string_view::npos)
-            return false;
-
-        s = s.substr(space);
-        return true;
-    }
-
     static bool remove_space(std::string_view& s)
     {
         if (s.empty() || s.front() != ' ')
@@ -234,6 +221,84 @@ class db2_preprocessor : public preprocessor
         }
     }
 
+    static bool consume_exec_sql(std::string_view& l)
+    {
+        using namespace std::literals;
+        constexpr const auto EXEC_literal = "EXEC"sv;
+        constexpr const auto SQL_literal = "SQL"sv;
+
+        const char* start = l.data();
+
+        if (!consume(l, EXEC_literal))
+            return false;
+        if (!remove_space(l))
+            return false;
+        if (!consume(l, SQL_literal))
+            return false;
+        return remove_space(l);
+    }
+
+    static bool is_end(std::string_view s)
+    {
+        using namespace std::literals;
+        constexpr const auto END_literal = "END"sv;
+
+        if (!consume(s, END_literal))
+            return false;
+
+        if (s.empty() || s.front() == ' ')
+            return true;
+
+        return false;
+    }
+
+    static bool consume_include(std::string_view& s)
+    {
+        using namespace std::literals;
+
+        constexpr const auto INCLUDE_literal = "INCLUDE"sv;
+
+        if (consume(s, INCLUDE_literal))
+        {
+            if (remove_space(s))
+                return true;
+        }
+        return false;
+    }
+
+    static std::string_view create_line_preview(std::string_view input)
+    {
+        const auto begin_offset = lexing::default_ictl.begin - 1;
+        using namespace std::literals;
+        if (input.size() < begin_offset)
+            return {};
+
+        input = input.substr(begin_offset, lexing::default_ictl.end - begin_offset);
+
+        if (const auto rn = input.find_first_of("\r\n"sv); rn != std::string_view::npos)
+            input = input.substr(0, rn);
+
+        return input;
+    }
+
+    static bool ignore_line(std::string_view s) { return s.empty() || s.front() == '*' || s.substr(0, 2) == ".*"; }
+
+    static std::string_view extract_label(std::string_view& s)
+    {
+        if (s.empty() || s.front() == ' ')
+            return {};
+
+        auto space = s.find(' ');
+        if (space == std::string_view::npos)
+            space = s.size();
+
+        std::string_view result = s.substr(0, space);
+
+        s.remove_prefix(space);
+
+        return result;
+    }
+
     struct fill_buffer_result
     {
         size_t removed_lines_from_input = 0;
@@ -245,78 +310,35 @@ class db2_preprocessor : public preprocessor
         std::string_view& input, size_t lineno, std::deque<std::string>& queue, bool include_allowed)
     {
         using namespace std::literals;
-        fill_buffer_result result;
 
-        if (include_allowed)
-        {
-            if (input.data() == m_last_position)
-                return result;
+        std::string_view line_preview = create_line_preview(input);
 
-            if (std::exchange(m_last_position, input.data()) == nullptr)
-            {
-                // injected right after ICTL or *PROCESS
-                inject_SQLSECT(queue);
-                result.lines_inserted = true;
-            }
-        }
+        if (ignore_line(line_preview))
+            return {};
 
-        if (input.size() < lexing::default_ictl.begin - 1)
-            return result;
+        std::string_view label = extract_label(line_preview);
 
-        std::string_view line_preview =
-            input.substr(lexing::default_ictl.begin - 1, lexing::default_ictl.end - (lexing::default_ictl.begin - 1));
-
-        if (const auto rn = line_preview.find_first_of("\r\n"sv); rn != std::string_view::npos)
-            line_preview = line_preview.substr(0, rn);
-
-        if (line_preview.empty())
-            return result;
-
-        std::string label;
-        if (line_preview.front() != ' ')
-        {
-            if (line_preview.front() == '*' || line_preview.substr(0, 2) == ".*")
-                return result;
-            if (!remove_non_space(line_preview))
-                return result;
-            label = std::string_view(input.data(), line_preview.data() - input.data());
-        }
         if (!remove_space(line_preview))
-            return result;
+            return {};
 
-        constexpr const auto END_literal = "END"sv;
-        if (consume(line_preview, END_literal))
+        if (is_end(line_preview))
         {
-            if (line_preview.empty() || line_preview.front() == ' ')
-            {
-                push_sql_working_storage(queue);
-                result.lines_inserted = true;
-            }
-            return result;
+            push_sql_working_storage(queue);
+
+            return { 0, true };
         }
 
-        constexpr const auto EXEC_literal = "EXEC"sv;
-        constexpr const auto SQL_literal = "SQL"sv;
-        constexpr const auto INCLUDE_literal = "INCLUDE"sv;
-
-        if (!consume(line_preview, EXEC_literal))
-            return result;
-        if (!remove_space(line_preview))
-            return result;
-        if (!consume(line_preview, SQL_literal))
-            return result;
-        if (line_preview.empty() || line_preview.front() != ' ')
-            return result;
-        remove_space(line_preview);
-        const auto skipped = line_preview.data() - input.data();
+        if (!consume_exec_sql(line_preview))
+            return {};
+        auto first_line_skipped = line_preview.data() - input.data();
 
         // now we have a valid EXEC SQL line
 
         m_operands.clear();
         m_logical_line.clear();
+
         bool extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
         assert(extracted);
-        result.removed_lines_from_input = m_logical_line.segments.size();
 
         if (m_logical_line.continuation_error && m_diags)
             m_diags(diagnostic_op::error_P0001(range(position(lineno, 0))));
@@ -325,44 +347,33 @@ class db2_preprocessor : public preprocessor
             queue.emplace_back(label) += " DS 0H";
 
         queue.emplace_back("***$$$");
-        result.lines_inserted = true;
 
-        bool first_line = true;
         for (const auto& segment : m_logical_line.segments)
         {
-            auto& l = queue.emplace_back();
-            if (first_line)
+            auto& l = queue.emplace_back(segment.line);
+
+            auto operand_part = segment.code;
+            if (first_line_skipped)
             {
-                first_line = false;
-                l.append(segment.code);
-                if (!label.empty())
+                operand_part.remove_prefix(first_line_skipped);
+                first_line_skipped = 0;
+                if (!l.empty())
                     l.replace(0, label.size(), label.size(), ' '); // mask out any label-like characters
                 l[0] = '*';
-                m_operands.append(segment.code.substr(skipped));
             }
-            else
-            {
-                l.append(segment.line.data(), segment.code.data() - segment.line.data());
-                l.append(segment.code);
-                m_operands.append(segment.code);
-            }
-            l.append(segment.continuation);
-            l.append(segment.ignore);
+            m_operands.append(operand_part);
         }
 
         std::string_view operands = m_operands;
         bool is_include = false;
-        if (consume(operands, INCLUDE_literal))
+        if (consume_include(operands))
         {
-            if (remove_space(operands))
-            {
-                operands = trim_right(operands);
+            operands = trim_right(operands);
 
-                if (include_allowed)
-                    is_include = true;
-                else if (m_diags)
-                    m_diags(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
-            }
+            if (include_allowed)
+                is_include = true;
+            else if (m_diags)
+                m_diags(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
         }
 
         if (is_include)
@@ -370,15 +381,26 @@ class db2_preprocessor : public preprocessor
         else
             queue.emplace_back("***$$$");
 
-        return result;
+        return { m_logical_line.segments.size(), true };
     }
 
     // Inherited via preprocessor
     virtual bool fill_buffer(std::string_view& input, size_t& lineno, std::deque<std::string>& queue) override
     {
+        bool lines_inserted = false;
+        if (input.data() == m_last_position)
+            return false;
+
+        if (std::exchange(m_last_position, input.data()) == nullptr)
+        {
+            // injected right after ICTL or *PROCESS
+            inject_SQLSECT(queue);
+            lines_inserted = true;
+        }
+
         const auto result = fill_buffer(input, lineno, queue, true);
         lineno += result.removed_lines_from_input;
-        return result.lines_inserted;
+        return lines_inserted || result.lines_inserted;
     }
 
 public:
