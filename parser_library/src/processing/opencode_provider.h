@@ -70,7 +70,6 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     {
         size_t ainsert_buffer;
         size_t copy_files;
-        size_t preprocessor_buffer;
         size_t current_text_lines;
     };
     lines_to_remove m_lines_to_remove = {};
@@ -91,7 +90,6 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
         {
             none,
             file,
-            preprocessor,
             copy,
             ainsert,
         } source;
@@ -108,7 +106,7 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
 
     std::vector<copy_member_state> m_copy_files;
 
-    std::deque<std::string> m_preprocessor_buffer;
+    std::unordered_map<context::id_index, std::string> m_preprocessor_virtual_files;
 
     std::unique_ptr<parsing::parser_holder> m_parser;
     std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
@@ -182,6 +180,7 @@ private:
         const range& op_range);
 
     bool fill_copy_buffer_for_aread();
+    bool try_running_preprocessor();
 
     void suspend_copy();
     bool resume_copy(size_t line_no, processing::resume_copy resume_opts);

@@ -14,6 +14,7 @@
 
 #include "opencode_provider.h"
 
+#include "analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
@@ -98,7 +99,8 @@ std::string opencode_provider::aread()
         if (m_ainsert_buffer.empty() && m_copy_suspended && !m_copy_files_aread_ready)
             resume_copy(0, resume_copy::ignore_line);
     }
-    else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread())
+    else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread()
+        || m_preprocessor && try_running_preprocessor() && fill_copy_buffer_for_aread())
     {
         auto& current = m_copy_files.back();
         result = lexing::extract_line(current.text).first;
@@ -108,12 +110,6 @@ std::string opencode_provider::aread()
             m_copy_files.pop_back();
             m_ctx->hlasm_ctx->opencode_copy_stack().pop_back();
         }
-    }
-    else if (!m_preprocessor_buffer.empty()
-        || m_preprocessor && m_preprocessor->fill_buffer(m_next_line_text, m_current_line, m_preprocessor_buffer))
-    {
-        result = std::move(m_preprocessor_buffer.back());
-        m_preprocessor_buffer.pop_back();
     }
     else if (!m_next_line_text.empty())
     {
@@ -351,7 +347,10 @@ bool opencode_provider::fill_copy_buffer_for_aread()
         return false;
 
     const auto cmi_to_cms = [lsp_ctx = m_ctx->lsp_ctx.get()](const context::copy_member_invocation& copy) {
-        const auto pos = copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
+        const bool before_first_read = copy.current_statement == (size_t)-1;
+        const auto pos = before_first_read
+            ? position {}
+            : copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
         const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
 
         std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });
@@ -359,7 +358,8 @@ bool opencode_provider::fill_copy_buffer_for_aread()
 
         // remove line being processed
         lexing::logical_line ll = {};
-        lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
+        if (!before_first_read)
+            lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
 
         return copy_member_state { remaining_text, full_text, pos.line + ll.segments.size() };
     };
@@ -376,7 +376,48 @@ bool opencode_provider::fill_copy_buffer_for_aread()
     if (m_copy_files.empty())
         return false;
 
-    suspend_copy();
+    if (!m_copy_suspended)
+        suspend_copy();
+
+    return true;
+}
+
+bool opencode_provider::try_running_preprocessor()
+{
+    const auto current_line = m_current_line;
+    auto result = m_preprocessor->generate_replacement(m_next_line_text, m_current_line);
+    if (!result.has_value() || result.value().empty())
+        return false;
+
+    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("DB2:" + std::to_string(current_line));
+
+    auto [new_file, inserted] = m_preprocessor_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
+
+    // set up "call site"
+    const auto current_offset =
+        m_next_line_text.empty() ? m_original_text.size() : m_next_line_text.data() - m_original_text.data();
+    const auto last_statement_line = m_current_line - (current_line != m_current_line);
+    m_ctx->hlasm_ctx->set_source_position(position(last_statement_line, 0));
+    m_ctx->hlasm_ctx->set_source_indices(current_offset, current_offset, last_statement_line);
+
+    if (inserted)
+    {
+        analyzer a(new_file->second,
+            analyzer_options {
+                *virtual_copy_name,
+                m_lib_provider,
+                *m_ctx,
+                workspaces::library_data { processing_kind::COPY, virtual_copy_name },
+            });
+        a.analyze();
+        collect_diags_from_child(a);
+    }
+    else
+    {
+        assert(result.value() == new_file->second);
+    }
+
+    m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
 
     return true;
 }
@@ -432,8 +473,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
 bool opencode_provider::finished() const
 {
-    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty()
-        && m_preprocessor_buffer.empty();
+    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty();
 }
 
 parsing::hlasmparser& opencode_provider::parser()
@@ -450,8 +490,7 @@ void opencode_provider::collect_diags() const { collect_diags_from_child(m_liste
 void opencode_provider::apply_pending_line_changes()
 {
     m_ainsert_buffer.erase(m_ainsert_buffer.begin(), m_ainsert_buffer.begin() + m_lines_to_remove.ainsert_buffer);
-    m_preprocessor_buffer.erase(
-        m_preprocessor_buffer.begin(), m_preprocessor_buffer.begin() + m_lines_to_remove.preprocessor_buffer);
+
     m_current_line += m_lines_to_remove.current_text_lines;
 
     m_lines_to_remove = {};
@@ -623,24 +662,13 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         }
     }
 
-    while (true)
+    if (m_preprocessor && try_running_preprocessor())
+        return extract_next_logical_line_result::failed;
+
+    while (!m_next_line_text.empty())
     {
-        if (!ictl_allowed
-            && (m_lines_to_remove.preprocessor_buffer < m_preprocessor_buffer.size()
-                || m_preprocessor
-                    && m_preprocessor->fill_buffer(m_next_line_text, m_current_line, m_preprocessor_buffer)))
-        {
-            std::string_view s = m_preprocessor_buffer[m_lines_to_remove.preprocessor_buffer++];
-            if (!append_to_logical_line(m_current_logical_line, s, lexing::default_ictl))
-                break;
-        }
-        else if (!m_next_line_text.empty())
-        {
-            ++m_lines_to_remove.current_text_lines;
-            if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
-                break;
-        }
-        else
+        ++m_lines_to_remove.current_text_lines;
+        if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))
             break;
     }
     finish_logical_line(m_current_logical_line, lexing::default_ictl);
@@ -648,22 +676,13 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (m_current_logical_line.segments.empty())
         return extract_next_logical_line_result::failed;
 
-    if (m_lines_to_remove.preprocessor_buffer)
-    {
-        // if at least one line was supplied by the pre-processor then consider the whole thing as supplied from the
-        // preprocessor
-        m_current_logical_line_source.source = logical_line_origin::source_type::preprocessor;
-    }
-    else
-    {
-        m_current_logical_line_source.begin_line = m_current_line;
-        m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
-        m_current_logical_line_source.begin_offset =
-            m_current_logical_line.segments.front().code.data() - m_original_text.data();
-        m_current_logical_line_source.end_offset =
-            m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
-        m_current_logical_line_source.source = logical_line_origin::source_type::file;
-    }
+    m_current_logical_line_source.begin_line = m_current_line;
+    m_current_logical_line_source.end_line = m_current_line + m_current_logical_line.segments.size() - 1;
+    m_current_logical_line_source.begin_offset =
+        m_current_logical_line.segments.front().code.data() - m_original_text.data();
+    m_current_logical_line_source.end_offset =
+        m_next_line_text.size() ? m_next_line_text.data() - m_original_text.data() : m_original_text.size();
+    m_current_logical_line_source.source = logical_line_origin::source_type::file;
 
     if (ictl_allowed)
         return extract_next_logical_line_result::ictl;

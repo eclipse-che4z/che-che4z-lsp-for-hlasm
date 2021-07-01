@@ -39,7 +39,7 @@ class preprocessor
 public:
     virtual ~preprocessor() = default;
 
-    virtual bool fill_buffer(std::string_view& input, size_t& lineno, std::deque<std::string>& buffer) = 0;
+    virtual std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) = 0;
 
     static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&, library_fetcher, diag_reporter);
 };
