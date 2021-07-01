@@ -430,3 +430,22 @@ TEST(db2_preprocessor, include_nonexistent)
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
+
+TEST(db2_preprocessor, ago_in_include)
+{
+    library_provider_with_uri libs({
+        { "MEMBER", R"(
+        AGO  .HERE
+.HERE   ANOP
+)" },
+    });
+    std::string input = " EXEC SQL INCLUDE MEMBER ";
+
+    analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    EXPECT_TRUE(a.hlasm_ctx().get_visited_files().count("MEMBER"));
+}
