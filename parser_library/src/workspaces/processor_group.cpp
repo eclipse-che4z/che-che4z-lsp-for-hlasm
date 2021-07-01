@@ -21,8 +21,8 @@ namespace hlasm_plugin::parser_library::workspaces {
 namespace {
 struct translate_pp_options
 {
-    preprocessor_options operator()(const std::monostate&) { return std::monostate {}; }
-    preprocessor_options operator()(const config::db2_preprocessor&) { return db2_preprocessor_options {}; }
+    preprocessor_options operator()(const std::monostate&) const { return std::monostate {}; }
+    preprocessor_options operator()(const config::db2_preprocessor&) const { return db2_preprocessor_options {}; }
 };
 } // namespace
 

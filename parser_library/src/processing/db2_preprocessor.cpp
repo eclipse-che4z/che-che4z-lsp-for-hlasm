@@ -63,7 +63,7 @@ class db2_preprocessor : public preprocessor
         return true;
     }
 
-    void push_sql_working_storage(std::deque<std::string>& queue)
+    static void push_sql_working_storage(std::deque<std::string>& queue)
     {
         queue.emplace_back("***$$$ SQL WORKING STORAGE                      ");
         queue.emplace_back("SQLDSIZ  DC    A(SQLDLEN) SQLDSECT SIZE         ");
@@ -103,7 +103,7 @@ class db2_preprocessor : public preprocessor
         queue.emplace_back("SQLDLEN  EQU   *-SQLDSECT                       ");
     }
 
-    void inject_SQLCA(std::deque<std::string>& queue)
+    static void inject_SQLCA(std::deque<std::string>& queue)
     {
         queue.emplace_back("***$$$ SQLCA                          ");
         queue.emplace_back("SQLCA    DS    0F                     ");
@@ -129,7 +129,7 @@ class db2_preprocessor : public preprocessor
         queue.emplace_back("SQLSTATE DS    CL5                    ");
         queue.emplace_back("***$$$");
     }
-    void inject_SQLDA(std::deque<std::string>& queue)
+    static void inject_SQLDA(std::deque<std::string>& queue)
     {
         queue.emplace_back("***$$$ SQLDA                                            ");
         queue.emplace_back("SQLTRIPL EQU    C'3'                                    ");
@@ -167,7 +167,7 @@ class db2_preprocessor : public preprocessor
         queue.emplace_back("         SQLSECT RESTORE                                ");
         queue.emplace_back("***$$$");
     }
-    void inject_SQLSECT(std::deque<std::string>& queue)
+    static void inject_SQLSECT(std::deque<std::string>& queue)
     {
         queue.emplace_back("         MACRO                          ");
         queue.emplace_back("         SQLSECT &TYPE                  ");
@@ -223,27 +223,18 @@ class db2_preprocessor : public preprocessor
 
     static bool consume_exec_sql(std::string_view& l)
     {
-        using namespace std::literals;
-        constexpr const auto EXEC_literal = "EXEC"sv;
-        constexpr const auto SQL_literal = "SQL"sv;
-
-        const char* start = l.data();
-
-        if (!consume(l, EXEC_literal))
+        if (!consume(l, "EXEC"))
             return false;
         if (!remove_space(l))
             return false;
-        if (!consume(l, SQL_literal))
+        if (!consume(l, "SQL"))
             return false;
         return remove_space(l);
     }
 
     static bool is_end(std::string_view s)
     {
-        using namespace std::literals;
-        constexpr const auto END_literal = "END"sv;
-
-        if (!consume(s, END_literal))
+        if (!consume(s, "END"))
             return false;
 
         if (s.empty() || s.front() == ' ')
@@ -254,16 +245,10 @@ class db2_preprocessor : public preprocessor
 
     static bool consume_include(std::string_view& s)
     {
-        using namespace std::literals;
+        if (!consume(s, "INCLUDE"))
+            return false;
 
-        constexpr const auto INCLUDE_literal = "INCLUDE"sv;
-
-        if (consume(s, INCLUDE_literal))
-        {
-            if (remove_space(s))
-                return true;
-        }
-        return false;
+        return remove_space(s);
     }
 
     static std::string_view create_line_preview(std::string_view input)
@@ -357,7 +342,7 @@ class db2_preprocessor : public preprocessor
             {
                 operand_part.remove_prefix(first_line_skipped);
                 first_line_skipped = 0;
-                if (!l.empty())
+                if (!label.empty())
                     l.replace(0, label.size(), label.size(), ' '); // mask out any label-like characters
                 l[0] = '*';
             }
