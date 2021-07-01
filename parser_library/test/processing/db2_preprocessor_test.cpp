@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <unordered_map>
+
 #include "../common_testing.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
@@ -345,29 +347,51 @@ TEST(db2_preprocessor, ignore_comments)
     EXPECT_EQ(RES.value().find("*        EXEC SQL SELECT 1 FROM SYSIBM.SYSDUMMY1"), 0);
 }
 
+namespace {
+class library_provider_with_uri final : public parse_lib_provider
+{
+    std::unordered_map<std::string, std::string> m_files;
+
+    const std::pair<const std::string, std::string>* find_file(const std::string& f) const
+    {
+        if (auto it = m_files.find(f); it != m_files.end())
+            return &*it;
+        return nullptr;
+    }
+
+public:
+    parse_result parse_library(const std::string& l, analyzing_context, library_data) override
+    {
+        assert(false);
+        return false;
+    };
+    bool has_library(const std::string& l, const std::string&) const override { return find_file(l) != nullptr; };
+    std::optional<std::string> get_library(const std::string& l, const std::string&, std::string* uri) const override
+    {
+        const auto* f = find_file(l);
+        if (!f)
+            return std::nullopt;
+
+        if (uri)
+            *uri = f->first;
+
+        return f->second;
+    }
+
+    library_provider_with_uri(std::initializer_list<std::pair<std::string, std::string>> files)
+        : m_files(files.begin(), files.end())
+    {}
+};
+} // namespace
+
 TEST(db2_preprocessor, continuation_in_buffer)
 {
-    struct feed_member final : public parse_lib_provider
-    {
-    public:
-        parse_result parse_library(const std::string&, analyzing_context, library_data) override { return false; };
-        bool has_library(const std::string& lib, const std::string&) const override { return lib == "MEMBER"; };
-        std::optional<std::string> get_library(
-            const std::string& l, const std::string&, std::string* uri) const override
-        {
-            if (l == "MEMBER")
-            {
-                if (uri)
-                    *uri = "MEMBER";
-
-                return R"(
+    library_provider_with_uri libs({
+        { "MEMBER", R"(
 &A SETA 1                                                              X
                comment to be ignored
-)";
-            }
-            return std::nullopt;
-        }
-    } libs;
+)" },
+    });
     std::string input = " EXEC SQL INCLUDE MEMBER ";
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
@@ -382,24 +406,9 @@ TEST(db2_preprocessor, continuation_in_buffer)
 
 TEST(db2_preprocessor, include_empty)
 {
-    struct feed_member final : public parse_lib_provider
-    {
-    public:
-        parse_result parse_library(const std::string&, analyzing_context, library_data) override { return false; };
-        bool has_library(const std::string& lib, const std::string&) const override { return lib == "MEMBER"; };
-        std::optional<std::string> get_library(
-            const std::string& l, const std::string&, std::string* uri) const override
-        {
-            if (l == "MEMBER")
-            {
-                if (uri)
-                    *uri = "MEMBER";
-
-                return "";
-            }
-            return std::nullopt;
-        }
-    } libs;
+    library_provider_with_uri libs({
+        { "MEMBER", "" },
+    });
     std::string input = " EXEC SQL INCLUDE MEMBER ";
 
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
