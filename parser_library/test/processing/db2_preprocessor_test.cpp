@@ -705,3 +705,28 @@ A
         EXPECT_EQ(a.diags()[0].diag_range.start.line, t.lineno);
     }
 }
+
+TEST(db2_preprocessor, multiline_exec_sql)
+{
+    std::string input = R"(
+        EXEC  SQL                                                      X
+               SELECT 1 FROM SYSIBM.SYSDUMMY1
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(db2_preprocessor, end_sqldsect_injection)
+{
+    std::string input = R"( END)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+}

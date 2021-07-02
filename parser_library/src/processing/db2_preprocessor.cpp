@@ -49,9 +49,12 @@ class db2_preprocessor : public preprocessor
         const auto non_space = s.find_first_not_of(' ');
 
         if (non_space == std::string_view::npos)
-            return false;
+        {
+            s = {};
+            return true;
+        }
 
-        s = s.substr(non_space);
+        s.remove_prefix(non_space);
         return true;
     }
 
@@ -296,6 +299,7 @@ class db2_preprocessor : public preprocessor
         if (ignore_line(line_preview))
             return 0;
 
+        size_t first_line_skipped = line_preview.size();
         std::string_view label = extract_label(line_preview);
 
         if (!remove_space(line_preview))
@@ -310,7 +314,8 @@ class db2_preprocessor : public preprocessor
 
         if (!consume_exec_sql(line_preview))
             return 0;
-        auto first_line_skipped = line_preview.data() - input.data();
+        if (!line_preview.empty())
+            first_line_skipped = line_preview.data() - input.data();
 
         // now we have a valid EXEC SQL line
 
