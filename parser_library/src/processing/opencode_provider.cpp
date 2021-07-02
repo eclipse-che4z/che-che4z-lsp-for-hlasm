@@ -348,9 +348,7 @@ bool opencode_provider::fill_copy_buffer_for_aread()
 
     const auto cmi_to_cms = [lsp_ctx = m_ctx->lsp_ctx.get()](const context::copy_member_invocation& copy) {
         const bool before_first_read = copy.current_statement == (size_t)-1;
-        const auto pos = before_first_read
-            ? position {}
-            : copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
+        const auto pos = copy.current_statement_position();
         const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
 
         std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });

@@ -347,8 +347,7 @@ processing_stack_t hlasm_context::processing_stack() const
         res.emplace_back(source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE);
         for (const auto& member : source_stack_[i].copy_stack)
         {
-            location loc(member.cached_definition->at(member.current_statement).get_base()->statement_position(),
-                member.definition_location->file);
+            location loc(member.current_statement_position(), member.definition_location->file);
             res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY);
         }
 
@@ -377,8 +376,7 @@ location hlasm_context::current_statement_location() const
         {
             const auto& member = source_stack_.back().copy_stack.back();
 
-            auto pos = member.cached_definition->at(member.current_statement).get_base()->statement_position();
-            return location(pos, member.definition_location->file);
+            return location(member.current_statement_position(), member.definition_location->file);
         }
         else
             return source_stack_.back().current_instruction;
