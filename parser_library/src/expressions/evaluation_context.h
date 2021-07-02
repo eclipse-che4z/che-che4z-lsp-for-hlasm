@@ -34,12 +34,7 @@ struct evaluation_context : public diagnosable_ctx
         , lib_provider(lib_provider)
     {}
 
-    evaluation_context(const evaluation_context& oth)
-        : diagnosable_ctx(oth)
-        , ctx(oth.ctx)
-        , hlasm_ctx(*ctx.hlasm_ctx)
-        , lib_provider(oth.lib_provider)
-    {}
+    evaluation_context(const evaluation_context& oth) = delete;
 
     void collect_diags() const override
     {

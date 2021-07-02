@@ -39,9 +39,10 @@ public:
         : op_diagnoser_(&diagnoser)
         , diag_range_(diag_range) {};
 
-    diagnostic_adder() {}
+    diagnostic_adder() = default;
 
-    void operator()(const std::function<diagnostic_op(range)>& f)
+    template<typename F, typename = std::enable_if<std::is_invocable_r_v<diagnostic_op, F, range>>>
+    void operator()(F&& f)
     {
         diagnostics_present = true;
         if (op_diagnoser_)

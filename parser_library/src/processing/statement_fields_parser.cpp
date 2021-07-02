@@ -52,19 +52,6 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     return *m_parser;
 }
 
-class diagnostic_op_transform_substitution : public diagnostic_op_consumer
-{
-public:
-    diagnostic_op_consumer* diagnoser;
-    std::string* field;
-    void add_diagnostic(diagnostic_op diag) const override
-    {
-        if (field)
-            diag.message = "While substituting to '" + *field + "' => " + diag.message;
-        diagnoser->add_diagnostic(std::move(diag));
-    }
-};
-
 std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
@@ -78,7 +65,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
     diagnostic_op_consumer_transform add_diag_subst([&](diagnostic_op diag) {
         if (after_substitution)
-            diag.message = "While substituting to '" + field + "' => " + diag.message;
+            diag.message = "While evaluating the result of substitution '" + field + "' => " + diag.message;
         add_diag.add_diagnostic(std::move(diag));
     });
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);

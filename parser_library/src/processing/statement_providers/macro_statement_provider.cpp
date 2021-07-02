@@ -23,7 +23,8 @@ macro_statement_provider::macro_statement_provider(analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& listener,
     diagnostic_op_consumer& diag_consumer)
-    : members_statement_provider(statement_provider_kind::MACRO, std::move(ctx), parser, lib_provider, listener, diag_consumer)
+    : members_statement_provider(
+        statement_provider_kind::MACRO, std::move(ctx), parser, lib_provider, listener, diag_consumer)
 {}
 
 bool macro_statement_provider::finished() const { return ctx.hlasm_ctx->scope_stack().size() == 1; }
