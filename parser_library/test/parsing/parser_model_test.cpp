@@ -151,7 +151,7 @@ TEST(parser, parse_bad_model)
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
     ASSERT_EQ(diags.size(), 1U);
-    EXPECT_EQ(diags[0].message, "While substituting to ''' => Unexpected end of statement");
+    EXPECT_EQ(diags[0].message, "While evaluating the result of substitution ''' => Unexpected end of statement");
 
     range expected_range = { { 0, 5 }, { 0, 5 } };
     EXPECT_EQ(diags[0].diag_range, expected_range);
