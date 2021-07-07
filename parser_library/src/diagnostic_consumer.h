@@ -42,25 +42,14 @@ using diagnostic_s_consumer = diagnostic_consumer<diagnostic_s>;
 using diagnostic_op_consumer = diagnostic_consumer<diagnostic_op>;
 
 namespace transform_traits {
-template<class signature>
-struct args;
+template<typename R, typename T>
+T arg0(std::function<R(T)>);
 
-// Unwraps functions with one parameter
-template<typename THIS, typename T>
-struct args<void (THIS::*)(T) const>
-{
-    using first_arg_t = typename T;
-};
-
-// Unwraps functors with one parameter
-template<typename F>
-struct callable_args
-{
-    using first_arg_t = typename args<decltype(&F::operator())>::first_arg_t;
-};
+template<typename T>
+using arg0_t = decltype(arg0(std::function(std::declval<T>())));
 } // namespace transform_traits
 
-template<typename F, typename T = typename transform_traits::callable_args<F>::first_arg_t>
+template<typename F, typename T = typename transform_traits::arg0_t<F>>
 class diagnostic_consumer_transform : public diagnostic_consumer<T>
 {
     F consumer;
