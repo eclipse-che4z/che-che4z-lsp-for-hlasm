@@ -99,7 +99,7 @@ void members_statement_provider::fill_cache(
     }
     else
     {
-        diagnostic_op_consumer_transform diag_consumer(
+        diagnostic_consumer_transform diag_consumer(
             [&reparsed_stmt](diagnostic_op diag) { reparsed_stmt.diags.push_back(std::move(diag)); });
         auto [op, rem] = parser.parse_operand_field(def_stmt.deferred_ref().value,
             false,

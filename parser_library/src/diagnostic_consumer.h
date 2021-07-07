@@ -41,19 +41,35 @@ protected:
 using diagnostic_s_consumer = diagnostic_consumer<diagnostic_s>;
 using diagnostic_op_consumer = diagnostic_consumer<diagnostic_op>;
 
-template<typename T>
+namespace transform_traits {
+template<class signature>
+struct args;
+
+// Unwraps functions with one parameter
+template<typename THIS, typename T>
+struct args<void (THIS::*)(T) const>
+{
+    using first_arg_t = typename T;
+};
+
+// Unwraps functors with one parameter
+template<typename F>
+struct callable_args
+{
+    using first_arg_t = typename args<decltype(&F::operator())>::first_arg_t;
+};
+} // namespace transform_traits
+
+template<typename F, typename T = typename transform_traits::callable_args<F>::first_arg_t>
 class diagnostic_consumer_transform : public diagnostic_consumer<T>
 {
-    std::function<void(T)> consumer;
-
+    F consumer;
 public:
-    explicit diagnostic_consumer_transform(std::function<void(T)> f)
+    explicit diagnostic_consumer_transform(F f)
         : consumer(std::move(f))
     {}
     void add_diagnostic(T diagnostic) const override { consumer(std::move(diagnostic)); };
 };
-
-using diagnostic_op_consumer_transform = diagnostic_consumer_transform<diagnostic_op>;
 
 template<typename T>
 class diagnostic_consumer_container : public diagnostic_consumer<T>
