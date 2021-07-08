@@ -72,6 +72,15 @@ SYM    LR &VAR,1
         {
             return library == copyfile_file_name || library == macro_file_name;
         };
+        std::optional<std::string> get_library(
+            const std::string& library, const std::string&, std::string*) const override
+        {
+            if (library == copyfile_file_name)
+                return copyfile;
+            if (library == macro_file_name)
+                return macro;
+            return std::nullopt;
+        }
     };
     static inline lib_provider_mock lib_prov_instance;
     lsp_context_copy_in_macro()

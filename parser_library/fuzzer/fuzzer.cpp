@@ -61,6 +61,19 @@ public:
         return read_library_name(library).has_value();
     }
 
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string&, std::string* uri) const override
+    {
+        auto lib = read_library_name(library);
+        if (!lib.has_value())
+            return std::nullopt;
+
+        if (uri)
+            *uri = library;
+
+        return files[lib.value()];
+    }
+
     std::vector<std::string> files;
 };
 
@@ -80,7 +93,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     *target = workspaces::file_impl::replace_non_utf8_chars(std::string_view((const char*)data, size));
 
-    analyzer a(source, analyzer_options(&lib));
+    analyzer a(source, analyzer_options(&lib, db2_preprocessor_options()));
     a.analyze();
 
     return 0; // Non-zero return values are reserved for future use.

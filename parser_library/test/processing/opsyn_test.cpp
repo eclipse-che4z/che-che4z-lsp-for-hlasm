@@ -286,6 +286,12 @@ public:
     }
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
+    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
+    {
+        if (library == "LR")
+            return LIB;
+        return std::nullopt;
+    }
 };
 
 TEST(OPSYN, macro_after_delete)

@@ -723,6 +723,13 @@ public:
         return true;
     }
     bool has_library(const std::string& lib, const std::string&) const override { return lib == "MAC"; }
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string*) const override
+    {
+        if (library == "MAC")
+            return M;
+        return std::nullopt;
+    }
 
 private:
     const std::string M =

@@ -47,15 +47,13 @@ public:
 
     bool has_library(const std::string& library, const std::string& program) const override
     {
-        auto& proc_grp = ws_.get_proc_grp_by_program(program);
-        for (auto&& lib : proc_grp.libraries())
-        {
-            std::shared_ptr<workspaces::processor> found = lib->find_file(library);
-            if (found)
-                return true;
-        }
+        return ws_.has_library(library, program);
+    }
 
-        return false;
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string* uri) const override
+    {
+        return ws_.get_library(library, program, uri);
     }
 };
 

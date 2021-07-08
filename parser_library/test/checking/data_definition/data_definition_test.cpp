@@ -378,3 +378,18 @@ TEST(data_definition, B_wrong_nominal_value)
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
+
+TEST(data_definition, trim_labels)
+{
+    using namespace hlasm_plugin::parser_library;
+    std::string input = R"(
+&L SETC 'LABEL '
+&L EQU  0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 0);
+}

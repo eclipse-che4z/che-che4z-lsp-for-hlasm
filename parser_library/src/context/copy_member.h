@@ -61,6 +61,14 @@ struct copy_member_invocation
         , copy_member_definition(std::move(copy_member))
         , current_statement(-1)
     {}
+
+    position current_statement_position() const
+    {
+        if (current_statement != -1)
+            return cached_definition->at(current_statement).get_base()->statement_position();
+        else
+            return {};
+    }
 };
 
 } // namespace hlasm_plugin::parser_library::context

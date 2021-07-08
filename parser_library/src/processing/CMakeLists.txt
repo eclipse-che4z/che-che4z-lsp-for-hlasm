@@ -14,9 +14,11 @@ target_sources(parser_library PRIVATE
 	branching_provider.h
 	context_manager.cpp
 	context_manager.h
+	db2_preprocessor.cpp
 	op_code.h
 	opencode_provider.cpp
 	opencode_provider.h
+	preprocessor.h
 	processing_format.h
 	processing_manager.cpp
 	processing_manager.h
