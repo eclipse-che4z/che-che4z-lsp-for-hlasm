@@ -70,7 +70,6 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
                 opts.get_lib_provider(),
                 mngr_,
                 src_proc_,
-                opts.file_name,
                 *this,
                 opts.get_preprocessor(
                     [libs = &opts.get_lib_provider(), program = opts.file_name, &ctx = ctx_](std::string_view library) {

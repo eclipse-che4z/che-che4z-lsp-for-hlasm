@@ -137,7 +137,6 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         semantics::source_info_processor& src_proc,
-        const std::string& filename,
         diagnosable_ctx& diag_consumer,
         std::unique_ptr<preprocessor> preprocessor,
         opencode_provider_options opts);
