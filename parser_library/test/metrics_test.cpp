@@ -53,12 +53,21 @@ public:
 class benchmark_test : public testing::Test
 {
 public:
-    benchmark_test() {};
+    benchmark_test()
+        : lib_provider({ { "MAC",
+                             R"(   MACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)" },
+            { "COPYFILE",
+                R"(R2 EQU 2
+            LR R2,R2)" } }) {};
     void SetUp() override {}
     void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
-        a = std::make_unique<analyzer>(content, analyzer_options { SOURCE_FILE, &lib_provider });
+        a = std::make_unique<analyzer>(content, analyzer_options { "OPENCODE", &lib_provider });
         a->analyze();
     }
 

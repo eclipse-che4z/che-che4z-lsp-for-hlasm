@@ -14,51 +14,45 @@
 
 #include "analyzer.h"
 
-constexpr const char* MACRO_FILE = "MAC";
-constexpr const char* SOURCE_FILE = "OPEN";
-constexpr const char* COPY_FILE = "path/COPYFILE";
+
 
 namespace hlasm_plugin::parser_library {
 
 class mock_parse_lib_provider : public workspaces::parse_lib_provider
 {
-public:
-    workspaces::parse_result parse_library(
-        const std::string&, analyzing_context ctx, workspaces::library_data data) override
-    {
-        analyzer a(data.proc_kind == processing::processing_kind::MACRO ? macro_contents : copy_contents,
-            analyzer_options {
-                data.proc_kind == processing::processing_kind::MACRO ? MACRO_FILE : COPY_FILE,
-                this,
-                std::move(ctx),
-                data,
-            });
+    std::unordered_map<std::string, std::string> m_files;
 
-        a.analyze();
+public:
+    mock_parse_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
+    {
+        for (const auto& e : entries)
+            m_files.insert(e);
+    }
+
+    workspaces::parse_result parse_library(
+        const std::string& library, analyzing_context ctx, workspaces::library_data data) override
+    {
+        auto it = m_files.find(library);
+        if (it == m_files.end())
+            return false;
+
+        auto a = std::make_unique<analyzer>(it->second, analyzer_options { library, this, std::move(ctx), data });
+        a->analyze();
+        a->collect_diags();
         return true;
     }
-    bool has_library(const std::string&, const std::string&) const override { return true; }
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string*) const override
-    {
-        if (library == "MAC")
-            return macro_contents;
-        else if (library == "COPYFILE")
-            return copy_contents;
-        else
-            return std::nullopt;
-    }
 
-private:
-    const std::string macro_contents =
-        R"(   MACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-    const std::string copy_contents =
-        R"(R2 EQU 2
-            LR R2,R2)";
+    bool has_library(const std::string& library, const std::string&) const override { return m_files.count(library); }
+
+
+    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
+    {
+        auto it = m_files.find(library);
+        if (it == m_files.end())
+            return std::nullopt;
+
+        return it->second;
+    }
 };
 
 } // namespace hlasm_plugin::parser_library
