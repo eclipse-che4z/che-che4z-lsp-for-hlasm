@@ -53,6 +53,7 @@ template<typename F, typename T = typename transform_traits::arg0_t<F>>
 class diagnostic_consumer_transform : public diagnostic_consumer<T>
 {
     F consumer;
+
 public:
     explicit diagnostic_consumer_transform(F f)
         : consumer(std::move(f))

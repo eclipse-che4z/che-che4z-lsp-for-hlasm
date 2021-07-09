@@ -105,7 +105,8 @@ struct parser_holder
 
     ~parser_holder();
 
-    static std::unique_ptr<parser_holder> create(semantics::source_info_processor* lsp_proc);
+    static std::unique_ptr<parser_holder> create(
+        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

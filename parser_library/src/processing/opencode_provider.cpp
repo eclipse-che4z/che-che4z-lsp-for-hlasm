@@ -35,9 +35,9 @@ opencode_provider::opencode_provider(std::string_view text,
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
-    , m_parser(parsing::parser_holder::create(&src_proc))
-    , m_lookahead_parser(parsing::parser_holder::create(nullptr))
-    , m_operand_parser(parsing::parser_holder::create(nullptr))
+    , m_parser(parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer))
+    , m_lookahead_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
+    , m_operand_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
     , m_ctx(&ctx)
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
@@ -45,12 +45,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_diagnoser(&diag_consumer)
     , m_opts(opts)
     , m_preprocessor(std::move(preprocessor))
-{
-    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), m_diagnoser);
-
-    m_lookahead_parser->parser->initialize(m_ctx->hlasm_ctx.get(), nullptr);
-    m_lookahead_parser->parser->removeErrorListeners();
-}
+{}
 
 void opencode_provider::rewind_input(context::source_position pos)
 {

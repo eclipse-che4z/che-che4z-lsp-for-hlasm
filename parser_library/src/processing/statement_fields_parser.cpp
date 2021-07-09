@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::processing {
 
 statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_ctx)
-    : m_parser(parsing::parser_holder::create(nullptr))
+    : m_parser(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr))
     , m_hlasm_ctx(hlasm_ctx)
 {}
 
@@ -67,7 +67,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
             diag.message = "While evaluating the result of substitution '" + field + "' => " + std::move(diag.message);
         add_diag.add_diagnostic(std::move(diag));
     };
-    
+
 
     diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
         if (after_substitution)

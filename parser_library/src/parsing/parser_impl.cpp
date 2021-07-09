@@ -31,13 +31,13 @@ parser_impl::parser_impl(antlr4::TokenStream* input)
     , hlasm_ctx(nullptr)
     , provider()
     , err_listener_(&provider)
-{
-    removeErrorListeners();
-    addErrorListener(&err_listener_);
-}
+{}
 
 void parser_impl::initialize(context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
 {
+    removeErrorListeners();
+    addErrorListener(&err_listener_);
+
     hlasm_ctx = hl_ctx;
     diagnoser_ = d;
     err_listener_.diagnoser = d;
@@ -55,7 +55,8 @@ void parser_impl::reinitialize(context::hlasm_context* h_ctx,
     err_listener_.diagnoser = d;
 }
 
-std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc)
+std::unique_ptr<parser_holder> parser_holder::create(
+    semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
 {
     std::string s;
     auto h = std::make_unique<parser_holder>();
@@ -65,6 +66,7 @@ std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_proc
     h->stream = std::make_unique<lexing::token_stream>(h->lex.get());
     h->parser = std::make_unique<hlasmparser>(h->stream.get());
     h->parser->setErrorHandler(h->error_handler);
+    h->parser->initialize(hl_ctx, d);
     return h;
 }
 
