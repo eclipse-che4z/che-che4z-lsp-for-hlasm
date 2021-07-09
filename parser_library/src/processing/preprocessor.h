@@ -23,7 +23,7 @@
 #include <string_view>
 #include <variant>
 
-#include "diagnostic.h"
+#include "diagnostic_consumer.h"
 
 namespace hlasm_plugin::parser_library {
 struct db2_preprocessor_options;
@@ -32,7 +32,6 @@ struct db2_preprocessor_options;
 namespace hlasm_plugin::parser_library::processing {
 
 using library_fetcher = std::function<std::optional<std::string>(std::string_view)>;
-using diag_reporter = std::function<void(diagnostic_op)>;
 
 class preprocessor
 {
@@ -41,7 +40,8 @@ public:
 
     virtual std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) = 0;
 
-    static std::unique_ptr<preprocessor> create(const db2_preprocessor_options&, library_fetcher, diag_reporter);
+    static std::unique_ptr<preprocessor> create(
+        const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
 };
 } // namespace hlasm_plugin::parser_library::processing
 

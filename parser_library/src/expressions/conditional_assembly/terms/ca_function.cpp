@@ -87,7 +87,7 @@ void ca_function::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); 
 context::SET_t ca_function::evaluate(const evaluation_context& eval_ctx) const
 {
     context::SET_t str_ret;
-    diagnostic_adder add_diagnostic(&eval_ctx, expr_range);
+    diagnostic_adder add_diagnostic(eval_ctx, expr_range);
 
     switch (function)
     {

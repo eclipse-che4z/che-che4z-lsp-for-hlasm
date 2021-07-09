@@ -19,8 +19,10 @@ namespace hlasm_plugin::parser_library::processing {
 copy_statement_provider::copy_statement_provider(analyzing_context ctx,
     statement_fields_parser& parser,
     workspaces::parse_lib_provider& lib_provider,
-    processing::processing_state_listener& listener)
-    : members_statement_provider(statement_provider_kind::COPY, std::move(ctx), parser, lib_provider, listener)
+    processing::processing_state_listener& listener,
+    diagnostic_op_consumer& diag_consumer)
+    : members_statement_provider(
+        statement_provider_kind::COPY, std::move(ctx), parser, lib_provider, listener, diag_consumer)
 {}
 
 bool copy_statement_provider::finished() const

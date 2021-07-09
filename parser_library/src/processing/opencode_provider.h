@@ -64,7 +64,7 @@ enum class extract_next_logical_line_result
 };
 
 // uses the parser implementation to produce statements in the opencode(-like) scenario
-class opencode_provider final : public diagnosable_impl, public statement_provider
+class opencode_provider final : public statement_provider
 {
     struct lines_to_remove
     {
@@ -116,10 +116,9 @@ class opencode_provider final : public diagnosable_impl, public statement_provid
     workspaces::parse_lib_provider* m_lib_provider;
     processing::processing_state_listener* m_state_listener;
     semantics::source_info_processor* m_src_proc;
+    diagnosable_ctx* m_diagnoser;
 
     opencode_provider_options m_opts;
-
-    parsing::parser_error_listener m_listener;
 
     bool m_line_fed = false;
     bool m_copy_files_aread_ready = false;
@@ -138,7 +137,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         processing::processing_state_listener& state_listener,
         semantics::source_info_processor& src_proc,
-        const std::string& filename,
+        diagnosable_ctx& diag_consumer,
         std::unique_ptr<preprocessor> preprocessor,
         opencode_provider_options opts);
 
@@ -147,8 +146,6 @@ public:
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
     bool finished() const override;
-
-    void collect_diags() const override;
 
 private:
     extract_next_logical_line_result feed_line(parsing::parser_holder& p);
@@ -164,7 +161,7 @@ private:
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
-        parsing::parser_error_listener_ctx* err_listener,
+        bool do_collect_diags,
         semantics::range_provider range_prov,
         range text_range,
         const processing_status& proc_status,

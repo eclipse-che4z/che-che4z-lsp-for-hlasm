@@ -46,12 +46,12 @@ class parser_impl : public antlr4::Parser
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(context::hlasm_context* hlasm_ctx, collectable<diagnostic_s>* d);
+    void initialize(context::hlasm_context* hlasm_ctx, diagnostic_op_consumer* diagnoser);
 
     void reinitialize(context::hlasm_context* hlasm_ctx,
         semantics::range_provider range_prov,
         processing::processing_status proc_stat,
-        collectable<diagnostic_s>* d);
+        diagnostic_op_consumer* diagnoser);
 
     semantics::collector& get_collector() { return collector; }
 
@@ -64,7 +64,7 @@ protected:
     bool is_data_attr();
     bool is_var_def();
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
-    context::data_attr_kind get_attribute(std::string attr_data, range data_range);
+    context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
@@ -90,7 +90,8 @@ protected:
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
-    collectable<diagnostic_s>* diags = nullptr;
+    diagnostic_op_consumer* diagnoser_ = nullptr;
+    parser_error_listener err_listener_;
 };
 
 // structure containing parser components
@@ -104,7 +105,8 @@ struct parser_holder
 
     ~parser_holder();
 
-    static std::unique_ptr<parser_holder> create(semantics::source_info_processor* lsp_proc);
+    static std::unique_ptr<parser_holder> create(
+        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

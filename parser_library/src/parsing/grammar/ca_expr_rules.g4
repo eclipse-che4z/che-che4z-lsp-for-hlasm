@@ -231,7 +231,7 @@ data_attribute returns [context::data_attr_kind attribute, std::variant<context:
 	: ORDSYMBOL attr data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
-		$attribute = get_attribute($ORDSYMBOL->getText(), provider.get_range($ORDSYMBOL));
+		$attribute = get_attribute($ORDSYMBOL->getText());
 		$value = std::move($data_attribute_value.value);
 		$value_range = provider.get_range( $data_attribute_value.ctx);
 	};

@@ -18,7 +18,6 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
-#include "parsing/parser_error_listener_ctx.h"
 #include "parsing/parser_impl.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
@@ -30,30 +29,23 @@ opencode_provider::opencode_provider(std::string_view text,
     workspaces::parse_lib_provider& lib_provider,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
-    const std::string& filename,
+    diagnosable_ctx& diag_consumer,
     std::unique_ptr<preprocessor> preprocessor,
     opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
-    , m_parser(parsing::parser_holder::create(&src_proc))
-    , m_lookahead_parser(parsing::parser_holder::create(nullptr))
-    , m_operand_parser(parsing::parser_holder::create(nullptr))
+    , m_parser(parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer))
+    , m_lookahead_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
+    , m_operand_parser(parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr))
     , m_ctx(&ctx)
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
     , m_src_proc(&src_proc)
+    , m_diagnoser(&diag_consumer)
     , m_opts(opts)
-    , m_listener(filename)
     , m_preprocessor(std::move(preprocessor))
-{
-    m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), &m_listener);
-    m_parser->parser->removeErrorListeners();
-    m_parser->parser->addErrorListener(&m_listener);
-
-    m_lookahead_parser->parser->initialize(m_ctx->hlasm_ctx.get(), nullptr);
-    m_lookahead_parser->parser->removeErrorListeners();
-}
+{}
 
 void opencode_provider::rewind_input(context::source_position pos)
 {
@@ -200,10 +192,9 @@ void opencode_provider::generate_continuation_error_messages() const
     {
         if (s.continuation_error)
         {
-            parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
-            listener.add_diagnostic(
+            m_diagnoser->add_diagnostic(
                 diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
-            collect_diags_from_child(listener);
+
             break;
         }
         ++line_no;
@@ -224,7 +215,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
             || std::get<context::id_index>(collector.current_instruction().value)
                 == m_ctx->hlasm_ctx->ids().well_known.COPY))
     {
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, nullptr, {}, op_range, proc_status, true);
+        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, false, {}, op_range, proc_status, true);
 
         h.parser->lookahead_operands_and_remarks();
 
@@ -256,9 +247,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (op_text)
     {
-        parsing::parser_error_listener_ctx listener(*m_ctx->hlasm_ctx, nullptr);
-        const auto& h =
-            prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, &listener, {}, op_range, proc_status, false);
+        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, true, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
         if (format.occurence == processing::operand_occurence::ABSENT
@@ -287,14 +276,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         auto [to_parse, ranges, r] = join_operands(line.operands);
 
                         semantics::range_provider tmp_provider(r, ranges, semantics::adjusting_state::MACRO_REPARSE);
-                        parsing::parser_error_listener_ctx tmp_listener(*m_ctx->hlasm_ctx, nullptr, tmp_provider);
 
                         const auto& h_second = prepare_operand_parser(
-                            to_parse, *m_ctx->hlasm_ctx, &tmp_listener, std::move(tmp_provider), r, proc_status, true);
+                            to_parse, *m_ctx->hlasm_ctx, true, std::move(tmp_provider), r, proc_status, true);
 
                         line.operands = std::move(h_second.parser->macro_ops()->list);
-
-                        collect_diags_from_child(tmp_listener);
                     }
 
                     h.parser->get_collector().set_operand_remark_field(
@@ -321,7 +307,6 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         {
             collector.append_operand_field(std::move(h.parser->get_collector()));
         }
-        collect_diags_from_child(listener);
     }
     range statement_range(position(m_current_logical_line_source.begin_line, 0)); // assign default
     auto result = collector.extract_statement(proc_status, statement_range);
@@ -408,7 +393,7 @@ bool opencode_provider::try_running_preprocessor()
                 workspaces::library_data { processing_kind::COPY, virtual_copy_name },
             });
         a.analyze();
-        collect_diags_from_child(a);
+        m_diagnoser->collect_diags_from_child(a);
     }
     else
     {
@@ -481,9 +466,6 @@ parsing::hlasmparser& opencode_provider::parser()
     assert(m_line_fed);
     return *m_parser->parser;
 }
-
-
-void opencode_provider::collect_diags() const { collect_diags_from_child(m_listener); }
 
 void opencode_provider::apply_pending_line_changes()
 {
@@ -690,7 +672,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
 const parsing::parser_holder& opencode_provider::prepare_operand_parser(const std::string& text,
     context::hlasm_context& hlasm_ctx,
-    parsing::parser_error_listener_ctx* err_listener,
+    bool do_collect_diags,
     semantics::range_provider range_prov,
     range text_range,
     const processing_status& proc_status,
@@ -706,10 +688,8 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
 
     h.stream->reset();
 
-    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, err_listener);
-    h.parser->removeErrorListeners();
-    if (err_listener)
-        h.parser->addErrorListener(err_listener);
+
+    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, do_collect_diags ? m_diagnoser : nullptr);
 
     h.parser->reset();
 

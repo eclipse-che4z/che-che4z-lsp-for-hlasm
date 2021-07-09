@@ -2058,17 +2058,9 @@ diagnostic_s diagnostic_s::warning_L0004(const std::string& path, const std::str
         {});
 }
 
-diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
+diagnostic_op diagnostic_op::error_S100(const std::string& message, const range& range)
 {
-    return diagnostic_s(
-        filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
+    return diagnostic_op(diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, range);
 }
-
-diagnostic_s diagnostic_s::error_S101(const std::string& filename, const std::string& message, const range& range)
-{
-    return diagnostic_s(
-        filename, range, diagnostic_severity::error, "S101", "Illegal attribute reference - " + message, {});
-}
-
 
 } // namespace hlasm_plugin::parser_library

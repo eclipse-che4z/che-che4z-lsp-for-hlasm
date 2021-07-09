@@ -22,7 +22,7 @@ target_sources(parser_library PRIVATE
 	diagnosable_impl.h
 	diagnostic.cpp
 	diagnostic.h
-	diagnostic_adder.cpp
+	diagnostic_consumer.h
 	diagnostic_adder.h
 	ebcdic_encoding.cpp
 	ebcdic_encoding.h

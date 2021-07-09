@@ -24,7 +24,8 @@ using namespace hlasm_plugin::parser_library::processing;
 
 TEST(db2_preprocessor, first_line)
 {
-    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, {});
+    auto p = preprocessor::create(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "";
     size_t lineno = 0;
 
@@ -40,7 +41,8 @@ TEST(db2_preprocessor, first_line)
 
 TEST(db2_preprocessor, last_line)
 {
-    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, {});
+    auto p = preprocessor::create(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\n END ";
     size_t lineno = 0;
 
@@ -63,12 +65,13 @@ TEST(db2_preprocessor, last_line)
 
 TEST(db2_preprocessor, include)
 {
-    auto p = preprocessor::create(db2_preprocessor_options {},
+    auto p = preprocessor::create(
+        db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return "member content";
         },
-        {});
+        nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE MEMBER ";
     size_t lineno = 0;
 
@@ -92,12 +95,13 @@ TEST(db2_preprocessor, include)
 TEST(db2_preprocessor, include_sqlca)
 {
     bool called = false;
-    auto p = preprocessor::create(db2_preprocessor_options {},
+    auto p = preprocessor::create(
+        db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
         },
-        {});
+        nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE SQLCA ";
     size_t lineno = 0;
 
@@ -122,12 +126,13 @@ TEST(db2_preprocessor, include_sqlca)
 TEST(db2_preprocessor, include_sqlda)
 {
     bool called = false;
-    auto p = preprocessor::create(db2_preprocessor_options {},
+    auto p = preprocessor::create(
+        db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
         },
-        {});
+        nullptr);
     std::string_view text = "\n EXEC SQL INCLUDE SQLDA ";
     size_t lineno = 0;
 
@@ -152,12 +157,13 @@ TEST(db2_preprocessor, include_sqlda)
 TEST(db2_preprocessor, sql_like)
 {
     bool called = false;
-    auto p = preprocessor::create(db2_preprocessor_options {},
+    auto p = preprocessor::create(
+        db2_preprocessor_options {},
         [&called](std::string_view s) {
             called = true;
             return std::nullopt;
         },
-        {});
+        nullptr);
     std::string_view text = "\n EXEC SQL SELECT 1 INTO :A FROM SYSIBM.SYSDUMMY1";
     size_t lineno = 0;
 
@@ -181,7 +187,8 @@ TEST(db2_preprocessor, sql_like)
 
 TEST(db2_preprocessor, with_label)
 {
-    auto p = preprocessor::create(db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, {});
+    auto p = preprocessor::create(
+        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, nullptr);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
     size_t lineno = 0;
 
@@ -202,14 +209,9 @@ TEST(db2_preprocessor, with_label)
 
 TEST(db2_preprocessor, missing_member)
 {
-    bool called = false;
+    diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {},
-        [](std::string_view s) { return std::nullopt; },
-        [&called](diagnostic_op d) {
-            called = true;
-            EXPECT_EQ(d.code, "P0002");
-        });
+        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
     std::deque<std::string> buffer;
@@ -217,19 +219,16 @@ TEST(db2_preprocessor, missing_member)
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
     EXPECT_EQ(lineno, 1);
-    EXPECT_TRUE(called);
+
+    ASSERT_EQ(diags.diags.size(), 1U);
+    EXPECT_EQ(diags.diags[0].code, "P0002");
 }
 
 TEST(db2_preprocessor, bad_continuation)
 {
-    bool called = false;
+    diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {},
-        [](std::string_view s) { return std::nullopt; },
-        [&called](diagnostic_op d) {
-            called = true;
-            EXPECT_EQ(d.code, "P0001");
-        });
+        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
@@ -238,29 +237,30 @@ badcontinuation)";
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
     EXPECT_EQ(lineno, 2);
-    EXPECT_TRUE(called);
+
+    ASSERT_EQ(diags.diags.size(), 1U);
+    EXPECT_EQ(diags.diags[0].code, "P0001");
 }
 
 TEST(db2_preprocessor, no_nested_include)
 {
-    bool called = false;
+    diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
         db2_preprocessor_options {},
         [](std::string_view s) {
             EXPECT_EQ(s, "MEMBER");
             return " EXEC SQL INCLUDE MEMBER";
         },
-        [&called](diagnostic_op d) {
-            called = true;
-            EXPECT_EQ(d.code, "P0003");
-        });
+        &diags);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
     std::deque<std::string> buffer;
     size_t lineno = 0;
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
     EXPECT_EQ(lineno, 1);
-    EXPECT_TRUE(called);
+
+    ASSERT_EQ(diags.diags.size(), 1U);
+    EXPECT_EQ(diags.diags[0].code, "P0003");
 }
 
 TEST(db2_preprocessor, sqlsect_available)

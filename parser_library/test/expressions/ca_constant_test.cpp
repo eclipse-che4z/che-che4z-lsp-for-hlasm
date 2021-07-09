@@ -37,20 +37,23 @@ TEST(ca_constant, undefined_attributes)
 class collectable_mock : public diagnosable_op_impl
 {
     void collect_diags() const override {}
+
+public:
+    void operator()(diagnostic_op d) { add_diagnostic(d); }
 };
 
 TEST(ca_constant, self_def_term_invalid_input)
 {
     {
         collectable_mock m;
-        diagnostic_adder add_diags(&m, range());
+        diagnostic_adder add_diags(m, range());
         ca_constant::self_defining_term("", add_diags);
         ASSERT_TRUE(add_diags.diagnostics_present);
         EXPECT_EQ(m.diags().front().code, "CE015");
     }
     {
         collectable_mock m;
-        diagnostic_adder add_diags(&m, range());
+        diagnostic_adder add_diags(m, range());
         ca_constant::self_defining_term("Q'dc'", add_diags);
         ASSERT_TRUE(add_diags.diagnostics_present);
         EXPECT_EQ(m.diags().front().code, "CE015");

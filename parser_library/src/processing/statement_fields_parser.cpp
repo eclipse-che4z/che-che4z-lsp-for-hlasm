@@ -17,12 +17,11 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
-#include "parsing/parser_error_listener_ctx.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
 statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_ctx)
-    : m_parser(parsing::parser_holder::create(nullptr))
+    : m_parser(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr))
     , m_hlasm_ctx(hlasm_ctx)
 {}
 
@@ -34,7 +33,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     bool unlimited_line,
     semantics::range_provider field_range,
     processing::processing_status status,
-    parsing::parser_error_listener_ctx& err_listener)
+    diagnostic_op_consumer& add_diag)
 {
     m_parser->input->reset(text);
 
@@ -44,9 +43,7 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
 
     m_parser->stream->reset();
 
-    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &err_listener);
-    m_parser->parser->removeErrorListeners();
-    m_parser->parser->addErrorListener(&err_listener);
+    m_parser->parser->reinitialize(m_hlasm_ctx, std::move(field_range), status, &add_diag);
 
     m_parser->parser->reset();
 
@@ -59,16 +56,18 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
     bool after_substitution,
     semantics::range_provider field_range,
     processing::processing_status status,
-    const std::function<void(diagnostic_op)>& add_diag)
+    diagnostic_op_consumer& add_diag)
 {
     m_hlasm_ctx->metrics.reparsed_statements++;
 
-    parsing::parser_error_listener_ctx listener(
-        *m_hlasm_ctx, after_substitution ? &field : nullptr, add_diag, field_range);
-
     const auto original_range = field_range.original_range;
 
-    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, listener);
+    diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
+        if (after_substitution)
+            diag.message = "While evaluating the result of substitution '" + field + "' => " + std::move(diag.message);
+        add_diag.add_diagnostic(std::move(diag));
+    });
+    const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);
 
     semantics::op_rem line;
     const auto& [format, opcode] = status;
@@ -89,7 +88,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                     semantics::range_provider tmp_provider(
                         r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE);
 
-                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, listener);
+                    const auto& h_second = prepare_parser(to_parse, true, tmp_provider, status, add_diag_subst);
 
                     line.operands = std::move(h_second.parser->macro_ops()->list);
                 }
@@ -108,8 +107,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
                 break;
         }
     }
-
-    collect_diags_from_child(listener);
 
     for (auto& op : line.operands)
     {

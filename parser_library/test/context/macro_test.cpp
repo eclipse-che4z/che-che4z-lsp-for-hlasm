@@ -197,6 +197,12 @@ TEST(macro, macro_lookahead_fail)
 
     id = a.hlasm_ctx().ids().add("INNER_M");
     EXPECT_TRUE(a.hlasm_ctx().macros().find(id) != a.hlasm_ctx().macros().end());
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 1U);
+    EXPECT_EQ(a.diags()[0].code, "E047");
+    ;
+    EXPECT_EQ(a.diags()[0].diag_range, range({ 2, 5 }, { 2, 7 }));
 }
 
 TEST(macro, macro_positional_param_subs)
@@ -212,7 +218,7 @@ TEST(macro, macro_positional_param_subs)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -230,7 +236,7 @@ TEST(macro, macro_keyword_param)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -248,8 +254,8 @@ TEST(macro, macro_undefined_keyword_param)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    ASSERT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<diagnosable*>(&a)->diags().front().severity, diagnostic_severity::warning);
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().front().severity, diagnostic_severity::warning);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -270,7 +276,7 @@ TEST(macro, macro_param_expr)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), (size_t)2);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -287,7 +293,7 @@ TEST(macro, macro_composite_param_no_err)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -304,7 +310,7 @@ TEST(macro, macro_composite_param_err)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -322,7 +328,7 @@ TEST(macro, macro_name_param)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -349,7 +355,7 @@ TEST(macro, macro_name_param_repetition)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), (size_t)3);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
     auto& m1 = a.hlasm_ctx().macros().find(a.hlasm_ctx().ids().add("m1"))->second;
@@ -409,7 +415,7 @@ TEST(macro, MEXIT)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -428,7 +434,7 @@ TEST(macro, cyclic_call_infinite)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -450,7 +456,7 @@ TEST(macro, cyclic_call_finite)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)10);
+    EXPECT_EQ(a.diags().size(), (size_t)10);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -478,7 +484,7 @@ TEST(macro, arguments_concatenation)
 
     EXPECT_EQ(it->second->access_set_symbol<C_t>()->get_value(), "(B-C)+(A-D)");
 
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -589,7 +595,7 @@ TEST(external_macro, bad_library)
         a.analyze();
         a.collect_diags();
         EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
-        EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)2);
+        EXPECT_EQ(a.diags().size(), (size_t)2);
         EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     }
 }
@@ -606,7 +612,7 @@ TEST(external_macro, library_with_begin_comment)
     a.analyze();
     a.collect_diags();
     EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&a)->diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
 
@@ -756,4 +762,23 @@ TEST(macro, apostrophe_in_substitution)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+}
+
+TEST(macro, macro_call_reparse_range)
+{
+    std::string input = R"(
+         MACRO                                                          00010000
+         M     &VAR                                    Comment          00020000
+         MEND                                                           00050000
+                                                                        00060000
+         M     op1,               remark                               X00070000
+               (
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_EQ(a.diags().size(), 1U);
+    EXPECT_EQ(a.diags()[0].code, "S0003");
+    EXPECT_EQ(a.diags()[0].diag_range, range({ 6, 16 }, { 6, 16 }));
 }
