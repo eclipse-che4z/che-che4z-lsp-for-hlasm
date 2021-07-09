@@ -62,13 +62,6 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
     const auto original_range = field_range.original_range;
 
-    auto fff = [&field, &add_diag, after_substitution](diagnostic_op diag) {
-        if (after_substitution)
-            diag.message = "While evaluating the result of substitution '" + field + "' => " + std::move(diag.message);
-        add_diag.add_diagnostic(std::move(diag));
-    };
-
-
     diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
         if (after_substitution)
             diag.message = "While evaluating the result of substitution '" + field + "' => " + std::move(diag.message);

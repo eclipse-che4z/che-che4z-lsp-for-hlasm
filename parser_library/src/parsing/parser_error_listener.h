@@ -67,9 +67,10 @@ class parser_error_listener final : public parser_error_listener_base
     const semantics::range_provider* provider = nullptr;
 
 public:
-    parser_error_listener() {};
-    parser_error_listener(const semantics::range_provider* prov)
+    parser_error_listener() = default;
+    explicit parser_error_listener(const semantics::range_provider* prov)
         : provider(prov) {};
+
     diagnostic_op_consumer* diagnoser = nullptr;
 
 protected:

@@ -48,14 +48,14 @@ workspaces::parse_lib_provider& analyzer_options::get_lib_provider() const
 }
 
 std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(
-    processing::library_fetcher lf, processing::diag_reporter dr) const
+    processing::library_fetcher lf, diagnostic_op_consumer& diag_consumer) const
 {
     return std::visit(
-        [&lf, &dr](const auto& p) -> std::unique_ptr<processing::preprocessor> {
+        [&lf, &diag_consumer](const auto& p) -> std::unique_ptr<processing::preprocessor> {
             if constexpr (std::is_same_v<std::decay_t<decltype(p)>, std::monostate>)
                 return {};
             else
-                return processing::preprocessor::create(p, std::move(lf), std::move(dr));
+                return processing::preprocessor::create(p, std::move(lf), &diag_consumer);
         },
         preprocessor_args);
 }
@@ -82,7 +82,7 @@ analyzer::analyzer(const std::string& text, analyzer_options opts)
 
                         return result;
                     },
-                    [this](diagnostic_op d) { this->add_diagnostic(std::move(d)); }),
+                    *this),
                 opts.parsing_opencode == file_is_opencode::yes ? opencode_provider_options { true, 10 }
                                                                : opencode_provider_options {}),
           ctx_,

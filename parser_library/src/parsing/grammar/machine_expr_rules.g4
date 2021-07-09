@@ -71,7 +71,7 @@ mach_term returns [mach_expr_ptr m_e]
 	| {is_data_attr()}? mach_data_attribute
 	{
 		auto rng = provider.get_range( $mach_data_attribute.ctx);
-		auto attr = get_attribute(std::move($mach_data_attribute.attribute),rng);
+		auto attr = get_attribute(std::move($mach_data_attribute.attribute));
 		if(attr == data_attr_kind::UNKNOWN || $mach_data_attribute.data == nullptr)
 			$m_e = std::make_unique<mach_expr_default>(rng);
 		else

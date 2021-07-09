@@ -39,7 +39,7 @@ class db2_preprocessor : public preprocessor
     lexing::logical_line m_logical_line;
     std::string m_operands;
     library_fetcher m_libs;
-    diag_reporter m_diags;
+    diagnostic_op_consumer* m_diags = nullptr;
     std::string m_buffer;
 
     static bool remove_space(std::string_view& s)
@@ -204,7 +204,7 @@ class db2_preprocessor : public preprocessor
         if (!include_text.has_value())
         {
             if (m_diags)
-                m_diags(diagnostic_op::error_P0002(range(position(lineno, 0)), operands));
+                m_diags->add_diagnostic(diagnostic_op::error_P0002(range(position(lineno, 0)), operands));
             return;
         }
 
@@ -326,7 +326,7 @@ class db2_preprocessor : public preprocessor
         assert(extracted);
 
         if (m_logical_line.continuation_error && m_diags)
-            m_diags(diagnostic_op::error_P0001(range(position(lineno, 0))));
+            m_diags->add_diagnostic(diagnostic_op::error_P0001(range(position(lineno, 0))));
 
         if (!label.empty())
             m_buffer.append(label).append(" DS 0H\n");
@@ -364,7 +364,7 @@ class db2_preprocessor : public preprocessor
             if (include_allowed)
                 is_include = true;
             else if (m_diags)
-                m_diags(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
+                m_diags->add_diagnostic(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
         }
 
         if (is_include)
@@ -396,16 +396,16 @@ class db2_preprocessor : public preprocessor
     }
 
 public:
-    db2_preprocessor(library_fetcher libs, diag_reporter diags)
+    db2_preprocessor(library_fetcher libs, diagnostic_op_consumer* diags)
         : m_libs(std::move(libs))
-        , m_diags(std::move(diags))
+        , m_diags(diags)
     {}
 };
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(
-    const db2_preprocessor_options&, library_fetcher libs, diag_reporter diags)
+    const db2_preprocessor_options&, library_fetcher libs, diagnostic_op_consumer* diags)
 {
-    return std::make_unique<db2_preprocessor>(std::move(libs), std::move(diags));
+    return std::make_unique<db2_preprocessor>(std::move(libs), diags);
 }
 } // namespace hlasm_plugin::parser_library::processing
