@@ -295,6 +295,10 @@ public:
     }
 
     bool has_library(const std::string&, const std::string&) const override { return true; }
+    std::optional<std::string> get_library(const std::string&, const std::string&, std::string*) const override
+    {
+        return "XXX EQU 1";
+    }
 };
 
 TEST(ordinary_symbols, symbol_location)

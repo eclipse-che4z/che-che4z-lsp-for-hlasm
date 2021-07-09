@@ -74,6 +74,13 @@ public:
         return true;
     }
     bool has_library(const std::string& library, const std::string&) const override { return find_content(library); }
+    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
+    {
+        const auto* content = find_content(library);
+        if (content)
+            return *content;
+        return std::nullopt;
+    }
 
     std::vector<std::unique_ptr<analyzer>> holder;
     std::unique_ptr<analyzer> a;

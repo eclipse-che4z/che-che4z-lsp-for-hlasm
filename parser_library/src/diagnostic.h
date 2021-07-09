@@ -625,6 +625,12 @@ struct diagnostic_op
     static diagnostic_op error_CW001(const range& range);
 
     static diagnostic_op error_S100(const std::string& message, const range& range);
+
+    static diagnostic_op error_P0001(const range& range);
+
+    static diagnostic_op error_P0002(const range& range, std::string_view lib);
+
+    static diagnostic_op error_P0003(const range& range, std::string_view lib);
 };
 
 struct range_uri_s

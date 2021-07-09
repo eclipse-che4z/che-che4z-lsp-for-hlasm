@@ -467,8 +467,8 @@ void macrodef_processor::add_correct_copy_nest()
     for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
     {
         auto& nest = hlasm_ctx.current_copy_stack()[i];
-        auto pos = nest.cached_definition->at(nest.current_statement).get_base()->statement_position();
-        result_.nests.back().emplace_back(pos, nest.definition_location->file);
+
+        result_.nests.back().emplace_back(nest.current_statement_position(), nest.definition_location->file);
     }
 
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())

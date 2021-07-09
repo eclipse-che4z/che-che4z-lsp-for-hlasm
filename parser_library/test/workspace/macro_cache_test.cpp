@@ -89,6 +89,14 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     {
         return files_by_library_.count(library) > 0;
     };
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string*) const override
+    {
+        auto it = files_by_library_.find(library);
+        if (it == files_by_library_.end())
+            return std::nullopt;
+        return it->second.first->get_text();
+    }
 };
 
 analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
@@ -134,7 +142,7 @@ TEST(macro_cache_test, copy_from_macro)
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copyfile_file_name, copyfile_text);
 
 
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -166,7 +174,7 @@ TEST(macro_cache_test, copy_from_macro)
 
 
     // Reparse the change so everything is cached again
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
 
     copyfile->did_change({}, " ");
 
@@ -196,7 +204,7 @@ SETA   OPSYN LR
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -219,7 +227,7 @@ SETA   OPSYN LR
 
 
     opencode->did_change({}, "L OPSYN SETB\n");
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
 
     analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, ctx_second_opsyn1));
@@ -250,7 +258,7 @@ TEST(macro_cache_test, empty_macro)
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
 
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
 
@@ -322,7 +330,7 @@ TEST(macro_cache_test, overwrite_by_inline)
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
 
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 2U);
 
@@ -357,7 +365,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
     auto& [copyfile, copy_c] = file_mngr.add_macro_or_copy(copy_file_name, copy_text);
 
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 0U);
 
@@ -372,7 +380,7 @@ TEST(macro_cache_test, inline_depends_on_copy)
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, new_ctx));
 
     copyfile->did_change({ { 0, 4 }, { 0, 5 } }, "16");
-    opencode->parse(file_mngr, {});
+    opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
     ASSERT_EQ(opencode->diags().size(), 1U);
     EXPECT_EQ(opencode->diags()[0].code, "M120");

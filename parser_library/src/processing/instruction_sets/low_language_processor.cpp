@@ -64,7 +64,21 @@ bool low_language_processor::create_symbol(
     return ok;
 }
 
-constexpr bool is_empty_or_space(std::string_view s) { return s.find_first_not_of(' ') == std::string_view::npos; }
+// return true if the result is not empty
+bool trim_right(std::string& s)
+{
+    auto last_non_space = s.find_last_not_of(' ');
+    if (last_non_space != std::string::npos)
+    {
+        s.erase(last_non_space + 1);
+        return true;
+    }
+    else
+    {
+        s.clear();
+        return false;
+    }
+}
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
@@ -78,7 +92,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         case semantics::label_si_type::CONC:
             new_label = semantics::concatenation_point::evaluate(
                 std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx);
-            if (is_empty_or_space(new_label))
+            if (!trim_right(new_label))
                 label.emplace(stmt.label_ref().field_range);
             else
                 label.emplace(stmt.label_ref().field_range, std::move(new_label));
@@ -86,7 +100,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
         case semantics::label_si_type::VAR:
             new_label = semantics::var_sym_conc::evaluate(
                 std::get<semantics::vs_ptr>(stmt.label_ref().value)->evaluate(eval_ctx));
-            if (is_empty_or_space(new_label))
+            if (!trim_right(new_label))
                 label.emplace(stmt.label_ref().field_range);
             else
                 label.emplace(stmt.label_ref().field_range, std::move(new_label));

@@ -34,6 +34,10 @@ public:
     };
 
     bool has_library(const std::string&, const std::string&) const override { return false; }
+    std::optional<std::string> get_library(const std::string&, const std::string&, std::string*) const override
+    {
+        return std::nullopt;
+    }
 };
 
 inline std::string big_string(char c = '1')

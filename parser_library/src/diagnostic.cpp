@@ -1963,6 +1963,26 @@ diagnostic_op diagnostic_op::error_CW001(const range& range)
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
 }
 
+diagnostic_op diagnostic_op::error_P0001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "P0001", "DB2 preprocessor - invalid line continuation", range);
+}
+
+diagnostic_op diagnostic_op::error_P0002(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "P0002",
+        std::string("DB2 preprocessor - unable to find library '").append(lib).append("'"),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_P0003(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "P0003",
+        std::string("DB2 preprocessor - nested include '").append(lib).append("' requested"),
+        range);
+}
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {

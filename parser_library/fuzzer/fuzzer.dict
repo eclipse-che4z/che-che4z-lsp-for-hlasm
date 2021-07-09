@@ -2072,3 +2072,11 @@
 
 #literal
 "=X'00'"
+
+#macro
+"@0"
+"@1"
+"@2"
+
+#macro separator
+"\xff"

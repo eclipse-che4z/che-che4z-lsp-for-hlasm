@@ -15,11 +15,15 @@
 #ifndef PROCESSING_OPENCODE_PROVIDER_H
 #define PROCESSING_OPENCODE_PROVIDER_H
 
+#include <deque>
+#include <memory>
 #include <string_view>
+#include <vector>
 
 #include "context/source_snapshot.h"
 #include "lexing/logical_line.h"
 #include "parsing/parser_error_listener.h"
+#include "preprocessor.h"
 #include "statement_providers/statement_provider.h"
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -66,7 +70,6 @@ class opencode_provider final : public statement_provider
     {
         size_t ainsert_buffer;
         size_t copy_files;
-        size_t preprocessor_buffer;
         size_t current_text_lines;
     };
     lines_to_remove m_lines_to_remove = {};
@@ -87,7 +90,6 @@ class opencode_provider final : public statement_provider
         {
             none,
             file,
-            preprocessor,
             copy,
             ainsert,
         } source;
@@ -104,7 +106,7 @@ class opencode_provider final : public statement_provider
 
     std::vector<copy_member_state> m_copy_files;
 
-    std::vector<std::string> m_preprocessor_buffer;
+    std::unordered_map<context::id_index, std::string> m_preprocessor_virtual_files;
 
     std::unique_ptr<parsing::parser_holder> m_parser;
     std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
@@ -114,13 +116,15 @@ class opencode_provider final : public statement_provider
     workspaces::parse_lib_provider* m_lib_provider;
     processing::processing_state_listener* m_state_listener;
     semantics::source_info_processor* m_src_proc;
-    diagnostic_op_consumer* m_diagnoser;
+    diagnosable_ctx* m_diagnoser;
 
     opencode_provider_options m_opts;
 
     bool m_line_fed = false;
     bool m_copy_files_aread_ready = false;
     bool m_copy_suspended = false;
+
+    std::unique_ptr<preprocessor> m_preprocessor;
 
 public:
     // rewinds position in file
@@ -134,7 +138,8 @@ public:
         processing::processing_state_listener& state_listener,
         semantics::source_info_processor& src_proc,
         const std::string& filename,
-        diagnostic_op_consumer& diag_consumer,
+        diagnosable_ctx& diag_consumer,
+        std::unique_ptr<preprocessor> preprocessor,
         opencode_provider_options opts);
 
     parsing::hlasmparser& parser(); // for testing only
@@ -173,6 +178,7 @@ private:
         const range& op_range);
 
     bool fill_copy_buffer_for_aread();
+    bool try_running_preprocessor();
 
     void suspend_copy();
     bool resume_copy(size_t line_no, processing::resume_copy resume_opts);

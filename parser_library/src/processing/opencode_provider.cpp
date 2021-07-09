@@ -14,6 +14,7 @@
 
 #include "opencode_provider.h"
 
+#include "analyzer.h"
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
@@ -29,7 +30,8 @@ opencode_provider::opencode_provider(std::string_view text,
     processing::processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
     const std::string& filename,
-    diagnostic_op_consumer& diag_consumer,
+    diagnosable_ctx& diag_consumer,
+    std::unique_ptr<preprocessor> preprocessor,
     opencode_provider_options opts)
     : statement_provider(processing::statement_provider_kind::OPEN)
     , m_original_text(text)
@@ -43,6 +45,7 @@ opencode_provider::opencode_provider(std::string_view text,
     , m_src_proc(&src_proc)
     , m_diagnoser(&diag_consumer)
     , m_opts(opts)
+    , m_preprocessor(std::move(preprocessor))
 {
     m_parser->parser->initialize(m_ctx->hlasm_ctx.get(), m_diagnoser);
 
@@ -94,7 +97,8 @@ std::string opencode_provider::aread()
         if (m_ainsert_buffer.empty() && m_copy_suspended && !m_copy_files_aread_ready)
             resume_copy(0, resume_copy::ignore_line);
     }
-    else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread())
+    else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread()
+        || m_preprocessor && try_running_preprocessor() && fill_copy_buffer_for_aread())
     {
         auto& current = m_copy_files.back();
         result = lexing::extract_line(current.text).first;
@@ -104,11 +108,6 @@ std::string opencode_provider::aread()
             m_copy_files.pop_back();
             m_ctx->hlasm_ctx->opencode_copy_stack().pop_back();
         }
-    }
-    else if (!m_preprocessor_buffer.empty())
-    {
-        result = std::move(m_preprocessor_buffer.back());
-        m_preprocessor_buffer.pop_back();
     }
     else if (!m_next_line_text.empty())
     {
@@ -339,7 +338,8 @@ bool opencode_provider::fill_copy_buffer_for_aread()
         return false;
 
     const auto cmi_to_cms = [lsp_ctx = m_ctx->lsp_ctx.get()](const context::copy_member_invocation& copy) {
-        const auto pos = copy.cached_definition->at(copy.current_statement).get_base()->statement_position();
+        const bool before_first_read = copy.current_statement == (size_t)-1;
+        const auto pos = copy.current_statement_position();
         const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
 
         std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });
@@ -347,7 +347,8 @@ bool opencode_provider::fill_copy_buffer_for_aread()
 
         // remove line being processed
         lexing::logical_line ll = {};
-        lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
+        if (!before_first_read)
+            lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
 
         return copy_member_state { remaining_text, full_text, pos.line + ll.segments.size() };
     };
@@ -364,7 +365,48 @@ bool opencode_provider::fill_copy_buffer_for_aread()
     if (m_copy_files.empty())
         return false;
 
-    suspend_copy();
+    if (!m_copy_suspended)
+        suspend_copy();
+
+    return true;
+}
+
+bool opencode_provider::try_running_preprocessor()
+{
+    const auto current_line = m_current_line;
+    auto result = m_preprocessor->generate_replacement(m_next_line_text, m_current_line);
+    if (!result.has_value() || result.value().empty())
+        return false;
+
+    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("DB2:" + std::to_string(current_line));
+
+    auto [new_file, inserted] = m_preprocessor_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
+
+    // set up "call site"
+    const auto current_offset =
+        m_next_line_text.empty() ? m_original_text.size() : m_next_line_text.data() - m_original_text.data();
+    const auto last_statement_line = m_current_line - (current_line != m_current_line);
+    m_ctx->hlasm_ctx->set_source_position(position(last_statement_line, 0));
+    m_ctx->hlasm_ctx->set_source_indices(current_offset, current_offset, last_statement_line);
+
+    if (inserted)
+    {
+        analyzer a(new_file->second,
+            analyzer_options {
+                *virtual_copy_name,
+                m_lib_provider,
+                *m_ctx,
+                workspaces::library_data { processing_kind::COPY, virtual_copy_name },
+            });
+        a.analyze();
+        m_diagnoser->collect_diags_from_child(a);
+    }
+    else
+    {
+        assert(result.value() == new_file->second);
+    }
+
+    m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
 
     return true;
 }
@@ -420,8 +462,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
 bool opencode_provider::finished() const
 {
-    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty()
-        && m_preprocessor_buffer.empty();
+    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty();
 }
 
 parsing::hlasmparser& opencode_provider::parser()
@@ -435,6 +476,7 @@ parsing::hlasmparser& opencode_provider::parser()
 void opencode_provider::apply_pending_line_changes()
 {
     m_ainsert_buffer.erase(m_ainsert_buffer.begin(), m_ainsert_buffer.begin() + m_lines_to_remove.ainsert_buffer);
+
     m_current_line += m_lines_to_remove.current_text_lines;
 
     m_lines_to_remove = {};
@@ -580,11 +622,6 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     if (!m_copy_files.empty())
         return extract_next_logical_line_from_copy_buffer();
 
-    if (!m_preprocessor_buffer.empty())
-    {
-        // TODO: other sources
-    }
-
     if (ictl_allowed)
         ictl_allowed = is_next_line_ictl();
 
@@ -611,7 +648,10 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
         }
     }
 
-    while (m_next_line_text.size())
+    if (m_preprocessor && try_running_preprocessor())
+        return extract_next_logical_line_result::failed;
+
+    while (!m_next_line_text.empty())
     {
         ++m_lines_to_remove.current_text_lines;
         if (!append_to_logical_line(m_current_logical_line, m_next_line_text, lexing::default_ictl))

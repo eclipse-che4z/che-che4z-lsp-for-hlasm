@@ -72,4 +72,56 @@ inline std::pair<bool, antlr4::ParserRuleContext*> try_parse_sll(
         return { false, tree };
     }
 }
+
+template<typename T>
+std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
+{
+    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    if (!var)
+        return std::nullopt;
+
+    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
+        return std::nullopt;
+    auto var_ = var->access_set_symbol_base();
+    if (var_->type != object_traits<T>::type_enum || !var_->is_scalar)
+        return std::nullopt;
+
+    auto symbol = var_->template access_set_symbol<T>();
+    if (!symbol)
+        return std::nullopt;
+
+    return symbol->get_value();
+}
+
+template<typename T>
+std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name)
+{
+    auto var = ctx.get_var_sym(ctx.ids().find(name));
+    if (!var)
+        return std::nullopt;
+
+    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
+        return std::nullopt;
+    auto var_ = var->access_set_symbol_base();
+    if (var_->type != object_traits<T>::type_enum || var_->is_scalar)
+        return std::nullopt;
+
+    auto symbol = var_->template access_set_symbol<T>();
+    if (!symbol)
+        return std::nullopt;
+
+    auto keys = symbol->keys();
+
+    std::vector<T> result;
+    result.reserve(keys.size());
+    for (size_t i = 0; i < keys.size(); ++i)
+    {
+        if (i != keys[i])
+            return std::nullopt;
+        result.push_back(symbol->get_value(i));
+    }
+
+    return result;
+}
+
 #endif

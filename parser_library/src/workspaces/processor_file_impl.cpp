@@ -45,7 +45,7 @@ void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
 
 bool processor_file_impl::is_once_only() const { return false; }
 
-parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts)
+parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts, preprocessor_options pp)
 {
     if (opencode_analyzer_)
         opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
@@ -56,6 +56,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
                 get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
                 file_is_opencode::yes,
                 std::move(opencode_analyzer_->hlasm_ctx().ids()),
+                std::move(pp),
             });
     else
         opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
@@ -65,6 +66,7 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
                 std::move(asm_opts),
                 get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
                 file_is_opencode::yes,
+                std::move(pp),
             });
 
     auto old_dep = dependencies_;

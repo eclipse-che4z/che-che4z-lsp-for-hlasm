@@ -59,11 +59,27 @@ void from_json(const nlohmann::json& j, assembler_options& p)
         it->get_to(p.sysparm);
 }
 
+void to_json(nlohmann::json& j, const db2_preprocessor&) { j = "DB2"; }
+void from_json(const nlohmann::json&, db2_preprocessor&) {}
+
+namespace {
+struct preprocessor_visitor
+{
+    nlohmann::json& j;
+
+    void operator()(const std::monostate&) const {}
+    void operator()(const db2_preprocessor& p) const { j = p; }
+};
+} // namespace
+
 void to_json(nlohmann::json& j, const processor_group& p)
 {
     j = nlohmann::json { { "name", p.name }, { "libs", p.libs } };
     if (auto opts = nlohmann::json(p.asm_options); !opts.empty())
         j["asm_options"] = std::move(opts);
+
+    if (!std::holds_alternative<std::monostate>(p.preprocessor.options))
+        std::visit(preprocessor_visitor { j["preprocessor"] }, p.preprocessor.options);
 }
 void from_json(const nlohmann::json& j, processor_group& p)
 {
@@ -71,6 +87,23 @@ void from_json(const nlohmann::json& j, processor_group& p)
     j.at("libs").get_to(p.libs);
     if (auto it = j.find("asm_options"); it != j.end())
         it->get_to(p.asm_options);
+
+    if (auto it = j.find("preprocessor"); it != j.end())
+    {
+        std::string p_name;
+        if (it->is_string())
+            p_name = it->get<std::string>();
+        else if (it->is_object())
+            it->at("name").get_to(p_name);
+        else
+            throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.");
+
+        std::transform(p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
+        if (p_name == "DB2")
+            it->get_to(p.preprocessor.options.emplace<db2_preprocessor>());
+        else
+            throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.");
+    }
 }
 
 void to_json(nlohmann::json& j, const proc_conf& p)
