@@ -62,6 +62,7 @@ SYM    LR &VAR,1
     void SetUp() override
     {
         a = std::make_unique<analyzer>(opencode, analyzer_options { opencode_file_name, &lib_prov_instance });
+        a->analyze();
     }
 };
 
