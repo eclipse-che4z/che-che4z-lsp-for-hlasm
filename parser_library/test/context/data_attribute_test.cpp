@@ -796,8 +796,7 @@ B EQU 1,11
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 1);
     EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().length(),
         (symbol_attributes::len_attr)1);
 

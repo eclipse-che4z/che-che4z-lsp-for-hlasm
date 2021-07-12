@@ -14,8 +14,8 @@
 
 #include "gtest/gtest.h"
 
-#include "analyzer_fixture.h"
 #include "../mock_parse_lib_provider.h"
+#include "analyzer_fixture.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
@@ -52,11 +52,11 @@ SYM    LR &VAR,1
 &VAR   SETA 1
 
 )";
-    
+
     mock_parse_lib_provider lib_prov_instance;
     std::unique_ptr<analyzer> a;
     lsp_context_copy_in_macro()
-        : lib_prov_instance({ { macro_file_name, macro }, { copyfile_file_name, copyfile} })
+        : lib_prov_instance({ { macro_file_name, macro }, { copyfile_file_name, copyfile } })
     {}
 
     void SetUp() override

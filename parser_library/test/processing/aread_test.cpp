@@ -14,8 +14,8 @@
 
 #include "gtest/gtest.h"
 
-#include "../mock_parse_lib_provider.h"
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for
 // AREAD handling

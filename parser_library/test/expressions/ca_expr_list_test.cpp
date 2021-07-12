@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../mock_parse_lib_provider.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_expr_list.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
@@ -22,7 +23,6 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
 #include "semantics/concatenation_term.h"
-#include "../mock_parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;

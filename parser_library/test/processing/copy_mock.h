@@ -15,8 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TEST_COPY_MOCK_H
 #define HLASMPLUGIN_PARSERLIBRARY_TEST_COPY_MOCK_H
 
-#include "analyzer.h"
 #include "../mock_parse_lib_provider.h"
+#include "analyzer.h"
 
 namespace hlasm_plugin::parser_library {
 

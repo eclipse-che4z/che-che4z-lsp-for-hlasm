@@ -84,38 +84,27 @@ R1      MAC   R2
 TEST_F(lsp_features_test, go_to)
 {
     // jump from source to macro, macro MAC
-    EXPECT_EQ(
-        location (position(1, 7), MACRO_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 4)));
+    EXPECT_EQ(location(position(1, 7), MACRO_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 4)));
     // no jump
-    EXPECT_EQ(
-        location (position(0, 8), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 8)));
+    EXPECT_EQ(location(position(0, 8), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(0, 8)));
     // jump in source, open code, var symbol &VAR
-    EXPECT_EQ(
-        location ( position(1, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(2, 13)));
+    EXPECT_EQ(location(position(1, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(2, 13)));
     // jump in source, open code, seq symbol .HERE
-    EXPECT_EQ(
-        location ( position(5, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(3, 13)));
+    EXPECT_EQ(location(position(5, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(3, 13)));
     // jump in source, macro, seq symbol .HERE
-    EXPECT_EQ(
-        location ( position(15, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(12, 15)));
+    EXPECT_EQ(location(position(15, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(12, 15)));
     // jump in source, macro, var symbol &LABEL
-    EXPECT_EQ(
-        location ( position(8, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 20)));
+    EXPECT_EQ(location(position(8, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 20)));
     // jump in source, macro, var symbol &VAR
-    EXPECT_EQ(
-        location ( position(8, 13), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 15)));
+    EXPECT_EQ(location(position(8, 13), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(11, 15)));
     // forward jump in source, open code, ord symbol R1
-    EXPECT_EQ(
-        location ( position(22, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 10)));
+    EXPECT_EQ(location(position(22, 0), SOURCE_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 10)));
     // jump from source to copy file, ord symbol R2 on machine instrution
-    EXPECT_EQ(
-        location ( position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 13)));
+    EXPECT_EQ(location(position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(21, 13)));
     // jump from source to copy file, ord symbol R2 on macro MAC
-    EXPECT_EQ(
-        location ( position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(23, 14)));
+    EXPECT_EQ(location(position(0, 0), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(23, 14)));
     // jump from source to first instruction in copy file, COPY COPYFILE
-    EXPECT_EQ(
-        location ( position(0, 3), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(20, 14)));
+    EXPECT_EQ(location(position(0, 3), COPY_FILE), a.context().lsp_ctx->definition(SOURCE_FILE, position(20, 14)));
 }
 
 TEST_F(lsp_features_test, refs)

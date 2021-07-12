@@ -14,10 +14,10 @@
 
 #include "gmock/gmock.h"
 
+#include "../mock_parse_lib_provider.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
 #include "expressions/evaluation_context.h"
-#include "../mock_parse_lib_provider.h"
 
 using namespace std::string_literals;
 using namespace hlasm_plugin::parser_library;
