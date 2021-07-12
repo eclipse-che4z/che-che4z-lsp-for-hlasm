@@ -27,10 +27,12 @@ public:
 
     mock_parse_lib_provider() = default;
     mock_parse_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
-    {
-        for (const auto& e : entries)
-            m_files.insert(e);
-    }
+        : m_files(entries.begin(), entries.end())
+    {}
+    template<typename T>
+    mock_parse_lib_provider(T&& c)
+        : m_files(c.begin(), c.end())
+    {}
 
     workspaces::parse_result parse_library(
         const std::string& library, analyzing_context ctx, workspaces::library_data data) override
@@ -49,11 +51,15 @@ public:
     bool has_library(const std::string& library, const std::string&) const override { return m_files.count(library); }
 
 
-    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string&, std::string* uri) const override
     {
         auto it = m_files.find(library);
         if (it == m_files.end())
             return std::nullopt;
+
+        if (uri)
+            *uri = library;
 
         return it->second;
     }

@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for macro feature:
 // definition parsing
@@ -519,85 +520,51 @@ TEST(macro, arguments_continuation)
     EXPECT_EQ(a.diags().size(), (size_t)0);
     EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 }
-
-class bad_mock : public parse_lib_provider
-{
-    static const std::string* content_variant(int i)
-    {
-        static const std::string content_bad_name =
-            R"(   MACRO
-       MACC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-        static const std::string content_bad_begin =
-            R"(  aMACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-        static const std::string content_comment =
-            R"(**********  
-       MACRO
-       MAC   &VAR
-       LR    &VAR,&VAR
-       MEND
-)";
-        switch (i)
-        {
-            case 0:
-                return &content_bad_name;
-            case 1:
-                return &content_bad_begin;
-            case 2:
-                return &content_comment;
-            default:
-                throw std::invalid_argument("Unknown variant");
-        }
-    }
-
-    const std::string* current_content;
-
-public:
-    bad_mock(int lib_code)
-        : current_content(content_variant(lib_code))
-    {}
-
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        (void)library;
-
-        a = std::make_unique<analyzer>(*current_content, analyzer_options { "/tmp/MAC", this, std::move(ctx), data });
-        a->analyze();
-        a->collect_diags();
-        return true;
-    }
-    bool has_library(const std::string&, const std::string&) const override { return true; }
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string*) const override
-    {
-        return *current_content;
-    }
-    std::unique_ptr<analyzer> a;
-};
-
-TEST(external_macro, bad_library)
+TEST(external_macro, bad_name)
 {
     std::string input =
         R"(
  MAC
  MAC
 )";
-    for (int i = 0; i < 2; ++i)
-    {
-        bad_mock m(i);
-        analyzer a(input, analyzer_options { &m });
-        a.analyze();
-        a.collect_diags();
-        EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)1);
-        EXPECT_EQ(a.diags().size(), (size_t)2);
-        EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    }
+    std::string content_bad_name =
+        R"(   MACRO
+       MACC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+    mock_parse_lib_provider lib_provider { { "MAC", content_bad_name } };
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
+    EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
+    EXPECT_EQ(a.diags().size(), 2U);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), 0U);
+}
+
+TEST(external_macro, bad_begin)
+{
+    std::string input =
+        R"(
+ MAC
+ MAC
+)";
+    std::string content_bad_begin =
+        R"(  aMACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+
+    mock_parse_lib_provider lib_provider { { "MAC", content_bad_begin } };
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
+    EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
+    EXPECT_EQ(a.diags().size(), 2U);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), 0U);
 }
 
 TEST(external_macro, library_with_begin_comment)
@@ -607,13 +574,21 @@ TEST(external_macro, library_with_begin_comment)
  MAC 1
  MAC 1
 )";
-    bad_mock m(2);
-    analyzer a(input, analyzer_options { &m });
+    std::string content_comment =
+        R"(**********  
+       MACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)";
+    mock_parse_lib_provider lib_provider { { "MAC", content_comment } };
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(dynamic_cast<diagnosable*>(&*m.a)->diags().size(), (size_t)0);
-    EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
+    EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 0U);
+    EXPECT_EQ(a.diags().size(), 0U);
+    EXPECT_EQ(a.parser().getNumberOfSyntaxErrors(), 0U);
 }
 
 TEST(variable_argument_passing, positive_sublist)

@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for OPSYN instruction
 
@@ -261,46 +262,18 @@ X OPSYN LR
     ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
-class opsyn_parse_lib_prov : public parse_lib_provider
-{
-    std::unique_ptr<analyzer> a;
-
-    std::string LIB =
-        R"( MACRO
- LR
- MEND)";
-
-public:
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        std::string* content;
-        if (library == "LR")
-            content = &LIB;
-        else
-            return false;
-
-        a = std::make_unique<analyzer>(*content, analyzer_options { library, this, std::move(ctx), data });
-        a->analyze();
-        a->collect_diags();
-        return true;
-    }
-
-    bool has_library(const std::string&, const std::string&) const override { return false; }
-    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
-    {
-        if (library == "LR")
-            return LIB;
-        return std::nullopt;
-    }
-};
-
 TEST(OPSYN, macro_after_delete)
 {
     std::string input(R"(
 LR OPSYN
    LR
 )");
-    opsyn_parse_lib_prov mock;
+
+    std::string LIB =
+        R"( MACRO
+ LR
+ MEND)";
+    mock_parse_lib_provider mock { { "LR", LIB } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();

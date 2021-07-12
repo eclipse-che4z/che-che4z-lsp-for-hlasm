@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // test for
 // symbol data attributes
@@ -709,36 +710,6 @@ TEST(data_attributes, O_opencode_var)
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class O_mock : public workspaces::parse_lib_provider
-{
-public:
-    workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, workspaces::library_data data) override
-    {
-        if (!has_library(library, ctx.hlasm_ctx->opencode_file_name()))
-            return false;
-
-        analyzer a(M, analyzer_options { library, this, std::move(ctx), data });
-        a.analyze();
-        return true;
-    }
-    bool has_library(const std::string& lib, const std::string&) const override { return lib == "MAC"; }
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string*) const override
-    {
-        if (library == "MAC")
-            return M;
-        return std::nullopt;
-    }
-
-private:
-    const std::string M =
-        R"(   MACRO
-       MAC  
-       LR   1,1
-       MEND
-)";
-};
 
 TEST(data_attributes, O_libraries)
 {
@@ -749,31 +720,23 @@ TEST(data_attributes, O_libraries)
 &V3 SETC O'MAC
 
 )";
-    O_mock prov;
+    const std::string mac_def =
+        R"(   MACRO
+       MAC  
+       LR   1,1
+       MEND
+)";
+
+    mock_parse_lib_provider prov { { "MAC", mac_def } };
     analyzer a(input, analyzer_options { &prov });
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "S");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "U");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "M");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V1"), "S");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "U");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V3"), "M");
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), 0U);
 }
 
 TEST(data_attributes, basic_attr_ref)
@@ -833,11 +796,7 @@ B EQU 1,11
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"),
         1);
     EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().length(),
         (symbol_attributes::len_attr)1);
