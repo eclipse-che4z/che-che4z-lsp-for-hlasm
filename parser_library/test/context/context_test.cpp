@@ -16,7 +16,6 @@
 
 #include "gtest/gtest.h"
 
-#include "../copy_mock.h"
 #include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "context/variables/system_variable.h"
@@ -585,8 +584,7 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
 
  M2
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    analyzer a(input);
     a.analyze();
 
     a.collect_diags();

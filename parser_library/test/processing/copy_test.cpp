@@ -13,7 +13,7 @@
  */
 
 #include "../common_testing.h"
-#include "../copy_mock.h"
+#include "copy_mock.h"
 
 // test for COPY instruction
 // various cases of instruction occurence in the source
@@ -25,8 +25,8 @@ TEST(copy, copy_enter_fail)
  COPY A+1
  COPY UNKNOWN
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -43,8 +43,8 @@ TEST(copy, copy_enter_success)
         R"(
  COPY COPYR
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -64,8 +64,8 @@ TEST(copy, copy_enter_diag_test)
         R"(
  COPY COPYD
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -92,8 +92,8 @@ TEST(copy, copy_jump)
  COPY COPYF
  AIF (&VAR LT 4).A
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -122,8 +122,8 @@ TEST(copy, copy_unbalanced_macro)
         R"(
  COPY COPYU
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -132,7 +132,8 @@ TEST(copy, copy_unbalanced_macro)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(mock.a->diags().size(), (size_t)1);
+    EXPECT_EQ(lib_provider.analyzers.count("COPYU"), 1U);
+    EXPECT_EQ(lib_provider.analyzers["COPYU"]->diags().size(), 1U);
 }
 
 TEST(copy, copy_twice)
@@ -142,8 +143,8 @@ TEST(copy, copy_twice)
  COPY COPYR
  COPY COPYR
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -161,8 +162,8 @@ TEST(copy, macro_call_from_copy_enter)
  M1
  M2
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -187,8 +188,8 @@ TEST(copy, copy_enter_from_macro_call)
 
  M
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -226,8 +227,8 @@ TEST(copy, copy_enter_from_lookahead)
 &V SETA &V+1
  
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -257,8 +258,8 @@ TEST(copy, nested_macro_copy_call)
  COPY COPYN
  
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -288,8 +289,8 @@ TEST(copy, macro_from_copy_call)
  M
  
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -316,8 +317,8 @@ TEST(copy, inner_copy_jump)
  LR
  
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -334,8 +335,8 @@ TEST(copy, jump_from_copy_fail)
         R"(
  COPY COPYJF
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -369,8 +370,8 @@ TEST(copy, jump_in_macro_from_copy_fail)
 
  m
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -401,8 +402,8 @@ TEST(copy, macro_nested_diagnostics)
  
  MAC  
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -431,8 +432,8 @@ TEST(copy, copy_call_with_jump_before_comment)
 ***
  ANOP
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();
@@ -457,8 +458,8 @@ TEST(copy, copy_empty_file)
  COPY EMPTY
  MEND
 )";
-    copy_mock mock;
-    analyzer a(input, analyzer_options { "start", &mock });
+    auto lib_provider = copy_mock::create();
+    analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
     a.collect_diags();

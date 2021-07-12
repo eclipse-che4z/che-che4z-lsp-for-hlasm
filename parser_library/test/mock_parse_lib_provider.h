@@ -23,6 +23,7 @@ class mock_parse_lib_provider : public workspaces::parse_lib_provider
     std::unordered_map<std::string, std::string> m_files;
 
 public:
+    std::unordered_map<std::string, std::unique_ptr<analyzer>> analyzers;
     mock_parse_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
     {
         for (const auto& e : entries)
@@ -39,6 +40,7 @@ public:
         auto a = std::make_unique<analyzer>(it->second, analyzer_options { library, this, std::move(ctx), data });
         a->analyze();
         a->collect_diags();
+        analyzers[library] = std::move(a);
         return true;
     }
 
