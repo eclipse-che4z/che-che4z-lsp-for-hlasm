@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-#include "../expressions/expr_mocks.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for lookahead feature:
 // forward/backward jums
@@ -193,7 +193,7 @@ TEST(attribute_lookahead, lookup_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { a.context() }, lib };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
@@ -207,7 +207,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { a.context() }, lib };
 
     auto v1 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V1"), false);
@@ -237,7 +237,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { a.context() }, lib };
 
     // define symbol with undefined length
@@ -257,7 +257,7 @@ TEST(attribute_lookahead, lookup_of_two_refs)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { a.context() }, lib };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)2);
@@ -271,7 +271,7 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
     analyzer a(input);
     auto& expr = a.parser().expr()->ca_expr;
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { a.context() }, lib };
 
     EXPECT_EQ(expr->get_undefined_attributed_symbols(eval_ctx).size(), (size_t)1);
@@ -457,62 +457,6 @@ X EQU =**)-,2
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
 
-class look_parse_lib_prov : public parse_lib_provider
-{
-    std::unique_ptr<analyzer> a;
-
-    std::string LIB =
-        R"( 
-X EQU 1,2,C'X'
-&WAS_IN SETB 1
-)";
-
-    std::string LIB2 =
-        R"( 
-&A SETA L'X
-&WAS_IN SETB 1
-)";
-
-    std::string LIB3 =
-        R"( 
- MAC 
-&AFTER_MAC SETB 1
-)";
-
-public:
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        std::string* content;
-        if (library == "LIB")
-            content = &LIB;
-        else if (library == "LIB2")
-            content = &LIB2;
-        else if (library == "LIB3")
-            content = &LIB3;
-        else
-            return false;
-
-        a = std::make_unique<analyzer>(*content, analyzer_options { library, this, std::move(ctx), data });
-        a->analyze();
-        a->collect_diags();
-        return true;
-    }
-
-    bool has_library(const std::string&, const std::string&) const override { return false; }
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string*) const override
-    {
-        if (library == "LIB")
-            return LIB;
-        else if (library == "LIB2")
-            return LIB2;
-        else if (library == "LIB3")
-            return LIB3;
-        else
-            return std::nullopt;
-    }
-};
-
 TEST(attribute_lookahead, lookup_to_copy)
 {
     std::string input(
@@ -522,8 +466,13 @@ TEST(attribute_lookahead, lookup_to_copy)
  COPY LIB
 &WAS_AFTER SETB 1
 )");
+    std::string LIB =
+        R"( 
+X EQU 1,2,C'X'
+&WAS_IN SETB 1
+)";
 
-    look_parse_lib_prov mock;
+    mock_parse_lib_provider mock { { "LIB", LIB } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
@@ -566,7 +515,13 @@ X EQU 1,2
 &WAS_AFTER SETB 1
 )");
 
-    look_parse_lib_prov mock;
+    std::string LIB2 =
+        R"( 
+&A SETA L'X
+&WAS_IN SETB 1
+)";
+
+    mock_parse_lib_provider mock { { "LIB2", LIB2 } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
@@ -613,8 +568,13 @@ X EQU 2,3
  COPY LIB3
 X EQU 1,2
 )");
+    std::string LIB3 =
+        R"( 
+ MAC 
+&AFTER_MAC SETB 1
+)";
 
-    look_parse_lib_prov mock;
+    mock_parse_lib_provider mock { { "LIB3", LIB3 } };
     analyzer a(input, analyzer_options { &mock });
     a.analyze();
     a.collect_diags();
@@ -645,8 +605,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
  mend
          GETMAIN   b=svc)");
 
-    look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { &mock });
+    analyzer a(input);
     a.analyze();
     a.collect_diags();
 
@@ -663,8 +622,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
          GETMAIN   b=svc
 )");
 
-    look_parse_lib_prov mock;
-    analyzer a(input, analyzer_options { &mock });
+    analyzer a(input);
     a.analyze();
     a.collect_diags();
 

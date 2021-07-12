@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_expr_list.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
@@ -23,6 +22,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
 #include "semantics/concatenation_term.h"
+#include "../mock_parse_lib_provider.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -30,7 +30,7 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_expr_list, unknown_function_to_operator)
 {
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };
@@ -59,7 +59,7 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
 TEST(ca_expr_list, resolve_C_type)
 {
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };
@@ -99,7 +99,7 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range());
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };

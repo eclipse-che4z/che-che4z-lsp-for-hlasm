@@ -24,6 +24,8 @@ class mock_parse_lib_provider : public workspaces::parse_lib_provider
 
 public:
     std::unordered_map<std::string, std::unique_ptr<analyzer>> analyzers;
+
+    mock_parse_lib_provider() = default;
     mock_parse_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
     {
         for (const auto& e : entries)

@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../mock_parse_lib_provider.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_string.h"
@@ -27,7 +28,7 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_string, undefined_attributes)
 {
     auto hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
 
     concat_chain value;
@@ -81,7 +82,7 @@ TEST(ca_string, test)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };
@@ -102,7 +103,7 @@ TEST_P(ca_string_suite, dupl)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };

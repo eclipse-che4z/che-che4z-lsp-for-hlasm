@@ -17,6 +17,7 @@
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
 #include "expressions/evaluation_context.h"
+#include "../mock_parse_lib_provider.h"
 
 using namespace std::string_literals;
 using namespace hlasm_plugin::parser_library;
@@ -77,7 +78,7 @@ public:
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    lib_prov_mock lib;
+    mock_parse_lib_provider lib;
     evaluation_context eval_ctx {
         analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
     };
