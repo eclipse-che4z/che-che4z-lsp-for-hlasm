@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "../mock_parse_lib_provider.h"
 #include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
 #include "expressions/evaluation_context.h"
@@ -78,9 +77,9 @@ public:
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    mock_parse_lib_provider lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance
     };
 
     context::SET_t get_result()

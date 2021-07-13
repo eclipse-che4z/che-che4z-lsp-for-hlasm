@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "../mock_parse_lib_provider.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_expr_list.h"
 #include "expressions/conditional_assembly/terms/ca_function.h"
@@ -30,9 +29,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_expr_list, unknown_function_to_operator)
 {
-    mock_parse_lib_provider lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance
     };
 
     std::string name = "AND";
@@ -59,9 +58,9 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
 TEST(ca_expr_list, resolve_C_type)
 {
-    mock_parse_lib_provider lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance
     };
 
     std::string name = "UPPER";
@@ -99,9 +98,9 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range());
 
-    mock_parse_lib_provider lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance
     };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
