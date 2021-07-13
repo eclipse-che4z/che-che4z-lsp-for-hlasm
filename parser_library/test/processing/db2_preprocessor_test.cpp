@@ -214,7 +214,6 @@ TEST(db2_preprocessor, missing_member)
         db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
-    std::deque<std::string> buffer;
     size_t lineno = 0;
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
@@ -232,7 +231,6 @@ TEST(db2_preprocessor, bad_continuation)
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
-    std::deque<std::string> buffer;
     size_t lineno = 0;
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
@@ -253,7 +251,6 @@ TEST(db2_preprocessor, no_nested_include)
         },
         &diags);
     std::string_view text = " EXEC SQL INCLUDE MEMBER ";
-    std::deque<std::string> buffer;
     size_t lineno = 0;
 
     EXPECT_TRUE(p->generate_replacement(text, lineno));
@@ -682,4 +679,217 @@ TEST(db2_preprocessor, end_sqldsect_injection)
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
+}
+
+TEST(db2_preprocessor, sql_types)
+{
+    diagnostic_op_consumer_container diags;
+    auto p = preprocessor::create(
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
+    std::string_view text = R"(
+RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
+RO SQL TYPE IS ROWID
+TU SQL TYPE IS TABLE LIKE A AS LOCATOR
+TQ SQL TYPE IS TABLE LIKE 'A''B' AS LOCATOR
+XB SQL TYPE IS XML AS BLOB 10
+XC SQL TYPE IS XML AS CLOB 10K
+XD SQL TYPE IS XML AS DBCLOB 10M
+BL SQL TYPE IS BINARY LARGE OBJECT 10K
+CL SQL TYPE IS CHARACTER LARGE OBJECT 10M
+DL SQL TYPE IS DBCLOB 1G
+BLOC SQL TYPE IS BLOB_LOCATOR
+CLOC SQL TYPE IS CLOB_LOCATOR
+DLOC SQL TYPE IS DBCLOB_LOCATOR
+BFILE SQL TYPE IS BLOB_FILE
+CFILE SQL TYPE IS CLOB_FILE
+DFILE SQL TYPE IS DBCLOB_FILE
+)";
+    size_t lineno = 0;
+
+    EXPECT_TRUE(p->generate_replacement(text, lineno).has_value());
+    EXPECT_EQ(lineno, 0);
+    text.remove_prefix(1);
+    ++lineno;
+
+    std::vector<std::string> expected = {
+        R"(
+***$$$
+*RE SQL TYPE IS RESULT_SET_LOCATOR VARYING
+***$$$
+RE       DS    FL4
+)",
+        R"(
+***$$$
+*RO SQL TYPE IS ROWID
+***$$$
+RO       DS    H,CL40
+)",
+        R"(
+***$$$
+*TU SQL TYPE IS TABLE LIKE A AS LOCATOR
+***$$$
+TU       DS    FL4
+)",
+        R"(
+***$$$
+*TQ SQL TYPE IS TABLE LIKE 'A''B' AS LOCATOR
+***$$$
+TQ       DS    FL4
+)",
+        R"(
+***$$$
+*XB SQL TYPE IS XML AS BLOB 10
+***$$$
+XB       DS   0FL4
+XB_LENGTH DS FL4
+XB_DATA DS CL10
+)",
+        R"(
+***$$$
+*XC SQL TYPE IS XML AS CLOB 10K
+***$$$
+XC       DS   0FL4
+XC_LENGTH DS FL4
+XC_DATA DS CL10240
+)",
+        R"(
+***$$$
+*XD SQL TYPE IS XML AS DBCLOB 10M
+***$$$
+XD       DS   0FL4
+XD_LENGTH DS FL4
+XD_DATA DS GL65534
+ ORG   *+(10420226)
+)",
+        R"(
+***$$$
+*BL SQL TYPE IS BINARY LARGE OBJECT 10K
+***$$$
+BL       DS   0FL4
+BL_LENGTH DS FL4
+BL_DATA DS CL10240
+)",
+        R"(
+***$$$
+*CL SQL TYPE IS CHARACTER LARGE OBJECT 10M
+***$$$
+CL       DS   0FL4
+CL_LENGTH DS FL4
+CL_DATA DS CL65535
+ ORG   *+(10420225)
+)",
+        R"(
+***$$$
+*DL SQL TYPE IS DBCLOB 1G
+***$$$
+DL       DS   0FL4
+DL_LENGTH DS FL4
+DL_DATA DS GL65534
+ ORG   *+(1073676289)
+)",
+        R"(
+***$$$
+*BLOC SQL TYPE IS BLOB_LOCATOR
+***$$$
+BLOC     DS    FL4
+)",
+        R"(
+***$$$
+*CLOC SQL TYPE IS CLOB_LOCATOR
+***$$$
+CLOC     DS    FL4
+)",
+        R"(
+***$$$
+*DLOC SQL TYPE IS DBCLOB_LOCATOR
+***$$$
+DLOC     DS    FL4
+)",
+        R"(
+***$$$
+*BFILE SQL TYPE IS BLOB_FILE
+***$$$
+BFILE    DS   0FL4
+BFILE_NAME_LENGTH DS FL4
+BFILE_DATA_LENGTH DS FL4
+BFILE_FILE_OPTIONS DS FL4
+BFILE_NAME DS CL255
+)",
+        R"(
+***$$$
+*CFILE SQL TYPE IS CLOB_FILE
+***$$$
+CFILE    DS   0FL4
+CFILE_NAME_LENGTH DS FL4
+CFILE_DATA_LENGTH DS FL4
+CFILE_FILE_OPTIONS DS FL4
+CFILE_NAME DS CL255
+)",
+        R"(
+***$$$
+*DFILE SQL TYPE IS DBCLOB_FILE
+***$$$
+DFILE    DS   0FL4
+DFILE_NAME_LENGTH DS FL4
+DFILE_DATA_LENGTH DS FL4
+DFILE_FILE_OPTIONS DS FL4
+DFILE_NAME DS CL255
+)"
+    };
+
+    size_t result_id = 0;
+    while (!text.empty())
+    {
+        ASSERT_LT(result_id, expected.size());
+
+        auto result = p->generate_replacement(text, lineno);
+        ASSERT_TRUE(result.has_value());
+
+        std::string_view e = expected[result_id];
+        e.remove_prefix(1);
+
+        EXPECT_EQ(result, e);
+
+        ++result_id;
+    }
+    EXPECT_EQ(result_id, expected.size());
+    EXPECT_EQ(diags.diags.size(), 0);
+}
+
+TEST(db2_preprocessor, sql_type_fails)
+{
+    for (std::string_view text : {
+             "A SQL TYPE IS ",
+             "A SQL TYPE IS UNKNOWN",
+             "A SQL TYPE IS BLOB",
+             "A SQL TYPE IS TABLE LIKE AAA AS LOCATORR",
+         })
+    {
+        diagnostic_op_consumer_container diags;
+        auto p = preprocessor::create(
+            db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+
+        size_t lineno = 0;
+
+        EXPECT_TRUE(p->generate_replacement(text, lineno));
+
+        ASSERT_EQ(diags.diags.size(), 1U);
+        EXPECT_EQ(diags.diags[0].code, "P0004");
+    }
+}
+
+TEST(db2_preprocessor, sql_type_warn_on_continuation)
+{
+    std::string_view text = "A SQL TYPE IS TABLE LIKE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
+                            "                AS LOCATOR";
+    diagnostic_op_consumer_container diags;
+    auto p = preprocessor::create(
+        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+
+    size_t lineno = 0;
+
+    EXPECT_TRUE(p->generate_replacement(text, lineno));
+
+    ASSERT_EQ(diags.diags.size(), 1U);
+    EXPECT_EQ(diags.diags[0].code, "P0005");
 }

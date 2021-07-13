@@ -1984,6 +1984,22 @@ diagnostic_op diagnostic_op::error_P0003(const range& range, std::string_view li
         range);
 }
 
+diagnostic_op diagnostic_op::error_P0004(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "P0004",
+        std::string("DB2 preprocessor - requested SQL TYPE not recognized"),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_P0005(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "P0005",
+        std::string("DB2 preprocessor - continuation detected on SQL TYPE statement"),
+        range);
+}
+
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
     return diagnostic_s(ws_uri,
