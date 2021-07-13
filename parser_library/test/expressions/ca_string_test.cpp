@@ -27,8 +27,8 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_string, undefined_attributes)
 {
     auto hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     concat_chain value;
     value.push_back(std::make_unique<char_str_conc>("gfds", range()));
@@ -81,10 +81,9 @@ TEST(ca_string, test)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     auto res = s.evaluate(eval_ctx);
 
@@ -102,10 +101,9 @@ TEST_P(ca_string_suite, dupl)
 
     ca_string s(std::move(value), std::move(dupl), ca_string::substring_t(), range());
 
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     auto res = s.evaluate(eval_ctx);
 

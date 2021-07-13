@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
 #include "expressions/conditional_assembly/ca_operator_binary.h"
 #include "expressions/conditional_assembly/ca_operator_unary.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
@@ -58,10 +57,9 @@ struct stringer
 class ca_op : public ::testing::TestWithParam<op_test_param>
 {
 protected:
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     SET_t get_result()
     {

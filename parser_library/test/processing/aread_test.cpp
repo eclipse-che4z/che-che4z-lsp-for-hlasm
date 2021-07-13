@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for
 // AREAD handling
@@ -309,46 +310,10 @@ Line5
     EXPECT_EQ(diags[0].diag_range.start.line, 15);
 }
 
-namespace {
-class asm_options_invalid_lib_provider : public parse_lib_provider
-{
-    std::unordered_map<std::string, std::string> m_files;
-
-public:
-    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        auto it = m_files.find(library);
-        if (it == m_files.end())
-            return false;
-
-        auto a = std::make_unique<analyzer>(it->second, analyzer_options { library, this, std::move(ctx), data });
-        a->analyze();
-        a->collect_diags();
-        return true;
-    }
-
-    bool has_library(const std::string& library, const std::string&) const override { return m_files.count(library); }
-
-    asm_options_invalid_lib_provider(std::initializer_list<std::pair<std::string, std::string>> entries)
-    {
-        for (const auto& e : entries)
-            m_files.insert(e);
-    }
-    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
-    {
-        auto it = m_files.find(library);
-        if (it == m_files.end())
-            return std::nullopt;
-
-        return it->second;
-    }
-};
-} // namespace
-
 TEST(aread, macro_called_in_copybook)
 {
     std::string input = " COPY  COPYBOOK";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "COPYBOOK", R"(
           MACRO
           M
@@ -379,7 +344,7 @@ TEST(aread, macro_called_in_copybook)
 TEST(aread, aread_from_source_stack)
 {
     std::string input = " COPY  COPYCOPY";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -416,7 +381,7 @@ TEST(aread, aread_from_opencode)
           COPY  COPYCOPY
 &A1       SETA  1                                                      X this line is removed by the macro
 &A2       SETA  2)";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -450,7 +415,7 @@ TEST(aread, aread_across_stack)
 &A1       SETA  1                                                      X this line is removed by the macro
 &A2       SETA  2
 )";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -492,7 +457,7 @@ TEST(aread, aread_from_macro_invoked_from_ainsert)
 &A1       SETA  1                                                      X this line is removed by the macro
 &A2       SETA  2
 )";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -534,7 +499,7 @@ TEST(aread, last_statements_in_copy)
 &A1       SETA  1                                                      X this line is removed by the macro
 &A2       SETA  2
 )";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -564,7 +529,7 @@ TEST(aread, last_statements_in_copy)
 TEST(aread, interleave_aread_ainsert)
 {
     std::string input = R"( COPY  COPYBOOK)";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC &CALL=1
@@ -601,7 +566,7 @@ removed on first call                                                  X
 TEST(aread, copy_in_macro)
 {
     std::string input = R"( COPY  COPYBOOK)";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -635,7 +600,7 @@ TEST(aread, copy_in_macro)
 TEST(aread, normal_processing_recovery)
 {
     std::string input = R"( COPY  COPYBOOK)";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC
@@ -668,7 +633,7 @@ TEST(aread, normal_processing_recovery)
 TEST(aread, normal_processing_recovery_line_skipped)
 {
     std::string input = R"( COPY  COPYBOOK)";
-    asm_options_invalid_lib_provider lib_provider {
+    mock_parse_lib_provider lib_provider {
         { "MAC", R"(*
           MACRO
           MAC

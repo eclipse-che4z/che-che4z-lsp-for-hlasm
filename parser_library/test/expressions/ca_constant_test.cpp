@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/evaluation_context.h"
 
@@ -24,10 +23,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
+                                      std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     ca_constant c(1, range());
 

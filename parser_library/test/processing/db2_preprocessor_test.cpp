@@ -15,9 +15,9 @@
 #include <unordered_map>
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "processing/preprocessor.h"
-
 // test db2 preprocessor emulator
 
 using namespace hlasm_plugin::parser_library::processing;
@@ -369,56 +369,9 @@ TEST(db2_preprocessor, ignore_comments)
     EXPECT_EQ(RES.value().find("*        EXEC SQL SELECT 1 FROM SYSIBM.SYSDUMMY1"), 0);
 }
 
-namespace {
-class library_provider_with_uri final : public parse_lib_provider
-{
-    std::unordered_map<std::string, std::string> m_files;
-
-    const std::pair<const std::string, std::string>* find_file(const std::string& f) const
-    {
-        if (auto it = m_files.find(f); it != m_files.end())
-            return &*it;
-        return nullptr;
-    }
-
-public:
-    parse_result parse_library(const std::string& l, analyzing_context ctx, library_data data) override
-    {
-        const auto* f = find_file(l);
-        if (!f)
-            return false;
-
-        analyzer a(f->second, analyzer_options { l, this, std::move(ctx), data });
-        a.analyze();
-        return true;
-    };
-    bool has_library(const std::string& l, const std::string&) const override { return find_file(l) != nullptr; };
-    std::optional<std::string> get_library(const std::string& l, const std::string&, std::string* uri) const override
-    {
-        const auto* f = find_file(l);
-        if (!f)
-            return std::nullopt;
-
-        if (uri)
-            *uri = f->first;
-
-        return f->second;
-    }
-
-    library_provider_with_uri(std::initializer_list<std::pair<std::string, std::string>> files)
-        : m_files(files.begin(), files.end())
-    {}
-
-    template<typename T>
-    library_provider_with_uri(T&& c)
-        : m_files(c.begin(), c.end())
-    {}
-};
-} // namespace
-
 TEST(db2_preprocessor, continuation_in_buffer)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", R"(
 &A SETA 1                                                              X
                comment to be ignored
@@ -438,7 +391,7 @@ TEST(db2_preprocessor, continuation_in_buffer)
 
 TEST(db2_preprocessor, include_empty)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", "" },
     });
     std::string input = " EXEC SQL INCLUDE MEMBER ";
@@ -465,7 +418,7 @@ TEST(db2_preprocessor, include_nonexistent)
 
 TEST(db2_preprocessor, ago_in_include)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", R"(
         AGO  .HERE
 .HERE   ANOP
@@ -486,7 +439,7 @@ TEST(db2_preprocessor, ago_in_include)
 
 TEST(db2_preprocessor, ago_into_include)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", R"(
 .HERE   ANOP
 &A      SETA 1
@@ -511,7 +464,7 @@ TEST(db2_preprocessor, ago_into_include)
 
 TEST(db2_preprocessor, ago_from_include)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", R"(
 &A      SETA 1
  AGO .HERE
@@ -536,7 +489,7 @@ TEST(db2_preprocessor, ago_from_include)
 
 TEST(db2_preprocessor, ago_around_include)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "MEMBER", R"(
 &A      SETA &A+1
 )" },
@@ -564,7 +517,7 @@ TEST(db2_preprocessor, ago_around_include)
 
 TEST(db2_preprocessor, copy_in_include)
 {
-    library_provider_with_uri libs({
+    mock_parse_lib_provider libs({
         { "COPY1", "&A1 SETA 1" },
         { "COPY2", "&A2 SETA 2" },
         { "MEMBER", R"(
@@ -696,7 +649,7 @@ A
 
     for (const auto& t : testcases)
     {
-        library_provider_with_uri libs(t.deps);
+        mock_parse_lib_provider libs(t.deps);
         analyzer a(t.opencode, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
         a.collect_diags();

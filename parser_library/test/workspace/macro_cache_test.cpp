@@ -332,6 +332,10 @@ TEST(macro_cache_test, overwrite_by_inline)
 
     opencode->parse(file_mngr, {}, {});
     opencode->collect_diags();
+    opencode->diags().clear();
+
+    opencode->parse(file_mngr, {}, {});
+    opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 2U);
 
 
