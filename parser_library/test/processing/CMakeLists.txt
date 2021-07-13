@@ -13,7 +13,6 @@
 target_sources(library_test PRIVATE
 	aread_test.cpp
 	ca_instr_test.cpp
-	copy_mock.h
 	copy_test.cpp
 	db2_preprocessor_test.cpp
 	dc_test.cpp

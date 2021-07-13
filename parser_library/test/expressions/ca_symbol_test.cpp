@@ -26,8 +26,7 @@ TEST(ca_symbol, undefined_attributes)
 {
     evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
                                       std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance
-    };
+        workspaces::empty_parse_lib_provider::instance };
     std::string name = "n";
 
     ca_symbol sym(&name, range());

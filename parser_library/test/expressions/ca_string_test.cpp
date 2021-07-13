@@ -83,8 +83,7 @@ TEST(ca_string, test)
 
     evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
                                       std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance
-    };
+        workspaces::empty_parse_lib_provider::instance };
 
     auto res = s.evaluate(eval_ctx);
 
@@ -104,8 +103,7 @@ TEST_P(ca_string_suite, dupl)
 
     evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
                                       std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance
-    };
+        workspaces::empty_parse_lib_provider::instance };
 
     auto res = s.evaluate(eval_ctx);
 

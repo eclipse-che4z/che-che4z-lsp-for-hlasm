@@ -27,8 +27,7 @@ TEST(ca_var_sym_basic, undefined_attributes)
 {
     evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
                                       std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance
-    };
+        workspaces::empty_parse_lib_provider::instance };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -48,8 +47,7 @@ TEST(ca_var_sym_created, undefined_attributes)
 {
     evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
                                       std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance
-    };
+        workspaces::empty_parse_lib_provider::instance };
 
     std::string name = "n";
     concat_chain created_name;

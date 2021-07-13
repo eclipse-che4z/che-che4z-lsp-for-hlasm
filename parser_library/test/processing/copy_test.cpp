@@ -13,11 +13,148 @@
  */
 
 #include "../common_testing.h"
-#include "copy_mock.h"
+#include "../mock_parse_lib_provider.h"
 
 // test for COPY instruction
 // various cases of instruction occurence in the source
+namespace {
+mock_parse_lib_provider create_copy_mock()
+{
+    static const std::string content_COPYR =
+        R"(   
+ LR 1,1
+ MACRO
+ M1
+ LR 1,1
+ 
+ MACRO
+ M2
+ LR 2,2
+ MEND
+ AGO .A
+.A ANOP
+ MEND
 
+&VARX SETA &VARX+1
+.A ANOP
+.B ANOP
+&VAR SETA &VAR+1
+)";
+    static const std::string content_COPYF =
+        R"(  
+ LR 1,1
+&VARX SETA &VARX+1
+ COPY COPYR
+&VAR SETA &VAR+1
+.C ANOP
+)";
+
+    static const std::string content_COPYD =
+        R"(  
+
+ LR 1,
+)";
+
+    static const std::string content_COPYREC =
+        R"(  
+ ANOP
+ COPY COPYREC
+ ANOP
+)";
+
+    static const std::string content_COPYU =
+        R"(  
+ ANOP
+ MACRO
+ M
+ MEND
+ MEND
+ ANOP
+)";
+
+    static const std::string content_COPYL =
+        R"(  
+ LR 1,1
+.A ANOP
+&VARX SETA &VARX+1
+ AGO .X
+&VAR SETA &VAR+1
+.A ANOP
+.C ANOP
+)";
+
+    static const std::string content_COPYN =
+        R"( 
+ MAC
+)";
+
+    static const std::string content_MAC =
+        R"( MACRO
+ MAC
+ LR 1,1
+ COPY COPYM
+ MEND
+)";
+
+    static const std::string content_COPYM =
+        R"(
+.A ANOP
+ GBLA &X
+&X SETA 4
+)";
+
+    static const std::string content_COPYJ =
+        R"(
+ AGO .X
+ ;%
+.X ANOP
+)";
+    static const std::string content_COPYJF =
+        R"(
+ AGO .X
+ LR
+)";
+
+    static const std::string content_COPYND1 =
+        R"(
+ COPY COPYND2
+)";
+
+    static const std::string content_COPYND2 =
+        R"(
+
+
+
+ LR 1,)";
+
+    static const std::string content_COPYBM =
+        R"( 
+ MACRO
+ M
+ LR 1
+ MEND
+)";
+    static const std::string content_EMPTY = "";
+    static const std::string content_COPYEMPTY = " COPY EMPTY";
+
+    return mock_parse_lib_provider { { "COPYR", content_COPYR },
+        { "COPYF", content_COPYF },
+        { "COPYD", content_COPYD },
+        { "COPYREC", content_COPYREC },
+        { "COPYU", content_COPYU },
+        { "COPYL", content_COPYL },
+        { "COPYN", content_COPYN },
+        { "MAC", content_MAC },
+        { "COPYM", content_COPYM },
+        { "COPYJ", content_COPYJ },
+        { "COPYJF", content_COPYJF },
+        { "COPYND1", content_COPYND1 },
+        { "COPYND2", content_COPYND2 },
+        { "COPYBM", content_COPYBM },
+        { "EMPTY", content_EMPTY },
+        { "COPYEMPTY", content_COPYEMPTY } };
+}
+} // namespace
 TEST(copy, copy_enter_fail)
 {
     std::string input =
@@ -25,7 +162,7 @@ TEST(copy, copy_enter_fail)
  COPY A+1
  COPY UNKNOWN
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -43,7 +180,7 @@ TEST(copy, copy_enter_success)
         R"(
  COPY COPYR
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -64,7 +201,7 @@ TEST(copy, copy_enter_diag_test)
         R"(
  COPY COPYD
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -92,7 +229,7 @@ TEST(copy, copy_jump)
  COPY COPYF
  AIF (&VAR LT 4).A
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -122,7 +259,7 @@ TEST(copy, copy_unbalanced_macro)
         R"(
  COPY COPYU
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -143,7 +280,7 @@ TEST(copy, copy_twice)
  COPY COPYR
  COPY COPYR
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -162,7 +299,7 @@ TEST(copy, macro_call_from_copy_enter)
  M1
  M2
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -188,7 +325,7 @@ TEST(copy, copy_enter_from_macro_call)
 
  M
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -227,7 +364,7 @@ TEST(copy, copy_enter_from_lookahead)
 &V SETA &V+1
  
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -258,7 +395,7 @@ TEST(copy, nested_macro_copy_call)
  COPY COPYN
  
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -289,7 +426,7 @@ TEST(copy, macro_from_copy_call)
  M
  
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -317,7 +454,7 @@ TEST(copy, inner_copy_jump)
  LR
  
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
 
@@ -335,7 +472,7 @@ TEST(copy, jump_from_copy_fail)
         R"(
  COPY COPYJF
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -370,7 +507,7 @@ TEST(copy, jump_in_macro_from_copy_fail)
 
  m
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -402,7 +539,7 @@ TEST(copy, macro_nested_diagnostics)
  
  MAC  
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -432,7 +569,7 @@ TEST(copy, copy_call_with_jump_before_comment)
 ***
  ANOP
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
@@ -458,7 +595,7 @@ TEST(copy, copy_empty_file)
  COPY EMPTY
  MEND
 )";
-    auto lib_provider = copy_mock::create();
+    auto lib_provider = create_copy_mock();
     analyzer a(input, analyzer_options { "start", &lib_provider });
     a.analyze();
 
