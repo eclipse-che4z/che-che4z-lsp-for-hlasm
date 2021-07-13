@@ -289,24 +289,9 @@ Y EQU X+1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "T");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("B"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("C"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "T");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 10);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "C"), 10);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -323,12 +308,7 @@ X EQU 1,10,C'T'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -345,12 +325,7 @@ X EQU 1,Y+11,C'T'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
     EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)2);
@@ -370,12 +345,7 @@ X EQU 1,2,**&
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -394,12 +364,7 @@ X EQU 1,2,&a
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -418,12 +383,7 @@ X EQU &a,2
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -442,12 +402,7 @@ X EQU =**)-,2
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -472,30 +427,10 @@ X EQU 1,2,C'X'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_BEFORE"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_IN"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_AFTER"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_BEFORE"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_IN"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_AFTER"), true);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -521,30 +456,10 @@ X EQU 1,2
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_BEFORE"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_IN"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("WAS_AFTER"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_BEFORE"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_IN"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_AFTER"), true);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -581,12 +496,7 @@ X EQU 1,2
                   ->access_set_symbol<A_t>()
                   ->get_value(),
         2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("AFTER_MAC"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<B_t>()
-                  ->get_value(),
-        true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "AFTER_MAC"), true);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -637,12 +547,7 @@ Y EQU 2,11
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        21);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -660,18 +565,8 @@ X LR 1,1
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("B"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "I");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "I");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -689,18 +584,8 @@ X CSECT
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("B"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "J");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "J");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -719,24 +604,9 @@ X DC FS24'6'       remark
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        4);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("B"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "F");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("C"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        24);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 4);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "F");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "C"), 24);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -753,12 +623,7 @@ X DC C'A'
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -776,12 +641,7 @@ Y EQU 2,11
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        21);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
@@ -798,12 +658,7 @@ X EQU 1,10
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        11);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 11);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
 }
@@ -822,12 +677,7 @@ B EQU 2,22
     a.analyze();
     a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("A"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        22);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }

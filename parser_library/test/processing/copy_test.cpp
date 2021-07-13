@@ -239,18 +239,8 @@ TEST(copy, copy_jump)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("VAR"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        4);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("VARX"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        2);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "VAR"), 4);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "VARX"), 2);
 }
 
 TEST(copy, copy_unbalanced_macro)
@@ -372,12 +362,7 @@ TEST(copy, copy_enter_from_lookahead)
 
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "V"), 1);
 
     ASSERT_EQ(a.diags().size(), (size_t)1);
 

@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "context/variables/system_variable.h"
@@ -591,34 +592,9 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "OPEN CODE");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "M2");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v5"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "M1");
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v1"), 2);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v2"), "OPEN CODE");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v3"), "M2");
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v4"), 1);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v5"), "M1");
 }
