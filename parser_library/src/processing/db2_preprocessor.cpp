@@ -241,7 +241,7 @@ class db2_preprocessor : public preprocessor
             }
             if (!remove_space(l))
             {
-                if (tolerate_no_space_at_end && l.empty() && &w == &*(words.end() - 1))
+                if (tolerate_no_space_at_end && l.empty() && &w == words.end() - 1)
                     return true;
                 l = init_l; // all or nothing
                 return false;
@@ -353,16 +353,16 @@ class db2_preprocessor : public preprocessor
         switch (scale)
         {
             case 'K':
-                result.scale = 1024;
+                result.scale = 1024ull;
                 break;
             case 'M':
-                result.scale = 1024 * 1024;
+                result.scale = 1024ull * 1024;
                 break;
             case 'G':
-                result.scale = 1024 * 1024 * 1024;
+                result.scale = 1024ull * 1024 * 1024;
                 break;
             default:
-                result.scale = 1;
+                result.scale = 1ull;
                 break;
         }
         switch (type)
@@ -382,6 +382,47 @@ class db2_preprocessor : public preprocessor
         }
         return result;
     }
+
+    bool handle_lob(const std::regex& pattern, std::string_view label, std::string_view operands)
+    {
+        std::match_results<std::string_view::const_iterator> match;
+        if (!std::regex_match(operands.cbegin(), operands.cend(), match, pattern))
+            return false;
+
+        switch (match[1].second[-1])
+        {
+            case 'E': // ..._FILE
+                add_ds_line(label, "", "0FL4");
+                add_ds_line(label, "_NAME_LENGTH", "FL4", false);
+                add_ds_line(label, "_DATA_LENGTH", "FL4", false);
+                add_ds_line(label, "_FILE_OPTIONS", "FL4", false);
+                add_ds_line(label, "_NAME", "CL255", false);
+                break;
+
+            case 'R': // ..._LOCATOR
+                add_ds_line(label, "", "FL4");
+                break;
+
+            default: {
+                const auto li = lob_info(*match[1].first, match[3].matched ? *match[3].first : 0);
+                unsigned long long len;
+                std::from_chars(&*match[2].first, &*match[2].first + match[2].length(), len);
+                len *= li.scale;
+
+                add_ds_line(label, "", "0FL4");
+                add_ds_line(label, "_LENGTH", "FL4", false);
+                add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
+                if (len > li.limit)
+                    m_buffer
+                        .append(" ORG   *+(")
+                        // there seems be this strage artifical limit
+                        .append(std::to_string(std::min(len - li.limit, 1073676289ull)))
+                        .append(")\n");
+                break;
+            }
+        }
+        return true;
+    };
 
     bool process_sql_type_operands(std::string_view operands, std::string_view label)
     {
@@ -407,41 +448,8 @@ class db2_preprocessor : public preprocessor
             ")"
             "(?: .*)?");
 
-        std::match_results<std::string_view::const_iterator> lob_match;
-        const auto handle_lob = [&match = lob_match, label, this]() {
-            switch (*(match[1].second - 1))
-            {
-                case 'E': // ..._FILE
-                    add_ds_line(label, "", "0FL4");
-                    add_ds_line(label, "_NAME_LENGTH", "FL4", false);
-                    add_ds_line(label, "_DATA_LENGTH", "FL4", false);
-                    add_ds_line(label, "_FILE_OPTIONS", "FL4", false);
-                    add_ds_line(label, "_NAME", "CL255", false);
-                    break;
-
-                case 'R': // ..._LOCATOR
-                    add_ds_line(label, "", "FL4");
-                    break;
-
-                default: {
-                    const auto li = lob_info(*match[1].first, match[3].matched ? *match[3].first : 0);
-                    unsigned long long len;
-                    std::from_chars(&*match[2].first, &*match[2].first + match[2].length(), len);
-                    len *= li.scale;
-
-                    add_ds_line(label, "", "0FL4");
-                    add_ds_line(label, "_LENGTH", "FL4", false);
-                    add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
-                    if (len > li.limit)
-                        m_buffer
-                            .append(" ORG   *+(")
-                            // there seems be this strage artifical limit
-                            .append(std::to_string(std::min(len - li.limit, 1073676289ull)))
-                            .append(")\n");
-                    break;
-                }
-            }
-        };
+        static const auto table_like =
+            std::regex("TABLE[ ]+LIKE[ ]+('(?:[^']|'')+'|(?:[^']|'')+)[ ]+AS[ ]+LOCATOR(?: .*)?");
 
         switch (operands[0])
         {
@@ -462,28 +470,19 @@ class db2_preprocessor : public preprocessor
                 }
                 break;
 
-            case 'T': {
-                static const auto table_like =
-                    std::regex("TABLE[ ]+LIKE[ ]+('(?:[^']|'')+'|(?:[^']|'')+)[ ]+AS[ ]+LOCATOR(?: .*)?");
+            case 'T':
                 if (!std::regex_match(operands.begin(), operands.end(), table_like))
                     break;
                 add_ds_line(label, "", "FL4");
                 return true;
-            }
 
             case 'X':
-                if (!std::regex_match(operands.begin(), operands.end(), lob_match, xml_type))
-                    break;
-                handle_lob();
-                return true;
+                return handle_lob(xml_type, label, operands);
 
             case 'B':
             case 'C':
             case 'D':
-                if (!std::regex_match(operands.begin(), operands.end(), lob_match, lob_type))
-                    break;
-                handle_lob();
-                return true;
+                return handle_lob(lob_type, label, operands);
         }
         return false;
     }
