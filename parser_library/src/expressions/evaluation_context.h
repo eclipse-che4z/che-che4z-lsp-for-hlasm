@@ -27,7 +27,7 @@ struct evaluation_context : public diagnosable_ctx
     workspaces::parse_lib_provider& lib_provider;
 
     evaluation_context(context::hlasm_context& ctx, workspaces::parse_lib_provider& lib_provider)
-        : diagnosable_ctx(hlasm_ctx)
+        : diagnosable_ctx(ctx)
         , hlasm_ctx(ctx)
         , lib_provider(lib_provider)
     {}

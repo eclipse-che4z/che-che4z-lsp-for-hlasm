@@ -26,14 +26,11 @@ using opencode_info_ptr = std::unique_ptr<opencode_info>;
 
 struct opencode_info
 {
-    context::hlasm_context& hlasm_ctx;
     vardef_storage variable_definitions;
     file_occurences_t file_occurences;
 
-    opencode_info(
-        context::hlasm_context& hlasm_ctx, vardef_storage variable_definitions, file_occurences_t file_occurences)
-        : hlasm_ctx(hlasm_ctx)
-        , variable_definitions(std::move(variable_definitions))
+    opencode_info(vardef_storage variable_definitions, file_occurences_t file_occurences)
+        : variable_definitions(std::move(variable_definitions))
         , file_occurences(std::move(file_occurences))
     {}
 };

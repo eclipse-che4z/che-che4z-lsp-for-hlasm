@@ -102,12 +102,12 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
 
 analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
 {
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids));
     analyzing_context new_ctx {
-        std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids)),
-        std::make_shared<lsp::lsp_context>(),
+        hlasm_ctx,
+        std::make_shared<lsp::lsp_context>(hlasm_ctx),
     };
-    lsp::opencode_info_ptr oip =
-        std::make_unique<lsp::opencode_info>(*new_ctx.hlasm_ctx, lsp::vardef_storage(), lsp::file_occurences_t {});
+    lsp::opencode_info_ptr oip = std::make_unique<lsp::opencode_info>(lsp::vardef_storage(), lsp::file_occurences_t {});
     new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_ref_t(""));
 
     return new_ctx;

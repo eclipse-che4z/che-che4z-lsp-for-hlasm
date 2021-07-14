@@ -100,7 +100,7 @@ void macro_cache_key::sort_opsyn_state(std::vector<cached_opsyn_mnemo>& opsyn_st
     });
 }
 
-const analyzer* macro_cache::find_cached_analyzer(const macro_cache_key& key) const
+const macro_cache_data* macro_cache::find_cached_data(const macro_cache_key& key) const
 {
     auto it = cache_.find(key);
     if (it == cache_.end())
@@ -118,16 +118,16 @@ const analyzer* macro_cache::find_cached_analyzer(const macro_cache_key& key) co
     }
 
     // Version of all dependent files are the same.
-    return cached_data.cached_analyzer.get();
+    return &cached_data;
 }
 
 bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_context& ctx)
 {
-    if (auto cached_analyzer = find_cached_analyzer(key))
+    if (auto cached_data = find_cached_data(key))
     {
         if (key.data.proc_kind == processing::processing_kind::MACRO)
         {
-            lsp::macro_info_ptr info = cached_analyzer->context().lsp_ctx->get_macro_info(key.data.library_member);
+            lsp::macro_info_ptr info = std::get<lsp::macro_info_ptr>(cached_data->cached_member);
             if (!info)
                 return true; // The file for which the analyzer is cached does not contain definition of macro
             ctx.hlasm_ctx->add_macro(info->macro_definition);
@@ -143,7 +143,7 @@ bool macro_cache::load_from_cache(const macro_cache_key& key, const analyzing_co
         }
         else if (key.data.proc_kind == processing::processing_kind::COPY)
         {
-            auto copy_member = cached_analyzer->context().hlasm_ctx->get_copy_member(key.data.library_member);
+            auto copy_member = std::get<context::copy_member_ptr>(cached_data->cached_member);
             ctx.hlasm_ctx->add_copy_member(copy_member);
             ctx.lsp_ctx->add_copy(copy_member, lsp::text_data_ref_t(macro_file_->get_text()));
         }
@@ -183,7 +183,10 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
         cache_data.stamps.clear();
 
     cache_data.stamps.try_emplace(macro_file_->get_file_name(), macro_file_->get_version());
-    cache_data.cached_analyzer = std::move(analyzer);
+    if (key.data.proc_kind == processing::processing_kind::MACRO)
+        cache_data.cached_member = analyzer->context().lsp_ctx->get_macro_info(key.data.library_member);
+    else if (key.data.proc_kind == processing::processing_kind::COPY)
+        cache_data.cached_member = analyzer->context().hlasm_ctx->get_copy_member(key.data.library_member);
 }
 
 void macro_cache::erase_cache_of_opencode(const std::string& opencode_file_name)

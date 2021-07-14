@@ -72,7 +72,7 @@ struct macro_cache_data
     // Versions of respective macro (copy member) with all dependencies (COPY instruction is evaluated during macro
     // definition and the statements are part of macro definition)
     version_stamp stamps;
-    std::unique_ptr<analyzer> cached_analyzer;
+    std::variant<lsp::macro_info_ptr, context::copy_member_ptr> cached_member;
 };
 
 class macro_cache final : public diagnosable_impl
@@ -90,7 +90,7 @@ public:
     void erase_cache_of_opencode(const std::string& opencode_file_name);
 
 private:
-    [[nodiscard]] const analyzer* find_cached_analyzer(const macro_cache_key& key) const;
+    [[nodiscard]] const macro_cache_data* find_cached_data(const macro_cache_key& key) const;
     [[nodiscard]] version_stamp get_copy_member_versions(context::macro_def_ptr ctx) const;
 
     void collect_diags() const override;
