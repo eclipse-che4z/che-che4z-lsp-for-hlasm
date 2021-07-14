@@ -140,12 +140,43 @@ const std::set<std::string>& processor_file_impl::dependencies() { return depend
 
 const semantics::lines_info& processor_file_impl::get_hl_info()
 {
-    return last_analyzer_->source_processor().semantic_tokens();
+    if (last_analyzer_)
+        return last_analyzer_->source_processor().semantic_tokens();
+
+    const static semantics::lines_info empty_lines;
+    return empty_lines;
 }
+
+namespace {
+class empty_feature_provider final : public lsp::feature_provider
+{
+    // Inherited via feature_provider
+    virtual location definition(const std::string& document_uri, position pos) const override { return location(); }
+    virtual location_list references(const std::string& document_uri, position pos) const override
+    {
+        return location_list();
+    }
+    virtual lsp::hover_result hover(const std::string& document_uri, position pos) const override
+    {
+        return lsp::hover_result();
+    }
+    virtual lsp::completion_list_s completion(const std::string& document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind) const override
+    {
+        return {};
+    }
+};
+} // namespace
 
 const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider()
 {
-    return *last_analyzer_->context().lsp_ctx;
+    if (last_analyzer_)
+        return *last_analyzer_->context().lsp_ctx;
+    
+    const static empty_feature_provider empty_res;
+    return empty_res;
 }
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }
