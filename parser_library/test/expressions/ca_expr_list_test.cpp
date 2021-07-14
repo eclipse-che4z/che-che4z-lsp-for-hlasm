@@ -29,9 +29,8 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_expr_list, unknown_function_to_operator)
 {
-    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
-                                      std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     std::string name = "AND";
     auto c = std::make_unique<ca_constant>(1, range());
@@ -57,9 +56,8 @@ TEST(ca_expr_list, unknown_function_to_operator)
 
 TEST(ca_expr_list, resolve_C_type)
 {
-    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
-                                      std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     std::string name = "UPPER";
     auto sym = std::make_unique<ca_symbol>(&name, range());
@@ -96,9 +94,8 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
     // (L'X 'low')
     ca_expr_list expr_list(std::move(list), range());
 
-    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
-                                      std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
     auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
     ASSERT_TRUE(res.size());
