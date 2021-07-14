@@ -285,7 +285,7 @@ TEST(db2_preprocessor, aread_from_preprocessor)
          MEND
 *
          MAC
-         EXEC SQL SELECT 1 FROM SYSIBM.SYSDUMMY1
+         EXEC SQL WHEnEVEr SQLERROR GOTO ERROR_RTN
 )";
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
@@ -312,8 +312,8 @@ TEST(db2_preprocessor, aread_from_two_preprocessor_outputs)
          MEND
 *
          MAC
-         EXEC SQL SELECT 1 FROM SYSIBM.SYSDUMMY1
-         EXEC SQL SELECT 2 FROM SYSIBM.SYSDUMMY1
+         EXEC SQL WHENEVER SQLERROR GOTO ERROR_RTN1
+         EXEC SQL whenever SQLERROR GOTO ERROR_RTN2
 )";
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
@@ -322,10 +322,10 @@ TEST(db2_preprocessor, aread_from_two_preprocessor_outputs)
 
     std::array expected {
         std::string { "***$$$" },
-        std::string { "*        EXEC SQL SELECT 1 FROM SYSIBM.SYSDUMMY1" },
+        std::string { "*        EXEC SQL WHENEVER SQLERROR GOTO ERROR_RTN1" },
         std::string { "***$$$" },
         std::string { "***$$$" },
-        std::string { "*        EXEC SQL SELECT 2 FROM SYSIBM.SYSDUMMY1" },
+        std::string { "*        EXEC SQL whenever SQLERROR GOTO ERROR_RTN2" },
         std::string { "***$$$" },
     };
     for (auto& s : expected)
@@ -660,7 +660,7 @@ TEST(db2_preprocessor, multiline_exec_sql)
 {
     std::string input = R"(
         EXEC  SQL                                                      X
-               SELECT 1 FROM SYSIBM.SYSDUMMY1
+               wHENeVER      SQLERROR GOTO ERROR_RTN
 )";
 
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });

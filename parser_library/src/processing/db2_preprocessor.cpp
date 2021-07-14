@@ -579,6 +579,8 @@ class db2_preprocessor : public preprocessor
         {
             case line_type::exec_sql:
                 process_regular_line(label, first_line_skipped);
+                if (sql_has_codegen(m_operands))
+                    generate_sql_code_mock();
                 m_buffer.append("***$$$\n");
                 break;
 
@@ -604,6 +606,20 @@ class db2_preprocessor : public preprocessor
         }
 
         return m_logical_line.segments.size();
+    }
+
+    static bool sql_has_codegen(std::string_view sql)
+    {
+        // handles only the most obvious cases (imprecisely)
+        static const auto no_code_statements = std::regex("(?:DECLARE|WHENEVER)(?: .*)?", std::regex_constants::icase);
+        return !std::regex_match(sql.begin(), sql.end(), no_code_statements);
+    }
+    void generate_sql_code_mock()
+    {
+        // this function generates non-realistic sql statement replacement code, because people do strange things...
+        m_buffer.append("         LA    15,SQLCA      \n"
+                        "         L     15,=V(DSNHLI) \n"
+                        "         BALR  14,15         \n");
     }
 
     // Inherited via preprocessor
