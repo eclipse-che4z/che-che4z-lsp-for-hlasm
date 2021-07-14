@@ -115,8 +115,7 @@ class ca_attr : public ::testing::TestWithParam<attr_test_param>
 {
 protected:
     std::shared_ptr<context::hlasm_context> hlasm_ctx = std::make_shared<context::hlasm_context>();
-    evaluation_context eval_ctx { *hlasm_ctx,
-        workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { *hlasm_ctx, workspaces::empty_parse_lib_provider::instance };
 };
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,

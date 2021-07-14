@@ -24,8 +24,7 @@ using namespace hlasm_plugin::parser_library;
 TEST(ca_constant, undefined_attributes)
 {
     context::hlasm_context ctx;
-    evaluation_context eval_ctx { ctx,
-        workspaces::empty_parse_lib_provider::instance };
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     ca_constant c(1, range());
 
