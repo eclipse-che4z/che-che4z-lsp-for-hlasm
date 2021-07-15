@@ -17,6 +17,7 @@ target_sources(library_test PRIVATE
 	file_with_text.h
 	load_config_test.cpp
 	macro_cache_test.cpp
+	processor_file_test.cpp
 	text_synchronization_test.cpp
 	workspace_test.cpp
 )

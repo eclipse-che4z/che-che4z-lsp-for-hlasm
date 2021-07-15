@@ -151,7 +151,10 @@ namespace {
 class empty_feature_provider final : public lsp::feature_provider
 {
     // Inherited via feature_provider
-    virtual location definition(const std::string& document_uri, position pos) const override { return location(); }
+    virtual location definition(const std::string& document_uri, position pos) const override
+    {
+        return location(pos, document_uri);
+    }
     virtual location_list references(const std::string& document_uri, position pos) const override
     {
         return location_list();
@@ -174,14 +177,20 @@ const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider()
 {
     if (last_analyzer_)
         return *last_analyzer_->context().lsp_ctx;
-    
+
     const static empty_feature_provider empty_res;
     return empty_res;
 }
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }
 
-const performance_metrics& processor_file_impl::get_metrics() { return last_analyzer_->get_metrics(); }
+const performance_metrics& processor_file_impl::get_metrics()
+{
+    if (last_analyzer_)
+        return last_analyzer_->get_metrics();
+    const static performance_metrics metrics;
+    return metrics;
+}
 
 void processor_file_impl::erase_cache_of_opencode(const std::string& opencode_file_name)
 {

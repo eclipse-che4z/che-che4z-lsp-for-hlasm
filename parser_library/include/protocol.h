@@ -221,7 +221,18 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     size_t continued_statements = 0;
     size_t non_continued_statements = 0;
     size_t files = 0;
+
+    
 };
+
+bool inline operator==(const performance_metrics& lhs, const performance_metrics& oth)
+{
+    return lhs.lines == oth.lines && lhs.macro_def_statements == oth.macro_def_statements
+        && lhs.open_code_statements == oth.open_code_statements && lhs.copy_def_statements == oth.copy_def_statements
+        && lhs.copy_statements == oth.copy_statements && lhs.reparsed_statements == oth.reparsed_statements
+        && lhs.lookahead_statements == oth.lookahead_statements && lhs.continued_statements == oth.continued_statements
+        && lhs.non_continued_statements == oth.non_continued_statements && lhs.files == oth.files;
+}
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list
 {
