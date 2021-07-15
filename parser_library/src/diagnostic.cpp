@@ -1478,6 +1478,13 @@ diagnostic_op diagnostic_op::warn_D025(const range& range, const std::string& ty
         diagnostic_severity::warning, "D025", "The " + modifier + " modifier is ignored with type " + type, range);
 }
 
+diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D031",
+        "Using absolute value '" + operand_value + "' as relative immediate value",
+        range);
+}
 diagnostic_op diagnostic_op::error_D026(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D026", "Invalid round mode", range);
@@ -1505,7 +1512,13 @@ diagnostic_op diagnostic_op::error_D030(const range& range, const std::string& t
 {
     return diagnostic_op(diagnostic_severity::error, "D030", "Only single symbol expected with type " + type, range);
 }
-
+diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D031",
+        "Using absolute value '" + operand_value + "' as relative immediate value",
+        range);
+}
 
 diagnostic_op diagnostic_op::error_M135(const std::string& instr_name, long long from, long long to, const range& range)
 {

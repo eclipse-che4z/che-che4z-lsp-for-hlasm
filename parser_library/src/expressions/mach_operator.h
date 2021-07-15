@@ -222,6 +222,7 @@ inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(mac
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
+
 template<>
 inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(mach_evaluate_info info) const
 {
