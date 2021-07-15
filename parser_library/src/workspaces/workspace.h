@@ -104,6 +104,8 @@ public:
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override;
     bool has_library(const std::string& library, const std::string& program) const override;
+    std::set<std::filesystem::path> get_lib_list(std::filesystem::path lib_path);
+    std::set<std::filesystem::path> iterate_lib_path(std::string lib_path);
     const asm_option& get_asm_options(const std::string& file_name) override;
     const ws_uri& uri();
 
