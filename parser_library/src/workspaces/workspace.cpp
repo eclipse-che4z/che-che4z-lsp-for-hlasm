@@ -596,7 +596,6 @@ std::set<std::filesystem::path> workspace::iterate_lib_path(std::string lib_path
     }
     return list_of_libs;
 }
-const asm_option& workspace::get_asm_options(const std::string& file_name)
 std::optional<std::string> workspace::get_library(
     const std::string& library, const std::string& program, std::string* uri) const
 {

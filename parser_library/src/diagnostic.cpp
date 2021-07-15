@@ -1485,14 +1485,6 @@ diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& op
         range);
 }
 
-diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
-{
-    return diagnostic_op(diagnostic_severity::warning,
-        "D031",
-        "Using absolute value '" + operand_value + "' as relative immediate value",
-        range);
-}
-
 diagnostic_op diagnostic_op::error_D026(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D026", "Invalid round mode", range);

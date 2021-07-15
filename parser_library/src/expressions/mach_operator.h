@@ -144,16 +144,6 @@ inline mach_expression::value_t mach_expr_binary<sub>::evaluate(mach_evaluate_in
 {
     return left_->evaluate(info) - right_->evaluate(info);
 }
-template<>
-inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evaluate_info info) const
-{
-    auto location = left_->evaluate(info);
-    auto target = right_->evaluate(info);
-    if (target.value_kind() == context::symbol_value_kind::ABS)
-    {
-        add_diagnostic(diagnostic_op::warn_D031(get_range(), std::to_string(target.get_abs())));
-        return target;
-    }
 
 template<>
 inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evaluate_info info) const
@@ -229,11 +219,6 @@ inline context::dependency_collector mach_expr_binary<add>::get_dependencies(mac
 
 template<>
 inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(mach_evaluate_info info) const
-{
-    return left_->get_dependencies(info) - right_->get_dependencies(info);
-}
-template<>
-inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(mach_evaluate_info info) const
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
