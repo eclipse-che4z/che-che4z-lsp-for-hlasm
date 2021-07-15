@@ -17,10 +17,12 @@
 
 #include <memory>
 
+#include "compiler_options.h"
 #include "diagnosable.h"
 #include "file.h"
 #include "lsp/feature_provider.h"
 #include "parse_lib_provider.h"
+#include "preprocessor_options.h"
 #include "semantics/highlighting_info.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
@@ -31,11 +33,11 @@ class processor : public virtual diagnosable
 {
 public:
     // starts parser with new (empty) context
-    virtual parse_result parse(parse_lib_provider&) = 0;
+    virtual parse_result parse(parse_lib_provider&, asm_option, preprocessor_options) = 0;
     // starts parser with in the context of parameter
-    virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, const library_data) = 0;
+    virtual parse_result parse_macro(parse_lib_provider&, analyzing_context, library_data) = 0;
     // starts parser to parse macro but does not update parse info or diagnostics
-    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context, const library_data) = 0;
+    virtual parse_result parse_no_lsp_update(parse_lib_provider&, analyzing_context, library_data) = 0;
 
 protected:
     ~processor() = default;

@@ -50,8 +50,6 @@ public:
 
     std::string getText(const antlr4::misc::Interval& interval) override;
 
-    void rewind_input(lexer::stream_position pos);
-
     void reset() override;
     // prepares this object to append more tokens
     void append();

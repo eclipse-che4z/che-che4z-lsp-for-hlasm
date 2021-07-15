@@ -48,4 +48,4 @@ macro_name returns [std::string value]
 	: ORDSYMBOL macro_name_b								{$value = $ORDSYMBOL->getText(); $value.append(std::move($macro_name_b.value));};
 
 bad_instr
-	: IDENTIFIER ~(SPACE|EOLLN)*;
+	: IDENTIFIER ~(SPACE)*;

@@ -227,10 +227,10 @@ TEST(diagnostics, immS_out_of_range)
 TEST(diagnostics, reloc_ImmS_out_of_range)
 {
     std::string input(
-        R"( 
+        R"(
  BRAS 1,DISP
 LEN123   DS CL(64444)
-DISP     MVC 0(1),1  
+DISP     MVC 0(1),1
 )");
     analyzer a(input);
     a.analyze();
@@ -326,8 +326,8 @@ TEST(diagnostics, relocImm_expected)
 TEST(diagnostics, invalid_reloc_operand)
 {
     std::string input(
-        R"( 
-SIZE EQU 5          
+        R"(
+SIZE EQU 5
  EXRL 1,LENGTH+LENGTH
 LENGTH DS CL(SIZE)
 )");
@@ -343,8 +343,8 @@ LENGTH DS CL(SIZE)
 TEST(diagnostics, valid_reloc_operand)
 {
     std::string input(
-        R"( 
-SIZE EQU 5          
+        R"(
+SIZE EQU 5
  EXRL 1,LENGTH+4
 LENGTH DS CL(SIZE)
 )");
@@ -359,7 +359,7 @@ LENGTH DS CL(SIZE)
 TEST(diagnostics, reloc_operand_halfword_o_error)
 {
     std::string input(
-        R"(          
+        R"(
  EXRL 1,LEN120
 LENGTH DS CL(5)
 LEN120 DS CL1
@@ -388,7 +388,7 @@ TEST(diagnostics, vecReg_expected)
 TEST(diagnostics, relocSymbol_expected)
 {
     std::string input(
-        R"( 
+        R"(
  EXRL 1,12
 )");
     analyzer a(input);
@@ -400,7 +400,7 @@ TEST(diagnostics, relocSymbol_expected)
 TEST(diagnostics, setc_variable_mnemonic_reloc_operand)
 {
     std::string input(
-        R"( 
+        R"(
 &RRR SETC 'NAME'
  J &RRR
 &RRR DS 0H
@@ -415,10 +415,10 @@ TEST(diagnostics, setc_variable_mnemonic_reloc_operand)
 TEST(diagnostics, setc_variable_reloc_operand)
 {
     std::string input(
-        R"( 
-TEST CSECT        
+        R"(
+TEST CSECT
 &OPS SETC '0,TEST'
-     LARL &OPS    
+     LARL &OPS
      END TEST
 )");
 
@@ -431,10 +431,10 @@ TEST CSECT
 TEST(diagnostics, setc_variable_reloc_symbol_expected_warn)
 {
     std::string input(
-        R"( 
-TEST CSECT        
+        R"(
+TEST CSECT
 &OPS SETC '0,1'
-     LARL &OPS    
+     LARL &OPS
      END TEST
 )");
 
@@ -447,12 +447,12 @@ TEST CSECT
 TEST(diagnostics, reloc_parsed_in_macro_valid)
 {
     std::string input(
-        R"( 
-        MACRO                                                          
+        R"(
+        MACRO
         CALLRIOPERAND
-LABEL   BRAS  0,*+12                                                   
-        MEND                                           
-        CALLRIOPERAND 
+LABEL   BRAS  0,*+12
+        MEND
+        CALLRIOPERAND
 )");
 
     analyzer a(input);
@@ -464,12 +464,12 @@ LABEL   BRAS  0,*+12
 TEST(diagnostics, reloc_parsed_in_macro_with_immValue)
 {
     std::string input(
-        R"( 
-       MACRO                                                          
+        R"(
+       MACRO
        CALLRIOPERAND
-LABEL  BRAS  0,12                                                   
-       MEND                                           
-       CALLRIOPERAND 
+LABEL  BRAS  0,12
+       MEND
+       CALLRIOPERAND
 )");
 
     analyzer a(input);
@@ -481,14 +481,14 @@ LABEL  BRAS  0,12
 TEST(diagnostics, reloc_parsed_in_macro_alignment_error)
 {
     std::string input(
-        R"( 
-    MACRO                                                          
+        R"(
+    MACRO
     CALLRIOPERAND
     EXRL 1,LEN120
 LENGTH DS CL(5)
-LEN120 DS CL1                                                
-        MEND                                           
-    CALLRIOPERAND 
+LEN120 DS CL1
+        MEND
+    CALLRIOPERAND
 )");
 
     analyzer a(input);

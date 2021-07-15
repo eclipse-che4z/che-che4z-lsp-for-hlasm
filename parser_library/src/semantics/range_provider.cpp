@@ -17,23 +17,6 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
 
-range range_provider::union_range(const range& lhs, const range& rhs)
-{
-    position ret[2];
-
-    if (lhs.start.line == rhs.start.line)
-        ret[0] = position(lhs.start.line, std::min(lhs.start.column, rhs.start.column));
-    else
-        ret[0] = (lhs.start.line == std::min(lhs.start.line, rhs.start.line)) ? lhs.start : rhs.start;
-
-    if (lhs.end.line == rhs.end.line)
-        ret[1] = position(lhs.end.line, std::max(lhs.end.column, rhs.end.column));
-    else
-        ret[1] = (lhs.end.line == std::max(lhs.end.line, rhs.end.line)) ? lhs.end : rhs.end;
-
-    return range(ret[0], ret[1]);
-}
-
 range range_provider::get_range(const antlr4::Token* start, const antlr4::Token* stop) const
 {
     range ret;

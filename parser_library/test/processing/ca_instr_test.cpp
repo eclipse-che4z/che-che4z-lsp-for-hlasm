@@ -424,7 +424,7 @@ TEST(SET, conversions_invalid)
 &C SETC '2'
 
 &A SETA '1'
-&B SETB '1'
+&B SETB ('1')
 
 &C SETC &A
 &C SETC &B

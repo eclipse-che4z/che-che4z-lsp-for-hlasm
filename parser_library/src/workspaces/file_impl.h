@@ -49,7 +49,7 @@ public:
     void did_change(range range, std::string new_text) override;
     void did_close() override;
 
-    static std::string replace_non_utf8_chars(const std::string& text);
+    static std::string replace_non_utf8_chars(std::string_view text);
     static std::vector<size_t> create_line_indices(const std::string& text);
 
     // Returns the location in text that corresponds to utf-16 based location

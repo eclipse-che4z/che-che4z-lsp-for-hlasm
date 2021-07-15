@@ -53,12 +53,21 @@ public:
 class benchmark_test : public testing::Test
 {
 public:
-    benchmark_test() {};
+    benchmark_test()
+        : lib_provider({ { "MAC",
+                             R"(   MACRO
+       MAC   &VAR
+       LR    &VAR,&VAR
+       MEND
+)" },
+            { "COPYFILE",
+                R"(R2 EQU 2
+            LR R2,R2)" } }) {};
     void SetUp() override {}
     void TearDown() override {}
     void setUpAnalyzer(const std::string& content)
     {
-        a = std::make_unique<analyzer>(content, SOURCE_FILE, lib_provider);
+        a = std::make_unique<analyzer>(content, analyzer_options { "OPENCODE", &lib_provider });
         a->analyze();
     }
 
@@ -72,13 +81,13 @@ TEST_F(benchmark_test, lines)
     setUpAnalyzer("a\nb\nc\nd");
     EXPECT_EQ(a->get_metrics().lines, (size_t)4);
 
-    setUpAnalyzer("\n");
+    setUpAnalyzer("\n\n");
     // also counts empty lines as lines
     EXPECT_EQ(a->get_metrics().lines, (size_t)2);
 
     setUpAnalyzer(" LR 1,1\n MAC 1\n COPY COPYFILE");
-    // 3 open code + 2 copy + 5 macro
-    EXPECT_EQ(a->get_metrics().lines, (size_t)10);
+    // 3 open code + 2 copy + 4 macro
+    EXPECT_EQ(a->get_metrics().lines, (size_t)9);
 }
 
 TEST_F(benchmark_test, macro_statements)
@@ -115,7 +124,7 @@ TEST_F(benchmark_test, copy_statements)
 
 TEST_F(benchmark_test, open_code_statements)
 {
-    setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n");
+    setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n\n");
     // 2 actual statements and 1 empty
     EXPECT_EQ(a->get_metrics().open_code_statements, (size_t)3);
 }

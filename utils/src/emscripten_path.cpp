@@ -42,7 +42,7 @@ bool is_absolute(const std::filesystem::path& p)
     if (is_windows())
     {
         const auto path = p.string();
-        return (path.size() >= 2 && std::isalpha(path[0]) && path[1] == ':') // C:...
+        return (path.size() >= 2 && std::isalpha((unsigned char)path[0]) && path[1] == ':') // C:...
             || (path.size() >= 4 && path[0] == '\\' && path[1] == '\\'); // \\...\....;
     }
     else

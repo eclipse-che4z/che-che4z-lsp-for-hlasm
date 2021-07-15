@@ -14,13 +14,15 @@
 
 #include "gtest/gtest.h"
 
+#include "../mock_parse_lib_provider.h"
 #include "analyzer_fixture.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
 
-struct lsp_context_copy_in_macro : public analyzer_fixture
+struct lsp_context_copy_in_macro : public ::testing::Test
 {
+    const static inline std::string opencode_file_name = "source";
     const static inline std::string opencode =
         R"(
        MAC 1
@@ -50,83 +52,65 @@ SYM    LR &VAR,1
 &VAR   SETA 1
 
 )";
-    class lib_provider_mock : public workspaces::parse_lib_provider
-    {
-        asm_option empty_options;
-        workspaces::parse_result parse_library(
-            const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
-        {
-            const std::string* text;
-            if (library == copyfile_file_name)
-                text = &copyfile;
-            else if (library == macro_file_name)
-                text = &macro;
-            else
-                return false;
 
-            analyzer lib_analyzer(*text, library, ctx, *this, data);
-            lib_analyzer.analyze();
-            return true;
-        };
-
-        bool has_library(const std::string& library, const std::string&) const override
-        {
-            return library == copyfile_file_name || library == macro_file_name;
-        };
-
-        const asm_option& get_asm_options(const std::string&) override { return empty_options; };
-    };
-    static inline lib_provider_mock lib_prov_instance;
+    mock_parse_lib_provider lib_prov_instance;
+    std::unique_ptr<analyzer> a;
     lsp_context_copy_in_macro()
-        : analyzer_fixture(opencode, lib_prov_instance)
+        : lib_prov_instance({ { macro_file_name, macro }, { copyfile_file_name, copyfile } })
     {}
+
+    void SetUp() override
+    {
+        a = std::make_unique<analyzer>(opencode, analyzer_options { opencode_file_name, &lib_prov_instance });
+        a->analyze();
+    }
 };
 
 TEST_F(lsp_context_copy_in_macro, definition_macro)
 {
-    location res = a.context().lsp_ctx->definition(opencode_file_name, { 1, 8 });
+    location res = a->context().lsp_ctx->definition(opencode_file_name, { 1, 8 });
     EXPECT_EQ(res.file, macro_file_name);
     EXPECT_EQ(res.pos, position(1, 7));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_copyfile_from_opencode)
 {
-    location res = a.context().lsp_ctx->definition(opencode_file_name, { 3, 13 });
+    location res = a->context().lsp_ctx->definition(opencode_file_name, { 3, 13 });
     EXPECT_EQ(res.file, copyfile_file_name);
     EXPECT_EQ(res.pos, position(0, 0));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_copyfile_from_macro)
 {
-    location res = a.context().lsp_ctx->definition(macro_file_name, { 3, 13 });
+    location res = a->context().lsp_ctx->definition(macro_file_name, { 3, 13 });
     EXPECT_EQ(res.file, copyfile_file_name);
     EXPECT_EQ(res.pos, position(0, 0));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_macro_param_from_copyfile)
 {
-    location res = a.context().lsp_ctx->definition(copyfile_file_name, { 2, 11 });
+    location res = a->context().lsp_ctx->definition(copyfile_file_name, { 2, 11 });
     EXPECT_EQ(res.file, macro_file_name);
     EXPECT_EQ(res.pos, position(1, 11));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_var_from_macro)
 {
-    location res = a.context().lsp_ctx->definition(macro_file_name, { 5, 11 });
+    location res = a->context().lsp_ctx->definition(macro_file_name, { 5, 11 });
     EXPECT_EQ(res.file, copyfile_file_name);
     EXPECT_EQ(res.pos, position(3, 0));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_var_from_opencode)
 {
-    location res = a.context().lsp_ctx->definition(opencode_file_name, { 4, 11 });
+    location res = a->context().lsp_ctx->definition(opencode_file_name, { 4, 11 });
     EXPECT_EQ(res.file, copyfile_file_name);
     EXPECT_EQ(res.pos, position(3, 0));
 }
 
 TEST_F(lsp_context_copy_in_macro, definition_no_exist_copyfile)
 {
-    location res = a.context().lsp_ctx->definition(opencode_file_name, { 7, 15 });
+    location res = a->context().lsp_ctx->definition(opencode_file_name, { 7, 15 });
     EXPECT_EQ(res.file, opencode_file_name);
     EXPECT_EQ(res.pos, position(7, 15));
 }

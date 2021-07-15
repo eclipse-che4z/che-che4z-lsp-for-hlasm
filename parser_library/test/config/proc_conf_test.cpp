@@ -85,6 +85,7 @@ static void compare_proc_conf(const proc_conf& pg, const proc_conf& expected)
         EXPECT_EQ(pg.pgroups[i].name, expected.pgroups[i].name);
         EXPECT_EQ(pg.pgroups[i].asm_options.profile, expected.pgroups[i].asm_options.profile);
         EXPECT_EQ(pg.pgroups[i].asm_options.sysparm, expected.pgroups[i].asm_options.sysparm);
+        EXPECT_EQ(pg.pgroups[i].preprocessor, expected.pgroups[i].preprocessor);
         ASSERT_EQ(pg.pgroups[i].libs.size(), expected.pgroups[i].libs.size());
         for (size_t j = 0; j < pg.pgroups[i].libs.size(); ++j)
         {
@@ -114,6 +115,12 @@ TEST(proc_conf, full_content_read)
             proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_conf { { { "P1", {}, {}, std::monostate {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
+            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
+            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -140,6 +147,10 @@ TEST(proc_conf, full_content_write)
             proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
+        std::make_pair(
+            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_conf { { { "P1", {}, {}, std::monostate {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
+            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
     };
 
     for (const auto& [expected, input] : cases)
@@ -155,13 +166,16 @@ TEST(proc_conf, invalid)
         R"({"pgroups":[{"libs":[]}]})"_json,
         R"({"pgroups":[{"name":"","libs":[{}]}]})"_json,
         R"({"pgroups":[{"name":"","libs":[{}]}],"macro_extensions":{}})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":"invalid"})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{}})"_json,
+        R"({"pgroups":[{"name":"","libs":[{}]}],"preprocessor":{"name":"invalid"}})"_json,
     };
 
     for (const auto& input : cases)
         EXPECT_THROW(input.get<proc_conf>(), nlohmann::json::exception);
 }
 
-TEST(pgm_conf, assembler_options_validate)
+TEST(proc_conf, assembler_options_validate)
 {
     const auto cases = {
         std::make_pair(assembler_options {}, true),

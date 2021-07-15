@@ -93,19 +93,9 @@ TEST(arithmetic_expressions, substitution_to_character_expression)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("C1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "5-10*10");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "5-10*10");
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("C2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "5-10*10");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "5-10*10");
 }
 
 TEST(arithmetic_expressions, subscript_use)
@@ -262,4 +252,21 @@ TEST(arithmetic_expressions, multiple_operand_with_spaces)
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)3);
+}
+
+TEST(arithmetic_expressions, conversion_from_binary)
+{
+    std::string input =
+        R"(
+&A SETA ISBIN('0000')
+&B SETA ISBIN('a0a0')
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
+
+    SETAEQ("A", 1);
+    SETAEQ("B", 0);
 }

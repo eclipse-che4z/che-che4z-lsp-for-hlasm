@@ -15,7 +15,6 @@ target_sources(parser_library PUBLIC
 	debugger.h
 	lib_config.h
 	message_consumer.h
-	parser_library.h
 	protocol.h
 	range.h
 	sequence.h

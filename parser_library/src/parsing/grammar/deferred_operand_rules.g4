@@ -41,4 +41,4 @@ deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
 	(CONTINUATION 
 	(deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
 	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
-	)*;
+	)* IGNORED*;

@@ -52,7 +52,7 @@ context::A_t ca_constant::self_defining_term(
         return context::object_traits<context::A_t>::default_v();
     }
 
-    switch (std::toupper(type.front()))
+    switch (std::toupper((unsigned char)type.front()))
     {
         case 'B':
             return ca_function::B2A(value, add_diagnostic).access_a();

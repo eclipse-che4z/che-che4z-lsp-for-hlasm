@@ -30,7 +30,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_provider,
     analyzing_context ctx,
-    const workspaces::library_data data,
+    workspaces::library_data data,
     std::string file_name,
     const std::string& file_text,
     workspaces::parse_lib_provider& lib_provider,
@@ -46,7 +46,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     switch (data.proc_kind)
     {
         case processing_kind::ORDINARY:
-            provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this));
+            provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, *this));
             procs_.emplace_back(
                 std::make_unique<ordinary_processor>(ctx_, *this, lib_provider, *this, parser, opencode_prov_));
             break;
@@ -60,7 +60,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this, *this));
     provs_.emplace_back(std::move(base_provider));
 }
 
@@ -233,6 +233,22 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode() { lsp_analyzer_.opencode_finished(); }
 
+void processing_manager::suspend_opencode_copy_processing()
+{
+    auto& copy_prov = **(provs_.end() - 2);
+    assert(copy_prov.kind == statement_provider_kind::COPY);
+
+    static_cast<copy_statement_provider&>(copy_prov).suspend();
+}
+
+bool processing_manager::resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts)
+{
+    auto& copy_prov = **(provs_.end() - 2);
+    assert(copy_prov.kind == statement_provider_kind::COPY);
+
+    return static_cast<copy_statement_provider&>(copy_prov).try_resume_at(line_no, resume_opts);
+}
+
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
 {
     if (file)
@@ -320,12 +336,6 @@ void processing_manager::collect_diags() const
 {
     for (auto& proc : procs_)
         collect_diags_from_child(*proc);
-
-
-    collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[0]));
-    if (provs_.size() > 2)
-        collect_diags_from_child(dynamic_cast<processing::members_statement_provider&>(*provs_[1]));
-    collect_diags_from_child(dynamic_cast<parsing::parser_impl&>(*provs_.back()));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

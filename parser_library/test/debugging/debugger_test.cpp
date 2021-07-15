@@ -245,14 +245,13 @@ bool check_step(
 class workspace_mock : public workspace
 {
     lib_config config;
-    asm_option asm_opts;
 
 public:
     workspace_mock(file_manager& file_mngr)
         : workspace(file_mngr, config)
     {}
 
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
     {
         std::shared_ptr<processor> found = get_file_manager().add_processor_file(library);
         if (found)
@@ -260,11 +259,8 @@ public:
 
         return false;
     }
-    const asm_option& get_asm_options(const std::string&) override
-    {
-        asm_opts = { "SEVEN", "" };
-        return asm_opts;
-    }
+    asm_option get_asm_options(const std::string&) const override { return { "SEVEN", "" }; }
+    preprocessor_options get_preprocessor_options(const std::string&) const override { return {}; }
 };
 
 TEST(debugger, test)
@@ -341,16 +337,23 @@ TEST(debugger, test)
     m.wait_for_stopped();
     exp_frames.insert(exp_frames.begin(), debugging::stack_frame(7, 7, 1, "MACRO", filename));
     exp_frame_vars.insert(exp_frame_vars.begin(),
-        frame_vars(std::unordered_map<std::string, test_var_value> { {
-                       "&SYSPARM",
-                       test_var_value("SEVEN"),
-                   } },
+        frame_vars(
+            std::unordered_map<std::string, test_var_value> {
+                {
+                    "&SYSPARM",
+                    test_var_value("SEVEN"),
+                },
+            },
             std::unordered_map<std::string, test_var_value> {
                 // macro locals
-                { "&SYSLIST",
+                {
+                    "&SYSLIST",
                     test_var_value("(10,13)",
-                        list { { "0", std::make_shared<test_var_value>("10") },
-                            { "1", std::make_shared<test_var_value>("13") } }) },
+                        list {
+                            { "0", std::make_shared<test_var_value>("10") },
+                            { "1", std::make_shared<test_var_value>("13") },
+                        }),
+                },
                 { "&SYSECT", "" },
                 { "&SYSNDX", "0000" },
                 { "&SYSSTYP", "" },

@@ -106,12 +106,7 @@ struct diagnostic_op
     range diag_range;
     diagnostic_op() = default;
 
-    diagnostic_op(diagnostic_severity severity, std::string code, std::string message)
-        : severity(severity)
-        , code(std::move(code))
-        , message(std::move(message)) {};
-
-    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range diag_range)
+    diagnostic_op(diagnostic_severity severity, std::string code, std::string message, range diag_range = {})
         : severity(severity)
         , code(std::move(code))
         , message(std::move(message))
@@ -493,6 +488,7 @@ struct diagnostic_op
 
     static diagnostic_op error_M200(const std::string& instr_name, const range& range);
 
+    static diagnostic_op error_E001(const range& range);
 
     static diagnostic_op error_E010(const std::string& message, const range& range);
 
@@ -624,7 +620,17 @@ struct diagnostic_op
 
     static diagnostic_op error_CE015(const range& range);
 
+    static diagnostic_op error_CE016_logical_expression_parenthesis(const range& range);
+
     static diagnostic_op error_CW001(const range& range);
+
+    static diagnostic_op error_S100(const std::string& message, const range& range);
+
+    static diagnostic_op error_P0001(const range& range);
+
+    static diagnostic_op error_P0002(const range& range, std::string_view lib);
+
+    static diagnostic_op error_P0003(const range& range, std::string_view lib);
 };
 
 struct range_uri_s
@@ -719,12 +725,6 @@ public:
     static diagnostic_s warning_L0003(const std::string& path);
 
     static diagnostic_s warning_L0004(const std::string& path, const std::string& macro_name);
-
-    static diagnostic_s error_L0005(const std::string& path);
-
-    static diagnostic_s error_S100(const std::string& filename, const std::string& message, const range& range);
-
-    static diagnostic_s error_S101(const std::string& filename, const std::string& message, const range& range);
 
     static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
 

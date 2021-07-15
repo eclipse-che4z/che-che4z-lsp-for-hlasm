@@ -120,6 +120,14 @@ macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
         return macros_.at(it->second);
 }
 
+const file_info* lsp_context::get_file_info(const std::string& file_name) const
+{
+    if (auto it = files_.find(file_name); it != files_.end())
+        return it->second.get();
+    else
+        return nullptr;
+}
+
 location lsp_context::definition(const std::string& document_uri, const position pos) const
 {
     auto [occ, macro_scope] = find_occurence_with_scope(document_uri, pos);
@@ -182,14 +190,14 @@ size_t constexpr continuation_column = 71;
 
 bool lsp_context::is_continued_line(std::string_view line) const
 {
-    return line.size() > continuation_column && !isspace(line[continuation_column]);
+    return line.size() > continuation_column && !isspace((unsigned char)line[continuation_column]);
 }
 
 bool lsp_context::should_complete_instr(const text_data_ref_t& text, const position pos) const
 {
     bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
 
-    std::string_view line_so_far = text.get_line_beginning(pos);
+    std::string_view line_so_far = text.get_line_beginning_at(pos);
 
     static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
     return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);

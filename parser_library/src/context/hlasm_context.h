@@ -29,9 +29,6 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-class hlasm_context;
-using hlasm_ctx_ptr = std::shared_ptr<hlasm_context>;
-
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one
 // place contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed
@@ -119,6 +116,9 @@ public:
     // gets copy nest of current statement processing
     const std::vector<copy_member_invocation>& current_copy_stack() const;
     std::vector<copy_member_invocation>& current_copy_stack();
+    // gets top level (opencode) copy stack
+    const std::vector<copy_member_invocation>& opencode_copy_stack() const;
+    std::vector<copy_member_invocation>& opencode_copy_stack();
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 
@@ -207,6 +207,9 @@ public:
     void enter_copy_member(id_index member);
     // leaves current copy member
     void leave_copy_member();
+
+    // register preprocessor dependency
+    void add_preprocessor_dependency(const std::string& file);
 
     // creates specified global set symbol
     template<typename T>

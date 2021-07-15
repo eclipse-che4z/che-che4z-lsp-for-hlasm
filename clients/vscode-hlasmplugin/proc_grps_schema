@@ -59,6 +59,26 @@
                                 "description": "Profile Member to be copied into the source program."
                             }
                         }
+                    },
+                    "preprocessor": {
+                        "description": "Defines optional preprocessor pass for open code.",
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "description": "Name of the preprocessor.",
+                                "pattern": "DB2"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of the preprocessor.",
+                                        "pattern": "DB2"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 },
                 "required": [

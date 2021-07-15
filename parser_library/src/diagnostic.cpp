@@ -1485,6 +1485,14 @@ diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& op
         range);
 }
 
+diagnostic_op diagnostic_op::warn_D031(const range& range, const std::string& operand_value)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "D031",
+        "Using absolute value '" + operand_value + "' as relative immediate value",
+        range);
+}
+
 diagnostic_op diagnostic_op::error_D026(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D026", "Invalid round mode", range);
@@ -1602,6 +1610,11 @@ diagnostic_op diagnostic_op::error_M200(const std::string& instr_name, const ran
 }
 
 // diagnostic_s errors
+diagnostic_op diagnostic_op::error_E001(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "E001", "Continued line does not begin with required number of blanks", range);
+}
 
 diagnostic_op diagnostic_op::error_E010(const std::string& message, const range& range)
 {
@@ -1869,6 +1882,7 @@ diagnostic_op diagnostic_op::error_ME003(const range& range)
     return diagnostic_op(
         diagnostic_severity::error, "ME003", "Relative Immediate operand must evaluate into an even offset.", range);
 }
+
 diagnostic_op diagnostic_op::error_CE001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "CE001", "Operator expected", range);
@@ -1945,11 +1959,37 @@ diagnostic_op diagnostic_op::error_CE015(const range& range)
     return diagnostic_op(diagnostic_severity::error, "CE015", "Invalid self-defining term", range);
 }
 
+diagnostic_op diagnostic_op::error_CE016_logical_expression_parenthesis(const range& range)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "CE016", "Logical expression must be enclosed in parenthesis.", range);
+}
+
 diagnostic_op diagnostic_op::error_CW001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
 }
 
+diagnostic_op diagnostic_op::error_P0001(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "P0001", "DB2 preprocessor - invalid line continuation", range);
+}
+
+diagnostic_op diagnostic_op::error_P0002(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "P0002",
+        std::string("DB2 preprocessor - unable to find library '").append(lib).append("'"),
+        range);
+}
+
+diagnostic_op diagnostic_op::error_P0003(const range& range, std::string_view lib)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "P0003",
+        std::string("DB2 preprocessor - nested include '").append(lib).append("' requested"),
+        range);
+}
 
 diagnostic_s diagnostic_s::error_W002(const std::string& ws_uri, const std::string& ws_name)
 {
@@ -2034,17 +2074,9 @@ diagnostic_s diagnostic_s::error_L0005(const std::string& path)
         {});
 }
 
-diagnostic_s diagnostic_s::error_S100(const std::string& filename, const std::string& message, const range& range)
+diagnostic_op diagnostic_op::error_S100(const std::string& message, const range& range)
 {
-    return diagnostic_s(
-        filename, range, diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, {});
+    return diagnostic_op(diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, range);
 }
-
-diagnostic_s diagnostic_s::error_S101(const std::string& filename, const std::string& message, const range& range)
-{
-    return diagnostic_s(
-        filename, range, diagnostic_severity::error, "S101", "Illegal attribute reference - " + message, {});
-}
-
 
 } // namespace hlasm_plugin::parser_library

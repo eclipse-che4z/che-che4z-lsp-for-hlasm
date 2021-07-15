@@ -32,12 +32,11 @@ LABEL EQU *+2
 )");
     analyzer a(input);
     a.analyze();
-
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics, string_substitution)
@@ -59,11 +58,11 @@ TEST(diagnostics, string_substitution)
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics, division_by_zero) // test ok
@@ -90,7 +89,7 @@ TEST(diagnostics, division_by_zero) // test ok
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics, instr_zero_op) // test ok
@@ -107,11 +106,11 @@ TEST(diagnostics, instr_zero_op) // test ok
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 /*
@@ -130,11 +129,11 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
         analyzer a(input);
         a.analyze();
 
-        dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+        a.collect_diags();
 
         ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-        ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+        ASSERT_EQ(a.diags().size(), (size_t)0);
 }*/
 
 
@@ -151,11 +150,11 @@ TEST(diagnostics, case_insensitivity)
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics, machine)
@@ -172,11 +171,11 @@ TEST(diagnostics, machine)
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 
@@ -228,18 +227,18 @@ TEST(diagnostics, mnemonics)
   BROL LABEL2
   BRNOL LABEL2
   JLNOP LABEL2
-LABEL1 EQU *+19000     
+LABEL1 EQU *+19000
 LABEL2 equ *+79000
 )");
 
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics,
@@ -292,11 +291,11 @@ label1 RSECT
     analyzer a(input);
     a.analyze();
 
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
 
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
 
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(diagnostics, parser_diagnostics_passing)

@@ -36,6 +36,7 @@ public:
     bool has_instruction() const;
     const operands_si& current_operands() const;
     operands_si& current_operands();
+    bool has_operands() const;
     const remarks_si& current_remarks();
 
     void set_label_field(range symbol_range);

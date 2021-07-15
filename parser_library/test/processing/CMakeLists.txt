@@ -14,8 +14,10 @@ target_sources(library_test PRIVATE
 	aread_test.cpp
 	ca_instr_test.cpp
 	copy_test.cpp
+	db2_preprocessor_test.cpp
 	dc_test.cpp
 	equ_test.cpp
+	label_test.cpp
 	loctr_test.cpp
 	lookahead_test.cpp
 	occurence_collector_test.cpp

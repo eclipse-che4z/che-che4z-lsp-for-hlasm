@@ -16,28 +16,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_TEST_EXPR_MOCK_H
 #define HLASMPLUGIN_PARSERLIBRARY_TEST_EXPR_MOCK_H
 
-#include "workspaces/parse_lib_provider.h"
-
-using namespace hlasm_plugin::parser_library;
-
-class dep_sol_mock : public context::dependency_solver
-{
-    const context::symbol* get_symbol(context::id_index) const override { return nullptr; };
-};
-
-class lib_prov_mock : public workspaces::parse_lib_provider
-{
-    asm_option asm_options;
-    workspaces::parse_result parse_library(
-        const std::string&, analyzing_context, const workspaces::library_data) override
-    {
-        return false;
-    };
-
-    bool has_library(const std::string&, const std::string&) const override { return false; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
-};
-
 inline std::string big_string(char c = '1')
 {
     std::string s;

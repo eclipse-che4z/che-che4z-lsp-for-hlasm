@@ -15,7 +15,6 @@
 #include "gmock/gmock.h"
 
 #include "ebcdic_encoding.h"
-#include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
@@ -26,9 +25,9 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_symbol_attr, undefined_attributes)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     std::string name = "n";
     std::vector<ca_expr_ptr> subscript;
@@ -53,9 +52,9 @@ ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::i
 
 TEST(ca_symbol_attr, evaluate_undef_varsym)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     auto res = create_var_sym_attr(context::data_attr_kind::D, hlasm_ctx->ids().add("n")).evaluate(eval_ctx);
 
@@ -65,9 +64,9 @@ TEST(ca_symbol_attr, evaluate_undef_varsym)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     auto name = hlasm_ctx->ids().add("n");
 
@@ -82,9 +81,9 @@ TEST(ca_symbol_attr, evaluate_substituted_varsym_not_char)
 
 TEST(ca_symbol_attr, evaluate_substituted_varsym_char_not_sym)
 {
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>();
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 
     auto name = hlasm_ctx->ids().add("n");
 
@@ -119,9 +118,9 @@ struct stringer
 class ca_attr : public ::testing::TestWithParam<attr_test_param>
 {
 protected:
-    context::hlasm_ctx_ptr hlasm_ctx = std::make_shared<context::hlasm_context>();
-    lib_prov_mock lib;
-    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() }, lib };
+    std::shared_ptr<context::hlasm_context> hlasm_ctx = std::make_shared<context::hlasm_context>();
+    evaluation_context eval_ctx { analyzing_context { hlasm_ctx, std::make_shared<lsp::lsp_context>() },
+        workspaces::empty_parse_lib_provider::instance };
 };
 
 INSTANTIATE_TEST_SUITE_P(ca_attr_suite,

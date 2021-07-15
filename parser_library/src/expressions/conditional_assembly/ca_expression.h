@@ -31,6 +31,12 @@ using undef_sym_set = std::set<context::id_index>;
 
 struct evaluation_context;
 
+enum class ca_expression_compatibility
+{
+    setb,
+    aif,
+};
+
 // base class for conditional assembly expressions
 class ca_expression : public diagnosable_op_impl
 {
@@ -54,6 +60,8 @@ public:
     T evaluate(const evaluation_context& eval_ctx) const;
 
     virtual context::SET_t evaluate(const evaluation_context& eval_ctx) const = 0;
+
+    virtual bool is_compatible(ca_expression_compatibility) const { return false; }
 
     virtual ~ca_expression() = default;
 

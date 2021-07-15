@@ -64,7 +64,7 @@ std::string feature::uri_to_path(const std::string& uri)
 
         if (utils::platform::is_windows())
         {
-            auth_path[0] = (char)tolower(auth_path[0]);
+            auth_path[0] = (char)tolower((unsigned char)auth_path[0]);
         }
     }
 
@@ -110,8 +110,9 @@ parser_library::range feature::parse_range(const json& range_json)
 
 parser_library::position feature::parse_position(const json& position_json)
 {
-    return { position_json["line"].get<nlohmann::json::number_unsigned_t>(),
-        position_json["character"].get<nlohmann::json::number_unsigned_t>() };
+    // TODO: rewrite message parsing
+    return { (size_t)position_json["line"].get<nlohmann::json::number_unsigned_t>(),
+        (size_t)position_json["character"].get<nlohmann::json::number_unsigned_t>() };
 }
 
 json feature::range_to_json(const parser_library::range& range)
