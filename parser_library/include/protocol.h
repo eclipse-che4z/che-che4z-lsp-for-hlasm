@@ -221,8 +221,6 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     size_t continued_statements = 0;
     size_t non_continued_statements = 0;
     size_t files = 0;
-
-    
 };
 
 bool inline operator==(const performance_metrics& lhs, const performance_metrics& oth)
