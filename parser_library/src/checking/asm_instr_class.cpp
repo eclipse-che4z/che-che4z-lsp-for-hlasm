@@ -31,6 +31,8 @@ bool assembler_instruction::operands_size_corresponding(const std::vector<const 
 {
     if ((int)to_check.size() >= min_operands && ((int)to_check.size() <= max_operands || max_operands == -1))
         return true;
+    if (min_operands == 0 && has_one_comma(to_check))
+        return true; // handles classic "    instr , comment" pattern
     if (max_operands == -1)
         add_diagnostic(diagnostic_op::error_A010_minimum(name_of_instruction, min_operands, stmt_range));
     else if (min_operands == max_operands)

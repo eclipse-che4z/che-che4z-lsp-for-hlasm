@@ -452,11 +452,9 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
 {
-    if (stmt.operands_ref().value.size() > 1)
-    {
-        check(stmt, hlasm_ctx, checker_, *this);
+    const auto& operands = stmt.operands_ref().value;
+    if (!check(stmt, hlasm_ctx, checker_, *this))
         return;
-    }
 
     auto label = find_label_symbol(stmt);
     if (label == context::id_storage::empty_id)
@@ -467,9 +465,9 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
     }
 
     context::id_index operand = context::id_storage::empty_id;
-    if (stmt.operands_ref().value.size() == 1)
+    if (operands.size() == 1) // covers also the " , " case
     {
-        auto expr_op = stmt.operands_ref().value.front()->access_asm()->access_expr();
+        auto expr_op = operands.front()->access_asm()->access_expr();
         if (expr_op)
         {
             if (auto expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression.get()))
@@ -489,7 +487,7 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
         if (hlasm_ctx.get_operation_code(operand))
             hlasm_ctx.add_mnemonic(label, operand);
         else
-            add_diagnostic(diagnostic_op::error_A246_OPSYN(stmt.operands_ref().value.front()->operand_range));
+            add_diagnostic(diagnostic_op::error_A246_OPSYN(operands.front()->operand_range));
     }
 }
 

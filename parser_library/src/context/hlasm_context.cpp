@@ -676,20 +676,25 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
     location definition_location,
     std::unordered_set<copy_member_ptr> used_copy_members)
 {
-    return macros_
-        .insert_or_assign(name,
-            std::make_shared<macro_definition>(name,
-                label_param_name,
-                std::move(params),
-                std::move(definition),
-                std::move(copy_nests),
-                std::move(labels),
-                std::move(definition_location),
-                std::move(used_copy_members)))
-        .first->second;
+    auto result = std::make_shared<macro_definition>(name,
+        label_param_name,
+        std::move(params),
+        std::move(definition),
+        std::move(copy_nests),
+        std::move(labels),
+        std::move(definition_location),
+        std::move(used_copy_members));
+    add_macro(result);
+    return result;
 }
 
-void hlasm_context::add_macro(macro_def_ptr macro) { macros_[macro->id] = std::move(macro); };
+void hlasm_context::add_macro(macro_def_ptr macro)
+{
+    const auto& m = macros_[macro->id] = std::move(macro);
+    // associate mnemonic if previously deleted by OPSYN
+    if (auto m_op = opcode_mnemo_.find(m->id); m_op != opcode_mnemo_.end() && !m_op->second)
+        m_op->second = opcode_t { m->id, m };
+};
 
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
 

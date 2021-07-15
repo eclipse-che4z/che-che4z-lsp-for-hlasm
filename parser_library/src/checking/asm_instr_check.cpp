@@ -498,6 +498,8 @@ bool opsyn::check(const std::vector<const asm_operand*>& to_check,
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
+    if (has_one_comma(to_check))
+        return true;
     if (to_check.size() == 1)
     {
         if (is_operand_complex(to_check[0]))
@@ -582,6 +584,8 @@ bool iseq::check(const std::vector<const asm_operand*>& to_check,
     const diagnostic_collector& add_diagnostic) const
 {
     if (to_check.empty())
+        return true;
+    if (has_one_comma(to_check))
         return true;
     if (to_check.size() == 2)
     {
@@ -1019,7 +1023,7 @@ bool expression_instruction::check(const std::vector<const asm_operand*>& to_che
     if (to_check.empty())
         return true;
     // an if for the specific "SPACE , " case which should return true
-    if (to_check.size() == 2 && is_operand_empty(to_check[0]) && is_operand_empty(to_check[1]))
+    if (has_one_comma(to_check))
         return true;
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
