@@ -262,16 +262,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "AGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 512);
     add_machine_instr(result, "AHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 512);
     add_machine_instr(result, "AGHI", mach_format::RI_a, { reg_4_U, imm_16_S }, 513);
-    add_machine_instr(result,
-        "AHHHR",
-        mach_format::RRF_a,
-        {
-            reg_4_U,
-            reg_4_U,
-            reg_4_U,
-        },
-
-        513);
+    add_machine_instr(result, "AHHHR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
     add_machine_instr(result, "AHHLR", mach_format::RRF_a, { reg_4_U, reg_4_U, reg_4_U }, 513);
     add_machine_instr(result, "AIH", mach_format::RIL_a, { reg_4_U, imm_32_S }, 513);
     add_machine_instr(result, "ALR", mach_format::RR, { reg_4_U, reg_4_U }, 514);
@@ -327,27 +318,9 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "BCT", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 525);
     add_machine_instr(result, "BCTG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 525);
     add_machine_instr(result, "BXH", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr(result,
-        "BXHG",
-        mach_format::RSY_a,
-        {
-            reg_4_U,
-            reg_4_U,
-            db_20_4_S,
-        },
-
-        526);
+    add_machine_instr(result, "BXHG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
     add_machine_instr(result, "BXLE", mach_format::RS_a, { reg_4_U, reg_4_U, db_12_4_U }, 526);
-    add_machine_instr(result,
-        "BXLEG",
-        mach_format::RSY_a,
-        {
-            reg_4_U,
-            reg_4_U,
-            db_20_4_S,
-        },
-
-        526);
+    add_machine_instr(result, "BXLEG", mach_format::RSY_a, { reg_4_U, reg_4_U, db_20_4_S }, 526);
     add_machine_instr(result, "BPP", mach_format::SMI, { mask_4_U, rel_addr_imm_16_S, db_12_4_U }, 527);
     add_machine_instr(result, "BPRP", mach_format::MII, { mask_4_U, rel_addr_imm_12_S, rel_addr_imm_24_S }, 527);
     add_machine_instr(result, "BRAS", mach_format::RI_b, { reg_4_U, rel_addr_imm_16_S }, 530);
@@ -384,28 +357,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CGRB", mach_format::RRS, { reg_4_U, reg_4_U, mask_4_U, db_12_4_U }, 619);
     add_machine_instr(result, "CRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 619);
     add_machine_instr(result, "CGRJ", mach_format::RIE_b, { reg_4_U, reg_4_U, mask_4_U, rel_addr_imm_16_S }, 620);
-    add_machine_instr(result,
-        "CIB",
-        mach_format::RIS,
-        {
-            reg_4_U,
-            imm_8_S,
-            mask_4_U,
-            db_12_4_U,
-        },
-
-        620);
-    add_machine_instr(result,
-        "CGIB",
-        mach_format::RIS,
-        {
-            reg_4_U,
-            imm_8_S,
-            mask_4_U,
-            db_12_4_U,
-        },
-
-        620);
+    add_machine_instr(result, "CIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
+    add_machine_instr(result, "CGIB", mach_format::RIS, { reg_4_U, imm_8_S, mask_4_U, db_12_4_U }, 620);
     add_machine_instr(result, "CIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
     add_machine_instr(result, "CGIJ", mach_format::RIE_c, { reg_4_U, imm_8_S, mask_4_U, rel_addr_imm_16_S }, 620);
     add_machine_instr(result, "CFC", mach_format::S, { db_12_4_U }, 621);
@@ -441,15 +394,7 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CLY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
     add_machine_instr(result, "CLG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
     add_machine_instr(result, "CLGF", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 636);
-    add_machine_instr(result,
-        "CLC",
-        mach_format::SS_a,
-        {
-            db_12_8x4L_U,
-            db_12_4_U,
-        },
-
-        636);
+    add_machine_instr(result, "CLC", mach_format::SS_a, { db_12_8x4L_U, db_12_4_U }, 636);
     add_machine_instr(result, "CLFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
     add_machine_instr(result, "CLGFI", mach_format::RIL_a, { reg_4_U, imm_32_S }, 636);
     add_machine_instr(result, "CLI", mach_format::SI, { db_12_4_U, imm_8_U }, 636);
@@ -1368,324 +1313,284 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "TDGET", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
     add_machine_instr(result, "TDGDT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
     add_machine_instr(result, "TDGXT", mach_format::RXE, { reg_4_U, dxb_12_4x4_U }, 1529);
-    add_machine_instr(result, "VBPERM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1536);
-    add_machine_instr(result, "VGEF", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1536);
+    add_machine_instr(result, "VBPERM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1536);
+    add_machine_instr(result, "VGEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
     add_machine_instr(
-        result, "VCFPS", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1641);
+        result, "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1641);
     add_machine_instr(
-        result, "VCLFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
-    add_machine_instr(result, "VGEG", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1536);
-    add_machine_instr(result, "VGBM", mach_format::VRI_a, { vec_reg_4_U, imm_16_U }, 1537);
-    add_machine_instr(result, "VGM", mach_format::VRI_b, { vec_reg_4_U, imm_8_U, imm_8_U, mask_4_U }, 1537);
-    add_machine_instr(result, "VL", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1, 1538);
-    add_machine_instr(result, "VSTEBRF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEBRG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VLLEBRZ", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr(result, "VLREP", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr(result, "VLR", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U }, 1538);
-    add_machine_instr(result, "VLEB", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1538);
-    add_machine_instr(result, "VLEBRH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VLEBRG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VLBRREP", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1562);
-    add_machine_instr(result, "VLER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1563);
-    add_machine_instr(result, "VLEH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIH", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIF", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIG", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLEIB", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1539);
-    add_machine_instr(result, "VLGV", mach_format::VRS_c, { reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1539);
-    add_machine_instr(result, "VLLEZ", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1540);
-    add_machine_instr(result, "VLM", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1, 1541);
-    add_machine_instr(result, "VLRLR", mach_format::VRS_d, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1541);
-    add_machine_instr(result, "VLRL", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1541);
-    add_machine_instr(result, "VLBB", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1542);
-    add_machine_instr(result, "VLVG", mach_format::VRS_b, { vec_reg_4_U, reg_4_U, db_12_4_U, mask_4_U }, 1543);
-    add_machine_instr(result, "VLVGP", mach_format::VRR_f, { vec_reg_4_U, reg_4_U, reg_4_U }, 1543);
-    add_machine_instr(result, "VLL", mach_format::VRS_b, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1543);
-    add_machine_instr(result, "VMRH", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1544);
-    add_machine_instr(result, "VMRL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1544);
-    add_machine_instr(result, "VPK", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1545);
+        result, "VCLFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
+    add_machine_instr(result, "VGEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1536);
+    add_machine_instr(result, "VGBM", mach_format::VRI_a, { vec_reg_5_U, imm_16_U }, 1537);
+    add_machine_instr(result, "VGM", mach_format::VRI_b, { vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1537);
+    add_machine_instr(result, "VL", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1, 1538);
+    add_machine_instr(result, "VSTEBRF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VSTEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VLLEBRZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
+    add_machine_instr(result, "VLREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
+    add_machine_instr(result, "VLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1538);
+    add_machine_instr(result, "VLEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1538);
+    add_machine_instr(result, "VLEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
+    add_machine_instr(result, "VLEBRG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1561);
+    add_machine_instr(result, "VLBRREP", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1562);
+    add_machine_instr(result, "VLER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1564);
+    add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1563);
+    add_machine_instr(result, "VLEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEIH", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEIF", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEIG", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
+    add_machine_instr(result, "VLEIB", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
+    add_machine_instr(result, "VLGV", mach_format::VRS_c, { reg_4_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1539);
+    add_machine_instr(result, "VLLEZ", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1540);
+    add_machine_instr(result, "VLM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1, 1541);
+    add_machine_instr(result, "VLRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1541);
+    add_machine_instr(result, "VLRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1541);
+    add_machine_instr(result, "VLBB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1542);
+    add_machine_instr(result, "VLVG", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U, mask_4_U }, 1543);
+    add_machine_instr(result, "VLVGP", mach_format::VRR_f, { vec_reg_5_U, reg_4_U, reg_4_U }, 1543);
+    add_machine_instr(result, "VLL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1543);
+    add_machine_instr(result, "VMRH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
+    add_machine_instr(result, "VMRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1544);
+    add_machine_instr(result, "VPK", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1545);
     add_machine_instr(
-        result, "VPKS", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1545);
+        result, "VPKS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1545);
     add_machine_instr(
-        result, "VPKLS", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1546);
+        result, "VPKLS", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1546);
     add_machine_instr(
-        result, "VPERM", mach_format::VRR_e, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1547);
-    add_machine_instr(result, "VPDI", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1547);
-    add_machine_instr(result, "VREP", mach_format::VRI_c, { vec_reg_4_U, vec_reg_4_U, imm_16_U, mask_4_U }, 1547);
-    add_machine_instr(result, "VREPI", mach_format::VRI_a, { vec_reg_4_U, imm_16_S, mask_4_U }, 1548);
-    add_machine_instr(result, "VSCEF", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1548);
-    add_machine_instr(result, "VSCEG", mach_format::VRV, { vec_reg_4_U, dvb_12_4x4_U, mask_4_U }, 1548);
-    add_machine_instr(result, "VSEL", mach_format::VRR_e, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1549);
-    add_machine_instr(result, "VSEG", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1549);
-    add_machine_instr(result, "VSTBR", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VST", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1, 1550);
-    add_machine_instr(result, "VSTEB", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEBRH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VSTEH", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEF", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTEG", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1550);
-    add_machine_instr(result, "VSTER", mach_format::VRX, { vec_reg_4_U, dxb_12_4x4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VSTM", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1, 1551);
-    add_machine_instr(result, "VSTRLR", mach_format::VRS_d, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1551);
-    add_machine_instr(result, "VSTRL", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1551);
-    add_machine_instr(result, "VSTL", mach_format::VRS_b, { vec_reg_4_U, reg_4_U, db_12_4_U }, 1552);
-    add_machine_instr(result, "VUPH", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1552);
-    add_machine_instr(result, "VUPL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1553);
-    add_machine_instr(result, "VUPLH", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1553);
-    add_machine_instr(result, "VUPLL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1554);
-    add_machine_instr(result, "VA", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1557);
-    add_machine_instr(result, "VACC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1558);
+        result, "VPERM", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1547);
+    add_machine_instr(result, "VPDI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1547);
+    add_machine_instr(result, "VREP", mach_format::VRI_c, { vec_reg_5_U, vec_reg_5_U, imm_16_U, mask_4_U }, 1547);
+    add_machine_instr(result, "VREPI", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1548);
+    add_machine_instr(result, "VSCEF", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
+    add_machine_instr(result, "VSCEG", mach_format::VRV, { vec_reg_5_U, dvb_12_5x4_U, mask_4_U }, 1548);
+    add_machine_instr(result, "VSEL", mach_format::VRR_e, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1549);
+    add_machine_instr(result, "VSEG", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1549);
+    add_machine_instr(result, "VSTBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VST", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1, 1550);
+    add_machine_instr(result, "VSTEB", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTEBRH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VSTEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1550);
+    add_machine_instr(result, "VSTER", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1578);
+    add_machine_instr(result, "VSTM", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1, 1551);
+    add_machine_instr(result, "VSTRLR", mach_format::VRS_d, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1551);
+    add_machine_instr(result, "VSTRL", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1551);
+    add_machine_instr(result, "VSTL", mach_format::VRS_b, { vec_reg_5_U, reg_4_U, db_12_4_U }, 1552);
+    add_machine_instr(result, "VUPH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1552);
+    add_machine_instr(result, "VUPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
+    add_machine_instr(result, "VUPLH", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1553);
+    add_machine_instr(result, "VUPLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1554);
+    add_machine_instr(result, "VA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1557);
+    add_machine_instr(result, "VACC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
     add_machine_instr(
-        result, "VAC", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1558);
-    add_machine_instr(result,
-        "VACCC",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1559);
-    add_machine_instr(result, "VN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1559);
-    add_machine_instr(result, "VNC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1559);
-    add_machine_instr(result, "VAVG", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1560);
-    add_machine_instr(result, "VAVGL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1560);
-    add_machine_instr(result, "VCKSM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1560);
-    add_machine_instr(result, "VEC", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1561);
-    add_machine_instr(result, "VECL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1561);
+        result, "VAC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1558);
     add_machine_instr(
-        result, "VCEQ", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1561);
+        result, "VACCC", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1559);
+    add_machine_instr(result, "VN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
+    add_machine_instr(result, "VNC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1559);
+    add_machine_instr(result, "VAVG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
+    add_machine_instr(result, "VAVGL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1560);
+    add_machine_instr(result, "VCKSM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1560);
+    add_machine_instr(result, "VEC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
+    add_machine_instr(result, "VECL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1561);
     add_machine_instr(
-        result, "VCH", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1562);
+        result, "VCEQ", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1561);
     add_machine_instr(
-        result, "VCHL", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1563);
-    add_machine_instr(result, "VCLZ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VCTZ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1564);
-    add_machine_instr(result, "VGFM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1565);
-    add_machine_instr(result, "VX", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1565);
-    add_machine_instr(result, "VLC", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1566);
-    add_machine_instr(result,
-        "VGFMA",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1566);
-    add_machine_instr(result, "VLP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1566);
-    add_machine_instr(result, "VMX", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMXL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1567);
-    add_machine_instr(result, "VMNL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1568);
+        result, "VCH", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1562);
     add_machine_instr(
-        result, "VMAL", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1568);
+        result, "VCHL", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1563);
+    add_machine_instr(result, "VCLZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
+    add_machine_instr(result, "VCTZ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1564);
+    add_machine_instr(result, "VGFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1565);
+    add_machine_instr(result, "VX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1565);
+    add_machine_instr(result, "VLC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
     add_machine_instr(
-        result, "VMAH", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1569);
-    add_machine_instr(result,
-        "VMALH",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1569);
+        result, "VGFMA", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
+    add_machine_instr(result, "VLP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1566);
+    add_machine_instr(result, "VMX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
+    add_machine_instr(result, "VMXL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
+    add_machine_instr(result, "VMN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1567);
+    add_machine_instr(result, "VMNL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
     add_machine_instr(
-        result, "VMAE", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1569);
-    add_machine_instr(result,
-        "VMALE",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1569);
+        result, "VMAL", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1568);
     add_machine_instr(
-        result, "VMAO", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1570);
-    add_machine_instr(result,
-        "VMALO",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1570);
-    add_machine_instr(result, "VMH", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1570);
-    add_machine_instr(result, "VMLH", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1571);
-    add_machine_instr(result, "VML", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1571);
-    add_machine_instr(result, "VME", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMLE", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1572);
-    add_machine_instr(result, "VMLO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1572);
+        result, "VMAH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
+    add_machine_instr(
+        result, "VMALH", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
+    add_machine_instr(
+        result, "VMAE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
+    add_machine_instr(
+        result, "VMALE", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1569);
+    add_machine_instr(
+        result, "VMAO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
+    add_machine_instr(
+        result, "VMALO", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
+    add_machine_instr(result, "VMH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1570);
+    add_machine_instr(result, "VMLH", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
+    add_machine_instr(result, "VML", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1571);
+    add_machine_instr(result, "VME", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
+    add_machine_instr(result, "VMLE", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
+    add_machine_instr(result, "VMO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
+    add_machine_instr(result, "VMLO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1572);
     add_machine_instr(result,
         "VMSL",
         mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1573);
-    add_machine_instr(result, "VNN", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
-    add_machine_instr(result, "VNO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
-    add_machine_instr(result, "VNX", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
-    add_machine_instr(result, "VO", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1574);
-    add_machine_instr(result, "VOC", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1575);
-    add_machine_instr(result, "VPOPCT", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1575);
-    add_machine_instr(result, "VERLLV", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1575);
-    add_machine_instr(result, "VERLL", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1575);
+    add_machine_instr(result, "VNN", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
+    add_machine_instr(result, "VNO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
+    add_machine_instr(result, "VNX", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
+    add_machine_instr(result, "VO", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1574);
+    add_machine_instr(result, "VOC", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1575);
+    add_machine_instr(result, "VPOPCT", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
+    add_machine_instr(result, "VERLLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1575);
+    add_machine_instr(result, "VERLL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1575);
     add_machine_instr(
-        result, "VERIM", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1576);
-    add_machine_instr(result, "VESLV", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESL", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRAV", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRA", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1577);
-    add_machine_instr(result, "VESRLV", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VESRL", mach_format::VRS_a, { vec_reg_4_U, vec_reg_4_U, db_12_4_U, mask_4_U }, 1578);
-    add_machine_instr(result, "VSLD", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1607);
-    add_machine_instr(result, "VSRD", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1608);
-    add_machine_instr(result, "VSLDB", mach_format::VRI_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U }, 1579);
-    add_machine_instr(result, "VSL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
-    add_machine_instr(result, "VSLB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
-    add_machine_instr(result, "VSRA", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1579);
-    add_machine_instr(result, "VSRAB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
-    add_machine_instr(result, "VSRL", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
-    add_machine_instr(result, "VSRLB", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U }, 1580);
-    add_machine_instr(result, "VS", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1580);
-    add_machine_instr(result, "VSCBI", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1581);
+        result, "VERIM", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1576);
+    add_machine_instr(result, "VESLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
+    add_machine_instr(result, "VESL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
+    add_machine_instr(result, "VESRAV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1577);
+    add_machine_instr(result, "VESRA", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1577);
+    add_machine_instr(result, "VESRLV", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1578);
+    add_machine_instr(result, "VESRL", mach_format::VRS_a, { vec_reg_5_U, vec_reg_5_U, db_12_4_U, mask_4_U }, 1578);
+    add_machine_instr(result, "VSLD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1607);
+    add_machine_instr(result, "VSRD", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1608);
+    add_machine_instr(result, "VSLDB", mach_format::VRI_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U }, 1579);
+    add_machine_instr(result, "VSL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
+    add_machine_instr(result, "VSLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
+    add_machine_instr(result, "VSRA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1579);
+    add_machine_instr(result, "VSRAB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
+    add_machine_instr(result, "VSRL", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
+    add_machine_instr(result, "VSRLB", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U }, 1580);
+    add_machine_instr(result, "VS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1580);
+    add_machine_instr(result, "VSCBI", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
     add_machine_instr(
-        result, "VCSFP", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1644);
+        result, "VCSFP", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1644);
     add_machine_instr(
-        result, "VSBI", mach_format::VRR_d, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1581);
-    add_machine_instr(result,
-        "VSBCBI",
-        mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U },
-
-        1582);
-    add_machine_instr(result, "VSUMG", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1582);
-    add_machine_instr(result, "VSUMQ", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1583);
-    add_machine_instr(result, "VSUM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1583);
-    add_machine_instr(result, "VTM", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U }, 1584);
+        result, "VSBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1581);
     add_machine_instr(
-        result, "VFAE", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1585);
+        result, "VSBCBI", mach_format::VRR_d, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
+    add_machine_instr(result, "VSUMG", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1582);
+    add_machine_instr(result, "VSUMQ", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
+    add_machine_instr(result, "VSUM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1583);
+    add_machine_instr(result, "VTM", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U }, 1584);
     add_machine_instr(
-        result, "VFEE", mach_format::VRR_b, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1587);
-    add_machine_instr(result,
-        "VFENE",
-        mach_format::VRR_b,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-        1,
-
-        1588);
-    add_machine_instr(result, "VISTR", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1, 1589);
+        result, "VFAE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1585);
+    add_machine_instr(
+        result, "VFEE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1587);
+    add_machine_instr(
+        result, "VFENE", mach_format::VRR_b, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1588);
+    add_machine_instr(result, "VISTR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1, 1589);
     add_machine_instr(result,
         "VSTRC",
         mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1,
-
         1590);
     add_machine_instr(result,
         "VSTRS",
         mach_format::VRR_d,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1,
         1622);
     add_machine_instr(
-        result, "VFA", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1595);
-    add_machine_instr(result, "WFC", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1599);
-    add_machine_instr(result, "WFK", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1600);
+        result, "VFA", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1595);
+    add_machine_instr(result, "WFC", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1599);
+    add_machine_instr(result, "WFK", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1600);
     add_machine_instr(result,
         "VFCE",
         mach_format::VRR_c,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
         1601);
     add_machine_instr(result,
         "VFCH",
         mach_format::VRR_c,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
         1603);
     add_machine_instr(result,
         "VFCHE",
         mach_format::VRR_c,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
         1605);
     add_machine_instr(
-        result, "VCFPS", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1607);
+        result, "VCFPS", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1607);
     add_machine_instr(
-        result, "VCFPL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1643);
+        result, "VCFPL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1643);
     add_machine_instr(
-        result, "VCLGD", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
+        result, "VCLGD", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1611);
     add_machine_instr(
-        result, "VFD", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1613);
+        result, "VFD", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1613);
     add_machine_instr(
-        result, "VFI", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1615);
-    add_machine_instr(result, "VFLL", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1617);
+        result, "VFI", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1615);
+    add_machine_instr(result, "VFLL", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1617);
     add_machine_instr(
-        result, "VFLR", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1618);
+        result, "VFLR", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1618);
     add_machine_instr(result,
         "VFMAX",
         mach_format::VRR_c,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
         1619);
     add_machine_instr(result,
         "VFMIN",
         mach_format::VRR_c,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U },
         1625);
     add_machine_instr(
-        result, "VFM", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1631);
+        result, "VFM", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1631);
     add_machine_instr(result,
         "VFMA",
         mach_format::VRR_e,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1633);
     add_machine_instr(result,
         "VFMS",
         mach_format::VRR_e,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1633);
     add_machine_instr(result,
         "VFNMA",
         mach_format::VRR_e,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1633);
     add_machine_instr(result,
         "VFNMS",
         mach_format::VRR_e,
-        { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U },
-
+        { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U },
         1633);
     add_machine_instr(
-        result, "VFPSO", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U, mask_4_U }, 1635);
-    add_machine_instr(result, "VFSQ", mach_format::VRR_a, { vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1636);
+        result, "VFPSO", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U, mask_4_U }, 1635);
+    add_machine_instr(result, "VFSQ", mach_format::VRR_a, { vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1636);
     add_machine_instr(
-        result, "VFS", mach_format::VRR_c, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, mask_4_U, mask_4_U }, 1637);
+        result, "VFS", mach_format::VRR_c, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, mask_4_U, mask_4_U }, 1637);
     add_machine_instr(
-        result, "VFTCI", mach_format::VRI_e, { vec_reg_4_U, vec_reg_4_U, imm_12_S, mask_4_U, mask_4_U }, 1638);
+        result, "VFTCI", mach_format::VRI_e, { vec_reg_5_U, vec_reg_5_U, imm_12_S, mask_4_U, mask_4_U }, 1638);
     add_machine_instr(
-        result, "VAP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1643);
-    add_machine_instr(result, "VCP", mach_format::VRR_h, { vec_reg_4_U, vec_reg_4_U, mask_4_U }, 1644);
-    add_machine_instr(result, "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U }, 1645);
-    add_machine_instr(result, "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_4_U, mask_4_U }, 1645);
-    add_machine_instr(result, "VCVD", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
-    add_machine_instr(result, "VCVDG", mach_format::VRI_i, { vec_reg_4_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
+        result, "VAP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1643);
+    add_machine_instr(result, "VCP", mach_format::VRR_h, { vec_reg_5_U, vec_reg_5_U, mask_4_U }, 1644);
+    add_machine_instr(result, "VCVB", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
+    add_machine_instr(result, "VCVBG", mach_format::VRR_i, { reg_4_U, vec_reg_5_U, mask_4_U }, 1645);
+    add_machine_instr(result, "VCVD", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
+    add_machine_instr(result, "VCVDG", mach_format::VRI_i, { vec_reg_5_U, reg_4_U, imm_8_S, mask_4_U }, 1646);
     add_machine_instr(
-        result, "VDP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1648);
+        result, "VDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1648);
     add_machine_instr(
-        result, "VMP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1650);
+        result, "VMP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1650);
     add_machine_instr(
-        result, "VMSP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1651);
+        result, "VMSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1651);
     add_machine_instr(
-        result, "VRP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1654);
+        result, "VRP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1654);
     add_machine_instr(
-        result, "VSDP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1656);
+        result, "VSDP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1656);
     add_machine_instr(
-        result, "VSP", mach_format::VRI_f, { vec_reg_4_U, vec_reg_4_U, vec_reg_4_U, imm_8_U, mask_4_U }, 1658);
-    add_machine_instr(result, "VLIP", mach_format::VRI_h, { vec_reg_4_U, imm_16_S, imm_4_U }, 1649);
-    add_machine_instr(result, "VPKZ", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1652);
+        result, "VSP", mach_format::VRI_f, { vec_reg_5_U, vec_reg_5_U, vec_reg_5_U, imm_8_U, mask_4_U }, 1658);
+    add_machine_instr(result, "VLIP", mach_format::VRI_h, { vec_reg_5_U, imm_16_S, imm_4_U }, 1649);
+    add_machine_instr(result, "VPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1652);
     add_machine_instr(
-        result, "VPSOP", mach_format::VRI_g, { vec_reg_4_U, vec_reg_4_U, imm_8_U, imm_8_U, mask_4_U }, 1653);
+        result, "VPSOP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_U, mask_4_U }, 1653);
     add_machine_instr(
-        result, "VSRP", mach_format::VRI_g, { vec_reg_4_U, vec_reg_4_U, imm_8_U, imm_8_S, mask_4_U }, 1657);
+        result, "VSRP", mach_format::VRI_g, { vec_reg_5_U, vec_reg_5_U, imm_8_U, imm_8_S, mask_4_U }, 1657);
     add_machine_instr(result, "SIE", mach_format::S, { db_12_4_U }, 7);
     add_machine_instr(result, "VAD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VSD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
@@ -1756,8 +1661,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VCVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VCZVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
     add_machine_instr(result, "VCOVM", mach_format::RRE, { reg_4_U, reg_4_U }, 0);
-    add_machine_instr(result, "VTP", mach_format::VRR_g, { vec_reg_4_U }, 1660);
-    add_machine_instr(result, "VUPKZ", mach_format::VSI, { vec_reg_4_U, db_12_4_U, imm_8_U }, 1660);
+    add_machine_instr(result, "VTP", mach_format::VRR_g, { vec_reg_5_U }, 1660);
+    add_machine_instr(result, "VUPKZ", mach_format::VSI, { vec_reg_5_U, db_12_4_U, imm_8_U }, 1660);
     add_machine_instr(result, "VSTK", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VSE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VSES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);

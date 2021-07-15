@@ -159,7 +159,7 @@ TEST(diagnostics, vec_reg_not_corresponding)
 {
     std::string input(
         R"( 
- VGEF 1,1(17,1),1 
+ VGEF 1,1(32,1),1
 )");
     analyzer a(input);
     a.analyze();
@@ -496,4 +496,17 @@ LEN120 DS CL1
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "ME003");
+}
+
+TEST(diagnostics, vec_reg_limits)
+{
+    std::string input(
+        R"(
+ VAC 31,31,31,31,15
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
