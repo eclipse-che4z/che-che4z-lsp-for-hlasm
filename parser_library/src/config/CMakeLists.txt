@@ -13,6 +13,6 @@
 target_sources(parser_library PRIVATE
 	pgm_conf.cpp
 	pgm_conf.h
-	proc_conf.cpp
-	proc_conf.h
+	proc_grps.cpp
+	proc_grps.h
 )

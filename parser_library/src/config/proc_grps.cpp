@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "proc_conf.h"
+#include "proc_grps.h"
 
 #include "nlohmann/json.hpp"
 
@@ -106,13 +106,13 @@ void from_json(const nlohmann::json& j, processor_group& p)
     }
 }
 
-void to_json(nlohmann::json& j, const proc_conf& p)
+void to_json(nlohmann::json& j, const proc_grps& p)
 {
     j = nlohmann::json { { "pgroups", p.pgroups } };
     if (auto m = nlohmann::json(p.macro_extensions); !m.empty())
         j["macro_extensions"] = std::move(m);
 }
-void from_json(const nlohmann::json& j, proc_conf& p)
+void from_json(const nlohmann::json& j, proc_grps& p)
 {
     j.at("pgroups").get_to(p.pgroups);
     if (auto it = j.find("macro_extensions"); it != j.end())

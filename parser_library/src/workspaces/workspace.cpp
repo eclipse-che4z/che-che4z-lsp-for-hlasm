@@ -339,7 +339,7 @@ bool workspace::load_and_process_config()
     opened_ = true;
 
     config::pgm_conf pgm_config;
-    config::proc_conf proc_groups;
+    config::proc_grps proc_groups;
     file_ptr pgm_conf_file;
 
     bool load_ok = load_config(proc_groups, pgm_config, pgm_conf_file);
@@ -421,7 +421,7 @@ bool workspace::load_and_process_config()
 
     return true;
 }
-bool workspace::load_config(config::proc_conf& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file)
+bool workspace::load_config(config::proc_grps& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file)
 {
     std::filesystem::path hlasm_base = utils::path::join(uri_, HLASM_PLUGIN_FOLDER);
 
