@@ -13,6 +13,9 @@
  */
 
 #include <cassert>
+#include <charconv>
+#include <regex>
+#include <utility>
 
 #include "lexing/logical_line.h"
 #include "preprocessor.h"
@@ -225,16 +228,26 @@ class db2_preprocessor : public preprocessor
             }
         }
     }
-
-    static bool consume_exec_sql(std::string_view& l)
+    static bool consume_words(
+        std::string_view& l, std::initializer_list<std::string_view> words, bool tolerate_no_space_at_end = false)
     {
-        if (!consume(l, "EXEC"))
-            return false;
-        if (!remove_space(l))
-            return false;
-        if (!consume(l, "SQL"))
-            return false;
-        return remove_space(l);
+        const auto init_l = l;
+        for (const auto& w : words)
+        {
+            if (!consume(l, w))
+            {
+                l = init_l; // all or nothing
+                return false;
+            }
+            if (!remove_space(l))
+            {
+                if (tolerate_no_space_at_end && l.empty() && &w == words.end() - 1)
+                    return true;
+                l = init_l; // all or nothing
+                return false;
+            }
+        }
+        return true;
     }
 
     static bool is_end(std::string_view s)
@@ -246,14 +259,6 @@ class db2_preprocessor : public preprocessor
             return true;
 
         return false;
-    }
-
-    static bool consume_include(std::string_view& s)
-    {
-        if (!consume(s, "INCLUDE"))
-            return false;
-
-        return remove_space(s);
     }
 
     static std::string_view create_line_preview(std::string_view input)
@@ -289,45 +294,201 @@ class db2_preprocessor : public preprocessor
         return result;
     }
 
-    /* returns number of consumed lines */
-    size_t fill_buffer(std::string_view& input, size_t lineno, bool include_allowed)
+    enum class line_type
     {
-        using namespace std::literals;
+        ignore,
+        exec_sql,
+        include,
+        sql_type
+    };
 
-        std::string_view line_preview = create_line_preview(input);
+    static line_type consume_instruction(std::string_view& line_preview)
+    {
+        if (line_preview.empty())
+            return line_type::ignore;
 
-        if (ignore_line(line_preview))
-            return 0;
-
-        size_t first_line_skipped = line_preview.size();
-        std::string_view label = extract_label(line_preview);
-
-        if (!remove_space(line_preview))
-            return 0;
-
-        if (is_end(line_preview))
+        switch (line_preview.front())
         {
-            push_sql_working_storage();
+            case 'E':
+                if (consume_words(line_preview, { "EXEC", "SQL" }))
+                {
+                    if (consume_words(line_preview, { "INCLUDE" }))
+                        return line_type::include;
+                    else
+                        return line_type::exec_sql;
+                }
+                return line_type::ignore;
 
-            return 0;
+            case 'S':
+                if (consume_words(line_preview, { "SQL", "TYPE", "IS" }))
+                    return line_type::sql_type;
+                return line_type::ignore;
+
+            default:
+                return line_type::ignore;
         }
+    }
 
-        if (!consume_exec_sql(line_preview))
-            return 0;
-        if (!line_preview.empty())
-            first_line_skipped = line_preview.data() - input.data();
+    void add_ds_line(std::string_view label, std::string_view label_suffix, std::string_view type, bool align = true)
+    {
+        m_buffer.append(label)
+            .append(label_suffix)
+            .append(align && label.size() + label_suffix.size() < 8 ? 8 - (label.size() + label_suffix.size()) : 0, ' ')
+            .append(" DS ")
+            .append(align ? 2 + (type.front() != '0') : 0, ' ')
+            .append(type)
+            .append("\n");
+    };
 
-        // now we have a valid EXEC SQL line
+    struct lob_info_t
+    {
+        unsigned long long scale;
+        unsigned long long limit;
+        std::string prefix;
+    };
 
-        m_operands.clear();
-        m_logical_line.clear();
+    static lob_info_t lob_info(char type, char scale)
+    {
+        lob_info_t result;
+        switch (scale)
+        {
+            case 'K':
+                result.scale = 1024ull;
+                break;
+            case 'M':
+                result.scale = 1024ull * 1024;
+                break;
+            case 'G':
+                result.scale = 1024ull * 1024 * 1024;
+                break;
+            default:
+                result.scale = 1ull;
+                break;
+        }
+        switch (type)
+        {
+            case 'B':
+                result.limit = 65535;
+                result.prefix = "CL";
+                break;
+            case 'C':
+                result.limit = 65535;
+                result.prefix = "CL";
+                break;
+            case 'D':
+                result.limit = 65534;
+                result.prefix = "GL";
+                break;
+        }
+        return result;
+    }
 
-        bool extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
-        assert(extracted);
+    bool handle_lob(const std::regex& pattern, std::string_view label, std::string_view operands)
+    {
+        std::match_results<std::string_view::const_iterator> match;
+        if (!std::regex_match(operands.cbegin(), operands.cend(), match, pattern))
+            return false;
 
-        if (m_logical_line.continuation_error && m_diags)
-            m_diags->add_diagnostic(diagnostic_op::error_P0001(range(position(lineno, 0))));
+        switch (match[1].second[-1])
+        {
+            case 'E': // ..._FILE
+                add_ds_line(label, "", "0FL4");
+                add_ds_line(label, "_NAME_LENGTH", "FL4", false);
+                add_ds_line(label, "_DATA_LENGTH", "FL4", false);
+                add_ds_line(label, "_FILE_OPTIONS", "FL4", false);
+                add_ds_line(label, "_NAME", "CL255", false);
+                break;
 
+            case 'R': // ..._LOCATOR
+                add_ds_line(label, "", "FL4");
+                break;
+
+            default: {
+                const auto li = lob_info(*match[1].first, match[3].matched ? *match[3].first : 0);
+                unsigned long long len;
+                std::from_chars(&*match[2].first, &*match[2].first + match[2].length(), len);
+                len *= li.scale;
+
+                add_ds_line(label, "", "0FL4");
+                add_ds_line(label, "_LENGTH", "FL4", false);
+                add_ds_line(label, "_DATA", li.prefix + std::to_string(len <= li.limit ? len : li.limit), false);
+                if (len > li.limit)
+                    m_buffer
+                        .append(" ORG   *+(")
+                        // there seems be this strage artifical limit
+                        .append(std::to_string(std::min(len - li.limit, 1073676289ull)))
+                        .append(")\n");
+                break;
+            }
+        }
+        return true;
+    };
+
+    bool process_sql_type_operands(std::string_view operands, std::string_view label)
+    {
+        if (operands.size() < 2)
+            return false;
+
+        // keep the capture groups in sync
+        static const auto xml_type = std::regex(
+            "XML[ ]+AS[ ]+"
+            "(?:"
+            "(BINARY[ ]+LARGE[ ]+OBJECT|BLOB|CHARACTER[ ]+LARGE[ ]+OBJECT|CHAR[ ]+LARGE[ ]+OBJECT|CLOB|DBCLOB)"
+            "[ ]+([[:digit:]]{1,9})([KMG])?"
+            "|"
+            "(BLOB_FILE|CLOB_FILE|DBCLOB_FILE)"
+            ")"
+            "(?: .*)?");
+        static const auto lob_type = std::regex(
+            "(?:"
+            "(BINARY[ ]+LARGE[ ]+OBJECT|BLOB|CHARACTER[ ]+LARGE[ ]+OBJECT|CHAR[ ]+LARGE[ ]+OBJECT|CLOB|DBCLOB)"
+            "[ ]+([[:digit:]]{1,9})([KMG])?"
+            "|"
+            "(BLOB_FILE|CLOB_FILE|DBCLOB_FILE|BLOB_LOCATOR|CLOB_LOCATOR|DBCLOB_LOCATOR)"
+            ")"
+            "(?: .*)?");
+
+        static const auto table_like =
+            std::regex("TABLE[ ]+LIKE[ ]+('(?:[^']|'')+'|(?:[^']|'')+)[ ]+AS[ ]+LOCATOR(?: .*)?");
+
+        switch (operands[0])
+        {
+            case 'R':
+                switch (operands[1])
+                {
+                    case 'E':
+                        if (!consume_words(operands, { "RESULT_SET_LOCATOR", "VARYING" }, true))
+                            break;
+                        add_ds_line(label, "", "FL4");
+                        return true;
+
+                    case 'O':
+                        if (!consume_words(operands, { "ROWID" }, true))
+                            break;
+                        add_ds_line(label, "", "H,CL40");
+                        return true;
+                }
+                break;
+
+            case 'T':
+                if (!std::regex_match(operands.begin(), operands.end(), table_like))
+                    break;
+                add_ds_line(label, "", "FL4");
+                return true;
+
+            case 'X':
+                return handle_lob(xml_type, label, operands);
+
+            case 'B':
+            case 'C':
+            case 'D':
+                return handle_lob(lob_type, label, operands);
+        }
+        return false;
+    }
+
+    void process_regular_line(std::string_view label, size_t first_line_skipped)
+    {
         if (!label.empty())
             m_buffer.append(label).append(" DS 0H\n");
 
@@ -354,25 +515,110 @@ class db2_preprocessor : public preprocessor
             m_buffer.append("\n");
             m_operands.append(operand_part);
         }
+    }
 
-        std::string_view operands = m_operands;
-        bool is_include = false;
-        if (consume_include(operands))
+    void process_sql_type_line(size_t first_line_skipped)
+    {
+        m_buffer.append("***$$$\n");
+        m_buffer.append("*")
+            .append(m_logical_line.segments.front().code.substr(0, lexing::default_ictl.end - 1))
+            .append("\n");
+
+        for (const auto& segment : m_logical_line.segments)
         {
-            operands = trim_right(operands);
-
-            if (include_allowed)
-                is_include = true;
-            else if (m_diags)
-                m_diags->add_diagnostic(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
+            m_operands.append(segment.code.substr(first_line_skipped));
+            first_line_skipped = 0;
         }
 
-        if (is_include)
-            process_include(operands, lineno);
-        else
-            m_buffer.append("***$$$\n");
+        m_buffer.append("***$$$\n");
+    }
+
+    /* returns number of consumed lines */
+    size_t fill_buffer(std::string_view& input, size_t lineno, bool include_allowed)
+    {
+        using namespace std::literals;
+
+        std::string_view line_preview = create_line_preview(input);
+
+        if (ignore_line(line_preview))
+            return 0;
+
+        size_t first_line_skipped = line_preview.size();
+        std::string_view label = extract_label(line_preview);
+
+        if (!remove_space(line_preview))
+            return 0;
+
+        if (is_end(line_preview))
+        {
+            push_sql_working_storage();
+
+            return 0;
+        }
+
+        auto instruction = consume_instruction(line_preview);
+        if (instruction == line_type::ignore)
+            return 0;
+
+        if (!line_preview.empty())
+            first_line_skipped = line_preview.data() - input.data();
+
+        // now we have a valid line
+
+        m_operands.clear();
+        m_logical_line.clear();
+
+        bool extracted = lexing::extract_logical_line(m_logical_line, input, lexing::default_ictl);
+        assert(extracted);
+
+        if (m_logical_line.continuation_error && m_diags)
+            m_diags->add_diagnostic(diagnostic_op::error_P0001(range(position(lineno, 0))));
+
+        switch (instruction)
+        {
+            case line_type::exec_sql:
+                process_regular_line(label, first_line_skipped);
+                if (sql_has_codegen(m_operands))
+                    generate_sql_code_mock();
+                m_buffer.append("***$$$\n");
+                break;
+
+            case line_type::include:
+                process_regular_line(label, first_line_skipped);
+
+                if (std::string_view operands = trim_right(m_operands); include_allowed)
+                    process_include(operands, lineno);
+                else if (m_diags)
+                    m_diags->add_diagnostic(diagnostic_op::error_P0003(range(position(lineno, 0)), operands));
+                break;
+
+            case line_type::sql_type:
+                process_sql_type_line(first_line_skipped);
+                // DB2 preprocessor exhibits strange behavior when SQL TYPE line is continued
+                if (m_logical_line.segments.size() > 1 && m_diags)
+                    m_diags->add_diagnostic(diagnostic_op::error_P0005(range(position(lineno, 0))));
+                if (label.empty())
+                    label = " "; // best matches the observed behavior
+                if (!process_sql_type_operands(m_operands, label) && m_diags)
+                    m_diags->add_diagnostic(diagnostic_op::error_P0004(range(position(lineno, 0))));
+                break;
+        }
 
         return m_logical_line.segments.size();
+    }
+
+    static bool sql_has_codegen(std::string_view sql)
+    {
+        // handles only the most obvious cases (imprecisely)
+        static const auto no_code_statements = std::regex("(?:DECLARE|WHENEVER)(?: .*)?", std::regex_constants::icase);
+        return !std::regex_match(sql.begin(), sql.end(), no_code_statements);
+    }
+    void generate_sql_code_mock()
+    {
+        // this function generates non-realistic sql statement replacement code, because people do strange things...
+        m_buffer.append("         LA    15,SQLCA      \n"
+                        "         L     15,=V(DSNHLI) \n"
+                        "         BALR  14,15         \n");
     }
 
     // Inherited via preprocessor

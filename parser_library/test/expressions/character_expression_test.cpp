@@ -73,14 +73,13 @@ TEST(character_expresssion, invalid_substring_notation)
         R"(
 &C SETC 'ABC'(0,1)
 &C SETC 'ABCDE'(7,3)
-&C SETC 'ABCDE'(6,*)
 &C SETC 'ABCDE'(3,-2)
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)4);
+    ASSERT_EQ(a.diags().size(), (size_t)3);
 }
 
 /*TODO uncomment when assembler options will be implemented
@@ -155,4 +154,20 @@ TEST(character_expresssion, single_operand_with_spaces)
     SETCEQ("C1", "A");
     SETCEQ("C2", "A");
     SETCEQ("C3", "A");
+}
+
+TEST(character_expresssion, zero_length_substring)
+{
+    std::string input = R"(
+     LCLC &EMPTY
+&C1  SETC '&EMPTY'(0,0)
+&C2  SETC '&EMPTY'(1,0)
+&C3  SETC '&EMPTY'(2,0)
+&C4  SETC 'ABCDE'(6,*)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }

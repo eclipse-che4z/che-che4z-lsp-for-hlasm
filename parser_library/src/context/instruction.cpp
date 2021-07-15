@@ -536,8 +536,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "X", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 738);
     add_machine_instr(result, "XY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
     add_machine_instr(result, "XG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 738);
-    add_machine_instr(result, "XI", mach_format::SI, { db_12_4_U, imm_8_S }, 739);
-    add_machine_instr(result, "XIY", mach_format::SIY, { db_20_4_S, imm_8_S }, 739);
+    add_machine_instr(result, "XI", mach_format::SI, { db_12_4_U, imm_8_U }, 739);
+    add_machine_instr(result, "XIY", mach_format::SIY, { db_20_4_S, imm_8_U }, 739);
     add_machine_instr(result, "XC", mach_format::SS_a, { db_12_8x4L_U, db_20_4_S }, 739);
     add_machine_instr(result, "EX", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 740);
     add_machine_instr(result, "XIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 740);
