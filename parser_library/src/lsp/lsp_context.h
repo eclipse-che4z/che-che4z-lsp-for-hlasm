@@ -32,7 +32,7 @@ class lsp_context final : public feature_provider
     std::shared_ptr<context::hlasm_context> hlasm_ctx_;
 
 public:
-    lsp_context(std::shared_ptr<context::hlasm_context> h_ctx);
+    explicit lsp_context(std::shared_ptr<context::hlasm_context> h_ctx);
 
     void add_copy(context::copy_member_ptr copy, text_data_ref_t text_data);
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());

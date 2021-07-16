@@ -151,19 +151,19 @@ namespace {
 class empty_feature_provider final : public lsp::feature_provider
 {
     // Inherited via feature_provider
-    virtual location definition(const std::string& document_uri, position pos) const override
+    location definition(const std::string& document_uri, position pos) const override
     {
         return location(pos, document_uri);
     }
-    virtual location_list references(const std::string& document_uri, position pos) const override
+    location_list references(const std::string& document_uri, position pos) const override
     {
         return location_list();
     }
-    virtual lsp::hover_result hover(const std::string& document_uri, position pos) const override
+    lsp::hover_result hover(const std::string& document_uri, position pos) const override
     {
         return lsp::hover_result();
     }
-    virtual lsp::completion_list_s completion(const std::string& document_uri,
+    lsp::completion_list_s completion(const std::string& document_uri,
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override
