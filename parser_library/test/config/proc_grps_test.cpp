@@ -16,12 +16,12 @@
 
 #include "gtest/gtest.h"
 
-#include "config/proc_conf.h"
+#include "config/proc_grps.h"
 #include "nlohmann/json.hpp"
 
 using namespace hlasm_plugin::parser_library::config;
 
-TEST(proc_conf, library_read)
+TEST(proc_grps, library_read)
 {
     const auto cases = {
         std::make_pair(R"("lib")"_json, library { "lib", {}, false }),
@@ -39,7 +39,7 @@ TEST(proc_conf, library_read)
     }
 }
 
-TEST(proc_conf, library_write)
+TEST(proc_grps, library_write)
 {
     const library l = { "lib", {}, true };
     const auto expected = R"({"path":"lib","optional":true})"_json;
@@ -47,7 +47,7 @@ TEST(proc_conf, library_write)
     EXPECT_EQ(nlohmann::json(l), expected);
 }
 
-TEST(proc_conf, assembler_options_read)
+TEST(proc_grps, assembler_options_read)
 {
     const auto cases = {
         std::make_pair(R"({})"_json, assembler_options {}),
@@ -64,7 +64,7 @@ TEST(proc_conf, assembler_options_read)
     }
 }
 
-TEST(proc_conf, assembler_options_write)
+TEST(proc_grps, assembler_options_write)
 {
     const auto cases = {
         std::make_pair(R"({})"_json, assembler_options {}),
@@ -77,7 +77,7 @@ TEST(proc_conf, assembler_options_write)
         EXPECT_EQ(nlohmann::json(input), expected);
 }
 
-static void compare_proc_conf(const proc_conf& pg, const proc_conf& expected)
+static void compare_proc_grps(const proc_grps& pg, const proc_grps& expected)
 {
     ASSERT_EQ(pg.pgroups.size(), expected.pgroups.size());
     for (size_t i = 0; i < pg.pgroups.size(); ++i)
@@ -96,68 +96,68 @@ static void compare_proc_conf(const proc_conf& pg, const proc_conf& expected)
     }
 }
 
-TEST(proc_conf, full_content_read)
+TEST(proc_grps, full_content_read)
 {
     const auto cases = {
-        std::make_pair(R"({"pgroups":[]})"_json, proc_conf {}),
+        std::make_pair(R"({"pgroups":[]})"_json, proc_grps {}),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":["lib1", {"path": "lib2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } } } }),
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":["lib1", {"path": "lib2", "optional":true}]},{"name":"P2", "libs":["lib2_1", {"path": "lib2_2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } },
                 { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":["lib1", {"path": "lib2", "optional":true}],"asm_options":{"SYSPARM":"PARAM","PROFILE":"PROFMAC"}},{"name":"P2", "libs":["lib2_1", {"path": "lib2_2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } }, { "PARAM", "PROFMAC" } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } }, { "PARAM", "PROFMAC" } },
                 { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":["lib1", {"path": "lib2", "optional":true,"macro_extensions":["mac"]}],"asm_options":{"SYSPARM":"PARAM","PROFILE":"PROFMAC"}},{"name":"P2", "libs":["lib2_1", {"path": "lib2_2", "optional":true}]}],"macro_extensions":["asmmac"]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
         std::make_pair(
-            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_conf { { { "P1", {}, {}, std::monostate {} } } }),
+            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
-            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
-            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
     };
 
     for (const auto& [input, expected] : cases)
-        compare_proc_conf(input.get<proc_conf>(), expected);
+        compare_proc_grps(input.get<proc_grps>(), expected);
 }
 
-TEST(proc_conf, full_content_write)
+TEST(proc_grps, full_content_write)
 {
     const auto cases = {
-        std::make_pair(R"({"pgroups":[]})"_json, proc_conf {}),
+        std::make_pair(R"({"pgroups":[]})"_json, proc_grps {}),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[{"path":"lib1","optional":false}, {"path": "lib2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } } } }),
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[{"path":"lib1","optional":false}, {"path": "lib2", "optional":true}]},{"name":"P2", "libs":[{"path":"lib2_1","optional":false}, {"path": "lib2_2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } } },
                 { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[{"path":"lib1","optional":false}, {"path": "lib2", "optional":true}],"asm_options":{"SYSPARM":"PARAM","PROFILE":"PROFMAC"}},{"name":"P2", "libs":[{"path":"lib2_1","optional":false}, {"path": "lib2_2", "optional":true}]}]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } }, { "PARAM", "PROFMAC" } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", {}, true } }, { "PARAM", "PROFMAC" } },
                 { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } } }),
         std::make_pair(
             R"({"pgroups":[{"name":"P1", "libs":[{"path":"lib1","optional":false}, {"path": "lib2", "optional":true,"macro_extensions":["mac"]}],"asm_options":{"SYSPARM":"PARAM","PROFILE":"PROFMAC"}},{"name":"P2", "libs":[{"path":"lib2_1","optional":false}, {"path": "lib2_2", "optional":true}]}],"macro_extensions":["asmmac"]})"_json,
-            proc_conf { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
+            proc_grps { { { "P1", { { "lib1", {}, false }, { "lib2", { "mac" }, true } }, { "PARAM", "PROFMAC" } },
                             { "P2", { { "lib2_1", {}, false }, { "lib2_2", {}, true } } } },
                 { "asmmac" } }),
         std::make_pair(
-            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_conf { { { "P1", {}, {}, std::monostate {} } } }),
+            R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
-            proc_conf { { { "P1", {}, {}, db2_preprocessor {} } } }),
+            proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
     };
 
     for (const auto& [expected, input] : cases)
         EXPECT_EQ(nlohmann::json(input), expected);
 }
 
-TEST(proc_conf, invalid)
+TEST(proc_grps, invalid)
 {
     const auto cases = {
         R"({})"_json,
@@ -172,10 +172,10 @@ TEST(proc_conf, invalid)
     };
 
     for (const auto& input : cases)
-        EXPECT_THROW(input.get<proc_conf>(), nlohmann::json::exception);
+        EXPECT_THROW(input.get<proc_grps>(), nlohmann::json::exception);
 }
 
-TEST(proc_conf, assembler_options_validate)
+TEST(proc_grps, assembler_options_validate)
 {
     const auto cases = {
         std::make_pair(assembler_options {}, true),

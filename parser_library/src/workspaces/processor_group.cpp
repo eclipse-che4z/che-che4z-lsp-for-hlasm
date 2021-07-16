@@ -14,7 +14,7 @@
 
 #include "processor_group.h"
 
-#include "config/proc_conf.h"
+#include "config/proc_grps.h"
 
 namespace hlasm_plugin::parser_library::workspaces {
 

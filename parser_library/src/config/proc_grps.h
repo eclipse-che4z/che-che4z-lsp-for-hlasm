@@ -12,8 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
-#define HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
+#ifndef HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H
+#define HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H
 
 #include <optional>
 #include <string>
@@ -68,14 +68,14 @@ struct processor_group
 void to_json(nlohmann::json& j, const processor_group& p);
 void from_json(const nlohmann::json& j, processor_group& p);
 
-struct proc_conf
+struct proc_grps
 {
     std::vector<processor_group> pgroups;
     std::vector<std::string> macro_extensions;
 };
-void to_json(nlohmann::json& j, const proc_conf& p);
-void from_json(const nlohmann::json& j, proc_conf& p);
+void to_json(nlohmann::json& j, const proc_grps& p);
+void from_json(const nlohmann::json& j, proc_grps& p);
 
 } // namespace hlasm_plugin::parser_library::config
 
-#endif // HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
+#endif // HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H

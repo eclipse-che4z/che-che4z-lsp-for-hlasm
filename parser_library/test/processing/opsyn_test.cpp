@@ -279,3 +279,41 @@ LR OPSYN
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(OPSYN, tolerate_comma_argument)
+{
+    std::string input(R"(
+LR OPSYN ,
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(OPSYN, full_circle)
+{
+    std::string input(R"(
+         GBLA  &CNT
+XDS      OPSYN DS
+DS       OPSYN ,
+
+         MACRO ,
+&Label   DS
+         GBLA  &CNT
+&CNT     SETA  &CNT+1
+         MEND  ,
+
+A        DS    C
+
+DS       OPSYN XDS
+XDS      OPSYN ,
+
+B        DS    C
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "CNT"), 1);
+}
