@@ -96,48 +96,6 @@ private:
     void process_empty(const semantics::complete_statement&);
 };
 
-template<typename T>
-inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
-{
-    std::vector<expressions::ca_expression*> expr_values;
-    auto [set_symbol, name, index] = get_SET_symbol<T>(stmt);
-
-    if (!set_symbol)
-        return;
-
-    if (!prepare_SET_operands(stmt, expr_values))
-        return;
-
-    for (size_t i = 0; i < expr_values.size(); i++)
-    {
-        // first obtain a place to put the result in
-        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index - 1 + i);
-        // then evaluate the new value and save it
-        val = expr_values[i]->template evaluate<T>(eval_ctx);
-    }
-}
-
-template<typename T, bool global>
-inline void ca_processor::process_GBL_LCL(const semantics::complete_statement& stmt)
-{
-    register_seq_sym(stmt);
-
-    std::vector<context::id_index> ids;
-    std::vector<bool> scalar_info;
-    bool ok = prepare_GBL_LCL(stmt, ids, scalar_info);
-
-    if (!ok)
-        return;
-
-    for (size_t i = 0; i < ids.size(); ++i)
-    {
-        if (global)
-            hlasm_ctx.create_global_variable<T>(ids[i], scalar_info[i]);
-        else
-            hlasm_ctx.create_local_variable<T>(ids[i], scalar_info[i]);
-    }
-}
-
 } // namespace hlasm_plugin::parser_library::processing
 
 #endif
