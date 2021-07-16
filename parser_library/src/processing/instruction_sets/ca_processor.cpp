@@ -89,81 +89,68 @@ void ca_processor::register_seq_sym(const semantics::complete_statement& stmt)
     }
 }
 
-bool ca_processor::test_symbol_for_assignment(const semantics::variable_symbol* symbol,
-    context::SET_t_enum type,
-    int& idx,
-    context::set_symbol_base*& set_symbol,
-    context::id_index& name)
+template<typename T>
+ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_statement& stmt)
 {
-    set_symbol = nullptr;
-    idx = -1;
+    if (stmt.label_ref().type != semantics::label_si_type::VAR)
+    {
+        add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
+        return {};
+    }
 
-    auto [tmp_name, subscript] = symbol->evaluate_symbol(eval_ctx);
-    name = tmp_name;
+    auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
+
+    int index = -1;
+
+    auto [name, subscript] = symbol->evaluate_symbol(eval_ctx);
 
     auto var_symbol = hlasm_ctx.get_var_sym(name);
 
     if (var_symbol && var_symbol->access_macro_param_base())
     {
         add_diagnostic(diagnostic_op::error_E030("symbolic parameter", symbol->symbol_range));
-        return false;
+        return {};
     }
 
     if (subscript.size() > 1)
     {
         add_diagnostic(diagnostic_op::error_E020("variable symbol subscript", symbol->symbol_range));
-        return false;
+        return {};
     }
     else if (subscript.size() == 1)
     {
-        idx = symbol->subscript.front()->evaluate<context::A_t>(eval_ctx);
+        index = symbol->subscript.front()->evaluate<context::A_t>(eval_ctx);
 
         if (subscript.front() < 1)
         {
             add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol->symbol_range));
-            return false;
+            return {};
         }
     }
 
     if (!var_symbol)
-        return true;
+        return { hlasm_ctx.create_local_variable<T>(name, index == -1).get(), name, index };
 
     auto set_sym = var_symbol->access_set_symbol_base();
     assert(set_sym);
-    if (set_sym->type != type)
+    if (set_sym->type != context::object_traits<T>::type_enum)
     {
         add_diagnostic(diagnostic_op::error_E013("wrong type of variable symbol", symbol->symbol_range));
-        return false;
+        return {};
     }
 
     if ((set_sym->is_scalar && symbol->subscript.size() == 1) || (!set_sym->is_scalar && symbol->subscript.size() == 0))
     {
         add_diagnostic(diagnostic_op::error_E013("subscript error", symbol->symbol_range));
-        return false;
+        return {};
     }
 
-    set_symbol = set_sym;
-    return true;
+    return { set_sym, name, index };
 }
 
-bool ca_processor::prepare_SET_symbol(const semantics::complete_statement& stmt,
-    context::SET_t_enum type,
-    int& idx,
-    context::set_symbol_base*& set_symbol,
-    context::id_index& name)
-{
-    if (stmt.label_ref().type != semantics::label_si_type::VAR)
-    {
-        add_diagnostic(diagnostic_op::error_E010("label", stmt.label_ref().field_range));
-        return false;
-    }
-
-    auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
-
-    auto ok = test_symbol_for_assignment(symbol, type, idx, set_symbol, name);
-
-    return ok;
-}
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::A_t>(const semantics::complete_statement& stmt);
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::B_t>(const semantics::complete_statement& stmt);
+template ca_processor::SET_info ca_processor::get_SET_symbol<context::C_t>(const semantics::complete_statement& stmt);
 
 bool ca_processor::prepare_SET_operands(
     const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values)
@@ -558,17 +545,10 @@ void ca_processor::process_AREAD(const semantics::complete_statement& stmt)
         return;
     }
 
-    int index;
-    context::id_index name;
-    context::set_symbol_base* set_symbol;
-
-    bool ok = prepare_SET_symbol(stmt, context::SET_t_enum::C_TYPE, index, set_symbol, name);
-
-    if (!ok)
-        return;
+    auto [set_symbol, name, index] = get_SET_symbol<context::C_t>(stmt);
 
     if (!set_symbol)
-        set_symbol = hlasm_ctx.create_local_variable<context::C_t>(name, index == -1).get();
+        return;
 
     constexpr const auto since_midnight = []() -> std::chrono::nanoseconds {
         using namespace std::chrono;

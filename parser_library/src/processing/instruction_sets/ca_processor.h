@@ -49,16 +49,15 @@ private:
 
     void register_seq_sym(const semantics::complete_statement& stmt);
 
-    bool test_symbol_for_assignment(const semantics::variable_symbol* symbol,
-        context::SET_t_enum type,
-        int& idx,
-        context::set_symbol_base*& set_symbol,
-        context::id_index& name);
-    bool prepare_SET_symbol(const semantics::complete_statement& stmt,
-        context::SET_t_enum type,
-        int& idx,
-        context::set_symbol_base*& set_symbol,
-        context::id_index& name);
+    struct SET_info
+    {
+        context::set_symbol_base* symbol;
+        context::id_index name;
+        int index;
+    };
+
+    template<typename T>
+    SET_info get_SET_symbol(const semantics::complete_statement& stmt);
     bool prepare_SET_operands(
         const semantics::complete_statement& stmt, std::vector<expressions::ca_expression*>& expr_values);
 
@@ -101,20 +100,12 @@ template<typename T>
 inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
 {
     std::vector<expressions::ca_expression*> expr_values;
-    int index;
-    context::id_index name;
-    context::set_symbol_base* set_symbol;
-    bool ok = prepare_SET_symbol(stmt, context::object_traits<T>::type_enum, index, set_symbol, name);
-
-    if (!ok)
-        return;
+    auto [set_symbol, name, index] = get_SET_symbol<T>(stmt);
 
     if (!set_symbol)
-        set_symbol = hlasm_ctx.create_local_variable<T>(name, index == -1).get();
+        return;
 
-    ok = prepare_SET_operands(stmt, expr_values);
-
-    if (!ok)
+    if (!prepare_SET_operands(stmt, expr_values))
         return;
 
     for (size_t i = 0; i < expr_values.size(); i++)
