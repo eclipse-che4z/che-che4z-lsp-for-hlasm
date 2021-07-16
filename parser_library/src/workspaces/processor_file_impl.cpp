@@ -155,10 +155,7 @@ class empty_feature_provider final : public lsp::feature_provider
     {
         return location(pos, document_uri);
     }
-    location_list references(const std::string& document_uri, position pos) const override
-    {
-        return location_list();
-    }
+    location_list references(const std::string& document_uri, position pos) const override { return location_list(); }
     lsp::hover_result hover(const std::string& document_uri, position pos) const override
     {
         return lsp::hover_result();
