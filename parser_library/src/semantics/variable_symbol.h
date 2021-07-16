@@ -53,12 +53,12 @@ struct variable_symbol
     std::vector<context::A_t> evaluate_subscript(const expressions::evaluation_context& eval_ctx) const;
     context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
+    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
+
     virtual ~variable_symbol() = default;
 
 protected:
     variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
-
-    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
 };
 
 struct basic_variable_symbol : variable_symbol

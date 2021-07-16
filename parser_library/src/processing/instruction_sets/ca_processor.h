@@ -109,7 +109,12 @@ inline void ca_processor::process_SET(const semantics::complete_statement& stmt)
         return;
 
     for (size_t i = 0; i < expr_values.size(); i++)
-        set_symbol->access_set_symbol<T>()->set_value(expr_values[i]->evaluate<T>(eval_ctx), index - 1 + i);
+    {
+        // first obtain a place to put the result in
+        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index - 1 + i);
+        // then evaluate the new value and save it
+        val = expr_values[i]->template evaluate<T>(eval_ctx);
+    }
 }
 
 template<typename T, bool global>

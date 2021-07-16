@@ -99,53 +99,57 @@ ca_processor::SET_info ca_processor::get_SET_symbol(const semantics::complete_st
     }
 
     auto symbol = std::get<semantics::vs_ptr>(stmt.label_ref().value).get();
+    bool is_scalar_expression = symbol->subscript.empty();
 
     int index = -1;
 
-    auto [name, subscript] = symbol->evaluate_symbol(eval_ctx);
+    auto name = symbol->evaluate_name(eval_ctx);
 
-    auto var_symbol = hlasm_ctx.get_var_sym(name);
+    context::set_symbol_base* set_sym = nullptr;
 
-    if (var_symbol && var_symbol->access_macro_param_base())
+    if (auto var_symbol = hlasm_ctx.get_var_sym(name); var_symbol)
     {
-        add_diagnostic(diagnostic_op::error_E030("symbolic parameter", symbol->symbol_range));
-        return {};
-    }
+        if (var_symbol->access_macro_param_base())
+        {
+            add_diagnostic(diagnostic_op::error_E030("symbolic parameter", symbol->symbol_range));
+            return {};
+        }
 
-    if (subscript.size() > 1)
+        set_sym = var_symbol->access_set_symbol_base();
+        assert(set_sym);
+        if (set_sym->type != context::object_traits<T>::type_enum)
+        {
+            add_diagnostic(diagnostic_op::error_E013("wrong type of variable symbol", symbol->symbol_range));
+            return {};
+        }
+    }
+    else
+        set_sym = hlasm_ctx.template create_local_variable<T>(name, is_scalar_expression)->access_set_symbol_base();
+
+    if (symbol->subscript.size() > 1)
     {
         add_diagnostic(diagnostic_op::error_E020("variable symbol subscript", symbol->symbol_range));
         return {};
     }
-    else if (subscript.size() == 1)
+
+    if (!is_scalar_expression)
     {
         index = symbol->subscript.front()->evaluate<context::A_t>(eval_ctx);
 
-        if (subscript.front() < 1)
+        if (index < 1)
         {
             add_diagnostic(diagnostic_op::error_E012("subscript value has to be 1 or more", symbol->symbol_range));
             return {};
         }
     }
 
-    if (!var_symbol)
-        return { hlasm_ctx.create_local_variable<T>(name, index == -1).get(), name, index };
-
-    auto set_sym = var_symbol->access_set_symbol_base();
-    assert(set_sym);
-    if (set_sym->type != context::object_traits<T>::type_enum)
-    {
-        add_diagnostic(diagnostic_op::error_E013("wrong type of variable symbol", symbol->symbol_range));
-        return {};
-    }
-
-    if ((set_sym->is_scalar && symbol->subscript.size() == 1) || (!set_sym->is_scalar && symbol->subscript.size() == 0))
+    if (set_sym->is_scalar ^ is_scalar_expression)
     {
         add_diagnostic(diagnostic_op::error_E013("subscript error", symbol->symbol_range));
         return {};
     }
 
-    return { set_sym, name, index };
+    return SET_info { set_sym, name, index };
 }
 
 template ca_processor::SET_info ca_processor::get_SET_symbol<context::A_t>(const semantics::complete_statement& stmt);
