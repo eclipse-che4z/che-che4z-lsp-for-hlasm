@@ -50,6 +50,7 @@ struct variable_symbol
     const created_variable_symbol* access_created() const;
 
     vs_eval evaluate_symbol(const expressions::evaluation_context& eval_ctx) const;
+    std::vector<context::A_t> evaluate_subscript(const expressions::evaluation_context& eval_ctx) const;
     context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
     virtual ~variable_symbol() = default;
