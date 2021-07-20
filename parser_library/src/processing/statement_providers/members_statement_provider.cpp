@@ -41,7 +41,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
         return nullptr;
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { ctx, lib_provider }, listener))
+        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { *ctx.hlasm_ctx, lib_provider }, listener))
         return nullptr;
 
     context::shared_stmt_ptr stmt;
@@ -61,7 +61,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
 
 
     if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(*stmt, { ctx, lib_provider }, listener))
+        && try_trigger_attribute_lookahead(*stmt, { *ctx.hlasm_ctx, lib_provider }, listener))
         return nullptr;
 
     return stmt;

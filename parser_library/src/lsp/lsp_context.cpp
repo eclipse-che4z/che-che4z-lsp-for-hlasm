@@ -81,6 +81,10 @@ void lsp_context::add_file(file_info file_i)
     files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
+lsp_context::lsp_context(std::shared_ptr<context::hlasm_context> h_ctx)
+    : hlasm_ctx_(std::move(h_ctx))
+{}
+
 void lsp_context::add_copy(context::copy_member_ptr copy, text_data_ref_t text_data)
 {
     add_file(file_info(std::move(copy), std::move(text_data)));
@@ -97,7 +101,7 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
 void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data)
 {
     opencode_ = std::move(opencode_i);
-    add_file(file_info(opencode_->hlasm_ctx.opencode_file_name(), std::move(text_data)));
+    add_file(file_info(hlasm_ctx_->opencode_file_name(), std::move(text_data)));
 
     // distribute all occurences as all files are present
     for (const auto& [_, m] : macros_)
@@ -108,13 +112,9 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
 {
-    // Opencode may be empty, if parsing was interrupted by cancellation token, or when this function is called in the
-    // middle of processing
-    if (!opencode_)
-        return nullptr;
     // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
-    auto it = opencode_->hlasm_ctx.macros().find(macro_name);
-    if (it == opencode_->hlasm_ctx.macros().end())
+    auto it = hlasm_ctx_->macros().find(macro_name);
+    if (it == hlasm_ctx_->macros().end())
         return nullptr;
     else
         return macros_.at(it->second);
@@ -247,7 +247,7 @@ completion_list_s lsp_context::complete_seq(const file_info& file, position pos)
     auto macro_i = file.find_scope(pos);
 
     const context::label_storage& seq_syms =
-        macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+        macro_i ? macro_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
 
     completion_list_s items;
     for (const auto& [_, sym] : seq_syms)
@@ -396,15 +396,14 @@ std::optional<location> lsp_context::find_definition_location(
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return sym->symbol_location;
             break;
         }
         case lsp::occurence_kind::SEQ: {
-            const context::label_storage& seq_syms = macro_scope_i
-                ? macro_scope_i->macro_definition->labels
-                : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+            const context::label_storage& seq_syms =
+                macro_scope_i ? macro_scope_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
             if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
                 return sym->second->symbol_location;
             break;
@@ -453,7 +452,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return hover_text(*sym);
             break;

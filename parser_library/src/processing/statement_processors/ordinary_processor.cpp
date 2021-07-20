@@ -29,7 +29,7 @@ ordinary_processor::ordinary_processor(analyzing_context ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code)
     : statement_processor(processing_kind::ORDINARY, ctx)
-    , eval_ctx { ctx, lib_provider }
+    , eval_ctx { *ctx.hlasm_ctx, lib_provider }
     , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
     , mac_proc_(ctx, branch_provider, lib_provider)
     , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code)

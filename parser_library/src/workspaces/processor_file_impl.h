@@ -54,7 +54,7 @@ public:
 
 private:
     std::unique_ptr<analyzer> opencode_analyzer_;
-    const analyzer* last_analyzer_;
+    const analyzer* last_analyzer_ = nullptr;
 
     bool parse_inner(analyzer&);
 

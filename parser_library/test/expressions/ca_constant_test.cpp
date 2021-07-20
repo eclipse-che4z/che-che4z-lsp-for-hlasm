@@ -23,9 +23,8 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
-    evaluation_context eval_ctx { analyzing_context { std::make_shared<context::hlasm_context>(),
-                                      std::make_shared<lsp::lsp_context>() },
-        workspaces::empty_parse_lib_provider::instance };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     ca_constant c(1, range());
 

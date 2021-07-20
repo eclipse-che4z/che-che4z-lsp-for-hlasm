@@ -22,6 +22,7 @@
 #include "file_with_text.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
+#include "workspaces/workspace.h"
 
 
 using namespace hlasm_plugin::parser_library;
@@ -101,12 +102,12 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
 
 analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
 {
+    auto hlasm_ctx = std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids));
     analyzing_context new_ctx {
-        std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids)),
-        std::make_shared<lsp::lsp_context>(),
+        hlasm_ctx,
+        std::make_shared<lsp::lsp_context>(hlasm_ctx),
     };
-    lsp::opencode_info_ptr oip =
-        std::make_unique<lsp::opencode_info>(*new_ctx.hlasm_ctx, lsp::vardef_storage(), lsp::file_occurences_t {});
+    lsp::opencode_info_ptr oip = std::make_unique<lsp::opencode_info>(lsp::vardef_storage(), lsp::file_occurences_t {});
     new_ctx.lsp_ctx->add_opencode(std::move(oip), lsp::text_data_ref_t(""));
 
     return new_ctx;
@@ -304,6 +305,47 @@ MAC OPSYN AREAD
     EXPECT_EQ(state, expected);
 }
 
+namespace {
+std::optional<diagnostic_s> find_diag_with_filename(
+    const std::vector<diagnostic_s>& diags, const std::string& file_name)
+{
+    auto macro_diag =
+        std::find_if(diags.begin(), diags.end(), [&](const diagnostic_s& d) { return d.file_name == file_name; });
+    if (macro_diag == diags.end())
+        return std::nullopt;
+    else
+        return *macro_diag;
+}
+
+struct files_parse_lib_provider : public parse_lib_provider
+{
+    file_manager* file_mngr;
+    files_parse_lib_provider(file_manager& mngr)
+        : file_mngr(&mngr)
+    {}
+    virtual parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
+    {
+        auto macro = file_mngr->add_processor_file(library);
+        if (!macro)
+            return false;
+        return macro->parse_macro(*this, std::move(ctx), std::move(data));
+    }
+    virtual bool has_library(const std::string& library, const std::string& program) const override
+    {
+        return file_mngr->find(library) != nullptr;
+    }
+    virtual std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string* file_uri) const override
+    {
+        auto macro = file_mngr->add_processor_file(library);
+        if (!macro)
+            return std::nullopt;
+        return macro->get_text();
+    }
+};
+
+} // namespace
+
 TEST(macro_cache_test, overwrite_by_inline)
 {
     std::string opencode_file_name = "opencode";
@@ -318,7 +360,7 @@ TEST(macro_cache_test, overwrite_by_inline)
        
        MAC
 )";
-    std::string macro_file_name = "lib/MAC";
+    std::string macro_file_name = "MAC";
     std::string macro_text =
         R"( MACRO
        MAC
@@ -326,28 +368,28 @@ TEST(macro_cache_test, overwrite_by_inline)
        MEND
 )";
 
-    file_manager_cache_test_mock file_mngr;
-    auto opencode = file_mngr.add_opencode(opencode_file_name, opencode_text);
-    auto& [macro, macro_c] = file_mngr.add_macro_or_copy(macro_file_name, macro_text);
+    file_manager_impl file_mngr;
+    lib_config global_config;
+    files_parse_lib_provider lib_provider(file_mngr);
 
-    opencode->parse(file_mngr, {}, {});
+    file_mngr.did_open_file(opencode_file_name, 0, opencode_text);
+    file_mngr.did_open_file(macro_file_name, 0, macro_text);
+    auto opencode = file_mngr.add_processor_file(opencode_file_name);
+
+    opencode->parse(lib_provider, {}, {});
     opencode->collect_diags();
+
+    EXPECT_EQ(opencode->diags().size(), 2U);
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_name));
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_name));
+
     opencode->diags().clear();
 
-    opencode->parse(file_mngr, {}, {});
+    opencode->parse(lib_provider, {}, {});
     opencode->collect_diags();
     EXPECT_EQ(opencode->diags().size(), 2U);
-
-
-    auto macro_diag = std::find_if(opencode->diags().begin(), opencode->diags().end(), [&](const diagnostic_s& d) {
-        return d.file_name == macro_file_name;
-    });
-    EXPECT_NE(macro_diag, opencode->diags().end());
-
-    auto opencode_diag = std::find_if(opencode->diags().begin(), opencode->diags().end(), [&](const diagnostic_s& d) {
-        return d.file_name == opencode_file_name;
-    });
-    EXPECT_NE(opencode_diag, opencode->diags().end());
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), macro_file_name));
+    EXPECT_TRUE(find_diag_with_filename(opencode->diags(), opencode_file_name));
 }
 
 TEST(macro_cache_test, inline_depends_on_copy)

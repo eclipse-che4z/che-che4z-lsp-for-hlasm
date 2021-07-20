@@ -113,8 +113,8 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
 
 void lsp_analyzer::opencode_finished()
 {
-    lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(
-                              hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)),
+    lsp_ctx_.add_opencode(
+        std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurences_)),
         lsp::text_data_ref_t(file_text_));
 }
 

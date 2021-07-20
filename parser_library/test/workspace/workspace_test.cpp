@@ -80,7 +80,6 @@ TEST_F(workspace_test, parse_lib_provider)
 
     file_mngr.add_processor_file("test\\library\\test_wks\\correct");
 
-    auto lsp_ptr = std::make_shared<lsp::lsp_context>();
     auto [ctx_1, ctx_2] = [&ws]() {
         if (platform::is_windows())
         {
@@ -102,7 +101,7 @@ TEST_F(workspace_test, parse_lib_provider)
     diags().clear();
 
     ws.parse_library("MACRO1",
-        analyzing_context { ctx_1, lsp_ptr },
+        analyzing_context { ctx_1, std::make_shared<lsp::lsp_context>(ctx_1) },
         library_data { processing::processing_kind::MACRO, ctx_1->ids().add("MACRO1") });
 
     // test, that macro1 is parsed, once we are able to parse macros (mby in ctx)
@@ -111,7 +110,7 @@ TEST_F(workspace_test, parse_lib_provider)
     EXPECT_EQ(diags().size(), (size_t)0);
 
     ws.parse_library("not_existing",
-        analyzing_context { ctx_2, lsp_ptr },
+        analyzing_context { ctx_2, std::make_shared<lsp::lsp_context>(ctx_2) },
         library_data { processing::processing_kind::MACRO, ctx_2->ids().add("not_existing") });
 }
 

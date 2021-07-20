@@ -29,7 +29,11 @@ class lsp_context final : public feature_provider
     std::unordered_map<std::string, file_info_ptr> files_;
     std::unordered_map<context::macro_def_ptr, macro_info_ptr> macros_;
 
+    std::shared_ptr<context::hlasm_context> hlasm_ctx_;
+
 public:
+    explicit lsp_context(std::shared_ptr<context::hlasm_context> h_ctx);
+
     void add_copy(context::copy_member_ptr copy, text_data_ref_t text_data);
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);

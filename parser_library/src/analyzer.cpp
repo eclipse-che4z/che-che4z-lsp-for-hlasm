@@ -27,11 +27,12 @@ analyzing_context& analyzer_options::get_context()
 {
     if (std::holds_alternative<asm_option>(ctx_source))
     {
+        auto h_ctx = std::make_shared<context::hlasm_context>(file_name,
+            std::move(std::get<asm_option>(ctx_source)),
+            ids_init.has_value() ? std::move(*ids_init) : id_storage {});
         ctx_source = analyzing_context {
-            std::make_unique<context::hlasm_context>(file_name,
-                std::move(std::get<asm_option>(ctx_source)),
-                ids_init.has_value() ? std::move(*ids_init) : id_storage {}),
-            std::make_unique<lsp::lsp_context>(),
+            h_ctx,
+            std::make_unique<lsp::lsp_context>(h_ctx),
         };
     }
     return std::get<analyzing_context>(ctx_source);
