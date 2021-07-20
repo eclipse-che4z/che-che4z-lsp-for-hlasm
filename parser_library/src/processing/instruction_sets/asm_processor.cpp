@@ -503,7 +503,7 @@ asm_processor::asm_processor(analyzing_context ctx,
 
 void asm_processor::process(context::shared_stmt_ptr stmt)
 {
-    auto rebuilt_stmt = preprocess(stmt);
+    auto rebuilt_stmt = preprocess(stmt, context::no_align);
 
     auto it = table_.find(rebuilt_stmt.opcode_ref().value);
     if (it != table_.end())
