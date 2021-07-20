@@ -28,44 +28,20 @@ class diagnosable_ctx : public diagnosable_impl, public diagnostic_op_consumer
     context::hlasm_context& ctx_;
 
 public:
-    void add_diagnostic(diagnostic_s diagnostic) const override
-    {
-        add_diagnostic_inner(
-            diagnostic_op(
-                diagnostic.severity, std::move(diagnostic.code), std::move(diagnostic.message), diagnostic.diag_range),
-            ctx_.processing_stack());
-    }
-
-    void add_diagnostic(diagnostic_op diagnostic) const override
-    {
-        add_diagnostic_inner(std::move(diagnostic), ctx_.processing_stack());
-    }
+    void add_diagnostic(diagnostic_s diagnostic) const override;
+    void add_diagnostic(diagnostic_op diagnostic) const override;
 
 protected:
     diagnosable_ctx(context::hlasm_context& ctx)
         : ctx_(ctx)
     {}
 
-    virtual ~diagnosable_ctx() {};
-
-private:
-    void add_diagnostic_inner(diagnostic_op diagnostic, const context::processing_stack_t& stack) const
-    {
-        diagnostic_s diag(stack.back().proc_location.file, diagnostic);
-
-        for (auto frame = ++stack.rbegin(); frame != stack.rend(); ++frame)
-        {
-            auto& file_name = frame->proc_location.file;
-            range r = range(frame->proc_location.pos, frame->proc_location.pos);
-            diagnostic_related_info_s s = diagnostic_related_info_s(range_uri_s(file_name, r),
-                "While compiling " + file_name + '(' + std::to_string(frame->proc_location.pos.line + 1) + ")");
-            diag.related.push_back(std::move(s));
-        }
-        diagnosable_impl::add_diagnostic(std::move(diag));
-    }
+    virtual ~diagnosable_ctx() = default;
 
     friend diagnostic_collector;
 };
+
+diagnostic_s add_stack_details(diagnostic_op diagnostic, context::processing_stack_t stack);
 
 } // namespace hlasm_plugin::parser_library
 
