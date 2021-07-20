@@ -314,6 +314,23 @@ TEST(AGO, extended_fail)
     EXPECT_TRUE(ctx.get_var_sym(it3));
 }
 
+TEST(AGO, skip_invalid)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      AGO .SKIP
+      2 a
+.SKIP ANOP
+      MEND
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(AIF, extended)
 {
     std::string input(R"(
