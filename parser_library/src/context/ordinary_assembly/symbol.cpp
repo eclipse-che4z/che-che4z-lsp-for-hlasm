@@ -126,15 +126,6 @@ symbol_value symbol_value::operator-() const
     }
 }
 
-symbol_value& symbol_value::operator=(const symbol_value& value)
-{
-    if (value_kind() != symbol_value_kind::UNDEF)
-        throw std::runtime_error("assigning to defined symbol");
-
-    value_ = value.value_;
-    return *this;
-}
-
 const symbol_value::abs_value_t& symbol_value::get_abs() const { return std::get<abs_value_t>(value_); }
 
 const symbol_value::reloc_value_t& symbol_value::get_reloc() const { return std::get<reloc_value_t>(value_); }
