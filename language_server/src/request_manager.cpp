@@ -33,7 +33,7 @@ void request_manager::add_request(server* server, json message)
 {
     if (async_policy_ == async_policy::SYNC)
     {
-        server->message_received(std::move(message));
+        server->message_received(message);
         return;
     }
     // add request to q

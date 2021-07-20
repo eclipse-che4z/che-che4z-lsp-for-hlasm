@@ -401,9 +401,9 @@ constexpr unsigned char digit_to_value(unsigned char c)
 // begin.
 std::optional<int> data_definition::parser::parse_number()
 {
-    constexpr long long min_l = -(1ll << 31);
-    constexpr long long max_l = (1ll << 31) - 1;
-    constexpr long long parse_limit_l = (1ll << 31);
+    constexpr long long min_l = -(1LL << 31);
+    constexpr long long max_l = (1LL << 31) - 1;
+    constexpr long long parse_limit_l = (1LL << 31);
     static_assert(std::numeric_limits<int>::min() <= min_l);
     static_assert(std::numeric_limits<int>::max() >= max_l);
 
