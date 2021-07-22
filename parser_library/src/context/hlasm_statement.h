@@ -16,10 +16,14 @@
 #define CONTEXT_HLASM_STATEMENT_H
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "range.h"
 
+namespace hlasm_plugin::parser_library {
+struct diagnostic_op;
+} // namespace hlasm_plugin::parser_library
 namespace hlasm_plugin::parser_library::semantics {
 struct deferred_statement;
 } // namespace hlasm_plugin::parser_library::semantics
@@ -53,6 +57,8 @@ struct hlasm_statement
     semantics::deferred_statement* access_deferred();
 
     virtual position statement_position() const = 0;
+
+    virtual std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const { return {}; }
 
     virtual ~hlasm_statement() = default;
 

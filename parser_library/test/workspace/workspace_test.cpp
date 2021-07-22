@@ -323,11 +323,11 @@ TEST_F(workspace_test, did_close_file)
     // 3 files are open
     //	- open codes source1 and source2 with syntax errors using macro ERROR
     //	- macro file lib/ERROR with syntax error
-    // on first reparse, there should be 3 diagnotics from sources and lib/ERROR file
+    // on first reparse, there should be 2x2=4 diagnotics from sources and lib/ERROR file
     ws.did_open_file("source1");
     ws.did_open_file("source2");
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)3);
-    EXPECT_TRUE(match_strings({ faulty_macro_path, "source2", "source1" }));
+    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)4);
+    EXPECT_TRUE(match_strings({ faulty_macro_path, faulty_macro_path, "source2", "source1" }));
 
     // when we close source1, only its diagnostics should disapear
     // macro's and source2's diagnostics should stay as it is still open

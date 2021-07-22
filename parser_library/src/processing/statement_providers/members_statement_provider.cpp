@@ -88,6 +88,10 @@ void members_statement_provider::fill_cache(
     context::statement_cache::cached_statement_t reparsed_stmt;
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
+    auto diags = def_impl->diagnostics();
+    for (auto i = diags.first; i != diags.second; ++i)
+        reparsed_stmt.diags.push_back(*i);
+
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
     {

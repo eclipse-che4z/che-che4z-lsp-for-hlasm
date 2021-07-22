@@ -44,9 +44,17 @@ struct resolved_statement_impl : public resolved_statement
         : base_stmt(std::move(base_stmt))
         , status(std::move(status))
     {}
+    resolved_statement_impl(std::shared_ptr<const semantics::complete_statement> base_stmt,
+        processing_status status,
+        std::vector<diagnostic_op>&& diags)
+        : base_stmt(std::move(base_stmt))
+        , status(std::move(status))
+        , statement_diagnostics(std::make_move_iterator(diags.begin()), std::make_move_iterator(diags.end()))
+    {}
 
     std::shared_ptr<const semantics::complete_statement> base_stmt;
     processing_status status;
+    std::vector<diagnostic_op> statement_diagnostics;
 
     const semantics::label_si& label_ref() const override { return base_stmt->label_ref(); }
     const semantics::instruction_si& instruction_ref() const override { return base_stmt->instruction_ref(); }
@@ -55,6 +63,10 @@ struct resolved_statement_impl : public resolved_statement
     const range& stmt_range_ref() const override { return base_stmt->stmt_range_ref(); }
     const op_code& opcode_ref() const override { return status.second; }
     processing_format format_ref() const override { return status.first; }
+    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
+    {
+        return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
+    }
 };
 
 // statement used for preprocessing of resolved statements

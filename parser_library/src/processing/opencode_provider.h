@@ -154,14 +154,14 @@ private:
     void generate_aread_highlighting(std::string_view text, size_t line_no) const;
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
-    void generate_continuation_error_messages() const;
+    void generate_continuation_error_messages(diagnostic_op_consumer* diags) const;
     extract_next_logical_line_result extract_next_logical_line_from_ainsert_buffer();
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
     const parsing::parser_holder& prepare_operand_parser(const std::string& text,
         context::hlasm_context& hlasm_ctx,
-        bool do_collect_diags,
+        diagnostic_op_consumer* diag_collector,
         semantics::range_provider range_prov,
         range text_range,
         const processing_status& proc_status,
@@ -174,7 +174,8 @@ private:
     std::shared_ptr<const context::hlasm_statement> process_ordinary(const statement_processor& proc,
         semantics::collector& collector,
         const std::optional<std::string>& op_text,
-        const range& op_range);
+        const range& op_range,
+        diagnostic_op_consumer* diags);
 
     bool fill_copy_buffer_for_aread();
     bool try_running_preprocessor();

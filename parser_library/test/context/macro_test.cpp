@@ -757,3 +757,57 @@ TEST(macro, macro_call_reparse_range)
     EXPECT_EQ(a.diags()[0].code, "S0003");
     EXPECT_EQ(a.diags()[0].diag_range, range({ 6, 16 }, { 6, 16 }));
 }
+
+TEST(macro, skip_invalid)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      AGO .SKIP
+      2 a
+.SKIP ANOP
+      MEND
+      MAC
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, invalid_not_invoked)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      2 a
+      MEND
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, invalid_invoked)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      2 a
+      MEND
+      MAC
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    const auto& d = a.diags();
+
+    const std::array expected = { std::string("S0002"), std::string("E049") };
+    std::vector<std::string> codes;
+    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& diag) { return diag.code; });
+
+    EXPECT_TRUE(std::is_permutation(codes.begin(), codes.end(), expected.begin(), expected.end()));
+}
