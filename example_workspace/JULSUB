@@ -551,3 +551,5 @@ OUT512   EQU   2
          REGS
          SPACE 3
          END
+A        DS    CL1
+         END

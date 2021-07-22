@@ -456,17 +456,18 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 
 void macrodef_processor::add_correct_copy_nest()
 {
-    result_.nests.push_back({ location(curr_outer_position_, result_.definition_location.file) });
+    result_.nests.push_back({ context::copy_nest_item {
+        { curr_outer_position_, result_.definition_location.file }, result_.prototype.macro_name } });
 
     for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
     {
         auto& nest = hlasm_ctx.current_copy_stack()[i];
         auto pos = nest.cached_definition[nest.current_statement].get_base()->statement_position();
         auto loc = location(pos, nest.definition_location.file);
-        result_.nests.back().push_back(std::move(loc));
+        result_.nests.back().push_back(context::copy_nest_item { std::move(loc), nest.name });
     }
 
-    const auto& current_file = result_.nests.back().back().file;
+    const auto& current_file = result_.nests.back().back().loc.file;
     bool in_inner_macro = macro_nest_ > 1;
 
 

@@ -256,7 +256,7 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
-    , ord_ctx(ids_)
+    , ord_ctx(ids_, *this)
 {
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
@@ -343,12 +343,13 @@ processing_stack_t hlasm_context::processing_stack() const
 
     for (size_t i = 0; i < source_stack_.size(); ++i)
     {
-        res.emplace_back(source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE);
+        res.emplace_back(
+            source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE, ids_.empty_id);
         for (const auto& member : source_stack_[i].copy_stack)
         {
             location loc(member.cached_definition[member.current_statement].get_base()->statement_position(),
                 member.definition_location.file);
-            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY);
+            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name);
         }
 
         if (i == 0) // append macros immediately after ordinary processing
@@ -359,8 +360,10 @@ processing_stack_t hlasm_context::processing_stack() const
 
                 const auto& nest = scope_stack_[j].this_macro->copy_nests[offs];
                 for (size_t k = 0; k < nest.size(); ++k)
-                    res.emplace_back(
-                        nest[k], scope_stack_[j], k == 0 ? file_processing_type::MACRO : file_processing_type::COPY);
+                    res.emplace_back(nest[k].loc,
+                        scope_stack_[j],
+                        k == 0 ? file_processing_type::MACRO : file_processing_type::COPY,
+                        nest[k].member_name);
             }
         }
     }
@@ -386,7 +389,7 @@ location hlasm_context::current_statement_location() const
     {
         const auto& mac_invo = scope_stack_.back().this_macro;
 
-        return mac_invo->copy_nests[mac_invo->current_statement].back();
+        return mac_invo->copy_nests[mac_invo->current_statement].back().loc;
     }
 }
 

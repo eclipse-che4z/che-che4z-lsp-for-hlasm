@@ -16,6 +16,7 @@
 #define LSP_FEATURE_PROVIDER_H
 
 #include "completion_item.h"
+#include "document_symbol_item.h"
 #include "location.h"
 #include "protocol.h"
 
@@ -33,9 +34,10 @@ struct feature_provider
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const = 0;
+    virtual document_symbol_list_s document_symbol(const std::string& document_uri) const = 0;
 
 protected:
-    ~feature_provider() = default;
+    virtual ~feature_provider() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

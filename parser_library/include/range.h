@@ -54,6 +54,7 @@ struct PARSER_LIBRARY_EXPORT range
         , end(start)
     {}
     bool operator==(const range& r) const { return start == r.start && end == r.end; }
+    bool operator!=(const range& r) const { return !(*this == r); }
     position start;
     position end;
 };

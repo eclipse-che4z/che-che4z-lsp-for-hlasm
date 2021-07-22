@@ -16,6 +16,7 @@
 #define LSP_CONTEXT_H
 
 #include "completion_item.h"
+#include "document_symbol_item.h"
 #include "feature_provider.h"
 #include "file_info.h"
 #include "location.h"
@@ -38,6 +39,8 @@ public:
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
+    macro_info_ptr get_macro_info(const context::macro_def_ptr& macro_def) const;
+
     location definition(const std::string& document_uri, position pos) const override;
     location_list references(const std::string& document_uri, position pos) const override;
     hover_result hover(const std::string& document_uri, position pos) const override;
@@ -45,6 +48,7 @@ public:
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
+    document_symbol_list_s document_symbol(const std::string& document_uri) const override;
 
 private:
     void add_file(file_info file_i);
@@ -63,6 +67,27 @@ private:
     bool is_continued_line(std::string_view line) const;
     bool should_complete_instr(const text_data_ref_t& text, const position pos) const;
     std::string get_macro_documentation(const macro_info& m) const;
+
+    document_symbol_list_s document_symbol_macro(const std::string& document_uri) const;
+    document_symbol_list_s document_symbol_macro(const std::string& document_uri, const range& r) const;
+    document_symbol_list_s document_symbol_copy(
+        const std::vector<symbol_occurence> occurence_list, const std::string& document_uri) const;
+    document_symbol_list_s document_symbol_copy(
+        const std::vector<symbol_occurence> occurence_list, const std::string& document_uri, const range& r) const;
+    std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences(
+        const std::string& document_uri) const;
+    void modify_with_copy(document_symbol_list_s& modified,
+        const context::id_index& sym_name,
+        const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
+        const document_symbol_kind kind) const;
+    context::id_index find_macro_copy_id(const context::processing_stack_t& stack, int i) const;
+    void document_symbol_symbol(document_symbol_list_s& modified,
+        const document_symbol_list_s& children,
+        const context::id_index& id,
+        const context::symbol& sym,
+        const document_symbol_kind kind,
+        unsigned long i,
+        const bool macro) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

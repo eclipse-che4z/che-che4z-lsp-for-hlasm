@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "context/id_storage.h"
 #include "parser_library_export.h"
 #include "range.h"
 #include "sequence.h"
@@ -75,7 +76,8 @@ struct variable_store;
 
 namespace lsp {
 struct completion_item_s;
-}
+struct document_symbol_item_s;
+} // namespace lsp
 
 struct location;
 struct range_uri_s;
@@ -114,6 +116,38 @@ private:
 
 template class PARSER_LIBRARY_EXPORT sequence<completion_item, const lsp::completion_item_s*>;
 using completion_list = sequence<completion_item, const lsp::completion_item_s*>;
+
+enum class PARSER_LIBRARY_EXPORT document_symbol_kind
+{
+    DAT = 0,
+    EQU = 1,
+    MACH = 2,
+    UNKNOWN = 3,
+    VAR = 4,
+    SEQ = 5,
+    COMMON = 6,
+    DUMMY = 7,
+    EXECUTABLE = 8,
+    READONLY = 9,
+    MACRO = 10
+};
+
+struct PARSER_LIBRARY_EXPORT document_symbol_item;
+template class PARSER_LIBRARY_EXPORT sequence<document_symbol_item, const lsp::document_symbol_item_s*>;
+using document_symbol_list = sequence<document_symbol_item, const lsp::document_symbol_item_s*>;
+
+struct PARSER_LIBRARY_EXPORT document_symbol_item
+{
+    document_symbol_item(const lsp::document_symbol_item_s& item);
+    context::id_index name() const;
+    document_symbol_kind kind() const;
+    range symbol_range() const;
+    range symbol_selection_range() const;
+    document_symbol_list children() const;
+
+private:
+    const lsp::document_symbol_item_s& item_;
+};
 
 struct PARSER_LIBRARY_EXPORT position_uri
 {

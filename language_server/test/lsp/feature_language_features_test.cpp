@@ -104,6 +104,27 @@ TEST(language_features, references)
     notifs["textDocument/references"]("", params1);
 }
 
+TEST(language_features, document_symbol)
+{
+    using namespace ::testing;
+    parser_library::workspace_manager ws_mngr;
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = "A EQU 1";
+    ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
+
+    json r = { { "start", { { "line", 0 }, { "character", 0 } } }, { "end", { { "line", 0 }, { "character", 0 } } } };
+    json response = json::array();
+    response.push_back(
+        { { "name", "A" }, { "kind", 17 }, { "range", r }, { "selectionRange", r }, { "children", json::array() } });
+    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+    notifs["textDocument/documentSymbol"]("", params1);
+}
+
 TEST(language_features, semantic_tokens)
 {
     using namespace ::testing;

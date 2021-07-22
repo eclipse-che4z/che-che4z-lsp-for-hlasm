@@ -41,6 +41,26 @@ completion_item sequence<completion_item, const lsp::completion_item_s*>::item(s
     return completion_item(stor_[index]);
 }
 
+//********************** document symbol item **********************
+
+document_symbol_item::document_symbol_item(const lsp::document_symbol_item_s& item)
+    : item_(item)
+{}
+
+context::id_index document_symbol_item::name() const { return item_.name; }
+document_symbol_kind document_symbol_item::kind() const { return item_.kind; }
+range document_symbol_item::symbol_range() const { return item_.symbol_range; }
+range document_symbol_item::symbol_selection_range() const { return item_.symbol_selection_range; }
+document_symbol_list document_symbol_item::children() const
+{
+    return document_symbol_list(item_.children.data(), item_.children.size());
+}
+
+template<>
+document_symbol_item sequence<document_symbol_item, const lsp::document_symbol_item_s*>::item(size_t index) const
+{
+    return document_symbol_item(stor_[index]);
+}
 //********************** location **********************
 
 position_uri::position_uri(const location& item)

@@ -62,11 +62,12 @@ struct code_scope;
 
 struct processing_frame
 {
-    processing_frame(location proc_location, const code_scope& scope, file_processing_type proc_type);
+    processing_frame(location proc_location, const code_scope& scope, file_processing_type proc_type, id_index member);
 
     location proc_location;
     const code_scope& scope;
     file_processing_type proc_type;
+    id_index member_name;
 };
 
 using processing_stack_t = std::vector<processing_frame>;

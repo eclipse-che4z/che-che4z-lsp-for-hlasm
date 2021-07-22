@@ -97,5 +97,6 @@
     "typeindex": "cpp",
     "variant": "cpp",
     "charconv": "cpp"
-  }
+  },
+  "cmake.configureOnOpen": false
 }
