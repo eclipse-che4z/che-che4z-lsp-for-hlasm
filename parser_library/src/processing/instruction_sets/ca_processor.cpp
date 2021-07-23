@@ -33,11 +33,10 @@ ca_processor::ca_processor(analyzing_context ctx,
     , open_code_(&open_code)
 {}
 
-void ca_processor::process(context::shared_stmt_ptr stmt)
+void ca_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    auto res = stmt->access_resolved();
-    auto& func = table_.at(res->opcode_ref().value);
-    func(*res);
+    auto& func = table_.at(stmt->opcode_ref().value);
+    func(*stmt);
 }
 
 ca_processor::process_table_t ca_processor::create_table(context::hlasm_context& h_ctx)

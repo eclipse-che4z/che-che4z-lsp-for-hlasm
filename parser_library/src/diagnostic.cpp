@@ -1676,6 +1676,26 @@ diagnostic_op diagnostic_op::error_E043(const range& range)
     return diagnostic_op(diagnostic_severity::error, "E043", "Invalid name of variable in macro prototype", range);
 }
 
+diagnostic_op diagnostic_op::error_E044(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
+}
+
+diagnostic_op diagnostic_op::error_E045(const std::string& message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E045", "Sequence symbol already defined - " + message, range);
+}
+
+diagnostic_op diagnostic_op::error_E046(const std::string& message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E046", "Missing MEND in " + message, range);
+}
+
+diagnostic_op diagnostic_op::error_E047(const std::string& message, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E047", "Lookahead failed, symbol not found - " + message, range);
+}
+
 diagnostic_op diagnostic_op::error_E048(const std::string& message, const range& range)
 {
     return diagnostic_op(
@@ -1798,24 +1818,9 @@ diagnostic_op diagnostic_op::error_E070(const range& range)
         diagnostic_severity::error, "E070", "Invalid AREAD operand. Use AREAD [NOSTMT|NOPRINT|CLOCKB|CLOCKD].", range);
 }
 
-diagnostic_op diagnostic_op::error_E044(const range& range)
+diagnostic_op diagnostic_op::error_E071(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E044", "Illegal name field in macro prototype, discarded", range);
-}
-
-diagnostic_op diagnostic_op::error_E045(const std::string& message, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "E045", "Sequence symbol already defined - " + message, range);
-}
-
-diagnostic_op diagnostic_op::error_E046(const std::string& message, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "E046", "Missing MEND in " + message, range);
-}
-
-diagnostic_op diagnostic_op::error_E047(const std::string& message, const range& range)
-{
-    return diagnostic_op(diagnostic_severity::error, "E047", "Lookahead failed, symbol not found - " + message, range);
+    return diagnostic_op(diagnostic_severity::error, "E071", "Macro prototype expected.", range);
 }
 
 diagnostic_op diagnostic_op::warning_W010(const std::string& message, const range& range)

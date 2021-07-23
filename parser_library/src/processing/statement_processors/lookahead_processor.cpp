@@ -51,19 +51,20 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
         find_ord(static_cast<const resolved_statement&>(*statement));
     }
 
-    auto resolved = statement->access_resolved();
-
-    if (resolved->opcode_ref().value == macro_id)
+    if (auto resolved = statement->access_resolved())
     {
-        process_MACRO();
-    }
-    else if (resolved->opcode_ref().value == mend_id)
-    {
-        process_MEND();
-    }
-    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
-    {
-        process_COPY(*resolved);
+        if (resolved->opcode_ref().value == macro_id)
+        {
+            process_MACRO();
+        }
+        else if (resolved->opcode_ref().value == mend_id)
+        {
+            process_MEND();
+        }
+        else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
+        {
+            process_COPY(*resolved);
+        }
     }
 }
 

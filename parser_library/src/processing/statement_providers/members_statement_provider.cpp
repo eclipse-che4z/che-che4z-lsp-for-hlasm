@@ -40,9 +40,14 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     if (!cache)
         return nullptr;
 
-    if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { *ctx.hlasm_ctx, lib_provider }, listener))
-        return nullptr;
+    if (processor.kind == processing_kind::ORDINARY)
+    {
+        if (const auto* instr = retrieve_instruction(*cache))
+        {
+            if (try_trigger_attribute_lookahead(*instr, { *ctx.hlasm_ctx, lib_provider }, listener))
+                return nullptr;
+        }
+    }
 
     context::shared_stmt_ptr stmt;
 
@@ -55,7 +60,6 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
             stmt = preprocess_deferred(processor, *cache);
             break;
         default:
-            assert(false);
             break;
     }
 
@@ -67,18 +71,17 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     return stmt;
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(
+const semantics::instruction_si* members_statement_provider::retrieve_instruction(
     const context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {
         case context::statement_kind::RESOLVED:
-            return cache.get_base()->access_resolved()->instruction_ref();
+            return &cache.get_base()->access_resolved()->instruction_ref();
         case context::statement_kind::DEFERRED:
-            return cache.get_base()->access_deferred()->instruction_ref();
+            return &cache.get_base()->access_deferred()->instruction_ref();
         default:
-            assert(false);
-            throw std::runtime_error("unexpected statement_kind enum value");
+            return nullptr;
     }
 }
 
@@ -88,6 +91,7 @@ void members_statement_provider::fill_cache(
     context::statement_cache::cached_statement_t reparsed_stmt;
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
+    // TODO: what if it fails?
     auto diags = def_impl->diagnostics();
     for (auto i = diags.first; i != diags.second; ++i)
         reparsed_stmt.diags.push_back(*i);

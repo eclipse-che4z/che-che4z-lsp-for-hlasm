@@ -44,18 +44,18 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
     const semantics::label_si* label;
     std::set<context::id_index> references;
 
-    if (statement.kind == context::statement_kind::DEFERRED)
+    if (auto def_stmt = statement.access_deferred())
     {
-        auto def_stmt = statement.access_deferred();
         label = &def_stmt->label_ref();
     }
-    else
+    else if (auto res_stmt = statement.access_resolved())
     {
-        auto res_stmt = statement.access_resolved();
         label = &res_stmt->label_ref();
 
         references.merge(process_operands(res_stmt->operands_ref(), eval_ctx));
     }
+    else
+        return false;
 
     references.merge(process_label(*label, eval_ctx));
 

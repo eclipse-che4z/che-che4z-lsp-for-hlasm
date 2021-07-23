@@ -71,19 +71,24 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
         return *status;
 }
 
-void ordinary_processor::process_statement(context::shared_stmt_ptr statement)
+void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
-    assert(statement->kind == context::statement_kind::RESOLVED);
+    assert(s->kind == context::statement_kind::RESOLVED); // TODO: not sure why in principle unresolved cannot arrive
+                                                          // here
+    if (s->kind != context::statement_kind::RESOLVED)
+        return;
 
-    bool fatal = check_fatals(range(statement->statement_position()));
+    bool fatal = check_fatals(range(s->statement_position()));
     if (fatal)
         return;
 
-    switch (statement->access_resolved()->opcode_ref().type)
+    auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
+
+    switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:
-            add_diagnostic(diagnostic_op::error_E049(*statement->access_resolved()->opcode_ref().value,
-                statement->access_resolved()->instruction_ref().field_range));
+            add_diagnostic(
+                diagnostic_op::error_E049(*statement->opcode_ref().value, statement->instruction_ref().field_range));
             return;
         case context::instruction_type::CA:
             ca_proc_.process(std::move(statement));
