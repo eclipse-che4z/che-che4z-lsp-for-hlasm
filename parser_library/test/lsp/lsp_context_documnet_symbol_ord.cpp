@@ -5,28 +5,6 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::lsp;
 
-bool is_permutation_with_permutations(const document_symbol_list_s& lhs, const document_symbol_list_s& rhs)
-{
-    if (lhs.size() != rhs.size())
-    {
-        return false;
-    }
-    for (auto& item : lhs)
-    {
-        auto i = std::find(rhs.begin(), rhs.end(), item);
-        if (i == rhs.end())
-        {
-            return false;
-        }
-        if (!is_permutation_with_permutations(item.children, i->children))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-
 struct lsp_context_document_symbol_ord_sect_1 : analyzer_fixture
 {
     const static inline std::string input =
@@ -44,14 +22,15 @@ TEST_F(lsp_context_document_symbol_ord_sect_1, sect_1)
 {
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX = "AUX", E = "E";
-    document_symbol_list_s expected =
-        document_symbol_list_s { document_symbol_item_s { &E, document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } },
-            document_symbol_item_s { &SEC1, document_symbol_kind::DUMMY, range { { 3, 0 }, { 3, 0 } } },
-            document_symbol_item_s { &SEC0,
-                document_symbol_kind::EXECUTABLE,
-                range { { 0, 0 }, { 0, 0 } },
-                document_symbol_list_s {
-                    document_symbol_item_s { &AUX, document_symbol_kind::MACH, range { { 1, 5 }, { 1, 5 } } } } } };
+    document_symbol_list_s expected = document_symbol_list_s {
+        document_symbol_item_s { sequence<char>(E), document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } },
+        document_symbol_item_s { sequence<char>(SEC1), document_symbol_kind::DUMMY, range { { 3, 0 }, { 3, 0 } } },
+        document_symbol_item_s { sequence<char>(SEC0),
+            document_symbol_kind::EXECUTABLE,
+            range { { 0, 0 }, { 0, 0 } },
+            document_symbol_list_s { document_symbol_item_s {
+                sequence<char>(AUX), document_symbol_kind::MACH, range { { 1, 5 }, { 1, 5 } } } } }
+    };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
 
@@ -77,20 +56,25 @@ TEST_F(lsp_context_document_symbol_ord_sect_2, sect_2)
 {
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX0 = "AUX0", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3", E = "E";
-    document_symbol_list_s expected =
-        document_symbol_list_s { document_symbol_item_s { &E, document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } },
-            document_symbol_item_s { &SEC1,
-                document_symbol_kind::DUMMY,
-                range { { 3, 0 }, { 3, 0 } },
-                document_symbol_list_s {
-                    document_symbol_item_s { &AUX3, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } },
-                    document_symbol_item_s { &AUX1, document_symbol_kind::MACH, range { { 4, 5 }, { 4, 5 } } } } },
-            document_symbol_item_s { &SEC0,
-                document_symbol_kind::EXECUTABLE,
-                range { { 0, 0 }, { 0, 0 } },
-                document_symbol_list_s {
-                    document_symbol_item_s { &AUX2, document_symbol_kind::MACH, range { { 6, 5 }, { 6, 5 } } },
-                    document_symbol_item_s { &AUX0, document_symbol_kind::MACH, range { { 1, 5 }, { 1, 5 } } } } } };
+    document_symbol_list_s expected = document_symbol_list_s {
+        document_symbol_item_s { sequence<char>(E), document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } },
+        document_symbol_item_s { sequence<char>(SEC1),
+            document_symbol_kind::DUMMY,
+            range { { 3, 0 }, { 3, 0 } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    sequence<char>(AUX3), document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } },
+                document_symbol_item_s {
+                    sequence<char>(AUX1), document_symbol_kind::MACH, range { { 4, 5 }, { 4, 5 } } } } },
+        document_symbol_item_s { sequence<char>(SEC0),
+            document_symbol_kind::EXECUTABLE,
+            range { { 0, 0 }, { 0, 0 } },
+            document_symbol_list_s {
+                document_symbol_item_s {
+                    sequence<char>(AUX2), document_symbol_kind::MACH, range { { 6, 5 }, { 6, 5 } } },
+                document_symbol_item_s {
+                    sequence<char>(AUX0), document_symbol_kind::MACH, range { { 1, 5 }, { 1, 5 } } } } }
+    };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
 
@@ -133,11 +117,13 @@ TEST_F(lsp_context_document_symbol_ord_macro_2, macro_2)
 {
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string MAC = "MAC", E = "E", AUX = "AUX";
-    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { &MAC,
+    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC),
         document_symbol_kind::MACRO,
         range { { 5, 4 }, { 5, 4 } },
-        document_symbol_list_s { document_symbol_item_s { &E, document_symbol_kind::EQU, range { { 5, 4 }, { 5, 4 } } },
-            document_symbol_item_s { &AUX, document_symbol_kind::MACH, range { { 5, 4 }, { 5, 4 } } } } } };
+        document_symbol_list_s {
+            document_symbol_item_s { sequence<char>(E), document_symbol_kind::EQU, range { { 5, 4 }, { 5, 4 } } },
+            document_symbol_item_s {
+                sequence<char>(AUX), document_symbol_kind::MACH, range { { 5, 4 }, { 5, 4 } } } } } };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
 
@@ -168,18 +154,21 @@ TEST_F(lsp_context_document_symbol_ord_macro_3, macro_3)
 {
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2";
-    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { &MAC2,
+    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC2),
         document_symbol_kind::MACRO,
         range { { 13, 5 }, { 13, 5 } },
         document_symbol_list_s {
-            document_symbol_item_s { &MAC1,
+            document_symbol_item_s { sequence<char>(MAC1),
                 document_symbol_kind::MACRO,
                 range { { 13, 5 }, { 13, 5 } },
                 document_symbol_list_s {
-                    document_symbol_item_s { &E1, document_symbol_kind::EQU, range { { 13, 5 }, { 13, 5 } } },
-                    document_symbol_item_s { &AUX1, document_symbol_kind::MACH, range { { 13, 5 }, { 13, 5 } } } } },
-            document_symbol_item_s { &AUX2, document_symbol_kind::MACH, range { { 13, 5 }, { 13, 5 } } },
-            document_symbol_item_s { &E2, document_symbol_kind::EQU, range { { 13, 5 }, { 13, 5 } } } } } };
+                    document_symbol_item_s {
+                        sequence<char>(E1), document_symbol_kind::EQU, range { { 13, 5 }, { 13, 5 } } },
+                    document_symbol_item_s {
+                        sequence<char>(AUX1), document_symbol_kind::MACH, range { { 13, 5 }, { 13, 5 } } } } },
+            document_symbol_item_s { sequence<char>(AUX2), document_symbol_kind::MACH, range { { 13, 5 }, { 13, 5 } } },
+            document_symbol_item_s {
+                sequence<char>(E2), document_symbol_kind::EQU, range { { 13, 5 }, { 13, 5 } } } } } };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
 
@@ -214,31 +203,34 @@ TEST_F(lsp_context_document_symbol_ord_macro_4, macro_4)
     std::string MAC1 = "MAC1", E1 = "E1", MAC2 = "MAC2", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3",
                 SEC = "SEC";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &MAC2,
+        document_symbol_item_s { sequence<char>(MAC2),
             document_symbol_kind::MACRO,
             range { { 15, 5 }, { 15, 5 } },
             document_symbol_list_s {
-                document_symbol_item_s { &E2, document_symbol_kind::EQU, range { { 15, 5 }, { 15, 5 } } },
-                document_symbol_item_s { &MAC1,
+                document_symbol_item_s {
+                    sequence<char>(E2), document_symbol_kind::EQU, range { { 15, 5 }, { 15, 5 } } },
+                document_symbol_item_s { sequence<char>(MAC1),
                     document_symbol_kind::MACRO,
                     range { { 15, 5 }, { 15, 5 } },
                     document_symbol_list_s { document_symbol_item_s {
-                        &E1, document_symbol_kind::EQU, range { { 15, 5 }, { 15, 5 } } } } } } },
-        document_symbol_item_s { &SEC,
+                        sequence<char>(E1), document_symbol_kind::EQU, range { { 15, 5 }, { 15, 5 } } } } } } },
+        document_symbol_item_s { sequence<char>(SEC),
             document_symbol_kind::EXECUTABLE,
             range { { 13, 0 }, { 13, 0 } },
-            document_symbol_list_s {
-                document_symbol_item_s { &MAC2,
-                    document_symbol_kind::MACRO,
-                    range { { 15, 5 }, { 15, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s { &AUX2, document_symbol_kind::MACH, range { { 15, 5 }, { 15, 5 } } },
-                        document_symbol_item_s { &MAC1,
-                            document_symbol_kind::MACRO,
-                            range { { 15, 5 }, { 15, 5 } },
-                            document_symbol_list_s { document_symbol_item_s {
-                                &AUX1, document_symbol_kind::MACH, range { { 15, 5 }, { 15, 5 } } } } } } },
-                document_symbol_item_s { &AUX3, document_symbol_kind::MACH, range { { 14, 5 }, { 14, 5 } } } } }
+            document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC2),
+                                         document_symbol_kind::MACRO,
+                                         range { { 15, 5 }, { 15, 5 } },
+                                         document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX2),
+                                                                      document_symbol_kind::MACH,
+                                                                      range { { 15, 5 }, { 15, 5 } } },
+                                             document_symbol_item_s { sequence<char>(MAC1),
+                                                 document_symbol_kind::MACRO,
+                                                 range { { 15, 5 }, { 15, 5 } },
+                                                 document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX1),
+                                                     document_symbol_kind::MACH,
+                                                     range { { 15, 5 }, { 15, 5 } } } } } } },
+                document_symbol_item_s {
+                    sequence<char>(AUX3), document_symbol_kind::MACH, range { { 14, 5 }, { 14, 5 } } } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -277,35 +269,41 @@ TEST_F(lsp_context_document_symbol_ord_macro_5, macro_5)
     std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", E3 = "E3", AUX1 = "AUX1", AUX2 = "AUX2",
                 AUX3 = "AUX3", AUX4 = "AUX4", SEC1 = "SEC1", SEC2 = "SEC2";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &E3, document_symbol_kind::EQU, range { { 18, 0 }, { 18, 0 } } },
-        document_symbol_item_s { &MAC2,
+        document_symbol_item_s { sequence<char>(E3), document_symbol_kind::EQU, range { { 18, 0 }, { 18, 0 } } },
+        document_symbol_item_s { sequence<char>(MAC2),
             document_symbol_kind::MACRO,
             range { { 17, 5 }, { 17, 5 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC1,
-                                         document_symbol_kind::MACRO,
-                                         range { { 17, 5 }, { 17, 5 } },
-                                         document_symbol_list_s { document_symbol_item_s {
-                                             &E1, document_symbol_kind::EQU, range { { 17, 5 }, { 17, 5 } } } } },
-                document_symbol_item_s { &E2, document_symbol_kind::EQU, range { { 17, 5 }, { 17, 5 } } },
-                document_symbol_item_s { &SEC1,
+            document_symbol_list_s {
+                document_symbol_item_s { sequence<char>(MAC1),
+                    document_symbol_kind::MACRO,
+                    range { { 17, 5 }, { 17, 5 } },
+                    document_symbol_list_s { document_symbol_item_s {
+                        sequence<char>(E1), document_symbol_kind::EQU, range { { 17, 5 }, { 17, 5 } } } } },
+                document_symbol_item_s {
+                    sequence<char>(E2), document_symbol_kind::EQU, range { { 17, 5 }, { 17, 5 } } },
+                document_symbol_item_s { sequence<char>(SEC1),
                     document_symbol_kind::EXECUTABLE,
                     range { { 17, 5 }, { 17, 5 } },
                     document_symbol_list_s {
-                        document_symbol_item_s { &AUX3, document_symbol_kind::MACH, range { { 17, 5 }, { 17, 5 } } },
-                        document_symbol_item_s { &MAC1,
+                        document_symbol_item_s {
+                            sequence<char>(AUX3), document_symbol_kind::MACH, range { { 17, 5 }, { 17, 5 } } },
+                        document_symbol_item_s { sequence<char>(MAC1),
                             document_symbol_kind::MACRO,
                             range { { 17, 5 }, { 17, 5 } },
-                            document_symbol_list_s { document_symbol_item_s {
-                                &AUX1, document_symbol_kind::MACH, range { { 17, 5 }, { 17, 5 } } } } } } } } },
-        document_symbol_item_s { &SEC2,
+                            document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX1),
+                                document_symbol_kind::MACH,
+                                range { { 17, 5 }, { 17, 5 } } } } } } } } },
+        document_symbol_item_s { sequence<char>(SEC2),
             document_symbol_kind::EXECUTABLE,
             range { { 15, 0 }, { 15, 0 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC2,
-                                         document_symbol_kind::MACRO,
-                                         range { { 17, 5 }, { 17, 5 } },
-                                         document_symbol_list_s { document_symbol_item_s {
-                                             &AUX2, document_symbol_kind::MACH, range { { 17, 5 }, { 17, 5 } } } } },
-                document_symbol_item_s { &AUX4, document_symbol_kind::MACH, range { { 16, 5 }, { 16, 5 } } } } }
+            document_symbol_list_s {
+                document_symbol_item_s { sequence<char>(MAC2),
+                    document_symbol_kind::MACRO,
+                    range { { 17, 5 }, { 17, 5 } },
+                    document_symbol_list_s { document_symbol_item_s {
+                        sequence<char>(AUX2), document_symbol_kind::MACH, range { { 17, 5 }, { 17, 5 } } } } },
+                document_symbol_item_s {
+                    sequence<char>(AUX4), document_symbol_kind::MACH, range { { 16, 5 }, { 16, 5 } } } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -357,12 +355,12 @@ TEST_F(lsp_context_document_symbol_ord_macro_6, macro_6)
 {
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string MAC1 = "MAC1", AUX = "AUX", E = "E";
-    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { &MAC1,
+    document_symbol_list_s expected = document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC1),
         document_symbol_kind::MACRO,
         range { { 0, 4 }, { 0, 4 } },
         document_symbol_list_s {
-            document_symbol_item_s { &AUX, document_symbol_kind::MACH, range { { 0, 4 }, { 0, 4 } } },
-            document_symbol_item_s { &E, document_symbol_kind::EQU, range { { 0, 4 }, { 0, 4 } } } } } };
+            document_symbol_item_s { sequence<char>(AUX), document_symbol_kind::MACH, range { { 0, 4 }, { 0, 4 } } },
+            document_symbol_item_s { sequence<char>(E), document_symbol_kind::EQU, range { { 0, 4 }, { 0, 4 } } } } } };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
 
@@ -434,40 +432,46 @@ TEST_F(lsp_context_document_symbol_ord_macro_7, macro_7)
     std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &MAC0,
+        document_symbol_item_s { sequence<char>(MAC0),
             document_symbol_kind::MACRO,
             range { { 8, 5 }, { 8, 5 } },
             document_symbol_list_s {
-                document_symbol_item_s { &MAC1,
+                document_symbol_item_s { sequence<char>(MAC1),
                     document_symbol_kind::MACRO,
                     range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s { document_symbol_item_s { &MAC2,
-                                                 document_symbol_kind::MACRO,
-                                                 range { { 8, 5 }, { 8, 5 } },
-                                                 document_symbol_list_s { document_symbol_item_s {
-                                                     &E2, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-                        document_symbol_item_s { &E1, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
-                        document_symbol_item_s { &SEC1,
+                    document_symbol_list_s {
+                        document_symbol_item_s { sequence<char>(MAC2),
+                            document_symbol_kind::MACRO,
+                            range { { 8, 5 }, { 8, 5 } },
+                            document_symbol_list_s { document_symbol_item_s {
+                                sequence<char>(E2), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+                        document_symbol_item_s {
+                            sequence<char>(E1), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
+                        document_symbol_item_s { sequence<char>(SEC1),
                             document_symbol_kind::DUMMY,
                             range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s { document_symbol_item_s { &MAC2,
+                            document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC2),
                                 document_symbol_kind::MACRO,
                                 range { { 8, 5 }, { 8, 5 } },
-                                document_symbol_list_s { document_symbol_item_s {
-                                    &AUX2, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } } } },
-                document_symbol_item_s { &E0, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-        document_symbol_item_s { &SEC0,
+                                document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX2),
+                                    document_symbol_kind::MACH,
+                                    range { { 8, 5 }, { 8, 5 } } } } } } } } },
+                document_symbol_item_s {
+                    sequence<char>(E0), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+        document_symbol_item_s { sequence<char>(SEC0),
             document_symbol_kind::EXECUTABLE,
             range { { 7, 0 }, { 7, 0 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC0,
+            document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC0),
                 document_symbol_kind::MACRO,
                 range { { 8, 5 }, { 8, 5 } },
-                document_symbol_list_s { document_symbol_item_s { &MAC1,
-                                             document_symbol_kind::MACRO,
-                                             range { { 8, 5 }, { 8, 5 } },
-                                             document_symbol_list_s { document_symbol_item_s {
-                                                 &AUX1, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } },
-                    document_symbol_item_s { &AUX0, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } }
+                document_symbol_list_s {
+                    document_symbol_item_s { sequence<char>(MAC1),
+                        document_symbol_kind::MACRO,
+                        range { { 8, 5 }, { 8, 5 } },
+                        document_symbol_list_s { document_symbol_item_s {
+                            sequence<char>(AUX1), document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } },
+                    document_symbol_item_s {
+                        sequence<char>(AUX0), document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -542,41 +546,46 @@ TEST_F(lsp_context_document_symbol_ord_macro_8, macro_8)
     std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &MAC0,
+        document_symbol_item_s { sequence<char>(MAC0),
             document_symbol_kind::MACRO,
             range { { 8, 5 }, { 8, 5 } },
             document_symbol_list_s {
-                document_symbol_item_s { &MAC1,
+                document_symbol_item_s { sequence<char>(MAC1),
                     document_symbol_kind::MACRO,
                     range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s { document_symbol_item_s { &MAC2,
-                                                 document_symbol_kind::MACRO,
-                                                 range { { 8, 5 }, { 8, 5 } },
-                                                 document_symbol_list_s { document_symbol_item_s {
-                                                     &E2, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-                        document_symbol_item_s { &E1, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
-                        document_symbol_item_s { &SEC1,
-                            document_symbol_kind::DUMMY,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s { document_symbol_item_s {
-                                &AUX1, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } },
-                document_symbol_item_s { &E0, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-        document_symbol_item_s { &SEC0,
-            document_symbol_kind::EXECUTABLE,
-            range { { 7, 0 }, { 7, 0 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC0,
-                document_symbol_kind::MACRO,
-                range { { 8, 5 }, { 8, 5 } },
-                document_symbol_list_s {
-                    document_symbol_item_s { &MAC1,
-                        document_symbol_kind::MACRO,
-                        range { { 8, 5 }, { 8, 5 } },
-                        document_symbol_list_s { document_symbol_item_s { &MAC2,
+                    document_symbol_list_s {
+                        document_symbol_item_s { sequence<char>(MAC2),
                             document_symbol_kind::MACRO,
                             range { { 8, 5 }, { 8, 5 } },
                             document_symbol_list_s { document_symbol_item_s {
-                                &AUX2, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } },
-                    document_symbol_item_s { &AUX0, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } }
+                                sequence<char>(E2), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+                        document_symbol_item_s {
+                            sequence<char>(E1), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
+                        document_symbol_item_s { sequence<char>(SEC1),
+                            document_symbol_kind::DUMMY,
+                            range { { 8, 5 }, { 8, 5 } },
+                            document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX1),
+                                document_symbol_kind::MACH,
+                                range { { 8, 5 }, { 8, 5 } } } } } } },
+                document_symbol_item_s {
+                    sequence<char>(E0), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+        document_symbol_item_s { sequence<char>(SEC0),
+            document_symbol_kind::EXECUTABLE,
+            range { { 7, 0 }, { 7, 0 } },
+            document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC0),
+                document_symbol_kind::MACRO,
+                range { { 8, 5 }, { 8, 5 } },
+                document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC1),
+                                             document_symbol_kind::MACRO,
+                                             range { { 8, 5 }, { 8, 5 } },
+                                             document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC2),
+                                                 document_symbol_kind::MACRO,
+                                                 range { { 8, 5 }, { 8, 5 } },
+                                                 document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX2),
+                                                     document_symbol_kind::MACH,
+                                                     range { { 8, 5 }, { 8, 5 } } } } } } },
+                    document_symbol_item_s {
+                        sequence<char>(AUX0), document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -674,45 +683,51 @@ TEST_F(lsp_context_document_symbol_ord_macro_9, macro_9)
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2", MAC3 = "MAC3", AUX3 = "AUX3", E3 = "E3", MAC4 = "MAC4",
                 AUX4 = "AUX4", E4 = "E4";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &MAC3,
+        document_symbol_item_s { sequence<char>(MAC3),
             document_symbol_kind::MACRO,
             range { { 9, 5 }, { 9, 5 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC4,
-                                         document_symbol_kind::MACRO,
-                                         range { { 9, 5 }, { 9, 5 } },
-                                         document_symbol_list_s { document_symbol_item_s {
-                                             &E4, document_symbol_kind::EQU, range { { 9, 5 }, { 9, 5 } } } } },
-                document_symbol_item_s { &E3, document_symbol_kind::EQU, range { { 9, 5 }, { 9, 5 } } } } },
-        document_symbol_item_s { &MAC0,
+            document_symbol_list_s {
+                document_symbol_item_s { sequence<char>(MAC4),
+                    document_symbol_kind::MACRO,
+                    range { { 9, 5 }, { 9, 5 } },
+                    document_symbol_list_s { document_symbol_item_s {
+                        sequence<char>(E4), document_symbol_kind::EQU, range { { 9, 5 }, { 9, 5 } } } } },
+                document_symbol_item_s {
+                    sequence<char>(E3), document_symbol_kind::EQU, range { { 9, 5 }, { 9, 5 } } } } },
+        document_symbol_item_s { sequence<char>(MAC0),
             document_symbol_kind::MACRO,
             range { { 7, 5 }, { 7, 5 } },
             document_symbol_list_s {
-                document_symbol_item_s { &MAC1,
+                document_symbol_item_s { sequence<char>(MAC1),
                     document_symbol_kind::MACRO,
                     range { { 7, 5 }, { 7, 5 } },
                     document_symbol_list_s {
-                        document_symbol_item_s { &E1, document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } },
-                        document_symbol_item_s { &SEC1,
+                        document_symbol_item_s {
+                            sequence<char>(E1), document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } },
+                        document_symbol_item_s { sequence<char>(SEC1),
                             document_symbol_kind::EXECUTABLE,
                             range { { 7, 5 }, { 7, 5 } },
                             document_symbol_list_s {
-                                document_symbol_item_s { &MAC4,
+                                document_symbol_item_s { sequence<char>(MAC4),
                                     document_symbol_kind::MACRO,
                                     range { { 9, 5 }, { 9, 5 } },
-                                    document_symbol_list_s { document_symbol_item_s {
-                                        &AUX4, document_symbol_kind::MACH, range { { 9, 5 }, { 9, 5 } } } } },
-                                document_symbol_item_s {
-                                    &AUX1, document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } } } } } },
-                document_symbol_item_s { &E0, document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } },
-                document_symbol_item_s { &AUX0, document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } } } },
-        document_symbol_item_s { &SEC0,
+                                    document_symbol_list_s { document_symbol_item_s { sequence<char>(AUX4),
+                                        document_symbol_kind::MACH,
+                                        range { { 9, 5 }, { 9, 5 } } } } },
+                                document_symbol_item_s { sequence<char>(AUX1),
+                                    document_symbol_kind::MACH,
+                                    range { { 7, 5 }, { 7, 5 } } } } } } },
+                document_symbol_item_s { sequence<char>(E0), document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } },
+                document_symbol_item_s {
+                    sequence<char>(AUX0), document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } } } },
+        document_symbol_item_s { sequence<char>(SEC0),
             document_symbol_kind::DUMMY,
             range { { 8, 0 }, { 8, 0 } },
-            document_symbol_list_s { document_symbol_item_s { &MAC3,
+            document_symbol_list_s { document_symbol_item_s { sequence<char>(MAC3),
                 document_symbol_kind::MACRO,
                 range { { 9, 5 }, { 9, 5 } },
-                document_symbol_list_s {
-                    document_symbol_item_s { &AUX3, document_symbol_kind::MACH, range { { 9, 5 }, { 9, 5 } } } } } } }
+                document_symbol_list_s { document_symbol_item_s {
+                    sequence<char>(AUX3), document_symbol_kind::MACH, range { { 9, 5 }, { 9, 5 } } } } } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -809,14 +824,16 @@ TEST_F(lsp_context_document_symbol_ord_copy_2, copy_2)
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string E0 = "E0", AUX0 = "AUX0", E1 = "E1", AUX1 = "AUX1", COPYFILE1 = "COPYFILE1";
     document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &COPYFILE1,
+        document_symbol_item_s { sequence<char>(COPYFILE1),
             document_symbol_kind::MACRO,
             range { { 2, 5 }, { 2, 5 } },
             document_symbol_list_s {
-                document_symbol_item_s { &AUX1, document_symbol_kind::MACH, range { { 2, 5 }, { 2, 5 } } },
-                document_symbol_item_s { &E1, document_symbol_kind::EQU, range { { 2, 5 }, { 2, 5 } } } } },
-        document_symbol_item_s { &AUX0, document_symbol_kind::MACH, range { { 1, 0 }, { 1, 0 } } },
-        document_symbol_item_s { &E0, document_symbol_kind::EQU, range { { 0, 0 }, { 0, 0 } } }
+                document_symbol_item_s {
+                    sequence<char>(AUX1), document_symbol_kind::MACH, range { { 2, 5 }, { 2, 5 } } },
+                document_symbol_item_s {
+                    sequence<char>(E1), document_symbol_kind::EQU, range { { 2, 5 }, { 2, 5 } } } } },
+        document_symbol_item_s { sequence<char>(AUX0), document_symbol_kind::MACH, range { { 1, 0 }, { 1, 0 } } },
+        document_symbol_item_s { sequence<char>(E0), document_symbol_kind::EQU, range { { 0, 0 }, { 0, 0 } } }
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
@@ -902,52 +919,61 @@ TEST_F(lsp_context_document_symbol_ord_copy_3, copy_3)
     std::string EM0 = "EM0", AM0 = "AM0", EM1 = "EM1", AM1 = "AM1", EC0 = "EC0", AC0 = "AC0", EC1 = "EC1", AC1 = "AC1",
                 EC2 = "EC2", AC2 = "AC2", EC3 = "EC3", AC3 = "AC3", COPYFILE1 = "COPYFILE1", COPYFILE2 = "COPYFILE2",
                 COPYFILE3 = "COPYFILE3", MAC0 = "MAC0", MAC1 = "MAC1", SEC1 = "SEC1", SEC2 = "SEC2";
-    document_symbol_list_s expected = document_symbol_list_s {
-        document_symbol_item_s { &MAC1,
-            document_symbol_kind::MACRO,
-            range { { 8, 5 }, { 8, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s { &COPYFILE2,
-                    document_symbol_kind::MACRO,
-                    range { { 8, 5 }, { 8, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s { &EC2, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
-                        document_symbol_item_s { &COPYFILE3,
-                            document_symbol_kind::MACRO,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s { document_symbol_item_s {
-                                &EC3, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-                        document_symbol_item_s { &SEC2,
-                            document_symbol_kind::DUMMY,
-                            range { { 8, 5 }, { 8, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s { &COPYFILE3,
-                                    document_symbol_kind::MACRO,
-                                    range { { 8, 5 }, { 8, 5 } },
-                                    document_symbol_list_s { document_symbol_item_s {
-                                        &AC3, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } },
-                                document_symbol_item_s {
-                                    &AC2, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } } } } } },
-                document_symbol_item_s { &EM1, document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
-        document_symbol_item_s { &MAC0,
-            document_symbol_kind::MACRO,
-            range { { 7, 5 }, { 7, 5 } },
-            document_symbol_list_s {
-                document_symbol_item_s { &COPYFILE1,
-                    document_symbol_kind::MACRO,
-                    range { { 7, 5 }, { 7, 5 } },
-                    document_symbol_list_s {
-                        document_symbol_item_s { &EC1, document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } },
-                        document_symbol_item_s { &SEC1,
-                            document_symbol_kind::EXECUTABLE,
-                            range { { 7, 5 }, { 7, 5 } },
-                            document_symbol_list_s {
-                                document_symbol_item_s {
-                                    &AM1, document_symbol_kind::MACH, range { { 8, 5 }, { 8, 5 } } },
-                                document_symbol_item_s {
-                                    &AC1, document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } } } } } },
-                document_symbol_item_s { &AM0, document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } },
-                document_symbol_item_s { &EM0, document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } } } }
-    };
+    document_symbol_list_s expected =
+        document_symbol_list_s {
+            document_symbol_item_s { sequence<char>(MAC1),
+                document_symbol_kind::MACRO,
+                range { { 8, 5 }, { 8, 5 } },
+                document_symbol_list_s {
+                    document_symbol_item_s { sequence<char>(COPYFILE2),
+                        document_symbol_kind::MACRO,
+                        range { { 8, 5 }, { 8, 5 } },
+                        document_symbol_list_s {
+                            document_symbol_item_s {
+                                sequence<char>(EC2), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } },
+                            document_symbol_item_s { sequence<char>(COPYFILE3),
+                                document_symbol_kind::MACRO,
+                                range { { 8, 5 }, { 8, 5 } },
+                                document_symbol_list_s { document_symbol_item_s {
+                                    sequence<char>(EC3), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+                            document_symbol_item_s { sequence<char>(SEC2),
+                                document_symbol_kind::DUMMY,
+                                range { { 8, 5 }, { 8, 5 } },
+                                document_symbol_list_s {
+                                    document_symbol_item_s { sequence<char>(COPYFILE3),
+                                        document_symbol_kind::MACRO,
+                                        range { { 8, 5 }, { 8, 5 } },
+                                        document_symbol_list_s { document_symbol_item_s { sequence<char>(AC3),
+                                            document_symbol_kind::MACH,
+                                            range { { 8, 5 }, { 8, 5 } } } } },
+                                    document_symbol_item_s { sequence<char>(AC2),
+                                        document_symbol_kind::MACH,
+                                        range { { 8, 5 }, { 8, 5 } } } } } } },
+                    document_symbol_item_s {
+                        sequence<char>(EM1), document_symbol_kind::EQU, range { { 8, 5 }, { 8, 5 } } } } },
+            document_symbol_item_s { sequence<char>(MAC0),
+                document_symbol_kind::MACRO,
+                range { { 7, 5 }, { 7, 5 } },
+                document_symbol_list_s {
+                    document_symbol_item_s { sequence<char>(COPYFILE1),
+                        document_symbol_kind::MACRO,
+                        range { { 7, 5 }, { 7, 5 } },
+                        document_symbol_list_s { document_symbol_item_s { sequence<char>(EC1),
+                                                     document_symbol_kind::EQU,
+                                                     range { { 7, 5 }, { 7, 5 } } },
+                            document_symbol_item_s { sequence<char>(SEC1),
+                                document_symbol_kind::EXECUTABLE,
+                                range { { 7, 5 }, { 7, 5 } },
+                                document_symbol_list_s { document_symbol_item_s { sequence<char>(AM1),
+                                                             document_symbol_kind::MACH,
+                                                             range { { 8, 5 }, { 8, 5 } } },
+                                    document_symbol_item_s { sequence<char>(AC1),
+                                        document_symbol_kind::MACH,
+                                        range { { 7, 5 }, { 7, 5 } } } } } } },
+                    document_symbol_item_s {
+                        sequence<char>(AM0), document_symbol_kind::MACH, range { { 7, 5 }, { 7, 5 } } },
+                    document_symbol_item_s {
+                        sequence<char>(EM0), document_symbol_kind::EQU, range { { 7, 5 }, { 7, 5 } } } } }
+        };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }

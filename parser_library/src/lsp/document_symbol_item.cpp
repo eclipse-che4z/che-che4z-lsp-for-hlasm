@@ -4,26 +4,14 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-document_symbol_item_s::document_symbol_item_s(hlasm_plugin::parser_library::context::id_index name,
-    document_symbol_kind kind,
-    range symbol_range,
-    range symbol_selection_range)
-    : name(name)
-    , kind(kind)
-    , symbol_range(symbol_range)
-    , symbol_selection_range(symbol_selection_range)
-{}
-document_symbol_item_s::document_symbol_item_s(
-    hlasm_plugin::parser_library::context::id_index name, document_symbol_kind kind, range symbol_range)
+document_symbol_item_s::document_symbol_item_s(sequence<char> name, document_symbol_kind kind, range symbol_range)
     : name(name)
     , kind(kind)
     , symbol_range(symbol_range)
     , symbol_selection_range(symbol_range)
 {}
-document_symbol_item_s::document_symbol_item_s(hlasm_plugin::parser_library::context::id_index name,
-    document_symbol_kind kind,
-    range symbol_range,
-    document_symbol_list_s children)
+document_symbol_item_s::document_symbol_item_s(
+    sequence<char> name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children)
     : name(name)
     , kind(kind)
     , symbol_range(symbol_range)
@@ -31,14 +19,49 @@ document_symbol_item_s::document_symbol_item_s(hlasm_plugin::parser_library::con
     , children(children)
 {}
 
-bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
+bool is_permutation_with_permutations(const document_symbol_list_s& lhs, const document_symbol_list_s& rhs)
 {
-    if (lhs.name == nullptr || rhs.name == nullptr)
+    if (lhs.size() != rhs.size())
     {
         return false;
     }
-    return *(lhs.name) == *(rhs.name) && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
-        && lhs.symbol_selection_range == rhs.symbol_selection_range;
+    for (auto& item : lhs)
+    {
+        auto i = std::find(rhs.begin(), rhs.end(), item);
+        if (i == rhs.end())
+        {
+            return false;
+        }
+        if (!is_permutation_with_permutations(item.children, i->children))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+document_symbol_list_s::iterator document_symbol_no_children_find(
+    document_symbol_list_s::iterator begin, document_symbol_list_s::iterator end, const document_symbol_item_s& item)
+{
+    while (begin != end)
+    {
+        if (static_cast<std::string>(item.name.data()) == static_cast<std::string>(begin->name.data())
+            && item.kind == begin->kind && item.symbol_range == begin->symbol_range
+            && item.symbol_selection_range == begin->symbol_selection_range)
+        {
+            return begin;
+        }
+        begin++;
+    }
+    return end;
+}
+
+bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
+{
+    return static_cast<std::string>(lhs.name.data()) == static_cast<std::string>(rhs.name.data())
+        && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
+        && lhs.symbol_selection_range == rhs.symbol_selection_range
+        && is_permutation_with_permutations(lhs.children, rhs.children);
 }
 
 } // namespace hlasm_plugin::parser_library::lsp

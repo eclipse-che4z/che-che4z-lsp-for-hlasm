@@ -80,7 +80,7 @@ private:
         const context::id_index& sym_name,
         const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
         const document_symbol_kind kind) const;
-    context::id_index find_macro_copy_id(const context::processing_stack_t& stack, int i) const;
+    sequence<char> find_macro_copy_id(const context::processing_stack_t& stack, int i) const;
     void document_symbol_symbol(document_symbol_list_s& modified,
         const document_symbol_list_s& children,
         const context::id_index& id,

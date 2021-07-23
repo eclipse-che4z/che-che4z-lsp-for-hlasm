@@ -47,7 +47,7 @@ document_symbol_item::document_symbol_item(const lsp::document_symbol_item_s& it
     : item_(item)
 {}
 
-context::id_index document_symbol_item::name() const { return item_.name; }
+sequence<char> document_symbol_item::name() const { return item_.name; }
 document_symbol_kind document_symbol_item::kind() const { return item_.kind; }
 range document_symbol_item::symbol_range() const { return item_.symbol_range; }
 range document_symbol_item::symbol_selection_range() const { return item_.symbol_selection_range; }

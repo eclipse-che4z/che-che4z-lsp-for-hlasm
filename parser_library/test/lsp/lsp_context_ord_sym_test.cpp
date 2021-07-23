@@ -38,7 +38,7 @@ TEST_F(lsp_context_ord_symbol, document_symbol)
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol(opencode_file_name);
     std::string R1 = "R1";
     document_symbol_list_s expected = { document_symbol_item_s {
-        &R1, document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } } };
+        sequence<char>(R1), document_symbol_kind::EQU, range { { 2, 0 }, { 2, 0 } } } };
     EXPECT_EQ(outline, expected);
 }
 

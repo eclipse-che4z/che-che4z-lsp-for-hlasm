@@ -24,7 +24,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "context/id_storage.h"
 #include "parser_library_export.h"
 #include "range.h"
 #include "sequence.h"
@@ -139,7 +138,7 @@ using document_symbol_list = sequence<document_symbol_item, const lsp::document_
 struct PARSER_LIBRARY_EXPORT document_symbol_item
 {
     document_symbol_item(const lsp::document_symbol_item_s& item);
-    context::id_index name() const;
+    sequence<char> name() const;
     document_symbol_kind kind() const;
     range symbol_range() const;
     range symbol_selection_range() const;

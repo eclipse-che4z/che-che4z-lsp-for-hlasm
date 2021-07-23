@@ -304,7 +304,7 @@ json feature_language_features::document_symbol_children_json(hlasm_plugin::pars
 
 json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)
 {
-    return { { "name", *(symbol.name()) },
+    return { { "name", symbol.name().data() },
         { "kind", document_symbol_item_kind_mapping.at(symbol.kind()) },
         { "range", range_to_json(symbol.symbol_range()) },
         { "selectionRange", range_to_json(symbol.symbol_selection_range()) },
