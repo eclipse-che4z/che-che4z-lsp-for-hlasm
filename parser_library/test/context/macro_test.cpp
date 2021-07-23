@@ -811,3 +811,19 @@ TEST(macro, invalid_invoked)
 
     EXPECT_TRUE(std::is_permutation(codes.begin(), codes.end(), expected.begin(), expected.end()));
 }
+
+TEST(macro, invalid_prototype)
+{
+    std::string input = R"(
+     MACRO
+&    &LABEL &a=15
+
+     MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_FALSE(a.diags().empty());
+    EXPECT_EQ(a.diags()[0].code, "E071");
+}
