@@ -59,6 +59,9 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
         case context::statement_kind::DEFERRED:
             stmt = preprocess_deferred(processor, *cache);
             break;
+        case context::statement_kind::ERROR:
+            stmt = cache->get_base();
+            break;
         default:
             break;
     }
@@ -80,6 +83,8 @@ const semantics::instruction_si* members_statement_provider::retrieve_instructio
             return &cache.get_base()->access_resolved()->instruction_ref();
         case context::statement_kind::DEFERRED:
             return &cache.get_base()->access_deferred()->instruction_ref();
+        case context::statement_kind::ERROR:
+            return nullptr;
         default:
             return nullptr;
     }

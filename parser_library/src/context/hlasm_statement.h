@@ -28,6 +28,7 @@ namespace hlasm_plugin::parser_library::semantics {
 struct deferred_statement;
 } // namespace hlasm_plugin::parser_library::semantics
 namespace hlasm_plugin::parser_library::processing {
+class error_statement;
 struct resolved_statement;
 } // namespace hlasm_plugin::parser_library::processing
 
@@ -42,7 +43,8 @@ using statement_block = std::vector<shared_stmt_ptr>;
 enum class statement_kind
 {
     RESOLVED,
-    DEFERRED
+    DEFERRED,
+    ERROR,
 };
 
 // abstract structure representing general HLASM statement
@@ -58,7 +60,7 @@ struct hlasm_statement
 
     virtual position statement_position() const = 0;
 
-    virtual std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const { return {}; }
+    virtual std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const = 0;
 
     virtual ~hlasm_statement() = default;
 

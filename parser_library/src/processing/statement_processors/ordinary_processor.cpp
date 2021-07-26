@@ -73,13 +73,14 @@ processing_status ordinary_processor::get_processing_status(const semantics::ins
 
 void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
-    assert(s->kind == context::statement_kind::RESOLVED); // TODO: not sure why in principle unresolved cannot arrive
-                                                          // here
-    if (s->kind != context::statement_kind::RESOLVED)
-        return;
+    auto diags = s->diagnostics();
+    for (auto it = diags.first; it != diags.second; ++it)
+        add_diagnostic(*it);
 
     bool fatal = check_fatals(range(s->statement_position()));
     if (fatal)
+        return;
+    if (s->kind != context::statement_kind::RESOLVED)
         return;
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));

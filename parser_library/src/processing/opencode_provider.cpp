@@ -19,6 +19,7 @@
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
+#include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
 
@@ -450,13 +451,11 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
     if (!collector.has_instruction())
     {
-        if (lookahead || !nested)
+        if (lookahead)
             return nullptr;
         else
-            return std::make_shared<semantics::statement_si_deferred>(range {},
-                semantics::label_si { {} },
-                semantics::instruction_si { {} },
-                semantics::deferred_operands_si { {}, {}, {} },
+            return std::make_shared<processing::error_statement>(
+                range(position(m_current_logical_line_source.begin_line, 0)),
                 std::move(collector.diag_container().diags));
     }
 
