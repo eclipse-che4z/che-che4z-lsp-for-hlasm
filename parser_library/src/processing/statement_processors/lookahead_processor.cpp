@@ -45,14 +45,13 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
 
 void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    if (macro_nest_ == 0)
-    {
-        find_seq(static_cast<const resolved_statement&>(*statement));
-        find_ord(static_cast<const resolved_statement&>(*statement));
-    }
-
     if (auto resolved = statement->access_resolved())
     {
+        if (macro_nest_ == 0)
+        {
+            find_seq(*resolved);
+            find_ord(*resolved);
+        }
         if (resolved->opcode_ref().value == macro_id)
         {
             process_MACRO();

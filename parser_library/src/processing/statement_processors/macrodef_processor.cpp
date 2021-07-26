@@ -94,6 +94,15 @@ void macrodef_processor::end_processing()
 
     hlasm_ctx.pop_statement_processing();
 
+    // cleanup empty file scopes
+    for (auto& scope : result_.file_scopes)
+    {
+        scope.second.erase(std::remove_if(scope.second.begin(),
+                               scope.second.end(),
+                               [](const auto& slice) { return slice.begin_statement == slice.end_statement; }),
+            scope.second.end());
+    }
+
     listener_.finish_macro_definition(std::move(result_));
 
     finished_flag_ = true;

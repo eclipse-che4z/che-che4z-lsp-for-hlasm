@@ -803,13 +803,8 @@ TEST(macro, invalid_invoked)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    const auto& d = a.diags();
 
-    const std::array expected = { std::string("S0002"), std::string("E049") };
-    std::vector<std::string> codes;
-    std::transform(d.begin(), d.end(), std::back_inserter(codes), [](const auto& diag) { return diag.code; });
-
-    EXPECT_TRUE(std::is_permutation(codes.begin(), codes.end(), expected.begin(), expected.end()));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "E049" }));
 }
 
 TEST(macro, invalid_prototype)
@@ -823,24 +818,44 @@ TEST(macro, invalid_prototype)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
+    const auto& d = a.diags();
 
-    ASSERT_FALSE(a.diags().empty());
-    EXPECT_EQ(a.diags()[0].code, "E071");
+    EXPECT_NE(std::find_if(d.begin(), d.end(), [](const auto& diag) { return diag.code == "E071"; }), d.end());
 }
 
-TEST(macro, invalid_continuation)
+TEST(macro, early_macro_errors)
 {
     std::string input = R"(
      MACRO
      MAC
      SAM31                                                             X
 A
+AAA
      MEND
 )";
     analyzer a(input);
     a.analyze();
     a.collect_diags();
 
-    ASSERT_FALSE(a.diags().empty());
-    EXPECT_EQ(a.diags()[0].code, "E001");
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "S0003" }));
+}
+
+TEST(macro, missing_mend)
+{
+    std::string input = R"(
+        MACRO
+        MACO
+        SAM31                                                          X
+            X
+
+        MACRO
+        MAC
+        SAM31
+        MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "E046" }));
 }
