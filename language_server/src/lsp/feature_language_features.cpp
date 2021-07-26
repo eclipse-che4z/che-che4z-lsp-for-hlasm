@@ -293,22 +293,13 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
         { parser_library::document_symbol_kind::READONLY, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::File } };
 
-json feature_language_features::document_symbol_children_json(hlasm_plugin::parser_library::document_symbol_item symbol)
-{
-    if (symbol.children().size() == 0)
-    {
-        return json::array();
-    }
-    return document_symbol_list_json(symbol.children());
-}
-
 json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)
 {
-    return { { "name", symbol.name().data() },
+    return { { "name", symbol.name() },
         { "kind", document_symbol_item_kind_mapping.at(symbol.kind()) },
         { "range", range_to_json(symbol.symbol_range()) },
         { "selectionRange", range_to_json(symbol.symbol_selection_range()) },
-        { "children", document_symbol_children_json(symbol) } };
+        { "children", document_symbol_list_json(symbol.children()) } };
 }
 
 json feature_language_features::document_symbol_list_json(

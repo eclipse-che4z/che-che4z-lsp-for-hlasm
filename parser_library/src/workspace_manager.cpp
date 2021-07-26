@@ -121,7 +121,7 @@ const std::vector<token_info>& workspace_manager::semantic_tokens(const char* do
     return impl_->semantic_tokens(document_uri);
 }
 
-document_symbol_list workspace_manager::document_symbol(const std::string& document_uri)
+document_symbol_list workspace_manager::document_symbol(const char* document_uri)
 {
     return impl_->document_symbol(document_uri);
 }

@@ -4,14 +4,14 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-document_symbol_item_s::document_symbol_item_s(sequence<char> name, document_symbol_kind kind, range symbol_range)
+document_symbol_item_s::document_symbol_item_s(std::string name, document_symbol_kind kind, range symbol_range)
     : name(name)
     , kind(kind)
     , symbol_range(symbol_range)
     , symbol_selection_range(symbol_range)
 {}
 document_symbol_item_s::document_symbol_item_s(
-    sequence<char> name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children)
+    std::string name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children)
     : name(name)
     , kind(kind)
     , symbol_range(symbol_range)
@@ -45,7 +45,7 @@ document_symbol_list_s::iterator document_symbol_no_children_find(
 {
     while (begin != end)
     {
-        if (static_cast<std::string>(item.name.data()) == static_cast<std::string>(begin->name.data())
+        if (item.name == begin->name
             && item.kind == begin->kind && item.symbol_range == begin->symbol_range
             && item.symbol_selection_range == begin->symbol_selection_range)
         {
@@ -58,7 +58,7 @@ document_symbol_list_s::iterator document_symbol_no_children_find(
 
 bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
 {
-    return static_cast<std::string>(lhs.name.data()) == static_cast<std::string>(rhs.name.data())
+    return lhs.name == rhs.name
         && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
         && lhs.symbol_selection_range == rhs.symbol_selection_range
         && is_permutation_with_permutations(lhs.children, rhs.children);

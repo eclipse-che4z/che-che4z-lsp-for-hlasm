@@ -95,12 +95,12 @@ const std::unordered_map<occurence_kind, document_symbol_kind> document_symbol_i
     { occurence_kind::VAR, document_symbol_kind::VAR }, { occurence_kind::SEQ, document_symbol_kind::SEQ }
 };
 
-sequence<char> lsp_context::find_macro_copy_id(const context::processing_stack_t& stack, int i) const
+std::string lsp_context::find_macro_copy_id(const context::processing_stack_t& stack, int i) const
 {
     assert(i != 0);
     assert(i < stack.size());
-    return stack[i].member_name == opencode_->hlasm_ctx.ids().empty_id ? sequence<char>(stack[i].proc_location.file)
-                                                                       : sequence<char>(*stack[i].member_name);
+    return stack[i].member_name == opencode_->hlasm_ctx.ids().empty_id ? stack[i].proc_location.file
+                                                                       : *stack[i].member_name;
 }
 
 document_symbol_list_s lsp_context::document_symbol_macro(const std::string& document_uri) const
@@ -120,7 +120,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                 else
                 {
                     result.emplace_back(document_symbol_item_s {
-                        sequence<char>(*var.name), document_symbol_kind::VAR, { var.def_position, var.def_position } });
+                        *var.name, document_symbol_kind::VAR, { var.def_position, var.def_position } });
                 }
             }
             for (const auto& [name, seq] : def->labels)
@@ -131,7 +131,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                 }
                 else
                 {
-                    result.emplace_back(document_symbol_item_s { sequence<char>(*name),
+                    result.emplace_back(document_symbol_item_s { *name,
                         document_symbol_kind::SEQ,
                         { seq->symbol_location.pos, seq->symbol_location.pos } });
                 }
@@ -157,7 +157,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                     continue;
                 }
                 result.emplace_back(document_symbol_item_s {
-                    sequence<char>(*var.name), document_symbol_kind::VAR, { var.def_position, var.def_position } });
+                    *var.name, document_symbol_kind::VAR, { var.def_position, var.def_position } });
                 result.back().symbol_range = r;
                 result.back().symbol_selection_range = r;
             }
@@ -167,7 +167,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                 {
                     continue;
                 }
-                result.emplace_back(document_symbol_item_s { sequence<char>(*name),
+                result.emplace_back(document_symbol_item_s { *name,
                     document_symbol_kind::SEQ,
                     { seq->symbol_location.pos, seq->symbol_location.pos } });
                 result.back().symbol_range = r;
@@ -188,7 +188,7 @@ document_symbol_list_s lsp_context::document_symbol_copy(
         if (occ.kind == occurence_kind::VAR || occ.kind == occurence_kind::SEQ)
         {
             position aux = definition(document_uri, occ.occurence_range.start).pos;
-            document_symbol_item_s item = { sequence<char>(*occ.name),
+            document_symbol_item_s item = { *occ.name,
                 document_symbol_item_kind_mapping_macro.at(occ.kind),
                 { aux, { aux.line, aux.column + occ.occurence_range.end.column - occ.occurence_range.start.column } } };
             if (std::find(result.begin(), result.end(), item) == result.end())
@@ -257,7 +257,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
             if (std::find(occs.begin(), occs.end(), sym_name) != occs.end())
             {
                 bool have_already = false;
-                auto sym_item = document_symbol_item_s { sequence<char>(*sym_name), kind, copy_occ.occurence_range };
+                auto sym_item = document_symbol_item_s { *sym_name, kind, copy_occ.occurence_range };
                 for (auto& item : modified)
                 {
                     if (item.name.data() == sequence<char>(*copy_occ.name).data())
@@ -272,7 +272,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
                 }
                 if (!have_already)
                 {
-                    modified.emplace_back(document_symbol_item_s { sequence<char>(*copy_occ.name),
+                    modified.emplace_back(document_symbol_item_s { *copy_occ.name,
                         document_symbol_kind::MACRO,
                         copy_occ.occurence_range,
                         document_symbol_list_s { sym_item } });
@@ -317,7 +317,7 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
     unsigned long i,
     const bool macro) const
 {
-    document_symbol_item_s aux = { sequence<char>(find_macro_copy_id(sym.proc_stack(), i)),
+    document_symbol_item_s aux = { find_macro_copy_id(sym.proc_stack(), i),
         document_symbol_kind::MACRO,
         { sym.proc_stack()[0].proc_location.pos, sym.proc_stack()[0].proc_location.pos } };
     auto i_find = document_symbol_no_children_find(modified.begin(), modified.end(), aux);
@@ -341,7 +341,7 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
     i++;
     while (i < sym.proc_stack().size())
     {
-        aux.name = sequence<char>(find_macro_copy_id(sym.proc_stack(), i));
+        aux.name = find_macro_copy_id(sym.proc_stack(), i);
         document_symbol_list_s* aux_list = &i_find->children;
         i_find = document_symbol_no_children_find(aux_list->begin(), aux_list->end(), aux);
         if (i_find == aux_list->end())
@@ -352,7 +352,7 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
         i++;
     }
     document_symbol_list_s* aux_list = &i_find->children;
-    aux_list->emplace_back(document_symbol_item_s { sequence<char>(*id), kind, i_find->symbol_range, children });
+    aux_list->emplace_back(document_symbol_item_s { *id, kind, i_find->symbol_range, children });
 }
 
 document_symbol_list_s lsp_context::document_symbol(const std::string& document_uri) const
@@ -396,7 +396,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
             {
                 if (sym.proc_stack().size() == 1)
                 {
-                    result.emplace_back(document_symbol_item_s { sequence<char>(*id),
+                    result.emplace_back(document_symbol_item_s { *id,
                         document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
                         { sym.symbol_location.pos, sym.symbol_location.pos } });
                     continue;
@@ -416,7 +416,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
             unsigned long i = 1;
             if (do_not_need_nodes(sym.proc_stack(), sect_sym->proc_stack(), i))
             {
-                children.emplace_back(document_symbol_item_s { sequence<char>(*id),
+                children.emplace_back(document_symbol_item_s { *id,
                     document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
                     { sym.proc_stack()[0].proc_location.pos, sym.proc_stack()[0].proc_location.pos } });
                 continue;
@@ -436,7 +436,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
         const auto& sym = *opencode_->hlasm_ctx.ord_ctx.get_symbol(sect->name);
         if (sym.proc_stack().size() == 1)
         {
-            result.emplace_back(document_symbol_item_s { sequence<char>(*sect->name),
+            result.emplace_back(document_symbol_item_s { *sect->name,
                 document_symbol_item_kind_mapping_section.at(sect->kind),
                 { sym.symbol_location.pos, sym.symbol_location.pos },
                 children });
@@ -456,7 +456,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
         else
         {
             result.emplace_back(document_symbol_item_s {
-                sequence<char>(*sym.name), document_symbol_kind::VAR, { sym.def_position, sym.def_position } });
+                *sym.name, document_symbol_kind::VAR, { sym.def_position, sym.def_position } });
         }
     }
     return result;

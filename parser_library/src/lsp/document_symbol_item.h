@@ -17,12 +17,12 @@ using document_symbol_list_s = std::vector<document_symbol_item_s>;
 struct document_symbol_item_s
 {
 public:
-    document_symbol_item_s(sequence<char> name, document_symbol_kind kind, range symbol_range);
+    document_symbol_item_s(std::string name, document_symbol_kind kind, range symbol_range);
     document_symbol_item_s(
-        sequence<char> name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children);
+        std::string name, document_symbol_kind kind, range symbol_range, document_symbol_list_s children);
 
     // several features of document symbol item from LSP
-    sequence<char> name;
+    std::string name;
     document_symbol_kind kind;
     range symbol_range;
     range symbol_selection_range;
