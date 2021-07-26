@@ -827,3 +827,20 @@ TEST(macro, invalid_prototype)
     ASSERT_FALSE(a.diags().empty());
     EXPECT_EQ(a.diags()[0].code, "E071");
 }
+
+TEST(macro, invalid_continuation)
+{
+    std::string input = R"(
+     MACRO
+     MAC
+     SAM31                                                             X
+A
+     MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_FALSE(a.diags().empty());
+    EXPECT_EQ(a.diags()[0].code, "E001");
+}

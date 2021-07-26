@@ -410,8 +410,6 @@ bool opencode_provider::try_running_preprocessor()
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
 {
     const bool lookahead = proc.kind == processing::processing_kind::LOOKAHEAD;
-    const bool nested =
-        proc.kind == processing::processing_kind::MACRO || proc.kind == processing::processing_kind::COPY;
 
     auto& ph = lookahead ? *m_lookahead_parser : *m_parser;
 
@@ -420,11 +418,20 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
         return nullptr;
 
     auto& collector = ph.parser->get_collector();
-    auto* diag_target = nested ? collector.diag_collector() : static_cast<diagnostic_op_consumer*>(m_diagnoser);
+    auto* diag_target =
+        proc.kind == processing::processing_kind::MACRO || proc.kind == processing::processing_kind::COPY
+        ? collector.diag_collector()
+        : static_cast<diagnostic_op_consumer*>(m_diagnoser);
 
-    // lookahead may read something that will be removed from the input stream later on
-    if (m_current_logical_line.continuation_error && !lookahead)
-        generate_continuation_error_messages(diag_target);
+    if (m_current_logical_line.continuation_error)
+    {
+        // continuation errors must be reported immediatelly
+        if (proc.kind == processing::processing_kind::MACRO)
+            generate_continuation_error_messages(static_cast<diagnostic_op_consumer*>(m_diagnoser));
+        // lookahead may read something that will be removed from the input stream later on
+        else if (!lookahead)
+            generate_continuation_error_messages(diag_target);
+    }
 
     if (feed_line_res != extract_next_logical_line_result::process && is_comment())
     {
