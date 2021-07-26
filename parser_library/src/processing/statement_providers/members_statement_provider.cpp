@@ -66,7 +66,6 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
             break;
     }
 
-
     if (processor.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*stmt, { *ctx.hlasm_ctx, lib_provider }, listener))
         return nullptr;
@@ -94,9 +93,9 @@ void members_statement_provider::fill_cache(
     context::statement_cache& cache, const semantics::deferred_statement& def_stmt, const processing_status& status)
 {
     context::statement_cache::cached_statement_t reparsed_stmt;
+    // TODO: what if it fails?
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
 
-    // TODO: what if it fails?
     auto diags = def_impl->diagnostics();
     for (auto i = diags.first; i != diags.second; ++i)
         reparsed_stmt.diags.push_back(*i);
@@ -123,7 +122,7 @@ void members_statement_provider::fill_cache(
         reparsed_stmt.stmt =
             std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
     }
-    cache.insert(status.first.form, reparsed_stmt);
+    cache.insert(status.first.form, std::move(reparsed_stmt));
 }
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
@@ -141,8 +140,11 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
 
     const auto& cache_item = cache.get(status.first.form);
 
-    for (const diagnostic_op& diag : cache_item->diags)
-        diagnoser.add_diagnostic(diag);
+    if (processor.kind != processing_kind::LOOKAHEAD)
+    {
+        for (const diagnostic_op& diag : cache_item->diags)
+            diagnoser.add_diagnostic(diag);
+    }
 
     return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
 }
