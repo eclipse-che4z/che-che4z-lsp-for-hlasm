@@ -67,7 +67,7 @@ struct symbol_attributes
     static symbol_attributes make_org_attrs();
 
     // helper function to transform char to enum
-    static data_attr_kind transform_attr(char c);
+    static data_attr_kind transform_attr(unsigned char c);
 
     static bool requires_ordinary_symbol(data_attr_kind attribute);
     static bool is_ordinary_attribute(data_attr_kind attribute);

@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-
+#include "../mock_parse_lib_provider.h"
 // tests for ordinary symbols feature:
 // relocatable/absolute value and attribute value
 // space/alignment creation
@@ -282,22 +282,6 @@ X3 EQU F-E
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class loc_mock : public workspaces::parse_lib_provider
-{
-    asm_option asm_options;
-    workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
-    {
-        std::string lib_data("XXX EQU 1");
-        analyzer a(lib_data, library, std::move(ctx), *this, data);
-        a.analyze();
-        return true;
-    }
-
-    bool has_library(const std::string&, const std::string&) const override { return true; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
-};
-
 TEST(ordinary_symbols, symbol_location)
 {
     std::string input = R"(
@@ -311,8 +295,9 @@ X EQU 1
  COPY COPYF
 
 )";
-    loc_mock tmp;
-    analyzer a(input, "test", tmp);
+    std::string lib_data("XXX EQU 1");
+    mock_parse_lib_provider mock { { "COPYF", lib_data } };
+    analyzer a(input, analyzer_options { "test", &mock });
     a.analyze();
     a.collect_diags();
 

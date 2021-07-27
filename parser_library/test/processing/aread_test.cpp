@@ -15,62 +15,12 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // tests for
 // AREAD handling
 
 namespace {
-template<typename T>
-std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
-{
-    auto var = ctx.get_var_sym(ctx.ids().find(name));
-    if (!var)
-        return std::nullopt;
-
-    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
-        return std::nullopt;
-    auto var_ = var->access_set_symbol_base();
-    if (var_->type != object_traits<T>::type_enum || !var_->is_scalar)
-        return std::nullopt;
-
-    auto symbol = var_->template access_set_symbol<T>();
-    if (!symbol)
-        return std::nullopt;
-
-    return symbol->get_value();
-}
-
-template<typename T>
-std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name)
-{
-    auto var = ctx.get_var_sym(ctx.ids().find(name));
-    if (!var)
-        return std::nullopt;
-
-    if (var->var_kind != context::variable_kind::SET_VAR_KIND)
-        return std::nullopt;
-    auto var_ = var->access_set_symbol_base();
-    if (var_->type != object_traits<T>::type_enum || var_->is_scalar)
-        return std::nullopt;
-
-    auto symbol = var_->template access_set_symbol<T>();
-    if (!symbol)
-        return std::nullopt;
-
-    auto keys = symbol->keys();
-
-    std::vector<T> result;
-    result.reserve(keys.size());
-    for (size_t i = 0; i < keys.size(); ++i)
-    {
-        if (i != keys[i])
-            return std::nullopt;
-        result.push_back(symbol->get_value(i));
-    }
-
-    return result;
-}
-
 std::string aread_pad(std::string s)
 {
     s.resize(80, ' ');
@@ -330,4 +280,386 @@ TEST(aread, empty_ainsert_record)
     auto& diags = a.diags();
     ASSERT_EQ(diags.size(), 1);
     EXPECT_EQ(diags.front().code, "A021");
+}
+
+TEST(aread, correct_line_counting)
+{
+    std::string input(R"(
+    MACRO
+    M
+&S  AREAD
+&S  AREAD
+&S  AREAD
+&S  AREAD
+&S  AREAD
+    MEND
+    M
+Line1
+Line2
+Line3
+Line4
+Line5
+    UNDEF
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 1);
+    EXPECT_EQ(diags[0].diag_range.start.line, 15);
+}
+
+TEST(aread, macro_called_in_copybook)
+{
+    std::string input = " COPY  COPYBOOK";
+    mock_parse_lib_provider lib_provider {
+        { "COPYBOOK", R"(
+          MACRO
+          M
+&VAR      AREAD
+          MEND
+          M
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, aread_from_source_stack)
+{
+    std::string input = " COPY  COPYCOPY";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYCOPY", R"(
+ COPY COPYBOOK
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)" },
+        { "COPYBOOK", " MAC" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, aread_from_opencode)
+{
+    std::string input = R"(
+          COPY  COPYCOPY
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYCOPY", R"( COPY COPYBOOK)" },
+        { "COPYBOOK", " MAC" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, aread_across_stack)
+{
+    std::string input = R"(
+          COPY  COPYCOPY
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+&VAR      AREAD
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYCOPY", R"(
+ COPY COPYBOOK
+removed by aread
+)" },
+        { "COPYBOOK", R"(
+ MAC
+removed by aread
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, aread_from_macro_invoked_from_ainsert)
+{
+    std::string input = R"(
+          COPY  COPYCOPY
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+&VAR      AREAD
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYCOPY", R"(
+ COPY COPYBOOK
+removed by aread
+)" },
+        { "COPYBOOK", R"(
+ AINSERT ' MAC',FRONT
+removed by aread
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, last_statements_in_copy)
+{
+    std::string input = R"(
+          COPY  COPYCOPY
+&A1       SETA  1                                                      X this line is removed by the macro
+&A2       SETA  2
+)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYCOPY", R"( COPY COPYBOOK)" },
+        { "COPYBOOK", R"( MAC)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, interleave_aread_ainsert)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC &CALL=1
+&VAR      AREAD
+          AIF (&CALL EQ 0).SKIPCALL
+          AINSERT ' MAC CALL=0',FRONT
+.SKIPCALL ANOP ,
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+removed on first call                                                  X
+&A1       SETA  1                                                      X removed by the second call
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, copy_in_macro)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+          AINSERT '&&A1       SETA  1    removed by the macro',FRONT
+          COPY MACINNER
+          MEND
+)" },
+        { "MACINNER", "&VAR      AREAD" },
+        { "COPYBOOK", R"(
+          MAC
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, normal_processing_recovery)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+&A1       SETA  1 removed by the macro
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
+}
+
+TEST(aread, normal_processing_recovery_line_skipped)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "COPYBOOK", R"(
+          MAC
+&A1       SETA  1 removed by the macro
+*
+&A2       SETA  2
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    ASSERT_EQ(diags.size(), 0);
+
+    auto& ctx = a.hlasm_ctx();
+
+    auto a1 = get_var_value<A_t>(ctx, "A1");
+    auto a2 = get_var_value<A_t>(ctx, "A2");
+
+    EXPECT_FALSE(a1.has_value());
+    EXPECT_EQ(a2, 2);
 }

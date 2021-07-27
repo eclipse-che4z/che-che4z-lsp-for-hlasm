@@ -77,10 +77,8 @@ public:
 class ca_func : public ::testing::TestWithParam<func_test_param>
 {
 protected:
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     context::SET_t get_result()
     {
@@ -135,26 +133,27 @@ INSTANTIATE_TEST_SUITE_P(func_parameters_suite,
         func_test_param { ca_expr_funcs::INDEX, { "abc", "b" }, 2, false, "INDEX_found" },
         func_test_param { ca_expr_funcs::INDEX, { "abc", "ca" }, 0, false, "INDEX_not_found" },
 
-        func_test_param { ca_expr_funcs::ISBIN, { "10101" }, 1, false, "ISBIN_valid" },
-        func_test_param { ca_expr_funcs::ISBIN, { "101010101010101010101010101010101" }, 0, false, "ISBIN_exceeds" },
-        func_test_param { ca_expr_funcs::ISBIN, { "1210" }, 0, false, "ISBIN_bad_char" },
+        func_test_param { ca_expr_funcs::ISBIN, { "10101" }, true, false, "ISBIN_valid" },
+        func_test_param {
+            ca_expr_funcs::ISBIN, { "101010101010101010101010101010101" }, false, false, "ISBIN_exceeds" },
+        func_test_param { ca_expr_funcs::ISBIN, { "1210" }, false, false, "ISBIN_bad_char" },
         func_test_param { ca_expr_funcs::ISBIN, { "" }, {}, true, "ISBIN_empty" },
 
-        func_test_param { ca_expr_funcs::ISDEC, { "12345678" }, 1, false, "ISDEC_valid" },
-        func_test_param { ca_expr_funcs::ISDEC, { "+25" }, 0, false, "ISDEC_bad_char" },
-        func_test_param { ca_expr_funcs::ISDEC, { "2147483648" }, 0, false, "ISDEC_overflow" },
-        func_test_param { ca_expr_funcs::ISDEC, { "00000000005" }, 0, false, "ISDEC_exceeds" },
+        func_test_param { ca_expr_funcs::ISDEC, { "12345678" }, true, false, "ISDEC_valid" },
+        func_test_param { ca_expr_funcs::ISDEC, { "+25" }, false, false, "ISDEC_bad_char" },
+        func_test_param { ca_expr_funcs::ISDEC, { "2147483648" }, false, false, "ISDEC_overflow" },
+        func_test_param { ca_expr_funcs::ISDEC, { "00000000005" }, false, false, "ISDEC_exceeds" },
         func_test_param { ca_expr_funcs::ISDEC, { "" }, {}, true, "ISDEC_empty" },
 
-        func_test_param { ca_expr_funcs::ISHEX, { "ab34CD9F" }, 1, false, "ISHEX_valid" },
-        func_test_param { ca_expr_funcs::ISHEX, { "abcdEFGH" }, 0, false, "ISHEX_bad_char" },
-        func_test_param { ca_expr_funcs::ISHEX, { "123456789" }, 0, false, "ISHEX_exceeds" },
+        func_test_param { ca_expr_funcs::ISHEX, { "ab34CD9F" }, true, false, "ISHEX_valid" },
+        func_test_param { ca_expr_funcs::ISHEX, { "abcdEFGH" }, false, false, "ISHEX_bad_char" },
+        func_test_param { ca_expr_funcs::ISHEX, { "123456789" }, false, false, "ISHEX_exceeds" },
         func_test_param { ca_expr_funcs::ISHEX, { "" }, {}, true, "ISHEX_empty" },
 
-        func_test_param { ca_expr_funcs::ISSYM, { "Abcd_1234" }, 1, false, "ISSYM_valid1" },
-        func_test_param { ca_expr_funcs::ISSYM, { "_abcd1234" }, 1, false, "ISSYM_valid2" },
-        func_test_param { ca_expr_funcs::ISSYM, { "##@$_" }, 1, false, "ISSYM_valid3" },
-        func_test_param { ca_expr_funcs::ISSYM, { "1234_Abcd" }, 0, false, "ISSYM_invalid" },
+        func_test_param { ca_expr_funcs::ISSYM, { "Abcd_1234" }, true, false, "ISSYM_valid1" },
+        func_test_param { ca_expr_funcs::ISSYM, { "_abcd1234" }, true, false, "ISSYM_valid2" },
+        func_test_param { ca_expr_funcs::ISSYM, { "##@$_" }, true, false, "ISSYM_valid3" },
+        func_test_param { ca_expr_funcs::ISSYM, { "1234_Abcd" }, false, false, "ISSYM_invalid" },
         func_test_param { ca_expr_funcs::ISSYM, { "" }, {}, true, "ISSYM_empty" },
 
         func_test_param { ca_expr_funcs::X2A, { "" }, 0, false, "X2A_empty" },

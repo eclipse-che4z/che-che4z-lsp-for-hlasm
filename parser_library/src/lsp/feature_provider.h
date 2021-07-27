@@ -37,7 +37,7 @@ struct feature_provider
     virtual document_symbol_list_s document_symbol(const std::string& document_uri) const = 0;
 
 protected:
-    virtual ~feature_provider() = default;
+    ~feature_provider() = default;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

@@ -14,8 +14,6 @@ target_sources(parser_library PRIVATE
 	error_strategy.h
 	parser_error_listener.cpp
 	parser_error_listener.h
-	parser_error_listener_ctx.cpp
-	parser_error_listener_ctx.h
 	parser_impl.cpp
 	parser_impl.h
 	parser_tools.cpp

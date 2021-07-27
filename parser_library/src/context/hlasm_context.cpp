@@ -251,8 +251,9 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name, asm_option asm_options)
-    : opencode_file_name_(file_name)
+hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, id_storage init_ids)
+    : ids_(std::move(init_ids))
+    , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
@@ -347,8 +348,7 @@ processing_stack_t hlasm_context::processing_stack() const
             source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE, ids_.empty_id);
         for (const auto& member : source_stack_[i].copy_stack)
         {
-            location loc(member.cached_definition[member.current_statement].get_base()->statement_position(),
-                member.definition_location.file);
+            location loc(member.current_statement_position(), member.definition_location->file);
             res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name);
         }
 
@@ -379,8 +379,7 @@ location hlasm_context::current_statement_location() const
         {
             const auto& member = source_stack_.back().copy_stack.back();
 
-            auto pos = member.cached_definition[member.current_statement].get_base()->statement_position();
-            return location(pos, member.definition_location.file);
+            return location(member.current_statement_position(), member.definition_location->file);
         }
         else
             return source_stack_.back().current_instruction;
@@ -404,6 +403,17 @@ const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() c
 
 std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
 
+const std::vector<copy_member_invocation>&
+hlasm_plugin::parser_library::context::hlasm_context::opencode_copy_stack() const
+{
+    return source_stack_.front().copy_stack;
+}
+
+std::vector<copy_member_invocation>& hlasm_plugin::parser_library::context::hlasm_context::opencode_copy_stack()
+{
+    return source_stack_.front().copy_stack;
+}
+
 std::vector<id_index> hlasm_context::whole_copy_stack() const
 {
     std::vector<id_index> ret;
@@ -415,12 +425,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
     return ret;
 }
 
-void hlasm_context::fill_metrics_files()
-{
-    metrics.files = visited_files_.size();
-    // for each line without '\n' at the end of the files
-    metrics.lines += metrics.files;
-}
+void hlasm_context::fill_metrics_files() { metrics.files = visited_files_.size(); }
 
 const code_scope::set_sym_storage& hlasm_context::globals() const { return globals_; }
 
@@ -671,21 +676,32 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
     statement_block definition,
     copy_nest_storage copy_nests,
     label_storage labels,
-    location definition_location)
+    location definition_location,
+    std::unordered_set<copy_member_ptr> used_copy_members)
 {
-    return macros_
-        .insert_or_assign(name,
-            std::make_shared<macro_definition>(name,
-                label_param_name,
-                std::move(params),
-                std::move(definition),
-                std::move(copy_nests),
-                std::move(labels),
-                std::move(definition_location)))
-        .first->second;
+    auto result = std::make_shared<macro_definition>(name,
+        label_param_name,
+        std::move(params),
+        std::move(definition),
+        std::move(copy_nests),
+        std::move(labels),
+        std::move(definition_location),
+        std::move(used_copy_members));
+    add_macro(result);
+    return result;
 }
 
+void hlasm_context::add_macro(macro_def_ptr macro)
+{
+    const auto& m = macros_[macro->id] = std::move(macro);
+    // associate mnemonic if previously deleted by OPSYN
+    if (auto m_op = opcode_mnemo_.find(m->id); m_op != opcode_mnemo_.end() && !m_op->second)
+        m_op->second = opcode_t { m->id, m };
+};
+
 const hlasm_context::macro_storage& hlasm_context::macros() const { return macros_; }
+
+const hlasm_context::opcode_map& hlasm_context::opcode_mnemo_storage() const { return opcode_mnemo_; }
 
 macro_def_ptr hlasm_context::get_macro_definition(id_index name) const
 {
@@ -744,6 +760,20 @@ copy_member_ptr hlasm_context::add_copy_member(
     return copydef;
 }
 
+void hlasm_context::add_copy_member(copy_member_ptr member)
+{
+    visited_files_.insert(member->definition_location.file);
+    copy_members_[member->name] = std::move(member);
+}
+
+
+copy_member_ptr hlasm_context::get_copy_member(id_index member) const
+{
+    if (auto it = copy_members_.find(member); it != copy_members_.end())
+        return it->second;
+    return nullptr;
+}
+
 void hlasm_context::enter_copy_member(id_index member_name)
 {
     auto tmp = copy_members_.find(member_name);
@@ -752,12 +782,14 @@ void hlasm_context::enter_copy_member(id_index member_name)
 
     const auto& [name, member] = *tmp;
 
-    source_stack_.back().copy_stack.emplace_back(member->enter());
+    source_stack_.back().copy_stack.emplace_back(copy_member_invocation(member));
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return copy_members_; }
 
 void hlasm_context::leave_copy_member() { source_stack_.back().copy_stack.pop_back(); }
+
+void hlasm_context::add_preprocessor_dependency(const std::string& file) { visited_files_.emplace(file); }
 
 void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
@@ -772,7 +804,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 
     for (auto& frame : snapshot.copy_frames)
     {
-        auto invo = copy_members_.at(frame.copy_member)->enter();
+        copy_member_invocation invo(copy_members_.at(frame.copy_member));
         invo.current_statement = (int)frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }

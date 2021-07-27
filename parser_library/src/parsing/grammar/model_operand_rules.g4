@@ -38,14 +38,33 @@ op_ch_v_c returns [concat_chain chain]
 	:
 	| tmp=op_ch_v_c op_ch_v						{$tmp.chain.push_back(std::move($op_ch_v.point)); $chain = std::move($tmp.chain);};
 
+model_string returns [std::string value]
+	: ap1=APOSTROPHE
+	(
+		l_sp_ch
+		{
+			if ($l_sp_ch.value == "&&")
+				$value.append("&");
+			else
+				$value.append(std::move($l_sp_ch.value));
+
+		}
+		|
+		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value.append("''");}
+	)*?
+	ap2=(APOSTROPHE|ATTR)
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
+	};
 
 before_var_sym_model_b returns [std::string value]
 	: op_ch												{$value = std::move($op_ch.value);}
-	| string											
+	|
+	model_string
 	{
-		$value.reserve($string.value.size()+2); 
+		$value.reserve($model_string.value.size()+2);
 		$value.push_back('\'');
-		$value.append($string.value); 
+		$value.append($model_string.value);
 		$value.push_back('\'');
 	};
 

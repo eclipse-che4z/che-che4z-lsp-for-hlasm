@@ -36,40 +36,24 @@ namespace hlasm_plugin::parser_library::parsing {
 
 using self_def_t = std::int32_t;
 
+class error_strategy;
 struct parser_holder;
 class hlasmparser;
 
 // class providing methods helpful for parsing and methods modifying parsing process
-class parser_impl : public antlr4::Parser,
-                    public diagnosable_impl,
-                    public processing::opencode_provider,
-                    public processing::statement_fields_parser
+class parser_impl : public antlr4::Parser
 {
 public:
     parser_impl(antlr4::TokenStream* input);
 
-    void initialize(analyzing_context ctx,
-        semantics::source_info_processor* src_prc,
-        workspaces::parse_lib_provider* lib_provider,
-        processing::processing_state_listener* state_listener);
+    void initialize(context::hlasm_context* hlasm_ctx, diagnostic_op_consumer* diagnoser);
 
-    bool is_last_line() const;
-    void rewind_input(context::source_position pos) override;
-    std::string aread() override;
-    void ainsert(const std::string& record, processing::ainsert_destination front) override;
+    void reinitialize(context::hlasm_context* hlasm_ctx,
+        semantics::range_provider range_prov,
+        processing::processing_status proc_stat,
+        diagnostic_op_consumer* diagnoser);
 
-    context::source_position statement_start() const;
-    context::source_position statement_end() const;
-
-    processing::statement_fields_parser::parse_result parse_operand_field(std::string field,
-        bool after_substitution,
-        semantics::range_provider field_range,
-        processing::processing_status status) override;
-
-    context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
-
-    void collect_diags() const override;
-    std::vector<antlr4::ParserRuleContext*> tree;
+    semantics::collector& get_collector() { return collector; }
 
 protected:
     void enable_continuation();
@@ -80,27 +64,16 @@ protected:
     bool is_data_attr();
     bool is_var_def();
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
-    context::data_attr_kind get_attribute(std::string attr_data, range data_range);
+    context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
-    void parse_macro_operands(semantics::op_rem& line);
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;
     void resolve_expression(expressions::ca_expr_ptr& expr) const;
 
-
-    bool finished() const override;
-
-    void set_source_indices(const antlr4::Token* start, const antlr4::Token* stop);
-
     lexing::token_stream& input;
-    analyzing_context ctx;
     context::hlasm_context* hlasm_ctx = nullptr;
-    semantics::source_info_processor* src_proc = nullptr;
-    const processing::statement_processor* processor = nullptr;
-    context::shared_stmt_ptr current_statement;
     std::optional<processing::processing_status> proc_status;
-    bool finished_flag;
     semantics::collector collector;
     semantics::range_provider provider;
 
@@ -116,45 +89,24 @@ protected:
     bool UNKNOWN();
 
 private:
-    std::unique_ptr<parser_holder> rest_parser_;
-    workspaces::parse_lib_provider* lib_provider_ = nullptr;
-    processing::processing_state_listener* state_listener_ = nullptr;
-    lexing::lexer* input_lexer = nullptr;
-
-    void initialize(context::hlasm_context* hlasm_ctx,
-        semantics::range_provider range_prov,
-        processing::processing_status proc_stat);
-
-    semantics::operand_list parse_macro_operands(
-        std::string operands, range field_range, std::vector<range> operand_ranges);
-
-    // process methods return true if attribute lookahead needed
-    bool process_instruction();
-    bool process_statement();
-
-    void process_ordinary();
-    void process_lookahead();
-
-    void parse_operands(const std::string& text, range text_range);
-    void parse_lookahead_operands(const std::string& text, range text_range);
-
     antlr4::misc::IntervalSet getExpectedTokens() override;
-
-    bool input_tokens_invalidated = false;
+    diagnostic_op_consumer* diagnoser_ = nullptr;
+    parser_error_listener err_listener_;
 };
 
 // structure containing parser components
 struct parser_holder
 {
+    std::shared_ptr<parsing::error_strategy> error_handler;
     std::unique_ptr<lexing::input_source> input;
     std::unique_ptr<lexing::lexer> lex;
     std::unique_ptr<lexing::token_stream> stream;
     std::unique_ptr<hlasmparser> parser;
 
-    parser_holder(const parser_holder&) = delete;
-    parser_holder() = default;
-
     ~parser_holder();
+
+    static std::unique_ptr<parser_holder> create(
+        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

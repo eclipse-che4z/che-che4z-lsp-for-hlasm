@@ -2,7 +2,7 @@
   "name": "hlasm-language-support",
   "displayName": "HLASM Language Support",
   "description": "Code completion, highlighting, browsing and validation for High Level Assembler.",
-  "version": "0.13.0",
+  "version": "0.13.0-NEXT",
   "license": "EPL-2.0",
   "author": "Broadcom",
   "publisher": "BroadcomMFD",
@@ -54,7 +54,7 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.5.3",
-    "vsce": "^1.52.0",
+    "vsce": "^1.94.0",
     "vscode-test": "^1.3.0"
   },
   "dependencies": {
@@ -200,7 +200,9 @@
       {
         "type": "hlasm",
         "label": "HLASM Macro tracer",
-        "languages": ["hlasm"],
+        "languages": [
+          "hlasm"
+        ],
         "configurationAttributes": {
           "launch": {
             "required": [
@@ -272,6 +274,16 @@
         "configuration": "./language-configuration.json",
         "filenames": [],
         "firstLine": " *MACRO *"
+      },
+      {
+        "id": "hlasmListing",
+        "extensions": [
+          ".listing"
+        ],
+        "aliases": [
+          "HLASMListing"
+        ],
+        "filenames": []
       }
     ],
     "grammars": [
@@ -279,6 +291,11 @@
         "language": "hlasm",
         "scopeName": "source.hlasm",
         "path": "./syntaxes/hlasm.tmLanguage.json"
+      },
+      {
+        "language": "hlasmListing",
+        "scopeName": "source.hlasmListing",
+        "path": "./syntaxes/hlasmListing.tmLanguage.json"
       }
     ],
     "configurationDefaults": {

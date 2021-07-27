@@ -59,7 +59,8 @@ public:
                 "asm_options": {
                 "SYSPARM": "SEVEN",
                  "PROFILE": "MAC1"
-                }
+                },
+                "preprocessor": "DB2"
     },
     {
       "name": "P2",
@@ -85,7 +86,8 @@ public:
                 "asm_options": {
                 "SYSPARM": "SEVEN",
                  "PROFILE": "MAC1"
-                }
+                },
+                "preprocessor": "DB2"
 			},
 			{
 				"name": "P2",
@@ -240,6 +242,11 @@ TEST(workspace, load_config_synthetic)
 
     EXPECT_EQ("SEVEN", asm_options.sysparm);
     EXPECT_EQ("MAC1", asm_options.profile);
+
+    const auto& pp_options =
+        ws.get_preprocessor_options(is_windows() ? "test_proc_grps_uri\\pgm1" : "test_proc_grps_uri/pgm1");
+
+    EXPECT_TRUE(std::holds_alternative<db2_preprocessor_options>(pp_options));
 }
 
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
@@ -91,4 +91,70 @@ TEST(stability_test, entry_6)
 
     analyzer a(input);
     a.analyze();
+}
+
+TEST(stability_test, entry_7)
+{
+    std::string input(R"(T J  , @g+')");
+
+    analyzer a(input);
+    a.analyze();
+}
+
+TEST(stability_test, entry_8)
+{
+    std::string input(R"(T&STSSSS(&())))())");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+}
+
+TEST(stability_test, entry_9)
+{
+    std::string input(" T&STSS(&(&STSS(&())S))S))S))))()-&"
+                      "\xEF\xBF\xBD\xEF\xBF\xBD"
+                      "?"
+                      "\xEF\xBF\xBD\xEF\xBF\xBD");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+}
+
+TEST(stability_test, entry_10)
+{
+    std::string input(R"(T&ST&WT&ST&W((SS((SS))))())");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+}
+
+TEST(stability_test, entry_11)
+{
+    std::string input(R"( D
+
+D DS  z)"
+                      "\xC2\x96"
+                      R"(M0@(L0)&GDDS NG+n&n((&D D
+,$N&D ')"
+                      "\x0\x10"
+                      "'''-D&SCB "
+                      "\xC2\xAC");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+}
+
+TEST(stability_test, entry_12)
+{
+    std::string input(R"(q DS  z)"
+                      "\xC2\x96"
+                      R"(M0@(L0)&GDDS NG+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
 }

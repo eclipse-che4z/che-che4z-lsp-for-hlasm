@@ -171,12 +171,12 @@ In this example, GROUP1 is used for all open code programs.
 
 The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favour of the standard VSCode user and workspace level setting `file.associations`.
 
-`proc_conf.json` can include an optional parameter `macro_extensions` which contains a list of extensions that are to be used to identify files with macro definitions.
+`proc_grps.json` can include an optional parameter `macro_extensions` which contains a list of extensions that are to be used to identify files with macro definitions.
 The options can be specified both at the top level of the file, providing the default list for all libraries in all process groups, and at the level of individual library definitions, overriding the default from the top level.
 
 For example, with the extension `.hlasm`, a user can add the macro `MAC` to his source code even if it is in a file called `MAC.hlasm`.
 
-The following example of `proc_conf.json` specifies that files with the extension `.hlasm` are recognized as macros, with the exception of macros in the `C:/external/project/macs` directory, where they need to have the extension `.mac`.
+The following example of `proc_grps.json` specifies that files with the extension `.hlasm` are recognized as macros, with the exception of macros in the `C:/external/project/macs` directory, where they need to have the extension `.mac`.
 
 ```
 {

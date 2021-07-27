@@ -58,7 +58,7 @@ add_custom_command(
 		OUTPUT
 			${CHECK}
 		COMMAND
-			${CALL} npm --unsafe-perm install
+			${CALL} npm --unsafe-perm ci
 			#the --unsafe-perm is needed when user with root rights runs the build on linux
 		COMMAND
 			${CMAKE_COMMAND} -E make_directory ${BIN_FOLDER}

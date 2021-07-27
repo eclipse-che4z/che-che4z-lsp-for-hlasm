@@ -18,6 +18,7 @@
 #include "antlr4-runtime.h"
 
 #include "diagnosable_ctx.h"
+#include "semantics/range_provider.h"
 
 // Override antlr Error listener for more polished output
 // parser. Provides more readable syntax errors.
@@ -61,19 +62,27 @@ protected:
         range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) = 0;
 };
 
-class parser_error_listener : public parser_error_listener_base, public diagnosable_impl
+class parser_error_listener final : public parser_error_listener_base
 {
-public:
-    parser_error_listener(std::string file_name);
+    const semantics::range_provider* provider = nullptr;
 
-    void collect_diags() const override;
+public:
+    parser_error_listener() = default;
+    explicit parser_error_listener(const semantics::range_provider* prov)
+        : provider(prov) {};
+
+    diagnostic_op_consumer* diagnoser = nullptr;
 
 protected:
     void add_parser_diagnostic(
-        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override;
-
-private:
-    std::string file_name_;
+        range diagnostic_range, diagnostic_severity severity, std::string code, std::string message) override
+    {
+        if (diagnoser)
+            diagnoser->add_diagnostic(diagnostic_op(severity,
+                std::move(code),
+                std::move(message),
+                provider ? provider->adjust_range(diagnostic_range) : std::move(diagnostic_range)));
+    }
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

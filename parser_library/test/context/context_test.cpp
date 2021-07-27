@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-#include "../copy_mock.h"
+#include "../common_testing.h"
 #include "analyzer.h"
 #include "context/hlasm_context.h"
 #include "context/variables/system_variable.h"
@@ -260,7 +260,7 @@ TEST(context_macro, add_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
 
     EXPECT_EQ(m.named_params().size(), (size_t)4);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
@@ -292,7 +292,7 @@ TEST(context_macro, call_and_leave_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|		MAC		&KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {});
+    auto& m = *ctx.add_macro(idx, nullptr, move(args), {}, {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr p2(make_unique<macro_param_data_single>("ada"));
@@ -354,7 +354,7 @@ TEST(context_macro, repeat_call_same_macro)
     args.push_back({ nullptr, op3 });
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr lb(make_unique<macro_param_data_single>("lbl"));
@@ -448,7 +448,7 @@ TEST(context_macro, recurr_call)
     args.push_back({ nullptr, op3 });
 
     // prototype->|&LBL		MAC		&KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {});
+    ctx.add_macro(idx, lbl, move(args), {}, {}, {}, {}, {});
 
     // creating param data
     macro_data_ptr lb(make_unique<macro_param_data_single>("lbl"));
@@ -585,42 +585,16 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
 
  M2
 )";
-    copy_mock mock;
-    analyzer a(input, "", mock);
+    analyzer a(input);
     a.analyze();
 
     a.collect_diags();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        2);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "OPEN CODE");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "M2");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("v5"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<context::C_t>()
-                  ->get_value(),
-        "M1");
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v1"), 2);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v2"), "OPEN CODE");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v3"), "M2");
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v4"), 1);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v5"), "M1");
 }

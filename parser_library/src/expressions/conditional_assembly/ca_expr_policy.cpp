@@ -64,17 +64,25 @@ bool ca_arithmetic_policy::is_function(ca_expr_funcs func)
         case ca_expr_funcs::DCLEN:
         case ca_expr_funcs::FIND:
         case ca_expr_funcs::INDEX:
-        case ca_expr_funcs::ISBIN:
-        case ca_expr_funcs::ISDEC:
-        case ca_expr_funcs::ISHEX:
-        case ca_expr_funcs::ISSYM:
         case ca_expr_funcs::X2A:
             return true;
         default:
             return false;
     }
 };
-bool ca_binary_policy::is_function(ca_expr_funcs) { return false; };
+bool ca_binary_policy::is_function(ca_expr_funcs func)
+{
+    switch (func)
+    {
+        case ca_expr_funcs::ISBIN:
+        case ca_expr_funcs::ISDEC:
+        case ca_expr_funcs::ISHEX:
+        case ca_expr_funcs::ISSYM:
+            return true;
+        default:
+            return false;
+    }
+};
 bool ca_character_policy::is_function(ca_expr_funcs func)
 {
     switch (func)
@@ -172,9 +180,18 @@ std::pair<size_t, context::SET_t_enum> ca_arithmetic_policy::get_function_param_
     else
         return std::make_pair(0, context::SET_t_enum::UNDEF_TYPE);
 }
-std::pair<size_t, context::SET_t_enum> ca_binary_policy::get_function_param_info(ca_expr_funcs)
+std::pair<size_t, context::SET_t_enum> ca_binary_policy::get_function_param_info(ca_expr_funcs func)
 {
-    return std::make_pair(0, context::SET_t_enum::UNDEF_TYPE);
+    switch (func)
+    {
+        case ca_expr_funcs::ISBIN:
+        case ca_expr_funcs::ISDEC:
+        case ca_expr_funcs::ISHEX:
+        case ca_expr_funcs::ISSYM:
+            return std::make_pair(1, context::SET_t_enum::C_TYPE);
+        default:
+            return std::make_pair(0, context::SET_t_enum::UNDEF_TYPE);
+    }
 }
 std::pair<size_t, context::SET_t_enum> ca_character_policy::get_function_param_info(ca_expr_funcs func)
 {

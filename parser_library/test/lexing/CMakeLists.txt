@@ -12,5 +12,6 @@
 
 target_sources(library_test PRIVATE
 	lexer_test.cpp
+	logical_line_test.cpp
 )
 

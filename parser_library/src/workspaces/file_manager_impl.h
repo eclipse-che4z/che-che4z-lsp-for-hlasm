@@ -45,11 +45,9 @@ public:
     processor_file_ptr get_processor_file(const file_uri&) override;
     void remove_file(const file_uri&) override;
 
-    file_ptr find(const std::string& key) override;
+    file_ptr find(const std::string& key) const override;
     processor_file_ptr find_processor_file(const std::string& key) override;
 
-    // Returns array of files that were updated since this method was last called
-    virtual std::vector<processor_file*> list_updated_files();
     list_directory_result list_directory_files(const std::string& path) override;
 
     void did_open_file(const std::string& document_uri, version_t version, std::string text) override;
@@ -66,7 +64,7 @@ protected:
     std::unordered_map<std::string, std::shared_ptr<file_impl>> files_;
 
 private:
-    std::mutex files_mutex;
+    mutable std::mutex files_mutex;
 
     std::atomic<bool>* cancel_;
 

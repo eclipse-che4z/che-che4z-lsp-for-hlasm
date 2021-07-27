@@ -41,6 +41,8 @@ macrodef_processor::macrodef_processor(analyzing_context ctx,
     result_.external = start_.is_external;
     if (start_.is_external)
         result_.prototype.macro_name = start_.external_name;
+
+    result_.invalid = true; // result starts invalid until mandatory statements are encountered
 }
 
 processing_status macrodef_processor::get_processing_status(const semantics::instruction_si& instruction) const
@@ -166,6 +168,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else if (expecting_prototype_)
     {
+        result_.invalid = false;
         assert(statement.access_resolved());
         process_prototype(*statement.access_resolved());
         expecting_prototype_ = false;
@@ -281,7 +284,7 @@ void macrodef_processor::process_prototype_operand(
 
                     param_names.push_back(var_id);
 
-                    diagnostic_adder add_diags(this, op->operand_range);
+                    diagnostic_adder add_diags(*this, op->operand_range);
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
@@ -378,7 +381,10 @@ void macrodef_processor::process_COPY(const resolved_statement& statement)
 
     if (statement.operands_ref().value.size() == 1 && statement.operands_ref().value.front()->access_asm())
     {
-        asm_processor::process_copy(statement, ctx, provider_, this);
+        if (asm_processor::process_copy(statement, ctx, provider_, this))
+        {
+            result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
+        }
     }
     else
         add_diagnostic(diagnostic_op::error_E058(statement.operands_ref().field_range));
@@ -461,11 +467,13 @@ void macrodef_processor::add_correct_copy_nest()
 
     for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
     {
-        auto& nest = hlasm_ctx.current_copy_stack()[i];
-        auto pos = nest.cached_definition[nest.current_statement].get_base()->statement_position();
-        auto loc = location(pos, nest.definition_location.file);
-        result_.nests.back().push_back(context::copy_nest_item { std::move(loc), nest.name });
+        const auto& nest = hlasm_ctx.current_copy_stack()[i];
+        result_.nests.back().emplace_back(context::copy_nest_item {
+            location { nest.current_statement_position(), nest.definition_location->file }, nest.name });
     }
+
+    if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
+        result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
     const auto& current_file = result_.nests.back().back().loc.file;
     bool in_inner_macro = macro_nest_ > 1;
@@ -485,7 +493,7 @@ void macrodef_processor::add_correct_copy_nest()
         if (inner_macro_ended) // add new scope when inner macro ended
             result_.file_scopes[current_file].emplace_back(curr_line_, in_inner_macro);
         else if (!in_inner_macro
-            || inner_macro_started) // if we are not in inner macro update the end of old scope. Update also when inner
+            || inner_macro_started) // if we are not in inner macro, update the end of old scope. Update also when inner
                                     // macro just started, since we use half-open intervals.
         {
             auto& last_scope = result_.file_scopes[current_file].back();

@@ -113,8 +113,8 @@ void lsp_analyzer::copydef_finished(context::copy_member_ptr copydef, copy_proce
 
 void lsp_analyzer::opencode_finished()
 {
-    lsp_ctx_.add_opencode(std::make_unique<lsp::opencode_info>(
-                              hlasm_ctx_, std::move(opencode_var_defs_), std::move(opencode_occurences_)),
+    lsp_ctx_.add_opencode(
+        std::make_unique<lsp::opencode_info>(std::move(opencode_var_defs_), std::move(opencode_occurences_)),
         lsp::text_data_ref_t(file_text_));
 }
 
@@ -259,7 +259,7 @@ void lsp_analyzer::collect_copy_operands(const context::hlasm_statement& stateme
     if (!res_stmt)
         return;
 
-    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().add("COPY") && res_stmt->operands_ref().value.size() == 1
+    if (res_stmt->opcode_ref().value == hlasm_ctx_.ids().well_known.COPY && res_stmt->operands_ref().value.size() == 1
         && res_stmt->operands_ref().value.front()->access_asm())
     {
         auto sym_expr = dynamic_cast<expressions::mach_expr_symbol*>(

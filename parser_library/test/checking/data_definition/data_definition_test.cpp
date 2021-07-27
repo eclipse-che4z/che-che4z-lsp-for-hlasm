@@ -87,6 +87,55 @@ TEST(data_definition_grammar, modifiers)
     expect_errors(" DC %");
 }
 
+TEST(data_definition_grammar, modifiers_lower_case)
+{
+    expect_no_errors(R"(
+ dc 10fdp(123)l(2*3)s(2*4)e(-12*2)'2.25'
+ dc 10fdp(123)l2s(2*4)e(-12*2)'2.25'
+ dc 10fdp(123)l(2*3)s6e(-12*2)'2.25'
+ dc 10fdp(123)l.(2*3)s6e(-12*2)'2.25'
+ dc 10fdp(123)l(2*3)s(2*4)e12'2.25'
+ dc 10fdp(123)l(2*3)s(2*4)e-12'2.25'
+ dc 10fdp(123)l(2*3)s6e0'2.25'
+ dc 10fdp(123)l.(2*3)s6e0'2.25'
+ dc 10fdp(123)l3s(2*4)e12'2.25'
+ dc 10fdp(123)l1s30e(-12*2)'2.25'
+ dc 10fdp(123)l1s-30e(-12*2)'2.25'
+ dc 10fdp(123)l.1s30e(-12*2)'2.25'
+ dc 10fdp(123)l1s30e40'2.25'
+ dc 10fdp(123)l1s-30e-40'2.25'
+ dc 10fdp(123)l.1s30e40'2.25'
+ dc 10fdp(123)l.1s-30e-40'2.25'
+
+ dc (1*8)fdp(123)l2s(2*4)e(-12*2)'2.25'
+ dc (1*8)fdp(123)l(2*3)s6e(-12*2)'2.25'
+ dc (1*8)fdp(123)l(2*3)s(2*4)e12'2.25'
+ dc (1*8)fdp(123)l(2*3)s6e0'2.25'
+ dc (1*8)fdp(123)l3s(2*4)e12'2.25'
+ dc (1*8)fdp(123)l1s30e(-12*2)'2.25'
+ dc (1*8)fdp(123)l1s30e40'2.25'
+
+ dc 10fdl(2*3)s(2*4)e(-12*2)'2.25'
+ dc 10fdl2s(2*4)e(-12*2)'2.25'
+ dc 10fdl(2*3)s6e(-12*2)'2.25'
+ dc 10fdl(2*3)s(2*4)e12'2.25'
+ dc 10fdl(2*3)s6e0'2.25'
+ dc 10fdl3s(2*4)e12'2.25'
+ dc 10fdl1s30e(-12*2)'2.25'
+ dc 10fdl1s30e40'2.25'
+
+ dc (1*8)fdl(2*3)s(2*4)e(-12*2)'2.25'
+ dc (1*8)fdl2s(2*4)e(-12*2)'2.25'
+ dc (1*8)fdl(2*3)s6e(-12*2)'2.25'
+ dc (1*8)fdl(2*3)s(2*4)e12'2.25'
+ dc (1*8)fdl(2*3)s6e0'2.25'
+ dc (1*8)fdl3s(2*4)e12'2.25'
+ dc (1*8)fdl1s30e(-12*2)'2.25'
+ dc (1*8)fdl1s30e40'2.25'
+ dc 13fl.(13)'2.25'
+)");
+}
+
 TEST(data_definition_grammar, address_nominal)
 {
     expect_no_errors(" DC (1*8)S(512(12))");
@@ -328,4 +377,19 @@ TEST(data_definition, B_wrong_nominal_value)
 
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)1);
+}
+
+TEST(data_definition, trim_labels)
+{
+    using namespace hlasm_plugin::parser_library;
+    std::string input = R"(
+&L SETC 'LABEL '
+&L EQU  0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 0);
 }

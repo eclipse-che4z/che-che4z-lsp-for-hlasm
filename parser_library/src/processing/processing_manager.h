@@ -36,7 +36,7 @@ class processing_manager final : public processing_state_listener, public branch
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
         analyzing_context ctx,
-        const workspaces::library_data data,
+        workspaces::library_data data,
         std::string file_name,
         const std::string& file_text,
         workspaces::parse_lib_provider& lib_provider,
@@ -48,6 +48,8 @@ public:
     void register_stmt_analyzer(statement_analyzer* stmt_analyzer);
 
     void collect_diags() const override;
+
+    auto& opencode_parser() { return opencode_prov_.parser(); } // for testing only
 
 private:
     analyzing_context ctx_;
@@ -75,6 +77,9 @@ private:
     void start_copy_member(copy_start_data start) override;
     void finish_copy_member(copy_processing_result result) override;
     void finish_opencode() override;
+
+    void suspend_opencode_copy_processing() override;
+    bool resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts) override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
 

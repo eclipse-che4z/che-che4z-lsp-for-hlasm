@@ -42,7 +42,7 @@ op_rem_body_mach
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($op_list_mach.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move($op_list_mach.operands), std::move(remarks), line_range);
-	} EOLLN EOF
+	} EOF
 	| SPACE+ model_op remark_o 
 	{
 		operand_ptr op;
@@ -55,8 +55,8 @@ op_rem_body_mach
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move(operands), std::move(remarks), line_range);
-	} EOLLN EOF
-	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOLLN EOF;
+	} EOF
+	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_mach returns [std::vector<operand_ptr> operands]
 	: operand_mach (comma operand_mach)*												
@@ -80,7 +80,7 @@ op_rem_body_dat
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($op_list_dat.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move($op_list_dat.operands), std::move(remarks), line_range);
-	} EOLLN EOF
+	} EOF
 	| SPACE+ model_op remark_o 
 	{
 		operand_ptr op;
@@ -93,8 +93,8 @@ op_rem_body_dat
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move(operands), std::move(remarks), line_range);
-	} EOLLN EOF
-	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOLLN EOF;
+	} EOF
+	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_dat returns [std::vector<operand_ptr> operands]
 	: operand_dat (comma operand_dat)*												
@@ -118,7 +118,7 @@ op_rem_body_asm
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($op_list_asm.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move($op_list_asm.operands), std::move(remarks), line_range);
-	} EOLLN EOF
+	} EOF
 	| SPACE+ model_op remark_o 
 	{
 		operand_ptr op;
@@ -131,8 +131,8 @@ op_rem_body_asm
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($model_op.ctx->getStart(),$remark_o.ctx->getStop());
 		collector.set_operand_remark_field(std::move(operands), std::move(remarks), line_range);
-	} EOLLN EOF
-	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOLLN EOF;
+	} EOF
+	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_asm returns [std::vector<operand_ptr> operands]
 	: operand_asm (comma operand_asm)*												
@@ -156,14 +156,14 @@ op_rem_body_ca
 	{
 		auto line_range = provider.get_range($op_rem_body_alt_ca.ctx);
 		collector.set_operand_remark_field(std::move($op_rem_body_alt_ca.line.operands), std::move($op_rem_body_alt_ca.line.remarks), line_range);
-	} EOLLN EOF
+	} EOF
 	| remark_o 
 	{
 		auto remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		auto line_range = provider.get_range($remark_o.ctx);
 		collector.set_operand_remark_field(operand_list(), std::move(remarks), line_range);
-	} EOLLN EOF
-	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOLLN EOF;
+	} EOF
+	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_rem_body_alt_ca returns [op_rem line]
 	: alt_op_list_comma_ca cont_ca												
@@ -223,13 +223,13 @@ op_rem_body_mac returns [op_rem line, range line_range]
 	{
 		$line = std::move($op_rem_body_alt_mac.line);
 		$line_range = provider.get_range($op_rem_body_alt_mac.ctx);
-	} EOLLN EOF
+	} EOF
 	| remark_o 
 	{
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
 		$line_range = provider.get_range($remark_o.ctx);
-	} EOLLN EOF
-	| {$line_range = provider.get_range(_localctx);} EOLLN EOF;
+	} EOF
+	| {$line_range = provider.get_range(_localctx);} EOF;
 
 op_rem_body_alt_mac returns [op_rem line]
 	: alt_op_list_comma_mac cont_mac												
@@ -285,24 +285,24 @@ alt_operand_mac returns [operand_ptr op]
 /////////////
 
 op_rem_body_ignored
-	: (~EOLLN)* EOLLN EOF;
+	: .*? EOF;
 
 op_rem_body_deferred
 	: 
 	{
 		collector.set_operand_remark_field(provider.get_empty_range(_localctx->getStart()));
-	} EOLLN EOF
+	} EOF
 	| SPACE {enable_hidden();} deferred_op_rem {disable_hidden();}
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
 		collector.set_operand_remark_field($deferred_op_rem.ctx->getText(),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r);
-	} EOLLN EOF;
+	} EOF;
 
 op_rem_body_noop
 	: remark_o 
 	{
 		collector.set_operand_remark_field(operand_list{},$remark_o.value ? remark_list{*$remark_o.value} : remark_list{}, provider.get_range( $remark_o.ctx));
-	} EOLLN EOF;
+	} EOF;
 
 //////////////////////////////////////// mach_r
 
@@ -311,7 +311,7 @@ op_rem_body_mach_r returns [op_rem line]
 	{
 		$line.operands = std::move($op_list_mach.operands);
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
+	} EOF
 	| model_op remark_o 
 	{
 		operand_ptr op;
@@ -321,8 +321,8 @@ op_rem_body_mach_r returns [op_rem line]
 			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
-	| EOLLN EOF;
+	} EOF
+	| EOF;
 
 //////////////////////////////////////// dat_r
 
@@ -331,7 +331,7 @@ op_rem_body_dat_r returns [op_rem line]
 	{
 		$line.operands = std::move($op_list_dat.operands);
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
+	} EOF
 	| model_op remark_o 
 	{
 		operand_ptr op;
@@ -341,8 +341,8 @@ op_rem_body_dat_r returns [op_rem line]
 			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
-	| EOLLN EOF;
+	} EOF
+	| EOF;
 
 //////////////////////////////////////// asm_r
 
@@ -351,7 +351,7 @@ op_rem_body_asm_r returns [op_rem line]
 	{
 		$line.operands = std::move($op_list_asm.operands);
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
+	} EOF
 	| model_op remark_o 
 	{
 		operand_ptr op;
@@ -361,8 +361,8 @@ op_rem_body_asm_r returns [op_rem line]
 			op = std::make_unique<semantics::empty_operand>(provider.get_range( $model_op.ctx)); 
 		$line.operands.push_back(std::move(op));
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
-	| EOLLN EOF;
+	} EOF
+	| EOF;
 
 //////////////////////////////////////// mac_r
 
@@ -370,12 +370,12 @@ op_rem_body_mac_r returns [op_rem line]
 	: op_rem_body_alt_mac
 	{
 		$line = std::move($op_rem_body_alt_mac.line);
-	} EOLLN EOF
+	} EOF
 	| remark_o 
 	{
 		$line.remarks = $remark_o.value ? remark_list{*$remark_o.value} : remark_list{};
-	} EOLLN EOF
-	| EOLLN EOF;
+	} EOF
+	| EOF;
 
 op_rem_body_noop_r
-	: remark_o EOLLN EOF;
+	: remark_o EOF;

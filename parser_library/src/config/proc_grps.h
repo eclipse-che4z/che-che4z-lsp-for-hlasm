@@ -12,11 +12,12 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
-#define HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
+#ifndef HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H
+#define HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H
 
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "nlohmann/json_fwd.hpp"
@@ -42,23 +43,39 @@ struct assembler_options
 void to_json(nlohmann::json& j, const assembler_options& p);
 void from_json(const nlohmann::json& j, assembler_options& p);
 
+struct db2_preprocessor
+{};
+inline bool operator==(const db2_preprocessor&, const db2_preprocessor&) { return true; }
+inline bool operator!=(const db2_preprocessor& l, const db2_preprocessor& r) { return !(l == r); }
+
+void to_json(nlohmann::json& j, const db2_preprocessor& p);
+void from_json(const nlohmann::json& j, db2_preprocessor& p);
+
+struct preprocessor_options
+{
+    std::variant<std::monostate, db2_preprocessor> options;
+};
+inline bool operator==(const preprocessor_options& l, const preprocessor_options& r) { return l.options == r.options; }
+inline bool operator!=(const preprocessor_options& l, const preprocessor_options& r) { return !(l == r); }
+
 struct processor_group
 {
     std::string name;
     std::vector<library> libs;
     assembler_options asm_options;
+    preprocessor_options preprocessor;
 };
 void to_json(nlohmann::json& j, const processor_group& p);
 void from_json(const nlohmann::json& j, processor_group& p);
 
-struct proc_conf
+struct proc_grps
 {
     std::vector<processor_group> pgroups;
     std::vector<std::string> macro_extensions;
 };
-void to_json(nlohmann::json& j, const proc_conf& p);
-void from_json(const nlohmann::json& j, proc_conf& p);
+void to_json(nlohmann::json& j, const proc_grps& p);
+void from_json(const nlohmann::json& j, proc_grps& p);
 
 } // namespace hlasm_plugin::parser_library::config
 
-#endif // HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_CONF_H
+#endif // HLASMPARSER_PARSERLIBRARY_CONFIG_PROC_GRPS_H

@@ -14,7 +14,6 @@
 
 #include "gmock/gmock.h"
 
-#include "expr_mocks.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/evaluation_context.h"
 
@@ -24,10 +23,8 @@ using namespace hlasm_plugin::parser_library;
 
 TEST(ca_constant, undefined_attributes)
 {
-    lib_prov_mock lib;
-    evaluation_context eval_ctx {
-        analyzing_context { std::make_shared<context::hlasm_context>(), std::make_shared<lsp::lsp_context>() }, lib
-    };
+    context::hlasm_context ctx;
+    evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
 
     ca_constant c(1, range());
 
@@ -37,20 +34,23 @@ TEST(ca_constant, undefined_attributes)
 class collectable_mock : public diagnosable_op_impl
 {
     void collect_diags() const override {}
+
+public:
+    void operator()(diagnostic_op d) { add_diagnostic(d); }
 };
 
 TEST(ca_constant, self_def_term_invalid_input)
 {
     {
         collectable_mock m;
-        diagnostic_adder add_diags(&m, range());
+        diagnostic_adder add_diags(m, range());
         ca_constant::self_defining_term("", add_diags);
         ASSERT_TRUE(add_diags.diagnostics_present);
         EXPECT_EQ(m.diags().front().code, "CE015");
     }
     {
         collectable_mock m;
-        diagnostic_adder add_diags(&m, range());
+        diagnostic_adder add_diags(m, range());
         ca_constant::self_defining_term("Q'dc'", add_diags);
         ASSERT_TRUE(add_diags.diagnostics_present);
         EXPECT_EQ(m.diags().front().code, "CE015");

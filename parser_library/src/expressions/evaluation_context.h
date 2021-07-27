@@ -21,20 +21,18 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // structure holding required objects to correcly perform evaluation of expressions
-struct evaluation_context : diagnosable_ctx
+struct evaluation_context : public diagnosable_ctx
 {
-    analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
     workspaces::parse_lib_provider& lib_provider;
 
-    evaluation_context(analyzing_context ctx, workspaces::parse_lib_provider& lib_provider)
-        : diagnosable_ctx(*ctx.hlasm_ctx)
-        , ctx(ctx)
-        , hlasm_ctx(*ctx.hlasm_ctx)
+    evaluation_context(context::hlasm_context& ctx, workspaces::parse_lib_provider& lib_provider)
+        : diagnosable_ctx(ctx)
+        , hlasm_ctx(ctx)
         , lib_provider(lib_provider)
     {}
 
-    evaluation_context(const evaluation_context&) = delete;
+    evaluation_context(const evaluation_context& oth) = delete;
 
     void collect_diags() const override
     {

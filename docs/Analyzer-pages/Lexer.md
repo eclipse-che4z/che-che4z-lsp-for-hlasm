@@ -39,7 +39,6 @@ Source code encodings differ for the used libraries. All strings are encoded in 
     |:---------------|-----------------------------------------------:|
     | **IGNORED**    |    sequence of characters ignored in processing|
     | **COMMENT**    |                           commentary statements|
-    | **EOLLN**      |         token signalling the end of a statement|
     | **SPACE**      |                            a sequence of spaces|
     | **IDENTIFIER** |                               symbol identifier|
     | **ORDSYMBOL**  |                      Ordinary symbol identifier|
@@ -65,7 +64,7 @@ Source code encodings differ for the used libraries. All strings are encoded in 
 Important functions:
 
 - `nextToken()`  
-Implements the main functionality: lexing and emitting tokens. Before lexing, the function uses the right input stream (either the source code or `AINSERT` buffer if not empty). After choosing the right input source, the lexer emits a token. HLASM introduces a *continuation* symbol (an arbitrary non-blank symbol in the continuation column) that breaks one logical line into two or more source-code lines. The end of one logical line indicates an `EOLLN` token. This token is important for further (syntactic and semantic) analysis.
+Implements the main functionality: lexing and emitting tokens. Before lexing, the function uses the right input stream (either the source code or `AINSERT` buffer if not empty). After choosing the right input source, the lexer emits a token. HLASM introduces a *continuation* symbol (an arbitrary non-blank symbol in the continuation column) that breaks one logical line into two or more source-code lines.
 
 - `create_token()`  
 Creates a token of a given type. The lexer’s internal state gives the position of the token.

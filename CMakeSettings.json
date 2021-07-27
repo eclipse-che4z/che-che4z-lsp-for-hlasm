@@ -1,4 +1,4 @@
-﻿{
+{
   "configurations": [
     {
       "name": "x86-Debug",
@@ -34,7 +34,13 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "CMAKE_VS_JUST_MY_CODE_DEBUGGING",
+          "value": "On",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Release",
@@ -55,7 +61,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=\"g++-8\" -DCMAKE_C_COMPILER=\"gcc-8\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=\"g++-10\" -DCMAKE_C_COMPILER=\"gcc-10\"",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -70,7 +76,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -85,7 +91,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined\"",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -100,7 +106,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined,fuzzer-no-link\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined,fuzzer-no-link\"",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -115,7 +121,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=\"-fsanitize=thread\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_FLAGS=\"-fsanitize=thread\"",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -130,7 +136,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_FLAGS=\"-fsanitize=thread\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_FLAGS=\"-fsanitize=thread\"",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],
@@ -145,7 +151,7 @@
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeExecutable": "/usr/bin/cmake",
-      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-8 -DCMAKE_C_COMPILER=clang-8 -DBUILD_FUZZER=On -DBUILD_VSIX=Off -DWITH_LIBCXX=Off -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DBUILD_FUZZER=On -DBUILD_VSIX=Off -DWITH_LIBCXX=Off -DCMAKE_CXX_FLAGS=\"-fsanitize=address,undefined\"",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_x64" ],

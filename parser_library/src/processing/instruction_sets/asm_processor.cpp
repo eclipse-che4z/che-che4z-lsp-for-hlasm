@@ -452,11 +452,9 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
 {
-    if (stmt.operands_ref().value.size() > 1)
-    {
-        check(stmt, hlasm_ctx, checker_, *this);
+    const auto& operands = stmt.operands_ref().value;
+    if (!check(stmt, hlasm_ctx, checker_, *this))
         return;
-    }
 
     auto label = find_label_symbol(stmt);
     if (label == context::id_storage::empty_id)
@@ -467,9 +465,9 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
     }
 
     context::id_index operand = context::id_storage::empty_id;
-    if (stmt.operands_ref().value.size() == 1)
+    if (operands.size() == 1) // covers also the " , " case
     {
-        auto expr_op = stmt.operands_ref().value.front()->access_asm()->access_expr();
+        auto expr_op = operands.front()->access_asm()->access_expr();
         if (expr_op)
         {
             if (auto expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression.get()))
@@ -489,7 +487,7 @@ void asm_processor::process_OPSYN(rebuilt_statement stmt)
         if (hlasm_ctx.get_operation_code(operand))
             hlasm_ctx.add_mnemonic(label, operand);
         else
-            add_diagnostic(diagnostic_op::error_A246_OPSYN(stmt.operands_ref().value.front()->operand_range));
+            add_diagnostic(diagnostic_op::error_A246_OPSYN(operands.front()->operand_range));
     }
 }
 
@@ -530,7 +528,7 @@ void asm_processor::process(context::shared_stmt_ptr stmt)
     }
 }
 
-void asm_processor::process_copy(const semantics::complete_statement& stmt,
+bool asm_processor::process_copy(const semantics::complete_statement& stmt,
     analyzing_context ctx,
     workspaces::parse_lib_provider& lib_provider,
     diagnosable_ctx* diagnoser)
@@ -542,7 +540,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-        return;
+        return false;
     }
 
     auto tmp = ctx.hlasm_ctx->copy_members().find(sym_expr->value);
@@ -556,7 +554,7 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
         {
             if (diagnoser)
                 diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
-            return;
+            return false;
         }
     }
     auto whole_copy_stack = ctx.hlasm_ctx->whole_copy_stack();
@@ -567,10 +565,12 @@ void asm_processor::process_copy(const semantics::complete_statement& stmt,
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E062(stmt.stmt_range_ref()));
-        return;
+        return false;
     }
 
     ctx.hlasm_ctx->enter_copy_member(sym_expr->value);
+
+    return true;
 }
 
 asm_processor::process_table_t asm_processor::create_table(context::hlasm_context& h_ctx)
@@ -588,7 +588,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("EQU"), std::bind(&asm_processor::process_EQU, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("DC"), std::bind(&asm_processor::process_DC, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
-    table.emplace(h_ctx.ids().add("COPY"), std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().well_known.COPY, std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));

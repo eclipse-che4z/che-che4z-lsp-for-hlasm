@@ -42,7 +42,7 @@ workspace::workspace(const ws_uri& uri,
     , name_(name)
     , uri_(uri)
     , file_manager_(file_manager)
-    , implicit_proc_grp("pg_implicit", {})
+    , implicit_proc_grp("pg_implicit", {}, {})
     , ws_path_(uri)
     , global_config_(global_config)
 {
@@ -160,7 +160,7 @@ void workspace::parse_file(const std::string& file_uri)
             {
                 auto found = file_manager_.find_processor_file(fname);
                 if (found)
-                    found->parse(*this);
+                    found->parse(*this, get_asm_options(fname), get_preprocessor_options(fname));
             }
 
             for (auto fname : dependants_)
@@ -199,7 +199,7 @@ void workspace::parse_file(const std::string& file_uri)
 
     for (auto f : files_to_parse)
     {
-        f->parse(*this);
+        f->parse(*this, get_asm_options(f->get_file_name()), get_preprocessor_options(f->get_file_name()));
         if (!f->dependencies().empty())
             dependants_.insert(f->get_file_name());
 
@@ -252,6 +252,13 @@ void workspace::did_close_file(const std::string& file_uri)
         auto file = file_manager_.find_processor_file(*fname);
         // filter the dependencies that should not be closed
         filter_and_close_dependencies_(file->dependencies(), file);
+        // Erase macros cached for this opencode from all its dependencies
+        for (const std::string& dep_name : file->dependencies())
+        {
+            auto proc_file = file_manager_.get_processor_file(dep_name);
+            if (proc_file)
+                proc_file->erase_cache_of_opencode(file_uri);
+        }
         // remove it from dependants
         dependants_.erase(fname);
     }
@@ -341,7 +348,7 @@ bool workspace::load_and_process_config()
     opened_ = true;
 
     config::pgm_conf pgm_config;
-    config::proc_conf proc_groups;
+    config::proc_grps proc_groups;
     file_ptr pgm_conf_file;
 
     bool load_ok = load_config(proc_groups, pgm_config, pgm_conf_file);
@@ -369,7 +376,7 @@ bool workspace::load_and_process_config()
     // process processor groups
     for (auto& pg : proc_groups.pgroups)
     {
-        processor_group prc_grp(pg.name, pg.asm_options);
+        processor_group prc_grp(pg.name, pg.asm_options, pg.preprocessor);
 
         for (const auto& lib : pg.libs)
         {
@@ -423,7 +430,7 @@ bool workspace::load_and_process_config()
 
     return true;
 }
-bool workspace::load_config(config::proc_conf& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file)
+bool workspace::load_config(config::proc_grps& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file)
 {
     std::filesystem::path hlasm_base = utils::path::join(uri_, HLASM_PLUGIN_FOLDER);
 
@@ -521,7 +528,7 @@ bool workspace::is_dependency_(const std::string& file_uri)
     return false;
 }
 
-parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, const library_data data)
+parse_result workspace::parse_library(const std::string& library, analyzing_context ctx, library_data data)
 {
     auto& proc_grp = get_proc_grp_by_program(ctx.hlasm_ctx->opencode_file_name());
     for (auto&& lib : proc_grp.libraries())
@@ -547,11 +554,40 @@ bool workspace::has_library(const std::string& library, const std::string& progr
     return false;
 }
 
-const asm_option& workspace::get_asm_options(const std::string& file_name)
+std::optional<std::string> workspace::get_library(
+    const std::string& library, const std::string& program, std::string* uri) const
+{
+    auto& proc_grp = get_proc_grp_by_program(program);
+    for (auto&& lib : proc_grp.libraries())
+    {
+        std::shared_ptr<processor> found = lib->find_file(library);
+        if (!found)
+            continue;
+
+        auto f = dynamic_cast<file*>(found.get());
+        if (!f) // for now
+            return std::nullopt;
+
+        if (uri)
+            *uri = f->get_file_name();
+
+        return f->get_text();
+    }
+    return std::nullopt;
+}
+
+asm_option workspace::get_asm_options(const std::string& file_name) const
 {
     auto& proc_grp = get_proc_grp_by_program(file_name);
 
     return proc_grp.asm_options();
+}
+
+preprocessor_options workspace::get_preprocessor_options(const std::string& file_name) const
+{
+    auto& proc_grp = get_proc_grp_by_program(file_name);
+
+    return proc_grp.preprocessor();
 }
 
 processor_file_ptr workspace::get_processor_file(const std::string& filename)

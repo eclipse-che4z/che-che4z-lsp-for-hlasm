@@ -23,8 +23,8 @@ namespace hlasm_plugin::parser_library {
 
 struct analyzing_context
 {
-    context::hlasm_ctx_ptr hlasm_ctx;
-    lsp::lsp_ctx_ptr lsp_ctx;
+    std::shared_ptr<context::hlasm_context> hlasm_ctx;
+    std::shared_ptr<lsp::lsp_context> lsp_ctx;
 };
 
 } // namespace hlasm_plugin::parser_library

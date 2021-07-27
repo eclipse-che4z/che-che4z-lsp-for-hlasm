@@ -138,7 +138,7 @@ using document_symbol_list = sequence<document_symbol_item, const lsp::document_
 struct PARSER_LIBRARY_EXPORT document_symbol_item
 {
     document_symbol_item(const lsp::document_symbol_item_s& item);
-    std::string name() const;
+    sequence<char> name() const;
     document_symbol_kind kind() const;
     range symbol_range() const;
     range symbol_selection_range() const;
@@ -255,6 +255,16 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     size_t non_continued_statements = 0;
     size_t files = 0;
 };
+
+bool inline operator==(const performance_metrics& lhs, const performance_metrics& rhs)
+{
+    return lhs.lines == rhs.lines && lhs.macro_def_statements == rhs.macro_def_statements
+        && lhs.macro_statements == rhs.macro_statements && lhs.open_code_statements == rhs.open_code_statements
+        && lhs.copy_def_statements == rhs.copy_def_statements && lhs.copy_statements == rhs.copy_statements
+        && lhs.reparsed_statements == rhs.reparsed_statements && lhs.lookahead_statements == rhs.lookahead_statements
+        && lhs.continued_statements == rhs.continued_statements
+        && lhs.non_continued_statements == rhs.non_continued_statements && lhs.files == rhs.files;
+}
 
 struct PARSER_LIBRARY_EXPORT diagnostic_list
 {

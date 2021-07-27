@@ -24,22 +24,23 @@
 
 namespace hlasm_plugin::parser_library::lsp {
 
-class lsp_context;
-
-using lsp_ctx_ptr = std::shared_ptr<lsp_context>;
-
-class lsp_context : public feature_provider
+class lsp_context final : public feature_provider
 {
     opencode_info_ptr opencode_;
     std::unordered_map<std::string, file_info_ptr> files_;
     std::unordered_map<context::macro_def_ptr, macro_info_ptr> macros_;
 
+    std::shared_ptr<context::hlasm_context> hlasm_ctx_;
+
 public:
+    explicit lsp_context(std::shared_ptr<context::hlasm_context> h_ctx);
+
     void add_copy(context::copy_member_ptr copy, text_data_ref_t text_data);
     void add_macro(macro_info_ptr macro_i, text_data_ref_t text_data = text_data_ref_t());
     void add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data);
 
-    macro_info_ptr get_macro_info(const context::macro_def_ptr& macro_def) const;
+    [[nodiscard]] macro_info_ptr get_macro_info(context::id_index macro_name) const;
+    [[nodiscard]] const file_info* get_file_info(const std::string& file_name) const;
 
     location definition(const std::string& document_uri, position pos) const override;
     location_list references(const std::string& document_uri, position pos) const override;

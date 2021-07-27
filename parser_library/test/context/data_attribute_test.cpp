@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 
 // test for
 // symbol data attributes
@@ -145,48 +146,13 @@ TEST(data_attributes, N_var_syms)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        3);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        3);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        0);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        3);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N1"), 3);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N2"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N3"), 3);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N4"), 0);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN1"), 3);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN2"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN3"), 1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -215,36 +181,11 @@ TEST(data_attributes, K_var_syms_good)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("N2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        7);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("NN3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        5);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N1"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "N2"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN1"), 7);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN2"), 1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "NN3"), 5);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -307,42 +248,12 @@ TEST(data_attributes, T_var_syms)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "O");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "N");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "N");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "N");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T5"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "N");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T6"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "U");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T1"), "O");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T2"), "N");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T3"), "N");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T4"), "N");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T5"), "N");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T6"), "U");
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -366,18 +277,8 @@ TEST(data_attributes, T_macro_params)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "O");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "N");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T1"), "O");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T2"), "N");
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -395,12 +296,7 @@ LAB LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("T1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "I");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T1"), "I");
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -411,45 +307,25 @@ TEST(data_attributes, D)
     std::string input = R"(
 A EQU 11,
 B LR 1,1
-&V1 SETB D'A
-&V2 SETB D'B
-&V3 SETB D'C
+&V1 SETB (D'A)
+&V2 SETB (D'B)
+&V3 SETB (D'C)
 
 &SYM SETC 'A'
 &BAD_SYM SETC 'C'
 
-&V4 SETB D'&SYM
-&V5 SETB D'&BAD_SYM
+&V4 SETB (D'&SYM)
+&V5 SETB (D'&BAD_SYM)
 )";
 
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx()
-                    .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                    ->access_set_symbol_base()
-                    ->access_set_symbol<B_t>()
-                    ->get_value());
-    EXPECT_TRUE(a.hlasm_ctx()
-                    .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                    ->access_set_symbol_base()
-                    ->access_set_symbol<B_t>()
-                    ->get_value());
-    EXPECT_FALSE(a.hlasm_ctx()
-                     .get_var_sym(a.hlasm_ctx().ids().add("V3"))
-                     ->access_set_symbol_base()
-                     ->access_set_symbol<B_t>()
-                     ->get_value());
-    EXPECT_TRUE(a.hlasm_ctx()
-                    .get_var_sym(a.hlasm_ctx().ids().add("V4"))
-                    ->access_set_symbol_base()
-                    ->access_set_symbol<B_t>()
-                    ->get_value());
-    EXPECT_FALSE(a.hlasm_ctx()
-                     .get_var_sym(a.hlasm_ctx().ids().add("V5"))
-                     ->access_set_symbol_base()
-                     ->access_set_symbol<B_t>()
-                     ->get_value());
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V1"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V2"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V3"), false);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V4"), true);
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "V5"), false);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -490,18 +366,8 @@ TEST EQU 11,10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        10);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 10);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V2"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -537,12 +403,7 @@ A DC FS12'1'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        12);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 12);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -602,12 +463,7 @@ HALFCON DC HS6'-25.93'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        9);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V"), 9);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -632,42 +488,12 @@ TEST(data_attributes, O_opencode_ord)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "O");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "A");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "A");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V4"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "E");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V5"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "M");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V6"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "U");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V1"), "O");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "A");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V3"), "A");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V4"), "E");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V5"), "M");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V6"), "U");
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -692,49 +518,13 @@ TEST(data_attributes, O_opencode_var)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "O");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "M");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V1"), "O");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "M");
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
-class O_mock : public workspaces::parse_lib_provider
-{
-    asm_option asm_options;
-
-public:
-    workspaces::parse_result parse_library(
-        const std::string& library, analyzing_context ctx, const workspaces::library_data data) override
-    {
-        if (!has_library(library, ctx.hlasm_ctx->opencode_file_name()))
-            return false;
-
-        analyzer a(M, library, std::move(ctx), *this, data);
-        a.analyze();
-        return true;
-    }
-    bool has_library(const std::string& lib, const std::string&) const override { return lib == "MAC"; }
-    const asm_option& get_asm_options(const std::string&) override { return asm_options; }
-
-private:
-    const std::string M =
-        R"(   MACRO
-       MAC  
-       LR   1,1
-       MEND
-)";
-};
 
 TEST(data_attributes, O_libraries)
 {
@@ -745,31 +535,23 @@ TEST(data_attributes, O_libraries)
 &V3 SETC O'MAC
 
 )";
-    O_mock prov;
-    analyzer a(input, "", prov);
+    const std::string mac_def =
+        R"(   MACRO
+       MAC  
+       LR   1,1
+       MEND
+)";
+
+    mock_parse_lib_provider prov { { "MAC", mac_def } };
+    analyzer a(input, analyzer_options { &prov });
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "S");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V2"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "U");
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V3"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<C_t>()
-                  ->get_value(),
-        "M");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V1"), "S");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V2"), "U");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "V3"), "M");
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), 0U);
 }
 
 TEST(data_attributes, basic_attr_ref)
@@ -829,12 +611,7 @@ B EQU 1,11
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx()
-                  .get_var_sym(a.hlasm_ctx().ids().add("V1"))
-                  ->access_set_symbol_base()
-                  ->access_set_symbol<A_t>()
-                  ->get_value(),
-        1);
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 1);
     EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().length(),
         (symbol_attributes::len_attr)1);
 

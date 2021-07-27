@@ -14,8 +14,10 @@
 
 #include "operand_impls.h"
 
+#include "context/instruction.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
+#include "expressions/mach_operator.h"
 #include "operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::semantics {
@@ -81,9 +83,8 @@ address_machine_operand* machine_operand::access_address()
     return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
-std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate_info info,
-    const expressions::mach_expression& expr,
-    std::optional<checking::machine_operand_type> type_hint = std::nullopt)
+std::unique_ptr<checking::operand> make_check_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -92,18 +93,25 @@ std::unique_ptr<checking::operand> make_check_operand(expressions::mach_evaluate
     }
     else
     {
-        if (type_hint && *type_hint == checking::machine_operand_type::REG_IMM)
-        {
-            return std::make_unique<checking::one_operand>(0);
-        }
-        else
-        {
-            return std::make_unique<checking::address_operand>(
-                checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
-        }
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
     }
 }
 
+std::unique_ptr<checking::operand> make_rel_imm_operand(
+    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+{
+    auto res = expr.evaluate(info);
+    if (res.value_kind() == context::symbol_value_kind::ABS)
+    {
+        return std::make_unique<checking::one_operand>(std::to_string(res.get_abs()), res.get_abs());
+    }
+    else
+    {
+        return std::make_unique<checking::address_operand>(
+            checking::address_state::UNRES, 0, 0, 0, checking::operand_state::ONE_OP);
+    }
+}
 //***************** expr_machine_operand *********************
 
 expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression, range operand_range)
@@ -120,7 +128,11 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expre
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
 {
-    return make_check_operand(info, *expression, type_hint);
+    if (type_hint == checking::machine_operand_type::RELOC_IMM)
+    {
+        return make_rel_imm_operand(info, *expression);
+    }
+    return make_check_operand(info, *expression);
 }
 
 // suppress MSVC warning 'inherits via dominance'
@@ -606,5 +618,86 @@ macro_operand::macro_operand(mac_kind kind, range operand_range)
     : operand(operand_type::MAC, std::move(operand_range))
     , kind(kind)
 {}
+
+
+join_operands_result join_operands(const operand_list& operands)
+{
+    if (operands.empty())
+        return {};
+
+    join_operands_result result;
+    size_t string_size = operands.size();
+
+    for (const auto& op : operands)
+        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+            string_size += m_op->value.size();
+
+    result.text.reserve(string_size);
+
+    bool insert_comma = false;
+    for (const auto& op : operands)
+    {
+        if (std::exchange(insert_comma, true))
+            result.text.push_back(',');
+
+        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
+            result.text.append(m_op->value);
+
+        result.ranges.push_back(op->operand_range);
+    }
+    result.total_range = union_range(operands.front()->operand_range, operands.back()->operand_range);
+
+    return result;
+}
+
+void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction)
+{
+    if (instruction->empty())
+        return;
+
+    const context::machine_instruction* instr;
+    const std::pair<size_t, size_t>* replaced_b = nullptr;
+    const std::pair<size_t, size_t>* replaced_e = nullptr;
+
+    if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
+        mnem_tmp != context::instruction::mnemonic_codes.end())
+    {
+        const auto& mnemonic = mnem_tmp->second;
+        instr = mnemonic.instruction;
+        replaced_b = mnemonic.replaced.data();
+        replaced_e = replaced_b + mnemonic.replaced.size();
+    }
+    else
+    {
+        instr = &context::instruction::machine_instructions.at(*instruction);
+    }
+
+    size_t position = 0;
+    for (const auto& operand : op_list)
+    {
+        while (replaced_b != replaced_e)
+        {
+            const auto index = replaced_b->first;
+            if (position < index)
+                break;
+            if (position++ == index)
+                ++replaced_b;
+        }
+
+        if (position >= instr->operands.size())
+            break;
+
+        if (instr->operands[position++].identifier.type != checking::machine_operand_type::RELOC_IMM)
+            continue;
+
+        if (auto* mach_op = operand->access_mach(); mach_op != nullptr && mach_op->kind == mach_kind::EXPR)
+        {
+            auto& mach_expr = mach_op->access_expr()->expression;
+            auto range = mach_expr->get_range();
+            mach_expr = std::make_unique<expressions::mach_expr_binary<expressions::rel_addr>>(
+                std::make_unique<expressions::mach_expr_location_counter>(range), std::move(mach_expr), range);
+        }
+    }
+}
 
 } // namespace hlasm_plugin::parser_library::semantics

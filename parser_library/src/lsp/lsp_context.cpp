@@ -99,8 +99,7 @@ std::string lsp_context::find_macro_copy_id(const context::processing_stack_t& s
 {
     assert(i != 0);
     assert(i < stack.size());
-    return stack[i].member_name == opencode_->hlasm_ctx.ids().empty_id ? stack[i].proc_location.file
-                                                                       : *stack[i].member_name;
+    return stack[i].member_name == hlasm_ctx_->ids().empty_id ? stack[i].proc_location.file : *stack[i].member_name;
 }
 
 document_symbol_list_s lsp_context::document_symbol_macro(const std::string& document_uri) const
@@ -131,9 +130,8 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                 }
                 else
                 {
-                    result.emplace_back(document_symbol_item_s { *name,
-                        document_symbol_kind::SEQ,
-                        { seq->symbol_location.pos, seq->symbol_location.pos } });
+                    result.emplace_back(document_symbol_item_s {
+                        *name, document_symbol_kind::SEQ, { seq->symbol_location.pos, seq->symbol_location.pos } });
                 }
             }
             return result;
@@ -167,9 +165,8 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
                 {
                     continue;
                 }
-                result.emplace_back(document_symbol_item_s { *name,
-                    document_symbol_kind::SEQ,
-                    { seq->symbol_location.pos, seq->symbol_location.pos } });
+                result.emplace_back(document_symbol_item_s {
+                    *name, document_symbol_kind::SEQ, { seq->symbol_location.pos, seq->symbol_location.pos } });
                 result.back().symbol_range = r;
                 result.back().symbol_selection_range = r;
             }
@@ -289,7 +286,7 @@ bool do_not_need_nodes(
     {
         return true;
     }
-    unsigned long size = sym.size() < sect_sym.size() ? sym.size() : sect_sym.size();
+    const auto size = sym.size() < sect_sym.size() ? sym.size() : sect_sym.size();
     for (i = 1; i < size; i++)
     {
         if (sym[i].proc_location.file != sect_sym[i].proc_location.file
@@ -372,13 +369,13 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
         return document_symbol_copy(file->second->get_occurences(), document_uri);
     }
 
-    const auto& symbol_list = opencode_->hlasm_ctx.ord_ctx.symbols();
+    const auto& symbol_list = hlasm_ctx_->ord_ctx.symbols();
     std::map<const context::section*, document_symbol_list_s> children_of_sects;
     for (const auto& [id, sym] : symbol_list)
     {
         if (sym.attributes().origin == context::symbol_origin::SECT)
         {
-            auto sect = opencode_->hlasm_ctx.ord_ctx.get_section(id);
+            auto sect = hlasm_ctx_->ord_ctx.get_section(id);
             if (sect == nullptr)
                 continue;
             children_of_sects.insert({ sect, {} });
@@ -411,7 +408,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
                 continue;
             }
 
-            const auto& sect_sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(sect->name);
+            const auto& sect_sym = hlasm_ctx_->ord_ctx.get_symbol(sect->name);
             auto& children = children_of_sects.find(sect)->second;
             unsigned long i = 1;
             if (do_not_need_nodes(sym.proc_stack(), sect_sym->proc_stack(), i))
@@ -433,7 +430,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
 
     for (const auto& [sect, children] : children_of_sects)
     {
-        const auto& sym = *opencode_->hlasm_ctx.ord_ctx.get_symbol(sect->name);
+        const auto& sym = *hlasm_ctx_->ord_ctx.get_symbol(sect->name);
         if (sym.proc_stack().size() == 1)
         {
             result.emplace_back(document_symbol_item_s { *sect->name,
@@ -468,6 +465,10 @@ void lsp_context::add_file(file_info file_i)
     files_.try_emplace(std::move(name), std::make_unique<file_info>(std::move(file_i)));
 }
 
+lsp_context::lsp_context(std::shared_ptr<context::hlasm_context> h_ctx)
+    : hlasm_ctx_(std::move(h_ctx))
+{}
+
 void lsp_context::add_copy(context::copy_member_ptr copy, text_data_ref_t text_data)
 {
     add_file(file_info(std::move(copy), std::move(text_data)));
@@ -484,7 +485,7 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_ref_t text_data)
 void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t text_data)
 {
     opencode_ = std::move(opencode_i);
-    add_file(file_info(opencode_->hlasm_ctx.opencode_file_name(), std::move(text_data)));
+    add_file(file_info(hlasm_ctx_->opencode_file_name(), std::move(text_data)));
 
     // distribute all occurences as all files are present
     for (const auto& [_, m] : macros_)
@@ -493,9 +494,22 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
     distribute_file_occurences(opencode_->file_occurences);
 }
 
-macro_info_ptr lsp_context::get_macro_info(const context::macro_def_ptr& macro_def) const
+macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
 {
-    return macros_.at(macro_def);
+    // This function does not respect OPSYN, so we do not use hlasm_context::get_macro_definition
+    auto it = hlasm_ctx_->macros().find(macro_name);
+    if (it == hlasm_ctx_->macros().end())
+        return nullptr;
+    else
+        return macros_.at(it->second);
+}
+
+const file_info* lsp_context::get_file_info(const std::string& file_name) const
+{
+    if (auto it = files_.find(file_name); it != files_.end())
+        return it->second.get();
+    else
+        return nullptr;
 }
 
 location lsp_context::definition(const std::string& document_uri, const position pos) const
@@ -560,14 +574,14 @@ size_t constexpr continuation_column = 71;
 
 bool lsp_context::is_continued_line(std::string_view line) const
 {
-    return line.size() > continuation_column && !isspace(line[continuation_column]);
+    return line.size() > continuation_column && !isspace((unsigned char)line[continuation_column]);
 }
 
 bool lsp_context::should_complete_instr(const text_data_ref_t& text, const position pos) const
 {
     bool line_before_continued = pos.line > 0 ? is_continued_line(text.get_line(pos.line - 1)) : false;
 
-    std::string_view line_so_far = text.get_line_beginning(pos);
+    std::string_view line_so_far = text.get_line_beginning_at(pos);
 
     static const std::regex instruction_regex("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)");
     return !line_before_continued && std::regex_match(line_so_far.begin(), line_so_far.end(), instruction_regex);
@@ -617,7 +631,7 @@ completion_list_s lsp_context::complete_seq(const file_info& file, position pos)
     auto macro_i = file.find_scope(pos);
 
     const context::label_storage& seq_syms =
-        macro_i ? macro_i->macro_definition->labels : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+        macro_i ? macro_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
 
     completion_list_s items;
     for (const auto& [_, sym] : seq_syms)
@@ -766,15 +780,14 @@ std::optional<location> lsp_context::find_definition_location(
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return sym->symbol_location;
             break;
         }
         case lsp::occurence_kind::SEQ: {
-            const context::label_storage& seq_syms = macro_scope_i
-                ? macro_scope_i->macro_definition->labels
-                : opencode_->hlasm_ctx.current_scope().sequence_symbols;
+            const context::label_storage& seq_syms =
+                macro_scope_i ? macro_scope_i->macro_definition->labels : hlasm_ctx_->current_scope().sequence_symbols;
             if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
                 return sym->second->symbol_location;
             break;
@@ -823,7 +836,7 @@ hover_result lsp_context::find_hover(const symbol_occurence& occ, macro_info_ptr
     switch (occ.kind)
     {
         case lsp::occurence_kind::ORD: {
-            auto sym = opencode_->hlasm_ctx.ord_ctx.get_symbol(occ.name);
+            auto sym = hlasm_ctx_->ord_ctx.get_symbol(occ.name);
             if (sym)
                 return hover_text(*sym);
             break;

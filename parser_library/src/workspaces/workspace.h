@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "config/pgm_conf.h"
-#include "config/proc_conf.h"
+#include "config/proc_grps.h"
 #include "diagnosable_impl.h"
 #include "file_manager.h"
 #include "lib_config.h"
@@ -103,9 +103,12 @@ public:
         completion_trigger_kind trigger_kind) const override;
     lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override;
 
-    parse_result parse_library(const std::string& library, analyzing_context ctx, const library_data data) override;
+    parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
     bool has_library(const std::string& library, const std::string& program) const override;
-    const asm_option& get_asm_options(const std::string& file_name) override;
+    std::optional<std::string> get_library(
+        const std::string& library, const std::string& program, std::string* uri) const override;
+    virtual asm_option get_asm_options(const std::string& file_name) const;
+    virtual preprocessor_options get_preprocessor_options(const std::string& file_name) const;
     const ws_uri& uri();
 
     void open();
@@ -144,7 +147,7 @@ private:
     bool load_and_process_config();
     // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.
     // Returns false if there is any error.
-    bool load_config(config::proc_conf& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file);
+    bool load_config(config::proc_grps& proc_groups, config::pgm_conf& pgm_config, file_ptr& pgm_conf_file);
 
     bool is_wildcard(const std::string& str);
 

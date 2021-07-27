@@ -1,4 +1,16 @@
-
+/*
+ * Copyright (c) 2021 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
 
 #include "document_symbol_item.h"
 
@@ -45,8 +57,7 @@ document_symbol_list_s::iterator document_symbol_no_children_find(
 {
     while (begin != end)
     {
-        if (item.name == begin->name
-            && item.kind == begin->kind && item.symbol_range == begin->symbol_range
+        if (item.name == begin->name && item.kind == begin->kind && item.symbol_range == begin->symbol_range
             && item.symbol_selection_range == begin->symbol_selection_range)
         {
             return begin;
@@ -58,8 +69,7 @@ document_symbol_list_s::iterator document_symbol_no_children_find(
 
 bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
 {
-    return lhs.name == rhs.name
-        && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
+    return lhs.name == rhs.name && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
         && lhs.symbol_selection_range == rhs.symbol_selection_range
         && is_permutation_with_permutations(lhs.children, rhs.children);
 }

@@ -21,37 +21,62 @@
 
 namespace hlasm_plugin::parser_library::workspaces {
 
-processor_file_impl::processor_file_impl(std::string file_name, std::atomic<bool>* cancel)
+processor_file_impl::processor_file_impl(
+    std::string file_name, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(std::move(file_name))
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
-processor_file_impl::processor_file_impl(file_impl&& f_impl, std::atomic<bool>* cancel)
+processor_file_impl::processor_file_impl(file_impl&& f_impl, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(std::move(f_impl))
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
-processor_file_impl::processor_file_impl(const file_impl& file, std::atomic<bool>* cancel)
+processor_file_impl::processor_file_impl(
+    const file_impl& file, const file_manager& file_mngr, std::atomic<bool>* cancel)
     : file_impl(file)
     , cancel_(cancel)
+    , macro_cache_(file_mngr, *this)
 {}
 
 void processor_file_impl::collect_diags() const { file_impl::collect_diags(); }
 
 bool processor_file_impl::is_once_only() const { return false; }
 
-parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
+parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts, preprocessor_options pp)
 {
-    analyzer_ = std::make_unique<analyzer>(get_text(), get_file_name(), lib_provider, get_lsp_editing());
+    if (opencode_analyzer_)
+        opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
+            analyzer_options {
+                get_file_name(),
+                &lib_provider,
+                std::move(asm_opts),
+                get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+                file_is_opencode::yes,
+                std::move(opencode_analyzer_->hlasm_ctx().ids()),
+                std::move(pp),
+            });
+    else
+        opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
+            analyzer_options {
+                get_file_name(),
+                &lib_provider,
+                std::move(asm_opts),
+                get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+                file_is_opencode::yes,
+                std::move(pp),
+            });
 
     auto old_dep = dependencies_;
 
-    auto res = parse_inner(*analyzer_);
+    auto res = parse_inner(*opencode_analyzer_);
 
     if (!cancel_ || !*cancel_)
     {
         dependencies_.clear();
-        for (auto& file : analyzer_->hlasm_ctx().get_visited_files())
+        for (auto& file : opencode_analyzer_->hlasm_ctx().get_visited_files())
             if (file != get_file_name())
                 dependencies_.insert(file);
     }
@@ -64,47 +89,111 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider)
             files_to_close_.insert(file);
     }
 
+    last_analyzer_ = opencode_analyzer_.get();
     return res;
 }
 
 
 parse_result processor_file_impl::parse_macro(
-    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
-    analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
 
-    return parse_inner(*analyzer_);
+    if (macro_cache_.load_from_cache(cache_key, ctx))
+        return true;
+
+    auto a = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
+
+    auto ret = parse_inner(*a);
+
+    if (!ret) // Parsing was interrupted by cancellation token, do not save the result into cache
+        return false;
+
+    last_analyzer_ = a.get();
+    macro_cache_.save_analyzer(cache_key, std::move(a));
+    return ret;
 }
 
 parse_result processor_file_impl::parse_no_lsp_update(
-    parse_lib_provider& lib_provider, analyzing_context ctx, const library_data data)
+    parse_lib_provider& lib_provider, analyzing_context ctx, library_data data)
 {
-    auto no_update_analyzer_ =
-        std::make_unique<analyzer>(get_text(), get_file_name(), std::move(ctx), lib_provider, data, get_lsp_editing());
+    auto no_update_analyzer_ = std::make_unique<analyzer>(get_text(),
+        analyzer_options {
+            get_file_name(),
+            &lib_provider,
+            std::move(ctx),
+            data,
+            get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
+        });
     no_update_analyzer_->analyze();
     return true;
-}
-
-bool processor_file_impl::parse_info_updated()
-{
-    bool ret = parse_info_updated_;
-    parse_info_updated_ = false;
-    return ret;
 }
 
 const std::set<std::string>& processor_file_impl::dependencies() { return dependencies_; }
 
 const semantics::lines_info& processor_file_impl::get_hl_info()
 {
-    return analyzer_->source_processor().semantic_tokens();
+    if (last_analyzer_)
+        return last_analyzer_->source_processor().semantic_tokens();
+
+    const static semantics::lines_info empty_lines;
+    return empty_lines;
 }
 
-const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider() { return *analyzer_->context().lsp_ctx; }
+namespace {
+class empty_feature_provider final : public lsp::feature_provider
+{
+    // Inherited via feature_provider
+    location definition(const std::string& document_uri, position pos) const override
+    {
+        return location(pos, document_uri);
+    }
+    location_list references(const std::string& document_uri, position pos) const override { return location_list(); }
+    lsp::hover_result hover(const std::string& document_uri, position pos) const override
+    {
+        return lsp::hover_result();
+    }
+    lsp::completion_list_s completion(const std::string& document_uri,
+        position pos,
+        char trigger_char,
+        completion_trigger_kind trigger_kind) const override
+    {
+        return {};
+    }
+    lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override { return {}; }
+};
+} // namespace
+
+const lsp::feature_provider& processor_file_impl::get_lsp_feature_provider()
+{
+    if (last_analyzer_)
+        return *last_analyzer_->context().lsp_ctx;
+
+    const static empty_feature_provider empty_res;
+    return empty_res;
+}
 
 const std::set<std::string>& processor_file_impl::files_to_close() { return files_to_close_; }
 
-const performance_metrics& processor_file_impl::get_metrics() { return analyzer_->get_metrics(); }
+const performance_metrics& processor_file_impl::get_metrics()
+{
+    if (last_analyzer_)
+        return last_analyzer_->get_metrics();
+    const static performance_metrics metrics;
+    return metrics;
+}
+
+void processor_file_impl::erase_cache_of_opencode(const std::string& opencode_file_name)
+{
+    macro_cache_.erase_cache_of_opencode(opencode_file_name);
+}
 
 bool processor_file_impl::parse_inner(analyzer& new_analyzer)
 {
@@ -113,10 +202,6 @@ bool processor_file_impl::parse_inner(analyzer& new_analyzer)
     new_analyzer.analyze(cancel_);
 
     collect_diags_from_child(new_analyzer);
-
-    // collect semantic info if the file is open in IDE
-    if (get_lsp_editing())
-        parse_info_updated_ = true;
 
     if (cancel_ && *cancel_)
         return false;

@@ -31,16 +31,18 @@ public:
         analyzing_context ctx,
         statement_fields_parser& parser,
         workspaces::parse_lib_provider& lib_provider,
-        processing::processing_state_listener& listener);
+        processing::processing_state_listener& listener,
+        diagnostic_op_consumer& diag_consumer);
 
     context::shared_stmt_ptr get_next(const statement_processor& processor) override;
+
 
 protected:
     analyzing_context ctx;
     statement_fields_parser& parser;
     workspaces::parse_lib_provider& lib_provider;
     processing::processing_state_listener& listener;
-
+    diagnostic_op_consumer& diagnoser;
     virtual context::statement_cache* get_next() = 0;
 
 private:

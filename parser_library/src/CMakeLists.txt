@@ -22,14 +22,14 @@ target_sources(parser_library PRIVATE
 	diagnosable_impl.h
 	diagnostic.cpp
 	diagnostic.h
-	diagnostic_adder.cpp
+	diagnostic_consumer.h
 	diagnostic_adder.h
 	ebcdic_encoding.cpp
 	ebcdic_encoding.h
 	error_messages.h
 	lib_config.cpp
 	location.h
-	parser_library.cpp
+	preprocessor_options.h
 	protocol.cpp
 	workspace_manager.cpp
 	workspace_manager_impl.h

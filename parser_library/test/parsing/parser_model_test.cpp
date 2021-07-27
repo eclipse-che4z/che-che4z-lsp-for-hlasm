@@ -20,14 +20,19 @@
 // various invalid statements parsing
 // checking correct ranges
 
-auto parse_model(std::string s, range r, bool after_substitution = false)
+auto parse_model(std::string s,
+    range r,
+    bool after_substitution = false,
+    diagnostic_op_consumer* diag_consumer = nullptr,
+    processing_form form = processing_form::MACH)
 {
-    std::string input(" LR &var,1");
-    analyzer a(input);
-    return a.parser().parse_operand_field(std::move(s),
+    hlasm_context context;
+    diagnostic_op_consumer_container fallback_container;
+    return statement_fields_parser(&context).parse_operand_field(std::move(s),
         after_substitution,
         range_provider(r, adjusting_state::NONE),
-        std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MACH), op_code()));
+        std::make_pair(processing_format(processing_kind::ORDINARY, form), op_code()),
+        diag_consumer ? *diag_consumer : fallback_container);
 }
 
 TEST(parser, parse_model)
@@ -135,9 +140,65 @@ TEST(parser, parse_model_with_apostrophe_escaping)
 
 TEST(parser, parse_bad_model)
 {
-    range r(position(0, 4), position(0, 5));
-    auto [op, rem] = parse_model("'", r, true);
+    diagnostic_op_consumer_container diag_container;
 
-    ASSERT_EQ(op.value.size(), (size_t)0);
-    ASSERT_EQ(rem.value.size(), (size_t)0);
+    range r(position(0, 4), position(0, 5));
+    auto [op, rem] = parse_model("'", r, true, &diag_container);
+
+    ASSERT_EQ(op.value.size(), 0U);
+    ASSERT_EQ(rem.value.size(), 0U);
+
+    std::vector<diagnostic_op>& diags = diag_container.diags;
+
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].message, "While evaluating the result of substitution ''' => Unexpected end of statement");
+
+    range expected_range = { { 0, 5 }, { 0, 5 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
+}
+
+TEST(parser, parse_bad_model_no_substitution)
+{
+    diagnostic_op_consumer_container diag_container;
+
+    range r(position(0, 4), position(0, 5));
+    auto [op, rem] = parse_model("'", r, false, &diag_container);
+
+    std::vector<diagnostic_op>& diags = diag_container.diags;
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].message, "Unexpected end of statement");
+    range expected_range = { { 0, 5 }, { 0, 5 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
+}
+
+TEST(parser, invalid_self_def)
+{
+    diagnostic_op_consumer_container diag_container;
+
+    range r(position(0, 5), position(0, 12));
+    auto [op, rem] = parse_model("1,A'10'", r, false, &diag_container);
+
+    std::vector<diagnostic_op>& diags = diag_container.diags;
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].code, "CE015");
+
+    range expected_range = { { 0, 7 }, { 0, 12 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
+}
+
+TEST(parser, invalid_macro_param_alternative)
+{
+    diagnostic_op_consumer_container diag_container;
+
+    range r(position(0, 3), position(0, 16));
+    std::string input = R"(op1,   remark                                                       X
+               ()";
+    auto [op, rem] = parse_model(input, r, false, &diag_container, processing_form::MAC);
+
+    std::vector<diagnostic_op>& diags = diag_container.diags;
+    ASSERT_EQ(diags.size(), 1U);
+    EXPECT_EQ(diags[0].code, "S0003");
+
+    range expected_range = { { 1, 16 }, { 1, 16 } };
+    EXPECT_EQ(diags[0].diag_range, expected_range);
 }

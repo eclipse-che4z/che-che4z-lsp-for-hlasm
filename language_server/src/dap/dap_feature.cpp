@@ -36,7 +36,7 @@ std::string convert_path(const std::string& path, path_format path_format)
     if (hlasm_plugin::utils::platform::is_windows())
     {
         if (result[1] == ':')
-            result[0] = (char)tolower(result[0]);
+            result[0] = (char)tolower((unsigned char)result[0]);
     }
 
     return result;

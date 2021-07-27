@@ -38,10 +38,13 @@ public:
     std::string_view get_line(size_t line) const;
 
     // Returns a string_view beginning at specified line and ending at specified column
-    std::string_view get_line_beginning(position pos) const;
+    std::string_view get_line_beginning_at(position pos) const;
 
     // Returns a string_view beginning at specified position and ending at specified position
     std::string_view get_range_content(range pos) const;
+
+    // Returns a string_view beginning at specified line
+    std::string_view get_lines_beginning_at(position pos) const;
 
     // Returns a character before the specified position
     // If the position points to the first character, returns '\0'

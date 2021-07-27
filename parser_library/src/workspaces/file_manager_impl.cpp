@@ -44,7 +44,7 @@ processor_file_ptr file_manager_impl::change_into_processor_file_if_not_already_
         return processor;
     else
     {
-        auto proc_file = std::make_shared<processor_file_impl>(std::move(*to_change), cancel_);
+        auto proc_file = std::make_shared<processor_file_impl>(std::move(*to_change), *this, cancel_);
         to_change = proc_file;
         return proc_file;
     }
@@ -56,7 +56,7 @@ processor_file_ptr file_manager_impl::add_processor_file(const file_uri& uri)
     auto ret = files_.find(uri);
     if (ret == files_.end())
     {
-        auto ptr = std::make_shared<processor_file_impl>(uri, cancel_);
+        auto ptr = std::make_shared<processor_file_impl>(uri, *this, cancel_);
         files_.emplace(uri, ptr);
         return ptr;
     }
@@ -70,7 +70,7 @@ processor_file_ptr file_manager_impl::get_processor_file(const file_uri& uri)
     auto ret = files_.find(uri);
     if (ret == files_.end())
     {
-        return std::make_shared<processor_file_impl>(uri);
+        return std::make_shared<processor_file_impl>(uri, *this);
     }
     else
         return change_into_processor_file_if_not_already_(ret->second);
@@ -87,7 +87,7 @@ void file_manager_impl::remove_file(const file_uri& document_uri)
     files_.erase(document_uri);
 }
 
-file_ptr file_manager_impl::find(const std::string& key)
+file_ptr file_manager_impl::find(const std::string& key) const
 {
     std::lock_guard guard(files_mutex);
     auto ret = files_.find(key);
@@ -105,19 +105,6 @@ processor_file_ptr file_manager_impl::find_processor_file(const std::string& key
         return nullptr;
 
     return change_into_processor_file_if_not_already_(ret->second);
-}
-
-
-std::vector<processor_file*> file_manager_impl::list_updated_files()
-{
-    std::vector<processor_file*> list;
-    for (auto& item : files_)
-    {
-        auto p = dynamic_cast<processor_file*>(item.second.get());
-        if (p && p->parse_info_updated())
-            list.push_back(p);
-    }
-    return list;
 }
 
 list_directory_result file_manager_impl::list_directory_files(const std::string& path)
@@ -138,7 +125,7 @@ void file_manager_impl::prepare_file_for_change_(std::shared_ptr<file_impl>& fil
     // another shared ptr to this file exists, we need to create a copy
     auto proc_file = std::dynamic_pointer_cast<processor_file>(file);
     if (proc_file)
-        file = std::make_shared<processor_file_impl>(*file, cancel_);
+        file = std::make_shared<processor_file_impl>(*file, *this, cancel_);
     else
         file = std::make_shared<file_impl>(*file);
 }
