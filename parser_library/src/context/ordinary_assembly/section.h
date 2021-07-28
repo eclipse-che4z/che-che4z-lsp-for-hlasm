@@ -26,7 +26,9 @@ enum class section_kind
     DUMMY,
     COMMON,
     EXECUTABLE,
-    READONLY
+    READONLY,
+    EXTERNAL,
+    WEAK_EXTERNAL,
 };
 
 
