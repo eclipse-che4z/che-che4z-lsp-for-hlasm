@@ -15,7 +15,10 @@
 
 #include "asm_instr_check.h"
 
+#include <array>
 #include <regex>
+
+#include "context/common_types.h"
 
 namespace {
 const std::vector<std::string> rmode_options = { "24", "31", "64", "ANY" };
@@ -246,7 +249,7 @@ bool title::check(const std::vector<const asm_operand*>& to_check,
         return false;
     }
     const auto& op_id = first->operand_identifier;
-    if (op_id.size() > TITLE_max_length || op_id.size() < 3)
+    if (op_id.size() > TITLE_max_length || op_id.size() < 2)
     {
         add_diagnostic(diagnostic_op::error_A106_TITLE_string_chars(first->operand_range));
         return false;
@@ -686,6 +689,32 @@ bool ictl::check(const std::vector<const asm_operand*>& to_check,
 external::external(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};
 
+static bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed = true)
+{
+    static constexpr const auto allowed_symbols = []() {
+        std::array<bool, 256> result = {};
+        for (unsigned char c = 'a'; c <= 'z'; ++c)
+            result[c] = true;
+        for (unsigned char c = 'A'; c <= 'Z'; ++c)
+            result[c] = true;
+        for (unsigned char c = '0'; c <= '9'; ++c)
+            result[c] = true;
+        result['@'] = true;
+        result['#'] = true;
+        result['$'] = true;
+        result['_'] = true;
+        return result;
+    }();
+    if (s.empty())
+        return false;
+    if (s.size() > 63 || !extended_names_allowed && s.size() > 8)
+        return false;
+    if (s.front() >= '0' && s.front() <= '9')
+        return false;
+    return std::all_of(
+        s.begin(), s.end(), [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
+}
+
 bool external::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
@@ -697,7 +726,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
         if (auto complex_op = get_complex_operand(operand); complex_op)
         {
             // check PART operand
-            if (complex_op->operand_identifier != "PART")
+            if (context::to_upper_copy(complex_op->operand_identifier) != "PART")
             {
                 add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                 return false;
@@ -705,7 +734,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
             for (const auto& parameter : complex_op->operand_parameters)
             {
                 if (is_operand_empty(parameter.get()) || is_operand_complex(parameter.get())
-                    || get_simple_operand(parameter.get())->operand_identifier == "")
+                    || !is_valid_symbol_name(get_simple_operand(parameter.get())->operand_identifier))
                 {
                     add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                     return false;
@@ -715,7 +744,7 @@ bool external::check(const std::vector<const asm_operand*>& to_check,
         else if (auto simple_op = get_simple_operand(operand); simple_op)
         {
             // check simple external symbol
-            if (simple_op->operand_identifier == "")
+            if (!is_valid_symbol_name(simple_op->operand_identifier))
             {
                 add_diagnostic(diagnostic_op::error_A129_EXTRN_format(operand->operand_range));
                 return false;
@@ -1186,8 +1215,8 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
     {
         if (first->operand_identifier[0] == 'C')
         {
-            // TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should not
-            // be
+            // TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should
+            // not be
             std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
             std::string substr = first->operand_identifier.substr(2, first->operand_identifier.size() - 3);
             if (!std::regex_match(substr, regex))

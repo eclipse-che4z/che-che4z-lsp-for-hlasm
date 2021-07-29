@@ -1137,6 +1137,11 @@ diagnostic_op diagnostic_op::error_A248_END_lang_char_sequence(const range& rang
         range);
 }
 
+diagnostic_op diagnostic_op::warning_A249_sequence_symbol_expected(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning, "A249", "Sequence symbol expected", range);
+}
+
 diagnostic_op diagnostic_op::warning_A300_op_apostrophes_missing(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,

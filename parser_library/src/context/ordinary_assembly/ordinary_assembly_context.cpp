@@ -101,6 +101,32 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
     }
 }
 
+void ordinary_assembly_context::create_external_section(id_index name, section_kind kind, location symbol_location)
+{
+    const auto attrs = [kind]() {
+        switch (kind)
+        {
+            case section_kind::EXTERNAL:
+                return symbol_attributes::make_extrn_attrs();
+            case section_kind::WEAK_EXTERNAL:
+                return symbol_attributes::make_wxtrn_attrs();
+            default:
+                throw std::invalid_argument("section type mismatch");
+        }
+    }();
+
+    if (!symbols_
+             .try_emplace(name,
+                 name,
+                 sections_.emplace_back(std::make_unique<section>(name, kind, ids))
+                     ->current_location_counter()
+                     .current_address(),
+                 attrs,
+                 std::move(symbol_location))
+             .second)
+        throw std::invalid_argument("symbol already defined");
+}
+
 void ordinary_assembly_context::set_location_counter(id_index name, location symbol_location)
 {
     if (!curr_section_)

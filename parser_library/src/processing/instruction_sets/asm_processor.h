@@ -57,6 +57,7 @@ private:
     void process_DS(rebuilt_statement stmt);
     void process_COPY(rebuilt_statement stmt);
     void process_EXTRN(rebuilt_statement stmt);
+    void process_WXTRN(rebuilt_statement stmt);
     void process_ORG(rebuilt_statement stmt);
     void process_OPSYN(rebuilt_statement stmt);
     void process_AINSERT(rebuilt_statement stmt);
@@ -65,6 +66,14 @@ private:
     void process_data_instruction(rebuilt_statement stmt);
 
     std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
+
+    enum class external_type
+    {
+        strong,
+        weak,
+    };
+
+    void process_external(rebuilt_statement stmt, external_type t);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -71,6 +71,9 @@ public:
     // sets current section
     void set_section(id_index name, section_kind kind, location symbol_location);
 
+    // creates an external section
+    void create_external_section(id_index name, section_kind kind, location symbol_location);
+
     // sets current location counter of current section
     void set_location_counter(id_index name, location symbol_location);
 

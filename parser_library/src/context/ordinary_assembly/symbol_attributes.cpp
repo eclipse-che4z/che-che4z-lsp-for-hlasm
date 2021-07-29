@@ -40,6 +40,10 @@ symbol_attributes symbol_attributes::make_extrn_attrs()
 {
     return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('T'), 1);
 }
+symbol_attributes symbol_attributes::make_wxtrn_attrs()
+{
+    return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('$'), 1);
+}
 symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make_org_attrs()
 {
     return symbol_attributes(symbol_origin::SECT, ebcdic_encoding::to_ebcdic('U'));
