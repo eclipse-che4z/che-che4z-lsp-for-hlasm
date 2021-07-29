@@ -93,8 +93,7 @@ std::vector<position> file_info::find_references(
 
 void file_info::update_occurences(const occurence_storage& occurences_upd)
 {
-    for (const auto& occ : occurences_upd)
-        occurences.emplace_back(occ);
+    occurences.insert(occurences.end(), occurences_upd.begin(), occurences_upd.end());
 }
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
