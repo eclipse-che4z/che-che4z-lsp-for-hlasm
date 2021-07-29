@@ -63,8 +63,8 @@ private:
     void collect_occurence(const semantics::operands_si& operands, occurence_collector& collector);
     void collect_occurence(const semantics::deferred_operands_si& operands, occurence_collector& collector);
 
-    void collect_var_definition(const context::hlasm_statement& statement);
-    void collect_copy_operands(const context::hlasm_statement& statement);
+    void collect_var_definition(const processing::resolved_statement& statement);
+    void collect_copy_operands(const processing::resolved_statement& statement);
 
     void collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type);
     void collect_LCL_GBL_defs(const processing::resolved_statement& statement, context::SET_t_enum type, bool global);
@@ -72,7 +72,7 @@ private:
 
     void add_copy_operand(context::id_index name, const range& operand_range);
 
-    void update_macro_nest(const context::hlasm_statement& statement);
+    void update_macro_nest(const processing::resolved_statement& statement);
 
     struct LCL_GBL_instr
     {

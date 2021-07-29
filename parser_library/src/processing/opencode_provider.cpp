@@ -19,6 +19,7 @@
 #include "lexing/token_stream.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
+#include "processing/error_statement.h"
 #include "semantics/collector.h"
 #include "semantics/range_provider.h"
 
@@ -185,14 +186,14 @@ void opencode_provider::process_comment()
     }
 }
 
-void opencode_provider::generate_continuation_error_messages() const
+void opencode_provider::generate_continuation_error_messages(diagnostic_op_consumer* diags) const
 {
     auto line_no = m_current_logical_line_source.begin_line;
     for (const auto& s : m_current_logical_line.segments)
     {
         if (s.continuation_error)
         {
-            m_diagnoser->add_diagnostic(
+            diags->add_diagnostic(
                 diagnostic_op::error_E001(range { { line_no, 0 }, { line_no, s.code_offset_utf16 } }));
 
             break;
@@ -215,7 +216,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
             || std::get<context::id_index>(collector.current_instruction().value)
                 == m_ctx->hlasm_ctx->ids().well_known.COPY))
     {
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, false, {}, op_range, proc_status, true);
+        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, nullptr, {}, op_range, proc_status, true);
 
         h.parser->lookahead_operands_and_remarks();
 
@@ -235,7 +236,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
 std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordinary(const statement_processor& proc,
     semantics::collector& collector,
     const std::optional<std::string>& op_text,
-    const range& op_range)
+    const range& op_range,
+    diagnostic_op_consumer* diags)
 {
     if (proc.kind == processing::processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(
@@ -247,7 +249,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
 
     if (op_text)
     {
-        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, true, {}, op_range, proc_status, false);
+        const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, diags, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
         if (format.occurence == processing::operand_occurence::ABSENT
@@ -278,7 +280,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         semantics::range_provider tmp_provider(r, ranges, semantics::adjusting_state::MACRO_REPARSE);
 
                         const auto& h_second = prepare_operand_parser(
-                            to_parse, *m_ctx->hlasm_ctx, true, std::move(tmp_provider), r, proc_status, true);
+                            to_parse, *m_ctx->hlasm_ctx, diags, std::move(tmp_provider), r, proc_status, true);
 
                         line.operands = std::move(h_second.parser->macro_ops()->list);
                     }
@@ -407,7 +409,10 @@ bool opencode_provider::try_running_preprocessor()
 
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
 {
-    const bool lookahead = proc.kind == processing::processing_kind::LOOKAHEAD;
+    using processing_kind = processing::processing_kind;
+
+    const bool lookahead = proc.kind == processing_kind::LOOKAHEAD;
+    const bool nested = proc.kind == processing_kind::MACRO || proc.kind == processing_kind::COPY;
 
     auto& ph = lookahead ? *m_lookahead_parser : *m_parser;
 
@@ -415,9 +420,18 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     if (feed_line_res == extract_next_logical_line_result::failed)
         return nullptr;
 
-    // lookahead may read something that will be removed from the input stream later on
-    if (m_current_logical_line.continuation_error && !lookahead)
-        generate_continuation_error_messages();
+    auto& collector = ph.parser->get_collector();
+    auto* diag_target = nested ? collector.diag_collector() : static_cast<diagnostic_op_consumer*>(m_diagnoser);
+
+    if (m_current_logical_line.continuation_error)
+    {
+        // report continuation errors immediately
+        if (proc.kind == processing_kind::MACRO)
+            generate_continuation_error_messages(static_cast<diagnostic_op_consumer*>(m_diagnoser));
+        // lookahead may read something that will be removed from the input stream later on
+        else if (!lookahead)
+            generate_continuation_error_messages(diag_target);
+    }
 
     if (feed_line_res != extract_next_logical_line_result::process && is_comment())
     {
@@ -426,9 +440,8 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
         return nullptr;
     }
 
-    auto& collector = ph.parser->get_collector();
-
-    collector.prepare_for_next_statement();
+    if (!lookahead)
+        ph.parser->set_diagnoser(diag_target);
 
     const auto& [op_text, op_range] = [parser = ph.parser.get(), lookahead]() {
         if (lookahead)
@@ -444,14 +457,30 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
     }();
 
     if (!collector.has_instruction())
-        return nullptr;
+    {
+        if (proc.kind == processing_kind::MACRO)
+        {
+            // these kinds of errors are reported right away,
+            for (auto& diag : collector.diag_container().diags)
+                m_diagnoser->add_diagnostic(std::move(diag));
+            // indicate errors were produced, but do not report them again
+            return std::make_shared<processing::error_statement>(
+                range(position(m_current_logical_line_source.begin_line, 0)), std::vector<diagnostic_op>());
+        }
+        else if (lookahead)
+            return nullptr;
+        else
+            return std::make_shared<processing::error_statement>(
+                range(position(m_current_logical_line_source.begin_line, 0)),
+                std::move(collector.diag_container().diags));
+    }
 
     m_ctx->hlasm_ctx->set_source_indices(m_current_logical_line_source.begin_offset,
         m_current_logical_line_source.end_offset,
         m_current_logical_line_source.end_line);
 
     return lookahead ? process_lookahead(proc, collector, op_text, op_range)
-                     : process_ordinary(proc, collector, op_text, op_range);
+                     : process_ordinary(proc, collector, op_text, op_range, diag_target);
 }
 
 bool opencode_provider::finished() const
@@ -672,7 +701,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
 
 const parsing::parser_holder& opencode_provider::prepare_operand_parser(const std::string& text,
     context::hlasm_context& hlasm_ctx,
-    bool do_collect_diags,
+    diagnostic_op_consumer* diags,
     semantics::range_provider range_prov,
     range text_range,
     const processing_status& proc_status,
@@ -689,7 +718,7 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
     h.stream->reset();
 
 
-    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, do_collect_diags ? m_diagnoser : nullptr);
+    h.parser->reinitialize(&hlasm_ctx, std::move(range_prov), proc_status, diags);
 
     h.parser->reset();
 

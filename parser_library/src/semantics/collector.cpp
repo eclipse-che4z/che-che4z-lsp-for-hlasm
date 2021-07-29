@@ -178,6 +178,10 @@ void collector::append_operand_field(collector&& c)
 
     for (auto& symbol : c.hl_symbols_)
         hl_symbols_.push_back(std::move(symbol));
+
+    statement_diagnostics.diags.insert(statement_diagnostics.diags.end(),
+        std::make_move_iterator(c.statement_diagnostics.diags.begin()),
+        std::make_move_iterator(c.statement_diagnostics.diags.end()));
 }
 
 const instruction_si& collector::peek_instruction() { return *instr_; }
@@ -199,8 +203,11 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     {
         if (!def_)
             def_.emplace(instr_->field_range, "", std::vector<vs_ptr>());
-        return std::make_shared<statement_si_deferred>(
-            union_range(lbl_->field_range, def_->field_range), std::move(*lbl_), std::move(*instr_), std::move(*def_));
+        return std::make_shared<statement_si_deferred>(union_range(lbl_->field_range, def_->field_range),
+            std::move(*lbl_),
+            std::move(*instr_),
+            std::move(*def_),
+            std::move(statement_diagnostics.diags));
     }
     else
     {
@@ -217,7 +224,8 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
         statement_range = union_range(lbl_->field_range, op_->field_range);
         auto stmt_si = std::make_shared<statement_si>(
             statement_range, std::move(*lbl_), std::move(*instr_), std::move(*op_), std::move(*rem_));
-        return std::make_shared<processing::resolved_statement_impl>(std::move(stmt_si), std::move(status));
+        return std::make_shared<processing::resolved_statement_impl>(
+            std::move(stmt_si), std::move(status), std::move(statement_diagnostics.diags));
     }
 }
 
@@ -241,4 +249,6 @@ void collector::prepare_for_next_statement()
     hl_symbols_.clear();
     lsp_symbols_extracted_ = false;
     hl_symbols_extracted_ = false;
+
+    statement_diagnostics.diags.clear();
 }

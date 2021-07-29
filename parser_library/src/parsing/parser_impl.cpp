@@ -149,14 +149,14 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     else if (opcode.value == hlasm_ctx->ids().well_known.SETB)
     {
         if (!expr->is_compatible(ca_expression_compatibility::setb))
-            expr->diags().push_back(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+            expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
     else if (opcode.value == hlasm_ctx->ids().well_known.AIF)
     {
         if (!expr->is_compatible(ca_expression_compatibility::aif))
-            expr->diags().push_back(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
+            expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }

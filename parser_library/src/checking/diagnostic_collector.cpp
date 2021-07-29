@@ -35,7 +35,7 @@ void diagnostic_collector::operator()(diagnostic_op diagnostic) const
 {
     if (!diagnoser_)
         return;
-    diagnoser_->add_diagnostic_inner(std::move(diagnostic), get_location_stack());
+    diagnoser_->diagnosable_impl::add_diagnostic(add_stack_details(std::move(diagnostic), get_location_stack()));
 }
 
 context::processing_stack_t diagnostic_collector::get_location_stack() const

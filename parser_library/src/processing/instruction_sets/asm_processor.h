@@ -37,7 +37,7 @@ public:
         statement_fields_parser& parser,
         opencode_provider& open_code);
 
-    void process(context::shared_stmt_ptr stmt) override;
+    void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,

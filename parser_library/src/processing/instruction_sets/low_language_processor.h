@@ -42,7 +42,7 @@ protected:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    rebuilt_statement preprocess(context::shared_stmt_ptr stmt);
+    rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
 
     // adds dependency and also check for cyclic dependency and adds diagnostics if so
     template<typename... Args>

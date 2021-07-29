@@ -53,6 +53,12 @@ public:
         processing::processing_status proc_stat,
         diagnostic_op_consumer* diagnoser);
 
+    void set_diagnoser(diagnostic_op_consumer* diagnoser)
+    {
+        diagnoser_ = diagnoser;
+        err_listener_.diagnoser = diagnoser;
+    }
+
     semantics::collector& get_collector() { return collector; }
 
 protected:

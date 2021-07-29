@@ -40,7 +40,7 @@ public:
         processing_state_listener& listener,
         opencode_provider& open_code);
 
-    void process(context::shared_stmt_ptr stmt) override;
+    void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 
 private:
     opencode_provider* open_code_;

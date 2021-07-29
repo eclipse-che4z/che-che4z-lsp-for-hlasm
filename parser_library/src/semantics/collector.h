@@ -64,6 +64,9 @@ public:
     std::vector<token_info> extract_hl_symbols();
     void prepare_for_next_statement();
 
+    diagnostic_op_consumer* diag_collector() { return &statement_diagnostics; }
+    diagnostic_op_consumer_container& diag_container() { return statement_diagnostics; }
+
 private:
     std::optional<label_si> lbl_;
     std::optional<instruction_si> instr_;
@@ -73,6 +76,8 @@ private:
     std::vector<token_info> hl_symbols_;
     bool lsp_symbols_extracted_;
     bool hl_symbols_extracted_;
+
+    diagnostic_op_consumer_container statement_diagnostics;
 
     void add_operand_remark_hl_symbols();
 };

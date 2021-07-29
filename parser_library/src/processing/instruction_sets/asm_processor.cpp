@@ -531,7 +531,7 @@ asm_processor::asm_processor(analyzing_context ctx,
     , open_code_(&open_code)
 {}
 
-void asm_processor::process(context::shared_stmt_ptr stmt)
+void asm_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
 

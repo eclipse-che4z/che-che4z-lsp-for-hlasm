@@ -30,7 +30,7 @@ namespace hlasm_plugin::parser_library::processing {
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
 class instruction_processor : public diagnosable_ctx
 {
-    virtual void process(context::shared_stmt_ptr stmt) = 0;
+    virtual void process(std::shared_ptr<const processing::resolved_statement> stmt) = 0;
 
     void collect_diags() const override { collect_diags_from_child(eval_ctx); }
 

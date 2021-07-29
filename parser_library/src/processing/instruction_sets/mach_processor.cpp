@@ -29,7 +29,7 @@ mach_processor::mach_processor(analyzing_context ctx,
     : low_language_processor(std::move(ctx), branch_provider, lib_provider, parser)
 {}
 
-void mach_processor::process(context::shared_stmt_ptr stmt)
+void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
 
@@ -39,7 +39,7 @@ void mach_processor::process(context::shared_stmt_ptr stmt)
             return *mnemonic->second.instruction;
         else
             return context::instruction::machine_instructions.at(name);
-    }(*stmt->access_resolved()->opcode_ref().value);
+    }(*stmt->opcode_ref().value);
 
     auto label_name = find_label_symbol(rebuilt_stmt);
 
