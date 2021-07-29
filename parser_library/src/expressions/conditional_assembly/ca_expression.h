@@ -16,7 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPRESSION_H
 
 #include <memory>
-#include <set>
+#include <unordered_set>
 
 #include "context/common_types.h"
 #include "context/ordinary_assembly/dependable.h"
@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library::expressions {
 class ca_expr_visitor;
 class ca_expression;
 using ca_expr_ptr = std::unique_ptr<ca_expression>;
-using undef_sym_set = std::set<context::id_index>;
+using undef_sym_set = std::unordered_set<context::id_index>;
 
 struct evaluation_context;
 
@@ -47,7 +47,7 @@ public:
     ca_expression(context::SET_t_enum expr_kind, range expr_range);
 
     // retrieves set of attributed symbols that are not yet defined
-    virtual undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const = 0;
+    virtual bool get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const = 0;
 
     // builds parts of the expression tree that could not be built during parsing
     virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;

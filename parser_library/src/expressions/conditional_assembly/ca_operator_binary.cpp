@@ -30,11 +30,13 @@ ca_binary_operator::ca_binary_operator(
     , right_expr(std::move(right_expr))
 {}
 
-undef_sym_set ca_binary_operator::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_binary_operator::get_undefined_attributed_symbols(
+    const evaluation_context& eval_ctx, undef_sym_set& result) const
 {
-    auto tmp = left_expr->get_undefined_attributed_symbols(eval_ctx);
-    tmp.merge(right_expr->get_undefined_attributed_symbols(eval_ctx));
-    return tmp;
+    bool added = false;
+    added |= left_expr->get_undefined_attributed_symbols(eval_ctx, result);
+    added |= right_expr->get_undefined_attributed_symbols(eval_ctx, result);
+    return added;
 }
 
 void ca_binary_operator::resolve_expression_tree(context::SET_t_enum kind)

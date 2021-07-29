@@ -33,16 +33,16 @@ ca_string::ca_string(
     , substring(std::move(substring))
 {}
 
-undef_sym_set ca_string::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_string::get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const
 {
-    undef_sym_set tmp;
+    bool added = false;
     if (duplication_factor)
-        tmp = duplication_factor->get_undefined_attributed_symbols(eval_ctx);
+        added |= duplication_factor->get_undefined_attributed_symbols(eval_ctx, result);
     if (substring.start)
-        tmp.merge(substring.start->get_undefined_attributed_symbols(eval_ctx));
+        added |= substring.start->get_undefined_attributed_symbols(eval_ctx, result);
     if (substring.count)
-        tmp.merge(substring.count->get_undefined_attributed_symbols(eval_ctx));
-    return tmp;
+        added |= substring.count->get_undefined_attributed_symbols(eval_ctx, result);
+    return added;
 }
 
 void ca_string::resolve_expression_tree(context::SET_t_enum kind)

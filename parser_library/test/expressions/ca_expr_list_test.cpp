@@ -96,9 +96,10 @@ TEST(ca_expr_list, get_undefined_attributed_symbols)
 
     context::hlasm_context ctx;
     evaluation_context eval_ctx { ctx, workspaces::empty_parse_lib_provider::instance };
-    auto res = expr_list.get_undefined_attributed_symbols(eval_ctx);
 
-    ASSERT_TRUE(res.size());
+    std::unordered_set<context::id_index> res;
+    EXPECT_TRUE(expr_list.get_undefined_attributed_symbols(eval_ctx, res));
+    EXPECT_FALSE(res.empty());
 }
 
 TEST(ca_expr_list, is_character_expression)

@@ -28,7 +28,7 @@ public:
 
     ca_var_sym(semantics::vs_ptr symbol, range expr_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const override;
 
     void resolve_expression_tree(context::SET_t_enum kind) override;
 
@@ -40,8 +40,8 @@ public:
 
     context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
-    static undef_sym_set get_undefined_attributed_symbols_vs(
-        const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx);
+    static bool get_undefined_attributed_symbols_vs(
+        const semantics::vs_ptr& symbol, const evaluation_context& eval_ctx, undef_sym_set& result);
     static void resolve_expression_tree_vs(const semantics::vs_ptr& symbol);
 
 private:

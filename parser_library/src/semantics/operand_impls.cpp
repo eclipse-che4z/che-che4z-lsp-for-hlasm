@@ -456,10 +456,10 @@ var_ca_operand::var_ca_operand(vs_ptr variable_symbol, range operand_range)
     , variable_symbol(std::move(variable_symbol))
 {}
 
-std::set<context::id_index> var_ca_operand::get_undefined_attributed_symbols(
-    const expressions::evaluation_context& eval_ctx)
+bool var_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result)
 {
-    return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(variable_symbol, eval_ctx);
+    return expressions::ca_var_sym::get_undefined_attributed_symbols_vs(variable_symbol, eval_ctx, result);
 }
 
 void var_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -469,10 +469,10 @@ expr_ca_operand::expr_ca_operand(expressions::ca_expr_ptr expression, range oper
     , expression(std::move(expression))
 {}
 
-std::set<context::id_index> expr_ca_operand::get_undefined_attributed_symbols(
-    const expressions::evaluation_context& eval_ctx)
+bool expr_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result)
 {
-    return expression->get_undefined_attributed_symbols(eval_ctx);
+    return expression->get_undefined_attributed_symbols(eval_ctx, result);
 }
 
 void expr_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -482,9 +482,10 @@ seq_ca_operand::seq_ca_operand(seq_sym sequence_symbol, range operand_range)
     , sequence_symbol(std::move(sequence_symbol))
 {}
 
-std::set<context::id_index> seq_ca_operand::get_undefined_attributed_symbols(const expressions::evaluation_context&)
+bool seq_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context&, std::unordered_set<context::id_index>&)
 {
-    return std::set<context::id_index>();
+    return false;
 }
 
 void seq_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -495,10 +496,10 @@ branch_ca_operand::branch_ca_operand(seq_sym sequence_symbol, expressions::ca_ex
     , expression(std::move(expression))
 {}
 
-std::set<context::id_index> branch_ca_operand::get_undefined_attributed_symbols(
-    const expressions::evaluation_context& eval_ctx)
+bool branch_ca_operand::get_undefined_attributed_symbols(
+    const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result)
 {
-    return expression->get_undefined_attributed_symbols(eval_ctx);
+    return expression->get_undefined_attributed_symbols(eval_ctx, result);
 }
 
 void branch_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
@@ -544,6 +545,7 @@ template<typename... args>
 std::vector<const context::resolvable*> resolvable_list(const args&... expr)
 {
     std::vector<const context::resolvable*> list;
+    list.reserve(sizeof...(args));
     (
         [&](auto&& x) {
             if (x)

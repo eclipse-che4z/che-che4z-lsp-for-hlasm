@@ -61,7 +61,11 @@ public:
         , value(std::move(value))
     {}
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context&) const override { return {}; };
+    bool get_undefined_attributed_symbols(
+        const evaluation_context&, std::unordered_set<context::id_index>&) const override
+    {
+        return false;
+    };
 
     void resolve_expression_tree(context::SET_t_enum) override {}
 

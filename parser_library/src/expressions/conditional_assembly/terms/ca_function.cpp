@@ -46,14 +46,14 @@ ca_function::ca_function(context::id_index function_name,
     , duplication_factor(std::move(duplication_factor))
 {}
 
-undef_sym_set ca_function::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_function::get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const
 {
-    undef_sym_set ret;
+    bool added = false;
     for (auto&& expr : parameters)
-        ret.merge(expr->get_undefined_attributed_symbols(eval_ctx));
+        added |= expr->get_undefined_attributed_symbols(eval_ctx, result);
     if (duplication_factor)
-        ret.merge(duplication_factor->get_undefined_attributed_symbols(eval_ctx));
-    return ret;
+        added |= duplication_factor->get_undefined_attributed_symbols(eval_ctx, result);
+    return added;
 }
 
 void ca_function::resolve_expression_tree(context::SET_t_enum kind)

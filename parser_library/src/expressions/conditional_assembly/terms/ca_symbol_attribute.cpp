@@ -58,47 +58,53 @@ ca_symbol_attribute::ca_symbol_attribute(
     , symbol_range(symbol_rng)
 {}
 
-undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
+bool ca_symbol_attribute::get_undefined_attributed_symbols(
+    const evaluation_context& eval_ctx, undef_sym_set& result) const
 {
     if (std::holds_alternative<context::id_index>(symbol))
     {
         if (context::symbol_attributes::is_ordinary_attribute(attribute)
             && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(std::get<context::id_index>(symbol))
             && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(std::get<context::id_index>(symbol)))
-            return { std::get<context::id_index>(symbol) };
-        return undef_sym_set();
+        {
+            result.emplace(std::get<context::id_index>(symbol));
+            return true;
+        }
     }
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
     {
         const auto& vs = std::get<semantics::vs_ptr>(symbol);
 
-        auto undef_syms = ca_var_sym::get_undefined_attributed_symbols_vs(vs, eval_ctx);
+        bool added = ca_var_sym::get_undefined_attributed_symbols_vs(vs, eval_ctx, result);
 
-        if (undef_syms.empty() && context::symbol_attributes::is_ordinary_attribute(attribute))
+        if (!added && context::symbol_attributes::is_ordinary_attribute(attribute))
         {
             context::SET_t substituted_name = vs->evaluate(eval_ctx);
             processing::context_manager mngr(&eval_ctx);
 
             if (substituted_name.type != context::SET_t_enum::C_TYPE)
-                return {};
+                return false;
 
             auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
 
             if (!valid)
-                return {};
+                return false;
 
             if (context::symbol_attributes::is_ordinary_attribute(attribute)
                 && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(ord_name)
                 && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(ord_name))
-                return { ord_name };
+            {
+                result.emplace(ord_name);
+                added = true;
+            }
         }
-        return undef_syms;
+        return added;
     }
     else
     {
         assert(false);
-        return undef_sym_set();
     }
+    return false;
 }
 
 void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind)

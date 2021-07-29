@@ -16,8 +16,8 @@
 #define SEMANTICS_CONCATENATION_H
 
 #include <memory>
-#include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "context/common_types.h"
@@ -64,8 +64,9 @@ struct concatenation_point
 
     static var_sym_conc* contains_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static std::set<context::id_index> get_undefined_attributed_symbols(
-        const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
+    static bool get_undefined_attributed_symbols(const concat_chain& chain,
+        const expressions::evaluation_context& eval_ctx,
+        std::unordered_set<context::id_index>&);
 
     const concat_type type;
 

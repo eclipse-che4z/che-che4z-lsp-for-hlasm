@@ -38,7 +38,7 @@ public:
     ca_symbol_attribute(
         semantics::vs_ptr symbol, context::data_attr_kind attribute, range expr_range, range symbol_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const override;
 
     void resolve_expression_tree(context::SET_t_enum kind) override;
 

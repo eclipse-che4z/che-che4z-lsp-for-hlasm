@@ -52,16 +52,16 @@ protected:
         processing::processing_state_listener& listener);
 
 private:
-    static void trigger_attribute_lookahead(std::set<context::id_index> references,
+    static void trigger_attribute_lookahead(std::unordered_set<context::id_index> references,
         const expressions::evaluation_context& eval_ctx,
         processing::processing_state_listener& listener);
 
-    static std::set<context::id_index> process_label(
-        const semantics::label_si& label, const expressions::evaluation_context& eval_ctx);
-    static std::set<context::id_index> process_instruction(
-        const semantics::instruction_si& instruction, const expressions::evaluation_context& eval_ctx);
-    static std::set<context::id_index> process_operands(
-        const semantics::operands_si& operands, const expressions::evaluation_context& eval_ctx);
+    static bool process_label(const semantics::label_si& label,
+        const expressions::evaluation_context& eval_ctx,
+        std::unordered_set<context::id_index>& result);
+    static bool process_operands(const semantics::operands_si& operands,
+        const expressions::evaluation_context& eval_ctx,
+        std::unordered_set<context::id_index>& result);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

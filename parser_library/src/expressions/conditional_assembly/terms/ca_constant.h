@@ -32,7 +32,7 @@ public:
 
     ca_constant(context::A_t value, range expr_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const override;
 
     void resolve_expression_tree(context::SET_t_enum kind) override;
 

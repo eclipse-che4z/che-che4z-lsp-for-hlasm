@@ -29,7 +29,7 @@ public:
 
     ca_binary_operator(ca_expr_ptr left_expr, ca_expr_ptr right_expr, context::SET_t_enum expr_kind, range expr_range);
 
-    undef_sym_set get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const override;
+    bool get_undefined_attributed_symbols(const evaluation_context& eval_ctx, undef_sym_set& result) const override;
 
     void resolve_expression_tree(context::SET_t_enum kind) override;
 
