@@ -172,9 +172,8 @@ var_sym_conc* concatenation_point::contains_var_sym(
     return nullptr;
 }
 
-bool concatenation_point::get_undefined_attributed_symbols(const concat_chain& chain,
-    const expressions::evaluation_context& eval_ctx,
-    std::unordered_set<context::id_index>& result)
+bool concatenation_point::get_undefined_attributed_symbols(
+    const concat_chain& chain, const expressions::evaluation_context& eval_ctx, context::id_set& result)
 {
     bool added = false;
     for (auto it = chain.begin(); it != chain.end(); ++it)

@@ -195,7 +195,7 @@ TEST(attribute_lookahead, lookup_triggered)
 
     evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_EQ(res.size(), (size_t)1);
 
@@ -215,7 +215,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
     auto v2 = a.hlasm_ctx().create_local_variable<context::C_t>(a.hlasm_ctx().ids().add("V2"), true);
     v2->access_set_symbol<context::C_t>()->set_value("B");
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_EQ(res.size(), (size_t)1);
     EXPECT_TRUE(res.find(a.hlasm_ctx().ids().add("B")) != res.end());
@@ -246,7 +246,7 @@ TEST(attribute_lookahead, lookup_not_triggered)
         a.hlasm_ctx().ids().add("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), {});
     ASSERT_TRUE(tmp);
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     // although length is undefined the actual symbol is defined so no lookup should happen
     EXPECT_FALSE(expr->get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_TRUE(res.empty());
@@ -262,7 +262,7 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 
     evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_EQ(res.size(), (size_t)2);
 
@@ -277,7 +277,7 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 
     evaluation_context eval_ctx { a.hlasm_ctx(), workspaces::empty_parse_lib_provider::instance };
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_EQ(res.size(), (size_t)1);
 

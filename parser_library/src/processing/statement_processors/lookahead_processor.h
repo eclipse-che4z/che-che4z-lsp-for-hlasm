@@ -36,7 +36,7 @@ class lookahead_processor : public statement_processor
     processing_state_listener& listener_;
     workspaces::parse_lib_provider& lib_provider_;
 
-    std::unordered_set<context::id_index> to_find_;
+    context::id_set to_find_;
     context::id_index target_;
 
 public:

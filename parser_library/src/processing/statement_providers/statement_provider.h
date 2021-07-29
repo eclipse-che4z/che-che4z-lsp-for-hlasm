@@ -52,16 +52,15 @@ protected:
         processing::processing_state_listener& listener);
 
 private:
-    static void trigger_attribute_lookahead(std::unordered_set<context::id_index> references,
+    static void trigger_attribute_lookahead(context::id_set references,
         const expressions::evaluation_context& eval_ctx,
         processing::processing_state_listener& listener);
 
-    static bool process_label(const semantics::label_si& label,
-        const expressions::evaluation_context& eval_ctx,
-        std::unordered_set<context::id_index>& result);
+    static bool process_label(
+        const semantics::label_si& label, const expressions::evaluation_context& eval_ctx, context::id_set& result);
     static bool process_operands(const semantics::operands_si& operands,
         const expressions::evaluation_context& eval_ctx,
-        std::unordered_set<context::id_index>& result);
+        context::id_set& result);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

@@ -74,6 +74,8 @@ public:
 
 using id_index = id_storage::const_pointer;
 
+using id_set = std::unordered_set<id_index>;
+
 } // namespace hlasm_plugin::parser_library::context
 
 

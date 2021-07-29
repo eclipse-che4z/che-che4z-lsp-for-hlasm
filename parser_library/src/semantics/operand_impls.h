@@ -373,7 +373,7 @@ struct ca_operand : operand
     const branch_ca_operand* access_branch() const;
 
     virtual bool get_undefined_attributed_symbols(
-        const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result) = 0;
+        const expressions::evaluation_context& eval_ctx, context::id_set& result) = 0;
 
     const ca_kind kind;
 };
@@ -384,7 +384,7 @@ struct var_ca_operand final : ca_operand
     var_ca_operand(vs_ptr variable_symbol, const range operand_range);
 
     bool get_undefined_attributed_symbols(
-        const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result) override;
+        const expressions::evaluation_context& eval_ctx, context::id_set& result) override;
 
     vs_ptr variable_symbol;
 
@@ -398,7 +398,7 @@ struct expr_ca_operand final : ca_operand
 
 
     bool get_undefined_attributed_symbols(
-        const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result) override;
+        const expressions::evaluation_context& eval_ctx, context::id_set& result) override;
 
     expressions::ca_expr_ptr expression;
 
@@ -412,7 +412,7 @@ struct seq_ca_operand final : ca_operand
 
 
     bool get_undefined_attributed_symbols(
-        const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result) override;
+        const expressions::evaluation_context& eval_ctx, context::id_set& result) override;
 
     seq_sym sequence_symbol;
 
@@ -426,7 +426,7 @@ struct branch_ca_operand final : ca_operand
 
 
     bool get_undefined_attributed_symbols(
-        const expressions::evaluation_context& eval_ctx, std::unordered_set<context::id_index>& result) override;
+        const expressions::evaluation_context& eval_ctx, context::id_set& result) override;
 
     seq_sym sequence_symbol;
     expressions::ca_expr_ptr expression;

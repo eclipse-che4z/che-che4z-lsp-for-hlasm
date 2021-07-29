@@ -30,7 +30,7 @@ TEST(ca_symbol, undefined_attributes)
 
     ca_symbol sym(&name, range());
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_FALSE(sym.get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_EQ(res.size(), 0U);
 }

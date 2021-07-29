@@ -64,9 +64,8 @@ struct concatenation_point
 
     static var_sym_conc* contains_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
-    static bool get_undefined_attributed_symbols(const concat_chain& chain,
-        const expressions::evaluation_context& eval_ctx,
-        std::unordered_set<context::id_index>&);
+    static bool get_undefined_attributed_symbols(
+        const concat_chain& chain, const expressions::evaluation_context& eval_ctx, context::id_set&);
 
     const concat_type type;
 

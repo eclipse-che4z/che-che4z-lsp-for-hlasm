@@ -32,7 +32,7 @@ bool statement_provider::try_trigger_attribute_lookahead(const semantics::instru
 
     const auto& chain = std::get<semantics::concat_chain>(instruction.value);
 
-    std::unordered_set<context::id_index> references;
+    context::id_set references;
     if (!semantics::concatenation_point::get_undefined_attributed_symbols(chain, eval_ctx, references))
         return false;
 
@@ -46,7 +46,7 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
     processing::processing_state_listener& listener)
 {
     const semantics::label_si* label;
-    std::unordered_set<context::id_index> references;
+    context::id_set references;
 
     if (auto def_stmt = statement.access_deferred())
     {
@@ -71,7 +71,7 @@ bool statement_provider::try_trigger_attribute_lookahead(const context::hlasm_st
     return true;
 }
 
-void statement_provider::trigger_attribute_lookahead(std::unordered_set<context::id_index> references,
+void statement_provider::trigger_attribute_lookahead(context::id_set references,
     const expressions::evaluation_context& eval_ctx,
     processing::processing_state_listener& listener)
 {
@@ -80,9 +80,8 @@ void statement_provider::trigger_attribute_lookahead(std::unordered_set<context:
     listener.start_lookahead(lookahead_start_data(std::move(references), statement_position, std::move(snapshot)));
 }
 
-bool statement_provider::process_label(const semantics::label_si& label,
-    const expressions::evaluation_context& eval_ctx,
-    std::unordered_set<context::id_index>& result)
+bool statement_provider::process_label(
+    const semantics::label_si& label, const expressions::evaluation_context& eval_ctx, context::id_set& result)
 {
     switch (label.type)
     {
@@ -97,9 +96,8 @@ bool statement_provider::process_label(const semantics::label_si& label,
     }
 }
 
-bool statement_provider::process_operands(const semantics::operands_si& operands,
-    const expressions::evaluation_context& eval_ctx,
-    std::unordered_set<context::id_index>& result)
+bool statement_provider::process_operands(
+    const semantics::operands_si& operands, const expressions::evaluation_context& eval_ctx, context::id_set& result)
 {
     bool added = false;
     for (const auto& op : operands.value)

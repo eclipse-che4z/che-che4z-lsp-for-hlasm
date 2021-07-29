@@ -28,7 +28,7 @@ TEST(ca_constant, undefined_attributes)
 
     ca_constant c(1, range());
 
-    std::unordered_set<context::id_index> references;
+    context::id_set references;
     EXPECT_FALSE(c.get_undefined_attributed_symbols(eval_ctx, references));
     EXPECT_EQ(references.size(), 0U);
 }

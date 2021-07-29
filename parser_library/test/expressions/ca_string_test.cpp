@@ -41,7 +41,7 @@ TEST(ca_string, undefined_attributes)
 
     ca_string s(std::move(value), std::move(dupl), std::move(substr), range());
 
-    std::unordered_set<context::id_index> res;
+    context::id_set res;
     EXPECT_FALSE(s.get_undefined_attributed_symbols(eval_ctx, res));
     EXPECT_TRUE(res.empty());
 }

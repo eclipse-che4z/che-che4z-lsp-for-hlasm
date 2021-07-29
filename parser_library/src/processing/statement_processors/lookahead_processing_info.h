@@ -51,11 +51,10 @@ struct lookahead_start_data
     {}
 
     // ORD action
-    std::unordered_set<context::id_index> targets;
+    context::id_set targets;
 
-    lookahead_start_data(std::unordered_set<context::id_index> targets,
-        context::source_position statement_position,
-        context::source_snapshot snapshot)
+    lookahead_start_data(
+        context::id_set targets, context::source_position statement_position, context::source_snapshot snapshot)
         : action(lookahead_action::ORD)
         , statement_position(statement_position)
         , snapshot(std::move(snapshot))

@@ -61,8 +61,7 @@ public:
         , value(std::move(value))
     {}
 
-    bool get_undefined_attributed_symbols(
-        const evaluation_context&, std::unordered_set<context::id_index>&) const override
+    bool get_undefined_attributed_symbols(const evaluation_context&, context::id_set&) const override
     {
         return false;
     };
