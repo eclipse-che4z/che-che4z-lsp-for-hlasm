@@ -63,6 +63,8 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
+
     auto symbol_name = find_label_symbol(stmt);
 
     if (symbol_name == context::id_storage::empty_id)
@@ -385,6 +387,7 @@ std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::si
 
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
@@ -533,7 +536,7 @@ asm_processor::asm_processor(analyzing_context ctx,
 
 void asm_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    auto rebuilt_stmt = preprocess(stmt, context::no_align);
+    auto rebuilt_stmt = preprocess(stmt);
 
     auto it = table_.find(rebuilt_stmt.opcode_ref().value);
     if (it != table_.end())
@@ -685,6 +688,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     constexpr context::alignment ccw_align = context::doubleword;
     constexpr size_t ccw_length = 8U;
 
+    fill_expression_loc_counters(stmt, ccw_align);
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
@@ -701,7 +705,6 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     }
     
     hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
-    // TODO assign correct values to location counters of machine expressions
     check(stmt, hlasm_ctx, checker_, *this);
 }
 
