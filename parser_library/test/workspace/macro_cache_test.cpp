@@ -18,12 +18,12 @@
 
 #include "gtest/gtest.h"
 
+#include "files_parse_lib_provider.h"
 #include "analyzer.h"
 #include "file_with_text.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
 #include "workspaces/workspace.h"
-
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -316,33 +316,6 @@ std::optional<diagnostic_s> find_diag_with_filename(
     else
         return *macro_diag;
 }
-
-struct files_parse_lib_provider : public parse_lib_provider
-{
-    file_manager* file_mngr;
-    files_parse_lib_provider(file_manager& mngr)
-        : file_mngr(&mngr)
-    {}
-    virtual parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        auto macro = file_mngr->add_processor_file(library);
-        if (!macro)
-            return false;
-        return macro->parse_macro(*this, std::move(ctx), std::move(data));
-    }
-    virtual bool has_library(const std::string& library, const std::string& program) const override
-    {
-        return file_mngr->find(library) != nullptr;
-    }
-    virtual std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string* file_uri) const override
-    {
-        auto macro = file_mngr->add_processor_file(library);
-        if (!macro)
-            return std::nullopt;
-        return macro->get_text();
-    }
-};
 
 } // namespace
 
