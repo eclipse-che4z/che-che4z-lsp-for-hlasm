@@ -31,7 +31,8 @@ mach_processor::mach_processor(analyzing_context ctx,
 
 void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    auto rebuilt_stmt = preprocess(stmt);
+    constexpr context::alignment mach_instr_alignment = context::halfword;
+    auto rebuilt_stmt = preprocess(stmt, mach_instr_alignment);
 
     const auto& mach_instr = [](const std::string& name) {
         if (auto mnemonic = context::instruction::mnemonic_codes.find(name);

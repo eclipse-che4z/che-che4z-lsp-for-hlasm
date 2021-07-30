@@ -42,7 +42,7 @@ protected:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
+    rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt, context::alignment instr_alignment);
 
     // adds dependency and also check for cyclic dependency and adds diagnostics if so
     template<typename... Args>
@@ -72,7 +72,7 @@ protected:
 
 private:
     using preprocessed_part = std::pair<std::optional<semantics::label_si>, std::optional<semantics::operands_si>>;
-    preprocessed_part preprocess_inner(const resolved_statement& stmt);
+    preprocessed_part preprocess_inner(const resolved_statement& stmt, context::alignment instr_alignment);
 
     using transform_result = std::optional<std::vector<checking::check_op_ptr>>;
     // transform semantic operands to checking operands - machine mnemonics instructions

@@ -31,10 +31,10 @@ low_language_processor::low_language_processor(analyzing_context ctx,
     , parser(parser)
 {}
 
-rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
+rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement, context::alignment instr_alignment)
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
-    auto [label, ops] = preprocess_inner(*stmt);
+    auto [label, ops] = preprocess_inner(*stmt, instr_alignment);
     return rebuilt_statement(std::move(stmt), std::move(label), std::move(ops));
 }
 
@@ -80,7 +80,8 @@ bool trim_right(std::string& s)
     }
 }
 
-low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
+low_language_processor::preprocessed_part low_language_processor::preprocess_inner(
+    const resolved_statement& stmt, context::alignment instr_alignment)
 {
     std::optional<semantics::label_si> label;
     std::optional<semantics::operands_si> operands;
@@ -135,15 +136,15 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     for (auto& op : (operands ? operands->value : stmt.operands_ref().value))
     {
         if (auto simple_tmp = dynamic_cast<semantics::simple_expr_operand*>(op.get()))
-            simple_tmp->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+            simple_tmp->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(instr_alignment));
         if (auto addr_tmp = dynamic_cast<semantics::address_machine_operand*>(op.get()))
         {
             if (addr_tmp->displacement)
-                addr_tmp->displacement->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+                addr_tmp->displacement->fill_location_counter(hlasm_ctx.ord_ctx.align(instr_alignment));
             if (addr_tmp->first_par)
-                addr_tmp->first_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+                addr_tmp->first_par->fill_location_counter(hlasm_ctx.ord_ctx.align(instr_alignment));
             if (addr_tmp->second_par)
-                addr_tmp->second_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
+                addr_tmp->second_par->fill_location_counter(hlasm_ctx.ord_ctx.align(instr_alignment));
         }
     }
 
