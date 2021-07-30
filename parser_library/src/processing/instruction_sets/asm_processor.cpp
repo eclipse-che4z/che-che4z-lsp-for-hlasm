@@ -624,6 +624,9 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AINSERT"), std::bind(&asm_processor::process_AINSERT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
 
     return table;
 }
@@ -675,6 +678,31 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
     auto dest = *value == "FRONT" ? processing::ainsert_destination::front : processing::ainsert_destination::back;
 
     open_code_->ainsert(record, dest);
+}
+
+void asm_processor::process_CCW(rebuilt_statement stmt)
+{
+    constexpr context::alignment ccw_align = context::doubleword;
+    constexpr size_t ccw_length = 8U;
+
+    find_sequence_symbol(stmt);
+
+    auto label = find_label_symbol(stmt);
+
+    if (label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        else
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                hlasm_ctx.ord_ctx.align(ccw_align),
+                context::symbol_attributes::make_org_attrs()); // TODO Correct attributes
+    }
+    
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
+    // TODO assign correct values to location counters of machine expressions
+    check(stmt, hlasm_ctx, checker_, *this);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

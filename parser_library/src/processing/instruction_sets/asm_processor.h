@@ -61,6 +61,7 @@ private:
     void process_ORG(rebuilt_statement stmt);
     void process_OPSYN(rebuilt_statement stmt);
     void process_AINSERT(rebuilt_statement stmt);
+    void process_CCW(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);
@@ -74,6 +75,7 @@ private:
     };
 
     void process_external(rebuilt_statement stmt, external_type t);
+    
 };
 
 } // namespace hlasm_plugin::parser_library::processing
