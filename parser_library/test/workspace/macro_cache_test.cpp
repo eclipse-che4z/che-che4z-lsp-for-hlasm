@@ -18,9 +18,9 @@
 
 #include "gtest/gtest.h"
 
-#include "files_parse_lib_provider.h"
 #include "analyzer.h"
 #include "file_with_text.h"
+#include "files_parse_lib_provider.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
 #include "workspaces/workspace.h"
@@ -81,7 +81,7 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
         auto a = std::make_unique<analyzer>(m->get_text(), analyzer_options { m->get_file_name(), ctx, this, data });
         a->analyze();
         auto key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
-        cache->save_analyzer(key, std::move(a));
+        cache->save_macro(key, *a);
         hlasm_ctx = ctx.hlasm_ctx;
         return true;
     }

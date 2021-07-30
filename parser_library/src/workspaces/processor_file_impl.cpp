@@ -47,19 +47,20 @@ bool processor_file_impl::is_once_only() const { return false; }
 
 parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_option asm_opts, preprocessor_options pp)
 {
-    if (opencode_analyzer_)
-        opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
+    // If parsed as opencode previously, use id_index from the last parsing
+    if (last_analyzer_opencode_)
+        last_analyzer_ = std::make_unique<analyzer>(get_text(),
             analyzer_options {
                 get_file_name(),
                 &lib_provider,
                 std::move(asm_opts),
                 get_lsp_editing() ? collect_highlighting_info::yes : collect_highlighting_info::no,
                 file_is_opencode::yes,
-                std::move(opencode_analyzer_->hlasm_ctx().ids()),
+                std::move(last_analyzer_->hlasm_ctx().ids()),
                 std::move(pp),
             });
     else
-        opencode_analyzer_ = std::make_unique<analyzer>(get_text(),
+        last_analyzer_ = std::make_unique<analyzer>(get_text(),
             analyzer_options {
                 get_file_name(),
                 &lib_provider,
@@ -68,15 +69,16 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
                 file_is_opencode::yes,
                 std::move(pp),
             });
+    last_analyzer_opencode_ = true;
 
     auto old_dep = dependencies_;
 
-    auto res = parse_inner(*opencode_analyzer_);
+    auto res = parse_inner(*last_analyzer_);
 
     if (!cancel_ || !*cancel_)
     {
         dependencies_.clear();
-        for (auto& file : opencode_analyzer_->hlasm_ctx().get_visited_files())
+        for (auto& file : last_analyzer_->hlasm_ctx().get_visited_files())
             if (file != get_file_name())
                 dependencies_.insert(file);
     }
@@ -89,7 +91,6 @@ parse_result processor_file_impl::parse(parse_lib_provider& lib_provider, asm_op
             files_to_close_.insert(file);
     }
 
-    last_analyzer_ = opencode_analyzer_.get();
     return res;
 }
 
@@ -116,8 +117,10 @@ parse_result processor_file_impl::parse_macro(
     if (!ret) // Parsing was interrupted by cancellation token, do not save the result into cache
         return false;
 
-    last_analyzer_ = a.get();
-    macro_cache_.save_analyzer(cache_key, std::move(a));
+    macro_cache_.save_macro(cache_key, *a);
+    last_analyzer_ = std::move(a);
+    last_analyzer_opencode_ = false;
+
     return ret;
 }
 

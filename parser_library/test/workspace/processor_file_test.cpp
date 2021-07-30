@@ -57,13 +57,13 @@ TEST(processor_file, parse_macro)
  MAC
  SAM31
  MEND)");
-    auto macro = mngr.add_processor_file(opencode_name);
+    auto macro = mngr.add_processor_file(macro_name);
 
     opencode->parse(provider, {}, {});
 
     // Opencode file tests
     auto& open_fp = opencode->get_lsp_feature_provider();
-    
+
     EXPECT_EQ(open_fp.definition(opencode_name, { 1, 2 }), location({ 1, 1 }, macro_name));
 
     const std::string sam31_hover_message = "Operands:   \nMachine instruction \nInstruction format: E";
