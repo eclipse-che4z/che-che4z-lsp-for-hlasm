@@ -17,6 +17,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 namespace hlasm_plugin::parser_library::context {
 
