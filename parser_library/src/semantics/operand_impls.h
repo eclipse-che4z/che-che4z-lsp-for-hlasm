@@ -15,7 +15,6 @@
 #ifndef SEMANTICS_OPERAND_IMPLS_H
 #define SEMANTICS_OPERAND_IMPLS_H
 
-#include <unordered_set>
 #include <vector>
 
 #include "checking/data_definition/data_definition_operand.h"

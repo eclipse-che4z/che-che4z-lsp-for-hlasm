@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CA_EXPRESSION_H
 
 #include <memory>
-#include <unordered_set>
 
 #include "context/common_types.h"
 #include "context/ordinary_assembly/dependable.h"

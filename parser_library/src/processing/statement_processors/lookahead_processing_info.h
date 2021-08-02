@@ -15,8 +15,6 @@
 #ifndef PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 #define PROCESSING_LOOKAHEAD_PROCESSING_INFO_H
 
-#include <unordered_set>
-
 #include "context/ordinary_assembly/symbol.h"
 #include "context/source_snapshot.h"
 

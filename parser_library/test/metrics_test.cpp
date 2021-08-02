@@ -163,26 +163,3 @@ TEST_F(benchmark_test, lookahead_statements)
     // 2 lines skipped by lookahead + 1 which finds the symbol
     EXPECT_EQ(a->get_metrics().lookahead_statements, (size_t)3);
 }
-
-TEST(perf, bench)
-{
-    std::string input = R"(
-         MACRO
-         MAC
-         ACTR 100000000
-         LCLA &A
-.NEXT    AIF  (&A GT 10000000).END
-&A       SETA &A+1
-         AGO  .NEXT
-.END     ANOP ,
-         MEND
-
-         MAC
-)";
-
-    analyzer a(input);
-    a.analyze();
-    a.collect_diags();
-
-    EXPECT_TRUE(a.diags().empty());
-}
