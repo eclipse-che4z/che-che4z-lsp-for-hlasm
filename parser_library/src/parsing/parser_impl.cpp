@@ -102,7 +102,7 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    diagnostic_adder add_diagnostic(*diagnoser_, term_range);
+    diagnostic_adder add_diagnostic = diagnoser_ ? diagnostic_adder(*diagnoser_, term_range) : diagnostic_adder();
     auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 
     return val;
