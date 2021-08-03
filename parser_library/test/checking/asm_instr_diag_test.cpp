@@ -24,10 +24,10 @@ TEST(diagnostics, org_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A115");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A115");
 }
 
 TEST(diagnostics, exitctl_op_incorrect_format)
@@ -38,10 +38,10 @@ TEST(diagnostics, exitctl_op_incorrect_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A020");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A020");
 }
 
 TEST(diagnostics, exitctl_op_incorrect_value)
@@ -52,10 +52,10 @@ TEST(diagnostics, exitctl_op_incorrect_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A131");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A131");
 }
 
 TEST(diagnostics, extrn_incorrect_part_operand)
@@ -66,10 +66,10 @@ TEST(diagnostics, extrn_incorrect_part_operand)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A129");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A129");
 }
 
 TEST(diagnostics, extrn_incorrect_complex_operand)
@@ -80,10 +80,10 @@ TEST(diagnostics, extrn_incorrect_complex_operand)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A129");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A129");
 }
 
 TEST(diagnostics, ictl_empty_op)
@@ -94,10 +94,10 @@ TEST(diagnostics, ictl_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A021");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A021");
 }
 
 TEST(diagnostics, ictl_undefined_op)
@@ -108,10 +108,10 @@ TEST(diagnostics, ictl_undefined_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A242");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A242");
 }
 
 TEST(diagnostics, ictl_incorrect_begin_val)
@@ -122,10 +122,10 @@ TEST(diagnostics, ictl_incorrect_begin_val)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A123");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A123");
 }
 
 TEST(diagnostics, ictl_incorrect_continuation_val)
@@ -136,10 +136,10 @@ TEST(diagnostics, ictl_incorrect_continuation_val)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A126");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A126");
 }
 
 TEST(diagnostics, ictl_incorrect_end_begin_diff)
@@ -150,10 +150,10 @@ TEST(diagnostics, ictl_incorrect_end_begin_diff)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A125");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A125");
 }
 
 TEST(diagnostics, ictl_incorrect_continuation_begin_diff)
@@ -164,10 +164,10 @@ TEST(diagnostics, ictl_incorrect_continuation_begin_diff)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A127");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A127");
 }
 
 TEST(diagnostics, end_incorrect_first_op_format)
@@ -178,10 +178,10 @@ TEST(diagnostics, end_incorrect_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A243");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A243");
 }
 
 TEST(diagnostics, end_incorrect_second_op_format)
@@ -193,10 +193,10 @@ simple equ 2
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A001");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A001");
 }
 
 
@@ -208,10 +208,10 @@ TEST(diagnostics, end_incorrect_language_third_char)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A140");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A140");
 }
 
 TEST(diagnostics, end_incorrect_language_second_char)
@@ -222,10 +222,10 @@ TEST(diagnostics, end_incorrect_language_second_char)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A139");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A139");
 }
 
 TEST(diagnostics, end_incorrect_language_format)
@@ -236,10 +236,10 @@ TEST(diagnostics, end_incorrect_language_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A137");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A137");
 }
 
 TEST(diagnostics, drop_incorrect_op_format)
@@ -250,10 +250,10 @@ TEST(diagnostics, drop_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A141");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A141");
 }
 
 TEST(diagnostics, cnop_incorrect_first_op_format)
@@ -264,10 +264,10 @@ TEST(diagnostics, cnop_incorrect_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A143");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A143");
 }
 
 TEST(diagnostics, cnop_incorrect_second_op_format)
@@ -278,10 +278,10 @@ TEST(diagnostics, cnop_incorrect_second_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A143");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A143");
 }
 
 TEST(diagnostics, cnop_incorrect_boundary)
@@ -292,10 +292,10 @@ TEST(diagnostics, cnop_incorrect_boundary)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A145");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A145");
 }
 
 TEST(diagnostics, ccw_unspecified_operand)
@@ -306,10 +306,10 @@ TEST(diagnostics, ccw_unspecified_operand)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A147");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A147");
 }
 
 TEST(diagnostics, ccw_incorrect_first_op)
@@ -320,10 +320,10 @@ TEST(diagnostics, ccw_incorrect_first_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A143");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A143");
 }
 
 TEST(diagnostics, ccw_incorrect_second_op)
@@ -334,10 +334,10 @@ TEST(diagnostics, ccw_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A247");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A247");
 }
 
 TEST(diagnostics, space_incorrect_op_format)
@@ -348,10 +348,10 @@ TEST(diagnostics, space_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A240");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A240");
 }
 
 TEST(diagnostics, space_incorrect_op_value)
@@ -362,10 +362,10 @@ TEST(diagnostics, space_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A148");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A148");
 }
 
 TEST(diagnostics, cattr_incorrect_simple_format)
@@ -376,10 +376,10 @@ TEST(diagnostics, cattr_incorrect_simple_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A149");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A149");
 }
 
 TEST(diagnostics, cattr_incorrect_complex_format)
@@ -390,10 +390,10 @@ TEST(diagnostics, cattr_incorrect_complex_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A149");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A149");
 }
 
 TEST(diagnostics, cattr_incorrect_complex_params)
@@ -404,10 +404,10 @@ TEST(diagnostics, cattr_incorrect_complex_params)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A016");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A016");
 }
 
 TEST(diagnostics, cattr_incorrect_rmode_param)
@@ -418,10 +418,10 @@ TEST(diagnostics, cattr_incorrect_rmode_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A204");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A204");
 }
 
 TEST(diagnostics, cattr_incorrect_align_param)
@@ -432,10 +432,10 @@ TEST(diagnostics, cattr_incorrect_align_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A205");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A205");
 }
 
 TEST(diagnostics, cattr_incorrect_fill_param)
@@ -446,10 +446,10 @@ TEST(diagnostics, cattr_incorrect_fill_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A206");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A206");
 }
 
 TEST(diagnostics, cattr_incorrect_priority_param)
@@ -460,10 +460,10 @@ TEST(diagnostics, cattr_incorrect_priority_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A208");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A208");
 }
 
 TEST(diagnostics, cattr_incorrect_part_param)
@@ -474,10 +474,10 @@ TEST(diagnostics, cattr_incorrect_part_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A207");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A207");
 }
 
 TEST(diagnostics, cattr_empty_op)
@@ -488,10 +488,10 @@ TEST(diagnostics, cattr_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A021");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A021");
 }
 
 TEST(diagnostics, ainsert_incorrect_string)
@@ -502,10 +502,10 @@ TEST(diagnostics, ainsert_incorrect_string)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A301");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A301");
 }
 
 TEST(diagnostics, ainsert_incorrect_second_op)
@@ -516,10 +516,10 @@ TEST(diagnostics, ainsert_incorrect_second_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A156");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A156");
 }
 
 TEST(diagnostics, adata_incorrect_op_format)
@@ -530,10 +530,10 @@ TEST(diagnostics, adata_incorrect_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A158");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A158");
 }
 
 TEST(diagnostics, adata_incorrect_last_op_format)
@@ -544,10 +544,10 @@ TEST(diagnostics, adata_incorrect_last_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A239");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A239");
 }
 
 TEST(diagnostics, adata_string_not_enclosed)
@@ -558,10 +558,10 @@ TEST(diagnostics, adata_string_not_enclosed)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A300");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A300");
 }
 
 TEST(diagnostics, adata_string_too_long)
@@ -577,10 +577,10 @@ TEST(diagnostics, adata_string_too_long)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A160");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A160");
 }
 
 TEST(diagnostics, acontrol_incorrect_simple_op_format)
@@ -591,10 +591,10 @@ TEST(diagnostics, acontrol_incorrect_simple_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A161");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A161");
 }
 
 TEST(diagnostics, acontrol_incorrect_complex_op_format)
@@ -605,10 +605,10 @@ TEST(diagnostics, acontrol_incorrect_complex_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A161");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A161");
 }
 
 TEST(diagnostics, acontrol_compat_format)
@@ -619,10 +619,10 @@ TEST(diagnostics, acontrol_compat_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A209");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A209");
 }
 
 TEST(diagnostics, acontrol_flag_format)
@@ -633,10 +633,10 @@ TEST(diagnostics, acontrol_flag_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A211");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A211");
 }
 
 TEST(diagnostics, acontrol_optable_params_size)
@@ -647,10 +647,10 @@ TEST(diagnostics, acontrol_optable_params_size)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A018");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A018");
 }
 
 TEST(diagnostics, acontrol_optable_first_params_format)
@@ -661,10 +661,10 @@ TEST(diagnostics, acontrol_optable_first_params_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A212");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A212");
 }
 
 TEST(diagnostics, acontrol_optable_second_params_format)
@@ -675,10 +675,10 @@ TEST(diagnostics, acontrol_optable_second_params_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A213");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A213");
 }
 
 TEST(diagnostics, acontrol_typecheck_param)
@@ -689,10 +689,10 @@ TEST(diagnostics, acontrol_typecheck_param)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A214");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A214");
 }
 
 TEST(diagnostics, acontrol_empty_op)
@@ -703,10 +703,10 @@ TEST(diagnostics, acontrol_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A021");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A021");
 }
 
 
@@ -718,10 +718,10 @@ TEST(diagnostics, extrn_empty_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A021");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A021");
 }
 
 TEST(diagnostics, xattr_scope_value)
@@ -732,10 +732,10 @@ TEST(diagnostics, xattr_scope_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A200");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A200");
 }
 
 TEST(diagnostics, xattr_linkage_value)
@@ -746,10 +746,10 @@ TEST(diagnostics, xattr_linkage_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A201");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A201");
 }
 
 TEST(diagnostics, xattr_reference_value)
@@ -760,10 +760,10 @@ TEST(diagnostics, xattr_reference_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A288");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A288");
 }
 
 TEST(diagnostics, xattr_reference_direct_indirect_options)
@@ -774,10 +774,10 @@ TEST(diagnostics, xattr_reference_direct_indirect_options)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A202");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A202");
 }
 
 TEST(diagnostics, xattr_reference_number_of_params)
@@ -788,10 +788,10 @@ TEST(diagnostics, xattr_reference_number_of_params)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A018");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A018");
 }
 
 TEST(diagnostics, mnote_incorrect_message)
@@ -802,10 +802,10 @@ TEST(diagnostics, mnote_incorrect_message)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A119");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A119");
 }
 
 TEST(diagnostics, mnote_first_op_value)
@@ -816,10 +816,10 @@ TEST(diagnostics, mnote_first_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A119");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A119");
 }
 
 TEST(diagnostics, mnote_first_op_format)
@@ -830,10 +830,10 @@ TEST(diagnostics, mnote_first_op_format)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A117");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A117");
 }
 
 TEST(diagnostics, mnote_long_message)
@@ -862,10 +862,10 @@ TEST(diagnostics, mnote_long_message)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A117");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A117");
 }
 
 TEST(diagnostics, iseq_number_of_operands)
@@ -876,10 +876,10 @@ TEST(diagnostics, iseq_number_of_operands)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A013");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A013");
 }
 
 TEST(diagnostics, iseq_incorrect_op_value)
@@ -890,10 +890,10 @@ TEST(diagnostics, iseq_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A120");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A120");
 }
 
 TEST(diagnostics, push_print_specified)
@@ -904,10 +904,10 @@ TEST(diagnostics, push_print_specified)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A112");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A112");
 }
 
 TEST(diagnostics, push_acontrol_specified)
@@ -918,10 +918,10 @@ TEST(diagnostics, push_acontrol_specified)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A112");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A112");
 }
 
 TEST(diagnostics, pop_noprint_first)
@@ -932,10 +932,10 @@ TEST(diagnostics, pop_noprint_first)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A113");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A113");
 }
 
 TEST(diagnostics, pop_incorrect_last_operand)
@@ -946,10 +946,10 @@ TEST(diagnostics, pop_incorrect_last_operand)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A110");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A110");
 }
 
 TEST(diagnostics, pop_only_noprint_specified)
@@ -960,10 +960,10 @@ TEST(diagnostics, pop_only_noprint_specified)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A114");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A114");
 }
 
 TEST(diagnostics, push_incorrect_op_value)
@@ -974,10 +974,10 @@ TEST(diagnostics, push_incorrect_op_value)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A111");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A111");
 }
 
 TEST(diagnostics, org_incorrect_first_op)
@@ -988,8 +988,8 @@ TEST(diagnostics, org_incorrect_first_op)
 )");
     analyzer a(input);
     a.analyze();
-    dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->collect_diags();
+    a.collect_diags();
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().size(), (size_t)1);
-    ASSERT_EQ(dynamic_cast<hlasm_plugin::parser_library::diagnosable*>(&a)->diags().at(0).code, "A245");
+    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().at(0).code, "A245");
 }

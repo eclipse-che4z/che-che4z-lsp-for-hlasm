@@ -1032,7 +1032,7 @@ bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
         }
         auto simple = get_simple_operand(to_check[i]);
 
-        if (simple == nullptr)
+        if (!simple || simple->is_default)
         {
             if (can_be_relocatable[i])
                 add_diagnostic(
@@ -1044,12 +1044,15 @@ bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
         }
 
         if (!one_operand::is_size_corresponding_unsigned(simple->value, operand_sizes[i]))
+        {
             if (can_be_relocatable[i])
-                add_diagnostic(
-                    diagnostic_op::error_M123(name_of_instruction, 0, (1LL << operand_sizes[i])-1, simple->operand_range));
+                add_diagnostic(diagnostic_op::error_M123(
+                    name_of_instruction, 0, (1LL << operand_sizes[i]) - 1, simple->operand_range));
             else
-                add_diagnostic(
-                    diagnostic_op::error_M122(name_of_instruction, 0, (1LL << operand_sizes[i])-1, simple->operand_range));
+                add_diagnostic(diagnostic_op::error_M122(
+                    name_of_instruction, 0, (1LL << operand_sizes[i]) - 1, simple->operand_range));
+            return false;
+        }
     }
     return true;
 }
