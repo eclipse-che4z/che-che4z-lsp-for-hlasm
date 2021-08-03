@@ -41,12 +41,13 @@ symbol_value address_resolver::resolve(dependency_solver&) const
 address address_resolver::extract_dep_address(const address& addr)
 {
     address tmp(address::base {}, 0, {});
+    auto& tmp_spaces = tmp.spaces();
     auto spaces = addr.normalized_spaces();
     for (auto it = spaces.rbegin(); it != spaces.rend(); ++it)
     {
-        tmp.spaces().push_back(*it);
-        if (it->first->kind == space_kind::ALIGNMENT || it->first->kind == space_kind::LOCTR_SET
-            || it->first->kind == space_kind::LOCTR_MAX)
+        auto kind = it->first->kind;
+        tmp_spaces.push_back(std::move(*it));
+        if (kind == space_kind::ALIGNMENT || kind == space_kind::LOCTR_SET || kind == space_kind::LOCTR_MAX)
             break;
     }
     return tmp;

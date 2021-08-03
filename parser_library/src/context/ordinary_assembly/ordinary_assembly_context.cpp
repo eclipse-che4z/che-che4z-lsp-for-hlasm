@@ -39,17 +39,19 @@ ordinary_assembly_context::ordinary_assembly_context(id_storage& storage)
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
 {
-    auto res = symbols_.try_emplace(name, name, value, attributes, std::move(symbol_location));
+    auto value_kind = value.value_kind();
+
+    auto res = symbols_.try_emplace(name, name, std::move(value), attributes, std::move(symbol_location));
 
     if (!res.second)
         throw std::runtime_error("symbol name in use");
 
     bool ok = true;
 
-    if (value.value_kind() == symbol_value_kind::RELOC)
+    if (value_kind == symbol_value_kind::RELOC)
         ok = symbol_dependencies.check_loctr_cycle();
 
-    if (value.value_kind() != symbol_value_kind::UNDEF)
+    if (value_kind != symbol_value_kind::UNDEF)
         symbol_dependencies.add_defined();
 
     return ok;
