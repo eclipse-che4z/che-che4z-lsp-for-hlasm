@@ -546,6 +546,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
     else
     {
+        fill_expression_loc_counters(rebuilt_stmt, context::no_align);
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
