@@ -701,12 +701,12 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 hlasm_ctx.ord_ctx.align(ccw_align),
-                context::symbol_attributes::make_ccw_attrs()); 
+                context::symbol_attributes::make_ccw_attrs());
     }
-    
+
     hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
 
-    
+
     bool has_dependencies =
         std::any_of(stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this](const auto& op) {
             auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());

@@ -232,10 +232,8 @@ bool machine_checker::check(const std::string& instruction_name,
     std::string mach_name = instruction_name;
 
     // instruction is a mnemonic instruction
-    if (context::instruction::mnemonic_codes.find(instruction_name)
-        != context::instruction::mnemonic_codes.end())
-        mach_name = context::instruction::mnemonic_codes.at(instruction_name)
-                        .instruction->instr_name;
+    if (context::instruction::mnemonic_codes.find(instruction_name) != context::instruction::mnemonic_codes.end())
+        mach_name = context::instruction::mnemonic_codes.at(instruction_name).instruction->instr_name;
 
     return context::instruction::machine_instructions.at(mach_name).check(
         instruction_name, ops, stmt_range, add_diagnostic);

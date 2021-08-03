@@ -21,6 +21,7 @@ target_sources(library_test PRIVATE
 	label_test.cpp
 	loctr_test.cpp
 	lookahead_test.cpp
+	mach_instr_test.cpp
 	occurence_collector_test.cpp
 	opsyn_test.cpp
 	org_test.cpp

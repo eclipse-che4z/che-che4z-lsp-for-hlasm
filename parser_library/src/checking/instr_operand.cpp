@@ -72,8 +72,7 @@ address_operand::address_operand(address_state state, int displacement, int firs
     , second_op(second)
     , op_state(op_state) {};
 
-diagnostic_op address_operand::get_first_parameter_error(
-    const machine_operand_type& op_type,
+diagnostic_op address_operand::get_first_parameter_error(const machine_operand_type& op_type,
     const std::string& instr_name,
     long long from,
     long long to,

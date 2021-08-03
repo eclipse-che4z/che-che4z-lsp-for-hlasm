@@ -75,7 +75,6 @@ private:
     };
 
     void process_external(rebuilt_statement stmt, external_type t);
-    
 };
 
 } // namespace hlasm_plugin::parser_library::processing

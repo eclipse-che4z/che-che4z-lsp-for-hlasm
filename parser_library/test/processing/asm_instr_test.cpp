@@ -37,7 +37,7 @@ ADDR   DS CL4
     auto symbol = ctx.ord_ctx.get_symbol(ctx.ids().add("CCWSYM"));
     ASSERT_NE(symbol, nullptr);
     EXPECT_EQ(symbol->value().get_reloc().offset(), 8);
-    
+
     EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::T), 'W'_ebcdic);
     EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::L), 8);
 }
