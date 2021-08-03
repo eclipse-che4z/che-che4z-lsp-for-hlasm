@@ -203,3 +203,32 @@ LEN120 DS CL1
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "ME003");
 }
+
+TEST(mach_instr_processing, mach_instr_aligned_assign_to_loctr)
+{
+    std::string input(
+        R"(
+SYM  DS   CL15
+     LR 1,*-SYM
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 1U);
+    ASSERT_EQ(a.diags()[0].code, "M120");
+}
+
+TEST(mach_instr_processing, mach_instr_aligned_assign_to_loctr_reloc_imm)
+{
+    std::string input(
+        R"(
+SYM  DS   CL1
+     EXRL 1,SYM
+)");
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 0U);
+}

@@ -41,3 +41,16 @@ ADDR   DS CL4
     EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::T), 'W'_ebcdic);
     EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::L), 8);
 }
+
+TEST(asm_instr_processing, CCW_loctr_correct_assign)
+{
+    std::string input = R"(
+SYM  DS   CL249
+     CCW  *-SYM,0,0,0
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 1U);
+    EXPECT_EQ(a.diags()[0].code, "M122");
+}
