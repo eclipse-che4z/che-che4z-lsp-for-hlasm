@@ -179,6 +179,9 @@ const std::vector<address::space_entry>& address::spaces() const { return spaces
 
 std::vector<address::space_entry> address::normalized_spaces() const
 {
+    if (spaces_.empty())
+        return {};
+
     std::vector<space_entry> res_spaces;
     std::unordered_map<space_ptr, size_t> tmp_map;
 
@@ -196,6 +199,7 @@ address::address(base address_base, int offset, const space_storage& spaces)
 {
     bases_.emplace_back(address_base, 1);
 
+    spaces_.reserve(spaces.size());
     for (auto& space : spaces)
     {
         spaces_.emplace_back(space, 1);
@@ -355,6 +359,9 @@ address::address(std::vector<base_entry> bases_, int offset_, std::vector<space_
 
 void address::normalize()
 {
+    if (spaces_.empty())
+        return;
+
     std::vector<space_entry> res_spaces;
     std::unordered_map<space_ptr, size_t> tmp_map;
 
