@@ -67,22 +67,10 @@ nominal_value returns [nominal_value_ptr value]
 		$value = std::make_unique<nominal_value_exprs>(std::move($exprs.exprs));
 	};
 
-nominal_value_o returns [nominal_value_ptr nominal, mach_expr_ptr e]
-	: nominal_value
-	{
-		$nominal = std::move($nominal_value.value);
-	}
-	| mach_expr_pars nominal_value
-	{
-		$nominal = std::move($nominal_value.value);
-		$e = std::move($mach_expr_pars.e);
-	}
-	|;
-
 data_def_address returns [address_nominal addr]
-	: disp=mach_expr lpar base=mach_expr rpar
+	: disp=mach_expr base=mach_expr_pars
 	{
-		$addr.base = std::move($base.m_e);
+		$addr.base = std::move($base.e);
 		$addr.displacement = std::move($disp.m_e);
 	};
 
@@ -109,12 +97,12 @@ mach_expr_or_address_comma_c returns [expr_or_address_list exprs]
 
 
 data_def returns [data_definition value]
-	: d_e=dupl_factor_expr_o data_def_id ptm=prog_type_and_modifier_p nominal_value_o
+	: d_e=dupl_factor_expr_o data_def_id ptm=prog_type_and_modifier_p (mach_expr_pars? nominal_value)?
 	{
 		std::string form = ($d_e.e ? data_definition::expr_placeholder : "")
 			+ std::move($data_def_id.value) + std::move($ptm.format)
-			+ ($nominal_value_o.e ? data_definition::expr_placeholder : "")
-			+ ($nominal_value_o.nominal ? data_definition::nominal_placeholder : "");
+			+ ($mach_expr_pars.ctx && $mach_expr_pars.e ? data_definition::expr_placeholder : "")
+			+ ($nominal_value.ctx && $nominal_value.value ? data_definition::nominal_placeholder : "");
 		mach_expr_list exprs;
 		if($d_e.e)
 			exprs.push_back(std::move($d_e.e));
@@ -122,12 +110,12 @@ data_def returns [data_definition value]
 		exprs.insert(exprs.end(), std::make_move_iterator($ptm.exprs.begin()),
 				std::make_move_iterator($ptm.exprs.end()));
 		
-		if($nominal_value_o.e)
-			exprs.push_back(std::move($nominal_value_o.e));
+		if($mach_expr_pars.ctx && $mach_expr_pars.e)
+			exprs.push_back(std::move($mach_expr_pars.e));
 
 		auto begin_range = provider.get_range($d_e.ctx->getStart(),$d_e.ctx->getStop());
 
-		$value = data_definition::create(collector, std::move(form), std::move(exprs), std::move($nominal_value_o.nominal), begin_range.start);
+		$value = data_definition::create(collector, std::move(form), std::move(exprs), $nominal_value.ctx?std::move($nominal_value.value):nominal_value_ptr{}, begin_range.start);
 	};
 
 data_def_ch returns [std::string value]
