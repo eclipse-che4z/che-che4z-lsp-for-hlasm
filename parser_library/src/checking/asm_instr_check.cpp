@@ -1057,8 +1057,8 @@ bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-template ccw<CCW_variant::CCW_CCW0>;
-template ccw<CCW_variant::CCW1>;
+template class ccw<CCW_variant::CCW_CCW0>;
+template class ccw<CCW_variant::CCW1>;
 
 // instructions like SPACE, CEJECT, START
 
