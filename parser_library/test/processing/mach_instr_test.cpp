@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-TEST(mach_instr_processing, relocImm_expected)
+TEST(mach_instr_processing, reloc_imm_expected)
 {
     std::string input(
         R"( 
@@ -78,7 +78,7 @@ LEN120 DS CL1
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "ME003");
 }
-TEST(mach_instr_processing, vecReg_expected)
+TEST(mach_instr_processing, vec_reg_expected)
 {
     std::string input(
         R"( 
@@ -91,7 +91,7 @@ TEST(mach_instr_processing, vecReg_expected)
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M114");
 }
-TEST(mach_instr_processing, relocSymbol_expected)
+TEST(mach_instr_processing, reloc_symbol_expected)
 {
     std::string input(
         R"(
