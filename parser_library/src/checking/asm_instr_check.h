@@ -272,7 +272,14 @@ public:
         const diagnostic_collector& add_diagnostic) const override;
 };
 
+enum class CCW_variant
+{
+    CCW_CCW0,
+    CCW1
+};
+
 // class for ccw (and ccw0, ccw1) instruction, operands can be expressions, TO DO
+template<CCW_variant variant>
 class ccw final : public assembler_instruction
 {
 public:

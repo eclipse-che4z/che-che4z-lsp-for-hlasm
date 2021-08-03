@@ -1008,15 +1008,21 @@ bool cnop::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-ccw::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+template<CCW_variant variant>
+ccw<variant>::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 4, 4) {};
 
-bool ccw::check(const std::vector<const asm_operand*>& to_check,
+template<CCW_variant variant>
+bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
+
+    constexpr std::array<int, 4> operand_sizes { 8, variant == CCW_variant::CCW_CCW0 ? 24 : 31, 8, 16 };
+    constexpr std::array<bool, 4> can_be_relocatable { false, true, false, false };
+
     for (size_t i = 0; i < to_check.size(); i++)
     {
         if (is_operand_empty(to_check[i]))
@@ -1025,9 +1031,10 @@ bool ccw::check(const std::vector<const asm_operand*>& to_check,
             return false;
         }
         auto simple = get_simple_operand(to_check[i]);
+
         if (simple == nullptr)
         {
-            if (i == 1)
+            if (can_be_relocatable[i])
                 add_diagnostic(
                     diagnostic_op::error_A247_must_be_rel_abs_expr(name_of_instruction, to_check[i]->operand_range));
             else
@@ -1035,9 +1042,20 @@ bool ccw::check(const std::vector<const asm_operand*>& to_check,
                     diagnostic_op::error_A143_must_be_absolute_expr(name_of_instruction, to_check[i]->operand_range));
             return false;
         }
+
+        if (!one_operand::is_size_corresponding_unsigned(simple->value, operand_sizes[i]))
+            if (can_be_relocatable[i])
+                add_diagnostic(
+                    diagnostic_op::error_M123(name_of_instruction, 0, (1LL << operand_sizes[i])-1, simple->operand_range));
+            else
+                add_diagnostic(
+                    diagnostic_op::error_M122(name_of_instruction, 0, (1LL << operand_sizes[i])-1, simple->operand_range));
     }
     return true;
 }
+
+template ccw<CCW_variant::CCW_CCW0>;
+template ccw<CCW_variant::CCW1>;
 
 // instructions like SPACE, CEJECT, START
 

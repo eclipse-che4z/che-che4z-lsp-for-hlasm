@@ -701,11 +701,23 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 hlasm_ctx.ord_ctx.align(ccw_align),
-                context::symbol_attributes::make_org_attrs()); // TODO Correct attributes
+                context::symbol_attributes::make_ccw_attrs()); 
     }
     
     hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
-    check(stmt, hlasm_ctx, checker_, *this);
+
+    
+    bool has_dependencies =
+        std::any_of(stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this](const auto& op) {
+            auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
+            return evaluable && evaluable->has_dependencies(hlasm_ctx.ord_ctx);
+        });
+
+    if (has_dependencies)
+        hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+    else
+        check(stmt, hlasm_ctx, checker_, *this);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
