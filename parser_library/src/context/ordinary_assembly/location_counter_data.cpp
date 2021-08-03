@@ -51,10 +51,8 @@ void location_counter_data::append_data(location_counter_data data)
 {
     append_storage(data.unknown_parts.front().storage_after);
 
-    data.unknown_parts.pop_front(); // the first unknown part is substitiuted by this data
-
     unknown_parts.insert(unknown_parts.end(),
-        std::make_move_iterator(data.unknown_parts.begin()),
+        std::make_move_iterator(data.unknown_parts.begin() + 1), // the first unknown part is substitiuted by this data
         std::make_move_iterator(data.unknown_parts.end()));
 
     current_safe_area = data.current_safe_area;
@@ -134,7 +132,7 @@ int location_counter_data::last_storage() const
         return unknown_parts.back().storage_after;
 }
 
-const space_ptr location_counter_data::fist_space() const
+space_ptr location_counter_data::fist_space() const
 {
     if (unknown_parts.size())
         return unknown_parts.front().unknown_space;
@@ -142,7 +140,7 @@ const space_ptr location_counter_data::fist_space() const
         return nullptr;
 }
 
-const space_ptr location_counter_data::last_space() const
+space_ptr location_counter_data::last_space() const
 {
     if (unknown_parts.size())
         return unknown_parts.back().unknown_space;

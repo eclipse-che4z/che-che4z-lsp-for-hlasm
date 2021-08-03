@@ -84,7 +84,7 @@ struct location_counter_data
     // count of virtually allocated bytes pior to this location counter
     int storage;
     // spaces with storages between them assigned to the counter
-    std::list<space_storage_t> unknown_parts;
+    std::vector<space_storage_t> unknown_parts;
     int initial_storage;
     // number of bytes before end of the storage after last space (if any)
     int current_safe_area;
@@ -103,8 +103,8 @@ struct location_counter_data
     bool need_space_alignment(alignment align) const;
 
     int last_storage() const;
-    const space_ptr fist_space() const;
-    const space_ptr last_space() const;
+    space_ptr fist_space() const;
+    space_ptr last_space() const;
     space_storage spaces() const;
 };
 
