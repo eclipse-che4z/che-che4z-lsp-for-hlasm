@@ -338,7 +338,7 @@ int main(int argc, char** argv)
             write_details = false;
         }
         // When specified, skip reparsing each program to test out macro caching
-        else if (arg == "-r")
+        else if (arg == "-nr")
             do_reparse = false;
         // When specified, the scpecified string will be shown at the beginning of each "Parsing <file>" message
         else if (arg == "-m")
