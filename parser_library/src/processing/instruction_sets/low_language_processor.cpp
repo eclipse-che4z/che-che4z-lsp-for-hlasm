@@ -35,7 +35,7 @@ namespace {
 class fill_loctr_visitor final : public semantics::operand_visitor
 {
 public:
-    fill_loctr_visitor(context::address address_to_fill)
+    explicit fill_loctr_visitor(context::address address_to_fill)
         : addr(std::move(address_to_fill))
     {}
 

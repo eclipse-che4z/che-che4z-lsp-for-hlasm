@@ -41,180 +41,179 @@ std::map<std::string, std::unique_ptr<assembler_instruction>> assembler_checker:
 
 void assembler_checker::initialize_assembler_map()
 {
-    assembler_instruction_map.insert(std::make_pair(
-        "*PROCESS", std::make_unique<process>(std::vector<label_types> { label_types::NO_LABEL }, "*PROCESS")));
-    assembler_instruction_map.insert(std::make_pair("ACONTROL",
+    assembler_instruction_map.try_emplace(
+        "*PROCESS", std::make_unique<process>(std::vector<label_types> { label_types::NO_LABEL }, "*PROCESS"));
+    assembler_instruction_map.try_emplace("ACONTROL",
         std::make_unique<acontrol>(
-            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ACONTROL")));
-    assembler_instruction_map.insert(std::make_pair("ADATA",
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ACONTROL"));
+    assembler_instruction_map.try_emplace("ADATA",
         std::make_unique<adata>(
-            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ADATA")));
-    assembler_instruction_map.insert(std::make_pair("AINSERT",
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ADATA"));
+    assembler_instruction_map.try_emplace("AINSERT",
         std::make_unique<ainsert>(
-            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "AINSERT")));
-    assembler_instruction_map.insert(std::make_pair("ALIAS",
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "AINSERT"));
+    assembler_instruction_map.try_emplace("ALIAS",
         std::make_unique<alias>(
-            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "ALIAS")));
-    assembler_instruction_map.insert(std::make_pair("AMODE",
-        std::make_unique<amode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "AMODE")));
-    assembler_instruction_map.insert(std::make_pair(
-        "CATTR", std::make_unique<cattr>(std::vector<label_types> { label_types::CLASS_NAME }, "CATTR")));
-    assembler_instruction_map.insert(std::make_pair("CCW",
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "ALIAS"));
+    assembler_instruction_map.try_emplace("AMODE",
+        std::make_unique<amode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "AMODE"));
+    assembler_instruction_map.try_emplace(
+        "CATTR", std::make_unique<cattr>(std::vector<label_types> { label_types::CLASS_NAME }, "CATTR"));
+    assembler_instruction_map.try_emplace("CCW",
         std::make_unique<ccw<CCW_variant::CCW_CCW0>>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW")));
-    assembler_instruction_map.insert(std::make_pair("CCW0",
+            "CCW"));
+    assembler_instruction_map.try_emplace("CCW0",
         std::make_unique<ccw<CCW_variant::CCW_CCW0>>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW0")));
-    assembler_instruction_map.insert(std::make_pair("CCW1",
+            "CCW0"));
+    assembler_instruction_map.try_emplace("CCW1",
         std::make_unique<ccw<CCW_variant::CCW1>>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW1")));
-    assembler_instruction_map.insert(std::make_pair("CEJECT",
+            "CCW1"));
+    assembler_instruction_map.try_emplace("CEJECT",
         std::make_unique<expression_instruction>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "CEJECT")));
-    assembler_instruction_map.insert(std::make_pair("CNOP",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "CEJECT"));
+    assembler_instruction_map.try_emplace("CNOP",
         std::make_unique<cnop>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CNOP")));
-    assembler_instruction_map.insert(std::make_pair("COM",
+            "CNOP"));
+    assembler_instruction_map.try_emplace("COM",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "COM")));
-    assembler_instruction_map.insert(std::make_pair("COPY",
+            "COM"));
+    assembler_instruction_map.try_emplace("COPY",
         std::make_unique<copy>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY")));
-    assembler_instruction_map.insert(std::make_pair("COPY",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY"));
+    assembler_instruction_map.try_emplace("COPY",
         std::make_unique<copy>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY")));
-    assembler_instruction_map.insert(std::make_pair("CSECT",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY"));
+    assembler_instruction_map.try_emplace("CSECT",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CSECT")));
-    assembler_instruction_map.insert(std::make_pair("CXD",
+            "CSECT"));
+    assembler_instruction_map.try_emplace("CXD",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CXD")));
-    assembler_instruction_map.insert(std::make_pair("DC",
+            "CXD"));
+    assembler_instruction_map.try_emplace("DC",
         std::make_unique<dc>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "DC")));
-    assembler_instruction_map.insert(std::make_pair("DROP",
+            "DC"));
+    assembler_instruction_map.try_emplace("DROP",
         std::make_unique<drop>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "DROP")));
-    assembler_instruction_map.insert(std::make_pair("DS",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "DROP"));
+    assembler_instruction_map.try_emplace("DS",
         std::make_unique<ds_dxd>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "DS")));
-    assembler_instruction_map.insert(std::make_pair("DSECT",
+            "DS"));
+    assembler_instruction_map.try_emplace("DSECT",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "DSECT")));
-    assembler_instruction_map.insert(std::make_pair("DXD",
+            "DSECT"));
+    assembler_instruction_map.try_emplace("DXD",
         std::make_unique<ds_dxd>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "DXD")));
-    assembler_instruction_map.insert(std::make_pair("EJECT",
+            "DXD"));
+    assembler_instruction_map.try_emplace("EJECT",
         std::make_unique<no_operands>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EJECT")));
-    assembler_instruction_map.insert(std::make_pair("END",
-        std::make_unique<end>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "END")));
-    assembler_instruction_map.insert(std::make_pair("ENTRY",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EJECT"));
+    assembler_instruction_map.try_emplace("END",
+        std::make_unique<end>(std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "END"));
+    assembler_instruction_map.try_emplace("ENTRY",
         std::make_unique<entry>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ENTRY")));
-    assembler_instruction_map.insert(std::make_pair("EQU",
-        std::make_unique<equ>(std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "EQU")));
-    assembler_instruction_map.insert(std::make_pair("EXITCTL",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ENTRY"));
+    assembler_instruction_map.try_emplace("EQU",
+        std::make_unique<equ>(std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "EQU"));
+    assembler_instruction_map.try_emplace("EXITCTL",
         std::make_unique<exitctl>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXITCTL")));
-    assembler_instruction_map.insert(std::make_pair("EXTRN",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXITCTL"));
+    assembler_instruction_map.try_emplace("EXTRN",
         std::make_unique<external>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXTRN")));
-    assembler_instruction_map.insert(
-        std::make_pair("ICTL", std::make_unique<ictl>(std::vector<label_types> { label_types::NO_LABEL }, "ICTL")));
-    assembler_instruction_map.insert(std::make_pair("ISEQ",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXTRN"));
+    assembler_instruction_map.try_emplace(
+        "ICTL", std::make_unique<ictl>(std::vector<label_types> { label_types::NO_LABEL }, "ICTL"));
+    assembler_instruction_map.try_emplace("ISEQ",
         std::make_unique<iseq>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ISEQ")));
-    assembler_instruction_map.insert(std::make_pair("LOCTR",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ISEQ"));
+    assembler_instruction_map.try_emplace("LOCTR",
         std::make_unique<no_operands>(
-            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "LOCTR")));
-    assembler_instruction_map.insert(std::make_pair("LTORG",
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "LOCTR"));
+    assembler_instruction_map.try_emplace("LTORG",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL },
-            "LTORG")));
-    assembler_instruction_map.insert(std::make_pair("MNOTE",
+            "LTORG"));
+    assembler_instruction_map.try_emplace("MNOTE",
         std::make_unique<mnote>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "MNOTE")));
-    assembler_instruction_map.insert(std::make_pair("OPSYN",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "MNOTE"));
+    assembler_instruction_map.try_emplace("OPSYN",
         std::make_unique<opsyn>(
             std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::OPERATION_CODE },
-            "OPSYN")));
-    assembler_instruction_map.insert(std::make_pair("ORG",
+            "OPSYN"));
+    assembler_instruction_map.try_emplace("ORG",
         std::make_unique<org>(
             std::vector<label_types> {
                 label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL },
-            "ORG")));
-    assembler_instruction_map.insert(std::make_pair("POP",
+            "ORG"));
+    assembler_instruction_map.try_emplace("POP",
         std::make_unique<stack_instr>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "POP")));
-    assembler_instruction_map.insert(std::make_pair("PRINT",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "POP"));
+    assembler_instruction_map.try_emplace("PRINT",
         std::make_unique<print>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PRINT")));
-    assembler_instruction_map.insert(std::make_pair("PUNCH",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PRINT"));
+    assembler_instruction_map.try_emplace("PUNCH",
         std::make_unique<punch>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUNCH")));
-    assembler_instruction_map.insert(std::make_pair("PUSH",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUNCH"));
+    assembler_instruction_map.try_emplace("PUSH",
         std::make_unique<stack_instr>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUSH")));
-    assembler_instruction_map.insert(std::make_pair("REPRO",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUSH"));
+    assembler_instruction_map.try_emplace("REPRO",
         std::make_unique<no_operands>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "REPRO")));
-    assembler_instruction_map.insert(std::make_pair("RMODE",
-        std::make_unique<rmode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "RMODE")));
-    assembler_instruction_map.insert(std::make_pair("RSECT",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "REPRO"));
+    assembler_instruction_map.try_emplace("RMODE",
+        std::make_unique<rmode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "RMODE"));
+    assembler_instruction_map.try_emplace("RSECT",
         std::make_unique<no_operands>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL },
-            "RSECT")));
-    assembler_instruction_map.insert(std::make_pair("SPACE",
+            "RSECT"));
+    assembler_instruction_map.try_emplace("SPACE",
         std::make_unique<expression_instruction>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "SPACE")));
-    assembler_instruction_map.insert(std::make_pair("START",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "SPACE"));
+    assembler_instruction_map.try_emplace("START",
         std::make_unique<expression_instruction>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::ORD_SYMBOL, label_types::VAR_SYMBOL },
-            "START")));
-    assembler_instruction_map.insert(std::make_pair("TITLE",
+            "START"));
+    assembler_instruction_map.try_emplace("TITLE",
         std::make_unique<title>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL, label_types::STRING },
-            "TITLE")));
-    assembler_instruction_map.insert(std::make_pair("USING",
+            "TITLE"));
+    assembler_instruction_map.try_emplace("USING",
         std::make_unique<using_instr>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL, label_types::ORD_SYMBOL },
-            "USING")));
-    assembler_instruction_map.insert(std::make_pair("WXTRN",
+            "USING"));
+    assembler_instruction_map.try_emplace("WXTRN",
         std::make_unique<external>(
-            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "WXTRN")));
-    assembler_instruction_map.insert(std::make_pair("XATTR",
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "WXTRN"));
+    assembler_instruction_map.try_emplace("XATTR",
         std::make_unique<xattr>(
             std::vector<label_types> { label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "XATTR")));
+            "XATTR"));
 }
 
 bool machine_checker::check(const std::string& instruction_name,

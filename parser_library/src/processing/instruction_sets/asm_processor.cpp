@@ -692,9 +692,9 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     fill_expression_loc_counters(stmt, ccw_align);
     find_sequence_symbol(stmt);
 
-    auto label = find_label_symbol(stmt);
 
-    if (label != context::id_storage::empty_id)
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
