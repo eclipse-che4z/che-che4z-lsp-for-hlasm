@@ -1008,19 +1008,20 @@ bool cnop::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
-template<CCW_variant variant>
-ccw<variant>::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
-    : assembler_instruction(allowed_types, name_of_instruction, 4, 4) {};
 
-template<CCW_variant variant>
-bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
+ccw::ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction, CCW_variant variant)
+    : assembler_instruction(allowed_types, name_of_instruction, 4, 4)
+    , variant_(variant) {};
+
+
+bool ccw::check(const std::vector<const asm_operand*>& to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
 
-    constexpr std::array<int, 4> operand_sizes { 8, variant == CCW_variant::CCW_CCW0 ? 24 : 31, 8, 16 };
+    std::array<int, 4> operand_sizes { 8, variant_ == CCW_variant::CCW_CCW0 ? 24 : 31, 8, 16 };
     constexpr std::array<bool, 4> can_be_relocatable { false, true, false, false };
 
     for (size_t i = 0; i < to_check.size(); i++)
@@ -1056,9 +1057,6 @@ bool ccw<variant>::check(const std::vector<const asm_operand*>& to_check,
     }
     return true;
 }
-
-template class ccw<CCW_variant::CCW_CCW0>;
-template class ccw<CCW_variant::CCW1>;
 
 // instructions like SPACE, CEJECT, START
 

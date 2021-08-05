@@ -60,20 +60,23 @@ void assembler_checker::initialize_assembler_map()
     assembler_instruction_map.try_emplace(
         "CATTR", std::make_unique<cattr>(std::vector<label_types> { label_types::CLASS_NAME }, "CATTR"));
     assembler_instruction_map.try_emplace("CCW",
-        std::make_unique<ccw<CCW_variant::CCW_CCW0>>(
+        std::make_unique<ccw>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW"));
+            "CCW",
+            CCW_variant::CCW_CCW0));
     assembler_instruction_map.try_emplace("CCW0",
-        std::make_unique<ccw<CCW_variant::CCW_CCW0>>(
+        std::make_unique<ccw>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW0"));
+            "CCW0",
+            CCW_variant::CCW_CCW0));
     assembler_instruction_map.try_emplace("CCW1",
-        std::make_unique<ccw<CCW_variant::CCW1>>(
+        std::make_unique<ccw>(
             std::vector<label_types> {
                 label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
-            "CCW1"));
+            "CCW1",
+            CCW_variant::CCW1));
     assembler_instruction_map.try_emplace("CEJECT",
         std::make_unique<expression_instruction>(
             std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "CEJECT"));

@@ -279,11 +279,12 @@ enum class CCW_variant
 };
 
 // class for ccw (and ccw0, ccw1) instruction, operands can be expressions, TO DO
-template<CCW_variant variant>
 class ccw final : public assembler_instruction
 {
+    CCW_variant variant_;
+
 public:
-    ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction);
+    ccw(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction, CCW_variant variant);
     bool check(const std::vector<const asm_operand*>& to_check,
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const override;
