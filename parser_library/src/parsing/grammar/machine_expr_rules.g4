@@ -130,8 +130,7 @@ string_ch returns [std::string value]
 	| (APOSTROPHE|ATTR) (APOSTROPHE|ATTR)	{$value = "'";};
 
 string_ch_c returns [std::string value]
-	:
-	| tmp=string_ch_c string_ch				{$value = std::move($tmp.value); $value.append($string_ch.value);};
+	: (string_ch				{$value.append($string_ch.value);})*;
 
 string returns [std::string value]
 	: ap1=APOSTROPHE string_ch_c ap2=(APOSTROPHE|ATTR)
