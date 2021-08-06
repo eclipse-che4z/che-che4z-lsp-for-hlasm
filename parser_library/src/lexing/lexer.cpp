@@ -468,7 +468,7 @@ bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c 
 bool lexer::is_data_attribute() const
 {
     auto tmp = std::toupper(input_state_->c);
-    return tmp == 'D' || tmp == 'O' || tmp == 'N' || tmp == 'S' || tmp == 'K' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
 }
 
 void lexer::lex_word()
@@ -476,11 +476,14 @@ void lexer::lex_word()
     bool last_char_data_attr = false;
     bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
     bool num = (input_state_->c >= '0' && input_state_->c <= '9');
-
+    size_t last_part_ord_len = 0;
     size_t w_len = 0;
     while (!is_space() && !eof() && !identifier_divider() && before_end())
     {
-        ord &= is_ord_char();
+        bool curr_ord = is_ord_char();
+        last_part_ord_len = curr_ord ? last_part_ord_len + 1 : 0;
+        ord &= curr_ord;
+
         num &= (input_state_->c >= '0' && input_state_->c <= '9');
         last_char_data_attr = is_data_attribute();
 
@@ -503,7 +506,8 @@ void lexer::lex_word()
     else
         create_token(IDENTIFIER);
 
-    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && w_len == 1
+
+    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && last_part_ord_len == 1
         && (unlimited_line_ || input_state_->char_position_in_line != end_))
     {
         start_token();

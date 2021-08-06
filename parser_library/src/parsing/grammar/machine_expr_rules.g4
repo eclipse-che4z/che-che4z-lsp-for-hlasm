@@ -101,9 +101,9 @@ literal
 	: equals data_def;
 
 mach_data_attribute returns [std::string attribute, id_index data = nullptr, range symbol_rng]
-	: ORDSYMBOL attr mach_data_attribute_value
+	: ORDSYMBOL (attr|APOSTROPHE) mach_data_attribute_value
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
+		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = $ORDSYMBOL->getText();
 		$data = $mach_data_attribute_value.data;
 		$symbol_rng = provider.get_range( $mach_data_attribute_value.ctx);

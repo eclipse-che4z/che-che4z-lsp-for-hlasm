@@ -75,6 +75,7 @@ INSTANTIATE_TEST_SUITE_P(parser,
         test_param { "attr_and_string", "S'SYM' STH'", "S'SYM' STH'" },
         test_param { "literal_FD", "=FD'SYM STH'", "=FD'SYM STH'" },
         test_param { "literal_FS", "=FS'SYM STH'", "=FS'SYM STH'" },
+        test_param { "number_before_attr_L", "=4L'SYM 93'", "=4L'SYM 93'" },
         test_param { "quote_before_attr_L", "\"L'SYM 93'", "\"L'SYM" },
         test_param { "quote_before_attr_D", "\"D'SYM 93'", "\"D'SYM 93'" }),
     stringer());
