@@ -1236,7 +1236,7 @@ diagnostic_op diagnostic_op::error_M113(const std::string& instr_name, const ran
 {
     return diagnostic_op(diagnostic_severity::error,
         "M113",
-        "Error at " + instr_name + " instruction: operand must be relocatable symbol or an absolute  immediate value",
+        "Error at " + instr_name + " instruction: operand must be relocatable symbol or an absolute immediate value",
         range);
 }
 

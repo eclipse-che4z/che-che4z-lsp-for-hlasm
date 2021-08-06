@@ -31,6 +31,54 @@ low_language_processor::low_language_processor(analyzing_context ctx,
     , parser(parser)
 {}
 
+namespace {
+class fill_loctr_visitor final : public semantics::operand_visitor
+{
+public:
+    explicit fill_loctr_visitor(context::address address_to_fill)
+        : addr(std::move(address_to_fill))
+    {}
+
+private:
+    context::address addr;
+    // Inherited via operand_visitor
+    void visit(const semantics::empty_operand&) override {}
+    void visit(const semantics::model_operand&) override {}
+    void visit(const semantics::expr_machine_operand& op) override { op.expression->fill_location_counter(addr); }
+    void visit(const semantics::address_machine_operand& op) override
+    {
+        if (op.displacement)
+            op.displacement->fill_location_counter(addr);
+        if (op.first_par)
+            op.first_par->fill_location_counter(addr);
+        if (op.second_par)
+            op.second_par->fill_location_counter(addr);
+    }
+    void visit(const semantics::expr_assembler_operand& op) override { op.expression->fill_location_counter(addr); }
+    void visit(const semantics::using_instr_assembler_operand&) override
+    {
+        // TODO when USING implementation is done
+    }
+    void visit(const semantics::complex_assembler_operand&) override {}
+    void visit(const semantics::string_assembler_operand&) override {}
+    void visit(const semantics::data_def_operand& op) override { op.value->assign_location_counter(addr); }
+    void visit(const semantics::var_ca_operand&) override {}
+    void visit(const semantics::expr_ca_operand&) override {}
+    void visit(const semantics::seq_ca_operand&) override {}
+    void visit(const semantics::branch_ca_operand&) override {}
+    void visit(const semantics::macro_operand_chain&) override {}
+    void visit(const semantics::macro_operand_string&) override {}
+};
+} // namespace
+
+void low_language_processor::fill_expression_loc_counters(rebuilt_statement& stmt, context::alignment instr_alignment)
+{
+    auto addr = hlasm_ctx.ord_ctx.align(instr_alignment);
+    fill_loctr_visitor fill_visitor(addr);
+    for (auto& op : stmt.operands_ref().value)
+        op->apply(fill_visitor);
+}
+
 rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
@@ -130,21 +178,6 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
                                  processing_status(stmt.format_ref(), stmt.opcode_ref()),
                                  *this)
                              .first);
-    }
-
-    for (auto& op : (operands ? operands->value : stmt.operands_ref().value))
-    {
-        if (auto simple_tmp = dynamic_cast<semantics::simple_expr_operand*>(op.get()))
-            simple_tmp->expression->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
-        if (auto addr_tmp = dynamic_cast<semantics::address_machine_operand*>(op.get()))
-        {
-            if (addr_tmp->displacement)
-                addr_tmp->displacement->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
-            if (addr_tmp->first_par)
-                addr_tmp->first_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
-            if (addr_tmp->second_par)
-                addr_tmp->second_par->fill_location_counter(hlasm_ctx.ord_ctx.align(context::no_align));
-        }
     }
 
     return std::make_pair(std::move(label), std::move(operands));

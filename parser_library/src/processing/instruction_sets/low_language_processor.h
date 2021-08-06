@@ -44,6 +44,8 @@ protected:
 
     rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
 
+    void fill_expression_loc_counters(rebuilt_statement& stmt, context::alignment instr_alignment);
+
     // adds dependency and also check for cyclic dependency and adds diagnostics if so
     template<typename... Args>
     void add_dependency(range err_range, Args&&... args)

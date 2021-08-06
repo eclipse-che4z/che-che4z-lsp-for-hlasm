@@ -136,13 +136,6 @@ public:
 
         test_expression_true.push_back(&op_val_8);
 
-        // ccw
-
-        test_ccw_true.push_back(&ccw_first);
-        test_ccw_true.push_back(&ccw_second);
-        test_ccw_true.push_back(&ccw_third);
-        test_ccw_true.push_back(&ccw_fourth);
-
         // cnop
 
 
@@ -741,10 +734,7 @@ protected:
     one_operand mnote_error_message = one_operand("'Error message text'");
     one_operand mnote_asterisk = one_operand("*");
     one_operand mnote_error_message_wrong = one_operand("'Error message text");
-    one_operand ccw_first = one_operand("X'06'");
-    one_operand ccw_second = one_operand("MyData");
-    one_operand ccw_third = one_operand("X'40'");
-    one_operand ccw_fourth = one_operand("MyBlkSize");
+
     one_operand exitctl_one = one_operand("SOURCE");
     one_operand exitctl_two = one_operand(2147483647);
     one_operand exitctl_three = one_operand("SOURCES");
@@ -774,7 +764,7 @@ protected:
     std::vector<const checking::operand*> test_amode_true = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_cattr_true = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_expression_true = std::vector<const checking::operand*>();
-    std::vector<const checking::operand*> test_ccw_true = std::vector<const checking::operand*>();
+
     std::vector<const checking::operand*> test_cnop_true = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_cnop_one_false = std::vector<const checking::operand*>();
     std::vector<const checking::operand*> test_cnop_two_false = std::vector<const checking::operand*>();
@@ -919,7 +909,23 @@ TEST_F(instruction_test, expression)
 TEST_F(instruction_test, ccw)
 {
     EXPECT_FALSE(checker.check("CCW", test_no_operand_true, range(), collector));
+
+    one_operand ccw_first("X'06'", 6);
+    // Current value of relocatable symbols for checker is one_operand("0", 0), see
+    // expr_assembler_operand::get_operand_value_inner
+    one_operand relocatable("0", 0);
+    one_operand big_absolute("17000000", 17000000);
+    one_operand ccw_third("X'40'", 64);
+    one_operand ccw_fourth("MyBlkSize", 20);
+    std::vector<const checking::operand*> test_ccw_true { &ccw_first, &relocatable, &ccw_third, &ccw_fourth };
     EXPECT_TRUE(checker.check("CCW", test_ccw_true, range(), collector));
+
+    std::vector<const checking::operand*> ccw_big_absolute_address {
+        &ccw_first, &big_absolute, &ccw_third, &ccw_fourth
+    };
+    EXPECT_FALSE(checker.check("CCW", ccw_big_absolute_address, range(), collector));
+    EXPECT_TRUE(checker.check("CCW1", ccw_big_absolute_address, range(), collector));
+
     EXPECT_FALSE(checker.check("CCW", test_expression_true, range(), collector));
     EXPECT_FALSE(checker.check("CCW", test_acontrol_true, range(), collector));
 }

@@ -86,7 +86,7 @@ public:
     // Checks whether any dependencies with specified macro cache key (macro context) have changed. If not, loads the
     // cached macro to the specified context. Returns true, if the macro was loaded.
     bool load_from_cache(const macro_cache_key& key, const analyzing_context& ctx);
-    void save_analyzer(const macro_cache_key& key, std::unique_ptr<analyzer> analyzer);
+    void save_macro(const macro_cache_key& key, const analyzer& analyzer);
     void erase_cache_of_opencode(const std::string& opencode_file_name);
 
 private:

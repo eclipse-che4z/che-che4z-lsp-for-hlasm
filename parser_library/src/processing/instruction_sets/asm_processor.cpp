@@ -63,6 +63,8 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
+
     auto symbol_name = find_label_symbol(stmt);
 
     if (symbol_name == context::id_storage::empty_id)
@@ -385,6 +387,7 @@ std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::si
 
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
@@ -543,6 +546,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
     else
     {
+        fill_expression_loc_counters(rebuilt_stmt, context::no_align);
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
@@ -624,6 +628,9 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AINSERT"), std::bind(&asm_processor::process_AINSERT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
 
     return table;
 }
@@ -675,6 +682,43 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
     auto dest = *value == "FRONT" ? processing::ainsert_destination::front : processing::ainsert_destination::back;
 
     open_code_->ainsert(record, dest);
+}
+
+void asm_processor::process_CCW(rebuilt_statement stmt)
+{
+    constexpr context::alignment ccw_align = context::doubleword;
+    constexpr size_t ccw_length = 8U;
+
+    fill_expression_loc_counters(stmt, ccw_align);
+    find_sequence_symbol(stmt);
+
+
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        else
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                hlasm_ctx.ord_ctx.align(ccw_align),
+                context::symbol_attributes::make_ccw_attrs());
+    }
+
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
+
+
+    bool has_dependencies =
+        std::any_of(stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this](const auto& op) {
+            auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
+            return evaluable && evaluable->has_dependencies(hlasm_ctx.ord_ctx);
+        });
+
+    if (has_dependencies)
+        hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+    else
+        check(stmt, hlasm_ctx, checker_, *this);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

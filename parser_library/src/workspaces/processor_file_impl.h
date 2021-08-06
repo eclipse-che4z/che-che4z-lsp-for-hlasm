@@ -53,8 +53,9 @@ public:
     void erase_cache_of_opencode(const std::string& opencode_file_name) override;
 
 private:
-    std::unique_ptr<analyzer> opencode_analyzer_;
-    const analyzer* last_analyzer_ = nullptr;
+    std::unique_ptr<analyzer> last_analyzer_ = nullptr;
+    std::shared_ptr<context::id_storage> last_opencode_id_storage_;
+    bool last_analyzer_opencode_ = false;
 
     bool parse_inner(analyzer&);
 
