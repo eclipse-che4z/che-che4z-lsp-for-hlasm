@@ -170,7 +170,7 @@ subscript returns [std::vector<ca_expr_ptr> value]
 		$value = std::move($expr_comma_c.ca_exprs);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
-	|;
+	| {_input->LA(1) != hlasmparser::LPAR }?;
 
 
 expr_comma_c returns [std::vector<ca_expr_ptr> ca_exprs]
@@ -285,7 +285,7 @@ var_def_substr returns [std::vector<ca_expr_ptr> value]
 		auto r = provider.get_range($num.ctx);
 		$value.emplace_back(std::make_unique<ca_constant>($num.value, r));
 	}
-	|;
+	| {_input->LA(1) != hlasmparser::LPAR }?;
 
 
 ca_dupl_factor returns [ca_expr_ptr value]
@@ -294,7 +294,7 @@ ca_dupl_factor returns [ca_expr_ptr value]
 		$value =std::move($expr.ca_expr);
 		resolve_expression($value, context::SET_t_enum::A_TYPE);
 	}
-	|;
+	| {_input->LA(1) != hlasmparser::LPAR }?;
 
 substring returns [expressions::ca_string::substring_t value]
 	: lpar e1=expr comma e2=expr rpar
@@ -311,7 +311,7 @@ substring returns [expressions::ca_string::substring_t value]
 		$value.substring_range = provider.get_range($lpar.ctx->getStart(), $rpar.ctx->getStop());
 		resolve_expression($value.start, context::SET_t_enum::A_TYPE);
 	}
-	|;
+	| {_input->LA(1) != hlasmparser::LPAR }?;
 
 ca_string_b returns [ca_expr_ptr ca_expr]
 	: ca_dupl_factor (apostrophe|attr) string_ch_v_c (apostrophe|attr) substring

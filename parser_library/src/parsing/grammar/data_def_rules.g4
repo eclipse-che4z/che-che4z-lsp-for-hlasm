@@ -29,7 +29,7 @@ dupl_factor_expr_o returns [mach_expr_ptr e]
 	{
 		$e = std::move($mach_expr_pars.e);
 	}
-	|;
+	| {_input->LA(1) != hlasmparser::LPAR }?;
 
 
 prog_type_and_modifier_p returns [std::string format, mach_expr_list exprs]
@@ -55,7 +55,7 @@ prog_type_and_modifier_p returns [std::string format, mach_expr_list exprs]
 		$exprs.push_back(std::move($e2.e));
 		$exprs.push_back(std::move($e3.e));
 	}
-	| ;
+	|;
 
 nominal_value returns [nominal_value_ptr value]
 	: data_def_string
