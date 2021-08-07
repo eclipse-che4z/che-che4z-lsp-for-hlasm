@@ -90,40 +90,41 @@ std::string kind_to_string(const document_symbol_kind& kind)
 {
     switch (kind)
     {
-    case document_symbol_kind::SEQ:
-        return "SEQ";
-    case document_symbol_kind::VAR:
-        return "VAR";
-    case document_symbol_kind::EQU:
-        return "EQU";
-    case document_symbol_kind::MACH:
-        return "MACH";
-    case document_symbol_kind::MACRO:
-        return "MACRO";
-    case document_symbol_kind::EXECUTABLE:
-        return "EXECUTABLE";
-    case document_symbol_kind::DUMMY:
-        return "DUMMY";
-    default:
-        return "???";
+        case document_symbol_kind::SEQ:
+            return "SEQ";
+        case document_symbol_kind::VAR:
+            return "VAR";
+        case document_symbol_kind::EQU:
+            return "EQU";
+        case document_symbol_kind::MACH:
+            return "MACH";
+        case document_symbol_kind::MACRO:
+            return "MACRO";
+        case document_symbol_kind::EXECUTABLE:
+            return "EXECUTABLE";
+        case document_symbol_kind::DUMMY:
+            return "DUMMY";
+        default:
+            return "???";
     }
 }
 
 void so_fucking_lazy(const document_symbol_item_s& item, std::ofstream& lazy, int& i, const document_symbol_list_s& l)
 {
-    i_tab(i,lazy);
+    i_tab(i, lazy);
     lazy << "document_symbol_item_s{\n";
     i++;
-    i_tab(i,lazy);
-    lazy << "&"+item.name+",\n";
-    i_tab(i,lazy);
-    lazy << "document_symbol_kind::"+kind_to_string(item.kind)+",\n";
-    i_tab(i,lazy);
+    i_tab(i, lazy);
+    lazy << "&" + item.name + ",\n";
+    i_tab(i, lazy);
+    lazy << "document_symbol_kind::" + kind_to_string(item.kind) + ",\n";
+    i_tab(i, lazy);
     if (!item.children.empty())
     {
-        lazy << "range{{"+std::to_string(item.symbol_range.start.line)+","+std::to_string(item.symbol_range.start.column)+"},{"+
-            std::to_string(item.symbol_range.end.line)+","+std::to_string(item.symbol_range.end.column)+"}},\n";
-        i_tab(i,lazy);
+        lazy << "range{{" + std::to_string(item.symbol_range.start.line) + ","
+                + std::to_string(item.symbol_range.start.column) + "},{" + std::to_string(item.symbol_range.end.line)
+                + "," + std::to_string(item.symbol_range.end.column) + "}},\n";
+        i_tab(i, lazy);
         lazy << "document_symbol_list_s{\n";
         i++;
         for (const auto& child : item.children)
@@ -131,17 +132,18 @@ void so_fucking_lazy(const document_symbol_item_s& item, std::ofstream& lazy, in
             so_fucking_lazy(child, lazy, i, item.children);
         }
         i--;
-        i_tab(i,lazy);
+        i_tab(i, lazy);
         lazy << "}\n";
     }
     else
     {
-        lazy << "range{{"+std::to_string(item.symbol_range.start.line)+","+std::to_string(item.symbol_range.start.column)+"},{"+
-            std::to_string(item.symbol_range.end.line)+","+std::to_string(item.symbol_range.end.column)+"}}\n";
+        lazy << "range{{" + std::to_string(item.symbol_range.start.line) + ","
+                + std::to_string(item.symbol_range.start.column) + "},{" + std::to_string(item.symbol_range.end.line)
+                + "," + std::to_string(item.symbol_range.end.column) + "}}\n";
     }
     i--;
-    i_tab(i,lazy);
-    if (l[l.size()-1] == item)
+    i_tab(i, lazy);
+    if (l[l.size() - 1] == item)
         lazy << "}\n";
     else
         lazy << "},\n";
@@ -152,11 +154,11 @@ void seriously_lazy(document_symbol_list_s result)
 {
     std::ofstream lazy;
     int i = 2;
-    lazy.open("/home/malimi/seriously_lazy.txt",std::ofstream::trunc);
+    lazy.open("/home/malimi/seriously_lazy.txt", std::ofstream::trunc);
     lazy << " document_symbol_list_s{\n";
     for (const auto& item : result)
     {
-        so_fucking_lazy(item,lazy,i,result);
+        so_fucking_lazy(item, lazy, i, result);
     }
     lazy << "   };\n\n\n";
     lazy.close();
@@ -210,7 +212,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
             }
             for (const auto& [name, seq] : def->labels)
             {
-                if (belongs_to_copyfile(document_uri, seq->symbol_location.pos,name))
+                if (belongs_to_copyfile(document_uri, seq->symbol_location.pos, name))
                 {
                     modify_with_copy(result, name, copy_occs, document_symbol_kind::SEQ);
                 }
@@ -262,7 +264,7 @@ document_symbol_list_s lsp_context::document_symbol_macro(const std::string& doc
 
 bool lsp_context::belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const
 {
-    const auto& aux =  find_occurence_with_scope(document_uri, pos).first;
+    const auto& aux = find_occurence_with_scope(document_uri, pos).first;
     return aux == nullptr || *aux->name != *id;
 }
 
@@ -304,7 +306,7 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
 {
     const auto& file = files_.find(document_uri);
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences;
-    for (const auto& [uri,info] : files_)
+    for (const auto& [uri, info] : files_)
     {
         if (info->type == file_type::COPY)
         {
@@ -316,8 +318,9 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
                     std::vector<context::id_index> occurences;
                     for (const auto& new_occ : info->get_occurences())
                     {
-                        if (new_occ.kind == occurence_kind::VAR || new_occ.kind == occurence_kind::SEQ &&
-                            std::find(occurences.begin(), occurences.end(), new_occ.name) == occurences.end())
+                        if (new_occ.kind == occurence_kind::VAR
+                            || new_occ.kind == occurence_kind::SEQ
+                                && std::find(occurences.begin(), occurences.end(), new_occ.name) == occurences.end())
                         {
                             occurences.push_back(new_occ.name);
                         }
@@ -345,7 +348,8 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
                 auto sym_item = document_symbol_item_s { *sym_name, kind, copy_occ.occurence_range };
                 for (auto& item : modified)
                 {
-                    if (item.name == *copy_occ.name && std::find(item.children.begin(), item.children.end(), sym_item) == item.children.end())
+                    if (item.name == *copy_occ.name
+                        && std::find(item.children.begin(), item.children.end(), sym_item) == item.children.end())
                     {
                         item.children.push_back(sym_item);
                         have_already = true;
@@ -437,7 +441,7 @@ document_symbol_list_s lsp_context::document_symbol_opencode_ord_symbol() const
             auto sect = hlasm_ctx_->ord_ctx.get_section(id);
             if (sect == nullptr)
                 continue;
-            children_of_sects.try_emplace( sect, document_symbol_list_s{} );
+            children_of_sects.try_emplace(sect, document_symbol_list_s {});
         }
     }
 
@@ -505,12 +509,12 @@ document_symbol_list_s lsp_context::document_symbol_opencode_ord_symbol() const
 
 void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result) const
 {
-    for (auto& item: result)
+    for (auto& item : result)
     {
         if (item.kind == document_symbol_kind::MACRO)
         {
             std::string document_uri = "";
-            for (const auto& [def,info]: macros_)
+            for (const auto& [def, info] : macros_)
             {
                 if (*def->id == item.name)
                 {
@@ -518,7 +522,7 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
                     break;
                 }
             }
-            for (const auto& [def,info] : hlasm_ctx_->copy_members())
+            for (const auto& [def, info] : hlasm_ctx_->copy_members())
             {
                 if (*info->name == item.name)
                 {
@@ -539,7 +543,8 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
                 }
                 if (file->second->type == file_type::COPY)
                 {
-                    item.children += document_symbol_copy(file->second->get_occurences(), file->first, item.symbol_range);
+                    item.children +=
+                        document_symbol_copy(file->second->get_occurences(), file->first, item.symbol_range);
                 }
             }
         }
@@ -547,7 +552,8 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
     }
 }
 
-void lsp_context::document_symbol_opencode_var_seq_symbol(const std::string& document_uri, document_symbol_list_s& result) const
+void lsp_context::document_symbol_opencode_var_seq_symbol(
+    const std::string& document_uri, document_symbol_list_s& result) const
 {
     document_symbol_opencode_var_seq_symbol_aux(result);
 
@@ -567,118 +573,23 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
     const auto& file = files_.find(document_uri);
     if (file == files_.end())
     {
-        return document_symbol_list_s{};
+        return document_symbol_list_s {};
     }
     switch (file->second->type)
     {
-    case file_type::MACRO:
-        seriously_lazy(document_symbol_macro(document_uri));
-        return document_symbol_macro(document_uri);
-    case file_type::COPY:
-        seriously_lazy(document_symbol_copy(file->second->get_occurences(), document_uri));
-        return document_symbol_copy(file->second->get_occurences(), document_uri);
-    default:
-        document_symbol_list_s result = document_symbol_opencode_ord_symbol();
-        document_symbol_opencode_var_seq_symbol(document_uri, result);
-        seriously_lazy(result);
-        return result;
+        case file_type::MACRO:
+            seriously_lazy(document_symbol_macro(document_uri));
+            return document_symbol_macro(document_uri);
+        case file_type::COPY:
+            seriously_lazy(document_symbol_copy(file->second->get_occurences(), document_uri));
+            return document_symbol_copy(file->second->get_occurences(), document_uri);
+        default:
+            document_symbol_list_s result = document_symbol_opencode_ord_symbol();
+            document_symbol_opencode_var_seq_symbol(document_uri, result);
+            seriously_lazy(result);
+            return result;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

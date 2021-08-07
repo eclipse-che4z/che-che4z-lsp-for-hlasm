@@ -344,8 +344,10 @@ processing_stack_t hlasm_context::processing_stack() const
 
     for (size_t i = 0; i < source_stack_.size(); ++i)
     {
-        res.emplace_back(
-            source_stack_[i].current_instruction, scope_stack_.front(), file_processing_type::OPENCODE, id_storage::empty_id);
+        res.emplace_back(source_stack_[i].current_instruction,
+            scope_stack_.front(),
+            file_processing_type::OPENCODE,
+            id_storage::empty_id);
         for (const auto& member : source_stack_[i].copy_stack)
         {
             location loc(member.current_statement_position(), member.definition_location->file);
