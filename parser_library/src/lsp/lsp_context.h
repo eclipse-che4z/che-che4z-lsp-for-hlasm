@@ -72,23 +72,26 @@ private:
     document_symbol_list_s document_symbol_macro(const std::string& document_uri) const;
     document_symbol_list_s document_symbol_macro(const std::string& document_uri, const range& r) const;
     document_symbol_list_s document_symbol_copy(
-        const std::vector<symbol_occurence> occurence_list, const std::string& document_uri) const;
+        const std::vector<symbol_occurence>& occurence_list, const std::string& document_uri) const;
     document_symbol_list_s document_symbol_copy(
-        const std::vector<symbol_occurence> occurence_list, const std::string& document_uri, const range& r) const;
+        const std::vector<symbol_occurence>& occurence_list, const std::string& document_uri, const range& r) const;
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences(
         const std::string& document_uri) const;
     void modify_with_copy(document_symbol_list_s& modified,
         const context::id_index& sym_name,
         const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
         const document_symbol_kind kind) const;
-    std::string find_macro_copy_id(const context::processing_stack_t& stack, int i) const;
+    std::string find_macro_copy_id(const context::processing_stack_t& stack, unsigned long i) const;
     void document_symbol_symbol(document_symbol_list_s& modified,
         const document_symbol_list_s& children,
         const context::id_index& id,
         const context::symbol& sym,
         const document_symbol_kind kind,
-        unsigned long i,
-        const bool macro) const;
+        unsigned long i) const;
+    document_symbol_list_s document_symbol_opencode_ord_symbol() const;
+    void document_symbol_opencode_var_seq_symbol(const std::string& document_uri, document_symbol_list_s& result) const;
+    void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result) const;
+    bool belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const;
 };
 
 } // namespace hlasm_plugin::parser_library::lsp

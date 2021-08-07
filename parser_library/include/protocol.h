@@ -136,7 +136,7 @@ using document_symbol_list = sequence<document_symbol_item, const lsp::document_
 
 struct PARSER_LIBRARY_EXPORT document_symbol_item
 {
-    document_symbol_item(const lsp::document_symbol_item_s& item);
+    explicit document_symbol_item(const lsp::document_symbol_item_s& item);
     sequence<char> name() const;
     document_symbol_kind kind() const;
     range symbol_range() const;

@@ -47,6 +47,7 @@ bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s&
 bool is_permutation_with_permutations(const document_symbol_list_s& lhs, const document_symbol_list_s& rhs);
 document_symbol_list_s::iterator document_symbol_no_children_find(
     document_symbol_list_s::iterator begin, document_symbol_list_s::iterator end, const document_symbol_item_s& item);
+void operator+=(document_symbol_list_s& lhs, const document_symbol_list_s& rhs);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

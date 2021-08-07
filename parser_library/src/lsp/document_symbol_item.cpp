@@ -74,4 +74,12 @@ bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s&
         && is_permutation_with_permutations(lhs.children, rhs.children);
 }
 
+void operator+=(document_symbol_list_s& lhs, const document_symbol_list_s& rhs)
+{
+    for (const auto& item : rhs)
+    {
+        lhs.push_back(item);
+    }
+}
+
 } // namespace hlasm_plugin::parser_library::lsp
