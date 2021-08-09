@@ -444,8 +444,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CVDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
     add_machine_instr(result, "CVDG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
     add_machine_instr(result, "CU24", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 715);
-    add_machine_instr(result, "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 718);
-    add_machine_instr(result, "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 718);
+    add_machine_instr(result, "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
+    add_machine_instr(result, "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
     add_machine_instr(result, "CU42", mach_format::RRE, { reg_4_U, reg_4_U }, 722);
     add_machine_instr(result, "CU41", mach_format::RRE, { reg_4_U, reg_4_U }, 725);
     add_machine_instr(result, "CUTFU", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 728);
