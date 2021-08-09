@@ -962,8 +962,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "STPX", mach_format::S, { db_12_4_U }, 1121);
     add_machine_instr(result, "STRAG", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1121);
     add_machine_instr(result, "STSI", mach_format::S, { db_12_4_U }, 1122);
-    add_machine_instr(result, "STOSM", mach_format::SI, { db_12_4_U, imm_8_S }, 1146);
-    add_machine_instr(result, "STNSM", mach_format::SI, { db_12_4_U, imm_8_S }, 1146);
+    add_machine_instr(result, "STOSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
+    add_machine_instr(result, "STNSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
     add_machine_instr(result, "STURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
     add_machine_instr(result, "STURG", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
     add_machine_instr(result, "TAR", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
