@@ -608,7 +608,7 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
         if (offset.empty())
             value = setc_sym->get_value();
         else
-            value = setc_sym->get_value(offset.front());
+            value = setc_sym->get_value(offset.front()-1);
     }
     else if (auto mac_par = var_symbol->access_macro_param_base())
     {
