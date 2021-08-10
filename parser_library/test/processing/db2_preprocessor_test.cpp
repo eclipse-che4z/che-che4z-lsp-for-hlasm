@@ -893,3 +893,19 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
     ASSERT_EQ(diags.diags.size(), 1U);
     EXPECT_EQ(diags.diags[0].code, "P0005");
 }
+
+#if 0
+TEST(db2_preprocessor, preprocessor_line_with_ignored_characters)
+{
+    // In debug, a string_view assertion fails.
+    // In release, 'Unknown data definition type' diagnostic is generated.
+    // Without the trailing spaces/ignored characters past 72. column, the test passes.
+    std::string input = "SYMBOL   SQL TYPE IS BLOB_LOCATOR                                       18760001";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), 0U);
+    size_t lineno = 0;
+}
+#endif
