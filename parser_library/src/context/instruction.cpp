@@ -589,11 +589,11 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
     add_machine_instr(result, "LLHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 765);
     add_machine_instr(result, "LLIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
-    add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
+    add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
+    add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
     add_machine_instr(result, "LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
-    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
+    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
+    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
     add_machine_instr(result, "LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 765);
     add_machine_instr(result, "LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
     add_machine_instr(result, "LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
