@@ -15,7 +15,6 @@
 #include "lsp_context.h"
 
 #include <cassert>
-#include <fstream>
 #include <regex>
 #include <sstream>
 #include <string_view>
