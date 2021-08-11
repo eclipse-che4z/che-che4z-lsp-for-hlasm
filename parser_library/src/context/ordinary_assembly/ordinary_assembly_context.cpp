@@ -123,7 +123,8 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
     }
 }
 
-void ordinary_assembly_context::create_external_section(id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack)
+void ordinary_assembly_context::create_external_section(
+    id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack)
 {
     const auto attrs = [kind]() {
         switch (kind)

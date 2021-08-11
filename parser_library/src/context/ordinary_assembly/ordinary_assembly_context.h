@@ -80,7 +80,8 @@ public:
     void set_section(id_index name, section_kind kind, location symbol_location);
 
     // creates an external section
-    void create_external_section(id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack);
+    void create_external_section(
+        id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack);
 
     // sets current location counter of current section
     void set_location_counter(id_index name, location symbol_location);
