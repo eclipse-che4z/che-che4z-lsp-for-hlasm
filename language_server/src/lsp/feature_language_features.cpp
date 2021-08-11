@@ -320,12 +320,6 @@ void feature_language_features::document_symbol(const json& id, const json& para
     auto symbol_list = ws_mngr_.document_symbol(uri_to_path(document_uri).c_str());
 
     response_->respond(id, "", document_symbol_list_json(symbol_list));
-
-    std::ofstream a;
-    a.open("/home/malimi/a.json", std::ofstream::trunc);
-    a << document_symbol_list_json(symbol_list);
-    a << "\n\n\n";
-    a.close();
 }
 
 

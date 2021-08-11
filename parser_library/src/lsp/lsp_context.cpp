@@ -77,94 +77,6 @@ hover_result hover_text(const variable_symbol_definition& sym)
 }
 } // namespace
 
-void i_tab(const int& i, std::ofstream& lazy)
-{
-    lazy << " ";
-    for (int j = 0; j < i; j++)
-    {
-        lazy << "   ";
-    }
-}
-
-std::string kind_to_string(const document_symbol_kind& kind)
-{
-    switch (kind)
-    {
-        case document_symbol_kind::SEQ:
-            return "SEQ";
-        case document_symbol_kind::VAR:
-            return "VAR";
-        case document_symbol_kind::EQU:
-            return "EQU";
-        case document_symbol_kind::MACH:
-            return "MACH";
-        case document_symbol_kind::MACRO:
-            return "MACRO";
-        case document_symbol_kind::EXECUTABLE:
-            return "EXECUTABLE";
-        case document_symbol_kind::DUMMY:
-            return "DUMMY";
-        default:
-            return "???";
-    }
-}
-
-void so_fucking_lazy(const document_symbol_item_s& item, std::ofstream& lazy, int& i, const document_symbol_list_s& l)
-{
-    i_tab(i, lazy);
-    lazy << "document_symbol_item_s{\n";
-    i++;
-    i_tab(i, lazy);
-    lazy << "&" + item.name + ",\n";
-    i_tab(i, lazy);
-    lazy << "document_symbol_kind::" + kind_to_string(item.kind) + ",\n";
-    i_tab(i, lazy);
-    if (!item.children.empty())
-    {
-        lazy << "range{{" + std::to_string(item.symbol_range.start.line) + ","
-                + std::to_string(item.symbol_range.start.column) + "},{" + std::to_string(item.symbol_range.end.line)
-                + "," + std::to_string(item.symbol_range.end.column) + "}},\n";
-        i_tab(i, lazy);
-        lazy << "document_symbol_list_s{\n";
-        i++;
-        for (const auto& child : item.children)
-        {
-            so_fucking_lazy(child, lazy, i, item.children);
-        }
-        i--;
-        i_tab(i, lazy);
-        lazy << "}\n";
-    }
-    else
-    {
-        lazy << "range{{" + std::to_string(item.symbol_range.start.line) + ","
-                + std::to_string(item.symbol_range.start.column) + "},{" + std::to_string(item.symbol_range.end.line)
-                + "," + std::to_string(item.symbol_range.end.column) + "}}\n";
-    }
-    i--;
-    i_tab(i, lazy);
-    if (l[l.size() - 1] == item)
-        lazy << "}\n";
-    else
-        lazy << "},\n";
-}
-
-
-void seriously_lazy(document_symbol_list_s result)
-{
-    std::ofstream lazy;
-    int i = 2;
-    lazy.open("/home/malimi/seriously_lazy.txt", std::ofstream::trunc);
-    lazy << " document_symbol_list_s{\n";
-    for (const auto& item : result)
-    {
-        so_fucking_lazy(item, lazy, i, result);
-    }
-    lazy << "   };\n\n\n";
-    lazy.close();
-}
-
-
 const std::unordered_map<context::symbol_origin, document_symbol_kind> document_symbol_item_kind_mapping_symbol {
     { context::symbol_origin::DAT, document_symbol_kind::DAT },
     { context::symbol_origin::EQU, document_symbol_kind::EQU },
@@ -578,15 +490,12 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
     switch (file->second->type)
     {
         case file_type::MACRO:
-            seriously_lazy(document_symbol_macro(document_uri));
             return document_symbol_macro(document_uri);
         case file_type::COPY:
-            seriously_lazy(document_symbol_copy(file->second->get_occurences(), document_uri));
             return document_symbol_copy(file->second->get_occurences(), document_uri);
         default:
             document_symbol_list_s result = document_symbol_opencode_ord_symbol();
             document_symbol_opencode_var_seq_symbol(document_uri, result);
-            seriously_lazy(result);
             return result;
     }
 }
