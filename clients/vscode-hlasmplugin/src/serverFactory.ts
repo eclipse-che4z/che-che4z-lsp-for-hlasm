@@ -60,18 +60,30 @@ export class ServerFactory {
         else if (method === 'wasm') {
             const server: vscodelc.Executable = {
                 command: process.execPath,
-                args: [
-                    '--experimental-wasm-threads',
-                    '--experimental-wasm-bulk-memory',
-                    path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
-                    ...getConfig<string[]>('arguments')
-                ]
+                args: this.getWasmArgs()
             };
             return server;
         }
         else {
             throw Error("Invalid method");
         }
+    }
+
+    private getWasmArgs(): Array<string> {
+        const v8Version = process && process.versions && process.versions.v8 || "1.0";
+        const v8Major = +v8Version.split(".")[0];
+        if (v8Major >= 9)
+            return [
+                path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                ...getConfig<string[]>('arguments')
+            ];
+        else
+            return [
+                '--experimental-wasm-threads',
+                '--experimental-wasm-bulk-memory',
+                path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                ...getConfig<string[]>('arguments')
+            ];
     }
 
     private async getPort(): Promise<number> {
