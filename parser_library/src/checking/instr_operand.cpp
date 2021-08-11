@@ -72,8 +72,7 @@ address_operand::address_operand(address_state state, int displacement, int firs
     , second_op(second)
     , op_state(op_state) {};
 
-hlasm_plugin::parser_library::diagnostic_op address_operand::get_first_parameter_error(
-    const machine_operand_type& op_type,
+diagnostic_op address_operand::get_first_parameter_error(const machine_operand_type& op_type,
     const std::string& instr_name,
     long long from,
     long long to,
@@ -201,7 +200,7 @@ bool hlasm_plugin::parser_library::checking::address_operand::is_length_correspo
     return true;
 };
 
-hlasm_plugin::parser_library::diagnostic_op machine_operand::get_simple_operand_expected(
+diagnostic_op machine_operand::get_simple_operand_expected(
     const machine_operand_format& op_format, const std::string& instr_name, const range& stmt_range) const
 {
     switch (op_format.identifier.type)

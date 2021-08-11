@@ -170,11 +170,16 @@ public:
         // lookahead and copy/macro definitions)
         if (proc_kind != processing::processing_kind::ORDINARY)
             return;
-        // Continue only for non-empty statements
-        if (statement.access_resolved()->opcode_ref().value == context::id_storage::empty_id)
+
+        const auto* resolved_stmt = statement.access_resolved();
+        if (!resolved_stmt)
             return;
 
-        range stmt_range = statement.access_resolved()->stmt_range_ref();
+        // Continue only for non-empty statements
+        if (resolved_stmt->opcode_ref().value == context::id_storage::empty_id)
+            return;
+
+        range stmt_range = resolved_stmt->stmt_range_ref();
 
         bool breakpoint_hit = false;
 

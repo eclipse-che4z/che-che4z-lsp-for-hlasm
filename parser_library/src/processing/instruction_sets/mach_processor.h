@@ -30,7 +30,7 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser);
 
-    void process(context::shared_stmt_ptr stmt) override;
+    void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

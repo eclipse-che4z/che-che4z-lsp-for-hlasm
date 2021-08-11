@@ -14,7 +14,6 @@ target_sources(library_test PRIVATE
 	asm_instr_check_test.cpp
 	asm_instr_diag_test.cpp
 	mach_instr_check_test.cpp
-	mach_instr_diag_test.cpp
 )
 
 add_subdirectory(data_definition)

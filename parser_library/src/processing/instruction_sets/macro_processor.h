@@ -34,7 +34,7 @@ public:
     macro_processor(
         analyzing_context ctx, branching_provider& branch_provider, workspaces::parse_lib_provider& lib_provider);
 
-    void process(context::shared_stmt_ptr stmt) override;
+    void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 
     static context::macro_data_ptr string_to_macrodata(std::string data);
 

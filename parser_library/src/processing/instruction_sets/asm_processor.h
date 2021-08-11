@@ -37,7 +37,7 @@ public:
         statement_fields_parser& parser,
         opencode_provider& open_code);
 
-    void process(context::shared_stmt_ptr stmt) override;
+    void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
@@ -57,14 +57,24 @@ private:
     void process_DS(rebuilt_statement stmt);
     void process_COPY(rebuilt_statement stmt);
     void process_EXTRN(rebuilt_statement stmt);
+    void process_WXTRN(rebuilt_statement stmt);
     void process_ORG(rebuilt_statement stmt);
     void process_OPSYN(rebuilt_statement stmt);
     void process_AINSERT(rebuilt_statement stmt);
+    void process_CCW(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);
 
     std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
+
+    enum class external_type
+    {
+        strong,
+        weak,
+    };
+
+    void process_external(rebuilt_statement stmt, external_type t);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

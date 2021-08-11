@@ -15,6 +15,7 @@ target_sources(library_test PRIVATE
 	empty_configs.h
 	extension_handling_test.cpp
 	file_with_text.h
+	files_parse_lib_provider.h
 	load_config_test.cpp
 	macro_cache_test.cpp
 	processor_file_test.cpp

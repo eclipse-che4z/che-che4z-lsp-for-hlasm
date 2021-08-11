@@ -94,6 +94,15 @@ void macrodef_processor::end_processing()
 
     hlasm_ctx.pop_statement_processing();
 
+    // cleanup empty file scopes
+    for (auto& scope : result_.file_scopes)
+    {
+        scope.second.erase(std::remove_if(scope.second.begin(),
+                               scope.second.end(),
+                               [](const auto& slice) { return slice.begin_statement == slice.end_statement; }),
+            scope.second.end());
+    }
+
     listener_.finish_macro_definition(std::move(result_));
 
     finished_flag_ = true;
@@ -121,7 +130,7 @@ processing_status macrodef_processor::get_macro_processing_status(
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.opcode == hlasm_ctx.ids().add("COPY"))
+        else if (code.opcode == hlasm_ctx.ids().well_known.COPY)
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurence::PRESENT);
 
@@ -149,11 +158,11 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
 
     omit_next_ = false;
 
+    auto res_stmt = statement.access_resolved();
+
     if (expecting_MACRO_)
     {
         result_.definition_location = hlasm_ctx.processing_stack().back().proc_location;
-
-        auto res_stmt = statement.access_resolved();
 
         if (!res_stmt || res_stmt->opcode_ref().value != macro_id)
         {
@@ -168,9 +177,15 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else if (expecting_prototype_)
     {
+        if (!res_stmt)
+        {
+            range r = res_stmt ? res_stmt->stmt_range_ref() : range(statement.statement_position());
+            add_diagnostic(diagnostic_op::error_E071(r));
+            result_.invalid = true;
+            return;
+        }
         result_.invalid = false;
-        assert(statement.access_resolved());
-        process_prototype(*statement.access_resolved());
+        process_prototype(*res_stmt);
         expecting_prototype_ = false;
     }
     else
@@ -178,7 +193,7 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         if (hlasm_ctx.current_copy_stack().size() - initial_copy_nest_ == 0)
             curr_outer_position_ = statement.statement_position();
 
-        if (auto res_stmt = statement.access_resolved())
+        if (res_stmt)
         {
             process_sequence_symbol(res_stmt->label_ref());
 
@@ -192,10 +207,8 @@ void macrodef_processor::process_statement(const context::hlasm_statement& state
         {
             process_sequence_symbol(def_stmt->label_ref());
         }
-        else
-            assert(false);
 
-        ++curr_line_;
+        ++curr_line_; // TODO: What are we doing here???
     }
 }
 

@@ -63,6 +63,8 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
+
     auto symbol_name = find_label_symbol(stmt);
 
     if (symbol_name == context::id_storage::empty_id)
@@ -321,24 +323,54 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
     }
 }
 
-void asm_processor::process_EXTRN(rebuilt_statement stmt)
+void asm_processor::process_EXTRN(rebuilt_statement stmt) { process_external(std::move(stmt), external_type::strong); }
+
+void asm_processor::process_WXTRN(rebuilt_statement stmt) { process_external(std::move(stmt), external_type::weak); }
+
+void asm_processor::process_external(rebuilt_statement stmt, external_type t)
 {
-    if (stmt.operands_ref().value.size())
+    if (auto label_type = stmt.label_ref().type; label_type != semantics::label_si_type::EMPTY)
     {
-        if (auto op = stmt.operands_ref().value.front()->access_asm())
+        if (label_type != semantics::label_si_type::SEQ)
+            add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
+        else
+            find_sequence_symbol(stmt);
+    }
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
+
+    const auto add_external = [s_kind = t == external_type::strong ? context::section_kind::EXTERNAL
+                                                                   : context::section_kind::WEAK_EXTERNAL,
+                                  this](context::id_index name, range op_range) {
+        if (hlasm_ctx.ord_ctx.symbol_defined(name))
+            add_diagnostic(diagnostic_op::error_E031("external symbol", op_range));
+        else
+            hlasm_ctx.ord_ctx.create_external_section(name, s_kind, hlasm_ctx.current_statement_location(),hlasm_ctx.processing_stack());
+    };
+    for (const auto& op : stmt.operands_ref().value)
+    {
+        auto op_asm = op->access_asm();
+        if (!op_asm)
+            continue;
+
+        if (auto expr = op_asm->access_expr())
         {
-            if (auto expr = op->access_expr())
+            if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get()))
+                add_external(sym->value, expr->operand_range);
+        }
+        else if (auto complex = op_asm->access_complex())
+        {
+            if (context::to_upper_copy(complex->value.identifier) != "PART")
+                continue;
+            for (const auto& nested : complex->value.values)
             {
-                auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
-                if (sym)
-                    create_symbol(sym->get_range(),
-                        sym->value,
-                        hlasm_ctx.ord_ctx.align(context::no_align),
-                        context::symbol_attributes::make_extrn_attrs());
+                if (const auto* string_val =
+                        dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(nested.get());
+                    !string_val->value.empty())
+                    add_external(hlasm_ctx.ids().add(string_val->value), string_val->op_range);
             }
         }
     }
-    check(stmt, hlasm_ctx, checker_, *this);
 }
 
 std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::simple_expr_operand* op) const
@@ -355,6 +387,7 @@ std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::si
 
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
+    fill_expression_loc_counters(stmt, context::no_align);
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
@@ -501,7 +534,7 @@ asm_processor::asm_processor(analyzing_context ctx,
     , open_code_(&open_code)
 {}
 
-void asm_processor::process(context::shared_stmt_ptr stmt)
+void asm_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
 
@@ -513,6 +546,7 @@ void asm_processor::process(context::shared_stmt_ptr stmt)
     }
     else
     {
+        fill_expression_loc_counters(rebuilt_stmt, context::no_align);
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
@@ -590,9 +624,13 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("DS"), std::bind(&asm_processor::process_DS, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().well_known.COPY, std::bind(&asm_processor::process_COPY, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("EXTRN"), std::bind(&asm_processor::process_EXTRN, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("WXTRN"), [this](rebuilt_statement stmt) { process_WXTRN(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("ORG"), std::bind(&asm_processor::process_ORG, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("OPSYN"), std::bind(&asm_processor::process_OPSYN, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AINSERT"), std::bind(&asm_processor::process_AINSERT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
 
     return table;
 }
@@ -644,6 +682,43 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
     auto dest = *value == "FRONT" ? processing::ainsert_destination::front : processing::ainsert_destination::back;
 
     open_code_->ainsert(record, dest);
+}
+
+void asm_processor::process_CCW(rebuilt_statement stmt)
+{
+    constexpr context::alignment ccw_align = context::doubleword;
+    constexpr size_t ccw_length = 8U;
+
+    fill_expression_loc_counters(stmt, ccw_align);
+    find_sequence_symbol(stmt);
+
+
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        else
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                hlasm_ctx.ord_ctx.align(ccw_align),
+                context::symbol_attributes::make_ccw_attrs());
+    }
+
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
+
+
+    bool has_dependencies =
+        std::any_of(stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this](const auto& op) {
+            auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
+            return evaluable && evaluable->has_dependencies(hlasm_ctx.ord_ctx);
+        });
+
+    if (has_dependencies)
+        hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+    else
+        check(stmt, hlasm_ctx, checker_, *this);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

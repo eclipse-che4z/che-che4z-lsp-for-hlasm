@@ -39,6 +39,19 @@ inline std::ostream& operator<<(std::ostream& stream, const location& item)
     return stream << "{ file: " << item.file << "\n position: " << item.pos << " }";
 }
 
+inline std::ostream& operator<<(std::ostream& stream, const performance_metrics& item)
+{
+    return stream << "continued statements: " << item.continued_statements
+                  << "\n copy def statements: " << item.copy_def_statements
+                  << "\n copy statements: " << item.copy_statements << "\n files: " << item.files
+                  << "\n lines: " << item.lines << "\n lookahead statements: " << item.lookahead_statements
+                  << "\n macro def statements: " << item.macro_def_statements
+                  << "\n macro statements: " << item.macro_statements
+                  << "\n non continued statements: " << item.non_continued_statements
+                  << "\n open code statements: " << item.open_code_statements
+                  << "\n reparsed statements: " << item.reparsed_statements << "\n";
+}
+
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::lsp {

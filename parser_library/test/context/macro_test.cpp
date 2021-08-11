@@ -757,3 +757,105 @@ TEST(macro, macro_call_reparse_range)
     EXPECT_EQ(a.diags()[0].code, "S0003");
     EXPECT_EQ(a.diags()[0].diag_range, range({ 6, 16 }, { 6, 16 }));
 }
+
+TEST(macro, skip_invalid)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      AGO .SKIP
+      2 a
+.SKIP ANOP
+      MEND
+      MAC
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, invalid_not_invoked)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      2 a
+      MEND
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, invalid_invoked)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      2 a
+      MEND
+      MAC
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "E049" }));
+}
+
+TEST(macro, invalid_prototype)
+{
+    std::string input = R"(
+     MACRO
+&    &LABEL &a=15
+
+     MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    const auto& d = a.diags();
+
+    EXPECT_NE(std::find_if(d.begin(), d.end(), [](const auto& diag) { return diag.code == "E071"; }), d.end());
+}
+
+TEST(macro, early_macro_errors)
+{
+    std::string input = R"(
+     MACRO
+     MAC
+     SAM31                                                             X
+A
+AAA
+     MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "S0003" }));
+}
+
+TEST(macro, missing_mend)
+{
+    std::string input = R"(
+        MACRO
+        MACO
+        SAM31                                                          X
+            X
+
+        MACRO
+        MAC
+        SAM31
+        MEND
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "E046" }));
+}

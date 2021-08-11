@@ -39,8 +39,10 @@ struct operand_occurence_analyzer_mock : public processing::statement_analyzer
         processing::statement_provider_kind,
         processing::processing_kind) override
     {
+        const auto* res_stmt = statement.access_resolved();
+        ASSERT_TRUE(res_stmt);
         processing::occurence_collector collector(occ_kind, *a.context().hlasm_ctx, st);
-        const auto& operands = statement.access_resolved()->operands_ref().value;
+        const auto& operands = res_stmt->operands_ref().value;
         std::for_each(operands.begin(), operands.end(), [&](const auto& op) { op->apply(collector); });
     }
 

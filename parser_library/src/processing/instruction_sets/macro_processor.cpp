@@ -27,12 +27,11 @@ macro_processor::macro_processor(
     : instruction_processor(std::move(ctx), branch_provider, lib_provider)
 {}
 
-void macro_processor::process(context::shared_stmt_ptr stmt)
+void macro_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    auto args = get_args(*stmt->access_resolved());
+    auto args = get_args(*stmt);
 
-    hlasm_ctx.enter_macro(
-        stmt->access_resolved()->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
+    hlasm_ctx.enter_macro(stmt->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 
 bool is_data_def(unsigned char c)

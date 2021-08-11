@@ -20,10 +20,10 @@
 
 #include "analyzer.h"
 #include "file_with_text.h"
+#include "files_parse_lib_provider.h"
 #include "workspaces/file_manager_impl.h"
 #include "workspaces/processor_file_impl.h"
 #include "workspaces/workspace.h"
-
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::workspaces;
@@ -81,7 +81,7 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
         auto a = std::make_unique<analyzer>(m->get_text(), analyzer_options { m->get_file_name(), ctx, this, data });
         a->analyze();
         auto key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, data);
-        cache->save_analyzer(key, std::move(a));
+        cache->save_macro(key, *a);
         hlasm_ctx = ctx.hlasm_ctx;
         return true;
     }
@@ -100,7 +100,7 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     }
 };
 
-analyzing_context create_analyzing_context(std::string file_name, context::id_storage ids)
+analyzing_context create_analyzing_context(std::string file_name, std::shared_ptr<context::id_storage> ids)
 {
     auto hlasm_ctx = std::make_shared<context::hlasm_context>(std::move(file_name), asm_option(), std::move(ids));
     analyzing_context new_ctx {
@@ -150,7 +150,7 @@ TEST(macro_cache_test, copy_from_macro)
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
     auto copy_id = file_mngr.hlasm_ctx->ids().add("COPYFILE");
 
-    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
 
     macro_cache_key macro_key { opencode_file_name, { processing::processing_kind::MACRO, macro_id }, {} };
@@ -165,7 +165,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     macro->did_change({}, " ");
 
-    analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids());
+    analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids_ptr());
 
     macro_cache_key copy_key { opencode_file_name, { processing::processing_kind::COPY, copy_id }, {} };
     // After macro change, copy should still be cached
@@ -179,7 +179,7 @@ TEST(macro_cache_test, copy_from_macro)
 
     copyfile->did_change({}, " ");
 
-    analyzing_context ctx_copy_changed = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
+    analyzing_context ctx_copy_changed = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
     // Macro depends on the copyfile, so none should be cached.
     EXPECT_FALSE(macro_c.load_from_cache(macro_key, ctx_copy_changed));
@@ -211,11 +211,11 @@ SETA   OPSYN LR
 
 
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
-    auto& ids = file_mngr.hlasm_ctx->ids();
+    auto ids = file_mngr.hlasm_ctx->ids_ptr();
 
     macro_cache_key macro_key_one_opsyn { opencode_file_name,
         { processing::processing_kind::MACRO, macro_id },
-        { cached_opsyn_mnemo { ids.well_known.SETA, ids.add("LR"), false } } };
+        { cached_opsyn_mnemo { ids->well_known.SETA, ids->add("LR"), false } } };
 
 
     analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
@@ -230,7 +230,7 @@ SETA   OPSYN LR
     opencode->did_change({}, "L OPSYN SETB\n");
     opencode->parse(file_mngr, {}, {});
 
-    analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
+    analyzing_context ctx_second_opsyn1 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_one_opsyn, ctx_second_opsyn1));
 
 
@@ -240,7 +240,7 @@ SETA   OPSYN LR
 
     macro_cache_key::sort_opsyn_state(macro_key_two_opsyns.opsyn_state);
 
-    analyzing_context ctx_second_opsyn2 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
+    analyzing_context ctx_second_opsyn2 = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
     EXPECT_TRUE(macro_c.load_from_cache(macro_key_two_opsyns, ctx_second_opsyn2));
 }
 
@@ -263,7 +263,7 @@ TEST(macro_cache_test, empty_macro)
 
     auto macro_id = file_mngr.hlasm_ctx->ids().add("MAC");
 
-    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids());
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
     macro_cache_key macro_key { opencode_file_name, { processing::processing_kind::MACRO, macro_id }, {} };
     EXPECT_TRUE(macro_c.load_from_cache(macro_key, new_ctx));
@@ -316,33 +316,6 @@ std::optional<diagnostic_s> find_diag_with_filename(
     else
         return *macro_diag;
 }
-
-struct files_parse_lib_provider : public parse_lib_provider
-{
-    file_manager* file_mngr;
-    files_parse_lib_provider(file_manager& mngr)
-        : file_mngr(&mngr)
-    {}
-    virtual parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override
-    {
-        auto macro = file_mngr->add_processor_file(library);
-        if (!macro)
-            return false;
-        return macro->parse_macro(*this, std::move(ctx), std::move(data));
-    }
-    virtual bool has_library(const std::string& library, const std::string& program) const override
-    {
-        return file_mngr->find(library) != nullptr;
-    }
-    virtual std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string* file_uri) const override
-    {
-        auto macro = file_mngr->add_processor_file(library);
-        if (!macro)
-            return std::nullopt;
-        return macro->get_text();
-    }
-};
 
 } // namespace
 
@@ -417,9 +390,8 @@ TEST(macro_cache_test, inline_depends_on_copy)
 
 
     auto copy_id = file_mngr.hlasm_ctx->ids().add("COPYFILE");
-    auto& ids = file_mngr.hlasm_ctx->ids();
 
-    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, ids);
+    analyzing_context new_ctx = create_analyzing_context(opencode_file_name, file_mngr.hlasm_ctx->ids_ptr());
 
 
     macro_cache_key copy_key { opencode_file_name, { processing::processing_kind::COPY, copy_id }, {} };

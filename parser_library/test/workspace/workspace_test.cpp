@@ -326,18 +326,18 @@ TEST_F(workspace_test, did_close_file)
     // on first reparse, there should be 3 diagnotics from sources and lib/ERROR file
     ws.did_open_file("source1");
     ws.did_open_file("source2");
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)3);
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)3);
     EXPECT_TRUE(match_strings({ faulty_macro_path, "source2", "source1" }));
 
     // when we close source1, only its diagnostics should disapear
     // macro's and source2's diagnostics should stay as it is still open
     ws.did_close_file("source1");
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
     EXPECT_TRUE(match_strings({ faulty_macro_path, "source2" }));
 
     // even though we close the ERROR macro, its diagnostics will still be there as it is a dependency of source2
     ws.did_close_file(faulty_macro_path);
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)2);
     EXPECT_TRUE(match_strings({ faulty_macro_path, "source2" }));
 
     // if we remove the line using ERROR macro in the source2. its diagnostics will be removed as it is no longer a
@@ -347,7 +347,7 @@ TEST_F(workspace_test, did_close_file)
     changes.push_back(document_change({ { 0, 0 }, { 0, 6 } }, new_text.c_str(), new_text.size()));
     file_manager.did_change_file("source2", 1, changes.data(), changes.size());
     ws.did_change_file("source2", changes.data(), changes.size());
-    ASSERT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)1);
+    EXPECT_EQ(collect_and_get_diags_size(ws, file_manager), (size_t)1);
     EXPECT_TRUE(match_strings({ "source2" }));
 
     // finally if we close the last source2 file, its diagnostics will disappear as well

@@ -13,11 +13,10 @@
  */
 #include "gtest/gtest.h"
 
-#include "analyzer.h"
+#include "../../common_testing.h"
 
 void expect_no_errors(const std::string& text)
 {
-    using namespace hlasm_plugin::parser_library;
     std::string input = (text);
     analyzer a(input);
     a.analyze();
@@ -25,14 +24,18 @@ void expect_no_errors(const std::string& text)
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
 
-void expect_errors(const std::string& text)
+void expect_errors(const std::string& text, std::initializer_list<std::string> msgs = {})
 {
-    using namespace hlasm_plugin::parser_library;
     std::string input = (text);
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_GT(a.diags().size(), (size_t)0);
+
+    const auto& diags = a.diags();
+    EXPECT_GT(diags.size(), (size_t)0);
+    for (const auto& msg : msgs)
+        EXPECT_NE(
+            std::find_if(diags.begin(), diags.end(), [&msg](const auto& d) { return d.code == msg; }), diags.end());
 }
 
 TEST(data_definition_grammar, modifiers)
@@ -178,8 +181,6 @@ TEST(data_definition_grammar, no_nominal)
 
 TEST(data_definition, duplication_factor)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "13C'A'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -193,8 +194,6 @@ TEST(data_definition, duplication_factor)
 
 TEST(data_definition, duplication_factor_expr)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "(13*2)C'A'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -208,8 +207,6 @@ TEST(data_definition, duplication_factor_expr)
 
 TEST(data_definition, duplication_factor_out_of_range)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "1231312123123123123C'A'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -223,8 +220,6 @@ TEST(data_definition, duplication_factor_out_of_range)
 
 TEST(data_definition, duplication_factor_invalid_number)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "-C'A'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -238,8 +233,6 @@ TEST(data_definition, duplication_factor_invalid_number)
 
 TEST(data_definition, all_fields)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "(1*8)FDP(123)L2S(2*4)E(-12*2)'2.25'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -261,8 +254,6 @@ TEST(data_definition, all_fields)
 
 TEST(data_definition, no_nominal)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "0FDL2";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -281,8 +272,6 @@ TEST(data_definition, no_nominal)
 
 TEST(data_definition, no_nominal_expr)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "0FDL(2+2)";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -301,8 +290,6 @@ TEST(data_definition, no_nominal_expr)
 
 TEST(data_definition, bit_length)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "(1*8)FDP(123)L.2S-8E(-12*2)'2.25'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -323,8 +310,6 @@ TEST(data_definition, bit_length)
 
 TEST(data_definition, unexpected_dot)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "(1*8)FDL.2S.-8E(-12*2)'2.25'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -345,8 +330,6 @@ TEST(data_definition, unexpected_dot)
 
 TEST(data_definition, unexpected_minus)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "(1*8)FDL.2S.-E(-12*2)'2.25'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -357,8 +340,6 @@ TEST(data_definition, unexpected_minus)
 
 TEST(data_definition, wrong_modifier_order)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = "1HL-12P(123)S1'1.25'";
     analyzer a(input);
     auto res = a.parser().data_def();
@@ -369,8 +350,6 @@ TEST(data_definition, wrong_modifier_order)
 
 TEST(data_definition, B_wrong_nominal_value)
 {
-    using namespace hlasm_plugin::parser_library;
-
     std::string input = " DC B'12'";
     analyzer a(input);
     a.analyze();
@@ -381,7 +360,6 @@ TEST(data_definition, B_wrong_nominal_value)
 
 TEST(data_definition, trim_labels)
 {
-    using namespace hlasm_plugin::parser_library;
     std::string input = R"(
 &L SETC 'LABEL '
 &L EQU  0
@@ -392,4 +370,84 @@ TEST(data_definition, trim_labels)
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), 0);
+}
+
+TEST(data_definition, externals)
+{
+    expect_no_errors(" EXTRN E1,E2\n DC A(E1,E2)");
+    expect_no_errors(" WXTRN W1,W2\n DC A(W1,W2)");
+}
+
+TEST(data_definition, duplicate_externals)
+{
+    expect_errors(" EXTRN E1\n EXTRN E1", { "E031" });
+    expect_errors(" WXTRN W1\n WXTRN W1", { "E031" });
+}
+
+TEST(data_definition, externals_sequence_support)
+{
+    expect_no_errors(" AGO .ABC\n.ABC EXTRN E1");
+    expect_no_errors(" AGO .ABC\n.ABC WXTRN W1");
+
+    expect_errors("ABC EXTRN E1", { "A249" });
+    expect_errors("ABC WXTRN W1", { "A249" });
+}
+
+TEST(data_definition, externals_no_expressions)
+{
+    expect_errors(" EXTRN E1+2");
+    expect_errors(" WXTRN W1+2");
+    expect_errors(" EXTRN PART(E1+2)");
+    expect_errors(" WXTRN PART(W1+2)");
+}
+
+TEST(data_definition, externals_type_support)
+{
+    std::string input = R"(
+     WXTRN A
+     EXTRN B
+&A   SETC T'A
+&B   SETC T'B
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "$");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "T");
+}
+
+TEST(data_definition, externals_part_type_support)
+{
+    std::string input = R"(
+     WXTRN PART(A)
+     EXTRN PART(B)
+&A   SETC T'A
+&B   SETC T'B
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "$");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "T");
+}
+
+TEST(data_definition, externals_part_support)
+{
+    expect_no_errors(" EXTRN PART(E1)");
+    expect_no_errors(" WXTRN PART(W1)");
+    expect_no_errors(" EXTRN PART(E1,E2)");
+    expect_no_errors(" WXTRN PART(W1,W2)");
+    expect_no_errors(" EXTRN PART(E1),PART(E2)");
+    expect_no_errors(" WXTRN PART(W1),PART(W2)");
+
+    expect_errors(" EXTRN PART(E1+1)");
+    expect_errors(" WXTRN PART(W1+1)");
+    expect_errors(" EXTRN PART()");
+    expect_errors(" WXTRN PART()");
 }

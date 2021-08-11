@@ -33,22 +33,22 @@ hlasm_context::instruction_storage hlasm_context::init_instruction_map()
     hlasm_context::instruction_storage instr_map;
     for (auto& [name, instr] : instruction::machine_instructions)
     {
-        auto id = ids_.add(name);
+        auto id = ids().add(name);
         instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::assembler_instructions)
     {
-        auto id = ids_.add(name);
+        auto id = ids().add(name);
         instr_map.emplace(id, &instr);
     }
     for (auto& instr : instruction::ca_instructions)
     {
-        auto id = ids_.add(instr.name);
+        auto id = ids().add(instr.name);
         instr_map.emplace(id, &instr);
     }
     for (auto& [name, instr] : instruction::mnemonic_codes)
     {
-        auto id = ids_.add(name);
+        auto id = ids().add(name);
         instr_map.emplace(id, &instr);
     }
     return instr_map;
@@ -251,13 +251,13 @@ bool hlasm_context::is_opcode(id_index symbol) const
     return macros_.find(symbol) != macros_.end() || instruction_map_.find(symbol) != instruction_map_.end();
 }
 
-hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, id_storage init_ids)
+hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std::shared_ptr<id_storage> init_ids)
     : ids_(std::move(init_ids))
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
     , SYSNDX_(0)
-    , ord_ctx(ids_, *this)
+    , ord_ctx(*ids_, *this)
 {
     scope_stack_.emplace_back();
     visited_files_.insert(file_name);
@@ -334,7 +334,9 @@ void hlasm_context::pop_statement_processing()
     proc_stack_.pop_back();
 }
 
-id_storage& hlasm_context::ids() { return ids_; }
+id_storage& hlasm_context::ids() { return *ids_; }
+
+std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
 
 const hlasm_context::instruction_storage& hlasm_context::instruction_map() const { return instruction_map_; }
 
@@ -632,7 +634,7 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     if (res)
         return "N";
 
-    id_index symbol_name = ids_.add(std::move(value));
+    id_index symbol_name = ids().add(std::move(value));
     auto tmp_symbol = ord_ctx.get_symbol(symbol_name);
 
     if (tmp_symbol)

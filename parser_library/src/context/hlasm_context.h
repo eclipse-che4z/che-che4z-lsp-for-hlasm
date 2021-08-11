@@ -49,7 +49,7 @@ class hlasm_context
     // map of OPSYN mnemonics
     opcode_map opcode_mnemo_;
     // storage of identifiers
-    id_storage ids_;
+    std::shared_ptr<id_storage> ids_;
 
     // stack of nested scopes
     std::deque<code_scope> scope_stack_;
@@ -82,7 +82,9 @@ class hlasm_context
     bool is_opcode(id_index symbol) const;
 
 public:
-    hlasm_context(std::string file_name = "", asm_option asm_opts = {}, id_storage init_ids = {});
+    hlasm_context(std::string file_name = "",
+        asm_option asm_opts = {},
+        std::shared_ptr<id_storage> init_ids = std::make_shared<id_storage>());
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;
@@ -126,6 +128,7 @@ public:
 
     // index storage
     id_storage& ids();
+    std::shared_ptr<id_storage> ids_ptr();
 
     // map of instructions
     const instruction_storage& instruction_map() const;

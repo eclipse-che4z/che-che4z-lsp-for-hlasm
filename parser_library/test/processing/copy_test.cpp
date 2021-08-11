@@ -605,3 +605,24 @@ TEST(copy, copy_empty_file)
 
     ASSERT_EQ(a.diags().size(), 0U);
 }
+
+TEST(copy, skip_invalid)
+{
+    std::string copybook_content = R"(
+        AGO .SKIP
+        2 a
+a       a                                                              X
+aaaaaaaaa
+.SKIP   ANOP
+)";
+    std::string input = R"(
+        COPY COPYBOOK
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

@@ -167,13 +167,13 @@ version_stamp macro_cache::get_copy_member_versions(context::macro_def_ptr macro
     return result;
 }
 
-void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<analyzer> analyzer)
+void macro_cache::save_macro(const macro_cache_key& key, const analyzer& analyzer)
 {
     auto& cache_data = cache_[key];
     if (key.data.proc_kind == processing::processing_kind::MACRO)
     {
         // Add stamps for all macro dependencies
-        auto parsed_macro = analyzer->context().hlasm_ctx->get_macro_definition(key.data.library_member);
+        auto parsed_macro = analyzer.context().hlasm_ctx->get_macro_definition(key.data.library_member);
         if (parsed_macro)
             cache_data.stamps = get_copy_member_versions(std::move(parsed_macro));
         else
@@ -184,9 +184,9 @@ void macro_cache::save_analyzer(const macro_cache_key& key, std::unique_ptr<anal
 
     cache_data.stamps.try_emplace(macro_file_->get_file_name(), macro_file_->get_version());
     if (key.data.proc_kind == processing::processing_kind::MACRO)
-        cache_data.cached_member = analyzer->context().lsp_ctx->get_macro_info(key.data.library_member);
+        cache_data.cached_member = analyzer.context().lsp_ctx->get_macro_info(key.data.library_member);
     else if (key.data.proc_kind == processing::processing_kind::COPY)
-        cache_data.cached_member = analyzer->context().hlasm_ctx->get_copy_member(key.data.library_member);
+        cache_data.cached_member = analyzer.context().hlasm_ctx->get_copy_member(key.data.library_member);
 }
 
 void macro_cache::erase_cache_of_opencode(const std::string& opencode_file_name)

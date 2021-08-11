@@ -40,9 +40,14 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     if (!cache)
         return nullptr;
 
-    if (processor.kind == processing_kind::ORDINARY
-        && try_trigger_attribute_lookahead(retrieve_instruction(*cache), { *ctx.hlasm_ctx, lib_provider }, listener))
-        return nullptr;
+    if (processor.kind == processing_kind::ORDINARY)
+    {
+        if (const auto* instr = retrieve_instruction(*cache))
+        {
+            if (try_trigger_attribute_lookahead(*instr, { *ctx.hlasm_ctx, lib_provider }, listener))
+                return nullptr;
+        }
+    }
 
     context::shared_stmt_ptr stmt;
 
@@ -54,11 +59,12 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
         case context::statement_kind::DEFERRED:
             stmt = preprocess_deferred(processor, *cache);
             break;
+        case context::statement_kind::ERROR:
+            stmt = cache->get_base();
+            break;
         default:
-            assert(false);
             break;
     }
-
 
     if (processor.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*stmt, { *ctx.hlasm_ctx, lib_provider }, listener))
@@ -67,18 +73,19 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
     return stmt;
 }
 
-const semantics::instruction_si& members_statement_provider::retrieve_instruction(
+const semantics::instruction_si* members_statement_provider::retrieve_instruction(
     const context::statement_cache& cache) const
 {
     switch (cache.get_base()->kind)
     {
         case context::statement_kind::RESOLVED:
-            return cache.get_base()->access_resolved()->instruction_ref();
+            return &cache.get_base()->access_resolved()->instruction_ref();
         case context::statement_kind::DEFERRED:
-            return cache.get_base()->access_deferred()->instruction_ref();
+            return &cache.get_base()->access_deferred()->instruction_ref();
+        case context::statement_kind::ERROR:
+            return nullptr;
         default:
-            assert(false);
-            throw std::runtime_error("unexpected statement_kind enum value");
+            return nullptr;
     }
 }
 
@@ -86,7 +93,12 @@ void members_statement_provider::fill_cache(
     context::statement_cache& cache, const semantics::deferred_statement& def_stmt, const processing_status& status)
 {
     context::statement_cache::cached_statement_t reparsed_stmt;
+    // TODO: what if it fails?
     auto def_impl = std::dynamic_pointer_cast<const semantics::statement_si_deferred>(cache.get_base());
+
+    auto diags = def_impl->diagnostics();
+    for (auto i = diags.first; i != diags.second; ++i)
+        reparsed_stmt.diags.push_back(*i);
 
     if (status.first.occurence == operand_occurence::ABSENT || status.first.form == processing_form::UNKNOWN
         || status.first.form == processing_form::IGNORED)
@@ -110,7 +122,7 @@ void members_statement_provider::fill_cache(
         reparsed_stmt.stmt =
             std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
     }
-    cache.insert(status.first.form, reparsed_stmt);
+    cache.insert(status.first.form, std::move(reparsed_stmt));
 }
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
@@ -128,8 +140,11 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
 
     const auto& cache_item = cache.get(status.first.form);
 
-    for (const diagnostic_op& diag : cache_item->diags)
-        diagnoser.add_diagnostic(diag);
+    if (processor.kind != processing_kind::LOOKAHEAD)
+    {
+        for (const diagnostic_op& diag : cache_item->diags)
+            diagnoser.add_diagnostic(diag);
+    }
 
     return std::make_shared<resolved_statement_impl>(cache_item->stmt, status);
 }

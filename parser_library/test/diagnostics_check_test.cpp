@@ -51,7 +51,7 @@ TEST(diagnostics, string_substitution)
  AMODE &b&a
 
 &z setc 'string'
- EXTRN 2,PART(2),PART(2,2),1000,'3',PART(&z,4) 
+ EXTRN A,PART(B),PART(C,D),E,F,PART(&z,H)
 
 )");
 
@@ -260,7 +260,7 @@ TEST(diagnostics,
  END ,(MYCOMPIlER,0101,00273)
  EXITCTL LISTING,256,*+128,,-2
  EXITCTL SOURCE,,,
- EXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
+ EXTRN A,PART(B),PART(C,D),E
  ICTL 1,71,16 
  ICTL 9,80
  DROP ,
@@ -284,7 +284,7 @@ label1 RSECT
  TITLE 'string'   remark
  USING (3,3),12
  USING 1,3,15,0,0/0
- WXTRN 2,PART(2),PART(2,2),1000,'3',PART('string',4)
+ WXTRN AW,PART(BW),PART(CW,DW),EW
  XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
 )");
 

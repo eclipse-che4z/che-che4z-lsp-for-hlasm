@@ -37,384 +37,186 @@ bool assembler_checker::check(const std::string& instruction_name,
     }
 }
 
-std::map<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>
-    assembler_checker::assembler_instruction_map = {};
+std::map<std::string, std::unique_ptr<assembler_instruction>> assembler_checker::assembler_instruction_map = {};
 
 void assembler_checker::initialize_assembler_map()
 {
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>(
-            "*PROCESS",
-            std::make_unique<hlasm_plugin::parser_library::checking::process>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::NO_LABEL },
-                "*PROCESS")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>(
-            "ACONTROL",
-            std::make_unique<hlasm_plugin::parser_library::checking::acontrol>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL },
-                "ACONTROL")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ADATA",
-            std::make_unique<hlasm_plugin::parser_library::checking::adata>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL },
-                "ADATA")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>(
-            "AINSERT",
-            std::make_unique<hlasm_plugin::parser_library::checking::ainsert>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL },
-                "AINSERT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ALIAS",
-            std::make_unique<hlasm_plugin::parser_library::checking::alias>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "ALIAS")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("AMODE",
-            std::make_unique<hlasm_plugin::parser_library::checking::amode>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::NAME },
-                "AMODE")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CATTR",
-            std::make_unique<hlasm_plugin::parser_library::checking::cattr>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::CLASS_NAME },
-                "CATTR")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CCW",
-            std::make_unique<hlasm_plugin::parser_library::checking::ccw>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CCW")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CCW0",
-            std::make_unique<hlasm_plugin::parser_library::checking::ccw>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CCW0")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CCW1",
-            std::make_unique<hlasm_plugin::parser_library::checking::ccw>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CCW1")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CEJECT",
-            std::make_unique<hlasm_plugin::parser_library::checking::expression_instruction>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "CEJECT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CNOP",
-            std::make_unique<hlasm_plugin::parser_library::checking::cnop>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CNOP")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("COM",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "COM")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("COPY",
-            std::make_unique<hlasm_plugin::parser_library::checking::copy>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "COPY")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("COPY",
-            std::make_unique<hlasm_plugin::parser_library::checking::copy>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "COPY")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CSECT",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CSECT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("CXD",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "CXD")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("DC",
-            std::make_unique<hlasm_plugin::parser_library::checking::dc>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "DC")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("DROP",
-            std::make_unique<hlasm_plugin::parser_library::checking::drop>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "DROP")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("DS",
-            std::make_unique<hlasm_plugin::parser_library::checking::ds_dxd>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "DS")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("DSECT",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "DSECT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("DXD",
-            std::make_unique<hlasm_plugin::parser_library::checking::ds_dxd>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "DXD")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("EJECT",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "EJECT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("END",
-            std::make_unique<hlasm_plugin::parser_library::checking::end>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "END")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ENTRY",
-            std::make_unique<hlasm_plugin::parser_library::checking::entry>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "ENTRY")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("EQU",
-            std::make_unique<hlasm_plugin::parser_library::checking::equ>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "EQU")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>(
-            "EXITCTL",
-            std::make_unique<hlasm_plugin::parser_library::checking::exitctl>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "EXITCTL")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("EXTRN",
-            std::make_unique<hlasm_plugin::parser_library::checking::external>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "EXTRN")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ICTL",
-            std::make_unique<hlasm_plugin::parser_library::checking::ictl>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::NO_LABEL },
-                "ICTL")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ISEQ",
-            std::make_unique<hlasm_plugin::parser_library::checking::iseq>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "ISEQ")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("LOCTR",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "LOCTR")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("LTORG",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL },
-                "LTORG")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("MNOTE",
-            std::make_unique<hlasm_plugin::parser_library::checking::mnote>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "MNOTE")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("OPSYN",
-            std::make_unique<hlasm_plugin::parser_library::checking::opsyn>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPERATION_CODE },
-                "OPSYN")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("ORG",
-            std::make_unique<hlasm_plugin::parser_library::checking::org>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL },
-                "ORG")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("POP",
-            std::make_unique<hlasm_plugin::parser_library::checking::stack_instr>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "POP")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("PRINT",
-            std::make_unique<hlasm_plugin::parser_library::checking::print>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "PRINT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("PUNCH",
-            std::make_unique<hlasm_plugin::parser_library::checking::punch>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "PUNCH")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("PUSH",
-            std::make_unique<hlasm_plugin::parser_library::checking::stack_instr>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "PUSH")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("REPRO",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "REPRO")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("RMODE",
-            std::make_unique<hlasm_plugin::parser_library::checking::rmode>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::NAME },
-                "RMODE")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("RSECT",
-            std::make_unique<hlasm_plugin::parser_library::checking::no_operands>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "RSECT")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("SPACE",
-            std::make_unique<hlasm_plugin::parser_library::checking::expression_instruction>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "SPACE")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("START",
-            std::make_unique<hlasm_plugin::parser_library::checking::expression_instruction>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "START")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("TITLE",
-            std::make_unique<hlasm_plugin::parser_library::checking::title>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::STRING },
-                "TITLE")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("USING",
-            std::make_unique<hlasm_plugin::parser_library::checking::using_instr>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL },
-                "USING")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("WXTRN",
-            std::make_unique<hlasm_plugin::parser_library::checking::external>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::OPTIONAL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL },
-                "WXTRN")));
-    assembler_instruction_map.insert(
-        std::pair<std::string, std::unique_ptr<hlasm_plugin::parser_library::checking::assembler_instruction>>("XATTR",
-            std::make_unique<hlasm_plugin::parser_library::checking::xattr>(
-                std::vector<hlasm_plugin::parser_library::checking::label_types> {
-                    hlasm_plugin::parser_library::checking::label_types::ORD_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::SEQUENCE_SYMBOL,
-                    hlasm_plugin::parser_library::checking::label_types::VAR_SYMBOL },
-                "XATTR")));
+    assembler_instruction_map.try_emplace(
+        "*PROCESS", std::make_unique<process>(std::vector<label_types> { label_types::NO_LABEL }, "*PROCESS"));
+    assembler_instruction_map.try_emplace("ACONTROL",
+        std::make_unique<acontrol>(
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ACONTROL"));
+    assembler_instruction_map.try_emplace("ADATA",
+        std::make_unique<adata>(
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "ADATA"));
+    assembler_instruction_map.try_emplace("AINSERT",
+        std::make_unique<ainsert>(
+            std::vector<label_types> { label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL }, "AINSERT"));
+    assembler_instruction_map.try_emplace("ALIAS",
+        std::make_unique<alias>(
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "ALIAS"));
+    assembler_instruction_map.try_emplace("AMODE",
+        std::make_unique<amode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "AMODE"));
+    assembler_instruction_map.try_emplace(
+        "CATTR", std::make_unique<cattr>(std::vector<label_types> { label_types::CLASS_NAME }, "CATTR"));
+    assembler_instruction_map.try_emplace("CCW",
+        std::make_unique<ccw>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CCW",
+            CCW_variant::CCW_CCW0));
+    assembler_instruction_map.try_emplace("CCW0",
+        std::make_unique<ccw>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CCW0",
+            CCW_variant::CCW_CCW0));
+    assembler_instruction_map.try_emplace("CCW1",
+        std::make_unique<ccw>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CCW1",
+            CCW_variant::CCW1));
+    assembler_instruction_map.try_emplace("CEJECT",
+        std::make_unique<expression_instruction>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "CEJECT"));
+    assembler_instruction_map.try_emplace("CNOP",
+        std::make_unique<cnop>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CNOP"));
+    assembler_instruction_map.try_emplace("COM",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "COM"));
+    assembler_instruction_map.try_emplace("COPY",
+        std::make_unique<copy>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY"));
+    assembler_instruction_map.try_emplace("COPY",
+        std::make_unique<copy>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "COPY"));
+    assembler_instruction_map.try_emplace("CSECT",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CSECT"));
+    assembler_instruction_map.try_emplace("CXD",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "CXD"));
+    assembler_instruction_map.try_emplace("DC",
+        std::make_unique<dc>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "DC"));
+    assembler_instruction_map.try_emplace("DROP",
+        std::make_unique<drop>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "DROP"));
+    assembler_instruction_map.try_emplace("DS",
+        std::make_unique<ds_dxd>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "DS"));
+    assembler_instruction_map.try_emplace("DSECT",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "DSECT"));
+    assembler_instruction_map.try_emplace("DXD",
+        std::make_unique<ds_dxd>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "DXD"));
+    assembler_instruction_map.try_emplace("EJECT",
+        std::make_unique<no_operands>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EJECT"));
+    assembler_instruction_map.try_emplace("END",
+        std::make_unique<end>(std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "END"));
+    assembler_instruction_map.try_emplace("ENTRY",
+        std::make_unique<entry>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ENTRY"));
+    assembler_instruction_map.try_emplace("EQU",
+        std::make_unique<equ>(std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "EQU"));
+    assembler_instruction_map.try_emplace("EXITCTL",
+        std::make_unique<exitctl>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXITCTL"));
+    assembler_instruction_map.try_emplace("EXTRN",
+        std::make_unique<external>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EXTRN"));
+    assembler_instruction_map.try_emplace(
+        "ICTL", std::make_unique<ictl>(std::vector<label_types> { label_types::NO_LABEL }, "ICTL"));
+    assembler_instruction_map.try_emplace("ISEQ",
+        std::make_unique<iseq>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ISEQ"));
+    assembler_instruction_map.try_emplace("LOCTR",
+        std::make_unique<no_operands>(
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL }, "LOCTR"));
+    assembler_instruction_map.try_emplace("LTORG",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL },
+            "LTORG"));
+    assembler_instruction_map.try_emplace("MNOTE",
+        std::make_unique<mnote>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "MNOTE"));
+    assembler_instruction_map.try_emplace("OPSYN",
+        std::make_unique<opsyn>(
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::OPERATION_CODE },
+            "OPSYN"));
+    assembler_instruction_map.try_emplace("ORG",
+        std::make_unique<org>(
+            std::vector<label_types> {
+                label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::OPTIONAL },
+            "ORG"));
+    assembler_instruction_map.try_emplace("POP",
+        std::make_unique<stack_instr>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "POP"));
+    assembler_instruction_map.try_emplace("PRINT",
+        std::make_unique<print>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PRINT"));
+    assembler_instruction_map.try_emplace("PUNCH",
+        std::make_unique<punch>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUNCH"));
+    assembler_instruction_map.try_emplace("PUSH",
+        std::make_unique<stack_instr>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "PUSH"));
+    assembler_instruction_map.try_emplace("REPRO",
+        std::make_unique<no_operands>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "REPRO"));
+    assembler_instruction_map.try_emplace("RMODE",
+        std::make_unique<rmode>(std::vector<label_types> { label_types::OPTIONAL, label_types::NAME }, "RMODE"));
+    assembler_instruction_map.try_emplace("RSECT",
+        std::make_unique<no_operands>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::ORD_SYMBOL, label_types::VAR_SYMBOL, label_types::SEQUENCE_SYMBOL },
+            "RSECT"));
+    assembler_instruction_map.try_emplace("SPACE",
+        std::make_unique<expression_instruction>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "SPACE"));
+    assembler_instruction_map.try_emplace("START",
+        std::make_unique<expression_instruction>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::ORD_SYMBOL, label_types::VAR_SYMBOL },
+            "START"));
+    assembler_instruction_map.try_emplace("TITLE",
+        std::make_unique<title>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL, label_types::STRING },
+            "TITLE"));
+    assembler_instruction_map.try_emplace("USING",
+        std::make_unique<using_instr>(
+            std::vector<label_types> {
+                label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL, label_types::ORD_SYMBOL },
+            "USING"));
+    assembler_instruction_map.try_emplace("WXTRN",
+        std::make_unique<external>(
+            std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "WXTRN"));
+    assembler_instruction_map.try_emplace("XATTR",
+        std::make_unique<xattr>(
+            std::vector<label_types> { label_types::ORD_SYMBOL, label_types::SEQUENCE_SYMBOL, label_types::VAR_SYMBOL },
+            "XATTR"));
 }
 
 bool machine_checker::check(const std::string& instruction_name,
@@ -432,12 +234,10 @@ bool machine_checker::check(const std::string& instruction_name,
     std::string mach_name = instruction_name;
 
     // instruction is a mnemonic instruction
-    if (hlasm_plugin::parser_library::context::instruction::mnemonic_codes.find(instruction_name)
-        != hlasm_plugin::parser_library::context::instruction::mnemonic_codes.end())
-        mach_name = hlasm_plugin::parser_library::context::instruction::mnemonic_codes.at(instruction_name)
-                        .instruction->instr_name;
+    if (context::instruction::mnemonic_codes.find(instruction_name) != context::instruction::mnemonic_codes.end())
+        mach_name = context::instruction::mnemonic_codes.at(instruction_name).instruction->instr_name;
 
-    return hlasm_plugin::parser_library::context::instruction::machine_instructions.at(mach_name).check(
+    return context::instruction::machine_instructions.at(mach_name).check(
         instruction_name, ops, stmt_range, add_diagnostic);
 }
 

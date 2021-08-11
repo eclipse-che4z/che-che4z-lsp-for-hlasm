@@ -16,6 +16,7 @@
 #define SEMANTICS_STATEMENT_H
 
 #include "context/hlasm_statement.h"
+#include "diagnostic.h"
 #include "statement_fields.h"
 
 // this file contains inherited structures from hlasm_statement that are used during the parsing
@@ -56,12 +57,16 @@ protected:
 // struct holding deferred semantic information (si) about whole instruction statement, whole logical line
 struct statement_si_deferred : public deferred_statement
 {
-    statement_si_deferred(
-        range stmt_range, label_si label, instruction_si instruction, deferred_operands_si deferred_operands)
+    statement_si_deferred(range stmt_range,
+        label_si label,
+        instruction_si instruction,
+        deferred_operands_si deferred_operands,
+        std::vector<diagnostic_op>&& diags)
         : stmt_range(std::move(stmt_range))
         , label(std::move(label))
         , instruction(std::move(instruction))
         , deferred_operands(std::move(deferred_operands))
+        , statement_diagnostics(std::make_move_iterator(diags.begin()), std::make_move_iterator(diags.end()))
     {}
 
     range stmt_range;
@@ -70,10 +75,17 @@ struct statement_si_deferred : public deferred_statement
     instruction_si instruction;
     deferred_operands_si deferred_operands;
 
-    const label_si& label_ref() const override { return label; };
-    const instruction_si& instruction_ref() const override { return instruction; };
-    const deferred_operands_si& deferred_ref() const override { return deferred_operands; };
-    const range& stmt_range_ref() const override { return stmt_range; };
+    std::vector<diagnostic_op> statement_diagnostics;
+
+    const label_si& label_ref() const override { return label; }
+    const instruction_si& instruction_ref() const override { return instruction; }
+    const deferred_operands_si& deferred_ref() const override { return deferred_operands; }
+    const range& stmt_range_ref() const override { return stmt_range; }
+
+    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override
+    {
+        return { statement_diagnostics.data(), statement_diagnostics.data() + statement_diagnostics.size() };
+    }
 };
 
 // struct holding full semantic information (si) about whole instruction statement, whole logical line

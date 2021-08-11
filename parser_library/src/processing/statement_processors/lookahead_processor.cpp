@@ -45,25 +45,25 @@ processing_status lookahead_processor::get_processing_status(const semantics::in
 
 void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    if (macro_nest_ == 0)
+    if (auto resolved = statement->access_resolved())
     {
-        find_seq(static_cast<const resolved_statement&>(*statement));
-        find_ord(static_cast<const resolved_statement&>(*statement));
-    }
-
-    auto resolved = statement->access_resolved();
-
-    if (resolved->opcode_ref().value == macro_id)
-    {
-        process_MACRO();
-    }
-    else if (resolved->opcode_ref().value == mend_id)
-    {
-        process_MEND();
-    }
-    else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
-    {
-        process_COPY(*resolved);
+        if (macro_nest_ == 0)
+        {
+            find_seq(*resolved);
+            find_ord(*resolved);
+        }
+        if (resolved->opcode_ref().value == macro_id)
+        {
+            process_MACRO();
+        }
+        else if (resolved->opcode_ref().value == mend_id)
+        {
+            process_MEND();
+        }
+        else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
+        {
+            process_COPY(*resolved);
+        }
     }
 }
 
