@@ -54,6 +54,11 @@ symbol_attributes symbol_attributes::make_ccw_attrs()
     return symbol_attributes(symbol_origin::ASM, ebcdic_encoding::to_ebcdic('W'), 8);
 }
 
+symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make_cnop_attrs()
+{
+    return symbol_attributes(symbol_origin::ASM, ebcdic_encoding::to_ebcdic('I'));
+}
+
 data_attr_kind symbol_attributes::transform_attr(unsigned char c)
 {
     c = (char)std::toupper(c);

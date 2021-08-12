@@ -373,6 +373,14 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
     }
 }
 
+std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::operand* op) const
+{
+    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
+    if (!expr_op)
+        return std::nullopt;
+    return try_get_abs_value(expr_op);
+}
+
 std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::simple_expr_operand* op) const
 {
     if (op->has_dependencies(hlasm_ctx.ord_ctx))
@@ -631,6 +639,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("CCW"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
 
     return table;
 }
@@ -719,6 +728,40 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
     else
         check(stmt, hlasm_ctx, checker_, *this);
+}
+
+void asm_processor::process_CNOP(rebuilt_statement stmt)
+{
+    constexpr context::alignment CNOP_symbol_align = context::halfword;
+
+    fill_expression_loc_counters(stmt, CNOP_symbol_align);
+    find_sequence_symbol(stmt);
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        else
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                hlasm_ctx.ord_ctx.align(CNOP_symbol_align),
+                context::symbol_attributes::make_cnop_attrs());
+    }
+
+    check(stmt, hlasm_ctx, checker_, *this);
+
+    if (stmt.operands_ref().value.size() != 2)
+        return;
+
+
+    std::optional<int> byte_value = try_get_abs_value(stmt.operands_ref().value[0].get());
+    std::optional<int> boundary_value = try_get_abs_value(stmt.operands_ref().value[1].get());
+    // For now, the implementation ignores the instruction, if the operands have dependencies. Most uses of this
+    // instruction should by covered anyway. It will still generate the label correctly.
+    if (!byte_value.has_value() || !boundary_value.has_value())
+        return;
+
+    hlasm_ctx.ord_ctx.reserve_storage_area(0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value });
 }
 
 } // namespace hlasm_plugin::parser_library::processing

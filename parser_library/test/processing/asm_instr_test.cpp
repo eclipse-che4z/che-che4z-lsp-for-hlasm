@@ -54,3 +54,31 @@ SYM  DS   CL249
     ASSERT_EQ(a.diags().size(), 1U);
     EXPECT_EQ(a.diags()[0].code, "M122");
 }
+
+TEST(asm_instr_processing, CNOP)
+{
+    std::string input = R"(
+ DC CL1''
+
+CNOPSYM CNOP 0,8
+
+A LR 1,1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), 0U);
+
+    auto& ctx = *a.context().hlasm_ctx;
+
+    auto symbol = ctx.ord_ctx.get_symbol(ctx.ids().add("CNOPSYM"));
+    ASSERT_NE(symbol, nullptr);
+    EXPECT_EQ(symbol->value().get_reloc().offset(), 2);
+
+    EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::T), 'I'_ebcdic);
+    
+    auto symbol_after = ctx.ord_ctx.get_symbol(ctx.ids().add("A"));
+    ASSERT_NE(symbol_after, nullptr);
+    EXPECT_EQ(symbol_after->value().get_reloc().offset(), 8);
+}
