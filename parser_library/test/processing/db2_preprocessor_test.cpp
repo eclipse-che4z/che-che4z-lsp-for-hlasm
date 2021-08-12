@@ -856,6 +856,62 @@ DFILE_NAME DS CL255
     EXPECT_EQ(diags.diags.size(), 0);
 }
 
+TEST(db2_preprocessor, sql_types_with_space)
+{
+    std::string input = R"(
+RE SQL TYPE IS RESULT_SET_LOCATOR VARYING   
+RO SQL TYPE IS ROWID                        
+TU SQL TYPE IS TABLE LIKE A AS LOCATOR      
+TQ SQL TYPE IS TABLE LIKE 'A''B' AS LOCATOR 
+XB SQL TYPE IS XML AS BLOB 10               
+XC SQL TYPE IS XML AS CLOB 10K              
+XD SQL TYPE IS XML AS DBCLOB 10M            
+BL SQL TYPE IS BINARY LARGE OBJECT 10K      
+CL SQL TYPE IS CHARACTER LARGE OBJECT 10M   
+DL SQL TYPE IS DBCLOB 1G                    
+BLOC SQL TYPE IS BLOB_LOCATOR               
+CLOC SQL TYPE IS CLOB_LOCATOR               
+DLOC SQL TYPE IS DBCLOB_LOCATOR             
+BFILE SQL TYPE IS BLOB_FILE                 
+CFILE SQL TYPE IS CLOB_FILE                 
+DFILE SQL TYPE IS DBCLOB_FILE               
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(db2_preprocessor, sql_types_with_comment)
+{
+    std::string input = R"(
+RE SQL TYPE IS RESULT_SET_LOCATOR VARYING   comment
+RO SQL TYPE IS ROWID                        comment
+TU SQL TYPE IS TABLE LIKE A AS LOCATOR      comment
+TQ SQL TYPE IS TABLE LIKE 'A''B' AS LOCATOR comment
+XB SQL TYPE IS XML AS BLOB 10               comment
+XC SQL TYPE IS XML AS CLOB 10K              comment
+XD SQL TYPE IS XML AS DBCLOB 10M            comment
+BL SQL TYPE IS BINARY LARGE OBJECT 10K      comment
+CL SQL TYPE IS CHARACTER LARGE OBJECT 10M   comment
+DL SQL TYPE IS DBCLOB 1G                    comment
+BLOC SQL TYPE IS BLOB_LOCATOR               comment
+CLOC SQL TYPE IS CLOB_LOCATOR               comment
+DLOC SQL TYPE IS DBCLOB_LOCATOR             comment
+BFILE SQL TYPE IS BLOB_FILE                 comment
+CFILE SQL TYPE IS CLOB_FILE                 comment
+DFILE SQL TYPE IS DBCLOB_FILE               comment
+)";
+
+    analyzer a(input, analyzer_options { db2_preprocessor_options {} });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(db2_preprocessor, sql_type_fails)
 {
     for (std::string_view text : {
