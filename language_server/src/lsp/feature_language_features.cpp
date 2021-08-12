@@ -284,6 +284,7 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
                                             lsp_document_symbol_item_kind::Array },
         { parser_library::document_symbol_kind::EQU, lsp_document_symbol_item_kind::Boolean },
         { parser_library::document_symbol_kind::MACH, lsp_document_symbol_item_kind::Constant },
+        { parser_library::document_symbol_kind::ASM, lsp_document_symbol_item_kind::Boolean },
         { parser_library::document_symbol_kind::UNKNOWN, lsp_document_symbol_item_kind::Operator },
         { parser_library::document_symbol_kind::VAR, lsp_document_symbol_item_kind::Variable },
         { parser_library::document_symbol_kind::SEQ, lsp_document_symbol_item_kind::String },
@@ -291,6 +292,8 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
         { parser_library::document_symbol_kind::DUMMY, lsp_document_symbol_item_kind::Class },
         { parser_library::document_symbol_kind::EXECUTABLE, lsp_document_symbol_item_kind::Object },
         { parser_library::document_symbol_kind::READONLY, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::EXTERNAL, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::WEAK_EXTERNAL, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::File } };
 
 json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)

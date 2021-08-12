@@ -128,7 +128,10 @@ enum class PARSER_LIBRARY_EXPORT document_symbol_kind
     DUMMY = 7,
     EXECUTABLE = 8,
     READONLY = 9,
-    MACRO = 10
+    MACRO = 10,
+    ASM = 11,
+    EXTERNAL = 12,
+    WEAK_EXTERNAL = 13
 };
 
 struct PARSER_LIBRARY_EXPORT document_symbol_item;

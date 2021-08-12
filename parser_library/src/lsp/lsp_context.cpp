@@ -80,6 +80,7 @@ const std::unordered_map<context::symbol_origin, document_symbol_kind> document_
     { context::symbol_origin::DAT, document_symbol_kind::DAT },
     { context::symbol_origin::EQU, document_symbol_kind::EQU },
     { context::symbol_origin::MACH, document_symbol_kind::MACH },
+    { context::symbol_origin::ASM, document_symbol_kind::ASM },
     { context::symbol_origin::UNKNOWN, document_symbol_kind::UNKNOWN }
 };
 
@@ -87,7 +88,9 @@ const std::unordered_map<context::section_kind, document_symbol_kind> document_s
     { context::section_kind::COMMON, document_symbol_kind::COMMON },
     { context::section_kind::DUMMY, document_symbol_kind::DUMMY },
     { context::section_kind::EXECUTABLE, document_symbol_kind::EXECUTABLE },
-    { context::section_kind::READONLY, document_symbol_kind::READONLY }
+    { context::section_kind::READONLY, document_symbol_kind::READONLY },
+    { context::section_kind::EXTERNAL, document_symbol_kind::EXTERNAL },
+    { context::section_kind::WEAK_EXTERNAL, document_symbol_kind::WEAK_EXTERNAL },
 };
 
 const std::unordered_map<occurence_kind, document_symbol_kind> document_symbol_item_kind_mapping_macro {
