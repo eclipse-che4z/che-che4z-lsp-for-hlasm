@@ -5,19 +5,24 @@
 #### Added
 - Caching of macros and copy files, improving response time of the extension when editing already open file
 - Highlighting support for HLASM listings
-- AREAD and AINSERT support
-- DB2 preprocessor emulator
+- Toleration of EXEC SQL statements and support for DB2 SQL types
 - CCW, CCW0 and CCW1 instruction support
+- Support for EXTRN and WXTRN instructions
 
 #### Fixed
+- Handle AREAD in macros called from COPY members
 - Format of instructions with relative addressing operands
 - Vector instructions flagged when VR16-31 are used
+- Improved OPSYN processing
+- Language server crashes while evaluating conditional assembly statements
 - Allow self-reference in previously undefined array variables
 - Tolerate '+' in modifiers in data defintions
 - Empty TITLE argument must be tolerated
 - Statements skipped by conditinal assembly emmiting errors in macros and copy files
 - Location counter in machine instruction sometimes evaluating incorrectly
 - WASM variant of the language server not working with the V8 JavaScript machine version 9 or later
+- Improve language server stability
+
 
 ## [0.13.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.12.0...0.13.0) (2021-06-01)
 
