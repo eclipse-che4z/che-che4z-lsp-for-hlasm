@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <numeric>
+
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
@@ -24,15 +26,17 @@ auto parse_model(std::string s,
     range r,
     bool after_substitution = false,
     diagnostic_op_consumer* diag_consumer = nullptr,
-    processing_form form = processing_form::MACH)
+    processing_form form = processing_form::MACH,
+    hlasm_context* context = nullptr)
 {
-    hlasm_context context;
+    hlasm_context fallback_context;
     diagnostic_op_consumer_container fallback_container;
-    return statement_fields_parser(&context).parse_operand_field(std::move(s),
-        after_substitution,
-        range_provider(r, adjusting_state::NONE),
-        std::make_pair(processing_format(processing_kind::ORDINARY, form), op_code()),
-        diag_consumer ? *diag_consumer : fallback_container);
+    return statement_fields_parser(context ? context : &fallback_context)
+        .parse_operand_field(std::move(s),
+            after_substitution,
+            range_provider(r, adjusting_state::NONE),
+            std::make_pair(processing_format(processing_kind::ORDINARY, form), op_code()),
+            diag_consumer ? *diag_consumer : fallback_container);
 }
 
 TEST(parser, parse_model)
@@ -201,4 +205,38 @@ TEST(parser, invalid_macro_param_alternative)
 
     range expected_range = { { 1, 16 }, { 1, 16 } };
     EXPECT_EQ(diags[0].diag_range, expected_range);
+}
+
+TEST(parser, parse_single_apostrophe_string)
+{
+    diagnostic_op_consumer_container diag_container;
+    hlasm_context context;
+
+    range r(position(0, 10), position(0, 20));
+    auto [op, rem] = parse_model("&VAR,C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
+
+    EXPECT_TRUE(diag_container.diags.empty());
+
+    ASSERT_EQ(op.value.size(), 1);
+    auto* model = op.value[0]->access_model();
+    ASSERT_TRUE(model);
+    auto cc = concatenation_point::to_string(model->chain);
+    EXPECT_EQ(std::count(cc.begin(), cc.end(), '\''), 4);
+}
+
+TEST(parser, parse_single_apostrophe_literal)
+{
+    diagnostic_op_consumer_container diag_container;
+    hlasm_context context;
+
+    range r(position(0, 10), position(0, 21));
+    auto [op, rem] = parse_model("&VAR,=C''''", r, false, &diag_container, processing::processing_form::MACH, &context);
+
+    EXPECT_TRUE(diag_container.diags.empty());
+
+    ASSERT_EQ(op.value.size(), 1);
+    auto* model = op.value[0]->access_model();
+    ASSERT_TRUE(model);
+    auto cc = concatenation_point::to_string(model->chain);
+    EXPECT_EQ(std::count(cc.begin(), cc.end(), '\''), 4);
 }
