@@ -218,6 +218,24 @@ For files that use macros extensively but do not have the definitions available,
 ```
 In the `pgm_conf.json` above, the `source_code` file has a configuration, so all discovered diagnostics are always shown. However, if you open another file and do not assign a processor group to it, its diagnostics are not shown if there are more than 15 of them.
 
+### Preprocessors
+
+Processor groups can be configured so that the HLASM source will be processed with a preprocessor. Currently, there is the option to use `DB2` preprocessor.
+
+It can by configured using the `preprocessor` key in processor group:
+```
+{
+  "pgroups": [
+    {
+      "name": "GROUP1",
+      "libs": [ "ASMMAC/" ],
+      "preprocessor": "DB2"
+    }
+  ]
+}
+```
+
+
 ## Questions, issues, feature requests, and contributions
 - If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
