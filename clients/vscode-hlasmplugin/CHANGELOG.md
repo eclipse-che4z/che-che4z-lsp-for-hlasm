@@ -2,6 +2,21 @@
 
 ## ****Unreleased****
 
+#### Added
+- Caching of macros and copy books for better performance
+- Support for relative address instruction operands
+- Highlighting for HLASM listings
+- Toleration of EXEC SQL statements and support for DB2 SQL types
+- Support for CCW, CCW0, CCW1 instructions
+- Support for EXTRN and WXTRN instructions
+
+#### Fixed
+- Handle AREAD in macros called from COPY members
+- Language server crashes while evaluating conditional assembly statements
+- Support vector registers 16-31
+- Improved OPSYN processing
+- Improve language server stability
+
 ## [0.13.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.12.0...0.13.0) (2021-06-01)
 
 #### Added
