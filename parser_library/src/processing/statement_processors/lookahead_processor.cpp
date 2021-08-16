@@ -290,8 +290,8 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
     if (statement.label_ref().type != semantics::label_si_type::ORD)
         return;
 
-    auto name = std::get<std::string>(statement.label_ref().value);
-    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(std::move(name));
+    auto name = std::get<semantics::ord_symbol_string>(statement.label_ref().value).symbol;
+    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(*name);
     if (!valid)
         return;
 

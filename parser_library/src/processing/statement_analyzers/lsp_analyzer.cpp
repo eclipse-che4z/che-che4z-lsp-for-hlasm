@@ -163,7 +163,7 @@ void lsp_analyzer::collect_occurence(const semantics::label_si& label, occurence
             collector.get_occurence(std::get<semantics::concat_chain>(label.value));
             break;
         case semantics::label_si_type::ORD:
-            collector.get_occurence(hlasm_ctx_.ids().add(std::get<std::string>(label.value)), label.field_range);
+            collector.get_occurence(std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range);
             break;
         case semantics::label_si_type::SEQ:
             collector.get_occurence(std::get<semantics::seq_sym>(label.value));

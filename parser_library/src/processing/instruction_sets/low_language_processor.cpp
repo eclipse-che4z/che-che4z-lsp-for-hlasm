@@ -88,10 +88,10 @@ rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const proce
 
 context::id_index low_language_processor::find_label_symbol(const rebuilt_statement& stmt) const
 {
-    if (stmt.label_ref().type == semantics::label_si_type::ORD)
+    if (const auto& label = stmt.label_ref(); label.type == semantics::label_si_type::ORD)
     {
         context_manager mngr(hlasm_ctx);
-        auto ret = mngr.get_symbol_name(std::get<std::string>(stmt.label_ref().value), stmt.label_ref().field_range);
+        auto ret = mngr.get_symbol_name(*std::get<semantics::ord_symbol_string>(label.value).symbol, label.field_range);
         collect_diags_from_child(mngr);
         return ret;
     }
@@ -130,51 +130,56 @@ bool trim_right(std::string& s)
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)
 {
-    std::optional<semantics::label_si> label;
-    std::optional<semantics::operands_si> operands;
+    using namespace semantics;
+    std::optional<label_si> label;
+    std::optional<operands_si> operands;
 
     std::string new_label;
     // label
-    switch (stmt.label_ref().type)
+    const auto& label_ref = stmt.label_ref();
+    switch (label_ref.type)
     {
-        case semantics::label_si_type::CONC:
-            new_label = semantics::concatenation_point::evaluate(
-                std::get<semantics::concat_chain>(stmt.label_ref().value), eval_ctx);
+        case label_si_type::CONC:
+            new_label = concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx);
             if (!trim_right(new_label))
-                label.emplace(stmt.label_ref().field_range);
+                label.emplace(label_ref.field_range);
             else
-                label.emplace(stmt.label_ref().field_range, std::move(new_label));
+            {
+                auto ord_id = hlasm_ctx.ids().add(new_label);
+                label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
+            }
             break;
-        case semantics::label_si_type::VAR:
-            new_label = semantics::var_sym_conc::evaluate(
-                std::get<semantics::vs_ptr>(stmt.label_ref().value)->evaluate(eval_ctx));
+        case label_si_type::VAR:
+            new_label = var_sym_conc::evaluate(std::get<vs_ptr>(label_ref.value)->evaluate(eval_ctx));
             if (!trim_right(new_label))
-                label.emplace(stmt.label_ref().field_range);
+                label.emplace(label_ref.field_range);
             else
-                label.emplace(stmt.label_ref().field_range, std::move(new_label));
+            {
+                auto ord_id = hlasm_ctx.ids().add(new_label);
+                label.emplace(label_ref.field_range, ord_symbol_string { ord_id, std::move(new_label) });
+            }
             break;
-        case semantics::label_si_type::MAC:
-            add_diagnostic(diagnostic_op::error_E057(stmt.label_ref().field_range));
+        case label_si_type::MAC:
+            add_diagnostic(diagnostic_op::error_E057(label_ref.field_range));
             break;
-        case semantics::label_si_type::SEQ:
-            branch_provider.register_sequence_symbol(std::get<semantics::seq_sym>(stmt.label_ref().value).name,
-                std::get<semantics::seq_sym>(stmt.label_ref().value).symbol_range);
+        case label_si_type::SEQ:
+            branch_provider.register_sequence_symbol(
+                std::get<seq_sym>(label_ref.value).name, std::get<seq_sym>(label_ref.value).symbol_range);
             break;
         default:
             break;
     }
 
     // operands
-    if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type == semantics::operand_type::MODEL)
+    const auto& operands_ref = stmt.operands_ref();
+    if (!operands_ref.value.empty() && operands_ref.value[0]->type == operand_type::MODEL)
     {
-        assert(stmt.operands_ref().value.size() == 1);
-        std::string field(
-            semantics::concatenation_point::evaluate(stmt.operands_ref().value[0]->access_model()->chain, eval_ctx));
+        assert(operands_ref.value.size() == 1);
+        std::string field(concatenation_point::evaluate(operands_ref.value[0]->access_model()->chain, eval_ctx));
         operands.emplace(parser
                              .parse_operand_field(std::move(field),
                                  true,
-                                 semantics::range_provider(stmt.operands_ref().value[0]->operand_range,
-                                     semantics::adjusting_state::SUBSTITUTION),
+                                 range_provider(operands_ref.value[0]->operand_range, adjusting_state::SUBSTITUTION),
                                  processing_status(stmt.format_ref(), stmt.opcode_ref()),
                                  *this)
                              .first);

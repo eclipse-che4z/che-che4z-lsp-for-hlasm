@@ -36,14 +36,20 @@ enum class label_si_type
     EMPTY
 };
 
-using label_si_value_t = std::variant<std::string, concat_chain, seq_sym, vs_ptr>;
+struct ord_symbol_string
+{
+    context::id_index symbol = nullptr;
+    std::string mixed_case;
+};
+
+using label_si_value_t = std::variant<std::string, ord_symbol_string, concat_chain, seq_sym, vs_ptr>;
 
 // struct holding semantic information (si) about label field
 struct label_si
 {
     struct mac_flag
     {};
-    label_si(range field_range, std::string value)
+    label_si(range field_range, ord_symbol_string value)
         : type(label_si_type::ORD)
         , field_range(std::move(field_range))
         , value(std::move(value))

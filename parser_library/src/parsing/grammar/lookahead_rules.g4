@@ -27,8 +27,9 @@ look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
 		if ($ORDSYMBOL)
 		{
 			auto r = provider.get_range($ORDSYMBOL);
-			auto id = hlasm_ctx->ids().add($ORDSYMBOL->getText());
-			collector.set_label_field(id,nullptr,r); 
+			auto ord_symbol = $ORDSYMBOL->getText();
+			auto id = hlasm_ctx->ids().add(ord_symbol);
+			collector.set_label_field(id,std::move(ord_symbol),nullptr,r);
 		}
 		
 		$op_text = $operand_field_rest.ctx->getText();

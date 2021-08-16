@@ -52,3 +52,24 @@ TEST(instruction_label, invalid_concatenation)
 
     EXPECT_EQ(diags.size(), 2);
 }
+
+TEST(instruction_label, mixed_case_in_macro_call)
+{
+    std::string input(R"(
+          MACRO
+&LABEL    TEST
+          AIF ('&LABEL' EQ 'MixedCase').SKIP
+          FAIL
+.SKIP     ANOP
+          MEND
+
+MixedCase TEST
+
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
