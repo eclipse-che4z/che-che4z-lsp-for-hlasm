@@ -248,11 +248,13 @@ comma
 	: COMMA {collector.add_hl_symbol(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol)); };
 dot 
 	: DOT {collector.add_hl_symbol(token_info(provider.get_range( $DOT),hl_scopes::operator_symbol)); };
-apostrophe 
-	: APOSTROPHE ;
-attr 
+apostrophe
+	: APOSTROPHE;
+attr
 	: ATTR {collector.add_hl_symbol(token_info(provider.get_range( $ATTR),hl_scopes::operator_symbol)); };
-lpar 
+apostrophe_as_attr
+	: APOSTROPHE {collector.add_hl_symbol(token_info(provider.get_range($APOSTROPHE),hl_scopes::operator_symbol)); };
+lpar
 	: LPAR { collector.add_hl_symbol(token_info(provider.get_range( $LPAR),hl_scopes::operator_symbol)); };
 rpar 
 	: RPAR {collector.add_hl_symbol(token_info(provider.get_range( $RPAR),hl_scopes::operator_symbol)); };
