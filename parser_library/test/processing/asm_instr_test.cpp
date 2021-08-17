@@ -77,7 +77,7 @@ A LR 1,1
     EXPECT_EQ(symbol->value().get_reloc().offset(), 2);
 
     EXPECT_EQ(symbol->attributes().get_attribute_value(context::data_attr_kind::T), 'I'_ebcdic);
-    
+
     auto symbol_after = ctx.ord_ctx.get_symbol(ctx.ids().add("A"));
     ASSERT_NE(symbol_after, nullptr);
     EXPECT_EQ(symbol_after->value().get_reloc().offset(), 8);
