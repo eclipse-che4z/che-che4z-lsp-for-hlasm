@@ -389,7 +389,7 @@ class db2_preprocessor : public preprocessor
         if (!std::regex_match(operands.cbegin(), operands.cend(), match, pattern))
             return false;
 
-        switch (match[1].second[-1])
+        switch ((match[4].matched ? match[4] : match[1]).second[-1])
         {
             case 'E': // ..._FILE
                 add_ds_line(label, "", "0FL4");
