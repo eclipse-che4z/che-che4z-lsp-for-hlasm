@@ -136,8 +136,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 
     std::string new_label;
     // label
-    const auto& label_ref = stmt.label_ref();
-    switch (label_ref.type)
+    switch (const auto& label_ref = stmt.label_ref(); label_ref.type)
     {
         case label_si_type::CONC:
             new_label = concatenation_point::evaluate(std::get<concat_chain>(label_ref.value), eval_ctx);
@@ -171,8 +170,8 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     }
 
     // operands
-    const auto& operands_ref = stmt.operands_ref();
-    if (!operands_ref.value.empty() && operands_ref.value[0]->type == operand_type::MODEL)
+    if (const auto& operands_ref = stmt.operands_ref();
+        !operands_ref.value.empty() && operands_ref.value[0]->type == operand_type::MODEL)
     {
         assert(operands_ref.value.size() == 1);
         std::string field(concatenation_point::evaluate(operands_ref.value[0]->access_model()->chain, eval_ctx));
