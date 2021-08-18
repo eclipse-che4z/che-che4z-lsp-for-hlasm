@@ -163,6 +163,7 @@ class empty_feature_provider final : public lsp::feature_provider
     {
         return {};
     }
+    lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override { return {}; }
 };
 } // namespace
 

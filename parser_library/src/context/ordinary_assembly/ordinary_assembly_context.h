@@ -28,6 +28,8 @@
 
 namespace hlasm_plugin::parser_library::context {
 
+class hlasm_context;
+
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
 class ordinary_assembly_context : public dependency_solver
@@ -44,14 +46,17 @@ class ordinary_assembly_context : public dependency_solver
 public:
     // access id storage
     id_storage& ids;
-
+    const hlasm_context& hlasm_ctx_;
     // access sections
     const std::vector<std::unique_ptr<section>>& sections() const;
+
+    // access symbols
+    const std::unordered_map<id_index, symbol>& symbols() const;
 
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage);
+    ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx);
 
     // creates symbol
     // returns false if loctr cycle has occured
@@ -65,6 +70,9 @@ public:
     const symbol* get_symbol(id_index name) const override;
     symbol* get_symbol(id_index name);
 
+    // gets section by name
+    section* get_section(id_index name);
+
     // access current section
     const section* current_section() const;
 
@@ -72,7 +80,8 @@ public:
     void set_section(id_index name, section_kind kind, location symbol_location);
 
     // creates an external section
-    void create_external_section(id_index name, section_kind kind, location symbol_location);
+    void create_external_section(
+        id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack);
 
     // sets current location counter of current section
     void set_location_counter(id_index name, location symbol_location);

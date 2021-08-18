@@ -20,4 +20,6 @@ target_sources(library_test PRIVATE
 	lsp_context_seq_sym_test.cpp
 	lsp_context_var_sym_test.cpp
 	lsp_features_test.cpp
+	lsp_context_document_symbol_ord_test.cpp
+	lsp_context_document_symbol_var_seq_test.cpp
 )

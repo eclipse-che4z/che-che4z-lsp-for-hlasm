@@ -36,6 +36,8 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
         std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
     methods.emplace("textDocument/semanticTokens/full",
         std::bind(&feature_language_features::semantic_tokens, this, std::placeholders::_1, std::placeholders::_2));
+    methods.emplace("textDocument/documentSymbol",
+        std::bind(&feature_language_features::document_symbol, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 json feature_language_features::register_capabilities()
@@ -68,7 +70,8 @@ json feature_language_features::register_capabilities()
                             "regexp", //        self_def_type      = 15
                             "parameter" } }, // ordinary_symbol    = 16
                       { "tokenModifiers", json::array() } } },
-                { "full", true } } } };
+                { "full", true } } },
+        { "documentSymbolProvider", true } };
 }
 
 void feature_language_features::initialize_feature(const json&)
@@ -242,6 +245,84 @@ void feature_language_features::semantic_tokens(const json& id, const json& para
     json num_array = convert_tokens_to_num_array(tokens);
 
     response_->respond(id, "", { { "data", num_array } });
+}
+
+// document symbol item kinds from the LSP specification
+enum class lsp_document_symbol_item_kind
+{
+    File = 1,
+    Module = 2,
+    Namespace = 3,
+    Package = 4,
+    Class = 5,
+    Method = 6,
+    Property = 7,
+    Field = 8,
+    Constructor = 9,
+    Enum = 10,
+    Interface = 11,
+    Function = 12,
+    Variable = 13,
+    Constant = 14,
+    String = 15,
+    Number = 16,
+    Boolean = 17,
+    Array = 18,
+    Object = 19,
+    Key = 20,
+    Null = 21,
+    EnumMember = 22,
+    Struct = 23,
+    Event = 24,
+    Operator = 25,
+    TypeParameter = 26
+};
+
+
+const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symbol_item_kind>
+    document_symbol_item_kind_mapping { { parser_library::document_symbol_kind::DAT,
+                                            lsp_document_symbol_item_kind::Array },
+        { parser_library::document_symbol_kind::EQU, lsp_document_symbol_item_kind::Boolean },
+        { parser_library::document_symbol_kind::MACH, lsp_document_symbol_item_kind::Constant },
+        { parser_library::document_symbol_kind::ASM, lsp_document_symbol_item_kind::Boolean },
+        { parser_library::document_symbol_kind::UNKNOWN, lsp_document_symbol_item_kind::Operator },
+        { parser_library::document_symbol_kind::VAR, lsp_document_symbol_item_kind::Variable },
+        { parser_library::document_symbol_kind::SEQ, lsp_document_symbol_item_kind::String },
+        { parser_library::document_symbol_kind::COMMON, lsp_document_symbol_item_kind::Struct },
+        { parser_library::document_symbol_kind::DUMMY, lsp_document_symbol_item_kind::Class },
+        { parser_library::document_symbol_kind::EXECUTABLE, lsp_document_symbol_item_kind::Object },
+        { parser_library::document_symbol_kind::READONLY, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::EXTERNAL, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::WEAK_EXTERNAL, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::File } };
+
+json feature_language_features::document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol)
+{
+    return { { "name", symbol.name() },
+        { "kind", document_symbol_item_kind_mapping.at(symbol.kind()) },
+        { "range", range_to_json(symbol.symbol_range()) },
+        { "selectionRange", range_to_json(symbol.symbol_selection_range()) },
+        { "children", document_symbol_list_json(symbol.children()) } };
+}
+
+json feature_language_features::document_symbol_list_json(
+    hlasm_plugin::parser_library::document_symbol_list symbol_list)
+{
+    json result = json::array();
+    for (const auto& symbol : symbol_list)
+    {
+        result.push_back(document_symbol_item_json(symbol));
+    }
+    return result;
+}
+
+void feature_language_features::document_symbol(const json& id, const json& params)
+{
+    auto document_uri = params["textDocument"]["uri"].get<std::string>();
+
+    auto symbol_list = ws_mngr_.document_symbol(uri_to_path(document_uri).c_str());
+
+    response_->respond(id, "", document_symbol_list_json(symbol_list));
 }
 
 

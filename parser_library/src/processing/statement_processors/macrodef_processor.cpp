@@ -475,19 +475,20 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
 
 void macrodef_processor::add_correct_copy_nest()
 {
-    result_.nests.push_back({ location(curr_outer_position_, result_.definition_location.file) });
+    result_.nests.push_back({ context::copy_nest_item {
+        { curr_outer_position_, result_.definition_location.file }, result_.prototype.macro_name } });
 
     for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
     {
-        auto& nest = hlasm_ctx.current_copy_stack()[i];
-
-        result_.nests.back().emplace_back(nest.current_statement_position(), nest.definition_location->file);
+        const auto& nest = hlasm_ctx.current_copy_stack()[i];
+        result_.nests.back().emplace_back(context::copy_nest_item {
+            location { nest.current_statement_position(), nest.definition_location->file }, nest.name });
     }
 
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
         result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
-    const auto& current_file = result_.nests.back().back().file;
+    const auto& current_file = result_.nests.back().back().loc.file;
     bool in_inner_macro = macro_nest_ > 1;
 
 
