@@ -65,7 +65,8 @@ void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
     lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
-void collector::set_label_field(const std::string* label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
+void collector::set_label_field(
+    const std::string* label, std::string mixed_case_label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
 {
     if (lbl_)
         throw std::runtime_error("field already assigned");
@@ -74,7 +75,7 @@ void collector::set_label_field(const std::string* label, antlr4::ParserRuleCont
         || (parser_ctx->getStart() == parser_ctx->getStop()
             && parser_ctx->getStart()->getType() == lexing::lexer::Tokens::ORDSYMBOL))
     {
-        lbl_.emplace(symbol_range, *label);
+        lbl_.emplace(symbol_range, ord_symbol_string { label, std::move(mixed_case_label) });
     }
     // otherwise it is macro label parameter
     else
