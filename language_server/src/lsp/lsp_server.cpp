@@ -163,7 +163,6 @@ void server::on_initialize(json id, const json& param)
                 } },
             { "documentHighlightProvider", false },
             { "renameProvider", false },
-            { "documentSymbolProvider", false },
             { "workspaceSymbolProvider", false } } } };
 
     for (auto& f : features_)

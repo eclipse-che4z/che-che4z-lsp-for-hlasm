@@ -1,3 +1,34 @@
+## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
+
+
+### Features
+
+* Implement the CCW* instructions ([#154](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/154)) ([f750bcc](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f750bccc051abea4b1141a71720df109f0a3a670))
+* Minimal DB2 preprocessor emulator ([#140](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/140)) ([77275dd](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/77275dd91e8a8ba40ca8a60bd2d47435ccf39ff5))
+* Support for complex SQL types ([#146](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/146)) ([3e85b98](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/3e85b98b476eb0b66566a9e729d540fe8fbb8f36))
+
+
+### Fixes
+
+* AREAD/AINSERT support in macros called from copybooks ([#138](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/138)) ([bdc3718](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/bdc371894730eef021f08f8cadb45f07d622ba6e))
+* DB2 LOB locator and file variables are not processed correctly ([20a6fba](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/20a6fba747ca19682806eeadeef1ced851b881ea))
+* Dependency files caching ([#129](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/129)) ([2541b7a](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2541b7a18070e10071b5586827659f6695d54755))
+* EXLR flagged as error by plugin ([#121](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/121)) ([e097903](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/e097903698dcafac65c3ccc01faea6a78e9cc85d))
+* Inline macros overwriting external definition stored in macro cache ([#148](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/148)) ([93107b3](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/93107b315298ce9b3f5652f28b8ad7a3b8a7dbf3))
+* language server crashes while evaluating conditional assembly statements ([#139](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/139)) ([249e85d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/249e85d2da17caca532d8fadd8517f215a4dbfd4))
+* Remove (no longer supported) experimental flags when running WASM server variant on V8 version 9 and newer. ([1cabd76](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1cabd76999fdffa7a8e700e943813c9f41ac3431))
+* Syntax errors reported in bilingual macros ([#152](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/152)) ([a8b1201](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/a8b1201c7cddef5c9d5b5a00b6ae71d3a6e75641)), closes [#144](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/144)
+* Various small fixes ([#149](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/149)) ([c1a6896](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c1a6896ed799efa91f9cc7ff10f5f5d6b7981de3)), closes [eclipse/che-che4z-lsp-for-hlasm#143](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/143) [eclipse/che-che4z-lsp-for-hlasm#142](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/142)
+* Various small fixes ([#150](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/150)) ([36fdbda](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/36fdbda1ca93e5a3d4ca173f6253f2b04c6ed53f))
+
+
+### Other changes
+
+* changelog + readme for preprocessors ([70caf82](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/70caf8292ca64b82f94533de3b83002f42a20168))
+* Introduce a  mock usable throughout the parser library tests ([#145](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/145)) ([547948e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/547948e1a82f701338aa42de57c7f4e18f58c408))
+* Parser reports all its diagnostics using single channel ([#141](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/141)) ([656caf3](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/656caf3a21d231713b7d66a8cdbf26091a4a20ac))
+* Split complex classes ([#134](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/134)) ([78ca7e7](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/78ca7e75189df5123379110b2e1bb20b7552143e))
+
 ## [0.13.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.12.0...0.13.0) (2021-06-01)
 
 

@@ -42,8 +42,10 @@ processing_context::processing_context(processing::processing_kind proc_kind, bo
     , owns_source(owns_source)
 {}
 
-processing_frame::processing_frame(location proc_location, const code_scope& scope, file_processing_type proc_type)
+processing_frame::processing_frame(
+    location proc_location, const code_scope& scope, file_processing_type proc_type, id_index member)
     : proc_location(std::move(proc_location))
     , scope(scope)
     , proc_type(std::move(proc_type))
+    , member_name(member)
 {}

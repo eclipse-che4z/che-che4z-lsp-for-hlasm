@@ -2,6 +2,8 @@
 
 ## ****Unreleased****
 
+## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
+
 #### Added
 - Caching of macros and copy files, improving response time of the extension when editing already open file
 - Highlighting support for HLASM listings

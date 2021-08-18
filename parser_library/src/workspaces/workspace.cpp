@@ -315,6 +315,15 @@ lsp::completion_list_s workspace::completion(const std::string& document_uri,
     return opencodes.back()->get_lsp_feature_provider().completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
+lsp::document_symbol_list_s workspace::document_symbol(const std::string& document_uri) const
+{
+    auto opencodes = find_related_opencodes(document_uri);
+    if (opencodes.empty())
+        return {};
+    // for now take last opencode
+    return opencodes.back()->get_lsp_feature_provider().document_symbol(document_uri);
+}
+
 void workspace::open() { load_and_process_config(); }
 
 void workspace::close() { opened_ = false; }

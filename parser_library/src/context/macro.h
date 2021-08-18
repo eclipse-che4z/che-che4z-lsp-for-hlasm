@@ -17,6 +17,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #include "common_types.h"
 #include "copy_member.h"
@@ -44,10 +45,18 @@ struct macro_arg
 
 class macro_definition;
 struct macro_invocation;
+struct copy_member;
 using macro_invo_ptr = std::shared_ptr<macro_invocation>;
 using macro_def_ptr = std::shared_ptr<macro_definition>;
 using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
-using copy_nest_storage = std::vector<std::vector<location>>;
+
+struct copy_nest_item
+{
+    location loc;
+    id_index member_name;
+};
+
+using copy_nest_storage = std::vector<std::vector<copy_nest_item>>;
 
 // class representing macro definition
 // contains info about keyword, positional parameters of HLASM macro as well as list of statements

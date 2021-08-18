@@ -62,7 +62,7 @@ auto tie_occurence(const lsp::symbol_occurence& lhs)
 void sort_occurence_vector(std::vector<lsp::symbol_occurence>& v)
 {
     std::sort(v.begin(), v.end(), [](const lsp::symbol_occurence& lhs, const lsp::symbol_occurence& rhs) {
-        return tie_occurence(lhs) <= tie_occurence(rhs);
+        return tie_occurence(lhs) < tie_occurence(rhs);
     });
 }
 

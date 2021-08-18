@@ -40,8 +40,11 @@ private:
     void hover(const json& id, const json& params);
     void completion(const json& id, const json& params);
     void semantic_tokens(const json& id, const json& params);
+    void document_symbol(const json& id, const json& params);
 
     static json get_markup_content(std::string_view content);
+    json document_symbol_item_json(hlasm_plugin::parser_library::document_symbol_item symbol);
+    json document_symbol_list_json(hlasm_plugin::parser_library::document_symbol_list symbol_list);
 };
 
 } // namespace hlasm_plugin::language_server::lsp

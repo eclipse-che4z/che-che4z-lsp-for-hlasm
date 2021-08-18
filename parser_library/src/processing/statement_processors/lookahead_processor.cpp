@@ -290,8 +290,8 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
     if (statement.label_ref().type != semantics::label_si_type::ORD)
         return;
 
-    auto name = std::get<std::string>(statement.label_ref().value);
-    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(std::move(name));
+    auto name = std::get<semantics::ord_symbol_string>(statement.label_ref().value).symbol;
+    auto [valid, id] = context_manager(hlasm_ctx).try_get_symbol_name(*name);
     if (!valid)
         return;
 
@@ -325,7 +325,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 
 void lookahead_processor::register_attr_ref(context::id_index name, context::symbol_attributes attributes)
 {
-    hlasm_ctx.ord_ctx.add_symbol_reference(context::symbol(name, context::symbol_value(), attributes, location()));
+    hlasm_ctx.ord_ctx.add_symbol_reference(context::symbol(name, context::symbol_value(), attributes, location(), {}));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

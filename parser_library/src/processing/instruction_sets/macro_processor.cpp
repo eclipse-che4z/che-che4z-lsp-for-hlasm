@@ -180,18 +180,20 @@ macro_arguments macro_processor::get_args(const resolved_statement& statement) c
 
 context::macro_data_ptr macro_processor::get_label_args(const resolved_statement& statement) const
 {
-    switch (statement.label_ref().type)
+    const auto& label = statement.label_ref();
+    switch (label.type)
     {
         case semantics::label_si_type::CONC:
-            return std::make_unique<context::macro_param_data_single>(semantics::concatenation_point::evaluate(
-                std::get<semantics::concat_chain>(statement.label_ref().value), eval_ctx));
-        case semantics::label_si_type::ORD:
-        case semantics::label_si_type::MAC:
             return std::make_unique<context::macro_param_data_single>(
-                std::get<std::string>(statement.label_ref().value));
+                semantics::concatenation_point::evaluate(std::get<semantics::concat_chain>(label.value), eval_ctx));
+        case semantics::label_si_type::ORD:
+            return std::make_unique<context::macro_param_data_single>(
+                std::get<semantics::ord_symbol_string>(label.value).mixed_case);
+        case semantics::label_si_type::MAC:
+            return std::make_unique<context::macro_param_data_single>(std::get<std::string>(label.value));
         case semantics::label_si_type::VAR:
-            return std::make_unique<context::macro_param_data_single>(semantics::var_sym_conc::evaluate(
-                std::get<semantics::vs_ptr>(statement.label_ref().value)->evaluate(eval_ctx)));
+            return std::make_unique<context::macro_param_data_single>(
+                semantics::var_sym_conc::evaluate(std::get<semantics::vs_ptr>(label.value)->evaluate(eval_ctx)));
         default:
             return context::macro_data_ptr();
     }

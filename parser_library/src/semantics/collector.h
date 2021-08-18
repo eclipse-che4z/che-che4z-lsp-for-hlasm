@@ -42,7 +42,8 @@ public:
     void set_label_field(range symbol_range);
     void set_label_field(std::string label, range symbol_range);
     void set_label_field(seq_sym sequence_symbol, range symbol_range);
-    void set_label_field(const std::string* label, antlr4::ParserRuleContext* ctx, range symbol_range);
+    void set_label_field(
+        const std::string* label, std::string mixed_case_label, antlr4::ParserRuleContext* ctx, range symbol_range);
     void set_label_field(concat_chain label, range symbol_range);
 
     void set_instruction_field(range symbol_range);
