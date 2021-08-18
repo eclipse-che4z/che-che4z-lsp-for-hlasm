@@ -143,12 +143,12 @@ string_v_actual returns [concat_chain chain]
 	};
 
 model_string_v returns [concat_chain chain]
-	: ap1=(APOSTROPHE|ATTR) string_ch_v_c ap2=(APOSTROPHE|ATTR)	
+	: ap1=(APOSTROPHE|ATTR) model_string_ch_v_c ap2=(APOSTROPHE|ATTR)
 	{ 
 		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap1)));
-		$chain.insert($chain.end(), 
-			std::make_move_iterator($string_ch_v_c.chain.begin()), 
-			std::make_move_iterator($string_ch_v_c.chain.end())
+		$chain.insert($chain.end(),
+			std::make_move_iterator($model_string_ch_v_c.chain.begin()),
+			std::make_move_iterator($model_string_ch_v_c.chain.end())
 		);
 		$chain.push_back(std::make_unique<char_str_conc>("'", provider.get_range($ap2)));
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
