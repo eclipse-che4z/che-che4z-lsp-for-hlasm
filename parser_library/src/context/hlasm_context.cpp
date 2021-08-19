@@ -147,9 +147,9 @@ void hlasm_context::add_system_vars_to_scope()
 
             macro_data_ptr mac_data = std::make_unique<macro_param_data_composite>(std::move(data));
 
-            auto var = std::make_shared<system_variable>(SYSMAC, std::move(mac_data), false);
+            sys_sym_ptr var = std::make_shared<system_variable_sysmac>(SYSMAC, std::move(mac_data), false);
 
-            curr_scope()->system_variables.insert({ SYSMAC, var });
+            curr_scope()->system_variables.insert({ SYSMAC, std::move(var) });
         }
     }
     add_global_system_vars();

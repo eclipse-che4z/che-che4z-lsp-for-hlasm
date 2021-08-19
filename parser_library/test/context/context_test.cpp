@@ -566,11 +566,21 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
  MACRO
  M1
  GBLA V1
- GBLC V2,V3,V5
+ GBLC V2,V3,V5,V6,V7
+ GBLC T1,T2,T3
+ GBLA K1,K2,K3
 &V1 SETA &SYSNEST
 &V2 SETC '&SYSMAC(&SYSNEST)'
 &V3 SETC '&SYSMAC(1)'
 &V5 SETC '&SYSMAC(0)'
+&V6 SETC '&SYSMAC'
+&V7 SETC '&SYSMAC(0,1,2,3,4,5,6,7,8,9,1)'
+&T1 SETC T'&SYSMAC
+&T2 SETC T'&SYSMAC(0)
+&T3 SETC T'&SYSMAC(10)
+&K1 SETA K'&SYSMAC
+&K2 SETA K'&SYSMAC(0)
+&K3 SETA K'&SYSMAC(10)
  MEND
 
  MACRO
@@ -581,7 +591,9 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
  MEND
  
  GBLA V1,V4
- GBLC V2,V3,V5
+ GBLC V2,V3,V5,V6,V7
+ GBLC T1,T2,T3
+ GBLA K1,K2,K3
 
  M2
 )";
@@ -597,4 +609,14 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v3"), "M2");
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v4"), 1);
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v5"), "M1");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v6"), "M1");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v7"), "M2");
+
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "t1"), "U");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "t2"), "U");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "t3"), "O");
+
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "k1"), 2);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "k2"), 2);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "k3"), 0);
 }
