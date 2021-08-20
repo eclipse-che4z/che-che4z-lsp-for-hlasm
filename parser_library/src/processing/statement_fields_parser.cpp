@@ -52,6 +52,54 @@ const parsing::parser_holder& statement_fields_parser::prepare_parser(const std:
     return *m_parser;
 }
 
+void append_sanitized(std::string& result, std::string_view str)
+{
+    auto it = str.begin();
+    auto end = str.end();
+    while (true)
+    {
+        auto first_complex = std::find_if(it, end, [](unsigned char c) { return c >= 0x80; });
+        result.append(it, first_complex);
+        it = first_complex;
+        if (it == end)
+            break;
+
+        unsigned char c = *it;
+        auto cs = lexing::utf8_prefix_sizes[c];
+        if (cs.utf8 && (end - it) >= cs.utf8
+            && std::all_of(it + 1, it + cs.utf8, [](unsigned char c) { return (c & 0xC0) == 0x80; }))
+        {
+            result.append(it, it + cs.utf8);
+            it += cs.utf8;
+        }
+        else
+        {
+            static const char hex_digits[] = "0123456789ABCDEF";
+            result.append(1, '<');
+            result.append(1, hex_digits[(c >> 4) & 0xf]);
+            result.append(1, hex_digits[(c >> 0) & 0xf]);
+            result.append(1, '>');
+
+            ++it;
+        }
+    }
+}
+
+std::string decorate_message(const std::string& field, const std::string& message)
+{
+    static const std::string_view prefix = "While evaluating the result of substitution '";
+    static const std::string_view arrow = "' => ";
+    std::string result;
+    result.reserve(prefix.size() + field.size() + arrow.size() + message.size());
+
+    result.append(prefix);
+    append_sanitized(result, field);
+    result.append(arrow);
+    result.append(message);
+
+    return result;
+}
+
 std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser::parse_operand_field(std::string field,
     bool after_substitution,
     semantics::range_provider field_range,
@@ -64,7 +112,7 @@ std::pair<semantics::operands_si, semantics::remarks_si> statement_fields_parser
 
     diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
         if (after_substitution)
-            diag.message = "While evaluating the result of substitution '" + field + "' => " + std::move(diag.message);
+            diag.message = decorate_message(field, diag.message);
         add_diag.add_diagnostic(std::move(diag));
     });
     const auto& h = prepare_parser(field, after_substitution, std::move(field_range), status, add_diag_subst);

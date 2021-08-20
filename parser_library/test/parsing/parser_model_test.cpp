@@ -240,3 +240,32 @@ TEST(parser, parse_single_apostrophe_literal)
     auto cc = concatenation_point::to_string(model->chain);
     EXPECT_EQ(std::count(cc.begin(), cc.end(), '\''), 4);
 }
+
+TEST(parser, sanitize_message_content_replace)
+{
+    diagnostic_op_consumer_container diag_container;
+
+    range r(position(0, 10), position(0, 15));
+    auto [op, rem] = parse_model("=C'\xC2'", r, true, &diag_container);
+
+    ASSERT_EQ(diag_container.diags.size(), 1);
+
+    const auto& msg = diag_container.diags[0].message;
+
+    EXPECT_TRUE(std::all_of(msg.begin(), msg.end(), [](unsigned char c) { return c < 0x80; }));
+}
+
+TEST(parser, sanitize_message_content_valid_multibyte)
+{
+    diagnostic_op_consumer_container diag_container;
+
+    range r(position(0, 10), position(0, 14));
+    std::string line = "=C'\xC2\x80";
+    auto [op, rem] = parse_model(line, r, true, &diag_container);
+
+    ASSERT_EQ(diag_container.diags.size(), 1);
+
+    const auto& msg = diag_container.diags[0].message;
+
+    EXPECT_NE(msg.find(line), std::string::npos);
+}
