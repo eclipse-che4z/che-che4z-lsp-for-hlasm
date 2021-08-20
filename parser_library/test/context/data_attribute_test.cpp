@@ -311,6 +311,26 @@ SYMA    DC A(0)
     ASSERT_EQ(a.diags().size(), 0U);
 }
 
+TEST(data_attributes, T_var_zero_subscript)
+{
+    std::string input = R"(
+SYMC    DC C''
+SYMA    DC A(0)
+
+&arr(1) SETC 'SYMC','SYMA'
+
+&t1     SETC t'&arr(0)
+
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 1U);
+    EXPECT_EQ(a.diags()[0].code, "E012");
+}
+
 TEST(data_attributes, D)
 {
     std::string input = R"(

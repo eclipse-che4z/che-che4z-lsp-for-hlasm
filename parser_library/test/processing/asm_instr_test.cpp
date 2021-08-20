@@ -82,3 +82,54 @@ A LR 1,1
     ASSERT_NE(symbol_after, nullptr);
     EXPECT_EQ(symbol_after->value().get_reloc().offset(), 8);
 }
+
+TEST(asm_instr_processing, CNOP_byte_expr)
+{
+    std::string input = R"(
+         DC CL4''
+N14      EQU 14
+CNOPSYM  CNOP N14,16
+
+A        LR 1,1
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), 0U);
+
+    auto& ctx = *a.context().hlasm_ctx;
+
+    auto symbol = ctx.ord_ctx.get_symbol(ctx.ids().add("CNOPSYM"));
+    ASSERT_NE(symbol, nullptr);
+    EXPECT_EQ(symbol->value().get_reloc().offset(), 4);
+
+    auto symbol_after = ctx.ord_ctx.get_symbol(ctx.ids().add("A"));
+    ASSERT_NE(symbol_after, nullptr);
+    EXPECT_EQ(symbol_after->value().get_reloc().offset(), 14);
+}
+
+TEST(asm_instr_processing, CNOP_non_absolute_expr)
+{
+    std::string input = R"(
+ADDR DC CL4''
+
+CNOPSYM CNOP ADDR,16
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(a.diags().size(), 0U);
+
+    // Should emit a diagnostic, but we dont check relocatable symbols at all right now.
+    // EXPECT_EQ(a.diags().size(), 1U);
+    // EXPECT_EQ(a.diags()[0].code, "A143");
+
+    auto& ctx = *a.context().hlasm_ctx;
+
+    auto symbol = ctx.ord_ctx.get_symbol(ctx.ids().add("CNOPSYM"));
+    ASSERT_NE(symbol, nullptr);
+    EXPECT_EQ(symbol->value().get_reloc().offset(), 4);
+}

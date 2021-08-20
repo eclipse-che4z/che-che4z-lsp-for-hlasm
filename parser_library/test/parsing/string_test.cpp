@@ -77,7 +77,11 @@ INSTANTIATE_TEST_SUITE_P(parser,
         test_param { "literal_FS", "=FS'SYM STH'", "=FS'SYM STH'" },
         test_param { "number_before_attr_L", "=4L'SYM 93'", "=4L'SYM 93'" },
         test_param { "quote_before_attr_L", "\"L'SYM 93'", "\"L'SYM" },
-        test_param { "quote_before_attr_D", "\"D'SYM 93'", "\"D'SYM 93'" }),
+        test_param { "quote_before_attr_D", "\"D'SYM 93'", "\"D'SYM 93'" },
+
+        // Invalid inputs are currently parsed as remark, therefore the variable symbol is empty.
+        test_param { "no_ending_apostrophe", "\"N'SYM", "" },
+        test_param { "no_ending_apostrophe_2", "\"L'SYM' STH", "" }),
     stringer());
 } // namespace
 
@@ -101,4 +105,26 @@ TEST_P(parser_string_fixture, basic)
     auto par_value = get_var_value<C_t>(a.hlasm_ctx(), "PAR");
     ASSERT_TRUE(par_value.has_value());
     EXPECT_EQ(*par_value, GetParam().expected);
+}
+
+
+TEST(parser, incomplete_string)
+{
+    std::string input = R"(
+ GBLC &PAR
+ MACRO
+ MAC &VAR
+ GBLC &PAR
+&PAR SETC &VAR 
+ MEND
+ 
+ MAC 'A 93)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), 0U);
+
+    auto par_value = get_var_value<C_t>(a.hlasm_ctx(), "PAR");
+    ASSERT_TRUE(par_value.has_value());
 }
