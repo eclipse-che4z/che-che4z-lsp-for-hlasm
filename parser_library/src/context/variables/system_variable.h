@@ -51,6 +51,19 @@ protected:
     const macro_param_data_component* real_data() const override;
 };
 
+// SYSMAC extras
+class system_variable_sysmac final : public system_variable
+{
+public:
+    using system_variable::system_variable;
+
+    // SYSMAC special behavior
+    const C_t& get_value(const std::vector<size_t>& offset) const override;
+    const C_t& get_value(size_t idx) const override;
+    const C_t& get_value() const override;
+    const macro_param_data_component* get_data(const std::vector<size_t>& offset) const override;
+};
+
 } // namespace hlasm_plugin::parser_library::context
 
 #endif

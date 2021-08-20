@@ -77,3 +77,25 @@ size_t system_variable::size(std::vector<size_t> offset) const
 }
 
 const macro_param_data_component* system_variable::real_data() const { return &*data_; }
+
+const C_t& system_variable_sysmac::get_value(const std::vector<size_t>& offset) const
+{
+    if (!offset.empty())
+        return get_data(offset)->get_value();
+    else
+        return get_data({ 0 })->get_value();
+}
+
+const C_t& system_variable_sysmac::get_value(size_t idx) const { return get_data({ idx })->get_value(); }
+
+const C_t& system_variable_sysmac::get_value() const { return get_data({ 0 })->get_value(); }
+
+const macro_param_data_component* system_variable_sysmac::get_data(const std::vector<size_t>& offset) const
+{
+    const macro_param_data_component* tmp = real_data();
+
+    if (!offset.empty())
+        tmp = tmp->get_ith(offset.back()); // what the original seems to do
+
+    return tmp;
+}
