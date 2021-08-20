@@ -2,6 +2,18 @@
 
 ## ****Unreleased****
 
+#### Added
+- Document outline support
+- CNOP instruction implementation (limited)
+
+#### Fixed
+- Preserve mixed-case labels on macro calls
+- Apostrophe parsing in model statements
+- Lexer generates the ATTR token only on data attributes that always consume the apostrophe
+- Fix instruction formats (STNSM, STOSM, CUUTF, CU21, LLI[LH][LH])
+- Evaluation of T'&VAR(num), where VAR is type C-type var symbol array
+- &SYSMAC should contain only the macro name
+
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
 #### Added
