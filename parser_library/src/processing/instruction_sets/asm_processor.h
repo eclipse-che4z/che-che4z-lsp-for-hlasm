@@ -62,10 +62,12 @@ private:
     void process_OPSYN(rebuilt_statement stmt);
     void process_AINSERT(rebuilt_statement stmt);
     void process_CCW(rebuilt_statement stmt);
+    void process_CNOP(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);
 
+    std::optional<context::A_t> try_get_abs_value(const semantics::operand* op) const;
     std::optional<context::A_t> try_get_abs_value(const semantics::simple_expr_operand* op) const;
 
     enum class external_type

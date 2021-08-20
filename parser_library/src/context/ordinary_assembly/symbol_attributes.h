@@ -69,6 +69,7 @@ struct symbol_attributes
     static symbol_attributes make_wxtrn_attrs();
     static symbol_attributes make_org_attrs();
     static symbol_attributes make_ccw_attrs();
+    static symbol_attributes make_cnop_attrs();
 
     // helper function to transform char to enum
     static data_attr_kind transform_attr(unsigned char c);

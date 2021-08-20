@@ -228,9 +228,9 @@ var_symbol returns [vs_ptr vs]
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
 
 data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value, range value_range]
-	: ORDSYMBOL attr data_attribute_value
+	: ORDSYMBOL (attr|apostrophe_as_attr) data_attribute_value
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $ORDSYMBOL), hl_scopes::data_attr_type));
+		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = get_attribute($ORDSYMBOL->getText());
 		$value = std::move($data_attribute_value.value);
 		$value_range = provider.get_range( $data_attribute_value.ctx);

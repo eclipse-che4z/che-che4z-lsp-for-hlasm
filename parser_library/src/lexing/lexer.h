@@ -94,7 +94,7 @@ public:
     // is next input char an ord char?
     bool is_ord_char() const;
     bool is_space() const;
-    bool is_data_attribute() const;
+    bool is_consuming_data_attribute() const;
     void set_unlimited_line(bool unlimited_lines);
     // set lexer's input state to file position
     void set_file_offset(position file_offset, bool process_allowed = false);

@@ -465,10 +465,12 @@ bool lexer::is_ord_char() const { return ord_char(input_state_->c); }
 
 bool lexer::is_space() const { return input_state_->c == ' ' || input_state_->c == '\n' || input_state_->c == '\r'; }
 
-bool lexer::is_data_attribute() const
+bool lexer::is_consuming_data_attribute() const
 {
+    // Although there are more data attributes (N, K, D), only these 5 consume the apostrophe right away, so that it
+    // cannot denote the beginning of string
     auto tmp = std::toupper(input_state_->c);
-    return tmp == 'D' || tmp == 'O' || tmp == 'N' || tmp == 'S' || tmp == 'K' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
 }
 
 void lexer::lex_word()
@@ -476,13 +478,16 @@ void lexer::lex_word()
     bool last_char_data_attr = false;
     bool ord = is_ord_char() && (input_state_->c < '0' || input_state_->c > '9');
     bool num = (input_state_->c >= '0' && input_state_->c <= '9');
-
+    size_t last_part_ord_len = 0;
     size_t w_len = 0;
     while (!is_space() && !eof() && !identifier_divider() && before_end())
     {
-        ord &= is_ord_char();
+        bool curr_ord = is_ord_char();
+        last_part_ord_len = curr_ord ? last_part_ord_len + 1 : 0;
+        ord &= curr_ord;
+
         num &= (input_state_->c >= '0' && input_state_->c <= '9');
-        last_char_data_attr = is_data_attribute();
+        last_char_data_attr = is_consuming_data_attribute();
 
         if (creating_var_symbol_ && !ord && w_len > 0 && w_len <= 63)
         {
@@ -503,7 +508,10 @@ void lexer::lex_word()
     else
         create_token(IDENTIFIER);
 
-    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && w_len == 1
+    // We generate the ATTR token even when we created identifier, but it ends with exactly one ordinary symbol which is
+    // also data attr symbol. That is because macro parameter "L'ORD must generate ATTR as string cannot start
+    // with the apostrophe
+    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && last_part_ord_len == 1
         && (unlimited_line_ || input_state_->char_position_in_line != end_))
     {
         start_token();

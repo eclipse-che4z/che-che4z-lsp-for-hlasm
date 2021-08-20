@@ -287,19 +287,48 @@ TEST(data_attributes, T_macro_params)
 TEST(data_attributes, T_var_to_ord_syms)
 {
     std::string input = R"(
-LAB LR 1,1
-&v1 setc 'LAB'
+LAB     LR 1,1
+SYMC    DC C''
+SYMA    DC A(0)
 
-&t1 setc t'&v1
+&v1     SETC 'LAB'
+&arr(1) SETC 'SYMC','SYMA'
+
+&t1     SETC t'&v1
+&t2     SETC t'&arr(1)
+&t3     SETC t'&arr(2)
+
 )";
 
     analyzer a(input);
     a.analyze();
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T1"), "I");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T2"), "C");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T3"), "A");
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), 0U);
+}
+
+TEST(data_attributes, T_var_zero_subscript)
+{
+    std::string input = R"(
+SYMC    DC C''
+SYMA    DC A(0)
+
+&arr(1) SETC 'SYMC','SYMA'
+
+&t1     SETC t'&arr(0)
+
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    ASSERT_EQ(a.diags().size(), 1U);
+    EXPECT_EQ(a.diags()[0].code, "E012");
 }
 
 TEST(data_attributes, D)

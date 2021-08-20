@@ -444,8 +444,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "CVDY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
     add_machine_instr(result, "CVDG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 715);
     add_machine_instr(result, "CU24", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 715);
-    add_machine_instr(result, "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 718);
-    add_machine_instr(result, "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 718);
+    add_machine_instr(result, "CUUTF", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
+    add_machine_instr(result, "CU21", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 718);
     add_machine_instr(result, "CU42", mach_format::RRE, { reg_4_U, reg_4_U }, 722);
     add_machine_instr(result, "CU41", mach_format::RRE, { reg_4_U, reg_4_U }, 725);
     add_machine_instr(result, "CUTFU", mach_format::RRF_c, { reg_4_U, reg_4_U, mask_4_U }, 1, 728);
@@ -589,11 +589,11 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "LLGHRL", mach_format::RIL_b, { reg_4_U, rel_addr_imm_32_S }, 764);
     add_machine_instr(result, "LLHH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 765);
     add_machine_instr(result, "LLIHF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
-    add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
+    add_machine_instr(result, "LLIHH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
+    add_machine_instr(result, "LLIHL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
     add_machine_instr(result, "LLILF", mach_format::RIL_a, { reg_4_U, imm_32_S }, 765);
-    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
-    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_S }, 765);
+    add_machine_instr(result, "LLILH", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
+    add_machine_instr(result, "LLILL", mach_format::RI_a, { reg_4_U, imm_16_U }, 765);
     add_machine_instr(result, "LLGTR", mach_format::RRE, { reg_4_U, reg_4_U }, 765);
     add_machine_instr(result, "LLGT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
     add_machine_instr(result, "LLGTAT", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 766);
@@ -962,8 +962,8 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "STPX", mach_format::S, { db_12_4_U }, 1121);
     add_machine_instr(result, "STRAG", mach_format::SSE, { db_12_4_U, db_12_4_U }, 1121);
     add_machine_instr(result, "STSI", mach_format::S, { db_12_4_U }, 1122);
-    add_machine_instr(result, "STOSM", mach_format::SI, { db_12_4_U, imm_8_S }, 1146);
-    add_machine_instr(result, "STNSM", mach_format::SI, { db_12_4_U, imm_8_S }, 1146);
+    add_machine_instr(result, "STOSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
+    add_machine_instr(result, "STNSM", mach_format::SI, { db_12_4_U, imm_8_U }, 1146);
     add_machine_instr(result, "STURA", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
     add_machine_instr(result, "STURG", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
     add_machine_instr(result, "TAR", mach_format::RRE, { reg_4_U, reg_4_U }, 1147);
