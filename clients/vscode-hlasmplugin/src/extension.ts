@@ -23,6 +23,7 @@ import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
+import { Telemetry } from './telemetry';
 
 const offset = 71;
 const continueColumn = 15;
@@ -36,6 +37,10 @@ const sleep = (ms: number) => {
  * activates the extension
  */
 export async function activate(context: vscode.ExtensionContext) {
+    
+    var telem = new Telemetry();
+    telem.reportEvent("test EVENT");
+    context.subscriptions.push(telem);
     // patterns for files and configs
     const filePattern: string = '**/*';
 
