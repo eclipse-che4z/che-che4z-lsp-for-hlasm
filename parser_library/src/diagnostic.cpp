@@ -1835,7 +1835,8 @@ diagnostic_op diagnostic_op::error_E072(const range& range)
 
 diagnostic_op diagnostic_op::error_E073(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "E073", "Illegal START instruction - CSECT already exists.", range);
+    return diagnostic_op(
+        diagnostic_severity::error, "E073", "Illegal START instruction - CSECT already exists.", range);
 }
 
 diagnostic_op diagnostic_op::warning_W010(const std::string& message, const range& range)
