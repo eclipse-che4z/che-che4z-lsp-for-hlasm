@@ -69,6 +69,7 @@ class hlasm_context
 
     // Compiler options
     asm_option asm_options_;
+    static constexpr alignment sectalgn = doubleword;
 
     // map of all instruction in HLASM
     const instruction_storage instruction_map_;
@@ -264,6 +265,8 @@ public:
     }
     unsigned long sysndx_limit() const { return SYSNDX_limit; }
     static constexpr unsigned long sysndx_limit_max() { return SYSNDX_limit_max; }
+
+    alignment section_alignment() const { return sectalgn; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

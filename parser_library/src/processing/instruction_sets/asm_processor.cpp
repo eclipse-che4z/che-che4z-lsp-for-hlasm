@@ -641,6 +641,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("CCW0"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
 
     return table;
 }
@@ -763,6 +764,54 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
         return;
 
     hlasm_ctx.ord_ctx.reserve_storage_area(0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value });
+}
+
+
+void asm_processor::process_START(rebuilt_statement stmt)
+{
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
+
+    auto sect_name = find_label_symbol(stmt);
+
+    if (std::any_of(hlasm_ctx.ord_ctx.sections().begin(), hlasm_ctx.ord_ctx.sections().end(), [](const auto& s) {
+            return s->kind == context::section_kind::EXECUTABLE || s->kind == context::section_kind::READONLY;
+        }))
+    {
+        add_diagnostic(diagnostic_op::error_E073(stmt.stmt_range_ref()));
+        return;
+    }
+
+    if (hlasm_ctx.ord_ctx.symbol_defined(sect_name))
+    {
+        add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        return;
+    }
+
+    auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+    sym_loc.pos.column = 0;
+    hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
+
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.size() != 1)
+        return;
+
+    auto initial_offset = try_get_abs_value(ops.front().get());
+    if (!initial_offset.has_value())
+        return;
+
+    size_t start_section_alignment = hlasm_ctx.section_alignment().boundary;
+    size_t start_section_alignment_mask = start_section_alignment - 1;
+
+    auto offset = initial_offset.value();
+    if (offset & start_section_alignment_mask)
+    {
+        // TODO: generate informational message?
+        offset += start_section_alignment_mask;
+        offset &= ~start_section_alignment_mask;
+    }
+
+    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
