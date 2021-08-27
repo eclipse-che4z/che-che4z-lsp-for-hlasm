@@ -29,8 +29,15 @@ macro_processor::macro_processor(
 
 void macro_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    auto args = get_args(*stmt);
+    const auto next_sysndx = hlasm_ctx.next_sysndx();
+    const auto sysndx_limit = hlasm_ctx.sysndx_limit();
+    if (next_sysndx > sysndx_limit)
+    {
+        add_diagnostic(diagnostic_op::error_E072(stmt->stmt_range_ref()));
+        return;
+    }
 
+    auto args = get_args(*stmt);
     hlasm_ctx.enter_macro(stmt->opcode_ref().value, std::move(args.name_param), std::move(args.symbolic_params));
 }
 

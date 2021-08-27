@@ -69,6 +69,7 @@ id_storage::well_known_strings::well_known_strings(std::unordered_set<std::strin
     , MACRO(&*ptr.emplace("MACRO").first)
     , MEND(&*ptr.emplace("MEND").first)
     , MEXIT(&*ptr.emplace("MEXIT").first)
+    , MHELP(&*ptr.emplace("MHELP").first)
     , ASPACE(&*ptr.emplace("ASPACE").first)
     , AIF(&*ptr.emplace("AIF").first)
     , AGO(&*ptr.emplace("AGO").first)

@@ -395,6 +395,73 @@ TEST(ACTR, infinite_ACTR)
     ASSERT_EQ(a.diags().size(), (size_t)1);
 }
 
+TEST(MHELP, SYSNDX_limit)
+{
+    std::string input = R"(
+         GBLC &LASTNDX
+         MACRO
+         MAC
+         GBLC &LASTNDX
+&LASTNDX SETC '&SYSNDX'
+         MEND
+
+         MHELP 256
+&I       SETA  0
+.NEXT    AIF   (&I GT 256).DONE
+&I       SETA  &I+1
+         MAC
+         AGO   .NEXT
+.DONE    ANOP  ,
+ )";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E072" }));
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "LASTNDX"), "0256");
+}
+
+TEST(MHELP, invalid_operands)
+{
+    std::string input = R"(
+ MHELP
+ MHELP 1,1
+ MHELP ,
+ MHELP ABC
+ MHELP (1).ABC
+ABC EQU 1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E021", "E020", "E020", "CE012", "E010" }));
+}
+
+TEST(MHELP, valid_operands)
+{
+    std::string input = R"(
+ABC EQU 1
+&VAR SETA 1
+ MHELP 1
+ MHELP X'1'
+ MHELP B'1'
+ MHELP ABC
+ MHELP ABC+ABC
+ MHELP ABC*5
+ MHELP &VAR+1
+ MHELP &VAR*&VAR
+)";
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(SET, conversions_valid)
 {
     std::string input(R"(

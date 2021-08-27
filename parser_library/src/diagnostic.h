@@ -574,6 +574,8 @@ struct diagnostic_op
 
     static diagnostic_op error_E071(const range& range);
 
+    static diagnostic_op error_E072(const range& range);
+
     static diagnostic_op warning_W010(const std::string& message, const range& range);
 
     static diagnostic_op warning_W011(const range& range);

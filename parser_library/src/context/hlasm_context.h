@@ -15,13 +15,13 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
-#include <compiler_options.h>
 #include <deque>
 #include <memory>
 #include <set>
 #include <vector>
 
 #include "code_scope.h"
+#include "compiler_options.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
@@ -75,7 +75,10 @@ class hlasm_context
     instruction_storage init_instruction_map();
 
     // value of system variable SYSNDX
-    size_t SYSNDX_;
+    unsigned long SYSNDX_ = 1;
+    static constexpr unsigned long SYSNDX_limit_max = 9999999UL;
+    unsigned long SYSNDX_limit = SYSNDX_limit_max;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -252,6 +255,15 @@ public:
 
         return val;
     }
+
+    unsigned long next_sysndx() const { return SYSNDX_; }
+    void sysndx_limit(unsigned long limit)
+    {
+        assert(limit <= SYSNDX_limit_max);
+        SYSNDX_limit = limit;
+    }
+    unsigned long sysndx_limit() const { return SYSNDX_limit; }
+    static constexpr unsigned long sysndx_limit_max() { return SYSNDX_limit_max; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

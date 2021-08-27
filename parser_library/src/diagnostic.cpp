@@ -1828,6 +1828,11 @@ diagnostic_op diagnostic_op::error_E071(const range& range)
     return diagnostic_op(diagnostic_severity::error, "E071", "Macro prototype expected.", range);
 }
 
+diagnostic_op diagnostic_op::error_E072(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "E072", "SYSNDX limit reached, macro call supressed.", range);
+}
+
 diagnostic_op diagnostic_op::warning_W010(const std::string& message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "W010", message + " not expected", range);

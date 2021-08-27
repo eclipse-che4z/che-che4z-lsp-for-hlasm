@@ -73,9 +73,8 @@ void hlasm_context::add_system_vars_to_scope()
             auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
 
             std::string value = std::to_string(SYSNDX_);
-            int tmp_size = (int)value.size();
-            for (int i = 0; i < 4 - tmp_size; ++i)
-                value.insert(value.begin(), '0');
+            if (auto value_len = value.size(); value_len < 4)
+                value.insert(0, 4 - value_len, '0');
 
             val_ndx->set_value(std::move(value));
             curr_scope()->variables.insert({ SYSNDX, val_ndx });
@@ -256,7 +255,6 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
-    , SYSNDX_(0)
     , ord_ctx(*ids_, *this)
 {
     scope_stack_.emplace_back();
@@ -727,16 +725,19 @@ bool hlasm_context::is_in_macro() const { return scope_stack_.back().is_in_macro
 
 macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
 {
+    assert(SYSNDX_ <= SYSNDX_limit);
+
     macro_def_ptr macro_def = get_macro_definition(name);
     assert(macro_def);
 
-    auto invo((macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"))));
+    auto invo = macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"));
     scope_stack_.emplace_back(invo, macro_def);
     add_system_vars_to_scope();
 
     visited_files_.insert(macro_def->definition_location.file);
 
     ++SYSNDX_;
+
     return invo;
 }
 

@@ -61,6 +61,7 @@ public:
         const std::string* MACRO;
         const std::string* MEND;
         const std::string* MEXIT;
+        const std::string* MHELP;
         const std::string* ASPACE;
         const std::string* AIF;
         const std::string* AGO;

@@ -118,6 +118,7 @@ const std::vector<ca_instruction> instruction::ca_instructions = {
     { "MACRO", true },
     { "MEND", true },
     { "MEXIT", true },
+    { "MHELP", false },
     { "AEJECT", true },
     { "AREAD", false },
     { "ASPACE", false },

@@ -355,7 +355,7 @@ TEST(debugger, test)
                         }),
                 },
                 { "&SYSECT", "" },
-                { "&SYSNDX", "0000" },
+                { "&SYSNDX", "0001" },
                 { "&SYSSTYP", "" },
                 { "&SYSLOC", "" },
                 { "&SYSNEST", 1 },
