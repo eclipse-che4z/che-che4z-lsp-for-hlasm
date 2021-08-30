@@ -386,6 +386,8 @@ struct diagnostic_op
 
     static diagnostic_op warning_A249_sequence_symbol_expected(const range& range);
 
+    static diagnostic_op error_A250_absolute_with_known_symbols(const range& range);
+
     // other
 
     static diagnostic_op warning_A300_op_apostrophes_missing(const std::string& instr_name, const range& range);

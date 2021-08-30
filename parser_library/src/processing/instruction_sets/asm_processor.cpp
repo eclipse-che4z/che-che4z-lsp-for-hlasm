@@ -769,9 +769,6 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
 
 void asm_processor::process_START(rebuilt_statement stmt)
 {
-    if (!check(stmt, hlasm_ctx, checker_, *this))
-        return;
-
     auto sect_name = find_label_symbol(stmt);
 
     if (std::any_of(hlasm_ctx.ord_ctx.sections().begin(), hlasm_ctx.ord_ctx.sections().end(), [](const auto& s) {
@@ -794,11 +791,17 @@ void asm_processor::process_START(rebuilt_statement stmt)
 
     const auto& ops = stmt.operands_ref().value;
     if (ops.size() != 1)
+    {
+        check(stmt, hlasm_ctx, checker_, *this);
         return;
+    }
 
     auto initial_offset = try_get_abs_value(ops.front().get());
     if (!initial_offset.has_value())
+    {
+        add_diagnostic(diagnostic_op::error_A250_absolute_with_known_symbols(ops.front()->operand_range));
         return;
+    }
 
     size_t start_section_alignment = hlasm_ctx.section_alignment().boundary;
     size_t start_section_alignment_mask = start_section_alignment - 1;

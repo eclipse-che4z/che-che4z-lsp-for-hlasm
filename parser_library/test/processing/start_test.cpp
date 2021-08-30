@@ -100,11 +100,24 @@ TEST(START, dsect_not_csect)
     std::string input(R"(
 D DSECT
 E EQU 0
-S CSECT
+S START
 )");
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(START, symbol_not_known_yet)
+{
+    std::string input(R"(
+S START E
+E EQU 0
+)");
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A250" }));
 }
