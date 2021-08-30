@@ -378,8 +378,8 @@ bool workspace::load_and_process_config()
             auto lib_regex = lib_path;
             if (!utils::path::is_absolute(lib_path))
                 lib_path = utils::path::join(ws_path, lib_path);
-
             lib_path = utils::path::lexically_normal(lib_path);
+
             auto lib_paths = get_lib_list(lib_path);
 
             library_local_options opts;
@@ -398,6 +398,7 @@ bool workspace::load_and_process_config()
             {
                 for (auto path : lib_paths)
                 {
+                    std::cout << path << "\n";
                     lib_path = path;
                     prc_grp.add_library(
                         std::make_unique<library_local>(file_manager_, lib_path.string(), std::move(opts)));
@@ -593,6 +594,11 @@ std::set<std::filesystem::path> workspace::iterate_lib_path(std::string lib_path
         {
             list_of_libs = wildcard_current_search(lib_path, found);
         }
+    }
+    for (auto path : list_of_libs)
+    {
+        std::cout << "Iterate";
+        std::cout << path << "\n";
     }
     return list_of_libs;
 }

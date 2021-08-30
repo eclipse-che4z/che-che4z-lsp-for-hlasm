@@ -12,6 +12,24 @@
 					"libs": [
 						"libs/lib2"
 					]
+				},
+				{
+					"name": "P3",
+					"libs": [
+						"libs/*/"
+					]
+				},
+				{
+					"name": "P5",
+					"libs": [
+						"libs/**/"
+					]
+				},
+				{
+					"name": "P4",
+					"libs": [
+						"lib/*/"
+					]
 				}
 			]
 		}

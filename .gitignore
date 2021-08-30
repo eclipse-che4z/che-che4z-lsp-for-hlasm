@@ -56,3 +56,8 @@ parser_library/test/res/output/tokens/correctness.output
 !/.vscode/extensions.json
 
 parser_library/jni/generated/
+/_deps/antlr4cpp-src
+/_deps/boost_ext-src
+/_deps/antlr4cpp-src
+/_deps/boost_ext-src
+/_deps/antlr4cpp-src

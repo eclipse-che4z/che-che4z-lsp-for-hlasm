@@ -18,9 +18,8 @@
 #include <filesystem>
 #include <functional>
 #include <string>
-
+#include <set>
 #include "list_directory_rc.h"
-
 namespace hlasm_plugin::utils::path {
 
 bool is_relative(const std::filesystem::path&);
@@ -35,6 +34,10 @@ bool equal(const std::filesystem::path& left, const std::filesystem::path& right
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
+list_directory_rc list_current_directory(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
+list_directory_rc list_directory_recursively(
+    const std::filesystem::path& d, const std::string& ,std::function<void(const std::filesystem::path&)> h);
 } // namespace hlasm_plugin::utils::path
 
 #endif

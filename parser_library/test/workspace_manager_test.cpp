@@ -67,13 +67,51 @@ TEST(workspace_manager, did_open_file)
     workspace_manager ws_mngr;
     diag_consumer_mock consumer;
     ws_mngr.register_diagnostics_consumer(&consumer);
-
-    ws_mngr.add_workspace("workspace", "test/library/test_wks");
+     using namespace hlasm_plugin::utils;
+    std::string test_wks_path = path::join(path::join("test", "library"), "test_wks").string();
+     ws_mngr.add_workspace("workspace", test_wks_path.c_str
+     ());
 
     std::string input_text = "label lr 1,2";
     ws_mngr.did_open_file("test/library/test_wks/some_file", 1, input_text.c_str(), input_text.size());
 
     EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
+}
+TEST(workspace_manager, library_list_current_dir_search)
+{
+    workspace_manager ws_mngr;
+    diag_consumer_mock consumer;
+    ws_mngr.register_diagnostics_consumer(&consumer);
+ 
+    ws_mngr.add_workspace("workspace", "test/library/test_wks");
+    std::string input = " correctm";
+    ws_mngr.did_open_file("test/library/test_wks/source", 1, input.c_str(), input.size());
+    EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
+   
+}
+TEST(workspace_manager, library_list_recursive_dir_search)
+{
+    workspace_manager ws_mngr;
+    diag_consumer_mock consumer;
+
+
+    ws_mngr.register_diagnostics_consumer(&consumer);
+    ws_mngr.add_workspace("workspace", "test/library/test_wks");
+    std::string input = " correctv";
+    ws_mngr.did_open_file("test/library/test_wks/source1", 1, input.c_str(), input.size());
+    EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)0);
+}
+TEST(workspace_manager, library_list_current_dirpath_error)
+{
+    workspace_manager ws_mngr;
+    diag_consumer_mock consumer;
+    ws_mngr.register_diagnostics_consumer(&consumer);
+
+    ws_mngr.add_workspace("workspace", "test/library/test_wks");
+    std::string input = " correctm";
+    ws_mngr.did_open_file("test/library/test_wks/source2", 1, input.c_str(), input.size());
+    EXPECT_EQ(consumer.diags.diagnostics_size(), (size_t)2);
+    ws_mngr.did_close_file("test/library/test_wks/source2");
 }
 
 TEST(workspace_manager, did_change_file)
@@ -83,6 +121,8 @@ TEST(workspace_manager, did_change_file)
     ws_mngr.register_diagnostics_consumer(&consumer);
 
     ws_mngr.add_workspace("workspace", "test/library/test_wks");
+    std::filesystem::create_directories(" test/library/test_wks/libs/lib1");
+    std::filesystem::create_directories(" test/library/test_wks/libs/lib2");
     std::string input = "label lr 1,2 remark";
     ws_mngr.did_open_file("test/library/test_wks/new_file", 1, input.c_str(), input.size());
 

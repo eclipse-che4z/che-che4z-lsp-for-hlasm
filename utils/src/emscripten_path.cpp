@@ -13,6 +13,7 @@
  */
 #include <algorithm>
 #include <emscripten.h>
+#include <iostream>
 
 #include <emscripten/bind.h>
 
@@ -204,8 +205,148 @@ public:
                 throw std::logic_error("unreachable");
         }
     }
-};
+    list_directory_rc get_libraries_current(const std::filesystem::path& d)
+    {
+        auto path = path::absolute(d).string();
 
+        int result = EM_ASM_INT(
+            {
+                let rc = 0;
+                try
+                {
+                    const dir_name = UTF8ToString($0);
+                    const fs = require('fs');
+                    const path = require('path');
+
+                    fs.accessSync(dir_name);
+
+                    rc = 1;
+
+                    const dir = fs.opendirSync(dir_name);
+
+                    rc = 2;
+
+                    let de = null;
+                    while (de = dir.readSync())
+                    {
+                        if (de.isDirectory())
+                        {
+                            const file_name = path.join(dir_name, de.name);
+                            const buf_len = lengthBytesUTF8(file_name);
+                            const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                            stringToUTF8(file_name, ptr, buf_len + 1);
+                            Module.directory_listing_commit_buffer($1);
+                        }
+                        if (de.isSymbolicLink())
+                        {
+                            // resolve symlink to actual existing path
+                            const file_name = fs.realpathSync(path.join(directory, de.name));
+                            const buf_len = lengthBytesUTF8(file_name);
+                            const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                            stringToUTF8(file_name, ptr, buf_len + 1);
+                            Module.directory_listing_commit_buffer($1);
+                        }
+                    }
+                    rc = 3;
+                }
+                catch (e)
+                {}
+                return rc;
+            },
+            (intptr_t)path.c_str(),
+            (intptr_t)this);
+
+        switch (result)
+        {
+            case 0:
+                return list_directory_rc::not_exists;
+            case 1:
+                return list_directory_rc::not_a_directory;
+            case 2:
+                return list_directory_rc::other_failure;
+            case 3:
+                return list_directory_rc::done;
+            default:
+                throw std::logic_error("unreachable");
+        }
+    }
+    list_directory_rc get_libraries_recursive(const std::filesystem::path& d, const std::string suffix_path)
+    {
+        auto path = path::absolute(d).lexically_normal().string();
+        int result = EM_ASM_INT(
+            {
+                let rc = 0;
+                try
+                {
+                    const dir_name = UTF8ToString($0);
+                    const suffix_path = UTF8ToString($2);
+                    const recursion_limit = 99;
+                    const fs = require('fs');
+                    const path = require('path');
+
+                    fs.accessSync(dir_name);
+
+                    rc = 1;
+
+                    const access = fs.opendirSync(dir_name);
+
+                    rc = 2;
+
+                    const getFilesRecursively = (directory, recursion_depth) =>
+                    {
+                        if (recursion_depth > recursion_limit)
+                            return;
+                        let de = null;
+                        const dir = fs.opendirSync(directory);
+                        while (de = dir.readSync())
+                        {
+                            if (de.isSymbolicLink())
+                            {
+                                const file_name = fs.realpathSync(path.join(directory, de.name));
+                                const buf_len = lengthBytesUTF8(file_name);
+                                const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                                stringToUTF8(file_name, ptr, buf_len + 1);
+                                Module.directory_listing_commit_buffer($1);
+                                getFilesRecursively(file_name, recursion_depth++);
+                            }
+                            var regex = new RegExp(dir_name + suffix_path);
+                            if (de.isDirectory() && regex.test(de.name))
+                            {
+                                const file_name = path.join(dir_name, de.name);
+                                const buf_len = lengthBytesUTF8(file_name);
+                                const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                                stringToUTF8(file_name, ptr, buf_len + 1);
+                                Module.directory_listing_commit_buffer($1);
+                                getFilesRecursively(file_name, recursion_depth++);
+                            }
+                        }
+                    };
+                    getFilesRecursively(dir_name, 1);
+                    rc = 3;
+                }
+                catch (e)
+                {}
+                return rc;
+            },
+            (intptr_t)path.c_str(),
+            (intptr_t)this,
+            (intptr_t)suffix_path.c_str());
+
+        switch (result)
+        {
+            case 0:
+                return list_directory_rc::not_exists;
+            case 1:
+                return list_directory_rc::not_a_directory;
+            case 2:
+                return list_directory_rc::other_failure;
+            case 3:
+                return list_directory_rc::done;
+            default:
+                throw std::logic_error("unreachable");
+        }
+    }
+}; // namespace hlasm_plugin::utils::path
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
@@ -213,5 +354,17 @@ list_directory_rc list_directory_regular_files(
     directory_listing l(h);
     return l.run(d);
 }
-
+list_directory_rc list_current_directory(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
+{
+    // directory listing seems broken everywhere
+    directory_listing l(h);
+    return l.get_libraries_current(d);
+}
+list_directory_rc list_directory_recursively(
+    const std::filesystem::path& d, const std::string& suffix_path, std::function<void(const std::filesystem::path&)> h)
+{
+    directory_listing l(h);
+    return l.get_libraries_recursive(d, suffix_path);
+}
 } // namespace hlasm_plugin::utils::path

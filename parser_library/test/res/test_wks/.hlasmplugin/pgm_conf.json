@@ -11,6 +11,19 @@
     {
       "program": "new_file",
       "pgroup": "P1"
+    },
+    {
+      "program": "source",
+      "pgroup": "P3"
+    },
+    {
+      "program": "source2",
+      "pgroup": "P4"
+    },
+    {
+      "program": "source1",
+      "pgroup": "P5"
     }
+
   ]
 }
