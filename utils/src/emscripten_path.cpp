@@ -309,8 +309,8 @@ public:
                                 Module.directory_listing_commit_buffer($1);
                                 getFilesRecursively(file_name, recursion_depth++);
                             }
-                            var regex = new RegExp(dir_name + suffix_path);
-                            if (de.isDirectory() && regex.test(de.name))
+                           // var regex = new RegExp(dir_name + suffix_path);
+                            if (de.isDirectory() )
                             {
                                 const file_name = path.join(dir_name, de.name);
                                 const buf_len = lengthBytesUTF8(file_name);
