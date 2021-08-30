@@ -2103,6 +2103,17 @@ diagnostic_s diagnostic_s::warning_L0004(const std::string& path, const std::str
         {});
 }
 
+diagnostic_s diagnostic_s::warning_L0005(const std::string& pattern, size_t limit)
+{
+    return diagnostic_s("",
+        {},
+        diagnostic_severity::warning,
+        "L0005",
+        "Limit of " + std::to_string(limit) + " directories was reached while evaluating library pattern '" + pattern
+            + "'.",
+        {});
+}
+
 diagnostic_op diagnostic_op::error_S100(const std::string& message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "S100", "Long ordinary symbol name - " + message, range);

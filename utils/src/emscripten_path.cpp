@@ -148,7 +148,7 @@ public:
         }
     }
 
-    list_directory_rc run(const std::filesystem::path& d)
+    list_directory_rc files(const std::filesystem::path& d)
     {
         auto path = path::absolute(d).string();
 
@@ -204,6 +204,75 @@ public:
                 throw std::logic_error("unreachable");
         }
     }
+
+    list_directory_rc dirs(const std::filesystem::path& d)
+    {
+        auto path = path::absolute(d).string();
+
+        int result = EM_ASM_INT(
+            {
+                let rc = 0;
+                try
+                {
+                    const dir_name = UTF8ToString($0);
+                    const fs = require('fs');
+                    const path = require('path');
+
+                    fs.accessSync(dir_name);
+
+                    rc = 1;
+
+                    const dir = fs.opendirSync(dir_name);
+
+                    rc = 2;
+
+                    let de = null;
+                    while (de = dir.readSync())
+                    {
+                        if (de.isDirectory())
+                        {
+                            const file_name = path.join(dir_name, de.name);
+                            const buf_len = lengthBytesUTF8(file_name);
+                            const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                            stringToUTF8(file_name, ptr, buf_len + 1);
+                            Module.directory_listing_commit_buffer($1);
+                        }
+                        else if (de.isSymbolicLink())
+                        {
+                            const file_name = path.join(dir_name, fs.readlinkSync(path.join(dir_name, de.name)));
+                            const link_target = fs.statSync(file_name);
+                            if (link_target.isDirectory())
+                            {
+                                const buf_len = lengthBytesUTF8(file_name);
+                                const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                                stringToUTF8(file_name, ptr, buf_len + 1);
+                                Module.directory_listing_commit_buffer($1);
+                            }
+                        }
+                    }
+                    rc = 3;
+                }
+                catch (e)
+                {}
+                return rc;
+            },
+            (intptr_t)path.c_str(),
+            (intptr_t)this);
+
+        switch (result)
+        {
+            case 0:
+                return list_directory_rc::not_exists;
+            case 1:
+                return list_directory_rc::not_a_directory;
+            case 2:
+                return list_directory_rc::other_failure;
+            case 3:
+                return list_directory_rc::done;
+            default:
+                throw std::logic_error("unreachable");
+        }
+    }
 };
 
 list_directory_rc list_directory_regular_files(
@@ -211,7 +280,16 @@ list_directory_rc list_directory_regular_files(
 {
     // directory listing seems broken everywhere
     directory_listing l(h);
-    return l.run(d);
+    return l.files(d);
+}
+
+
+list_directory_rc list_directory_directories(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
+{
+    // directory listing seems broken everywhere
+    directory_listing l(h);
+    return l.dirs(d);
 }
 
 } // namespace hlasm_plugin::utils::path

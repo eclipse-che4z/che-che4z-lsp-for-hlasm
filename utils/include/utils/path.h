@@ -35,6 +35,8 @@ bool equal(const std::filesystem::path& left, const std::filesystem::path& right
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
+list_directory_rc list_directory_directories(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
 } // namespace hlasm_plugin::utils::path
 
 #endif

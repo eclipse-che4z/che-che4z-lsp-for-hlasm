@@ -68,4 +68,42 @@ list_directory_rc list_directory_regular_files(
     return list_directory_rc::done;
 }
 
+list_directory_rc list_directory_directories(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
+{
+    std::filesystem::directory_entry dir(d);
+
+    if (!dir.exists())
+        return list_directory_rc::not_exists;
+
+    if (!dir.is_directory())
+        return list_directory_rc::not_a_directory;
+
+    try
+    {
+        std::filesystem::directory_iterator it(dir);
+
+        for (auto& p : it)
+        {
+            if (p.is_directory())
+            {
+                h(p.path());
+            }
+            else if (p.is_symlink())
+            {
+                auto follow_symlink = join(d, std::filesystem::read_symlink(p));
+                std::filesystem::directory_entry de(follow_symlink);
+                if (de.exists() && de.is_directory())
+                    h(follow_symlink);
+            }
+        }
+    }
+    catch (const std::filesystem::filesystem_error&)
+    {
+        return list_directory_rc::other_failure;
+    }
+
+    return list_directory_rc::done;
+}
+
 } // namespace hlasm_plugin::utils::path
