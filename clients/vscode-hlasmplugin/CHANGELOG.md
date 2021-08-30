@@ -5,6 +5,7 @@
 #### Added
 - Document outline support
 - CNOP instruction implementation (limited)
+- START, MHELP instructions
 
 #### Fixed
 - Preserve mixed-case labels on macro calls

@@ -143,26 +143,27 @@ void parser_impl::resolve_expression(std::vector<expressions::ca_expr_ptr>& expr
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
 {
     auto [_, opcode] = *proc_status;
-    if (opcode.value == hlasm_ctx->ids().well_known.SETA || opcode.value == hlasm_ctx->ids().well_known.ACTR
-        || opcode.value == hlasm_ctx->ids().well_known.ASPACE || opcode.value == hlasm_ctx->ids().well_known.AGO)
+    const auto& wk = hlasm_ctx->ids().well_known;
+    if (opcode.value == wk.SETA || opcode.value == wk.ACTR || opcode.value == wk.ASPACE || opcode.value == wk.AGO
+        || opcode.value == wk.MHELP)
         resolve_expression(expr, context::SET_t_enum::A_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().well_known.SETB)
+    else if (opcode.value == wk.SETB)
     {
         if (!expr->is_compatible(ca_expression_compatibility::setb))
             expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
-    else if (opcode.value == hlasm_ctx->ids().well_known.AIF)
+    else if (opcode.value == wk.AIF)
     {
         if (!expr->is_compatible(ca_expression_compatibility::aif))
             expr->add_diagnostic(diagnostic_op::error_CE016_logical_expression_parenthesis(expr->expr_range));
 
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
-    else if (opcode.value == hlasm_ctx->ids().well_known.SETC)
+    else if (opcode.value == wk.SETC)
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
-    else if (opcode.value == hlasm_ctx->ids().well_known.AREAD)
+    else if (opcode.value == wk.AREAD)
     {
         // aread operand is just enumeration
     }
