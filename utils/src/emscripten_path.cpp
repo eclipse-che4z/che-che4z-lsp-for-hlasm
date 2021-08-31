@@ -240,7 +240,7 @@ public:
                         if (de.isSymbolicLink())
                         {
                             // resolve symlink to actual existing path
-                            const file_name = fs.realpathSync(path.join(directory, de.name));
+                            const file_name = fs.realpathSync(path.join(dir_name, de.name));
                             const buf_len = lengthBytesUTF8(file_name);
                             const ptr = Module.directory_listing_get_buffer($1, buf_len);
                             stringToUTF8(file_name, ptr, buf_len + 1);
@@ -300,23 +300,29 @@ public:
                         const dir = fs.opendirSync(directory);
                         while (de = dir.readSync())
                         {
+                            const file_name = path.join(directory, de.name);
                             if (de.isSymbolicLink())
                             {
-                                const file_name = fs.realpathSync(path.join(directory, de.name));
-                                const buf_len = lengthBytesUTF8(file_name);
-                                const ptr = Module.directory_listing_get_buffer($1, buf_len);
-                                stringToUTF8(file_name, ptr, buf_len + 1);
-                                Module.directory_listing_commit_buffer($1);
+                                
+                                if (file_name.match(suffix_path))
+                                {
+                                    const resolved_link = fs.realpathSync(file_name);
+                                    const buf_len = lengthBytesUTF8(resolved_link);
+                                    const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                                    stringToUTF8(resolved_link, ptr, buf_len + 1);
+                                    Module.directory_listing_commit_buffer($1);
+                                }
                                 getFilesRecursively(file_name, recursion_depth++);
                             }
-                           // var regex = new RegExp(dir_name + suffix_path);
                             if (de.isDirectory() )
-                            {
-                                const file_name = path.join(dir_name, de.name);
-                                const buf_len = lengthBytesUTF8(file_name);
-                                const ptr = Module.directory_listing_get_buffer($1, buf_len);
-                                stringToUTF8(file_name, ptr, buf_len + 1);
-                                Module.directory_listing_commit_buffer($1);
+                            {   
+                                if (file_name.match(suffix_path))
+                                {
+                                    const buf_len = lengthBytesUTF8(file_name);
+                                    const ptr = Module.directory_listing_get_buffer($1, buf_len);
+                                    stringToUTF8(file_name, ptr, buf_len + 1);
+                                    Module.directory_listing_commit_buffer($1);
+                                }
                                 getFilesRecursively(file_name, recursion_depth++);
                             }
                         }

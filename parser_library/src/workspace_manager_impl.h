@@ -72,7 +72,6 @@ public:
 
     void did_open_file(const std::string& document_uri, version_t version, std::string text)
     {
-        std::cout << document_uri << "filename";
         file_manager_.did_open_file(document_uri, version, std::move(text));
         if (cancel_ && *cancel_)
             return;

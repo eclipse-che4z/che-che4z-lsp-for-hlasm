@@ -90,7 +90,7 @@ std::set<std::filesystem::path> wildcard_recursive_search(std::string lib_path, 
     list_directory_result result;
     std::set<std::filesystem::path> list_of_libs;
     auto substr = std::filesystem::path(lib_path.substr(0, pos));
-    pos = pos + 1;
+    pos = pos + 2;
     std::string suffix_path = lib_path.substr(pos);
     suffix_path.pop_back();
     suffix_path = std::regex_replace(suffix_path, std::regex("\\*"), ".*");
@@ -99,7 +99,7 @@ std::set<std::filesystem::path> wildcard_recursive_search(std::string lib_path, 
         substr, suffix_path, [&result, &list_of_libs, &lib_path, &pos](const std::filesystem::path& f) {
             result.first[utils::path::filename(f).string()] = utils::path::absolute(f).string();
             list_of_libs.insert(
-                utils::path::absolute(f).append(lib_path.substr(pos, lib_path.size())).lexically_normal());
+                utils::path::absolute(f).lexically_normal());
         });
 
 
