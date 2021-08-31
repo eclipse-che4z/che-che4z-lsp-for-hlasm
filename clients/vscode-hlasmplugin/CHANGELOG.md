@@ -6,6 +6,7 @@
 - Document outline support
 - CNOP instruction implementation (limited)
 - START, MHELP instructions
+- Wildcard support in library specification
 
 #### Fixed
 - Preserve mixed-case labels on macro calls
