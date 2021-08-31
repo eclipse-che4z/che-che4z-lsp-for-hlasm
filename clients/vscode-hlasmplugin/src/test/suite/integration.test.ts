@@ -186,4 +186,25 @@ suite('Integration Test Suite', () => {
 
 		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
 	}).timeout(10000).slow(4000);
+
+	// change 'open' file to create diagnostic
+	test('Test library patterns', async () => {
+		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
+
+		assert.ok(files && files[0]);
+		const file = files[0];
+
+		// open the file
+		const document = await vscode.workspace.openTextDocument(file);
+
+		await vscode.window.showTextDocument(document);
+
+		await sleep(2000);
+
+		const allDiags = vscode.languages.getDiagnostics();
+		const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
+
+		if (patternDiags)
+			assert.ok(patternDiags[1].length == 0);
+	}).timeout(10000).slow(1000);
 });
