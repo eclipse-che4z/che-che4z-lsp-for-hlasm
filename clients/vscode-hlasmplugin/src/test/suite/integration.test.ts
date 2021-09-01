@@ -206,5 +206,5 @@ suite('Integration Test Suite', () => {
 
 		if (patternDiags)
 			assert.ok(patternDiags[1].length == 0);
-	}).timeout(10000).slow(1000);
+	}).timeout(10000).slow(2500);
 });

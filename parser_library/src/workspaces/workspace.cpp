@@ -429,7 +429,13 @@ void workspace::find_and_add_libs(
 
     std::set<std::string> processed_candidates;
     std::deque<std::string> dirs_to_search;
-    dirs_to_search.push_back(root);
+    dirs_to_search.push_back(std::move(root));
+
+    const auto fix_path = [](std::string path) {
+        if (!path.empty() && path.back() != '/' && path.back() != '\\')
+            path.push_back('/');
+        return path;
+    };
 
     constexpr size_t limit = 1000;
     while (!dirs_to_search.empty())
@@ -439,11 +445,8 @@ void workspace::find_and_add_libs(
             add_diagnostic(diagnostic_s::warning_L0005(path_pattern, limit));
             break;
         }
-        std::string path = std::move(dirs_to_search.front());
+        const std::string path = fix_path(utils::path::lexically_normal(std::move(dirs_to_search.front())).string());
         dirs_to_search.pop_front();
-        path = utils::path::lexically_normal(std::move(path)).string();
-        if (!path.empty() && path.back() != '/' && path.back() != '\\')
-            path.push_back('/');
         if (!processed_candidates.insert(path).second)
             continue;
 
@@ -451,7 +454,7 @@ void workspace::find_and_add_libs(
             prc_grp.add_library(std::make_unique<library_local>(file_manager_, path, opts));
 
         auto rc = utils::path::list_directory_directories(path, [&](const auto& path) {
-            if (auto p = path.string(); processed_candidates.count(p) == 0)
+            if (auto p = fix_path(path.string()); processed_candidates.count(p) == 0)
                 dirs_to_search.push_back(std::move(p));
         });
         if (rc != utils::path::list_directory_rc::done)
