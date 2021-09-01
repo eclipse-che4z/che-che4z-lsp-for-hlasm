@@ -663,3 +663,22 @@ TEST(aread, normal_processing_recovery_line_skipped)
     EXPECT_FALSE(a1.has_value());
     EXPECT_EQ(a2, 2);
 }
+
+TEST(aread, lookahead_in_ainsert)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         AINSERT '    AIF (1).L',BACK
+         AINSERT '.L  ANOP     ',BACK
+         MEND
+         MAC
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    EXPECT_TRUE(diags.empty());
+}
