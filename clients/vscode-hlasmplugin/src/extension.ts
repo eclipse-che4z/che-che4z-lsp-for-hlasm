@@ -24,6 +24,8 @@ import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 import { Telemetry } from './telemetry';
+import { getLatestInsidersMetadata } from 'vscode-test/out/util';
+import { LanguageClientErrorHandler } from './languageClientErrorHandler';
 
 const offset = 71;
 const continueColumn = 15;
@@ -31,6 +33,9 @@ const continueColumn = 15;
 const sleep = (ms: number) => {
     return new Promise((resolve) => { setTimeout(resolve, ms) });
 };
+
+
+
 //export var hlasmpluginClient : vscodelc.LanguageClient;
 /**
  * ACTIVATION
@@ -38,12 +43,15 @@ const sleep = (ms: number) => {
  */
 export async function activate(context: vscode.ExtensionContext) {
     
-    var telem = new Telemetry();
-    telem.reportEvent("test EVENT");
-    context.subscriptions.push(telem);
+    var telemetry = new Telemetry();
+    telemetry.reportEvent("hlasm.activated", {"reason" : "sth"});
+    context.subscriptions.push(telemetry);
+    
     // patterns for files and configs
     const filePattern: string = '**/*';
-
+    
+    const clientErrorHandler = new LanguageClientErrorHandler();
+    
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
     const clientOptions: vscodelc.LanguageClientOptions = {
@@ -55,8 +63,10 @@ export async function activate(context: vscode.ExtensionContext) {
             code2Protocol: (value: vscode.Uri) => value.toString(),
             protocol2Code: (value: string) =>
                 vscode.Uri.file((vscode.Uri.parse(value).fsPath))
-        }
+        },
+        errorHandler: clientErrorHandler
     };
+    
 
     // create server options
     var factory = new ServerFactory();
@@ -65,6 +75,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     //client init
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
+    
+    clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
 
     //asm contribution 
     var highlight = new SemanticTokensFeature(hlasmpluginClient);
@@ -81,12 +93,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (serverVariant === 'native')
         startCheckingNativeClient(hlasmpluginClient);
-
+        
     let api = {
         getExtension(): vscodelc.LanguageClient {
             return hlasmpluginClient;
+        },
+        getTelemetry(): Telemetry {
+            return telemetry;
         }
     };
+    let a = vscode.extensions.getExtension("broadcommfd.hlasm-language-support").isActive
     return api;
 }
 

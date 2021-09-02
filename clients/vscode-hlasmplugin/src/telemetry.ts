@@ -76,10 +76,10 @@ export class Telemetry {
         this.reporter = new TelemetryReporter(EXTENSION_ID, this.getExtensionVersion(), TELEMETRY_KEY);
     }
 
-    public reportEvent(content : any): void {
+    public reportEvent(eventName: string, content : any): void {
         if (this.isValidTelemetryKey()) {
             
-            this.reporter.sendTelemetryEvent(content.eventName, content, { 'numericMeasure': 123 });
+            this.reporter.sendTelemetryEvent(eventName, content, { 'numericMeasure': 123 });
         }
     }
 
