@@ -31,7 +31,7 @@ suite('Integration Test Suite', () => {
 	};
 
 	suiteSetup(async function () {
-		this.timeout(10000);
+		this.timeout(30000);
 		// 'open' should be in workspace
 		const files = await vscode.workspace.findFiles(workspace_file);
 
