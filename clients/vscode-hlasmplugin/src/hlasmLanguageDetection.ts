@@ -38,13 +38,21 @@ export class HLASMLanguageDetection {
     //automatic detection function
     setHlasmLanguage(document: vscode.TextDocument): boolean {
         // check only plain text files
-        if (document.languageId == 'plaintext') {
+        if (document.languageId == 'plaintext' && !this.EndsWithExtension(document)) {
             if (this.checkHlasmLanguage(document)) {
                 vscode.languages.setTextDocumentLanguage(document, 'hlasm');
                 return true;
             }
         }
         return document.languageId == 'hlasm';
+    }
+    //Checks for extension for plaintext files
+    EndsWithExtension(document: vscode.TextDocument): boolean {
+
+        var regexExtension = new RegExp("\\.\\w+$");
+          if (regexExtension.test(document.fileName))
+             return true;
+        return false;
     }
 
     private checkHlasmLanguage(document: vscode.TextDocument) {
