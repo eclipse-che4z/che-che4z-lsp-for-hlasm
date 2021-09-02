@@ -233,22 +233,6 @@ void processing_manager::finish_copy_member(copy_processing_result result)
 
 void processing_manager::finish_opencode() { lsp_analyzer_.opencode_finished(); }
 
-void processing_manager::suspend_opencode_copy_processing()
-{
-    auto& copy_prov = **(provs_.end() - 2);
-    assert(copy_prov.kind == statement_provider_kind::COPY);
-
-    static_cast<copy_statement_provider&>(copy_prov).suspend();
-}
-
-bool processing_manager::resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts)
-{
-    auto& copy_prov = **(provs_.end() - 2);
-    assert(copy_prov.kind == statement_provider_kind::COPY);
-
-    return static_cast<copy_statement_provider&>(copy_prov).try_resume_at(line_no, resume_opts);
-}
-
 void processing_manager::start_macro_definition(macrodef_start_data start, std::optional<std::string> file)
 {
     if (file)

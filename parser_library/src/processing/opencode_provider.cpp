@@ -87,22 +87,22 @@ std::string opencode_provider::aread()
     {
         result = std::move(m_ainsert_buffer.front());
         m_ainsert_buffer.pop_front();
-        // resume normal copy processing if the last line from ainsert buffer was removed
-        // AND no modifications were done to sources on the copy stack
-        if (m_ainsert_buffer.empty() && m_copy_suspended && !m_copy_files_aread_ready)
-            resume_copy(0, resume_copy::ignore_line);
     }
-    else if (!m_copy_files.empty() || !m_copy_files_aread_ready && fill_copy_buffer_for_aread()
-        || m_preprocessor && try_running_preprocessor() && fill_copy_buffer_for_aread())
+    else if (suspend_copy_processing() || m_preprocessor && try_running_preprocessor() && suspend_copy_processing())
     {
-        auto& current = m_copy_files.back();
-        result = lexing::extract_line(current.text).first;
-        ++current.line_no;
-        while (!m_copy_files.empty() && m_copy_files.back().text.empty())
-        {
-            m_copy_files.pop_back();
-            m_ctx->hlasm_ctx->opencode_copy_stack().pop_back();
-        }
+        auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+        auto& copy = opencode_stack.back();
+        const auto line = copy.suspended_at;
+        std::string_view remaining_text =
+            m_ctx->lsp_ctx->get_file_info(copy.definition_location()->file)->data.get_lines_beginning_at({ line, 0 });
+        result = lexing::extract_line(remaining_text).first;
+        if (remaining_text.empty())
+            copy.resume();
+        else
+            copy.suspend(line + 1);
+
+        while (!opencode_stack.empty() && !opencode_stack.back().suspended())
+            opencode_stack.pop_back();
     }
     else if (!m_next_line_text.empty())
     {
@@ -133,8 +133,7 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
     }
     // ainsert buffer may contain macro call that will remove code lines from copybooks
     // this prevents copybook unwinding
-    if (!m_copy_suspended)
-        suspend_copy();
+    suspend_copy_processing();
 }
 
 extract_next_logical_line_result opencode_provider::feed_line(parsing::parser_holder& p)
@@ -327,46 +326,6 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     return result;
 }
 
-bool opencode_provider::fill_copy_buffer_for_aread()
-{
-    auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
-    if (opencode_stack.empty())
-        return false;
-
-    const auto cmi_to_cms = [lsp_ctx = m_ctx->lsp_ctx.get()](const context::copy_member_invocation& copy) {
-        const bool before_first_read = copy.current_statement == (size_t)-1;
-        const auto pos = copy.current_statement_position();
-        const auto* const copy_content = lsp_ctx->get_file_info(copy.definition_location->file);
-
-        std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });
-        std::string_view remaining_text = copy_content->data.get_lines_beginning_at(pos);
-
-        // remove line being processed
-        lexing::logical_line ll = {};
-        if (!before_first_read)
-            lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
-
-        return copy_member_state { remaining_text, full_text, pos.line + ll.segments.size() };
-    };
-    std::transform(opencode_stack.begin(), opencode_stack.end(), std::back_inserter(m_copy_files), cmi_to_cms);
-
-    while (!m_copy_files.empty() && m_copy_files.back().text.empty())
-    {
-        m_copy_files.pop_back();
-        opencode_stack.pop_back();
-    }
-
-    m_copy_files_aread_ready = true;
-
-    if (m_copy_files.empty())
-        return false;
-
-    if (!m_copy_suspended)
-        suspend_copy();
-
-    return true;
-}
-
 bool opencode_provider::try_running_preprocessor()
 {
     const auto current_line = m_current_line;
@@ -376,7 +335,7 @@ bool opencode_provider::try_running_preprocessor()
 
     auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("DB2:" + std::to_string(current_line));
 
-    auto [new_file, inserted] = m_preprocessor_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
+    auto [new_file, inserted] = m_virtual_files.try_emplace(virtual_copy_name, std::move(result.value()));
 
     // set up "call site"
     const auto current_offset =
@@ -405,6 +364,76 @@ bool opencode_provider::try_running_preprocessor()
     m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
 
     return true;
+}
+
+bool opencode_provider::suspend_copy_processing()
+{
+    auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
+
+    if (opencode_stack.empty())
+        return false;
+
+    for (auto& copy : opencode_stack)
+    {
+        if (copy.suspended())
+            continue;
+
+        const auto* const copy_content = m_ctx->lsp_ctx->get_file_info(copy.definition_location()->file);
+        std::string_view full_text = copy_content->data.get_lines_beginning_at({ 0, 0 });
+
+        const auto pos = copy.current_statement_position();
+        std::string_view remaining_text = copy_content->data.get_lines_beginning_at(pos);
+        size_t line_no = pos.line;
+
+        // remove line being processed
+        lexing::logical_line ll = {};
+        if (const bool before_first_read = copy.current_statement == (size_t)-1; !before_first_read)
+            lexing::extract_logical_line(ll, remaining_text, lexing::default_ictl_copy);
+
+        if (remaining_text.empty())
+        {
+            copy.resume();
+            copy.current_statement = copy.cached_definition()->size() - 1;
+        }
+        else
+            copy.suspend(line_no + ll.segments.size());
+    }
+    while (!opencode_stack.empty() && !opencode_stack.back().suspended())
+        opencode_stack.pop_back();
+
+    return !opencode_stack.empty();
+}
+
+void opencode_provider::convert_ainsert_buffer_to_copybook()
+{
+    std::string result;
+    result.reserve(m_ainsert_buffer.size() * (80 + 1));
+    for (const auto& s : m_ainsert_buffer)
+        result.append(s), result.push_back('\n');
+    m_ainsert_buffer.clear();
+
+    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ainsert_copy_id++));
+
+    auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
+
+    // set up "call site"
+    //    const auto current_offset =
+    //        m_next_line_text.empty() ? m_original_text.size() : m_next_line_text.data() - m_original_text.data();
+    //    const auto last_statement_line = m_current_line;
+    //    m_ctx->hlasm_ctx->set_source_position(position(last_statement_line, 0));
+    //    m_ctx->hlasm_ctx->set_source_indices(current_offset, current_offset, last_statement_line);
+
+    analyzer a(new_file->second,
+        analyzer_options {
+            *virtual_copy_name,
+            m_lib_provider,
+            *m_ctx,
+            workspaces::library_data { processing_kind::COPY, virtual_copy_name },
+        });
+    a.analyze();
+    m_diagnoser->collect_diags_from_child(a);
+
+    m_ctx->hlasm_ctx->enter_copy_member(virtual_copy_name);
 }
 
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
@@ -485,7 +514,16 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
 bool opencode_provider::finished() const
 {
-    return m_next_line_text.empty() && m_copy_files.empty() && m_ainsert_buffer.empty();
+    if (!m_next_line_text.empty())
+        return false;
+    if (!m_ctx->hlasm_ctx->in_opencode())
+        return true;
+    if (!m_ainsert_buffer.empty())
+        return false;
+    const auto& o = m_ctx->hlasm_ctx->opencode_copy_stack();
+    if (o.empty())
+        return true;
+    return std::none_of(o.begin(), o.end(), [](const auto& c) { return c.suspended(); });
 }
 
 parsing::hlasmparser& opencode_provider::parser()
@@ -538,72 +576,56 @@ bool opencode_provider::is_next_line_process() const
         });
 }
 
-
-extract_next_logical_line_result opencode_provider::extract_next_logical_line_from_ainsert_buffer()
-{
-    for (std::string_view line : m_ainsert_buffer)
-    {
-        ++m_lines_to_remove.ainsert_buffer;
-        if (!lexing::append_to_logical_line(m_current_logical_line, line, lexing::default_ictl_copy))
-            break;
-    }
-    finish_logical_line(m_current_logical_line, lexing::default_ictl_copy);
-
-    m_current_logical_line_source.begin_line = 0;
-    m_current_logical_line_source.end_line = m_current_logical_line.segments.size() - 1;
-    m_current_logical_line_source.begin_offset = 0;
-    m_current_logical_line_source.end_offset = 0;
-    m_current_logical_line_source.source = logical_line_origin::source_type::ainsert;
-
-    // resume normal copy processing if the last line from ainsert buffer was removed
-    // AND no modifications were done to sources on the copy stack
-    if (m_lines_to_remove.ainsert_buffer == m_ainsert_buffer.size() && m_copy_suspended && !m_copy_files_aread_ready)
-        resume_copy(0, resume_copy::ignore_line);
-
-    return extract_next_logical_line_result::normal;
-}
-
-
 extract_next_logical_line_result opencode_provider::extract_next_logical_line_from_copy_buffer()
 {
+    assert(m_ctx->hlasm_ctx->in_opencode());
+
     auto& opencode_copy_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
-    assert(&opencode_copy_stack == &m_ctx->hlasm_ctx->current_copy_stack());
-
-    auto& copy_file = m_copy_files.back();
-    if (!lexing::extract_logical_line(m_current_logical_line, copy_file.text, lexing::default_ictl_copy))
-        return extract_next_logical_line_result::failed;
-
-    m_current_logical_line_source.begin_line = copy_file.line_no;
-    m_current_logical_line_source.end_line = copy_file.line_no + m_current_logical_line.segments.size() - 1;
-    m_current_logical_line_source.begin_offset =
-        m_current_logical_line.segments.front().code.data() - copy_file.full_text.data();
-    m_current_logical_line_source.end_offset =
-        copy_file.text.size() ? copy_file.text.data() - copy_file.full_text.data() : copy_file.full_text.size();
-    m_current_logical_line_source.source = logical_line_origin::source_type::copy;
-
-    copy_file.line_no += m_current_logical_line.segments.size() - 1;
-
-    bool restarted = false;
-    while (!m_copy_files.empty())
+    while (!opencode_copy_stack.empty())
     {
-        if (!m_copy_files.back().text.empty())
+        auto& copy_file = opencode_copy_stack.back();
+        if (!copy_file.suspended())
+            return extract_next_logical_line_result::failed; // copy processing resumed
+        const auto line = copy_file.suspended_at;
+
+        size_t resync = (size_t)-1;
+        for (const auto& stmt : *copy_file.cached_definition())
         {
-            restarted = resume_copy(m_copy_files.back().line_no, resume_copy::exact_or_next_line);
-            if (restarted)
+            auto stmt_line = stmt.get_base()->statement_position().line;
+            if (stmt_line == line)
+            {
+                copy_file.current_statement = resync;
+                copy_file.resume();
+                return extract_next_logical_line_result::failed; // copy processing resumed
+            }
+            if (stmt_line > line)
                 break;
+            ++resync;
         }
-        m_copy_files.pop_back();
-        opencode_copy_stack.pop_back();
+        copy_file.current_statement = resync;
+
+        const auto* copy_text = m_ctx->lsp_ctx->get_file_info(copy_file.definition_location()->file);
+        std::string_view full_text = copy_text->data.get_lines_beginning_at({ 0, 0 });
+        std::string_view remaining_text = copy_text->data.get_lines_beginning_at({ line, 0 });
+        if (!lexing::extract_logical_line(m_current_logical_line, remaining_text, lexing::default_ictl_copy))
+        {
+            opencode_copy_stack.pop_back();
+            continue;
+        }
+
+        m_current_logical_line_source.begin_line = line;
+        m_current_logical_line_source.end_line = line + m_current_logical_line.segments.size() - 1;
+        m_current_logical_line_source.begin_offset =
+            m_current_logical_line.segments.front().code.data() - full_text.data();
+        m_current_logical_line_source.end_offset =
+            remaining_text.size() ? remaining_text.data() - full_text.data() : full_text.size();
+        m_current_logical_line_source.source = logical_line_origin::source_type::copy;
+
+        copy_file.resume();
+
+        return extract_next_logical_line_result::normal; // unaligned statement extracted
     }
-
-    if (m_copy_files.empty())
-        restarted = resume_copy(0, resume_copy::ignore_line);
-
-    assert(restarted);
-
-    m_copy_files.clear();
-
-    return extract_next_logical_line_result::normal;
+    return extract_next_logical_line_result::failed; // next round
 }
 
 extract_next_logical_line_result opencode_provider::extract_next_logical_line()
@@ -620,30 +642,17 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     m_current_logical_line.clear();
     m_current_logical_line_source = {};
 
-    if (m_ainsert_buffer.size())
-        return extract_next_logical_line_from_ainsert_buffer();
-
-    if (m_copy_files_aread_ready)
+    if (m_ctx->hlasm_ctx->in_opencode())
     {
-        m_copy_files_aread_ready = false;
-
-        assert(&m_ctx->hlasm_ctx->current_copy_stack() == &m_ctx->hlasm_ctx->opencode_copy_stack());
-
-        if (m_copy_suspended)
+        if (!m_ainsert_buffer.empty())
         {
-            if (m_copy_files.empty())
-                resume_copy(0, resume_copy::ignore_line);
-            else if (resume_copy(m_copy_files.back().line_no, resume_copy::exact_line_match))
-            {
-                // copy processing was resumed, pre-parsed statements will be executed
-                m_copy_files.clear();
-                return extract_next_logical_line_result::failed;
-            }
+            convert_ainsert_buffer_to_copybook();
+            return extract_next_logical_line_result::failed;
         }
-    }
 
-    if (!m_copy_files.empty())
-        return extract_next_logical_line_from_copy_buffer();
+        if (!m_ctx->hlasm_ctx->opencode_copy_stack().empty())
+            return extract_next_logical_line_from_copy_buffer();
+    }
 
     if (ictl_allowed)
         ictl_allowed = is_next_line_ictl();
@@ -725,23 +734,6 @@ const parsing::parser_holder& opencode_provider::prepare_operand_parser(const st
     h.parser->get_collector().prepare_for_next_statement();
 
     return h;
-}
-
-void opencode_provider::suspend_copy()
-{
-    m_state_listener->suspend_opencode_copy_processing();
-    m_copy_suspended = true;
-}
-
-bool opencode_provider::resume_copy(size_t line_no, processing::resume_copy resume_opts)
-{
-    if (m_state_listener->resume_opencode_copy_processing_at(line_no, resume_opts))
-    {
-        m_copy_suspended = false;
-        return true;
-    }
-    else
-        return false;
 }
 
 } // namespace hlasm_plugin::parser_library::processing

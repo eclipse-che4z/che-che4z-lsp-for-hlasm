@@ -182,5 +182,5 @@ macro_invocation::macro_invocation(id_index name,
     , copy_nests(copy_nests)
     , labels(labels)
     , definition_location(definition_location)
-    , current_statement(-1)
+    , current_statement((size_t)-1)
 {}

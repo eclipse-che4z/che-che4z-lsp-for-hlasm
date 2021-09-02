@@ -33,9 +33,6 @@ public:
 
     bool finished() const override;
 
-    void suspend();
-    bool try_resume_at(size_t line_no, resume_copy resume_opts);
-
 protected:
     context::statement_cache* get_next() override;
 };

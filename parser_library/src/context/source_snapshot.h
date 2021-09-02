@@ -45,9 +45,9 @@ struct source_position
 struct copy_frame
 {
     id_index copy_member;
-    int statement_offset;
+    size_t statement_offset;
 
-    copy_frame(id_index copy_member, int statement_offset)
+    copy_frame(id_index copy_member, size_t statement_offset)
         : copy_member(copy_member)
         , statement_offset(statement_offset)
     {}

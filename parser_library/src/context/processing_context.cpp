@@ -29,7 +29,7 @@ source_snapshot source_context::create_snapshot() const
     std::vector<copy_frame> copy_frames;
 
     for (auto& member : copy_stack)
-        copy_frames.emplace_back(member.name, member.current_statement);
+        copy_frames.emplace_back(member.name(), member.current_statement);
 
     if (!copy_frames.empty())
         --copy_frames.back().statement_offset;

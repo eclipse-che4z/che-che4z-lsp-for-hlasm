@@ -96,17 +96,9 @@ class opencode_provider final : public statement_provider
     } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
+    size_t m_ainsert_copy_id = 0;
 
-    struct copy_member_state
-    {
-        std::string_view text;
-        std::string_view full_text;
-        size_t line_no;
-    };
-
-    std::vector<copy_member_state> m_copy_files;
-
-    std::unordered_map<context::id_index, std::string> m_preprocessor_virtual_files;
+    std::unordered_map<context::id_index, std::string> m_virtual_files;
 
     std::unique_ptr<parsing::parser_holder> m_parser;
     std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
@@ -121,8 +113,6 @@ class opencode_provider final : public statement_provider
     opencode_provider_options m_opts;
 
     bool m_line_fed = false;
-    bool m_copy_files_aread_ready = false;
-    bool m_copy_suspended = false;
 
     std::unique_ptr<preprocessor> m_preprocessor;
 
@@ -155,7 +145,6 @@ private:
     bool is_next_line_ictl() const;
     bool is_next_line_process() const;
     void generate_continuation_error_messages(diagnostic_op_consumer* diags) const;
-    extract_next_logical_line_result extract_next_logical_line_from_ainsert_buffer();
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
     void apply_pending_line_changes();
@@ -177,11 +166,9 @@ private:
         const range& op_range,
         diagnostic_op_consumer* diags);
 
-    bool fill_copy_buffer_for_aread();
     bool try_running_preprocessor();
-
-    void suspend_copy();
-    bool resume_copy(size_t line_no, processing::resume_copy resume_opts);
+    bool suspend_copy_processing();
+    void convert_ainsert_buffer_to_copybook();
 };
 
 } // namespace hlasm_plugin::parser_library::processing

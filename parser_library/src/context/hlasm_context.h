@@ -125,6 +125,9 @@ public:
     // gets top level (opencode) copy stack
     const std::vector<copy_member_invocation>& opencode_copy_stack() const;
     std::vector<copy_member_invocation>& opencode_copy_stack();
+    // is open code being processed
+    bool in_opencode() const { return source_stack_.size() == 1; }
+
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 
