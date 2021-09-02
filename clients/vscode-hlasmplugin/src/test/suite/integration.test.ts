@@ -148,27 +148,6 @@ suite('Integration Test Suite', () => {
 			&& result[0].range.start.character == 4, 'Wrong macro definition location');
 	}).timeout(10000).slow(1000);
 
-	// verify that library patterns are working
-	test('Test library patterns', async () => {
-		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
-
-		assert.ok(files && files[0]);
-		const file = files[0];
-
-		// open the file
-		const document = await vscode.workspace.openTextDocument(file);
-
-		await vscode.window.showTextDocument(document);
-
-		await sleep(2000);
-
-		const allDiags = vscode.languages.getDiagnostics();
-		const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
-
-		if (patternDiags)
-			assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
-	}).timeout(10000).slow(2500);
-
 	// debug open code test
 	test('Debug test', async () => {
 		// simulates basic debugging procedure
@@ -209,4 +188,25 @@ suite('Integration Test Suite', () => {
 
 		await vscode.commands.executeCommand('workbench.action.debug.stop');
 	}).timeout(10000).slow(4000);
+
+	// verify that library patterns are working
+	test('Test library patterns', async () => {
+		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
+
+		assert.ok(files && files[0]);
+		const file = files[0];
+
+		// open the file
+		const document = await vscode.workspace.openTextDocument(file);
+
+		await vscode.window.showTextDocument(document);
+
+		await sleep(2000);
+
+		const allDiags = vscode.languages.getDiagnostics();
+		const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
+
+		if (patternDiags)
+			assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
+	}).timeout(10000).slow(2500);
 });
