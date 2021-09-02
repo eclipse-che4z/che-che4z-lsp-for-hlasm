@@ -48,7 +48,15 @@ suite('Language Detection Test Suite', () => {
 		document.fileName = "file"
 		document.uri = vscode.Uri.file('file');
 		assert.ok(!detector.EndsWithExtension(document));
-	
+		document.fileName = "file."
+		document.uri = vscode.Uri.file('file.');
+		assert.ok(!detector.EndsWithExtension(document));
+		document.fileName = "file.dfd)"
+		document.uri = vscode.Uri.file('file.dfd)');
+		assert.ok(!detector.EndsWithExtension(document));
+		document.fileName = ".dfd)"
+		document.uri = vscode.Uri.file('.dfd)');
+		assert.ok(!detector.EndsWithExtension(document));
 	});
 	// if file has extension  return true
 	test('non HLASM file extension test true', async () => {
@@ -82,6 +90,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(detector.setHlasmLanguage(document));
 	
 	});
+	
 	// set non HLASM file as HLASM
 	test('non HLASM files test', async () => {
 		var document = new TextDocumentMock();
