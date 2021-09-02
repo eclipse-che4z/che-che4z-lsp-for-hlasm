@@ -150,9 +150,6 @@ suite('Integration Test Suite', () => {
 
 	// debug open code test
 	test('Debug test', async () => {
-		// simulates basic debugging procedure
-		const editor = get_editor();
-
 		const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
 			// when the debug session starts
 			const disposable = vscode.debug.onDidStartDebugSession((session) => {
@@ -180,13 +177,18 @@ suite('Integration Test Suite', () => {
 		const reference = scopes.find((scope: { name: string }) => scope.name == 'Locals').variablesReference;
 		const variablesResult = await session.customRequest('variables', { variablesReference: reference });
 
+		const wait_for_debug_end = new Promise<void>((resolve) => {
+			const disposable = vscode.debug.onDidTerminateDebugSession(() => {
+				disposable.dispose();
+				resolve();
+			});
+		});
 		await vscode.commands.executeCommand('workbench.action.debug.stop');
+		await wait_for_debug_end;
 
 		const variables = variablesResult.body ? variablesResult.body.variables : variablesResult.variables;
 
 		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
-
-		await vscode.commands.executeCommand('workbench.action.debug.stop');
 	}).timeout(10000).slow(4000);
 
 	// verify that library patterns are working
