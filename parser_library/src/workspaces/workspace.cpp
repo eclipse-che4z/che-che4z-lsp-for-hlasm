@@ -422,41 +422,56 @@ std::regex pathmask_to_regex(std::string input)
     return std::regex(r);
 }
 
+namespace {
+std::string fix_path(std::string path)
+{
+    if (!path.empty() && path.back() != '/' && path.back() != '\\')
+        path.push_back('/');
+    return path;
+};
+} // namespace
+
 void workspace::find_and_add_libs(
     std::string root, const std::string& path_pattern, processor_group& prc_grp, const library_local_options& opts)
 {
     std::regex path_validator = pathmask_to_regex(path_pattern);
 
-    std::set<std::string> processed_candidates;
-    std::deque<std::string> dirs_to_search;
-    dirs_to_search.push_back(std::move(root));
+    std::set<std::string> processed_canonical_paths;
+    std::deque<std::pair<std::string, std::string>> dirs_to_search;
 
-    const auto fix_path = [](std::string path) {
-        if (!path.empty() && path.back() != '/' && path.back() != '\\')
-            path.push_back('/');
-        return path;
-    };
+    if (std::error_code ec; dirs_to_search.emplace_back(fix_path(root), utils::path::canonical(root, ec).string()), ec)
+    {
+        if (!opts.optional_library)
+            add_diagnostic(diagnostic_s::error_L0001(root));
+        return;
+    }
 
     constexpr size_t limit = 1000;
     while (!dirs_to_search.empty())
     {
-        if (processed_candidates.size() > limit)
+        if (processed_canonical_paths.size() > limit)
         {
             add_diagnostic(diagnostic_s::warning_L0005(path_pattern, limit));
             break;
         }
-        const std::string path = fix_path(utils::path::lexically_normal(std::move(dirs_to_search.front())).string());
+        auto [path, canonical_path] = std::move(dirs_to_search.front());
         dirs_to_search.pop_front();
-        if (!processed_candidates.insert(path).second)
+
+        if (!processed_canonical_paths.insert(std::move(canonical_path)).second)
             continue;
 
         if (std::regex_match(path, path_validator))
             prc_grp.add_library(std::make_unique<library_local>(file_manager_, path, opts));
 
-        auto rc = utils::path::list_directory_directories(path, [&](const auto& path) {
-            if (auto p = fix_path(path.string()); processed_candidates.count(p) == 0)
-                dirs_to_search.push_back(std::move(p));
-        });
+        auto rc = utils::path::list_directory_subdirs_and_symlinks(
+            path, [&processed_canonical_paths, &dirs_to_search](const auto& path) {
+                std::error_code ec;
+                auto cp = utils::path::canonical(path, ec).string();
+                if (ec || processed_canonical_paths.count(cp))
+                    return;
+                if (utils::path::is_directory(cp))
+                    dirs_to_search.emplace_back(fix_path(path.string()), std::move(cp));
+            });
         if (rc != utils::path::list_directory_rc::done)
         {
             add_diagnostic(diagnostic_s::error_L0001(path));
