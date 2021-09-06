@@ -45,18 +45,20 @@ suite('Integration Test Suite', () => {
 	});
 
 	// open 'open' file, should be recognized as hlasm
-	test('Diagnostic test', async () => {
+	test('HLASM file open test', async () => {
 		const editor = get_editor();
 
 		// setting a language takes a while but shouldn't take longer than a second
 		await sleep(1000);
 		assert.ok(editor.document.languageId === 'hlasm');
+	}).timeout(10000).slow(4000);
 
-		// Originally, there were 2 separate tests, but the combination of Theia and Mocha
-		// somehow only works when running EXACTLY 8 tests (no matter what they do, even empty ones).
+	// change 'open' file to create diagnostic
+	test('Diagnostic test', async () => {
+		const editor = get_editor();
 
 		// register callback to check for the correctness of the diagnostic
-		var diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
+		const diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
 			const listener = vscode.languages.onDidChangeDiagnostics((_) => {
 				listener.dispose();
 				resolve(vscode.languages.getDiagnostics());
@@ -68,10 +70,10 @@ suite('Integration Test Suite', () => {
 		});
 
 		const allDiags = await diagnostic_event;
-		var openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+		const openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
 
 		assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
-	}).timeout(10000).slow(4000);
+	}).timeout(10000).slow(1000);
 
 	// test completion for instructions
 	test('Completion Instructions test', async () => {
