@@ -15,11 +15,14 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_SERVER
 #define HLASMPLUGIN_LANGUAGESERVER_SERVER
 
+#include <chrono>
 #include <unordered_set>
 
 #include "common_types.h"
 #include "feature.h"
 #include "workspace_manager.h"
+#include "parsing_metadata_collector.h"
+#include "diagnostic_counter.h"
 
 namespace hlasm_plugin::language_server {
 
@@ -52,6 +55,8 @@ public:
 
     void set_send_message_provider(send_message_provider* provider);
 
+    ~server();
+
 protected:
     send_message_provider* send_message_ = nullptr;
 
@@ -69,6 +74,12 @@ protected:
 
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
     void call_method(const std::string& method, const json& id, const json& args);
+
+private:
+    parsing_metadata_collector parsing_metadata_;
+    diagnostic_counter diag_counter_;
+
+    void notify_telemetry(const std::string& method_name, telemetry_log_level log_level, double seconds);
 };
 
 } // namespace hlasm_plugin::language_server

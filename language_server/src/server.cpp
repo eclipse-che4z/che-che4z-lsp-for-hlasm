@@ -26,7 +26,16 @@ namespace hlasm_plugin::language_server {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : ws_mngr_(ws_mngr)
-{}
+{
+    ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
+    ws_mngr_.register_diagnostics_consumer(&diag_counter_);
+}
+
+server::~server()
+{
+    ws_mngr_.unregister_parsing_metadata_consumer(&parsing_metadata_);
+    ws_mngr_.unregister_diagnostics_consumer(&diag_counter_);
+}
 
 void server::register_feature_methods()
 {
@@ -35,6 +44,8 @@ void server::register_feature_methods()
         f->register_methods(methods_);
     }
 }
+
+
 
 void server::call_method(const std::string& method, const json& id, const json& args)
 {
@@ -48,7 +59,12 @@ void server::call_method(const std::string& method, const json& id, const json& 
     {
         try
         {
-            (*found).second(id, args);
+            std::chrono::steady_clock clock;
+            auto start = clock.now();
+            (*found).second.handler(id, args);
+            std::chrono::duration<double> duration = clock.now() - start;
+
+            notify_telemetry(method, (*found).second.telemetry_level, duration.count());
         }
         catch (const nlohmann::basic_json<>::exception& e)
         {
@@ -62,6 +78,15 @@ void server::call_method(const std::string& method, const json& id, const json& 
         ss << "Method " << method << " is not available on this server.";
         LOG_WARNING(ss.str());
     }
+}
+
+void server::notify_telemetry(const std::string& method_name, telemetry_log_level log_level, double seconds)
+{
+    if (log_level == telemetry_log_level::NO_TELEMETRY)
+        return;
+
+
+    notify("telemetry/event", { { "methodName", method_name } });
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

@@ -260,6 +260,19 @@ struct PARSER_LIBRARY_EXPORT performance_metrics
     size_t files = 0;
 };
 
+struct PARSER_LIBRARY_EXPORT workspace_file_info
+{
+    bool config_parsing = false;
+    bool diagnostics_suppressed = false;
+    bool processor_group_found = false;
+};
+
+struct PARSER_LIBRARY_EXPORT parsing_metadata
+{
+    performance_metrics metrics;
+    workspace_file_info ws_info;
+};
+
 bool inline operator==(const performance_metrics& lhs, const performance_metrics& rhs)
 {
     return lhs.lines == rhs.lines && lhs.macro_def_statements == rhs.macro_def_statements

@@ -65,7 +65,7 @@ void server::message_received(const json& message)
 
         method handler = handler_found->second;
         request_handlers_.erase(handler_found);
-        handler(id_found.value(), result_found.value());
+        handler.handler(id_found.value(), result_found.value());
         return;
     }
     else if (error_result_found != message.end())
@@ -139,10 +139,15 @@ void server::respond_error(
 
 void server::register_methods()
 {
-    methods_.emplace(
-        "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
-    methods_.emplace("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
-    methods_.emplace("exit", std::bind(&server::on_exit, this, std::placeholders::_1, std::placeholders::_2));
+    methods_.try_emplace("initialize",
+        method { [this](const json& id, const json& params) { on_initialize(id, params); },
+            telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("shutdown",
+        method { [this](const json& id, const json& params) { on_shutdown(id, params); },
+            telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("exit",
+        method {
+            [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
 }
 
 void empty_handler(json, const json&)
@@ -157,10 +162,7 @@ void server::on_initialize(json id, const json& param)
         json { { "documentFormattingProvider", false },
             { "documentRangeFormattingProvider", false },
             { "codeActionProvider", false },
-            { "signatureHelpProvider",
-                json {
-                    { "triggerCharacters", { "(", "," } },
-                } },
+            { "signatureHelpProvider", false },
             { "documentHighlightProvider", false },
             { "renameProvider", false },
             { "workspaceSymbolProvider", false } } } };
@@ -177,7 +179,10 @@ void server::on_initialize(json id, const json& param)
         { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
     };
 
-    request("register1", "client/registerCapability", register_configuration_changed_args, &empty_handler);
+    request("register1",
+        "client/registerCapability",
+        register_configuration_changed_args,
+        { &empty_handler, telemetry_log_level::NO_TELEMETRY });
 
 
     for (auto& f : features_)

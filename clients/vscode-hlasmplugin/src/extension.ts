@@ -24,7 +24,6 @@ import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerFactory, ServerVariant } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 import { Telemetry } from './telemetry';
-import { getLatestInsidersMetadata } from 'vscode-test/out/util';
 import { LanguageClientErrorHandler } from './languageClientErrorHandler';
 
 const offset = 71;
@@ -35,8 +34,6 @@ const sleep = (ms: number) => {
 };
 
 
-
-//export var hlasmpluginClient : vscodelc.LanguageClient;
 /**
  * ACTIVATION
  * activates the extension
@@ -77,7 +74,8 @@ export async function activate(context: vscode.ExtensionContext) {
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
-
+    hlasmpluginClient.onTelemetry((object) => {telemetry.reportEvent(object.methodName, object)});
+    
     //asm contribution 
     var highlight = new SemanticTokensFeature(hlasmpluginClient);
     // register highlighting as features

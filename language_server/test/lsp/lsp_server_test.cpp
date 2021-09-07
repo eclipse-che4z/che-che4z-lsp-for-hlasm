@@ -129,7 +129,8 @@ TEST(lsp_server, request_correct)
     rp.request("a_request",
         "client_method",
         "a_json_parameter",
-        std::bind(&request_handler::handle, &handler, std::placeholders::_1, std::placeholders::_2));
+        { [&handler](const json& id, const json& params) { handler.handle(id, params); },
+            telemetry_log_level::NO_TELEMETRY });
 
     json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
 

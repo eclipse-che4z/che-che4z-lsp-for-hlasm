@@ -87,9 +87,9 @@ public:
     const processor_group& get_proc_grp(const proc_grp_id& proc_grp) const;
     const processor_group& get_proc_grp_by_program(const std::string& program) const;
 
-    void parse_file(const std::string& file_uri);
+    workspace_file_info parse_file(const std::string& file_uri);
     void refresh_libraries();
-    void did_open_file(const std::string& file_uri);
+    workspace_file_info did_open_file(const std::string& file_uri);
     void did_close_file(const std::string& file_uri);
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);

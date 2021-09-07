@@ -26,6 +26,7 @@
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
+#include "../language_server/src/diagnostic_counter.h"
 
 /*
  * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
@@ -61,41 +62,12 @@
 
 using json = nlohmann::json;
 
-class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
+class metrics_collector : public hlasm_plugin::parser_library::parsing_metadata_consumer
 {
 public:
-    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
+    void consume_parsing_metadata(const hlasm_plugin::parser_library::parsing_metadata& metadata) override
     {
-        for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
-        {
-            auto diag_sev = diagnostics.diagnostics(i).severity();
-            if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
-                error_count++;
-            else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
-                warning_count++;
-            message_counts[diagnostics.diagnostics(i).code()]++;
-        }
-    }
-
-    void clear_counters()
-    {
-        error_count = 0;
-        warning_count = 0;
-        message_counts.clear();
-    }
-
-    size_t error_count = 0;
-    size_t warning_count = 0;
-
-    std::unordered_map<std::string, unsigned> message_counts;
-};
-
-class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
-{
-public:
-    void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
-    {
-        metrics_ = metrics;
+        metrics_ = metadata.metrics;
     }
 
     hlasm_plugin::parser_library::performance_metrics metrics_;
@@ -112,21 +84,6 @@ struct all_file_stats
     size_t reparsing_crashes = 0;
     size_t failed_file_opens = 0;
 };
-
-json get_top_messages(const std::unordered_map<std::string, unsigned>& msgs, size_t limit = 3)
-{
-    std::vector<std::pair<std::string, unsigned>> top_msgs(limit);
-
-    constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
-
-    const auto last = std::partial_sort_copy(msgs.begin(), msgs.end(), top_msgs.begin(), top_msgs.end(), cmp_msg);
-    top_msgs.erase(last, top_msgs.end());
-
-    json result = json::object();
-    for (auto&& [key, value] : top_msgs)
-        result[std::move(key)] = value;
-    return result;
-}
 
 json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
@@ -150,10 +107,10 @@ json parse_one_file(const std::string& source_file,
 
     // new workspace manager
     hlasm_plugin::parser_library::workspace_manager ws;
-    diagnostic_counter diag_counter;
+    hlasm_plugin::language_server::diagnostic_counter diag_counter;
     ws.register_diagnostics_consumer(&diag_counter);
     metrics_collector collector;
-    ws.register_performance_metrics_consumer(&collector);
+    ws.register_parsing_metadata_consumer(&collector);
     // input folder as new workspace
     ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
 
@@ -190,7 +147,7 @@ json parse_one_file(const std::string& source_file,
     s.all_files += collector.metrics_.files;
     s.whole_time += time;
 
-    auto top_messages = get_top_messages(diag_counter.message_counts);
+    auto top_messages = hlasm_plugin::language_server::get_top_messages(diag_counter.message_counts);
 
     json result({ { "File", source_file },
         { "Success", true },

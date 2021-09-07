@@ -61,22 +61,26 @@ dap_feature::dap_feature(parser_library::workspace_manager& ws_mngr,
 
 void dap_feature::register_methods(std::map<std::string, method>& methods)
 {
-    const auto this_bind = [this](void (dap_feature::*func)(const json&, const json&)) {
-        return [this, func](const json& requested_seq, const json& args) { (this->*func)(requested_seq, args); };
+    const auto this_bind = [this](void (dap_feature::*func)(const json&, const json&), telemetry_log_level telem) {
+        return method {
+            [this, func](const json& requested_seq, const json& args) { (this->*func)(requested_seq, args); }, telem
+        };
     };
-    methods.try_emplace("initialize", this_bind(&dap_feature::on_initialize));
-    methods.try_emplace("disconnect", this_bind(&dap_feature::on_disconnect));
-    methods.try_emplace("launch", this_bind(&dap_feature::on_launch));
-    methods.try_emplace("setBreakpoints", this_bind(&dap_feature::on_set_breakpoints));
-    methods.try_emplace("setExceptionBreakpoints", this_bind(&dap_feature::on_set_exception_breakpoints));
-    methods.try_emplace("configurationDone", this_bind(&dap_feature::on_configuration_done));
-    methods.try_emplace("threads", this_bind(&dap_feature::on_threads));
-    methods.try_emplace("stackTrace", this_bind(&dap_feature::on_stack_trace));
-    methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes));
-    methods.try_emplace("next", this_bind(&dap_feature::on_next));
-    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in));
-    methods.try_emplace("variables", this_bind(&dap_feature::on_variables));
-    methods.try_emplace("continue", this_bind(&dap_feature::on_continue));
+    methods.try_emplace("initialize", this_bind(&dap_feature::on_initialize, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("disconnect", this_bind(&dap_feature::on_disconnect, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("launch", this_bind(&dap_feature::on_launch, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("setBreakpoints", this_bind(&dap_feature::on_set_breakpoints, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("setExceptionBreakpoints",
+        this_bind(&dap_feature::on_set_exception_breakpoints, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace(
+        "configurationDone", this_bind(&dap_feature::on_configuration_done, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("threads", this_bind(&dap_feature::on_threads, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("stackTrace", this_bind(&dap_feature::on_stack_trace, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("next", this_bind(&dap_feature::on_next, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("variables", this_bind(&dap_feature::on_variables, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::NO_TELEMETRY));
 }
 json dap_feature::register_capabilities() { return json(); }
 

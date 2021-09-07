@@ -15,6 +15,7 @@ target_sources(language_server_base PRIVATE
 	base_protocol_channel.h
 	blocking_queue.h
 	common_types.h
+	diagnostic_counter.h
 	dispatcher.cpp
 	dispatcher.h
 	feature.cpp
@@ -26,6 +27,7 @@ target_sources(language_server_base PRIVATE
 	logger.h
 	message_router.cpp
 	message_router.h
+	parsing_metadata_collector.h
 	request_manager.cpp
 	request_manager.h
 	scope_exit.h

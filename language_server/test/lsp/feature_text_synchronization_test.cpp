@@ -45,7 +45,7 @@ TEST(text_synchronization, did_open_file)
 
     EXPECT_CALL(ws_mngr, did_open_file(StrEq(txt_file_path), 4, StrEq("sad"), 3));
 
-    notifs["textDocument/didOpen"]("", params1);
+    notifs["textDocument/didOpen"].handler("", params1);
 }
 
 MATCHER_P2(PointerAndSizeEqArray, pointer, size, "")
@@ -79,7 +79,7 @@ TEST(text_synchronization, did_change_file)
 
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 2))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected1, std::size(expected1))));
-    notifs["textDocument/didChange"]("", params1);
+    notifs["textDocument/didChange"].handler("", params1);
 
 
 
@@ -89,14 +89,14 @@ TEST(text_synchronization, did_change_file)
     EXPECT_CALL(ws_mngr, did_change_file(StrEq(txt_file_path), 7, _, 1))
         .With(Args<2, 3>(PointerAndSizeEqArray(expected2, std::size(expected2))));
 
-    notifs["textDocument/didChange"]("", params2);
+    notifs["textDocument/didChange"].handler("", params2);
 
 
 
     json params3 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri
         + R"("},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":0,"character":8}},"rangeLength":8,"text":"sad"}, {"range":{"start":{"line":1,"character":12},"end":{"line":1,"character":14}},"rangeLength":2,"text":""}]})");
 
-    EXPECT_THROW(notifs["textDocument/didChange"]("", params3), nlohmann::basic_json<>::exception);
+    EXPECT_THROW(notifs["textDocument/didChange"].handler("", params3), nlohmann::basic_json<>::exception);
 }
 
 TEST(text_synchronization, did_close_file)
@@ -111,7 +111,7 @@ TEST(text_synchronization, did_close_file)
     json params1 = json::parse(R"({"textDocument":{"uri":")" + txt_file_uri + R"("}})");
     EXPECT_CALL(ws_mngr, did_close_file(StrEq(txt_file_path))),
 
-        notifs["textDocument/didClose"]("", params1);
+        notifs["textDocument/didClose"].handler("", params1);
 }
 
 TEST(feature, uri_to_path)

@@ -89,10 +89,21 @@ void workspace_manager::register_diagnostics_consumer(diagnostics_consumer* cons
     impl_->register_diagnostics_consumer(consumer);
 }
 
-void workspace_manager::register_performance_metrics_consumer(performance_metrics_consumer* consumer)
+void workspace_manager::unregister_diagnostics_consumer(diagnostics_consumer* consumer)
 {
-    impl_->register_performance_metrics_consumer(consumer);
+    impl_->unregister_diagnostics_consumer(consumer);
 }
+
+void workspace_manager::register_parsing_metadata_consumer(parsing_metadata_consumer* consumer)
+{
+    impl_->register_parsing_metadata_consumer(consumer);
+}
+
+void workspace_manager::unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer)
+{
+    impl_->unregister_parsing_metadata_consumer(consumer);
+}
+
 void workspace_manager::set_message_consumer(message_consumer* consumer) { impl_->set_message_consumer(consumer); }
 
 position_uri workspace_manager::definition(const char* document_uri, const position pos)
