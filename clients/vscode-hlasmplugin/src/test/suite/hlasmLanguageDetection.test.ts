@@ -40,7 +40,7 @@ suite('Language Detection Test Suite', () => {
 		assert.ok(detector.setHlasmLanguage(document));
 	});
 	// if file has no extension  return false
-	test('non HLASM file extension test false', async () => {
+	test('non HLASM file extension test false_one', async () => {
 		var document = new TextDocumentMock();
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
@@ -48,14 +48,23 @@ suite('Language Detection Test Suite', () => {
 		document.fileName = "file"
 		document.uri = vscode.Uri.file('file');
 		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('non HLASM file extension test false_two', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = ".hidden"
+		document.uri = vscode.Uri.file('.hidden');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('non HLASM file extension test false_three', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
 		document.fileName = "file."
 		document.uri = vscode.Uri.file('file.');
-		assert.ok(!detector.EndsWithExtension(document));
-		document.fileName = "file.dfd)"
-		document.uri = vscode.Uri.file('file.dfd)');
-		assert.ok(!detector.EndsWithExtension(document));
-		document.fileName = ".dfd)"
-		document.uri = vscode.Uri.file('.dfd)');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	// if file has extension  return true
