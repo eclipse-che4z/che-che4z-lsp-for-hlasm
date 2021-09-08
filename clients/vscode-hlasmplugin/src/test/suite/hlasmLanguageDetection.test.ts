@@ -72,8 +72,8 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = "ZIMLU02.FTP.COBOL(BIGFILE)";
-		document.uri = vscode.Uri.file('ZIMLU02.FTP.COBOL(BIGFILE)');
+		document.fileName = "USER.FTP.COBOL(BIGFILE)";
+		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE)');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
 	test('Cobol file ending with extension', async () => {
@@ -81,8 +81,8 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = "ZIMLU02.FTP.COBOL(BIGFILE).cbl";
-		document.uri = vscode.Uri.file('ZIMLU02.FTP.COBOL(BIGFILE).cbl');
+		document.fileName = "USER.FTP.COBOL(BIGFILE).cbl";
+		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE).cbl');
 		assert.ok(detector.EndsWithExtension(document));
 	});
 	// if file has extension  return true
