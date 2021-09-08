@@ -13,7 +13,7 @@
  */
 
 import * as vscode from 'vscode';
-
+import * as path from 'path';
 import { ConfigurationsHandler } from './configurationsHandler'
 import { getConfig } from './eventsHandler';
 
@@ -47,10 +47,10 @@ export class HLASMLanguageDetection {
         return document.languageId == 'hlasm';
     }
     //Checks for extension for plaintext files
-    EndsWithExtension(document: vscode.TextDocument): boolean {
-
+    EndsWithExtension(document: vscode.TextDocument): boolean { 
+        
         var regexExtension = new RegExp("[^.].*\\.\\w+$");
-        if (regexExtension.test(document.fileName))
+        if (regexExtension.test(path.basename(document.fileName)))
             return true;
         return false;
     }
