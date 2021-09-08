@@ -103,7 +103,7 @@ When you open a HLASM file or manually set the HLASM language for a file, you ca
 
 Example `proc_grps.json`:
 
-The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error. Path masks can be specified using wildcard sequences `*` (matching arbitrary 0 or more characters) and `**` (matching directory separators as well as other characters). The order of libraries selected by a path mask is arbitrary and therefore it is recommended to ensure uniqueness of macros names within these libraries.
 
 ```
 {
@@ -116,7 +116,8 @@ The following example defines two processor groups, GROUP1 and GROUP2, and a lis
           "path": "MACLIB/",
           "optional": true
         },
-        "C:/SYS.ASMMAC"
+        "C:/SYS.ASMMAC",
+        "C:/common/**/maclib"
       ],
       "asm_options": {
         "SYSPARM": "ZOS210"
@@ -126,7 +127,8 @@ The following example defines two processor groups, GROUP1 and GROUP2, and a lis
       "name": "GROUP2",
       "libs": [
         "G2MAC/",
-        "C:/SYS.ASMMAC"
+        "C:/SYS.ASMMAC",
+        "C:/common/**/maclib"
       ]
     }
   ]
