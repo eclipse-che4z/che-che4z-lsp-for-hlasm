@@ -49,7 +49,7 @@ export class HLASMLanguageDetection {
     //Checks for extension for plaintext files
     EndsWithExtension(document: vscode.TextDocument): boolean {
 
-        var regexExtension = new RegExp("^[^\\.].*\\.\\w+$");
+        var regexExtension = new RegExp("[^.].*\\.\\w+$");
         if (regexExtension.test(document.fileName))
             return true;
         return false;
