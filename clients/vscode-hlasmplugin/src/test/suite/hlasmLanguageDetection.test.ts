@@ -45,7 +45,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = "file"
+		document.fileName = "file";
 		document.uri = vscode.Uri.file('file');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
@@ -54,7 +54,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = ".hidden"
+		document.fileName = ".hidden";
 		document.uri = vscode.Uri.file('.hidden');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
@@ -63,7 +63,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = "file."
+		document.fileName = "file.";
 		document.uri = vscode.Uri.file('file.');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
@@ -73,7 +73,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
-		document.fileName = "file.cbl"
+		document.fileName = "file.cbl";
 		document.uri = vscode.Uri.file('file.cbl');
 		assert.ok(detector.EndsWithExtension(document));
 	
@@ -84,7 +84,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = hlasmContents;
-		document.fileName = "file.cbl"
+		document.fileName = "file.cbl";
 		document.uri = vscode.Uri.file('file.cbl');
 		assert.ok(!detector.setHlasmLanguage(document));
 	
@@ -94,7 +94,7 @@ suite('Language Detection Test Suite', () => {
 		// set plain text file to HLASM
 		document.languageId = 'hlasm';
 		document.text = hlasmContents;
-		document.fileName = "file.hlasm"
+		document.fileName = "file.hlasm";
 		document.uri = vscode.Uri.file('file.hlasm');
 		assert.ok(detector.setHlasmLanguage(document));
 	
