@@ -156,7 +156,7 @@ export class ConfigurationsHandler {
             fs.mkdirSync(this.folderPath);
 
         fs.writeFile(this.procGrpsPath, JSON.stringify(
-            { "pgroups": [{ "name": "", "libs": [""] }] }
+            { "pgroups": [{ "name": "", "libs": [] }] }
             , null, 2), () => { });
         vscode.commands.executeCommand("vscode.open", vscode.Uri.file(this.procGrpsPath));
     }
