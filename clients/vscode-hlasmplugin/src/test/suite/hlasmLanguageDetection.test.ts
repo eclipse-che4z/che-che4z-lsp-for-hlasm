@@ -67,6 +67,24 @@ suite('Language Detection Test Suite', () => {
 		document.uri = vscode.Uri.file('file.');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
+	test('Cobol file  containing several dots but not extension returns false', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "ZIMLU02.FTP.COBOL(BIGFILE)";
+		document.uri = vscode.Uri.file('ZIMLU02.FTP.COBOL(BIGFILE)');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('Cobol file ending with extension', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "ZIMLU02.FTP.COBOL(BIGFILE).cbl";
+		document.uri = vscode.Uri.file('ZIMLU02.FTP.COBOL(BIGFILE).cbl');
+		assert.ok(detector.EndsWithExtension(document));
+	});
 	// if file has extension  return true
 	test('non HLASM file extension test true', async () => {
 		var document = new TextDocumentMock();
