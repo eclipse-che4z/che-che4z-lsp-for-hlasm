@@ -48,11 +48,7 @@ export class HLASMLanguageDetection {
     }
     //Checks for extension for plaintext files
     EndsWithExtension(document: vscode.TextDocument): boolean { 
-        
-        var regexExtension = new RegExp("[^.].*\\.\\w+$");
-        if (regexExtension.test(path.basename(document.fileName)))
-            return true;
-        return false;
+        return /^\.\w+$/.test(path.extname(document.fileName));
     }
 
     private checkHlasmLanguage(document: vscode.TextDocument) {
