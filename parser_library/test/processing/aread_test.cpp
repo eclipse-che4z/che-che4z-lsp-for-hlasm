@@ -706,3 +706,41 @@ A        DS  C
     auto& diags = a.diags();
     EXPECT_TRUE(diags.empty());
 }
+
+TEST(aread, ainserted_macro_call_from_copybook)
+{
+    std::string input = R"( COPY  COPYBOOK)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+         MACRO
+         MAC
+         AINSERT ' MAC2',BACK
+         MEND
+)" },
+        { "MAC2", R"(*
+         MACRO
+         MAC2
+A        DC C
+         MEND
+)" },
+        { "COPYBOOK", R"(
+         MAC
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+
+    const auto& diags = a.diags();
+
+    ASSERT_EQ(diags.size(), 1);
+
+    const auto& d = diags.front();
+
+    EXPECT_EQ(d.code, "D016");
+    ASSERT_EQ(d.related.size(), 3);
+    EXPECT_EQ(d.related[0].location.uri, "AINSERT:1");
+    EXPECT_EQ(d.related[1].location.uri, "COPYBOOK");
+}

@@ -166,7 +166,7 @@ private:
         diagnostic_op_consumer* diags);
 
     bool try_running_preprocessor();
-    bool suspend_copy_processing();
+    bool suspend_copy_processing(bool remove_empty) const;
     void convert_ainsert_buffer_to_copybook();
 };
 

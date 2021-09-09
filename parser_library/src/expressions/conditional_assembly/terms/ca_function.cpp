@@ -207,13 +207,13 @@ context::SET_t ca_function::B2A(std::string_view param, diagnostic_adder& add_di
     if (param.size() > 32)
         RET_ERRPARM;
 
-    unsigned int res;
+    uint32_t res;
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 2);
 
     if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
-    return *reinterpret_cast<int*>(&res);
+    return static_cast<int32_t>(res);
 }
 
 context::SET_t ca_function::C2A(std::string_view param, diagnostic_adder& add_diagnostic)
