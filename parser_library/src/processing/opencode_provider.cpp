@@ -28,12 +28,12 @@ namespace hlasm_plugin::parser_library::processing {
 opencode_provider::opencode_provider(std::string_view text,
     analyzing_context& ctx,
     workspaces::parse_lib_provider& lib_provider,
-    processing::processing_state_listener& state_listener,
+    processing_state_listener& state_listener,
     semantics::source_info_processor& src_proc,
     diagnosable_ctx& diag_consumer,
     std::unique_ptr<preprocessor> preprocessor,
     opencode_provider_options opts)
-    : statement_provider(processing::statement_provider_kind::OPEN)
+    : statement_provider(statement_provider_kind::OPEN)
     , m_original_text(text)
     , m_next_line_text(text)
     , m_parser(parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer))
@@ -88,8 +88,8 @@ std::string opencode_provider::aread()
         result = std::move(m_ainsert_buffer.front());
         m_ainsert_buffer.pop_front();
     }
-    else if (suspend_copy_processing(true)
-        || m_preprocessor && try_running_preprocessor() && suspend_copy_processing(true))
+    else if (suspend_copy_processing(remove_empty::yes)
+        || m_preprocessor && try_running_preprocessor() && suspend_copy_processing(remove_empty::yes))
     {
         auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
         auto& copy = opencode_stack.back();
@@ -125,16 +125,16 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
 {
     switch (dest)
     {
-        case hlasm_plugin::parser_library::processing::ainsert_destination::back:
+        case ainsert_destination::back:
             m_ainsert_buffer.push_back(rec);
             break;
-        case hlasm_plugin::parser_library::processing::ainsert_destination::front:
+        case ainsert_destination::front:
             m_ainsert_buffer.push_front(rec);
             break;
     }
     // ainsert buffer may contain macro call that will remove code lines from copybooks
     // this prevents copybook unwinding
-    suspend_copy_processing(false);
+    suspend_copy_processing(remove_empty::no);
 }
 
 extract_next_logical_line_result opencode_provider::feed_line(parsing::parser_holder& p)
@@ -210,7 +210,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     auto proc_status = proc.get_processing_status(collector.peek_instruction());
 
     if (op_text
-        && proc_status.first.form != processing::processing_form::IGNORED
+        && proc_status.first.form != processing_form::IGNORED
         // optimization : if statement has no label and is not COPY, do not even parse operands
         && (collector.has_label() || collector.current_instruction().type != semantics::instruction_si_type::ORD
             || std::get<context::id_index>(collector.current_instruction().value)
@@ -239,7 +239,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     const range& op_range,
     diagnostic_op_consumer* diags)
 {
-    if (proc.kind == processing::processing_kind::ORDINARY
+    if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(
             collector.current_instruction(), { *m_ctx->hlasm_ctx, *m_lib_provider }, *m_state_listener))
         return nullptr;
@@ -252,23 +252,22 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
         const auto& h = prepare_operand_parser(*op_text, *m_ctx->hlasm_ctx, diags, {}, op_range, proc_status, false);
 
         const auto& [format, opcode] = proc_status;
-        if (format.occurence == processing::operand_occurence::ABSENT
-            || format.form == processing::processing_form::UNKNOWN)
+        if (format.occurence == operand_occurence::ABSENT || format.form == processing_form::UNKNOWN)
             h.parser->op_rem_body_noop();
         else
         {
             switch (format.form)
             {
-                case processing::processing_form::IGNORED:
+                case processing_form::IGNORED:
                     h.parser->op_rem_body_ignored();
                     break;
-                case processing::processing_form::DEFERRED:
+                case processing_form::DEFERRED:
                     h.parser->op_rem_body_deferred();
                     break;
-                case processing::processing_form::CA:
+                case processing_form::CA:
                     h.parser->op_rem_body_ca();
                     break;
-                case processing::processing_form::MAC: {
+                case processing_form::MAC: {
                     auto rule = h.parser->op_rem_body_mac();
                     auto line = std::move(rule->line);
                     auto line_range = rule->line_range;
@@ -289,15 +288,15 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                         std::move(line.operands), std::move(line.remarks), line_range);
                 }
                 break;
-                case processing::processing_form::ASM:
+                case processing_form::ASM:
                     h.parser->op_rem_body_asm();
                     break;
-                case processing::processing_form::MACH:
+                case processing_form::MACH:
                     h.parser->op_rem_body_mach();
                     if (auto& h_collector = h.parser->get_collector(); h_collector.has_operands())
                         transform_reloc_imm_operands(h_collector.current_operands().value, opcode.value);
                     break;
-                case processing::processing_form::DAT:
+                case processing_form::DAT:
                     h.parser->op_rem_body_dat();
                     break;
                 default:
@@ -305,7 +304,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
             }
         }
 
-        if (format.form != processing::processing_form::IGNORED)
+        if (format.form != processing_form::IGNORED)
         {
             collector.append_operand_field(std::move(h.parser->get_collector()));
         }
@@ -313,7 +312,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
     range statement_range(position(m_current_logical_line_source.begin_line, 0)); // assign default
     auto result = collector.extract_statement(proc_status, statement_range);
 
-    if (proc.kind == processing::processing_kind::ORDINARY
+    if (proc.kind == processing_kind::ORDINARY
         && try_trigger_attribute_lookahead(*result, { *m_ctx->hlasm_ctx, *m_lib_provider }, *m_state_listener))
         return nullptr;
 
@@ -367,7 +366,7 @@ bool opencode_provider::try_running_preprocessor()
     return true;
 }
 
-bool opencode_provider::suspend_copy_processing(bool remove_empty) const
+bool opencode_provider::suspend_copy_processing(remove_empty re) const
 {
     auto& opencode_stack = m_ctx->hlasm_ctx->opencode_copy_stack();
 
@@ -392,12 +391,12 @@ bool opencode_provider::suspend_copy_processing(bool remove_empty) const
         copy.suspend(line_no + ll.segments.size());
         if (remaining_text.empty())
         {
-            if (remove_empty)
+            if (re == remove_empty::yes)
                 copy.resume();
             copy.current_statement = copy.cached_definition()->size() - 1;
         }
     }
-    if (remove_empty)
+    if (re == remove_empty::yes)
     {
         while (!opencode_stack.empty() && !opencode_stack.back().suspended())
             opencode_stack.pop_back();
@@ -434,8 +433,6 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
 
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
 {
-    using processing_kind = processing::processing_kind;
-
     const bool lookahead = proc.kind == processing_kind::LOOKAHEAD;
     const bool nested = proc.kind == processing_kind::MACRO || proc.kind == processing_kind::COPY;
 
@@ -489,14 +486,13 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
             for (auto& diag : collector.diag_container().diags)
                 m_diagnoser->add_diagnostic(std::move(diag));
             // indicate errors were produced, but do not report them again
-            return std::make_shared<processing::error_statement>(
+            return std::make_shared<error_statement>(
                 range(position(m_current_logical_line_source.begin_line, 0)), std::vector<diagnostic_op>());
         }
         else if (lookahead)
             return nullptr;
         else
-            return std::make_shared<processing::error_statement>(
-                range(position(m_current_logical_line_source.begin_line, 0)),
+            return std::make_shared<error_statement>(range(position(m_current_logical_line_source.begin_line, 0)),
                 std::move(collector.diag_container().diags));
     }
 

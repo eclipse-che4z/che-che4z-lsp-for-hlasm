@@ -166,7 +166,12 @@ private:
         diagnostic_op_consumer* diags);
 
     bool try_running_preprocessor();
-    bool suspend_copy_processing(bool remove_empty) const;
+    enum class remove_empty : bool
+    {
+        no,
+        yes,
+    };
+    bool suspend_copy_processing(remove_empty re) const;
     void convert_ainsert_buffer_to_copybook();
 };
 
