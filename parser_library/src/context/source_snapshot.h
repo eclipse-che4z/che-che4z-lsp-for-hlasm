@@ -62,40 +62,32 @@ struct copy_frame
 struct source_snapshot
 {
     location instruction;
-    size_t begin_index;
-    size_t end_index;
-    size_t end_line;
+    size_t begin_index = 0;
+    size_t end_index = 0;
+    size_t end_line = 0;
+    size_t ainsert_id = 0;
     std::vector<copy_frame> copy_frames;
 
-    source_snapshot()
-        : begin_index(0)
-        , end_index(0)
-        , end_line(0)
-    {}
+    source_snapshot() = default;
 
     source_snapshot(location instruction,
         size_t begin_index,
         size_t end_index,
         size_t end_line,
+        size_t ainsert_id,
         std::vector<copy_frame> copy_frames)
         : instruction(std::move(instruction))
         , begin_index(begin_index)
         , end_index(end_index)
         , end_line(end_line)
+        , ainsert_id(ainsert_id)
         , copy_frames(std::move(copy_frames))
     {}
 
     bool operator==(const source_snapshot& oth) const
     {
-        if (!(end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
-                && copy_frames.size() == oth.copy_frames.size()))
-            return false;
-
-        for (size_t i = 0; i < copy_frames.size(); ++i)
-            if (!(copy_frames[i] == oth.copy_frames[i]))
-                return false;
-
-        return true;
+        return end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
+            && ainsert_id == oth.ainsert_id && copy_frames == oth.copy_frames;
     }
 };
 

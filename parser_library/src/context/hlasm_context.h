@@ -270,6 +270,9 @@ public:
     static constexpr unsigned long sysndx_limit_max() { return SYSNDX_limit_max; }
 
     alignment section_alignment() const { return sectalgn; }
+
+    size_t current_ainsert_id() const { return source_stack_.front().ainsert_id; }
+    size_t obtain_ainsert_id() { return ++source_stack_.front().ainsert_id; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

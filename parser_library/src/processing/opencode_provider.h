@@ -96,7 +96,6 @@ class opencode_provider final : public statement_provider
     } m_current_logical_line_source;
 
     std::deque<std::string> m_ainsert_buffer;
-    size_t m_ainsert_copy_id = 0;
 
     std::unordered_map<context::id_index, std::string> m_virtual_files;
 

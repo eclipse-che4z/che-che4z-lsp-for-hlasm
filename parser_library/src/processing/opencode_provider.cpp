@@ -412,7 +412,8 @@ void opencode_provider::convert_ainsert_buffer_to_copybook()
         result.append(s), result.push_back('\n');
     m_ainsert_buffer.clear();
 
-    auto virtual_copy_name = m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ainsert_copy_id++));
+    auto virtual_copy_name =
+        m_ctx->hlasm_ctx->ids().add("AINSERT:" + std::to_string(m_ctx->hlasm_ctx->obtain_ainsert_id()));
 
     auto new_file = m_virtual_files.try_emplace(virtual_copy_name, std::move(result)).first;
 
