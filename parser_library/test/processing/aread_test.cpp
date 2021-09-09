@@ -682,3 +682,27 @@ TEST(aread, lookahead_in_ainsert)
     auto& diags = a.diags();
     EXPECT_TRUE(diags.empty());
 }
+
+TEST(aread, lookahead_resumed_after_ainsert)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         AINSERT '   AIF   (1).L       ',BACK
+         AINSERT '.L ANOP              ',BACK
+         MEND
+
+&X       SETA L'A
+
+         MAC
+
+A        DS  C
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    auto& diags = a.diags();
+    EXPECT_TRUE(diags.empty());
+}
