@@ -31,7 +31,7 @@ suite('Integration Test Suite', () => {
 	};
 
 	suiteSetup(async function () {
-		this.timeout(10000);
+		this.timeout(30000);
 		// 'open' should be in workspace
 		const files = await vscode.workspace.findFiles(workspace_file);
 
@@ -56,8 +56,9 @@ suite('Integration Test Suite', () => {
 	// change 'open' file to create diagnostic
 	test('Diagnostic test', async () => {
 		const editor = get_editor();
+
 		// register callback to check for the correctness of the diagnostic
-		var diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
+		const diagnostic_event = new Promise<[vscode.Uri, vscode.Diagnostic[]][]>((resolve, reject) => {
 			const listener = vscode.languages.onDidChangeDiagnostics((_) => {
 				listener.dispose();
 				resolve(vscode.languages.getDiagnostics());
@@ -69,7 +70,7 @@ suite('Integration Test Suite', () => {
 		});
 
 		const allDiags = await diagnostic_event;
-		var openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
+		const openDiags = allDiags.find(pair => pair[0].path.endsWith("open"))[1]
 
 		assert.ok(openDiags.length == 1 && openDiags[0].code == 'M003', 'Wrong diagnostic');
 	}).timeout(10000).slow(1000);
@@ -150,9 +151,6 @@ suite('Integration Test Suite', () => {
 
 	// debug open code test
 	test('Debug test', async () => {
-		// simulates basic debugging procedure
-		const editor = get_editor();
-
 		const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
 			// when the debug session starts
 			const disposable = vscode.debug.onDidStartDebugSession((session) => {
@@ -186,4 +184,25 @@ suite('Integration Test Suite', () => {
 
 		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
 	}).timeout(10000).slow(4000);
+
+	// verify that library patterns are working
+	test('Test library patterns', async () => {
+		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
+
+		assert.ok(files && files[0]);
+		const file = files[0];
+
+		// open the file
+		const document = await vscode.workspace.openTextDocument(file);
+
+		await vscode.window.showTextDocument(document);
+
+		await sleep(2000);
+
+		const allDiags = vscode.languages.getDiagnostics();
+		const patternDiags = allDiags.find(pair => pair[0].path.endsWith("test_pattern.hlasm"))
+
+		if (patternDiags)
+			assert.ok(patternDiags[1].length == 0, 'Library patterns are not working');
+	}).timeout(10000).slow(2500);
 });

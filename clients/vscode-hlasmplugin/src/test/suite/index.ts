@@ -66,6 +66,8 @@ export async function run(): Promise<void> {
 		// Run the mocha test
 		mocha.run(failures => {
 			if (failures > 0) {
+				if (!is_vscode)
+					console.error('>>>THEIA TESTS FAILED<<<');
 				reject(new Error(`${failures} tests failed.`));
 			} else {
 				resolve(undefined);
@@ -77,7 +79,8 @@ export async function run(): Promise<void> {
 		// report code coverage
 		nyc.writeCoverageFile();
 		nyc.report();
+		console.log('Report created');
 	}
-
-	console.log('Report created');
+	else
+		console.log('>>>THEIA TESTS PASSED<<<');
 }

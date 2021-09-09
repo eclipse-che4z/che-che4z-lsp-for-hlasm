@@ -35,7 +35,14 @@ std::filesystem::path lexically_relative(const std::filesystem::path& p, std::st
 
 std::filesystem::path filename(const std::filesystem::path& p) { return p.filename(); }
 
+std::filesystem::path canonical(const std::filesystem::path& p) { return std::filesystem::canonical(p); }
+std::filesystem::path canonical(const std::filesystem::path& p, std::error_code& ec)
+{
+    return std::filesystem::canonical(p, ec);
+}
+
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right) { return left == right; }
+bool is_directory(const std::filesystem::path& p) { return std::filesystem::directory_entry(p).is_directory(); }
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
@@ -58,6 +65,36 @@ list_directory_rc list_directory_regular_files(
             {
                 h(p.path());
             }
+        }
+    }
+    catch (const std::filesystem::filesystem_error&)
+    {
+        return list_directory_rc::other_failure;
+    }
+
+    return list_directory_rc::done;
+}
+
+list_directory_rc list_directory_subdirs_and_symlinks(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
+{
+    std::filesystem::directory_entry dir(d);
+
+    if (!dir.exists())
+        return list_directory_rc::not_exists;
+
+    if (!dir.is_directory())
+        return list_directory_rc::not_a_directory;
+
+    try
+    {
+        std::filesystem::directory_iterator it(dir);
+
+        for (auto& p : it)
+        {
+            auto path = p.path();
+            if (std::filesystem::directory_entry de(path); de.is_directory() || de.is_symlink())
+                h(path);
         }
     }
     catch (const std::filesystem::filesystem_error&)
