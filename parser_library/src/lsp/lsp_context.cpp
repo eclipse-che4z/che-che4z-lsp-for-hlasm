@@ -736,7 +736,7 @@ std::string lsp_context::get_macro_documentation(const macro_info& m) const
     // Skip over MACRO statement
     size_t doc_before_begin_line = MACRO_line - 1;
     // Find the beginning line of documentation written in front of macro definition
-    while (doc_before_begin_line != -1 && is_comment(text.get_line(doc_before_begin_line)))
+    while (doc_before_begin_line != (size_t)-1 && is_comment(text.get_line(doc_before_begin_line)))
         --doc_before_begin_line;
     ++doc_before_begin_line;
 
