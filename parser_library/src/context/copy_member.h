@@ -61,7 +61,7 @@ struct copy_member_invocation
 
     position current_statement_position() const
     {
-        if (current_statement != -1)
+        if (current_statement != (size_t)-1)
             return cached_definition()->at(current_statement).get_base()->statement_position();
         else
             return {};

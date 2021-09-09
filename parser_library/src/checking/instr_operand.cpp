@@ -259,11 +259,10 @@ one_operand::one_operand(int value, range range)
 {}
 
 one_operand::one_operand(const one_operand& op)
-{
-    operand_identifier = op.operand_identifier;
-    value = op.value;
-    is_default = op.is_default;
-};
+    : operand(operand_range)
+    , operand_identifier(op.operand_identifier)
+    , value(op.value)
+    , is_default(op.is_default) {};
 
 bool one_operand::check(
     diagnostic_op& diag, const machine_operand_format to_check, const std::string& instr_name, const range&) const
