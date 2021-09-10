@@ -642,6 +642,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
 
     return table;
 }
@@ -815,6 +816,20 @@ void asm_processor::process_START(rebuilt_statement stmt)
     }
 
     hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
+}
+
+void asm_processor::process_ALIAS(rebuilt_statement stmt)
+{
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
+    auto symbol_name = find_label_symbol(stmt);
+    if (symbol_name->empty())
+    {
+        add_diagnostic(diagnostic_op::error_A163_ALIAS_mandatory_label(stmt.stmt_range_ref()));
+        return;
+    }
+
+    // TODO: check that the symbol_name is an external symbol
 }
 
 } // namespace hlasm_plugin::parser_library::processing

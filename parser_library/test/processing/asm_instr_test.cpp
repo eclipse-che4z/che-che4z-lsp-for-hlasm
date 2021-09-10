@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "../common_testing.h"
 #include "analyzer.h"
 #include "ebcdic_encoding.h"
 
@@ -132,4 +133,67 @@ CNOPSYM CNOP ADDR,16
     auto symbol = ctx.ord_ctx.get_symbol(ctx.ids().add("CNOPSYM"));
     ASSERT_NE(symbol, nullptr);
     EXPECT_EQ(symbol->value().get_reloc().offset(), 4);
+}
+
+TEST(asm_instr_processing, ALIAS_mandatory_label)
+{
+    std::string input = R"(
+  ALIAS C'SOMESTRING'
+  ALIAS X'434343434343'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A163", "A163" }));
+}
+
+TEST(asm_instr_processing, ALIAS_external_missing)
+{
+    /* TODO: lable must be an external symbol
+    std::string input = R"(
+A ALIAS C'SOMESTRING'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "????" }));
+    */
+}
+
+TEST(asm_instr_processing, ALIAS_external_present)
+{
+    std::string input = R"(
+A DSECT
+B START
+C CSECT
+D DXD F
+  DC Q(A)
+  ENTRY E
+E DS 0H
+  DC V(F)
+G RSECT
+H COM
+  EXTRN I
+  WXTRN J
+A ALIAS C'STRING'
+B ALIAS C'STRING'
+C ALIAS C'STRING'
+D ALIAS C'STRING'
+E ALIAS C'STRING'
+F ALIAS C'STRING'
+G ALIAS C'STRING'
+H ALIAS C'STRING'
+I ALIAS C'STRING'
+J ALIAS C'STRING'
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
 }

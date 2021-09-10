@@ -682,6 +682,11 @@ diagnostic_op diagnostic_op::error_A162_PROCESS_uknown_option(const std::string&
         diagnostic_severity::error, "A162", "Error at *PROCESS instruction: unknown assembler option " + option, range);
 }
 
+diagnostic_op diagnostic_op::error_A163_ALIAS_mandatory_label(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "A163", "Label not provided on ALIAS instruction", range);
+}
+
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(const std::string& instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,

@@ -93,6 +93,7 @@ protected:
     bool CA();
     bool MAC();
     bool UNKNOWN();
+    bool ALIAS();
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;

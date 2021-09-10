@@ -235,6 +235,19 @@ bool parser_impl::UNKNOWN()
     return format.form == processing::processing_form::UNKNOWN;
 }
 
+bool parser_impl::ALIAS()
+{
+    static const auto alias_instruction =
+        opcode_t::opcode_variant(&context::instruction::assembler_instructions.at("ALIAS"));
+
+    auto& [format, opcode] = *proc_status;
+    if (format.form != processing::processing_form::ASM)
+        return false;
+
+    auto i = hlasm_ctx->instruction_map().find(opcode.value);
+    return i != hlasm_ctx->instruction_map().end() && i->second == alias_instruction;
+}
+
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 {
     if (proc_status->first.kind == processing::processing_kind::LOOKAHEAD)
