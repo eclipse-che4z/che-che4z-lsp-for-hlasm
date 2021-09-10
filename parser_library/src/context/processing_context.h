@@ -30,7 +30,6 @@ struct source_context
     size_t begin_index = 0;
     size_t end_index = 0;
     size_t end_line = 0;
-    size_t ainsert_id = 0;
 
     // stack of copy nests
     std::vector<copy_member_invocation> copy_stack;

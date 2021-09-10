@@ -185,7 +185,7 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 {
     // jump to the statement where the previous lookahead stopped
     if (hlasm_ctx_.current_source().end_index < lookahead_stop_.end_index
-        && (!hlasm_ctx_.in_opencode() || hlasm_ctx_.current_ainsert_id() <= lookahead_stop_.ainsert_id))
+        && (!hlasm_ctx_.in_opencode() || hlasm_ctx_.current_ainsert_id() <= lookahead_stop_ainsert_id))
         perform_opencode_jump(
             context::source_position(lookahead_stop_.end_line + 1, lookahead_stop_.end_index), lookahead_stop_);
 
@@ -196,6 +196,7 @@ void processing_manager::start_lookahead(lookahead_start_data start)
 void processing_manager::finish_lookahead(lookahead_processing_result result)
 {
     lookahead_stop_ = hlasm_ctx_.current_source().create_snapshot();
+    lookahead_stop_ainsert_id = hlasm_ctx_.current_ainsert_id();
 
     if (result.action == lookahead_action::SEQ)
     {

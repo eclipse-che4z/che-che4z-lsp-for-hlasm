@@ -31,14 +31,7 @@ source_snapshot source_context::create_snapshot() const
     if (!copy_frames.empty())
         --copy_frames.back().statement_offset;
 
-    return source_snapshot {
-        current_instruction,
-        begin_index,
-        end_index,
-        end_line,
-        ainsert_id,
-        std::move(copy_frames),
-    };
+    return source_snapshot { current_instruction, begin_index, end_index, end_line, std::move(copy_frames) };
 }
 
 processing_context::processing_context(processing::processing_kind proc_kind, bool owns_source)

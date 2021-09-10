@@ -36,7 +36,7 @@ namespace hlasm_plugin::parser_library::expressions {
 
 // Represents data definition operand as it was written into source code.
 // Uses machine expressions to represent all modifiers and nominal value.
-struct data_definition : public diagnosable_op_impl, public context::dependable
+struct data_definition final : public diagnosable_op_impl, public context::dependable
 {
     enum class length_type
     {

@@ -80,6 +80,9 @@ class hlasm_context
     static constexpr unsigned long SYSNDX_limit_max = 9999999UL;
     unsigned long SYSNDX_limit = SYSNDX_limit_max;
 
+    // last AINSERT virtual file id
+    size_t m_ainsert_id = 0;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -271,8 +274,8 @@ public:
 
     alignment section_alignment() const { return sectalgn; }
 
-    size_t current_ainsert_id() const { return source_stack_.front().ainsert_id; }
-    size_t obtain_ainsert_id() { return ++source_stack_.front().ainsert_id; }
+    size_t current_ainsert_id() const { return m_ainsert_id; }
+    size_t obtain_ainsert_id() { return ++m_ainsert_id; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

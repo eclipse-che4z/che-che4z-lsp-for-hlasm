@@ -64,6 +64,7 @@ private:
     std::vector<statement_analyzer*> stms_analyzers_;
 
     context::source_snapshot lookahead_stop_;
+    size_t lookahead_stop_ainsert_id = 0;
 
     bool attr_lookahead_active() const;
 
