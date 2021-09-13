@@ -86,6 +86,7 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 section* ordinary_assembly_context::get_section(id_index name)
 {
     for (auto& tmp : sections_)
+       
     {
         if (tmp->name == name)
         {
@@ -297,8 +298,12 @@ void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* 
         }
     }
 }
+void ordinary_assembly_context::stop_processing(loctr_dependency_resolver* resolver) {
+    current_section()->location_counters()[0]->finish_layout(0);
+    symbol_dependencies.add_defined(resolver);
 
-const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols() { return symbols_; }
+}
+    const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols() { return symbols_; }
 
 std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(size_t length, alignment align)
 {

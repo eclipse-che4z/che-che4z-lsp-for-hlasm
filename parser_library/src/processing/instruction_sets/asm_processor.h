@@ -36,9 +36,10 @@ public:
         workspaces::parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         opencode_provider& open_code);
-
+    bool end_processing = false;
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
-
+    bool get_end_process() { return  end_processing;
+    }
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,
@@ -64,7 +65,8 @@ private:
     void process_CCW(rebuilt_statement stmt);
     void process_CNOP(rebuilt_statement stmt);
     void process_START(rebuilt_statement stmt);
-
+    void process_END(rebuilt_statement stmt);
+   
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);
 
