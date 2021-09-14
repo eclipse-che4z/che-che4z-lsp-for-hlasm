@@ -642,7 +642,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("CCW1"), [this](rebuilt_statement stmt) { process_CCW(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
-    table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
+   // table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
 
     return table;
 }
@@ -817,28 +817,34 @@ void asm_processor::process_START(rebuilt_statement stmt)
 
     hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
-void asm_processor::process_END(rebuilt_statement stmt)
+/*void asm_processor::process_END(rebuilt_statement stmt)
 {
-    const auto& label = stmt.label_ref();
+   /* const auto& label = stmt.label_ref();
    
     if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ)) {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
         return;
     }
-    if (!stmt.operands_ref().value.empty()) {
+    if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
+    {
 
-     auto operand = stmt.operands_ref().value[1]->access_asm()->access_string();
-        if (operand->value != *hlasm_ctx.ord_ctx.current_section()->name)
-        {
-            add_diagnostic(diagnostic_op::error_E032(operand->value, stmt.operands_ref().field_range));
+     auto operand = stmt.operands_ref().value[0]->access_asm();
+     auto string_op = operand->access_expr();
+
+     auto symbol =  string_op->expression.get()->evaluate(hlasm_ctx.ord_ctx);
+     if (symbol.value_kind() != context::symbol_value_kind::RELOC) {
+         //auto value = dynamic_cast<checking::one_operand&>(*string_op).operand_identifier;
+         auto val = dynamic_cast<const expressions::mach_expr_symbol*>(string_op->expression.get());
+         
+           add_diagnostic(diagnostic_op::error_E032(*val->value, stmt.operands_ref().field_range));
             return;
         }
-            hlasm_ctx.ord_ctx.stop_processing(this);
+           // hlasm_ctx.ord_ctx.stop_processing(this);
 
     }
     else
     {
       //  end_processing = true;
     }
-    }
+    }*/
 } // namespace hlasm_plugin::parser_library::processing
