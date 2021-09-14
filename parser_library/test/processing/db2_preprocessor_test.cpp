@@ -97,7 +97,7 @@ TEST(db2_preprocessor, include_sqlca)
     bool called = false;
     auto p = preprocessor::create(
         db2_preprocessor_options {},
-        [&called](std::string_view s) {
+        [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
@@ -128,7 +128,7 @@ TEST(db2_preprocessor, include_sqlda)
     bool called = false;
     auto p = preprocessor::create(
         db2_preprocessor_options {},
-        [&called](std::string_view s) {
+        [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
@@ -159,7 +159,7 @@ TEST(db2_preprocessor, sql_like)
     bool called = false;
     auto p = preprocessor::create(
         db2_preprocessor_options {},
-        [&called](std::string_view s) {
+        [&called](std::string_view) {
             called = true;
             return std::nullopt;
         },
@@ -188,7 +188,7 @@ TEST(db2_preprocessor, sql_like)
 TEST(db2_preprocessor, with_label)
 {
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, nullptr);
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, nullptr);
     std::string_view text = "\nABC EXEC SQL WHATEVER";
     size_t lineno = 0;
 
@@ -211,7 +211,7 @@ TEST(db2_preprocessor, missing_member)
 {
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
     std::string_view text = " EXEC SQL INCLUDE MISSING";
     size_t lineno = 0;
@@ -227,7 +227,7 @@ TEST(db2_preprocessor, bad_continuation)
 {
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
     std::string_view text = R"( EXEC SQL PRETENT SQL STATEMENT                                        X
 badcontinuation)";
@@ -923,7 +923,7 @@ TEST(db2_preprocessor, sql_type_fails)
     {
         diagnostic_op_consumer_container diags;
         auto p = preprocessor::create(
-            db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+            db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
         size_t lineno = 0;
 
@@ -940,7 +940,7 @@ TEST(db2_preprocessor, sql_type_warn_on_continuation)
                             "                AS LOCATOR";
     diagnostic_op_consumer_container diags;
     auto p = preprocessor::create(
-        db2_preprocessor_options {}, [](std::string_view s) { return std::nullopt; }, &diags);
+        db2_preprocessor_options {}, [](std::string_view) { return std::nullopt; }, &diags);
 
     size_t lineno = 0;
 

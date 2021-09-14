@@ -482,7 +482,7 @@ void macrodef_processor::add_correct_copy_nest()
     {
         const auto& nest = hlasm_ctx.current_copy_stack()[i];
         result_.nests.back().emplace_back(context::copy_nest_item {
-            location { nest.current_statement_position(), nest.definition_location->file }, nest.name });
+            location { nest.current_statement_position(), nest.definition_location()->file }, nest.name() });
     }
 
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())

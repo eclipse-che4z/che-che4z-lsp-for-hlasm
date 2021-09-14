@@ -80,6 +80,9 @@ class hlasm_context
     static constexpr unsigned long SYSNDX_limit_max = 9999999UL;
     unsigned long SYSNDX_limit = SYSNDX_limit_max;
 
+    // last AINSERT virtual file id
+    size_t m_ainsert_id = 0;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -125,6 +128,9 @@ public:
     // gets top level (opencode) copy stack
     const std::vector<copy_member_invocation>& opencode_copy_stack() const;
     std::vector<copy_member_invocation>& opencode_copy_stack();
+    // is open code being processed
+    bool in_opencode() const { return source_stack_.size() == 1; }
+
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 
@@ -267,6 +273,9 @@ public:
     static constexpr unsigned long sysndx_limit_max() { return SYSNDX_limit_max; }
 
     alignment section_alignment() const { return sectalgn; }
+
+    size_t current_ainsert_id() const { return m_ainsert_id; }
+    size_t obtain_ainsert_id() { return ++m_ainsert_id; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

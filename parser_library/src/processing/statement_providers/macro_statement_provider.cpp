@@ -35,7 +35,7 @@ context::statement_cache* macro_statement_provider::get_next()
     assert(invo);
 
     ++invo->current_statement;
-    if ((size_t)invo->current_statement == invo->cached_definition.size())
+    if (invo->current_statement == invo->cached_definition.size())
     {
         ctx.hlasm_ctx->leave_macro();
         return nullptr;

@@ -27,53 +27,8 @@ copy_statement_provider::copy_statement_provider(analyzing_context ctx,
 
 bool copy_statement_provider::finished() const
 {
-    return ctx.hlasm_ctx->current_copy_stack().empty()
-        || m_suspended && &ctx.hlasm_ctx->current_copy_stack() == &ctx.hlasm_ctx->opencode_copy_stack();
-}
-
-void copy_statement_provider::suspend()
-{
-    assert(!m_suspended);
-    m_suspended = true;
-}
-
-bool copy_statement_provider::try_resume_at(size_t line_no, resume_copy resume_opts)
-{
-    assert(m_suspended);
-
-    if (resume_opts == resume_copy::ignore_line)
-    {
-        m_suspended = false;
-        return true;
-    }
-
-    auto& opencode_copy_stack = ctx.hlasm_ctx->opencode_copy_stack().back();
-
-    opencode_copy_stack.current_statement = -1;
-
-    for (const auto& stmt : *opencode_copy_stack.cached_definition)
-    {
-        const auto stmt_line_no = stmt.get_base()->statement_position().line;
-        if (stmt_line_no == line_no)
-        {
-            m_suspended = false;
-            return true;
-        }
-        else if (stmt_line_no > line_no)
-        {
-            switch (resume_opts)
-            {
-                case resume_copy::exact_line_match:
-                    return false;
-                case resume_copy::exact_or_next_line:
-                    m_suspended = false;
-                    return true;
-            }
-        }
-
-        ++opencode_copy_stack.current_statement;
-    }
-    return false;
+    const auto& current_stack = ctx.hlasm_ctx->current_copy_stack();
+    return current_stack.empty() || ctx.hlasm_ctx->in_opencode() && current_stack.back().suspended();
 }
 
 context::statement_cache* copy_statement_provider::get_next()
@@ -81,13 +36,13 @@ context::statement_cache* copy_statement_provider::get_next()
     auto& invo = ctx.hlasm_ctx->current_copy_stack().back();
 
     ++invo.current_statement;
-    if ((size_t)invo.current_statement == invo.cached_definition->size())
+    if (invo.current_statement == invo.cached_definition()->size())
     {
         ctx.hlasm_ctx->leave_copy_member();
         return nullptr;
     }
 
-    return &invo.cached_definition->at(invo.current_statement);
+    return &invo.cached_definition()->at(invo.current_statement);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

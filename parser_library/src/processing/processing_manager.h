@@ -64,6 +64,7 @@ private:
     std::vector<statement_analyzer*> stms_analyzers_;
 
     context::source_snapshot lookahead_stop_;
+    size_t lookahead_stop_ainsert_id = 0;
 
     bool attr_lookahead_active() const;
 
@@ -77,9 +78,6 @@ private:
     void start_copy_member(copy_start_data start) override;
     void finish_copy_member(copy_processing_result result) override;
     void finish_opencode() override;
-
-    void suspend_opencode_copy_processing() override;
-    bool resume_opencode_copy_processing_at(size_t line_no, resume_copy resume_opts) override;
 
     void start_macro_definition(macrodef_start_data start, std::optional<std::string> file);
 

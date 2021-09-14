@@ -17,6 +17,7 @@
 - &SYSMAC should contain only the macro name
 - Diagnostics lost during JSON serialization
 - Files with extension should not be set to hlasm in libs folder
+- Lookahead mode does not work correctly when triggered from AINSERTed code
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
