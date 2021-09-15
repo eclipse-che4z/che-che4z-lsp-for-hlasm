@@ -304,9 +304,9 @@ TEST(machine_instr_check_test, reloc_ImmS_out_of_range)
 {
     std::string input(
         R"(
- BRAS 1,DISP
-LEN123   DS CL(64444)
-DISP     MVC 0(1),1
+         BRAS 1,DISP
+         DS   CL(65532)
+DISP     MVC  0(1),1
 )");
     analyzer a(input);
     a.analyze();
@@ -314,6 +314,21 @@ DISP     MVC 0(1),1
     ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
     ASSERT_EQ(a.diags().size(), (size_t)1);
     ASSERT_EQ(a.diags().at(0).code, "M123");
+}
+
+TEST(machine_instr_check_test, reloc_ImmS_in_range)
+{
+    std::string input(
+        R"(
+         BRAS 1,DISP
+         DS   CL(65530)
+DISP     MVC 0(1),1
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    ASSERT_EQ(a.parser().getNumberOfSyntaxErrors(), (size_t)0);
+    ASSERT_EQ(a.diags().size(), (size_t)0);
 }
 
 TEST(machine_instr_check_test, mask_out_of_range)
