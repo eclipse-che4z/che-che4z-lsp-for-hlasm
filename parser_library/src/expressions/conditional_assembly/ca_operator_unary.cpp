@@ -42,7 +42,10 @@ void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind)
 
 void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr); }
 
-bool ca_unary_operator::is_character_expression() const { return false; }
+bool ca_unary_operator::is_character_expression(character_expression_purpose purpose) const
+{
+    return purpose == character_expression_purpose::assignment && expr_kind == context::SET_t_enum::C_TYPE;
+}
 
 void ca_unary_operator::apply(ca_expr_visitor& visitor) const { expr->apply(visitor); }
 

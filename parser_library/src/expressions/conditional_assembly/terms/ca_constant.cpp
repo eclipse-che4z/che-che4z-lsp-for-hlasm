@@ -37,7 +37,7 @@ void ca_constant::collect_diags() const
     // nothing to collect
 }
 
-bool ca_constant::is_character_expression() const { return false; }
+bool ca_constant::is_character_expression(character_expression_purpose) const { return false; }
 
 void ca_constant::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 

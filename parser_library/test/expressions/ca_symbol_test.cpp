@@ -46,4 +46,9 @@ TEST(ca_symbol, resolve_expr_tree)
     ASSERT_NE(sym.diags().size(), 0U);
 }
 
-TEST(ca_symbol, is_char) { ASSERT_FALSE(ca_symbol(nullptr, range()).is_character_expression()); }
+TEST(ca_symbol, is_char)
+{
+    EXPECT_FALSE(ca_symbol(nullptr, range()).is_character_expression(character_expression_purpose::assignment));
+    EXPECT_FALSE(
+        ca_symbol(nullptr, range()).is_character_expression(character_expression_purpose::left_side_of_comparison));
+}

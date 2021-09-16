@@ -21,6 +21,7 @@
 - Incorrect relative immediate operand validation
 - Remove ALIAS operand parsing limitation
 - Attribute expressions ending with dot are not parsed correctly
+- Improve evaluation and diagnostics of conditional assembler expressions
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 

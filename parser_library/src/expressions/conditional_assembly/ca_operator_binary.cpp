@@ -54,7 +54,10 @@ void ca_binary_operator::collect_diags() const
     collect_diags_from_child(*right_expr);
 }
 
-bool ca_binary_operator::is_character_expression() const { return left_expr->is_character_expression(); }
+bool ca_binary_operator::is_character_expression(character_expression_purpose purpose) const
+{
+    return left_expr->is_character_expression(purpose);
+}
 
 void ca_binary_operator::apply(ca_expr_visitor& visitor) const
 {
@@ -80,7 +83,8 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
 {
     if (expr_kind != kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
-    else if ((function == ca_expr_ops::FIND || function == ca_expr_ops::INDEX) && !left_expr->is_character_expression())
+    else if ((function == ca_expr_ops::FIND || function == ca_expr_ops::INDEX)
+        && !left_expr->is_character_expression(character_expression_purpose::left_side_of_comparison))
         add_diagnostic(diagnostic_op::error_CE004(left_expr->expr_range));
     else
     {
@@ -88,8 +92,11 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
 
         if (is_relational())
         {
-            operands_kind =
-                left_expr->is_character_expression() ? context::SET_t_enum::C_TYPE : context::SET_t_enum::A_TYPE;
+            // 'A' eq UPPER('a') is ok
+            // UPPER('a') eq 'A' is not
+            operands_kind = left_expr->is_character_expression(character_expression_purpose::left_side_of_comparison)
+                ? context::SET_t_enum::C_TYPE
+                : context::SET_t_enum::A_TYPE;
         }
         else
             operands_kind = ca_common_expr_policy::get_operands_type(function, kind);

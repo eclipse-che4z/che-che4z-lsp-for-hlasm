@@ -92,7 +92,7 @@ TEST_P(parser_string_fixture, basic)
  MACRO
  MAC &VAR
  GBLC &PAR
-&PAR SETC &VAR 
+&PAR SETC '&VAR'
  MEND
  
  MAC )" + GetParam().parameter;
@@ -115,7 +115,7 @@ TEST(parser, incomplete_string)
  MACRO
  MAC &VAR
  GBLC &PAR
-&PAR SETC &VAR 
+&PAR SETC '&VAR'
  MEND
  
  MAC 'A 93)";

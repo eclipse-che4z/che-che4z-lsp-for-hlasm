@@ -175,6 +175,10 @@ TEST(character_expresssion, zero_length_substring)
 TEST(character_expresssion, dots)
 {
     for (const auto& [input, ok] : {
+             std::pair<std::string, bool> { "&C SETC &C", false },
+             std::pair<std::string, bool> { "&C. SETC &C", false },
+             std::pair<std::string, bool> { "&C SETC &C.", false },
+             std::pair<std::string, bool> { "&C. SETC &C.", false },
              std::pair<std::string, bool> { "&C SETC T'&C", true },
              std::pair<std::string, bool> { "&C SETC T'&C.", true },
          })

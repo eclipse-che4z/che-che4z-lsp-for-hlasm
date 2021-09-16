@@ -634,6 +634,8 @@ struct diagnostic_op
 
     static diagnostic_op error_CE016_logical_expression_parenthesis(const range& range);
 
+    static diagnostic_op error_CE017_character_expression_expected(const range& range);
+
     static diagnostic_op error_CW001(const range& range);
 
     static diagnostic_op error_S100(const std::string& message, const range& range);

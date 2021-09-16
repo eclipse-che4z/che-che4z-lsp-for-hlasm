@@ -80,7 +80,53 @@ void ca_function::collect_diags() const
     // nothing to collect
 }
 
-bool ca_function::is_character_expression() const { return false; }
+bool ca_function::is_character_expression(character_expression_purpose purpose) const
+{
+    switch (function)
+    {
+        case ca_expr_funcs::B2A:
+        case ca_expr_funcs::C2A:
+        case ca_expr_funcs::D2A:
+        case ca_expr_funcs::DCLEN:
+        case ca_expr_funcs::FIND:
+        case ca_expr_funcs::INDEX:
+        case ca_expr_funcs::ISBIN:
+        case ca_expr_funcs::ISDEC:
+        case ca_expr_funcs::ISHEX:
+        case ca_expr_funcs::ISSYM:
+        case ca_expr_funcs::X2A:
+            return false;
+        case ca_expr_funcs::A2B:
+        case ca_expr_funcs::A2C:
+        case ca_expr_funcs::A2D:
+        case ca_expr_funcs::A2X:
+        case ca_expr_funcs::B2C:
+        case ca_expr_funcs::B2D:
+        case ca_expr_funcs::B2X:
+        case ca_expr_funcs::BYTE:
+        case ca_expr_funcs::C2B:
+        case ca_expr_funcs::C2D:
+        case ca_expr_funcs::C2X:
+        case ca_expr_funcs::D2B:
+        case ca_expr_funcs::D2C:
+        case ca_expr_funcs::D2X:
+        case ca_expr_funcs::DCVAL:
+        case ca_expr_funcs::DEQUOTE:
+        case ca_expr_funcs::DOUBLE:
+        case ca_expr_funcs::ESYM:
+        case ca_expr_funcs::LOWER:
+        case ca_expr_funcs::SIGNED:
+        case ca_expr_funcs::SYSATTRA:
+        case ca_expr_funcs::SYSATTRP:
+        case ca_expr_funcs::UPPER:
+        case ca_expr_funcs::X2B:
+        case ca_expr_funcs::X2C:
+        case ca_expr_funcs::X2D:
+            return purpose == character_expression_purpose::assignment;
+        default:
+            return false;
+    }
+}
 
 void ca_function::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 

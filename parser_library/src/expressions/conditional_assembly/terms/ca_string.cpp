@@ -61,7 +61,7 @@ void ca_string::collect_diags() const
         collect_diags_from_child(*substring.count);
 }
 
-bool ca_string::is_character_expression() const { return duplication_factor == nullptr; }
+bool ca_string::is_character_expression(character_expression_purpose) const { return true; }
 
 void ca_string::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 

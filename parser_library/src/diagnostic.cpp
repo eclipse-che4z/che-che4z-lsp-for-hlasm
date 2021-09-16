@@ -1992,6 +1992,11 @@ diagnostic_op diagnostic_op::error_CE016_logical_expression_parenthesis(const ra
         diagnostic_severity::error, "CE016", "Logical expression must be enclosed in parenthesis.", range);
 }
 
+diagnostic_op diagnostic_op::error_CE017_character_expression_expected(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "CE017", "Character expression expected", range);
+}
+
 diagnostic_op diagnostic_op::error_CW001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);
