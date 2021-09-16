@@ -171,3 +171,18 @@ TEST(character_expresssion, zero_length_substring)
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(character_expresssion, dots)
+{
+    for (const auto& [input, ok] : {
+             std::pair<std::string, bool> { "&C SETC T'&C", true },
+             std::pair<std::string, bool> { "&C SETC T'&C.", true },
+         })
+    {
+        analyzer a(input);
+        a.analyze();
+
+        a.collect_diags();
+        ASSERT_EQ(a.diags().empty(), ok);
+    }
+}

@@ -238,7 +238,7 @@ data_attribute returns [context::data_attr_kind attribute, std::variant<context:
 
 data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
 	: literal
-	| var_symbol
+	| var_symbol DOT?
 	{
 		$value = std::move($var_symbol.vs);
 	}
