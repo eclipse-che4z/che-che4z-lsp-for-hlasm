@@ -60,6 +60,8 @@
  * - Files                    - total number of parsed files
  */
 
+namespace hlasm_plugin::benchmark {
+
 using json = nlohmann::json;
 
 class metrics_collector : public hlasm_plugin::parser_library::parsing_metadata_consumer
@@ -155,21 +157,13 @@ json parse_one_file(const std::string& source_file,
         { "Warnings", diag_counter.warning_count },
         { "Wall Time (ms)", time },
         { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
-        { "Open Code Statements", collector.metrics_.open_code_statements },
-        { "Copy Statements", collector.metrics_.copy_statements },
-        { "Macro Statements", collector.metrics_.macro_statements },
-        { "Copy Def Statements", collector.metrics_.copy_def_statements },
-        { "Macro Def Statements", collector.metrics_.macro_def_statements },
-        { "Lookahead Statements", collector.metrics_.lookahead_statements },
-        { "Reparsed Statements", collector.metrics_.reparsed_statements },
-        { "Continued Statements", collector.metrics_.continued_statements },
-        { "Non-continued Statements", collector.metrics_.non_continued_statements },
         { "Executed Statements", exec_statements },
-        { "Lines", collector.metrics_.lines },
         { "ExecStatement/ms", exec_statements / (double)time },
         { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files },
         { "Top messages", std::move(top_messages) } });
+
+    json metrics_json = language_server::get_metrics_json(collector.metrics_);
+    result.insert(metrics_json.begin(), metrics_json.end());
 
     auto first_parse_metrics = collector.metrics_;
     auto first_diag_counter = diag_counter;
@@ -407,3 +401,5 @@ int main(int argc, char** argv)
     }
     return 0;
 }
+
+} // namespace hlasm_plugin::benchmark

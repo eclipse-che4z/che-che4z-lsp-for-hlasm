@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_LANGUAGESERVER_PARSING_METADATA_SINK_H
 
 #include "workspace_manager.h"
+#include "nlohmann/json.hpp"
 
 namespace hlasm_plugin::language_server {
 
@@ -25,6 +26,23 @@ class parsing_metadata_collector : public parser_library::parsing_metadata_consu
 
     parser_library::parsing_metadata data;
 };
+
+inline nlohmann::json get_metrics_json(const parser_library::performance_metrics& metrics)
+{
+    return json {
+        { "Open Code Statements", metrics.open_code_statements },
+        { "Copy Statements", metrics.copy_statements },
+        { "Macro Statements", metrics.macro_statements },
+        { "Copy Def Statements", metrics.copy_def_statements },
+        { "Macro Def Statements", metrics.macro_def_statements },
+        { "Lookahead Statements", metrics.lookahead_statements },
+        { "Reparsed Statements", metrics.reparsed_statements },
+        { "Continued Statements", metrics.continued_statements },
+        { "Non-continued Statements", metrics.non_continued_statements },
+        { "Lines", metrics.lines },
+        { "Files", metrics.files }
+    };
+}
 
 } // namespace hlasm_plugin::language_server
 

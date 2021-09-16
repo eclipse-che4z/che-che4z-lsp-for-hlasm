@@ -85,6 +85,7 @@ void server::notify_telemetry(const std::string& method_name, telemetry_log_leve
     if (log_level == telemetry_log_level::NO_TELEMETRY)
         return;
 
+    
 
     notify("telemetry/event", { { "methodName", method_name } });
 }
