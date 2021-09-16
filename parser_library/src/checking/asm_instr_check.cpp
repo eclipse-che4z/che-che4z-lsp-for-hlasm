@@ -1236,7 +1236,7 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
         {
             // TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should
             // not be
-            std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
+            static const std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
             std::string substr = first->operand_identifier.substr(2, first->operand_identifier.size() - 3);
             if (!std::regex_match(substr, regex))
             {

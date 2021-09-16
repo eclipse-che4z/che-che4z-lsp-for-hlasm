@@ -151,7 +151,7 @@ TEST(asm_instr_processing, ALIAS_mandatory_label)
 
 TEST(asm_instr_processing, ALIAS_external_missing)
 {
-    /* TODO: lable must be an external symbol
+    /* TODO: label must be an external symbol
     std::string input = R"(
 A ALIAS C'SOMESTRING'
 )";
