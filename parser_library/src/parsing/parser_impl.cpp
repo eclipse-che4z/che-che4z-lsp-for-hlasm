@@ -237,15 +237,8 @@ bool parser_impl::UNKNOWN()
 
 bool parser_impl::ALIAS()
 {
-    static const auto alias_instruction =
-        opcode_t::opcode_variant(&context::instruction::assembler_instructions.at("ALIAS"));
-
     auto& [format, opcode] = *proc_status;
-    if (format.form != processing::processing_form::ASM)
-        return false;
-
-    auto i = hlasm_ctx->instruction_map().find(opcode.value);
-    return i != hlasm_ctx->instruction_map().end() && i->second == alias_instruction;
+    return opcode.type == instruction_type::ASM && *opcode.value == "ALIAS";
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()

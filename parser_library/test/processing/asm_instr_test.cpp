@@ -197,3 +197,18 @@ J ALIAS C'STRING'
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(asm_instr_processing, ALIAS_with_opsyn)
+{
+    std::string input = R"(
+X OPSYN ALIAS
+L X     C'SOMESTRING'
+  EXTRN L
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
