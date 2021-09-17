@@ -64,6 +64,7 @@ private:
     void process_CCW(rebuilt_statement stmt);
     void process_CNOP(rebuilt_statement stmt);
     void process_START(rebuilt_statement stmt);
+    void process_ALIAS(rebuilt_statement stmt);
 
     template<checking::data_instr_type instr_type>
     void process_data_instruction(rebuilt_statement stmt);

@@ -279,6 +279,8 @@ struct diagnostic_op
 
     static diagnostic_op error_A162_PROCESS_uknown_option(const std::string& option, const range& range);
 
+    static diagnostic_op error_A163_ALIAS_mandatory_label(const range& range);
+
     // operand parameters
 
     static diagnostic_op error_A200_SCOPE_param(const std::string& instr_name, const range& range);

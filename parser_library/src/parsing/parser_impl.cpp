@@ -235,6 +235,12 @@ bool parser_impl::UNKNOWN()
     return format.form == processing::processing_form::UNKNOWN;
 }
 
+bool parser_impl::ALIAS()
+{
+    auto& [format, opcode] = *proc_status;
+    return opcode.type == instruction_type::ASM && *opcode.value == "ALIAS";
+}
+
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
 {
     if (proc_status->first.kind == processing::processing_kind::LOOKAHEAD)
