@@ -112,7 +112,7 @@ TEST(ca_expr_list, is_character_expression)
     // ('low')
     ca_expr_list expr_list(std::move(list), range());
 
-    EXPECT_FALSE(expr_list.is_character_expression(character_expression_purpose::assignment));
+    EXPECT_TRUE(expr_list.is_character_expression(character_expression_purpose::assignment));
     EXPECT_FALSE(expr_list.is_character_expression(character_expression_purpose::left_side_of_comparison));
 }
 

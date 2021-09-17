@@ -144,6 +144,8 @@ TEST(character_expresssion, single_operand_with_spaces)
 &C1 SETC UPPER( 'A' )
 &C2 SETC UPPER( 'A')
 &C3 SETC UPPER('A' )
+&C4 SETC UPPER('&C1') 
+&C5 SETC (UPPER '&C1')
 )";
     analyzer a(input);
     a.analyze();
@@ -154,6 +156,23 @@ TEST(character_expresssion, single_operand_with_spaces)
     SETCEQ("C1", "A");
     SETCEQ("C2", "A");
     SETCEQ("C3", "A");
+    SETCEQ("C4", "A");
+    SETCEQ("C5", "A");
+}
+
+TEST(character_expresssion, single_operand_fail)
+{
+    for (std::string input : {
+             "&C SETC UPPER(&C)",
+             "&C SETC (UPPER &C)",
+         })
+    {
+        analyzer a(input);
+        a.analyze();
+
+        a.collect_diags();
+        EXPECT_FALSE(a.diags().empty());
+    }
 }
 
 TEST(character_expresssion, zero_length_substring)

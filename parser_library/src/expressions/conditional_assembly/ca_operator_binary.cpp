@@ -84,7 +84,7 @@ void ca_function_binary_operator::resolve_expression_tree(context::SET_t_enum ki
     if (expr_kind != kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if ((function == ca_expr_ops::FIND || function == ca_expr_ops::INDEX)
-        && !left_expr->is_character_expression(character_expression_purpose::left_side_of_comparison))
+        && !left_expr->is_character_expression(character_expression_purpose::function_parameter))
         add_diagnostic(diagnostic_op::error_CE004(left_expr->expr_range));
     else
     {

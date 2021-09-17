@@ -64,7 +64,11 @@ void ca_expr_list::collect_diags() const
         collect_diags_from_child(*expr);
 }
 
-bool ca_expr_list::is_character_expression(character_expression_purpose) const { return false; }
+bool ca_expr_list::is_character_expression(character_expression_purpose purpose) const
+{
+    return purpose == character_expression_purpose::assignment && expr_list.size() == 1
+        && expr_list.front()->is_character_expression(purpose);
+}
 
 void ca_expr_list::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
