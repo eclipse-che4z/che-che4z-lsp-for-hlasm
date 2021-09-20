@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2021 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,21 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPARSER_PARSERLIBRARY_COMPILER_OPTIONS_H
-#define HLASMPARSER_PARSERLIBRARY_COMPILER_OPTIONS_H
-
-#include <string>
-
-// This file contains assembler compiler options definitions.
+#include "compiler_options.h"
 
 namespace hlasm_plugin::parser_library {
-struct asm_option
-{
-    std::string sysparm;
-    std::string profile;
-
-    static const std::string system_id_default;
-    std::string system_id = system_id_default;
-};
+const std::string asm_option::system_id_default = "z/OS 02.04.00";
 } // namespace hlasm_plugin::parser_library
-#endif

@@ -16,6 +16,7 @@ target_sources(parser_library PRIVATE
 	analyzer.cpp
 	analyzer.h
 	analyzing_context.h
+	compiler_options.cpp
 	compiler_options.h
 	diagnosable.h
 	diagnosable_ctx.cpp
