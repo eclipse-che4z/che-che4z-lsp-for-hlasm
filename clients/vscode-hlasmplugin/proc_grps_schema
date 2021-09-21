@@ -57,6 +57,10 @@
                             "PROFILE": {
                                 "type": "string",
                                 "description": "Profile Member to be copied into the source program."
+                            },
+                            "SYSTEM_ID": {
+                                "type": "string",
+                                "description": "Provides the value for the SYSTEM_ID system variable. Defaults to 'z/OS 02.04.00' when omitted."
                             }
                         }
                     },

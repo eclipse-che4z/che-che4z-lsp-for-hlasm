@@ -161,6 +161,7 @@ void hlasm_context::add_global_system_vars()
     auto SYSTIME = ids().add("SYSTIME");
     auto SYSPARM = ids().add("SYSPARM");
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
+    auto SYSTEM_ID = ids().add("SYSTEM_ID");
 
     if (!is_in_macro())
     {
@@ -231,6 +232,13 @@ void hlasm_context::add_global_system_vars()
             auto val = std::make_shared<set_symbol<B_t>>(SYSOPT_RENT, true, true);
             globals_.insert({ SYSOPT_RENT, std::move(val) });
         }
+        {
+            auto val = std::make_shared<set_symbol<C_t>>(SYSTEM_ID, true, true);
+
+            val->set_value(asm_options_.system_id);
+
+            globals_.insert({ SYSTEM_ID, std::move(val) });
+        }
     }
 
     auto glob = globals_.find(SYSDATC);
@@ -242,6 +250,8 @@ void hlasm_context::add_global_system_vars()
     glob = globals_.find(SYSPARM);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSOPT_RENT);
+    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    glob = globals_.find(SYSTEM_ID);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
 }
 
