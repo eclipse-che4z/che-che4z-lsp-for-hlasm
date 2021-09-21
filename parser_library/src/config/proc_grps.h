@@ -37,6 +37,7 @@ struct assembler_options
 {
     std::string sysparm;
     std::string profile;
+    std::string system_id;
 
     bool valid() const noexcept { return sysparm.size() < 256; }
 };

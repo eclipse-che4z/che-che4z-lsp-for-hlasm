@@ -1,0 +1,11 @@
+         MACRO
+         TEST
+         TEST1
+         TEST2
+         MEND
+
+         TEST
+         TEST1
+         TEST2
+
+         END

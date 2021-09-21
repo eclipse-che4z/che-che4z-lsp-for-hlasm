@@ -18,6 +18,7 @@ target_sources(library_test PRIVATE
 	files_parse_lib_provider.h
 	load_config_test.cpp
 	macro_cache_test.cpp
+	pathmask_test.cpp
 	processor_file_test.cpp
 	text_synchronization_test.cpp
 	workspace_test.cpp

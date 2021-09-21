@@ -76,15 +76,6 @@ suite('Language Detection Test Suite', () => {
 		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE)');
 		assert.ok(!detector.EndsWithExtension(document));
 	});
-	test('non HLASM file extension test false_', async () => {
-		var document = new TextDocumentMock();
-		// set plain text file to HLASM
-		document.languageId = 'plaintext';
-		document.text = nonHlasmContents;
-		document.fileName = ".file.hidden";
-		document.uri = vscode.Uri.file('.file.hidden');
-		assert.ok(!detector.EndsWithExtension(document));
-	});
 	test('Cobol file ending with extension', async () => {
 		var document = new TextDocumentMock();
 		// set plain text file to HLASM
@@ -94,7 +85,6 @@ suite('Language Detection Test Suite', () => {
 		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE).cbl');
 		assert.ok(detector.EndsWithExtension(document));
 	});
-	
 	// if file has extension  return true
 	test('non HLASM file extension test true', async () => {
 		var document = new TextDocumentMock();

@@ -1236,7 +1236,7 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
         {
             // TO DO - no support for four characters in EBCDIC (¢, ¬, ±, ¦) - we throw an error although it should
             // not be
-            std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
+            static const std::regex regex(R"([\.<¢\(\+\|&!\$\*\);¬\-\/¦,%_>\?`,:#@\=\"~±\[\]\{\}\^\\a-zA-Z0-9]*)");
             std::string substr = first->operand_identifier.substr(2, first->operand_identifier.size() - 3);
             if (!std::regex_match(substr, regex))
             {
@@ -1247,7 +1247,7 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
         }
         else if (first->operand_identifier[0] == 'X')
         {
-            if (first->operand_identifier.size() % 2 == 1)
+            if ((first->operand_identifier.size() - 3) % 2 == 1)
             {
                 add_diagnostic(diagnostic_op::error_A154_ALIAS_X_format_no_of_chars(first->operand_range));
                 return false;
@@ -1281,10 +1281,6 @@ bool alias::check(const std::vector<const asm_operand*>& to_check,
                 }
             }
             return true;
-        }
-        else
-        {
-            return false;
         }
     }
     add_diagnostic(diagnostic_op::error_A151_ALIAS_op_format(first->operand_range));

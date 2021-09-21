@@ -41,6 +41,7 @@ using ws_uri = std::string;
 using proc_grp_id = std::string;
 using program_id = std::string;
 using ws_highlight_info = std::unordered_map<std::string, semantics::highlighting_info>;
+struct library_local_options;
 
 // represents pair program => processor group - saves
 // information that a program uses certain processor group
@@ -143,6 +144,8 @@ private:
 
     bool opened_ = false;
 
+    void find_and_add_libs(
+        std::string root, const std::string& path_pattern, processor_group& prc_grp, const library_local_options& opts);
 
     bool load_and_process_config();
     // Loads the pgm_conf.json and proc_grps.json from disk, adds them to file_manager_ and parses both jsons.

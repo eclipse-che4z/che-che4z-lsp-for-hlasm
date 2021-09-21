@@ -19,9 +19,6 @@ using namespace hlasm_plugin::parser_library::context;
 
 source_context::source_context(std::string source_name)
     : current_instruction(position(), std::move(source_name))
-    , begin_index(0)
-    , end_index(0)
-    , end_line(0)
 {}
 
 source_snapshot source_context::create_snapshot() const
@@ -29,7 +26,7 @@ source_snapshot source_context::create_snapshot() const
     std::vector<copy_frame> copy_frames;
 
     for (auto& member : copy_stack)
-        copy_frames.emplace_back(member.name, member.current_statement);
+        copy_frames.emplace_back(member.name(), member.current_statement);
 
     if (!copy_frames.empty())
         --copy_frames.back().statement_offset;

@@ -27,9 +27,9 @@ struct source_context
     location current_instruction;
 
     // location in the file
-    size_t begin_index;
-    size_t end_index;
-    size_t end_line;
+    size_t begin_index = 0;
+    size_t end_index = 0;
+    size_t end_line = 0;
 
     // stack of copy nests
     std::vector<copy_member_invocation> copy_stack;

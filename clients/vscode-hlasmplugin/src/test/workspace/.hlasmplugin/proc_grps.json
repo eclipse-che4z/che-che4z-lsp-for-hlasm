@@ -8,6 +8,12 @@
         },
         "copy"
       ]
+    },
+    {
+      "name": "patterns",
+      "libs": [
+        "pattern_test/libs/**"
+      ]
     }
   ],
   "macro_extensions": [

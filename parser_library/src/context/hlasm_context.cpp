@@ -161,6 +161,7 @@ void hlasm_context::add_global_system_vars()
     auto SYSTIME = ids().add("SYSTIME");
     auto SYSPARM = ids().add("SYSPARM");
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
+    auto SYSTEM_ID = ids().add("SYSTEM_ID");
 
     if (!is_in_macro())
     {
@@ -231,6 +232,13 @@ void hlasm_context::add_global_system_vars()
             auto val = std::make_shared<set_symbol<B_t>>(SYSOPT_RENT, true, true);
             globals_.insert({ SYSOPT_RENT, std::move(val) });
         }
+        {
+            auto val = std::make_shared<set_symbol<C_t>>(SYSTEM_ID, true, true);
+
+            val->set_value(asm_options_.system_id);
+
+            globals_.insert({ SYSTEM_ID, std::move(val) });
+        }
     }
 
     auto glob = globals_.find(SYSDATC);
@@ -242,6 +250,8 @@ void hlasm_context::add_global_system_vars()
     glob = globals_.find(SYSPARM);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSOPT_RENT);
+    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    glob = globals_.find(SYSTEM_ID);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
 }
 
@@ -350,8 +360,8 @@ processing_stack_t hlasm_context::processing_stack() const
             id_storage::empty_id);
         for (const auto& member : source_stack_[i].copy_stack)
         {
-            location loc(member.current_statement_position(), member.definition_location->file);
-            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name);
+            location loc(member.current_statement_position(), member.definition_location()->file);
+            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name());
         }
 
         if (i == 0) // append macros immediately after ordinary processing
@@ -381,7 +391,7 @@ location hlasm_context::current_statement_location() const
         {
             const auto& member = source_stack_.back().copy_stack.back();
 
-            return location(member.current_statement_position(), member.definition_location->file);
+            return location(member.current_statement_position(), member.definition_location()->file);
         }
         else
             return source_stack_.back().current_instruction;
@@ -422,7 +432,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
     for (auto& entry : source_stack_)
         for (auto& nest : entry.copy_stack)
-            ret.push_back(nest.name);
+            ret.push_back(nest.name());
 
     return ret;
 }
@@ -810,7 +820,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
     for (auto& frame : snapshot.copy_frames)
     {
         copy_member_invocation invo(copy_members_.at(frame.copy_member));
-        invo.current_statement = (int)frame.statement_offset;
+        invo.current_statement = frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }
 }

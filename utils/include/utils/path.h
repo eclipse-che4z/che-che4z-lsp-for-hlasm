@@ -31,9 +31,14 @@ std::filesystem::path join(const std::filesystem::path& left, const std::filesys
 std::filesystem::path lexically_normal(const std::filesystem::path& p);
 std::filesystem::path lexically_relative(const std::filesystem::path& p, std::string q);
 std::filesystem::path filename(const std::filesystem::path& p);
+std::filesystem::path canonical(const std::filesystem::path& p);
+std::filesystem::path canonical(const std::filesystem::path& p, std::error_code& ec);
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right);
+bool is_directory(const std::filesystem::path& p);
 
 list_directory_rc list_directory_regular_files(
+    const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
+list_directory_rc list_directory_subdirs_and_symlinks(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h);
 } // namespace hlasm_plugin::utils::path
 

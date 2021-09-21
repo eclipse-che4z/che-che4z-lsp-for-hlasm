@@ -45,9 +45,9 @@ struct source_position
 struct copy_frame
 {
     id_index copy_member;
-    int statement_offset;
+    size_t statement_offset;
 
-    copy_frame(id_index copy_member, int statement_offset)
+    copy_frame(id_index copy_member, size_t statement_offset)
         : copy_member(copy_member)
         , statement_offset(statement_offset)
     {}
@@ -62,16 +62,12 @@ struct copy_frame
 struct source_snapshot
 {
     location instruction;
-    size_t begin_index;
-    size_t end_index;
-    size_t end_line;
+    size_t begin_index = 0;
+    size_t end_index = 0;
+    size_t end_line = 0;
     std::vector<copy_frame> copy_frames;
 
-    source_snapshot()
-        : begin_index(0)
-        , end_index(0)
-        , end_line(0)
-    {}
+    source_snapshot() = default;
 
     source_snapshot(location instruction,
         size_t begin_index,
@@ -87,15 +83,8 @@ struct source_snapshot
 
     bool operator==(const source_snapshot& oth) const
     {
-        if (!(end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
-                && copy_frames.size() == oth.copy_frames.size()))
-            return false;
-
-        for (size_t i = 0; i < copy_frames.size(); ++i)
-            if (!(copy_frames[i] == oth.copy_frames[i]))
-                return false;
-
-        return true;
+        return end_line == oth.end_line && begin_index == oth.begin_index && end_index == oth.end_index
+            && copy_frames == oth.copy_frames;
     }
 };
 

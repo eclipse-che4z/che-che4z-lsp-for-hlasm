@@ -501,7 +501,7 @@ TEST(SET, conversions_invalid)
 
     a.collect_diags();
 
-    ASSERT_EQ(a.diags().size(), (size_t)6);
+    ASSERT_EQ(a.diags().size(), (size_t)8);
 }
 
 TEST(CA_instructions, undefined_relocatable)

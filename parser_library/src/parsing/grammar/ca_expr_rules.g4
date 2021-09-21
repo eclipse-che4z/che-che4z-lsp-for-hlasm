@@ -70,11 +70,7 @@ term_c returns [ca_expr_ptr ca_expr]
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
 
 term returns [ca_expr_ptr ca_expr]
-	: expr_list
-	{
-		$ca_expr = std::move($expr_list.ca_expr);
-	}
-	| var_symbol
+	: var_symbol
 	{
 		auto r = provider.get_range($var_symbol.ctx);
 		$ca_expr = std::make_unique<ca_var_sym>(std::move($var_symbol.vs), r);
@@ -123,6 +119,11 @@ term returns [ca_expr_ptr ca_expr]
 		collector.add_hl_symbol(token_info(provider.get_range( $id_no_dot.ctx),hl_scopes::operand));
 		auto r = provider.get_range($id_no_dot.ctx);
 		$ca_expr = std::make_unique<ca_symbol>($id_no_dot.name, r);
+	}
+	|
+	expr_list
+	{
+		$ca_expr = std::move($expr_list.ca_expr);
 	};
 	finally
 	{if (!$ca_expr) $ca_expr = std::make_unique<ca_constant>(0, provider.get_range(_localctx));}
@@ -238,7 +239,7 @@ data_attribute returns [context::data_attr_kind attribute, std::variant<context:
 
 data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
 	: literal
-	| var_symbol
+	| var_symbol DOT?
 	{
 		$value = std::move($var_symbol.vs);
 	}

@@ -279,6 +279,8 @@ struct diagnostic_op
 
     static diagnostic_op error_A162_PROCESS_uknown_option(const std::string& option, const range& range);
 
+    static diagnostic_op error_A163_ALIAS_mandatory_label(const range& range);
+
     // operand parameters
 
     static diagnostic_op error_A200_SCOPE_param(const std::string& instr_name, const range& range);
@@ -632,6 +634,8 @@ struct diagnostic_op
 
     static diagnostic_op error_CE016_logical_expression_parenthesis(const range& range);
 
+    static diagnostic_op error_CE017_character_expression_expected(const range& range);
+
     static diagnostic_op error_CW001(const range& range);
 
     static diagnostic_op error_S100(const std::string& message, const range& range);
@@ -739,6 +743,8 @@ public:
     static diagnostic_s warning_L0003(const std::string& path);
 
     static diagnostic_s warning_L0004(const std::string& path, const std::string& macro_name);
+
+    static diagnostic_s warning_L0005(const std::string& pattern, size_t limit);
 
     static diagnostic_s error_W002(const std::string& file_name, const std::string& ws_name);
 

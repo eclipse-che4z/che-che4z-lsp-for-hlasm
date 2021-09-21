@@ -151,19 +151,13 @@ class empty_feature_provider final : public lsp::feature_provider
     {
         return location(pos, document_uri);
     }
-    location_list references(const std::string& document_uri, position pos) const override { return location_list(); }
-    lsp::hover_result hover(const std::string& document_uri, position pos) const override
-    {
-        return lsp::hover_result();
-    }
-    lsp::completion_list_s completion(const std::string& document_uri,
-        position pos,
-        char trigger_char,
-        completion_trigger_kind trigger_kind) const override
+    location_list references(const std::string&, position) const override { return location_list(); }
+    lsp::hover_result hover(const std::string&, position) const override { return lsp::hover_result(); }
+    lsp::completion_list_s completion(const std::string&, position, char, completion_trigger_kind) const override
     {
         return {};
     }
-    lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override { return {}; }
+    lsp::document_symbol_list_s document_symbol(const std::string&) const override { return {}; }
 };
 } // namespace
 

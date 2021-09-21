@@ -3,7 +3,14 @@
     {
       "program": "open",
       "pgroup": "P1"
+    },
+    {
+      "program": "pattern_test/test_pattern.hlasm",
+      "pgroup": "patterns"
     }
   ],
-  "alwaysRecognize": ["*.asm","pgms/*"]
+  "alwaysRecognize": [
+    "*.asm",
+    "pgms/*"
+  ]
 }

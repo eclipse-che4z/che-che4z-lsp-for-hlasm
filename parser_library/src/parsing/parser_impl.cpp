@@ -162,7 +162,11 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
         resolve_expression(expr, context::SET_t_enum::B_TYPE);
     }
     else if (opcode.value == wk.SETC)
+    {
         resolve_expression(expr, context::SET_t_enum::C_TYPE);
+        if (!expr->is_character_expression(character_expression_purpose::assignment) && diagnoser_)
+            diagnoser_->add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
+    }
     else if (opcode.value == wk.AREAD)
     {
         // aread operand is just enumeration
@@ -233,6 +237,12 @@ bool parser_impl::UNKNOWN()
 {
     auto& [format, opcode] = *proc_status;
     return format.form == processing::processing_form::UNKNOWN;
+}
+
+bool parser_impl::ALIAS()
+{
+    auto& [format, opcode] = *proc_status;
+    return opcode.type == instruction_type::ASM && *opcode.value == "ALIAS";
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()

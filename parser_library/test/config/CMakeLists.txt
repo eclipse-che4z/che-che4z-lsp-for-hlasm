@@ -13,4 +13,5 @@
 target_sources(library_test PRIVATE
 	pgm_conf_test.cpp
 	proc_grps_test.cpp
+	system_id_test.cpp
 )
