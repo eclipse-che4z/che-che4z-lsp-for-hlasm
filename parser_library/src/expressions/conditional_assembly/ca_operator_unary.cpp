@@ -42,7 +42,10 @@ void ca_unary_operator::resolve_expression_tree(context::SET_t_enum kind)
 
 void ca_unary_operator::collect_diags() const { collect_diags_from_child(*expr); }
 
-bool ca_unary_operator::is_character_expression() const { return false; }
+bool ca_unary_operator::is_character_expression(character_expression_purpose purpose) const
+{
+    return purpose == character_expression_purpose::assignment && expr_kind == context::SET_t_enum::C_TYPE;
+}
 
 void ca_unary_operator::apply(ca_expr_visitor& visitor) const { expr->apply(visitor); }
 
@@ -62,7 +65,15 @@ void ca_function_unary_operator::resolve_expression_tree(context::SET_t_enum kin
     if (expr_kind != kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else
-        expr->resolve_expression_tree(ca_common_expr_policy::get_operands_type(function, kind));
+    {
+        auto param_type = ca_common_expr_policy::get_operands_type(function, kind);
+        expr->resolve_expression_tree(param_type);
+
+        // TODO: additional types?
+        if (param_type == context::SET_t_enum::C_TYPE
+            && !expr->is_character_expression(character_expression_purpose::function_parameter))
+            expr->add_diagnostic(diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
+    }
 }
 
 context::SET_t ca_function_unary_operator::operation(context::SET_t operand, const evaluation_context& eval_ctx) const

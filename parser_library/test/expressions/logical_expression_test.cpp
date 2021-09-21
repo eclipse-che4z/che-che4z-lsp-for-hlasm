@@ -123,6 +123,9 @@ AND EQU 1
 &A3 SETB ('abc' GT 'b')
 &A4 SETB ('A' EQ UPPER('a'))
 &A5 SETB (D2A('10') EQ 10)
+&A6 SETB ('CCCC' EQ (4)'C')
+&A7 SETB ((4)'C' EQ 'CCCC')
+&A8 SETB ('A' EQ BYTE(X'C1'))
 )";
     analyzer a(input);
     a.analyze();
@@ -135,6 +138,9 @@ AND EQU 1
     SETBEQ("A3", 1);
     SETBEQ("A4", 1);
     SETBEQ("A5", 1);
+    SETBEQ("A6", 1);
+    SETBEQ("A7", 1);
+    SETBEQ("A8", 1);
 }
 
 TEST(logical_expressions, invalid_relational_expression)
@@ -144,12 +150,13 @@ TEST(logical_expressions, invalid_relational_expression)
 &A1 SETB (UPPER('a') EQ 'A')
 &A2 SETB (13 LT 'A')
 &A3 SETB ('a' LT 12)
+&A4 SETB (BYTE(X'C1') EQ 'A')
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)4);
+    ASSERT_EQ(a.diags().size(), (size_t)6);
 }
 
 TEST(logical_expressions, priority)

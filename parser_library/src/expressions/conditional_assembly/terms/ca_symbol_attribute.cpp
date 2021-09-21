@@ -119,7 +119,7 @@ void ca_symbol_attribute::collect_diags() const
     }
 }
 
-bool ca_symbol_attribute::is_character_expression() const
+bool ca_symbol_attribute::is_character_expression(character_expression_purpose purpose) const
 {
     return get_attribute_type(attribute) == context::SET_t_enum::C_TYPE;
 }

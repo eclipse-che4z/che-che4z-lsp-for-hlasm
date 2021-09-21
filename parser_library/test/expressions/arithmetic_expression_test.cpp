@@ -270,3 +270,20 @@ TEST(arithmetic_expressions, conversion_from_binary)
     SETAEQ("A", 1);
     SETAEQ("B", 0);
 }
+
+TEST(arithmetic_expressions, dots)
+{
+    for (const auto& [input, ok] : {
+             std::pair<std::string, bool> { "&A SETA &A", true },
+             std::pair<std::string, bool> { "&A. SETA &A", false },
+             std::pair<std::string, bool> { "&A SETA &A.", false },
+             std::pair<std::string, bool> { "&A. SETA &A.", false },
+         })
+    {
+        analyzer a(input);
+        a.analyze();
+
+        a.collect_diags();
+        ASSERT_EQ(a.diags().empty(), ok);
+    }
+}
