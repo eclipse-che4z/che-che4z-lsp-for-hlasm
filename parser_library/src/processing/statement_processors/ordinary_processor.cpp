@@ -85,7 +85,10 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
     if (asm_proc_.get_end_process())
-        this->end_processing();
+    {
+        this->end_statement();
+        return;
+    }   
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:
@@ -112,16 +115,22 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
 void ordinary_processor::end_processing()
 {
-   // hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
+    hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
 
-   // hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
+    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
 
-   // hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
+    hlasm_ctx.ord_ctx.symbol_dependencies.resolve_all_as_default();
 
-   // check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
+    check_postponed_statements(hlasm_ctx.ord_ctx.symbol_dependencies.collect_postponed());
 
-  //  hlasm_ctx.pop_statement_processing();
+    hlasm_ctx.pop_statement_processing();
 
+    listener_.finish_opencode();
+
+    finished_flag_ = true;
+}
+void ordinary_processor::end_statement()
+{
     listener_.finish_opencode();
 
     finished_flag_ = true;
