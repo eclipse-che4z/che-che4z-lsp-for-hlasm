@@ -37,7 +37,8 @@ public:
     };
     // pair of processing format and reparsed statement
     // processing format serves as an identifier of reparsing kind
-    using cache_t = std::pair<processing::processing_form, cached_statement_t>;
+    using cache_t =
+        std::pair<std::pair<processing::processing_form, processing::operand_occurence>, cached_statement_t>;
 
 private:
     std::vector<cache_t> cache_;
@@ -46,11 +47,11 @@ private:
 public:
     statement_cache(shared_stmt_ptr base);
 
-    bool contains(processing::processing_form format) const;
+    bool contains(processing::processing_form format, processing::operand_occurence ops) const;
 
-    void insert(processing::processing_form format, cached_statement_t statement);
+    void insert(processing::processing_form format, processing::operand_occurence ops, cached_statement_t statement);
 
-    const cached_statement_t* get(processing::processing_form format) const;
+    const cached_statement_t* get(processing::processing_form format, processing::operand_occurence ops) const;
 
     shared_stmt_ptr get_base() const;
 };

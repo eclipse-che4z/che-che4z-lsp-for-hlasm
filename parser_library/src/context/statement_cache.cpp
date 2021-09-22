@@ -22,23 +22,27 @@ statement_cache::statement_cache(shared_stmt_ptr base)
     : base_stmt_(std::move(base))
 {}
 
-bool statement_cache::contains(processing::processing_form format) const
+bool statement_cache::contains(processing::processing_form format, processing::operand_occurence ops) const
 {
+    auto key = std::make_pair(format, ops);
     for (const auto& entry : cache_)
-        if (entry.first == format)
+        if (entry.first == key)
             return true;
     return false;
 }
 
-void statement_cache::insert(processing::processing_form format, cached_statement_t statement)
+void statement_cache::insert(
+    processing::processing_form format, processing::operand_occurence ops, cached_statement_t statement)
 {
-    cache_.emplace_back(format, std::move(statement));
+    cache_.emplace_back(std::make_pair(format, ops), std::move(statement));
 }
 
-const statement_cache::cached_statement_t* statement_cache::get(processing::processing_form format) const
+const statement_cache::cached_statement_t* statement_cache::get(
+    processing::processing_form format, processing::operand_occurence ops) const
 {
+    auto key = std::make_pair(format, ops);
     for (const auto& entry : cache_)
-        if (entry.first == format)
+        if (entry.first == key)
             return &entry.second;
     return nullptr;
 }

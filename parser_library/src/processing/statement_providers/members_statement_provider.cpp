@@ -122,7 +122,7 @@ void members_statement_provider::fill_cache(
         reparsed_stmt.stmt =
             std::make_shared<semantics::statement_si_defer_done>(def_impl, std::move(op), std::move(rem));
     }
-    cache.insert(status.first.form, std::move(reparsed_stmt));
+    cache.insert(status.first.form, status.first.occurence, std::move(reparsed_stmt));
 }
 
 context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
@@ -135,10 +135,10 @@ context::shared_stmt_ptr members_statement_provider::preprocess_deferred(
     if (status.first.form == processing_form::DEFERRED)
         return cache.get_base();
 
-    if (!cache.contains(status.first.form))
+    if (!cache.contains(status.first.form, status.first.occurence))
         fill_cache(cache, def_stmt, status);
 
-    const auto& cache_item = cache.get(status.first.form);
+    const auto& cache_item = cache.get(status.first.form, status.first.occurence);
 
     if (processor.kind != processing_kind::LOOKAHEAD)
     {
