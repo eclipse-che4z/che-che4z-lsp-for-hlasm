@@ -21,6 +21,7 @@
 #include <string>
 
 #include "logger.h"
+#include "parsing_metadata_serialization.h"
 
 namespace hlasm_plugin::language_server {
 
@@ -85,9 +86,20 @@ void server::notify_telemetry(const std::string& method_name, telemetry_log_leve
     if (log_level == telemetry_log_level::NO_TELEMETRY)
         return;
 
-    
+    json metrics;
+    json ws_info;
+    if (log_level == telemetry_log_level::LOG_WITH_PARSE_DATA)
+    {
+        metrics = parsing_metadata_.data.metrics;
+        ws_info = parsing_metadata_.data.ws_info;
+    }
 
-    notify("telemetry/event", { { "methodName", method_name } });
+    metrics["duration"] = seconds;
+
+    notify("telemetry/event",
+        { { "method_name", method_name },
+            { "properties", ws_info },
+            { "measurements", metrics } });
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

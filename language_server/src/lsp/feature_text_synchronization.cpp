@@ -27,7 +27,7 @@ void feature_text_synchronization::register_methods(std::map<std::string, method
 {
     methods.try_emplace("textDocument/didOpen",
         method { [this](const json& id, const json& args) { on_did_open(id, args); },
-            telemetry_log_level::LOG_WITH_METRICS });
+            telemetry_log_level::LOG_WITH_PARSE_DATA });
     methods.try_emplace("textDocument/didChange",
         method {
             [this](const json& id, const json& args) { on_did_change(id, args); }, telemetry_log_level::NO_TELEMETRY });

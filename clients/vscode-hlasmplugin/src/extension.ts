@@ -33,21 +33,27 @@ const sleep = (ms: number) => {
     return new Promise((resolve) => { setTimeout(resolve, ms) });
 };
 
+function objectToString(o : any) {
+    Object.keys(o).forEach(k => {
+      o[k] = '' + o[k];
+    });
+    
+    return o;
+  }
 
 /**
  * ACTIVATION
  * activates the extension
  */
 export async function activate(context: vscode.ExtensionContext) {
-    
     var telemetry = new Telemetry();
-    telemetry.reportEvent("hlasm.activated", {"reason" : "sth"});
+    telemetry.reportEvent("hlasm.activated");
     context.subscriptions.push(telemetry);
     
     // patterns for files and configs
     const filePattern: string = '**/*';
     
-    const clientErrorHandler = new LanguageClientErrorHandler();
+    const clientErrorHandler = new LanguageClientErrorHandler(telemetry);
     
     // create client options
     const syncFileEvents = getConfig<boolean>('syncFileEvents', true);
@@ -74,8 +80,8 @@ export async function activate(context: vscode.ExtensionContext) {
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
-    hlasmpluginClient.onTelemetry((object) => {telemetry.reportEvent(object.methodName, object)});
-    
+    hlasmpluginClient.onTelemetry((object) => {telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements)});
+
     //asm contribution 
     var highlight = new SemanticTokensFeature(hlasmpluginClient);
     // register highlighting as features

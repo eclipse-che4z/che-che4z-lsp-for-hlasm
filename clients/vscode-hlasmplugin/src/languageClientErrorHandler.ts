@@ -9,19 +9,20 @@ const extensionID : string = "broadcommfd.hlasm-language-support";
 export class LanguageClientErrorHandler implements ErrorHandler
 {
     defaultHandler : ErrorHandler = undefined;
+    telemetry : Telemetry;
     
-    getTelemetry():Telemetry{
-        return vscode.extensions.getExtension(extensionID).exports.getTelemetry();
+    constructor(tlmtry : Telemetry)
+    {
+        this.telemetry = tlmtry;
     }
     
     error(error: Error, message: vscodelc.Message, count: number): vscodelc.ErrorAction {
-
-        this.getTelemetry().reportEvent("hlasm.connectionError", error)
+        this.telemetry.reportEvent("hlasm.connectionError", error)
         
         return this.defaultHandler.error(error, message, count);
     }
     closed(): vscodelc.CloseAction {
-        this.getTelemetry().reportEvent("hlasm.connectionClosed", {})
+        this.telemetry.reportEvent("hlasm.connectionClosed")
         return this.defaultHandler.closed();
     }
     

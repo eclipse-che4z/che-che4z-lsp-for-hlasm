@@ -27,6 +27,7 @@
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
 #include "../language_server/src/diagnostic_counter.h"
+#include "../language_server/src/parsing_metadata_serialization.h"
 
 /*
  * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
@@ -60,9 +61,11 @@
  * - Files                    - total number of parsed files
  */
 
-namespace hlasm_plugin::benchmark {
+using namespace hlasm_plugin;
 
 using json = nlohmann::json;
+
+namespace {
 
 class metrics_collector : public hlasm_plugin::parser_library::parsing_metadata_consumer
 {
@@ -162,7 +165,8 @@ json parse_one_file(const std::string& source_file,
         { "Line/ms", collector.metrics_.lines / (double)time },
         { "Top messages", std::move(top_messages) } });
 
-    json metrics_json = language_server::get_metrics_json(collector.metrics_);
+    json metrics_json(collector.metrics_);
+    
     result.insert(metrics_json.begin(), metrics_json.end());
 
     auto first_parse_metrics = collector.metrics_;
@@ -237,6 +241,7 @@ std::string get_file_message(size_t iter, size_t begin, size_t end, const std::s
     s << "[" << base_message << " " << iter << "/(" << begin << "-" << end << ")] ";
     return s.str();
 }
+} // namespace
 
 int main(int argc, char** argv)
 {
@@ -401,5 +406,3 @@ int main(int argc, char** argv)
     }
     return 0;
 }
-
-} // namespace hlasm_plugin::benchmark
