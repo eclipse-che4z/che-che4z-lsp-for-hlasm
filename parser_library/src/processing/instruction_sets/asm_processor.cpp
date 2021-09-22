@@ -824,17 +824,21 @@ void asm_processor::process_END(rebuilt_statement stmt)
 {
     const auto& label = stmt.label_ref();
 
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
     if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ))
     {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
         return;
     }
-    if (stmt.operands_ref().value.size() > 2) {
-        add_diagnostic(diagnostic_op::error_A012_from_to(*stmt.opcode_ref().value,0, 2, stmt.operands_ref().field_range));
+    if (stmt.operands_ref().value.size() > 2)
+    {
+        add_diagnostic(
+            diagnostic_op::error_A012_from_to(*stmt.opcode_ref().value, 0, 2, stmt.operands_ref().field_range));
     }
     if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
     {
-        if ( stmt.operands_ref().value[0]->access_asm() != nullptr
+        if (stmt.operands_ref().value[0]->access_asm() != nullptr
             && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
         {
             auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
@@ -847,7 +851,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
                         diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
                     return;
                 case context::symbol_value_kind::RELOC:
-   
+
                     break;
                 default:
                     if (auto val = dynamic_cast<const expressions::mach_expr_symbol*>(
@@ -865,83 +869,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
             return;
         }
     }
-    if (stmt.operands_ref().value.size() == 2)
-    {
-        if ((stmt.operands_ref().value[1]->type != semantics::operand_type::EMPTY))
-        {
-            {
-                {
-                    auto operand = stmt.operands_ref().value[1]->access_asm();
-                    if (operand->kind == semantics::asm_kind::COMPLEX )
-                    {
-                        auto lang_operand = operand->access_complex();
-                        if (lang_operand->value.values.size() == 3 && lang_operand->value.identifier == "")
-                        {
-                            int i = 1;
-                            for (const auto& nested : lang_operand->value.values)
-                            {
-                                if (const auto* string_val =
-                                        dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(
-                                            nested.get()))
-                                {
-                                    switch (i)
-                                    {
-                                        case 1:
-                                            if (string_val->value.size() > 10)
-                                            {
-                                                add_diagnostic(
-                                                    diagnostic_op::error_A138_END_lang_first(nested.get()->op_range));
-                                                return;
-                                            }
-                                            break;
-                                        case 2:
-                                            if (string_val->value.size() != 4)
-                                            {
-                                                add_diagnostic(
-                                                    diagnostic_op::error_A139_END_lang_second(nested.get()->op_range));
-                                                return;
-                                            }
-                                            break;
-                                        case 3:
-                                            if (string_val->value.size() != 5 || !has_all_digits(string_val->value))
-                                            {
-                                                add_diagnostic(
-                                                    diagnostic_op::error_A140_END_lang_third(nested.get()->op_range));
-                                                return;
-                                            }
-                                            break;
-                                           
-                                    }
-                                    
-                                }
-                                else
-                                {
-                                    add_diagnostic(diagnostic_op::error_A016_exact(
-                                        *stmt.opcode_ref().value, "language", 3, stmt.operands_ref().field_range));
-                                    return;
-                                }
-                                i++;
-                            }
-                        }
-                        else
-                        {
-                            add_diagnostic(diagnostic_op::error_A137_END_lang_format(lang_operand->value.op_range));
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        add_diagnostic(diagnostic_op::error_A001_complex_op_expected(
-                            *stmt.opcode_ref().value, stmt.operands_ref().field_range));
-                        return;
-                    }
-                }
-            }
-        }
-    }
     this->end_processing = true;
 }
-} // namespace hlasm_plugin::parser_library::processing
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
     if (!check(stmt, hlasm_ctx, checker_, *this))

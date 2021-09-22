@@ -88,7 +88,7 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
     {
         this->end_statement();
         return;
-    }   
+    }
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:

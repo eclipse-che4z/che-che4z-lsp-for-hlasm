@@ -120,8 +120,6 @@ public:
     // creates layout of every section
     void finish_module_layout(loctr_dependency_resolver* resolver);
 
-    void stop_processing(loctr_dependency_resolver* resolver);
-
     const std::unordered_map<id_index, symbol>& get_all_symbols();
 
 private:
