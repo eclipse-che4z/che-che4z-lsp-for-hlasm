@@ -62,6 +62,16 @@ TEST(END, only_first_end_processed)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W014" }));
+}
+TEST(END, no_operands)
+{
+    std::string input(R"(
+   END ,
+ )");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, undefined_symbol)

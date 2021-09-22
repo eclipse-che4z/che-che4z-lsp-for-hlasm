@@ -75,6 +75,7 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
     auto diags = s->diagnostics();
     for (auto it = diags.first; it != diags.second; ++it)
+
         add_diagnostic(*it);
 
     bool fatal = check_fatals(range(s->statement_position()));
@@ -84,8 +85,10 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
         return;
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
-    if (asm_proc_.get_end_process())
+    if (asm_proc_.is_end_statement_reached())
     {
+        if (!statement->opcode_ref().value->empty())
+            add_diagnostic(diagnostic_op::warning_W015(statement->stmt_range_ref()));
         this->end_statement();
         return;
     }

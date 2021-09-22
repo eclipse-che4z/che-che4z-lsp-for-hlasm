@@ -1883,7 +1883,13 @@ diagnostic_op diagnostic_op::warning_W014(const range& range)
         "Undefined keyword parameter, default to positional including keyword",
         range);
 }
-
+diagnostic_op diagnostic_op::warning_W015(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::warning,
+        "W014",
+        "End of Source Input Reached",
+        range);
+}
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "EQU1", "Constant redefinition", range);

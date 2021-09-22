@@ -19,10 +19,8 @@
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
-#include "expressions/mach_operator.h"
 #include "postponed_statement_impl.h"
 #include "processing/context_manager.h"
-using namespace hlasm_plugin::parser_library::checking;
 
 namespace hlasm_plugin::parser_library::processing {
 

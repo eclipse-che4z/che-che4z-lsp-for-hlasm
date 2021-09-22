@@ -38,7 +38,7 @@ public:
         opencode_provider& open_code);
     bool end_processing = false;
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
-    bool get_end_process() { return end_processing; }
+    bool is_end_statement_reached() { return end_processing; }
     static bool process_copy(const semantics::complete_statement& stmt,
         analyzing_context ctx,
         workspaces::parse_lib_provider& lib_provider,

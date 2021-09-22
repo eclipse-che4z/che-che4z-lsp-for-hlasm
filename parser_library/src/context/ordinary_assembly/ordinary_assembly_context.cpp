@@ -86,7 +86,6 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
 section* ordinary_assembly_context::get_section(id_index name)
 {
     for (auto& tmp : sections_)
-
     {
         if (tmp->name == name)
         {

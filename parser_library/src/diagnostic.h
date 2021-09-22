@@ -592,6 +592,8 @@ struct diagnostic_op
 
     static diagnostic_op warning_W014(const range& range);
 
+    static diagnostic_op warning_W015(const range& range);
+
     static diagnostic_op error_EQU1(const range& range);
 
     static diagnostic_op error_EQU2(const range& range);
