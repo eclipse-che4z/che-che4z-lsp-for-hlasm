@@ -859,3 +859,30 @@ TEST(macro, missing_mend)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E001", "E046" }));
 }
+
+TEST(macro, dynamic_instruction_types)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &OP,&FIRST,&SECOND,&THIRD
+         LCLC  &OPERAND
+&OPERAND SETC  '&FIRST'
+         AIF   ('&SECOND' EQ '').SKIP
+&OPERAND SETC  '&FIRST.,&SECOND.'
+         AIF   ('&THIRD' EQ '').SKIP
+&OPERAND SETC  '&FIRST.,&SECOND.,&THIRD.'
+.SKIP    ANOP
+         &OP   &OPERAND
+         MEND
+
+         MAC SAM64,this_is_comment
+         MAC LA,0,0
+         MAC ARK,0,0,0
+
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
