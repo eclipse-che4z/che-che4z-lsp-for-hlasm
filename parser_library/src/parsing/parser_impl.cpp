@@ -95,9 +95,9 @@ bool parser_impl::is_data_attr()
 bool parser_impl::is_var_def()
 {
     auto [_, opcode] = *proc_status;
-    return opcode.value == hlasm_ctx->ids().well_known.GBLA || opcode.value == hlasm_ctx->ids().well_known.GBLB
-        || opcode.value == hlasm_ctx->ids().well_known.GBLC || opcode.value == hlasm_ctx->ids().well_known.LCLA
-        || opcode.value == hlasm_ctx->ids().well_known.LCLB || opcode.value == hlasm_ctx->ids().well_known.LCLC;
+    const auto& wk = hlasm_ctx->ids().well_known;
+    return opcode.value == wk.GBLA || opcode.value == wk.GBLB || opcode.value == wk.GBLC || opcode.value == wk.LCLA
+        || opcode.value == wk.LCLB || opcode.value == wk.LCLC;
 }
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
@@ -178,71 +178,28 @@ void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr) const
     }
 }
 
-bool parser_impl::deferred()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.form == processing::processing_form::DEFERRED;
-}
-
-bool parser_impl::no_op()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.occurence == processing::operand_occurence::ABSENT;
-}
-
-bool parser_impl::ignored()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.form == processing::processing_form::IGNORED;
-}
-
-bool parser_impl::alt_format()
-{
-    auto& [format, opcode] = *proc_status;
-
-    return format.form == processing::processing_form::CA || format.form == processing::processing_form::MAC;
-}
-
 bool parser_impl::MACH()
 {
-    auto& [format, opcode] = *proc_status;
+    auto& [format, _] = *proc_status;
     return format.form == processing::processing_form::MACH;
 }
 
 bool parser_impl::ASM()
 {
-    auto& [format, opcode] = *proc_status;
+    auto& [format, _] = *proc_status;
     return format.form == processing::processing_form::ASM;
 }
 
 bool parser_impl::DAT()
 {
-    auto& [format, opcode] = *proc_status;
+    auto& [format, _] = *proc_status;
     return format.form == processing::processing_form::DAT;
-}
-
-bool parser_impl::CA()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.form == processing::processing_form::CA;
-}
-
-bool parser_impl::MAC()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.form == processing::processing_form::MAC;
-}
-
-bool parser_impl::UNKNOWN()
-{
-    auto& [format, opcode] = *proc_status;
-    return format.form == processing::processing_form::UNKNOWN;
 }
 
 bool parser_impl::ALIAS()
 {
-    auto& [format, opcode] = *proc_status;
-    return opcode.type == instruction_type::ASM && *opcode.value == "ALIAS";
+    auto& [_, opcode] = *proc_status;
+    return opcode.type == instruction_type::ASM && opcode.value == hlasm_ctx->ids().well_known.ALIAS;
 }
 
 antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
