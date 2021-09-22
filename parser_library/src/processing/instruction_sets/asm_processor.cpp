@@ -941,6 +941,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
     }
     this->end_processing = true;
 }
+} // namespace hlasm_plugin::parser_library::processing
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
     if (!check(stmt, hlasm_ctx, checker_, *this))

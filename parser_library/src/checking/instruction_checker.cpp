@@ -132,6 +132,8 @@ void assembler_checker::initialize_assembler_map()
     assembler_instruction_map.try_emplace("EJECT",
         std::make_unique<no_operands>(
             std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "EJECT"));
+    assembler_instruction_map.try_emplace("END",
+        std::make_unique<end>(std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "END"));
     assembler_instruction_map.try_emplace("ENTRY",
         std::make_unique<entry>(
             std::vector<label_types> { label_types::OPTIONAL, label_types::SEQUENCE_SYMBOL }, "ENTRY"));

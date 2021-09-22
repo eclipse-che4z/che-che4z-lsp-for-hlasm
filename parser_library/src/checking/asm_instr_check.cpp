@@ -833,6 +833,82 @@ bool entry::check(const std::vector<const asm_operand*>& to_check,
     return true;
 }
 
+end::end(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
+    : assembler_instruction(allowed_types, name_of_instruction, 0, 2) {};
+
+bool end::check(const std::vector<const asm_operand*>& to_check,
+    const range& stmt_range,
+    const diagnostic_collector& add_diagnostic) const
+{
+    if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
+        return false;
+    // check the first expression operand
+    if (!to_check.empty())
+    {
+        if (!is_operand_simple(to_check[0]) && !is_operand_empty(to_check[0])) // first operand must be simple
+        {
+            add_diagnostic(diagnostic_op::error_A243_END_expr_format(to_check[0]->operand_range));
+            return false;
+        }
+    }
+    // check the second language operand
+    if (to_check.size() == 2)
+    {
+        // second operand must be complex or empty
+        if (is_operand_empty(to_check[1]))
+            return true;
+        auto language_operand = get_complex_operand(to_check[1]);
+        if (language_operand == nullptr)
+        {
+            add_diagnostic(
+                diagnostic_op::error_A001_complex_op_expected(name_of_instruction, to_check[1]->operand_range));
+            return false;
+        }
+        if (language_operand->operand_parameters.size() != 3)
+        {
+            add_diagnostic(diagnostic_op::error_A016_exact(name_of_instruction, "language", 3, stmt_range));
+            return false;
+        }
+        if (language_operand->operand_identifier != "")
+        {
+            add_diagnostic(diagnostic_op::error_A137_END_lang_format(language_operand->operand_range));
+            return false;
+        }
+        for (const auto& param : language_operand->operand_parameters)
+        {
+            // all parameters must be simple
+            if (!is_operand_simple(param.get()))
+            {
+                add_diagnostic(diagnostic_op::error_A248_END_lang_char_sequence(param->operand_range));
+                return false;
+            }
+        }
+        if (get_simple_operand(language_operand->operand_parameters[0].get())->operand_identifier.empty()
+            || get_simple_operand(language_operand->operand_parameters[0].get())->operand_identifier.size()
+                > END_lang_first_par_size)
+        {
+            add_diagnostic(
+                diagnostic_op::error_A138_END_lang_first(language_operand->operand_parameters[0]->operand_range));
+            return false;
+        }
+        if (get_simple_operand(language_operand->operand_parameters[1].get())->operand_identifier.size()
+            != END_lang_second_par_size)
+        {
+            add_diagnostic(
+                diagnostic_op::error_A139_END_lang_second(language_operand->operand_parameters[1]->operand_range));
+            return false;
+        }
+        auto third_op = get_simple_operand(language_operand->operand_parameters[2].get());
+        if (third_op->operand_identifier.size() != END_lang_third_par_size
+            || !has_all_digits(third_op->operand_identifier))
+        {
+            add_diagnostic(
+                diagnostic_op::error_A140_END_lang_third(language_operand->operand_parameters[2]->operand_range));
+            return false;
+        }
+    }
+    return true;
+}
 
 drop::drop(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 0, -1) {};

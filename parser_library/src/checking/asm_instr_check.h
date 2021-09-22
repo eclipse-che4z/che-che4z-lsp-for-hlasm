@@ -206,6 +206,15 @@ public:
         const diagnostic_collector& add_diagnostic) const override;
 };
 
+class end final : public assembler_instruction
+{
+public:
+    end(const std::vector<label_types>& allowed_types, const std::string& name_of_instruction);
+    bool check(const std::vector<const asm_operand*>& to_check,
+        const range& stmt_range,
+        const diagnostic_collector& add_diagnostic) const override;
+};
+
 class drop final : public assembler_instruction
 {
 public:
