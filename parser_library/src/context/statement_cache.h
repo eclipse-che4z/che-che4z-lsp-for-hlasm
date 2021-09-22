@@ -17,7 +17,7 @@
 
 #include "diagnostic.h"
 #include "hlasm_statement.h"
-#include "processing/processing_format.h"
+#include "processing/op_code.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 struct complete_statement;
@@ -37,8 +37,7 @@ public:
     };
     // pair of processing format and reparsed statement
     // processing format serves as an identifier of reparsing kind
-    using cache_t =
-        std::pair<std::pair<processing::processing_form, processing::operand_occurence>, cached_statement_t>;
+    using cache_t = std::pair<processing::processing_status_cache_key, cached_statement_t>;
 
 private:
     std::vector<cache_t> cache_;
@@ -47,11 +46,11 @@ private:
 public:
     statement_cache(shared_stmt_ptr base);
 
-    bool contains(processing::processing_form format, processing::operand_occurence ops) const;
+    bool contains(processing::processing_status_cache_key key) const;
 
-    void insert(processing::processing_form format, processing::operand_occurence ops, cached_statement_t statement);
+    void insert(processing::processing_status_cache_key key, cached_statement_t statement);
 
-    const cached_statement_t* get(processing::processing_form format, processing::operand_occurence ops) const;
+    const cached_statement_t* get(processing::processing_status_cache_key key) const;
 
     shared_stmt_ptr get_base() const;
 };
