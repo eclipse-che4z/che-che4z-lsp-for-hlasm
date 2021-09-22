@@ -951,15 +951,6 @@ TEST_F(instruction_test, drop)
     EXPECT_FALSE(checker.check("DROP", test_acontrol_true, range(), collector));
 }
 
-TEST_F(instruction_test, end)
-{
-    EXPECT_TRUE(checker.check("END", test_no_operand_true, range(), collector));
-    EXPECT_TRUE(checker.check("END", test_end_true_one, range(), collector));
-    EXPECT_TRUE(checker.check("END", test_end_true_two, range(), collector));
-    EXPECT_FALSE(checker.check("END", test_end_false, range(), collector));
-    EXPECT_FALSE(checker.check("END", test_exitctl_true, range(), collector));
-}
-
 TEST_F(instruction_test, entry)
 {
     EXPECT_FALSE(checker.check("ENTRY", test_no_operand_true, range(), collector));
