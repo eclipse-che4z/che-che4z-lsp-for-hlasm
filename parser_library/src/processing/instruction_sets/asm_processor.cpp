@@ -819,7 +819,8 @@ void asm_processor::process_START(rebuilt_statement stmt)
     hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
 void asm_processor::process_END(rebuilt_statement stmt)
-{    const auto& label = stmt.label_ref();
+{
+    const auto& label = stmt.label_ref();
 
     if (!check(stmt, hlasm_ctx, checker_, *this))
         return;
