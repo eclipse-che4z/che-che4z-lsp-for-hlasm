@@ -62,7 +62,7 @@ TEST(END, only_first_end_processed)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "W014" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, no_operands)
 {
