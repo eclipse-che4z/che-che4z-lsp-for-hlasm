@@ -34,6 +34,9 @@ const sleep = (ms: number) => {
 };
 
 function objectToString(o : any) {
+    if(o === null)
+        return null;
+    
     Object.keys(o).forEach(k => {
       o[k] = '' + o[k];
     });

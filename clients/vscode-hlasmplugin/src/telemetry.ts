@@ -17,65 +17,52 @@ import * as vscode from "vscode";
 
 import TelemetryReporter, { TelemetryEventProperties, TelemetryEventMeasurements } from 'vscode-extension-telemetry';
 
-const TELEMETRY_KEY = "9cdad008-5b0d-442e-a8e6-55788e858fc0";
 const EXTENSION_ID = "broadcommfd.hlasm-language-support"
+const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY"
 
 export class Telemetry {
 
+    private reporter: TelemetryReporter;
+    private telemetry_key: string = undefined;
+    
+    
     private getExtensionVersion(): string {
         return vscode.extensions.getExtension(EXTENSION_ID).packageJSON.version;
     }
+    
+    private getExtensionPath(): string {
+        return vscode.extensions.getExtension(EXTENSION_ID).extensionPath;
+    }
 
     /**
-     * This method return the value of the instrumentation key necessary to create the telemetry reporter from an
-     * external file configuration. If the file doesn't exists it returns a generic value that will not be valid
+     * This method returns the value of the instrumentation key necessary to create the telemetry reporter from an
+     * external file configuration. If the file doesn't exist, it returns a generic value that will not be valid
      * for collect telemetry event.
-     
-    private static getTelemetryKeyId(): string {
-        return fs.existsSync(this.getTelemetryResourcePath()) ? this.getInstrumentationKey() : TELEMETRY_DEFAULT_CONTENT;
+     */
+    private getTelemetryKey(): string {
+        if (this.telemetry_key === undefined)
+            this.telemetry_key = fs.existsSync(this.getTelemetryResourcePath()) ? this.getInstrumentationKey() : TELEMETRY_DEFAULT_KEY;
+        return this.telemetry_key;
     }
 
-    private static getTelemetryResourcePath() {
+    private getTelemetryResourcePath() {
         return vscode.Uri.file(
-            path.join(ExtensionUtils.getExtensionPath(), "resources", "TELEMETRY_KEY")).fsPath;
+            path.join(this.getExtensionPath(), "resources", "TELEMETRY_KEY")).fsPath;
     }
 
-    private static getInstrumentationKey(): string {
+    private getInstrumentationKey(): string {
+        (new Buffer('text')).toString('base64')
+        Buffer.from('text').toString('base64')
         return Buffer.from(fs.readFileSync(this.getTelemetryResourcePath(), "utf8"), "base64").toString().trim();
+        
     }
 
-    private static convertData(content: TelemetryEvent) {
-        return {
-            categories: content.categories.toString(),
-            event: content.eventName,
-            IDE: ExtensionUtils.getIDEName(),
-            notes: content.notes,
-            timestamp: content.timestamp,
-            rootCause: content.rootCause,
-        };
-    }
-
-
-    private static convertMeasurements(content: Map<string, number>): TelemetryMeasurement {
-        const result: TelemetryMeasurement = {};
-
-        if (content) {
-            for (const [key, value] of content) {
-                if (value) {
-                    result[key] = value;
-                }
-            }
-        }
-        return result;
-    }
-*/
-    private reporter: TelemetryReporter;
 
     constructor() {
-        this.reporter = new TelemetryReporter(EXTENSION_ID, this.getExtensionVersion(), TELEMETRY_KEY);
+        this.reporter = new TelemetryReporter(EXTENSION_ID, this.getExtensionVersion(), this.getTelemetryKey());
     }
 
-    public reportEvent(eventName: string, properties? : any, measurements? : any): void {
+    public reportEvent(eventName: string, properties? : any, measurements? : TelemetryEventMeasurements): void {
         if (this.isValidTelemetryKey()) {
             this.reporter.sendTelemetryEvent(eventName, properties, measurements);
         }
@@ -92,6 +79,6 @@ export class Telemetry {
     }
 
     private isValidTelemetryKey(): boolean {
-        return true;
+        return this.getTelemetryKey() !== TELEMETRY_DEFAULT_KEY;
     }
 }
