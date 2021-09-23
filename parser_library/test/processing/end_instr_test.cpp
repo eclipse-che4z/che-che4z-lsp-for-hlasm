@@ -131,7 +131,7 @@ ENTRYPT  BALR            2,0
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A137" }));
 }
-TEST(END, three_operands_emptyfalse)
+TEST(END, three_operands_empty_false)
 {
     std::string input(R"( 
 NAME     CSECT
@@ -143,6 +143,26 @@ ENTRYPT  BALR            2,0
     a.analyze();
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
+}
+TEST(END, label_sequenceSymbol_true)
+{
+    std::string input(R"( 
+.NAME  END 
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+TEST(END, label_sequenceSymbol_false)
+{
+    std::string input(R"( 
+NAME  END 
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A249" }));
 }
 TEST(END, three_operands_false)
 {

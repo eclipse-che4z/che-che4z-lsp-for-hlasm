@@ -819,8 +819,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
     hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
 void asm_processor::process_END(rebuilt_statement stmt)
-{
-    const auto& label = stmt.label_ref();
+{    const auto& label = stmt.label_ref();
 
     if (!check(stmt, hlasm_ctx, checker_, *this))
         return;
@@ -828,11 +827,6 @@ void asm_processor::process_END(rebuilt_statement stmt)
     {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
         return;
-    }
-    if (stmt.operands_ref().value.size() > 2)
-    {
-        add_diagnostic(
-            diagnostic_op::error_A012_from_to(*stmt.opcode_ref().value, 0, 2, stmt.operands_ref().field_range));
     }
     if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
     {
@@ -842,29 +836,12 @@ void asm_processor::process_END(rebuilt_statement stmt)
             auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
                 hlasm_ctx.ord_ctx);
 
-            switch (symbol.value_kind())
+            if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {
-                case context::symbol_value_kind::ABS:
-                    add_diagnostic(
-                        diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
-                    return;
-                case context::symbol_value_kind::RELOC:
-
-                    break;
-                default:
-                    if (auto val = dynamic_cast<const expressions::mach_expr_symbol*>(
-                            stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get());
-                        val != nullptr)
-                    {
-                        add_diagnostic(diagnostic_op::error_E032(*val->value, stmt.operands_ref().field_range));
-                        return;
-                    }
+                add_diagnostic(
+                    diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
+                return;
             }
-        }
-        else
-        {
-            add_diagnostic(diagnostic_op::error_A243_END_expr_format(stmt.operands_ref().field_range));
-            return;
         }
     }
     this->end_processing = true;
