@@ -21,16 +21,17 @@
 #include "stream_helper.h"
 
 
+using namespace hlasm_plugin;
 using namespace hlasm_plugin::language_server;
 
 class server_mock : public server
 {
-    hlasm_plugin::parser_library::workspace_manager ws;
+    ;
     int counter = 0;
     int messages_limit;
 
 public:
-    server_mock(int max_messages)
+    server_mock(parser_library::workspace_manager& ws, int max_messages)
         : server(ws)
         , messages_limit(max_messages)
     {}
@@ -125,7 +126,8 @@ TEST_P(dispatcher_fixture, basic)
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
 
-    server_mock dummy_server(GetParam().messages_limit);
+    parser_library::workspace_manager ws;
+    server_mock dummy_server(ws, GetParam().messages_limit);
 
     base_protocol_channel channel(ss_in, ss_out);
     dispatcher disp(json_channel_adapter(channel), dummy_server, rm);
@@ -139,8 +141,9 @@ TEST_P(dispatcher_fixture, basic)
 
 TEST(dispatcher, write_message)
 {
+    parser_library::workspace_manager ws;
     std::stringstream ss;
-    server_mock dummy_server(1);
+    server_mock dummy_server(ws, 1);
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel, request_manager::async_policy::SYNC);
     base_protocol_channel channel(ss, ss);

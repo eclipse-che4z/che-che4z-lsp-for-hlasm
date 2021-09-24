@@ -23,6 +23,7 @@
 #include "workspace_manager.h"
 #include "parsing_metadata_collector.h"
 #include "diagnostic_counter.h"
+#include "json_channel.h"
 
 namespace hlasm_plugin::language_server {
 
@@ -43,7 +44,7 @@ class server : public response_provider
 public:
     // Constructs the server with workspace_manager.
     // All the requests and notifications are passed to the workspace manager
-    explicit server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr, json_sink* telemetry_provider = nullptr);
 
     // Tells the server that a massage was received. The server carries out the notification or request.
     virtual void message_received(const json& message) = 0;
@@ -69,6 +70,7 @@ protected:
     bool exit_notification_received_ = false;
 
     parser_library::workspace_manager& ws_mngr_;
+    json_sink* telemetry_provider_;
 
     void register_feature_methods();
 

@@ -32,7 +32,8 @@ namespace hlasm_plugin::language_server::lsp {
 // Consumes diagnostics that come from the parser library and sends them to LSP client.
 class server final : public hlasm_plugin::language_server::server,
                      public parser_library::diagnostics_consumer,
-                     public parser_library::message_consumer
+                     public parser_library::message_consumer,
+                     public json_sink
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -40,6 +41,11 @@ public:
 
     // Parses LSP (JSON RPC) message and calls corresponding method.
     void message_received(const json& message) override;
+
+    // Inherited via json_sink
+    // Takes json with telemetry info and sends it through LSP
+    virtual void write(const nlohmann::json&) override;
+    virtual void write(nlohmann::json&&) override;
 
 protected:
     // Sends request to LSP client using send_message_provider.

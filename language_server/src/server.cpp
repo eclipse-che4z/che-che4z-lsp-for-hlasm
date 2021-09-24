@@ -25,8 +25,9 @@
 
 namespace hlasm_plugin::language_server {
 
-server::server(parser_library::workspace_manager& ws_mngr)
+server::server(parser_library::workspace_manager& ws_mngr, json_sink* telemetry_provider)
     : ws_mngr_(ws_mngr)
+    , telemetry_provider_(telemetry_provider)
 {
     ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
     ws_mngr_.register_diagnostics_consumer(&diag_counter_);
@@ -96,10 +97,9 @@ void server::notify_telemetry(const std::string& method_name, telemetry_log_leve
 
     metrics["duration"] = seconds;
 
-    notify("telemetry/event",
-        { { "method_name", method_name },
-            { "properties", ws_info },
-            { "measurements", metrics } });
+    if (telemetry_provider_)
+        telemetry_provider_->write(
+            { { "method_name", method_name }, { "properties", ws_info }, { "measurements", metrics } });
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

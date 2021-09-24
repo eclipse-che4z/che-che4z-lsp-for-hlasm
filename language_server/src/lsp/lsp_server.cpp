@@ -27,7 +27,7 @@
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
-    : language_server::server(ws_mngr)
+    : language_server::server(ws_mngr, this)
 {
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
@@ -149,6 +149,10 @@ void server::register_methods()
         method {
             [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
 }
+
+void server::write(const nlohmann::json& payload) { notify("telemetry/event", payload); }
+
+void server::write(nlohmann::json&& payload) { write(payload); }
 
 void empty_handler(json, const json&)
 {
