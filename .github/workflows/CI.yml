@@ -235,6 +235,10 @@ jobs:
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Inject telemetry key
+        run: |
+          cd clients/vscode-hlasmplugin/resources
+          node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))" > TELEMETRY_KEY
       - name: Configure
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build
