@@ -30,12 +30,13 @@ class session_manager final : public json_sink
     hlasm_plugin::parser_library::workspace_manager* ws_mngr;
     json_sink* out_stream;
     std::map<std::string, std::unique_ptr<dap::session>, std::less<>> sessions;
+    json_sink* telemetry_reporter;
 
     void cleanup_sessions();
     void handle_registration_request(size_t new_id);
 
 public:
-    session_manager(hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
+    session_manager(hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telemetry_reporter = nullptr);
 
     // Inherited via json_sink
     void write(const nlohmann::json& msg) override;

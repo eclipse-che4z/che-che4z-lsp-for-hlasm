@@ -20,8 +20,8 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-server::server(parser_library::workspace_manager& ws_mngr)
-    : language_server::server(ws_mngr)
+server::server(parser_library::workspace_manager& ws_mngr, json_sink* telemetry_reporter)
+    : language_server::server(ws_mngr, telemetry_reporter)
 {
     features_.push_back(std::make_unique<dap_feature>(ws_mngr_, *this, this));
     register_feature_methods();

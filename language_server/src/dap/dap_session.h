@@ -34,11 +34,12 @@ class session final : public json_sink
     dap::message_unwrapper msg_unwrapper;
     std::thread worker;
     std::atomic<bool> running = true;
+    json_sink* telemetry_reporter;
 
     void thread_routine();
 
 public:
-    session(size_t session_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
+    session(size_t session_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink * telemetry_reporter = nullptr);
     ~session();
 
     message_router::message_predicate get_message_matcher() const;

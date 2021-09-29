@@ -29,7 +29,7 @@ void session::thread_routine()
         scope_exit indicate_end([this]() { running = false; });
         request_manager req_mgr(&cancel);
         scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
-        dap::server server(*ws_mngr);
+        dap::server server(*ws_mngr, telemetry_reporter);
         dispatcher dispatcher(json_channel_adapter(msg_unwrapper, msg_wrapper), server, req_mgr);
         dispatcher.run_server_loop();
     }
@@ -42,11 +42,13 @@ void session::thread_routine()
         LOG_ERROR("DAP Thread encountered an unknown exception.");
     }
 }
-session::session(size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out)
+session::session(
+    size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telem_reporter)
     : session_id(message_wrapper::generate_method_name(s_id))
     , ws_mngr(&ws)
     , msg_wrapper(out, s_id)
     , msg_unwrapper(queue)
+    , telemetry_reporter(telem_reporter)
 {
     worker = std::thread([this]() { this->thread_routine(); });
 }

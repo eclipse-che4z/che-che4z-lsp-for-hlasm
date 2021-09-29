@@ -26,6 +26,7 @@
 #include "scope_exit.h"
 #include "server_streams.h"
 #include "workspace_manager.h"
+#include "telemetry_broker.h"
 
 using namespace hlasm_plugin::language_server;
 
@@ -41,23 +42,27 @@ class main_program : public json_sink
     message_router router;
 
     std::thread lsp_thread;
-
+    telemetry_broker dap_telemetry_broker;
     dap::session_manager dap_sessions;
 
 public:
     main_program(json_sink& json_output, int& ret)
         : ws_mngr(&cancel)
         , router(&lsp_queue)
-        , dap_sessions(ws_mngr, json_output)
+        , dap_sessions(ws_mngr, json_output, &dap_telemetry_broker)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
 
-        lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
+        lsp_thread =
+            std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
             try
             {
                 request_manager req_mgr(&cancel);
                 scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
                 lsp::server server(ws_mngr);
+                scope_exit disconnect_telemetry(
+                    [this]() { dap_telemetry_broker.set_telemetry_sink(nullptr); });
+                dap_telemetry_broker.set_telemetry_sink(&server);
 
                 dispatcher lsp_dispatcher(io, server, req_mgr);
                 ret = lsp_dispatcher.run_server_loop();
