@@ -336,7 +336,7 @@ void hlasm_context::push_statement_processing(const processing::processing_kind 
 
 void hlasm_context::pop_statement_processing()
 {
-    if (!proc_stack_.empty() && proc_stack_.back().owns_source)
+    if (proc_stack_.back().owns_source)
         source_stack_.pop_back();
 
     proc_stack_.pop_back();
