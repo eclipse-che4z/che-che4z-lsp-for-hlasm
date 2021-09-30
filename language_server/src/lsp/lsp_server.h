@@ -44,8 +44,8 @@ public:
 
     // Inherited via json_sink
     // Takes json with telemetry info and sends it through LSP
-    virtual void write(const nlohmann::json&) override;
-    virtual void write(nlohmann::json&&) override;
+    void write(const nlohmann::json&) override;
+    void write(nlohmann::json&&) override;
 
 protected:
     // Sends request to LSP client using send_message_provider.
@@ -61,9 +61,14 @@ protected:
         const std::string& err_message,
         const json& error) override;
 
-private:
-    // requests
+    telemetry_metrics_info get_telemetry_details() override;
 
+private:
+    parsing_metadata_collector parsing_metadata_;
+    size_t diags_warning_count = 0;
+    size_t diags_error_count = 0;
+
+    // requests
     // Implements initialize request.
     void on_initialize(json id, const json& param);
     // Implements the LSP shutdown request.
@@ -91,6 +96,8 @@ private:
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();
+
+
 };
 
 } // namespace hlasm_plugin::language_server::lsp

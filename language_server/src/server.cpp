@@ -21,23 +21,13 @@
 #include <string>
 
 #include "logger.h"
-#include "parsing_metadata_serialization.h"
 
 namespace hlasm_plugin::language_server {
 
 server::server(parser_library::workspace_manager& ws_mngr, json_sink* telemetry_provider)
     : ws_mngr_(ws_mngr)
     , telemetry_provider_(telemetry_provider)
-{
-    ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
-    ws_mngr_.register_diagnostics_consumer(&diag_counter_);
-}
-
-server::~server()
-{
-    ws_mngr_.unregister_parsing_metadata_consumer(&parsing_metadata_);
-    ws_mngr_.unregister_diagnostics_consumer(&diag_counter_);
-}
+{}
 
 void server::register_feature_methods()
 {
@@ -82,24 +72,23 @@ void server::call_method(const std::string& method, const json& id, const json& 
     }
 }
 
+server::telemetry_metrics_info server::get_telemetry_details() { return {}; }
+
 void server::notify_telemetry(const std::string& method_name, telemetry_log_level log_level, double seconds)
 {
     if (log_level == telemetry_log_level::NO_TELEMETRY)
         return;
 
-    json metrics;
-    json ws_info;
+    telemetry_metrics_info details;
     if (log_level == telemetry_log_level::LOG_WITH_PARSE_DATA)
-    {
-        metrics = parsing_metadata_.data.metrics;
-        ws_info = parsing_metadata_.data.ws_info;
-    }
+        details = get_telemetry_details();
 
-    metrics["duration"] = seconds;
+    details.metrics["duration"] = seconds;
 
     if (telemetry_provider_)
-        telemetry_provider_->write(
-            { { "method_name", method_name }, { "properties", ws_info }, { "measurements", metrics } });
+        telemetry_provider_->write({ { "method_name", method_name },
+            { "properties", details.properties },
+            { "measurements", details.metrics } });
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

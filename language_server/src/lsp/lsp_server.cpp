@@ -23,6 +23,7 @@
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
 #include "lib_config.h"
+#include "parsing_metadata_serialization.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -37,6 +38,8 @@ server::server(parser_library::workspace_manager& ws_mngr)
 
     ws_mngr_.register_diagnostics_consumer(this);
     ws_mngr_.set_message_consumer(this);
+
+    ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
 }
 
 void server::message_received(const json& message)
@@ -107,6 +110,14 @@ void server::message_received(const json& message)
         LOG_ERROR(e.what());
         return;
     }
+}
+
+server::telemetry_metrics_info server::get_telemetry_details()
+{
+    json metrics(parsing_metadata_.data.metrics);
+    metrics["error_count"] = diags_error_count;
+    metrics["warning_count"] = diags_warning_count;
+    return { parsing_metadata_.data.ws_info, metrics };
 }
 
 void server::request(const json& id, const std::string& requested_method, const json& args, method handler)
@@ -231,10 +242,17 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // map of all diagnostics that came from the server
     std::map<std::string, std::vector<parser_library::diagnostic>> diags;
 
+    diags_error_count = 0;
+    diags_warning_count = 0;
+
     for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
     {
         auto d = diagnostics.diagnostics(i);
         diags[d.file_name()].push_back(d);
+        if (d.severity() == parser_library::diagnostic_severity::error)
+            ++diags_error_count;
+        else if (d.severity() == parser_library::diagnostic_severity::warning)
+            ++diags_warning_count;
     }
 
     // set of all files for which diagnostics came from the server.
