@@ -75,7 +75,6 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 {
     auto diags = s->diagnostics();
     for (auto it = diags.first; it != diags.second; ++it)
-
         add_diagnostic(*it);
 
     bool fatal = check_fatals(range(s->statement_position()));
