@@ -94,6 +94,16 @@ TEST(lsp_server, not_implemented_method)
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
 
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_details":"unknown_method","error_type":"method_not_implemented"}
+           }})"_json;
+
+    // Only telemetry expected
+    EXPECT_CALL(smpm, reply(expected_telemetry));
+
     s.message_received(j);
     // No result is tested, server should ignore unknown LSP method
 }
@@ -150,7 +160,15 @@ TEST(lsp_server, request_no_handler)
 
     json request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
 
-    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_type":"lsp_server/response_no_handler"}
+           }})"_json;
+
+    // Only telemetry expected
+    EXPECT_CALL(message_provider, reply(expected_telemetry));
 
     s.message_received(request_response);
 }
@@ -164,7 +182,15 @@ TEST(lsp_server, request_no_id)
 
     json request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
 
-    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_type":"lsp_server/response_no_id"}
+           }})"_json;
+
+    // Only telemetry expected
+    EXPECT_CALL(message_provider, reply(expected_telemetry));
 
     s.message_received(request_response);
 }
@@ -180,7 +206,16 @@ TEST(lsp_server, request_error)
 
     json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
 
-    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_details":"\"the_error_message\"",
+                          "error_type":"lsp_server/response_error_returned"}
+           }})"_json;
+
+    // Only telemetry expected
+    EXPECT_CALL(message_provider, reply(expected_telemetry));
 
     s.message_received(request_response);
 }
@@ -194,7 +229,17 @@ TEST(lsp_server, request_error_no_message)
 
     json request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;
 
-    EXPECT_CALL(message_provider, reply(::testing::_)).Times(0);
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_details":"Request with id \"a_request\" returned with unspecified error.",
+                          "error_type":"lsp_server/response_error_returned"}
+           }})"_json;
+
+    // Only telemetry expected
+
+    EXPECT_CALL(message_provider, reply(expected_telemetry));
 
     s.message_received(request_response);
 }
@@ -205,6 +250,18 @@ TEST(lsp_server_test, wrong_message_received)
     send_message_provider_mock smpm;
     lsp::server s(ws_mngr);
     s.set_send_message_provider(&smpm);
+
+    json expected_telemetry =
+        R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
+            "measurements":null,
+            "method_name":"server_error",
+            "properties":{"error_details":"Unable to parse URI string.",
+                          "error_type":"lsp_server/method_unknown_error"}
+           }})"_json;
+
+    // Only telemetry expected
+
+    EXPECT_CALL(smpm, reply(expected_telemetry));
 
     s.message_received(
         R"({"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"user_storage:/user/storage/layout","languageId":"plaintext","version":4,"text":"sad"}}})"_json);

@@ -84,8 +84,10 @@ protected:
 
     telemetry_metrics_info virtual get_telemetry_details();
 
+    void telemetry_error(std::string where, std::string what = "");
+
 private:
-    void notify_telemetry(const std::string& method_name, telemetry_log_level log_level, double seconds);
+    void telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds);
 };
 
 } // namespace hlasm_plugin::language_server

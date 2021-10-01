@@ -56,6 +56,7 @@ void server::message_received(const json& message)
         if (id_found == message.end())
         {
             LOG_WARNING("A response with no id field received.");
+            telemetry_error("lsp_server/response_no_id");
             return;
         }
 
@@ -63,6 +64,7 @@ void server::message_received(const json& message)
         if (handler_found == request_handlers_.end())
         {
             LOG_WARNING("A response with no registered handler received.");
+            telemetry_error("lsp_server/response_no_handler");
             return;
         }
 
@@ -80,6 +82,7 @@ void server::message_received(const json& message)
         else
             warn_message = "Request with id " + id_found->dump() + " returned with unspecified error.";
         LOG_WARNING(warn_message);
+        telemetry_error("lsp_server/response_error_returned", warn_message);
         return;
     }
 
@@ -89,6 +92,7 @@ void server::message_received(const json& message)
     if (params_found == message.end() || method_found == message.end())
     {
         LOG_WARNING("Method or params missing from received request or notification");
+        telemetry_error("lsp_server/method_or_params_missing");
         return;
     }
 
@@ -108,6 +112,7 @@ void server::message_received(const json& message)
     catch (const std::exception& e)
     {
         LOG_ERROR(e.what());
+        telemetry_error("lsp_server/method_unknown_error", e.what());
         return;
     }
 }

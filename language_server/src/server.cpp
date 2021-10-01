@@ -56,12 +56,13 @@ void server::call_method(const std::string& method, const json& id, const json& 
             (*found).second.handler(id, args);
             std::chrono::duration<double> duration = clock.now() - start;
 
-            notify_telemetry(method, (*found).second.telemetry_level, duration.count());
+            telemetry_method_call(method, (*found).second.telemetry_level, duration.count());
         }
         catch (const nlohmann::basic_json<>::exception& e)
         {
             (void)e;
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
+            telemetry_error("call_method/json_error", e.what());
         }
     }
     else
@@ -69,12 +70,27 @@ void server::call_method(const std::string& method, const json& id, const json& 
         std::ostringstream ss;
         ss << "Method " << method << " is not available on this server.";
         LOG_WARNING(ss.str());
+
+        telemetry_error("method_not_implemented", method);
     }
 }
 
 server::telemetry_metrics_info server::get_telemetry_details() { return {}; }
 
-void server::notify_telemetry(const std::string& method_name, telemetry_log_level log_level, double seconds)
+void server::telemetry_error(std::string where, std::string what)
+{
+    if (!telemetry_provider_)
+        return;
+
+    json properties;
+    properties["error_type"] = where;
+    if (what != "")
+        properties["error_details"] = what;
+    telemetry_provider_->write(
+        { { "method_name", "server_error" }, { "properties", properties }, { "measurements", {} } });
+}
+
+void server::telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds)
 {
     if (log_level == telemetry_log_level::NO_TELEMETRY)
         return;

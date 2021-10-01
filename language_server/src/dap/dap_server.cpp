@@ -71,6 +71,7 @@ void server::message_received(const json& message)
         if (message.at("type") != "request")
         {
             LOG_WARNING(std::string("Invalid message receive: ") + message.dump());
+            telemetry_error("lsp_server/invalid_message");
             return;
         }
         auto arguments = message.find("arguments");
@@ -83,6 +84,7 @@ void server::message_received(const json& message)
     {
         (void)e;
         LOG_WARNING(std::string("There was an error with received request:") + e.what());
+        telemetry_error("dap_server/method_unknown_error", e.what());
     }
 }
 
