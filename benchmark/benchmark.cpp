@@ -22,12 +22,12 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "../language_server/src/diagnostic_counter.h"
+#include "../language_server/src/parsing_metadata_serialization.h"
 #include "config/pgm_conf.h"
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
-#include "../language_server/src/diagnostic_counter.h"
-#include "../language_server/src/parsing_metadata_serialization.h"
 
 /*
  * The benchmark is used to evaluate multiple aspects about the performance and accuracy of the parse library.
@@ -166,7 +166,7 @@ json parse_one_file(const std::string& source_file,
         { "Top messages", std::move(top_messages) } });
 
     json metrics_json(collector.metrics_);
-    
+
     result.insert(metrics_json.begin(), metrics_json.end());
 
     auto first_parse_metrics = collector.metrics_;

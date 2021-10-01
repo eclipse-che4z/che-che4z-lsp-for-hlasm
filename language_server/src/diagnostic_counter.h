@@ -15,8 +15,8 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_DIAGNOSTIC_COUNTER_H
 #define HLASMPLUGIN_LANGUAGESERVER_DIAGNOSTIC_COUNTER_H
 
-#include "workspace_manager.h"
 #include "nlohmann/json.hpp"
+#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
 

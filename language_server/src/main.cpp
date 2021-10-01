@@ -25,8 +25,8 @@
 #include "message_router.h"
 #include "scope_exit.h"
 #include "server_streams.h"
-#include "workspace_manager.h"
 #include "telemetry_broker.h"
+#include "workspace_manager.h"
 
 using namespace hlasm_plugin::language_server;
 
@@ -53,15 +53,13 @@ public:
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
 
-        lsp_thread =
-            std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
+        lsp_thread = std::thread([&ret, this, io = json_channel_adapter(lsp_queue, json_output)]() {
             try
             {
                 request_manager req_mgr(&cancel);
                 scope_exit end_request_manager([&req_mgr]() { req_mgr.end_worker(); });
                 lsp::server server(ws_mngr);
-                scope_exit disconnect_telemetry(
-                    [this]() { dap_telemetry_broker.set_telemetry_sink(nullptr); });
+                scope_exit disconnect_telemetry([this]() { dap_telemetry_broker.set_telemetry_sink(nullptr); });
                 dap_telemetry_broker.set_telemetry_sink(&server);
 
                 dispatcher lsp_dispatcher(io, server, req_mgr);

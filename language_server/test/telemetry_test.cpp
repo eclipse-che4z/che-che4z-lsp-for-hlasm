@@ -20,7 +20,4 @@
 
 using namespace hlasm_plugin::language_server;
 
-TEST(telemetry, lsp_server_)
-{
-    
-}
+TEST(telemetry, lsp_server_) {}

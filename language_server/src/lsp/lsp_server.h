@@ -96,8 +96,6 @@ private:
 
     // Registers LSP methods implemented by this server (not by features).
     void register_methods();
-
-
 };
 
 } // namespace hlasm_plugin::language_server::lsp

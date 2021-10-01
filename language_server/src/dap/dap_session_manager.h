@@ -36,7 +36,8 @@ class session_manager final : public json_sink
     void handle_registration_request(size_t new_id);
 
 public:
-    session_manager(hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telemetry_reporter = nullptr);
+    session_manager(
+        hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telemetry_reporter = nullptr);
 
     // Inherited via json_sink
     void write(const nlohmann::json& msg) override;
