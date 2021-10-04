@@ -18,7 +18,7 @@
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
-namespace hlasm_plugin::language_server {
+namespace hlasm_plugin::benchmark {
 
 class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
 {
@@ -65,7 +65,7 @@ inline nlohmann::json get_top_messages(const std::unordered_map<std::string, uns
 }
 
 
-} // namespace hlasm_plugin::language_server
+} // namespace hlasm_plugin::benchmark
 
 
 

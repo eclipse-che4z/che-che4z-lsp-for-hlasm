@@ -22,9 +22,10 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "../language_server/src/diagnostic_counter.h"
+#include "../language_server/src/parsing_metadata_collector.h"
 #include "../language_server/src/parsing_metadata_serialization.h"
 #include "config/pgm_conf.h"
+#include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
@@ -67,17 +68,6 @@ using json = nlohmann::json;
 
 namespace {
 
-class metrics_collector : public hlasm_plugin::parser_library::parsing_metadata_consumer
-{
-public:
-    void consume_parsing_metadata(const hlasm_plugin::parser_library::parsing_metadata& metadata) override
-    {
-        metrics_ = metadata.metrics;
-    }
-
-    hlasm_plugin::parser_library::performance_metrics metrics_;
-};
-
 struct all_file_stats
 {
     double average_line_ms = 0;
@@ -112,9 +102,9 @@ json parse_one_file(const std::string& source_file,
 
     // new workspace manager
     hlasm_plugin::parser_library::workspace_manager ws;
-    hlasm_plugin::language_server::diagnostic_counter diag_counter;
+    hlasm_plugin::benchmark::diagnostic_counter diag_counter;
     ws.register_diagnostics_consumer(&diag_counter);
-    metrics_collector collector;
+    hlasm_plugin::language_server::parsing_metadata_collector collector;
     ws.register_parsing_metadata_consumer(&collector);
     // input folder as new workspace
     ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
@@ -141,18 +131,19 @@ json parse_one_file(const std::string& source_file,
         return json({ { "File", source_file }, { "Success", false }, { "Reason", "Crash" } });
     }
 
+    const auto& metrics = collector.data.metrics;
+
     auto c_end = std::clock();
     auto end = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    auto exec_statements = collector.metrics_.open_code_statements + collector.metrics_.copy_statements
-        + collector.metrics_.macro_statements + collector.metrics_.lookahead_statements
-        + collector.metrics_.reparsed_statements;
+    auto exec_statements = metrics.open_code_statements + metrics.copy_statements + metrics.macro_statements
+        + metrics.lookahead_statements + metrics.reparsed_statements;
     s.average_stmt_ms += (exec_statements / (double)time);
-    s.average_line_ms += collector.metrics_.lines / (double)time;
-    s.all_files += collector.metrics_.files;
+    s.average_line_ms += metrics.lines / (double)time;
+    s.all_files += metrics.files;
     s.whole_time += time;
 
-    auto top_messages = hlasm_plugin::language_server::get_top_messages(diag_counter.message_counts);
+    auto top_messages = hlasm_plugin::benchmark::get_top_messages(diag_counter.message_counts);
 
     json result({ { "File", source_file },
         { "Success", true },
@@ -162,14 +153,14 @@ json parse_one_file(const std::string& source_file,
         { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
         { "Executed Statements", exec_statements },
         { "ExecStatement/ms", exec_statements / (double)time },
-        { "Line/ms", collector.metrics_.lines / (double)time },
+        { "Line/ms", metrics.lines / (double)time },
         { "Top messages", std::move(top_messages) } });
 
-    json metrics_json(collector.metrics_);
+    json metrics_json(metrics);
 
     result.insert(metrics_json.begin(), metrics_json.end());
 
-    auto first_parse_metrics = collector.metrics_;
+    auto first_parse_metrics = metrics;
     auto first_diag_counter = diag_counter;
     long long reparse_time = 0;
     // Reparse to benchmark macro caching

@@ -21,6 +21,7 @@
 
 #include "../common_types.h"
 #include "../feature.h"
+#include "../parsing_metadata_collector.h"
 #include "../server.h"
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"

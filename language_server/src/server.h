@@ -21,9 +21,7 @@
 #include "json_channel.h"
 
 #include "common_types.h"
-#include "diagnostic_counter.h"
 #include "feature.h"
-#include "parsing_metadata_collector.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {

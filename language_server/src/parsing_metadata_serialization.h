@@ -12,11 +12,10 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::parser_library {
-
-
 
 void inline to_json(nlohmann::json& j, const parser_library::workspace_file_info& info)
 {
