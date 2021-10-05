@@ -328,7 +328,7 @@ ca_string returns [ca_expr_ptr ca_expr]
 	{
 		$ca_expr = std::move($ca_string_b.ca_expr);
 	}
-	| tmp=ca_string dot ca_string_b
+	| tmp=ca_string dot? ca_string_b
 	{
 		auto r = provider.get_range($tmp.ctx->getStart(), $ca_string_b.ctx->getStop());
 		$ca_expr = std::make_unique<ca_basic_binary_operator<ca_conc>>(std::move($tmp.ca_expr), std::move($ca_string_b.ca_expr), r);
