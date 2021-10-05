@@ -8,4 +8,4 @@ HLASM Language Support supports security updates only for the latest version.
 
 ## Reporting a Vulnerability
 
-We recommend that in case of suspected vulnerabilities you do not use the COBOL LS public issue tracker, but instead contact the Eclipse Security Team directly via security@eclipse.org.
+We recommend that in case of suspected vulnerabilities you do not use the HLASM Language Support public issue tracker, but instead contact the Eclipse Security Team directly via security@eclipse.org.
