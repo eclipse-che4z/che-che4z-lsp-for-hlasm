@@ -24,6 +24,7 @@
 - Attribute expressions ending with dot are not parsed correctly
 - Improve evaluation and diagnostics of conditional assembler expressions
 - Operands of dynamically generated statements may be incorrectly parsed
+- Infinite loop during lookahead processing when model statement is located in copybook
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
