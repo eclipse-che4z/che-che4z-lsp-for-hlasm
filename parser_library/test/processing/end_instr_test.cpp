@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-
+#include "../mock_parse_lib_provider.h"
 TEST(END, relocatable_symbol)
 {
     std::string input(R"(
@@ -53,7 +53,7 @@ TEST(END, external_symbol)
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
 }
-TEST(END, only_first_end_processed)
+TEST(END, multiple_ends)
 {
     std::string input(R"(
    END 
@@ -62,7 +62,8 @@ TEST(END, only_first_end_processed)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
+    EXPECT_TRUE(a.diags().empty());
+    // EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, no_operands)
 {
@@ -177,3 +178,143 @@ ENTRYPT  BALR            2,0
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
 }
+
+TEST(END, end_called_from_macro_correct)
+{
+    std::string input(R"( 
+         MACRO                                               
+     MAC                                                 
+     END   TEST                                   
+     MEND                                                
+TEST CSECT                                
+     MAC
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(END, end_called_from_macro_with_undefined_opcode_after_end_not_diagnosed)
+{
+    std::string input(R"( 
+         MACRO                                               
+     MAC                                                 
+     END   TEST                                         
+     MEND                                                
+TEST CSECT                                                                                 
+     MAC  
+     GIBBERISH
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+// todo , warning for statements after end not implemented
+TEST(END, end_called_from_macro_with_look_ahead_symbols_found)
+{
+    std::string input(R"( 
+         MACRO                                               
+     MAC                                                 
+     END   TEST                                          
+     MEND                                                
+TEST CSECT                                                   
+     AIF   (L'X LT 0).X                                 
+     MAC
+     BR    14                                            
+.X   ANOP  ,                                            
+X    DS    C                                                          
+     BR    0                                             
+     END                                                 
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(END, end_called_from_macro_with_look_ahead_symbols_not_found)
+{
+    std::string input(R"( 
+         MACRO                                               
+     MAC                                                 
+     END   TEST                                          
+     MEND                                                
+TEST CSECT                                                   
+     AIF   (L'X LT 0).X                                 
+     MAC
+     BR    14                                                                                                    
+     BR    0                                             
+     END                                                 
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
+}
+// End called from copybook inside macro not working
+/*TEST(END, end_called_from_copybook_inside_macro_one)
+{
+    std::string copybook_content = R"(
+  MACRO
+  M
+  LR 1
+  END
+  MEND        
+)";
+    std::string input = R"(
+         COPY COPYBOOK_TWO
+        undef_opcode
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}*/
+TEST(END, end_called_from_copybook_)
+{
+    std::string copybook_content = R"(
+
+  LR 1,2
+  END       
+)";
+    std::string input = R"(
+         COPY COPYBOOK_TWO
+        undef_opcode
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+/* same as above*/
+/*TEST(END, end_called_from_copybook_inside_macro_two)
+{
+    std::string copybook_content = R"(
+  MACRO
+  M
+  LR 1
+  END TEST
+  undef_opcode
+ MEND
+)";
+    std::string input = R"(
+        COPY COPYBOOK
+        SDSD
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+*/

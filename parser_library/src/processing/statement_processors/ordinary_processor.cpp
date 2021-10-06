@@ -84,34 +84,32 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
         return;
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
-    if (asm_proc_.is_end_statement_reached())
-    {
-        if (!statement->opcode_ref().value->empty())
-            add_diagnostic(diagnostic_op::warning_W015(statement->stmt_range_ref()));
-        this->end_statement();
-        return;
-    }
+
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:
             add_diagnostic(
                 diagnostic_op::error_E049(*statement->opcode_ref().value, statement->instruction_ref().field_range));
-            return;
+            break;
         case context::instruction_type::CA:
             ca_proc_.process(std::move(statement));
-            return;
+            break;
         case context::instruction_type::MAC:
             mac_proc_.process(std::move(statement));
-            return;
+            break;
         case context::instruction_type::ASM:
             asm_proc_.process(std::move(statement));
-            return;
+            break;
         case context::instruction_type::MACH:
             mach_proc_.process(std::move(statement));
-            return;
+            break;
         default:
             assert(false);
-            return;
+            break;
+    }
+    if (asm_proc_.is_end_statement_reached())
+    {
+        finished_flag_ = true;
     }
 }
 
@@ -131,12 +129,6 @@ void ordinary_processor::end_processing()
 
     finished_flag_ = true;
 }
-void ordinary_processor::end_statement()
-{
-    listener_.finish_opencode();
-
-    finished_flag_ = true;
-}
 
 bool ordinary_processor::terminal_condition(const statement_provider_kind prov_kind) const
 {
@@ -144,6 +136,7 @@ bool ordinary_processor::terminal_condition(const statement_provider_kind prov_k
 }
 
 bool ordinary_processor::finished() { return finished_flag_; }
+
 
 struct processing_status_visitor
 {
