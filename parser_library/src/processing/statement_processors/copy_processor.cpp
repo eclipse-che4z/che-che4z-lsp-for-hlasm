@@ -69,8 +69,9 @@ void copy_processor::end_processing()
     }
 
     hlasm_ctx.pop_statement_processing();
-
     listener_.finish_copy_member(std::move(result_));
+    if (hlasm_ctx.get_end_reached())
+        hlasm_ctx.leave_copy_member();
 }
 
 bool copy_processor::terminal_condition(const statement_provider_kind prov_kind) const
