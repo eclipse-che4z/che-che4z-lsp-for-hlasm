@@ -36,8 +36,8 @@ json open_file_message =
 
 auto get_method_matcher(std::string method)
 {
-
-    return [method = std::move(method)](auto& arg) { return arg.count("method") > 0 && arg["method"].get<std::string>() == method; };
+    return [method = std::move(method)](
+               auto& arg) { return arg.count("method") > 0 && arg["method"].get<std::string>() == method; };
 }
 
 auto get_telemetry_method_matcher(std::string method)
@@ -90,14 +90,15 @@ TEST(telemetry, telemetry_broker)
     lsp::server lsp_server(ws_mngr);
     send_message_provider_mock lsp_smpm;
     lsp_server.set_send_message_provider(&lsp_smpm);
-    
+
 
     EXPECT_CALL(lsp_smpm, reply(Truly(get_method_matcher("textDocument/publishDiagnostics"))));
-   
-    
+
+
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/didOpen"))));
-    
-    EXPECT_CALL(lsp_smpm, reply(Truly([](auto& arg) { return arg.count("id") > 0 && arg["id"] == 48; }))); // response to 
+
+    EXPECT_CALL(
+        lsp_smpm, reply(Truly([](auto& arg) { return arg.count("id") > 0 && arg["id"] == 48; }))); // response to
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("textDocument/hover"))));
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("launch"))));
     EXPECT_CALL(lsp_smpm, reply(Truly(get_telemetry_method_matcher("disconnect"))));

@@ -12,7 +12,9 @@
 
 project(benchmark)
 
-add_executable(benchmark ${PROJECT_SOURCE_DIR}/benchmark.cpp)
+add_executable(benchmark
+    benchmark.cpp
+    diagnostic_counter.h)
 
 target_link_libraries(benchmark nlohmann_json::nlohmann_json)
 

@@ -62,7 +62,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         {
             (void)e;
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
-            telemetry_error("call_method/json_error", e.what());
+            telemetry_error("call_method/json_error");
         }
     }
     else
