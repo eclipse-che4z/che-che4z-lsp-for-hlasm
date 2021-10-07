@@ -112,7 +112,7 @@ void server::message_received(const json& message)
     catch (const std::exception& e)
     {
         LOG_ERROR(e.what());
-        telemetry_error("lsp_server/method_unknown_error", e.what());
+        telemetry_error("lsp_server/method_unknown_error");
         return;
     }
 }

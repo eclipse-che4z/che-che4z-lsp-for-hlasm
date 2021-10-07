@@ -84,7 +84,7 @@ void server::message_received(const json& message)
     {
         (void)e;
         LOG_WARNING(std::string("There was an error with received request:") + e.what());
-        telemetry_error("dap_server/method_unknown_error", e.what());
+        telemetry_error("dap_server/method_unknown_error");
     }
 }
 
