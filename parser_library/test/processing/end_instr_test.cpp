@@ -253,18 +253,20 @@ TEST CSECT
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
 }
-// End called from copybook inside macro not working
-/*TEST(END, end_called_from_copybook_inside_macro_one)
+
+TEST(END, end_called_from_copybook_inside_macro_one)
 {
     std::string copybook_content = R"(
-  MACRO
+   MACRO
   M
-  LR 1
-  END
-  MEND        
+  LR 1,2
+  END 
+  undef_opcode
+ MEND       
 )";
     std::string input = R"(
          COPY COPYBOOK_TWO
+         M
         undef_opcode
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
@@ -274,7 +276,7 @@ TEST CSECT
     a.collect_diags();
 
     EXPECT_TRUE(a.diags().empty());
-}*/
+}
 TEST(END, end_called_from_copybook_)
 {
     std::string copybook_content = R"(
@@ -294,20 +296,19 @@ TEST(END, end_called_from_copybook_)
 
     EXPECT_TRUE(a.diags().empty());
 }
-/* same as above*/
-/*TEST(END, end_called_from_copybook_inside_macro_two)
+TEST(END, end_called_from_copybook_inside_macro_two)
 {
     std::string copybook_content = R"(
   MACRO
   M
-  LR 1
-  END TEST
+  LR 1,2
+  END 
   undef_opcode
  MEND
 )";
     std::string input = R"(
         COPY COPYBOOK
-        SDSD
+        M
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
@@ -317,4 +318,3 @@ TEST(END, end_called_from_copybook_)
 
     EXPECT_TRUE(a.diags().empty());
 }
-*/

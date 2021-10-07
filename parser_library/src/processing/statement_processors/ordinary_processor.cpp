@@ -90,26 +90,22 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
         case context::instruction_type::UNDEF:
             add_diagnostic(
                 diagnostic_op::error_E049(*statement->opcode_ref().value, statement->instruction_ref().field_range));
-            break;
+            return;
         case context::instruction_type::CA:
             ca_proc_.process(std::move(statement));
-            break;
+            return;
         case context::instruction_type::MAC:
             mac_proc_.process(std::move(statement));
-            break;
+            return;
         case context::instruction_type::ASM:
             asm_proc_.process(std::move(statement));
-            break;
+            return;
         case context::instruction_type::MACH:
             mach_proc_.process(std::move(statement));
-            break;
+            return;
         default:
             assert(false);
-            break;
-    }
-    if (asm_proc_.is_end_statement_reached())
-    {
-        finished_flag_ = true;
+            return;
     }
 }
 
