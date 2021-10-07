@@ -39,10 +39,4 @@ void inline to_json(nlohmann::json& j, const parser_library::performance_metrics
         { "Files", metrics.files } };
 }
 
-void inline to_json(nlohmann::json& j, const parser_library::parsing_metadata& pm)
-{
-    j = nlohmann::json { { "metrics", pm.metrics }, { "ws_info", pm.ws_info } };
-}
-
-
 } // namespace hlasm_plugin::parser_library
