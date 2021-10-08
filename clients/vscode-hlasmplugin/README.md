@@ -240,3 +240,30 @@ It can by configured using the `preprocessor` key in processor group:
 - If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm)
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
 - Any and all feedback is appreciated and welcome!
+
+## Privacy Notice
+The extensions for Visual Studio Code developed by Broadcom Inc., including its corporate affiliates and subsidiaries, ("Broadcom") are provided free of charge, but in order to better understand and meet its users’ needs, Broadcom may collect, use, analyze and retain anonymous users’ metadata and interaction data, (collectively, “Usage Data”) and aggregate such Usage Data with similar Usage Data of other Broadcom customers. Please find more detailed information in [License and Service Terms & Repository](https://www.broadcom.com/company/legal/licensing).
+
+This data collection uses built-in Microsoft VS Code Telemetry, which can be disabled, at your sole discretion, if you do not want to send Usage Data.
+
+The current release of HLASM Language Support collects anonymous data for the following events:
+* Activation of this VS Code extension
+* Open and close of files
+* Invocation of the following features: Autocomplete, Go to definition, Find all references and Hover
+* Launch of Macro tracer and subsequent user interactions with the debugging interface (step into, step over, continue, set breakpoints)
+* Malfunctions of the extension
+
+Each such event is logged with the following information:
+* Event time
+* Operating system and version
+* Country or region
+* Anonymous user and session ID
+* Version numbers of Microsoft VS Code and COBOL Language Support
+* Extension response time
+
+Additionally, when a file is opened, the following information are logged:
+* Number of diagnostics (errors and warnings)
+* Number of files that were parsed including macros and COPY files
+* Number of parsed lines
+* Whether the diagnostics were suppressed
+* Whether matching processor group was found in the configuration
