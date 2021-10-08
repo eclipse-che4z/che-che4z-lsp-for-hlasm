@@ -53,7 +53,9 @@ TEST(proc_grps, assembler_options_read)
         std::make_pair(R"({})"_json, assembler_options {}),
         std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { "", "MAC" }),
         std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "" }),
-        std::make_pair(R"({"PROFILE":"MAC","SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "MAC" }),
+        std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { "", "", "VSE" }),
+        std::make_pair(R"({"PROFILE":"MAC","SYSPARM":"TESTPARM","SYSTEM_ID":"VSE"})"_json,
+            assembler_options { "TESTPARM", "MAC", "VSE" }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -61,6 +63,7 @@ TEST(proc_grps, assembler_options_read)
         const auto ao = input.get<assembler_options>();
         EXPECT_EQ(ao.profile, expected.profile);
         EXPECT_EQ(ao.sysparm, expected.sysparm);
+        EXPECT_EQ(ao.system_id, expected.system_id);
     }
 }
 
@@ -70,7 +73,9 @@ TEST(proc_grps, assembler_options_write)
         std::make_pair(R"({})"_json, assembler_options {}),
         std::make_pair(R"({"PROFILE":"MAC"})"_json, assembler_options { "", "MAC" }),
         std::make_pair(R"({"SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "" }),
-        std::make_pair(R"({"PROFILE":"MAC","SYSPARM":"TESTPARM"})"_json, assembler_options { "TESTPARM", "MAC" }),
+        std::make_pair(R"({"SYSTEM_ID":"VSE"})"_json, assembler_options { "", "", "VSE" }),
+        std::make_pair(R"({"PROFILE":"MAC","SYSPARM":"TESTPARM","SYSTEM_ID":"VSE"})"_json,
+            assembler_options { "TESTPARM", "MAC", "VSE" }),
     };
 
     for (const auto& [expected, input] : cases)

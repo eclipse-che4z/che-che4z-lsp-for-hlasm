@@ -347,6 +347,148 @@ const processor_group& workspace::get_proc_grp(const proc_grp_id& proc_grp) cons
     return proc_grps_.at(proc_grp);
 }
 
+void replace_all(std::string& str, std::string_view what, std::string_view with)
+{
+    for (std::string::size_type p = 0; (p = str.find(what, p)) != std::string::npos; p += with.size())
+        str.replace(p, what.size(), with);
+}
+
+bool starts_with(std::string_view s, std::string_view b) { return s.substr(0, b.size()) == b; }
+
+std::regex pathmask_to_regex(std::string input)
+{
+    std::string r;
+    r.reserve(input.size());
+
+    replace_all(input, "\\", "/");
+    if (input.back() != '/')
+        input.push_back('/');
+
+    std::string_view s = input;
+
+    bool path_started = false;
+    while (!s.empty())
+    {
+        switch (auto c = s.front())
+        {
+            case '*':
+                if (starts_with(s, "**/"))
+                {
+                    if (path_started)
+                    {
+                        path_started = false;
+                        r.append("[^/\\\\]*[/\\\\]");
+                    }
+                    r.append("(?:[^/\\\\]+[/\\\\])*");
+                    s.remove_prefix(3);
+                }
+                else if (starts_with(s, "**"))
+                {
+                    r.append(".*");
+                    s.remove_prefix(2);
+                }
+                else if (starts_with(s, "*/"))
+                {
+                    path_started = false;
+                    r.append("[^/\\\\]*[/\\\\]");
+                    s.remove_prefix(2);
+                }
+                else
+                {
+                    r.append("[^/\\\\]*");
+                    s.remove_prefix(1);
+                }
+                break;
+
+            case '/':
+                path_started = false;
+                r.append("[/\\\\]");
+                s.remove_prefix(1);
+                break;
+
+            case '?':
+            case '^':
+            case '$':
+            case '+':
+            case '.':
+            case '(':
+            case ')':
+            case '|':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+                r.push_back('\\');
+                [[fallthrough]];
+            default:
+                path_started = true;
+                r.push_back(c);
+                s.remove_prefix(1);
+                break;
+        }
+    }
+
+    return std::regex(r);
+}
+
+namespace {
+std::string fix_path(std::string path)
+{
+    if (!path.empty() && path.back() != '/' && path.back() != '\\')
+        path.push_back('/');
+    return path;
+};
+} // namespace
+
+void workspace::find_and_add_libs(
+    std::string root, const std::string& path_pattern, processor_group& prc_grp, const library_local_options& opts)
+{
+    std::regex path_validator = pathmask_to_regex(path_pattern);
+
+    std::set<std::string> processed_canonical_paths;
+    std::deque<std::pair<std::string, std::string>> dirs_to_search;
+
+    if (std::error_code ec; dirs_to_search.emplace_back(fix_path(root), utils::path::canonical(root, ec).string()), ec)
+    {
+        if (!opts.optional_library)
+            add_diagnostic(diagnostic_s::error_L0001(root));
+        return;
+    }
+
+    constexpr size_t limit = 1000;
+    while (!dirs_to_search.empty())
+    {
+        if (processed_canonical_paths.size() > limit)
+        {
+            add_diagnostic(diagnostic_s::warning_L0005(path_pattern, limit));
+            break;
+        }
+        auto [path, canonical_path] = std::move(dirs_to_search.front());
+        dirs_to_search.pop_front();
+
+        if (!processed_canonical_paths.insert(std::move(canonical_path)).second)
+            continue;
+
+        if (std::regex_match(path, path_validator))
+            prc_grp.add_library(std::make_unique<library_local>(file_manager_, path, opts));
+
+        auto rc = utils::path::list_directory_subdirs_and_symlinks(
+            path, [&processed_canonical_paths, &dirs_to_search](const auto& path) {
+                std::error_code ec;
+                auto cp = utils::path::canonical(path, ec).string();
+                if (ec || processed_canonical_paths.count(cp))
+                    return;
+                if (utils::path::is_directory(cp))
+                    dirs_to_search.emplace_back(fix_path(path.string()), std::move(cp));
+            });
+        if (rc != utils::path::list_directory_rc::done)
+        {
+            add_diagnostic(diagnostic_s::error_L0001(path));
+            break;
+        }
+    }
+}
+
 // open config files and parse them
 bool workspace::load_and_process_config()
 {
@@ -410,8 +552,12 @@ bool workspace::load_and_process_config()
                 opts.extensions_from_deprecated_source = true;
             }
 
-
-            prc_grp.add_library(std::make_unique<library_local>(file_manager_, lib_path.string(), std::move(opts)));
+            auto path_string = lib_path.string();
+            if (auto asterisk = path_string.find('*'); asterisk == std::string::npos)
+                prc_grp.add_library(std::make_unique<library_local>(file_manager_, path_string, std::move(opts)));
+            else
+                find_and_add_libs(
+                    path_string.substr(0, path_string.find_last_of("/\\", asterisk)), path_string, prc_grp, opts);
         }
 
         add_proc_grp(std::move(prc_grp));

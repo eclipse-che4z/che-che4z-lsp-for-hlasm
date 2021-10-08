@@ -126,7 +126,7 @@ struct feature_launch_test : public testing::Test
         file_name[0] = (char)std::tolower((unsigned char)file_name[0]);
     }
 
-    void check_simple_stack_trace(json id, size_t expected_line)
+    void check_simple_stack_trace(json, size_t expected_line)
     {
         feature.on_stack_trace("1"_json, json());
         ASSERT_EQ(resp_provider.responses.size(), 1U);

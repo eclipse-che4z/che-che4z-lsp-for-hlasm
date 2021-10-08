@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library {
 // Implementation of workspace manager (Implementation part of the pimpl idiom)
 // Holds workspaces, file manager and macro tracer and handles LSP and DAP
 // notifications and requests.
-class workspace_manager::impl : public diagnosable_impl
+class workspace_manager::impl final : public diagnosable_impl
 {
 public:
     impl(std::atomic<bool>* cancel = nullptr)

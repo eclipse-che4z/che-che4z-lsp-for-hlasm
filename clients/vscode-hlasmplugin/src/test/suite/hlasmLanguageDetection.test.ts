@@ -28,7 +28,7 @@ suite('Language Detection Test Suite', () => {
 	test('HLASM files test', async () => {
 		const existingDocument = await vscode.workspace.openTextDocument(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'open'));
 		const document = new TextDocumentMock();
-
+		document.fileName = "file";
 		// set plain text file to HLASM
 		document.languageId = 'plaintext';
 		document.text = hlasmContents;
@@ -39,7 +39,85 @@ suite('Language Detection Test Suite', () => {
 		document.languageId = 'hlasm';
 		assert.ok(detector.setHlasmLanguage(document));
 	});
-
+	// if file has no extension  return false
+	test('non HLASM file extension test false_one', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "file";
+		document.uri = vscode.Uri.file('file');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('non HLASM file extension test false_two', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = ".hidden";
+		document.uri = vscode.Uri.file('.hidden');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('non HLASM file extension test false_three', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "file.";
+		document.uri = vscode.Uri.file('file.');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('Cobol file  containing several dots but not extension returns false', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "USER.FTP.COBOL(BIGFILE)";
+		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE)');
+		assert.ok(!detector.EndsWithExtension(document));
+	});
+	test('Cobol file ending with extension', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "USER.FTP.COBOL(BIGFILE).cbl";
+		document.uri = vscode.Uri.file('USER.FTP.COBOL(BIGFILE).cbl');
+		assert.ok(detector.EndsWithExtension(document));
+	});
+	// if file has extension  return true
+	test('non HLASM file extension test true', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = nonHlasmContents;
+		document.fileName = "file.cbl";
+		document.uri = vscode.Uri.file('file.cbl');
+		assert.ok(detector.EndsWithExtension(document));
+	
+	});
+	//Dont set to Hlasm if file extension exist other than .hlasm or file assosciations irrespective of content
+	test('non HLASM test based on file extension and language id', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'plaintext';
+		document.text = hlasmContents;
+		document.fileName = "file.cbl";
+		document.uri = vscode.Uri.file('file.cbl');
+		assert.ok(!detector.setHlasmLanguage(document));
+	
+	});
+	test('HLASM test based on file extension and language id', async () => {
+		var document = new TextDocumentMock();
+		// set plain text file to HLASM
+		document.languageId = 'hlasm';
+		document.text = hlasmContents;
+		document.fileName = "file.hlasm";
+		document.uri = vscode.Uri.file('file.hlasm');
+		assert.ok(detector.setHlasmLanguage(document));
+	
+	});
+	
 	// set non HLASM file as HLASM
 	test('non HLASM files test', async () => {
 		var document = new TextDocumentMock();
@@ -47,8 +125,10 @@ suite('Language Detection Test Suite', () => {
 		document.languageId = 'plaintext';
 		document.text = nonHlasmContents;
 		document.uri = vscode.Uri.file('file');
+		document.fileName = "file";
 		assert.ok(!detector.setHlasmLanguage(document));
 	});
+	
 });
 
 const hlasmContents = `

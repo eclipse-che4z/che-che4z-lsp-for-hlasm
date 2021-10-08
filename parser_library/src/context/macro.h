@@ -124,7 +124,7 @@ public:
     // location of the macro definition in code
     const location& definition_location;
     // index to definition vector
-    int current_statement;
+    size_t current_statement;
 
     macro_invocation(id_index name,
         cached_block& cached_definition,

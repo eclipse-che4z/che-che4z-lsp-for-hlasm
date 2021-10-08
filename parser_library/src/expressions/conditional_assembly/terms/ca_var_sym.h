@@ -34,7 +34,7 @@ public:
 
     void collect_diags() const override;
 
-    bool is_character_expression() const override;
+    bool is_character_expression(character_expression_purpose purpose) const override;
 
     void apply(ca_expr_visitor& visitor) const override;
 

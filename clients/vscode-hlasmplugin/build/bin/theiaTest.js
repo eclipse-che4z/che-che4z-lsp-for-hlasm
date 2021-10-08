@@ -46,14 +46,14 @@ async function main() {
     // check for the results
     child.stdout.on('data', function(data) {
         console.log(data.toString());
-        if (data.toString().includes('8 passing')) {
+        if (data.toString().includes('>>>THEIA TESTS PASSED<<<')) {
             process.exit();
         }
     })
 
     child.stderr.on('data', function(data) {
         console.log(data.toString());
-        if(data.toString().includes('tests failed')) {
+        if (data.toString().includes('>>>THEIA TESTS FAILED<<<')) {
             process.exit(2);
         }
     })

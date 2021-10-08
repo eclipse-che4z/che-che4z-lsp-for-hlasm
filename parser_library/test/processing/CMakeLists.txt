@@ -25,5 +25,6 @@ target_sources(library_test PRIVATE
 	occurence_collector_test.cpp
 	opsyn_test.cpp
 	org_test.cpp
+	start_test.cpp
 )
 

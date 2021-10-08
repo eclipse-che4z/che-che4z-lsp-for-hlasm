@@ -876,14 +876,10 @@ TEST_F(instruction_test, ainsert)
 
 TEST_F(instruction_test, alias)
 {
-    // TO DO - not working due to self-defining terms issues
-
-    /*
     EXPECT_FALSE(checker.check("ALIAS", test_alias_false, range(), collector));
     EXPECT_TRUE(checker.check("ALIAS", test_alias_true_one, range(), collector));
     EXPECT_TRUE(checker.check("ALIAS", test_alias_true_two, range(), collector));
     EXPECT_FALSE(checker.check("ALIAS", test_acontrol_true, range(), collector));
-    */
 }
 
 TEST_F(instruction_test, amode)

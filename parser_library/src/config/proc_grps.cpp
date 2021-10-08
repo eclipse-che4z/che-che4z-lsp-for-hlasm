@@ -47,6 +47,8 @@ void to_json(nlohmann::json& j, const assembler_options& p)
         j["PROFILE"] = p.profile;
     if (p.sysparm.size())
         j["SYSPARM"] = p.sysparm;
+    if (p.system_id.size())
+        j["SYSTEM_ID"] = p.system_id;
 }
 void from_json(const nlohmann::json& j, assembler_options& p)
 {
@@ -57,6 +59,8 @@ void from_json(const nlohmann::json& j, assembler_options& p)
         it->get_to(p.profile);
     if (auto it = j.find("SYSPARM"); it != j.end())
         it->get_to(p.sysparm);
+    if (auto it = j.find("SYSTEM_ID"); it != j.end())
+        it->get_to(p.system_id);
 }
 
 void to_json(nlohmann::json& j, const db2_preprocessor&) { j = "DB2"; }

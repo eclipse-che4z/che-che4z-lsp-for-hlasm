@@ -15,13 +15,13 @@
 #ifndef CONTEXT_HLASM_CONTEXT_H
 #define CONTEXT_HLASM_CONTEXT_H
 
-#include <compiler_options.h>
 #include <deque>
 #include <memory>
 #include <set>
 #include <vector>
 
 #include "code_scope.h"
+#include "compiler_options.h"
 #include "operation_code.h"
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
@@ -69,13 +69,20 @@ class hlasm_context
 
     // Compiler options
     asm_option asm_options_;
+    static constexpr alignment sectalgn = doubleword;
 
     // map of all instruction in HLASM
     const instruction_storage instruction_map_;
     instruction_storage init_instruction_map();
 
     // value of system variable SYSNDX
-    size_t SYSNDX_;
+    unsigned long SYSNDX_ = 1;
+    static constexpr unsigned long SYSNDX_limit_max = 9999999UL;
+    unsigned long SYSNDX_limit = SYSNDX_limit_max;
+
+    // last AINSERT virtual file id
+    size_t m_ainsert_id = 0;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -121,6 +128,9 @@ public:
     // gets top level (opencode) copy stack
     const std::vector<copy_member_invocation>& opencode_copy_stack() const;
     std::vector<copy_member_invocation>& opencode_copy_stack();
+    // is open code being processed
+    bool in_opencode() const { return source_stack_.size() == 1; }
+
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 
@@ -252,6 +262,20 @@ public:
 
         return val;
     }
+
+    unsigned long next_sysndx() const { return SYSNDX_; }
+    void sysndx_limit(unsigned long limit)
+    {
+        assert(limit <= SYSNDX_limit_max);
+        SYSNDX_limit = limit;
+    }
+    unsigned long sysndx_limit() const { return SYSNDX_limit; }
+    static constexpr unsigned long sysndx_limit_max() { return SYSNDX_limit_max; }
+
+    alignment section_alignment() const { return sectalgn; }
+
+    size_t current_ainsert_id() const { return m_ainsert_id; }
+    size_t obtain_ainsert_id() { return ++m_ainsert_id; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

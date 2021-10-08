@@ -14,6 +14,7 @@
 
 #include "gmock/gmock.h"
 
+#include "../common_testing.h"
 #include "semantics/concatenation_term.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
@@ -83,4 +84,46 @@ TEST(concatenation, contains_var_sym)
 
         EXPECT_EQ(var, nullptr);
     }
+}
+
+TEST(concatenation, no_dots)
+{
+    std::string input = R"(
+&A SETC ' '
+&A SETC '&A'(1,1)'&A'(1,1)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "  ");
+}
+
+TEST(concatenation, with_dots)
+{
+    std::string input = R"(
+&A SETC ' '
+&A SETC '&A'(1,1).'&A'(1,1)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), "  ");
+}
+
+TEST(concatenation, no_dots_without_subscript)
+{
+    std::string input = R"(
+&A SETC ' '
+&A SETC '&A''&A'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "A"), " ' ");
 }

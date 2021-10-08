@@ -21,10 +21,12 @@
 
 namespace hlasm_plugin::parser_library {
 struct asm_option
-
 {
     std::string sysparm;
     std::string profile;
+
+    static const std::string system_id_default;
+    std::string system_id = system_id_default;
 };
 } // namespace hlasm_plugin::parser_library
 #endif

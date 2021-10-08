@@ -37,6 +37,13 @@ enum class ca_expression_compatibility
     aif,
 };
 
+enum class character_expression_purpose
+{
+    assignment,
+    left_side_of_comparison,
+    function_parameter,
+};
+
 // base class for conditional assembly expressions
 class ca_expression : public diagnosable_op_impl
 {
@@ -52,7 +59,7 @@ public:
     // builds parts of the expression tree that could not be built during parsing
     virtual void resolve_expression_tree(context::SET_t_enum kind) = 0;
 
-    virtual bool is_character_expression() const = 0;
+    virtual bool is_character_expression(character_expression_purpose purpose) const = 0;
 
     virtual void apply(ca_expr_visitor& visitor) const = 0;
 

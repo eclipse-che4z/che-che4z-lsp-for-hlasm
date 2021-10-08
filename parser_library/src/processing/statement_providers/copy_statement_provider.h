@@ -22,8 +22,6 @@ namespace hlasm_plugin::parser_library::processing {
 // statement provider providing statements of copy members
 class copy_statement_provider : public members_statement_provider
 {
-    bool m_suspended = false;
-
 public:
     copy_statement_provider(analyzing_context ctx,
         statement_fields_parser& parser,
@@ -32,9 +30,6 @@ public:
         diagnostic_op_consumer& diag_consumer);
 
     bool finished() const override;
-
-    void suspend();
-    bool try_resume_at(size_t line_no, resume_copy resume_opts);
 
 protected:
     context::statement_cache* get_next() override;

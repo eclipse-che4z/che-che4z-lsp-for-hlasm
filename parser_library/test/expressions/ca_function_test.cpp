@@ -65,7 +65,7 @@ public:
 
     void resolve_expression_tree(context::SET_t_enum) override {}
 
-    bool is_character_expression() const override { return false; }
+    bool is_character_expression(character_expression_purpose) const override { return false; }
 
     void apply(ca_expr_visitor&) const override {}
 

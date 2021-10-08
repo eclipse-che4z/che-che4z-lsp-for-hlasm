@@ -65,7 +65,7 @@ void ca_var_sym::collect_diags() const
         collect_diags_from_child(*expr);
 }
 
-bool ca_var_sym::is_character_expression() const { return false; }
+bool ca_var_sym::is_character_expression(character_expression_purpose) const { return false; }
 
 void ca_var_sym::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 

@@ -59,6 +59,9 @@ TEST(lsp_server, initialize)
     EXPECT_CALL(smpm, reply(show_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(register_message)).Times(::testing::AtMost(1));
     EXPECT_CALL(smpm, reply(config_request_message)).Times(::testing::AtMost(1));
+    EXPECT_CALL(smpm, reply(::testing::Truly([](const json& arg) {
+        return arg.count("method") && arg["method"] == "telemetry/event";
+    })));
 
     s.message_received(j);
 
@@ -255,8 +258,7 @@ TEST(lsp_server_test, wrong_message_received)
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
             "method_name":"server_error",
-            "properties":{"error_details":"Unable to parse URI string.",
-                          "error_type":"lsp_server/method_unknown_error"}
+            "properties":{"error_type":"lsp_server/method_unknown_error"}
            }})"_json;
 
     // Only telemetry expected

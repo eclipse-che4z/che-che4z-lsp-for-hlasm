@@ -73,9 +73,8 @@ void hlasm_context::add_system_vars_to_scope()
             auto val_ndx = std::make_shared<set_symbol<C_t>>(SYSNDX, true, false);
 
             std::string value = std::to_string(SYSNDX_);
-            int tmp_size = (int)value.size();
-            for (int i = 0; i < 4 - tmp_size; ++i)
-                value.insert(value.begin(), '0');
+            if (auto value_len = value.size(); value_len < 4)
+                value.insert(0, 4 - value_len, '0');
 
             val_ndx->set_value(std::move(value));
             curr_scope()->variables.insert({ SYSNDX, val_ndx });
@@ -162,6 +161,7 @@ void hlasm_context::add_global_system_vars()
     auto SYSTIME = ids().add("SYSTIME");
     auto SYSPARM = ids().add("SYSPARM");
     auto SYSOPT_RENT = ids().add("SYSOPT_RENT");
+    auto SYSTEM_ID = ids().add("SYSTEM_ID");
 
     if (!is_in_macro())
     {
@@ -232,6 +232,13 @@ void hlasm_context::add_global_system_vars()
             auto val = std::make_shared<set_symbol<B_t>>(SYSOPT_RENT, true, true);
             globals_.insert({ SYSOPT_RENT, std::move(val) });
         }
+        {
+            auto val = std::make_shared<set_symbol<C_t>>(SYSTEM_ID, true, true);
+
+            val->set_value(asm_options_.system_id);
+
+            globals_.insert({ SYSTEM_ID, std::move(val) });
+        }
     }
 
     auto glob = globals_.find(SYSDATC);
@@ -243,6 +250,8 @@ void hlasm_context::add_global_system_vars()
     glob = globals_.find(SYSPARM);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
     glob = globals_.find(SYSOPT_RENT);
+    curr_scope()->variables.insert({ glob->second->id, glob->second });
+    glob = globals_.find(SYSTEM_ID);
     curr_scope()->variables.insert({ glob->second->id, glob->second });
 }
 
@@ -256,7 +265,6 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
-    , SYSNDX_(0)
     , ord_ctx(*ids_, *this)
 {
     scope_stack_.emplace_back();
@@ -352,8 +360,8 @@ processing_stack_t hlasm_context::processing_stack() const
             id_storage::empty_id);
         for (const auto& member : source_stack_[i].copy_stack)
         {
-            location loc(member.current_statement_position(), member.definition_location->file);
-            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name);
+            location loc(member.current_statement_position(), member.definition_location()->file);
+            res.emplace_back(std::move(loc), scope_stack_.front(), file_processing_type::COPY, member.name());
         }
 
         if (i == 0) // append macros immediately after ordinary processing
@@ -383,7 +391,7 @@ location hlasm_context::current_statement_location() const
         {
             const auto& member = source_stack_.back().copy_stack.back();
 
-            return location(member.current_statement_position(), member.definition_location->file);
+            return location(member.current_statement_position(), member.definition_location()->file);
         }
         else
             return source_stack_.back().current_instruction;
@@ -424,7 +432,7 @@ std::vector<id_index> hlasm_context::whole_copy_stack() const
 
     for (auto& entry : source_stack_)
         for (auto& nest : entry.copy_stack)
-            ret.push_back(nest.name);
+            ret.push_back(nest.name());
 
     return ret;
 }
@@ -727,16 +735,19 @@ bool hlasm_context::is_in_macro() const { return scope_stack_.back().is_in_macro
 
 macro_invo_ptr hlasm_context::enter_macro(id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params)
 {
+    assert(SYSNDX_ <= SYSNDX_limit);
+
     macro_def_ptr macro_def = get_macro_definition(name);
     assert(macro_def);
 
-    auto invo((macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"))));
+    auto invo = macro_def->call(std::move(label_param_data), std::move(params), ids().add("SYSLIST"));
     scope_stack_.emplace_back(invo, macro_def);
     add_system_vars_to_scope();
 
     visited_files_.insert(macro_def->definition_location.file);
 
     ++SYSNDX_;
+
     return invo;
 }
 
@@ -809,7 +820,7 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
     for (auto& frame : snapshot.copy_frames)
     {
         copy_member_invocation invo(copy_members_.at(frame.copy_member));
-        invo.current_statement = (int)frame.statement_offset;
+        invo.current_statement = frame.statement_offset;
         source_stack_.back().copy_stack.push_back(std::move(invo));
     }
 }

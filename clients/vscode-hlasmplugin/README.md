@@ -88,7 +88,7 @@ Breakpoints can be set before or during the debugging session.
 ### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
-- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, the _SYSPARM_ option can be specified in the `asm_options` section.
+- `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries defined by a list of directories (some of which can be optional). Additionaly, the _SYSPARM_ and _SYSTEM_ID_ options can be specified in the `asm_options` section.
 
 - `pgm_conf.json` provides a mapping between _programs_ (open-code files) and processor groups. It specifies which list of directories is used with which source file. If a relative source file path is specified, it is relative to the current workspace.
 
@@ -103,7 +103,9 @@ When you open a HLASM file or manually set the HLASM language for a file, you ca
 
 Example `proc_grps.json`:
 
-The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error. 
+
+The path `C:/common/**/maclib` contains the wildcard `**`, which matches any number of characters and directory separators. Path masks can also be specified using the wildcard `*` which matches characters but not directory separators. The order of libraries selected by a path mask is arbitrary. We therefore recommend you ensure that macro names within these libraries are unique.
 
 ```
 {
@@ -116,7 +118,8 @@ The following example defines two processor groups, GROUP1 and GROUP2, and a lis
           "path": "MACLIB/",
           "optional": true
         },
-        "C:/SYS.ASMMAC"
+        "C:/SYS.ASMMAC",
+        "C:/common/**/maclib"
       ],
       "asm_options": {
         "SYSPARM": "ZOS210"
@@ -126,7 +129,8 @@ The following example defines two processor groups, GROUP1 and GROUP2, and a lis
       "name": "GROUP2",
       "libs": [
         "G2MAC/",
-        "C:/SYS.ASMMAC"
+        "C:/SYS.ASMMAC",
+        "C:/common/**/maclib"
       ]
     }
   ]

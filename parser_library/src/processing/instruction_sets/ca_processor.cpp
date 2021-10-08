@@ -71,6 +71,7 @@ ca_processor::process_table_t ca_processor::create_table(context::hlasm_context&
     table.emplace(h_ctx.ids().add("AREAD"), std::bind(&ca_processor::process_AREAD, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("ASPACE"), std::bind(&ca_processor::process_ASPACE, this, std::placeholders::_1));
     table.emplace(h_ctx.ids().add("AEJECT"), std::bind(&ca_processor::process_AEJECT, this, std::placeholders::_1));
+    table.emplace(h_ctx.ids().add("MHELP"), [this](const semantics::complete_statement& stmt) { process_MHELP(stmt); });
 
     return table;
 }
@@ -638,3 +639,44 @@ template void ca_processor::process_GBL_LCL<context::C_t, false>(const semantics
 template void ca_processor::process_GBL_LCL<context::A_t, true>(const semantics::complete_statement& stmt);
 template void ca_processor::process_GBL_LCL<context::B_t, true>(const semantics::complete_statement& stmt);
 template void ca_processor::process_GBL_LCL<context::C_t, true>(const semantics::complete_statement& stmt);
+
+void ca_processor::process_MHELP(const semantics::complete_statement& stmt)
+{
+    register_seq_sym(stmt);
+
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.size() > 1)
+    {
+        add_diagnostic(diagnostic_op::error_E020("operand", stmt.instruction_ref().field_range));
+        return;
+    }
+    if (ops.size() < 1)
+    {
+        add_diagnostic(diagnostic_op::error_E021("operand", stmt.instruction_ref().field_range));
+        return;
+    }
+
+    const auto* ca_op = ops[0]->access_ca();
+    assert(ca_op);
+    if (!ca_op)
+        return;
+
+    uint32_t value = 0;
+    if (ca_op->kind == semantics::ca_kind::EXPR)
+    {
+        value = ca_op->access_expr()->expression->evaluate<context::A_t>(eval_ctx);
+    }
+    else if (ca_op->kind == semantics::ca_kind::VAR)
+    {
+        auto val = ca_op->access_var()->variable_symbol->evaluate(eval_ctx);
+        if (val.type == context::SET_t_enum::A_TYPE)
+            value = val.access_a();
+    }
+    else
+    {
+        add_diagnostic(diagnostic_op::error_E010("operand", ca_op->operand_range));
+    }
+    value &= ~0xffUL; // ignore the option part
+    if (value & 0xff00UL) // rest is considered only when byte 3 is non-zero
+        hlasm_ctx.sysndx_limit(std::min((unsigned long)value, context::hlasm_context::sysndx_limit_max()));
+}

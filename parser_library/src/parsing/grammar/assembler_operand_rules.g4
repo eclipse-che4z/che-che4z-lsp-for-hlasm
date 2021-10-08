@@ -16,7 +16,14 @@
 parser grammar assembler_operand_rules; 
 
 asm_op returns [operand_ptr op]
-	: id lpar asm_op_comma_c rpar
+	:
+	{ ALIAS() }? ORDSYMBOL string
+	{
+		auto range = provider.get_range($ORDSYMBOL,$string.ctx->getStop());
+		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL),hl_scopes::self_def_type));
+		$op = std::make_unique<expr_assembler_operand>(std::make_unique<mach_expr_default>(range),$ctx->getText(),range);
+	}
+	| id lpar asm_op_comma_c rpar
 	{
 		$op = std::make_unique<complex_assembler_operand>(
 			*$id.name,std::move($asm_op_comma_c.asm_ops),
@@ -47,7 +54,7 @@ asm_op returns [operand_ptr op]
 			provider.get_range($lpar.ctx->getStart(),$rpar.ctx->getStop())
 		);
 	}
-	| mach_expr
+	| { !ALIAS() }? mach_expr
 	{
 		std::string upper_case = $mach_expr.ctx->getText();
 		context::to_upper(upper_case);

@@ -94,6 +94,8 @@ private:
     void process_AREAD(const semantics::complete_statement& stmt);
 
     void process_empty(const semantics::complete_statement&);
+
+    void process_MHELP(const semantics::complete_statement& stmt);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

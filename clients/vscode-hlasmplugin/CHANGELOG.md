@@ -5,6 +5,9 @@
 #### Added
 - Document outline support
 - CNOP instruction implementation (limited)
+- START, MHELP instructions
+- Wildcard support in library specification
+- Support for SYSTEM_ID system variable.
 
 #### Fixed
 - Preserve mixed-case labels on macro calls
@@ -14,6 +17,15 @@
 - Evaluation of T'&VAR(num), where VAR is type C-type var symbol array
 - &SYSMAC should contain only the macro name
 - Diagnostics lost during JSON serialization
+- Files with extension should not be set to hlasm in libs folder
+- Lookahead mode does not work correctly when triggered from AINSERTed code
+- Incorrect relative immediate operand validation
+- Remove ALIAS operand parsing limitation
+- Attribute expressions ending with dot are not parsed correctly
+- Improve evaluation and diagnostics of conditional assembler expressions
+- Operands of dynamically generated statements may be incorrectly parsed
+- Infinite loop during lookahead processing when model statement is located in copybook
+- DOT operator in string concatenation is optional
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 

@@ -4,7 +4,7 @@ To provide a similar experience with local files, the parser library simulates t
 
 ### Processor groups
 
-The proc\_grps configuration file contains a JSON array of possible processor groups, which consist of a name and an array of folder paths, which can be relative to the root of the workspace. An example can be found in \[lst:proc\_grps\].
+The proc\_grps configuration file contains a JSON array of possible processor groups, which consist of a name and an array of folder paths, which can be relative to the root of the workspace. Additionally, path masks can be specified using wildcard sequences `*` (matching arbitrary 0 or more characters) and `**` (matching directory separators as well as other characters). An example can be found in \[lst:proc\_grps\].
 
 When `load_config` is called, the workspace retrieves these processor groups from the configuration file and creates libraries. The libraries provide information about paths to their dependency files. During the parsing, the workspace retrieves the library corresponding to the provided processor group name and uses it to search for a macro or copy file.
 
@@ -20,7 +20,8 @@ From this configuration, the workspace remembers the processor group - open code
     	      "name":"GROUP1",
     	      "libs": [
     	        "ASMMAC/",
-    	        "C:/SYS.ASMMAC"
+    	        "C:/SYS.ASMMAC",
+    	        "C:/common/**/maclib"
     	      ]
     	    },
     	    {

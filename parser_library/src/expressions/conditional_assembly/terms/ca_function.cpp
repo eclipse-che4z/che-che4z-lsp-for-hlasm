@@ -70,17 +70,33 @@ void ca_function::resolve_expression_tree(context::SET_t_enum kind)
         else
         {
             for (auto&& expr : parameters)
+            {
                 expr->resolve_expression_tree(param_kind);
+
+                // TODO: other parameter types?
+                if (param_kind == context::SET_t_enum::C_TYPE)
+                {
+                    if (!expr->is_character_expression(character_expression_purpose::function_parameter))
+                        expr->add_diagnostic(
+                            diagnostic_op::error_CE017_character_expression_expected(expr->expr_range));
+                }
+            }
         }
     }
 }
 
 void ca_function::collect_diags() const
 {
-    // nothing to collect
+    for (auto&& expr : parameters)
+        collect_diags_from_child(*expr);
+    if (duplication_factor)
+        collect_diags_from_child(*duplication_factor);
 }
 
-bool ca_function::is_character_expression() const { return false; }
+bool ca_function::is_character_expression(character_expression_purpose purpose) const
+{
+    return purpose == character_expression_purpose::assignment && ca_character_policy::is_function(function);
+}
 
 void ca_function::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); }
 
@@ -207,13 +223,13 @@ context::SET_t ca_function::B2A(std::string_view param, diagnostic_adder& add_di
     if (param.size() > 32)
         RET_ERRPARM;
 
-    unsigned int res;
+    uint32_t res;
     auto conv = std::from_chars(param.data(), param.data() + param.size(), res, 2);
 
     if (conv.ec != std::errc() || conv.ptr != param.data() + param.size())
         RET_ERRPARM;
 
-    return *reinterpret_cast<int*>(&res);
+    return static_cast<int32_t>(res);
 }
 
 context::SET_t ca_function::C2A(std::string_view param, diagnostic_adder& add_diagnostic)

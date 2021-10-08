@@ -90,8 +90,7 @@ struct file_manager_cache_test_mock : public file_manager_impl, public parse_lib
     {
         return files_by_library_.count(library) > 0;
     };
-    std::optional<std::string> get_library(
-        const std::string& library, const std::string& program, std::string*) const override
+    std::optional<std::string> get_library(const std::string& library, const std::string&, std::string*) const override
     {
         auto it = files_by_library_.find(library);
         if (it == files_by_library_.end())
@@ -342,7 +341,6 @@ TEST(macro_cache_test, overwrite_by_inline)
 )";
 
     file_manager_impl file_mngr;
-    lib_config global_config;
     files_parse_lib_provider lib_provider(file_mngr);
 
     file_mngr.did_open_file(opencode_file_name, 0, opencode_text);
