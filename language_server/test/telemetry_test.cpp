@@ -13,6 +13,7 @@
  */
 
 #include <sstream>
+#include <thread>
 
 #include "gmock/gmock.h"
 
@@ -37,12 +38,12 @@ json open_file_message =
 auto get_method_matcher(std::string method)
 {
     return [method = std::move(method)](
-               auto& arg) { return arg.count("method") > 0 && arg["method"].get<std::string>() == method; };
+               const json& arg) { return arg.count("method") > 0 && arg["method"].get<std::string>() == method; };
 }
 
 auto get_telemetry_method_matcher(std::string method)
 {
-    return [method = std::move(method)](auto& arg) {
+    return [method = std::move(method)](const json& arg) {
         return arg.count("method") > 0 && arg["method"].get<std::string>() == "telemetry/event"
             && arg["params"]["method_name"] == method;
     };
