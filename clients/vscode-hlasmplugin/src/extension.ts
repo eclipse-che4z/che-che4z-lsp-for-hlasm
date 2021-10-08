@@ -114,7 +114,6 @@ export async function activate(context: vscode.ExtensionContext) {
             return telemetry;
         }
     };
-    let a = vscode.extensions.getExtension("broadcommfd.hlasm-language-support").isActive
     return api;
 }
 

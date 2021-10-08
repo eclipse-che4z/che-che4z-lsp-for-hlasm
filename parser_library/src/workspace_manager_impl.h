@@ -262,7 +262,7 @@ private:
         }
     }
 
-    void notify_performance_consumers(const std::string& document_uri, workspace_file_info ws_file_info)
+    void notify_performance_consumers(const std::string& document_uri, workspace_file_info ws_file_info) const
     {
         auto file = file_manager_.find(document_uri);
         auto proc_file = dynamic_cast<workspaces::processor_file*>(file.get());

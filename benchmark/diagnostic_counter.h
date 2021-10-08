@@ -27,8 +27,8 @@ public:
     {
         for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
         {
-            auto diag_sev = diagnostics.diagnostics(i).severity();
-            if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
+            if (auto diag_sev = diagnostics.diagnostics(i).severity();
+                diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
                 error_count++;
             else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
                 warning_count++;
