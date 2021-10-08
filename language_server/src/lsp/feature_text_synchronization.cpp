@@ -38,16 +38,12 @@ void feature_text_synchronization::register_methods(std::map<std::string, method
 
 json feature_text_synchronization::register_capabilities()
 {
-    // there is no reason why not ask for notifications (most of them is
-    // ignored anyway).
-    // we cant process willSaveWaitUntil because it is a request and we dont
-    // want many hanging requests
     return json { { "textDocumentSync",
         json { { "openClose", true },
             { "change", (int)text_document_sync_kind::incremental },
-            { "willSave", true },
+            { "willSave", false },
             { "willSaveWaitUntil", false },
-            { "save", json { { "includeText", true } } } } } };
+            { "save", false } } } };
 }
 
 

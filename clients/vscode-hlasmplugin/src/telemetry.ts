@@ -51,10 +51,7 @@ export class Telemetry {
     }
 
     private getInstrumentationKey(): string {
-        (new Buffer('text')).toString('base64')
-        Buffer.from('text').toString('base64')
         return Buffer.from(fs.readFileSync(this.getTelemetryResourcePath(), "utf8"), "base64").toString().trim();
-        
     }
 
 
@@ -67,12 +64,6 @@ export class Telemetry {
             this.reporter.sendTelemetryEvent(eventName, properties, measurements);
         }
     }
-
-    /*public reportExceptionEvent(content: any): void {
-        if (this.isValidTelemetryKey()) {
-            this.reporter.sendTelemetryErrorEvent(content.eventName, TelemetryReporterImpl.convertData(content));
-        }
-    }*/
 
     public dispose(): any {
         this.reporter.dispose();

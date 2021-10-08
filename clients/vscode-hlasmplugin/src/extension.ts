@@ -49,9 +49,14 @@ function objectToString(o : any) {
  * activates the extension
  */
 export async function activate(context: vscode.ExtensionContext) {
+    const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
+    
     var telemetry = new Telemetry();
-    telemetry.reportEvent("hlasm.activated");
     context.subscriptions.push(telemetry);
+    
+    // setTimeout is needed, because telemetry initialization is asynchronous
+    // and AFAIK no event in the API is exposed to send the activation telemetry event
+    setTimeout(() => {telemetry.reportEvent("hlasm.activated", {server_variant:serverVariant.toString()});}, 1000);
     
     // patterns for files and configs
     const filePattern: string = '**/*';
@@ -76,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // create server options
     var factory = new ServerFactory();
-    const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
+    
     const serverOptions = await factory.create(serverVariant);
 
     //client init

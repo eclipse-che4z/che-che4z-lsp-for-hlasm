@@ -157,6 +157,9 @@ void server::register_methods()
 {
     methods_.try_emplace("initialize",
         method { [this](const json& id, const json& params) { on_initialize(id, params); },
+            telemetry_log_level::LOG_EVENT });
+    methods_.try_emplace("initialized",
+        method { [this](const json& id, const json& params) { /*no implementation, silences uninteresting telemetry*/ },
             telemetry_log_level::NO_TELEMETRY });
     methods_.try_emplace("shutdown",
         method { [this](const json& id, const json& params) { on_shutdown(id, params); },
@@ -164,6 +167,11 @@ void server::register_methods()
     methods_.try_emplace("exit",
         method {
             [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("$/setTraceNotification",
+        method { [this](const json& id, const json& params) {
+                    /*no implementation, silences reporting of VS Code implementation-specific notification*/
+                },
+            telemetry_log_level::NO_TELEMETRY });
 }
 
 void server::write(const nlohmann::json& payload) { notify("telemetry/event", payload); }

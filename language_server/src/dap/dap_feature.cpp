@@ -77,10 +77,10 @@ void dap_feature::register_methods(std::map<std::string, method>& methods)
     methods.try_emplace("threads", this_bind(&dap_feature::on_threads, telemetry_log_level::NO_TELEMETRY));
     methods.try_emplace("stackTrace", this_bind(&dap_feature::on_stack_trace, telemetry_log_level::NO_TELEMETRY));
     methods.try_emplace("scopes", this_bind(&dap_feature::on_scopes, telemetry_log_level::NO_TELEMETRY));
-    methods.try_emplace("next", this_bind(&dap_feature::on_next, telemetry_log_level::NO_TELEMETRY));
-    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("next", this_bind(&dap_feature::on_next, telemetry_log_level::LOG_EVENT));
+    methods.try_emplace("stepIn", this_bind(&dap_feature::on_step_in, telemetry_log_level::LOG_EVENT));
     methods.try_emplace("variables", this_bind(&dap_feature::on_variables, telemetry_log_level::NO_TELEMETRY));
-    methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::NO_TELEMETRY));
+    methods.try_emplace("continue", this_bind(&dap_feature::on_continue, telemetry_log_level::LOG_EVENT));
 }
 json dap_feature::register_capabilities() { return json(); }
 
