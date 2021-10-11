@@ -800,3 +800,76 @@ C     DC C'STH'
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(attribute_lookahead, dc_in_copybook)
+{
+    std::string input =
+        R"(
+      GBLC &RESULT
+&S    SETC 'STR'
+      COPY LIB
+*
+&L    SETA L'LABEL
+&T    SETC T'LABEL
+&RESULT2 SETC '&L &T'
+      END
+)";
+
+    std::string LIB =
+        R"(
+      MAC   LABEL
+LABEL DC    C'&S'
+)";
+
+    std::string MAC = R"(   MACRO
+      MAC &LBL
+      GBLC &RESULT
+&L    SETA L'&LBL
+&T    SETC T'&LBL
+&RESULT SETC '&L &T'
+      MEND
+)";
+
+    mock_parse_lib_provider mock { { "LIB", LIB }, { "MAC", MAC } };
+    analyzer a(input, analyzer_options { &mock });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT"), "1 U");
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT2"), "3 C");
+}
+
+TEST(attribute_lookahead, mach_in_copybook)
+{
+    std::string input =
+        R"(
+      GBLC &RESULT
+&S    SETC 'STR'
+      COPY LIB
+      END
+)";
+
+    std::string LIB =
+        R"(
+      MAC   LABEL
+LABEL LLILF 0,C'&S'
+)";
+
+    std::string MAC = R"(   MACRO
+      MAC &LBL
+      GBLC &RESULT
+&L    SETA L'&LBL
+&T    SETC T'&LBL
+&RESULT SETC '&L &T'
+      MEND
+)";
+
+    mock_parse_lib_provider mock { { "LIB", LIB }, { "MAC", MAC } };
+    analyzer a(input, analyzer_options { &mock });
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT"), "6 I");
+}

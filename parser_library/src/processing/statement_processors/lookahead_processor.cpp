@@ -219,7 +219,14 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     auto data_op = statement.operands_ref().value.front()->access_data_def();
 
     if (!data_op)
+    {
+        register_attr_ref(symbol_name,
+            context::symbol_attributes(context::symbol_origin::DAT,
+                ebcdic_encoding::a2e[(unsigned char)'U'],
+                context::symbol_attributes::undef_length,
+                context::symbol_attributes::undef_scale));
         return;
+    }
 
     context::symbol_attributes::type_attr type =
         ebcdic_encoding::a2e[(unsigned char)data_op->value->get_type_attribute()];
