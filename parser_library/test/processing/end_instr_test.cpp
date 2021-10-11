@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
-#include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 TEST(END, relocatable_symbol)
 {
@@ -211,7 +210,7 @@ TEST CSECT
     a.collect_diags();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
-    
+
 TEST(END, end_called_from_macro_with_lookahead_symbols_found)
 {
     std::string input(R"( 
@@ -292,7 +291,7 @@ TEST(END, end_called_from_copybook_with_warning_after_EndStatement)
     a.collect_diags();
     EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
 }
-  
+
 TEST(END, end_called_from_macro_inside_copybook_two)
 {
     std::string copybook_content = R"(
@@ -334,7 +333,6 @@ TEST(END, end_called_from_nested_macro)
     a.analyze();
     a.collect_diags();
     EXPECT_TRUE(a.diags().empty());
-   
 }
 TEST(END, end_called_from_nested_macro_with_warning_issued)
 {
@@ -392,10 +390,10 @@ TEST(END, end_called_from_copy_book_inside_macro)
   END     
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
-    analyzer a(input, analyzer_options { &lib_provider }); 
+    analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(a.diags().empty());  
+    EXPECT_TRUE(a.diags().empty());
 }
 TEST(END, stops_lookahead)
 {
