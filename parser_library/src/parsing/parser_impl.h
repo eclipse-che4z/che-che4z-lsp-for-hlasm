@@ -83,16 +83,9 @@ protected:
     semantics::collector collector;
     semantics::range_provider provider;
 
-    bool deferred();
-    bool no_op();
-    bool ignored();
-    bool alt_format();
     bool MACH();
     bool ASM();
     bool DAT();
-    bool CA();
-    bool MAC();
-    bool UNKNOWN();
     bool ALIAS();
 
 private:
