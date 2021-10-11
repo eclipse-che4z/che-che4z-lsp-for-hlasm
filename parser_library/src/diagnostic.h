@@ -227,13 +227,13 @@ struct diagnostic_op
 
     static diagnostic_op error_A136_ENTRY_op_format(const range& range);
 
-    static diagnostic_op error_A137_END_lang_format(const range& range);
+    static diagnostic_op warning_A137_END_lang_format(const range& range);
 
-    static diagnostic_op error_A138_END_lang_first(const range& range);
+    static diagnostic_op warning_A138_END_lang_first(const range& range);
 
-    static diagnostic_op error_A139_END_lang_second(const range& range);
+    static diagnostic_op warning_A139_END_lang_second(const range& range);
 
-    static diagnostic_op error_A140_END_lang_third(const range& range);
+    static diagnostic_op warning_A140_END_lang_third(const range& range);
 
     static diagnostic_op error_A141_DROP_op_format(const range& range);
 
@@ -374,7 +374,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A242_ICTL_op_format_second_third(const range& range);
 
-    static diagnostic_op error_A243_END_expr_format(const range& range);
+    static diagnostic_op warning_A243_END_expr_format(const range& range);
 
     static diagnostic_op error_A244_PUNCH_char_string(const range& range);
 
@@ -384,7 +384,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A247_must_be_rel_abs_expr(const std::string& instr_name, const range& range);
 
-    static diagnostic_op error_A248_END_lang_char_sequence(const range& range);
+    static diagnostic_op warning_A248_END_lang_char_sequence(const range& range);
 
     static diagnostic_op warning_A249_sequence_symbol_expected(const range& range);
 

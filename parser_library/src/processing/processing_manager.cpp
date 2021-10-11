@@ -104,7 +104,7 @@ void processing_manager::start_processing(std::atomic<bool>* cancel)
         statement_processor& proc = *procs_.back();
         statement_provider& prov = find_provider();
 
-        if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished() || hlasm_ctx_.get_end_reached())
+        if ((prov.finished() && proc.terminal_condition(prov.kind)) || proc.finished())
         {
             finish_processor();
             continue;

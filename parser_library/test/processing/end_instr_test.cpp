@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 TEST(END, relocatable_symbol)
 {
@@ -62,8 +63,7 @@ TEST(END, multiple_ends)
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(a.diags().empty());
-    // EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, no_operands)
 {
@@ -195,7 +195,7 @@ TEST CSECT
     EXPECT_TRUE(a.diags().empty());
 }
 
-TEST(END, end_called_from_macro_with_undefined_opcode_after_end_not_diagnosed)
+TEST(END, end_called_from_macro_with_statements_after_end)
 {
     std::string input(R"( 
          MACRO                                               
@@ -204,15 +204,15 @@ TEST(END, end_called_from_macro_with_undefined_opcode_after_end_not_diagnosed)
      MEND                                                
 TEST CSECT                                                                                 
      MAC  
-     GIBBERISH
+     LR 1,2     
 )");
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(a.diags().empty());
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
-// todo , warning for statements after end not implemented
-TEST(END, end_called_from_macro_with_look_ahead_symbols_found)
+    
+TEST(END, end_called_from_macro_with_lookahead_symbols_found)
 {
     std::string input(R"( 
          MACRO                                               
@@ -231,90 +231,183 @@ X    DS    C
     analyzer a(input);
     a.analyze();
     a.collect_diags();
-    EXPECT_TRUE(a.diags().empty());
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 
-TEST(END, end_called_from_macro_with_look_ahead_symbols_not_found)
-{
-    std::string input(R"( 
-         MACRO                                               
-     MAC                                                 
-     END   TEST                                          
-     MEND                                                
-TEST CSECT                                                   
-     AIF   (L'X LT 0).X                                 
-     MAC
-     BR    14                                                                                                    
-     BR    0                                             
-     END                                                 
-)");
-    analyzer a(input);
-    a.analyze();
-    a.collect_diags();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "W013" }));
-}
-
-TEST(END, end_called_from_copybook_inside_macro_one)
+TEST(END, end_called_from_macro_inside_copy_book_one_with_warning_after_end)
 {
     std::string copybook_content = R"(
    MACRO
   M
   LR 1,2
   END 
-  undef_opcode
  MEND       
 )";
     std::string input = R"(
          COPY COPYBOOK_TWO
          M
-        undef_opcode
+         LR 1,2
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
 
     a.analyze();
     a.collect_diags();
-
-    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
 }
-TEST(END, end_called_from_copybook_)
+TEST(END, end_called_from_copybook)
 {
     std::string copybook_content = R"(
 
   LR 1,2
-  END       
+  END
+  UNDEF       
 )";
     std::string input = R"(
          COPY COPYBOOK_TWO
-        undef_opcode
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
 
     a.analyze();
     a.collect_diags();
-
     EXPECT_TRUE(a.diags().empty());
 }
-TEST(END, end_called_from_copybook_inside_macro_two)
+TEST(END, end_called_from_copybook_with_warning_after_EndStatement)
+{
+    std::string copybook_content = R"(
+
+  LR 1,2
+  END
+         
+)";
+    std::string input = R"(
+         COPY COPYBOOK_TWO
+         UNDEF
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK_TWO", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+}
+  
+TEST(END, end_called_from_macro_inside_copybook_two)
 {
     std::string copybook_content = R"(
   MACRO
   M
   LR 1,2
   END 
-  undef_opcode
- MEND
+  UNDEF
+  MEND
 )";
     std::string input = R"(
         COPY COPYBOOK
         M
+        
 )";
     mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
     analyzer a(input, analyzer_options { &lib_provider });
 
     a.analyze();
     a.collect_diags();
-
     EXPECT_TRUE(a.diags().empty());
+}
+TEST(END, end_called_from_nested_macro)
+{
+    std::string input = R"(
+    MACRO
+    OUTER_MACRO                               
+    INNER_MACRO 
+    MEND   
+    MACRO
+    INNER_MACRO                               
+    END
+    UNDEF
+    MEND
+    OUTER_MACRO
+)";
+    analyzer a(input);
+
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+   
+}
+TEST(END, end_called_from_nested_macro_with_warning_issued)
+{
+    std::string input = R"(
+    MACRO
+    OUTER_MACRO                               
+    INNER_MACRO 
+    MEND   
+    MACRO
+    INNER_MACRO                               
+    END
+    UNDEF
+    MEND
+    OUTER_MACRO
+    UNDEF
+)";
+    analyzer a(input);
+
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+}
+TEST(END, end_called_from_copy_book_inside_macro_with_warning)
+{
+    std::string input = R"(
+    MACRO
+      MAC
+    COPY COPYBOOK
+      MEND
+     MAC
+     END    
+)";
+    std::string copybook_content = R"(
+  LR 1,2
+  END     
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider });
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+}
+TEST(END, end_called_from_copy_book_inside_macro)
+{
+    std::string input = R"(
+    MACRO
+    MAC
+    COPY COPYBOOK
+    NOT_PROCESSED_LINE
+    MEND
+    MAC    
+)";
+    std::string copybook_content = R"(
+  LR 1,2
+  END     
+)";
+    mock_parse_lib_provider lib_provider { { "COPYBOOK", copybook_content } };
+    analyzer a(input, analyzer_options { &lib_provider }); 
+    a.analyze();
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());  
+}
+TEST(END, stops_lookahead)
+{
+    std::string input = R"(
+         AIF (L'X LT 0).X
+.X       END
+.X       ANOP
+)";
+    analyzer a(input);
+
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_EQ(0, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "E045"; }));
 }

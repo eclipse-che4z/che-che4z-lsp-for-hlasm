@@ -462,37 +462,37 @@ diagnostic_op diagnostic_op::error_A136_ENTRY_op_format(const range& range)
         range);
 }
 
-diagnostic_op diagnostic_op::error_A137_END_lang_format(const range& range)
+diagnostic_op diagnostic_op::warning_A137_END_lang_format(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
+    return diagnostic_op(diagnostic_severity::warning,
         "A137",
-        "Error at END instruction: language operand must be in the following format: (char10, char4, char5)",
+        " Language operand parameter must be in the following format: (char10, char4, char5)",
         range);
 }
 
-diagnostic_op diagnostic_op::error_A138_END_lang_first(const range& range)
+diagnostic_op diagnostic_op::warning_A138_END_lang_first(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
+    return diagnostic_op(diagnostic_severity::warning,
         "A138",
-        "Error at END instruction: first parameter of language operand (language translator identifier) must be a 1 to "
+        "First parameter of language operand (language translator identifier) must be a 1 to "
         "10 character code",
         range);
 }
 
-diagnostic_op diagnostic_op::error_A139_END_lang_second(const range& range)
+diagnostic_op diagnostic_op::warning_A139_END_lang_second(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
+    return diagnostic_op(diagnostic_severity::warning,
         "A139",
-        "Error at END instruction: second parameter of language operand (version and release code) must be exactly 4 "
+        "Second parameter of language operand (version and release code) must be exactly 4 "
         "character long",
         range);
 }
 
-diagnostic_op diagnostic_op::error_A140_END_lang_third(const range& range)
+diagnostic_op diagnostic_op::warning_A140_END_lang_third(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
+    return diagnostic_op(diagnostic_severity::warning,
         "A140",
-        "Error at END instruction: third parameter of language operand must be exactly 5 character long and must "
+        "Third parameter of language operand must be exactly 5 character long and must "
         "specify the compile date in the \"YYDDD\" format",
         range);
 }
@@ -1094,11 +1094,11 @@ diagnostic_op diagnostic_op::error_A242_ICTL_op_format_second_third(const range&
         range);
 }
 
-diagnostic_op diagnostic_op::error_A243_END_expr_format(const range& range)
+diagnostic_op diagnostic_op::warning_A243_END_expr_format(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
+    return diagnostic_op(diagnostic_severity::warning,
         "A243",
-        "Error at END instruction: first operand must either be an expresison or the operand must be omitted",
+        "first operand must either be an expresison or the operand must be omitted",
         range);
 }
 
@@ -1134,12 +1134,10 @@ diagnostic_op diagnostic_op::error_A247_must_be_rel_abs_expr(const std::string& 
         range);
 }
 
-diagnostic_op diagnostic_op::error_A248_END_lang_char_sequence(const range& range)
+diagnostic_op diagnostic_op::warning_A248_END_lang_char_sequence(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
-        "A248",
-        "Error at END instruction at language operand: parameter must be a character sequence",
-        range);
+    return diagnostic_op(
+        diagnostic_severity::warning, "A248", "Language operand parameter must be a character sequence", range);
 }
 
 diagnostic_op diagnostic_op::warning_A249_sequence_symbol_expected(const range& range)
@@ -1374,7 +1372,6 @@ diagnostic_op diagnostic_op::error_D005(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D005", "Unexpected '.' in modifier other than length", range);
 }
-
 diagnostic_op diagnostic_op::error_D006(const range& range)
 {
     return diagnostic_op(

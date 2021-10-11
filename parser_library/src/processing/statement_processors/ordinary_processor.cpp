@@ -85,6 +85,18 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
     auto statement = std::static_pointer_cast<const processing::resolved_statement>(std::move(s));
 
+    if (hlasm_ctx.get_end_reached())
+    {
+        if (statement->label_ref().type != semantics::label_si_type::EMPTY
+            || statement->instruction_ref().type != semantics::instruction_si_type::EMPTY
+            || !statement->operands_ref().value.empty())
+        {
+            add_diagnostic(diagnostic_op::warning_W015(range(statement->statement_position())));
+            finished_flag_ = true;
+        }
+        return;
+    }
+
     switch (statement->opcode_ref().type)
     {
         case context::instruction_type::UNDEF:

@@ -106,9 +106,6 @@ void macrodef_processor::end_processing()
     listener_.finish_macro_definition(std::move(result_));
 
     finished_flag_ = true;
-    if (hlasm_ctx.get_end_reached()) {
-        hlasm_ctx.leave_macro();
-    }
 }
 
 bool macrodef_processor::terminal_condition(const statement_provider_kind prov_kind) const

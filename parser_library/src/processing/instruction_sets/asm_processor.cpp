@@ -845,7 +845,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
             }
         }
     }
-    hlasm_ctx.set_end_reached(true);
+    hlasm_ctx.end_reached();
 }
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
