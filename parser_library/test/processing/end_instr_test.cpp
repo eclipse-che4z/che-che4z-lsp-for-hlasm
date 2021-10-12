@@ -353,7 +353,7 @@ TEST(END, end_called_from_nested_macro_with_warning_issued)
 
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copy_book_inside_macro_with_warning)
 {
