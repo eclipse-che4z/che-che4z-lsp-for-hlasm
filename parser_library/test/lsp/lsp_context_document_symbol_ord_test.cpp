@@ -1111,3 +1111,39 @@ EM1  EQU  1
     };
     EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
 }
+
+size_t recursive_counter(const document_symbol_list_s& x)
+{
+    size_t result = x.size();
+    for (const auto& c : x)
+        result += recursive_counter(c.children);
+    return result;
+}
+
+TEST(lsp_context_document_symbol, limit)
+{
+    std::string input =
+        R"(
+         MACRO
+         MAC  &I
+         ACTR 999999
+         LCLA &A
+
+.NEXT    ANOP
+LABEL_&A DS   A
+&A       SETA &A+1
+         AIF (&A LT &I).NEXT
+
+         MEND
+
+SECT     DSECT
+         MAC 1000
+)";
+    analyzer a(input);
+    a.analyze();
+
+    const auto limit = 10LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
+
+    EXPECT_LE(recursive_counter(outline), 100);
+}
