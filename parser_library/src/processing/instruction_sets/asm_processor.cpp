@@ -827,7 +827,6 @@ void asm_processor::process_END(rebuilt_statement stmt)
     if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ))
     {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
-        return;
     }
     if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
     {

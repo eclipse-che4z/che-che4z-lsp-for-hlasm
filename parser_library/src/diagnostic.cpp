@@ -466,7 +466,7 @@ diagnostic_op diagnostic_op::warning_A137_END_lang_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A137",
-        " Language operand parameter must be in the following format: (char10, char4, char5)",
+        "Language operand parameter must be in the following format: (char10, char4, char5)",
         range);
 }
 
@@ -1098,7 +1098,7 @@ diagnostic_op diagnostic_op::warning_A243_END_expr_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A243",
-        "first operand must either be an expresison or the operand must be omitted",
+        "First operand must either be an expresison or the operand must be omitted",
         range);
 }
 
@@ -1883,7 +1883,7 @@ diagnostic_op diagnostic_op::warning_W014(const range& range)
 diagnostic_op diagnostic_op::warning_W015(const range& range)
 {
     return diagnostic_op(
-        diagnostic_severity::warning, "W015", "End of Source Input Reached,batch mode is not yet supported", range);
+        diagnostic_severity::warning, "W015", "End of source input reached, batch mode is not supported yet", range);
 }
 diagnostic_op diagnostic_op::error_EQU1(const range& range)
 {

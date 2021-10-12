@@ -252,7 +252,7 @@ TEST(END, end_called_from_macro_inside_copy_book_one_with_warning_after_end)
 
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copybook)
 {
@@ -289,7 +289,7 @@ TEST(END, end_called_from_copybook_with_warning_after_EndStatement)
 
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 
 TEST(END, end_called_from_macro_inside_copybook_two)
@@ -353,7 +353,7 @@ TEST(END, end_called_from_nested_macro_with_warning_issued)
 
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copy_book_inside_macro_with_warning)
 {
@@ -373,7 +373,7 @@ TEST(END, end_called_from_copy_book_inside_macro_with_warning)
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copy_book_inside_macro)
 {
