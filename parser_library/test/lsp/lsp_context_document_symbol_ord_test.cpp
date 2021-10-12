@@ -1146,4 +1146,6 @@ SECT     DSECT
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
 
     EXPECT_LE(recursive_counter(outline), 100);
+    ASSERT_FALSE(outline.empty());
+    EXPECT_EQ(outline.front().name, "Outline may be truncated");
 }

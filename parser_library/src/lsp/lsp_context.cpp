@@ -440,7 +440,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
 {
     document_symbol_list_s result;
     const auto& file = files_.find(document_uri);
-    if (file == files_.end())
+    if (file == files_.end() || limit <= 0)
         return result;
 
     std::unordered_map<std::string_view, std::string_view> name_to_uri;
@@ -474,6 +474,11 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
                 }
             }
             break;
+    }
+    if (limit <= 0)
+    {
+        result.insert(
+            result.begin(), document_symbol_item_s("Outline may be truncated", document_symbol_kind::DUMMY, range()));
     }
     return result;
 }
