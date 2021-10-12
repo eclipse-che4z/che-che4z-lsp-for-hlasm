@@ -69,12 +69,15 @@ private:
     bool should_complete_instr(const text_data_ref_t& text, const position pos) const;
     std::string get_macro_documentation(const macro_info& m) const;
 
-    document_symbol_list_s document_symbol_macro(const std::string& document_uri) const;
-    document_symbol_list_s document_symbol_macro(const std::string& document_uri, const range& r) const;
-    document_symbol_list_s document_symbol_copy(
-        const std::vector<symbol_occurence>& occurence_list, const std::string& document_uri) const;
-    document_symbol_list_s document_symbol_copy(
-        const std::vector<symbol_occurence>& occurence_list, const std::string& document_uri, const range& r) const;
+    void document_symbol_macro(document_symbol_list_s& result, const std::string& document_uri) const;
+    void document_symbol_macro(document_symbol_list_s& result, const std::string& document_uri, const range& r) const;
+    void document_symbol_copy(document_symbol_list_s& result,
+        const std::vector<symbol_occurence>& occurence_list,
+        const std::string& document_uri) const;
+    void document_symbol_copy(document_symbol_list_s& result,
+        const std::vector<symbol_occurence>& occurence_list,
+        const std::string& document_uri,
+        const range& r) const;
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences(
         const std::string& document_uri) const;
     void modify_with_copy(document_symbol_list_s& modified,
@@ -88,7 +91,7 @@ private:
         const context::symbol& sym,
         const document_symbol_kind kind,
         unsigned long i) const;
-    document_symbol_list_s document_symbol_opencode_ord_symbol() const;
+    void document_symbol_opencode_ord_symbol(document_symbol_list_s& result) const;
     void document_symbol_opencode_var_seq_symbol(const std::string& document_uri, document_symbol_list_s& result) const;
     void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result) const;
     bool belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const;
