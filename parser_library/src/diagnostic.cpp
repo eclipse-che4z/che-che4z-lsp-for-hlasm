@@ -1098,7 +1098,7 @@ diagnostic_op diagnostic_op::warning_A243_END_expr_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A243",
-        "first operand must either be an expresison or the operand must be omitted",
+        "First operand must either be an expresison or the operand must be omitted",
         range);
 }
 
