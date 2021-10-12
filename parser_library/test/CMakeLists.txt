@@ -24,7 +24,7 @@ target_sources(library_test PRIVATE
 	stability_test.cpp
 	utf_conv_test.cpp
 	workspace_manager_test.cpp
- )
+)
 
 add_subdirectory(checking)
 add_subdirectory(config)
