@@ -52,21 +52,6 @@ bool is_permutation_with_permutations(const document_symbol_list_s& lhs, const d
     return true;
 }
 
-document_symbol_list_s::iterator document_symbol_no_children_find(
-    document_symbol_list_s::iterator begin, document_symbol_list_s::iterator end, const document_symbol_item_s& item)
-{
-    while (begin != end)
-    {
-        if (item.name == begin->name && item.kind == begin->kind && item.symbol_range == begin->symbol_range
-            && item.symbol_selection_range == begin->symbol_selection_range)
-        {
-            return begin;
-        }
-        begin++;
-    }
-    return end;
-}
-
 bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
 {
     return lhs.name == rhs.name && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range

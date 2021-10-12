@@ -69,31 +69,34 @@ private:
     bool should_complete_instr(const text_data_ref_t& text, const position pos) const;
     std::string get_macro_documentation(const macro_info& m) const;
 
-    void document_symbol_macro(document_symbol_list_s& result, const std::string& document_uri) const;
-    void document_symbol_macro(document_symbol_list_s& result, const std::string& document_uri, const range& r) const;
-    void document_symbol_copy(document_symbol_list_s& result,
-        const std::vector<symbol_occurence>& occurence_list,
-        const std::string& document_uri) const;
+    void document_symbol_macro(document_symbol_list_s& result,
+        const std::string& document_uri,
+        std::optional<range> r,
+        long long& limit) const;
     void document_symbol_copy(document_symbol_list_s& result,
         const std::vector<symbol_occurence>& occurence_list,
         const std::string& document_uri,
-        const range& r) const;
+        std::optional<range> r,
+        long long& limit) const;
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences(
         const std::string& document_uri) const;
     void modify_with_copy(document_symbol_list_s& modified,
         const context::id_index& sym_name,
         const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
-        const document_symbol_kind kind) const;
+        const document_symbol_kind kind,
+        long long& limit) const;
     std::string find_macro_copy_id(const context::processing_stack_t& stack, unsigned long i) const;
     void document_symbol_symbol(document_symbol_list_s& modified,
         document_symbol_list_s children,
         context::id_index id,
         const context::symbol& sym,
         const document_symbol_kind kind,
-        unsigned long i) const;
-    void document_symbol_opencode_ord_symbol(document_symbol_list_s& result) const;
+        unsigned long i,
+        long long& limit) const;
+    void document_symbol_opencode_ord_symbol(document_symbol_list_s& result, long long& limit) const;
     void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
-        const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache) const;
+        const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache,
+        long long& limit) const;
     bool belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const;
 };
 
