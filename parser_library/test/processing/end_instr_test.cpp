@@ -252,7 +252,7 @@ TEST(END, end_called_from_macro_inside_copy_book_one_with_warning_after_end)
 
     a.analyze();
     a.collect_diags();
-    EXPECT_EQ(1, std::count_if(a.diags().begin(), a.diags().end(), [](const auto& d) { return d.code == "W015"; }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
 TEST(END, end_called_from_copybook)
 {
