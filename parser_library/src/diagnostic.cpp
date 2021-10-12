@@ -466,7 +466,7 @@ diagnostic_op diagnostic_op::warning_A137_END_lang_format(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning,
         "A137",
-        " Language operand parameter must be in the following format: (char10, char4, char5)",
+        "Language operand parameter must be in the following format: (char10, char4, char5)",
         range);
 }
 
