@@ -11,21 +11,22 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
-import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
 import TelemetryReporter from 'vscode-extension-telemetry';
 
-const EXTENSION_ID = "broadcommfd.hlasm-language-support"
-const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY"
+const EXTENSION_ID = "broadcommfd.hlasm-language-support";
+const TELEMETRY_DEFAULT_KEY = "NOT_TELEMETRY_KEY";
+
+// The following line is replaced by base64 encoded telemetry key in the CI
+const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY;
 
 export class Telemetry {
 
     private reporter: TelemetryReporter;
     private telemetry_key: string = undefined;
-    
-    
+
     private getExtensionVersion(): string {
         return vscode.extensions.getExtension(EXTENSION_ID).packageJSON.version;
     }
@@ -41,7 +42,7 @@ export class Telemetry {
      */
     private getTelemetryKey(): string {
         if (this.telemetry_key === undefined)
-            this.telemetry_key = fs.existsSync(this.getTelemetryResourcePath()) ? this.getInstrumentationKey() : TELEMETRY_DEFAULT_KEY;
+            this.telemetry_key = Buffer.from(TELEMETRY_KEY_ENCODED, "base64").toString().trim();
         return this.telemetry_key;
     }
 
@@ -49,11 +50,6 @@ export class Telemetry {
         return vscode.Uri.file(
             path.join(this.getExtensionPath(), "resources", "TELEMETRY_KEY")).fsPath;
     }
-
-    private getInstrumentationKey(): string {
-        return Buffer.from(fs.readFileSync(this.getTelemetryResourcePath(), "utf8"), "base64").toString().trim();
-    }
-
 
     constructor() {
         this.reporter = new TelemetryReporter(EXTENSION_ID, this.getExtensionVersion(), this.getTelemetryKey());
