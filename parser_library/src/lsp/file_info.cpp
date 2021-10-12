@@ -56,13 +56,19 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos) const
 {
     const symbol_occurence* found = nullptr;
 
+    auto l = std::lower_bound(occurences.begin(), occurences.end(), pos, [](const auto& occ, const auto& p) {
+        return occ.occurence_range.start.line < p.line;
+    });
     // find in occurences
-    for (const auto& occ : occurences)
+    for (auto it = l; it != occurences.end() && it->occurence_range.start.line <= pos.line; ++it)
+    {
+        const auto& occ = *it;
         if (is_in_range(pos, occ.occurence_range))
         {
             found = &occ;
             break;
         }
+    }
 
     // if not found, return
     if (!found)
@@ -144,5 +150,12 @@ std::vector<file_slice_t> file_slice_t::transform_slices(
 
 
 const std::vector<symbol_occurence>& file_info::get_occurences() const { return occurences; }
+
+void file_info::sort_occurrences()
+{
+    std::sort(occurences.begin(), occurences.end(), [](const auto& l, const auto& r) {
+        return l.occurence_range.start.line < r.occurence_range.start.line;
+    });
+}
 
 } // namespace hlasm_plugin::parser_library::lsp

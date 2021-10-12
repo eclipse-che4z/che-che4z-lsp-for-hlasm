@@ -86,14 +86,14 @@ private:
         const document_symbol_kind kind) const;
     std::string find_macro_copy_id(const context::processing_stack_t& stack, unsigned long i) const;
     void document_symbol_symbol(document_symbol_list_s& modified,
-        const document_symbol_list_s& children,
-        const context::id_index& id,
+        document_symbol_list_s children,
+        context::id_index id,
         const context::symbol& sym,
         const document_symbol_kind kind,
         unsigned long i) const;
     void document_symbol_opencode_ord_symbol(document_symbol_list_s& result) const;
-    void document_symbol_opencode_var_seq_symbol(const std::string& document_uri, document_symbol_list_s& result) const;
-    void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result) const;
+    void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
+        const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache) const;
     bool belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const;
 };
 

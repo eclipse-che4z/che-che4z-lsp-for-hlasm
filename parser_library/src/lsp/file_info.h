@@ -96,6 +96,7 @@ public:
     void update_occurences(const occurence_storage& occurences_upd);
     void update_slices(const std::vector<file_slice_t>& slices);
     const std::vector<symbol_occurence>& get_occurences() const;
+    void sort_occurrences();
 
 private:
     std::map<line_range, file_slice_t> slices;

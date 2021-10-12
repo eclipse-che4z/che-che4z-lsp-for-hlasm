@@ -106,76 +106,57 @@ std::string lsp_context::find_macro_copy_id(const context::processing_stack_t& s
 
 void lsp_context::document_symbol_macro(document_symbol_list_s& result, const std::string& document_uri) const
 {
+    auto m = std::find_if(macros_.begin(), macros_.end(), [&document_uri](const auto& mac) {
+        return mac.first->definition_location.file == document_uri;
+    });
+    if (m == macros_.end())
+        return;
+
+    const auto& [def, info] = *m;
+
     auto copy_occs = copy_occurences(document_uri);
-    for (const auto& [def, info] : macros_)
+
+    for (const auto& var : info->var_definitions)
     {
-        if (info->definition_location.file == document_uri)
-        {
-            for (const auto& var : info->var_definitions)
-            {
-                if (belongs_to_copyfile(document_uri, var.def_position, var.name))
-                {
-                    modify_with_copy(result, var.name, copy_occs, document_symbol_kind::VAR);
-                }
-                else
-                {
-                    result.emplace_back(document_symbol_item_s {
-                        *var.name, document_symbol_kind::VAR, { var.def_position, var.def_position } });
-                }
-            }
-            for (const auto& [name, seq] : def->labels)
-            {
-                if (belongs_to_copyfile(document_uri, seq->symbol_location.pos, name))
-                {
-                    modify_with_copy(result, name, copy_occs, document_symbol_kind::SEQ);
-                }
-                else
-                {
-                    result.emplace_back(document_symbol_item_s {
-                        *name, document_symbol_kind::SEQ, { seq->symbol_location.pos, seq->symbol_location.pos } });
-                }
-            }
-            break;
-        }
+        if (belongs_to_copyfile(document_uri, var.def_position, var.name))
+            modify_with_copy(result, var.name, copy_occs, document_symbol_kind::VAR);
+        else
+            result.emplace_back(*var.name, document_symbol_kind::VAR, range(var.def_position));
+    }
+    for (const auto& [name, seq] : def->labels)
+    {
+        if (belongs_to_copyfile(document_uri, seq->symbol_location.pos, name))
+            modify_with_copy(result, name, copy_occs, document_symbol_kind::SEQ);
+        else
+            result.emplace_back(*name, document_symbol_kind::SEQ, range(seq->symbol_location.pos));
     }
 }
 
 void lsp_context::document_symbol_macro(
     document_symbol_list_s& result, const std::string& document_uri, const range& r) const
 {
-    auto copy_occs = copy_occurences(document_uri);
-    for (const auto& [def, info] : macros_)
+    auto m = std::find_if(macros_.begin(), macros_.end(), [&document_uri](const auto& mac) {
+        return mac.first->definition_location.file == document_uri;
+    });
+    if (m == macros_.end())
+        return;
+
+    const auto& [def, info] = *m;
+    for (const auto& var : info->var_definitions)
     {
-        if (def->definition_location.file == document_uri)
-        {
-            for (const auto& var : info->var_definitions)
-            {
-                if (!belongs_to_copyfile(document_uri, var.def_position, var.name))
-                {
-                    result.emplace_back(document_symbol_item_s {
-                        *var.name, document_symbol_kind::VAR, { var.def_position, var.def_position } });
-                    result.back().symbol_range = r;
-                    result.back().symbol_selection_range = r;
-                }
-            }
-            for (const auto& [name, seq] : def->labels)
-            {
-                if (!belongs_to_copyfile(document_uri, seq->symbol_location.pos, name))
-                {
-                    result.emplace_back(document_symbol_item_s {
-                        *name, document_symbol_kind::SEQ, { seq->symbol_location.pos, seq->symbol_location.pos } });
-                    result.back().symbol_range = r;
-                    result.back().symbol_selection_range = r;
-                }
-            }
-            break;
-        }
+        if (!belongs_to_copyfile(document_uri, var.def_position, var.name))
+            result.emplace_back(*var.name, document_symbol_kind::VAR, r);
+    }
+    for (const auto& [name, seq] : def->labels)
+    {
+        if (!belongs_to_copyfile(document_uri, seq->symbol_location.pos, name))
+            result.emplace_back(*name, document_symbol_kind::SEQ, r);
     }
 }
 
 bool lsp_context::belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const
 {
-    const auto& aux = find_occurence_with_scope(document_uri, pos).first;
+    const auto* aux = find_occurence_with_scope(document_uri, pos).first;
     return aux == nullptr || *aux->name != *id;
 }
 
@@ -219,26 +200,26 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences;
     for (const auto& [uri, info] : files_)
     {
-        if (info->type == file_type::COPY)
+        if (info->type != file_type::COPY)
+            continue;
+
+        const context::id_index name = std::get<context::copy_member_ptr>(info->owner)->name;
+        for (const auto& occ : file->second->get_occurences())
         {
-            const context::id_index name = std::get<context::copy_member_ptr>(info->owner)->name;
-            for (const auto& occ : file->second->get_occurences())
+            if (occ.name != name)
+                continue;
+
+            std::vector<context::id_index> occurences;
+            for (const auto& new_occ : info->get_occurences())
             {
-                if (occ.name == name)
+                if (new_occ.kind == occurence_kind::VAR
+                    || new_occ.kind == occurence_kind::SEQ
+                        && std::find(occurences.begin(), occurences.end(), new_occ.name) == occurences.end())
                 {
-                    std::vector<context::id_index> occurences;
-                    for (const auto& new_occ : info->get_occurences())
-                    {
-                        if (new_occ.kind == occurence_kind::VAR
-                            || new_occ.kind == occurence_kind::SEQ
-                                && std::find(occurences.begin(), occurences.end(), new_occ.name) == occurences.end())
-                        {
-                            occurences.push_back(new_occ.name);
-                        }
-                    }
-                    copy_occurences.emplace_back(std::pair { occ, occurences });
+                    occurences.push_back(new_occ.name);
                 }
             }
+            copy_occurences.emplace_back(occ, std::move(occurences));
         }
     }
     return copy_occurences;
@@ -249,32 +230,29 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
     const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
     const document_symbol_kind kind) const
 {
-    if (!copy_occs.empty())
+    for (const auto& [copy_occ, occs] : copy_occs)
     {
-        for (const auto& [copy_occ, occs] : copy_occs)
+        if (std::find(occs.begin(), occs.end(), sym_name) == occs.end())
+            continue;
+
+        bool have_already = false;
+        document_symbol_item_s sym_item(*sym_name, kind, copy_occ.occurence_range);
+        for (auto& item : modified)
         {
-            if (std::find(occs.begin(), occs.end(), sym_name) != occs.end())
+            if (item.name == *copy_occ.name
+                && std::find(item.children.begin(), item.children.end(), sym_item) == item.children.end())
             {
-                bool have_already = false;
-                auto sym_item = document_symbol_item_s { *sym_name, kind, copy_occ.occurence_range };
-                for (auto& item : modified)
-                {
-                    if (item.name == *copy_occ.name
-                        && std::find(item.children.begin(), item.children.end(), sym_item) == item.children.end())
-                    {
-                        item.children.push_back(sym_item);
-                        have_already = true;
-                        break;
-                    }
-                }
-                if (!have_already)
-                {
-                    modified.emplace_back(document_symbol_item_s { *copy_occ.name,
-                        document_symbol_kind::MACRO,
-                        copy_occ.occurence_range,
-                        document_symbol_list_s { sym_item } });
-                }
+                item.children.push_back(sym_item);
+                have_already = true;
+                break;
             }
+        }
+        if (!have_already)
+        {
+            modified.emplace_back(*copy_occ.name,
+                document_symbol_kind::MACRO,
+                copy_occ.occurence_range,
+                document_symbol_list_s { std::move(sym_item) });
         }
     }
 }
@@ -308,8 +286,8 @@ bool do_not_need_nodes(
 }
 
 void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
-    const document_symbol_list_s& children,
-    const context::id_index& id,
+    document_symbol_list_s children,
+    context::id_index id,
     const context::symbol& sym,
     document_symbol_kind kind,
     unsigned long i) const
@@ -337,7 +315,7 @@ void lsp_context::document_symbol_symbol(document_symbol_list_s& modified,
         i++;
     }
     document_symbol_list_s* aux_list = &i_find->children;
-    aux_list->emplace_back(document_symbol_item_s { *id, kind, i_find->symbol_range, children });
+    aux_list->emplace_back(*id, kind, i_find->symbol_range, std::move(children));
 }
 
 void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& result) const
@@ -348,101 +326,94 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
     {
         if (sym.attributes().origin == context::symbol_origin::SECT)
         {
-            auto sect = hlasm_ctx_->ord_ctx.get_section(id);
-            if (sect == nullptr)
-                continue;
-            children_of_sects.try_emplace(sect, document_symbol_list_s {});
+            if (auto sect = hlasm_ctx_->ord_ctx.get_section(id))
+                children_of_sects.try_emplace(sect, document_symbol_list_s {});
         }
     }
 
     for (const auto& [id, sym] : symbol_list)
     {
-        if (sym.attributes().origin != context::symbol_origin::SECT)
+        if (sym.attributes().origin == context::symbol_origin::SECT)
+            continue;
+
+        const auto* sect =
+            sym.value().value_kind() == context::symbol_value_kind::RELOC && sym.value().get_reloc().bases().size() == 1
+            ? sym.value().get_reloc().bases().front().first.owner
+            : nullptr;
+        if (sect == nullptr || children_of_sects.find(sect) == children_of_sects.end())
         {
-            const auto& sect = sym.value().value_kind() == context::symbol_value_kind::RELOC
-                ? sym.value().get_reloc().bases()[0].first.owner
-                : nullptr;
-            if (children_of_sects.find(sect) == children_of_sects.end())
+            if (sym.proc_stack().size() == 1)
             {
-                if (sym.proc_stack().size() == 1)
-                {
-                    result.emplace_back(document_symbol_item_s { *id,
-                        document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
-                        { sym.symbol_location.pos, sym.symbol_location.pos } });
-                    continue;
-                }
+                result.emplace_back(*id,
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
+                    range(sym.symbol_location.pos));
+            }
+            else
+            {
                 document_symbol_symbol(result,
                     document_symbol_list_s {},
                     id,
                     sym,
                     document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
                     1);
-                continue;
             }
-
-            const auto& sect_sym = hlasm_ctx_->ord_ctx.get_symbol(sect->name);
+        }
+        else
+        {
+            const auto* sect_sym = hlasm_ctx_->ord_ctx.get_symbol(sect->name);
             auto& children = children_of_sects.find(sect)->second;
             unsigned long i = 1;
             if (do_not_need_nodes(sym.proc_stack(), sect_sym->proc_stack(), i))
             {
-                children.emplace_back(document_symbol_item_s { *id,
+                children.emplace_back(*id,
                     document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
-                    { sym.proc_stack()[0].proc_location.pos, sym.proc_stack()[0].proc_location.pos } });
-                continue;
+                    range(sym.proc_stack()[0].proc_location.pos));
             }
-            document_symbol_symbol(children,
-                document_symbol_list_s {},
-                id,
-                sym,
-                document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
-                i);
+            else
+            {
+                document_symbol_symbol(children,
+                    document_symbol_list_s {},
+                    id,
+                    sym,
+                    document_symbol_item_kind_mapping_symbol.at(sym.attributes().origin),
+                    i);
+            }
         }
     }
 
-    for (const auto& [sect, children] : children_of_sects)
+    for (auto&& [sect, children] : children_of_sects)
     {
         const auto& sym = *hlasm_ctx_->ord_ctx.get_symbol(sect->name);
         if (sym.proc_stack().size() == 1)
         {
-            result.emplace_back(document_symbol_item_s { *sect->name,
+            result.emplace_back(*sect->name,
                 document_symbol_item_kind_mapping_section.at(sect->kind),
-                { sym.symbol_location.pos, sym.symbol_location.pos },
-                children });
-            continue;
+                range(sym.symbol_location.pos),
+                std::move(children));
         }
-        document_symbol_symbol(
-            result, children, sect->name, sym, document_symbol_item_kind_mapping_section.at(sect->kind), 1);
+        else
+        {
+            document_symbol_symbol(result,
+                std::move(children),
+                sect->name,
+                sym,
+                document_symbol_item_kind_mapping_section.at(sect->kind),
+                1);
+        }
     }
 }
 
-void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result) const
+void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
+    const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache) const
 {
     for (auto& item : result)
     {
         if (item.kind == document_symbol_kind::MACRO)
         {
-            std::string document_uri = "";
-            for (const auto& [def, info] : macros_)
-            {
-                if (*def->id == item.name)
-                {
-                    document_uri = info->definition_location.file;
-                    break;
-                }
-            }
-            for (const auto& [def, info] : hlasm_ctx_->copy_members())
-            {
-                if (*info->name == item.name)
-                {
-                    document_uri = info->definition_location.file;
-                    break;
-                }
-            }
-            if (document_uri == "")
-            {
+            auto uri = name_to_uri_cache.find(item.name);
+            if (uri == name_to_uri_cache.end() || uri->second.empty())
                 return;
-            }
-            const auto& file = files_.find(document_uri);
+            const auto& file = files_.find(std::string(uri->second));
             if (file != files_.end())
             {
                 if (file->second->type == file_type::MACRO)
@@ -451,23 +422,7 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
                     document_symbol_copy(item.children, file->second->get_occurences(), file->first, item.symbol_range);
             }
         }
-        document_symbol_opencode_var_seq_symbol_aux(item.children);
-    }
-}
-
-void lsp_context::document_symbol_opencode_var_seq_symbol(
-    const std::string& document_uri, document_symbol_list_s& result) const
-{
-    document_symbol_opencode_var_seq_symbol_aux(result);
-
-    auto copy_occs = copy_occurences(document_uri);
-    for (const auto& sym : opencode_->variable_definitions)
-    {
-        if (!belongs_to_copyfile(document_uri, sym.def_position, sym.name))
-        {
-            result.emplace_back(document_symbol_item_s {
-                *sym.name, document_symbol_kind::VAR, { sym.def_position, sym.def_position } });
-        }
+        document_symbol_opencode_var_seq_symbol_aux(item.children, name_to_uri_cache);
     }
 }
 
@@ -477,6 +432,12 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
     const auto& file = files_.find(document_uri);
     if (file == files_.end())
         return result;
+
+    std::unordered_map<std::string_view, std::string_view> name_to_uri;
+    for (const auto& [def, info] : macros_)
+        name_to_uri.insert_or_assign(*def->id, info->definition_location.file);
+    for (const auto& [def, info] : hlasm_ctx_->copy_members())
+        name_to_uri.insert_or_assign(*info->name, info->definition_location.file);
 
     switch (file->second->type)
     {
@@ -490,7 +451,13 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
 
         default:
             document_symbol_opencode_ord_symbol(result);
-            document_symbol_opencode_var_seq_symbol(document_uri, result);
+            document_symbol_opencode_var_seq_symbol_aux(result, name_to_uri);
+
+            for (const auto& sym : opencode_->variable_definitions)
+            {
+                if (!belongs_to_copyfile(document_uri, sym.def_position, sym.name))
+                    result.emplace_back(*sym.name, document_symbol_kind::VAR, range(sym.def_position));
+            }
             break;
     }
     return result;
@@ -531,6 +498,9 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
         distribute_macro_i(m);
 
     distribute_file_occurences(opencode_->file_occurences);
+
+    for (auto& [name, file] : files_)
+        file->sort_occurrences();
 }
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const
