@@ -29,7 +29,9 @@ SEC1 DSECT
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX = "AUX", E = "E";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -73,7 +75,9 @@ AUX3 LR    1,1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string SEC0 = "SEC0", SEC1 = "SEC1", AUX0 = "AUX0", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3", E = "E";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -129,7 +133,9 @@ E   EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     document_symbol_list_s expected = {};
     EXPECT_EQ(outline, expected);
 }
@@ -146,7 +152,9 @@ E   EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC = "MAC", E = "E", AUX = "AUX";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -190,7 +198,9 @@ AUX2 LR  1,1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -253,7 +263,9 @@ AUX3 LR 1,1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC1 = "MAC1", E1 = "E1", MAC2 = "MAC2", E2 = "E2", AUX1 = "AUX1", AUX2 = "AUX2", AUX3 = "AUX3",
                 SEC = "SEC";
     document_symbol_list_s expected = document_symbol_list_s {
@@ -346,7 +358,9 @@ E3   EQU 1
 )";
     analyzer a(input);
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC1 = "MAC1", MAC2 = "MAC2", E1 = "E1", E2 = "E2", E3 = "E3", AUX1 = "AUX1", AUX2 = "AUX2",
                 AUX3 = "AUX3", AUX4 = "AUX4", SEC1 = "SEC1", SEC2 = "SEC2";
     document_symbol_list_s expected = document_symbol_list_s {
@@ -446,7 +460,9 @@ AUX LR  1,1
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC1 = "MAC1", AUX = "AUX", E = "E";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -501,7 +517,9 @@ E2   EQU  1
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
     document_symbol_list_s expected = document_symbol_list_s {
@@ -627,7 +645,9 @@ E2   EQU  1
     });
     analyzer a(opencode, analyzer_options(&mock));
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2";
     document_symbol_list_s expected = document_symbol_list_s {
@@ -767,7 +787,9 @@ E4   EQU  1
     });
     analyzer a(opencode, analyzer_options(&mock));
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string MAC0 = "MAC0", AUX0 = "AUX0", MAC1 = "MAC1", AUX1 = "AUX1", MAC2 = "MAC2", AUX2 = "AUX2", SEC0 = "SEC0",
                 SEC1 = "SEC1", E0 = "E0", E1 = "E1", E2 = "E2", MAC3 = "MAC3", AUX3 = "AUX3", E3 = "E3", MAC4 = "MAC4",
                 AUX4 = "AUX4", E4 = "E4";
@@ -881,7 +903,9 @@ TEST(lsp_context_document_symbol, ord_copy)
     mock_parse_lib_provider mock({ { "COPYFILE1", "" } });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     document_symbol_list_s expected = document_symbol_list_s {};
     EXPECT_EQ(outline, expected);
 }
@@ -900,7 +924,9 @@ AUX1 LR   1,1
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string E0 = "E0", AUX0 = "AUX0", E1 = "E1", AUX1 = "AUX1", COPYFILE1 = "COPYFILE1";
     document_symbol_list_s expected = document_symbol_list_s {
         document_symbol_item_s {
@@ -969,7 +995,9 @@ EM1  EQU  1
     });
     analyzer a(opencode, analyzer_options { &mock });
     a.analyze();
-    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("");
+
+    const auto limit = 1000LL;
+    document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     std::string EM0 = "EM0", AM0 = "AM0", EM1 = "EM1", AM1 = "AM1", EC0 = "EC0", AC0 = "AC0", EC1 = "EC1", AC1 = "AC1",
                 EC2 = "EC2", AC2 = "AC2", EC3 = "EC3", AC3 = "AC3", COPYFILE1 = "COPYFILE1", COPYFILE2 = "COPYFILE2",
                 COPYFILE3 = "COPYFILE3", MAC0 = "MAC0", MAC1 = "MAC1", SEC1 = "SEC1", SEC2 = "SEC2";

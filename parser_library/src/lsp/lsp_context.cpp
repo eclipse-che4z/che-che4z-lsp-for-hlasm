@@ -453,12 +453,15 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
             {
                 if (file->second->type == file_type::MACRO)
                 {
-                    item.children += document_symbol_macro(file->first, item.symbol_range);
+                    auto tmp = document_symbol_macro(file->first, item.symbol_range);
+                    item.children.insert(
+                        item.children.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
                 }
                 if (file->second->type == file_type::COPY)
                 {
-                    item.children +=
-                        document_symbol_copy(file->second->get_occurences(), file->first, item.symbol_range);
+                    auto tmp = document_symbol_copy(file->second->get_occurences(), file->first, item.symbol_range);
+                    item.children.insert(
+                        item.children.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
                 }
             }
         }
@@ -482,7 +485,7 @@ void lsp_context::document_symbol_opencode_var_seq_symbol(
     }
 }
 
-document_symbol_list_s lsp_context::document_symbol(const std::string& document_uri) const
+document_symbol_list_s lsp_context::document_symbol(const std::string& document_uri, long long limit) const
 {
     const auto& file = files_.find(document_uri);
     if (file == files_.end())

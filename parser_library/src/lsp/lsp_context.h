@@ -49,7 +49,7 @@ public:
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
-    document_symbol_list_s document_symbol(const std::string& document_uri) const override;
+    document_symbol_list_s document_symbol(const std::string& document_uri, long long limit) const override;
 
 private:
     void add_file(file_info file_i);
