@@ -822,8 +822,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
 {
     const auto& label = stmt.label_ref();
 
-    check(stmt, hlasm_ctx, checker_, *this);
-
+    if (!check(stmt, hlasm_ctx, checker_, *this))
+        return;
     if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ))
     {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
@@ -840,6 +840,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
             {
                 add_diagnostic(
                     diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
+                return;
             }
         }
     }
