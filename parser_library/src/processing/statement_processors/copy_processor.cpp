@@ -69,6 +69,7 @@ void copy_processor::end_processing()
     }
 
     hlasm_ctx.pop_statement_processing();
+
     listener_.finish_copy_member(std::move(result_));
 }
 
