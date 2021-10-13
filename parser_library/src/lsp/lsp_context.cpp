@@ -400,6 +400,7 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
         }
         else
         {
+            ++limit; // already counted
             document_symbol_symbol(result,
                 std::move(children),
                 sect->name,
