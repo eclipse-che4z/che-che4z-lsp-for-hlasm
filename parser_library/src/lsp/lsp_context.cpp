@@ -476,10 +476,8 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
             break;
     }
     if (limit <= 0)
-    {
-        result.insert(
-            result.begin(), document_symbol_item_s("Outline may be truncated", document_symbol_kind::DUMMY, range()));
-    }
+        result.emplace(result.begin(), "Outline may be truncated", document_symbol_kind::DUMMY, range());
+
     return result;
 }
 
@@ -519,8 +517,8 @@ void lsp_context::add_opencode(opencode_info_ptr opencode_i, text_data_ref_t tex
 
     distribute_file_occurences(opencode_->file_occurences);
 
-    for (auto& [name, file] : files_)
-        file->sort_occurrences();
+    for (const auto& [name, file] : files_)
+        file->process_occurrences();
 }
 
 macro_info_ptr lsp_context::get_macro_info(context::id_index macro_name) const

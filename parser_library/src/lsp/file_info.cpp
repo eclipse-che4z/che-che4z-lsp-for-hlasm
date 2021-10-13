@@ -57,10 +57,11 @@ occurence_scope_t file_info::find_occurence_with_scope(position pos) const
     const symbol_occurence* found = nullptr;
 
     auto l = std::lower_bound(occurences.begin(), occurences.end(), pos, [](const auto& occ, const auto& p) {
-        return occ.occurence_range.start.line < p.line;
+        return occ.occurence_range.end.line < p.line;
     });
+    auto it_limit = occurences_start_limit.begin() + std::distance(occurences.begin(), l);
     // find in occurences
-    for (auto it = l; it != occurences.end() && it->occurence_range.start.line <= pos.line; ++it)
+    for (auto it = l; it != occurences.end() && *it_limit <= pos.line; ++it, ++it_limit)
     {
         const auto& occ = *it;
         if (is_in_range(pos, occ.occurence_range))
@@ -99,8 +100,7 @@ std::vector<position> file_info::find_references(
 
 void file_info::update_occurences(const occurence_storage& occurences_upd)
 {
-    for (const auto& occ : occurences_upd)
-        occurences.emplace_back(occ);
+    occurences.insert(occurences.end(), occurences_upd.begin(), occurences_upd.end());
 }
 
 void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
@@ -151,11 +151,19 @@ std::vector<file_slice_t> file_slice_t::transform_slices(
 
 const std::vector<symbol_occurence>& file_info::get_occurences() const { return occurences; }
 
-void file_info::sort_occurrences()
+void file_info::process_occurrences()
 {
     std::sort(occurences.begin(), occurences.end(), [](const auto& l, const auto& r) {
-        return l.occurence_range.start.line < r.occurence_range.start.line;
+        return std::tie(l.occurence_range.end.line, l.occurence_range.start.line)
+            < std::tie(r.occurence_range.end.line, r.occurence_range.start.line);
     });
+
+    occurences_start_limit.resize(occurences.size());
+
+    std::transform(occurences.rbegin(),
+        occurences.rend(),
+        occurences_start_limit.rbegin(),
+        [min = (size_t)-1](const auto& occ) mutable { return min = std::min(min, occ.occurence_range.start.line); });
 }
 
 } // namespace hlasm_plugin::parser_library::lsp
