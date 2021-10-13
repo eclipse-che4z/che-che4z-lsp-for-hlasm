@@ -424,8 +424,8 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
         auto uri = name_to_uri_cache.find(item.name);
         if (uri == name_to_uri_cache.end() || uri->second.empty())
             return;
-        const auto& file = files_.find(std::string(uri->second));
-        if (file != files_.end())
+
+        if (const auto& file = files_.find(std::string(uri->second)); file != files_.end())
         {
             if (file->second->type == file_type::MACRO)
                 document_symbol_macro(item.children, file->first, item.symbol_range, limit);
