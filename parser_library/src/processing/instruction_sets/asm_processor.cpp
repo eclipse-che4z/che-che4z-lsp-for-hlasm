@@ -643,6 +643,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("CNOP"), [this](rebuilt_statement stmt) { process_CNOP(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
 
     return table;
 }
@@ -817,7 +818,32 @@ void asm_processor::process_START(rebuilt_statement stmt)
 
     hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
+void asm_processor::process_END(rebuilt_statement stmt)
+{
+    const auto& label = stmt.label_ref();
+    check(stmt, hlasm_ctx, checker_, *this);
 
+    if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ))
+    {
+        add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
+    }
+    if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
+    {
+        if (stmt.operands_ref().value[0]->access_asm() != nullptr
+            && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
+        {
+            auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
+                hlasm_ctx.ord_ctx);
+
+            if (symbol.value_kind() == context::symbol_value_kind::ABS)
+            {
+                add_diagnostic(
+                    diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
+            }
+        }
+    }
+    hlasm_ctx.end_reached();
+}
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
     if (!check(stmt, hlasm_ctx, checker_, *this))

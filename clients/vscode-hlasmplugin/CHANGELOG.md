@@ -8,6 +8,7 @@
 - START, MHELP instructions
 - Wildcard support in library specification
 - Support for SYSTEM_ID system variable.
+- END instruction
 
 #### Fixed
 - Preserve mixed-case labels on macro calls
