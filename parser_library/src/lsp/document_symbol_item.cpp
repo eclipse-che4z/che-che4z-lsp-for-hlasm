@@ -14,6 +14,8 @@
 
 #include "document_symbol_item.h"
 
+#include "utils/similar.h"
+
 namespace hlasm_plugin::parser_library::lsp {
 
 document_symbol_item_s::document_symbol_item_s(std::string name, document_symbol_kind kind, range symbol_range)
@@ -31,32 +33,15 @@ document_symbol_item_s::document_symbol_item_s(
     , children(children)
 {}
 
-bool is_permutation_with_permutations(const document_symbol_list_s& lhs, const document_symbol_list_s& rhs)
+bool is_similar(const document_symbol_list_s& l, const document_symbol_list_s& r)
 {
-    if (lhs.size() != rhs.size())
-    {
-        return false;
-    }
-    for (auto& item : lhs)
-    {
-        auto i = std::find(rhs.begin(), rhs.end(), item);
-        if (i == rhs.end())
-        {
-            return false;
-        }
-        if (!is_permutation_with_permutations(item.children, i->children))
-        {
-            return false;
-        }
-    }
-    return true;
+    return l.size() == r.size() && std::is_permutation(l.begin(), l.end(), r.begin(), utils::is_similar);
 }
 
-bool operator==(const document_symbol_item_s& lhs, const document_symbol_item_s& rhs)
+bool is_similar(const document_symbol_item_s& l, const document_symbol_item_s& r)
 {
-    return lhs.name == rhs.name && lhs.kind == rhs.kind && lhs.symbol_range == rhs.symbol_range
-        && lhs.symbol_selection_range == rhs.symbol_selection_range
-        && is_permutation_with_permutations(lhs.children, rhs.children);
+    return l.name == r.name && l.kind == r.kind && l.symbol_range == r.symbol_range
+        && l.symbol_selection_range == r.symbol_selection_range && is_similar(l.children, r.children);
 }
 
 } // namespace hlasm_plugin::parser_library::lsp

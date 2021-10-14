@@ -36,7 +36,7 @@ TEST(lsp_context_document_symbol_var_seq, 1)
         document_symbol_item_s { "V2", document_symbol_kind::VAR, range { { 1, 0 }, { 1, 0 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
 }
 
 TEST(lsp_context_document_symbol_var_seq, 2)
@@ -81,8 +81,8 @@ EM1   EQU     1
         document_symbol_item_s { "SM1", document_symbol_kind::SEQ, range { { 5, 0 }, { 5, 0 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac1, expected_mac1));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_mac1, expected_mac1));
 }
 
 TEST(lsp_context_document_symbol_var_seq, 3)
@@ -150,9 +150,9 @@ EM2   EQU     1
         document_symbol_item_s { "SM2", document_symbol_kind::SEQ, range { { 5, 0 }, { 5, 0 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac1, expected_mac1));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac2, expected_mac2));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_mac1, expected_mac1));
+    EXPECT_TRUE(is_similar(outline_mac2, expected_mac2));
 }
 
 TEST(lsp_context_document_symbol_var_seq, 4)
@@ -217,9 +217,9 @@ EC1   EQU     1)" },
         document_symbol_item_s { "SC1", document_symbol_kind::SEQ, range { { 3, 0 }, { 3, 4 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac1, expected_mac1));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_copyfile1, expected_copyfile1));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_mac1, expected_mac1));
+    EXPECT_TRUE(is_similar(outline_copyfile1, expected_copyfile1));
 }
 
 TEST(lsp_context_document_symbol_var_seq, 5)
@@ -284,9 +284,9 @@ EC1   EQU     1
         document_symbol_item_s { "SC1", document_symbol_kind::SEQ, range { { 3, 0 }, { 3, 4 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac1, expected_mac1));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_copyfile1, expected_copyfile1));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_mac1, expected_mac1));
+    EXPECT_TRUE(is_similar(outline_copyfile1, expected_copyfile1));
 }
 
 TEST(lsp_context_document_symbol_var_seq, 6)
@@ -359,7 +359,7 @@ EC1   EQU     1
         document_symbol_item_s { "SC1", document_symbol_kind::SEQ, range { { 3, 0 }, { 3, 4 } } }
     };
 
-    EXPECT_TRUE(is_permutation_with_permutations(outline_opencode, expected_opencode));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_mac1, expected_mac1));
-    EXPECT_TRUE(is_permutation_with_permutations(outline_copyfile1, expected_copyfile1));
+    EXPECT_TRUE(is_similar(outline_opencode, expected_opencode));
+    EXPECT_TRUE(is_similar(outline_mac1, expected_mac1));
+    EXPECT_TRUE(is_similar(outline_copyfile1, expected_copyfile1));
 }

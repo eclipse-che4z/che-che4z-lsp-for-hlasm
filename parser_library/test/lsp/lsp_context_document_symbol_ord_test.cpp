@@ -57,7 +57,7 @@ SEC1 DSECT
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_sect_2)
@@ -120,7 +120,7 @@ AUX3 LR    1,1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_1)
@@ -137,7 +137,7 @@ E   EQU 1
     const auto limit = 1000LL;
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     document_symbol_list_s expected = {};
-    EXPECT_EQ(outline, expected);
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_2)
@@ -175,7 +175,7 @@ E   EQU 1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_3)
@@ -238,7 +238,7 @@ AUX2 LR  1,1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_4)
@@ -330,7 +330,7 @@ AUX3 LR 1,1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_5)
@@ -442,7 +442,7 @@ E3   EQU 1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_6)
@@ -483,7 +483,7 @@ AUX LR  1,1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_7)
@@ -610,7 +610,7 @@ E2   EQU  1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_8)
@@ -738,7 +738,7 @@ E2   EQU  1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_macro_9)
@@ -891,7 +891,7 @@ E4   EQU  1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_copy)
@@ -907,7 +907,7 @@ TEST(lsp_context_document_symbol, ord_copy)
     const auto limit = 1000LL;
     document_symbol_list_s outline = a.context().lsp_ctx->document_symbol("", limit);
     document_symbol_list_s expected = document_symbol_list_s {};
-    EXPECT_EQ(outline, expected);
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_copy_2)
@@ -957,7 +957,7 @@ AUX1 LR   1,1
             range { { 0, 0 }, { 0, 0 } },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 TEST(lsp_context_document_symbol, ord_copy_3)
@@ -1109,7 +1109,7 @@ EM1  EQU  1
             },
         },
     };
-    EXPECT_TRUE(is_permutation_with_permutations(outline, expected));
+    EXPECT_TRUE(is_similar(outline, expected));
 }
 
 size_t recursive_counter(const document_symbol_list_s& x)

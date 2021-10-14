@@ -22,6 +22,7 @@
 
 #include "context/instruction.h"
 #include "ebcdic_encoding.h"
+#include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 namespace {
@@ -143,7 +144,7 @@ void lsp_context::document_symbol_macro(
     }
 }
 
-bool lsp_context::belongs_to_copyfile(const std::string& document_uri, position pos, const context::id_index& id) const
+bool lsp_context::belongs_to_copyfile(const std::string& document_uri, position pos, context::id_index id) const
 {
     const auto* aux = find_occurence_with_scope(document_uri, pos).first;
     return aux == nullptr || *aux->name != *id;
@@ -168,7 +169,7 @@ void lsp_context::document_symbol_copy(document_symbol_list_s& result,
                 r.value_or(range(aux,
                     position(aux.line, aux.column + occ.occurence_range.end.column - occ.occurence_range.start.column)))
             };
-            if (std::find(result.begin(), result.end(), item) == result.end())
+            if (std::none_of(result.begin(), result.end(), utils::is_similar_to(item)))
             {
                 result.push_back(item);
                 --limit;
@@ -198,7 +199,8 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
             {
                 if (new_occ.kind == occurence_kind::VAR
                     || new_occ.kind == occurence_kind::SEQ
-                        && std::find(occurences.begin(), occurences.end(), new_occ.name) == occurences.end())
+                        && std::none_of(
+                            occurences.begin(), occurences.end(), [id = new_occ.name](auto e) { return id == e; }))
                 {
                     occurences.push_back(new_occ.name);
                 }
@@ -210,7 +212,7 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
 }
 
 void lsp_context::modify_with_copy(document_symbol_list_s& modified,
-    const context::id_index& sym_name,
+    context::id_index sym_name,
     const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
     const document_symbol_kind kind,
     long long& limit) const
@@ -219,7 +221,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
     {
         if (limit <= 0)
             return;
-        if (std::find(occs.begin(), occs.end(), sym_name) == occs.end())
+        if (std::none_of(occs.begin(), occs.end(), [sym_name](auto e) { return e == sym_name; }))
             continue;
 
         bool have_already = false;
@@ -227,7 +229,7 @@ void lsp_context::modify_with_copy(document_symbol_list_s& modified,
         for (auto& item : modified)
         {
             if (item.name == *copy_occ.name
-                && std::find(item.children.begin(), item.children.end(), sym_item) == item.children.end())
+                && std::none_of(item.children.begin(), item.children.end(), utils::is_similar_to(sym_item)))
             {
                 item.children.push_back(sym_item);
                 have_already = true;
