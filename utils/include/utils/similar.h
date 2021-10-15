@@ -64,18 +64,16 @@ constexpr detail::is_similar_t is_similar;
 template<typename T>
 class is_similar_to
 {
-    T value;
+    const T& value;
 
 public:
-    is_similar_to(T&& t)
-        : value(std::forward<T>(t))
+    is_similar_to(const T& t)
+        : value(t)
     {}
-
+    is_similar_to(T&&) = delete;
 
     bool operator()(const T& r) const { return is_similar(value, r); }
 };
-template<typename T>
-is_similar_to(T&) -> is_similar_to<const T&>;
 
 } // namespace hlasm_plugin::utils
 
