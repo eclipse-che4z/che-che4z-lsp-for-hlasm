@@ -101,7 +101,7 @@ public:
         const char* document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
 
     virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
-    virtual document_symbol_list document_symbol(const char* document_uri);
+    virtual document_symbol_list document_symbol(const char* document_uri, long long limit);
 
     virtual void configuration_changed(const lib_config& new_config);
 
