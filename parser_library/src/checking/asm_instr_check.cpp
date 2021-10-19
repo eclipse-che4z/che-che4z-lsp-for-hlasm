@@ -1300,7 +1300,7 @@ bool ainsert::check(const std::vector<const asm_operand*>& to_check,
     auto second = get_simple_operand(to_check[1]);
     // check first operand
     if (first == nullptr || first->operand_identifier.size() < 2
-        || first->operand_identifier.size() > string_max_length)
+        || first->operand_identifier.size() > string_max_length + 2) // quotes
     {
         add_diagnostic(diagnostic_op::error_A157_AINSERT_first_op_size(to_check[0]->operand_range));
         return false;

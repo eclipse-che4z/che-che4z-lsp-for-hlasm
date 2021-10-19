@@ -744,3 +744,41 @@ A        DC C
     EXPECT_EQ(d.related[0].location.uri, "AINSERT:1");
     EXPECT_EQ(d.related[1].location.uri, "COPYBOOK");
 }
+
+TEST(ainsert, argument_limit)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+&C       SETC (80)' '
+         AINSERT '&C',BACK
+         MEND
+         MAC
+)";
+
+    analyzer a(input);
+
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(a.diags().empty());
+}
+
+TEST(ainsert, argument_limit_over)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+&C       SETC (81)' '
+         AINSERT '&C',BACK
+         MEND
+         MAC
+)";
+
+    analyzer a(input);
+
+    a.analyze();
+    a.collect_diags();
+
+    ASSERT_TRUE(matches_message_codes(a.diags(), { "A157" }));
+}

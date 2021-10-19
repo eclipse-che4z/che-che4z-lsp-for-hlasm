@@ -27,6 +27,7 @@
 - Operands of dynamically generated statements may be incorrectly parsed
 - Infinite loop during lookahead processing when model statement is located in copybook
 - DOT operator in string concatenation is optional
+- AINSERT operand length validation
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
