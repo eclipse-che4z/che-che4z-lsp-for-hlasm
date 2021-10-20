@@ -24,7 +24,7 @@
 
 namespace hlasm_plugin::language_server {
 
-server::server(parser_library::workspace_manager& ws_mngr, json_sink* telemetry_provider)
+server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_provider)
     : ws_mngr_(ws_mngr)
     , telemetry_provider_(telemetry_provider)
 {}
@@ -62,7 +62,7 @@ void server::call_method(const std::string& method, const json& id, const json& 
         {
             (void)e;
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
-            telemetry_error("call_method/json_error");
+            send_telemetry_error("call_method/json_error");
         }
     }
     else
@@ -71,40 +71,33 @@ void server::call_method(const std::string& method, const json& id, const json& 
         ss << "Method " << method << " is not available on this server.";
         LOG_WARNING(ss.str());
 
-        telemetry_error("method_not_implemented", method);
+        send_telemetry_error("method_not_implemented", method);
     }
 }
 
-server::telemetry_metrics_info server::get_telemetry_details() { return {}; }
+telemetry_metrics_info server::get_telemetry_details() { return {}; }
 
-void server::telemetry_error(std::string where, std::string what)
+void server::send_telemetry_error(std::string where, std::string what)
 {
     if (!telemetry_provider_)
         return;
 
-    json properties;
-    properties["error_type"] = where;
-    if (what != "")
-        properties["error_details"] = what;
-    telemetry_provider_->write(
-        { { "method_name", "server_error" }, { "properties", properties }, { "measurements", {} } });
+    telemetry_provider_->send_telemetry(telemetry_error { where, what });
 }
 
 void server::telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds)
 {
     if (log_level == telemetry_log_level::NO_TELEMETRY)
         return;
+    if (!telemetry_provider_)
+        return;
 
-    telemetry_metrics_info details;
+    telemetry_info info { method_name, seconds };
+
     if (log_level == telemetry_log_level::LOG_WITH_PARSE_DATA)
-        details = get_telemetry_details();
+        info.metrics = get_telemetry_details();
 
-    details.metrics["duration"] = seconds;
-
-    if (telemetry_provider_)
-        telemetry_provider_->write({ { "method_name", method_name },
-            { "properties", details.properties },
-            { "measurements", details.metrics } });
+    telemetry_provider_->send_telemetry(info);
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }

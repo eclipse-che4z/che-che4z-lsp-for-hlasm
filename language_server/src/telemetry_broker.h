@@ -17,34 +17,28 @@
 
 #include <mutex>
 
+#include "telemetry_sink.h"
+
 namespace hlasm_plugin::language_server {
 
 // The purpose of this class is to send telemetry messages from dap_servers to lsp_server. That requires
 // synchronization, because both servers may be created and destructed in parallel.
-class telemetry_broker : public json_sink
+class telemetry_broker : public telemetry_sink
 {
-    json_sink* telemetry_sink = nullptr;
+    telemetry_sink* telem_sink = nullptr;
     std::mutex write_mutex;
 
 public:
-    // Inherited via json_sink
-    void write(const nlohmann::json& msg) override
+    void send_telemetry(const telemetry_message& message) override
     {
         std::lock_guard guard(write_mutex);
-        if (telemetry_sink)
-            telemetry_sink->write(msg);
-    }
-    void write(nlohmann::json&& msg) override
-    {
-        std::lock_guard guard(write_mutex);
-        if (telemetry_sink)
-            telemetry_sink->write(std::move(msg));
+        telem_sink->send_telemetry(message);
     }
 
-    void set_telemetry_sink(json_sink* sink)
+    void set_telemetry_sink(telemetry_sink* sink)
     {
         std::lock_guard guard(write_mutex);
-        telemetry_sink = sink;
+        telem_sink = sink;
     }
 };
 

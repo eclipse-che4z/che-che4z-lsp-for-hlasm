@@ -24,6 +24,7 @@
 #include "../parsing_metadata_collector.h"
 #include "../server.h"
 #include "nlohmann/json.hpp"
+#include "telemetry_sink.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::lsp {
@@ -34,7 +35,7 @@ namespace hlasm_plugin::language_server::lsp {
 class server final : public hlasm_plugin::language_server::server,
                      public parser_library::diagnostics_consumer,
                      public parser_library::message_consumer,
-                     public json_sink
+                     public telemetry_sink
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -43,10 +44,8 @@ public:
     // Parses LSP (JSON RPC) message and calls corresponding method.
     void message_received(const json& message) override;
 
-    // Inherited via json_sink
-    // Takes json with telemetry info and sends it through LSP
-    void write(const nlohmann::json&) override;
-    void write(nlohmann::json&&) override;
+    // Inherited via telemetry_sink
+    void send_telemetry(const telemetry_message& message) override;
 
 protected:
     // Sends request to LSP client using send_message_provider.

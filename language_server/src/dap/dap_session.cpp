@@ -43,7 +43,7 @@ void session::thread_routine()
     }
 }
 session::session(
-    size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telem_reporter)
+    size_t s_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, telemetry_sink* telem_reporter)
     : session_id(message_wrapper::generate_method_name(s_id))
     , ws_mngr(&ws)
     , msg_wrapper(out, s_id)

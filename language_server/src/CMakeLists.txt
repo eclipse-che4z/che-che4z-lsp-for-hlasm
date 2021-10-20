@@ -36,6 +36,8 @@ target_sources(language_server_base PRIVATE
 	server_streams.h
 	stream_helper.h
 	telemetry_broker.h
+	telemetry_info.h
+	telemetry_sink.h
 )
 
 if(EMSCRIPTEN)

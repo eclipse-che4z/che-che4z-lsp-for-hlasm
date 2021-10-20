@@ -55,7 +55,7 @@ void session_manager::handle_registration_request(size_t new_id)
     sessions.try_emplace(new_session->get_session_id(), std::move(new_session));
 }
 session_manager::session_manager(
-    hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, json_sink* telem_reporter)
+    hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out, telemetry_sink* telem_reporter)
     : ws_mngr(&ws)
     , out_stream(&out)
     , telemetry_reporter(telem_reporter)

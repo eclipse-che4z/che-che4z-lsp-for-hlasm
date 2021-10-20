@@ -13,6 +13,7 @@
  */
 
 #include "nlohmann/json.hpp"
+#include "telemetry_info.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::parser_library {
@@ -39,4 +40,50 @@ void inline to_json(nlohmann::json& j, const parser_library::performance_metrics
         { "Files", metrics.files } };
 }
 
+void inline to_json(nlohmann::json& j, const parser_library::parsing_metadata& metadata)
+{
+    j = nlohmann::json { { "properties", metadata.ws_info }, { "measurements", metadata.metrics } };
+}
+
 } // namespace hlasm_plugin::parser_library
+
+
+namespace hlasm_plugin::language_server {
+
+void inline to_json(nlohmann::json& j, const telemetry_metrics_info& metrics)
+{
+    j = metrics.metadata;
+    j["measurements"]["error_count"] = metrics.error_count;
+    j["measurements"]["warning_count"] = metrics.warning_count;
+}
+
+void inline to_json(nlohmann::json& j, const telemetry_info& info)
+{
+    if (info.metrics.has_value())
+        j = *info.metrics;
+    else
+        j["properties"] = nlohmann::json::value_t::null;
+
+    j["measurements"]["duration"] = info.duration;
+    j["method_name"] = info.method_name;
+}
+
+void inline to_json(nlohmann::json& j, const telemetry_error& err)
+{
+    nlohmann::json properties;
+    properties["error_type"] = err.error_type;
+    if (err.error_details != "")
+        properties["error_details"] = err.error_details;
+    j = nlohmann::json { { "method_name", "server_error" }, { "properties", properties }, { "measurements", {} } };
+}
+
+void inline to_json(nlohmann::json& j, const telemetry_message& message)
+{
+    if (std::holds_alternative<telemetry_error>(message))
+        j = std::get<telemetry_error>(message);
+    else
+        j = std::get<telemetry_info>(message);
+}
+
+
+} // namespace hlasm_plugin::language_server
