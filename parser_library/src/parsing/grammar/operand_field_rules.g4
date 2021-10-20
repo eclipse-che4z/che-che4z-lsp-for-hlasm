@@ -242,7 +242,7 @@ op_rem_body_alt_mac returns [op_rem line]
 		last_mac_op=mac_op? last_remark=remark_o
 		{
 			if ($last_mac_op.ctx)
-				$line.operands.push_back(std::move($last_mac_op.op)); 
+				$line.operands.push_back(std::move($last_mac_op.op));
 			if ($last_remark.value)
 				$line.remarks.push_back(std::move(*$last_remark.value));
 		}
