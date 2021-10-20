@@ -51,10 +51,19 @@ mac_preproc_c returns [vs_ptr vs]
 	| NUM													{collector.add_hl_symbol(token_info(provider.get_range($NUM), hl_scopes::operand));}
 	| ORDSYMBOL												{collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));}
 	| dot									
-	| AMPERSAND ORDSYMBOL									
+	| AMPERSAND ORDSYMBOL
+	{
+		auto name = $ORDSYMBOL->getText();
+	}
+	(
+		CONTINUATION IGNORED* ORDSYMBOL
+		{
+			name += $ORDSYMBOL->getText();
+		}
+	)*
 	{
 		auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
-		$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add($ORDSYMBOL->getText()), std::vector<ca_expr_ptr>(), r);
+		$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r);
 		collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 	}
 	| AMPERSAND LPAR
