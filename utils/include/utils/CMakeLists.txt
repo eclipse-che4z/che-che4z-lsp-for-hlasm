@@ -14,4 +14,5 @@ target_sources(hlasm_utils PUBLIC
 	list_directory_rc.h
 	path.h
 	platform.h
+	similar.h
 )

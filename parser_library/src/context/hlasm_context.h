@@ -82,7 +82,7 @@ class hlasm_context
 
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
-
+    bool m_end_reached = false;
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -130,7 +130,8 @@ public:
     std::vector<copy_member_invocation>& opencode_copy_stack();
     // is open code being processed
     bool in_opencode() const { return source_stack_.size() == 1; }
-
+    bool get_end_reached() const { return m_end_reached; };
+    void end_reached();
     // gets names of whole copy nest
     std::vector<id_index> whole_copy_stack() const;
 

@@ -16,7 +16,14 @@
 parser grammar lookahead_rules; 
 
 look_lab_instr  returns [std::optional<std::string> op_text, range op_range]
-	: seq_symbol .*? EOF
+	: seq_symbol SPACE ORDSYMBOL (SPACE .*?)? EOF
+	{
+		collector.set_label_field($seq_symbol.ss,provider.get_range($seq_symbol.ctx));
+		auto instr_id = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
+		collector.set_instruction_field(instr_id,provider.get_range($ORDSYMBOL));
+		collector.set_operand_remark_field(provider.get_range($seq_symbol.ctx));
+	}
+	| seq_symbol .*? EOF
 	{
 		collector.set_label_field($seq_symbol.ss,provider.get_range($seq_symbol.ctx));
 		collector.set_instruction_field(provider.get_range($seq_symbol.ctx));

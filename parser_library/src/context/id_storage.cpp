@@ -76,4 +76,5 @@ id_storage::well_known_strings::well_known_strings(std::unordered_set<std::strin
     , ACTR(&*ptr.emplace("ACTR").first)
     , AREAD(&*ptr.emplace("AREAD").first)
     , ALIAS(&*ptr.emplace("ALIAS").first)
+    , END(&*ptr.emplace("END").first)
 {}

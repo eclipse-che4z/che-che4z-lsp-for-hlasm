@@ -47,22 +47,28 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
 {
     if (auto resolved = statement->access_resolved())
     {
+        auto opcode = resolved->opcode_ref().value;
+
         if (macro_nest_ == 0)
         {
             find_seq(*resolved);
             find_ord(*resolved);
         }
-        if (resolved->opcode_ref().value == macro_id)
+        if (opcode == macro_id)
         {
             process_MACRO();
         }
-        else if (resolved->opcode_ref().value == mend_id)
+        else if (opcode == mend_id)
         {
             process_MEND();
         }
-        else if (macro_nest_ == 0 && resolved->opcode_ref().value == copy_id)
+        else if (macro_nest_ == 0 && opcode == copy_id)
         {
             process_COPY(*resolved);
+        }
+        else if (opcode == hlasm_ctx.ids().well_known.END)
+        {
+            finished_flag_ = true;
         }
     }
 }

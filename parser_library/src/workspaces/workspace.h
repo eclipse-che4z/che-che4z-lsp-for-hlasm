@@ -102,7 +102,7 @@ public:
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
-    lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override;
+    lsp::document_symbol_list_s document_symbol(const std::string& document_uri, long long limit) const override;
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
     bool has_library(const std::string& library, const std::string& program) const override;
