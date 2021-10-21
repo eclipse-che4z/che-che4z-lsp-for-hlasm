@@ -88,6 +88,8 @@ export async function activate(context: vscode.ExtensionContext) {
     var hlasmpluginClient = new vscodelc.LanguageClient('Hlasmplugin Language Server', serverOptions, clientOptions);
     
     clientErrorHandler.defaultHandler = hlasmpluginClient.createDefaultErrorHandler();
+    // The objectToString is necessary, because telemetry reporter only takes objects with
+    // string properties and there are some boolean that we receive from the language server
     hlasmpluginClient.onTelemetry((object) => {telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements)});
 
     //asm contribution 
@@ -105,7 +107,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (serverVariant === 'native')
         startCheckingNativeClient(hlasmpluginClient);
-        
+
     let api = {
         getExtension(): vscodelc.LanguageClient {
             return hlasmpluginClient;
