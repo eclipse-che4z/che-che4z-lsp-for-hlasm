@@ -51,7 +51,6 @@ void server::call_method(const std::string& method, const json& id, const json& 
     {
         try
         {
-            std::chrono::steady_clock clock;
             auto start = std::chrono::steady_clock::now();
             (*found).second.handler(id, args);
             std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;

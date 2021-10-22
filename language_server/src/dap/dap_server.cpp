@@ -71,7 +71,7 @@ void server::message_received(const json& message)
         if (message.at("type") != "request")
         {
             LOG_WARNING(std::string("Invalid message receive: ") + message.dump());
-            send_telemetry_error("lsp_server/invalid_message");
+            send_telemetry_error("dap_server/invalid_message");
             return;
         }
         auto arguments = message.find("arguments");

@@ -32,7 +32,8 @@ public:
     void send_telemetry(const telemetry_message& message) override
     {
         std::lock_guard guard(write_mutex);
-        telem_sink->send_telemetry(message);
+        if (telem_sink)
+            telem_sink->send_telemetry(message);
     }
 
     void set_telemetry_sink(telemetry_sink* sink)
