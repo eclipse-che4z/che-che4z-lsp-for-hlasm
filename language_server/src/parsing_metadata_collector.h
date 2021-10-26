@@ -20,7 +20,7 @@
 
 namespace hlasm_plugin::language_server {
 
-struct parsing_metadata_collector : public parser_library::parsing_metadata_consumer
+struct parsing_metadata_collector final : public parser_library::parsing_metadata_consumer
 {
     void consume_parsing_metadata(const parser_library::parsing_metadata& metadata) override { data = metadata; }
 

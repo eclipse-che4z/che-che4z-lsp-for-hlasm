@@ -11,7 +11,6 @@
  * Contributors:
  *   Broadcom, Inc. - initial API and implementation
  */
-import * as path from "path";
 import * as vscode from "vscode";
 
 import TelemetryReporter from 'vscode-extension-telemetry';
@@ -30,25 +29,11 @@ export class Telemetry {
     private getExtensionVersion(): string {
         return vscode.extensions.getExtension(EXTENSION_ID).packageJSON.version;
     }
-    
-    private getExtensionPath(): string {
-        return vscode.extensions.getExtension(EXTENSION_ID).extensionPath;
-    }
 
-    /**
-     * This method returns the value of the instrumentation key necessary to create the telemetry reporter from an
-     * external file configuration. If the file doesn't exist, it returns a generic value that will not be valid
-     * for collect telemetry event.
-     */
     private getTelemetryKey(): string {
         if (this.telemetry_key === undefined)
             this.telemetry_key = Buffer.from(TELEMETRY_KEY_ENCODED, "base64").toString().trim();
         return this.telemetry_key;
-    }
-
-    private getTelemetryResourcePath() {
-        return vscode.Uri.file(
-            path.join(this.getExtensionPath(), "resources", "TELEMETRY_KEY")).fsPath;
     }
 
     constructor() {

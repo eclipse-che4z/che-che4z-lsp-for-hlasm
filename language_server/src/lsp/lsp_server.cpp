@@ -173,8 +173,6 @@ void server::register_methods()
 
 void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", json(message)); }
 
-// void server::write(const nlohmann::json& payload) { notify("telemetry/event", payload); }
-
 void empty_handler(json, const json&)
 {
     // Does nothing
