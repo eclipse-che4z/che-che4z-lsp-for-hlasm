@@ -339,7 +339,8 @@ jobs:
     needs: alpine-VSIX
     strategy:
       matrix:
-        theia: ["theiaide/theia", "theiaide/theia:next"]
+        theia: ["quay.io/zowe-explorer/theia:1.18.0"] 
+# theiaide images not supported anymore, replaced with a quay mirror until there is something official again. See also https://github.com/theia-ide/theia-apps/issues/496
     container:
       image: ${{ matrix.theia }}
       options: --user root
