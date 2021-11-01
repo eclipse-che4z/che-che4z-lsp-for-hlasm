@@ -22,7 +22,10 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "../language_server/src/parsing_metadata_collector.h"
+#include "../language_server/src/parsing_metadata_serialization.h"
 #include "config/pgm_conf.h"
+#include "diagnostic_counter.h"
 #include "nlohmann/json.hpp"
 #include "workspace_manager.h"
 #include "workspaces/file_impl.h"
@@ -59,47 +62,11 @@
  * - Files                    - total number of parsed files
  */
 
+using namespace hlasm_plugin;
+
 using json = nlohmann::json;
 
-class diagnostic_counter : public hlasm_plugin::parser_library::diagnostics_consumer
-{
-public:
-    void consume_diagnostics(hlasm_plugin::parser_library::diagnostic_list diagnostics) override
-    {
-        for (size_t i = 0; i < diagnostics.diagnostics_size(); i++)
-        {
-            auto diag_sev = diagnostics.diagnostics(i).severity();
-            if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::error)
-                error_count++;
-            else if (diag_sev == hlasm_plugin::parser_library::diagnostic_severity::warning)
-                warning_count++;
-            message_counts[diagnostics.diagnostics(i).code()]++;
-        }
-    }
-
-    void clear_counters()
-    {
-        error_count = 0;
-        warning_count = 0;
-        message_counts.clear();
-    }
-
-    size_t error_count = 0;
-    size_t warning_count = 0;
-
-    std::unordered_map<std::string, unsigned> message_counts;
-};
-
-class metrics_collector : public hlasm_plugin::parser_library::performance_metrics_consumer
-{
-public:
-    void consume_performance_metrics(const hlasm_plugin::parser_library::performance_metrics& metrics) override
-    {
-        metrics_ = metrics;
-    }
-
-    hlasm_plugin::parser_library::performance_metrics metrics_;
-};
+namespace {
 
 struct all_file_stats
 {
@@ -112,21 +79,6 @@ struct all_file_stats
     size_t reparsing_crashes = 0;
     size_t failed_file_opens = 0;
 };
-
-json get_top_messages(const std::unordered_map<std::string, unsigned>& msgs, size_t limit = 3)
-{
-    std::vector<std::pair<std::string, unsigned>> top_msgs(limit);
-
-    constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
-
-    const auto last = std::partial_sort_copy(msgs.begin(), msgs.end(), top_msgs.begin(), top_msgs.end(), cmp_msg);
-    top_msgs.erase(last, top_msgs.end());
-
-    json result = json::object();
-    for (auto&& [key, value] : top_msgs)
-        result[std::move(key)] = value;
-    return result;
-}
 
 json parse_one_file(const std::string& source_file,
     const std::string& ws_folder,
@@ -150,10 +102,10 @@ json parse_one_file(const std::string& source_file,
 
     // new workspace manager
     hlasm_plugin::parser_library::workspace_manager ws;
-    diagnostic_counter diag_counter;
+    hlasm_plugin::benchmark::diagnostic_counter diag_counter;
     ws.register_diagnostics_consumer(&diag_counter);
-    metrics_collector collector;
-    ws.register_performance_metrics_consumer(&collector);
+    hlasm_plugin::language_server::parsing_metadata_collector collector;
+    ws.register_parsing_metadata_consumer(&collector);
     // input folder as new workspace
     ws.add_workspace(ws_folder.c_str(), ws_folder.c_str());
 
@@ -179,18 +131,19 @@ json parse_one_file(const std::string& source_file,
         return json({ { "File", source_file }, { "Success", false }, { "Reason", "Crash" } });
     }
 
+    const auto& metrics = collector.data.metrics;
+
     auto c_end = std::clock();
     auto end = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    auto exec_statements = collector.metrics_.open_code_statements + collector.metrics_.copy_statements
-        + collector.metrics_.macro_statements + collector.metrics_.lookahead_statements
-        + collector.metrics_.reparsed_statements;
+    auto exec_statements = metrics.open_code_statements + metrics.copy_statements + metrics.macro_statements
+        + metrics.lookahead_statements + metrics.reparsed_statements;
     s.average_stmt_ms += (exec_statements / (double)time);
-    s.average_line_ms += collector.metrics_.lines / (double)time;
-    s.all_files += collector.metrics_.files;
+    s.average_line_ms += metrics.lines / (double)time;
+    s.all_files += metrics.files;
     s.whole_time += time;
 
-    auto top_messages = get_top_messages(diag_counter.message_counts);
+    auto top_messages = hlasm_plugin::benchmark::get_top_messages(diag_counter.message_counts);
 
     json result({ { "File", source_file },
         { "Success", true },
@@ -198,23 +151,16 @@ json parse_one_file(const std::string& source_file,
         { "Warnings", diag_counter.warning_count },
         { "Wall Time (ms)", time },
         { "CPU Time (ms/n)", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC },
-        { "Open Code Statements", collector.metrics_.open_code_statements },
-        { "Copy Statements", collector.metrics_.copy_statements },
-        { "Macro Statements", collector.metrics_.macro_statements },
-        { "Copy Def Statements", collector.metrics_.copy_def_statements },
-        { "Macro Def Statements", collector.metrics_.macro_def_statements },
-        { "Lookahead Statements", collector.metrics_.lookahead_statements },
-        { "Reparsed Statements", collector.metrics_.reparsed_statements },
-        { "Continued Statements", collector.metrics_.continued_statements },
-        { "Non-continued Statements", collector.metrics_.non_continued_statements },
         { "Executed Statements", exec_statements },
-        { "Lines", collector.metrics_.lines },
         { "ExecStatement/ms", exec_statements / (double)time },
-        { "Line/ms", collector.metrics_.lines / (double)time },
-        { "Files", collector.metrics_.files },
+        { "Line/ms", metrics.lines / (double)time },
         { "Top messages", std::move(top_messages) } });
 
-    auto first_parse_metrics = collector.metrics_;
+    json metrics_json(metrics);
+
+    result.insert(metrics_json.begin(), metrics_json.end());
+
+    auto first_parse_metrics = metrics;
     auto first_diag_counter = diag_counter;
     long long reparse_time = 0;
     // Reparse to benchmark macro caching
@@ -286,6 +232,7 @@ std::string get_file_message(size_t iter, size_t begin, size_t end, const std::s
     s << "[" << base_message << " " << iter << "/(" << begin << "-" << end << ")] ";
     return s.str();
 }
+} // namespace
 
 int main(int argc, char** argv)
 {

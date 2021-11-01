@@ -200,6 +200,11 @@ jobs:
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Inject telemetry key
+        run: |
+          cd clients/vscode-hlasmplugin/src
+          export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
+          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
       - name: Package VSIX
         run: cd clients/vscode-hlasmplugin/ && npm ci && npm run package
       - name: Get VSIX filename
@@ -231,6 +236,11 @@ jobs:
         run: cd clients/vscode-hlasmplugin && npm ci && npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Inject telemetry key
+        run: |
+          cd clients/vscode-hlasmplugin/src
+          export TEL_KEY=`node -e "console.log(Buffer.from('${{ secrets.TELEMETRY_KEY }}').toString('base64'))"`
+          sed -i "s/const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY/const TELEMETRY_KEY_ENCODED = '$TEL_KEY'/" telemetry.ts
       - name: Configure
         run: mkdir build && cd build && cmake -G Ninja ../
       - name: Build

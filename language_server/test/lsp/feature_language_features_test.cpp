@@ -45,7 +45,7 @@ TEST(language_features, completion)
     EXPECT_CALL(ws_mngr,
         completion(
             StrEq(path), parser_library::position(0, 1), '\0', parser_library::completion_trigger_kind::invoked));
-    notifs["textDocument/completion"]("", params1);
+    notifs["textDocument/completion"].handler("", params1);
 }
 
 TEST(language_features, hover)
@@ -64,7 +64,7 @@ TEST(language_features, hover)
     std::string s("test");
     std::string_view ret(s);
     EXPECT_CALL(ws_mngr, hover(StrEq(path), parser_library::position(0, 1))).WillOnce(Return(ret));
-    notifs["textDocument/hover"]("", params1);
+    notifs["textDocument/hover"].handler("", params1);
 }
 
 TEST(language_features, definition)
@@ -84,7 +84,7 @@ TEST(language_features, definition)
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
     EXPECT_CALL(response_mock, respond(json(""), "", ::testing::_));
-    notifs["textDocument/definition"]("", params1);
+    notifs["textDocument/definition"].handler("", params1);
 }
 
 TEST(language_features, references)
@@ -101,7 +101,7 @@ TEST(language_features, references)
         : R"({"textDocument":{"uri":"file:///home/test"},"position":{"line":0,"character":1}})"_json;
 
     EXPECT_CALL(ws_mngr, references(StrEq(path), parser_library::position(0, 1)));
-    notifs["textDocument/references"]("", params1);
+    notifs["textDocument/references"].handler("", params1);
 }
 
 TEST(language_features, document_symbol)
@@ -122,7 +122,7 @@ TEST(language_features, document_symbol)
     response.push_back(
         { { "name", "A" }, { "kind", 17 }, { "range", r }, { "selectionRange", r }, { "children", json::array() } });
     EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
-    notifs["textDocument/documentSymbol"]("", params1);
+    notifs["textDocument/documentSymbol"].handler("", params1);
 }
 
 TEST(language_features, semantic_tokens)
@@ -141,7 +141,7 @@ TEST(language_features, semantic_tokens)
     json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
     EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
 
-    notifs["textDocument/semanticTokens/full"]("", params1);
+    notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
 
 TEST(language_features, semantic_tokens_multiline)
@@ -174,7 +174,7 @@ IIIIIIIIIIIIIII1
     // clang-format on
     EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
 
-    notifs["textDocument/semanticTokens/full"]("", params1);
+    notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
 
 #endif

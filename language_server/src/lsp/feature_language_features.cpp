@@ -26,18 +26,21 @@ feature_language_features::feature_language_features(
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
 {
-    methods.emplace("textDocument/definition",
-        std::bind(&feature_language_features::definition, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("textDocument/references",
-        std::bind(&feature_language_features::references, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("textDocument/hover",
-        std::bind(&feature_language_features::hover, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("textDocument/completion",
-        std::bind(&feature_language_features::completion, this, std::placeholders::_1, std::placeholders::_2));
+    const auto this_bind = [this](void (feature_language_features::*func)(const json&, const json&),
+                               telemetry_log_level telem) {
+        return method { [this, func](const json& id, const json& args) { (this->*func)(id, args); }, telem };
+    };
+    methods.emplace(
+        "textDocument/definition", this_bind(&feature_language_features::definition, telemetry_log_level::LOG_EVENT));
+    methods.emplace(
+        "textDocument/references", this_bind(&feature_language_features::references, telemetry_log_level::LOG_EVENT));
+    methods.emplace("textDocument/hover", this_bind(&feature_language_features::hover, telemetry_log_level::LOG_EVENT));
+    methods.emplace(
+        "textDocument/completion", this_bind(&feature_language_features::completion, telemetry_log_level::LOG_EVENT));
     methods.emplace("textDocument/semanticTokens/full",
-        std::bind(&feature_language_features::semantic_tokens, this, std::placeholders::_1, std::placeholders::_2));
+        this_bind(&feature_language_features::semantic_tokens, telemetry_log_level::NO_TELEMETRY));
     methods.emplace("textDocument/documentSymbol",
-        std::bind(&feature_language_features::document_symbol, this, std::placeholders::_1, std::placeholders::_2));
+        this_bind(&feature_language_features::document_symbol, telemetry_log_level::NO_TELEMETRY));
 }
 
 json feature_language_features::register_capabilities()
