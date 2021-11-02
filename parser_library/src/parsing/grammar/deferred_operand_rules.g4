@@ -34,10 +34,12 @@ deferred_entry returns [vs_ptr vs]
 	|
 	ap1=APOSTROPHE
 	{disable_ca_string();}
-	l_sp_ch_v*?
 	(
 		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
-		l_sp_ch_v*?
+		|
+		l_sp_ch_v+
+		|
+		(CONTINUATION IGNORED*)
 	)*
 	{enable_ca_string();}
 	ap2=(APOSTROPHE|ATTR)
