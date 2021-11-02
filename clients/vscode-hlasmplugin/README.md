@@ -247,8 +247,6 @@ It can by configured using the `preprocessor` key in processor group:
 
 ## Technical Assistance and Support for HLASM Language Support
 
-The HLASM Language Support extension is made available to customers on the Visual Studio Code Marketplace in accordance with the terms and conditions contained in the provided End-User License Agreement (EULA).
-
 If you are on active support for Brightside, you get technical assistance and support in accordance with the terms, guidelines, details, and parameters that are located within the Broadcom [Working with Support](https://support.broadcom.com/external/content/release-announcements/CA-Support-Policies/6933) guide.
 
 This support generally includes:
