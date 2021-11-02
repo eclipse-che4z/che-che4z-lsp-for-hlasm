@@ -16,11 +16,60 @@
 parser grammar deferred_operand_rules;
 
 deferred_entry returns [vs_ptr vs]
-	: mac_preproc_c					{$vs = std::move($mac_preproc_c.vs);}
-	| apostrophe
+	: asterisk
+	| minus
+	| plus
+	| LT
+	| GT
+	| slash
+	| equals
+	| VERTICAL
+	| IDENTIFIER											{collector.add_hl_symbol(token_info(provider.get_range($IDENTIFIER), hl_scopes::operand));}
+	| NUM													{collector.add_hl_symbol(token_info(provider.get_range($NUM), hl_scopes::operand));}
+	| ORDSYMBOL												{collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::operand));}
+	| dot
+	| lpar
+	| rpar
+	| attr
+	|
+	ap1=APOSTROPHE
+	{disable_ca_string();}
+	l_sp_ch_v*?
+	(
+		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
+		l_sp_ch_v*?
+	)*
+	{enable_ca_string();}
+	ap2=(APOSTROPHE|ATTR)
+	{
+		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string));
+	}
 	| comma
 	| AMPERSAND
+	(
+		ORDSYMBOL
+		{
+			auto name = $ORDSYMBOL->getText();
+		}
+		(
+			CONTINUATION IGNORED* ORDSYMBOL
+			{
+				name += $ORDSYMBOL->getText();
+			}
+		)*
+		{
+			auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
+			$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r);
+			collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
+		}
+		|
+		LPAR
+		|
+		AMPERSAND
+	)?
 	| IGNORED; 
+	finally
+	{enable_ca_string();}
 
 def_string_body
 	: string_ch_v
@@ -28,7 +77,7 @@ def_string_body
 	| CONTINUATION;
 
 def_string returns [concat_chain chain]
-	: ap1=APOSTROPHE def_string_body* ap2=(APOSTROPHE|ATTR)	
+	: ap1=APOSTROPHE def_string_body*? ap2=(APOSTROPHE|ATTR)
 	{ 
 		collector.add_hl_symbol(token_info(provider.get_range($ap1,$ap2),hl_scopes::string)); 
 	};
