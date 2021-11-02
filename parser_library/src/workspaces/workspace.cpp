@@ -148,8 +148,10 @@ const processor_group& workspace::get_proc_grp_by_program(const std::string& fil
 
 const ws_uri& workspace::uri() { return uri_; }
 
-void workspace::parse_file(const std::string& file_uri)
+workspace_file_info workspace::parse_file(const std::string& file_uri)
 {
+    workspace_file_info ws_file_info;
+
     std::filesystem::path file_path(file_uri);
     // add support for hlasm to vscode (auto detection??) and do the decision based on languageid
     if (utils::path::equal(file_path, proc_grps_path_) || utils::path::equal(file_path, pgm_conf_path_))
@@ -170,7 +172,8 @@ void workspace::parse_file(const std::string& file_uri)
                     filter_and_close_dependencies_(found->files_to_close(), found);
             }
         }
-        return;
+        ws_file_info.config_parsing = true;
+        return ws_file_info;
     }
     // what about removing files??? what if depentands_ points to not existing file?
     std::vector<processor_file_ptr> files_to_parse;
@@ -210,8 +213,12 @@ void workspace::parse_file(const std::string& file_uri)
 
         const processor_group& grp = get_proc_grp_by_program(f->get_file_name());
         f->collect_diags();
+        ws_file_info.processor_group_found = &grp != &implicit_proc_grp;
         if (&grp == &implicit_proc_grp && (int64_t)f->diags().size() > get_config().diag_supress_limit)
+        {
+            ws_file_info.diagnostics_suppressed = true;
             delete_diags(f);
+        }
         else
             diag_suppress_notified_[f->get_file_name()] = false;
     }
@@ -219,6 +226,8 @@ void workspace::parse_file(const std::string& file_uri)
     // second check after all dependants are there to close all files that used to be dependencies
     for (auto f : files_to_parse)
         filter_and_close_dependencies_(f->files_to_close(), f);
+
+    return ws_file_info;
 }
 
 void workspace::refresh_libraries()
@@ -232,7 +241,7 @@ void workspace::refresh_libraries()
     }
 }
 
-void workspace::did_open_file(const std::string& file_uri) { parse_file(file_uri); }
+workspace_file_info workspace::did_open_file(const std::string& file_uri) { return parse_file(file_uri); }
 
 void workspace::did_close_file(const std::string& file_uri)
 {
@@ -315,13 +324,13 @@ lsp::completion_list_s workspace::completion(const std::string& document_uri,
     return opencodes.back()->get_lsp_feature_provider().completion(document_uri, pos, trigger_char, trigger_kind);
 }
 
-lsp::document_symbol_list_s workspace::document_symbol(const std::string& document_uri) const
+lsp::document_symbol_list_s workspace::document_symbol(const std::string& document_uri, long long limit) const
 {
     auto opencodes = find_related_opencodes(document_uri);
     if (opencodes.empty())
         return {};
     // for now take last opencode
-    return opencodes.back()->get_lsp_feature_provider().document_symbol(document_uri);
+    return opencodes.back()->get_lsp_feature_provider().document_symbol(document_uri, limit);
 }
 
 void workspace::open() { load_and_process_config(); }

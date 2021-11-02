@@ -245,6 +245,7 @@ It can by configured using the `preprocessor` key in processor group:
 - Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse/che-che4z-lsp-for-hlasm) repository for more information.
 - Any and all feedback is appreciated and welcome!
 
+
 ## Technical Assistance and Support for HLASM Language Support
 
 If you are on active support for Brightside, you get technical assistance and support in accordance with the terms, guidelines, details, and parameters that are located within the Broadcom [Working with Support](https://support.broadcom.com/external/content/release-announcements/CA-Support-Policies/6933) guide.
@@ -259,3 +260,31 @@ This support generally includes:
 * Technical support cases must be submitted to Broadcom in accordance with guidance provided in “Working with Support”.
 
 Note: To receive technical assistance and support, you must remain compliant with “Working with Support”, be current on all applicable licensing and maintenance requirements, and maintain an environment in which all computer hardware, operating systems, and third party software associated with the affected Broadcom CA software are on the releases and version levels from the manufacturer that Broadcom designates as compatible with the software. Changes you elect to make to your operating environment could detrimentally affect the performance of Broadcom CA software and Broadcom shall not be responsible for these effects or any resulting degradation in performance of the Broadcom CA software. Severity 1 cases must be opened via telephone and elevations of lower severity incidents to Severity 1 status must be requested via telephone.
+
+## Privacy Notice
+The extensions for Visual Studio Code developed by Broadcom Inc., including its corporate affiliates and subsidiaries, ("Broadcom") are provided free of charge, but in order to better understand and meet its users’ needs, Broadcom may collect, use, analyze and retain anonymous users’ metadata and interaction data, (collectively, “Usage Data”) and aggregate such Usage Data with similar Usage Data of other Broadcom customers. Please find more detailed information in [License and Service Terms & Repository](https://www.broadcom.com/company/legal/licensing).
+
+This data collection uses built-in Microsoft VS Code Telemetry, which can be disabled, at your sole discretion, if you do not want to send Usage Data. See the `telemetry.telemetryLevel` and `telemetry.enableTelemetry` (deprecated) settings of VS Code. 
+
+The current release of HLASM Language Support collects anonymous data for the following events:
+* Activation of this VS Code extension
+* Open and close of files
+* Invocation of the following features: Autocomplete, Go to definition, Find all references and Hover
+* Launch of Macro tracer and subsequent user interactions with the debugging interface (step into, step over, continue, set breakpoints)
+* Malfunctions of the extension
+
+Each such event is logged with the following information:
+* Event time
+* Operating system and version
+* Country or region
+* Anonymous user and session ID
+* Version numbers of Microsoft VS Code and HLASM Language Support
+* Extension response time
+
+Additionally, when a file is opened, the following information are logged:
+* Number of diagnostics (errors and warnings)
+* Number of files that were parsed including macros and COPY files
+* Number of parsed lines
+* Whether the diagnostics were suppressed
+* Whether matching processor group was found in the configuration
+

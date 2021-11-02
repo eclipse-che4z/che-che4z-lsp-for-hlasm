@@ -59,6 +59,7 @@
     "vscode-test": "^1.3.0"
   },
   "dependencies": {
+    "vscode-extension-telemetry": "^0.4.2",
     "vscode-languageclient": "^5.2.1"
   },
   "scripts": {

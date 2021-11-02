@@ -20,8 +20,8 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-server::server(parser_library::workspace_manager& ws_mngr)
-    : language_server::server(ws_mngr)
+server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_reporter)
+    : language_server::server(ws_mngr, telemetry_reporter)
 {
     features_.push_back(std::make_unique<dap_feature>(ws_mngr_, *this, this));
     register_feature_methods();
@@ -71,6 +71,7 @@ void server::message_received(const json& message)
         if (message.at("type") != "request")
         {
             LOG_WARNING(std::string("Invalid message receive: ") + message.dump());
+            send_telemetry_error("dap_server/invalid_message");
             return;
         }
         auto arguments = message.find("arguments");
@@ -83,6 +84,7 @@ void server::message_received(const json& message)
     {
         (void)e;
         LOG_WARNING(std::string("There was an error with received request:") + e.what());
+        send_telemetry_error("dap_server/method_unknown_error");
     }
 }
 

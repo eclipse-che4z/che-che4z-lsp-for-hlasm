@@ -54,13 +54,13 @@ protected:
 
 // Interface that can be implemented to be able to get performance metrics
 //(time that parsing took, number of parsed lines, etc)
-class performance_metrics_consumer
+class parsing_metadata_consumer
 {
 public:
-    virtual void consume_performance_metrics(const performance_metrics& metrics) = 0;
+    virtual void consume_parsing_metadata(const parsing_metadata& metrics) = 0;
 
 protected:
-    ~performance_metrics_consumer() = default;
+    ~parsing_metadata_consumer() = default;
 };
 
 // The main class that encapsulates all functionality of parser library.
@@ -101,13 +101,15 @@ public:
         const char* document_uri, position pos, char trigger_char, completion_trigger_kind trigger_kind);
 
     virtual const std::vector<token_info>& semantic_tokens(const char* document_uri);
-    virtual document_symbol_list document_symbol(const char* document_uri);
+    virtual document_symbol_list document_symbol(const char* document_uri, long long limit);
 
     virtual void configuration_changed(const lib_config& new_config);
 
-    // implementation of observer pattern - register consumer. Unregistering not implemented (yet).
+    // implementation of observer pattern - register consumer.
     virtual void register_diagnostics_consumer(diagnostics_consumer* consumer);
-    virtual void register_performance_metrics_consumer(performance_metrics_consumer* consumer);
+    virtual void unregister_diagnostics_consumer(diagnostics_consumer* consumer);
+    virtual void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
+    virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer);
     virtual void set_message_consumer(message_consumer* consumer);
 
 private:

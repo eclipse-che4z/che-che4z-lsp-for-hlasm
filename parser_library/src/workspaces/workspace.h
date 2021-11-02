@@ -88,9 +88,9 @@ public:
     const processor_group& get_proc_grp(const proc_grp_id& proc_grp) const;
     const processor_group& get_proc_grp_by_program(const std::string& program) const;
 
-    void parse_file(const std::string& file_uri);
+    workspace_file_info parse_file(const std::string& file_uri);
     void refresh_libraries();
-    void did_open_file(const std::string& file_uri);
+    workspace_file_info did_open_file(const std::string& file_uri);
     void did_close_file(const std::string& file_uri);
     void did_change_file(const std::string document_uri, const document_change* changes, size_t ch_size);
     void did_change_watched_files(const std::string& file_uri);
@@ -102,7 +102,7 @@ public:
         position pos,
         char trigger_char,
         completion_trigger_kind trigger_kind) const override;
-    lsp::document_symbol_list_s document_symbol(const std::string& document_uri) const override;
+    lsp::document_symbol_list_s document_symbol(const std::string& document_uri, long long limit) const override;
 
     parse_result parse_library(const std::string& library, analyzing_context ctx, library_data data) override;
     bool has_library(const std::string& library, const std::string& program) const override;

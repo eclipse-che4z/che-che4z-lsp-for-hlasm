@@ -25,26 +25,25 @@ feature_text_synchronization::feature_text_synchronization(
 
 void feature_text_synchronization::register_methods(std::map<std::string, method>& methods)
 {
-    methods.emplace("textDocument/didOpen",
-        std::bind(&feature_text_synchronization::on_did_open, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("textDocument/didChange",
-        std::bind(&feature_text_synchronization::on_did_change, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("textDocument/didClose",
-        std::bind(&feature_text_synchronization::on_did_close, this, std::placeholders::_1, std::placeholders::_2));
+    methods.try_emplace("textDocument/didOpen",
+        method { [this](const json& id, const json& args) { on_did_open(id, args); },
+            telemetry_log_level::LOG_WITH_PARSE_DATA });
+    methods.try_emplace("textDocument/didChange",
+        method {
+            [this](const json& id, const json& args) { on_did_change(id, args); }, telemetry_log_level::NO_TELEMETRY });
+    methods.try_emplace("textDocument/didClose",
+        method {
+            [this](const json& id, const json& args) { on_did_close(id, args); }, telemetry_log_level::LOG_EVENT });
 }
 
 json feature_text_synchronization::register_capabilities()
 {
-    // there is no reason why not ask for notifications (most of them is
-    // ignored anyway).
-    // we cant process willSaveWaitUntil because it is a request and we dont
-    // want many hanging requests
     return json { { "textDocumentSync",
         json { { "openClose", true },
             { "change", (int)text_document_sync_kind::incremental },
-            { "willSave", true },
+            { "willSave", false },
             { "willSaveWaitUntil", false },
-            { "save", json { { "includeText", true } } } } } };
+            { "save", false } } } };
 }
 
 

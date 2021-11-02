@@ -23,11 +23,12 @@
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
 #include "lib_config.h"
+#include "parsing_metadata_serialization.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
-    : language_server::server(ws_mngr)
+    : language_server::server(ws_mngr, this)
 {
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr_, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr_, *this));
@@ -37,6 +38,8 @@ server::server(parser_library::workspace_manager& ws_mngr)
 
     ws_mngr_.register_diagnostics_consumer(this);
     ws_mngr_.set_message_consumer(this);
+
+    ws_mngr_.register_parsing_metadata_consumer(&parsing_metadata_);
 }
 
 void server::message_received(const json& message)
@@ -53,6 +56,7 @@ void server::message_received(const json& message)
         if (id_found == message.end())
         {
             LOG_WARNING("A response with no id field received.");
+            send_telemetry_error("lsp_server/response_no_id");
             return;
         }
 
@@ -60,12 +64,13 @@ void server::message_received(const json& message)
         if (handler_found == request_handlers_.end())
         {
             LOG_WARNING("A response with no registered handler received.");
+            send_telemetry_error("lsp_server/response_no_handler");
             return;
         }
 
         method handler = handler_found->second;
         request_handlers_.erase(handler_found);
-        handler(id_found.value(), result_found.value());
+        handler.handler(id_found.value(), result_found.value());
         return;
     }
     else if (error_result_found != message.end())
@@ -77,6 +82,7 @@ void server::message_received(const json& message)
         else
             warn_message = "Request with id " + id_found->dump() + " returned with unspecified error.";
         LOG_WARNING(warn_message);
+        send_telemetry_error("lsp_server/response_error_returned", warn_message);
         return;
     }
 
@@ -86,6 +92,7 @@ void server::message_received(const json& message)
     if (params_found == message.end() || method_found == message.end())
     {
         LOG_WARNING("Method or params missing from received request or notification");
+        send_telemetry_error("lsp_server/method_or_params_missing");
         return;
     }
 
@@ -105,8 +112,14 @@ void server::message_received(const json& message)
     catch (const std::exception& e)
     {
         LOG_ERROR(e.what());
+        send_telemetry_error("lsp_server/method_unknown_error");
         return;
     }
+}
+
+telemetry_metrics_info server::get_telemetry_details()
+{
+    return telemetry_metrics_info { parsing_metadata_.data, diags_error_count, diags_warning_count };
 }
 
 void server::request(const json& id, const std::string& requested_method, const json& args, method handler)
@@ -139,11 +152,26 @@ void server::respond_error(
 
 void server::register_methods()
 {
-    methods_.emplace(
-        "initialize", std::bind(&server::on_initialize, this, std::placeholders::_1, std::placeholders::_2));
-    methods_.emplace("shutdown", std::bind(&server::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
-    methods_.emplace("exit", std::bind(&server::on_exit, this, std::placeholders::_1, std::placeholders::_2));
+    methods_.try_emplace("initialize",
+        method { [this](const json& id, const json& params) { on_initialize(id, params); },
+            telemetry_log_level::LOG_EVENT });
+    methods_.try_emplace("initialized",
+        method { [](const json&, const json&) { /*no implementation, silences uninteresting telemetry*/ },
+            telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("shutdown",
+        method { [this](const json& id, const json& params) { on_shutdown(id, params); },
+            telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("exit",
+        method {
+            [this](const json& id, const json& params) { on_exit(id, params); }, telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("$/setTraceNotification",
+        method { [](const json&, const json&) {
+                    /*no implementation, silences reporting of VS Code implementation-specific notification*/
+                },
+            telemetry_log_level::NO_TELEMETRY });
 }
+
+void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", json(message)); }
 
 void empty_handler(json, const json&)
 {
@@ -157,10 +185,7 @@ void server::on_initialize(json id, const json& param)
         json { { "documentFormattingProvider", false },
             { "documentRangeFormattingProvider", false },
             { "codeActionProvider", false },
-            { "signatureHelpProvider",
-                json {
-                    { "triggerCharacters", { "(", "," } },
-                } },
+            { "signatureHelpProvider", false },
             { "documentHighlightProvider", false },
             { "renameProvider", false },
             { "workspaceSymbolProvider", false } } } };
@@ -177,7 +202,10 @@ void server::on_initialize(json id, const json& param)
         { { "registrations", { { { "id", "configureRegister" }, { "method", "workspace/didChangeConfiguration" } } } } }
     };
 
-    request("register1", "client/registerCapability", register_configuration_changed_args, &empty_handler);
+    request("register1",
+        "client/registerCapability",
+        register_configuration_changed_args,
+        { &empty_handler, telemetry_log_level::NO_TELEMETRY });
 
 
     for (auto& f : features_)
@@ -222,10 +250,17 @@ void server::consume_diagnostics(parser_library::diagnostic_list diagnostics)
     // map of all diagnostics that came from the server
     std::map<std::string, std::vector<parser_library::diagnostic>> diags;
 
+    diags_error_count = 0;
+    diags_warning_count = 0;
+
     for (size_t i = 0; i < diagnostics.diagnostics_size(); ++i)
     {
         auto d = diagnostics.diagnostics(i);
         diags[d.file_name()].push_back(d);
+        if (d.severity() == parser_library::diagnostic_severity::error)
+            ++diags_error_count;
+        else if (d.severity() == parser_library::diagnostic_severity::warning)
+            ++diags_warning_count;
     }
 
     // set of all files for which diagnostics came from the server.

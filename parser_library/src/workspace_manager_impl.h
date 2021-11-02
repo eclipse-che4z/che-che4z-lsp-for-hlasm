@@ -15,6 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACE_MANAGER_IMPL_H
 
+#include <algorithm>
+
 #include "debugging/debug_lib_provider.h"
 #include "workspace_manager.h"
 #include "workspaces/file_manager_impl.h"
@@ -77,13 +79,13 @@ public:
             return;
 
         workspaces::workspace& ws = ws_path_match(document_uri);
-        ws.did_open_file(document_uri);
+        auto metadata = ws.did_open_file(document_uri);
         if (cancel_ && *cancel_)
             return;
 
         notify_diagnostics_consumers();
         // only on open
-        notify_performance_consumers(document_uri);
+        notify_performance_consumers(document_uri, metadata);
     }
     void did_change_file(
         const std::string document_uri, version_t version, const document_change* changes, size_t ch_size)
@@ -118,10 +120,21 @@ public:
     }
 
     void register_diagnostics_consumer(diagnostics_consumer* consumer) { diag_consumers_.push_back(consumer); }
-
-    void register_performance_metrics_consumer(performance_metrics_consumer* consumer)
+    void unregister_diagnostics_consumer(diagnostics_consumer* consumer)
     {
-        metrics_consumers_.push_back(consumer);
+        diag_consumers_.erase(
+            std::remove(diag_consumers_.begin(), diag_consumers_.end(), consumer), diag_consumers_.end());
+    }
+
+    void register_parsing_metadata_consumer(parsing_metadata_consumer* consumer)
+    {
+        parsing_metadata_consumers_.push_back(consumer);
+    }
+
+    void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer)
+    {
+        auto& pmc = parsing_metadata_consumers_;
+        pmc.erase(std::remove(pmc.begin(), pmc.end(), consumer), pmc.end());
     }
 
     void set_message_consumer(message_consumer* consumer)
@@ -183,12 +196,12 @@ public:
     }
 
     lsp::document_symbol_list_s document_symbol_result;
-    document_symbol_list document_symbol(const std::string& document_uri)
+    document_symbol_list document_symbol(const std::string& document_uri, long long limit)
     {
         if (cancel_ && *cancel_)
             return document_symbol_list { nullptr, 0 };
 
-        document_symbol_result = ws_path_match(document_uri).document_symbol(document_uri);
+        document_symbol_result = ws_path_match(document_uri).document_symbol(document_uri, limit);
 
         return document_symbol_list(document_symbol_result.data(), document_symbol_result.size());
     }
@@ -249,16 +262,16 @@ private:
         }
     }
 
-    void notify_performance_consumers(const std::string& document_uri)
+    void notify_performance_consumers(const std::string& document_uri, workspace_file_info ws_file_info) const
     {
         auto file = file_manager_.find(document_uri);
         auto proc_file = dynamic_cast<workspaces::processor_file*>(file.get());
         if (proc_file)
         {
             auto metrics = proc_file->get_metrics();
-            for (auto consumer : metrics_consumers_)
+            for (auto consumer : parsing_metadata_consumers_)
             {
-                consumer->consume_performance_metrics(metrics);
+                consumer->consume_parsing_metadata({ metrics, ws_file_info });
             }
         }
     }
@@ -284,7 +297,7 @@ private:
     std::atomic<bool>* cancel_;
 
     std::vector<diagnostics_consumer*> diag_consumers_;
-    std::vector<performance_metrics_consumer*> metrics_consumers_;
+    std::vector<parsing_metadata_consumer*> parsing_metadata_consumers_;
     message_consumer* message_consumer_ = nullptr;
 };
 } // namespace hlasm_plugin::parser_library

@@ -847,7 +847,7 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
     {
         if (!is_operand_simple(to_check[0]) && !is_operand_empty(to_check[0])) // first operand must be simple
         {
-            add_diagnostic(diagnostic_op::error_A243_END_expr_format(to_check[0]->operand_range));
+            add_diagnostic(diagnostic_op::warning_A243_END_expr_format(to_check[0]->operand_range));
             return false;
         }
     }
@@ -871,7 +871,7 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
         }
         if (language_operand->operand_identifier != "")
         {
-            add_diagnostic(diagnostic_op::error_A137_END_lang_format(language_operand->operand_range));
+            add_diagnostic(diagnostic_op::warning_A137_END_lang_format(language_operand->operand_range));
             return false;
         }
         for (const auto& param : language_operand->operand_parameters)
@@ -879,7 +879,7 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
             // all parameters must be simple
             if (!is_operand_simple(param.get()))
             {
-                add_diagnostic(diagnostic_op::error_A248_END_lang_char_sequence(param->operand_range));
+                add_diagnostic(diagnostic_op::warning_A248_END_lang_char_sequence(param->operand_range));
                 return false;
             }
         }
@@ -888,14 +888,14 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
                 > END_lang_first_par_size)
         {
             add_diagnostic(
-                diagnostic_op::error_A138_END_lang_first(language_operand->operand_parameters[0]->operand_range));
+                diagnostic_op::warning_A138_END_lang_first(language_operand->operand_parameters[0]->operand_range));
             return false;
         }
         if (get_simple_operand(language_operand->operand_parameters[1].get())->operand_identifier.size()
             != END_lang_second_par_size)
         {
             add_diagnostic(
-                diagnostic_op::error_A139_END_lang_second(language_operand->operand_parameters[1]->operand_range));
+                diagnostic_op::warning_A139_END_lang_second(language_operand->operand_parameters[1]->operand_range));
             return false;
         }
         auto third_op = get_simple_operand(language_operand->operand_parameters[2].get());
@@ -903,7 +903,7 @@ bool end::check(const std::vector<const asm_operand*>& to_check,
             || !has_all_digits(third_op->operand_identifier))
         {
             add_diagnostic(
-                diagnostic_op::error_A140_END_lang_third(language_operand->operand_parameters[2]->operand_range));
+                diagnostic_op::warning_A140_END_lang_third(language_operand->operand_parameters[2]->operand_range));
             return false;
         }
     }
@@ -1300,7 +1300,7 @@ bool ainsert::check(const std::vector<const asm_operand*>& to_check,
     auto second = get_simple_operand(to_check[1]);
     // check first operand
     if (first == nullptr || first->operand_identifier.size() < 2
-        || first->operand_identifier.size() > string_max_length)
+        || first->operand_identifier.size() > string_max_length + 2) // quotes
     {
         add_diagnostic(diagnostic_op::error_A157_AINSERT_first_op_size(to_check[0]->operand_range));
         return false;

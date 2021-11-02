@@ -21,8 +21,10 @@
 
 #include "../common_types.h"
 #include "../feature.h"
+#include "../parsing_metadata_collector.h"
 #include "../server.h"
 #include "nlohmann/json.hpp"
+#include "telemetry_sink.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::lsp {
@@ -32,7 +34,8 @@ namespace hlasm_plugin::language_server::lsp {
 // Consumes diagnostics that come from the parser library and sends them to LSP client.
 class server final : public hlasm_plugin::language_server::server,
                      public parser_library::diagnostics_consumer,
-                     public parser_library::message_consumer
+                     public parser_library::message_consumer,
+                     public telemetry_sink
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -40,6 +43,9 @@ public:
 
     // Parses LSP (JSON RPC) message and calls corresponding method.
     void message_received(const json& message) override;
+
+    // Inherited via telemetry_sink
+    void send_telemetry(const telemetry_message& message) override;
 
 protected:
     // Sends request to LSP client using send_message_provider.
@@ -55,9 +61,14 @@ protected:
         const std::string& err_message,
         const json& error) override;
 
-private:
-    // requests
+    telemetry_metrics_info get_telemetry_details() override;
 
+private:
+    parsing_metadata_collector parsing_metadata_;
+    size_t diags_warning_count = 0;
+    size_t diags_error_count = 0;
+
+    // requests
     // Implements initialize request.
     void on_initialize(json id, const json& param);
     // Implements the LSP shutdown request.

@@ -32,17 +32,15 @@ feature_workspace_folders::feature_workspace_folders(
 
 void feature_workspace_folders::register_methods(std::map<std::string, method>& methods)
 {
-    methods.emplace("workspace/didChangeWorkspaceFolders",
-        std::bind(&feature_workspace_folders::on_did_change_workspace_folders,
-            this,
-            std::placeholders::_1,
-            std::placeholders::_2));
-    methods.emplace("workspace/didChangeWatchedFiles",
-        std::bind(
-            &feature_workspace_folders::did_change_watched_files, this, std::placeholders::_1, std::placeholders::_2));
-    methods.emplace("workspace/didChangeConfiguration",
-        std::bind(
-            &feature_workspace_folders::did_change_configuration, this, std::placeholders::_1, std::placeholders::_2));
+    methods.try_emplace("workspace/didChangeWorkspaceFolders",
+        method { [this](const json& id, const json& args) { on_did_change_workspace_folders(id, args); },
+            telemetry_log_level::LOG_EVENT });
+    methods.try_emplace("workspace/didChangeWatchedFiles",
+        method { [this](const json& id, const json& args) { did_change_watched_files(id, args); },
+            telemetry_log_level::NO_TELEMETRY });
+    methods.try_emplace("workspace/didChangeConfiguration",
+        method { [this](const json& id, const json& args) { did_change_configuration(id, args); },
+            telemetry_log_level::NO_TELEMETRY });
 }
 
 json feature_workspace_folders::register_capabilities()
@@ -151,7 +149,7 @@ void feature_workspace_folders::send_configuration_request()
     response_->request("config_request_" + std::to_string(config_request_number_),
         "workspace/configuration",
         config_request_args,
-        std::bind(&feature_workspace_folders::configuration, this, std::placeholders::_1, std::placeholders::_2));
+        { [this](const json& id, const json& params) { configuration(id, params); }, telemetry_log_level::LOG_EVENT });
     ++config_request_number_;
 }
 

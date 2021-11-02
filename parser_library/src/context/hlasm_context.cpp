@@ -426,6 +426,17 @@ std::vector<copy_member_invocation>& hlasm_plugin::parser_library::context::hlas
     return source_stack_.front().copy_stack;
 }
 
+void hlasm_plugin::parser_library::context::hlasm_context::end_reached()
+{
+    assert(!m_end_reached);
+    m_end_reached = true;
+
+    scope_stack_.erase(scope_stack_.begin() + 1, scope_stack_.end());
+    source_stack_.erase(source_stack_.begin() + 1, source_stack_.end());
+    source_stack_.front().copy_stack.clear();
+    proc_stack_.erase(proc_stack_.begin() + 1, proc_stack_.end());
+}
+
 std::vector<id_index> hlasm_context::whole_copy_stack() const
 {
     std::vector<id_index> ret;

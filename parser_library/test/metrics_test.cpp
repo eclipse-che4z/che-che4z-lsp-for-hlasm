@@ -23,10 +23,10 @@
 
 using namespace hlasm_plugin::parser_library;
 
-class metrics_mock : public performance_metrics_consumer
+class metrics_mock : public parsing_metadata_consumer
 {
 public:
-    void consume_performance_metrics(const performance_metrics& metrics) override { metrics_ = metrics; }
+    void consume_parsing_metadata(const parsing_metadata& metadata) override { metrics_ = metadata.metrics; }
 
     performance_metrics metrics_;
 };

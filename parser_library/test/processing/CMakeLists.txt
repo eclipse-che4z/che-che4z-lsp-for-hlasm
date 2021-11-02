@@ -26,5 +26,6 @@ target_sources(library_test PRIVATE
 	opsyn_test.cpp
 	org_test.cpp
 	start_test.cpp
+	end_instr_test.cpp
 )
 

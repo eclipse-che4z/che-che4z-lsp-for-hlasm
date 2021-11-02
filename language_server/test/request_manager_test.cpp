@@ -28,8 +28,8 @@ using namespace std::chrono_literals;
 class server_mock_rm : public server
 {
 public:
-    server_mock_rm(std::atomic<bool>* cancel)
-        : server(ws_mngr_)
+    server_mock_rm(parser_library::workspace_manager& ws_mngr, std::atomic<bool>* cancel)
+        : server(ws_mngr)
         , cancel_(cancel)
     {}
     void message_received(const json&) override
@@ -51,16 +51,16 @@ public:
     int messages_received = 0;
 
 private:
-    parser_library::workspace_manager ws_mngr_;
     std::atomic<bool>* cancel_;
 };
 
 TEST(request_manager, finish_requests)
 {
+    parser_library::workspace_manager ws_mngr;
     std::atomic<bool> cancel = false;
     request_manager rm(&cancel);
-    server_mock_rm s(&cancel);
-    server_mock_rm s2(&cancel);
+    server_mock_rm s(ws_mngr, &cancel);
+    server_mock_rm s2(ws_mngr, &cancel);
 
     rm.add_request(&s, "0"_json);
     rm.add_request(&s, "0"_json);

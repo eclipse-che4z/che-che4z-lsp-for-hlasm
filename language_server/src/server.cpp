@@ -24,8 +24,9 @@
 
 namespace hlasm_plugin::language_server {
 
-server::server(parser_library::workspace_manager& ws_mngr)
+server::server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_provider)
     : ws_mngr_(ws_mngr)
+    , telemetry_provider_(telemetry_provider)
 {}
 
 void server::register_feature_methods()
@@ -35,6 +36,8 @@ void server::register_feature_methods()
         f->register_methods(methods_);
     }
 }
+
+
 
 void server::call_method(const std::string& method, const json& id, const json& args)
 {
@@ -48,12 +51,17 @@ void server::call_method(const std::string& method, const json& id, const json& 
     {
         try
         {
-            (*found).second(id, args);
+            auto start = std::chrono::steady_clock::now();
+            (*found).second.handler(id, args);
+            std::chrono::duration<double> duration = std::chrono::steady_clock::now() - start;
+
+            telemetry_method_call(method, (*found).second.telemetry_level, duration.count());
         }
         catch (const nlohmann::basic_json<>::exception& e)
         {
             (void)e;
             LOG_WARNING("There is an error regarding the JSON or LSP:" + std::string(e.what()));
+            send_telemetry_error("call_method/json_error");
         }
     }
     else
@@ -61,7 +69,34 @@ void server::call_method(const std::string& method, const json& id, const json& 
         std::ostringstream ss;
         ss << "Method " << method << " is not available on this server.";
         LOG_WARNING(ss.str());
+
+        send_telemetry_error("method_not_implemented", method);
     }
+}
+
+telemetry_metrics_info server::get_telemetry_details() { return {}; }
+
+void server::send_telemetry_error(std::string where, std::string what)
+{
+    if (!telemetry_provider_)
+        return;
+
+    telemetry_provider_->send_telemetry(telemetry_error { where, what });
+}
+
+void server::telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds)
+{
+    if (log_level == telemetry_log_level::NO_TELEMETRY)
+        return;
+    if (!telemetry_provider_)
+        return;
+
+    telemetry_info info { method_name, seconds };
+
+    if (log_level == telemetry_log_level::LOG_WITH_PARSE_DATA)
+        info.metrics = get_telemetry_details();
+
+    telemetry_provider_->send_telemetry(info);
 }
 
 bool server::is_exit_notification_received() const { return exit_notification_received_; }
