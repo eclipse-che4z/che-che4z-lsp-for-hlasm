@@ -26,6 +26,8 @@ target_sources(language_server_base PRIVATE
 	logger.h
 	message_router.cpp
 	message_router.h
+	parsing_metadata_collector.h
+	parsing_metadata_serialization.h
 	request_manager.cpp
 	request_manager.h
 	scope_exit.h
@@ -33,6 +35,9 @@ target_sources(language_server_base PRIVATE
 	server.h
 	server_streams.h
 	stream_helper.h
+	telemetry_broker.h
+	telemetry_info.h
+	telemetry_sink.h
 )
 
 if(EMSCRIPTEN)

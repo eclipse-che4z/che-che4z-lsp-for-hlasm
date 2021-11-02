@@ -21,6 +21,7 @@
 #include "../json_queue_channel.h"
 #include "../message_router.h"
 #include "dap_message_wrappers.h"
+#include "telemetry_sink.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server::dap {
@@ -34,11 +35,15 @@ class session final : public json_sink
     dap::message_unwrapper msg_unwrapper;
     std::thread worker;
     std::atomic<bool> running = true;
+    telemetry_sink* telemetry_reporter;
 
     void thread_routine();
 
 public:
-    session(size_t session_id, hlasm_plugin::parser_library::workspace_manager& ws, json_sink& out);
+    session(size_t session_id,
+        hlasm_plugin::parser_library::workspace_manager& ws,
+        json_sink& out,
+        telemetry_sink* telemetry_reporter = nullptr);
     ~session();
 
     message_router::message_predicate get_message_matcher() const;

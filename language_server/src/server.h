@@ -15,10 +15,14 @@
 #ifndef HLASMPLUGIN_LANGUAGESERVER_SERVER
 #define HLASMPLUGIN_LANGUAGESERVER_SERVER
 
+#include <chrono>
 #include <unordered_set>
+
+#include "json_channel.h"
 
 #include "common_types.h"
 #include "feature.h"
+#include "telemetry_sink.h"
 #include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
@@ -40,7 +44,7 @@ class server : public response_provider
 public:
     // Constructs the server with workspace_manager.
     // All the requests and notifications are passed to the workspace manager
-    explicit server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr, telemetry_sink* telemetry_provider = nullptr);
 
     // Tells the server that a massage was received. The server carries out the notification or request.
     virtual void message_received(const json& message) = 0;
@@ -64,11 +68,19 @@ protected:
     bool exit_notification_received_ = false;
 
     parser_library::workspace_manager& ws_mngr_;
+    telemetry_sink* telemetry_provider_;
 
     void register_feature_methods();
 
     // Calls a method that is registered in methods_ with the specified name with arguments and id of request.
     void call_method(const std::string& method, const json& id, const json& args);
+
+    virtual telemetry_metrics_info get_telemetry_details();
+
+    void send_telemetry_error(std::string where, std::string what = "");
+
+private:
+    void telemetry_method_call(const std::string& method_name, telemetry_log_level log_level, double seconds);
 };
 
 } // namespace hlasm_plugin::language_server

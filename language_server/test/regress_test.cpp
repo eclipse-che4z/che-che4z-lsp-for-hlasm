@@ -50,9 +50,13 @@ TEST(regress_test, behaviour_error)
         R"#({"textDocument":{"uri":"file:///c%3A/test/behaviour_error.hlasm","languageId":"plaintext","version":1,"text":"LABEL LR 1,20 REMARK"}})#"_json);
     s.message_received(notf);
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
-    ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
-    auto diagnostics = mess_p.notfs[0]["params"]["diagnostics"];
+    ASSERT_EQ(mess_p.notfs.size(), (size_t)2);
+    auto publish_notif = std::find_if(mess_p.notfs.begin(), mess_p.notfs.end(), [&](json notif) {
+        return notif["method"] == "textDocument/publishDiagnostics";
+    });
+    ASSERT_NE(publish_notif, mess_p.notfs.end());
+    ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
+    auto diagnostics = (*publish_notif)["params"]["diagnostics"];
     ASSERT_EQ(diagnostics.size(), (size_t)1);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "M120");
 

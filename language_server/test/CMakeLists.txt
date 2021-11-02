@@ -23,6 +23,7 @@ target_sources(server_test PRIVATE
 	send_message_provider_mock.h
 	stream_helper_test.cpp
 	ws_mngr_mock.h
+	telemetry_test.cpp
 )
 
 add_subdirectory(dap)
