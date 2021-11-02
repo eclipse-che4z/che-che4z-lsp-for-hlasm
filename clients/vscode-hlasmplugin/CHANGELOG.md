@@ -28,6 +28,7 @@
 - Infinite loop during lookahead processing when model statement is located in copybook
 - DOT operator in string concatenation is optional
 - AINSERT operand length validation
+- HLASM Listing highligting of lines with trimmed whitespace
 
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
