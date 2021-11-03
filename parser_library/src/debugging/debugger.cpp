@@ -204,6 +204,7 @@ public:
             stop_on_next_stmt_ = false;
             step_over_ = false;
             next_stmt_range_ = stmt_range;
+            step_over_depth_ = ctx_->processing_stack().size();
 
             continue_ = false;
             if (event_)
@@ -221,7 +222,6 @@ public:
         {
             std::lock_guard<std::mutex> lck(control_mtx);
             step_over_ = true;
-            step_over_depth_ = ctx_->processing_stack().size();
             continue_ = true;
         }
         con_var.notify_all();
