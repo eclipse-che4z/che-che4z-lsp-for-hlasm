@@ -258,10 +258,10 @@ op_rem_body_deferred
 	{
 		collector.set_operand_remark_field(provider.get_empty_range(_localctx->getStart()));
 	} EOF
-	| SPACE {enable_hidden();} deferred_op_rem {disable_hidden();}
+	| SPACE deferred_op_rem EOF
 	{
 		auto r = provider.get_range( $deferred_op_rem.ctx);
-		collector.set_operand_remark_field($deferred_op_rem.ctx->getText(),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r);
+		collector.set_operand_remark_field(_input->getText(misc::Interval($SPACE->getStartIndex()+1,_input->size()-1)),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r);
 	} EOF;
 
 op_rem_body_noop
