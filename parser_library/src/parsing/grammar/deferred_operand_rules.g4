@@ -15,7 +15,7 @@
  //rules for deferred operand
 parser grammar deferred_operand_rules;
 
-deferred_entry returns [vs_ptr vs]
+deferred_entry returns [std::vector<vs_ptr> vs]
 	: asterisk
 	| minus
 	| plus
@@ -37,9 +37,17 @@ deferred_entry returns [vs_ptr vs]
 	(
 		(APOSTROPHE|ATTR) (APOSTROPHE|ATTR)
 		|
-		l_sp_ch_v+
+		(
+			{std::string name;}
+			AMPERSAND (ORDSYMBOL {name += $ORDSYMBOL->getText();})+
+			{
+				auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
+				$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
+				collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
+			}
+		)
 		|
-		(CONTINUATION IGNORED*)
+		l_sp_ch_v
 	)*
 	{enable_ca_string();}
 	ap2=(APOSTROPHE|ATTR)
@@ -54,14 +62,14 @@ deferred_entry returns [vs_ptr vs]
 			auto name = $ORDSYMBOL->getText();
 		}
 		(
-			CONTINUATION IGNORED* ORDSYMBOL
+			ORDSYMBOL
 			{
 				name += $ORDSYMBOL->getText();
 			}
 		)*
 		{
 			auto r = provider.get_range($AMPERSAND,$ORDSYMBOL);
-			$vs = std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r);
+			$vs.push_back(std::make_unique<basic_variable_symbol>(hlasm_ctx->ids().add(std::move(name)), std::vector<ca_expr_ptr>(), r));
 			collector.add_hl_symbol(token_info(r,hl_scopes::var_symbol));
 		}
 		|
@@ -69,7 +77,7 @@ deferred_entry returns [vs_ptr vs]
 		|
 		AMPERSAND
 	)?
-	| IGNORED; 
+	;
 	finally
 	{enable_ca_string();}
 
@@ -87,9 +95,29 @@ def_string returns [concat_chain chain]
 	{concatenation_point::clear_concat_chain($chain);}
 
 deferred_op_rem returns [remark_list remarks, std::vector<vs_ptr> var_list]
-	: (deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
-	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
-	(CONTINUATION 
-	(deferred_entry {if ($deferred_entry.vs) $var_list.push_back(std::move($deferred_entry.vs));})* 
-	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);} 
-	)* IGNORED*;
+	:
+	(
+		deferred_entry
+		{
+			for (auto&v : $deferred_entry.vs)
+				$var_list.push_back(std::move(v));
+		}
+	)*
+	{enable_continuation();}
+	remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);}
+	(
+		CONTINUATION
+		{disable_continuation();}
+		(
+			deferred_entry
+			{
+				for (auto&v : $deferred_entry.vs)
+					$var_list.push_back(std::move(v));
+			}
+		)*
+		{enable_continuation();}
+		remark_o {if($remark_o.value) $remarks.push_back(*$remark_o.value);}
+	)*
+	;
+	finally
+	{disable_continuation();}
