@@ -42,21 +42,27 @@ std::filesystem::path canonical(const std::filesystem::path& p, std::error_code&
 }
 
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right) { return left == right; }
-bool is_directory(const std::filesystem::path& p) { return std::filesystem::directory_entry(p).is_directory(); }
+bool is_directory(const std::filesystem::path& p)
+{
+    std::error_code ec;
+    std::filesystem::directory_entry d(p, ec);
+
+    return !ec && d.is_directory();
+}
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
-    std::filesystem::directory_entry dir(d);
-
-    if (!dir.exists())
-        return list_directory_rc::not_exists;
-
-    if (!dir.is_directory())
-        return list_directory_rc::not_a_directory;
-
     try
     {
+        std::filesystem::directory_entry dir(d);
+
+        if (!dir.exists())
+            return list_directory_rc::not_exists;
+
+        if (!dir.is_directory())
+            return list_directory_rc::not_a_directory;
+
         std::filesystem::directory_iterator it(dir);
 
         for (auto& p : it)
@@ -78,16 +84,16 @@ list_directory_rc list_directory_regular_files(
 list_directory_rc list_directory_subdirs_and_symlinks(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
-    std::filesystem::directory_entry dir(d);
-
-    if (!dir.exists())
-        return list_directory_rc::not_exists;
-
-    if (!dir.is_directory())
-        return list_directory_rc::not_a_directory;
-
     try
     {
+        std::filesystem::directory_entry dir(d);
+
+        if (!dir.exists())
+            return list_directory_rc::not_exists;
+
+        if (!dir.is_directory())
+            return list_directory_rc::not_a_directory;
+
         std::filesystem::directory_iterator it(dir);
 
         for (auto& p : it)
