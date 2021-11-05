@@ -169,6 +169,11 @@ void server::register_methods()
                     /*no implementation, silences reporting of VS Code implementation-specific notification*/
                 },
             telemetry_log_level::NO_TELEMETRY });
+    methods_.try_emplace("$/cancelRequest",
+        method { [](const json&, const json&) {
+                    /*no implementation, silences telemetry reporting*/
+                },
+            telemetry_log_level::NO_TELEMETRY });
 }
 
 void server::send_telemetry(const telemetry_message& message) { notify("telemetry/event", json(message)); }

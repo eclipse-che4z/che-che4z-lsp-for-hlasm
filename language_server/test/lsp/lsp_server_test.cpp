@@ -100,8 +100,8 @@ TEST(lsp_server, not_implemented_method)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_details":"unknown_method","error_type":"method_not_implemented"}
+            "method_name":"server_error/method_not_implemented",
+            "properties":{"error_details":"unknown_method"}
            }})"_json;
 
     // Only telemetry expected
@@ -166,8 +166,8 @@ TEST(lsp_server, request_no_handler)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_type":"lsp_server/response_no_handler"}
+            "method_name":"server_error/lsp_server/response_no_handler",
+            "properties":null
            }})"_json;
 
     // Only telemetry expected
@@ -188,8 +188,8 @@ TEST(lsp_server, request_no_id)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_type":"lsp_server/response_no_id"}
+            "method_name":"server_error/lsp_server/response_no_id",
+            "properties":null
            }})"_json;
 
     // Only telemetry expected
@@ -212,9 +212,8 @@ TEST(lsp_server, request_error)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_details":"\"the_error_message\"",
-                          "error_type":"lsp_server/response_error_returned"}
+            "method_name":"server_error/lsp_server/response_error_returned",
+            "properties":{"error_details":"\"the_error_message\""}
            }})"_json;
 
     // Only telemetry expected
@@ -235,9 +234,8 @@ TEST(lsp_server, request_error_no_message)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_details":"Request with id \"a_request\" returned with unspecified error.",
-                          "error_type":"lsp_server/response_error_returned"}
+            "method_name":"server_error/lsp_server/response_error_returned",
+            "properties":{"error_details":"Request with id \"a_request\" returned with unspecified error."}
            }})"_json;
 
     // Only telemetry expected
@@ -257,8 +255,8 @@ TEST(lsp_server_test, wrong_message_received)
     json expected_telemetry =
         R"({"jsonrpc":"2.0","method":"telemetry/event","params":{
             "measurements":null,
-            "method_name":"server_error",
-            "properties":{"error_type":"lsp_server/method_unknown_error"}
+            "method_name":"server_error/lsp_server/method_unknown_error",
+            "properties":null
            }})"_json;
 
     // Only telemetry expected
