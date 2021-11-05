@@ -71,10 +71,11 @@ void inline to_json(nlohmann::json& j, const telemetry_info& info)
 void inline to_json(nlohmann::json& j, const telemetry_error& err)
 {
     nlohmann::json properties;
-    properties["error_type"] = err.error_type;
     if (err.error_details != "")
         properties["error_details"] = err.error_details;
-    j = nlohmann::json { { "method_name", "server_error" }, { "properties", properties }, { "measurements", {} } };
+    j = nlohmann::json {
+        { "method_name", "server_error/" + err.error_type }, { "properties", properties }, { "measurements", {} }
+    };
 }
 
 void inline to_json(nlohmann::json& j, const telemetry_message& message)
