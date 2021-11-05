@@ -74,10 +74,6 @@ void parser_impl::enable_continuation() { input.enable_continuation(); }
 
 void parser_impl::disable_continuation() { input.disable_continuation(); }
 
-void parser_impl::enable_hidden() { input.enable_hidden(); }
-
-void parser_impl::disable_hidden() { input.disable_hidden(); }
-
 bool parser_impl::is_self_def()
 {
     std::string tmp(_input->LT(1)->getText());

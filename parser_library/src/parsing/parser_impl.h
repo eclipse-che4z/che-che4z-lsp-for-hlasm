@@ -64,8 +64,6 @@ public:
 protected:
     void enable_continuation();
     void disable_continuation();
-    void enable_hidden();
-    void disable_hidden();
     bool is_self_def();
     bool is_data_attr();
     bool is_var_def();
