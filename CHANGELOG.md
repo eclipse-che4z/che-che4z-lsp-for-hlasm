@@ -1,3 +1,42 @@
+## [0.15.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.14.0...0.15.0) (2021-11-08)
+
+
+### Features
+
+* Allow wildcards in proc_grps.json library specification ([#172](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/172)) ([9157ef7](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/9157ef78e903c80e484eaa6ec6f6970bd4647093)), closes [#69](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/69)
+* Document outline support ([9f65cd4](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/9f65cd4f6a473a349639b49b9836b020ad507788))
+* Implement SYSTEM_ID system variable ([#182](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/182)) ([caa6fd0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/caa6fd04b380a6735a1379ff77f04b25c99b4cc2))
+* Support START and MHELP instructions ([#171](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/171)) ([f9f2fb2](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f9f2fb2852a7feed5e1fdca4a771588b15758762))
+* Telemetry reporting ([#187](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/187)) ([70445dd](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/70445ddd3db3d1a8344aa151c7651c5e802459aa))
+
+
+### Other changes
+
+* Add Support section to client readme ([#192](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/192)) ([c68270f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/c68270f53cfd9f6bf15289d35d75bb8fa75ddb84))
+* replace theia docker images that do not exist anymore ([#197](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/197)) ([ac5cb3d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/ac5cb3df74f0a80d8cab481469255e251854f3f8))
+
+
+### Fixes
+
+* &SYSMAC should contain only the macro name (fixes eclipse/che-che4z-lsp-for-hlasm[#168](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/168)) ([4e2fddc](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/4e2fddce850712783d6cfb14091af21692076a53))
+* AINSERT operand length validation ([#196](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/196)) ([03d62ad](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/03d62ad65d1ed4167f60f7e41c6319118955dca5))
+* Apostrophe parsing in model statements (fixes eclipse/che-che4z-lsp-for-hlasm[#163](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/163)) ([#164](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/164)) ([94843c8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/94843c8a8facdc621058b00100129331da67e66a))
+* Diagnostics lost during JSON serialization ([#170](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/170)) ([f272f7d](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f272f7d9820488a9ecda52d909679f67507cf2b7))
+* DOT operator in string concatenation is optional ([#190](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/190)) ([33d9ecf](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/33d9ecfd14b7a9418418c640d164f7c1f6c73fc0))
+* Enhance conditional assembler expression parsing, evaluation and diagnostics ([#181](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/181)) ([40a2019](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/40a2019b59e8fdc240b65da9537145b87e524de1))
+* File with extensions for other files should not be set to hlasm ([#173](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/173)) ([fc49775](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/fc497751149b72c2b2a318b618928adabcd18032))
+* Fix HLASM Listing highlighting on lines with trimmed whitespace ([#199](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/199)) ([4262e27](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/4262e27861eef1aa7ed87fd8bcac898e6b679bff))
+* Incorrect relative immediate operand validation (fixes [#177](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/177)) ([614c86e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/614c86e844fa7ff47c86b9ceec52f484e0d672aa))
+* Infinite loop during lookahead processing when model statement is located in copybook ([#189](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/189)) ([176de31](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/176de31a040fe67e59a8abcf2852a63a3a1af5c1))
+* Language server crashes while trying to list inaccessible directory ([60db271](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/60db2715b7a5356a102d80bb22a3add834b00a53))
+* Lookahead mode does not work correctly when triggered from AINSERTed code ([#175](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/175)) ([f7143c8](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f7143c8326f5ddbdea46827e7ccd2a700c841a33))
+* Operands of dynamically generated statements may be incorrectly parsed ([#185](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/185)) ([1a9127e](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/1a9127e509cd0cf4137a3bc4a6d92ab742cb616f))
+* Preserve mixed-case labels on macro calls ([#165](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/165)) ([d8545fe](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/d8545fee66cf2987d9cdf179529df4d7987d9c6e)), closes [eclipse/che-che4z-lsp-for-hlasm#155](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/155)
+* Process END instruction ([#184](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/184)) ([2d5ad75](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/2d5ad7593f78a50483d528568996a4e6af701581))
+* Remove ALIAS operand parsing limitation ([#178](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/178)) ([480e602](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/480e602c30fc6cf0cddcd017ee4abe66d75fc043)), closes [#157](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/157)
+* Various fixes ([#166](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/166)) ([200b769](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/200b769e5da0082be264971fdc4a916d63426211))
+* Write the error name directly to method name of telemetry event ([#200](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/200)) ([6dd6b9f](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/6dd6b9f91cfb10791809c5e4b833a4e1a78e693c))
+
 ## [0.14.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.13.0...0.14.0) (2021-08-18)
 
 
