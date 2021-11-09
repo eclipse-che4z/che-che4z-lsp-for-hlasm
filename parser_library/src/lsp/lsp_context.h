@@ -32,6 +32,12 @@ class lsp_context final : public feature_provider
 
     std::shared_ptr<context::hlasm_context> hlasm_ctx_;
 
+    struct document_symbol_cache
+    {
+        std::unordered_map<std::string, std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>>
+            occurences;
+    };
+
 public:
     explicit lsp_context(std::shared_ptr<context::hlasm_context> h_ctx);
 
@@ -72,14 +78,15 @@ private:
     void document_symbol_macro(document_symbol_list_s& result,
         const std::string& document_uri,
         std::optional<range> r,
-        long long& limit) const;
+        long long& limit,
+        document_symbol_cache& cache) const;
     void document_symbol_copy(document_symbol_list_s& result,
         const std::vector<symbol_occurence>& occurence_list,
         const std::string& document_uri,
         std::optional<range> r,
         long long& limit) const;
-    std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences(
-        const std::string& document_uri) const;
+    const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occurences(
+        const std::string& document_uri, document_symbol_cache& cache) const;
     void modify_with_copy(document_symbol_list_s& modified,
         context::id_index sym_name,
         const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& copy_occs,
@@ -96,7 +103,8 @@ private:
     void document_symbol_opencode_ord_symbol(document_symbol_list_s& result, long long& limit) const;
     void document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
         const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache,
-        long long& limit) const;
+        long long& limit,
+        document_symbol_cache& cache) const;
     bool belongs_to_copyfile(const std::string& document_uri, position pos, context::id_index id) const;
 };
 

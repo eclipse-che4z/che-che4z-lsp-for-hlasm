@@ -105,8 +105,11 @@ std::string lsp_context::find_macro_copy_id(const context::processing_stack_t& s
     return stack[i].member_name == context::id_storage::empty_id ? stack[i].proc_location.file : *stack[i].member_name;
 }
 
-void lsp_context::document_symbol_macro(
-    document_symbol_list_s& result, const std::string& document_uri, std::optional<range> r, long long& limit) const
+void lsp_context::document_symbol_macro(document_symbol_list_s& result,
+    const std::string& document_uri,
+    std::optional<range> r,
+    long long& limit,
+    document_symbol_cache& cache) const
 {
     auto m = std::find_if(macros_.begin(), macros_.end(), [&document_uri](const auto& mac) {
         return mac.first->definition_location.file == document_uri;
@@ -116,7 +119,7 @@ void lsp_context::document_symbol_macro(
 
     const auto& [def, info] = *m;
 
-    auto copy_occs = copy_occurences(document_uri);
+    const auto& copy_occs = copy_occurences(document_uri, cache);
 
     for (const auto& var : info->var_definitions)
     {
@@ -178,9 +181,12 @@ void lsp_context::document_symbol_copy(document_symbol_list_s& result,
     }
 }
 
-std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_context::copy_occurences(
-    const std::string& document_uri) const
+const std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>>& lsp_context::copy_occurences(
+    const std::string& document_uri, document_symbol_cache& cache) const
 {
+    if (auto it = cache.occurences.find(document_uri); it != cache.occurences.end())
+        return it->second;
+
     const auto& file = files_.find(document_uri);
     std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> copy_occurences;
     for (const auto& [uri, info] : files_)
@@ -208,7 +214,7 @@ std::vector<std::pair<symbol_occurence, std::vector<context::id_index>>> lsp_con
             copy_occurences.emplace_back(occ, std::move(occurences));
         }
     }
-    return copy_occurences;
+    return cache.occurences[document_uri] = std::move(copy_occurences);
 }
 
 void lsp_context::modify_with_copy(document_symbol_list_s& modified,
@@ -416,7 +422,8 @@ void lsp_context::document_symbol_opencode_ord_symbol(document_symbol_list_s& re
 
 void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_list_s& result,
     const std::unordered_map<std::string_view, std::string_view>& name_to_uri_cache,
-    long long& limit) const
+    long long& limit,
+    document_symbol_cache& cache) const
 {
     for (auto& item : result)
     {
@@ -430,12 +437,12 @@ void lsp_context::document_symbol_opencode_var_seq_symbol_aux(document_symbol_li
         if (const auto& file = files_.find(std::string(uri->second)); file != files_.end())
         {
             if (file->second->type == file_type::MACRO)
-                document_symbol_macro(item.children, file->first, item.symbol_range, limit);
+                document_symbol_macro(item.children, file->first, item.symbol_range, limit, cache);
             else if (file->second->type == file_type::COPY)
                 document_symbol_copy(
                     item.children, file->second->get_occurences(), file->first, item.symbol_range, limit);
         }
-        document_symbol_opencode_var_seq_symbol_aux(item.children, name_to_uri_cache, limit);
+        document_symbol_opencode_var_seq_symbol_aux(item.children, name_to_uri_cache, limit, cache);
     }
 }
 
@@ -452,10 +459,12 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
     for (const auto& [def, info] : hlasm_ctx_->copy_members())
         name_to_uri.insert_or_assign(*info->name, info->definition_location.file);
 
+    document_symbol_cache cache;
+
     switch (file->second->type)
     {
         case file_type::MACRO:
-            document_symbol_macro(result, document_uri, std::nullopt, limit);
+            document_symbol_macro(result, document_uri, std::nullopt, limit, cache);
             break;
 
         case file_type::COPY:
@@ -464,7 +473,7 @@ document_symbol_list_s lsp_context::document_symbol(const std::string& document_
 
         default:
             document_symbol_opencode_ord_symbol(result, limit);
-            document_symbol_opencode_var_seq_symbol_aux(result, name_to_uri, limit);
+            document_symbol_opencode_var_seq_symbol_aux(result, name_to_uri, limit, cache);
 
             for (const auto& sym : opencode_->variable_definitions)
             {
