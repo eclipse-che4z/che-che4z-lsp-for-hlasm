@@ -155,7 +155,7 @@ op_rem_body_ca
 	:
 	SPACE* EOF {collector.set_operand_remark_field(provider.get_range(_localctx));}
 	|
-	SPACE+ op_rem_body_alt_ca 
+	SPACE+ op_rem_body_alt_ca
 	{
 		auto line_range = provider.get_range($op_rem_body_alt_ca.ctx);
 		collector.set_operand_remark_field(std::move($op_rem_body_alt_ca.line.operands), std::move($op_rem_body_alt_ca.line.remarks), line_range);
@@ -168,7 +168,7 @@ op_rem_body_ca
 	} EOF;
 
 op_rem_body_alt_ca returns [op_rem line]
-	: 
+	:
 	(
 		(
 			ca_op? comma
