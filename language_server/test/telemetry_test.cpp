@@ -106,14 +106,13 @@ TEST(telemetry, telemetry_broker)
 
 
     telemetry_broker broker;
+    broker.set_telemetry_sink(&lsp_server);
+
     lsp_server.message_received(open_file_message);
 
     //"textDocument/hover",R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm"},"position":{"line":0,"character":7}})#"_json),
 
     std::thread lsp_thread([&broker, &lsp_server]() {
-        broker.set_telemetry_sink(&lsp_server);
-
-        json message;
         lsp_server.message_received(
             R"({"jsonrpc":"2.0","id":48,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///test_file"},"position":{"line":0,"character":2} }})"_json);
     });
