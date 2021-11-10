@@ -31,6 +31,6 @@ suite('ServerFactory Test Suite', () => {
             assert.ok(matches.length > 0);
         });
         // check port arguments
-        assert.equal(execOptions.args.length, 0);
+        assert.equal(execOptions.args.length, 2);
     });
 });

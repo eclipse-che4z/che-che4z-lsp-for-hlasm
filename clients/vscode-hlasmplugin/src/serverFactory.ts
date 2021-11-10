@@ -39,7 +39,7 @@ export class ServerFactory {
             //spawn the server
             cp.execFile(
                 path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                [lspPort.toString()]);
+                ServerFactory.decorateArgs([lspPort.toString()]));
 
             return () => {
                 let socket = net.connect(lspPort, 'localhost');
@@ -53,14 +53,15 @@ export class ServerFactory {
         else if (method === 'native') {
             const server: vscodelc.Executable = {
                 command: path.join(__dirname, '..', 'bin', langServerFolder, 'language_server'),
-                args: getConfig<string[]>('arguments')
+                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments'))
             };
             return server;
         }
         else if (method === 'wasm') {
-            const server: vscodelc.Executable = {
-                command: process.execPath,
-                args: this.getWasmArgs()
+            const server: vscodelc.NodeModule = {
+                module: path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
+                args: ServerFactory.decorateArgs(getConfig<string[]>('arguments')),
+                options: { execArgv: this.getWasmRuntimeArgs() }
             };
             return server;
         }
@@ -69,20 +70,23 @@ export class ServerFactory {
         }
     }
 
-    private getWasmArgs(): Array<string> {
+    private static decorateArgs(args: Array<string>): Array<string> {
+        return [
+            '--hlasm-start',
+            ...args,
+            '--hlasm-end'
+        ];
+    }
+
+    private getWasmRuntimeArgs(): Array<string> {
         const v8Version = process && process.versions && process.versions.v8 || "1.0";
         const v8Major = +v8Version.split(".")[0];
         if (v8Major >= 9)
-            return [
-                path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
-                ...getConfig<string[]>('arguments')
-            ];
+            return [];
         else
             return [
                 '--experimental-wasm-threads',
-                '--experimental-wasm-bulk-memory',
-                path.join(__dirname, '..', 'bin', 'wasm', 'language_server'),
-                ...getConfig<string[]>('arguments')
+                '--experimental-wasm-bulk-memory'
             ];
     }
 

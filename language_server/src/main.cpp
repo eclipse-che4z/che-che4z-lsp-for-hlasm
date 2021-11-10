@@ -90,13 +90,31 @@ public:
     void write(nlohmann::json&& msg) override { router.write(std::move(msg)); }
 };
 
+auto separate_arguments(int argc, char** argv)
+{
+    auto start = std::find_if(argv + !!argc, argv + argc, [](std::string_view arg) { return arg == "--hlasm-start"; });
+    auto end = std::find_if(start, argv + argc, [](std::string_view arg) { return arg == "--hlasm-end"; });
+
+    if (end == argv + argc)
+    {
+        start = argv + !!argc;
+        end = argv + argc;
+    }
+    else
+        ++start;
+
+    return std::make_pair((int)(end - start), start);
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     using namespace hlasm_plugin::language_server;
 
-    auto io_setup = server_streams::create(argc, argv);
+    auto [count, start] = separate_arguments(argc, argv);
+
+    auto io_setup = server_streams::create(count, start);
     if (!io_setup)
         return 1;
 
