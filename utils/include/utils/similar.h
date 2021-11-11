@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_SIMILAR_H
 #define HLASMPLUGIN_UTILS_SIMILAR_H
 
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -55,6 +56,18 @@ public:
             return l.is_similar(r);
         else if constexpr (equal)
             return l == r; // if things are the same then they are also similar
+    }
+
+    template<typename T>
+    bool operator()(const std::shared_ptr<T>& l, const std::shared_ptr<T>& r) const
+    {
+        return l == r || (l && r && operator()(*l, *r));
+    }
+
+    template<typename T, class D1, class D2>
+    bool operator()(const std::unique_ptr<T, D1>& l, const std::unique_ptr<T, D2>& r) const
+    {
+        return l == r || (l && r && operator()(*l, *r));
     }
 };
 } // namespace detail
