@@ -161,7 +161,7 @@ EMSCRIPTEN_BINDINGS(main_thread)
 std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
 {
     (void)argv;
-    if (argc != 1)
+    if (argc != 0)
     {
         std::cerr << "No arguments allowed";
         return {};

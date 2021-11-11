@@ -83,16 +83,16 @@ public:
 
 std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
 {
-    if (argc > 2)
+    if (argc > 1)
     {
         std::cerr << "Invalid arguments. Use language_server [<lsp port>]";
         return {};
     }
-    const bool use_tcp = argc == 2;
+    const bool use_tcp = argc == 1;
     int lsp_port = 0;
     if (use_tcp)
     {
-        lsp_port = atoi(argv[1]);
+        lsp_port = atoi(argv[0]);
         if (lsp_port <= 0 || lsp_port > 65535)
         {
             std::cerr << "Wrong port entered.";
