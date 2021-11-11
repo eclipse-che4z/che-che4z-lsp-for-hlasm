@@ -1,3 +1,16 @@
+### [0.15.1](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.15.0...0.15.1) (2021-11-11)
+
+
+### Fixes
+
+* Improve outline performance for files with large number of labels ([#202](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/202)) ([16def4b](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/16def4bb701049a031d7b66fb876daa382c3d4bd))
+* Language server must tolerate extra arguments passed by vscode in wasm mode ([#203](https://github.com/eclipse/che-che4z-lsp-for-hlasm/issues/203)) ([f7f4fa6](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/f7f4fa6bc6e3555ed093ebf1fcc7f07ff1fad37c))
+
+
+### Other changes
+
+* Add changelog for v0.15.1 ([d86d752](https://github.com/eclipse/che-che4z-lsp-for-hlasm/commit/d86d752f36512604ecf930b561e402cc8dc77afb))
+
 ## [0.15.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.14.0...0.15.0) (2021-11-08)
 
 
