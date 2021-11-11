@@ -39,6 +39,9 @@ public:
         : op_diagnoser_(&diagnoser)
         , diag_range_(diag_range) {};
 
+    explicit diagnostic_adder(range diag_range)
+        : diag_range_(diag_range) {};
+
     diagnostic_adder() = default;
 
     template<typename F, typename = std::enable_if<std::is_invocable_r_v<diagnostic_op, F, range>>>
