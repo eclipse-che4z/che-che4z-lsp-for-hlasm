@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Fixed
+- Compatibility of WASM backend with VS Code 1.62.1
+
 ## [0.15.0](https://github.com/eclipse/che-che4z-lsp-for-hlasm/compare/0.14.0...0.15.0) (2021-11-08)
 
 #### Added
