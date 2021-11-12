@@ -197,7 +197,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         data_op->value->assign_location_counter(adr);
 
-        has_dependencies |= data_op->value->type != 'V' && data_op->has_dependencies(hlasm_ctx.ord_ctx);
+        has_dependencies |= data_op->has_dependencies(hlasm_ctx.ord_ctx);
 
         has_length_dependencies |= data_op->get_length_dependencies(hlasm_ctx.ord_ctx).contains_dependencies();
 

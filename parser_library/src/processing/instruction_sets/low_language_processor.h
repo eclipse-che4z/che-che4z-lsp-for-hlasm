@@ -28,7 +28,7 @@ class low_language_processor : public instruction_processor, public context::loc
 public:
     static bool check(const resolved_statement& stmt,
         context::hlasm_context& hlasm_ctx,
-        checking::instruction_checker& checker,
+        const checking::instruction_checker& checker,
         const diagnosable_ctx& diagnoser);
 
     void resolve_unknown_loctr_dependency(

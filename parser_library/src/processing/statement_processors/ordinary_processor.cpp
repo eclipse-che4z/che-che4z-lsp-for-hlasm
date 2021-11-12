@@ -224,8 +224,8 @@ void ordinary_processor::collect_diags() const
 
 void ordinary_processor::check_postponed_statements(std::vector<context::post_stmt_ptr> stmts)
 {
-    checking::assembler_checker asm_checker;
-    checking::machine_checker mach_checker;
+    static const checking::assembler_checker asm_checker;
+    static const checking::machine_checker mach_checker;
 
     for (auto& stmt : stmts)
     {

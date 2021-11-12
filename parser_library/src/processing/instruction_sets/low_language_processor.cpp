@@ -387,7 +387,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 
 bool low_language_processor::check(const resolved_statement& stmt,
     context::hlasm_context& hlasm_ctx,
-    checking::instruction_checker& checker,
+    const checking::instruction_checker& checker,
     const diagnosable_ctx& diagnoser)
 {
     auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
