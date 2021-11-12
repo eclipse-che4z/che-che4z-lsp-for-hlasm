@@ -451,3 +451,34 @@ TEST(data_definition, externals_part_support)
     expect_errors(" EXTRN PART()");
     expect_errors(" WXTRN PART()");
 }
+
+TEST(data_definition, moving_loctr)
+{
+    std::string input = R"(
+X    DC  (*-X+1)XL(*-X+1)'0',(*-X+1)F'0'
+LX   EQU *-X
+TEST DS  0FD
+     DS  A
+B    DS  A
+Y    DC  FL.(2*(*-TEST))'0',FL.(2*(*-TEST))'-1',FL.12'0'
+LY   EQU *-Y
+Z    DC  3FL(*-Z+1)'0',3FL(*-Z+1)'0'
+LZ   EQU *-Z
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    auto LX = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LX"));
+    auto LY = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LY"));
+    auto LZ = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LZ"));
+
+    ASSERT_TRUE(LX && LX->value().value_kind() == context::symbol_value_kind::ABS);
+    ASSERT_TRUE(LY && LY->value().value_kind() == context::symbol_value_kind::ABS);
+    ASSERT_TRUE(LZ && LZ->value().value_kind() == context::symbol_value_kind::ABS);
+
+    EXPECT_EQ(LX->value().get_abs(), 24);
+    EXPECT_EQ(LY->value().get_abs(), 6);
+    EXPECT_EQ(LZ->value().get_abs(), 15);
+}

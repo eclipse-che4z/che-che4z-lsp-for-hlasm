@@ -83,6 +83,8 @@ symbol* ordinary_assembly_context::get_symbol(id_index name)
     return tmp == symbols_.end() ? nullptr : &tmp->second;
 }
 
+int ordinary_assembly_context::get_intrastatement_loctr_offset() const { return 0; }
+
 section* ordinary_assembly_context::get_section(id_index name)
 {
     for (auto& tmp : sections_)

@@ -25,6 +25,7 @@ class dependency_solver
 {
 public:
     virtual const symbol* get_symbol(id_index name) const = 0;
+    virtual int get_intrastatement_loctr_offset() const = 0;
 
 protected:
     ~dependency_solver() = default;

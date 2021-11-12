@@ -43,20 +43,52 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
         return conjunction;
     }
 
-    static int32_t get_operands_length(const semantics::operand_list& operands, context::dependency_solver& solver)
+    static int32_t get_operands_length(const semantics::operand_list& operands, context::dependency_solver& _solver)
     {
-        std::vector<checking::check_op_ptr> checking_ops;
-        std::vector<const checking::data_definition_operand*> get_len_ops;
+        struct data_def_dependency_solver final : public context::dependency_solver
+        {
+            explicit data_def_dependency_solver(context::dependency_solver& base)
+                : base(base)
+            {}
+            context::dependency_solver& base;
+            uint64_t operands_bit_length = 0;
+
+            const context::symbol* get_symbol(context::id_index name) const override { return base.get_symbol(name); }
+            int get_intrastatement_loctr_offset() const override { return (int)(operands_bit_length / 8); }
+        } solver(_solver);
+
+        constexpr const auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };
+
         for (const auto& op : operands)
         {
             if (op->type == semantics::operand_type::EMPTY)
                 continue;
-            auto o = op->access_data_def()->get_operand_value(solver);
-            checking::data_definition_operand* dd_op = dynamic_cast<checking::data_definition_operand*>(o.get());
-            checking_ops.push_back(std::move(o));
-            get_len_ops.push_back(dd_op);
+
+            if (auto dd = op->access_data_def()->value.get();
+                dd->length_type != expressions::data_definition::length_type::BIT)
+            {
+                // align to whole byte
+                round_up_bytes(solver.operands_bit_length, 1);
+
+                // enforce data def alignment
+                round_up_bytes(solver.operands_bit_length, dd->get_alignment().boundary);
+            }
+            const auto o = op->access_data_def()->get_operand_value(solver);
+            const auto* dd_op = dynamic_cast<checking::data_definition_operand*>(o.get());
+
+
+            if (!dd_op->check<instr_type>(diagnostic_collector()))
+                return 0;
+
+            solver.operands_bit_length += dd_op->get_length();
         }
-        uint64_t len = checking::data_definition_operand::get_operands_length<instr_type>(get_len_ops);
+
+        // align to whole byte
+        round_up_bytes(solver.operands_bit_length, 1);
+
+        // returns the length in bytes
+        uint64_t len = solver.operands_bit_length / 8;
+
         if (len > INT32_MAX)
             return 0;
         else

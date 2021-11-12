@@ -177,11 +177,16 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 template<checking::data_instr_type instr_type>
 void asm_processor::process_data_instruction(rebuilt_statement stmt)
 {
-    // enforce alignment of the first operand
-    context::alignment al = context::no_align;
-    if (!stmt.operands_ref().value.empty() && stmt.operands_ref().value[0]->type != semantics::operand_type::EMPTY)
-        al = stmt.operands_ref().value[0]->access_data_def()->value->get_alignment();
+    if (const auto& ops = stmt.operands_ref().value; ops.empty()
+        || std::any_of(
+            ops.begin(), ops.end(), [](const auto& op) { return op->type == semantics::operand_type::EMPTY; }))
+    {
+        check(stmt, hlasm_ctx, checker_, *this);
+        return;
+    }
 
+    // enforce alignment of the first operand
+    context::alignment al = stmt.operands_ref().value.front()->access_data_def()->value->get_alignment();
     context::address adr = hlasm_ctx.ord_ctx.align(al);
 
     // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
@@ -191,8 +196,6 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     bool has_length_dependencies = false;
     for (const auto& op : stmt.operands_ref().value)
     {
-        if (op->type == semantics::operand_type::EMPTY)
-            continue;
         auto data_op = op->access_data_def();
 
         data_op->value->assign_location_counter(adr);
@@ -208,8 +211,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     // process label
     auto label = find_label_symbol(stmt);
 
-    if (label != context::id_storage::empty_id && stmt.operands_ref().value.size()
-        && stmt.operands_ref().value.front()->type != semantics::operand_type::EMPTY)
+    if (label != context::id_storage::empty_id)
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
@@ -268,9 +270,6 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         if (label != context::id_storage::empty_id)
         {
-            if (adder.source_stmt->impl()->operands_ref().value.empty())
-                return;
-
             auto data_op = adder.source_stmt->impl()->operands_ref().value.front()->access_data_def();
 
             if (data_op->value->length

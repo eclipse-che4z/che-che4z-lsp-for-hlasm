@@ -70,6 +70,8 @@ public:
     const symbol* get_symbol(id_index name) const override;
     symbol* get_symbol(id_index name);
 
+    int get_intrastatement_loctr_offset() const override;
+
     // gets section by name
     section* get_section(id_index name);
 
