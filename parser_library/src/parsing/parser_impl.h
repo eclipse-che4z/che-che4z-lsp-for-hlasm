@@ -19,6 +19,7 @@
 
 #include "context/hlasm_context.h"
 #include "diagnosable.h"
+#include "expressions/data_definition.h"
 #include "lexing/lexer.h"
 #include "processing/opencode_provider.h"
 #include "processing/statement_fields_parser.h"
@@ -75,6 +76,8 @@ protected:
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
+
+    context::id_index add_literal(std::string literal_text, expressions::data_definition dd, range dd_range);
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;

@@ -26,8 +26,9 @@
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
-
 namespace hlasm_plugin::parser_library::context {
+
+class literal_pool;
 
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one
@@ -83,6 +84,10 @@ class hlasm_context
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
+
+    // literals
+    std::unique_ptr<literal_pool> m_literals;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -92,6 +97,7 @@ public:
     hlasm_context(std::string file_name = "",
         asm_option asm_opts = {},
         std::shared_ptr<id_storage> init_ids = std::make_shared<id_storage>());
+    ~hlasm_context();
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;
@@ -277,6 +283,8 @@ public:
 
     size_t current_ainsert_id() const { return m_ainsert_id; }
     size_t obtain_ainsert_id() { return ++m_ainsert_id; }
+
+    literal_pool& literals() { return *m_literals; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

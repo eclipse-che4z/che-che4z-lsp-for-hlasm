@@ -24,6 +24,8 @@ target_sources(parser_library PRIVATE
 	instruction.cpp
 	instruction.h
 	instruction_type.h
+	literal_pool.cpp
+	literal_pool.h
 	macro.cpp
 	macro.h
 	macro_param_data.cpp

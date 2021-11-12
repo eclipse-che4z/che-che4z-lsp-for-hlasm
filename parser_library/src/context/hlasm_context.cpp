@@ -21,6 +21,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "instruction.h"
+#include "literal_pool.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -265,6 +266,7 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     , opencode_file_name_(file_name)
     , asm_options_(std::move(asm_options))
     , instruction_map_(init_instruction_map())
+    , m_literals(std::make_unique<literal_pool>())
     , ord_ctx(*ids_, *this)
 {
     scope_stack_.emplace_back();
@@ -272,6 +274,8 @@ hlasm_context::hlasm_context(std::string file_name, asm_option asm_options, std:
     push_statement_processing(processing::processing_kind::ORDINARY, std::move(file_name));
     add_global_system_vars();
 }
+
+hlasm_context::~hlasm_context() = default;
 
 void hlasm_context::set_source_position(position pos) { source_stack_.back().current_instruction.pos = pos; }
 

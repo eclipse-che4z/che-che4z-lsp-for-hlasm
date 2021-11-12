@@ -100,12 +100,19 @@ mach_term returns [mach_expr_ptr m_e]
 	}
 	| literal
 	{
-		$m_e = std::make_unique<mach_expr_constant>(0, provider.get_range($literal.ctx));
+		auto rng = provider.get_range($literal.ctx);
+		if (auto lit_name = add_literal($literal.text, std::move($literal.value), rng))
+			$m_e = std::make_unique<mach_expr_symbol>(lit_name, rng);
+		else
+			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
 
-literal
-	: equals data_def;
+literal returns [data_definition value]
+	: equals data_def
+	{
+		$value = std::move($data_def.value);
+	};
 
 mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index> data, range symbol_rng]
 	: ORDSYMBOL (attr|apostrophe_as_attr) mach_data_attribute_value
@@ -118,6 +125,10 @@ mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monosta
 
 mach_data_attribute_value returns [std::variant<std::monostate, id_index> data]
 	: literal
+	{
+		if (auto lit_name = add_literal($literal.text, std::move($literal.value), provider.get_range($literal.ctx)))
+			$data = lit_name;
+	}
 	| mach_location_counter
 	| id
 	{
