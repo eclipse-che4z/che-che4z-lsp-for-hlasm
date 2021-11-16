@@ -21,7 +21,7 @@
 namespace hlasm_plugin::parser_library::expressions {
 
 // Represents a number written in a machine expression.
-class mach_expr_constant : public mach_expression
+class mach_expr_constant final : public mach_expression
 {
     value_t value_;
 
@@ -41,7 +41,7 @@ public:
 };
 
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
-class mach_expr_data_attr : public mach_expression
+class mach_expr_data_attr final : public mach_expression
 {
 public:
     mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
@@ -62,7 +62,7 @@ public:
 };
 
 // Represents an ordinary symbol in machine expressions.
-class mach_expr_symbol : public mach_expression
+class mach_expr_symbol final : public mach_expression
 {
 public:
     mach_expr_symbol(context::id_index value, range rng);
@@ -82,7 +82,7 @@ public:
 };
 
 // Represents a location counter written in a machine expression (the character *)
-class mach_expr_location_counter : public mach_expression
+class mach_expr_location_counter final : public mach_expression
 {
 public:
     mach_expr_location_counter(range rng);
@@ -99,7 +99,7 @@ public:
 };
 
 // Represents a self defining term (e.g. X'4A')
-class mach_expr_self_def : public mach_expression
+class mach_expr_self_def final : public mach_expression
 {
     value_t value_;
 
@@ -119,7 +119,7 @@ public:
 
 // Represents an "empty" term that is used when parsing of a machine expression fails
 //(the user writes invalid expression)
-class mach_expr_default : public mach_expression
+class mach_expr_default final : public mach_expression
 {
 public:
     mach_expr_default(range rng);
