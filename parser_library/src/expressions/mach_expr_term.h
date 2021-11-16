@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_MACH_EXPR_TERM_H
 
 #include "context/id_storage.h"
+#include "expressions/data_definition.h"
 #include "mach_expression.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -133,6 +134,27 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override;
+};
+
+// Represents an literal expression (e.g. =C'text')
+class mach_expr_literal final : public mach_expression
+{
+    std::shared_ptr<const data_definition> m_data_definition;
+
+public:
+    mach_expr_literal(range rng, data_definition dd);
+
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+    value_t evaluate(mach_evaluate_info info) const override;
+
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
+
+    void collect_diags() const override;
+
+    const std::shared_ptr<const data_definition>& get_data_definition() const;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

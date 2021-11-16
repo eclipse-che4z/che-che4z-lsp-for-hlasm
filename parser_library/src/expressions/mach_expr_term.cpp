@@ -192,4 +192,27 @@ const mach_expression* mach_expr_data_attr::leftmost_term() const { return this;
 
 void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
+mach_expr_literal::mach_expr_literal(range rng, data_definition dd)
+    : mach_expression(rng)
+    , m_data_definition(std::make_shared<data_definition>(std::move(dd)))
+{}
+
+context::dependency_collector mach_expr_literal::get_dependencies(context::dependency_solver&) const
+{
+    return context::dependency_collector();
+}
+
+mach_expression::value_t mach_expr_literal::evaluate(mach_evaluate_info) const { return value_t(); }
+
+const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
+
+void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+
+void mach_expr_literal::collect_diags() const {}
+
+const std::shared_ptr<const data_definition>& mach_expr_literal::get_data_definition() const
+{
+    return m_data_definition;
+}
+
 } // namespace hlasm_plugin::parser_library::expressions

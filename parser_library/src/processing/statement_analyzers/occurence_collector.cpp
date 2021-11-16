@@ -63,22 +63,23 @@ void occurence_collector::visit(const semantics::complex_assembler_operand&) {}
 
 void occurence_collector::visit(const semantics::string_assembler_operand&) {}
 
-void occurence_collector::visit(const semantics::data_def_operand& op)
-{
-    if (op.value->dupl_factor)
-        op.value->dupl_factor->apply(*this);
-    if (op.value->program_type)
-        op.value->program_type->apply(*this);
-    if (op.value->length)
-        op.value->length->apply(*this);
-    if (op.value->scale)
-        op.value->scale->apply(*this);
-    if (op.value->exponent)
-        op.value->exponent->apply(*this);
 
-    if (op.value->nominal_value && op.value->nominal_value->access_exprs())
+void occurence_collector::visit(const expressions::data_definition& dd)
+{
+    if (dd.dupl_factor)
+        dd.dupl_factor->apply(*this);
+    if (dd.program_type)
+        dd.program_type->apply(*this);
+    if (dd.length)
+        dd.length->apply(*this);
+    if (dd.scale)
+        dd.scale->apply(*this);
+    if (dd.exponent)
+        dd.exponent->apply(*this);
+
+    if (dd.nominal_value && dd.nominal_value->access_exprs())
     {
-        for (const auto& val : op.value->nominal_value->access_exprs()->exprs)
+        for (const auto& val : dd.nominal_value->access_exprs()->exprs)
         {
             if (std::holds_alternative<expressions::mach_expr_ptr>(val))
                 std::get<expressions::mach_expr_ptr>(val)->apply(*this);
@@ -91,6 +92,8 @@ void occurence_collector::visit(const semantics::data_def_operand& op)
         }
     }
 }
+
+void occurence_collector::visit(const semantics::data_def_operand& op) { visit(*op.value); }
 
 void occurence_collector::visit(const semantics::var_ca_operand& op) { get_occurence(*op.variable_symbol); }
 
@@ -181,6 +184,8 @@ void occurence_collector::visit(const expressions::mach_expr_location_counter&) 
 void occurence_collector::visit(const expressions::mach_expr_self_def&) {}
 
 void occurence_collector::visit(const expressions::mach_expr_default&) {}
+
+void occurence_collector::visit(const expressions::mach_expr_literal& lit) { visit(*lit.get_data_definition()); }
 
 void occurence_collector::visit(const expressions::ca_constant&) {}
 

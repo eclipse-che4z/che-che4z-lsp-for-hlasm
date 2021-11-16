@@ -26,6 +26,8 @@ class occurence_collector : public semantics::operand_visitor,
                             public expressions::mach_expr_visitor,
                             public expressions::ca_expr_visitor
 {
+    void visit(const expressions::data_definition&);
+
 public:
     lsp::occurence_kind collector_kind;
     context::hlasm_context& hlasm_ctx;
@@ -63,6 +65,7 @@ private:
     void visit(const expressions::mach_expr_location_counter& expr) override;
     void visit(const expressions::mach_expr_self_def& expr) override;
     void visit(const expressions::mach_expr_default& expr) override;
+    void visit(const expressions::mach_expr_literal& expr) override;
 
     void visit(const expressions::ca_constant& expr) override;
     void visit(const expressions::ca_expr_list& expr) override;
