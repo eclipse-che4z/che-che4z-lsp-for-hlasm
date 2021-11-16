@@ -162,15 +162,16 @@ first_part
 	};
 
 operand_field_rest
-	: .*?;
+	: (~EOF)*;
 
 lab_instr returns [std::optional<std::string> op_text, range op_range]
-	: first_part {enable_hidden();} operand_field_rest {disable_hidden();} EOF
+	: first_part operand_field_rest EOF
 	{
 		if (!$first_part.ctx->exception)
 		{
-			$op_text = $operand_field_rest.ctx->getText();
-			$op_range = provider.get_range($operand_field_rest.ctx);
+			auto op_index = $first_part.stop->getTokenIndex()+1;
+			$op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+			$op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
 		}
 	}
 	| SPACE? EOF

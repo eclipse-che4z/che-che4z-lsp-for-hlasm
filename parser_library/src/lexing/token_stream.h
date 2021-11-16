@@ -30,7 +30,6 @@ namespace hlasm_plugin::parser_library::lexing {
 class token_stream : public antlr4::BufferedTokenStream
 {
     bool enabled_cont_;
-    bool enabled_hidden_;
     bool needSetup_;
 
 public:
@@ -40,11 +39,6 @@ public:
     void enable_continuation();
     // filter continuation token from the token stream
     void disable_continuation();
-
-    // enable hidden channel tokens in the token stream
-    void enable_hidden();
-    // disable hidden token channel
-    void disable_hidden();
 
     antlr4::Token* LT(ssize_t k) override;
 

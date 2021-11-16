@@ -75,7 +75,7 @@ term returns [ca_expr_ptr ca_expr]
 		auto r = provider.get_range($var_symbol.ctx);
 		$ca_expr = std::make_unique<ca_var_sym>(std::move($var_symbol.vs), r);
 	}
-	| ca_string
+	| {allow_ca_string()}? ca_string
 	{ 
 		auto r = provider.get_range($ca_string.ctx);
 		collector.add_hl_symbol(token_info(r, hl_scopes::string));

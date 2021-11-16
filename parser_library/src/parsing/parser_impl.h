@@ -64,11 +64,14 @@ public:
 protected:
     void enable_continuation();
     void disable_continuation();
-    void enable_hidden();
-    void disable_hidden();
     bool is_self_def();
     bool is_data_attr();
     bool is_var_def();
+
+    bool allow_ca_string() const { return ca_string_enabled; }
+    void enable_ca_string() { ca_string_enabled = true; }
+    void disable_ca_string() { ca_string_enabled = false; }
+
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
@@ -92,6 +95,8 @@ private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;
     parser_error_listener err_listener_;
+
+    bool ca_string_enabled = true;
 };
 
 // structure containing parser components

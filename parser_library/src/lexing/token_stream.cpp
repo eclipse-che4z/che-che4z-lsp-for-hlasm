@@ -20,17 +20,12 @@ using namespace antlr4;
 token_stream::token_stream(antlr4::TokenSource* token_source)
     : antlr4::BufferedTokenStream(token_source)
     , enabled_cont_(false)
-    , enabled_hidden_(false)
     , needSetup_(true)
 {}
 
 void token_stream::enable_continuation() { enabled_cont_ = true; }
 
 void token_stream::disable_continuation() { enabled_cont_ = false; }
-
-void token_stream::enable_hidden() { enabled_hidden_ = true; }
-
-void token_stream::disable_hidden() { enabled_hidden_ = false; }
 
 void token_stream::reset()
 {
@@ -215,6 +210,5 @@ size_t token_stream::previous_token_on_channel(size_t i)
 bool token_stream::is_on_channel(antlr4::Token* token)
 {
     return token->getChannel() == lexer::Channels::DEFAULT_CHANNEL
-        || (enabled_hidden_ && token->getChannel() == lexer::Channels::HIDDEN_CHANNEL)
         || (enabled_cont_ && token->getType() == lexer::CONTINUATION) || token->getType() == antlr4::Token::EOF;
 }
