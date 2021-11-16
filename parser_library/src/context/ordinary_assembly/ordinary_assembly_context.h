@@ -32,7 +32,7 @@ class hlasm_context;
 
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
-class ordinary_assembly_context : public dependency_solver
+class ordinary_assembly_context
 {
     // list of visited sections
     std::vector<std::unique_ptr<section>> sections_;
@@ -66,11 +66,7 @@ public:
     void add_symbol_reference(symbol sym);
     const symbol* get_symbol_reference(context::id_index name) const;
 
-    // gets symbol by name
-    const symbol* get_symbol(id_index name) const override;
     symbol* get_symbol(id_index name);
-
-    int get_intrastatement_loctr_offset() const override;
 
     // gets section by name
     section* get_section(id_index name);
@@ -93,15 +89,17 @@ public:
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source);
+        post_stmt_ptr dependency_source,
+        std::optional<context::address> loctr_addr);
     space_ptr set_location_counter_value_space(const address& addr,
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source);
+        post_stmt_ptr dependency_source,
+        std::optional<context::address> loctr_addr);
 
     // sets next available value for the current location counter
-    void set_available_location_counter_value(size_t boundary, int offset);
+    void set_available_location_counter_value(size_t boundary, int offset, std::optional<context::address> loctr_addr);
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name);
@@ -111,10 +109,10 @@ public:
     bool counter_defined(id_index name);
 
     // reserves storage area of specified length and alignment
-    address reserve_storage_area(size_t length, alignment align);
+    address reserve_storage_area(size_t length, alignment align, std::optional<context::address> loctr_addr);
 
     // aligns storage
-    address align(alignment align);
+    address align(alignment align, std::optional<context::address> loctr_addr);
 
     // adds space to the current location counter
     space_ptr register_ordinary_space(alignment align);
@@ -126,7 +124,26 @@ public:
 
 private:
     void create_private_section();
-    std::pair<address, space_ptr> reserve_storage_area_space(size_t length, alignment align);
+    std::pair<address, space_ptr> reserve_storage_area_space(
+        size_t length, alignment align, std::optional<context::address> loctr_addr);
+
+    friend class ordinary_assembly_dependency_solver;
+};
+
+class ordinary_assembly_dependency_solver final : public dependency_solver
+{
+    const ordinary_assembly_context& ord_context;
+    std::optional<context::address> loctr_addr;
+
+public:
+    ordinary_assembly_dependency_solver(
+        const ordinary_assembly_context& ord_context, std::optional<context::address> loctr_addr)
+        : ord_context(ord_context)
+        , loctr_addr(std::move(loctr_addr))
+    {}
+
+    const symbol* get_symbol(id_index name) const override;
+    std::optional<context::address> get_loctr() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::context

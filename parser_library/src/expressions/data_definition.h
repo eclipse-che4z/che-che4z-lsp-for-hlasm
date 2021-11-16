@@ -95,9 +95,6 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     // Expects that check_single_symbol_ok returned true.
     std::vector<context::id_index> get_single_symbol_names() const;
 
-    // Assigns location counter to all expressions used to represent this data_definition.
-    void assign_location_counter(context::address loctr_value);
-
     void collect_diags() const override;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set

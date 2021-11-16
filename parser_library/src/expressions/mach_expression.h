@@ -46,9 +46,6 @@ public:
 
     virtual value_t evaluate(mach_evaluate_info info) const = 0;
 
-    // Sets location counter in the whole machine expression to specified address.
-    virtual void fill_location_counter(context::address addr) = 0;
-
     virtual const mach_expression* leftmost_term() const = 0;
 
     virtual void apply(mach_expr_visitor& visitor) const = 0;

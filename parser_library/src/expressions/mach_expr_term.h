@@ -33,8 +33,6 @@ public:
 
     value_t evaluate(mach_evaluate_info info) const override;
 
-    void fill_location_counter(context::address addr) override;
-
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
@@ -56,8 +54,6 @@ public:
 
     value_t evaluate(mach_evaluate_info info) const override;
 
-    void fill_location_counter(context::address addr) override;
-
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
@@ -78,8 +74,6 @@ public:
 
     value_t evaluate(mach_evaluate_info info) const override;
 
-    void fill_location_counter(context::address addr) override;
-
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
@@ -91,15 +85,11 @@ public:
 class mach_expr_location_counter : public mach_expression
 {
 public:
-    std::optional<context::address> location_counter;
-
     mach_expr_location_counter(range rng);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
     value_t evaluate(mach_evaluate_info info) const override;
-
-    void fill_location_counter(context::address addr) override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -120,8 +110,6 @@ public:
 
     value_t evaluate(mach_evaluate_info info) const override;
 
-    void fill_location_counter(context::address addr) override;
-
     const mach_expression* leftmost_term() const override;
 
     void apply(mach_expr_visitor& visitor) const override;
@@ -139,8 +127,6 @@ public:
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
     value_t evaluate(mach_evaluate_info info) const override;
-
-    void fill_location_counter(context::address addr) override;
 
     const mach_expression* leftmost_term() const override;
 

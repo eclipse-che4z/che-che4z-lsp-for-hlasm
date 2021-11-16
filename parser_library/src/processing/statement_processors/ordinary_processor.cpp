@@ -222,12 +222,13 @@ void ordinary_processor::collect_diags() const
     collect_diags_from_child(eval_ctx);
 }
 
-void ordinary_processor::check_postponed_statements(std::vector<context::post_stmt_ptr> stmts)
+void ordinary_processor::check_postponed_statements(
+    std::vector<std::pair<context::post_stmt_ptr, std::optional<context::address>>> stmts)
 {
     static const checking::assembler_checker asm_checker;
     static const checking::machine_checker mach_checker;
 
-    for (auto& stmt : stmts)
+    for (auto& [stmt, loctr] : stmts)
     {
         if (!stmt)
             continue;
@@ -236,10 +237,12 @@ void ordinary_processor::check_postponed_statements(std::vector<context::post_st
         assert(stmt->impl()->opcode_ref().type == context::instruction_type::ASM
             || stmt->impl()->opcode_ref().type == context::instruction_type::MACH);
 
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
+
         if (stmt->impl()->opcode_ref().type == context::instruction_type::ASM)
-            low_language_processor::check(*stmt->impl(), hlasm_ctx, asm_checker, *this);
+            low_language_processor::check(*stmt->impl(), stmt->location_stack(), dep_solver, asm_checker, *this);
         else
-            low_language_processor::check(*stmt->impl(), hlasm_ctx, mach_checker, *this);
+            low_language_processor::check(*stmt->impl(), stmt->location_stack(), dep_solver, mach_checker, *this);
     }
 }
 

@@ -31,54 +31,6 @@ low_language_processor::low_language_processor(analyzing_context ctx,
     , parser(parser)
 {}
 
-namespace {
-class fill_loctr_visitor final : public semantics::operand_visitor
-{
-public:
-    explicit fill_loctr_visitor(context::address address_to_fill)
-        : addr(std::move(address_to_fill))
-    {}
-
-private:
-    context::address addr;
-    // Inherited via operand_visitor
-    void visit(const semantics::empty_operand&) override {}
-    void visit(const semantics::model_operand&) override {}
-    void visit(const semantics::expr_machine_operand& op) override { op.expression->fill_location_counter(addr); }
-    void visit(const semantics::address_machine_operand& op) override
-    {
-        if (op.displacement)
-            op.displacement->fill_location_counter(addr);
-        if (op.first_par)
-            op.first_par->fill_location_counter(addr);
-        if (op.second_par)
-            op.second_par->fill_location_counter(addr);
-    }
-    void visit(const semantics::expr_assembler_operand& op) override { op.expression->fill_location_counter(addr); }
-    void visit(const semantics::using_instr_assembler_operand&) override
-    {
-        // TODO when USING implementation is done
-    }
-    void visit(const semantics::complex_assembler_operand&) override {}
-    void visit(const semantics::string_assembler_operand&) override {}
-    void visit(const semantics::data_def_operand& op) override { op.value->assign_location_counter(addr); }
-    void visit(const semantics::var_ca_operand&) override {}
-    void visit(const semantics::expr_ca_operand&) override {}
-    void visit(const semantics::seq_ca_operand&) override {}
-    void visit(const semantics::branch_ca_operand&) override {}
-    void visit(const semantics::macro_operand_chain&) override {}
-    void visit(const semantics::macro_operand_string&) override {}
-};
-} // namespace
-
-void low_language_processor::fill_expression_loc_counters(rebuilt_statement& stmt, context::alignment instr_alignment)
-{
-    auto addr = hlasm_ctx.ord_ctx.align(instr_alignment);
-    fill_loctr_visitor fill_visitor(addr);
-    for (auto& op : stmt.operands_ref().value)
-        op->apply(fill_visitor);
-}
-
 rebuilt_statement low_language_processor::preprocess(std::shared_ptr<const processing::resolved_statement> statement)
 {
     auto stmt = std::static_pointer_cast<const resolved_statement>(statement);
@@ -210,15 +162,18 @@ bool low_language_processor::check_address_for_ORG(range err_range,
 }
 
 void low_language_processor::resolve_unknown_loctr_dependency(
-    context::space_ptr sp, const context::address& addr, range err_range)
+    context::space_ptr sp, const context::address& addr, range err_range, std::optional<context::address> loctr_addr)
 {
     auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
     hlasm_ctx.ord_ctx.set_location_counter(sp->owner.name, location());
     hlasm_ctx.ord_ctx.current_section()->current_location_counter().switch_to_unresolved_value(sp);
 
-    if (!check_address_for_ORG(
-            err_range, addr, hlasm_ctx.ord_ctx.align(context::no_align), sp->previous_boundary, sp->previous_offset))
+    if (!check_address_for_ORG(err_range,
+            addr,
+            hlasm_ctx.ord_ctx.align(context::no_align, loctr_addr),
+            sp->previous_boundary,
+            sp->previous_offset))
     {
         (void)hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
         hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
@@ -226,7 +181,7 @@ void low_language_processor::resolve_unknown_loctr_dependency(
     }
 
     auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
-        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr);
+        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, std::move(loctr_addr));
 
     auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
     hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());
@@ -247,7 +202,7 @@ void low_language_processor::resolve_unknown_loctr_dependency(
 
 
 low_language_processor::transform_result low_language_processor::transform_mnemonic(
-    const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
+    const resolved_statement& stmt, context::dependency_solver& dep_solver, diagnostic_collector add_diagnostic)
 {
     // operands obtained from the user
     const auto& operands = stmt.operands_ref().value;
@@ -298,7 +253,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
             }
             else // if operand is not empty
             {
-                auto uniq = get_check_op(operand.get(), hlasm_ctx, add_diagnostic, stmt, j, &mnemonic);
+                auto uniq = get_check_op(operand.get(), dep_solver, add_diagnostic, stmt, j, &mnemonic);
                 if (!uniq)
                     return std::nullopt; // contains dependencies
 
@@ -311,7 +266,7 @@ low_language_processor::transform_result low_language_processor::transform_mnemo
 }
 
 low_language_processor::transform_result low_language_processor::transform_default(
-    const resolved_statement& stmt, context::hlasm_context& hlasm_ctx, diagnostic_collector add_diagnostic)
+    const resolved_statement& stmt, context::dependency_solver& dep_solver, diagnostic_collector add_diagnostic)
 {
     std::vector<checking::check_op_ptr> operand_vector;
     for (auto& op : stmt.operands_ref().value)
@@ -324,7 +279,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
             continue;
         }
 
-        auto uniq = get_check_op(op.get(), hlasm_ctx, add_diagnostic, stmt, operand_vector.size());
+        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt, operand_vector.size());
 
         if (!uniq)
             return std::nullopt; // contains dependencies
@@ -336,7 +291,7 @@ low_language_processor::transform_result low_language_processor::transform_defau
 }
 
 checking::check_op_ptr low_language_processor::get_check_op(const semantics::operand* op,
-    context::hlasm_context& hlasm_ctx,
+    context::dependency_solver& dep_solver,
     diagnostic_collector add_diagnostic,
     const resolved_statement& stmt,
     size_t op_position,
@@ -348,7 +303,7 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
     bool can_have_ord_syms =
         tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
 
-    if (can_have_ord_syms && ev_op.has_dependencies(hlasm_ctx.ord_ctx))
+    if (can_have_ord_syms && ev_op.has_dependencies(dep_solver))
     {
         add_diagnostic(diagnostic_op::error_E010("ordinary symbol", ev_op.operand_range));
         return nullptr;
@@ -363,18 +318,18 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
         if (instr->operands.size() > op_position)
         {
             auto type = instr->operands[op_position].identifier.type;
-            uniq = mach_op->get_operand_value(hlasm_ctx.ord_ctx, type);
+            uniq = mach_op->get_operand_value(dep_solver, type);
         }
         else
-            uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
+            uniq = ev_op.get_operand_value(dep_solver);
     }
     else if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
     {
-        uniq = expr_op->get_operand_value(hlasm_ctx.ord_ctx, can_have_ord_syms);
+        uniq = expr_op->get_operand_value(dep_solver, can_have_ord_syms);
     }
     else
     {
-        uniq = ev_op.get_operand_value(hlasm_ctx.ord_ctx);
+        uniq = ev_op.get_operand_value(dep_solver);
     }
 
     ev_op.collect_diags();
@@ -386,13 +341,12 @@ checking::check_op_ptr low_language_processor::get_check_op(const semantics::ope
 }
 
 bool low_language_processor::check(const resolved_statement& stmt,
-    context::hlasm_context& hlasm_ctx,
+    const context::processing_stack_t& processing_stack,
+    context::dependency_solver& dep_solver,
     const checking::instruction_checker& checker,
     const diagnosable_ctx& diagnoser)
 {
-    auto postponed_stmt = dynamic_cast<const context::postponed_statement*>(&stmt);
-    diagnostic_collector collector(
-        &diagnoser, postponed_stmt ? postponed_stmt->location_stack() : hlasm_ctx.processing_stack());
+    diagnostic_collector collector(&diagnoser, processing_stack);
 
     std::vector<const checking::operand*> operand_ptr_vector;
     transform_result operand_vector;
@@ -402,13 +356,13 @@ bool low_language_processor::check(const resolved_statement& stmt,
 
     if (mnem_tmp != context::instruction::mnemonic_codes.end())
     {
-        operand_vector = transform_mnemonic(stmt, hlasm_ctx, collector);
+        operand_vector = transform_mnemonic(stmt, dep_solver, collector);
         // save the actual mnemonic name
         instruction_name = &mnem_tmp->first;
     }
     else
     {
-        operand_vector = transform_default(stmt, hlasm_ctx, collector);
+        operand_vector = transform_default(stmt, dep_solver, collector);
         instruction_name = stmt.opcode_ref().value;
     }
 

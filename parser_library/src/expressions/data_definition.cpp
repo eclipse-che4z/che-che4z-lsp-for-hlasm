@@ -227,33 +227,6 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     return symbols;
 }
 
-void data_definition::assign_location_counter(context::address loctr_value)
-{
-    if (dupl_factor)
-        dupl_factor->fill_location_counter(loctr_value);
-    if (program_type)
-        program_type->fill_location_counter(loctr_value);
-    if (length)
-        length->fill_location_counter(loctr_value);
-    if (scale)
-        scale->fill_location_counter(loctr_value);
-    if (exponent)
-        exponent->fill_location_counter(loctr_value);
-    if (nominal_value && nominal_value->access_exprs())
-    {
-        for (auto& entry : nominal_value->access_exprs()->exprs)
-        {
-            if (std::holds_alternative<mach_expr_ptr>(entry))
-                std::get<mach_expr_ptr>(entry)->fill_location_counter(loctr_value);
-            else
-            {
-                std::get<address_nominal>(entry).base->fill_location_counter(loctr_value);
-                std::get<address_nominal>(entry).displacement->fill_location_counter(loctr_value);
-            }
-        }
-    }
-}
-
 void data_definition::collect_diags() const {}
 
 checking::data_def_field<int32_t> set_data_def_field(

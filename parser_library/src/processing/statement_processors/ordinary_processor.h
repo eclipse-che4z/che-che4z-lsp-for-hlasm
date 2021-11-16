@@ -63,7 +63,8 @@ public:
     void collect_diags() const override;
 
 private:
-    void check_postponed_statements(std::vector<context::post_stmt_ptr> stmts);
+    void check_postponed_statements(
+        std::vector<std::pair<context::post_stmt_ptr, std::optional<context::address>>> stmts);
     bool check_fatals(range line_range);
 
     context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;

@@ -47,8 +47,6 @@ context::dependency_collector mach_expr_constant::get_dependencies(context::depe
 
 mach_expr_constant::value_t mach_expr_constant::evaluate(mach_evaluate_info) const { return value_; }
 
-void mach_expr_constant::fill_location_counter(context::address) {}
-
 const mach_expression* mach_expr_constant::leftmost_term() const { return this; }
 
 void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
@@ -83,7 +81,7 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) 
 
     return symbol->value();
 }
-void mach_expr_symbol::fill_location_counter(context::address) {}
+
 const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
 void mach_expr_symbol::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 //***********  mach_expr_self_def ************
@@ -101,8 +99,6 @@ context::dependency_collector mach_expr_self_def::get_dependencies(context::depe
 
 mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info) const { return value_; }
 
-void mach_expr_self_def::fill_location_counter(context::address) {}
-
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
 
 void mach_expr_self_def::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
@@ -111,8 +107,9 @@ mach_expr_location_counter::mach_expr_location_counter(range rng)
     : mach_expression(rng)
 {}
 
-context::dependency_collector mach_expr_location_counter::get_dependencies(context::dependency_solver&) const
+context::dependency_collector mach_expr_location_counter::get_dependencies(context::dependency_solver& mi) const
 {
+    auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
         return context::dependency_collector(true);
     else
@@ -121,13 +118,12 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
 
 mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info mi) const
 {
+    auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
         return context::address({ nullptr }, 0, {});
     else
-        return *location_counter + mi.get_intrastatement_loctr_offset();
+        return *location_counter;
 }
-
-void mach_expr_location_counter::fill_location_counter(context::address addr) { location_counter = std::move(addr); }
 
 const mach_expression* mach_expr_location_counter::leftmost_term() const { return this; }
 
@@ -143,8 +139,6 @@ context::dependency_collector mach_expr_default::get_dependencies(context::depen
 }
 
 mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info) const { return value_t(); }
-
-void mach_expr_default::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_default::leftmost_term() const { return this; }
 
@@ -193,8 +187,6 @@ mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) 
     else
         return context::symbol_attributes::default_value(attribute);
 }
-
-void mach_expr_data_attr::fill_location_counter(context::address) {}
 
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
 

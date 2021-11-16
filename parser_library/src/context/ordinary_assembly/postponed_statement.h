@@ -15,6 +15,9 @@
 #ifndef CONTEXT_POSTPONED_STATEMENT_H
 #define CONTEXT_POSTPONED_STATEMENT_H
 
+#include <optional>
+
+#include "address.h"
 #include "context/processing_context.h"
 
 namespace hlasm_plugin::parser_library::processing {

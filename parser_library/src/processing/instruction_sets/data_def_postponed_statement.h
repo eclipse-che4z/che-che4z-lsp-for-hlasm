@@ -54,7 +54,13 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
             uint64_t operands_bit_length = 0;
 
             const context::symbol* get_symbol(context::id_index name) const override { return base.get_symbol(name); }
-            int get_intrastatement_loctr_offset() const override { return (int)(operands_bit_length / 8); }
+            std::optional<context::address> get_loctr() const override
+            {
+                if (auto ret = base.get_loctr(); ret.has_value())
+                    return ret.value() + (int)(operands_bit_length / 8);
+                else
+                    return std::nullopt;
+            }
         } solver(_solver);
 
         constexpr const auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };

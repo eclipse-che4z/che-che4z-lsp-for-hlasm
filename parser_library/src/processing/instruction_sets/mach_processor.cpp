@@ -31,9 +31,8 @@ mach_processor::mach_processor(analyzing_context ctx,
 
 void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
-    constexpr context::alignment mach_instr_alignment = context::halfword;
     auto rebuilt_stmt = preprocess(stmt);
-    fill_expression_loc_counters(rebuilt_stmt, mach_instr_alignment);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, std::nullopt);
 
     const auto& mach_instr = [](const std::string& name) {
         if (auto mnemonic = context::instruction::mnemonic_codes.find(name);
@@ -53,23 +52,22 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
         }
         else
         {
-            auto addr = hlasm_ctx.ord_ctx.align(context::halfword);
-
             create_symbol(rebuilt_stmt.stmt_range_ref(),
                 label_name,
-                addr,
+                hlasm_ctx.ord_ctx.align(context::halfword, loctr),
                 context::symbol_attributes::make_machine_attrs(
                     (context::symbol_attributes::len_attr)mach_instr.size_for_alloc / 8));
         }
     }
 
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
     bool has_dependencies = false;
     for (auto& op : rebuilt_stmt.operands_ref().value)
     {
         auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
         if (evaluable)
         {
-            if (evaluable->has_dependencies(hlasm_ctx.ord_ctx))
+            if (evaluable->has_dependencies(dep_solver))
             {
                 has_dependencies = true;
                 break;
@@ -79,11 +77,12 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
 
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
-            std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()));
+            std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()),
+            std::move(loctr));
     else
-        check(rebuilt_stmt, hlasm_ctx, checker, *this);
+        check(rebuilt_stmt, hlasm_ctx.processing_stack(), dep_solver, checker, *this);
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_for_alloc / 8, context::halfword);
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_for_alloc / 8, context::halfword, std::move(loctr));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

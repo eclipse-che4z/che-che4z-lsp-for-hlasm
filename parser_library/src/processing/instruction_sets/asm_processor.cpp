@@ -28,17 +28,19 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
 {
     auto sect_name = find_label_symbol(stmt);
 
+    const auto& processing_stack = hlasm_ctx.processing_stack();
     if (hlasm_ctx.ord_ctx.symbol_defined(sect_name) && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
     else
     {
-        auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+        auto sym_loc = processing_stack.back().proc_location;
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc));
     }
-    check(stmt, hlasm_ctx, checker_, *this);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    check(stmt, processing_stack, dep_solver, checker_, *this);
 }
 
 void asm_processor::process_LOCTR(rebuilt_statement stmt)
@@ -48,6 +50,7 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
     if (loctr_name == context::id_storage::empty_id)
         add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
 
+    const auto& processing_stack = hlasm_ctx.processing_stack();
     if (hlasm_ctx.ord_ctx.symbol_defined(loctr_name) && !hlasm_ctx.ord_ctx.counter_defined(loctr_name))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -58,12 +61,14 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc));
     }
-    check(stmt, hlasm_ctx, checker_, *this);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    check(stmt, processing_stack, dep_solver, checker_, *this);
 }
 
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
-    fill_expression_loc_counters(stmt, context::no_align);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     auto symbol_name = find_label_symbol(stmt);
 
@@ -86,9 +91,9 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = stmt.operands_ref().value[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto t_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+            auto t_value = expr_op->expression->resolve(dep_solver);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -106,9 +111,9 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
         auto asm_op = stmt.operands_ref().value[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_dependencies(dep_solver))
         {
-            auto length_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+            auto length_value = expr_op->expression->resolve(dep_solver);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -127,7 +132,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
         if (expr_op)
         {
-            auto holder(expr_op->expression->get_dependencies(hlasm_ctx.ord_ctx));
+            auto holder(expr_op->expression->get_dependencies(dep_solver));
 
             if (length_attr == context::symbol_attributes::undef_length)
             {
@@ -149,8 +154,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
 
             if (!holder.contains_dependencies())
             {
-                create_symbol(
-                    stmt.stmt_range_ref(), symbol_name, expr_op->expression->resolve(hlasm_ctx.ord_ctx), attrs);
+                create_symbol(stmt.stmt_range_ref(), symbol_name, expr_op->expression->resolve(dep_solver), attrs);
             }
             else
             {
@@ -164,7 +168,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                         add_dependency(stmt_range,
                             symbol_name,
                             &*expr_op->expression,
-                            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+                            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+                            std::move(loctr));
                     }
                 }
                 else
@@ -181,13 +186,15 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         || std::any_of(
             ops.begin(), ops.end(), [](const auto& op) { return op->type == semantics::operand_type::EMPTY; }))
     {
-        check(stmt, hlasm_ctx, checker_, *this);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
         return;
     }
 
     // enforce alignment of the first operand
     context::alignment al = stmt.operands_ref().value.front()->access_data_def()->value->get_alignment();
-    context::address adr = hlasm_ctx.ord_ctx.align(al);
+    context::address loctr = hlasm_ctx.ord_ctx.align(al, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
     bool has_dependencies = false;
@@ -198,11 +205,9 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         auto data_op = op->access_data_def();
 
-        data_op->value->assign_location_counter(adr);
+        has_dependencies |= data_op->has_dependencies(dep_solver);
 
-        has_dependencies |= data_op->has_dependencies(hlasm_ctx.ord_ctx);
-
-        has_length_dependencies |= data_op->get_length_dependencies(hlasm_ctx.ord_ctx).contains_dependencies();
+        has_length_dependencies |= data_op->get_length_dependencies(dep_solver).contains_dependencies();
 
         // some types require operands that consist only of one symbol
         data_op->value->check_single_symbol_ok(diagnostic_collector(this));
@@ -223,22 +228,21 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
-            auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
+            auto tmp = data_op->get_operand_value(dep_solver);
             auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
             if (!data_op->value->length
-                || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+                || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
             {
                 len = value.get_length_attribute();
             }
-            if (data_op->value->scale
-                && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+            if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
             {
                 scale = value.get_scale_attribute();
             }
             create_symbol(stmt.stmt_range_ref(),
                 label,
-                std::move(adr),
+                loctr,
                 context::symbol_attributes(
                     context::symbol_origin::DAT, type, len, scale, value.get_integer_attribute()));
         }
@@ -253,7 +257,8 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     if (has_dependencies)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
-            std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()));
+            std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()),
+            loctr);
         if (has_length_dependencies)
         {
             auto sp = hlasm_ctx.ord_ctx.register_ordinary_space(al);
@@ -261,10 +266,10 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                 sp, dynamic_cast<const data_def_postponed_statement<instr_type>*>(&*adder.source_stmt));
         }
         else
-            hlasm_ctx.ord_ctx.reserve_storage_area(
-                data_def_postponed_statement<instr_type>::get_operands_length(
-                    adder.source_stmt->impl()->operands_ref().value, hlasm_ctx.ord_ctx),
-                context::no_align);
+            hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
+                                                       adder.source_stmt->impl()->operands_ref().value, dep_solver),
+                context::no_align,
+                loctr);
 
         bool cycle_ok = true;
 
@@ -272,12 +277,10 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         {
             auto data_op = adder.source_stmt->impl()->operands_ref().value.front()->access_data_def();
 
-            if (data_op->value->length
-                && data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+            if (data_op->value->length && data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
                 cycle_ok = adder.add_dependency(label, context::data_attr_kind::L, data_op->value->length.get());
 
-            if (data_op->value->scale
-                && data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+            if (data_op->value->scale && data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
                 cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, data_op->value->scale.get());
         }
 
@@ -292,9 +295,10 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     else
     {
         hlasm_ctx.ord_ctx.reserve_storage_area(
-            data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, hlasm_ctx.ord_ctx),
-            context::no_align);
-        check(stmt, hlasm_ctx, checker_, *this);
+            data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, dep_solver),
+            context::no_align,
+            std::move(loctr));
+        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
 
@@ -318,7 +322,8 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
     }
     else
     {
-        check(stmt, hlasm_ctx, checker_, *this);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
 
@@ -335,7 +340,8 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
         else
             find_sequence_symbol(stmt);
     }
-    if (!check(stmt, hlasm_ctx, checker_, *this))
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
     const auto add_external = [s_kind = t == external_type::strong ? context::section_kind::EXTERNAL
@@ -373,20 +379,22 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
     }
 }
 
-std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::operand* op) const
+std::optional<context::A_t> asm_processor::try_get_abs_value(
+    const semantics::operand* op, context::dependency_solver& dep_solver) const
 {
     auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
     if (!expr_op)
         return std::nullopt;
-    return try_get_abs_value(expr_op);
+    return try_get_abs_value(expr_op, dep_solver);
 }
 
-std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::simple_expr_operand* op) const
+std::optional<context::A_t> asm_processor::try_get_abs_value(
+    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver) const
 {
-    if (op->has_dependencies(hlasm_ctx.ord_ctx))
+    if (op->has_dependencies(dep_solver))
         return std::nullopt;
 
-    auto val = op->expression->evaluate(hlasm_ctx.ord_ctx);
+    auto val = op->expression->evaluate(dep_solver);
 
     if (val.value_kind() != context::symbol_value_kind::ABS)
         return std::nullopt;
@@ -395,21 +403,19 @@ std::optional<context::A_t> asm_processor::try_get_abs_value(const semantics::si
 
 void asm_processor::process_ORG(rebuilt_statement stmt)
 {
-    fill_expression_loc_counters(stmt, context::no_align);
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt);
 
     if (label != context::id_storage::empty_id)
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(),
-                label,
-                hlasm_ctx.ord_ctx.align(context::no_align),
-                context::symbol_attributes::make_org_attrs());
+            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_org_attrs());
     }
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     const semantics::expr_assembler_operand* reloc_expr = nullptr;
     bool undefined_absolute_part = false;
@@ -435,7 +441,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
         if (i == 0)
         {
-            auto deps = expr->expression->get_dependencies(hlasm_ctx.ord_ctx);
+            auto deps = expr->expression->get_dependencies(dep_solver);
             undefined_absolute_part =
                 deps.undefined_attr_refs.size() || deps.undefined_symbols.size() || deps.unresolved_spaces.size();
             if (!deps.unresolved_address)
@@ -448,7 +454,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 
         if (i == 1)
         {
-            auto val = try_get_abs_value(expr);
+            auto val = try_get_abs_value(expr, dep_solver);
             if (!val || *val < 2 || *val > 4096 || ((*val & (*val - 1)) != 0)) // check range and test for power of 2
             {
                 add_diagnostic(diagnostic_op::error_A116_ORG_boundary_operand(stmt.stmt_range_ref()));
@@ -458,7 +464,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
         }
         if (i == 2)
         {
-            auto val = try_get_abs_value(expr);
+            auto val = try_get_abs_value(expr, dep_solver);
             if (!val)
             {
                 add_diagnostic(diagnostic_op::error_A115_ORG_op_format(stmt.stmt_range_ref()));
@@ -471,11 +477,10 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     if (reloc_expr)
     {
         auto reloc_val = !undefined_absolute_part
-            ? reloc_expr->expression->evaluate(hlasm_ctx.ord_ctx).get_reloc()
-            : *reloc_expr->expression->get_dependencies(hlasm_ctx.ord_ctx).unresolved_address;
+            ? reloc_expr->expression->evaluate(dep_solver).get_reloc()
+            : *reloc_expr->expression->get_dependencies(dep_solver).unresolved_address;
 
-        if (!check_address_for_ORG(
-                stmt.stmt_range_ref(), reloc_val, hlasm_ctx.ord_ctx.align(context::no_align), boundary, offset))
+        if (!check_address_for_ORG(stmt.stmt_range_ref(), reloc_val, loctr, boundary, offset))
             return;
 
         if (undefined_absolute_part)
@@ -483,18 +488,21 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
                 boundary,
                 offset,
                 reloc_expr->expression.get(),
-                std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+                std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+                std::move(loctr));
         else
-            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val), boundary, offset, nullptr, nullptr);
+            hlasm_ctx.ord_ctx.set_location_counter_value(
+                std::move(reloc_val), boundary, offset, nullptr, nullptr, std::move(loctr));
     }
     else
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset, std::move(loctr));
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
 {
     const auto& operands = stmt.operands_ref().value;
-    if (!check(stmt, hlasm_ctx, checker_, *this))
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
     auto label = find_label_symbol(stmt);
@@ -554,7 +562,8 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
     else
     {
-        fill_expression_loc_counters(rebuilt_stmt, context::no_align);
+        context::ordinary_assembly_dependency_solver dep_solver(
+            hlasm_ctx.ord_ctx, hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt));
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
@@ -563,10 +572,10 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
                 tmp != context::instruction::assembler_instructions.end() ? tmp->second.has_ord_symbols : true;
 
             if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
-                && op->access_asm()->has_dependencies(hlasm_ctx.ord_ctx))
+                && op->access_asm()->has_dependencies(dep_solver))
                 return;
         }
-        check(rebuilt_stmt, hlasm_ctx, checker_, *this);
+        check(rebuilt_stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
 
@@ -681,7 +690,8 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
 {
     const auto& ops = stmt.operands_ref();
 
-    if (!check(stmt, hlasm_ctx, checker_, *this))
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
     const auto& record = dynamic_cast<const semantics::string_assembler_operand&>(*ops.value[0]).value;
@@ -701,43 +711,38 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     constexpr context::alignment ccw_align = context::doubleword;
     constexpr size_t ccw_length = 8U;
 
-    fill_expression_loc_counters(stmt, ccw_align);
+    auto loctr = hlasm_ctx.ord_ctx.align(ccw_align, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
     find_sequence_symbol(stmt);
-
-
 
     if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
     {
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(),
-                label,
-                hlasm_ctx.ord_ctx.align(ccw_align),
-                context::symbol_attributes::make_ccw_attrs());
+            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_ccw_attrs());
     }
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align, loctr);
 
-
-    bool has_dependencies =
-        std::any_of(stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this](const auto& op) {
+    bool has_dependencies = std::any_of(
+        stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this, &dep_solver](const auto& op) {
             auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
-            return evaluable && evaluable->has_dependencies(hlasm_ctx.ord_ctx);
+            return evaluable && evaluable->has_dependencies(dep_solver);
         });
 
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
-            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()));
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+            std::move(loctr));
     else
-        check(stmt, hlasm_ctx, checker_, *this);
+        check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 }
 
 void asm_processor::process_CNOP(rebuilt_statement stmt)
 {
-    constexpr context::alignment CNOP_symbol_align = context::halfword;
-
-    fill_expression_loc_counters(stmt, CNOP_symbol_align);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
     find_sequence_symbol(stmt);
 
     if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
@@ -745,26 +750,23 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(),
-                label,
-                hlasm_ctx.ord_ctx.align(CNOP_symbol_align),
-                context::symbol_attributes::make_cnop_attrs());
+            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_cnop_attrs());
     }
 
-    check(stmt, hlasm_ctx, checker_, *this);
+    check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 
     if (stmt.operands_ref().value.size() != 2)
         return;
 
-
-    std::optional<int> byte_value = try_get_abs_value(stmt.operands_ref().value[0].get());
-    std::optional<int> boundary_value = try_get_abs_value(stmt.operands_ref().value[1].get());
+    std::optional<int> byte_value = try_get_abs_value(stmt.operands_ref().value[0].get(), dep_solver);
+    std::optional<int> boundary_value = try_get_abs_value(stmt.operands_ref().value[1].get(), dep_solver);
     // For now, the implementation ignores the instruction, if the operands have dependencies. Most uses of this
     // instruction should by covered anyway. It will still generate the label correctly.
     if (!byte_value.has_value() || !boundary_value.has_value())
         return;
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value });
+    hlasm_ctx.ord_ctx.reserve_storage_area(
+        0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value }, std::move(loctr));
 }
 
 
@@ -786,18 +788,20 @@ void asm_processor::process_START(rebuilt_statement stmt)
         return;
     }
 
-    auto sym_loc = hlasm_ctx.processing_stack().back().proc_location;
+    const auto& processing_stack = hlasm_ctx.processing_stack();
+    auto sym_loc = processing_stack.back().proc_location;
     sym_loc.pos.column = 0;
     hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
 
     const auto& ops = stmt.operands_ref().value;
     if (ops.size() != 1)
     {
-        check(stmt, hlasm_ctx, checker_, *this);
+        check(stmt, processing_stack, dep_solver, checker_, *this);
         return;
     }
 
-    auto initial_offset = try_get_abs_value(ops.front().get());
+    auto initial_offset = try_get_abs_value(ops.front().get(), dep_solver);
     if (!initial_offset.has_value())
     {
         add_diagnostic(diagnostic_op::error_A250_absolute_with_known_symbols(ops.front()->operand_range));
@@ -815,12 +819,14 @@ void asm_processor::process_START(rebuilt_statement stmt)
         offset &= ~start_section_alignment_mask;
     }
 
-    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
+    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset, std::nullopt);
 }
 void asm_processor::process_END(rebuilt_statement stmt)
 {
     const auto& label = stmt.label_ref();
-    check(stmt, hlasm_ctx, checker_, *this);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+
+    check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 
     if (!(label.type == semantics::label_si_type::EMPTY || label.type == semantics::label_si_type::SEQ))
     {
@@ -831,8 +837,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
         if (stmt.operands_ref().value[0]->access_asm() != nullptr
             && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
         {
-            auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
-                hlasm_ctx.ord_ctx);
+            auto symbol =
+                stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(dep_solver);
 
             if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {
@@ -845,7 +851,8 @@ void asm_processor::process_END(rebuilt_statement stmt)
 }
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
-    if (!check(stmt, hlasm_ctx, checker_, *this))
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
     auto symbol_name = find_label_symbol(stmt);
     if (symbol_name->empty())

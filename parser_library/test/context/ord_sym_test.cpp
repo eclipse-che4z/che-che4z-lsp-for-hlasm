@@ -422,3 +422,32 @@ C EQU B-A
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(ordinary_symbols, postponed_statement_in_macro)
+{
+    std::string input = R"(
+   MACRO
+   MAC
+   DS XL(*-AAA+(YD-XD))
+   MEND
+AAA DS C
+   MAC
+   MAC
+   MAC
+TEST_AAA EQU *-AAA
+
+XD DSECT
+  DS F
+YD DS 0C
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    auto test_aaa = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("TEST_AAA"));
+    ASSERT_TRUE(test_aaa && test_aaa->kind() == context::symbol_value_kind::ABS);
+    EXPECT_EQ(test_aaa->value().get_abs(), 36);
+}

@@ -50,7 +50,9 @@ TEST(dependency_collector, uresolved_addresses)
         std::make_unique<mach_expr_symbol>(name2, range()),
         range());
 
-    auto deps = expr.get_dependencies(ctx.ord_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, std::nullopt);
+
+    auto deps = expr.get_dependencies(dep_solver);
 
     ASSERT_EQ(deps.unresolved_spaces.size(), (size_t)1);
     EXPECT_TRUE(deps.unresolved_spaces.find(sp) != deps.unresolved_spaces.end());
