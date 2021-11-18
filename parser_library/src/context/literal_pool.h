@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LITERAL_POOL_H
 #define HLASMPLUGIN_PARSERLIBRARY_LITERAL_POOL_H
 
+#include <unordered_map>
 #include <unordered_set>
 
 #include "expressions/data_definition.h"
@@ -29,7 +30,7 @@ class literal_pool
     {
         std::string text;
         size_t generation;
-        expressions::data_definition value;
+        std::shared_ptr<const expressions::data_definition> value;
 
         bool is_similar(const literal_definition&) const noexcept;
     };
@@ -39,12 +40,28 @@ class literal_pool
     };
     size_t m_current_literal_pool_generation = 0;
 
+    struct pair_hash
+    {
+        template<typename T1, typename T2>
+        size_t operator()(const std::pair<T1, T2>& p) const noexcept
+        {
+            return std::hash<T1>()(p.first) ^ std::hash<T2>()(p.second);
+        }
+    };
+
     std::unordered_set<literal_definition, literal_definition_hasher, decltype(utils::is_similar)> m_literals;
+    std::unordered_map<std::pair<size_t, const expressions::data_definition*>,
+        decltype(m_literals)::const_iterator,
+        pair_hash>
+        m_literals_genmap;
 
 public:
-    id_index add_literal(std::string literal_text, expressions::data_definition dd);
+    id_index add_literal(
+        const std::string& literal_text, const std::shared_ptr<const expressions::data_definition>& dd);
+    id_index get_literal(size_t generation, const std::shared_ptr<const expressions::data_definition>& dd) const;
 
     void generate_pool();
+    size_t current_generation() const { return m_current_literal_pool_generation; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

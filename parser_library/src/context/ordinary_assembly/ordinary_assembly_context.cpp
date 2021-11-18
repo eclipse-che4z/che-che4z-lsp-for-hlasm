@@ -20,6 +20,7 @@
 
 #include "alignment.h"
 #include "context/hlasm_context.h"
+#include "context/literal_pool.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -35,10 +36,13 @@ const std::unordered_map<id_index, symbol>& ordinary_assembly_context::symbols()
 
 ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
+    , m_literals(std::make_unique<literal_pool>())
     , ids(storage)
     , hlasm_ctx_(hlasm_ctx)
     , symbol_dependencies(*this)
 {}
+ordinary_assembly_context::ordinary_assembly_context(ordinary_assembly_context&&) noexcept = default;
+ordinary_assembly_context::~ordinary_assembly_context() = default;
 
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
@@ -330,5 +334,14 @@ const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) con
 }
 
 std::optional<context::address> ordinary_assembly_dependency_solver::get_loctr() const { return loctr_addr; }
+
+id_index ordinary_assembly_dependency_solver::get_literal_id(
+    const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit)
+{
+    if (literal_pool_generation == (size_t)-1)
+        return ord_context.m_literals->add_literal(text, lit);
+    else
+        return ord_context.m_literals->get_literal(literal_pool_generation, lit);
+}
 
 } // namespace hlasm_plugin::parser_library::context

@@ -28,8 +28,6 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-class literal_pool;
-
 // class helping to perform semantic analysis of hlasm source code
 // wraps all classes and structures needed by semantic analysis (like variable symbol tables, opsyn tables...) in one
 // place contains methods that store gathered information from semantic analysis helping it to correctly evaluate parsed
@@ -84,9 +82,6 @@ class hlasm_context
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
-
-    // literals
-    std::unique_ptr<literal_pool> m_literals;
 
     void add_system_vars_to_scope();
     void add_global_system_vars();
@@ -283,8 +278,6 @@ public:
 
     size_t current_ainsert_id() const { return m_ainsert_id; }
     size_t obtain_ainsert_id() { return ++m_ainsert_id; }
-
-    literal_pool& literals() { return *m_literals; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -18,12 +18,25 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-id_index literal_pool::add_literal(std::string literal_text, expressions::data_definition dd)
+id_index literal_pool::add_literal(
+    const std::string& literal_text, const std::shared_ptr<const expressions::data_definition>& dd)
 {
-    return &m_literals
-                .emplace(
-                    literal_definition { std::move(literal_text), m_current_literal_pool_generation, std::move(dd) })
-                .first->text;
+    if (auto lit = get_literal(m_current_literal_pool_generation, dd))
+        return lit;
+
+    auto it = m_literals.emplace(literal_definition { literal_text, m_current_literal_pool_generation, dd }).first;
+    m_literals_genmap.emplace(std::make_pair(m_current_literal_pool_generation, dd.get()), it);
+
+    return &it->text;
+}
+
+id_index literal_pool::get_literal(
+    size_t generation, const std::shared_ptr<const expressions::data_definition>& dd) const
+{
+    auto it = m_literals_genmap.find(std::make_pair(generation, dd.get()));
+    if (it == m_literals_genmap.end())
+        return nullptr;
+    return &it->second->text;
 }
 
 void literal_pool::generate_pool() { ++m_current_literal_pool_generation; }

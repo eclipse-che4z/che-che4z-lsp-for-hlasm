@@ -61,6 +61,11 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
                 else
                     return std::nullopt;
             }
+            context::id_index get_literal_id(
+                const std::string& text, const std::shared_ptr<const expressions::data_definition>& dd) override
+            {
+                return base.get_literal_id(text, dd);
+            }
         } solver(_solver);
 
         constexpr const auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };

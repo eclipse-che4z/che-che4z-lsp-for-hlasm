@@ -25,10 +25,13 @@
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
 
+namespace hlasm_plugin::parser_library::expressions {
+struct data_definition;
+} // namespace hlasm_plugin::parser_library::expressions
 
 namespace hlasm_plugin::parser_library::context {
-
 class hlasm_context;
+class literal_pool;
 
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
@@ -43,10 +46,14 @@ class ordinary_assembly_context
 
     section* curr_section_;
 
-public:
+    // literals
+    std::unique_ptr<literal_pool> m_literals;
+
     // access id storage
     id_storage& ids;
     const hlasm_context& hlasm_ctx_;
+
+public:
     // access sections
     const std::vector<std::unique_ptr<section>>& sections() const;
 
@@ -57,6 +64,8 @@ public:
     symbol_dependency_tables symbol_dependencies;
 
     ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx);
+    ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
+    ~ordinary_assembly_context();
 
     // creates symbol
     // returns false if loctr cycle has occured
@@ -134,16 +143,21 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
 {
     const ordinary_assembly_context& ord_context;
     std::optional<context::address> loctr_addr;
+    size_t literal_pool_generation;
 
 public:
-    ordinary_assembly_dependency_solver(
-        const ordinary_assembly_context& ord_context, std::optional<context::address> loctr_addr)
+    ordinary_assembly_dependency_solver(const ordinary_assembly_context& ord_context,
+        std::optional<context::address> loctr_addr,
+        size_t literal_pool_generation = (size_t)-1) // TODO: support multiple generations
         : ord_context(ord_context)
         , loctr_addr(std::move(loctr_addr))
+        , literal_pool_generation(literal_pool_generation)
     {}
 
     const symbol* get_symbol(id_index name) const override;
     std::optional<context::address> get_loctr() const override;
+    id_index get_literal_id(
+        const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit) override;
 };
 
 } // namespace hlasm_plugin::parser_library::context

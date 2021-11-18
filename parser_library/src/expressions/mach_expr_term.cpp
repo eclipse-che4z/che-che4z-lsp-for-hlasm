@@ -205,12 +205,12 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
     if (length_deps.has_error || length_deps.contains_dependencies())
         return context::dependency_collector(true);
     else
-        return context::dependency_collector(solver.add_literal(m_data_definition));
+        return context::dependency_collector(solver.get_literal_id(m_dd_text, m_data_definition));
 }
 
 mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver) const
 {
-    auto symbol = solver.get_symbol(solver.add_literal(m_data_definition));
+    auto symbol = solver.get_symbol(solver.get_literal_id(m_dd_text, m_data_definition));
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
         return context::symbol_value();

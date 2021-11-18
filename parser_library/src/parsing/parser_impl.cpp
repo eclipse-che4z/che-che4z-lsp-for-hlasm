@@ -119,11 +119,6 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
     return hlasm_ctx->ids().add(std::move(value));
 }
 
-context::id_index parser_impl::add_literal(std::string literal_text, expressions::data_definition dd, range)
-{
-    return hlasm_ctx->literals().add_literal(std::move(literal_text), std::move(dd));
-}
-
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
     expr->resolve_expression_tree(type);
