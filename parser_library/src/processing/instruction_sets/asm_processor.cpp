@@ -67,7 +67,7 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
 
 void asm_processor::process_EQU(rebuilt_statement stmt)
 {
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     auto symbol_name = find_label_symbol(stmt);
@@ -169,7 +169,10 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                             symbol_name,
                             &*expr_op->expression,
                             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                            std::move(loctr));
+                            context::dependency_evaluation_context {
+                                std::move(loctr),
+                                hlasm_ctx.ord_ctx.current_literal_pool_generation(),
+                            });
                     }
                 }
                 else
@@ -193,7 +196,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
     // enforce alignment of the first operand
     context::alignment al = stmt.operands_ref().value.front()->access_data_def()->value->get_alignment();
-    context::address loctr = hlasm_ctx.ord_ctx.align(al, std::nullopt);
+    context::address loctr = hlasm_ctx.ord_ctx.align(al);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
 
     // dependency sources is list of all expressions in data def operand, that have some unresolved dependencies.
@@ -258,7 +261,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
             std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()),
-            loctr);
+            { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
         if (has_length_dependencies)
         {
             auto sp = hlasm_ctx.ord_ctx.register_ordinary_space(al);
@@ -269,7 +272,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
             hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
                                                        adder.source_stmt->impl()->operands_ref().value, dep_solver),
                 context::no_align,
-                loctr);
+                { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 
         bool cycle_ok = true;
 
@@ -297,7 +300,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         hlasm_ctx.ord_ctx.reserve_storage_area(
             data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, dep_solver),
             context::no_align,
-            std::move(loctr));
+            { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
@@ -406,7 +409,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
 
     if (label != context::id_storage::empty_id)
     {
@@ -489,13 +492,18 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
                 offset,
                 reloc_expr->expression.get(),
                 std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                std::move(loctr));
+                { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
         else
-            hlasm_ctx.ord_ctx.set_location_counter_value(
-                std::move(reloc_val), boundary, offset, nullptr, nullptr, std::move(loctr));
+            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val),
+                boundary,
+                offset,
+                nullptr,
+                nullptr,
+                { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
     }
     else
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset, std::move(loctr));
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(
+            boundary, offset, { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
@@ -563,7 +571,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     else
     {
         context::ordinary_assembly_dependency_solver dep_solver(
-            hlasm_ctx.ord_ctx, hlasm_ctx.ord_ctx.align(context::no_align, std::nullopt));
+            hlasm_ctx.ord_ctx, hlasm_ctx.ord_ctx.align(context::no_align));
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
@@ -712,7 +720,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     constexpr context::alignment ccw_align = context::doubleword;
     constexpr size_t ccw_length = 8U;
 
-    auto loctr = hlasm_ctx.ord_ctx.align(ccw_align, std::nullopt);
+    auto loctr = hlasm_ctx.ord_ctx.align(ccw_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
     find_sequence_symbol(stmt);
 
@@ -724,7 +732,8 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
             create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_ccw_attrs());
     }
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align, loctr);
+    hlasm_ctx.ord_ctx.reserve_storage_area(
+        ccw_length, ccw_align, { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 
     bool has_dependencies = std::any_of(
         stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this, &dep_solver](const auto& op) {
@@ -735,14 +744,14 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-            std::move(loctr));
+            { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
     else
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 }
 
 void asm_processor::process_CNOP(rebuilt_statement stmt)
 {
-    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, std::nullopt);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr);
     find_sequence_symbol(stmt);
 
@@ -766,8 +775,9 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
     if (!byte_value.has_value() || !boundary_value.has_value())
         return;
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(
-        0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value }, std::move(loctr));
+    hlasm_ctx.ord_ctx.reserve_storage_area(0,
+        context::alignment { (size_t)*byte_value, (size_t)*boundary_value },
+        { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 }
 
 
@@ -820,7 +830,8 @@ void asm_processor::process_START(rebuilt_statement stmt)
         offset &= ~start_section_alignment_mask;
     }
 
-    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset, std::nullopt);
+    hlasm_ctx.ord_ctx.set_available_location_counter_value(
+        start_section_alignment, offset, { std::nullopt, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 }
 void asm_processor::process_END(rebuilt_statement stmt)
 {

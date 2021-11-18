@@ -161,8 +161,10 @@ bool low_language_processor::check_address_for_ORG(range err_range,
     return true;
 }
 
-void low_language_processor::resolve_unknown_loctr_dependency(
-    context::space_ptr sp, const context::address& addr, range err_range, std::optional<context::address> loctr_addr)
+void low_language_processor::resolve_unknown_loctr_dependency(context::space_ptr sp,
+    const context::address& addr,
+    range err_range,
+    context::dependency_evaluation_context dep_ctx)
 {
     auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
@@ -171,7 +173,7 @@ void low_language_processor::resolve_unknown_loctr_dependency(
 
     if (!check_address_for_ORG(err_range,
             addr,
-            hlasm_ctx.ord_ctx.align(context::no_align, loctr_addr),
+            hlasm_ctx.ord_ctx.align(context::no_align, dep_ctx),
             sp->previous_boundary,
             sp->previous_offset))
     {
@@ -181,7 +183,7 @@ void low_language_processor::resolve_unknown_loctr_dependency(
     }
 
     auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
-        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, std::move(loctr_addr));
+        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, std::move(dep_ctx));
 
     auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
     hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());

@@ -32,13 +32,19 @@ namespace hlasm_plugin::parser_library::context {
 
 class ordinary_assembly_context;
 
+struct dependency_evaluation_context
+{
+    std::optional<address> loctr_address;
+    size_t literal_pool_generation;
+};
+
 // helper structure to count dependencies of a statement
 struct statement_ref
 {
-    using ref_t = std::unordered_map<post_stmt_ptr, std::optional<address>>::const_iterator;
+    using ref_t = std::unordered_map<post_stmt_ptr, dependency_evaluation_context>::const_iterator;
     statement_ref(ref_t stmt_ref, size_t ref_count = (size_t)1);
 
-    std::unordered_map<post_stmt_ptr, std::optional<address>>::const_iterator stmt_ref;
+    ref_t stmt_ref;
     size_t ref_count;
 };
 
@@ -47,14 +53,14 @@ class dependency_adder;
 class symbol_dependency_tables
 {
     // actual dependecies of symbol or space
-    std::unordered_map<dependant, std::pair<const resolvable*, std::optional<address>>> dependencies_;
+    std::unordered_map<dependant, std::pair<const resolvable*, dependency_evaluation_context>> dependencies_;
 
     // statements where dependencies are from
     std::unordered_map<dependant, statement_ref> dependency_source_stmts_;
     // addresses where dependencies are from
     std::unordered_map<dependant, addr_res_ptr> dependency_source_addrs_;
     // list of statements containing dependencies that can not be checked yet
-    std::unordered_map<post_stmt_ptr, std::optional<address>> postponed_stmts_;
+    std::unordered_map<post_stmt_ptr, dependency_evaluation_context> postponed_stmts_;
 
     ordinary_assembly_context& sym_ctx_;
 
@@ -63,18 +69,19 @@ class symbol_dependency_tables
     void resolve_dependant(dependant target,
         const resolvable* dep_src,
         loctr_dependency_resolver* resolver,
-        std::optional<address> loctr_addr);
+        dependency_evaluation_context dep_ctx);
     void resolve_dependant_default(dependant target);
     void resolve(loctr_dependency_resolver* resolver);
 
-    std::vector<dependant> extract_dependencies(const resolvable* dependency_source, std::optional<address> loctr_addr);
     std::vector<dependant> extract_dependencies(
-        const std::vector<const resolvable*>& dependency_sources, std::optional<address> loctr_addr);
+        const resolvable* dependency_source, dependency_evaluation_context dep_ctx);
+    std::vector<dependant> extract_dependencies(
+        const std::vector<const resolvable*>& dependency_sources, dependency_evaluation_context dep_ctx);
 
     void try_erase_source_statement(dependant index);
 
     bool add_dependency(
-        dependant target, const resolvable* dependency_source, bool check_cycle, std::optional<address> loctr_addr);
+        dependant target, const resolvable* dependency_source, bool check_cycle, dependency_evaluation_context dep_ctx);
 
 public:
     symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
@@ -84,7 +91,7 @@ public:
     [[nodiscard]] bool add_dependency(id_index target,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        std::optional<context::address> loctr_addr);
+        dependency_evaluation_context dep_ctx);
 
     // add symbol attribute dependency on statement
     // returns false if cyclic dependency occured
@@ -92,24 +99,24 @@ public:
         data_attr_kind attr,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        std::optional<context::address> loctr_addr);
+        dependency_evaluation_context dep_ctx);
 
     // add space dependency
     void add_dependency(space_ptr target,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        std::optional<context::address> loctr_addr);
+        dependency_evaluation_context dep_ctx);
     void add_dependency(space_ptr target,
         addr_res_ptr dependency_source,
-        std::optional<context::address> loctr_addr,
+        dependency_evaluation_context dep_ctx,
         post_stmt_ptr dependency_source_stmt = nullptr);
     bool check_cycle(space_ptr target);
 
     // add statement dependency on its operands
-    void add_dependency(post_stmt_ptr target, std::optional<context::address> loctr_addr);
+    void add_dependency(post_stmt_ptr target, dependency_evaluation_context dep_ctx);
 
     // method for creating more than one dependency assigned to one statement
-    dependency_adder add_dependencies(post_stmt_ptr dependency_source_stmt, std::optional<context::address> loctr_addr);
+    dependency_adder add_dependencies(post_stmt_ptr dependency_source_stmt, dependency_evaluation_context dep_ctx);
 
     // registers that some symbol has been defined
     // if resolver is present, location counter dependencies are checked as well (not just symbol deps)
@@ -134,14 +141,13 @@ class dependency_adder
     size_t ref_count_;
 
     std::vector<dependant> dependants;
-    std::optional<context::address> loctr_addr;
+    dependency_evaluation_context dep_ctx;
 
 public:
     post_stmt_ptr source_stmt;
 
-    dependency_adder(symbol_dependency_tables& owner,
-        post_stmt_ptr dependency_source_stmt,
-        std::optional<context::address> loctr_addr);
+    dependency_adder(
+        symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt, dependency_evaluation_context dep_ctx);
 
     // add symbol dependency on statement
     [[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);

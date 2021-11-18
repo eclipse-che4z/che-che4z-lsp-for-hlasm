@@ -35,7 +35,7 @@ public:
     void resolve_unknown_loctr_dependency(context::space_ptr sp,
         const context::address& addr,
         range err_range,
-        std::optional<context::address> loctr_addr) override;
+        context::dependency_evaluation_context dep_ctx) override;
 
 protected:
     statement_fields_parser& parser;
@@ -49,7 +49,8 @@ protected:
 
     // adds dependency and also check for cyclic dependency and adds diagnostics if so
     template<typename... Args>
-    void add_dependency(range err_range, Args&&... args)
+    auto add_dependency(range err_range, Args&&... args)
+        -> std::void_t<decltype(hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::forward<Args>(args)...))>
     {
         bool cycle_ok = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(std::forward<Args>(args)...);
         if (!cycle_ok)

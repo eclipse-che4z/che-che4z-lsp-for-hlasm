@@ -32,7 +32,7 @@ mach_processor::mach_processor(analyzing_context ctx,
 void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)
 {
     auto rebuilt_stmt = preprocess(stmt);
-    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, std::nullopt);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
 
     const auto& mach_instr = [](const std::string& name) {
         if (auto mnemonic = context::instruction::mnemonic_codes.find(name);
@@ -54,7 +54,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
         {
             create_symbol(rebuilt_stmt.stmt_range_ref(),
                 label_name,
-                hlasm_ctx.ord_ctx.align(context::halfword, loctr),
+                loctr,
                 context::symbol_attributes::make_machine_attrs(
                     (context::symbol_attributes::len_attr)mach_instr.size_for_alloc / 8));
         }
@@ -78,11 +78,13 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
             std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()),
-            std::move(loctr));
+            { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
     else
         check(rebuilt_stmt, hlasm_ctx.processing_stack(), dep_solver, checker, *this);
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_for_alloc / 8, context::halfword, std::move(loctr));
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(mach_instr.size_for_alloc / 8,
+        context::halfword,
+        { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
 }
 
 } // namespace hlasm_plugin::parser_library::processing
