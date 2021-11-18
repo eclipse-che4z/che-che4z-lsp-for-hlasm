@@ -82,9 +82,9 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     char get_type_attribute() const;
     // Expects, that scale does not have unresolved dependencies
-    int32_t get_scale_attribute(expressions::mach_evaluate_info info) const;
-    uint32_t get_length_attribute(expressions::mach_evaluate_info info) const;
-    int32_t get_integer_attribute(expressions::mach_evaluate_info info) const;
+    int32_t get_scale_attribute(context::dependency_solver& info) const;
+    uint32_t get_length_attribute(context::dependency_solver& info) const;
+    int32_t get_integer_attribute(context::dependency_solver& info) const;
 
     // Returns true, if this data definition has one of the types, that take expressions consisting of only one symbol
     // (like V or R)
@@ -99,14 +99,14 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false
-    checking::dupl_factor_modifier_t evaluate_dupl_factor(expressions::mach_evaluate_info info) const;
-    checking::data_def_length_t evaluate_length(expressions::mach_evaluate_info info) const;
-    checking::scale_modifier_t evaluate_scale(expressions::mach_evaluate_info info) const;
-    checking::exponent_modifier_t evaluate_exponent(expressions::mach_evaluate_info info) const;
+    checking::dupl_factor_modifier_t evaluate_dupl_factor(context::dependency_solver& info) const;
+    checking::data_def_length_t evaluate_length(context::dependency_solver& info) const;
+    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info) const;
+    checking::exponent_modifier_t evaluate_exponent(context::dependency_solver& info) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
-    checking::nominal_value_t evaluate_nominal_value(expressions::mach_evaluate_info info) const;
+    checking::nominal_value_t evaluate_nominal_value(context::dependency_solver& info) const;
 
 private:
     class parser;

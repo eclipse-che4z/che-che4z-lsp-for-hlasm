@@ -40,9 +40,9 @@ public:
         // text = left_->move_text() + T::sign_char() + right_->move_text();
     }
 
-    context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     void apply(mach_expr_visitor& visitor) const override
     {
@@ -75,9 +75,9 @@ public:
         // text = T::sign_char_begin() + child_->move_text() + T::sign_char_end();
     }
 
-    context::dependency_collector get_dependencies(mach_evaluate_info info) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     void apply(mach_expr_visitor& visitor) const override { child_->apply(visitor); }
 
@@ -126,19 +126,19 @@ struct par
 
 
 template<>
-inline mach_expression::value_t mach_expr_binary<add>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_binary<add>::evaluate(context::dependency_solver& info) const
 {
     return left_->evaluate(info) + right_->evaluate(info);
 }
 
 template<>
-inline mach_expression::value_t mach_expr_binary<sub>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_binary<sub>::evaluate(context::dependency_solver& info) const
 {
     return left_->evaluate(info) - right_->evaluate(info);
 }
 
 template<>
-inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(context::dependency_solver& info) const
 {
     auto location = left_->evaluate(info);
     auto target = right_->evaluate(info);
@@ -159,7 +159,7 @@ inline mach_expression::value_t mach_expr_binary<rel_addr>::evaluate(mach_evalua
 }
 
 template<>
-inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_binary<mul>::evaluate(context::dependency_solver& info) const
 {
     auto left_res = left_->evaluate(info);
     auto right_res = right_->evaluate(info);
@@ -175,7 +175,7 @@ inline mach_expression::value_t mach_expr_binary<mul>::evaluate(mach_evaluate_in
 }
 
 template<>
-inline mach_expression::value_t mach_expr_binary<div>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_binary<div>::evaluate(context::dependency_solver& info) const
 {
     auto left_res = left_->evaluate(info);
     auto right_res = right_->evaluate(info);
@@ -190,67 +190,68 @@ inline mach_expression::value_t mach_expr_binary<div>::evaluate(mach_evaluate_in
 }
 
 template<>
-inline mach_expression::value_t mach_expr_unary<add>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_unary<add>::evaluate(context::dependency_solver& info) const
 {
     return child_->evaluate(info);
 }
 
 template<>
-inline mach_expression::value_t mach_expr_unary<sub>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_unary<sub>::evaluate(context::dependency_solver& info) const
 {
     return -child_->evaluate(info);
 }
 
 template<>
-inline mach_expression::value_t mach_expr_unary<par>::evaluate(mach_evaluate_info info) const
+inline mach_expression::value_t mach_expr_unary<par>::evaluate(context::dependency_solver& info) const
 {
     return child_->evaluate(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_binary<add>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<add>::get_dependencies(context::dependency_solver& info) const
 {
     return left_->get_dependencies(info) + right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<sub>::get_dependencies(context::dependency_solver& info) const
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<rel_addr>::get_dependencies(
+    context::dependency_solver& info) const
 {
     return left_->get_dependencies(info) - right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_binary<mul>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<mul>::get_dependencies(context::dependency_solver& info) const
 {
     return left_->get_dependencies(info) * right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_binary<div>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_binary<div>::get_dependencies(context::dependency_solver& info) const
 {
     return left_->get_dependencies(info) / right_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_unary<add>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<add>::get_dependencies(context::dependency_solver& info) const
 {
     return child_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_unary<sub>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<sub>::get_dependencies(context::dependency_solver& info) const
 {
     return context::dependency_collector() - child_->get_dependencies(info);
 }
 
 template<>
-inline context::dependency_collector mach_expr_unary<par>::get_dependencies(mach_evaluate_info info) const
+inline context::dependency_collector mach_expr_unary<par>::get_dependencies(context::dependency_solver& info) const
 {
     return child_->get_dependencies(info);
 }

@@ -84,7 +84,7 @@ address_machine_operand* machine_operand::access_address()
 }
 
 std::unique_ptr<checking::operand> make_check_operand(
-    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -99,7 +99,7 @@ std::unique_ptr<checking::operand> make_check_operand(
 }
 
 std::unique_ptr<checking::operand> make_rel_imm_operand(
-    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -120,13 +120,13 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
     , simple_expr_operand(std::move(expression))
 {}
 
-std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
     return make_check_operand(info, *expression);
 }
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
+    context::dependency_solver& info, checking::machine_operand_type type_hint) const
 {
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
@@ -136,13 +136,13 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool expr_machine_operand::has_dependencies(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_dependencies(info);
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_machine_operand::has_error(expressions::mach_evaluate_info info) const
+bool expr_machine_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
@@ -166,7 +166,7 @@ address_machine_operand::address_machine_operand(expressions::mach_expr_ptr disp
     , state(std::move(state))
 {}
 
-bool address_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool address_machine_operand::has_dependencies(context::dependency_solver& info) const
 {
     if (first_par)
     {
@@ -183,7 +183,7 @@ bool address_machine_operand::has_dependencies(expressions::mach_evaluate_info i
             || second_par->get_dependencies(info).contains_dependencies(); // D(,B)
 }
 
-bool address_machine_operand::has_error(expressions::mach_evaluate_info info) const
+bool address_machine_operand::has_error(context::dependency_solver& info) const
 {
     if (first_par)
     {
@@ -198,8 +198,7 @@ bool address_machine_operand::has_error(expressions::mach_evaluate_info info) co
         return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; // D(,B)
 }
 
-std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
     context::symbol_value displ, first, second;
     context::symbol_value::abs_value_t displ_v, first_v, second_v;
@@ -230,7 +229,7 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
 }
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info, checking::machine_operand_type) const
+    context::dependency_solver& info, checking::machine_operand_type) const
 {
     return get_operand_value(info);
 }
@@ -280,19 +279,19 @@ expr_assembler_operand::expr_assembler_operand(
     , value_(std::move(string_value))
 {}
 
-std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(context::dependency_solver& info) const
 {
     return get_operand_value_inner(info, true);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
-    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym) const
 {
     return get_operand_value_inner(info, can_have_ordsym);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
-    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym) const
 {
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
@@ -313,13 +312,13 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool expr_assembler_operand::has_dependencies(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_dependencies(info);
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+bool expr_assembler_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
@@ -338,18 +337,18 @@ using_instr_assembler_operand::using_instr_assembler_operand(
     , end(std::move(end))
 {}
 
-bool using_instr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_dependencies(context::dependency_solver& info) const
 {
     return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
 }
 
-bool using_instr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_error(context::dependency_solver& info) const
 {
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
 std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
-    expressions::mach_evaluate_info info) const
+    context::dependency_solver& info) const
 {
     (void)info;
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
@@ -374,11 +373,11 @@ complex_assembler_operand::complex_assembler_operand(
     , value(std::move(identifier), std::move(values), std::move(operand_range))
 {}
 
-bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
+bool complex_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
 
-bool complex_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
+bool complex_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
+std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
     return value.create_operand();
 }
@@ -441,12 +440,12 @@ simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
 {}
 
 
-[[nodiscard]] bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_dependencies(context::dependency_solver& info) const
 {
     return expression->get_dependencies(info).contains_dependencies();
 }
 
-[[nodiscard]] bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_error(context::dependency_solver& info) const
 {
     return expression->get_dependencies(info).has_error;
 }
@@ -520,22 +519,22 @@ data_def_operand::data_def_operand(expressions::data_definition val, range opera
 {}
 
 
-context::dependency_collector data_def_operand::get_length_dependencies(expressions::mach_evaluate_info info) const
+context::dependency_collector data_def_operand::get_length_dependencies(context::dependency_solver& info) const
 {
     return value->get_length_dependencies(info);
 }
 
-context::dependency_collector data_def_operand::get_dependencies(expressions::mach_evaluate_info info) const
+context::dependency_collector data_def_operand::get_dependencies(context::dependency_solver& info) const
 {
     return value->get_dependencies(info);
 }
 
-bool data_def_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool data_def_operand::has_dependencies(context::dependency_solver& info) const
 {
     return value->get_dependencies(info).contains_dependencies();
 }
 
-bool data_def_operand::has_error(expressions::mach_evaluate_info info) const
+bool data_def_operand::has_error(context::dependency_solver& info) const
 {
     return value->get_dependencies(info).has_error;
 }
@@ -553,7 +552,7 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-std::unique_ptr<checking::operand> data_def_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> data_def_operand::get_operand_value(context::dependency_solver& info) const
 {
     auto op = std::make_unique<checking::data_definition_operand>();
 
@@ -581,11 +580,11 @@ string_assembler_operand::string_assembler_operand(std::string value, range oper
     , value(std::move(value))
 {}
 
-bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
+bool string_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
 
-bool string_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
+bool string_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
+std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
     return std::make_unique<checking::one_operand>("'" + value + "'");
 }

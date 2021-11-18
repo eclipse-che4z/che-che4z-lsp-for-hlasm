@@ -144,7 +144,7 @@ char hlasm_plugin::parser_library::expressions::data_definition::get_type_attrib
     return 'U';
 }
 
-int32_t data_definition::get_scale_attribute(expressions::mach_evaluate_info info) const
+int32_t data_definition::get_scale_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -153,7 +153,7 @@ int32_t data_definition::get_scale_attribute(expressions::mach_evaluate_info inf
         return 0;
 }
 
-uint32_t data_definition::get_length_attribute(expressions::mach_evaluate_info info) const
+uint32_t data_definition::get_length_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -162,7 +162,7 @@ uint32_t data_definition::get_length_attribute(expressions::mach_evaluate_info i
         return 0;
 }
 
-int32_t data_definition::get_integer_attribute(expressions::mach_evaluate_info info) const
+int32_t data_definition::get_integer_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -230,7 +230,7 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
 void data_definition::collect_diags() const {}
 
 checking::data_def_field<int32_t> set_data_def_field(
-    const expressions::mach_expression* e, expressions::mach_evaluate_info info)
+    const expressions::mach_expression* e, context::dependency_solver& info)
 {
     using namespace checking;
     data_def_field<int32_t> field;
@@ -247,12 +247,12 @@ checking::data_def_field<int32_t> set_data_def_field(
     return field;
 }
 
-checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(expressions::mach_evaluate_info info) const
+checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(context::dependency_solver& info) const
 {
     return set_data_def_field(dupl_factor.get(), info);
 }
 
-checking::data_def_length_t data_definition::evaluate_length(expressions::mach_evaluate_info info) const
+checking::data_def_length_t data_definition::evaluate_length(context::dependency_solver& info) const
 {
     checking::data_def_length_t len(set_data_def_field(length.get(), info));
     len.len_type = length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length_t::BIT
@@ -260,18 +260,18 @@ checking::data_def_length_t data_definition::evaluate_length(expressions::mach_e
     return len;
 }
 
-checking::scale_modifier_t data_definition::evaluate_scale(expressions::mach_evaluate_info info) const
+checking::scale_modifier_t data_definition::evaluate_scale(context::dependency_solver& info) const
 {
     auto common = set_data_def_field(scale.get(), info);
     return checking::scale_modifier_t(common.present, (int16_t)common.value, common.rng);
 }
 
-checking::exponent_modifier_t data_definition::evaluate_exponent(expressions::mach_evaluate_info info) const
+checking::exponent_modifier_t data_definition::evaluate_exponent(context::dependency_solver& info) const
 {
     return set_data_def_field(exponent.get(), info);
 }
 
-checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::mach_evaluate_info info) const
+checking::nominal_value_t data_definition::evaluate_nominal_value(context::dependency_solver& info) const
 {
     checking::nominal_value_t nom;
     if (nominal_value)

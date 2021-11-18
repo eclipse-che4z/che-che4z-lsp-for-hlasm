@@ -32,7 +32,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -53,7 +53,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -73,7 +73,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -90,7 +90,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -109,7 +109,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -127,7 +127,7 @@ public:
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -140,13 +140,14 @@ public:
 class mach_expr_literal final : public mach_expression
 {
     std::shared_ptr<const data_definition> m_data_definition;
+    std::string m_dd_text;
 
 public:
-    mach_expr_literal(range rng, data_definition dd);
+    mach_expr_literal(range rng, data_definition dd, std::string text);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    value_t evaluate(mach_evaluate_info info) const override;
+    value_t evaluate(context::dependency_solver& info) const override;
 
     const mach_expression* leftmost_term() const override;
 
@@ -155,6 +156,8 @@ public:
     void collect_diags() const override;
 
     const std::shared_ptr<const data_definition>& get_data_definition() const;
+
+    const std::string& get_data_definition_text() const { return m_dd_text; }
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

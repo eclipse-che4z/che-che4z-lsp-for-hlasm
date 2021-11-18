@@ -45,7 +45,7 @@ context::dependency_collector mach_expr_constant::get_dependencies(context::depe
     return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_constant::evaluate(mach_evaluate_info) const { return value_; }
+mach_expr_constant::value_t mach_expr_constant::evaluate(context::dependency_solver&) const { return value_; }
 
 const mach_expression* mach_expr_constant::leftmost_term() const { return this; }
 
@@ -72,7 +72,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
         return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_symbol::evaluate(mach_evaluate_info info) const
+mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solver& info) const
 {
     auto symbol = info.get_symbol(value);
 
@@ -97,7 +97,7 @@ context::dependency_collector mach_expr_self_def::get_dependencies(context::depe
     return context::dependency_collector();
 }
 
-mach_expr_self_def::value_t mach_expr_self_def::evaluate(mach_evaluate_info) const { return value_; }
+mach_expr_self_def::value_t mach_expr_self_def::evaluate(context::dependency_solver&) const { return value_; }
 
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
 
@@ -116,7 +116,7 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
         return context::dependency_collector(*location_counter);
 }
 
-mach_expression::value_t mach_expr_location_counter::evaluate(mach_evaluate_info mi) const
+mach_expression::value_t mach_expr_location_counter::evaluate(context::dependency_solver& mi) const
 {
     auto location_counter = mi.get_loctr();
     if (!location_counter.has_value())
@@ -138,7 +138,7 @@ context::dependency_collector mach_expr_default::get_dependencies(context::depen
     return context::dependency_collector();
 }
 
-mach_expression::value_t mach_expr_default::evaluate(mach_evaluate_info) const { return value_t(); }
+mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&) const { return value_t(); }
 
 const mach_expression* mach_expr_default::leftmost_term() const { return this; }
 
@@ -166,7 +166,7 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
         return context::dependency_collector();
 }
 
-mach_expression::value_t mach_expr_data_attr::evaluate(mach_evaluate_info info) const
+mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solver& info) const
 {
     auto symbol = info.get_symbol(value);
 
@@ -192,17 +192,31 @@ const mach_expression* mach_expr_data_attr::leftmost_term() const { return this;
 
 void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-mach_expr_literal::mach_expr_literal(range rng, data_definition dd)
+mach_expr_literal::mach_expr_literal(range rng, data_definition dd, std::string dd_text)
     : mach_expression(rng)
     , m_data_definition(std::make_shared<data_definition>(std::move(dd)))
+    , m_dd_text(std::move(dd_text))
 {}
 
-context::dependency_collector mach_expr_literal::get_dependencies(context::dependency_solver&) const
+context::dependency_collector mach_expr_literal::get_dependencies(context::dependency_solver& solver) const
 {
-    return context::dependency_collector();
+    auto length_deps = m_data_definition->get_length_dependencies(solver);
+    // literal size has to be evaluable at the definition point (ASMA151E)
+    if (length_deps.has_error || length_deps.contains_dependencies())
+        return context::dependency_collector(true);
+    else
+        return context::dependency_collector(solver.add_literal(m_data_definition));
 }
 
-mach_expression::value_t mach_expr_literal::evaluate(mach_evaluate_info) const { return value_t(); }
+mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver) const
+{
+    auto symbol = solver.get_symbol(solver.add_literal(m_data_definition));
+
+    if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
+        return context::symbol_value();
+
+    return symbol->value();
+}
 
 const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
 

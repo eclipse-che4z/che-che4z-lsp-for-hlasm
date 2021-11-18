@@ -24,8 +24,6 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-using mach_evaluate_info = context::dependency_solver&;
-
 class mach_expr_visitor;
 class mach_expression;
 using mach_expr_ptr = std::unique_ptr<mach_expression>;
@@ -35,7 +33,7 @@ using mach_expr_list = std::vector<mach_expr_ptr>;
 // This interface represents one node (operator or term) in
 // a machine expression, the root operator represents the
 // whole machine expression.
-// It can be evaluated using mach_evaluate_info that provides
+// It can be evaluated using context::dependency_solver& that provides
 // information about values of ordinary symbols.
 class mach_expression : public diagnosable_op_impl, public context::resolvable
 {
@@ -44,7 +42,7 @@ public:
 
     context::symbol_value resolve(context::dependency_solver& solver) const override;
 
-    virtual value_t evaluate(mach_evaluate_info info) const = 0;
+    virtual value_t evaluate(context::dependency_solver& info) const = 0;
 
     virtual const mach_expression* leftmost_term() const = 0;
 

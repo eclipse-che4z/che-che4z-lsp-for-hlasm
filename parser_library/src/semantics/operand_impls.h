@@ -55,11 +55,11 @@ struct evaluable_operand : operand, diagnosable_op_impl
 {
     evaluable_operand(const operand_type type, const range operand_range);
 
-    virtual bool has_dependencies(expressions::mach_evaluate_info info) const = 0;
+    virtual bool has_dependencies(context::dependency_solver& info) const = 0;
 
-    virtual bool has_error(expressions::mach_evaluate_info info) const = 0;
+    virtual bool has_error(context::dependency_solver& info) const = 0;
 
-    virtual std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const = 0;
+    virtual std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const = 0;
 };
 
 
@@ -69,9 +69,9 @@ struct simple_expr_operand : virtual evaluable_operand
 {
     simple_expr_operand(expressions::mach_expr_ptr expression);
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
     expressions::mach_expr_ptr expression;
 };
@@ -95,7 +95,7 @@ struct machine_operand : virtual evaluable_operand
 
     using evaluable_operand::get_operand_value;
     virtual std::unique_ptr<checking::operand> get_operand_value(
-        expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const = 0;
+        context::dependency_solver& info, checking::machine_operand_type type_hint) const = 0;
 
     const mach_kind kind;
 };
@@ -107,12 +107,12 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
 {
     expr_machine_operand(expressions::mach_expr_ptr expression, const range operand_range);
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
     std::unique_ptr<checking::operand> get_operand_value(
-        expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
+        context::dependency_solver& info, checking::machine_operand_type type_hint) const override;
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
     void collect_diags() const override;
 
@@ -134,13 +134,13 @@ struct address_machine_operand final : machine_operand
     expressions::mach_expr_ptr second_par;
     checking::operand_state state;
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
     std::unique_ptr<checking::operand> get_operand_value(
-        expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const override;
+        context::dependency_solver& info, checking::machine_operand_type type_hint) const override;
 
     void collect_diags() const override;
 
@@ -183,13 +183,12 @@ private:
 public:
     expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range operand_range);
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(
-        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info, bool can_have_ordsym) const;
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
     void collect_diags() const override;
 
@@ -197,7 +196,7 @@ public:
 
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
-        expressions::mach_evaluate_info info, bool can_have_ordsym) const;
+        context::dependency_solver& info, bool can_have_ordsym) const;
 };
 
 
@@ -208,11 +207,11 @@ struct using_instr_assembler_operand final : assembler_operand
     using_instr_assembler_operand(
         expressions::mach_expr_ptr base, expressions::mach_expr_ptr end, const range operand_range);
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
 
     expressions::mach_expr_ptr base;
     expressions::mach_expr_ptr end;
@@ -289,11 +288,11 @@ struct complex_assembler_operand final : assembler_operand
     complex_assembler_operand(
         std::string identifier, std::vector<std::unique_ptr<component_value_t>> values, const range operand_range);
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
 
     composite_value_t value;
 
@@ -309,11 +308,11 @@ struct string_assembler_operand : assembler_operand
 {
     string_assembler_operand(std::string value, const range operand_range);
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
 
     std::string value;
 
@@ -329,15 +328,15 @@ struct data_def_operand final : evaluable_operand
 
     std::shared_ptr<expressions::data_definition> value;
 
-    context::dependency_collector get_length_dependencies(expressions::mach_evaluate_info info) const;
+    context::dependency_collector get_length_dependencies(context::dependency_solver& info) const;
 
-    context::dependency_collector get_dependencies(expressions::mach_evaluate_info info) const;
+    context::dependency_collector get_dependencies(context::dependency_solver& info) const;
 
-    bool has_dependencies(expressions::mach_evaluate_info info) const override;
+    bool has_dependencies(context::dependency_solver& info) const override;
 
-    bool has_error(expressions::mach_evaluate_info info) const override;
+    bool has_error(context::dependency_solver& info) const override;
 
-    std::unique_ptr<checking::operand> get_operand_value(expressions::mach_evaluate_info info) const override;
+    std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info) const override;
 
     void collect_diags() const override;
 
