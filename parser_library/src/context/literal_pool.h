@@ -54,13 +54,14 @@ class literal_pool
         decltype(m_literals)::const_iterator,
         pair_hash>
         m_literals_genmap;
+    std::vector<std::pair<const literal_definition*, size_t>> m_pending_literals;
 
 public:
     id_index add_literal(
         const std::string& literal_text, const std::shared_ptr<const expressions::data_definition>& dd);
     id_index get_literal(size_t generation, const std::shared_ptr<const expressions::data_definition>& dd) const;
 
-    void generate_pool();
+    void generate_pool(dependency_solver& solver);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 };
 

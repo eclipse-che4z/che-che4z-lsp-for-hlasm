@@ -554,19 +554,26 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
 
 std::unique_ptr<checking::operand> data_def_operand::get_operand_value(context::dependency_solver& info) const
 {
-    auto op = std::make_unique<checking::data_definition_operand>();
+    return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info));
+}
 
-    op->dupl_factor = value->evaluate_dupl_factor(info);
-    op->type.value = value->type;
-    op->type.rng = value->type_range;
-    op->extension.present = value->extension != '\0';
-    op->extension.value = value->extension;
-    op->extension.rng = value->extension_range;
-    op->length = value->evaluate_length(info);
-    op->scale = value->evaluate_scale(info);
-    op->exponent = value->evaluate_exponent(info);
+checking::data_definition_operand data_def_operand::get_operand_value(
+    const expressions::data_definition& dd, context::dependency_solver& info)
+{
+    checking::data_definition_operand op;
 
-    op->nominal_value = value->evaluate_nominal_value(info);
+    op.dupl_factor = dd.evaluate_dupl_factor(info);
+    op.type.value = dd.type;
+    op.type.rng = dd.type_range;
+    op.extension.present = dd.extension != '\0';
+    op.extension.value = dd.extension;
+    op.extension.rng = dd.extension_range;
+    op.length = dd.evaluate_length(info);
+    op.scale = dd.evaluate_scale(info);
+    op.exponent = dd.evaluate_exponent(info);
+
+    op.nominal_value = dd.evaluate_nominal_value(info);
+
     return op;
 }
 

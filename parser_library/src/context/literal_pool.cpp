@@ -14,7 +14,10 @@
 
 #include "literal_pool.h"
 
+#include <algorithm>
 #include <functional>
+
+#include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -26,6 +29,7 @@ id_index literal_pool::add_literal(
 
     auto it = m_literals.emplace(literal_definition { literal_text, m_current_literal_pool_generation, dd }).first;
     m_literals_genmap.emplace(std::make_pair(m_current_literal_pool_generation, dd.get()), it);
+    m_pending_literals.emplace_back(&*it, 0);
 
     return &it->text;
 }
@@ -39,7 +43,31 @@ id_index literal_pool::get_literal(
     return &it->second->text;
 }
 
-void literal_pool::generate_pool() { ++m_current_literal_pool_generation; }
+void literal_pool::generate_pool(dependency_solver& solver)
+{
+    for (auto& [lit, alignment] : m_pending_literals)
+    {
+        auto* type = lit->value->access_data_def_type();
+        if (!type)
+            continue;
+
+        auto length = (semantics::data_def_operand::get_operand_value(*lit->value, solver).get_length() + 7) / 8;
+        if (length == 0)
+            continue;
+
+        auto top_alignment = length | 16; // 16B length alignment is the top
+        top_alignment = ~top_alignment & top_alignment - 1;
+        alignment = top_alignment + 1;
+    }
+
+    std::stable_sort(m_pending_literals.begin(), m_pending_literals.end(), [](const auto& l, const auto& r) {
+        return l.second > r.second;
+    });
+
+    // TODO: Generate all literals
+
+    ++m_current_literal_pool_generation;
+}
 
 bool literal_pool::literal_definition::is_similar(const literal_definition& ld) const noexcept
 {
