@@ -169,11 +169,7 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                             symbol_name,
                             &*expr_op->expression,
                             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                            context::dependency_evaluation_context {
-                                std::move(loctr),
-                                dep_solver.current_literal_pool_generation(),
-                                dep_solver.current_unique_id(),
-                            });
+                            dep_solver.derive_current_dependency_evaluation_context());
                     }
                 }
                 else
@@ -262,11 +258,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
             std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()),
-            {
-                loctr,
-                dep_solver.current_literal_pool_generation(),
-                dep_solver.current_unique_id(),
-            });
+            dep_solver.derive_current_dependency_evaluation_context());
         if (has_length_dependencies)
         {
             auto sp = hlasm_ctx.ord_ctx.register_ordinary_space(al);
@@ -495,31 +487,12 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
                 offset,
                 reloc_expr->expression.get(),
                 std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                {
-                    std::move(loctr),
-                    dep_solver.current_literal_pool_generation(),
-                    dep_solver.current_unique_id(),
-                });
+                dep_solver.derive_current_dependency_evaluation_context());
         else
-            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val),
-                boundary,
-                offset,
-                nullptr,
-                nullptr,
-                {
-                    std::move(loctr),
-                    dep_solver.current_literal_pool_generation(),
-                    dep_solver.current_unique_id(),
-                });
+            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val), boundary, offset);
     }
     else
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary,
-            offset,
-            {
-                std::move(loctr),
-                dep_solver.current_literal_pool_generation(),
-                dep_solver.current_unique_id(),
-            });
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
@@ -759,11 +732,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-            {
-                std::move(loctr),
-                dep_solver.current_literal_pool_generation(),
-                dep_solver.current_unique_id(),
-            });
+            dep_solver.derive_current_dependency_evaluation_context());
     else
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 }
@@ -847,13 +816,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
         offset &= ~start_section_alignment_mask;
     }
 
-    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment,
-        offset,
-        {
-            std::nullopt,
-            dep_solver.current_literal_pool_generation(),
-            dep_solver.current_unique_id(),
-        });
+    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment, offset);
 }
 void asm_processor::process_END(rebuilt_statement stmt)
 {

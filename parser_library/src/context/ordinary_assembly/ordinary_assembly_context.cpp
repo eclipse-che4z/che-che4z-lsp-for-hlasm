@@ -192,6 +192,11 @@ void ordinary_assembly_context::set_location_counter_value(const address& addr,
         addr, boundary, offset, undefined_address, std::move(dependency_source), dep_ctx);
 }
 
+void ordinary_assembly_context::set_location_counter_value(const address& addr, size_t boundary, int offset)
+{
+    set_location_counter_value(addr, boundary, offset, nullptr, nullptr, dependency_evaluation_context {});
+}
+
 space_ptr ordinary_assembly_context::set_location_counter_value_space(const address& addr,
     size_t boundary,
     int offset,
@@ -242,6 +247,10 @@ void ordinary_assembly_context::set_available_location_counter_value(
             (void)align(alignment { 0, boundary }, dep_ctx);
         (void)reserve_storage_area(offset, context::no_align, dep_ctx);
     }
+}
+void ordinary_assembly_context::set_available_location_counter_value(size_t boundary, int offset)
+{
+    set_available_location_counter_value(boundary, offset, dependency_evaluation_context {});
 }
 
 bool ordinary_assembly_context::symbol_defined(id_index name) { return symbols_.find(name) != symbols_.end(); }
@@ -342,10 +351,7 @@ const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) con
     return tmp == ord_context.symbols_.end() ? nullptr : &tmp->second;
 }
 
-dependency_evaluation_context ordinary_assembly_dependency_solver::get_depctx() const
-{
-    return dependency_evaluation_context { loctr_addr, literal_pool_generation, unique_id };
-}
+std::optional<address> ordinary_assembly_dependency_solver::get_loctr() const { return loctr_addr; }
 
 id_index ordinary_assembly_dependency_solver::get_literal_id(
     const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit)
@@ -354,6 +360,16 @@ id_index ordinary_assembly_dependency_solver::get_literal_id(
         return ord_context.m_literals->add_literal(text, lit, {}, unique_id);
     else
         return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
+}
+
+
+dependency_evaluation_context ordinary_assembly_dependency_solver::derive_current_dependency_evaluation_context() const
+{
+    return dependency_evaluation_context {
+        loctr_addr,
+        literal_pool_generation == (size_t)-1 ? ord_context.current_literal_pool_generation() : literal_pool_generation,
+        unique_id,
+    };
 }
 
 } // namespace hlasm_plugin::parser_library::context

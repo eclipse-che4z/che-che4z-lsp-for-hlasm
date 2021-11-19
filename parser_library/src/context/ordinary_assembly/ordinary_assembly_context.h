@@ -101,6 +101,7 @@ public:
         const resolvable* undefined_address,
         post_stmt_ptr dependency_source,
         const dependency_evaluation_context& dep_ctx);
+    void set_location_counter_value(const address& addr, size_t boundary, int offset);
     space_ptr set_location_counter_value_space(const address& addr,
         size_t boundary,
         int offset,
@@ -111,6 +112,7 @@ public:
     // sets next available value for the current location counter
     void set_available_location_counter_value(
         size_t boundary, int offset, const dependency_evaluation_context& dep_ctx);
+    void set_available_location_counter_value(size_t boundary, int offset);
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name);
@@ -162,27 +164,20 @@ public:
         , loctr_addr(std::move(loctr_addr))
         , unique_id(ord_context.next_unique_id())
     {}
-    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context,
-        std::optional<context::address> loctr_addr,
-        size_t literal_pool_generation,
-        size_t unique_id)
+    ordinary_assembly_dependency_solver(
+        ordinary_assembly_context& ord_context, const dependency_evaluation_context& dep_ctx)
         : ord_context(ord_context)
-        , loctr_addr(std::move(loctr_addr))
-        , literal_pool_generation(literal_pool_generation)
-        , unique_id(unique_id)
+        , loctr_addr(dep_ctx.loctr_address)
+        , literal_pool_generation(dep_ctx.literal_pool_generation)
+        , unique_id(dep_ctx.unique_id)
     {}
 
     const symbol* get_symbol(id_index name) const override;
-    dependency_evaluation_context get_depctx() const override;
+    std::optional<address> get_loctr() const override;
     id_index get_literal_id(
         const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit) override;
 
-    size_t current_literal_pool_generation() const noexcept
-    {
-        return literal_pool_generation == (size_t)-1 ? ord_context.current_literal_pool_generation()
-                                                     : literal_pool_generation;
-    }
-    size_t current_unique_id() const noexcept { return unique_id; }
+    dependency_evaluation_context derive_current_dependency_evaluation_context() const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

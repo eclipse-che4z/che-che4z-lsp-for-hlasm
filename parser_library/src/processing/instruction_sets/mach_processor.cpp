@@ -78,11 +78,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
             std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()),
-            {
-                loctr,
-                dep_solver.current_literal_pool_generation(),
-                dep_solver.current_unique_id(),
-            });
+            dep_solver.derive_current_dependency_evaluation_context());
     else
         check(rebuilt_stmt, hlasm_ctx.processing_stack(), dep_solver, checker, *this);
 

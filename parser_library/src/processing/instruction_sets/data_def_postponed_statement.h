@@ -55,13 +55,12 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
             uint64_t operands_bit_length = 0;
 
             const context::symbol* get_symbol(context::id_index name) const override { return base.get_symbol(name); }
-            context::dependency_evaluation_context get_depctx() const override
+            std::optional<context::address> get_loctr() const override
             {
-                auto ret = base.get_depctx();
-                if (ret.loctr_address.has_value())
-                    ret.loctr_address = ret.loctr_address.value() + (int)(operands_bit_length / 8);
+                if (auto loctr = base.get_loctr(); loctr.has_value())
+                    return loctr.value() + (int)(operands_bit_length / 8);
 
-                return ret;
+                return std::nullopt;
             }
             context::id_index get_literal_id(
                 const std::string& text, const std::shared_ptr<const expressions::data_definition>& dd) override

@@ -233,8 +233,7 @@ void ordinary_processor::check_postponed_statements(
         if (!stmt)
             continue;
 
-        context::ordinary_assembly_dependency_solver dep_solver(
-            hlasm_ctx.ord_ctx, dep_ctx.loctr_address, dep_ctx.literal_pool_generation, dep_ctx.unique_id);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx);
 
         switch (stmt->impl()->opcode_ref().type)
         {

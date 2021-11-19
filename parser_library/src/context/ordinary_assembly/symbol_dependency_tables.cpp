@@ -104,8 +104,7 @@ void symbol_dependency_tables::resolve_dependant(dependant target,
     loctr_dependency_resolver* resolver,
     const dependency_evaluation_context& dep_ctx)
 {
-    context::ordinary_assembly_dependency_solver dep_solver(
-        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation, dep_ctx.unique_id);
+    context::ordinary_assembly_dependency_solver dep_solver(sym_ctx_, dep_ctx);
     symbol_value val = dep_src->resolve(dep_solver);
 
     std::visit(resolve_dependant_visitor { val, resolver, sym_ctx_, dependency_source_stmts_, dep_ctx }, target);
@@ -180,8 +179,7 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
     const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx)
 {
     std::vector<dependant> ret;
-    context::ordinary_assembly_dependency_solver dep_solver(
-        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation, dep_ctx.unique_id);
+    context::ordinary_assembly_dependency_solver dep_solver(sym_ctx_, dep_ctx);
     auto deps = dependency_source->get_dependencies(dep_solver);
 
     ret.insert(ret.end(),
