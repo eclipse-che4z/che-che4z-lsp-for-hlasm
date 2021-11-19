@@ -35,7 +35,7 @@ public:
     void resolve_unknown_loctr_dependency(context::space_ptr sp,
         const context::address& addr,
         range err_range,
-        context::dependency_evaluation_context dep_ctx) override;
+        const context::dependency_evaluation_context& dep_ctx) override;
 
 protected:
     statement_fields_parser& parser;

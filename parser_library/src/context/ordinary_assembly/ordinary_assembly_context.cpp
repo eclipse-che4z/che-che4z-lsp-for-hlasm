@@ -186,10 +186,10 @@ void ordinary_assembly_context::set_location_counter_value(const address& addr,
     int offset,
     const resolvable* undefined_address,
     post_stmt_ptr dependency_source,
-    dependency_evaluation_context dep_ctx)
+    const dependency_evaluation_context& dep_ctx)
 {
     (void)set_location_counter_value_space(
-        addr, boundary, offset, undefined_address, std::move(dependency_source), std::move(dep_ctx));
+        addr, boundary, offset, undefined_address, std::move(dependency_source), dep_ctx);
 }
 
 space_ptr ordinary_assembly_context::set_location_counter_value_space(const address& addr,
@@ -197,7 +197,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
     int offset,
     const resolvable* undefined_address,
     post_stmt_ptr dependency_source,
-    dependency_evaluation_context dep_ctx)
+    const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -211,22 +211,22 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
             symbol_dependencies.add_dependency(sp,
                 std::make_unique<alignable_address_resolver>(
                     std::move(curr_addr), std::vector<address> { addr }, boundary, offset),
-                std::move(dep_ctx));
+                dep_ctx);
         else
             symbol_dependencies.add_dependency(sp,
                 std::make_unique<alignable_address_abs_part_resolver>(undefined_address),
-                std::move(dep_ctx),
+                dep_ctx,
                 std::move(dependency_source));
         return sp;
     }
     else
     {
-        return reserve_storage_area_space(offset, alignment { 0, boundary ? boundary : 1 }, std::move(dep_ctx)).second;
+        return reserve_storage_area_space(offset, alignment { 0, boundary ? boundary : 1 }, dep_ctx).second;
     }
 }
 
 void ordinary_assembly_context::set_available_location_counter_value(
-    size_t boundary, int offset, dependency_evaluation_context dep_ctx)
+    size_t boundary, int offset, const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -235,12 +235,12 @@ void ordinary_assembly_context::set_available_location_counter_value(
 
     if (sp)
         symbol_dependencies.add_dependency(
-            sp, std::make_unique<aggregate_address_resolver>(std::move(addr), boundary, offset), std::move(dep_ctx));
+            sp, std::make_unique<aggregate_address_resolver>(std::move(addr), boundary, offset), dep_ctx);
     else
     {
         if (boundary)
             (void)align(alignment { 0, boundary }, dep_ctx);
-        (void)reserve_storage_area(offset, context::no_align, std::move(dep_ctx));
+        (void)reserve_storage_area(offset, context::no_align, dep_ctx);
     }
 }
 
@@ -267,14 +267,14 @@ bool ordinary_assembly_context::counter_defined(id_index name)
 }
 
 address ordinary_assembly_context::reserve_storage_area(
-    size_t length, alignment align, dependency_evaluation_context dep_ctx)
+    size_t length, alignment align, const dependency_evaluation_context& dep_ctx)
 {
-    return reserve_storage_area_space(length, align, std::move(dep_ctx)).first;
+    return reserve_storage_area_space(length, align, dep_ctx).first;
 }
 
-address ordinary_assembly_context::align(alignment align, dependency_evaluation_context dep_ctx)
+address ordinary_assembly_context::align(alignment align, const dependency_evaluation_context& dep_ctx)
 {
-    return reserve_storage_area(0, align, std::move(dep_ctx));
+    return reserve_storage_area(0, align, dep_ctx);
 }
 
 address ordinary_assembly_context::align(alignment a)
@@ -313,7 +313,7 @@ void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* 
 const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols() { return symbols_; }
 
 std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(
-    size_t length, alignment align, dependency_evaluation_context dep_ctx)
+    size_t length, alignment align, const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -324,7 +324,7 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
         auto [ret_addr, sp] = curr_section_->current_location_counter().reserve_storage_area(length, align);
         assert(sp);
 
-        symbol_dependencies.add_dependency(sp, std::make_unique<address_resolver>(addr), std::move(dep_ctx));
+        symbol_dependencies.add_dependency(sp, std::make_unique<address_resolver>(addr), dep_ctx);
         return std::make_pair(ret_addr, sp);
     }
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);

@@ -164,7 +164,7 @@ bool low_language_processor::check_address_for_ORG(range err_range,
 void low_language_processor::resolve_unknown_loctr_dependency(context::space_ptr sp,
     const context::address& addr,
     range err_range,
-    context::dependency_evaluation_context dep_ctx)
+    const context::dependency_evaluation_context& dep_ctx)
 {
     auto tmp_loctr = hlasm_ctx.ord_ctx.current_section()->current_location_counter();
 
@@ -183,7 +183,7 @@ void low_language_processor::resolve_unknown_loctr_dependency(context::space_ptr
     }
 
     auto new_sp = hlasm_ctx.ord_ctx.set_location_counter_value_space(
-        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, std::move(dep_ctx));
+        addr, sp->previous_boundary, sp->previous_offset, nullptr, nullptr, dep_ctx);
 
     auto ret = hlasm_ctx.ord_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
     hlasm_ctx.ord_ctx.set_location_counter(tmp_loctr.name, location());

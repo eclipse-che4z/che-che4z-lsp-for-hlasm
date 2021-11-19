@@ -69,19 +69,21 @@ class symbol_dependency_tables
     void resolve_dependant(dependant target,
         const resolvable* dep_src,
         loctr_dependency_resolver* resolver,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
     void resolve_dependant_default(dependant target);
     void resolve(loctr_dependency_resolver* resolver);
 
     std::vector<dependant> extract_dependencies(
-        const resolvable* dependency_source, dependency_evaluation_context dep_ctx);
+        const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
     std::vector<dependant> extract_dependencies(
-        const std::vector<const resolvable*>& dependency_sources, dependency_evaluation_context dep_ctx);
+        const std::vector<const resolvable*>& dependency_sources, const dependency_evaluation_context& dep_ctx);
 
     void try_erase_source_statement(dependant index);
 
-    bool add_dependency(
-        dependant target, const resolvable* dependency_source, bool check_cycle, dependency_evaluation_context dep_ctx);
+    bool add_dependency(dependant target,
+        const resolvable* dependency_source,
+        bool check_cycle,
+        const dependency_evaluation_context& dep_ctx);
 
 public:
     symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
@@ -91,7 +93,7 @@ public:
     [[nodiscard]] bool add_dependency(id_index target,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
 
     // add symbol attribute dependency on statement
     // returns false if cyclic dependency occured
@@ -99,24 +101,25 @@ public:
         data_attr_kind attr,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
 
     // add space dependency
     void add_dependency(space_ptr target,
         const resolvable* dependency_source,
         post_stmt_ptr dependency_source_stmt,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
     void add_dependency(space_ptr target,
         addr_res_ptr dependency_source,
-        dependency_evaluation_context dep_ctx,
+        const dependency_evaluation_context& dep_ctx,
         post_stmt_ptr dependency_source_stmt = nullptr);
     bool check_cycle(space_ptr target);
 
     // add statement dependency on its operands
-    void add_dependency(post_stmt_ptr target, dependency_evaluation_context dep_ctx);
+    void add_dependency(post_stmt_ptr target, const dependency_evaluation_context& dep_ctx);
 
     // method for creating more than one dependency assigned to one statement
-    dependency_adder add_dependencies(post_stmt_ptr dependency_source_stmt, dependency_evaluation_context dep_ctx);
+    dependency_adder add_dependencies(
+        post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx);
 
     // registers that some symbol has been defined
     // if resolver is present, location counter dependencies are checked as well (not just symbol deps)
@@ -146,8 +149,9 @@ class dependency_adder
 public:
     post_stmt_ptr source_stmt;
 
-    dependency_adder(
-        symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt, dependency_evaluation_context dep_ctx);
+    dependency_adder(symbol_dependency_tables& owner,
+        post_stmt_ptr dependency_source_stmt,
+        const dependency_evaluation_context& dep_ctx);
 
     // add symbol dependency on statement
     [[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);

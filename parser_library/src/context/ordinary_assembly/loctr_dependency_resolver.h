@@ -26,7 +26,7 @@ class loctr_dependency_resolver
 {
 public:
     virtual void resolve_unknown_loctr_dependency(
-        space_ptr sp, const context::address& addr, range err_range, dependency_evaluation_context dep_ctx) = 0;
+        space_ptr sp, const context::address& addr, range err_range, const dependency_evaluation_context& dep_ctx) = 0;
 
 protected:
     ~loctr_dependency_resolver() = default;

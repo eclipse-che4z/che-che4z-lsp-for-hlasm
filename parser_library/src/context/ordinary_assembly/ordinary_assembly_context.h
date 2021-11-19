@@ -99,16 +99,17 @@ public:
         int offset,
         const resolvable* undefined_address,
         post_stmt_ptr dependency_source,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
     space_ptr set_location_counter_value_space(const address& addr,
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
         post_stmt_ptr dependency_source,
-        dependency_evaluation_context dep_ctx);
+        const dependency_evaluation_context& dep_ctx);
 
     // sets next available value for the current location counter
-    void set_available_location_counter_value(size_t boundary, int offset, dependency_evaluation_context dep_ctx);
+    void set_available_location_counter_value(
+        size_t boundary, int offset, const dependency_evaluation_context& dep_ctx);
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name);
@@ -118,10 +119,10 @@ public:
     bool counter_defined(id_index name);
 
     // reserves storage area of specified length and alignment
-    address reserve_storage_area(size_t length, alignment align, dependency_evaluation_context dep_ctx);
+    address reserve_storage_area(size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
 
     // aligns storage
-    address align(alignment align, dependency_evaluation_context dep_ctx);
+    address align(alignment align, const dependency_evaluation_context& dep_ctx);
     address align(alignment a);
 
     // adds space to the current location counter
@@ -137,7 +138,7 @@ public:
 private:
     void create_private_section();
     std::pair<address, space_ptr> reserve_storage_area_space(
-        size_t length, alignment align, dependency_evaluation_context dep_ctx);
+        size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
 
     friend class ordinary_assembly_dependency_solver;
 };
