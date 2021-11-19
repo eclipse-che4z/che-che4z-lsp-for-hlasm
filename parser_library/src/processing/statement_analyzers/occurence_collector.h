@@ -26,8 +26,6 @@ class occurence_collector : public semantics::operand_visitor,
                             public expressions::mach_expr_visitor,
                             public expressions::ca_expr_visitor
 {
-    void visit(const expressions::data_definition&);
-
 public:
     lsp::occurence_kind collector_kind;
     context::hlasm_context& hlasm_ctx;

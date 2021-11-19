@@ -22,6 +22,7 @@
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "mach_expr_term.h"
+#include "mach_expr_visitor.h"
 #include "semantics/collector.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
@@ -342,6 +343,35 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(context::depen
     return nom;
 }
 
+void data_definition::apply(mach_expr_visitor& visitor) const
+{
+    if (dupl_factor)
+        dupl_factor->apply(visitor);
+    if (program_type)
+        program_type->apply(visitor);
+    if (length)
+        length->apply(visitor);
+    if (scale)
+        scale->apply(visitor);
+    if (exponent)
+        exponent->apply(visitor);
+
+    if (nominal_value && nominal_value->access_exprs())
+    {
+        for (const auto& val : nominal_value->access_exprs()->exprs)
+        {
+            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
+                std::get<expressions::mach_expr_ptr>(val)->apply(visitor);
+            else
+            {
+                const auto& addr = std::get<expressions::address_nominal>(val);
+                addr.base->apply(visitor);
+                addr.displacement->apply(visitor);
+            }
+        }
+    }
+}
+
 data_definition::parser::parser(
     semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
     : collector_(coll)
@@ -574,6 +604,21 @@ void data_definition::parser::parse_modifier()
     assign_expr_to_modifier(modifier, std::move(expr));
 }
 
+namespace {
+struct loctr_reference_visitor final : public mach_expr_visitor
+{
+    bool found_loctr_reference = false;
+
+    void visit(const mach_expr_constant&) override {}
+    void visit(const mach_expr_data_attr&) override {}
+    void visit(const mach_expr_symbol&) override {}
+    void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
+    void visit(const mach_expr_self_def&) override {}
+    void visit(const mach_expr_default&) override {}
+    void visit(const mach_expr_literal& expr) override { expr.get_data_definition()->apply(*this); }
+};
+} // namespace
+
 data_definition data_definition::parser::parse()
 {
     parse_duplication_factor();
@@ -623,6 +668,10 @@ data_definition data_definition::parser::parse()
             result_.add_diagnostic(diagnostic_op::error_D006({ begin_pos, pos_ }));
         }
     }
+
+    loctr_reference_visitor v;
+    result_.apply(v);
+    result_.references_loctr = v.found_loctr_reference;
 
     return std::move(result_);
 }

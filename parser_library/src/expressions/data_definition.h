@@ -33,12 +33,13 @@ class collector;
 
 
 namespace hlasm_plugin::parser_library::expressions {
+class mach_expr_visitor;
 
 // Represents data definition operand as it was written into source code.
 // Uses machine expressions to represent all modifiers and nominal value.
 struct data_definition final : public diagnosable_op_impl, public context::dependable
 {
-    enum class length_type
+    enum class length_type : unsigned char
     {
         BYTE,
         BIT
@@ -57,6 +58,7 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     nominal_value_ptr nominal_value = nullptr;
 
     length_type length_type = length_type::BYTE;
+    bool references_loctr = false;
 
     inline static const char* expr_placeholder = "&";
     inline static const char* nominal_placeholder = " ";
@@ -107,6 +109,8 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
     checking::nominal_value_t evaluate_nominal_value(context::dependency_solver& info) const;
+
+    void apply(mach_expr_visitor& visitor) const;
 
 private:
     class parser;
