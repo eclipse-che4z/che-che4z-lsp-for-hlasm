@@ -500,3 +500,27 @@ LZ   EQU *-Z
     EXPECT_EQ(LY->value().get_abs(), 6);
     EXPECT_EQ(LZ->value().get_abs(), 15);
 }
+
+TEST(data_definition, no_loctr_ref)
+{
+    std::string input = "(2*2)ADL(2*2)(2*2)";
+    analyzer a(input);
+    auto res = a.parser().data_def();
+
+    auto parsed = std::move(res->value);
+    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_FALSE(parsed.references_loctr);
+}
+
+TEST(data_definition, loctr_ref)
+{
+    for (std::string input : { "(*-*)ADL(2*2)(2*2)", "(2*2)ADL(*-*)(2*2)", "(2*2)ADL(2*2)(*-*)" })
+    {
+        analyzer a(input);
+        auto res = a.parser().data_def();
+
+        auto parsed = std::move(res->value);
+        EXPECT_EQ(parsed.diags().size(), (size_t)0);
+        EXPECT_TRUE(parsed.references_loctr);
+    }
+}

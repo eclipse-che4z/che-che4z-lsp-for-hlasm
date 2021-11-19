@@ -222,3 +222,22 @@ TEST(occurence_collector, ord_dc_operand_nominal_value)
     sort_occurence_vector(oa.st);
     EXPECT_EQ(oa.st, expected);
 }
+
+TEST(occurence_collector, ord_literal)
+{
+    std::string input = R"(
+    LARL 0,=A(X,X)
+X   DC   A(X)
+)";
+    operand_occurence_analyzer_mock oa(input, lsp::occurence_kind::ORD);
+
+    // operands only
+    std::vector<lsp::symbol_occurence> expected = {
+        { lsp::occurence_kind::ORD, oa.get_id("X"), { { 1, 14 }, { 1, 15 } } },
+        { lsp::occurence_kind::ORD, oa.get_id("X"), { { 1, 16 }, { 1, 17 } } },
+        { lsp::occurence_kind::ORD, oa.get_id("X"), { { 2, 11 }, { 2, 12 } } }
+    };
+
+    sort_occurence_vector(oa.st);
+    EXPECT_EQ(oa.st, expected);
+}
