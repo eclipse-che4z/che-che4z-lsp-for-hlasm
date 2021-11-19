@@ -48,6 +48,7 @@ class ordinary_assembly_context
 
     // literals
     std::unique_ptr<literal_pool> m_literals;
+    size_t m_statement_unique_id = 1;
 
     // access id storage
     id_storage& ids;
@@ -120,6 +121,7 @@ public:
 
     // reserves storage area of specified length and alignment
     address reserve_storage_area(size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
+    address reserve_storage_area(size_t length, alignment align);
 
     // aligns storage
     address align(alignment align, const dependency_evaluation_context& dep_ctx);
@@ -134,6 +136,9 @@ public:
     const std::unordered_map<id_index, symbol>& get_all_symbols();
 
     size_t current_literal_pool_generation() const;
+    size_t next_unique_id() { return m_statement_unique_id++; }
+
+    const literal_pool& literals() const { return *m_literals; }
 
 private:
     void create_private_section();
@@ -145,23 +150,39 @@ private:
 
 class ordinary_assembly_dependency_solver final : public dependency_solver
 {
-    const ordinary_assembly_context& ord_context;
+    ordinary_assembly_context& ord_context;
     std::optional<context::address> loctr_addr;
-    size_t literal_pool_generation;
+    size_t literal_pool_generation = (size_t)-1;
+    size_t unique_id;
 
 public:
-    ordinary_assembly_dependency_solver(const ordinary_assembly_context& ord_context,
+    ordinary_assembly_dependency_solver(
+        ordinary_assembly_context& ord_context, std::optional<context::address> loctr_addr)
+        : ord_context(ord_context)
+        , loctr_addr(std::move(loctr_addr))
+        , unique_id(ord_context.next_unique_id())
+    {}
+    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context,
         std::optional<context::address> loctr_addr,
-        size_t literal_pool_generation = (size_t)-1) // TODO: support multiple generations
+        size_t literal_pool_generation,
+        size_t unique_id)
         : ord_context(ord_context)
         , loctr_addr(std::move(loctr_addr))
         , literal_pool_generation(literal_pool_generation)
+        , unique_id(unique_id)
     {}
 
     const symbol* get_symbol(id_index name) const override;
-    std::optional<context::address> get_loctr() const override;
+    dependency_evaluation_context get_depctx() const override;
     id_index get_literal_id(
         const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit) override;
+
+    size_t current_literal_pool_generation() const noexcept
+    {
+        return literal_pool_generation == (size_t)-1 ? ord_context.current_literal_pool_generation()
+                                                     : literal_pool_generation;
+    }
+    size_t current_unique_id() const noexcept { return unique_id; }
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -105,7 +105,7 @@ void symbol_dependency_tables::resolve_dependant(dependant target,
     const dependency_evaluation_context& dep_ctx)
 {
     context::ordinary_assembly_dependency_solver dep_solver(
-        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation);
+        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation, dep_ctx.unique_id);
     symbol_value val = dep_src->resolve(dep_solver);
 
     std::visit(resolve_dependant_visitor { val, resolver, sym_ctx_, dependency_source_stmts_, dep_ctx }, target);
@@ -181,7 +181,7 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(
 {
     std::vector<dependant> ret;
     context::ordinary_assembly_dependency_solver dep_solver(
-        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation);
+        sym_ctx_, dep_ctx.loctr_address, dep_ctx.literal_pool_generation, dep_ctx.unique_id);
     auto deps = dependency_source->get_dependencies(dep_solver);
 
     ret.insert(ret.end(),
@@ -457,15 +457,15 @@ bool symbol_dependency_tables::check_loctr_cycle()
     return cycled.empty();
 }
 
-std::vector<std::pair<post_stmt_ptr, std::optional<address>>> symbol_dependency_tables::collect_postponed()
+std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> symbol_dependency_tables::collect_postponed()
 {
-    std::vector<std::pair<post_stmt_ptr, std::optional<address>>> res;
+    std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> res;
 
     res.reserve(postponed_stmts_.size());
     for (auto it = postponed_stmts_.begin(); it != postponed_stmts_.end();)
     {
         auto node = postponed_stmts_.extract(it++);
-        res.push_back(std::make_pair(std::move(node.key()), std::move(node.mapped().loctr_address)));
+        res.push_back(std::make_pair(std::move(node.key()), std::move(node.mapped())));
     }
 
     postponed_stmts_.clear();

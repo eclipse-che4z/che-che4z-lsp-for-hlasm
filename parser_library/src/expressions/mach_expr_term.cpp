@@ -109,7 +109,7 @@ mach_expr_location_counter::mach_expr_location_counter(range rng)
 
 context::dependency_collector mach_expr_location_counter::get_dependencies(context::dependency_solver& mi) const
 {
-    auto location_counter = mi.get_loctr();
+    auto location_counter = mi.get_depctx().loctr_address;
     if (!location_counter.has_value())
         return context::dependency_collector(true);
     else
@@ -118,7 +118,7 @@ context::dependency_collector mach_expr_location_counter::get_dependencies(conte
 
 mach_expression::value_t mach_expr_location_counter::evaluate(context::dependency_solver& mi) const
 {
-    auto location_counter = mi.get_loctr();
+    auto location_counter = mi.get_depctx().loctr_address;
     if (!location_counter.has_value())
         return context::address({ nullptr }, 0, {});
     else

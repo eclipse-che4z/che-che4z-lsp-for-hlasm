@@ -35,7 +35,8 @@ class ordinary_assembly_context;
 struct dependency_evaluation_context
 {
     std::optional<address> loctr_address;
-    size_t literal_pool_generation;
+    size_t literal_pool_generation = 0;
+    size_t unique_id = 0;
 };
 
 // helper structure to count dependencies of a statement
@@ -129,7 +130,7 @@ public:
     bool check_loctr_cycle();
 
     // collect all postponed statements either if they still contain dependent objects
-    std::vector<std::pair<post_stmt_ptr, std::optional<address>>> collect_postponed();
+    std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> collect_postponed();
 
     // assign default values to all unresoved dependants
     void resolve_all_as_default();

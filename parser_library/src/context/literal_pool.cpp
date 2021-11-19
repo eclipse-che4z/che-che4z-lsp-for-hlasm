@@ -17,67 +17,86 @@
 #include <algorithm>
 #include <functional>
 
+#include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::context {
 
-id_index literal_pool::add_literal(
-    const std::string& literal_text, const std::shared_ptr<const expressions::data_definition>& dd)
+id_index literal_pool::add_literal(const std::string& literal_text,
+    const std::shared_ptr<const expressions::data_definition>& dd,
+    location loc,
+    size_t unique_id)
 {
-    if (auto lit = get_literal(m_current_literal_pool_generation, dd))
+    unique_id = dd->references_loctr ? unique_id : 0;
+    if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
         return lit;
 
-    auto it = m_literals.emplace(literal_definition { literal_text, m_current_literal_pool_generation, dd }).first;
-    m_literals_genmap.emplace(std::make_pair(m_current_literal_pool_generation, dd.get()), it);
-    m_pending_literals.emplace_back(&*it, 0);
+    auto it = m_literals
+                  .emplace(literal_definition {
+                      literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(loc), {} })
+                  .first;
+    m_literals_genmap.emplace(literal_id { m_current_literal_pool_generation, unique_id, dd.get() }, it);
+    m_pending_literals.emplace_back(&*it);
 
     return &it->text;
 }
 
 id_index literal_pool::get_literal(
-    size_t generation, const std::shared_ptr<const expressions::data_definition>& dd) const
+    size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const
 {
-    auto it = m_literals_genmap.find(std::make_pair(generation, dd.get()));
+    unique_id = dd->references_loctr ? unique_id : 0;
+    auto it = m_literals_genmap.find(literal_id { generation, unique_id, dd.get() });
     if (it == m_literals_genmap.end())
         return nullptr;
     return &it->second->text;
 }
 
-void literal_pool::generate_pool(dependency_solver& solver)
+void literal_pool::generate_pool(ordinary_assembly_context& ord_ctx, dependency_solver& solver)
 {
-    for (auto& [lit, alignment] : m_pending_literals)
+    for (auto& [lit, size, alignment] : m_pending_literals)
     {
         auto* type = lit->value->access_data_def_type();
         if (!type)
             continue;
 
-        auto length = (semantics::data_def_operand::get_operand_value(*lit->value, solver).get_length() + 7) / 8;
-        if (length == 0)
+        size = (semantics::data_def_operand::get_operand_value(*lit->value, solver).get_length() + 7) / 8;
+        if (size == 0)
             continue;
 
-        auto top_alignment = length | 16; // 16B length alignment is the top
-        top_alignment = ~top_alignment & top_alignment - 1;
-        alignment = top_alignment + 1;
+        auto top_alignment = size | 16; // 16B length alignment is the top
+        alignment = (~top_alignment & top_alignment - 1) + 1;
     }
 
     std::stable_sort(m_pending_literals.begin(), m_pending_literals.end(), [](const auto& l, const auto& r) {
-        return l.second > r.second;
+        return l.alignment > r.alignment;
     });
 
     // TODO: Generate all literals
+    constexpr auto sectalign = doubleword;
+    ord_ctx.align(sectalign);
+    for (auto& [lit, size, alignment] : m_pending_literals)
+    {
+        if (size == 0)
+            break;
+        auto addr = ord_ctx.reserve_storage_area(size, no_align);
+        symbol_attributes attrs(
+            symbol_origin::EQU, lit->value->get_type_attribute(), lit->value->get_length_attribute(solver));
+        bool cycle = ord_ctx.create_symbol(&lit->text, addr, attrs, {});
+    }
 
+    m_pending_literals.clear();
     ++m_current_literal_pool_generation;
 }
 
 bool literal_pool::literal_definition::is_similar(const literal_definition& ld) const noexcept
 {
-    return generation == ld.generation && text == ld.text; // for now
+    return generation == ld.generation && unique_id == ld.unique_id && text == ld.text; // for now
 }
 
 size_t literal_pool::literal_definition_hasher::operator()(const literal_definition& ld) const noexcept
 {
     auto text_hash = std::hash<std::string> {}(ld.text);
-    return text_hash ^ ld.generation;
+    return text_hash ^ ld.generation ^ ld.unique_id;
 }
 
 } // namespace hlasm_plugin::parser_library::context

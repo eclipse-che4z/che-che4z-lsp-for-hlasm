@@ -20,9 +20,11 @@
 
 #include "expressions/data_definition.h"
 #include "id_storage.h"
+#include "location.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {
+class ordinary_assembly_context;
 
 class literal_pool
 {
@@ -30,7 +32,11 @@ class literal_pool
     {
         std::string text;
         size_t generation;
+        size_t unique_id;
         std::shared_ptr<const expressions::data_definition> value;
+
+        location loc;
+        processing_stack_t stack;
 
         bool is_similar(const literal_definition&) const noexcept;
     };
@@ -40,29 +46,56 @@ class literal_pool
     };
     size_t m_current_literal_pool_generation = 0;
 
-    struct pair_hash
+    struct literal_id
     {
-        template<typename T1, typename T2>
-        size_t operator()(const std::pair<T1, T2>& p) const noexcept
+        size_t generation;
+        size_t unique_id;
+        const expressions::data_definition* lit;
+    };
+
+    struct literal_id_helper
+    {
+        size_t operator()(const literal_id& p) const noexcept
         {
-            return std::hash<T1>()(p.first) ^ std::hash<T2>()(p.second);
+            return std::hash<size_t>()(p.generation) ^ std::hash<size_t>()(p.unique_id)
+                ^ std::hash<const expressions::data_definition*>()(p.lit);
+        }
+        bool operator()(const literal_id& l, const literal_id& r) const noexcept
+        {
+            return l.lit == r.lit && l.generation == r.generation && l.unique_id == r.unique_id;
         }
     };
 
     std::unordered_set<literal_definition, literal_definition_hasher, decltype(utils::is_similar)> m_literals;
-    std::unordered_map<std::pair<size_t, const expressions::data_definition*>,
-        decltype(m_literals)::const_iterator,
-        pair_hash>
+    std::unordered_map<literal_id, decltype(m_literals)::const_iterator, literal_id_helper, literal_id_helper>
         m_literals_genmap;
-    std::vector<std::pair<const literal_definition*, size_t>> m_pending_literals;
+
+    struct pending_literal
+    {
+        const literal_definition* literal;
+        size_t size = 0;
+        size_t alignment = 0;
+
+        pending_literal(const literal_definition* l) noexcept
+            : literal(l)
+        {}
+    };
+
+    std::vector<pending_literal> m_pending_literals;
 
 public:
-    id_index add_literal(
-        const std::string& literal_text, const std::shared_ptr<const expressions::data_definition>& dd);
-    id_index get_literal(size_t generation, const std::shared_ptr<const expressions::data_definition>& dd) const;
+    id_index add_literal(const std::string& literal_text,
+        const std::shared_ptr<const expressions::data_definition>& dd,
+        location loc,
+        size_t unique_id);
+    id_index get_literal(
+        size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
-    void generate_pool(dependency_solver& solver);
+    void generate_pool(ordinary_assembly_context& ord_ctx, dependency_solver& solver);
     size_t current_generation() const { return m_current_literal_pool_generation; }
+
+    // testing
+    size_t get_pending_count() const { return m_pending_literals.size(); }
 };
 
 } // namespace hlasm_plugin::parser_library::context

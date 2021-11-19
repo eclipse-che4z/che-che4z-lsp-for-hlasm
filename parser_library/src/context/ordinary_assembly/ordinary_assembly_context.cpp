@@ -272,15 +272,17 @@ address ordinary_assembly_context::reserve_storage_area(
     return reserve_storage_area_space(length, align, dep_ctx).first;
 }
 
+address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
+{
+    return reserve_storage_area(length, align, dependency_evaluation_context {});
+}
+
 address ordinary_assembly_context::align(alignment align, const dependency_evaluation_context& dep_ctx)
 {
     return reserve_storage_area(0, align, dep_ctx);
 }
 
-address ordinary_assembly_context::align(alignment a)
-{
-    return align(a, dependency_evaluation_context { std::optional<address> {}, m_literals->current_generation() });
-}
+address ordinary_assembly_context::align(alignment a) { return align(a, dependency_evaluation_context {}); }
 
 space_ptr ordinary_assembly_context::register_ordinary_space(alignment align)
 {
@@ -340,15 +342,18 @@ const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) con
     return tmp == ord_context.symbols_.end() ? nullptr : &tmp->second;
 }
 
-std::optional<context::address> ordinary_assembly_dependency_solver::get_loctr() const { return loctr_addr; }
+dependency_evaluation_context ordinary_assembly_dependency_solver::get_depctx() const
+{
+    return dependency_evaluation_context { loctr_addr, literal_pool_generation, unique_id };
+}
 
 id_index ordinary_assembly_dependency_solver::get_literal_id(
     const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit)
 {
     if (literal_pool_generation == (size_t)-1)
-        return ord_context.m_literals->add_literal(text, lit);
+        return ord_context.m_literals->add_literal(text, lit, {}, unique_id);
     else
-        return ord_context.m_literals->get_literal(literal_pool_generation, lit);
+        return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
 }
 
 } // namespace hlasm_plugin::parser_library::context

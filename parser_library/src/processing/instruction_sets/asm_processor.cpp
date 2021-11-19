@@ -171,7 +171,8 @@ void asm_processor::process_EQU(rebuilt_statement stmt)
                             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
                             context::dependency_evaluation_context {
                                 std::move(loctr),
-                                hlasm_ctx.ord_ctx.current_literal_pool_generation(),
+                                dep_solver.current_literal_pool_generation(),
+                                dep_solver.current_unique_id(),
                             });
                     }
                 }
@@ -261,7 +262,11 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         auto adder = hlasm_ctx.ord_ctx.symbol_dependencies.add_dependencies(
             std::make_unique<data_def_postponed_statement<instr_type>>(std::move(stmt), hlasm_ctx.processing_stack()),
-            { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+            {
+                loctr,
+                dep_solver.current_literal_pool_generation(),
+                dep_solver.current_unique_id(),
+            });
         if (has_length_dependencies)
         {
             auto sp = hlasm_ctx.ord_ctx.register_ordinary_space(al);
@@ -271,8 +276,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         else
             hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
                                                        adder.source_stmt->impl()->operands_ref().value, dep_solver),
-                context::no_align,
-                { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+                context::no_align);
 
         bool cycle_ok = true;
 
@@ -299,8 +303,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
     {
         hlasm_ctx.ord_ctx.reserve_storage_area(
             data_def_postponed_statement<instr_type>::get_operands_length(stmt.operands_ref().value, dep_solver),
-            context::no_align,
-            { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+            context::no_align);
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
@@ -492,18 +495,31 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
                 offset,
                 reloc_expr->expression.get(),
                 std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+                {
+                    std::move(loctr),
+                    dep_solver.current_literal_pool_generation(),
+                    dep_solver.current_unique_id(),
+                });
         else
             hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val),
                 boundary,
                 offset,
                 nullptr,
                 nullptr,
-                { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+                {
+                    std::move(loctr),
+                    dep_solver.current_literal_pool_generation(),
+                    dep_solver.current_unique_id(),
+                });
     }
     else
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(
-            boundary, offset, { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary,
+            offset,
+            {
+                std::move(loctr),
+                dep_solver.current_literal_pool_generation(),
+                dep_solver.current_unique_id(),
+            });
 }
 
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
@@ -732,8 +748,7 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
             create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_ccw_attrs());
     }
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(
-        ccw_length, ccw_align, { loctr, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
 
     bool has_dependencies = std::any_of(
         stmt.operands_ref().value.begin(), stmt.operands_ref().value.end(), [this, &dep_solver](const auto& op) {
@@ -744,7 +759,11 @@ void asm_processor::process_CCW(rebuilt_statement stmt)
     if (has_dependencies)
         hlasm_ctx.ord_ctx.symbol_dependencies.add_dependency(
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-            { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+            {
+                std::move(loctr),
+                dep_solver.current_literal_pool_generation(),
+                dep_solver.current_unique_id(),
+            });
     else
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 }
@@ -775,9 +794,7 @@ void asm_processor::process_CNOP(rebuilt_statement stmt)
     if (!byte_value.has_value() || !boundary_value.has_value())
         return;
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(0,
-        context::alignment { (size_t)*byte_value, (size_t)*boundary_value },
-        { std::move(loctr), hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+    hlasm_ctx.ord_ctx.reserve_storage_area(0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value });
 }
 
 
@@ -830,8 +847,13 @@ void asm_processor::process_START(rebuilt_statement stmt)
         offset &= ~start_section_alignment_mask;
     }
 
-    hlasm_ctx.ord_ctx.set_available_location_counter_value(
-        start_section_alignment, offset, { std::nullopt, hlasm_ctx.ord_ctx.current_literal_pool_generation() });
+    hlasm_ctx.ord_ctx.set_available_location_counter_value(start_section_alignment,
+        offset,
+        {
+            std::nullopt,
+            dep_solver.current_literal_pool_generation(),
+            dep_solver.current_unique_id(),
+        });
 }
 void asm_processor::process_END(rebuilt_statement stmt)
 {
