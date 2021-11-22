@@ -51,3 +51,17 @@ TEST(literals, unique_when_no_loctr_references)
 
     EXPECT_EQ(a.hlasm_ctx().ord_ctx.literals().get_pending_count(), 1);
 }
+
+TEST(literals, no_nested_literals)
+{
+    std::string input = R"(
+    LARL 0,=A(=A(0))
+    DC   A(=A(0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    auto& d = a.diags();
+    EXPECT_EQ(std::count_if(d.begin(), d.end(), [](const auto& m) { return m.code == "S0013"; }), 2);
+}
