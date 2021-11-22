@@ -105,10 +105,12 @@ mach_term returns [mach_expr_ptr m_e]
 
 
 literal returns [data_definition value]
-	: equals data_def
+	: equals {allow_literals()}? {disable_litarals();} data_def
 	{
 		$value = std::move($data_def.value);
 	};
+	finally
+	{enable_litarals();}
 
 mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index> data, range symbol_rng]
 	: ORDSYMBOL (attr|apostrophe_as_attr) mach_data_attribute_value

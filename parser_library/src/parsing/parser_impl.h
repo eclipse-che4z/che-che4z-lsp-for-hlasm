@@ -73,6 +73,10 @@ protected:
     void enable_ca_string() { ca_string_enabled = true; }
     void disable_ca_string() { ca_string_enabled = false; }
 
+    bool allow_literals() const { return literals_allowed; }
+    void enable_litarals() { literals_allowed = true; }
+    void disable_litarals() { literals_allowed = false; }
+
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
@@ -98,6 +102,7 @@ private:
     parser_error_listener err_listener_;
 
     bool ca_string_enabled = true;
+    bool literals_allowed = true;
 };
 
 // structure containing parser components
