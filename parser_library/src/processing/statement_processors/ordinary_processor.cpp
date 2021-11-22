@@ -123,6 +123,16 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
 void ordinary_processor::end_processing()
 {
+    if (auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target())
+    {
+        hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
+        constexpr size_t sectalgn = 8;
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(sectalgn, 0);
+
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+        hlasm_ctx.ord_ctx.generate_pool(dep_solver);
+    }
+
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
 
     hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);

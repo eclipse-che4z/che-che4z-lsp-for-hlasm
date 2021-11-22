@@ -15,6 +15,7 @@
 #include "asm_processor.h"
 
 #include "checking/instr_operand.h"
+#include "context/literal_pool.h"
 #include "data_def_postponed_statement.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
@@ -844,6 +845,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
             }
         }
     }
+
     hlasm_ctx.end_reached();
 }
 void asm_processor::process_ALIAS(rebuilt_statement stmt)

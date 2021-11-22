@@ -45,6 +45,7 @@ class ordinary_assembly_context
     std::unordered_map<id_index, symbol> symbol_refs_;
 
     section* curr_section_;
+    section* first_section_ = nullptr;
 
     // literals
     std::unique_ptr<literal_pool> m_literals;
@@ -141,11 +142,19 @@ public:
     size_t next_unique_id() { return m_statement_unique_id++; }
 
     const literal_pool& literals() const { return *m_literals; }
+    void generate_pool(dependency_solver& solver);
+    location_counter* implicit_ltorg_target() const
+    {
+        if (!first_section_)
+            return nullptr;
+        return &first_section_->current_location_counter();
+    }
 
 private:
     void create_private_section();
     std::pair<address, space_ptr> reserve_storage_area_space(
         size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
+    section* create_section(id_index name, section_kind kind);
 
     friend class ordinary_assembly_dependency_solver;
 };

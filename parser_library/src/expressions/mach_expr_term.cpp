@@ -205,7 +205,17 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
     if (length_deps.has_error || length_deps.contains_dependencies())
         return context::dependency_collector(true);
     else
-        return context::dependency_collector(solver.get_literal_id(m_dd_text, m_data_definition));
+    {
+        auto symbol_id = solver.get_literal_id(m_dd_text, m_data_definition);
+        auto symbol = solver.get_symbol(symbol_id);
+
+        if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
+            return symbol_id;
+        else if (symbol->kind() == context::symbol_value_kind::RELOC)
+            return symbol->value().get_reloc();
+        else
+            return context::dependency_collector();
+    }
 }
 
 mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver) const

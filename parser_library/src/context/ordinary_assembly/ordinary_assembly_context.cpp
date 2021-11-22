@@ -26,8 +26,7 @@ namespace hlasm_plugin::parser_library::context {
 
 void ordinary_assembly_context::create_private_section()
 {
-    sections_.emplace_back(std::make_unique<section>(id_storage::empty_id, section_kind::EXECUTABLE, ids));
-    curr_section_ = sections_.back().get();
+    curr_section_ = create_section(id_storage::empty_id, section_kind::EXECUTABLE);
 }
 
 const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const { return sections_; }
@@ -107,8 +106,7 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
         if (symbols_.find(name) != symbols_.end())
             throw std::invalid_argument("symbol already defined");
 
-        sections_.emplace_back(std::make_unique<section>(name, kind, ids));
-        curr_section_ = sections_.back().get();
+        curr_section_ = create_section(name, kind);
 
         auto tmp_addr = curr_section_->current_location_counter().current_address();
         symbols_.try_emplace(name,
@@ -138,9 +136,7 @@ void ordinary_assembly_context::create_external_section(
     if (!symbols_
              .try_emplace(name,
                  name,
-                 sections_.emplace_back(std::make_unique<section>(name, kind, ids))
-                     ->current_location_counter()
-                     .current_address(),
+                 create_section(name, kind)->current_location_counter().current_address(),
                  attrs,
                  std::move(symbol_location),
                  processing_stack)
@@ -341,8 +337,18 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);
 }
 
+section* ordinary_assembly_context::create_section(id_index name, section_kind kind)
+{
+    section* ret = sections_.emplace_back(std::make_unique<section>(name, kind, ids)).get();
+    if (first_section_ == nullptr)
+        first_section_ = ret;
+    return ret;
+}
+
 
 size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
+
+void ordinary_assembly_context::generate_pool(dependency_solver& solver) { m_literals->generate_pool(*this, solver); }
 
 const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) const
 {

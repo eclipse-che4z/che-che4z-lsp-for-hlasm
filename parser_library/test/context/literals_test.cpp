@@ -32,8 +32,13 @@ TEST(literals, duplicate_when_loctr_references)
 )";
     analyzer a(input);
     a.analyze();
+    a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.literals().get_pending_count(), 2);
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 24);
 }
 
 TEST(literals, unique_when_no_loctr_references)
@@ -48,8 +53,13 @@ TEST(literals, unique_when_no_loctr_references)
 )";
     analyzer a(input);
     a.analyze();
+    a.collect_diags();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.literals().get_pending_count(), 1);
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 20);
 }
 
 TEST(literals, no_nested_literals)
