@@ -50,7 +50,7 @@ TEST(dependency_collector, uresolved_addresses)
         std::make_unique<mach_expr_symbol>(name2, range()),
         range());
 
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     auto deps = expr.get_dependencies(dep_solver);
 

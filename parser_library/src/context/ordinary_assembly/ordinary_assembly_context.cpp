@@ -362,7 +362,7 @@ std::optional<address> ordinary_assembly_dependency_solver::get_loctr() const { 
 id_index ordinary_assembly_dependency_solver::get_literal_id(
     const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit)
 {
-    if (literal_pool_generation == (size_t)-1)
+    if (allow_adding_literals)
         return ord_context.m_literals->add_literal(text, lit, {}, unique_id);
     else
         return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
@@ -373,7 +373,7 @@ dependency_evaluation_context ordinary_assembly_dependency_solver::derive_curren
 {
     return dependency_evaluation_context {
         loctr_addr,
-        literal_pool_generation == (size_t)-1 ? ord_context.current_literal_pool_generation() : literal_pool_generation,
+        literal_pool_generation,
         unique_id,
     };
 }

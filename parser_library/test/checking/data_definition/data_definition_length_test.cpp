@@ -35,7 +35,7 @@ TEST(data_def_operands_length, all_bit_len)
     list.push_back(data_def_op_from_string("BL.6'101'"));
 
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_postponed_statement<data_instr_type::DC>::get_operands_length(list, dep_solver), 2);
 }
@@ -47,7 +47,7 @@ TEST(data_def_operands_length, byte_in_middle_len)
     list.push_back(data_def_op_from_string("A(1)"));
     list.push_back(data_def_op_from_string("BL.6'101'"));
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_postponed_statement<data_instr_type::DC>::get_operands_length(list, dep_solver), 9);
 }
@@ -59,7 +59,7 @@ TEST(data_def_operands_length, explicit_byte)
     list.push_back(data_def_op_from_string("AL4(1)"));
     list.push_back(data_def_op_from_string("C'101'"));
     context::hlasm_context ctx;
-    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_postponed_statement<data_instr_type::DC>::get_operands_length(list, dep_solver), 12);
 }

@@ -40,7 +40,7 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc));
     }
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     check(stmt, processing_stack, dep_solver, checker_, *this);
 }
 
@@ -62,7 +62,7 @@ void asm_processor::process_LOCTR(rebuilt_statement stmt)
         sym_loc.pos.column = 0;
         hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc));
     }
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     check(stmt, processing_stack, dep_solver, checker_, *this);
 }
 
@@ -187,7 +187,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         || std::any_of(
             ops.begin(), ops.end(), [](const auto& op) { return op->type == semantics::operand_type::EMPTY; }))
     {
-        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
         return;
     }
@@ -321,7 +321,7 @@ void asm_processor::process_COPY(rebuilt_statement stmt)
     }
     else
     {
-        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
         check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
@@ -339,7 +339,7 @@ void asm_processor::process_external(rebuilt_statement stmt, external_type t)
         else
             find_sequence_symbol(stmt);
     }
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
@@ -499,7 +499,7 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
 void asm_processor::process_OPSYN(rebuilt_statement stmt)
 {
     const auto& operands = stmt.operands_ref().value;
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
@@ -689,7 +689,7 @@ void asm_processor::process_AINSERT(rebuilt_statement stmt)
 {
     const auto& ops = stmt.operands_ref();
 
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
 
@@ -790,7 +790,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
     auto sym_loc = processing_stack.back().proc_location;
     sym_loc.pos.column = 0;
     hlasm_ctx.ord_ctx.set_section(sect_name, context::section_kind::EXECUTABLE, std::move(sym_loc));
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
 
     const auto& ops = stmt.operands_ref().value;
     if (ops.size() != 1)
@@ -822,7 +822,7 @@ void asm_processor::process_START(rebuilt_statement stmt)
 void asm_processor::process_END(rebuilt_statement stmt)
 {
     const auto& label = stmt.label_ref();
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
 
     check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
 
@@ -850,7 +850,7 @@ void asm_processor::process_END(rebuilt_statement stmt)
 }
 void asm_processor::process_ALIAS(rebuilt_statement stmt)
 {
-    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     if (!check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this))
         return;
     auto symbol_name = find_label_symbol(stmt);

@@ -188,7 +188,7 @@ TEST(data_definition, duplication_factor)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 13);
@@ -203,7 +203,7 @@ TEST(data_definition, duplication_factor_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 26);
@@ -218,7 +218,7 @@ TEST(data_definition, duplication_factor_out_of_range)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 1);
@@ -233,7 +233,7 @@ TEST(data_definition, duplication_factor_invalid_number)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 1);
@@ -248,7 +248,7 @@ TEST(data_definition, all_fields)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 8);
@@ -271,7 +271,7 @@ TEST(data_definition, no_nominal)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
@@ -291,7 +291,7 @@ TEST(data_definition, no_nominal_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
@@ -311,7 +311,7 @@ TEST(data_definition, bit_length)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
 
@@ -333,7 +333,7 @@ TEST(data_definition, unexpected_dot)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, std::nullopt);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
     EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
 

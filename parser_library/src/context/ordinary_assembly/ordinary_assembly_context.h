@@ -164,15 +164,30 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
     ordinary_assembly_context& ord_context;
     std::optional<context::address> loctr_addr;
     size_t literal_pool_generation = (size_t)-1;
-    size_t unique_id;
+    size_t unique_id = 0;
+    bool allow_adding_literals = false;
 
 public:
-    ordinary_assembly_dependency_solver(
-        ordinary_assembly_context& ord_context, std::optional<context::address> loctr_addr)
+    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
+        : ord_context(ord_context)
+        , literal_pool_generation(ord_context.current_literal_pool_generation())
+        , unique_id(ord_context.next_unique_id())
+        , allow_adding_literals(true)
+    {}
+    struct no_new_literals
+    {};
+    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, no_new_literals)
+        : ord_context(ord_context)
+    {}
+
+    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context, context::address loctr_addr)
         : ord_context(ord_context)
         , loctr_addr(std::move(loctr_addr))
+        , literal_pool_generation(ord_context.current_literal_pool_generation())
         , unique_id(ord_context.next_unique_id())
+        , allow_adding_literals(true)
     {}
+
     ordinary_assembly_dependency_solver(
         ordinary_assembly_context& ord_context, const dependency_evaluation_context& dep_ctx)
         : ord_context(ord_context)
