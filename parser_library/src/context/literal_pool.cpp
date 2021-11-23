@@ -84,7 +84,7 @@ void literal_pool::generate_pool(ordinary_assembly_context& ord_ctx, dependency_
             break;
         auto addr = ord_ctx.reserve_storage_area(size, no_align);
         symbol_attributes attrs(
-            symbol_origin::EQU, lit->value->get_type_attribute(), lit->value->get_length_attribute(solver));
+            symbol_origin::DAT, lit->value->get_type_attribute(), lit->value->get_length_attribute(solver));
         bool cycle = ord_ctx.create_symbol(&lit->text, addr, attrs, {});
     }
 

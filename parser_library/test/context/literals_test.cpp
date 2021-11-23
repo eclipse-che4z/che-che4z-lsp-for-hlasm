@@ -98,3 +98,30 @@ A   EQU  L'=A(0)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 24);
 }
+
+TEST(literals, allow_attribute_references_to_literals_in_ca)
+{
+    std::string input = R"(
+*&L SETA L'=FS1'0'
+*&D SETA D'=FS1'0'
+*&S SETA S'=FS1'0'
+*&I SETA I'=FS1'0'
+*&T SETC T'=FS1'0'
+L EQU L'=FS1'0'
+D EQU D'=FS1'0'
+S EQU S'=FS1'0'
+I EQU I'=FS1'0'
+T EQU T'=FS1'0'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "L"), 4);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "D"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "S"), 1);
+    EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "I"), 30);
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "F");
+}

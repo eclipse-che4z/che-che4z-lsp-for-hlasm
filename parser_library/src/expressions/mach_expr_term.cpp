@@ -165,36 +165,64 @@ mach_expr_data_attr::mach_expr_data_attr(
 
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const
 {
-    auto v = value ? value : lit->get_literal_id(solver);
-    auto symbol = solver.get_symbol(v);
+    if (value)
+    {
+        auto symbol = solver.get_symbol(value);
 
-    if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
-        return context::dependency_collector({ attribute, v });
-    else
-        return context::dependency_collector();
+        if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
+            return context::dependency_collector({ attribute, value });
+        else
+            return context::dependency_collector();
+    }
+    else if (lit)
+    {
+        return context::dependency_collector(
+            lit->get_data_definition()->get_dependencies(solver).contains_dependencies());
+    }
+
+    return context::dependency_collector(true);
 }
 
 mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solver& solver) const
 {
-    auto v = value ? value : lit->get_literal_id(solver);
-    auto symbol = solver.get_symbol(v);
+    if (value)
+    {
+        auto symbol = solver.get_symbol(value);
 
-    if (symbol == nullptr)
-    {
-        return context::symbol_attributes::default_value(attribute);
+        if (symbol == nullptr)
+        {
+            return context::symbol_attributes::default_value(attribute);
+        }
+        else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+            && !symbol->attributes().can_have_SI_attr())
+        {
+            add_diagnostic(diagnostic_op::warning_W011(get_range()));
+            return 0;
+        }
+        else if (symbol->attributes().is_defined(attribute))
+        {
+            return symbol->attributes().get_attribute_value(attribute);
+        }
+        else
+            return context::symbol_attributes::default_value(attribute);
     }
-    else if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
-        && !symbol->attributes().can_have_SI_attr())
+    else if (lit)
     {
-        add_diagnostic(diagnostic_op::warning_W011(get_range()));
-        return 0;
+        auto& dd = lit->get_data_definition();
+        context::symbol_attributes attrs(context::symbol_origin::DAT,
+            dd->get_type_attribute(),
+            dd->get_length_attribute(solver),
+            dd->get_scale_attribute(solver),
+            dd->get_integer_attribute(solver));
+        if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+            && !attrs.can_have_SI_attr())
+        {
+            add_diagnostic(diagnostic_op::warning_W011(get_range()));
+            return 0;
+        }
+        return attrs.get_attribute_value(attribute);
     }
-    else if (symbol->attributes().is_defined(attribute))
-    {
-        return symbol->attributes().get_attribute_value(attribute);
-    }
-    else
-        return context::symbol_attributes::default_value(attribute);
+    return context::symbol_attributes::default_value(attribute);
 }
 
 const mach_expression* mach_expr_data_attr::leftmost_term() const { return this; }
