@@ -237,11 +237,9 @@ void add_machine_instr(std::map<std::string, machine_instruction>& result,
         instruction_name, machine_instruction(instruction_name, format, std::move(op_format), optional, page_no)));
 }
 
-
-std::map<std::string, machine_instruction>
-hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
+namespace {
+void get_machine_instructions1(std::map<std::string, machine_instruction>& result)
 {
-    std::map<std::string, machine_instruction> result;
     add_machine_instr(result, "AR", mach_format::RR, { reg_4_U, reg_4_U }, 510);
     add_machine_instr(result, "ADDFRR", mach_format::RRE, { reg_4_U, reg_4_U }, 7);
     add_machine_instr(result, "AGR", mach_format::RRE, { reg_4_U, reg_4_U }, 510);
@@ -644,6 +642,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "M", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 788);
     add_machine_instr(result, "MFY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
     add_machine_instr(result, "MG", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 788);
+}
+
+void get_machine_instructions2(std::map<std::string, machine_instruction>& result)
+{
     add_machine_instr(result, "MH", mach_format::RX_a, { reg_4_U, dxb_12_4x4_U }, 789);
     add_machine_instr(result, "MHY", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
     add_machine_instr(result, "MGH", mach_format::RXY_a, { reg_4_U, dxb_20_4x4_S }, 789);
@@ -989,7 +991,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "STSCH", mach_format::S, { db_12_4_U }, 1230);
     add_machine_instr(result, "TPI", mach_format::S, { db_12_4_U }, 1231);
     add_machine_instr(result, "TSCH", mach_format::S, { db_12_4_U }, 1232);
+}
 
+void get_machine_instructions3(std::map<std::string, machine_instruction>& result)
+{
     add_machine_instr(result, "AER", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
     add_machine_instr(result, "ADR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
     add_machine_instr(result, "AXR", mach_format::RR, { reg_4_U, reg_4_U }, 1412);
@@ -1337,6 +1342,10 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VLBR", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1563);
     add_machine_instr(result, "VLEH", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
     add_machine_instr(result, "VLEIH", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
+}
+
+void get_machine_instructions4(std::map<std::string, machine_instruction>& result)
+{
     add_machine_instr(result, "VLEF", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
     add_machine_instr(result, "VLEIF", mach_format::VRI_a, { vec_reg_5_U, imm_16_S, mask_4_U }, 1539);
     add_machine_instr(result, "VLEG", mach_format::VRX, { vec_reg_5_U, dxb_12_4x4_U, mask_4_U }, 1539);
@@ -1693,9 +1702,21 @@ hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
     add_machine_instr(result, "VCD", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VCE", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
     add_machine_instr(result, "VCES", mach_format::RI_a, { reg_4_U, imm_16_U }, 0);
+}
+}
 
+std::map<std::string, machine_instruction>
+hlasm_plugin::parser_library::context::instruction::get_machine_instructions()
+{
+    std::map<std::string, machine_instruction> result;
+    get_machine_instructions1(result);
+    get_machine_instructions2(result);
+    get_machine_instructions3(result);
+    get_machine_instructions4(result);
     return result;
 }
+
+
 
 void add_mnemonic_code(std::map<std::string, mnemonic_code>& result, std::string instr, mnemonic_code code)
 {
@@ -1708,6 +1729,7 @@ std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::inst
     const std::map<std::string, machine_instruction>& i)
 {
     std::map<std::string, mnemonic_code> result;
+    /*
     add_mnemonic_code(result, "B", { &i.at("BC"), { { 0, 15 } } });
     add_mnemonic_code(result, "BR", { &i.at("BCR"), { { 0, 15 } } });
     add_mnemonic_code(result, "J", { &i.at("BRC"), { { 0, 15 } } });
@@ -2662,6 +2684,7 @@ std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::inst
     add_mnemonic_code(result, "STOCNL", { &i.at("STOC"), { { 2, 10 } } });
     // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
     add_mnemonic_code(result, "VNOT", { &i.at("VNO"), { { 2, 0 } } });
+    */
     return result;
 }
 

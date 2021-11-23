@@ -24,14 +24,14 @@ file(GLOB GRAMMAR_SRC
     "*.g4"
 )
 
-add_custom_command(OUTPUT ${GENERATED_SRC}
-   COMMAND 
-   ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
-   COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
-   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
-   DEPENDS antlr4jar ${GRAMMAR_SRC} lex.tokens
-)
+#add_custom_command(OUTPUT ${GENERATED_SRC}
+#   COMMAND 
+#   ${CMAKE_COMMAND} -E make_directory ${GENERATED_FOLDER}
+#   COMMAND
+#   "${Java_JAVA_EXECUTABLE}" -jar \"${ANTLR_JAR_LOCATION}\" -Werror -Dlanguage=Cpp -lib ${PROJECT_SOURCE_DIR}/src/parsing/grammar/ -o ${GENERATED_FOLDER}/ -package hlasm_plugin::parser_library::parsing hlasmparser.g4
+#   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/src/parsing/grammar/"
+#   DEPENDS antlr4jar ${GRAMMAR_SRC} lex.tokens
+#)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	set_source_files_properties(${GENERATED_FOLDER}/hlasmparser.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")

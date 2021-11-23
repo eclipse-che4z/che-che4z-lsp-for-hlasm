@@ -152,9 +152,9 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
 {
     workspace_file_info ws_file_info;
 
-    std::filesystem::path file_path(file_uri);
+    /* std::filesystem::path file_path(file_uri);
     // add support for hlasm to vscode (auto detection??) and do the decision based on languageid
-    if (utils::path::equal(file_path, proc_grps_path_) || utils::path::equal(file_path, pgm_conf_path_))
+     if (utils::path::equal(file_path, proc_grps_path_) || utils::path::equal(file_path, pgm_conf_path_))
     {
         if (load_and_process_config())
         {
@@ -174,7 +174,7 @@ workspace_file_info workspace::parse_file(const std::string& file_uri)
         }
         ws_file_info.config_parsing = true;
         return ws_file_info;
-    }
+    }*/
     // what about removing files??? what if depentands_ points to not existing file?
     std::vector<processor_file_ptr> files_to_parse;
 
@@ -551,7 +551,7 @@ bool workspace::load_and_process_config()
                 opts.extensions = macro_extensions_compatibility_list;
                 opts.extensions_from_deprecated_source = true;
             }
-
+            
             auto path_string = lib_path.string();
             if (auto asterisk = path_string.find('*'); asterisk == std::string::npos)
                 prc_grp.add_library(std::make_unique<library_local>(file_manager_, path_string, std::move(opts)));

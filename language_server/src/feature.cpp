@@ -28,6 +28,7 @@ const std::string untitled = "untitled";
 
 std::string feature::uri_to_path(const std::string& uri)
 {
+    return uri;
     network::uri u(uri);
 
     // vscode sometimes sends us uri in form 'untitled:Untitled-1',
@@ -73,6 +74,8 @@ std::string feature::uri_to_path(const std::string& uri)
 
 std::string feature::path_to_uri(std::string_view path)
 {
+    return std::string(path);
+
     if (path.substr(0, untitled.size()) == untitled)
         return std::string(path);
 

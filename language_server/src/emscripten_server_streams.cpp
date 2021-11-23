@@ -60,11 +60,17 @@ public:
     void write(const nlohmann::json& msg) override
     {
         auto msg_string = msg.dump();
-        auto msg_string_size = msg_string.size();
-        auto msg_to_send = "Content-Length: " + std::to_string(msg_string_size) + "\r\n\r\n" + std::move(msg_string);
 
         MAIN_THREAD_EM_ASM(
-            { process.stdout.write(HEAPU8.slice($0, $0 + $1)); }, msg_to_send.data(), msg_to_send.size());
+            {
+                const response = HEAPU8.slice($0, $0 + $1);
+                const response_str = new TextDecoder().decode(response);
+                console.log(response_str);
+                const json = JSON.parse(response_str);
+                Module["lspWriter"].write(json);
+            },
+            msg_string.data(),
+            msg_string.size());
     }
     void write(nlohmann::json&& msg) override { write(msg); }
 
@@ -75,7 +81,6 @@ public:
             auto msg = queue.pop();
             if (!msg.has_value())
                 return std::nullopt;
-
             try
             {
                 return nlohmann::json::parse(msg.value());
@@ -91,48 +96,24 @@ public:
     {
         MAIN_THREAD_EM_ASM(
             {
-                const content_length = 'Content-Length: ';
-                var buffer = Buffer.from([]);
-
                 const ptr = $0;
-                Module["emscripten_std_setup_term"] = Module["emscripten_std_setup_term"] || new Map();
-
-                function end_event_handler() { Module.terminate_input(ptr); };
-                function data_event_handler(data)
+                function consumeMessage(json)
                 {
-                    buffer = Buffer.concat([ buffer, data ]);
-                    while (true)
-                    {
-                        if (buffer.indexOf(content_length) != 0)
-                            return;
-                        const end_of_line = buffer.indexOf('\\x0D\\x0A');
-                        if (end_of_line < 0)
-                            return;
-                        const length = +buffer.slice(content_length.length, end_of_line);
-                        const end_of_headers = buffer.indexOf('\\x0D\\x0A\\x0D\\x0A');
-                        if (end_of_headers < 0)
-                            return;
-                        const data_start = end_of_headers + 4;
-                        const data_end = data_start + length;
-                        if (data_end > buffer.length)
-                            return;
-
-                        const data_to_pass = buffer.slice(data_start, data_end);
-                        buffer = buffer.slice(data_end);
-
-                        const store_buffer = Module.get_stdin_buffer(ptr, data_to_pass.length);
-                        data_to_pass.copy(store_buffer);
-                        Module.commit_stdin_buffer(ptr);
-                    }
-                };
-                process.stdin.on('data', data_event_handler);
-                process.stdin.on('end', end_event_handler);
-
-                Module["emscripten_std_setup_term"][ptr] = function()
+                    console.log(json);
+                    const data_to_pass = new TextEncoder().encode(JSON.stringify(json));
+                    const store_buffer = Module.get_stdin_buffer(ptr, data_to_pass.length);
+                    let store_uint = new Uint8Array(store_buffer);
+                    for (let i = 0; i < data_to_pass.length; ++i)
+                        store_buffer[i] = data_to_pass[i];
+                    Module.commit_stdin_buffer(ptr);
+                }
+                for (const x of Module["lspQueue"])
                 {
-                    process.stdin.removeListener('data', data_event_handler);
-                    process.stdin.removeListener('end', end_event_handler);
-                };
+                    console.log("consuming");
+                    consumeMessage(x);
+                }
+                console.log("Streams");
+                Module["lspReader"].listen(consumeMessage);
             },
             get_ptr_token());
     }
@@ -161,6 +142,7 @@ EMSCRIPTEN_BINDINGS(main_thread)
 std::unique_ptr<server_streams> server_streams::create(int argc, char** argv)
 {
     (void)argv;
+    MAIN_THREAD_EM_ASM({ console.log("LANGUAGE BACKEND IS RUNNING"); });
     if (argc != 0)
     {
         std::cerr << "No arguments allowed";

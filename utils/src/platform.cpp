@@ -27,6 +27,7 @@ bool is_windows()
 #ifdef _WIN32
     return true;
 #elif __EMSCRIPTEN__
+    return false;
     // clang-format off
     static const bool windows_flag = []() { return EM_ASM_INT({ return process.platform === "win32" ? 1 : 0; }); }();
     // clang-format on

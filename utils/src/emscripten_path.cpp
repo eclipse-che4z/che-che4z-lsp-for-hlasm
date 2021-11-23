@@ -39,14 +39,15 @@ bool is_relative(const std::filesystem::path& p) { return !is_absolute(p); }
 bool is_absolute(const std::filesystem::path& p)
 {
     // emscripten implementation seems to be broken on windows
-    if (is_windows())
+    /* if (is_windows())
     {
         const auto path = p.string();
         return (path.size() >= 2 && std::isalpha((unsigned char)path[0]) && path[1] == ':') // C:...
             || (path.size() >= 4 && path[0] == '\\' && path[1] == '\\'); // \\...\....;
     }
     else
-        return p.is_absolute();
+        return p.is_absolute();*/
+    return false;
 }
 
 std::filesystem::path absolute(const std::filesystem::path& p)
@@ -54,7 +55,7 @@ std::filesystem::path absolute(const std::filesystem::path& p)
     if (p.empty() || is_absolute(p))
         return p;
 
-    return join(std::filesystem::current_path(), p);
+    return p;
 }
 
 std::filesystem::path join(const std::filesystem::path& left, const std::filesystem::path& right)
@@ -62,11 +63,7 @@ std::filesystem::path join(const std::filesystem::path& left, const std::filesys
     // emscripten implementation seems to be broken on windows
     if (is_windows())
     {
-        if (is_absolute(right))
-            return right;
-        return std::filesystem::path(make_windows_preferred((std::filesystem::path(make_linux_preferred(left.string()))
-            / std::filesystem::path(make_linux_preferred(right.string())))
-                                                                .string()));
+        return left;
     }
     else
         return left / right;
@@ -77,10 +74,7 @@ std::filesystem::path lexically_normal(const std::filesystem::path& p)
     // emscripten implementation seems to be broken on windows
     if (is_windows())
     {
-        auto p_ = make_linux_preferred(p.string());
-        const bool unc = p_.size() >= 2 && p_[0] == '/' && p_[1] == '/';
-        return std::filesystem::path(
-            (unc ? "\\" : "") + make_windows_preferred(std::filesystem::path(p_).lexically_normal().string()));
+        return p;
     }
     else
         return p.lexically_normal();
@@ -91,9 +85,7 @@ std::filesystem::path lexically_relative(const std::filesystem::path& p, std::st
 {
     // emscripten implementation seems to be broken on windows
     if (is_windows())
-        return std::filesystem::path(make_windows_preferred(std::filesystem::path(make_linux_preferred(p.string()))
-                                                                .lexically_relative(make_linux_preferred(std::move(q)))
-                                                                .string()));
+        return p;
     else
         return p.lexically_relative(q);
 }
@@ -102,7 +94,7 @@ std::filesystem::path filename(const std::filesystem::path& p)
 {
     // emscripten implementation seems to be broken on windows
     if (is_windows())
-        return std::filesystem::path(make_linux_preferred(p.string())).filename();
+        return p;
     else
         return p.filename();
 }
@@ -110,11 +102,7 @@ std::filesystem::path filename(const std::filesystem::path& p)
 bool equal(const std::filesystem::path& left, const std::filesystem::path& right)
 {
     // emscripten implementation seems to be broken on windows
-    if (is_windows())
-        return std::filesystem::path(make_linux_preferred(left.string()))
-            == std::filesystem::path(make_linux_preferred(right.string()));
-    else
-        return left == right;
+    return true;
 }
 
 class directory_op_support
@@ -144,210 +132,53 @@ public:
         if (!registered)
         {
             registered = true;
-            emscripten::function("directory_op_support_get_buffer", &directory_op_support::get_buffer);
-            emscripten::function("directory_op_support_commit_buffer", &directory_op_support::commit_buffer);
         }
     }
 
     list_directory_rc files(const std::filesystem::path& d)
     {
-        auto path = path::absolute(d).string();
-
-        int result = EM_ASM_INT(
-            {
-                let rc = 0;
-                try
-                {
-                    const dir_name = UTF8ToString($0);
-                    const fs = require('fs');
-                    const path = require('path');
-
-                    fs.accessSync(dir_name);
-
-                    rc = 1;
-
-                    const dir = fs.opendirSync(dir_name);
-
-                    rc = 2;
-
-                    let de = null;
-                    while (de = dir.readSync())
-                    {
-                        if (de.isFile())
-                        {
-                            const file_name = path.join(dir_name, de.name);
-                            const buf_len = lengthBytesUTF8(file_name);
-                            const ptr = Module.directory_op_support_get_buffer($1, buf_len);
-                            stringToUTF8(file_name, ptr, buf_len + 1);
-                            Module.directory_op_support_commit_buffer($1);
-                        }
-                    }
-                    rc = 3;
-                }
-                catch (e)
-                {}
-                return rc;
-            },
-            (intptr_t)path.c_str(),
-            (intptr_t)this);
-
-        switch (result)
-        {
-            case 0:
-                return list_directory_rc::not_exists;
-            case 1:
-                return list_directory_rc::not_a_directory;
-            case 2:
-                return list_directory_rc::other_failure;
-            case 3:
-                return list_directory_rc::done;
-            default:
-                throw std::logic_error("unreachable");
-        }
+     return list_directory_rc::done;
     }
 
     list_directory_rc subdirs_and_symlinks(const std::filesystem::path& d)
     {
-        auto path = path::absolute(d).string();
-
-        int result = EM_ASM_INT(
-            {
-                let rc = 0;
-                try
-                {
-                    const dir_name = UTF8ToString($0);
-                    const fs = require('fs');
-                    const path = require('path');
-
-                    fs.accessSync(dir_name);
-
-                    rc = 1;
-
-                    const dir = fs.opendirSync(dir_name);
-
-                    rc = 2;
-
-                    let de = null;
-                    while (de = dir.readSync())
-                    {
-                        if (de.isDirectory() || de.isSymbolicLink())
-                        {
-                            const file_name = path.join(dir_name, de.name);
-                            const buf_len = lengthBytesUTF8(file_name);
-                            const ptr = Module.directory_op_support_get_buffer($1, buf_len);
-                            stringToUTF8(file_name, ptr, buf_len + 1);
-                            Module.directory_op_support_commit_buffer($1);
-                        }
-                    }
-                    rc = 3;
-                }
-                catch (e)
-                {}
-                return rc;
-            },
-            (intptr_t)path.c_str(),
-            (intptr_t)this);
-
-        switch (result)
-        {
-            case 0:
-                return list_directory_rc::not_exists;
-            case 1:
-                return list_directory_rc::not_a_directory;
-            case 2:
-                return list_directory_rc::other_failure;
-            case 3:
-                return list_directory_rc::done;
-            default:
-                throw std::logic_error("unreachable");
-        }
+        return list_directory_rc::done;
     }
 
     std::filesystem::path realpath(const std::filesystem::path& path, std::error_code& ec)
     {
-        buffer.clear();
-        int result = EM_ASM_INT(
-            {
-                try
-                {
-                    const real_name = require('fs').realpathSync(UTF8ToString($0));
-
-                    const buf_len = lengthBytesUTF8(real_name);
-                    const ptr = Module.directory_op_support_get_buffer($1, buf_len);
-                    stringToUTF8(real_name, ptr, buf_len + 1);
-                    Module.directory_op_support_commit_buffer($1);
-
-                    return 0;
-                }
-                catch (e)
-                {
-                    return e.errno || -1;
-                }
-            },
-            (intptr_t)path.c_str(),
-            (intptr_t)this);
-
-        if (result != 0)
-            ec = std::error_code(-result, std::system_category());
+        
 
         return buffer;
     }
 
     bool is_dir(const std::filesystem::path& path)
     {
-        int result = EM_ASM_INT(
-            {
-                try
-                {
-                    if (require('fs').statSync(UTF8ToString($0)).isDirectory())
-                        return 1;
-                    else
-                        return 0;
-                }
-                catch (e)
-                {
-                    return -1;
-                }
-            },
-            (intptr_t)path.c_str());
-
-        return result == 1;
+        return false;
     }
 };
 
 list_directory_rc list_directory_regular_files(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
-    // directory listing seems broken everywhere
-    directory_op_support l(h);
-    return l.files(d);
+    return list_directory_rc::done;
 }
 
 
 list_directory_rc list_directory_subdirs_and_symlinks(
     const std::filesystem::path& d, std::function<void(const std::filesystem::path&)> h)
 {
-    // directory listing seems broken everywhere
-    directory_op_support l(h);
-    return l.subdirs_and_symlinks(d);
+    return list_directory_rc::done;
 }
 
 std::filesystem::path canonical(const std::filesystem::path& p)
-{
-    std::error_code ec;
-    auto result = directory_op_support().realpath(p, ec);
-
-    if (ec)
-        throw std::filesystem::filesystem_error("realpath error", p.string(), ec);
-
-    return result;
-}
+{ return p; }
 std::filesystem::path canonical(const std::filesystem::path& p, std::error_code& ec)
 {
-    return directory_op_support().realpath(p, ec);
+    return p;
 }
 
 
-bool is_directory(const std::filesystem::path& p) { return directory_op_support().is_dir(p); }
+bool is_directory(const std::filesystem::path& p) { return false; }
 
 } // namespace hlasm_plugin::utils::path
