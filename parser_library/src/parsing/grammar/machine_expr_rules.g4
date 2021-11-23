@@ -109,16 +109,21 @@ mach_term returns [mach_expr_ptr m_e]
 
 
 literal returns [std::optional<data_definition> value]
-	: equals {allow_literals()}? {disable_litarals();} data_def
+	: equals
 	{
-		if (!$ctx->exception)
+		bool lit_allowed = allow_literals();
+		auto lit_restore = disable_literals();
+	}
+	data_def
+	{
+		if (lit_allowed)
 			$value = std::move($data_def.value);
+		else
+            add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};
-	finally
-	{enable_litarals();}
 
-mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index> data, range symbol_rng]
-	: ORDSYMBOL (attr|apostrophe_as_attr) mach_data_attribute_value
+mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data, range symbol_rng]
+	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();} mach_data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = get_attribute($ORDSYMBOL->getText());
@@ -126,11 +131,12 @@ mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monosta
 		$symbol_rng = provider.get_range($mach_data_attribute_value.ctx);
 	};
 
-mach_data_attribute_value returns [std::variant<std::monostate, id_index> data]
+mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data]
 	: literal
 	{
-		// if (auto lit_name = add_literal($literal.text, std::move($literal.value), provider.get_range($literal.ctx)))
-		// 	$data = lit_name;
+		auto rng = provider.get_range($literal.ctx);
+		if (auto& lv = $literal.value; lv.has_value())
+			$data = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
 	}
 	| mach_location_counter
 	| id

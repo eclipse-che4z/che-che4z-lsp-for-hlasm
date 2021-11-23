@@ -242,16 +242,6 @@ void parser_error_listener_base::syntaxError(
             add_parser_diagnostic(
                 range(position(line, char_pos_in_line)), diagnostic_severity::error, "S0002", "Syntax error");
     }
-    catch (antlr4::FailedPredicateException& excp)
-    {
-        const std::string& ruleName = excp.getRecognizer()->getRuleNames()[excp.getRuleIndex()];
-        if (ruleName == "literal")
-            add_parser_diagnostic(
-                range(position(line, char_pos_in_line)), diagnostic_severity::error, "S0013", "Invalid literal usage");
-        else
-            add_parser_diagnostic(
-                range(position(line, char_pos_in_line)), diagnostic_severity::error, "S0002", "Syntax error");
-    }
     catch (...)
     {
         add_parser_diagnostic(

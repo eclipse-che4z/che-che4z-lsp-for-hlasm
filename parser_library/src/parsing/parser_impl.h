@@ -63,6 +63,44 @@ public:
     semantics::collector& get_collector() { return collector; }
 
 protected:
+    class literal_controller
+    {
+        enum class request_t
+        {
+            none,
+            off,
+            on,
+        } request = request_t::none;
+        parser_impl& impl;
+
+    public:
+        literal_controller(parser_impl& impl)
+            : impl(impl)
+        {}
+        literal_controller(parser_impl& impl, bool restore)
+            : request(restore ? request_t::on : request_t::off)
+            , impl(impl)
+        {}
+        literal_controller(literal_controller&& oth)
+            : request(std::exchange(oth.request, request_t::none))
+            , impl(oth.impl)
+        {}
+        ~literal_controller()
+        {
+            switch (request)
+            {
+                case request_t::off:
+                    impl.literals_allowed = false;
+                    break;
+                case request_t::on:
+                    impl.literals_allowed = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     void enable_continuation();
     void disable_continuation();
     bool is_self_def();
@@ -74,8 +112,22 @@ protected:
     void disable_ca_string() { ca_string_enabled = false; }
 
     bool allow_literals() const { return literals_allowed; }
-    void enable_litarals() { literals_allowed = true; }
-    void disable_litarals() { literals_allowed = false; }
+    literal_controller enable_literals()
+    {
+        if (literals_allowed)
+            return literal_controller(*this);
+
+        literals_allowed = true;
+        return literal_controller(*this, false);
+    }
+    literal_controller disable_literals()
+    {
+        if (!literals_allowed)
+            return literal_controller(*this);
+
+        literals_allowed = false;
+        return literal_controller(*this, true);
+    }
 
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data);
@@ -95,6 +147,8 @@ protected:
     bool ASM();
     bool DAT();
     bool ALIAS();
+
+    void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
 
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;

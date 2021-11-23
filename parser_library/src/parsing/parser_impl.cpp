@@ -205,6 +205,13 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return antlr4::Parser::getExpectedTokens();
 }
 
+void parser_impl::add_diagnostic(
+    diagnostic_severity severity, std::string code, std::string message, range diag_range) const
+{
+    if (diagnoser_)
+        diagnoser_->add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
+}
+
 parser_holder::~parser_holder() = default;
 
 } // namespace hlasm_plugin::parser_library::parsing

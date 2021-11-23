@@ -74,3 +74,27 @@ TEST(literals, no_nested_literals)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0013", "S0013" }));
 }
+
+TEST(literals, allow_attribute_references_to_literals)
+{
+    std::string input = R"(
+    DC   A(L'=A(0))
+A   EQU  L'=A(0)
+    LARL 0,=A(L'=A(0))
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    const auto* symbol = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"));
+    ASSERT_TRUE(symbol);
+    auto symbol_value = symbol->value();
+    ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
+    EXPECT_EQ(symbol_value.get_abs(), 4);
+
+    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 24);
+}
