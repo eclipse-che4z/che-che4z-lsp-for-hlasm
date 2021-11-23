@@ -154,21 +154,30 @@ mach_expr_data_attr::mach_expr_data_attr(
     , symbol_range(symbol_rng)
 {}
 
+mach_expr_data_attr::mach_expr_data_attr(
+    std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng)
+    : mach_expression(whole_rng)
+    , value(nullptr)
+    , attribute(attribute)
+    , symbol_range(symbol_rng)
+    , lit(std::move(value))
+{}
+
 context::dependency_collector mach_expr_data_attr::get_dependencies(context::dependency_solver& solver) const
 {
-    auto symbol = solver.get_symbol(value);
+    auto v = value ? value : lit->get_literal_id(solver);
+    auto symbol = solver.get_symbol(v);
 
     if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
-    {
-        return context::dependency_collector({ attribute, value });
-    }
+        return context::dependency_collector({ attribute, v });
     else
         return context::dependency_collector();
 }
 
-mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solver& info) const
+mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solver& solver) const
 {
-    auto symbol = info.get_symbol(value);
+    auto v = value ? value : lit->get_literal_id(solver);
+    auto symbol = solver.get_symbol(v);
 
     if (symbol == nullptr)
     {
@@ -206,7 +215,7 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
         return context::dependency_collector(true);
     else
     {
-        auto symbol_id = solver.get_literal_id(m_dd_text, m_data_definition);
+        auto symbol_id = get_literal_id(solver);
         auto symbol = solver.get_symbol(symbol_id);
 
         if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
@@ -220,7 +229,7 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
 
 mach_expression::value_t mach_expr_literal::evaluate(context::dependency_solver& solver) const
 {
-    auto symbol = solver.get_symbol(solver.get_literal_id(m_dd_text, m_data_definition));
+    auto symbol = solver.get_symbol(get_literal_id(solver));
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
         return context::symbol_value();
@@ -237,6 +246,11 @@ void mach_expr_literal::collect_diags() const {}
 const std::shared_ptr<const data_definition>& mach_expr_literal::get_data_definition() const
 {
     return m_data_definition;
+}
+
+context::id_index mach_expr_literal::get_literal_id(context::dependency_solver& solver) const
+{
+    return solver.get_literal_id(m_dd_text, m_data_definition);
 }
 
 } // namespace hlasm_plugin::parser_library::expressions

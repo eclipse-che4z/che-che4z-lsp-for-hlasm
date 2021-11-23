@@ -41,15 +41,44 @@ public:
     void collect_diags() const override {}
 };
 
+// Represents an literal expression (e.g. =C'text')
+class mach_expr_literal final : public mach_expression
+{
+    std::shared_ptr<const data_definition> m_data_definition;
+    std::string m_dd_text;
+
+public:
+    mach_expr_literal(range rng, data_definition dd, std::string text);
+
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+
+    value_t evaluate(context::dependency_solver& info) const override;
+
+    const mach_expression* leftmost_term() const override;
+
+    void apply(mach_expr_visitor& visitor) const override;
+
+    void collect_diags() const override;
+
+    const std::shared_ptr<const data_definition>& get_data_definition() const;
+
+    const std::string& get_data_definition_text() const { return m_dd_text; }
+
+    context::id_index get_literal_id(context::dependency_solver& solver) const;
+};
+
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
 class mach_expr_data_attr final : public mach_expression
 {
 public:
     mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
+    mach_expr_data_attr(
+        std::unique_ptr<mach_expr_literal> value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
 
     context::id_index value;
     context::data_attr_kind attribute;
     range symbol_range;
+    std::unique_ptr<mach_expr_literal> lit;
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
@@ -134,30 +163,6 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override;
-};
-
-// Represents an literal expression (e.g. =C'text')
-class mach_expr_literal final : public mach_expression
-{
-    std::shared_ptr<const data_definition> m_data_definition;
-    std::string m_dd_text;
-
-public:
-    mach_expr_literal(range rng, data_definition dd, std::string text);
-
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-    value_t evaluate(context::dependency_solver& info) const override;
-
-    const mach_expression* leftmost_term() const override;
-
-    void apply(mach_expr_visitor& visitor) const override;
-
-    void collect_diags() const override;
-
-    const std::shared_ptr<const data_definition>& get_data_definition() const;
-
-    const std::string& get_data_definition_text() const { return m_dd_text; }
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
