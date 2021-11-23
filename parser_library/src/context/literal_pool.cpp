@@ -31,12 +31,16 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
         return lit;
 
-    auto it = m_literals
-                  .emplace(literal_definition {
-                      literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(loc), {} })
-                  .first;
-    m_literals_genmap.emplace(literal_id { m_current_literal_pool_generation, unique_id, dd.get() }, it);
-    m_pending_literals.emplace_back(&*it);
+    // TODO: processing stack
+    auto [it, inserted] = m_literals.emplace(
+        literal_definition { literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(loc), {} });
+    // even if we end up inserting a duplicate
+    // we need to try to insert const expressions::data_definition->iterator relation
+    // because a single literal may be referenced by independent data_definitions
+    m_literals_genmap.try_emplace(literal_id { m_current_literal_pool_generation, unique_id, dd.get() }, it);
+    // but we should not try to put logical duplicates on the pending queue
+    if (inserted)
+        m_pending_literals.emplace_back(&*it);
 
     return &it->text;
 }
