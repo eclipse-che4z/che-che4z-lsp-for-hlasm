@@ -72,6 +72,5 @@ TEST(literals, no_nested_literals)
     a.analyze();
     a.collect_diags();
 
-    auto& d = a.diags();
-    EXPECT_EQ(std::count_if(d.begin(), d.end(), [](const auto& m) { return m.code == "S0013"; }), 2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0013", "S0013" }));
 }

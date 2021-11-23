@@ -100,14 +100,19 @@ mach_term returns [mach_expr_ptr m_e]
 	}
 	| literal
 	{
-		$m_e = std::make_unique<mach_expr_literal>(provider.get_range($literal.ctx), std::move($literal.value), $literal.text);
+		auto rng = provider.get_range($literal.ctx);
+		if (auto& lv = $literal.value; lv.has_value())
+			$m_e = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
+		else
+			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
 
-literal returns [data_definition value]
+literal returns [std::optional<data_definition> value]
 	: equals {allow_literals()}? {disable_litarals();} data_def
 	{
-		$value = std::move($data_def.value);
+		if (!$ctx->exception)
+			$value = std::move($data_def.value);
 	};
 	finally
 	{enable_litarals();}
