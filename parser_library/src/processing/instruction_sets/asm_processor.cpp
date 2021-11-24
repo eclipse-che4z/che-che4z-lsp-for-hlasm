@@ -650,6 +650,7 @@ asm_processor::process_table_t asm_processor::create_table(context::hlasm_contex
     table.emplace(h_ctx.ids().add("START"), [this](rebuilt_statement stmt) { process_START(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("ALIAS"), [this](rebuilt_statement stmt) { process_ALIAS(std::move(stmt)); });
     table.emplace(h_ctx.ids().add("END"), [this](rebuilt_statement stmt) { process_END(std::move(stmt)); });
+    table.emplace(h_ctx.ids().add("LTORG"), [this](rebuilt_statement stmt) { process_LTORG(std::move(stmt)); });
 
     return table;
 }
@@ -861,6 +862,30 @@ void asm_processor::process_ALIAS(rebuilt_statement stmt)
     }
 
     // TODO: check that the symbol_name is an external symbol
+}
+void asm_processor::process_LTORG(rebuilt_statement stmt)
+{
+    constexpr size_t sectalgn = 8;
+    auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn });
+
+    context::ordinary_assembly_dependency_solver dep_solver(
+        hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
+    find_sequence_symbol(stmt);
+
+    check(stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
+
+    if (auto label = find_label_symbol(stmt); label != context::id_storage::empty_id)
+    {
+        if (hlasm_ctx.ord_ctx.symbol_defined(label))
+            add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
+        else
+            create_symbol(stmt.stmt_range_ref(),
+                label,
+                loctr,
+                context::symbol_attributes(context::symbol_origin::EQU, ebcdic_encoding::to_ebcdic('U'), 1));
+    }
+
+    hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

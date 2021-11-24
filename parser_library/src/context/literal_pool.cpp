@@ -59,6 +59,9 @@ id_index literal_pool::get_literal(
 void literal_pool::generate_pool(
     ordinary_assembly_context& ord_ctx, dependency_solver& solver, diagnostic_op_consumer& diags)
 {
+    if (m_pending_literals.empty())
+        return;
+
     for (auto& [lit, size, alignment] : m_pending_literals)
     {
         auto* type = lit->value->access_data_def_type();
@@ -77,19 +80,24 @@ void literal_pool::generate_pool(
         return l.alignment > r.alignment;
     });
 
-    // TODO: Generate all literals
     constexpr auto sectalign = doubleword;
     ord_ctx.align(sectalign);
     for (auto& [lit, size, alignment] : m_pending_literals)
     {
+        // TODO: warn on align > sectalign
         if (size == 0)
             break;
-        auto addr = ord_ctx.reserve_storage_area(size, no_align);
-        symbol_attributes attrs(symbol_origin::DAT,
-            ebcdic_encoding::to_ebcdic(lit->value->get_type_attribute()),
-            lit->value->get_length_attribute(solver));
-        bool cycle = ord_ctx.create_symbol(&lit->text, addr, attrs, {});
-        if (cycle)
+
+        bool cycle_ok = ord_ctx.create_symbol(&lit->text,
+            ord_ctx.align(no_align),
+            symbol_attributes(symbol_origin::DAT,
+                ebcdic_encoding::to_ebcdic(lit->value->get_type_attribute()),
+                lit->value->get_length_attribute(solver)),
+            {});
+
+        ord_ctx.reserve_storage_area(size, no_align);
+
+        if (!cycle_ok)
             diags.add_diagnostic(diagnostic_op::error_E033(range(lit->loc.pos))); // TODO: full range
     }
 
@@ -99,7 +107,7 @@ void literal_pool::generate_pool(
 
 bool literal_pool::literal_definition::is_similar(const literal_definition& ld) const noexcept
 {
-    return generation == ld.generation && unique_id == ld.unique_id && text == ld.text; // for now
+    return generation == ld.generation && unique_id == ld.unique_id && text == ld.text; // TODO: for now
 }
 
 size_t literal_pool::literal_definition_hasher::operator()(const literal_definition& ld) const noexcept

@@ -124,3 +124,50 @@ TEST(literals, attribute_references_to_literals_in_ca)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 4);
 }
+
+TEST(literals, ltorg)
+{
+    std::string input = R"(
+    LARL 0,=A(0)
+A   LTORG
+B   EQU   *-A
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    const auto* symbol = get_symbol(a.hlasm_ctx(), "B");
+    ASSERT_TRUE(symbol);
+    auto symbol_value = symbol->value();
+    ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
+    EXPECT_EQ(symbol_value.get_abs(), 4);
+}
+
+TEST(literals, ltorg_repeating_literals)
+{
+    std::string input = R"(
+    LARL 0,=A(0)
+    LARL 0,=A(0)
+    LTORG
+    LARL 0,=A(0)
+    LARL 0,=A(0)
+    LTORG
+    LARL 0,=A(0)
+    LARL 0,=A(0)
+    LTORG
+    LARL 0,=A(0)
+    LARL 0,=A(0)
+    LTORG
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 68);
+}

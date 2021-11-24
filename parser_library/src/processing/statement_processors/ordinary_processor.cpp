@@ -126,8 +126,7 @@ void ordinary_processor::end_processing()
     if (auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target())
     {
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
-        constexpr size_t sectalgn = 8;
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(sectalgn, 0);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 
         context::ordinary_assembly_dependency_solver dep_solver(
             hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
