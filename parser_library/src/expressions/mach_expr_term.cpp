@@ -18,6 +18,7 @@
 
 #include "checking/checker_helper.h"
 #include "conditional_assembly/terms/ca_constant.h"
+#include "ebcdic_encoding.h"
 #include "mach_expr_visitor.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -176,8 +177,7 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
     }
     else if (lit)
     {
-        return context::dependency_collector(
-            lit->get_data_definition()->get_dependencies(solver).contains_dependencies());
+        return lit->get_data_definition()->get_dependencies(solver);
     }
 
     return context::dependency_collector(true);
@@ -208,9 +208,13 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
     }
     else if (lit)
     {
+        if (lit->get_data_definition()->get_dependencies(solver).contains_dependencies())
+        {
+            // TODO: something should probably be done here
+        }
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
-            dd->get_type_attribute(),
+            ebcdic_encoding::to_ebcdic(dd->get_type_attribute()),
             dd->get_length_attribute(solver),
             dd->get_scale_attribute(solver),
             dd->get_integer_attribute(solver));

@@ -135,4 +135,22 @@ inline bool matches_message_codes(const std::vector<diagnostic_s>& d, std::initi
     return std::is_permutation(codes.begin(), codes.end(), m.begin(), m.end());
 }
 
+inline const section* get_section(hlasm_context& ctx, std::string name)
+{
+    auto sect = ctx.ids().find(std::move(name));
+    if (!sect)
+        return nullptr;
+
+    return ctx.ord_ctx.get_section(sect);
+}
+
+inline const symbol* get_symbol(hlasm_context& ctx, std::string name)
+{
+    auto sect = ctx.ids().find(std::move(name));
+    if (!sect)
+        return nullptr;
+
+    return ctx.ord_ctx.get_symbol(sect);
+}
+
 #endif

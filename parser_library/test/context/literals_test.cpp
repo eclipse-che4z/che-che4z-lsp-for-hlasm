@@ -36,7 +36,7 @@ TEST(literals, duplicate_when_loctr_references)
 
     EXPECT_TRUE(a.diags().empty());
 
-    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 24);
 }
@@ -57,7 +57,7 @@ TEST(literals, unique_when_no_loctr_references)
 
     EXPECT_TRUE(a.diags().empty());
 
-    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 20);
 }
@@ -75,7 +75,7 @@ TEST(literals, no_nested_literals)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0013", "S0013" }));
 }
 
-TEST(literals, allow_attribute_references_to_literals)
+TEST(literals, attribute_references_to_literals)
 {
     std::string input = R"(
     DC   A(L'=A(0))
@@ -88,30 +88,25 @@ A   EQU  L'=A(0)
 
     EXPECT_TRUE(a.diags().empty());
 
-    const auto* symbol = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"));
+    const auto* symbol = get_symbol(a.hlasm_ctx(), "A");
     ASSERT_TRUE(symbol);
     auto symbol_value = symbol->value();
     ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
     EXPECT_EQ(symbol_value.get_abs(), 4);
 
-    auto* sect = a.hlasm_ctx().ord_ctx.get_section(context::id_storage::empty_id);
+    auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 24);
 }
 
-TEST(literals, allow_attribute_references_to_literals_in_ca)
+TEST(literals, attribute_references_to_literals_in_ca)
 {
     std::string input = R"(
-*&L SETA L'=FS1'0'
-*&D SETA D'=FS1'0'
-*&S SETA S'=FS1'0'
-*&I SETA I'=FS1'0'
-*&T SETC T'=FS1'0'
-L EQU L'=FS1'0'
-D EQU D'=FS1'0'
-S EQU S'=FS1'0'
-I EQU I'=FS1'0'
-T EQU T'=FS1'0'
+&L SETA L'=FS1'0'
+&D SETA D'=FS1'0'
+&S SETA S'=FS1'0'
+&I SETA I'=FS1'0'
+&T SETC T'=FS1'0'
 )";
     analyzer a(input);
     a.analyze();
@@ -124,4 +119,8 @@ T EQU T'=FS1'0'
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "S"), 1);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "I"), 30);
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "T"), "F");
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 4);
 }

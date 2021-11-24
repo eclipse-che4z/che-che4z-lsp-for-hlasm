@@ -84,10 +84,11 @@ term returns [ca_expr_ptr ca_expr]
 	| data_attribute
 	{
 		auto r = provider.get_range($data_attribute.ctx);
-		if (std::holds_alternative<id_index>($data_attribute.value))
-			$ca_expr = std::make_unique<ca_symbol_attribute>(std::get<id_index>($data_attribute.value), $data_attribute.attribute, r, $data_attribute.value_range);
-		else if (std::holds_alternative<vs_ptr>($data_attribute.value))
-			$ca_expr = std::make_unique<ca_symbol_attribute>(std::move(std::get<vs_ptr>($data_attribute.value)), $data_attribute.attribute, r, $data_attribute.value_range);
+		auto val_range = $data_attribute.value_range;
+		auto attr = $data_attribute.attribute;
+		$ca_expr = std::visit([&r, &val_range, &attr](auto& v){
+			return std::make_unique<ca_symbol_attribute>(std::move(v), attr, r, val_range);
+		}, $data_attribute.value);
 	}
 	| {is_self_def()}? self_def_term
 	{
@@ -228,7 +229,7 @@ var_symbol returns [vs_ptr vs]
 	}
 	| created_set_symbol 									{$vs = std::move($created_set_symbol.vs);};
 
-data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr> value, range value_range]
+data_attribute returns [context::data_attr_kind attribute, std::variant<context::id_index, semantics::vs_ptr, expressions::ca_literal_def> value, range value_range]
 	: ORDSYMBOL (attr|apostrophe_as_attr) data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
@@ -237,8 +238,12 @@ data_attribute returns [context::data_attr_kind attribute, std::variant<context:
 		$value_range = provider.get_range( $data_attribute_value.ctx);
 	};
 
-data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr> value]
+data_attribute_value returns [std::variant<context::id_index, semantics::vs_ptr, expressions::ca_literal_def> value]
 	: literal
+	{
+		if ($literal.value.has_value())
+			$value = expressions::ca_literal_def {$literal.text, std::make_shared<expressions::data_definition>(std::move($literal.value.value()))};
+	}
 	| var_symbol DOT?
 	{
 		$value = std::move($var_symbol.vs);

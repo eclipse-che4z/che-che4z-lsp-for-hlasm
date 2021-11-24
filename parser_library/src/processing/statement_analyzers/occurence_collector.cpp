@@ -136,6 +136,13 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
         }
     }
 }
+void occurence_collector::get_occurence(const expressions::ca_literal_def& lit)
+{
+    if (collector_kind == lsp::occurence_kind::ORD)
+    {
+        lit.dd->apply(*this);
+    }
+}
 
 void occurence_collector::visit(const expressions::mach_expr_constant&) {}
 
@@ -185,8 +192,10 @@ void occurence_collector::visit(const expressions::ca_symbol_attribute& expr)
 {
     if (std::holds_alternative<context::id_index>(expr.symbol))
         get_occurence(std::get<context::id_index>(expr.symbol), expr.symbol_range);
-    else
+    else if (std::holds_alternative<semantics::vs_ptr>(expr.symbol))
         get_occurence(*std::get<semantics::vs_ptr>(expr.symbol));
+    else if (std::holds_alternative<expressions::ca_literal_def>(expr.symbol))
+        get_occurence(std::get<expressions::ca_literal_def>(expr.symbol));
 }
 
 void occurence_collector::visit(const expressions::ca_var_sym& expr) { get_occurence(*expr.symbol); }
