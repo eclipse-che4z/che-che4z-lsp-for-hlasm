@@ -1729,7 +1729,7 @@ std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::inst
     const std::map<std::string, machine_instruction>& i)
 {
     std::map<std::string, mnemonic_code> result;
-    /*
+    
     add_mnemonic_code(result, "B", { &i.at("BC"), { { 0, 15 } } });
     add_mnemonic_code(result, "BR", { &i.at("BCR"), { { 0, 15 } } });
     add_mnemonic_code(result, "J", { &i.at("BRC"), { { 0, 15 } } });
@@ -2684,7 +2684,7 @@ std::map<std::string, mnemonic_code> hlasm_plugin::parser_library::context::inst
     add_mnemonic_code(result, "STOCNL", { &i.at("STOC"), { { 2, 10 } } });
     // VNO V1,V2,V2        (operand with index 2 replaced with 0 )
     add_mnemonic_code(result, "VNOT", { &i.at("VNO"), { { 2, 0 } } });
-    */
+    
     return result;
 }
 
