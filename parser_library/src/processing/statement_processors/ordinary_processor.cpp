@@ -131,7 +131,7 @@ void ordinary_processor::end_processing()
 
         context::ordinary_assembly_dependency_solver dep_solver(
             hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
-        hlasm_ctx.ord_ctx.generate_pool(dep_solver);
+        hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);

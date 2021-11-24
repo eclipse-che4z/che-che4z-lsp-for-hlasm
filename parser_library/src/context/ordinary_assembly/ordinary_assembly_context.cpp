@@ -348,7 +348,10 @@ section* ordinary_assembly_context::create_section(id_index name, section_kind k
 
 size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
 
-void ordinary_assembly_context::generate_pool(dependency_solver& solver) { m_literals->generate_pool(*this, solver); }
+void ordinary_assembly_context::generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags)
+{
+    m_literals->generate_pool(*this, solver, diags);
+}
 
 const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) const
 {

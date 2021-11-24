@@ -19,6 +19,7 @@
 
 #include "alignment.h"
 #include "dependable.h"
+#include "diagnostic_consumer.h"
 #include "location_counter.h"
 #include "loctr_dependency_resolver.h"
 #include "section.h"
@@ -142,7 +143,7 @@ public:
     size_t next_unique_id() { return m_statement_unique_id++; }
 
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(dependency_solver& solver);
+    void generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags);
     location_counter* implicit_ltorg_target() const
     {
         if (!first_section_)

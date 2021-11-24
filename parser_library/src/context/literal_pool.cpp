@@ -18,6 +18,7 @@
 #include <functional>
 
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
+#include "ebcdic_encoding.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -55,7 +56,8 @@ id_index literal_pool::get_literal(
     return &it->second->text;
 }
 
-void literal_pool::generate_pool(ordinary_assembly_context& ord_ctx, dependency_solver& solver)
+void literal_pool::generate_pool(
+    ordinary_assembly_context& ord_ctx, dependency_solver& solver, diagnostic_op_consumer& diags)
 {
     for (auto& [lit, size, alignment] : m_pending_literals)
     {
@@ -83,9 +85,12 @@ void literal_pool::generate_pool(ordinary_assembly_context& ord_ctx, dependency_
         if (size == 0)
             break;
         auto addr = ord_ctx.reserve_storage_area(size, no_align);
-        symbol_attributes attrs(
-            symbol_origin::DAT, lit->value->get_type_attribute(), lit->value->get_length_attribute(solver));
+        symbol_attributes attrs(symbol_origin::DAT,
+            ebcdic_encoding::to_ebcdic(lit->value->get_type_attribute()),
+            lit->value->get_length_attribute(solver));
         bool cycle = ord_ctx.create_symbol(&lit->text, addr, attrs, {});
+        if (cycle)
+            diags.add_diagnostic(diagnostic_op::error_E033(range(lit->loc.pos))); // TODO: full range
     }
 
     m_pending_literals.clear();
