@@ -208,6 +208,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
     }
     else if (lit)
     {
+        (void)lit->evaluate(solver);
         if (lit->get_data_definition()->get_dependencies(solver).contains_dependencies())
         {
             // TODO: something should probably be done here
