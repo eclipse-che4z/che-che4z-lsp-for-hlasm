@@ -14,7 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as net from 'net'
-import { BaseLanguageClient } from 'vscode-languageclient';
+import { BaseLanguageClient } from 'vscode-languageclient/node';
 
 export class HLASMDebugAdapterFactory implements vscode.DebugAdapterDescriptorFactory {
     private theia_local_server: net.Server = null;

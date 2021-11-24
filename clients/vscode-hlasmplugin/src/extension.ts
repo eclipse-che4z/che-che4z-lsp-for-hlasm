@@ -13,10 +13,9 @@
  */
 
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient';
+import * as vscodelc from 'vscode-languageclient/node';
 
 
-import { SemanticTokensFeature } from './semanticTokens';
 import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } from './debugProvider';
 import { ContinuationHandler } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
@@ -92,12 +91,8 @@ export async function activate(context: vscode.ExtensionContext) {
     // string properties and there are some boolean that we receive from the language server
     hlasmpluginClient.onTelemetry((object) => {telemetry.reportEvent(object.method_name, objectToString(object.properties), object.measurements)});
 
-    //asm contribution 
-    var highlight = new SemanticTokensFeature(hlasmpluginClient);
-    // register highlighting as features
-    hlasmpluginClient.registerFeature(highlight);
     // register all commands and objects to context
-    await registerToContext(context, highlight, hlasmpluginClient);
+    await registerToContext(context, hlasmpluginClient);
 
     //give the server some time to start listening when using TCP
     if (serverVariant === 'tcp')
@@ -143,7 +138,7 @@ function startCheckingNativeClient(hlasmpluginClient: vscodelc.LanguageClient) {
     });
 }
 
-async function registerToContext(context: vscode.ExtensionContext, highlight: SemanticTokensFeature, client: vscodelc.LanguageClient) {
+async function registerToContext(context: vscode.ExtensionContext, client: vscodelc.LanguageClient) {
     const completeCommand = "editor.action.triggerSuggest";
     var commandList = await vscode.commands.getCommands();
 
@@ -151,7 +146,7 @@ async function registerToContext(context: vscode.ExtensionContext, highlight: Se
     var commandsRegistered = commandList.find(command => command == 'insertContinuation' || command == 'removeContinuation');
 
     // initialize helpers
-    const handler = new EventsHandler(completeCommand, highlight);
+    const handler = new EventsHandler(completeCommand);
     const contHandling = new ContinuationHandler();
     const commands = new CustomEditorCommands();
 
@@ -186,11 +181,10 @@ async function registerToContext(context: vscode.ExtensionContext, highlight: Se
             (editor, edit) => commands.deleteRight(editor, edit, offset)));
     }
     // register event handlers
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e, highlight, offset)));
-    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e, highlight)));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => handler.onDidChangeTextDocument(e, offset)));
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(e => handler.onDidOpenTextDocument(e)));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => handler.onDidChangeConfiguration(e)));
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(e => handler.onDidSaveTextDocument(e)));
-    context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(e => handler.onDidChangeVisibleTextEditors(e, highlight)));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(e => handler.onDidChangeActiveTextEditor(e)));
 
     // register filename retrieve functions for debug sessions

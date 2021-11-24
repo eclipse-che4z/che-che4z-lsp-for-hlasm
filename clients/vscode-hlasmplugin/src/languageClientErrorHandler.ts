@@ -12,9 +12,9 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import * as vscodelc from 'vscode-languageclient';
+import * as vscodelc from 'vscode-languageclient/node';
 
-import { ErrorHandler } from 'vscode-languageclient';
+import { ErrorHandler } from 'vscode-languageclient/node';
 import { Telemetry } from './telemetry';
 
 export class LanguageClientErrorHandler implements ErrorHandler

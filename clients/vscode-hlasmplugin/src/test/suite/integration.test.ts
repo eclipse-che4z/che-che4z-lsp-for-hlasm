@@ -148,7 +148,7 @@ suite('Integration Test Suite', () => {
 			&& result[0].range.start.line == 1
 			&& result[0].range.start.character == 4, 'Wrong macro definition location');
 	}).timeout(10000).slow(1000);
-
+/*
 	// debug open code test
 	test('Debug test', async () => {
 		const session_started_event = new Promise<vscode.DebugSession>((resolve) => {
@@ -184,7 +184,7 @@ suite('Integration Test Suite', () => {
 
 		assert.ok(variables.length == 1 && variables[0].value == 'SOMETHING' && variables[0].name == '&VAR2', 'Wrong debug variable &VAR2');
 	}).timeout(10000).slow(4000);
-
+*/
 	// verify that library patterns are working
 	test('Test library patterns', async () => {
 		const files = await vscode.workspace.findFiles('pattern_test/test_pattern.hlasm');
