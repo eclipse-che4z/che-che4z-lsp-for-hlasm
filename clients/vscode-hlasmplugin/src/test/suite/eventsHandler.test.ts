@@ -18,13 +18,12 @@ import * as vscode from 'vscode';
 import { EventsHandler } from '../../eventsHandler';
 import { LanguageClientMock, LanguageClientOptionsMock, 
     TextEditorMock, TextDocumentMock, ConfigurationChangeEventMock, 
-    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock,SemanticTokensFeatureMock } from '../mocks';
+    TextDocumentChangeEventMock, TextDocumentContentChangeEventMock,} from '../mocks';
 
 suite('Events Handler Test Suite', () => {
     const options = new LanguageClientOptionsMock();
-        const client = new LanguageClientMock('client', 'mock', options);
-    const highlight = new SemanticTokensFeatureMock(client);
-    const handler = new EventsHandler('editor.action.triggerSuggest',highlight);
+    const client = new LanguageClientMock('client', 'mock', options);
+    const handler = new EventsHandler('editor.action.triggerSuggest');
 
     test('Active Text Editor Change test', () => {
         const document = new TextDocumentMock();
@@ -52,32 +51,17 @@ suite('Events Handler Test Suite', () => {
         const event = new TextDocumentChangeEventMock([change]);
         event.document = document;
         // get completion results
-        assert.ok(handler.onDidChangeTextDocument(event,highlight,71));
-    });
-
-    test('Visible Text Editors Change test', () => {
-        // prepare document
-        const document = new TextDocumentMock();
-        document.languageId = 'hlasm';
-        // prepare editor
-        const editor = new TextEditorMock(document);
-        // prepare highlighting feature
-        const options = new LanguageClientOptionsMock();
-        const client = new LanguageClientMock('client', 'mock', options);
-        const highlight = new SemanticTokensFeatureMock(client);
-        handler.onDidChangeVisibleTextEditors([editor], highlight);
-        assert.ok(highlight.didColorize);
+        assert.ok(handler.onDidChangeTextDocument(event,71));
     });
 
     test('Text Document Open test', () => {
         // prepare highlighting feature
         const options = new LanguageClientOptionsMock();
         const client = new LanguageClientMock('client', 'mock', options);
-        const highlight = new SemanticTokensFeatureMock(client);
         // prepare document
         const document = new TextDocumentMock();
         document.languageId = 'hlasm';
-        handler.onDidOpenTextDocument(document,highlight);
+        handler.onDidOpenTextDocument(document);
     });
 
     test('Text Document Saved test', () => {

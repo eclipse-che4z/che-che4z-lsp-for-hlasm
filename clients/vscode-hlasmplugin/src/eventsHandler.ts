@@ -17,7 +17,6 @@ import * as vscode from 'vscode';
 import { ConfigurationsHandler } from './configurationsHandler'
 import { isLineContinued } from './customEditorCommands';
 import { HLASMLanguageDetection } from './hlasmLanguageDetection'
-import { SemanticTokensFeature } from './semanticTokens';
 
 /**
  * Handles various events happening in VSCode
@@ -35,31 +34,29 @@ export class EventsHandler {
      * @param completeCommand Used to invoke complete manually in continuationHandling mode
      * @param highlight Shows/hides parsing progress
      */
-    constructor(completeCommand: string, highlight: SemanticTokensFeature) {
+    constructor(completeCommand: string) {
         this.isInstruction = new RegExp("^([^*][^*]\\S*\\s+\\S+|\\s+\\S*)$");
         this.isTrigger = new RegExp("^[a-zA-Z\*\@\#\$\_]+$");
         this.completeCommand = completeCommand;
         this.configSetup = new ConfigurationsHandler();
         this.langDetect = new HLASMLanguageDetection(this.configSetup);
-        this.initialize(highlight);
+        this.initialize();
     }
 
     dispose() { }
 
     // invoked on extension activation
-    private initialize(highlight: SemanticTokensFeature) {
+    private initialize() {
         // initialize wildcards
         this.configSetup.updateWildcards();
         // first run, simulate ondidopen
         if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId == 'hlasm') {
-            this.onDidOpenTextDocument(vscode.window.activeTextEditor.document, highlight);
+            this.onDidOpenTextDocument(vscode.window.activeTextEditor.document);
         }
     }
 
     // when contents of a document change, issue a completion request
-    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, highlight: SemanticTokensFeature, continuationOffset: number): boolean {
-        // remove this once LSP implements semantic tokens
-        highlight.askForTokens(event.document);
+    onDidChangeTextDocument(event: vscode.TextDocumentChangeEvent, continuationOffset: number): boolean {
         if (getConfig<boolean>('continuationHandling', false)) {
             if (event.document.languageId != 'hlasm')
                 return false;
@@ -90,21 +87,9 @@ export class EventsHandler {
         return false;
     }
 
-    // when any visible text editor changes, apply decorations for it
-    onDidChangeVisibleTextEditors(editors: vscode.TextEditor[], highlight: SemanticTokensFeature) {
-        for (var i = 0; i < editors.length; i++) {
-            if (editors[i].document.languageId == 'hlasm') {
-                highlight.colorize();
-                break;
-            }
-        }
-    }
-
     // when document opens, show parse progress
-    onDidOpenTextDocument(document: vscode.TextDocument, highlight: SemanticTokensFeature) {
+    onDidOpenTextDocument(document: vscode.TextDocument) {
         this.editorChanged(document);
-        // remove this once LSP implements semantic tokens
-        highlight.askForTokens(document);
     }
 
     onDidChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
