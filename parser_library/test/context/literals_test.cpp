@@ -201,3 +201,42 @@ TEST(literals, ltorg_repeating_literals)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 68);
 }
+
+TEST(literals, similar)
+{
+    struct test
+    {
+        std::string l;
+        std::string r;
+        size_t size;
+
+        std::string operator()() const { return "L:" + l + '\n' + "R:" + r + '\n' + "S:" + std::to_string(size); }
+    };
+    for (const auto& t : {
+             test { "=A(0)", "=a(0)", 4 },
+             test { "=A(0)", "=AL4(0)", 8 },
+             test { "=A(a)", "=a(A)", 4 },
+             test { "=A(A)", "=A(B)", 8 },
+             test { "=A(A,B)", "=a(B,A)", 16 },
+             test { "=A(A,b)", "=a(a,B)", 8 },
+             test { "=F'1 2'", "=F'1     2'", 8 },
+             test { "=A(0)", "=1A(0)", 8 },
+             test { "=F'0'", "=A(0)", 8 },
+             test { "=FD'0'", "=F'0'", 12 },
+             test { "=(B-A)A(0)", "=(1)A(0)", 8 },
+             test { "=A(*)", "=A(*)", 8 },
+             test { "=Al4(0)", "=aL4(0)", 4 },
+         })
+    {
+        std::string input = "A EQU 1\nB EQU 2\nT1   EQU  L'" + t.l + '\n' + "T2   EQU  L'" + t.r;
+        analyzer a(input);
+        a.analyze();
+        a.collect_diags();
+
+        EXPECT_TRUE(a.diags().empty());
+
+        auto* sect = get_section(a.hlasm_ctx(), "");
+        ASSERT_TRUE(sect);
+        EXPECT_EQ(sect->location_counters().back()->current_address().offset(), t.size) << t();
+    }
+}

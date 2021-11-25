@@ -251,7 +251,7 @@ checking::data_def_field<int32_t> set_data_def_field(
 
 checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(context::dependency_solver& info) const
 {
-    return set_data_def_field(dupl_factor.get(), info);
+    return dupl_factor ? set_data_def_field(dupl_factor.get(), info) : checking::data_def_field<int32_t>(1);
 }
 
 checking::data_def_length_t data_definition::evaluate_length(context::dependency_solver& info) const
@@ -489,16 +489,10 @@ void data_definition::parser::parse_duplication_factor()
 
         if (dupl_factor_num)
             result_.dupl_factor = std::make_unique<mach_expr_constant>(*dupl_factor_num, range(old_pos, pos_));
-        else
-            result_.dupl_factor = std::make_unique<mach_expr_constant>(1, range(old_pos, pos_));
     }
     else if (format_[0] == *data_definition::expr_placeholder)
     { // duplication factor as expression
         result_.dupl_factor = move_next_expression();
-    }
-    else
-    {
-        result_.dupl_factor = std::make_unique<mach_expr_constant>(1, range(pos_, pos_));
     }
 }
 

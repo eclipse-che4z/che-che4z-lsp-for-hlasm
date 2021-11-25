@@ -220,8 +220,7 @@ TEST(data_definition, duplication_factor_out_of_range)
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
-    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
-    EXPECT_EQ(dup_f, 1);
+    EXPECT_FALSE(parsed.dupl_factor);
 }
 
 TEST(data_definition, duplication_factor_invalid_number)
@@ -235,8 +234,7 @@ TEST(data_definition, duplication_factor_invalid_number)
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
-    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
-    EXPECT_EQ(dup_f, 1);
+    EXPECT_FALSE(parsed.dupl_factor);
 }
 
 TEST(data_definition, all_fields)
