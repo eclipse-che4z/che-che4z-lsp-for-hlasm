@@ -65,6 +65,12 @@ unsigned char hlasm_plugin::parser_library::ebcdic_encoding::to_ebcdic(unsigned 
 
 std::string hlasm_plugin::parser_library::ebcdic_encoding::to_ascii(unsigned char c)
 {
+    if (c == 0x0D || c == 0x25) // CR LF
+        return std::string {
+            static_cast<char>(0b11100000 | ebcdic_encoding::unicode_private >> 4),
+            static_cast<char>(0x80 | ebcdic_encoding::unicode_private & 0xf | c >> 6),
+            static_cast<char>(0x80 | c & 0x3f),
+        };
     auto val = e2a[c];
     if (0x80 > val)
         return std::string({ static_cast<char>(val) });

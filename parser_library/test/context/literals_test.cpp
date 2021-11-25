@@ -256,3 +256,16 @@ TEST(literals, in_machine_instructions)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 12);
 }
+
+TEST(literals, strange_literals)
+{
+    std::string input = R"(
+&ENDL    SETC  X2C('0D25')
+         MVC   0,=C'&ENDL'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
