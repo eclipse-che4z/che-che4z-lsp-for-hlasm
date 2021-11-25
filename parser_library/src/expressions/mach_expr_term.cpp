@@ -20,10 +20,22 @@
 #include "conditional_assembly/terms/ca_constant.h"
 #include "ebcdic_encoding.h"
 #include "mach_expr_visitor.h"
+#include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::expressions {
-
 //***********  mach_expr_constant ************
+
+bool mach_expr_constant::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_constant&>(expr);
+    if (value_.value_kind() != e.value_.value_kind())
+        return false;
+    if (value_.value_kind() == context::symbol_value_kind::ABS)
+        return value_.get_abs() == e.value_.get_abs();
+
+    return true;
+}
+
 mach_expr_constant::mach_expr_constant(std::string value_text, range rng)
     : mach_expression(rng)
 {
@@ -52,7 +64,13 @@ const mach_expression* mach_expr_constant::leftmost_term() const { return this; 
 
 void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-
+size_t mach_expr_constant::hash() const
+{
+    auto result = (size_t)0x38402610af574281;
+    if (value_.value_kind() == context::symbol_value_kind::ABS)
+        result = hash_combine(result, value_.get_abs());
+    return result;
+}
 
 //***********  mach_expr_symbol ************
 mach_expr_symbol::mach_expr_symbol(context::id_index value, range rng)
@@ -85,7 +103,26 @@ mach_expr_constant::value_t mach_expr_symbol::evaluate(context::dependency_solve
 
 const mach_expression* mach_expr_symbol::leftmost_term() const { return this; }
 void mach_expr_symbol::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+size_t mach_expr_symbol::hash() const
+{
+    auto result = (size_t)0xdf510e8c145dd28d;
+
+    if (value)
+        result = hash_combine(result, (uintptr_t)value);
+    return result;
+}
+bool mach_expr_symbol::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_symbol&>(expr);
+    return value == e.value;
+}
 //***********  mach_expr_self_def ************
+bool mach_expr_self_def::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_self_def&>(expr);
+    return value_.get_abs() == e.value_.get_abs();
+}
+
 mach_expr_self_def::mach_expr_self_def(std::string option, std::string value, range rng)
     : mach_expression(rng)
 {
@@ -103,6 +140,10 @@ mach_expr_self_def::value_t mach_expr_self_def::evaluate(context::dependency_sol
 const mach_expression* mach_expr_self_def::leftmost_term() const { return this; }
 
 void mach_expr_self_def::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
+
+size_t mach_expr_self_def::hash() const { return hash_combine((size_t)0x038d7ea26932b75b, value_.get_abs()); }
+
+bool mach_expr_location_counter::do_is_similar(const mach_expression&) const { return true; }
 
 mach_expr_location_counter::mach_expr_location_counter(range rng)
     : mach_expression(rng)
@@ -130,6 +171,10 @@ const mach_expression* mach_expr_location_counter::leftmost_term() const { retur
 
 void mach_expr_location_counter::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
+size_t mach_expr_location_counter::hash() const { return (size_t)0x0009459ca772d69b; }
+
+bool mach_expr_default::do_is_similar(const mach_expression&) const { return true; }
+
 mach_expr_default::mach_expr_default(range rng)
     : mach_expression(rng)
 {}
@@ -146,6 +191,14 @@ const mach_expression* mach_expr_default::leftmost_term() const { return this; }
 void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 void mach_expr_default::collect_diags() const {}
+
+size_t mach_expr_default::hash() const { return (size_t)0xd11a22d1aa4016e0; }
+
+bool mach_expr_data_attr::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_data_attr&>(expr);
+    return value == e.value && attribute == e.attribute && utils::is_similar(lit, e.lit);
+}
 
 mach_expr_data_attr::mach_expr_data_attr(
     context::id_index value, context::data_attr_kind attribute, range rng, range symbol_rng)
@@ -234,6 +287,24 @@ const mach_expression* mach_expr_data_attr::leftmost_term() const { return this;
 
 void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
+size_t mach_expr_data_attr::hash() const
+{
+    auto result = (size_t)0xa2957a462d908bd2;
+    if (value)
+        result = hash_combine(result, (uintptr_t)value);
+    result = hash_combine(result, (size_t)attribute);
+    if (lit)
+        result = hash_combine(result, lit->hash());
+
+    return result;
+}
+
+bool mach_expr_literal::do_is_similar(const mach_expression& expr) const
+{
+    const auto& e = static_cast<const mach_expr_literal&>(expr);
+    return utils::is_similar(m_data_definition, e.m_data_definition);
+}
+
 mach_expr_literal::mach_expr_literal(range rng, data_definition dd, std::string dd_text)
     : mach_expression(rng)
     , m_data_definition(std::make_shared<data_definition>(std::move(dd)))
@@ -275,6 +346,8 @@ const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
 void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
 void mach_expr_literal::collect_diags() const {}
+
+size_t mach_expr_literal::hash() const { return m_data_definition->hash(); }
 
 const std::shared_ptr<const data_definition>& mach_expr_literal::get_data_definition() const
 {

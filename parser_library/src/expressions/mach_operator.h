@@ -28,6 +28,8 @@ namespace hlasm_plugin::parser_library::expressions {
 template<typename T>
 class mach_expr_binary final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
     mach_expr_ptr left_;
     mach_expr_ptr right_;
 
@@ -57,6 +59,8 @@ public:
         collect_diags_from_child(*left_);
         collect_diags_from_child(*right_);
     }
+
+    size_t hash() const override;
 };
 
 // Represents a unart operator in machine expression. Holds its
@@ -65,6 +69,8 @@ public:
 template<typename T>
 class mach_expr_unary final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
     mach_expr_ptr child_;
 
 public:
@@ -84,6 +90,8 @@ public:
     const mach_expression* leftmost_term() const override { return child_->leftmost_term(); }
 
     void collect_diags() const override { collect_diags_from_child(*child_); }
+
+    size_t hash() const override;
 };
 
 struct add

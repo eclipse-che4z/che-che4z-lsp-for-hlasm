@@ -16,12 +16,24 @@
 
 #include <unordered_set>
 
+#include "utils/similar.h"
+
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::context;
 
 nominal_value_string* nominal_value_t::access_string() { return dynamic_cast<nominal_value_string*>(this); }
 
 nominal_value_exprs* nominal_value_t::access_exprs() { return dynamic_cast<nominal_value_exprs*>(this); }
+
+const nominal_value_string* nominal_value_t::access_string() const
+{
+    return dynamic_cast<const nominal_value_string*>(this);
+}
+
+const nominal_value_exprs* nominal_value_t::access_exprs() const
+{
+    return dynamic_cast<const nominal_value_exprs*>(this);
+}
 
 //*********** nominal_value_string ***************
 dependency_collector nominal_value_string::get_dependencies(dependency_solver&) const { return dependency_collector(); }
@@ -30,6 +42,11 @@ nominal_value_string::nominal_value_string(std::string value, hlasm_plugin::pars
     : value(std::move(value))
     , value_range(rng)
 {}
+
+size_t hlasm_plugin::parser_library::expressions::nominal_value_string::hash() const
+{
+    return hash_combine((size_t)0xfc655abdb5880969, std::hash<std::string> {}(value));
+}
 
 //*********** nominal_value_exprs ***************
 dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& solver) const
@@ -51,6 +68,24 @@ dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& so
 nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs)
     : exprs(std::move(exprs))
 {}
+
+size_t nominal_value_exprs::hash() const
+{
+    auto result = (size_t)0x0c260c0f86f63b4e;
+    for (const auto& v : exprs)
+    {
+        result = hash_combine(result,
+            std::visit(
+                [](const auto& v) {
+                    if constexpr (std::is_same_v<decltype(v), const mach_expr_ptr&>)
+                        return v->hash();
+                    else
+                        return v.hash();
+                },
+                v));
+    }
+    return result;
+}
 
 
 
@@ -74,3 +109,51 @@ address_nominal::address_nominal(mach_expr_ptr displacement, mach_expr_ptr base)
     : displacement(std::move(displacement))
     , base(std::move(base))
 {}
+
+size_t address_nominal::hash() const
+{
+    auto result = (size_t)0x2aa82a8e5d77ef6c;
+
+    if (displacement)
+        result = hash_combine(result, displacement->hash());
+    if (base)
+        result = hash_combine(result, base->hash());
+
+    return result;
+}
+
+namespace hlasm_plugin::parser_library::expressions {
+
+bool is_similar(const nominal_value_t& l, const nominal_value_t& r)
+{
+    return utils::is_similar(l.access_string(), r.access_string())
+        && utils::is_similar(l.access_exprs(), r.access_exprs());
+}
+
+bool is_similar(const address_nominal& l, const address_nominal& r)
+{
+    return utils::is_similar(l, r, &address_nominal::displacement, &address_nominal::base);
+}
+
+bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r)
+{
+    if (l.exprs.size() != r.exprs.size())
+        return false;
+
+    for (size_t i = 0; i < l.exprs.size(); ++i)
+    {
+        if (!std::visit(
+                [](const auto& l, const auto& r) {
+                    if constexpr (std::is_same_v<decltype(l), decltype(r)>)
+                        return utils::is_similar(l, r);
+                    else
+                        return false;
+                },
+                l.exprs[i],
+                r.exprs[i]))
+            return false;
+    }
+    return true;
+}
+
+} // namespace hlasm_plugin::parser_library::expressions

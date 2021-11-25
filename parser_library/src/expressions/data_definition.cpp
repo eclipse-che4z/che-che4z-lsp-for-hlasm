@@ -24,6 +24,7 @@
 #include "mach_expr_term.h"
 #include "mach_expr_visitor.h"
 #include "semantics/collector.h"
+#include "utils/similar.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
@@ -372,6 +373,29 @@ void data_definition::apply(mach_expr_visitor& visitor) const
     }
 }
 
+size_t hlasm_plugin::parser_library::expressions::data_definition::hash() const
+{
+    size_t ret = (size_t)0x65b40f329f97f6c9;
+    ret = hash_combine(ret, type);
+    ret = hash_combine(ret, extension);
+    if (length)
+        ret = hash_combine(ret, length->hash());
+
+    ret = hash_combine(ret, (size_t)length_type);
+    if (dupl_factor)
+        ret = hash_combine(ret, dupl_factor->hash());
+    if (program_type)
+        ret = hash_combine(ret, program_type->hash());
+    if (scale)
+        ret = hash_combine(ret, scale->hash());
+    if (exponent)
+        ret = hash_combine(ret, exponent->hash());
+    if (nominal_value)
+        ret = hash_combine(ret, nominal_value->hash());
+
+    return ret;
+}
+
 data_definition::parser::parser(
     semantics::collector& coll, std::string format, mach_expr_list exprs, nominal_value_ptr nominal, position begin)
     : collector_(coll)
@@ -674,4 +698,19 @@ data_definition data_definition::parser::parse()
     result_.references_loctr = v.found_loctr_reference;
 
     return std::move(result_);
+}
+
+bool hlasm_plugin::parser_library::expressions::is_similar(const data_definition& l, const data_definition& r) noexcept
+{
+    return hlasm_plugin::utils::is_similar(l,
+        r,
+        &data_definition::type,
+        &data_definition::extension,
+        &data_definition::length,
+        &data_definition::length_type,
+        &data_definition::dupl_factor,
+        &data_definition::program_type,
+        &data_definition::scale,
+        &data_definition::exponent,
+        &data_definition::nominal_value);
 }

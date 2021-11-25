@@ -107,13 +107,12 @@ void literal_pool::generate_pool(
 
 bool literal_pool::literal_definition::is_similar(const literal_definition& ld) const noexcept
 {
-    return generation == ld.generation && unique_id == ld.unique_id && text == ld.text; // TODO: for now
+    return generation == ld.generation && unique_id == ld.unique_id && utils::is_similar(value, ld.value);
 }
 
 size_t literal_pool::literal_definition_hasher::operator()(const literal_definition& ld) const noexcept
 {
-    auto text_hash = std::hash<std::string> {}(ld.text);
-    return text_hash ^ ld.generation ^ ld.unique_id;
+    return ld.value->hash() ^ ld.generation ^ ld.unique_id;
 }
 
 } // namespace hlasm_plugin::parser_library::context

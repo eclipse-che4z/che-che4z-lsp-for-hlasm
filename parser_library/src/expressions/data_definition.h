@@ -112,6 +112,10 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     void apply(mach_expr_visitor& visitor) const;
 
+    friend bool is_similar(const data_definition& l, const data_definition& r) noexcept;
+
+    size_t hash() const;
+
 private:
     class parser;
 };

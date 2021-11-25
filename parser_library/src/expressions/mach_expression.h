@@ -37,6 +37,8 @@ using mach_expr_list = std::vector<mach_expr_ptr>;
 // information about values of ordinary symbols.
 class mach_expression : public diagnosable_op_impl, public context::resolvable
 {
+    virtual bool do_is_similar(const mach_expression& expr) const = 0;
+
 public:
     using value_t = context::symbol_value;
 
@@ -48,10 +50,14 @@ public:
 
     virtual void apply(mach_expr_visitor& visitor) const = 0;
 
+    virtual size_t hash() const = 0;
+
     range get_range() const;
     virtual ~mach_expression() {}
 
     static mach_expr_ptr assign_expr(mach_expr_ptr expr, range expr_range);
+
+    bool is_similar(const mach_expression& expr) const;
 
 protected:
     mach_expression(range rng);
@@ -60,7 +66,10 @@ private:
     range expr_range_;
 };
 
-
+inline size_t hash_combine(std::size_t old, std::size_t next)
+{
+    return old ^ (next + 0x9e3779b9 + (old << 6) + (old >> 2));
+}
 
 } // namespace hlasm_plugin::parser_library::expressions
 

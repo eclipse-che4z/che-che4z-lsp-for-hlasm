@@ -19,6 +19,7 @@ target_sources(parser_library PRIVATE
 	mach_expr_visitor.h
 	mach_expression.cpp
 	mach_expression.h
+	mach_operator.cpp
 	mach_operator.h
 	nominal_value.cpp
 	nominal_value.h

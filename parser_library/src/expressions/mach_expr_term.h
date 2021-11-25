@@ -26,6 +26,8 @@ class mach_expr_constant final : public mach_expression
 {
     value_t value_;
 
+    bool do_is_similar(const mach_expression& expr) const override;
+
 public:
     mach_expr_constant(std::string value_text, range rng);
     mach_expr_constant(int value, range rng);
@@ -39,11 +41,15 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
+
+    size_t hash() const override;
 };
 
 // Represents an literal expression (e.g. =C'text')
 class mach_expr_literal final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
     std::shared_ptr<const data_definition> m_data_definition;
     std::string m_dd_text;
 
@@ -60,6 +66,8 @@ public:
 
     void collect_diags() const override;
 
+    size_t hash() const override;
+
     const std::shared_ptr<const data_definition>& get_data_definition() const;
 
     const std::string& get_data_definition_text() const { return m_dd_text; }
@@ -70,6 +78,8 @@ public:
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
 class mach_expr_data_attr final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
 public:
     mach_expr_data_attr(context::id_index value, context::data_attr_kind attribute, range whole_rng, range symbol_rng);
     mach_expr_data_attr(
@@ -89,11 +99,15 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
+
+    size_t hash() const override;
 };
 
 // Represents an ordinary symbol in machine expressions.
 class mach_expr_symbol final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
 public:
     mach_expr_symbol(context::id_index value, range rng);
 
@@ -109,11 +123,15 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
+
+    size_t hash() const override;
 };
 
 // Represents a location counter written in a machine expression (the character *)
 class mach_expr_location_counter final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
 public:
     mach_expr_location_counter(range rng);
 
@@ -126,11 +144,15 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
+
+    size_t hash() const override;
 };
 
 // Represents a self defining term (e.g. X'4A')
 class mach_expr_self_def final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
     value_t value_;
 
 public:
@@ -145,12 +167,16 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override {}
+
+    size_t hash() const override;
 };
 
 // Represents an "empty" term that is used when parsing of a machine expression fails
 //(the user writes invalid expression)
 class mach_expr_default final : public mach_expression
 {
+    bool do_is_similar(const mach_expression& expr) const override;
+
 public:
     mach_expr_default(range rng);
 
@@ -163,6 +189,8 @@ public:
     void apply(mach_expr_visitor& visitor) const override;
 
     void collect_diags() const override;
+
+    size_t hash() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions
