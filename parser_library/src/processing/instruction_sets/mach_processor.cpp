@@ -65,14 +65,8 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
     for (auto& op : rebuilt_stmt.operands_ref().value)
     {
         auto evaluable = dynamic_cast<semantics::evaluable_operand*>(op.get());
-        if (evaluable)
-        {
-            if (evaluable->has_dependencies(dep_solver))
-            {
-                has_dependencies = true;
-                break;
-            }
-        }
+        if (evaluable && evaluable->has_dependencies(dep_solver))
+            has_dependencies = true;
     }
 
     if (has_dependencies)

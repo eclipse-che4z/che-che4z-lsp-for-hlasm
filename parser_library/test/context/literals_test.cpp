@@ -240,3 +240,19 @@ TEST(literals, similar)
         EXPECT_EQ(sect->location_counters().back()->current_address().offset(), t.size) << t();
     }
 }
+
+TEST(literals, in_machine_instructions)
+{
+    std::string input = R"(
+    MVC =A(0),=A(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 12);
+}

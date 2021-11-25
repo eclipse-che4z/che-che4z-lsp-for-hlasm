@@ -562,6 +562,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     {
         context::ordinary_assembly_dependency_solver dep_solver(
             hlasm_ctx.ord_ctx, hlasm_ctx.ord_ctx.align(context::no_align));
+        bool skip_check = false;
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
         {
@@ -571,8 +572,10 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
 
             if (op->type != semantics::operand_type::EMPTY && can_have_ord_syms
                 && op->access_asm()->has_dependencies(dep_solver))
-                return;
+                skip_check = true;
         }
+        if (skip_check)
+            return;
         check(rebuilt_stmt, hlasm_ctx.processing_stack(), dep_solver, checker_, *this);
     }
 }
