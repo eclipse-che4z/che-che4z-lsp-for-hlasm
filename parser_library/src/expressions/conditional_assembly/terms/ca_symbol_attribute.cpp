@@ -270,7 +270,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     (void)solver.get_literal_id(lit.text, lit.dd);
 
     if (attribute == context::data_attr_kind::D)
-        return true;
+        return false;
     else if (attribute == context::data_attr_kind::O)
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
@@ -278,12 +278,12 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
     }
     else if (attribute == context::data_attr_kind::T)
     {
-        return std::string { lit.dd->get_type_attribute() };
+        return "U";
     }
     else
     {
         context::symbol_attributes attrs(context::symbol_origin::DAT,
-            ebcdic_encoding::to_ebcdic(lit.dd->get_type_attribute()),
+            ebcdic_encoding::a2e[(unsigned char)lit.dd->get_type_attribute()],
             lit.dd->get_length_attribute(solver),
             lit.dd->get_scale_attribute(solver),
             lit.dd->get_integer_attribute(solver));

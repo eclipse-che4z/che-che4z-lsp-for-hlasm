@@ -91,7 +91,7 @@ void literal_pool::generate_pool(
         bool cycle_ok = ord_ctx.create_symbol(&lit->text,
             ord_ctx.align(no_align),
             symbol_attributes(symbol_origin::DAT,
-                ebcdic_encoding::to_ebcdic(lit->value->get_type_attribute()),
+                ebcdic_encoding::a2e[(unsigned char)lit->value->get_type_attribute()],
                 lit->value->get_length_attribute(solver)),
             {});
 

@@ -215,7 +215,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
         }
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
-            ebcdic_encoding::to_ebcdic(dd->get_type_attribute()),
+            ebcdic_encoding::a2e[(unsigned char)dd->get_type_attribute()],
             dd->get_length_attribute(solver),
             dd->get_scale_attribute(solver),
             dd->get_integer_attribute(solver));
