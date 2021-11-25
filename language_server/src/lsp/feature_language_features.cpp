@@ -47,34 +47,48 @@ json feature_language_features::register_capabilities()
 {
     // in case any changes are done to tokenTypes, the hl_scopes field in protocol.h
     // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
-    return json { { "definitionProvider", true },
+    return json {
+        { "definitionProvider", true },
         { "referencesProvider", true },
         { "hoverProvider", true },
         { "completionProvider",
             { { "resolveProvider", false }, { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } } } },
-        { "semanticTokensProvider",
-            { { "legend",
-                  { { "tokenTypes",
-                        { "class", //           label              = 0
-                            "function", //      instruction        = 1
-                            "comment", //       remark             = 2
-                            "event", //         ignored            = 3
-                            "comment", //       comment            = 4
-                            "modifier", //      continuation       = 5
-                            "keyword", //       seq_symbol         = 6
-                            "variable", //      var_symbol         = 7
-                            "operator", //      operator_symbol    = 8
-                            "string", //        string             = 9
-                            "number", //        number             = 10
-                            "parameter", //     operand            = 11
-                            "regexp", //        data_def_type      = 12
-                            "modifier", //      data_def_extension = 13
-                            "modifier", //      data_attrib_type   = 14
-                            "regexp", //        self_def_type      = 15
-                            "parameter" } }, // ordinary_symbol    = 16
-                      { "tokenModifiers", json::array() } } },
-                { "full", true } } },
-        { "documentSymbolProvider", true } };
+        {
+            "semanticTokensProvider",
+            {
+                {
+                    "legend",
+                    {
+                        {
+                            "tokenTypes",
+                            {
+                                "class", //           label              = 0
+                                "function", //      instruction        = 1
+                                "comment", //       remark             = 2
+                                "event", //         ignored            = 3
+                                "comment", //       comment            = 4
+                                "modifier", //      continuation       = 5
+                                "keyword", //       seq_symbol         = 6
+                                "variable", //      var_symbol         = 7
+                                "operator", //      operator_symbol    = 8
+                                "string", //        string             = 9
+                                "number", //        number             = 10
+                                "parameter", //     operand            = 11
+                                "regexp", //        data_def_type      = 12
+                                "modifier", //      data_def_extension = 13
+                                "modifier", //      data_attrib_type   = 14
+                                "regexp", //        self_def_type      = 15
+                                "parameter",
+                            },
+                        }, // ordinary_symbol    = 16
+                        { "tokenModifiers", json::array() },
+                    },
+                },
+                { "full", true },
+            },
+        },
+        { "documentSymbolProvider", true },
+    };
 }
 
 void feature_language_features::initialize_feature(const json&)

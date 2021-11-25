@@ -43,6 +43,7 @@ void base_protocol_channel::write_message(const std::string& in)
         LOG_INFO("Output error.");
         return;
     }
+    std::cerr << in << "\n\n";
     output.write(content_length_string.data(), content_length_string.size());
     std::string size = std::to_string(in.size());
     output.write(size.c_str(), size.size());
