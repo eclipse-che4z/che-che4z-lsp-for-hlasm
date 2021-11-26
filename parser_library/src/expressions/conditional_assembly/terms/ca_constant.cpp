@@ -43,6 +43,23 @@ void ca_constant::apply(ca_expr_visitor& visitor) const { visitor.visit(*this); 
 
 context::SET_t ca_constant::evaluate(const evaluation_context&) const { return value; }
 
+namespace {
+context::A_t CA_selfdef(std::string_view value, diagnostic_adder& add_diagnostic)
+{
+    if (value.size() > 4)
+    {
+        add_diagnostic(diagnostic_op::error_CE007);
+        return 0;
+    }
+
+    unsigned long long result = 0;
+    for (unsigned char c : value)
+        result = (result << 8) | c;
+
+    return (context::A_t)result;
+}
+} // namespace
+
 context::A_t ca_constant::self_defining_term(
     std::string_view type, std::string_view value, diagnostic_adder& add_diagnostic)
 {
@@ -66,6 +83,8 @@ context::A_t ca_constant::self_defining_term(
             case 'x':
             case 'X':
                 return ca_function::X2A(value, add_diagnostic).access_a();
+            default:
+                break;
         }
     }
     else if (type.size() == 2)
@@ -77,19 +96,15 @@ context::A_t ca_constant::self_defining_term(
                 switch (type.back())
                 {
                     case 'a':
-                    case 'A': {
-                        if (value.size() > 4)
-                        {
-                            add_diagnostic(diagnostic_op::error_CE007);
-                            return 0;
-                        }
-                        unsigned long long result = 0;
-                        for (unsigned char c : value)
-                            result = (result << 8) | c;
-                        return (context::A_t)result;
-                    }
-                    break;
+                    case 'A':
+                        return CA_selfdef(value, add_diagnostic);
+
+                    default:
+                        break;
                 }
+                break;
+
+            default:
                 break;
         }
     }

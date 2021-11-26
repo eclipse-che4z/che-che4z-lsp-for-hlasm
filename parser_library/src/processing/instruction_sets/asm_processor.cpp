@@ -483,14 +483,14 @@ void asm_processor::process_ORG(rebuilt_statement stmt)
             return;
 
         if (undefined_absolute_part)
-            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val),
+            hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val,
                 boundary,
                 offset,
                 reloc_expr->expression.get(),
                 std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
                 dep_solver.derive_current_dependency_evaluation_context());
         else
-            hlasm_ctx.ord_ctx.set_location_counter_value(std::move(reloc_val), boundary, offset);
+            hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset);
     }
     else
         hlasm_ctx.ord_ctx.set_available_location_counter_value(boundary, offset);

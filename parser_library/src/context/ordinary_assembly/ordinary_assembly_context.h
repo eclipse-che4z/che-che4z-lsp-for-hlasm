@@ -169,7 +169,7 @@ class ordinary_assembly_dependency_solver final : public dependency_solver
     bool allow_adding_literals = false;
 
 public:
-    ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
+    explicit ordinary_assembly_dependency_solver(ordinary_assembly_context& ord_context)
         : ord_context(ord_context)
         , literal_pool_generation(ord_context.current_literal_pool_generation())
         , unique_id(ord_context.next_unique_id())

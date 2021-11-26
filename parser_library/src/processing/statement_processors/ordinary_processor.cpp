@@ -238,7 +238,7 @@ void ordinary_processor::check_postponed_statements(
     static const checking::assembler_checker asm_checker;
     static const checking::machine_checker mach_checker;
 
-    for (auto& [stmt, dep_ctx] : stmts)
+    for (const auto& [stmt, dep_ctx] : stmts)
     {
         if (!stmt)
             continue;

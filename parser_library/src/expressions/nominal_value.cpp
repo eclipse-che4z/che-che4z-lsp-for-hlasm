@@ -72,7 +72,7 @@ nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs)
 size_t nominal_value_exprs::hash() const
 {
     auto result = (size_t)0x0c260c0f86f63b4e;
-    for (const auto& v : exprs)
+    for (const auto& e : exprs)
     {
         result = hash_combine(result,
             std::visit(
@@ -82,7 +82,7 @@ size_t nominal_value_exprs::hash() const
                     else
                         return v.hash();
                 },
-                v));
+                e));
     }
     return result;
 }
@@ -135,12 +135,12 @@ bool is_similar(const address_nominal& l, const address_nominal& r)
     return utils::is_similar(l, r, &address_nominal::displacement, &address_nominal::base);
 }
 
-bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r)
+bool is_similar(const nominal_value_exprs& left, const nominal_value_exprs& right)
 {
-    if (l.exprs.size() != r.exprs.size())
+    if (left.exprs.size() != right.exprs.size())
         return false;
 
-    for (size_t i = 0; i < l.exprs.size(); ++i)
+    for (size_t i = 0; i < left.exprs.size(); ++i)
     {
         if (!std::visit(
                 [](const auto& l, const auto& r) {
@@ -149,8 +149,8 @@ bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r)
                     else
                         return false;
                 },
-                l.exprs[i],
-                r.exprs[i]))
+                left.exprs[i],
+                right.exprs[i]))
             return false;
     }
     return true;

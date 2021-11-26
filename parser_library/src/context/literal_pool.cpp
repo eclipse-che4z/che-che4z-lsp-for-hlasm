@@ -64,8 +64,7 @@ void literal_pool::generate_pool(
 
     for (auto& [lit, size, alignment] : m_pending_literals)
     {
-        auto* type = lit->value->access_data_def_type();
-        if (!type)
+        if (!lit->value->access_data_def_type()) // unknown type
             continue;
 
         size = (semantics::data_def_operand::get_operand_value(*lit->value, solver).get_length() + 7) / 8;

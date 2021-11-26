@@ -74,14 +74,14 @@ protected:
         parser_impl& impl;
 
     public:
-        literal_controller(parser_impl& impl)
+        explicit literal_controller(parser_impl& impl)
             : impl(impl)
         {}
         literal_controller(parser_impl& impl, bool restore)
             : request(restore ? request_t::on : request_t::off)
             , impl(impl)
         {}
-        literal_controller(literal_controller&& oth)
+        literal_controller(literal_controller&& oth) noexcept
             : request(std::exchange(oth.request, request_t::none))
             , impl(oth.impl)
         {}

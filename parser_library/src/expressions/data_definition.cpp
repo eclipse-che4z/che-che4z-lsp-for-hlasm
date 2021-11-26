@@ -375,7 +375,7 @@ void data_definition::apply(mach_expr_visitor& visitor) const
 
 size_t hlasm_plugin::parser_library::expressions::data_definition::hash() const
 {
-    size_t ret = (size_t)0x65b40f329f97f6c9;
+    auto ret = (size_t)0x65b40f329f97f6c9;
     ret = hash_combine(ret, type);
     ret = hash_combine(ret, extension);
     if (length)

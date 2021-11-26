@@ -76,7 +76,7 @@ class literal_pool
         size_t size = 0;
         size_t alignment = 0;
 
-        pending_literal(const literal_definition* l) noexcept
+        explicit pending_literal(const literal_definition* l) noexcept
             : literal(l)
         {}
     };

@@ -145,13 +145,13 @@ void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
     while (defined)
     {
         defined = false;
-        for (auto& [target, dep_src_and_context] : dependencies_)
+        for (const auto& [target, dep_src_and_context] : dependencies_)
         {
             // resolve only symbol dependencies when resolver is not present
             if (resolver == nullptr && std::holds_alternative<space_ptr>(target))
                 continue;
 
-            auto&& [dep_src, context] = dep_src_and_context;
+            const auto& [dep_src, context] = dep_src_and_context;
 
             if (extract_dependencies(dep_src, context).empty()) // target no longer dependent on anything
             {
@@ -368,12 +368,12 @@ bool symbol_dependency_tables::check_loctr_cycle()
     std::unordered_map<dependant, dep_set> visited;
 
     // create graph
-    for (auto& [target, dep_src_loctr] : dependencies_)
+    for (const auto& [target, dep_src_loctr] : dependencies_)
     {
         if (!std::holds_alternative<space_ptr>(target))
             continue;
 
-        auto&& [dep_src, loctr] = dep_src_loctr;
+        const auto& [dep_src, loctr] = dep_src_loctr;
         auto new_deps = extract_dependencies(dep_src, loctr);
         if (!new_deps.empty() && std::holds_alternative<id_index>(new_deps.front()))
             continue;
