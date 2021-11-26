@@ -55,7 +55,7 @@ struct nominal_value_string final : public nominal_value_t
 };
 
 // Represents address in the form D(B)
-struct address_nominal : public context::dependable
+struct address_nominal final : public context::dependable
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
     address_nominal();

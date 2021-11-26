@@ -157,7 +157,7 @@ class empty_feature_provider final : public lsp::feature_provider
     {
         return {};
     }
-    lsp::document_symbol_list_s document_symbol(const std::string&, long long limit) const override { return {}; }
+    lsp::document_symbol_list_s document_symbol(const std::string&, long long) const override { return {}; }
 };
 } // namespace
 

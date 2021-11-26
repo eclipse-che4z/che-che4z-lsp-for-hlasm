@@ -14,6 +14,8 @@
 
 #include "mach_expression.h"
 
+#include <typeinfo>
+
 #include "mach_expr_term.h"
 
 using namespace hlasm_plugin::parser_library;

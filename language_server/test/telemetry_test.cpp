@@ -112,7 +112,7 @@ TEST(telemetry, telemetry_broker)
 
     //"textDocument/hover",R"#({"textDocument":{"uri":"file:///c%3A/test/stability.hlasm"},"position":{"line":0,"character":7}})#"_json),
 
-    std::thread lsp_thread([&broker, &lsp_server]() {
+    std::thread lsp_thread([&lsp_server]() {
         lsp_server.message_received(
             R"({"jsonrpc":"2.0","id":48,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///test_file"},"position":{"line":0,"character":2} }})"_json);
     });
