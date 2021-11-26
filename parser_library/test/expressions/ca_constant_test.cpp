@@ -77,4 +77,10 @@ TEST(ca_constant, self_def_term_valid_input)
         ASSERT_FALSE(add_diags.diagnostics_present);
         EXPECT_EQ(res, 15);
     }
+    {
+        diagnostic_adder add_diags;
+        auto res = ca_constant::self_defining_term("CA'A'", add_diags);
+        ASSERT_FALSE(add_diags.diagnostics_present);
+        EXPECT_EQ(res, 0x41);
+    }
 }
