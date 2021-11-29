@@ -356,7 +356,7 @@ const std::shared_ptr<const data_definition>& mach_expr_literal::get_data_defini
 
 context::id_index mach_expr_literal::get_literal_id(context::dependency_solver& solver) const
 {
-    return solver.get_literal_id(m_dd_text, m_data_definition);
+    return solver.get_literal_id(m_dd_text, m_data_definition, get_range());
 }
 
 } // namespace hlasm_plugin::parser_library::expressions

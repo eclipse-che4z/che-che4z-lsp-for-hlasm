@@ -463,7 +463,7 @@ std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> symbol_depe
     for (auto it = postponed_stmts_.begin(); it != postponed_stmts_.end();)
     {
         auto node = postponed_stmts_.extract(it++);
-        res.push_back(std::make_pair(std::move(node.key()), std::move(node.mapped())));
+        res.emplace_back(std::move(node.key()), std::move(node.mapped()));
     }
 
     postponed_stmts_.clear();

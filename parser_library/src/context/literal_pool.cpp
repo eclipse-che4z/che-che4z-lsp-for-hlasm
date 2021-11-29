@@ -25,7 +25,7 @@ namespace hlasm_plugin::parser_library::context {
 
 id_index literal_pool::add_literal(const std::string& literal_text,
     const std::shared_ptr<const expressions::data_definition>& dd,
-    location loc,
+    range r,
     size_t unique_id)
 {
     unique_id = dd->references_loctr ? unique_id : 0;
@@ -34,7 +34,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
 
     // TODO: processing stack
     auto [it, inserted] = m_literals.emplace(
-        literal_definition { literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(loc), {} });
+        literal_definition { literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(r), {} });
     // even if we end up inserting a duplicate
     // we need to try to insert const expressions::data_definition->iterator relation
     // because a single literal may be referenced by independent data_definitions
@@ -81,7 +81,7 @@ void literal_pool::generate_pool(
 
     constexpr auto sectalign = doubleword;
     ord_ctx.align(sectalign);
-    for (auto& [lit, size, alignment] : m_pending_literals)
+    for (const auto& [lit, size, alignment] : m_pending_literals)
     {
         // TODO: warn on align > sectalign
         if (size == 0)
@@ -97,7 +97,9 @@ void literal_pool::generate_pool(
         ord_ctx.reserve_storage_area(size, no_align);
 
         if (!cycle_ok)
-            diags.add_diagnostic(diagnostic_op::error_E033(range(lit->loc.pos))); // TODO: full range
+            diags.add_diagnostic(diagnostic_op::error_E033(lit->r));
+        else if (lit->value->get_dependencies(solver).contains_dependencies())
+        {}
     }
 
     m_pending_literals.clear();

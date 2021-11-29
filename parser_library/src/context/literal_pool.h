@@ -35,7 +35,7 @@ class literal_pool
         size_t unique_id;
         std::shared_ptr<const expressions::data_definition> value;
 
-        location loc;
+        range r;
         processing_stack_t stack;
 
         bool is_similar(const literal_definition&) const noexcept;
@@ -86,7 +86,7 @@ class literal_pool
 public:
     id_index add_literal(const std::string& literal_text,
         const std::shared_ptr<const expressions::data_definition>& dd,
-        location loc,
+        range r,
         size_t unique_id);
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;

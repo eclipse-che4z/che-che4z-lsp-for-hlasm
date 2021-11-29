@@ -267,7 +267,7 @@ context::SET_t ca_symbol_attribute::evaluate_literal(
 {
     context::ordinary_assembly_dependency_solver solver(
         eval_ctx.hlasm_ctx.ord_ctx, eval_ctx.hlasm_ctx.ord_ctx.align(context::no_align));
-    (void)solver.get_literal_id(lit.text, lit.dd);
+    (void)solver.get_literal_id(lit.text, lit.dd, expr_range);
 
     if (attribute == context::data_attr_kind::D)
         return false;

@@ -30,7 +30,8 @@ class dependency_solver
 public:
     virtual const symbol* get_symbol(id_index name) const = 0;
     virtual std::optional<address> get_loctr() const = 0;
-    virtual id_index get_literal_id(const std::string&, const std::shared_ptr<const expressions::data_definition>&) = 0;
+    virtual id_index get_literal_id(
+        const std::string&, const std::shared_ptr<const expressions::data_definition>&, const range& r) = 0;
 
 protected:
     ~dependency_solver() = default;
