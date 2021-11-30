@@ -38,17 +38,20 @@ id_index literal_pool::add_literal(const std::string& literal_text,
 
     // TODO: processing stack
     // TODO: better uniqueness detection of dd
-    auto [it, inserted] = m_literals.emplace(literal_definition {
-        literal_text, m_current_literal_pool_generation, unique_id, dd, std::move(r), {}, std::move(loctr) });
+    auto [it, inserted] = m_literals.try_emplace(
+        literal_id { m_current_literal_pool_generation, unique_id, dd }, literal_text, std::move(r), std::move(loctr));
     // even if we end up inserting a duplicate
     // we need to try to insert const expressions::data_definition->iterator relation
     // because a single literal may be referenced by independent data_definitions
     m_literals_genmap.try_emplace(literal_id { m_current_literal_pool_generation, unique_id, dd }, it);
     // but we should not try to put logical duplicates on the pending queue
     if (inserted)
-        m_pending_literals.emplace_back(&*it);
+    {
+        m_pending_literals.emplace_back(it);
+        it->second.stack = hlasm_ctx.processing_stack();
+    }
 
-    return &it->text;
+    return &it->second.text;
 }
 
 id_index literal_pool::get_literal(
@@ -58,22 +61,63 @@ id_index literal_pool::get_literal(
     auto it = m_literals_genmap.find(literal_id { generation, unique_id, dd });
     if (it == m_literals_genmap.end())
         return nullptr;
-    return &it->second->text;
+    return &it->second->second.text;
 }
 
-void literal_pool::generate_pool(hlasm_context& hlasm_ctx, dependency_solver& solver, diagnostic_op_consumer& diags)
+
+class literal_pool::literal_postponed_statement : public context::postponed_statement,
+                                                  public processing::resolved_statement
+{
+    const literal_pool::literal_details* details;
+    semantics::operands_si op;
+    processing::op_code op_code;
+
+    static const semantics::remarks_si empty_remarks;
+    static const semantics::label_si empty_label;
+    static const semantics::instruction_si empty_instr;
+    static const processing::processing_format dc_format;
+
+public:
+    literal_postponed_statement(const std::shared_ptr<const expressions::data_definition>& dd,
+        const literal_pool::literal_details& details,
+        id_storage& ids)
+        : details(&details)
+        , op(details.r, {})
+        , op_code(ids.add("DC"), instruction_type::ASM)
+    {
+        op.value.push_back(std::make_unique<semantics::data_def_operand>(dd, details.r));
+    }
+    const processing_stack_t& location_stack() const override { return details->stack; }
+    const processing::resolved_statement* resolved_stmt() const override { return this; }
+    const processing::op_code& opcode_ref() const override { return op_code; }
+    processing::processing_format format_ref() const override { return dc_format; }
+    const semantics::operands_si& operands_ref() const override { return op; }
+    const semantics::remarks_si& remarks_ref() const override { return empty_remarks; }
+    const range& stmt_range_ref() const override { return details->r; }
+    const semantics::label_si& label_ref() const override { return empty_label; }
+    const semantics::instruction_si& instruction_ref() const override { return empty_instr; }
+    std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override { return {}; };
+};
+const semantics::remarks_si literal_pool::literal_postponed_statement::empty_remarks({}, {});
+const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});
+const semantics::instruction_si literal_pool::literal_postponed_statement::empty_instr(range {});
+const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
+    processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
+
+void literal_pool::generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
     if (m_pending_literals.empty())
         return;
 
-    for (auto& [lit, size, alignment] : m_pending_literals)
+    for (auto& [it, size, alignment] : m_pending_literals)
     {
-        if (!lit->value->access_data_def_type()) // unknown type
+        const auto& lit = it->first.lit;
+        if (!lit->access_data_def_type()) // unknown type
             continue;
 
-        size = (semantics::data_def_operand::get_operand_value(*lit->value, solver).get_length() + 7) / 8;
+        size = (semantics::data_def_operand::get_operand_value(*lit, solver).get_length() + 7) / 8;
         if (size == 0)
             continue;
 
@@ -88,75 +132,32 @@ void literal_pool::generate_pool(hlasm_context& hlasm_ctx, dependency_solver& so
     constexpr auto sectalign = doubleword;
     ord_ctx.align(sectalign);
 
-    for (const auto& [lit, size, alignment] : m_pending_literals)
+    for (const auto& [it, size, alignment] : m_pending_literals)
     {
+        const auto& lit_key = it->first;
+        const auto& lit = lit_key.lit;
+        const auto& lit_val = it->second;
+
         // TODO: warn on align > sectalign
         if (size == 0)
             break;
 
-        bool cycle_ok = ord_ctx.create_symbol(&lit->text,
+        bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
             ord_ctx.align(no_align),
             symbol_attributes(symbol_origin::DAT,
-                ebcdic_encoding::a2e[(unsigned char)lit->value->get_type_attribute()],
-                lit->value->get_length_attribute(solver)),
+                ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
+                lit->get_length_attribute(solver)),
             {});
 
         ord_ctx.reserve_storage_area(size, no_align);
 
         if (!cycle_ok)
-            diags.add_diagnostic(diagnostic_op::error_E033(lit->r));
-        else if (lit->value->get_dependencies(solver).contains_dependencies())
+            diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
+        else if (lit->get_dependencies(solver).contains_dependencies())
         {
-            struct literal_postponed_statement : public context::postponed_statement,
-                                                 public processing::resolved_statement
-            {
-                const literal_pool::literal_definition* lit;
-                semantics::operands_si op;
-                processing::op_code op_code;
-
-            public:
-                literal_postponed_statement(const literal_pool::literal_definition* lit, id_storage& ids)
-                    : lit(lit)
-                    , op(lit->r, {})
-                    , op_code(ids.add("DC"), instruction_type::ASM)
-                {
-                    op.value.push_back(std::make_unique<semantics::data_def_operand>(lit->value, lit->r));
-                }
-
-                const processing_stack_t& location_stack() const override { return lit->stack; }
-
-                const processing::resolved_statement* resolved_stmt() const override { return this; }
-
-                const processing::op_code& opcode_ref() const override { return op_code; }
-                processing::processing_format format_ref() const override
-                {
-                    return processing::processing_format(processing::processing_kind::ORDINARY,
-                        processing::processing_form::ASM,
-                        processing::operand_occurence::PRESENT);
-                }
-                const semantics::operands_si& operands_ref() const override { return op; }
-                const semantics::remarks_si& remarks_ref() const override
-                {
-                    static const semantics::remarks_si empty_remarks({}, {});
-                    return empty_remarks;
-                }
-                const range& stmt_range_ref() const override { return lit->r; }
-                const semantics::label_si& label_ref() const override
-                {
-                    static const semantics::label_si empty_label(range {});
-                    return empty_label;
-                }
-                const semantics::instruction_si& instruction_ref() const override
-                {
-                    static const semantics::instruction_si empty_instr(range {});
-                    return empty_instr;
-                }
-                std::pair<const diagnostic_op*, const diagnostic_op*> diagnostics() const override { return {}; };
-            };
-
             auto adder = ord_ctx.symbol_dependencies.add_dependencies(
-                std::make_unique<literal_postponed_statement>(lit, hlasm_ctx.ids()),
-                { lit->loctr, lit->generation, lit->unique_id });
+                std::make_unique<literal_postponed_statement>(lit, lit_val, hlasm_ctx.ids()),
+                { lit_val.loctr, lit_key.generation, lit_key.unique_id });
             adder.add_dependency();
             adder.finish();
         }
@@ -166,14 +167,14 @@ void literal_pool::generate_pool(hlasm_context& hlasm_ctx, dependency_solver& so
     ++m_current_literal_pool_generation;
 }
 
-bool literal_pool::literal_definition::is_similar(const literal_definition& ld) const noexcept
+bool literal_pool::literal_id::is_similar(const literal_id& ld) const noexcept
 {
-    return generation == ld.generation && unique_id == ld.unique_id && utils::is_similar(value, ld.value);
+    return generation == ld.generation && unique_id == ld.unique_id && utils::is_similar(lit, ld.lit);
 }
 
-size_t literal_pool::literal_definition_hasher::operator()(const literal_definition& ld) const noexcept
+size_t literal_pool::literal_definition_hasher::operator()(const literal_id& ld) const noexcept
 {
-    return ld.value->hash() ^ ld.generation ^ ld.unique_id;
+    return ld.lit->hash() ^ ld.generation ^ ld.unique_id;
 }
 
 } // namespace hlasm_plugin::parser_library::context

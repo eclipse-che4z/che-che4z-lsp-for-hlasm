@@ -35,7 +35,7 @@ const std::unordered_map<id_index, symbol>& ordinary_assembly_context::symbols()
 
 ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
-    , m_literals(std::make_unique<literal_pool>())
+    , m_literals(std::make_unique<literal_pool>(hlasm_ctx))
     , ids(storage)
     , hlasm_ctx_(hlasm_ctx)
     , symbol_dependencies(*this)
@@ -350,7 +350,7 @@ size_t ordinary_assembly_context::current_literal_pool_generation() const { retu
 
 void ordinary_assembly_context::generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags)
 {
-    m_literals->generate_pool(hlasm_ctx_, solver, diags);
+    m_literals->generate_pool(solver, diags);
 }
 
 const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) const

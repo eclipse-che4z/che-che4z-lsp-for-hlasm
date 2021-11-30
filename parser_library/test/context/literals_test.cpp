@@ -281,3 +281,21 @@ TEST(literals, missing_label_in_literal)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
 }
+
+TEST(literals, processing_stack_in_messages)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         LARL 0,=A(B)
+         MEND
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    auto& d = a.diags();
+    ASSERT_TRUE(matches_message_codes(d, { "E010" }));
+    EXPECT_EQ(d.front().related.size(), 1);
+}

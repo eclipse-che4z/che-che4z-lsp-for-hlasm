@@ -21,6 +21,7 @@
 #include "expressions/data_definition.h"
 #include "id_storage.h"
 #include "location.h"
+#include "processing_context.h"
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {
@@ -28,31 +29,40 @@ class hlasm_context;
 
 class literal_pool
 {
-    struct literal_definition
-    {
-        std::string text;
-        size_t generation;
-        size_t unique_id;
-        std::shared_ptr<const expressions::data_definition> value;
-
-        range r;
-        processing_stack_t stack;
-        std::optional<address> loctr;
-
-        bool is_similar(const literal_definition&) const noexcept;
-    };
-    struct literal_definition_hasher
-    {
-        size_t operator()(const literal_definition&) const noexcept;
-    };
-    size_t m_current_literal_pool_generation = 0;
-
     struct literal_id
     {
         size_t generation;
         size_t unique_id;
         std::shared_ptr<const expressions::data_definition> lit;
+
+        bool is_similar(const literal_id&) const noexcept;
     };
+    struct literal_details
+    {
+        std::string text;
+        range r;
+        std::optional<address> loctr;
+        processing_stack_t stack;
+
+        literal_details(std::string text, range r, std::optional<address> loctr)
+            : text(std::move(text))
+            , r(r)
+            , loctr(std::move(loctr))
+        {}
+
+        literal_details(std::string text, range r, std::optional<address> loctr, processing_stack_t stack)
+            : text(std::move(text))
+            , r(r)
+            , loctr(std::move(loctr))
+            , stack(std::move(stack))
+        {}
+    };
+    class literal_postponed_statement; 
+    struct literal_definition_hasher
+    {
+        size_t operator()(const literal_id&) const noexcept;
+    };
+    size_t m_current_literal_pool_generation = 0;
 
     struct literal_id_helper
     {
@@ -67,24 +77,30 @@ class literal_pool
         }
     };
 
-    std::unordered_set<literal_definition, literal_definition_hasher, decltype(utils::is_similar)> m_literals;
+    std::unordered_map<literal_id, literal_details, literal_definition_hasher, decltype(utils::is_similar)> m_literals;
     std::unordered_map<literal_id, decltype(m_literals)::const_iterator, literal_id_helper, literal_id_helper>
         m_literals_genmap;
 
     struct pending_literal
     {
-        const literal_definition* literal;
+        decltype(m_literals)::const_iterator literal;
         size_t size = 0;
         size_t alignment = 0;
 
-        explicit pending_literal(const literal_definition* l) noexcept
+        explicit pending_literal(decltype(m_literals)::const_iterator l) noexcept
             : literal(l)
         {}
     };
 
     std::vector<pending_literal> m_pending_literals;
 
+    hlasm_context& hlasm_ctx;
+
 public:
+    literal_pool(hlasm_context& hlasm_ctx)
+        : hlasm_ctx(hlasm_ctx)
+    {}
+
     id_index add_literal(const std::string& literal_text,
         const std::shared_ptr<const expressions::data_definition>& dd,
         range r,
@@ -93,7 +109,7 @@ public:
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
-    void generate_pool(hlasm_context& hlasm_ctx, dependency_solver& solver, diagnostic_op_consumer& diags);
+    void generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 
     // testing
