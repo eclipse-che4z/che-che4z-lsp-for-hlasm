@@ -30,7 +30,8 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     const std::shared_ptr<const expressions::data_definition>& dd,
     range r,
     size_t unique_id,
-    std::optional<address> loctr)
+    std::optional<address> loctr,
+    bool align_on_halfword)
 {
     unique_id = dd->references_loctr ? unique_id : 0;
     if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
@@ -50,6 +51,7 @@ id_index literal_pool::add_literal(const std::string& literal_text,
         m_pending_literals.emplace_back(it);
         it->second.stack = hlasm_ctx.processing_stack();
     }
+    it->second.align_on_halfword |= align_on_halfword;
 
     return &it->second.text;
 }
@@ -143,7 +145,7 @@ void literal_pool::generate_pool(dependency_solver& solver, diagnostic_op_consum
             break;
 
         bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
-            ord_ctx.align(no_align),
+            ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
                 lit->get_length_attribute(solver)),

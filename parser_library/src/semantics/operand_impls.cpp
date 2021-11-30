@@ -17,6 +17,7 @@
 #include "context/instruction.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
+#include "expressions/mach_expr_visitor.h"
 #include "expressions/mach_operator.h"
 #include "operand_visitor.h"
 
@@ -661,6 +662,18 @@ join_operands_result join_operands(const operand_list& operands)
     return result;
 }
 
+struct request_halfword_alignment : public expressions::mach_expr_visitor
+{
+    // Inherited via mach_expr_visitor
+    void visit(const expressions::mach_expr_constant&) override {}
+    void visit(const expressions::mach_expr_data_attr&) override {}
+    void visit(const expressions::mach_expr_symbol&) override {}
+    void visit(const expressions::mach_expr_location_counter&) override {}
+    void visit(const expressions::mach_expr_self_def&) override {}
+    void visit(const expressions::mach_expr_default&) override {}
+    void visit(const expressions::mach_expr_literal& expr) override { expr.referenced_by_reladdr(); }
+};
+
 void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction)
 {
     if (instruction->empty())
@@ -704,6 +717,10 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_
         if (auto* mach_op = operand->access_mach(); mach_op != nullptr && mach_op->kind == mach_kind::EXPR)
         {
             auto& mach_expr = mach_op->access_expr()->expression;
+
+            request_halfword_alignment visitor;
+            mach_expr->apply(visitor);
+
             auto range = mach_expr->get_range();
             mach_expr = std::make_unique<expressions::mach_expr_binary<expressions::rel_addr>>(
                 std::make_unique<expressions::mach_expr_location_counter>(range), std::move(mach_expr), range);

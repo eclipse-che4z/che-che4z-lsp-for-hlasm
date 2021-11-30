@@ -201,7 +201,8 @@ public:
     std::optional<address> get_loctr() const override;
     id_index get_literal_id(const std::string& text,
         const std::shared_ptr<const expressions::data_definition>& lit,
-        const range& r) override;
+        const range& r,
+        bool align_on_halfword) override;
 
     dependency_evaluation_context derive_current_dependency_evaluation_context() const;
 };

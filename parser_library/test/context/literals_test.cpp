@@ -299,3 +299,47 @@ TEST(literals, processing_stack_in_messages)
     ASSERT_TRUE(matches_message_codes(d, { "E010" }));
     EXPECT_EQ(d.front().related.size(), 1);
 }
+
+TEST(literals, halfward_alignment)
+{
+    std::string input = R"(
+         LARL 0,=C'0'
+         LARL 0,=C'1'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(literals, halfward_alignment_expression)
+{
+    std::string input = R"(
+         LARL 0,=C'0'
+         LARL 0,2+=C'1'-2
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(literals, halfward_alignment_delayed)
+{
+    std::string input = R"(
+         LARL 0,=C'0'
+         LA   0,=C'1'
+         LARL 0,=C'1'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 19);
+}

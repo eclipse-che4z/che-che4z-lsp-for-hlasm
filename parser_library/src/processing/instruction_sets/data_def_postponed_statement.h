@@ -64,9 +64,10 @@ struct data_def_postponed_statement : public postponed_statement_impl, public co
             }
             context::id_index get_literal_id(const std::string& text,
                 const std::shared_ptr<const expressions::data_definition>& dd,
-                const range& r) override
+                const range& r,
+                bool align_on_halfword) override
             {
-                return base.get_literal_id(text, dd, r);
+                return base.get_literal_id(text, dd, r, align_on_halfword);
             }
         } solver(_solver);
 

@@ -230,7 +230,7 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
     }
     else if (lit)
     {
-        return lit->get_data_definition()->get_dependencies(solver);
+        return lit->get_data_definition().get_dependencies(solver);
     }
 
     return context::dependency_collector(true);
@@ -262,16 +262,16 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
     else if (lit)
     {
         (void)lit->evaluate(solver);
-        if (lit->get_data_definition()->get_dependencies(solver).contains_dependencies())
+        if (lit->get_data_definition().get_dependencies(solver).contains_dependencies())
         {
             // TODO: something should probably be done here
         }
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
-            ebcdic_encoding::a2e[(unsigned char)dd->get_type_attribute()],
-            dd->get_length_attribute(solver),
-            dd->get_scale_attribute(solver),
-            dd->get_integer_attribute(solver));
+            ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
+            dd.get_length_attribute(solver),
+            dd.get_scale_attribute(solver),
+            dd.get_integer_attribute(solver));
         if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
             && !attrs.can_have_SI_attr())
         {
@@ -302,18 +302,18 @@ size_t mach_expr_data_attr::hash() const
 bool mach_expr_literal::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_literal&>(expr);
-    return utils::is_similar(m_data_definition, e.m_data_definition);
+    return utils::is_similar(m_literal_data->dd, e.m_literal_data->dd);
 }
 
 mach_expr_literal::mach_expr_literal(range rng, data_definition dd, std::string dd_text)
     : mach_expression(rng)
-    , m_data_definition(std::make_shared<data_definition>(std::move(dd)))
+    , m_literal_data(std::make_shared<literal_data>(std::move(dd)))
     , m_dd_text(std::move(dd_text))
 {}
 
 context::dependency_collector mach_expr_literal::get_dependencies(context::dependency_solver& solver) const
 {
-    auto length_deps = m_data_definition->get_length_dependencies(solver);
+    auto length_deps = m_literal_data->dd.get_length_dependencies(solver);
     // literal size has to be evaluable at the definition point (ASMA151E)
     if (length_deps.has_error || length_deps.contains_dependencies())
         return context::dependency_collector(true);
@@ -347,16 +347,16 @@ void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(
 
 void mach_expr_literal::collect_diags() const {}
 
-size_t mach_expr_literal::hash() const { return m_data_definition->hash(); }
+size_t mach_expr_literal::hash() const { return m_literal_data->dd.hash(); }
 
-const std::shared_ptr<const data_definition>& mach_expr_literal::get_data_definition() const
-{
-    return m_data_definition;
-}
+const data_definition& mach_expr_literal::get_data_definition() const { return m_literal_data->dd; }
 
 context::id_index mach_expr_literal::get_literal_id(context::dependency_solver& solver) const
 {
-    return solver.get_literal_id(m_dd_text, m_data_definition, get_range());
+    return solver.get_literal_id(m_dd_text,
+        std::shared_ptr<const data_definition>(m_literal_data, &m_literal_data->dd),
+        get_range(),
+        m_literal_data->referenced_by_reladdr);
 }
 
 } // namespace hlasm_plugin::parser_library::expressions

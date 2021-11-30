@@ -50,7 +50,17 @@ class mach_expr_literal final : public mach_expression
 {
     bool do_is_similar(const mach_expression& expr) const override;
 
-    std::shared_ptr<const data_definition> m_data_definition;
+    struct literal_data
+    {
+        const data_definition dd;
+        bool referenced_by_reladdr = false;
+
+        literal_data(data_definition dd)
+            : dd(std::move(dd))
+        {}
+    };
+
+    std::shared_ptr<literal_data> m_literal_data;
     std::string m_dd_text;
 
 public:
@@ -68,11 +78,13 @@ public:
 
     size_t hash() const override;
 
-    const std::shared_ptr<const data_definition>& get_data_definition() const;
+    const data_definition& get_data_definition() const;
 
     const std::string& get_data_definition_text() const { return m_dd_text; }
 
     context::id_index get_literal_id(context::dependency_solver& solver) const;
+
+    void referenced_by_reladdr() const { m_literal_data->referenced_by_reladdr = true; }
 };
 
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)

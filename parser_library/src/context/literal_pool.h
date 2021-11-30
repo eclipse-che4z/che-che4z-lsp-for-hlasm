@@ -43,6 +43,7 @@ class literal_pool
         range r;
         std::optional<address> loctr;
         processing_stack_t stack;
+        bool align_on_halfword = false;
 
         literal_details(std::string text, range r, std::optional<address> loctr)
             : text(std::move(text))
@@ -57,7 +58,7 @@ class literal_pool
             , stack(std::move(stack))
         {}
     };
-    class literal_postponed_statement; 
+    class literal_postponed_statement;
     struct literal_definition_hasher
     {
         size_t operator()(const literal_id&) const noexcept;
@@ -97,7 +98,7 @@ class literal_pool
     hlasm_context& hlasm_ctx;
 
 public:
-    literal_pool(hlasm_context& hlasm_ctx)
+    explicit literal_pool(hlasm_context& hlasm_ctx)
         : hlasm_ctx(hlasm_ctx)
     {}
 
@@ -105,7 +106,8 @@ public:
         const std::shared_ptr<const expressions::data_definition>& dd,
         range r,
         size_t unique_id,
-        std::optional<address> loctr);
+        std::optional<address> loctr,
+        bool align_on_halfword);
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
