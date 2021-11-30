@@ -269,3 +269,15 @@ TEST(literals, strange_literals)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(literals, missing_label_in_literal)
+{
+    std::string input = R"(
+    LARL 0,=A(LABEL)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+}

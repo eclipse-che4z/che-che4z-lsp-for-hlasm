@@ -32,7 +32,7 @@ struct postponed_statement
 {
     virtual const processing_stack_t& location_stack() const = 0;
 
-    const processing::postponed_statement_impl* impl() const;
+    virtual const processing::resolved_statement* resolved_stmt() const = 0;
 
     virtual ~postponed_statement() = default;
 };

@@ -518,6 +518,11 @@ data_def_operand::data_def_operand(expressions::data_definition val, range opera
     , value(std::make_shared<expressions::data_definition>(std::move(val)))
 {}
 
+data_def_operand::data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, range operand_range)
+    : evaluable_operand(operand_type::DAT, std::move(operand_range))
+    , value(std::move(dd_ptr))
+{}
+
 
 context::dependency_collector data_def_operand::get_length_dependencies(context::dependency_solver& info) const
 {

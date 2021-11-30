@@ -245,14 +245,15 @@ void ordinary_processor::check_postponed_statements(
 
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx);
 
-        switch (stmt->impl()->opcode_ref().type)
+        const auto* rs = stmt->resolved_stmt();
+        switch (rs->opcode_ref().type)
         {
             case hlasm_plugin::parser_library::context::instruction_type::MACH:
-                low_language_processor::check(*stmt->impl(), stmt->location_stack(), dep_solver, mach_checker, *this);
+                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);
                 break;
 
             case hlasm_plugin::parser_library::context::instruction_type::ASM:
-                low_language_processor::check(*stmt->impl(), stmt->location_stack(), dep_solver, asm_checker, *this);
+                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, asm_checker, *this);
                 break;
 
             default:

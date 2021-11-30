@@ -325,8 +325,9 @@ struct string_assembler_operand : assembler_operand
 struct data_def_operand final : evaluable_operand
 {
     data_def_operand(expressions::data_definition data_def, const range operand_range);
+    data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, const range operand_range);
 
-    std::shared_ptr<expressions::data_definition> value;
+    std::shared_ptr<const expressions::data_definition> value;
 
     context::dependency_collector get_length_dependencies(context::dependency_solver& info) const;
 

@@ -24,7 +24,7 @@
 #include "utils/similar.h"
 
 namespace hlasm_plugin::parser_library::context {
-class ordinary_assembly_context;
+class hlasm_context;
 
 class literal_pool
 {
@@ -37,6 +37,7 @@ class literal_pool
 
         range r;
         processing_stack_t stack;
+        std::optional<address> loctr;
 
         bool is_similar(const literal_definition&) const noexcept;
     };
@@ -50,7 +51,7 @@ class literal_pool
     {
         size_t generation;
         size_t unique_id;
-        const expressions::data_definition* lit;
+        std::shared_ptr<const expressions::data_definition> lit;
     };
 
     struct literal_id_helper
@@ -58,7 +59,7 @@ class literal_pool
         size_t operator()(const literal_id& p) const noexcept
         {
             return std::hash<size_t>()(p.generation) ^ std::hash<size_t>()(p.unique_id)
-                ^ std::hash<const expressions::data_definition*>()(p.lit);
+                ^ std::hash<const expressions::data_definition*>()(p.lit.get());
         }
         bool operator()(const literal_id& l, const literal_id& r) const noexcept
         {
@@ -87,11 +88,12 @@ public:
     id_index add_literal(const std::string& literal_text,
         const std::shared_ptr<const expressions::data_definition>& dd,
         range r,
-        size_t unique_id);
+        size_t unique_id,
+        std::optional<address> loctr);
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
-    void generate_pool(ordinary_assembly_context& ord_ctx, dependency_solver& solver, diagnostic_op_consumer& diags);
+    void generate_pool(hlasm_context& hlasm_ctx, dependency_solver& solver, diagnostic_op_consumer& diags);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 
     // testing

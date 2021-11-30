@@ -16,11 +16,4 @@
 
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
-namespace hlasm_plugin::parser_library::context {
-
-const processing::postponed_statement_impl* postponed_statement::impl() const
-{
-    return static_cast<const processing::postponed_statement_impl*>(this);
-}
-
-} // namespace hlasm_plugin::parser_library::context
+namespace hlasm_plugin::parser_library::context {} // namespace hlasm_plugin::parser_library::context

@@ -33,6 +33,8 @@ struct postponed_statement_impl : public context::postponed_statement, public re
     rebuilt_statement stmt;
     context::processing_stack_t stmt_location_stack;
 
+    const processing::resolved_statement* resolved_stmt() const override { return this; }
+
     const semantics::label_si& label_ref() const override { return stmt.label_ref(); }
     const semantics::instruction_si& instruction_ref() const override { return stmt.instruction_ref(); }
     const semantics::operands_si& operands_ref() const override { return stmt.operands_ref(); }

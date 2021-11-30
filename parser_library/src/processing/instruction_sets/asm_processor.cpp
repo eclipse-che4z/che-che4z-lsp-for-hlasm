@@ -267,15 +267,16 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                 sp, dynamic_cast<const data_def_postponed_statement<instr_type>*>(&*adder.source_stmt));
         }
         else
-            hlasm_ctx.ord_ctx.reserve_storage_area(data_def_postponed_statement<instr_type>::get_operands_length(
-                                                       adder.source_stmt->impl()->operands_ref().value, dep_solver),
+            hlasm_ctx.ord_ctx.reserve_storage_area(
+                data_def_postponed_statement<instr_type>::get_operands_length(
+                    adder.source_stmt->resolved_stmt()->operands_ref().value, dep_solver),
                 context::no_align);
 
         bool cycle_ok = true;
 
         if (label != context::id_storage::empty_id)
         {
-            auto data_op = adder.source_stmt->impl()->operands_ref().value.front()->access_data_def();
+            auto data_op = adder.source_stmt->resolved_stmt()->operands_ref().value.front()->access_data_def();
 
             if (data_op->value->length && data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
                 cycle_ok = adder.add_dependency(label, context::data_attr_kind::L, data_op->value->length.get());
@@ -287,8 +288,8 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         adder.add_dependency();
 
         if (!cycle_ok)
-            add_diagnostic(
-                diagnostic_op::error_E033(adder.source_stmt->impl()->operands_ref().value.front()->operand_range));
+            add_diagnostic(diagnostic_op::error_E033(
+                adder.source_stmt->resolved_stmt()->operands_ref().value.front()->operand_range));
 
         adder.finish();
     }

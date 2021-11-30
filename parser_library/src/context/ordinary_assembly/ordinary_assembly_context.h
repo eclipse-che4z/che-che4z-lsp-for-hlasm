@@ -54,7 +54,7 @@ class ordinary_assembly_context
 
     // access id storage
     id_storage& ids;
-    const hlasm_context& hlasm_ctx_;
+    hlasm_context& hlasm_ctx_;
 
 public:
     // access sections
@@ -66,7 +66,7 @@ public:
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx);
+    ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx);
     ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
     ~ordinary_assembly_context();
 

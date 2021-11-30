@@ -33,7 +33,7 @@ const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections
 
 const std::unordered_map<id_index, symbol>& ordinary_assembly_context::symbols() const { return symbols_; }
 
-ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx)
+ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
     , m_literals(std::make_unique<literal_pool>())
     , ids(storage)
@@ -350,7 +350,7 @@ size_t ordinary_assembly_context::current_literal_pool_generation() const { retu
 
 void ordinary_assembly_context::generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags)
 {
-    m_literals->generate_pool(*this, solver, diags);
+    m_literals->generate_pool(hlasm_ctx_, solver, diags);
 }
 
 const symbol* ordinary_assembly_dependency_solver::get_symbol(id_index name) const
@@ -366,7 +366,7 @@ id_index ordinary_assembly_dependency_solver::get_literal_id(
     const std::string& text, const std::shared_ptr<const expressions::data_definition>& lit, const range& r)
 {
     if (allow_adding_literals)
-        return ord_context.m_literals->add_literal(text, lit, r, unique_id);
+        return ord_context.m_literals->add_literal(text, lit, r, unique_id, get_loctr());
     else
         return ord_context.m_literals->get_literal(literal_pool_generation, lit, unique_id);
 }

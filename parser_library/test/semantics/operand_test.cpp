@@ -136,7 +136,7 @@ TEST(operand, access_operand)
     EXPECT_TRUE(access_asm_op(asm_kind::STRING, &sao));
 
     // datadef operand
-    data_def_operand ddo({}, range());
+    data_def_operand ddo(expressions::data_definition {}, range());
     EXPECT_TRUE(access_op(operand_type::DAT, &ddo));
 
     // ca operand

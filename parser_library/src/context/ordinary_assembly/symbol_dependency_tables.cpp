@@ -92,7 +92,7 @@ struct resolve_dependant_visitor
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
             resolver->resolve_unknown_loctr_dependency(sp,
                 val.get_reloc(),
-                dependency_source_stmts_.find(sp)->second.stmt_ref->first.get()->impl()->stmt_range_ref(),
+                dependency_source_stmts_.find(sp)->second.stmt_ref->first->resolved_stmt()->stmt_range_ref(),
                 dep_ctx);
         else
             space::resolve(sp, length);
