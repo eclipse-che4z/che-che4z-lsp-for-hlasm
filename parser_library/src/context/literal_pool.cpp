@@ -37,8 +37,6 @@ id_index literal_pool::add_literal(const std::string& literal_text,
     if (auto lit = get_literal(m_current_literal_pool_generation, dd, unique_id))
         return lit;
 
-    // TODO: processing stack
-    // TODO: better uniqueness detection of dd
     auto [it, inserted] = m_literals.try_emplace(
         literal_id { m_current_literal_pool_generation, unique_id, dd }, literal_text, std::move(r), std::move(loctr));
     // even if we end up inserting a duplicate

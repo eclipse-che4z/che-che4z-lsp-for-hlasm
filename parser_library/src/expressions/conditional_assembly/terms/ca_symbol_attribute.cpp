@@ -105,7 +105,7 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
     }
     else if (std::holds_alternative<ca_literal_def>(symbol))
     {
-        // TODO: ???
+        // everything needs to be defined
         return undef_sym_set();
     }
     else
@@ -121,10 +121,6 @@ void ca_symbol_attribute::resolve_expression_tree(context::SET_t_enum kind)
         add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (std::holds_alternative<semantics::vs_ptr>(symbol))
         ca_var_sym::resolve_expression_tree_vs(std::get<semantics::vs_ptr>(symbol));
-    else if (std::holds_alternative<ca_literal_def>(symbol))
-    {
-        // TODO:
-    }
 }
 
 void ca_symbol_attribute::collect_diags() const
@@ -137,7 +133,8 @@ void ca_symbol_attribute::collect_diags() const
     }
     else if (std::holds_alternative<ca_literal_def>(symbol))
     {
-        // TODO:
+        auto&& lit = std::get<ca_literal_def>(symbol);
+        collect_diags_from_child(*lit.dd);
     }
 }
 

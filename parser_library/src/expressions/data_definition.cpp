@@ -229,7 +229,36 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     return symbols;
 }
 
-void data_definition::collect_diags() const {}
+void data_definition::collect_diags() const
+{
+    if (dupl_factor)
+        collect_diags_from_child(*dupl_factor);
+    if (program_type)
+        collect_diags_from_child(*program_type);
+    if (length)
+        collect_diags_from_child(*length);
+    if (scale)
+        collect_diags_from_child(*scale);
+    if (exponent)
+        collect_diags_from_child(*exponent);
+
+    if (nominal_value && nominal_value->access_exprs())
+    {
+        for (const auto& val : nominal_value->access_exprs()->exprs)
+        {
+            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
+                collect_diags_from_child(*std::get<expressions::mach_expr_ptr>(val));
+            else
+            {
+                const auto& addr = std::get<expressions::address_nominal>(val);
+                if (addr.base)
+                    collect_diags_from_child(*addr.base);
+                if (addr.displacement)
+                    collect_diags_from_child(*addr.displacement);
+            }
+        }
+    }
+}
 
 checking::data_def_field<int32_t> set_data_def_field(
     const expressions::mach_expression* e, context::dependency_solver& info)
@@ -366,8 +395,10 @@ void data_definition::apply(mach_expr_visitor& visitor) const
             else
             {
                 const auto& addr = std::get<expressions::address_nominal>(val);
-                addr.base->apply(visitor);
-                addr.displacement->apply(visitor);
+                if (addr.base)
+                    addr.base->apply(visitor);
+                if (addr.displacement)
+                    addr.displacement->apply(visitor);
             }
         }
     }
