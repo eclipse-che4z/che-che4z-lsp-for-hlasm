@@ -127,13 +127,13 @@ void ca_symbol_attribute::collect_diags() const
 {
     if (std::holds_alternative<semantics::vs_ptr>(symbol))
     {
-        auto&& sym = std::get<semantics::vs_ptr>(symbol);
-        for (auto&& expr : sym->subscript)
+        const auto& sym = std::get<semantics::vs_ptr>(symbol);
+        for (const auto& expr : sym->subscript)
             collect_diags_from_child(*expr);
     }
     else if (std::holds_alternative<ca_literal_def>(symbol))
     {
-        auto&& lit = std::get<ca_literal_def>(symbol);
+        const auto& lit = std::get<ca_literal_def>(symbol);
         collect_diags_from_child(*lit.dd);
     }
 }

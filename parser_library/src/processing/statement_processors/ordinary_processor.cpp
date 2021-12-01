@@ -233,7 +233,7 @@ void ordinary_processor::collect_diags() const
 }
 
 void ordinary_processor::check_postponed_statements(
-    std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>> stmts)
+    const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts)
 {
     static const checking::assembler_checker asm_checker;
     static const checking::machine_checker mach_checker;

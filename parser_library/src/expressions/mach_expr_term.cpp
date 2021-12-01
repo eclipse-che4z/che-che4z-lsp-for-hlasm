@@ -287,6 +287,12 @@ const mach_expression* mach_expr_data_attr::leftmost_term() const { return this;
 
 void mach_expr_data_attr::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
+void mach_expr_data_attr::collect_diags() const
+{
+    if (lit)
+        collect_diags_from_child(*lit);
+}
+
 size_t mach_expr_data_attr::hash() const
 {
     auto result = (size_t)0xa2957a462d908bd2;
@@ -345,7 +351,7 @@ const mach_expression* mach_expr_literal::leftmost_term() const { return this; }
 
 void mach_expr_literal::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-void mach_expr_literal::collect_diags() const {}
+void mach_expr_literal::collect_diags() const { collect_diags_from_child(m_literal_data->dd); }
 
 size_t mach_expr_literal::hash() const { return m_literal_data->dd.hash(); }
 

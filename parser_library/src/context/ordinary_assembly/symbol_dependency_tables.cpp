@@ -40,17 +40,18 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
         auto top_dep = std::move(dependencies.back());
         dependencies.pop_back();
 
-        if (auto it = dependencies_.find(top_dep); it != dependencies_.end())
+        auto it = dependencies_.find(top_dep);
+        if (it == dependencies_.end())
+            continue;
+
+        for (auto&& dep : extract_dependencies(it->second.first, it->second.second))
         {
-            for (auto&& dep : extract_dependencies(it->second.first, it->second.second))
+            if (dep == target)
             {
-                if (dep == target)
-                {
-                    resolve_dependant_default(target);
-                    return false;
-                }
-                dependencies.push_back(std::move(dep));
+                resolve_dependant_default(target);
+                return false;
             }
+            dependencies.push_back(std::move(dep));
         }
     }
     return true;
@@ -319,7 +320,7 @@ void symbol_dependency_tables::add_dependency(space_ptr target,
 
     if (dependency_source_stmt)
     {
-        auto [sit, sinserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt), dep_ctx);
+        auto [sit, sinserted] = postponed_stmts_.try_emplace(std::move(dependency_source_stmt), dep_ctx);
 
         if (!sinserted)
             throw std::runtime_error("statement already registered");
@@ -532,7 +533,7 @@ void dependency_adder::finish()
     if (ref_count_ == 0)
         return;
 
-    auto [it, inserted] = owner_.postponed_stmts_.emplace(std::move(source_stmt), dep_ctx);
+    auto [it, inserted] = owner_.postponed_stmts_.try_emplace(std::move(source_stmt), dep_ctx);
 
     if (!inserted)
         throw std::runtime_error("statement already registered");

@@ -64,7 +64,7 @@ public:
 
 private:
     void check_postponed_statements(
-        std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>> stmts);
+        const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts);
     bool check_fatals(range line_range);
 
     context::id_index resolve_instruction(const semantics::concat_chain& chain, range instruction_range) const;

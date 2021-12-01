@@ -55,7 +55,7 @@ class mach_expr_literal final : public mach_expression
         const data_definition dd;
         bool referenced_by_reladdr = false;
 
-        literal_data(data_definition dd)
+        explicit literal_data(data_definition dd)
             : dd(std::move(dd))
         {}
     };
@@ -110,7 +110,7 @@ public:
 
     void apply(mach_expr_visitor& visitor) const override;
 
-    void collect_diags() const override {}
+    void collect_diags() const override;
 
     size_t hash() const override;
 };

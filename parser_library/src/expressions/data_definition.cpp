@@ -302,74 +302,82 @@ checking::exponent_modifier_t data_definition::evaluate_exponent(context::depend
     return set_data_def_field(exponent.get(), info);
 }
 
+inline checking::nominal_value_expressions extract_nominal_value_expressions(
+    const expr_or_address_list& exprs, context::dependency_solver& info)
+{
+    checking::nominal_value_expressions values;
+    for (const auto& e_or_a : exprs)
+    {
+        if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
+        {
+            const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
+            auto deps = e->get_dependencies(info);
+            bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
+            auto ev = e->evaluate(info);
+            auto kind = ev.value_kind();
+            if (kind == context::symbol_value_kind::ABS)
+            {
+                values.push_back(checking::data_def_expr {
+                    ev.get_abs(),
+                    checking::expr_type::ABS,
+                    e->get_range(),
+                    ignored,
+                });
+            }
+            else if (kind == context::symbol_value_kind::RELOC)
+            {
+                // TO DO value of the relocatable expression
+                // maybe push back data_def_addr?
+                values.push_back(checking::data_def_expr {
+                    0,
+                    ev.get_reloc().is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
+                    e->get_range(),
+                    ignored,
+                });
+            }
+            else if (kind == context::symbol_value_kind::UNDEF)
+            {
+                values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
+            }
+            else
+            {
+                assert(false);
+                continue;
+            }
+        }
+        else // there is an address D(B)
+        {
+            const auto& a = std::get<expressions::address_nominal>(e_or_a);
+            checking::data_def_address ch_adr;
+
+            ch_adr.base = set_data_def_field(a.base.get(), info);
+            ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
+            ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
+            values.push_back(ch_adr);
+        }
+    }
+    return values;
+}
+
 checking::nominal_value_t data_definition::evaluate_nominal_value(context::dependency_solver& info) const
 {
+    if (!nominal_value)
+        return {};
+
     checking::nominal_value_t nom;
-    if (nominal_value)
+    nom.present = true;
+    if (nominal_value->access_string())
     {
-        nom.present = true;
-        if (nominal_value->access_string())
-        {
-            nom.value = nominal_value->access_string()->value;
-            nom.rng = nominal_value->access_string()->value_range;
-        }
-        else if (nominal_value->access_exprs())
-        {
-            checking::nominal_value_expressions values;
-            for (auto& e_or_a : nominal_value->access_exprs()->exprs)
-            {
-                if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
-                {
-                    expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
-                    bool ignored = e->get_dependencies(info).has_error
-                        || e->get_dependencies(info).contains_dependencies(); // ignore values with dependencies
-                    auto ev = e->evaluate(info);
-                    auto kind = ev.value_kind();
-                    if (kind == context::symbol_value_kind::ABS)
-                        values.push_back(checking::data_def_expr {
-                            ev.get_abs(), checking::expr_type::ABS, e->get_range(), ignored });
-
-                    else if (kind == context::symbol_value_kind::RELOC)
-                    {
-                        checking::expr_type ex_type;
-                        const auto& reloc = ev.get_reloc();
-                        if (reloc.is_complex())
-                            ex_type = checking::expr_type::COMPLEX;
-                        else
-                            ex_type = checking::expr_type::RELOC;
-                        // TO DO value of the relocatable expression
-                        // maybe push back data_def_addr?
-                        values.push_back(checking::data_def_expr { 0, ex_type, e->get_range(), ignored });
-                    }
-                    else if (kind == context::symbol_value_kind::UNDEF)
-                    {
-                        values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
-                    }
-                    else
-                    {
-                        assert(false);
-                        continue;
-                    }
-                }
-                else // there is an address D(B)
-                {
-                    auto& a = std::get<expressions::address_nominal>(e_or_a);
-                    checking::data_def_address ch_adr;
-
-                    ch_adr.base = set_data_def_field(a.base.get(), info);
-                    ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
-                    if (!ch_adr.base.present || !ch_adr.displacement.present)
-                        ch_adr.ignored = true; // ignore values with dependencies
-                    values.push_back(ch_adr);
-                }
-            }
-            nom.value = std::move(values);
-        }
-        else
-            assert(false);
+        nom.value = nominal_value->access_string()->value;
+        nom.rng = nominal_value->access_string()->value_range;
+    }
+    else if (nominal_value->access_exprs())
+    {
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info);
     }
     else
-        nom.present = false;
+        assert(false);
+
     return nom;
 }
 

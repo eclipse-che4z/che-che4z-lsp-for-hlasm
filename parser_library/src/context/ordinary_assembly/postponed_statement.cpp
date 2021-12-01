@@ -15,5 +15,3 @@
 #include "postponed_statement.h"
 
 #include "processing/instruction_sets/postponed_statement_impl.h"
-
-namespace hlasm_plugin::parser_library::context {} // namespace hlasm_plugin::parser_library::context
