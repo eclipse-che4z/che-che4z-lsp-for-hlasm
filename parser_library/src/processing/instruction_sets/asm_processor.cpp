@@ -561,8 +561,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
     }
     else
     {
-        context::ordinary_assembly_dependency_solver dep_solver(
-            hlasm_ctx.ord_ctx, hlasm_ctx.ord_ctx.align(context::no_align));
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
         bool skip_check = false;
         // until implementation of all instructions, if has deps, ignore
         for (auto& op : rebuilt_stmt.operands_ref().value)
