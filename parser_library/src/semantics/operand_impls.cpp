@@ -662,7 +662,7 @@ join_operands_result join_operands(const operand_list& operands)
     return result;
 }
 
-struct request_halfword_alignment : public expressions::mach_expr_visitor
+struct request_halfword_alignment final : public expressions::mach_expr_visitor
 {
     // Inherited via mach_expr_visitor
     void visit(const expressions::mach_expr_constant&) override {}

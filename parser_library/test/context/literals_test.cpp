@@ -343,3 +343,42 @@ TEST(literals, halfward_alignment_delayed)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 19);
 }
+
+TEST(literals, target_csect)
+{
+    std::string input = R"(
+A        CSECT
+L2       LOCTR
+L1       LOCTR
+         LARL 0,=C'0'
+L2       LOCTR
+B        CSECT
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect_a = get_section(a.hlasm_ctx(), "A");
+    ASSERT_TRUE(sect_a);
+    EXPECT_EQ(sect_a->location_counters().back()->current_address().offset(), 8);
+
+    auto* sect_b = get_section(a.hlasm_ctx(), "B");
+    ASSERT_TRUE(sect_b);
+    EXPECT_EQ(sect_b->location_counters().back()->current_address().offset(), 0);
+}
+
+TEST(literals, unreachable_literal)
+{
+    std::string input = R"(
+A        CSECT
+B        CSECT
+         LARL 0,=C'0'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
+}
