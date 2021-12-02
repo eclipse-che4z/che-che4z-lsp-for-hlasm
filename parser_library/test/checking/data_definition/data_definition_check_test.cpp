@@ -66,7 +66,7 @@ TEST(data_def_checker, unknown_extension_analyzer)
     a.collect_diags();
 
     ASSERT_EQ(a.diags().size(), 1U);
-    EXPECT_EQ(a.diags()[0].code, "D013");
+    EXPECT_EQ(a.diags()[0].code, "D006");
 }
 
 TEST(data_def_checker, unexpected_expr)

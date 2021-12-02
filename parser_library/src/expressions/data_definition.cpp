@@ -535,10 +535,9 @@ void data_definition::parser::parse_duplication_factor()
     }
 }
 
-bool is_type_extension(char ch)
+bool is_type_extension(char type, char ch)
 {
-    static std::set<char> type_extensions({ 'A', 'E', 'U', 'H', 'B', 'D', 'Q', 'Y' });
-    return type_extensions.find(ch) != type_extensions.end();
+    return checking::data_def_type::types_and_extensions.count(std::make_pair(type, ch)) > 0;
 }
 
 bool is_modifier_or_prog(char ch) { return ch == 'P' || ch == 'L' || ch == 'S' || ch == 'E'; }
@@ -689,7 +688,7 @@ data_definition data_definition::parser::parse()
     if (p_ >= format_.size())
         return std::move(result_);
 
-    if (is_type_extension(format_[p_]))
+    if (is_type_extension(result_.type, format_[p_]))
     {
         result_.extension = format_[p_];
         result_.extension_range = { pos_, { pos_.line, pos_.column + 1 } };
