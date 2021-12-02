@@ -232,3 +232,9 @@ SYM  DS   CL1
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), 0U);
 }
+
+TEST(mach_instr_processing, verify_rel_addr_size)
+{
+    for (const auto& instr : context::instruction::machine_instructions)
+        (void)processing::processing_status_cache_key::generate_reladdr_bitmask(&instr.first);
+}

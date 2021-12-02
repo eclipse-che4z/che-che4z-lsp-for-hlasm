@@ -46,19 +46,18 @@ class processing_status_cache_key
     processing_form form;
     operand_occurence occurence;
     bool is_alias;
+    unsigned char rel_addr;
 
 public:
     friend bool operator==(processing_status_cache_key l, processing_status_cache_key r)
     {
-        return l.form == r.form && l.occurence == r.occurence && l.is_alias == r.is_alias;
+        return l.form == r.form && l.occurence == r.occurence && l.is_alias == r.is_alias && l.rel_addr == r.rel_addr;
     }
     friend bool operator!=(processing_status_cache_key l, processing_status_cache_key r) { return !(l == r); }
 
-    explicit processing_status_cache_key(const processing_status& s)
-        : form(s.first.form)
-        , occurence(s.first.occurence)
-        , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
-    {}
+    explicit processing_status_cache_key(const processing_status& s);
+
+    static unsigned char generate_reladdr_bitmask(context::id_index id);
 };
 
 } // namespace hlasm_plugin::parser_library::processing
