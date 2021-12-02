@@ -46,7 +46,7 @@ class ordinary_assembly_context
     std::unordered_map<id_index, symbol> symbol_refs_;
 
     section* curr_section_;
-    section* first_section_ = nullptr;
+    section* first_control_section_ = nullptr;
 
     // literals
     std::unique_ptr<literal_pool> m_literals;
@@ -144,11 +144,12 @@ public:
 
     const literal_pool& literals() const { return *m_literals; }
     void generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags) const;
-    location_counter* implicit_ltorg_target() const
+    location_counter* implicit_ltorg_target()
     {
-        if (!first_section_)
-            return nullptr;
-        return &first_section_->current_location_counter();
+        if (!first_control_section_)
+            create_private_section();
+
+        return &first_control_section_->current_location_counter();
     }
 
 private:

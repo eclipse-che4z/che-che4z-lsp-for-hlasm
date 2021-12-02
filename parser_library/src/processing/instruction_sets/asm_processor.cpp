@@ -29,8 +29,23 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
 {
     auto sect_name = find_label_symbol(stmt);
 
+    using context::section_kind;
+    const auto do_other_private_sections_exist = [this](context::id_index sect_name, section_kind kind) {
+        for (auto k : { section_kind::COMMON, section_kind::EXECUTABLE, section_kind::READONLY })
+        {
+            if (k == kind)
+                continue;
+            if (hlasm_ctx.ord_ctx.section_defined(sect_name, k))
+                return true;
+        }
+        return false;
+    };
+
     const auto& processing_stack = hlasm_ctx.processing_stack();
-    if (hlasm_ctx.ord_ctx.symbol_defined(sect_name) && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind))
+    if (hlasm_ctx.ord_ctx.symbol_defined(sect_name)
+        && (sect_name != context::id_storage::empty_id && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
+            || sect_name == context::id_storage::empty_id && kind != section_kind::DUMMY
+                && do_other_private_sections_exist(sect_name, kind)))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }

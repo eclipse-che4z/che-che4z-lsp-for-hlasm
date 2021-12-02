@@ -103,7 +103,7 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
         curr_section_ = &**tmp;
     else
     {
-        if (symbols_.find(name) != symbols_.end())
+        if (name != id_storage::empty_id && symbols_.find(name) != symbols_.end())
             throw std::invalid_argument("symbol already defined");
 
         curr_section_ = create_section(name, kind);
@@ -340,8 +340,9 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
 section* ordinary_assembly_context::create_section(id_index name, section_kind kind)
 {
     section* ret = sections_.emplace_back(std::make_unique<section>(name, kind, ids)).get();
-    if (first_section_ == nullptr)
-        first_section_ = ret;
+    if (first_control_section_ == nullptr
+        && (kind == section_kind::COMMON || kind == section_kind::EXECUTABLE || kind == section_kind::READONLY))
+        first_control_section_ = ret;
     return ret;
 }
 

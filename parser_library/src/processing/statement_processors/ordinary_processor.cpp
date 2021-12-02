@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "checking/instruction_checker.h"
+#include "context/literal_pool.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
@@ -123,8 +124,9 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
 void ordinary_processor::end_processing()
 {
-    if (auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target())
+    if (hlasm_ctx.ord_ctx.literals().get_pending_count())
     {
+        auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target();
         hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
         hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
 

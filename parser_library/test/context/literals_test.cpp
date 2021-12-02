@@ -382,3 +382,30 @@ B        CSECT
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
 }
+
+TEST(literals, no_csect_available)
+{
+    std::string input = R"(
+    DSECT
+    LARL 0,=A(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M113" }));
+}
+
+TEST(literals, ltorg_in_dsect)
+{
+    std::string input = R"(
+    DSECT
+    LARL 0,=A(0)
+    LTORG
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

@@ -451,3 +451,36 @@ YD DS 0C
     ASSERT_TRUE(test_aaa && test_aaa->kind() == context::symbol_value_kind::ABS);
     EXPECT_EQ(test_aaa->value().get_abs(), 36);
 }
+
+TEST(ordinary_symbols, private_sections_valid)
+{
+    for (std::string sect_type : { "CSECT", "RSECT", "COM" })
+    {
+        std::string input = R"(
+ DSECT
+ )" + sect_type;
+        analyzer a(input);
+        a.analyze();
+
+        a.collect_diags();
+        EXPECT_EQ(a.diags().size(), (size_t)0) << sect_type;
+    }
+}
+
+TEST(ordinary_symbols, private_sections_invalid)
+{
+    std::initializer_list<std::string> types = { "CSECT", "RSECT", "COM" };
+
+    for (const auto& t1 : types)
+    {
+        for (const auto& t2 : types)
+        {
+            std::string input = " " + t1 + "\n " + t2;
+            analyzer a(input);
+            a.analyze();
+
+            a.collect_diags();
+            EXPECT_EQ(a.diags().size(), t1 != t2) << t1 << t2;
+        }
+    }
+}
