@@ -409,3 +409,15 @@ TEST(literals, ltorg_in_dsect)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(literals, bad_attribute)
+{
+    std::string input = R"(
+    LHI 0,S'=A(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W011" }));
+}
