@@ -45,7 +45,7 @@ public:
     size_t hash() const override;
 };
 
-// Represents an literal expression (e.g. =C'text')
+// Represents a literal expression (e.g. =C'text')
 class mach_expr_literal final : public mach_expression
 {
     bool do_is_similar(const mach_expression& expr) const override;

@@ -17,7 +17,6 @@
 
 #include <optional>
 
-#include "address.h"
 #include "context/processing_context.h"
 
 namespace hlasm_plugin::parser_library::processing {

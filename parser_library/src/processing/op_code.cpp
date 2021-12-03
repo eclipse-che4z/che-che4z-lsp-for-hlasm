@@ -20,6 +20,8 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
+// Generates a bitmask for an arbitrary machine instruction indicating which operands
+// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
 unsigned char processing_status_cache_key::generate_reladdr_bitmask(context::id_index id)
 {
     auto p_instr = context::instruction::machine_instructions.find(*id);

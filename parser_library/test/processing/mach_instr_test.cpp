@@ -238,3 +238,16 @@ TEST(mach_instr_processing, verify_rel_addr_size)
     for (const auto& instr : context::instruction::machine_instructions)
         (void)processing::processing_status_cache_key::generate_reladdr_bitmask(&instr.first);
 }
+
+TEST(mach_instr_processing, rel_addr_bitmask)
+{
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
+             { "LARL", 0x40 },
+             { "LA", 0x00 },
+             { "CLIJ", 0x10 },
+             { "BPRP", 0x60 },
+         })
+    {
+        EXPECT_EQ(processing::processing_status_cache_key::generate_reladdr_bitmask(&instr), expected) << instr;
+    }
+}

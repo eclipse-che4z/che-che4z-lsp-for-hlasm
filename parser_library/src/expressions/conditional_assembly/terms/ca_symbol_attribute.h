@@ -18,7 +18,7 @@
 #include <variant>
 
 #include "../ca_expression.h"
-#include "expressions/mach_expr_term.h"
+#include "expressions/data_definition.h"
 #include "semantics/variable_symbol.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -32,7 +32,7 @@ struct ca_literal_def
 // represents CA expression attributed ordinary symbol
 class ca_symbol_attribute : public ca_expression
 {
-    // variant of ordinary symbol, variable symbol(, literal TODO)
+    // variant of ordinary symbol, variable symbol, literal
 
     using ca_attr_variant_t = std::variant<context::id_index, semantics::vs_ptr, ca_literal_def>;
 

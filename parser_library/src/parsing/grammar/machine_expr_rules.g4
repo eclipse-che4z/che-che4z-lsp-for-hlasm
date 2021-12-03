@@ -119,7 +119,7 @@ literal returns [std::optional<data_definition> value]
 		if (lit_allowed)
 			$value = std::move($data_def.value);
 		else
-            add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
+			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};
 
 mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data, range symbol_rng]
