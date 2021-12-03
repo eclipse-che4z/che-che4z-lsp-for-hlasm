@@ -649,7 +649,7 @@ C_t hlasm_context::get_type_attr(var_sym_ptr var_symbol, const std::vector<size_
     if (value.empty())
         return "O";
 
-    expressions::ca_symbol_attribute::try_extract_leading_symbol(value);
+    value = expressions::ca_symbol_attribute::try_extract_leading_symbol(value);
 
     auto res = expressions::ca_constant::try_self_defining_term(value);
     if (res)

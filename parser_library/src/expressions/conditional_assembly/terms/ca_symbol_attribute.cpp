@@ -91,7 +91,7 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
             if (substituted_name.type != context::SET_t_enum::C_TYPE)
                 return {};
 
-            auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+            auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
             if (!valid)
                 return {};
@@ -164,36 +164,28 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
 
     return context::SET_t(expr_kind);
 }
-
-void ca_symbol_attribute::try_extract_leading_symbol(std::string& expr)
+std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
 {
-    std::string delims = "+-*/()";
-
     // remove parentheses
-    size_t start = 0;
-    for (; start < expr.size() && expr[start] == '(' && expr[expr.size() - 1 - start] == ')'; ++start) {};
-    expr.resize(expr.size() - start);
+    while (!expr.empty() && expr.front() == '(' && expr.back() == ')')
+    {
+        expr.remove_prefix(1);
+        expr.remove_suffix(1);
+    }
 
     // remove leading using prefixes
-    for (size_t i = start; i < expr.size(); ++i)
-    {
-        if (expr[i] == '.' && i != expr.size() - 1)
-            start = i + 1;
-        else if (!lexing::lexer::ord_char(expr[i]))
-            break;
-    }
-    expr.erase(0, start);
+    for (auto p = expr.find_first_of('.'); p != std::string_view::npos && !std::isdigit((unsigned char)expr.front())
+         && std::all_of(expr.begin(), expr.begin() + p, lexing::lexer::ord_char);
+         p = expr.find_first_of('.'))
+        expr.remove_prefix(p + 1);
 
-    // look for symbol in the rest
-    if (expr.front() >= '0' && expr.front() <= '9')
-        return;
-    for (size_t i = 0; i < expr.size(); ++i)
+    // try to isolate one ordinary symbol
+    if (!expr.empty() && !std::isdigit((unsigned char)expr.front()) && lexing::lexer::ord_char(expr.front()))
     {
-        if (delims.find(expr[i]) != std::string::npos)
-            expr.resize(i);
-        else if (!lexing::lexer::ord_char(expr[i]))
-            return;
+        if (auto d = expr.find_first_of("+-*/()"); d != std::string_view::npos)
+            expr = expr.substr(0, d);
     }
+    return std::string(expr);
 }
 
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
@@ -361,8 +353,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    try_extract_leading_symbol(substituted_name.access_c());
-    auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+    auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
     if (!valid)
     {
