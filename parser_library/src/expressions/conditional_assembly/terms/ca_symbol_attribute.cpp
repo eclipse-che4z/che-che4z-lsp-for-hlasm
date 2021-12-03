@@ -16,6 +16,7 @@
 
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"

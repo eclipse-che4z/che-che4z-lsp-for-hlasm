@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 
 #include "../../common_testing.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 
 void expect_no_errors(const std::string& text)
 {

@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include "ordinary_assembly_context.h"
+#include "ordinary_assembly_dependency_solver.h"
 #include "processing/instruction_sets/low_language_processor.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 

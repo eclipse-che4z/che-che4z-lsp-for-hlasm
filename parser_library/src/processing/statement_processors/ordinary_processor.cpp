@@ -18,6 +18,7 @@
 
 #include "checking/instruction_checker.h"
 #include "context/literal_pool.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 

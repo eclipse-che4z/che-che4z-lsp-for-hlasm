@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "data_definition_common.h"
 #include "expressions/data_definition.h"
 #include "processing/instruction_sets/data_def_postponed_statement.h"

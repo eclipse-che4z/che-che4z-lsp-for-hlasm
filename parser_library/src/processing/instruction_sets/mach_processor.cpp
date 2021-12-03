@@ -17,6 +17,7 @@
 #include <algorithm>
 
 #include "context/instruction_type.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "postponed_statement_impl.h"
 #include "semantics/operand_impls.h"
 

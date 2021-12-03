@@ -28,6 +28,8 @@ target_sources(parser_library PRIVATE
 	loctr_dependency_resolver.h
 	ordinary_assembly_context.cpp
 	ordinary_assembly_context.h
+	ordinary_assembly_dependency_solver.cpp
+	ordinary_assembly_dependency_solver.h
 	postponed_statement.cpp
 	postponed_statement.h
 	section.cpp

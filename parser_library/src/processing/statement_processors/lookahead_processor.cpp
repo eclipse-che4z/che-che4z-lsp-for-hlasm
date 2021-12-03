@@ -14,6 +14,7 @@
 
 #include "lookahead_processor.h"
 
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "ordinary_processor.h"
