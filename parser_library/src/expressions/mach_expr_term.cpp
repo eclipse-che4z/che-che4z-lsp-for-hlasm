@@ -262,10 +262,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(context::dependency_solve
     else if (lit)
     {
         (void)lit->evaluate(solver);
-        if (lit->get_data_definition().get_dependencies(solver).contains_dependencies())
-        {
-            // TODO: something should probably be done here
-        }
+
         auto& dd = lit->get_data_definition();
         context::symbol_attributes attrs(context::symbol_origin::DAT,
             ebcdic_encoding::a2e[(unsigned char)dd.get_type_attribute()],
