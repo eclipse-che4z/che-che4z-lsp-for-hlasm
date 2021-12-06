@@ -26,6 +26,10 @@
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnosable_ctx;
+} // namespace hlasm_plugin::parser_library
+
 namespace hlasm_plugin::parser_library::expressions {
 struct data_definition;
 } // namespace hlasm_plugin::parser_library::expressions
@@ -143,7 +147,7 @@ public:
     size_t next_unique_id() { return m_statement_unique_id++; }
 
     const literal_pool& literals() const { return *m_literals; }
-    void generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags) const;
+    void generate_pool(dependency_solver& solver, const diagnosable_ctx& diags) const;
     location_counter* implicit_ltorg_target()
     {
         if (!first_control_section_)

@@ -421,3 +421,44 @@ TEST(literals, bad_attribute)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W011" }));
 }
+
+TEST(literals, bad_nominal_value)
+{
+    std::string input = R"(
+    LARL 0,=AL4'123'
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D017" }));
+}
+
+TEST(literals, bad_nominal_value_dependency)
+{
+    std::string input = R"(
+    LARL  0,=FL4(X)
+    LTORG
+X   DS    0H
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D018" }));
+}
+
+TEST(literals, bad_nominal_value_both)
+{
+    std::string input = R"(
+    LARL  0,=AL4'123'
+    LARL  0,=FL4(X)
+    LTORG
+X   DS    0H
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D017", "D018" }));
+}

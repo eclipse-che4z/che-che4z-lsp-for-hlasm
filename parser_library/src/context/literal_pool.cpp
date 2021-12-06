@@ -19,6 +19,7 @@
 
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "context/ordinary_assembly/postponed_statement.h"
+#include "diagnosable_ctx.h"
 #include "ebcdic_encoding.h"
 #include "hlasm_context.h"
 #include "processing/statement.h"
@@ -104,7 +105,7 @@ const semantics::instruction_si literal_pool::literal_postponed_statement::empty
 const processing::processing_format literal_pool::literal_postponed_statement::dc_format(
     processing::processing_kind::ORDINARY, processing::processing_form::ASM, processing::operand_occurence::PRESENT);
 
-void literal_pool::generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags)
+void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ctx& diags)
 {
     ordinary_assembly_context& ord_ctx = hlasm_ctx.ord_ctx;
 
@@ -160,6 +161,15 @@ void literal_pool::generate_pool(dependency_solver& solver, diagnostic_op_consum
                 { lit_val.loctr, lit_key.generation, lit_key.unique_id });
             adder.add_dependency();
             adder.finish();
+        }
+        else
+        {
+            auto ddt = lit->access_data_def_type();
+            if (!ddt) // unknown type
+                continue;
+
+            auto ddo = semantics::data_def_operand::get_operand_value(*lit, solver);
+            ddt->check_DC(ddo, diagnostic_collector(&diags, lit_val.stack));
         }
     }
 

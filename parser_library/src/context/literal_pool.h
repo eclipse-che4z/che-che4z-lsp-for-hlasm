@@ -111,7 +111,7 @@ public:
     id_index get_literal(
         size_t generation, const std::shared_ptr<const expressions::data_definition>& dd, size_t unique_id) const;
 
-    void generate_pool(dependency_solver& solver, diagnostic_op_consumer& diags);
+    void generate_pool(dependency_solver& solver, const diagnosable_ctx& diags);
     size_t current_generation() const { return m_current_literal_pool_generation; }
 
     // testing
