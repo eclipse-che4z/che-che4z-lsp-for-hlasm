@@ -98,7 +98,7 @@ To use a predefined set of macro and copy members, follow these steps:
    You have created a new processor group.
 3. Use the identifier of the new processor group with the name of your source code file in `pgm_conf.json` to assign the library members to the program.
 
-The structure of the configuration is based on CA Endevor® SCM. Ensure that you configure these files before using macros from separate files or the COPY instruction.
+The structure of the configuration is based on Endevor®. Ensure that you configure these files before using macros from separate files or the COPY instruction.
 When you open a HLASM file or manually set the HLASM language for a file, you can choose to automatically create these files for the current program.
 
 Example `proc_grps.json`:
