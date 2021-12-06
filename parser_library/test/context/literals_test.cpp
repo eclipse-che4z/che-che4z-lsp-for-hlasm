@@ -462,3 +462,15 @@ X   DS    0H
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D017", "D018" }));
 }
+
+TEST(literals, zero_length)
+{
+    std::string input = R"(
+    LARL  0,=0A(0)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D031" }));
+}

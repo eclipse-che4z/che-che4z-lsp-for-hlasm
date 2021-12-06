@@ -139,9 +139,10 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
         const auto& lit = lit_key.lit;
         const auto& lit_val = it->second;
 
+        if (!lit->access_data_def_type()) // unknown type
+            continue;
+
         // TODO: warn on align > sectalign
-        if (size == 0)
-            break;
 
         bool cycle_ok = ord_ctx.create_symbol(&lit_val.text,
             ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
@@ -149,6 +150,12 @@ void literal_pool::generate_pool(dependency_solver& solver, const diagnosable_ct
                 ebcdic_encoding::a2e[(unsigned char)lit->get_type_attribute()],
                 lit->get_length_attribute(solver)),
             {});
+
+        if (size == 0)
+        {
+            diags.add_diagnostic(diagnostic_op::error_D031(it->second.r));
+            continue;
+        }
 
         ord_ctx.reserve_storage_area(size, no_align);
 

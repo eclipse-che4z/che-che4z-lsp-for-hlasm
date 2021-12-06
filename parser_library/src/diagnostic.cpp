@@ -1529,6 +1529,11 @@ diagnostic_op diagnostic_op::error_D030(const range& range, const std::string& t
     return diagnostic_op(diagnostic_severity::error, "D030", "Only single symbol expected with type " + type, range);
 }
 
+diagnostic_op diagnostic_op::error_D031(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "D031", "Duplication factor in literals must be positive", range);
+}
+
 
 diagnostic_op diagnostic_op::error_M135(const std::string& instr_name, long long from, long long to, const range& range)
 {
