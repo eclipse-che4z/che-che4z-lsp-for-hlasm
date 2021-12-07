@@ -475,7 +475,7 @@ TEST(literals, deduplicate_loctr_len_reference)
 {
     std::string input = R"(
     LARL  0,=A(L'*)
-    LARL  0,=A(L'*)
+    LARL  0,=A(l'*)
 )";
     analyzer a(input);
     a.analyze();
