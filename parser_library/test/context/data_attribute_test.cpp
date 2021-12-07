@@ -216,12 +216,9 @@ C LOCTR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().type(),
-        ebcdic_encoding::a2e[U'I']);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->attributes().type(),
-        ebcdic_encoding::a2e[U'J']);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("C"))->attributes().type(),
-        ebcdic_encoding::a2e[U'J']);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().type(), ebcdic_encoding::a2e[U'I']);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().type(), ebcdic_encoding::a2e[U'J']);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "C")->attributes().type(), ebcdic_encoding::a2e[U'J']);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -373,8 +370,8 @@ B EQU L'LBL
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 1);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -414,7 +411,7 @@ B EQU S'A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 12);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 12);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -451,16 +448,11 @@ EXTEND DC LS10'5.312'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("HALFCON"))->attributes().integer(),
-        (symbol_attributes::len_attr)9);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("ONECON"))->attributes().integer(),
-        (symbol_attributes::len_attr)23);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("SHORT"))->attributes().integer(),
-        (symbol_attributes::len_attr)4);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LONG"))->attributes().integer(),
-        (symbol_attributes::len_attr)9);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("EXTEND"))->attributes().integer(),
-        (symbol_attributes::len_attr)18);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "HALFCON")->attributes().integer(), (symbol_attributes::len_attr)9);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "ONECON")->attributes().integer(), (symbol_attributes::len_attr)23);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "SHORT")->attributes().integer(), (symbol_attributes::len_attr)4);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LONG")->attributes().integer(), (symbol_attributes::len_attr)9);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "EXTEND")->attributes().integer(), (symbol_attributes::len_attr)18);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -476,7 +468,7 @@ X EQU I'HALFCON
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 9);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 9);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -597,9 +589,8 @@ B EQU T'W
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 1);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(),
-        symbol_attributes::undef_type);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), symbol_attributes::undef_type);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -619,8 +610,8 @@ W EQU 4,5,6
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 2);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -641,8 +632,7 @@ B EQU 1,11
     a.analyze();
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "V1"), 1);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().length(),
-        (symbol_attributes::len_attr)1);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().length(), (symbol_attributes::len_attr)1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -677,12 +667,10 @@ B EQU L'A
     ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
     ASSERT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->value().get_abs(), 11);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("A"))->attributes().length(),
-        (symbol_attributes::len_attr)11);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 11);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->attributes().length(),
-        (symbol_attributes::len_attr)1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 11);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "A")->attributes().length(), (symbol_attributes::len_attr)11);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 11);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "B")->attributes().length(), (symbol_attributes::len_attr)1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -703,7 +691,7 @@ C EQU 1,12
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind(), symbol_value_kind::ABS);
+    ASSERT_EQ(get_symbol(a.hlasm_ctx(), "X")->kind(), symbol_value_kind::ABS);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

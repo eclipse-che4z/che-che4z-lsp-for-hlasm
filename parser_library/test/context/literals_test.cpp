@@ -88,11 +88,7 @@ A   EQU  L'=A(0)
 
     EXPECT_TRUE(a.diags().empty());
 
-    const auto* symbol = get_symbol(a.hlasm_ctx(), "A");
-    ASSERT_TRUE(symbol);
-    auto symbol_value = symbol->value();
-    ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
-    EXPECT_EQ(symbol_value.get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 4);
 
     auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
