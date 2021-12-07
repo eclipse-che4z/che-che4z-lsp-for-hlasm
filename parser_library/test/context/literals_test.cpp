@@ -470,3 +470,20 @@ TEST(literals, zero_length)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D031" }));
 }
+
+TEST(literals, deduplicate_loctr_len_reference)
+{
+    std::string input = R"(
+    LARL  0,=A(L'*)
+    LARL  0,=A(L'*)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 20);
+}

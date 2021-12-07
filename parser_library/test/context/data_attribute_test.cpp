@@ -711,3 +711,24 @@ V EQU I'C
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
 }
+
+TEST(data_attributes, loctr_length)
+{
+    std::string input = R"(
+X1   DS   (L'*)C
+A    EQU  *-X1
+X2   DC   (L'*)C' '
+B    EQU  *-X2
+C    EQU  L'*
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 1);
+}
