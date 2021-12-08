@@ -178,10 +178,28 @@ const checking::machine_operand_format rel_addr_imm_24_S =
 const checking::machine_operand_format rel_addr_imm_32_S =
     checking::machine_operand_format(reladdr_imm_32s, empty, empty);
 
+class reladdr_transform_mask
+{
+    unsigned char m_mask;
+
+public:
+    reladdr_transform_mask(unsigned char m)
+        : m_mask(m)
+    {}
+    unsigned char mask() const { return m_mask; }
+
+    friend bool operator==(const reladdr_transform_mask& l, const reladdr_transform_mask& r)
+    {
+        return l.m_mask == r.m_mask;
+    }
+    friend bool operator!=(const reladdr_transform_mask& l, const reladdr_transform_mask& r) { return !(l == r); }
+};
 
 // machine instruction representation for checking
 class machine_instruction
 {
+    static unsigned char generate_reladdr_bitmask(const std::vector<checking::machine_operand_format>& operands);
+
 public:
     std::string instr_name;
     mach_format format;
@@ -190,18 +208,20 @@ public:
     int no_optional;
     size_t page_no;
 
+    reladdr_transform_mask reladdr_mask;
+
     machine_instruction(const std::string& name,
         mach_format format,
         std::vector<checking::machine_operand_format> operands,
         int no_optional,
-
         size_t page_no)
         : instr_name(name)
         , format(format)
         , operands(operands)
         , size_for_alloc(get_length_by_format(format))
         , no_optional(no_optional)
-        , page_no(page_no) {};
+        , page_no(page_no)
+        , reladdr_mask(generate_reladdr_bitmask(operands)) {};
     machine_instruction(const std::string& name,
         mach_format format,
         std::vector<checking::machine_operand_format> operands,
@@ -237,15 +257,21 @@ struct ca_instruction
 // representation of mnemonic codes for machine instructions
 struct mnemonic_code
 {
+    static unsigned char generate_reladdr_bitmask(
+        const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced);
+
 public:
     mnemonic_code(const machine_instruction* instr, std::vector<std::pair<size_t, size_t>> replaced)
         : instruction(instr)
-        , replaced(replaced) {};
+        , replaced(replaced)
+        , reladdr_mask(generate_reladdr_bitmask(instr, replaced)) {};
 
     const machine_instruction* instruction;
 
     // first goes place, then value
     std::vector<std::pair<size_t, size_t>> replaced;
+
+    reladdr_transform_mask reladdr_mask;
 
     size_t operand_count() const { return instruction->operands.size() + instruction->no_optional - replaced.size(); }
 };

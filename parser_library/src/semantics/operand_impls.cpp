@@ -14,6 +14,8 @@
 
 #include "operand_impls.h"
 
+#include <limits>
+
 #include "context/instruction.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
@@ -679,39 +681,21 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_
     if (instruction->empty())
         return;
 
-    const context::machine_instruction* instr;
-    const std::pair<size_t, size_t>* replaced_b = nullptr;
-    const std::pair<size_t, size_t>* replaced_e = nullptr;
+    unsigned char mask = 0;
+    decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
 
     if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
         mnem_tmp != context::instruction::mnemonic_codes.end())
-    {
-        const auto& mnemonic = mnem_tmp->second;
-        instr = mnemonic.instruction;
-        replaced_b = mnemonic.replaced.data();
-        replaced_e = replaced_b + mnemonic.replaced.size();
-    }
+        mask = mnem_tmp->second.reladdr_mask.mask();
     else
-    {
-        instr = &context::instruction::machine_instructions.at(*instruction);
-    }
+        mask = context::instruction::machine_instructions.at(*instruction).reladdr_mask.mask();
 
-    size_t position = 0;
     for (const auto& operand : op_list)
     {
-        while (replaced_b != replaced_e)
-        {
-            const auto index = replaced_b->first;
-            if (position < index)
-                break;
-            if (position++ == index)
-                ++replaced_b;
-        }
+        bool eligible = mask & top_bit;
+        top_bit >>= 1;
 
-        if (position >= instr->operands.size())
-            break;
-
-        if (instr->operands[position++].identifier.type != checking::machine_operand_type::RELOC_IMM)
+        if (!eligible)
             continue;
 
         if (auto* mach_op = operand->access_mach(); mach_op != nullptr && mach_op->kind == mach_kind::EXPR)

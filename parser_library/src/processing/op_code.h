@@ -56,8 +56,6 @@ public:
     friend bool operator!=(processing_status_cache_key l, processing_status_cache_key r) { return !(l == r); }
 
     explicit processing_status_cache_key(const processing_status& s);
-
-    static unsigned char generate_reladdr_bitmask(context::id_index id);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

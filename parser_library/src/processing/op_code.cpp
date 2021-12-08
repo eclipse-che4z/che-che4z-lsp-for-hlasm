@@ -14,41 +14,30 @@
 
 #include "op_code.h"
 
-#include <limits>
-
 #include "context/instruction.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
-// Generates a bitmask for an arbitrary machine instruction indicating which operands
-// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
-unsigned char processing_status_cache_key::generate_reladdr_bitmask(context::id_index id)
+inline unsigned char get_reladdr_bitmask(context::id_index id)
 {
-    auto p_instr = context::instruction::machine_instructions.find(*id);
-    if (p_instr == context::instruction::machine_instructions.end())
+    if (!id || id->empty())
         return 0;
 
-    unsigned char result = 0;
+    if (auto p_instr = context::instruction::machine_instructions.find(*id);
+        p_instr != context::instruction::machine_instructions.end())
+        return p_instr->second.reladdr_mask.mask();
 
-    const auto& instr = p_instr->second;
-    assert(instr.operands.size() <= std::numeric_limits<decltype(result)>::digits);
+    if (auto p_mnemo = context::instruction::mnemonic_codes.find(*id);
+        p_mnemo != context::instruction::mnemonic_codes.end())
+        return p_mnemo->second.reladdr_mask.mask();
 
-    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
-
-    for (const auto& op : instr.operands)
-    {
-        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
-            result |= top_bit;
-        top_bit >>= 1;
-    }
-
-    return result;
+    return 0;
 }
 
 processing_status_cache_key::processing_status_cache_key(const processing_status& s)
     : form(s.first.form)
     , occurence(s.first.occurence)
     , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
-    , rel_addr(s.second.value ? generate_reladdr_bitmask(s.second.value) : 0)
+    , rel_addr(get_reladdr_bitmask(s.second.value))
 {}
 } // namespace hlasm_plugin::parser_library::processing

@@ -521,7 +521,7 @@ void data_definition::parser::update_position_by_one() { ++pos_.column; }
 
 void data_definition::parser::parse_duplication_factor()
 {
-    if (isdigit(format_[0]) || format_[0] == '-') // duplication factor is present
+    if (isdigit(static_cast<unsigned char>(format_[0])) || format_[0] == '-') // duplication factor is present
     {
         position old_pos = pos_;
         auto dupl_factor_num = parse_number();
