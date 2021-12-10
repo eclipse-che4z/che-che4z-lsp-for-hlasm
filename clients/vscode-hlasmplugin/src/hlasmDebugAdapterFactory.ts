@@ -95,7 +95,7 @@ class HLASMDebugAdapter implements vscode.DebugAdapter {
     private readonly message_id: string = HLASMDebugAdapter.registration_message_id + '/' + this.session_id;
 
     constructor(private client: BaseLanguageClient) {
-        this.client.sendNotification(HLASMDebugAdapter.registration_message_id, this.session_id);
+        this.client.sendNotification(HLASMDebugAdapter.registration_message_id, { session_id : this.session_id });
         this.client.onReady().then(() => {
             client.onNotification(this.message_id, (msg: any) => {
                 this.message_event.fire(msg);
