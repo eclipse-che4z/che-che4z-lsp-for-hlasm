@@ -19,12 +19,14 @@
 namespace {
 std::optional<size_t> extract_session_id_from_registration_message(const nlohmann::json& msg)
 {
+    const static std::string session_id_key_name = "session_id";
     auto params = msg.find("params");
     if (params == msg.end())
         return std::nullopt;
-    if (!params->is_number_integer())
+    auto session_id = params->find(session_id_key_name);
+    if (session_id == params->end() || !session_id->is_number())
         return std::nullopt;
-    return params->get<size_t>();
+    return session_id->get<size_t>();
 }
 std::string_view extract_method(const nlohmann::json& msg)
 {

@@ -55,7 +55,6 @@
          LCLC  &ASMTIME
 &ASMTIME SETC  '&SYSTIME'(1,5)
          DC    CL16' &SYSDATE &ASMTIME '
-         DC    CL16' &SYSDATE &ASMTIME '
          MEND
          SPACE
          

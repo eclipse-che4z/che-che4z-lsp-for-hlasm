@@ -73,116 +73,6 @@
     "test:theia": "npm run compile && node ./build/bin/prepareWorkspace.js && node ./build/bin/theiaTest.js"
   },
   "contributes": {
-    "colors": [
-      {
-        "id": "hlasm.function",
-        "description": "Color for HLASM instructions",
-        "defaults": {
-          "dark": "#DCDCAA",
-          "light": "#795E26",
-          "highContrast": "#DCDCAA"
-        }
-      },
-      {
-        "id": "hlasm.comment",
-        "description": "Color for comments and remarks",
-        "defaults": {
-          "dark": "#6A9955",
-          "light": "#008000",
-          "highContrast": "#7CA668"
-        }
-      },
-      {
-        "id": "hlasm.event",
-        "description": "Color for ignored characters",
-        "defaults": {
-          "dark": "#F44747",
-          "light": "#CD3131",
-          "highContrast": "#F44747"
-        }
-      },
-      {
-        "id": "hlasm.modifier",
-        "description": "Color for continuation characters and data definition type extension character",
-        "defaults": {
-          "dark": "#569CD6",
-          "light": "#0000FF",
-          "highContrast": "#569CD6"
-        }
-      },
-      {
-        "id": "hlasm.regexp",
-        "description": "Color for data definition type character",
-        "defaults": {
-          "dark": "#646695",
-          "light": "#811F3F",
-          "highContrast": "#B46695"
-        }
-      },
-      {
-        "id": "hlasm.variable",
-        "description": "Color for variable symbols",
-        "defaults": {
-          "dark": "#9CDCFE",
-          "light": "#001080",
-          "highContrast": "#9CDCFE"
-        }
-      },
-      {
-        "id": "hlasm.string",
-        "description": "Color for strings",
-        "defaults": {
-          "dark": "#CE9178",
-          "light": "#A31515",
-          "highContrast": "#CE9178"
-        }
-      },
-      {
-        "id": "hlasm.number",
-        "description": "Color for numbers",
-        "defaults": {
-          "dark": "#B5CEA8",
-          "light": "#098658",
-          "highContrast": "#B5CEA8"
-        }
-      },
-      {
-        "id": "hlasm.keyword",
-        "description": "Color for sequence symbols",
-        "defaults": {
-          "dark": "#C586C0",
-          "light": "#AF00DB",
-          "highContrast": "#C586C0"
-        }
-      },
-      {
-        "id": "hlasm.class",
-        "description": "Color for labels",
-        "defaults": {
-          "dark": "#4EC9B0",
-          "light": "#267F99",
-          "highContrast": "#4EC9B0"
-        }
-      },
-      {
-        "id": "hlasm.operator",
-        "description": "Color for operators",
-        "defaults": {
-          "dark": "#D4D4D4",
-          "light": "#000000",
-          "highContrast": "#D4D4D4"
-        }
-      },
-      {
-        "id": "hlasm.parameter",
-        "description": "Color for operands",
-        "defaults": {
-          "dark": "#808080",
-          "light": "#800000",
-          "highContrast": "#808080"
-        }
-      }
-    ],
     "jsonValidation": [
       {
         "fileMatch": "pgm_conf.json",
@@ -298,6 +188,14 @@
         "language": "hlasmListing",
         "scopeName": "source.hlasmListing",
         "path": "./syntaxes/hlasmListing.tmLanguage.json"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "hlasm",
+        "scopes": {
+          "parameter": ["parameter", "punctuation.definition.tag"]
+        }
       }
     ],
     "configurationDefaults": {

@@ -19,7 +19,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <iostream>
 
 #include "logger.h"
 
@@ -161,8 +160,6 @@ std::optional<nlohmann::json> base_protocol_channel::read()
         if (read_message(message_buffer))
         {
             LOG_INFO(message_buffer);
-
-            std::cerr << message_buffer << "\nNEXTMESSAGE\n\n";
 
             try
             {
