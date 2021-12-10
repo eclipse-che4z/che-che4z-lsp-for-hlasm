@@ -20,25 +20,28 @@
 
 #include "alignment.h"
 #include "context/hlasm_context.h"
+#include "context/literal_pool.h"
 
 namespace hlasm_plugin::parser_library::context {
 
 void ordinary_assembly_context::create_private_section()
 {
-    sections_.emplace_back(std::make_unique<section>(id_storage::empty_id, section_kind::EXECUTABLE, ids));
-    curr_section_ = sections_.back().get();
+    curr_section_ = create_section(id_storage::empty_id, section_kind::EXECUTABLE);
 }
 
 const std::vector<std::unique_ptr<section>>& ordinary_assembly_context::sections() const { return sections_; }
 
 const std::unordered_map<id_index, symbol>& ordinary_assembly_context::symbols() const { return symbols_; }
 
-ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx)
+ordinary_assembly_context::ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx)
     : curr_section_(nullptr)
+    , m_literals(std::make_unique<literal_pool>(hlasm_ctx))
     , ids(storage)
     , hlasm_ctx_(hlasm_ctx)
     , symbol_dependencies(*this)
 {}
+ordinary_assembly_context::ordinary_assembly_context(ordinary_assembly_context&&) noexcept = default;
+ordinary_assembly_context::~ordinary_assembly_context() = default;
 
 bool ordinary_assembly_context::create_symbol(
     id_index name, symbol_value value, symbol_attributes attributes, location symbol_location)
@@ -67,13 +70,6 @@ const symbol* ordinary_assembly_context::get_symbol_reference(context::id_index 
     auto tmp = symbol_refs_.find(name);
 
     return tmp == symbol_refs_.end() ? nullptr : &tmp->second;
-}
-
-const symbol* ordinary_assembly_context::get_symbol(id_index name) const
-{
-    auto tmp = symbols_.find(name);
-
-    return tmp == symbols_.end() ? nullptr : &tmp->second;
 }
 
 symbol* ordinary_assembly_context::get_symbol(id_index name)
@@ -107,11 +103,10 @@ void ordinary_assembly_context::set_section(id_index name, section_kind kind, lo
         curr_section_ = &**tmp;
     else
     {
-        if (symbols_.find(name) != symbols_.end())
+        if (name != id_storage::empty_id && symbols_.find(name) != symbols_.end())
             throw std::invalid_argument("symbol already defined");
 
-        sections_.emplace_back(std::make_unique<section>(name, kind, ids));
-        curr_section_ = sections_.back().get();
+        curr_section_ = create_section(name, kind);
 
         auto tmp_addr = curr_section_->current_location_counter().current_address();
         symbols_.try_emplace(name,
@@ -141,9 +136,7 @@ void ordinary_assembly_context::create_external_section(
     if (!symbols_
              .try_emplace(name,
                  name,
-                 sections_.emplace_back(std::make_unique<section>(name, kind, ids))
-                     ->current_location_counter()
-                     .current_address(),
+                 create_section(name, kind)->current_location_counter().current_address(),
                  attrs,
                  std::move(symbol_location),
                  processing_stack)
@@ -188,16 +181,24 @@ void ordinary_assembly_context::set_location_counter_value(const address& addr,
     size_t boundary,
     int offset,
     const resolvable* undefined_address,
-    post_stmt_ptr dependency_source)
+    post_stmt_ptr dependency_source,
+    const dependency_evaluation_context& dep_ctx)
 {
-    (void)set_location_counter_value_space(addr, boundary, offset, undefined_address, std::move(dependency_source));
+    (void)set_location_counter_value_space(
+        addr, boundary, offset, undefined_address, std::move(dependency_source), dep_ctx);
+}
+
+void ordinary_assembly_context::set_location_counter_value(const address& addr, size_t boundary, int offset)
+{
+    set_location_counter_value(addr, boundary, offset, nullptr, nullptr, dependency_evaluation_context {});
 }
 
 space_ptr ordinary_assembly_context::set_location_counter_value_space(const address& addr,
     size_t boundary,
     int offset,
     const resolvable* undefined_address,
-    post_stmt_ptr dependency_source)
+    post_stmt_ptr dependency_source,
+    const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -210,20 +211,23 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(const addr
         if (!undefined_address)
             symbol_dependencies.add_dependency(sp,
                 std::make_unique<alignable_address_resolver>(
-                    std::move(curr_addr), std::vector<address> { addr }, boundary, offset));
+                    std::move(curr_addr), std::vector<address> { addr }, boundary, offset),
+                dep_ctx);
         else
             symbol_dependencies.add_dependency(sp,
                 std::make_unique<alignable_address_abs_part_resolver>(undefined_address),
+                dep_ctx,
                 std::move(dependency_source));
         return sp;
     }
     else
     {
-        return reserve_storage_area_space(offset, alignment { 0, boundary ? boundary : 1 }).second;
+        return reserve_storage_area_space(offset, alignment { 0, boundary ? boundary : 1 }, dep_ctx).second;
     }
 }
 
-void ordinary_assembly_context::set_available_location_counter_value(size_t boundary, int offset)
+void ordinary_assembly_context::set_available_location_counter_value(
+    size_t boundary, int offset, const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -232,13 +236,17 @@ void ordinary_assembly_context::set_available_location_counter_value(size_t boun
 
     if (sp)
         symbol_dependencies.add_dependency(
-            sp, std::make_unique<aggregate_address_resolver>(std::move(addr), boundary, offset));
+            sp, std::make_unique<aggregate_address_resolver>(std::move(addr), boundary, offset), dep_ctx);
     else
     {
         if (boundary)
-            (void)align(alignment { 0, boundary });
-        (void)reserve_storage_area(offset, context::no_align);
+            (void)align(alignment { 0, boundary }, dep_ctx);
+        (void)reserve_storage_area(offset, context::no_align, dep_ctx);
     }
+}
+void ordinary_assembly_context::set_available_location_counter_value(size_t boundary, int offset)
+{
+    set_available_location_counter_value(boundary, offset, dependency_evaluation_context {});
 }
 
 bool ordinary_assembly_context::symbol_defined(id_index name) { return symbols_.find(name) != symbols_.end(); }
@@ -263,12 +271,23 @@ bool ordinary_assembly_context::counter_defined(id_index name)
     return false;
 }
 
-address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
+address ordinary_assembly_context::reserve_storage_area(
+    size_t length, alignment align, const dependency_evaluation_context& dep_ctx)
 {
-    return reserve_storage_area_space(length, align).first;
+    return reserve_storage_area_space(length, align, dep_ctx).first;
 }
 
-address ordinary_assembly_context::align(alignment align) { return reserve_storage_area(0, align); }
+address ordinary_assembly_context::reserve_storage_area(size_t length, alignment align)
+{
+    return reserve_storage_area(length, align, dependency_evaluation_context {});
+}
+
+address ordinary_assembly_context::align(alignment align, const dependency_evaluation_context& dep_ctx)
+{
+    return reserve_storage_area(0, align, dep_ctx);
+}
+
+address ordinary_assembly_context::align(alignment a) { return align(a, dependency_evaluation_context {}); }
 
 space_ptr ordinary_assembly_context::register_ordinary_space(alignment align)
 {
@@ -300,7 +319,8 @@ void ordinary_assembly_context::finish_module_layout(loctr_dependency_resolver* 
 
 const std::unordered_map<id_index, symbol>& ordinary_assembly_context::get_all_symbols() { return symbols_; }
 
-std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(size_t length, alignment align)
+std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_space(
+    size_t length, alignment align, const dependency_evaluation_context& dep_ctx)
 {
     if (!curr_section_)
         create_private_section();
@@ -311,10 +331,27 @@ std::pair<address, space_ptr> ordinary_assembly_context::reserve_storage_area_sp
         auto [ret_addr, sp] = curr_section_->current_location_counter().reserve_storage_area(length, align);
         assert(sp);
 
-        symbol_dependencies.add_dependency(sp, std::make_unique<address_resolver>(addr));
+        symbol_dependencies.add_dependency(sp, std::make_unique<address_resolver>(addr), dep_ctx);
         return std::make_pair(ret_addr, sp);
     }
     return std::make_pair(curr_section_->current_location_counter().reserve_storage_area(length, align).first, nullptr);
+}
+
+section* ordinary_assembly_context::create_section(id_index name, section_kind kind)
+{
+    section* ret = sections_.emplace_back(std::make_unique<section>(name, kind, ids)).get();
+    if (first_control_section_ == nullptr
+        && (kind == section_kind::COMMON || kind == section_kind::EXECUTABLE || kind == section_kind::READONLY))
+        first_control_section_ = ret;
+    return ret;
+}
+
+
+size_t ordinary_assembly_context::current_literal_pool_generation() const { return m_literals->current_generation(); }
+
+void ordinary_assembly_context::generate_pool(dependency_solver& solver, const diagnosable_ctx& diags) const
+{
+    m_literals->generate_pool(solver, diags);
 }
 
 } // namespace hlasm_plugin::parser_library::context

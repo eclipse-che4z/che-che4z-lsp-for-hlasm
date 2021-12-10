@@ -19,20 +19,28 @@
 
 #include "alignment.h"
 #include "dependable.h"
+#include "diagnostic_consumer.h"
 #include "location_counter.h"
 #include "loctr_dependency_resolver.h"
 #include "section.h"
 #include "symbol.h"
 #include "symbol_dependency_tables.h"
 
+namespace hlasm_plugin::parser_library {
+class diagnosable_ctx;
+} // namespace hlasm_plugin::parser_library
+
+namespace hlasm_plugin::parser_library::expressions {
+struct data_definition;
+} // namespace hlasm_plugin::parser_library::expressions
 
 namespace hlasm_plugin::parser_library::context {
-
 class hlasm_context;
+class literal_pool;
 
 // class holding complete information about the 'ordinary assembly' (assembler and machine instructions)
 // it contains 'sections' ordinary 'symbols' and all dependencies between them
-class ordinary_assembly_context : public dependency_solver
+class ordinary_assembly_context
 {
     // list of visited sections
     std::vector<std::unique_ptr<section>> sections_;
@@ -42,11 +50,17 @@ class ordinary_assembly_context : public dependency_solver
     std::unordered_map<id_index, symbol> symbol_refs_;
 
     section* curr_section_;
+    section* first_control_section_ = nullptr;
 
-public:
+    // literals
+    std::unique_ptr<literal_pool> m_literals;
+    size_t m_statement_unique_id = 1;
+
     // access id storage
     id_storage& ids;
-    const hlasm_context& hlasm_ctx_;
+    hlasm_context& hlasm_ctx_;
+
+public:
     // access sections
     const std::vector<std::unique_ptr<section>>& sections() const;
 
@@ -56,7 +70,9 @@ public:
     // access symbol dependency table
     symbol_dependency_tables symbol_dependencies;
 
-    ordinary_assembly_context(id_storage& storage, const hlasm_context& hlasm_ctx);
+    ordinary_assembly_context(id_storage& storage, hlasm_context& hlasm_ctx);
+    ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
+    ~ordinary_assembly_context();
 
     // creates symbol
     // returns false if loctr cycle has occured
@@ -66,8 +82,6 @@ public:
     void add_symbol_reference(symbol sym);
     const symbol* get_symbol_reference(context::id_index name) const;
 
-    // gets symbol by name
-    const symbol* get_symbol(id_index name) const override;
     symbol* get_symbol(id_index name);
 
     // gets section by name
@@ -91,14 +105,19 @@ public:
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source);
+        post_stmt_ptr dependency_source,
+        const dependency_evaluation_context& dep_ctx);
+    void set_location_counter_value(const address& addr, size_t boundary, int offset);
     space_ptr set_location_counter_value_space(const address& addr,
         size_t boundary,
         int offset,
         const resolvable* undefined_address,
-        post_stmt_ptr dependency_source);
+        post_stmt_ptr dependency_source,
+        const dependency_evaluation_context& dep_ctx);
 
     // sets next available value for the current location counter
+    void set_available_location_counter_value(
+        size_t boundary, int offset, const dependency_evaluation_context& dep_ctx);
     void set_available_location_counter_value(size_t boundary, int offset);
 
     // check whether symbol is already defined
@@ -109,10 +128,12 @@ public:
     bool counter_defined(id_index name);
 
     // reserves storage area of specified length and alignment
+    address reserve_storage_area(size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
     address reserve_storage_area(size_t length, alignment align);
 
     // aligns storage
-    address align(alignment align);
+    address align(alignment align, const dependency_evaluation_context& dep_ctx);
+    address align(alignment a);
 
     // adds space to the current location counter
     space_ptr register_ordinary_space(alignment align);
@@ -122,9 +143,26 @@ public:
 
     const std::unordered_map<id_index, symbol>& get_all_symbols();
 
+    size_t current_literal_pool_generation() const;
+    size_t next_unique_id() { return m_statement_unique_id++; }
+
+    const literal_pool& literals() const { return *m_literals; }
+    void generate_pool(dependency_solver& solver, const diagnosable_ctx& diags) const;
+    location_counter* implicit_ltorg_target()
+    {
+        if (!first_control_section_)
+            create_private_section();
+
+        return &first_control_section_->current_location_counter();
+    }
+
 private:
     void create_private_section();
-    std::pair<address, space_ptr> reserve_storage_area_space(size_t length, alignment align);
+    std::pair<address, space_ptr> reserve_storage_area_space(
+        size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
+    section* create_section(id_index name, section_kind kind);
+
+    friend class ordinary_assembly_dependency_solver;
 };
 
 } // namespace hlasm_plugin::parser_library::context

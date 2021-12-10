@@ -14,6 +14,7 @@
 
 #include "lookahead_processor.h"
 
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "ordinary_processor.h"
@@ -151,6 +152,7 @@ lookahead_processor::process_table_t lookahead_processor::create_table(context::
 
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
     // type attribute operand
     context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
     if (statement.operands_ref().value.size() >= 3
@@ -159,9 +161,9 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[2]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_error(hlasm_ctx.ord_ctx) && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
         {
-            auto t_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+            auto t_value = expr_op->expression->resolve(dep_solver);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -176,9 +178,9 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
         auto asm_op = statement.operands_ref().value[1]->access_asm();
         auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_error(hlasm_ctx.ord_ctx) && !expr_op->has_dependencies(hlasm_ctx.ord_ctx))
+        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver))
         {
-            auto length_value = expr_op->expression->resolve(hlasm_ctx.ord_ctx);
+            auto length_value = expr_op->expression->resolve(dep_solver);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -234,14 +236,15 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
     context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
 
-    auto tmp = data_op->get_operand_value(hlasm_ctx.ord_ctx);
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx);
+    auto tmp = data_op->get_operand_value(dep_solver);
     auto& value = dynamic_cast<checking::data_definition_operand&>(*tmp);
 
-    if (!data_op->value->length || !data_op->value->length->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+    if (!data_op->value->length || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
     {
         len = value.get_length_attribute();
     }
-    if (data_op->value->scale && !data_op->value->scale->get_dependencies(hlasm_ctx.ord_ctx).contains_dependencies())
+    if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
     {
         scale = value.get_scale_attribute();
     }

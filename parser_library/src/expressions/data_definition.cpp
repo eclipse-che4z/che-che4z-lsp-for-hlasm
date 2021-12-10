@@ -22,7 +22,9 @@
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "mach_expr_term.h"
+#include "mach_expr_visitor.h"
 #include "semantics/collector.h"
+#include "utils/similar.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
@@ -144,7 +146,7 @@ char hlasm_plugin::parser_library::expressions::data_definition::get_type_attrib
     return 'U';
 }
 
-int32_t data_definition::get_scale_attribute(expressions::mach_evaluate_info info) const
+int32_t data_definition::get_scale_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -153,7 +155,7 @@ int32_t data_definition::get_scale_attribute(expressions::mach_evaluate_info inf
         return 0;
 }
 
-uint32_t data_definition::get_length_attribute(expressions::mach_evaluate_info info) const
+uint32_t data_definition::get_length_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -162,7 +164,7 @@ uint32_t data_definition::get_length_attribute(expressions::mach_evaluate_info i
         return 0;
 }
 
-int32_t data_definition::get_integer_attribute(expressions::mach_evaluate_info info) const
+int32_t data_definition::get_integer_attribute(context::dependency_solver& info) const
 {
     auto def_type = access_data_def_type();
     if (def_type)
@@ -227,37 +229,39 @@ std::vector<context::id_index> data_definition::get_single_symbol_names() const
     return symbols;
 }
 
-void data_definition::assign_location_counter(context::address loctr_value)
+void data_definition::collect_diags() const
 {
     if (dupl_factor)
-        dupl_factor->fill_location_counter(loctr_value);
+        collect_diags_from_child(*dupl_factor);
     if (program_type)
-        program_type->fill_location_counter(loctr_value);
+        collect_diags_from_child(*program_type);
     if (length)
-        length->fill_location_counter(loctr_value);
+        collect_diags_from_child(*length);
     if (scale)
-        scale->fill_location_counter(loctr_value);
+        collect_diags_from_child(*scale);
     if (exponent)
-        exponent->fill_location_counter(loctr_value);
+        collect_diags_from_child(*exponent);
+
     if (nominal_value && nominal_value->access_exprs())
     {
-        for (auto& entry : nominal_value->access_exprs()->exprs)
+        for (const auto& val : nominal_value->access_exprs()->exprs)
         {
-            if (std::holds_alternative<mach_expr_ptr>(entry))
-                std::get<mach_expr_ptr>(entry)->fill_location_counter(loctr_value);
+            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
+                collect_diags_from_child(*std::get<expressions::mach_expr_ptr>(val));
             else
             {
-                std::get<address_nominal>(entry).base->fill_location_counter(loctr_value);
-                std::get<address_nominal>(entry).displacement->fill_location_counter(loctr_value);
+                const auto& addr = std::get<expressions::address_nominal>(val);
+                if (addr.base)
+                    collect_diags_from_child(*addr.base);
+                if (addr.displacement)
+                    collect_diags_from_child(*addr.displacement);
             }
         }
     }
 }
 
-void data_definition::collect_diags() const {}
-
 checking::data_def_field<int32_t> set_data_def_field(
-    const expressions::mach_expression* e, expressions::mach_evaluate_info info)
+    const expressions::mach_expression* e, context::dependency_solver& info)
 {
     using namespace checking;
     data_def_field<int32_t> field;
@@ -274,12 +278,12 @@ checking::data_def_field<int32_t> set_data_def_field(
     return field;
 }
 
-checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(expressions::mach_evaluate_info info) const
+checking::dupl_factor_modifier_t data_definition::evaluate_dupl_factor(context::dependency_solver& info) const
 {
-    return set_data_def_field(dupl_factor.get(), info);
+    return dupl_factor ? set_data_def_field(dupl_factor.get(), info) : checking::data_def_field<int32_t>(1);
 }
 
-checking::data_def_length_t data_definition::evaluate_length(expressions::mach_evaluate_info info) const
+checking::data_def_length_t data_definition::evaluate_length(context::dependency_solver& info) const
 {
     checking::data_def_length_t len(set_data_def_field(length.get(), info));
     len.len_type = length_type == expressions::data_definition::length_type::BIT ? checking::data_def_length_t::BIT
@@ -287,86 +291,148 @@ checking::data_def_length_t data_definition::evaluate_length(expressions::mach_e
     return len;
 }
 
-checking::scale_modifier_t data_definition::evaluate_scale(expressions::mach_evaluate_info info) const
+checking::scale_modifier_t data_definition::evaluate_scale(context::dependency_solver& info) const
 {
     auto common = set_data_def_field(scale.get(), info);
     return checking::scale_modifier_t(common.present, (int16_t)common.value, common.rng);
 }
 
-checking::exponent_modifier_t data_definition::evaluate_exponent(expressions::mach_evaluate_info info) const
+checking::exponent_modifier_t data_definition::evaluate_exponent(context::dependency_solver& info) const
 {
     return set_data_def_field(exponent.get(), info);
 }
 
-checking::nominal_value_t data_definition::evaluate_nominal_value(expressions::mach_evaluate_info info) const
+inline checking::nominal_value_expressions extract_nominal_value_expressions(
+    const expr_or_address_list& exprs, context::dependency_solver& info)
 {
-    checking::nominal_value_t nom;
-    if (nominal_value)
+    checking::nominal_value_expressions values;
+    for (const auto& e_or_a : exprs)
     {
-        nom.present = true;
-        if (nominal_value->access_string())
+        if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
         {
-            nom.value = nominal_value->access_string()->value;
-            nom.rng = nominal_value->access_string()->value_range;
-        }
-        else if (nominal_value->access_exprs())
-        {
-            checking::nominal_value_expressions values;
-            for (auto& e_or_a : nominal_value->access_exprs()->exprs)
+            const expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
+            auto deps = e->get_dependencies(info);
+            bool ignored = deps.has_error || deps.contains_dependencies(); // ignore values with dependencies
+            auto ev = e->evaluate(info);
+            auto kind = ev.value_kind();
+            if (kind == context::symbol_value_kind::ABS)
             {
-                if (std::holds_alternative<expressions::mach_expr_ptr>(e_or_a))
-                {
-                    expressions::mach_expr_ptr& e = std::get<expressions::mach_expr_ptr>(e_or_a);
-                    bool ignored = e->get_dependencies(info).has_error
-                        || e->get_dependencies(info).contains_dependencies(); // ignore values with dependencies
-                    auto ev = e->evaluate(info);
-                    auto kind = ev.value_kind();
-                    if (kind == context::symbol_value_kind::ABS)
-                        values.push_back(checking::data_def_expr {
-                            ev.get_abs(), checking::expr_type::ABS, e->get_range(), ignored });
-
-                    else if (kind == context::symbol_value_kind::RELOC)
-                    {
-                        checking::expr_type ex_type;
-                        const auto& reloc = ev.get_reloc();
-                        if (reloc.is_complex())
-                            ex_type = checking::expr_type::COMPLEX;
-                        else
-                            ex_type = checking::expr_type::RELOC;
-                        // TO DO value of the relocatable expression
-                        // maybe push back data_def_addr?
-                        values.push_back(checking::data_def_expr { 0, ex_type, e->get_range(), ignored });
-                    }
-                    else if (kind == context::symbol_value_kind::UNDEF)
-                    {
-                        values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
-                    }
-                    else
-                    {
-                        assert(false);
-                        continue;
-                    }
-                }
-                else // there is an address D(B)
-                {
-                    auto& a = std::get<expressions::address_nominal>(e_or_a);
-                    checking::data_def_address ch_adr;
-
-                    ch_adr.base = set_data_def_field(a.base.get(), info);
-                    ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
-                    if (!ch_adr.base.present || !ch_adr.displacement.present)
-                        ch_adr.ignored = true; // ignore values with dependencies
-                    values.push_back(ch_adr);
-                }
+                values.push_back(checking::data_def_expr {
+                    ev.get_abs(),
+                    checking::expr_type::ABS,
+                    e->get_range(),
+                    ignored,
+                });
             }
-            nom.value = std::move(values);
+            else if (kind == context::symbol_value_kind::RELOC)
+            {
+                // TO DO value of the relocatable expression
+                // maybe push back data_def_addr?
+                values.push_back(checking::data_def_expr {
+                    0,
+                    ev.get_reloc().is_complex() ? checking::expr_type::COMPLEX : checking::expr_type::RELOC,
+                    e->get_range(),
+                    ignored,
+                });
+            }
+            else if (kind == context::symbol_value_kind::UNDEF)
+            {
+                values.push_back(checking::data_def_expr { 0, checking::expr_type::ABS, e->get_range(), true });
+            }
+            else
+            {
+                assert(false);
+                continue;
+            }
         }
-        else
-            assert(false);
+        else // there is an address D(B)
+        {
+            const auto& a = std::get<expressions::address_nominal>(e_or_a);
+            checking::data_def_address ch_adr;
+
+            ch_adr.base = set_data_def_field(a.base.get(), info);
+            ch_adr.displacement = set_data_def_field(a.displacement.get(), info);
+            ch_adr.ignored = !ch_adr.base.present || !ch_adr.displacement.present; // ignore value with dependencies
+            values.push_back(ch_adr);
+        }
+    }
+    return values;
+}
+
+checking::nominal_value_t data_definition::evaluate_nominal_value(context::dependency_solver& info) const
+{
+    if (!nominal_value)
+        return {};
+
+    checking::nominal_value_t nom;
+    nom.present = true;
+    if (nominal_value->access_string())
+    {
+        nom.value = nominal_value->access_string()->value;
+        nom.rng = nominal_value->access_string()->value_range;
+    }
+    else if (nominal_value->access_exprs())
+    {
+        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs, info);
     }
     else
-        nom.present = false;
+        assert(false);
+
     return nom;
+}
+
+void data_definition::apply(mach_expr_visitor& visitor) const
+{
+    if (dupl_factor)
+        dupl_factor->apply(visitor);
+    if (program_type)
+        program_type->apply(visitor);
+    if (length)
+        length->apply(visitor);
+    if (scale)
+        scale->apply(visitor);
+    if (exponent)
+        exponent->apply(visitor);
+
+    if (nominal_value && nominal_value->access_exprs())
+    {
+        for (const auto& val : nominal_value->access_exprs()->exprs)
+        {
+            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
+                std::get<expressions::mach_expr_ptr>(val)->apply(visitor);
+            else
+            {
+                const auto& addr = std::get<expressions::address_nominal>(val);
+                if (addr.base)
+                    addr.base->apply(visitor);
+                if (addr.displacement)
+                    addr.displacement->apply(visitor);
+            }
+        }
+    }
+}
+
+size_t hlasm_plugin::parser_library::expressions::data_definition::hash() const
+{
+    auto ret = (size_t)0x65b40f329f97f6c9;
+    ret = hash_combine(ret, type);
+    ret = hash_combine(ret, extension);
+    if (length)
+        ret = hash_combine(ret, length->hash());
+
+    ret = hash_combine(ret, (size_t)length_type);
+    if (dupl_factor)
+        ret = hash_combine(ret, dupl_factor->hash());
+    if (program_type)
+        ret = hash_combine(ret, program_type->hash());
+    if (scale)
+        ret = hash_combine(ret, scale->hash());
+    if (exponent)
+        ret = hash_combine(ret, exponent->hash());
+    if (nominal_value)
+        ret = hash_combine(ret, nominal_value->hash());
+
+    return ret;
 }
 
 data_definition::parser::parser(
@@ -455,30 +521,23 @@ void data_definition::parser::update_position_by_one() { ++pos_.column; }
 
 void data_definition::parser::parse_duplication_factor()
 {
-    if (isdigit(format_[0]) || format_[0] == '-') // duplication factor is present
+    if (isdigit(static_cast<unsigned char>(format_[0])) || format_[0] == '-') // duplication factor is present
     {
         position old_pos = pos_;
         auto dupl_factor_num = parse_number();
 
         if (dupl_factor_num)
             result_.dupl_factor = std::make_unique<mach_expr_constant>(*dupl_factor_num, range(old_pos, pos_));
-        else
-            result_.dupl_factor = std::make_unique<mach_expr_constant>(1, range(old_pos, pos_));
     }
     else if (format_[0] == *data_definition::expr_placeholder)
     { // duplication factor as expression
         result_.dupl_factor = move_next_expression();
     }
-    else
-    {
-        result_.dupl_factor = std::make_unique<mach_expr_constant>(1, range(pos_, pos_));
-    }
 }
 
-bool is_type_extension(char ch)
+bool is_type_extension(char type, char ch)
 {
-    static std::set<char> type_extensions({ 'A', 'E', 'U', 'H', 'B', 'D', 'Q', 'Y' });
-    return type_extensions.find(ch) != type_extensions.end();
+    return checking::data_def_type::types_and_extensions.count(std::make_pair(type, ch)) > 0;
 }
 
 bool is_modifier_or_prog(char ch) { return ch == 'P' || ch == 'L' || ch == 'S' || ch == 'E'; }
@@ -601,6 +660,21 @@ void data_definition::parser::parse_modifier()
     assign_expr_to_modifier(modifier, std::move(expr));
 }
 
+namespace {
+struct loctr_reference_visitor final : public mach_expr_visitor
+{
+    bool found_loctr_reference = false;
+
+    void visit(const mach_expr_constant&) override {}
+    void visit(const mach_expr_data_attr&) override {}
+    void visit(const mach_expr_symbol&) override {}
+    void visit(const mach_expr_location_counter&) override { found_loctr_reference = true; }
+    void visit(const mach_expr_self_def&) override {}
+    void visit(const mach_expr_default&) override {}
+    void visit(const mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
+};
+} // namespace
+
 data_definition data_definition::parser::parse()
 {
     parse_duplication_factor();
@@ -614,7 +688,7 @@ data_definition data_definition::parser::parse()
     if (p_ >= format_.size())
         return std::move(result_);
 
-    if (is_type_extension(format_[p_]))
+    if (is_type_extension(result_.type, format_[p_]))
     {
         result_.extension = format_[p_];
         result_.extension_range = { pos_, { pos_.line, pos_.column + 1 } };
@@ -651,5 +725,24 @@ data_definition data_definition::parser::parse()
         }
     }
 
+    loctr_reference_visitor v;
+    result_.apply(v);
+    result_.references_loctr = v.found_loctr_reference;
+
     return std::move(result_);
+}
+
+bool hlasm_plugin::parser_library::expressions::is_similar(const data_definition& l, const data_definition& r) noexcept
+{
+    return hlasm_plugin::utils::is_similar(l,
+        r,
+        &data_definition::type,
+        &data_definition::extension,
+        &data_definition::length,
+        &data_definition::length_type,
+        &data_definition::dupl_factor,
+        &data_definition::program_type,
+        &data_definition::scale,
+        &data_definition::exponent,
+        &data_definition::nominal_value);
 }

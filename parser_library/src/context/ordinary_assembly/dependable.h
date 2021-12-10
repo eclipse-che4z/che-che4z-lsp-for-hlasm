@@ -18,6 +18,10 @@
 #include "dependency_collector.h"
 #include "symbol.h"
 
+namespace hlasm_plugin::parser_library::expressions {
+struct data_definition;
+} // namespace hlasm_plugin::parser_library::expressions
+
 namespace hlasm_plugin::parser_library::context {
 
 // interface for obtaining symbol from its name
@@ -25,6 +29,11 @@ class dependency_solver
 {
 public:
     virtual const symbol* get_symbol(id_index name) const = 0;
+    virtual std::optional<address> get_loctr() const = 0;
+    virtual id_index get_literal_id(const std::string&,
+        const std::shared_ptr<const expressions::data_definition>&,
+        const range& r,
+        bool align_on_halfword) = 0;
 
 protected:
     ~dependency_solver() = default;

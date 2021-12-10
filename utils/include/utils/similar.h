@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_UTILS_SIMILAR_H
 #define HLASMPLUGIN_UTILS_SIMILAR_H
 
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -41,6 +42,12 @@ class is_similar_t
     static std::false_type use_equal(...);
 
 public:
+    template<typename T, typename... Members>
+    bool operator()(const T& l, const T& r, Members T::*... member) const
+    {
+        return (operator()(l.*member, r.*member) && ...);
+    }
+
     template<typename T>
     bool operator()(const T& l, const T& r) const
     {
@@ -49,12 +56,32 @@ public:
         constexpr bool equal = decltype(use_equal(l))::value;
         static_assert(standalone || member || equal, "is_similar or equal to operator not available");
 
+        if (&l == &r)
+            return true;
         if constexpr (standalone)
             return is_similar(l, r);
         else if constexpr (member)
             return l.is_similar(r);
         else if constexpr (equal)
             return l == r; // if things are the same then they are also similar
+    }
+
+    template<typename T>
+    bool operator()(const std::shared_ptr<T>& l, const std::shared_ptr<T>& r) const
+    {
+        return l == r || (l && r && operator()(*l, *r));
+    }
+
+    template<typename T, class D>
+    bool operator()(const std::unique_ptr<T, D>& l, const std::unique_ptr<T, D>& r) const
+    {
+        return l == r || (l && r && operator()(*l, *r));
+    }
+
+    template<typename T>
+    bool operator()(T* const& l, T* const& r) const
+    {
+        return l == r || (l && r && operator()(*l, *r));
     }
 };
 } // namespace detail

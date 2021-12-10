@@ -17,6 +17,7 @@ target_sources(parser_library PRIVATE
 	db2_preprocessor.cpp
 	error_statement.cpp
 	error_statement.h
+	op_code.cpp
 	op_code.h
 	opencode_provider.cpp
 	opencode_provider.h

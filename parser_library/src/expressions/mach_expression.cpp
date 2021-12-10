@@ -14,6 +14,8 @@
 
 #include "mach_expression.h"
 
+#include <typeinfo>
+
 #include "mach_expr_term.h"
 
 using namespace hlasm_plugin::parser_library;
@@ -27,6 +29,11 @@ mach_expr_ptr hlasm_plugin::parser_library::expressions::mach_expression::assign
     mach_expr_ptr expr, range expr_range)
 {
     return expr ? std::move(expr) : std::make_unique<mach_expr_default>(expr_range);
+}
+
+bool mach_expression::is_similar(const mach_expression& expr) const
+{
+    return typeid(*this) == typeid(expr) && do_is_similar(expr);
 }
 
 range mach_expression::get_range() const { return expr_range_; }

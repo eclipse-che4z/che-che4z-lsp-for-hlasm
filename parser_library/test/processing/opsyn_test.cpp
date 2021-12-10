@@ -317,3 +317,24 @@ B        DS    C
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "CNT"), 1);
 }
+
+TEST(OPSYN, reladdr_caching)
+{
+    std::string input(R"(
+      MACRO
+      MAC
+      INSTR 0,A
+      MEND
+
+INSTR OPSYN LA
+      MAC
+INSTR OPSYN LARL
+      MAC
+A     DS    0H
+)");
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

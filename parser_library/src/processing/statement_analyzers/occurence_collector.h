@@ -55,6 +55,7 @@ public:
     void get_occurence(const semantics::seq_sym& seq);
     void get_occurence(context::id_index ord, const range& ord_range);
     void get_occurence(const semantics::concat_chain& chain);
+    void get_occurence(const expressions::ca_literal_def& var);
 
 private:
     void visit(const expressions::mach_expr_constant& expr) override;
@@ -63,6 +64,7 @@ private:
     void visit(const expressions::mach_expr_location_counter& expr) override;
     void visit(const expressions::mach_expr_self_def& expr) override;
     void visit(const expressions::mach_expr_default& expr) override;
+    void visit(const expressions::mach_expr_literal& expr) override;
 
     void visit(const expressions::ca_constant& expr) override;
     void visit(const expressions::ca_expr_list& expr) override;

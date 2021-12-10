@@ -232,3 +232,25 @@ SYM  DS   CL1
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), 0U);
 }
+
+TEST(mach_instr_processing, rel_addr_bitmask)
+{
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
+             { "LARL", 0x40 },
+             { "LA", 0x00 },
+             { "CLIJ", 0x10 },
+             { "BPRP", 0x60 },
+         })
+    {
+        EXPECT_EQ(context::instruction::machine_instructions.at(instr).reladdr_mask.mask(), expected) << instr;
+    }
+
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
+             { "CLIJE", 0x20 },
+             { "BNE", 0x00 },
+             { "JNE", 0x80 },
+         })
+    {
+        EXPECT_EQ(context::instruction::mnemonic_codes.at(instr).reladdr_mask.mask(), expected) << instr;
+    }
+}

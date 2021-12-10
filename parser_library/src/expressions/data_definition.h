@@ -33,12 +33,13 @@ class collector;
 
 
 namespace hlasm_plugin::parser_library::expressions {
+class mach_expr_visitor;
 
 // Represents data definition operand as it was written into source code.
 // Uses machine expressions to represent all modifiers and nominal value.
 struct data_definition final : public diagnosable_op_impl, public context::dependable
 {
-    enum class length_type
+    enum class length_type : unsigned char
     {
         BYTE,
         BIT
@@ -57,6 +58,7 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     nominal_value_ptr nominal_value = nullptr;
 
     length_type length_type = length_type::BYTE;
+    bool references_loctr = false;
 
     inline static const char* expr_placeholder = "&";
     inline static const char* nominal_placeholder = " ";
@@ -82,9 +84,9 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
 
     char get_type_attribute() const;
     // Expects, that scale does not have unresolved dependencies
-    int32_t get_scale_attribute(expressions::mach_evaluate_info info) const;
-    uint32_t get_length_attribute(expressions::mach_evaluate_info info) const;
-    int32_t get_integer_attribute(expressions::mach_evaluate_info info) const;
+    int32_t get_scale_attribute(context::dependency_solver& info) const;
+    uint32_t get_length_attribute(context::dependency_solver& info) const;
+    int32_t get_integer_attribute(context::dependency_solver& info) const;
 
     // Returns true, if this data definition has one of the types, that take expressions consisting of only one symbol
     // (like V or R)
@@ -95,21 +97,24 @@ struct data_definition final : public diagnosable_op_impl, public context::depen
     // Expects that check_single_symbol_ok returned true.
     std::vector<context::id_index> get_single_symbol_names() const;
 
-    // Assigns location counter to all expressions used to represent this data_definition.
-    void assign_location_counter(context::address loctr_value);
-
     void collect_diags() const override;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false
-    checking::dupl_factor_modifier_t evaluate_dupl_factor(expressions::mach_evaluate_info info) const;
-    checking::data_def_length_t evaluate_length(expressions::mach_evaluate_info info) const;
-    checking::scale_modifier_t evaluate_scale(expressions::mach_evaluate_info info) const;
-    checking::exponent_modifier_t evaluate_exponent(expressions::mach_evaluate_info info) const;
+    checking::dupl_factor_modifier_t evaluate_dupl_factor(context::dependency_solver& info) const;
+    checking::data_def_length_t evaluate_length(context::dependency_solver& info) const;
+    checking::scale_modifier_t evaluate_scale(context::dependency_solver& info) const;
+    checking::exponent_modifier_t evaluate_exponent(context::dependency_solver& info) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
-    checking::nominal_value_t evaluate_nominal_value(expressions::mach_evaluate_info info) const;
+    checking::nominal_value_t evaluate_nominal_value(context::dependency_solver& info) const;
+
+    void apply(mach_expr_visitor& visitor) const;
+
+    friend bool is_similar(const data_definition& l, const data_definition& r) noexcept;
+
+    size_t hash() const;
 
 private:
     class parser;

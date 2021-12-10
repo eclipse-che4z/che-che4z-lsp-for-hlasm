@@ -70,12 +70,13 @@ TEST(arithmetic_expressions, invalid_self_defining_term)
         R"(
 &C1 SETC 'D'
 &A1 SETA C'&C1'
+&A2 SETA CA'A'
 )";
     analyzer a(input);
     a.analyze();
 
     a.collect_diags();
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), (size_t)3);
 }
 
 TEST(arithmetic_expressions, substitution_to_character_expression)

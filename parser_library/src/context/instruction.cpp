@@ -15,6 +15,7 @@
 #include "instruction.h"
 
 #include <algorithm>
+#include <limits>
 
 using namespace hlasm_plugin::parser_library::context;
 using namespace hlasm_plugin::parser_library::checking;
@@ -178,7 +179,6 @@ const std::map<std::string, assembler_instruction> instruction::assembler_instru
     { "WXTRN", assembler_instruction(1, -1, false, "<external_symbol>+|PART(<external_symbol>+)") },
     { "XATTR", assembler_instruction(1, -1, false, "attribute+") },
 };
-
 
 bool hlasm_plugin::parser_library::context::machine_instruction::check_nth_operand(
     size_t place, const checking::machine_operand* operand)
@@ -2670,3 +2670,55 @@ const std::map<std::string, machine_instruction> instruction::machine_instructio
 
 const std::map<std::string, mnemonic_code> instruction::mnemonic_codes =
     instruction::get_mnemonic_codes(machine_instructions);
+
+// Generates a bitmask for an arbitrary machine instruction indicating which operands
+// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
+unsigned char machine_instruction::generate_reladdr_bitmask(
+    const std::vector<checking::machine_operand_format>& operands)
+{
+    unsigned char result = 0;
+
+    assert(operands.size() <= std::numeric_limits<decltype(result)>::digits);
+
+    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
+
+    for (const auto& op : operands)
+    {
+        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
+            result |= top_bit;
+        top_bit >>= 1;
+    }
+
+    return result;
+}
+
+// Generates a bitmask for an arbitrary mnemonit indicating which operands
+// are of the RI type (and therefore are modified by transform_reloc_imm_operands)
+unsigned char mnemonic_code::generate_reladdr_bitmask(
+    const machine_instruction* instruction, const std::vector<std::pair<size_t, size_t>>& replaced)
+{
+    unsigned char result = 0;
+
+    decltype(result) top_bit = 1 << (std::numeric_limits<decltype(result)>::digits - 1);
+
+    const std::pair<size_t, size_t>* replaced_b = replaced.data();
+    const std::pair<size_t, size_t>* const replaced_e = replaced.data() + replaced.size();
+
+    size_t position = 0;
+    for (const auto& op : instruction->operands)
+    {
+        if (replaced_b != replaced_e && position == replaced_b->first)
+        {
+            ++replaced_b;
+            ++position;
+            continue;
+        }
+
+        if (op.identifier.type == checking::machine_operand_type::RELOC_IMM)
+            result |= top_bit;
+        top_bit >>= 1;
+
+        ++position;
+    }
+    return result;
+}

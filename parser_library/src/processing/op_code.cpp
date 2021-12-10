@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2021 Broadcom.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Broadcom, Inc. - initial API and implementation
+ */
+
+#include "op_code.h"
+
+#include "context/instruction.h"
+
+namespace hlasm_plugin::parser_library::processing {
+
+inline unsigned char get_reladdr_bitmask(context::id_index id)
+{
+    if (!id || id->empty())
+        return 0;
+
+    if (auto p_instr = context::instruction::machine_instructions.find(*id);
+        p_instr != context::instruction::machine_instructions.end())
+        return p_instr->second.reladdr_mask.mask();
+
+    if (auto p_mnemo = context::instruction::mnemonic_codes.find(*id);
+        p_mnemo != context::instruction::mnemonic_codes.end())
+        return p_mnemo->second.reladdr_mask.mask();
+
+    return 0;
+}
+
+processing_status_cache_key::processing_status_cache_key(const processing_status& s)
+    : form(s.first.form)
+    , occurence(s.first.occurence)
+    , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
+    , rel_addr(get_reladdr_bitmask(s.second.value))
+{}
+} // namespace hlasm_plugin::parser_library::processing

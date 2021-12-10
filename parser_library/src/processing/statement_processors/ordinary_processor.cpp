@@ -17,6 +17,8 @@
 #include <stdexcept>
 
 #include "checking/instruction_checker.h"
+#include "context/literal_pool.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
@@ -123,6 +125,17 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
 
 void ordinary_processor::end_processing()
 {
+    if (hlasm_ctx.ord_ctx.literals().get_pending_count())
+    {
+        auto ltorg = hlasm_ctx.ord_ctx.implicit_ltorg_target();
+        hlasm_ctx.ord_ctx.set_location_counter(ltorg->name, {});
+        hlasm_ctx.ord_ctx.set_available_location_counter_value(0, 0);
+
+        context::ordinary_assembly_dependency_solver dep_solver(
+            hlasm_ctx.ord_ctx, context::ordinary_assembly_dependency_solver::no_new_literals {});
+        hlasm_ctx.ord_ctx.generate_pool(dep_solver, *this);
+    }
+
     hlasm_ctx.ord_ctx.symbol_dependencies.add_defined(&asm_proc_);
 
     hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_);
@@ -222,24 +235,34 @@ void ordinary_processor::collect_diags() const
     collect_diags_from_child(eval_ctx);
 }
 
-void ordinary_processor::check_postponed_statements(std::vector<context::post_stmt_ptr> stmts)
+void ordinary_processor::check_postponed_statements(
+    const std::vector<std::pair<context::post_stmt_ptr, context::dependency_evaluation_context>>& stmts)
 {
-    checking::assembler_checker asm_checker;
-    checking::machine_checker mach_checker;
+    static const checking::assembler_checker asm_checker;
+    static const checking::machine_checker mach_checker;
 
-    for (auto& stmt : stmts)
+    for (const auto& [stmt, dep_ctx] : stmts)
     {
         if (!stmt)
             continue;
 
+        context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx);
 
-        assert(stmt->impl()->opcode_ref().type == context::instruction_type::ASM
-            || stmt->impl()->opcode_ref().type == context::instruction_type::MACH);
+        const auto* rs = stmt->resolved_stmt();
+        switch (rs->opcode_ref().type)
+        {
+            case hlasm_plugin::parser_library::context::instruction_type::MACH:
+                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, mach_checker, *this);
+                break;
 
-        if (stmt->impl()->opcode_ref().type == context::instruction_type::ASM)
-            low_language_processor::check(*stmt->impl(), hlasm_ctx, asm_checker, *this);
-        else
-            low_language_processor::check(*stmt->impl(), hlasm_ctx, mach_checker, *this);
+            case hlasm_plugin::parser_library::context::instruction_type::ASM:
+                low_language_processor::check(*rs, stmt->location_stack(), dep_solver, asm_checker, *this);
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
     }
 }
 

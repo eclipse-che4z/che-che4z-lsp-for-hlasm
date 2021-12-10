@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 
 #include "../../common_testing.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 
 void expect_no_errors(const std::string& text)
 {
@@ -64,6 +65,7 @@ TEST(data_definition_grammar, modifiers)
  DC (1*8)FDP(123)L3S(2*4)E12'2.25'
  DC (1*8)FDP(123)L1S30E(-12*2)'2.25'
  DC (1*8)FDP(123)L1S30E40'2.25'
+ DC EE(1)'1'
 
  DC 10FDL(2*3)S(2*4)E(-12*2)'2.25'
  DC 10FDL2S(2*4)E(-12*2)'2.25'
@@ -117,6 +119,7 @@ TEST(data_definition_grammar, modifiers_lower_case)
  dc (1*8)fdp(123)l3s(2*4)e12'2.25'
  dc (1*8)fdp(123)l1s30e(-12*2)'2.25'
  dc (1*8)fdp(123)l1s30e40'2.25'
+ dc ee(1)'1'
 
  dc 10fdl(2*3)s(2*4)e(-12*2)'2.25'
  dc 10fdl2s(2*4)e(-12*2)'2.25'
@@ -188,7 +191,9 @@ TEST(data_definition, duplication_factor)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 13);
 }
 
@@ -201,7 +206,9 @@ TEST(data_definition, duplication_factor_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 26);
 }
 
@@ -214,8 +221,9 @@ TEST(data_definition, duplication_factor_out_of_range)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
-    EXPECT_EQ(dup_f, 1);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    EXPECT_FALSE(parsed.dupl_factor);
 }
 
 TEST(data_definition, duplication_factor_invalid_number)
@@ -227,8 +235,9 @@ TEST(data_definition, duplication_factor_invalid_number)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
-    EXPECT_EQ(dup_f, 1);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    EXPECT_FALSE(parsed.dupl_factor);
 }
 
 TEST(data_definition, all_fields)
@@ -240,14 +249,16 @@ TEST(data_definition, all_fields)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    auto dup_f = parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs();
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    auto dup_f = parsed.dupl_factor->evaluate(dep_solver).get_abs();
     EXPECT_EQ(dup_f, 8);
 
-    EXPECT_EQ(parsed.program_type->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.program_type->evaluate(dep_solver).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
-    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), 8);
+    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -261,9 +272,11 @@ TEST(data_definition, no_nominal)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 0);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -279,9 +292,11 @@ TEST(data_definition, no_nominal_expr)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 0);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 0);
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 4);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 4);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BYTE);
     EXPECT_EQ(parsed.scale, nullptr);
     EXPECT_EQ(parsed.exponent, nullptr);
@@ -297,13 +312,15 @@ TEST(data_definition, bit_length)
     auto parsed = std::move(res->value);
     EXPECT_EQ(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
 
-    EXPECT_EQ(parsed.program_type->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 123);
-    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
+
+    EXPECT_EQ(parsed.program_type->evaluate(dep_solver).get_abs(), 123);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), -8);
+    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -317,13 +334,15 @@ TEST(data_definition, unexpected_dot)
     auto parsed = std::move(res->value);
     EXPECT_GT(parsed.diags().size(), (size_t)0);
 
-    EXPECT_EQ(parsed.dupl_factor->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 8);
+    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx);
+
+    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver).get_abs(), 8);
 
     EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), 2);
+    EXPECT_EQ(parsed.length->evaluate(dep_solver).get_abs(), 2);
     EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_EQ(parsed.scale->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -8);
-    EXPECT_EQ(parsed.exponent->evaluate(a.hlasm_ctx().ord_ctx).get_abs(), -24);
+    EXPECT_EQ(parsed.scale->evaluate(dep_solver).get_abs(), -8);
+    EXPECT_EQ(parsed.exponent->evaluate(dep_solver).get_abs(), -24);
     ASSERT_NE(parsed.nominal_value->access_string(), nullptr);
     EXPECT_EQ(parsed.nominal_value->access_string()->value, "2.25");
 }
@@ -450,4 +469,59 @@ TEST(data_definition, externals_part_support)
     expect_errors(" WXTRN PART(W1+1)");
     expect_errors(" EXTRN PART()");
     expect_errors(" WXTRN PART()");
+}
+
+TEST(data_definition, moving_loctr)
+{
+    std::string input = R"(
+X    DC  (*-X+1)XL(*-X+1)'0',(*-X+1)F'0'
+LX   EQU *-X
+TEST DS  0FD
+     DS  A
+B    DS  A
+Y    DC  FL.(2*(*-TEST))'0',FL.(2*(*-TEST))'-1',FL.12'0'
+LY   EQU *-Y
+Z    DC  3FL(*-Z+1)'0',3FL(*-Z+1)'0'
+LZ   EQU *-Z
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+    EXPECT_EQ(a.diags().size(), (size_t)0);
+
+    auto LX = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LX"));
+    auto LY = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LY"));
+    auto LZ = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LZ"));
+
+    ASSERT_TRUE(LX && LX->value().value_kind() == context::symbol_value_kind::ABS);
+    ASSERT_TRUE(LY && LY->value().value_kind() == context::symbol_value_kind::ABS);
+    ASSERT_TRUE(LZ && LZ->value().value_kind() == context::symbol_value_kind::ABS);
+
+    EXPECT_EQ(LX->value().get_abs(), 24);
+    EXPECT_EQ(LY->value().get_abs(), 6);
+    EXPECT_EQ(LZ->value().get_abs(), 15);
+}
+
+TEST(data_definition, no_loctr_ref)
+{
+    std::string input = "(2*2)ADL(2*2)(2*2)";
+    analyzer a(input);
+    auto res = a.parser().data_def();
+
+    auto parsed = std::move(res->value);
+    EXPECT_EQ(parsed.diags().size(), (size_t)0);
+    EXPECT_FALSE(parsed.references_loctr);
+}
+
+TEST(data_definition, loctr_ref)
+{
+    for (std::string input : { "(*-*)ADL(2*2)(2*2)", "(2*2)ADL(*-*)(2*2)", "(2*2)ADL(2*2)(*-*)" })
+    {
+        analyzer a(input);
+        auto res = a.parser().data_def();
+
+        auto parsed = std::move(res->value);
+        EXPECT_EQ(parsed.diags().size(), (size_t)0);
+        EXPECT_TRUE(parsed.references_loctr);
+    }
 }

@@ -70,12 +70,19 @@ mach_term returns [mach_expr_ptr m_e]
 	}
 	| {is_data_attr()}? mach_data_attribute
 	{
-		auto rng = provider.get_range( $mach_data_attribute.ctx);
-		auto attr = get_attribute(std::move($mach_data_attribute.attribute));
-		if(attr == data_attr_kind::UNKNOWN || $mach_data_attribute.data == nullptr)
+		auto rng = provider.get_range($mach_data_attribute.ctx);
+		auto attr = $mach_data_attribute.attribute;
+		if(attr == data_attr_kind::UNKNOWN)
 			$m_e = std::make_unique<mach_expr_default>(rng);
 		else
-			$m_e = std::make_unique<mach_expr_data_attr>($mach_data_attribute.data, attr, rng, $mach_data_attribute.symbol_rng);
+			$m_e = std::visit([rng, attr, symbol_rng = $mach_data_attribute.symbol_rng](auto& arg) -> mach_expr_ptr {
+				if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::monostate>) {
+					return std::make_unique<mach_expr_default>(rng);
+				}
+				else {
+					return std::make_unique<mach_expr_data_attr>(std::move(arg), attr, rng, symbol_rng);
+				}
+			}, $mach_data_attribute.data);
 	}
 	| id
 	{
@@ -93,29 +100,50 @@ mach_term returns [mach_expr_ptr m_e]
 	}
 	| literal
 	{
-		$m_e = std::make_unique<mach_expr_constant>(0, provider.get_range($literal.ctx));
+		auto rng = provider.get_range($literal.ctx);
+		if (auto& lv = $literal.value; lv.has_value())
+			$m_e = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
+		else
+			$m_e = std::make_unique<mach_expr_default>(rng);
 	};
 
 
-literal
-	: equals data_def;
+literal returns [std::optional<data_definition> value]
+	: equals
+	{
+		bool lit_allowed = allow_literals();
+		auto lit_restore = disable_literals();
+	}
+	data_def
+	{
+		if (lit_allowed)
+			$value = std::move($data_def.value);
+		else
+			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
+	};
 
-mach_data_attribute returns [std::string attribute, id_index data = nullptr, range symbol_rng]
-	: ORDSYMBOL (attr|apostrophe_as_attr) mach_data_attribute_value
+mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data, range symbol_rng]
+	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();} mach_data_attribute_value
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
-		$attribute = $ORDSYMBOL->getText();
-		$data = $mach_data_attribute_value.data;
-		$symbol_rng = provider.get_range( $mach_data_attribute_value.ctx);
+		$attribute = get_attribute($ORDSYMBOL->getText());
+		$data = std::move($mach_data_attribute_value.data);
+		$symbol_rng = provider.get_range($mach_data_attribute_value.ctx);
 	};
 
-mach_data_attribute_value returns [id_index data = nullptr]
+mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data]
 	: literal
+	{
+		auto rng = provider.get_range($literal.ctx);
+		if (auto& lv = $literal.value; lv.has_value())
+			$data = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
+	}
 	| mach_location_counter
 	| id
 	{
-		collector.add_hl_symbol(token_info(provider.get_range( $id.ctx), hl_scopes::ordinary_symbol));
-		$data = $id.name;
+		collector.add_hl_symbol(token_info(provider.get_range($id.ctx), hl_scopes::ordinary_symbol));
+		if (auto name = $id.name)
+			$data = name;
 	};
 
 string_ch returns [std::string value]

@@ -77,6 +77,8 @@ public:
     static std::string to_ascii(unsigned char c);
     // Converts EBCDIC string to UTF-8 string.
     static std::string to_ascii(const std::string& s);
+
+    static constexpr unsigned char unicode_private = 0xe0;
 };
 
 inline unsigned char operator""_ebcdic(char c) { return ebcdic_encoding::a2e[static_cast<unsigned char>(c)]; }

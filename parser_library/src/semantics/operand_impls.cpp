@@ -14,9 +14,12 @@
 
 #include "operand_impls.h"
 
+#include <limits>
+
 #include "context/instruction.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
+#include "expressions/mach_expr_visitor.h"
 #include "expressions/mach_operator.h"
 #include "operand_visitor.h"
 
@@ -84,7 +87,7 @@ address_machine_operand* machine_operand::access_address()
 }
 
 std::unique_ptr<checking::operand> make_check_operand(
-    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -99,7 +102,7 @@ std::unique_ptr<checking::operand> make_check_operand(
 }
 
 std::unique_ptr<checking::operand> make_rel_imm_operand(
-    expressions::mach_evaluate_info info, const expressions::mach_expression& expr)
+    context::dependency_solver& info, const expressions::mach_expression& expr)
 {
     auto res = expr.evaluate(info);
     if (res.value_kind() == context::symbol_value_kind::ABS)
@@ -120,13 +123,13 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
     , simple_expr_operand(std::move(expression))
 {}
 
-std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
     return make_check_operand(info, *expression);
 }
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info, checking::machine_operand_type type_hint) const
+    context::dependency_solver& info, checking::machine_operand_type type_hint) const
 {
     if (type_hint == checking::machine_operand_type::RELOC_IMM)
     {
@@ -136,13 +139,13 @@ std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool expr_machine_operand::has_dependencies(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_dependencies(info);
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_machine_operand::has_error(expressions::mach_evaluate_info info) const
+bool expr_machine_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
@@ -166,7 +169,7 @@ address_machine_operand::address_machine_operand(expressions::mach_expr_ptr disp
     , state(std::move(state))
 {}
 
-bool address_machine_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool address_machine_operand::has_dependencies(context::dependency_solver& info) const
 {
     if (first_par)
     {
@@ -183,7 +186,7 @@ bool address_machine_operand::has_dependencies(expressions::mach_evaluate_info i
             || second_par->get_dependencies(info).contains_dependencies(); // D(,B)
 }
 
-bool address_machine_operand::has_error(expressions::mach_evaluate_info info) const
+bool address_machine_operand::has_error(context::dependency_solver& info) const
 {
     if (first_par)
     {
@@ -198,8 +201,7 @@ bool address_machine_operand::has_error(expressions::mach_evaluate_info info) co
         return displacement->get_dependencies(info).has_error || second_par->get_dependencies(info).has_error; // D(,B)
 }
 
-std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info) const
 {
     context::symbol_value displ, first, second;
     context::symbol_value::abs_value_t displ_v, first_v, second_v;
@@ -230,7 +232,7 @@ std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
 }
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
-    expressions::mach_evaluate_info info, checking::machine_operand_type) const
+    context::dependency_solver& info, checking::machine_operand_type) const
 {
     return get_operand_value(info);
 }
@@ -280,19 +282,19 @@ expr_assembler_operand::expr_assembler_operand(
     , value_(std::move(string_value))
 {}
 
-std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(context::dependency_solver& info) const
 {
     return get_operand_value_inner(info, true);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
-    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym) const
 {
     return get_operand_value_inner(info, can_have_ordsym);
 }
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
-    expressions::mach_evaluate_info info, bool can_have_ordsym) const
+    context::dependency_solver& info, bool can_have_ordsym) const
 {
     if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
         return std::make_unique<checking::one_operand>(value_);
@@ -313,13 +315,13 @@ std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inn
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool expr_assembler_operand::has_dependencies(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_dependencies(info);
 }
 
 // suppress MSVC warning 'inherits via dominance'
-bool expr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+bool expr_assembler_operand::has_error(context::dependency_solver& info) const
 {
     return simple_expr_operand::has_error(info);
 }
@@ -338,18 +340,18 @@ using_instr_assembler_operand::using_instr_assembler_operand(
     , end(std::move(end))
 {}
 
-bool using_instr_assembler_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_dependencies(context::dependency_solver& info) const
 {
     return base->get_dependencies(info).contains_dependencies() || end->get_dependencies(info).contains_dependencies();
 }
 
-bool using_instr_assembler_operand::has_error(expressions::mach_evaluate_info info) const
+bool using_instr_assembler_operand::has_error(context::dependency_solver& info) const
 {
     return base->get_dependencies(info).has_error || end->get_dependencies(info).has_error;
 }
 
 std::unique_ptr<checking::operand> using_instr_assembler_operand::get_operand_value(
-    expressions::mach_evaluate_info info) const
+    context::dependency_solver& info) const
 {
     (void)info;
     std::vector<std::unique_ptr<checking::asm_operand>> pair;
@@ -374,11 +376,11 @@ complex_assembler_operand::complex_assembler_operand(
     , value(std::move(identifier), std::move(values), std::move(operand_range))
 {}
 
-bool complex_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
+bool complex_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
 
-bool complex_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
+bool complex_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
+std::unique_ptr<checking::operand> complex_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
     return value.create_operand();
 }
@@ -441,12 +443,12 @@ simple_expr_operand::simple_expr_operand(expressions::mach_expr_ptr expression)
 {}
 
 
-[[nodiscard]] bool simple_expr_operand::has_dependencies(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_dependencies(context::dependency_solver& info) const
 {
     return expression->get_dependencies(info).contains_dependencies();
 }
 
-[[nodiscard]] bool simple_expr_operand::has_error(expressions::mach_evaluate_info info) const
+[[nodiscard]] bool simple_expr_operand::has_error(context::dependency_solver& info) const
 {
     return expression->get_dependencies(info).has_error;
 }
@@ -519,23 +521,28 @@ data_def_operand::data_def_operand(expressions::data_definition val, range opera
     , value(std::make_shared<expressions::data_definition>(std::move(val)))
 {}
 
+data_def_operand::data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, range operand_range)
+    : evaluable_operand(operand_type::DAT, std::move(operand_range))
+    , value(std::move(dd_ptr))
+{}
 
-context::dependency_collector data_def_operand::get_length_dependencies(expressions::mach_evaluate_info info) const
+
+context::dependency_collector data_def_operand::get_length_dependencies(context::dependency_solver& info) const
 {
     return value->get_length_dependencies(info);
 }
 
-context::dependency_collector data_def_operand::get_dependencies(expressions::mach_evaluate_info info) const
+context::dependency_collector data_def_operand::get_dependencies(context::dependency_solver& info) const
 {
     return value->get_dependencies(info);
 }
 
-bool data_def_operand::has_dependencies(expressions::mach_evaluate_info info) const
+bool data_def_operand::has_dependencies(context::dependency_solver& info) const
 {
     return value->get_dependencies(info).contains_dependencies();
 }
 
-bool data_def_operand::has_error(expressions::mach_evaluate_info info) const
+bool data_def_operand::has_error(context::dependency_solver& info) const
 {
     return value->get_dependencies(info).has_error;
 }
@@ -553,21 +560,28 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-std::unique_ptr<checking::operand> data_def_operand::get_operand_value(expressions::mach_evaluate_info info) const
+std::unique_ptr<checking::operand> data_def_operand::get_operand_value(context::dependency_solver& info) const
 {
-    auto op = std::make_unique<checking::data_definition_operand>();
+    return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info));
+}
 
-    op->dupl_factor = value->evaluate_dupl_factor(info);
-    op->type.value = value->type;
-    op->type.rng = value->type_range;
-    op->extension.present = value->extension != '\0';
-    op->extension.value = value->extension;
-    op->extension.rng = value->extension_range;
-    op->length = value->evaluate_length(info);
-    op->scale = value->evaluate_scale(info);
-    op->exponent = value->evaluate_exponent(info);
+checking::data_definition_operand data_def_operand::get_operand_value(
+    const expressions::data_definition& dd, context::dependency_solver& info)
+{
+    checking::data_definition_operand op;
 
-    op->nominal_value = value->evaluate_nominal_value(info);
+    op.dupl_factor = dd.evaluate_dupl_factor(info);
+    op.type.value = dd.type;
+    op.type.rng = dd.type_range;
+    op.extension.present = dd.extension != '\0';
+    op.extension.value = dd.extension;
+    op.extension.rng = dd.extension_range;
+    op.length = dd.evaluate_length(info);
+    op.scale = dd.evaluate_scale(info);
+    op.exponent = dd.evaluate_exponent(info);
+
+    op.nominal_value = dd.evaluate_nominal_value(info);
+
     return op;
 }
 
@@ -581,11 +595,11 @@ string_assembler_operand::string_assembler_operand(std::string value, range oper
     , value(std::move(value))
 {}
 
-bool string_assembler_operand::has_dependencies(expressions::mach_evaluate_info) const { return false; }
+bool string_assembler_operand::has_dependencies(context::dependency_solver&) const { return false; }
 
-bool string_assembler_operand::has_error(expressions::mach_evaluate_info) const { return false; }
+bool string_assembler_operand::has_error(context::dependency_solver&) const { return false; }
 
-std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(expressions::mach_evaluate_info) const
+std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(context::dependency_solver&) const
 {
     return std::make_unique<checking::one_operand>("'" + value + "'");
 }
@@ -650,49 +664,47 @@ join_operands_result join_operands(const operand_list& operands)
     return result;
 }
 
+struct request_halfword_alignment final : public expressions::mach_expr_visitor
+{
+    // Inherited via mach_expr_visitor
+    void visit(const expressions::mach_expr_constant&) override {}
+    void visit(const expressions::mach_expr_data_attr&) override {}
+    void visit(const expressions::mach_expr_symbol&) override {}
+    void visit(const expressions::mach_expr_location_counter&) override {}
+    void visit(const expressions::mach_expr_self_def&) override {}
+    void visit(const expressions::mach_expr_default&) override {}
+    void visit(const expressions::mach_expr_literal& expr) override { expr.referenced_by_reladdr(); }
+};
+
 void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction)
 {
     if (instruction->empty())
         return;
 
-    const context::machine_instruction* instr;
-    const std::pair<size_t, size_t>* replaced_b = nullptr;
-    const std::pair<size_t, size_t>* replaced_e = nullptr;
+    unsigned char mask = 0;
+    decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
 
     if (auto mnem_tmp = context::instruction::mnemonic_codes.find(*instruction);
         mnem_tmp != context::instruction::mnemonic_codes.end())
-    {
-        const auto& mnemonic = mnem_tmp->second;
-        instr = mnemonic.instruction;
-        replaced_b = mnemonic.replaced.data();
-        replaced_e = replaced_b + mnemonic.replaced.size();
-    }
+        mask = mnem_tmp->second.reladdr_mask.mask();
     else
-    {
-        instr = &context::instruction::machine_instructions.at(*instruction);
-    }
+        mask = context::instruction::machine_instructions.at(*instruction).reladdr_mask.mask();
 
-    size_t position = 0;
     for (const auto& operand : op_list)
     {
-        while (replaced_b != replaced_e)
-        {
-            const auto index = replaced_b->first;
-            if (position < index)
-                break;
-            if (position++ == index)
-                ++replaced_b;
-        }
+        bool eligible = mask & top_bit;
+        top_bit >>= 1;
 
-        if (position >= instr->operands.size())
-            break;
-
-        if (instr->operands[position++].identifier.type != checking::machine_operand_type::RELOC_IMM)
+        if (!eligible)
             continue;
 
         if (auto* mach_op = operand->access_mach(); mach_op != nullptr && mach_op->kind == mach_kind::EXPR)
         {
             auto& mach_expr = mach_op->access_expr()->expression;
+
+            request_halfword_alignment visitor;
+            mach_expr->apply(visitor);
+
             auto range = mach_expr->get_range();
             mach_expr = std::make_unique<expressions::mach_expr_binary<expressions::rel_addr>>(
                 std::make_unique<expressions::mach_expr_location_counter>(range), std::move(mach_expr), range);

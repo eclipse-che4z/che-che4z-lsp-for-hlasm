@@ -422,3 +422,65 @@ C EQU B-A
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
+
+TEST(ordinary_symbols, postponed_statement_in_macro)
+{
+    std::string input = R"(
+   MACRO
+   MAC
+   DS XL(*-AAA+(YD-XD))
+   MEND
+AAA DS C
+   MAC
+   MAC
+   MAC
+TEST_AAA EQU *-AAA
+
+XD DSECT
+  DS F
+YD DS 0C
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    a.collect_diags();
+    EXPECT_TRUE(a.diags().empty());
+
+    auto test_aaa = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("TEST_AAA"));
+    ASSERT_TRUE(test_aaa && test_aaa->kind() == context::symbol_value_kind::ABS);
+    EXPECT_EQ(test_aaa->value().get_abs(), 36);
+}
+
+TEST(ordinary_symbols, private_sections_valid)
+{
+    for (std::string sect_type : { "CSECT", "RSECT", "COM" })
+    {
+        std::string input = R"(
+ DSECT
+ )" + sect_type;
+        analyzer a(input);
+        a.analyze();
+
+        a.collect_diags();
+        EXPECT_EQ(a.diags().size(), (size_t)0) << sect_type;
+    }
+}
+
+TEST(ordinary_symbols, private_sections_invalid)
+{
+    std::initializer_list<std::string> types = { "CSECT", "RSECT", "COM" };
+
+    for (const auto& t1 : types)
+    {
+        for (const auto& t2 : types)
+        {
+            std::string input = " " + t1 + "\n " + t2;
+            analyzer a(input);
+            a.analyze();
+
+            a.collect_diags();
+            EXPECT_EQ(a.diags().size(), t1 != t2) << t1 << t2;
+        }
+    }
+}

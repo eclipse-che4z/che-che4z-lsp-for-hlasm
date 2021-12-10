@@ -29,7 +29,14 @@ struct nominal_value_t : public context::dependable
     nominal_value_string* access_string();
     nominal_value_exprs* access_exprs();
 
+    const nominal_value_string* access_string() const;
+    const nominal_value_exprs* access_exprs() const;
+
     virtual ~nominal_value_t() = default;
+
+    virtual size_t hash() const = 0;
+
+    friend bool is_similar(const nominal_value_t& l, const nominal_value_t& r);
 };
 
 using nominal_value_ptr = std::unique_ptr<nominal_value_t>;
@@ -41,16 +48,24 @@ struct nominal_value_string final : public nominal_value_t
     nominal_value_string(std::string value, range rng);
     std::string value;
     range value_range;
+
+    friend bool is_similar(const nominal_value_string& l, const nominal_value_string& r) { return l.value == r.value; }
+
+    size_t hash() const override;
 };
 
 // Represents address in the form D(B)
-struct address_nominal : public context::dependable
+struct address_nominal final : public context::dependable
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
     address_nominal();
     address_nominal(mach_expr_ptr displacement, mach_expr_ptr base);
     mach_expr_ptr displacement;
     mach_expr_ptr base;
+
+    friend bool is_similar(const address_nominal& l, const address_nominal& r);
+
+    size_t hash() const;
 };
 
 using expr_or_address = std::variant<mach_expr_ptr, address_nominal>;
@@ -62,6 +77,10 @@ struct nominal_value_exprs final : public nominal_value_t
 
     nominal_value_exprs(expr_or_address_list exprs);
     expr_or_address_list exprs;
+
+    friend bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r);
+
+    size_t hash() const override;
 };
 
 

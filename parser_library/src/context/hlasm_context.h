@@ -26,7 +26,6 @@
 #include "ordinary_assembly/ordinary_assembly_context.h"
 #include "processing_context.h"
 
-
 namespace hlasm_plugin::parser_library::context {
 
 // class helping to perform semantic analysis of hlasm source code
@@ -83,6 +82,7 @@ class hlasm_context
     // last AINSERT virtual file id
     size_t m_ainsert_id = 0;
     bool m_end_reached = false;
+
     void add_system_vars_to_scope();
     void add_global_system_vars();
 
@@ -92,6 +92,7 @@ public:
     hlasm_context(std::string file_name = "",
         asm_option asm_opts = {},
         std::shared_ptr<id_storage> init_ids = std::make_shared<id_storage>());
+    ~hlasm_context();
 
     // gets name of file where is open-code located
     const std::string& opencode_file_name() const;

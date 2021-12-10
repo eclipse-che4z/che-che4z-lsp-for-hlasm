@@ -63,34 +63,7 @@ void occurence_collector::visit(const semantics::complex_assembler_operand&) {}
 
 void occurence_collector::visit(const semantics::string_assembler_operand&) {}
 
-void occurence_collector::visit(const semantics::data_def_operand& op)
-{
-    if (op.value->dupl_factor)
-        op.value->dupl_factor->apply(*this);
-    if (op.value->program_type)
-        op.value->program_type->apply(*this);
-    if (op.value->length)
-        op.value->length->apply(*this);
-    if (op.value->scale)
-        op.value->scale->apply(*this);
-    if (op.value->exponent)
-        op.value->exponent->apply(*this);
-
-    if (op.value->nominal_value && op.value->nominal_value->access_exprs())
-    {
-        for (const auto& val : op.value->nominal_value->access_exprs()->exprs)
-        {
-            if (std::holds_alternative<expressions::mach_expr_ptr>(val))
-                std::get<expressions::mach_expr_ptr>(val)->apply(*this);
-            else
-            {
-                const auto& addr = std::get<expressions::address_nominal>(val);
-                addr.base->apply(*this);
-                addr.displacement->apply(*this);
-            }
-        }
-    }
-}
+void occurence_collector::visit(const semantics::data_def_operand& op) { op.value->apply(*this); }
 
 void occurence_collector::visit(const semantics::var_ca_operand& op) { get_occurence(*op.variable_symbol); }
 
@@ -163,6 +136,13 @@ void occurence_collector::get_occurence(const semantics::concat_chain& chain)
         }
     }
 }
+void occurence_collector::get_occurence(const expressions::ca_literal_def& lit)
+{
+    if (collector_kind == lsp::occurence_kind::ORD)
+    {
+        lit.dd->apply(*this);
+    }
+}
 
 void occurence_collector::visit(const expressions::mach_expr_constant&) {}
 
@@ -181,6 +161,8 @@ void occurence_collector::visit(const expressions::mach_expr_location_counter&) 
 void occurence_collector::visit(const expressions::mach_expr_self_def&) {}
 
 void occurence_collector::visit(const expressions::mach_expr_default&) {}
+
+void occurence_collector::visit(const expressions::mach_expr_literal& lit) { lit.get_data_definition().apply(*this); }
 
 void occurence_collector::visit(const expressions::ca_constant&) {}
 
@@ -210,8 +192,10 @@ void occurence_collector::visit(const expressions::ca_symbol_attribute& expr)
 {
     if (std::holds_alternative<context::id_index>(expr.symbol))
         get_occurence(std::get<context::id_index>(expr.symbol), expr.symbol_range);
-    else
+    else if (std::holds_alternative<semantics::vs_ptr>(expr.symbol))
         get_occurence(*std::get<semantics::vs_ptr>(expr.symbol));
+    else if (std::holds_alternative<expressions::ca_literal_def>(expr.symbol))
+        get_occurence(std::get<expressions::ca_literal_def>(expr.symbol));
 }
 
 void occurence_collector::visit(const expressions::ca_var_sym& expr) { get_occurence(*expr.symbol); }

@@ -16,6 +16,7 @@
 
 #include <cctype>
 
+#include "context/literal_pool.h"
 #include "error_strategy.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/conditional_assembly/terms/ca_constant.h"
@@ -98,10 +99,8 @@ bool parser_impl::is_var_def()
 
 self_def_t parser_impl::parse_self_def_term(const std::string& option, const std::string& value, range term_range)
 {
-    diagnostic_adder add_diagnostic(*diagnoser_, term_range);
-    auto val = expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
-
-    return val;
+    auto add_diagnostic = diagnoser_ ? diagnostic_adder(*diagnoser_, term_range) : diagnostic_adder(term_range);
+    return expressions::ca_constant::self_defining_term(option, value, add_diagnostic);
 }
 
 context::data_attr_kind parser_impl::get_attribute(std::string attr_data)
@@ -204,6 +203,13 @@ antlr4::misc::IntervalSet parser_impl::getExpectedTokens()
         return {};
     else
         return antlr4::Parser::getExpectedTokens();
+}
+
+void parser_impl::add_diagnostic(
+    diagnostic_severity severity, std::string code, std::string message, range diag_range) const
+{
+    if (diagnoser_)
+        diagnoser_->add_diagnostic(diagnostic_op(severity, std::move(code), std::move(message), diag_range));
 }
 
 parser_holder::~parser_holder() = default;

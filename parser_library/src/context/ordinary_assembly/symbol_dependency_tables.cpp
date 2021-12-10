@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include "ordinary_assembly_context.h"
+#include "ordinary_assembly_dependency_solver.h"
 #include "processing/instruction_sets/low_language_processor.h"
 #include "processing/instruction_sets/postponed_statement_impl.h"
 
@@ -40,14 +41,11 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
         auto top_dep = std::move(dependencies.back());
         dependencies.pop_back();
 
-        const resolvable* dep_src = nullptr;
-
-        if (auto it = dependencies_.find(top_dep); it != dependencies_.end())
-            dep_src = it->second;
-        else
+        auto it = dependencies_.find(top_dep);
+        if (it == dependencies_.end())
             continue;
 
-        for (auto&& dep : extract_dependencies(dep_src))
+        for (auto&& dep : extract_dependencies(it->second.first, it->second.second))
         {
             if (dep == target)
             {
@@ -57,7 +55,6 @@ bool symbol_dependency_tables::check_cycle(dependant target, std::vector<dependa
             dependencies.push_back(std::move(dep));
         }
     }
-
     return true;
 }
 
@@ -67,6 +64,7 @@ struct resolve_dependant_visitor
     loctr_dependency_resolver* resolver;
     ordinary_assembly_context& sym_ctx_;
     std::unordered_map<dependant, statement_ref>& dependency_source_stmts_;
+    const dependency_evaluation_context& dep_ctx;
 
     void operator()(const attr_ref& ref) const
     {
@@ -96,18 +94,22 @@ struct resolve_dependant_visitor
         if (sp->kind == space_kind::LOCTR_UNKNOWN)
             resolver->resolve_unknown_loctr_dependency(sp,
                 val.get_reloc(),
-                dependency_source_stmts_.find(sp)->second.stmt_ref->get()->impl()->stmt_range_ref());
+                dependency_source_stmts_.find(sp)->second.stmt_ref->first->resolved_stmt()->stmt_range_ref(),
+                dep_ctx);
         else
             space::resolve(sp, length);
     }
 };
 
-void symbol_dependency_tables::resolve_dependant(
-    dependant target, const resolvable* dep_src, loctr_dependency_resolver* resolver)
+void symbol_dependency_tables::resolve_dependant(dependant target,
+    const resolvable* dep_src,
+    loctr_dependency_resolver* resolver,
+    const dependency_evaluation_context& dep_ctx)
 {
-    symbol_value val = dep_src->resolve(sym_ctx_);
+    context::ordinary_assembly_dependency_solver dep_solver(sym_ctx_, dep_ctx);
+    symbol_value val = dep_src->resolve(dep_solver);
 
-    std::visit(resolve_dependant_visitor { val, resolver, sym_ctx_, dependency_source_stmts_ }, target);
+    std::visit(resolve_dependant_visitor { val, resolver, sym_ctx_, dependency_source_stmts_, dep_ctx }, target);
 }
 
 struct resolve_dependant_default_visitor
@@ -145,17 +147,19 @@ void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
     while (defined)
     {
         defined = false;
-        for (auto& [target, dep_src] : dependencies_)
+        for (const auto& [target, dep_src_and_context] : dependencies_)
         {
             // resolve only symbol dependencies when resolver is not present
             if (resolver == nullptr && std::holds_alternative<space_ptr>(target))
                 continue;
 
-            if (extract_dependencies(dep_src).empty()) // target no longer dependent on anything
+            const auto& [dep_src, context] = dep_src_and_context;
+
+            if (extract_dependencies(dep_src, context).empty()) // target no longer dependent on anything
             {
                 to_delete.push_back(target);
 
-                resolve_dependant(target, dep_src, resolver); // resolve target
+                resolve_dependant(target, dep_src, resolver, context); // resolve target
 
                 defined = true; // another defined target => iterate again
 
@@ -173,10 +177,12 @@ void symbol_dependency_tables::resolve(loctr_dependency_resolver* resolver)
     }
 }
 
-std::vector<dependant> symbol_dependency_tables::extract_dependencies(const resolvable* dependency_source)
+std::vector<dependant> symbol_dependency_tables::extract_dependencies(
+    const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx)
 {
     std::vector<dependant> ret;
-    auto deps = dependency_source->get_dependencies(sym_ctx_);
+    context::ordinary_assembly_dependency_solver dep_solver(sym_ctx_, dep_ctx);
+    auto deps = dependency_source->get_dependencies(dep_solver);
 
     ret.insert(ret.end(),
         std::make_move_iterator(deps.undefined_symbols.begin()),
@@ -207,13 +213,13 @@ std::vector<dependant> symbol_dependency_tables::extract_dependencies(const reso
 }
 
 std::vector<dependant> symbol_dependency_tables::extract_dependencies(
-    const std::vector<const resolvable*>& dependency_sources)
+    const std::vector<const resolvable*>& dependency_sources, const dependency_evaluation_context& dep_ctx)
 {
     std::vector<dependant> ret;
 
     for (auto dep : dependency_sources)
     {
-        auto tmp = extract_dependencies(dep);
+        auto tmp = extract_dependencies(dep, dep_ctx);
         ret.insert(ret.end(), std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
     }
     return ret;
@@ -243,8 +249,10 @@ symbol_dependency_tables::symbol_dependency_tables(ordinary_assembly_context& sy
     : sym_ctx_(sym_ctx)
 {}
 
-bool symbol_dependency_tables::add_dependency(
-    dependant target, const resolvable* dependency_source, bool check_for_cycle)
+bool symbol_dependency_tables::add_dependency(dependant target,
+    const resolvable* dependency_source,
+    bool check_for_cycle,
+    const dependency_evaluation_context& dep_ctx)
 {
     if (dependencies_.find(target) != dependencies_.end())
         throw std::invalid_argument("symbol dependency already present");
@@ -252,7 +260,7 @@ bool symbol_dependency_tables::add_dependency(
 
     if (check_for_cycle)
     {
-        auto dependencies = extract_dependencies(dependency_source);
+        auto dependencies = extract_dependencies(dependency_source, dep_ctx);
 
         bool no_cycle = check_cycle(target, dependencies);
         if (!no_cycle)
@@ -262,49 +270,58 @@ bool symbol_dependency_tables::add_dependency(
         }
     }
 
-    dependencies_.emplace(target, dependency_source);
+    dependencies_.try_emplace(target, dependency_source, dep_ctx);
 
     return true;
 }
 
-bool symbol_dependency_tables::add_dependency(
-    id_index target, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
+bool symbol_dependency_tables::add_dependency(id_index target,
+    const resolvable* dependency_source,
+    post_stmt_ptr dependency_source_stmt,
+    const dependency_evaluation_context& dep_ctx)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt));
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
     bool added = adder.add_dependency(target, dependency_source);
     adder.finish();
 
     return added;
 }
 
-bool symbol_dependency_tables::add_dependency(
-    id_index target, data_attr_kind attr, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
+bool symbol_dependency_tables::add_dependency(id_index target,
+    data_attr_kind attr,
+    const resolvable* dependency_source,
+    post_stmt_ptr dependency_source_stmt,
+    const dependency_evaluation_context& dep_ctx)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt));
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
     bool added = adder.add_dependency(target, attr, dependency_source);
     adder.finish();
 
     return added;
 }
 
-void symbol_dependency_tables::add_dependency(
-    space_ptr space, const resolvable* dependency_source, post_stmt_ptr dependency_source_stmt)
+void symbol_dependency_tables::add_dependency(space_ptr space,
+    const resolvable* dependency_source,
+    post_stmt_ptr dependency_source_stmt,
+    const dependency_evaluation_context& dep_ctx)
 {
-    dependency_adder adder(*this, std::move(dependency_source_stmt));
+    dependency_adder adder(*this, std::move(dependency_source_stmt), dep_ctx);
     adder.add_dependency(space, dependency_source);
     adder.finish();
 }
 
-void symbol_dependency_tables::add_dependency(
-    space_ptr target, addr_res_ptr dependency_source, post_stmt_ptr dependency_source_stmt)
+void symbol_dependency_tables::add_dependency(space_ptr target,
+    addr_res_ptr dependency_source,
+    const dependency_evaluation_context& dep_ctx,
+    post_stmt_ptr dependency_source_stmt)
 {
     auto [it, inserted] = dependency_source_addrs_.emplace(target, std::move(dependency_source));
 
-    add_dependency(dependant(target), &*it->second, false);
+    add_dependency(dependant(target), &*it->second, false, dep_ctx);
 
     if (dependency_source_stmt)
     {
-        auto [sit, sinserted] = postponed_stmts_.emplace(std::move(dependency_source_stmt));
+        auto [sit, sinserted] = postponed_stmts_.try_emplace(std::move(dependency_source_stmt), dep_ctx);
 
         if (!sinserted)
             throw std::runtime_error("statement already registered");
@@ -319,7 +336,7 @@ bool symbol_dependency_tables::check_cycle(space_ptr target)
     if (dep_src == dependencies_.end())
         return true;
 
-    bool no_cycle = check_cycle(target, extract_dependencies(dep_src->second));
+    bool no_cycle = check_cycle(target, extract_dependencies(dep_src->second.first, dep_src->second.second));
 
     if (!no_cycle)
         resolve(nullptr);
@@ -327,16 +344,17 @@ bool symbol_dependency_tables::check_cycle(space_ptr target)
     return no_cycle;
 }
 
-void symbol_dependency_tables::add_dependency(post_stmt_ptr target)
+void symbol_dependency_tables::add_dependency(post_stmt_ptr target, const dependency_evaluation_context& dep_ctx)
 {
-    dependency_adder adder(*this, std::move(target));
+    dependency_adder adder(*this, std::move(target), dep_ctx);
     adder.add_dependency();
     adder.finish();
 }
 
-dependency_adder symbol_dependency_tables::add_dependencies(post_stmt_ptr dependency_source_stmt)
+dependency_adder symbol_dependency_tables::add_dependencies(
+    post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx)
 {
-    return dependency_adder(*this, std::move(dependency_source_stmt));
+    return dependency_adder(*this, std::move(dependency_source_stmt), dep_ctx);
 }
 
 void symbol_dependency_tables::add_defined(loctr_dependency_resolver* resolver) { resolve(resolver); }
@@ -352,24 +370,23 @@ bool symbol_dependency_tables::check_loctr_cycle()
     std::unordered_map<dependant, dep_set> visited;
 
     // create graph
-    for (auto& [target, dep_src] : dependencies_)
+    for (const auto& [target, dep_src_loctr] : dependencies_)
     {
-        if (std::holds_alternative<space_ptr>(target))
-        {
-            auto new_deps = extract_dependencies(dep_src);
-            if (!new_deps.empty() && std::holds_alternative<id_index>(new_deps.front()))
-                continue;
-            else
-            {
-                std::vector<dependant> space_deps;
-                for (auto& entry : new_deps)
-                    if (std::holds_alternative<space_ptr>(entry))
-                        space_deps.push_back(std::move(entry));
+        if (!std::holds_alternative<space_ptr>(target))
+            continue;
 
-                if (!space_deps.empty())
-                    dep_g.emplace(target, std::move(space_deps));
-            }
-        }
+        const auto& [dep_src, loctr] = dep_src_loctr;
+        auto new_deps = extract_dependencies(dep_src, loctr);
+        if (!new_deps.empty() && std::holds_alternative<id_index>(new_deps.front()))
+            continue;
+
+        std::vector<dependant> space_deps;
+        for (auto& entry : new_deps)
+            if (std::holds_alternative<space_ptr>(entry))
+                space_deps.push_back(std::move(entry));
+
+        if (!space_deps.empty())
+            dep_g.emplace(target, std::move(space_deps));
     }
 
     // find cycle
@@ -440,15 +457,15 @@ bool symbol_dependency_tables::check_loctr_cycle()
     return cycled.empty();
 }
 
-std::vector<post_stmt_ptr> symbol_dependency_tables::collect_postponed()
+std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> symbol_dependency_tables::collect_postponed()
 {
-    std::vector<post_stmt_ptr> res;
+    std::vector<std::pair<post_stmt_ptr, dependency_evaluation_context>> res;
 
     res.reserve(postponed_stmts_.size());
     for (auto it = postponed_stmts_.begin(); it != postponed_stmts_.end();)
     {
         auto node = postponed_stmts_.extract(it++);
-        res.push_back(std::move(node.value()));
+        res.emplace_back(std::move(node.key()), std::move(node.mapped()));
     }
 
     postponed_stmts_.clear();
@@ -469,15 +486,17 @@ statement_ref::statement_ref(ref_t stmt_ref, size_t ref_count)
     , ref_count(ref_count)
 {}
 
-dependency_adder::dependency_adder(symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt)
+dependency_adder::dependency_adder(
+    symbol_dependency_tables& owner, post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx)
     : owner_(owner)
     , ref_count_(0)
+    , dep_ctx(dep_ctx)
     , source_stmt(std::move(dependency_source_stmt))
 {}
 
 bool dependency_adder::add_dependency(id_index target, const resolvable* dependency_source)
 {
-    bool added = owner_.add_dependency(dependant(target), dependency_source, true);
+    bool added = owner_.add_dependency(dependant(target), dependency_source, true, dep_ctx);
 
     if (added)
     {
@@ -490,7 +509,7 @@ bool dependency_adder::add_dependency(id_index target, const resolvable* depende
 
 bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source)
 {
-    bool added = owner_.add_dependency(dependant(attr_ref { attr, target }), dependency_source, true);
+    bool added = owner_.add_dependency(dependant(attr_ref { attr, target }), dependency_source, true, dep_ctx);
 
     if (added)
     {
@@ -503,7 +522,7 @@ bool dependency_adder::add_dependency(id_index target, data_attr_kind attr, cons
 
 void dependency_adder::add_dependency(space_ptr target, const resolvable* dependency_source)
 {
-    owner_.add_dependency(dependant(target), dependency_source, false);
+    owner_.add_dependency(dependant(target), dependency_source, false, dep_ctx);
     ++ref_count_;
     dependants.push_back(target);
 }
@@ -515,7 +534,7 @@ void dependency_adder::finish()
     if (ref_count_ == 0)
         return;
 
-    auto [it, inserted] = owner_.postponed_stmts_.emplace(std::move(source_stmt));
+    auto [it, inserted] = owner_.postponed_stmts_.try_emplace(std::move(source_stmt), dep_ctx);
 
     if (!inserted)
         throw std::runtime_error("statement already registered");

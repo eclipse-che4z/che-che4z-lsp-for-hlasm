@@ -77,12 +77,6 @@ options {
 	superClass = parser_impl;
 }
 
-@members 
-{
-	#define last_text() _input->LT(-1)->getText()
-	#define text(token) token->getText()
-}
-
 /*
 program :  ictl? prcs*  program_block  EOF;
 

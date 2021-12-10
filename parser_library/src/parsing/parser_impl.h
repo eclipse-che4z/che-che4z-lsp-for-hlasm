@@ -19,6 +19,7 @@
 
 #include "context/hlasm_context.h"
 #include "diagnosable.h"
+#include "expressions/data_definition.h"
 #include "lexing/lexer.h"
 #include "processing/opencode_provider.h"
 #include "processing/statement_fields_parser.h"
@@ -62,6 +63,44 @@ public:
     semantics::collector& get_collector() { return collector; }
 
 protected:
+    class literal_controller
+    {
+        enum class request_t
+        {
+            none,
+            off,
+            on,
+        } request = request_t::none;
+        parser_impl& impl;
+
+    public:
+        explicit literal_controller(parser_impl& impl)
+            : impl(impl)
+        {}
+        literal_controller(parser_impl& impl, bool restore)
+            : request(restore ? request_t::on : request_t::off)
+            , impl(impl)
+        {}
+        literal_controller(literal_controller&& oth) noexcept
+            : request(std::exchange(oth.request, request_t::none))
+            , impl(oth.impl)
+        {}
+        ~literal_controller()
+        {
+            switch (request)
+            {
+                case request_t::off:
+                    impl.literals_allowed = false;
+                    break;
+                case request_t::on:
+                    impl.literals_allowed = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     void enable_continuation();
     void disable_continuation();
     bool is_self_def();
@@ -71,6 +110,24 @@ protected:
     bool allow_ca_string() const { return ca_string_enabled; }
     void enable_ca_string() { ca_string_enabled = true; }
     void disable_ca_string() { ca_string_enabled = false; }
+
+    bool allow_literals() const { return literals_allowed; }
+    literal_controller enable_literals()
+    {
+        if (literals_allowed)
+            return literal_controller(*this);
+
+        literals_allowed = true;
+        return literal_controller(*this, false);
+    }
+    literal_controller disable_literals()
+    {
+        if (!literals_allowed)
+            return literal_controller(*this);
+
+        literals_allowed = false;
+        return literal_controller(*this, true);
+    }
 
     self_def_t parse_self_def_term(const std::string& option, const std::string& value, range term_range);
     context::data_attr_kind get_attribute(std::string attr_data);
@@ -91,12 +148,15 @@ protected:
     bool DAT();
     bool ALIAS();
 
+    void add_diagnostic(diagnostic_severity severity, std::string code, std::string message, range diag_range) const;
+
 private:
     antlr4::misc::IntervalSet getExpectedTokens() override;
     diagnostic_op_consumer* diagnoser_ = nullptr;
     parser_error_listener err_listener_;
 
     bool ca_string_enabled = true;
+    bool literals_allowed = true;
 };
 
 // structure containing parser components

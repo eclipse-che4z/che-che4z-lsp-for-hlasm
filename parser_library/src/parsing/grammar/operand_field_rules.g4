@@ -97,7 +97,7 @@ op_rem_body_dat
 	| {collector.set_operand_remark_field(provider.get_range(_localctx));} EOF;
 
 op_list_dat returns [std::vector<operand_ptr> operands]
-	: operand_dat (comma operand_dat)*												
+	: {auto lit_restore = disable_literals();} operand_dat (comma operand_dat)*
 	{
 		auto& result = $operands;
 		auto operands = $ctx->operand_dat();

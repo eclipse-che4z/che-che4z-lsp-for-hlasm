@@ -16,6 +16,8 @@
 
 #include "ca_var_sym.h"
 #include "context/ordinary_assembly/dependable.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
@@ -58,6 +60,14 @@ ca_symbol_attribute::ca_symbol_attribute(
     , symbol_range(symbol_rng)
 {}
 
+ca_symbol_attribute::ca_symbol_attribute(
+    ca_literal_def lit, context::data_attr_kind attribute, range expr_range, range symbol_rng)
+    : ca_expression(get_attribute_type(attribute), std::move(expr_range))
+    , attribute(attribute)
+    , symbol(std::move(lit))
+    , symbol_range(symbol_rng)
+{}
+
 undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evaluation_context& eval_ctx) const
 {
     if (std::holds_alternative<context::id_index>(symbol))
@@ -82,7 +92,7 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
             if (substituted_name.type != context::SET_t_enum::C_TYPE)
                 return {};
 
-            auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+            auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
             if (!valid)
                 return {};
@@ -93,6 +103,11 @@ undef_sym_set ca_symbol_attribute::get_undefined_attributed_symbols(const evalua
                 return { ord_name };
         }
         return undef_syms;
+    }
+    else if (std::holds_alternative<ca_literal_def>(symbol))
+    {
+        // everything needs to be defined
+        return undef_sym_set();
     }
     else
     {
@@ -113,9 +128,14 @@ void ca_symbol_attribute::collect_diags() const
 {
     if (std::holds_alternative<semantics::vs_ptr>(symbol))
     {
-        auto&& sym = std::get<semantics::vs_ptr>(symbol);
-        for (auto&& expr : sym->subscript)
+        const auto& sym = std::get<semantics::vs_ptr>(symbol);
+        for (const auto& expr : sym->subscript)
             collect_diags_from_child(*expr);
+    }
+    else if (std::holds_alternative<ca_literal_def>(symbol))
+    {
+        const auto& lit = std::get<ca_literal_def>(symbol);
+        collect_diags_from_child(*lit.dd);
     }
 }
 
@@ -138,38 +158,35 @@ context::SET_t ca_symbol_attribute::evaluate(const evaluation_context& eval_ctx)
         return evaluate_varsym(std::get<semantics::vs_ptr>(symbol), eval_ctx);
     }
 
+    if (std::holds_alternative<ca_literal_def>(symbol))
+    {
+        return evaluate_literal(std::get<ca_literal_def>(symbol), eval_ctx);
+    }
+
     return context::SET_t(expr_kind);
 }
-
-void ca_symbol_attribute::try_extract_leading_symbol(std::string& expr)
+std::string ca_symbol_attribute::try_extract_leading_symbol(std::string_view expr)
 {
-    std::string delims = "+-*/()";
-
     // remove parentheses
-    size_t start = 0;
-    for (; start < expr.size() && expr[start] == '(' && expr[expr.size() - 1 - start] == ')'; ++start) {};
-    expr.resize(expr.size() - start);
+    while (!expr.empty() && expr.front() == '(' && expr.back() == ')')
+    {
+        expr.remove_prefix(1);
+        expr.remove_suffix(1);
+    }
 
     // remove leading using prefixes
-    for (size_t i = start; i < expr.size(); ++i)
-    {
-        if (expr[i] == '.' && i != expr.size() - 1)
-            start = i + 1;
-        else if (!lexing::lexer::ord_char(expr[i]))
-            break;
-    }
-    expr.erase(0, start);
+    for (auto p = expr.find_first_of('.'); p != std::string_view::npos && !std::isdigit((unsigned char)expr.front())
+         && std::all_of(expr.begin(), expr.begin() + p, lexing::lexer::ord_char);
+         p = expr.find_first_of('.'))
+        expr.remove_prefix(p + 1);
 
-    // look for symbol in the rest
-    if (expr.front() >= '0' && expr.front() <= '9')
-        return;
-    for (size_t i = 0; i < expr.size(); ++i)
+    // try to isolate one ordinary symbol
+    if (!expr.empty() && !std::isdigit((unsigned char)expr.front()) && lexing::lexer::ord_char(expr.front()))
     {
-        if (delims.find(expr[i]) != std::string::npos)
-            expr.resize(i);
-        else if (!lexing::lexer::ord_char(expr[i]))
-            return;
+        if (auto d = expr.find_first_of("+-*/()"); d != std::string_view::npos)
+            expr = expr.substr(0, d);
     }
+    return std::string(expr);
 }
 
 context::SET_t ca_symbol_attribute::get_ordsym_attr_value(
@@ -232,6 +249,41 @@ context::SET_t ca_symbol_attribute::evaluate_ordsym(context::id_index name, cons
     {
         eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
         return context::symbol_attributes::default_ca_value(attribute);
+    }
+}
+
+context::SET_t ca_symbol_attribute::evaluate_literal(
+    const ca_literal_def& lit, const evaluation_context& eval_ctx) const
+{
+    context::ordinary_assembly_dependency_solver solver(
+        eval_ctx.hlasm_ctx.ord_ctx, eval_ctx.hlasm_ctx.ord_ctx.align(context::no_align));
+    (void)solver.get_literal_id(lit.text, lit.dd, expr_range, false);
+
+    if (attribute == context::data_attr_kind::D)
+        return false;
+    else if (attribute == context::data_attr_kind::O)
+    {
+        eval_ctx.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        return {};
+    }
+    else if (attribute == context::data_attr_kind::T)
+    {
+        return "U";
+    }
+    else
+    {
+        context::symbol_attributes attrs(context::symbol_origin::DAT,
+            ebcdic_encoding::a2e[(unsigned char)lit.dd->get_type_attribute()],
+            lit.dd->get_length_attribute(solver),
+            lit.dd->get_scale_attribute(solver),
+            lit.dd->get_integer_attribute(solver));
+        if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
+            && !attrs.can_have_SI_attr())
+        {
+            add_diagnostic(diagnostic_op::warning_W011(symbol_range));
+            return 0;
+        }
+        return attrs.get_attribute_value(attribute);
     }
 }
 
@@ -302,8 +354,7 @@ context::SET_t ca_symbol_attribute::evaluate_substituted(context::id_index var_n
         return context::symbol_attributes::default_ca_value(attribute);
     }
 
-    try_extract_leading_symbol(substituted_name.access_c());
-    auto [valid, ord_name] = mngr.try_get_symbol_name(substituted_name.access_c());
+    auto [valid, ord_name] = mngr.try_get_symbol_name(try_extract_leading_symbol(substituted_name.access_c()));
 
     if (!valid)
     {

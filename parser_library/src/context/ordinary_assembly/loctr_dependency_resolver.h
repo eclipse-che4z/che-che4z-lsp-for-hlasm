@@ -15,14 +15,18 @@
 #ifndef CONTEXT_LOCTR_DEPENDENCY_RESOLVER_H
 #define CONTEXT_LOCTR_DEPENDENCY_RESOLVER_H
 
+#include <optional>
+
 #include "address.h"
 
 namespace hlasm_plugin::parser_library::context {
+struct dependency_evaluation_context;
 
 class loctr_dependency_resolver
 {
 public:
-    virtual void resolve_unknown_loctr_dependency(space_ptr sp, const context::address& addr, range err_range) = 0;
+    virtual void resolve_unknown_loctr_dependency(
+        space_ptr sp, const context::address& addr, range err_range, const dependency_evaluation_context& dep_ctx) = 0;
 
 protected:
     ~loctr_dependency_resolver() = default;

@@ -873,3 +873,20 @@ LABEL LLILF 0,C'&S'
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RESULT"), "6 I");
 }
+
+TEST(attribute_lookahead, expression)
+{
+    std::string input = R"(
+&X SETC 'A(3)'
+&T SETC T'&X
+A  DS   C
+)";
+
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "C");
+}
