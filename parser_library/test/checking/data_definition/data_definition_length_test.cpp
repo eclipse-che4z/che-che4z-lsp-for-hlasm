@@ -39,7 +39,7 @@ TEST(data_def_operands_length, all_bit_len)
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(
-                  list.data(), list.data() + list.size(), dep_solver, std::nullopt),
+                  list.data(), list.data() + list.size(), dep_solver),
         2);
 }
 
@@ -53,7 +53,7 @@ TEST(data_def_operands_length, byte_in_middle_len)
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(
-                  list.data(), list.data() + list.size(), dep_solver, std::nullopt),
+                  list.data(), list.data() + list.size(), dep_solver),
         9);
 }
 
@@ -67,7 +67,7 @@ TEST(data_def_operands_length, explicit_byte)
     context::ordinary_assembly_dependency_solver dep_solver(ctx.ord_ctx);
 
     EXPECT_EQ(processing::data_def_dependency<data_instr_type::DC>::get_operands_length(
-                  list.data(), list.data() + list.size(), dep_solver, std::nullopt),
+                  list.data(), list.data() + list.size(), dep_solver),
         12);
 }
 

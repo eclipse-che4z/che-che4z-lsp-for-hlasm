@@ -28,43 +28,12 @@ data_def_postponed_statement<instr_type>::data_def_postponed_statement(rebuilt_s
     , m_dependencies(std::move(dependencies))
 {}
 
-namespace {
-struct data_def_dependency_solver final : public context::dependency_solver
-{
-    explicit data_def_dependency_solver(context::dependency_solver& base, const std::optional<context::address>& loctr)
-        : base(base)
-        , loctr(loctr)
-    {}
-    context::dependency_solver& base;
-    const std::optional<context::address>& loctr;
-    uint64_t operands_bit_length = 0;
-
-    const context::symbol* get_symbol(context::id_index name) const override { return base.get_symbol(name); }
-    std::optional<context::address> get_loctr() const override
-    {
-        if (loctr.has_value())
-            return loctr.value() + (int)(operands_bit_length / 8);
-        if (auto l = base.get_loctr(); l.has_value())
-            return l.value() + (int)(operands_bit_length / 8);
-
-        return std::nullopt;
-    }
-    context::id_index get_literal_id(const std::string& text,
-        const std::shared_ptr<const expressions::data_definition>& dd,
-        const range& r,
-        bool align_on_halfword) override
-    {
-        return base.get_literal_id(text, dd, r, align_on_halfword);
-    }
-};
-} // namespace
-
 // Inherited via resolvable
 template<checking::data_instr_type instr_type>
 context::dependency_collector data_def_dependency<instr_type>::get_dependencies(
     context::dependency_solver& _solver) const
 {
-    data_def_dependency_solver solver(_solver, m_loctr);
+    data_def_dependency_solver solver(_solver, &m_loctr);
     context::dependency_collector conjunction;
     for (auto it = m_begin; it != m_end; ++it)
     {
@@ -73,7 +42,6 @@ context::dependency_collector data_def_dependency<instr_type>::get_dependencies(
             continue;
         conjunction = conjunction + op->access_data_def()->get_length_dependencies(solver);
     }
-    conjunction = conjunction + m_loctr;
     return conjunction;
 }
 
@@ -81,7 +49,7 @@ template<checking::data_instr_type instr_type>
 int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::operand_ptr* b,
     const semantics::operand_ptr* e,
     context::dependency_solver& _solver,
-    std::optional<context::address> loctr)
+    const context::address* loctr)
 {
     data_def_dependency_solver solver(_solver, loctr);
 
@@ -127,12 +95,35 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
 template<checking::data_instr_type instr_type>
 context::symbol_value data_def_dependency<instr_type>::resolve(context::dependency_solver& solver) const
 {
-    return get_operands_length(m_begin, m_end, solver, m_loctr);
+    return get_operands_length(m_begin, m_end, solver, &m_loctr);
 }
 
 template class data_def_postponed_statement<checking::data_instr_type::DC>;
 template class data_def_postponed_statement<checking::data_instr_type::DS>;
 template class data_def_dependency<checking::data_instr_type::DC>;
 template class data_def_dependency<checking::data_instr_type::DS>;
+
+const context::symbol* data_def_dependency_solver::get_symbol(context::id_index name) const
+{
+    return base.get_symbol(name);
+}
+
+std::optional<context::address> data_def_dependency_solver::get_loctr() const
+{
+    if (loctr)
+        return *loctr + (int)(operands_bit_length / 8);
+    if (auto l = base.get_loctr(); l.has_value())
+        return l.value() + (int)(operands_bit_length / 8);
+
+    return std::nullopt;
+}
+
+context::id_index data_def_dependency_solver::get_literal_id(const std::string& text,
+    const std::shared_ptr<const expressions::data_definition>& dd,
+    const range& r,
+    bool align_on_halfword)
+{
+    return base.get_literal_id(text, dd, r, align_on_halfword);
+}
 
 } // namespace hlasm_plugin::parser_library::processing

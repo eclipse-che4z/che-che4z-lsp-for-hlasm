@@ -284,6 +284,9 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         const auto start = it;
 
         const auto initial_alignment = (*it)->access_data_def()->value->get_alignment();
+        context::address op_loctr = hlasm_ctx.ord_ctx.align(initial_alignment);
+        data_def_dependency_solver op_solver(dep_solver, &op_loctr);
+
         auto current_alignment = initial_alignment;
 
         // has_length_dependencies specifies whether the length of the data instruction can be resolved right now or
@@ -302,9 +305,9 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
                 break;
             current_alignment = op_align;
 
-            has_dependencies |= data_op->has_dependencies(dep_solver);
+            has_dependencies |= data_op->has_dependencies(op_solver);
 
-            has_length_dependencies |= data_op->get_length_dependencies(dep_solver).contains_dependencies();
+            has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
 
             // some types require operands that consist only of one symbol
             (void)data_op->value->check_single_symbol_ok(diagnostic_collector(this));
@@ -312,7 +315,6 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
 
         const auto* b = &*start;
         const auto* e = b + (it - start);
-        auto op_loctr = hlasm_ctx.ord_ctx.align(initial_alignment);
 
         if (has_length_dependencies)
         {
@@ -321,7 +323,7 @@ void asm_processor::process_data_instruction(rebuilt_statement stmt)
         }
         else
         {
-            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, dep_solver, std::move(op_loctr));
+            auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver);
             hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
         }
     }

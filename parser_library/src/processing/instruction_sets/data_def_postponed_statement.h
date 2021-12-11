@@ -38,7 +38,7 @@ public:
     static int32_t get_operands_length(const semantics::operand_ptr* b,
         const semantics::operand_ptr* e,
         context::dependency_solver& _solver,
-        std::optional<context::address> loctr);
+        const context::address* loctr = nullptr);
 
     // Inherited via resolvable
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
@@ -57,6 +57,25 @@ public:
         std::vector<data_def_dependency<instr_type>> dependencies);
 
     const std::vector<data_def_dependency<instr_type>>& get_dependencies() const { return m_dependencies; }
+};
+
+struct data_def_dependency_solver final : public context::dependency_solver
+{
+    data_def_dependency_solver(context::dependency_solver& base, const context::address* loctr)
+        : base(base)
+        , loctr(loctr)
+    {}
+
+    context::dependency_solver& base;
+    const context::address* loctr;
+    uint64_t operands_bit_length = 0;
+
+    const context::symbol* get_symbol(context::id_index name) const override;
+    std::optional<context::address> get_loctr() const override;
+    context::id_index get_literal_id(const std::string& text,
+        const std::shared_ptr<const expressions::data_definition>& dd,
+        const range& r,
+        bool align_on_halfword) override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
