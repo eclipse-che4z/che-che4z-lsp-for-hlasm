@@ -22,16 +22,41 @@
 namespace hlasm_plugin::parser_library::processing {
 
 template<checking::data_instr_type instr_type>
-struct data_def_postponed_statement : public postponed_statement_impl, public context::resolvable
+class data_def_dependency final : public context::resolvable
 {
-    data_def_postponed_statement(rebuilt_statement stmt, context::processing_stack_t stmt_location_stack);
+    const semantics::operand_ptr* m_begin;
+    const semantics::operand_ptr* m_end;
+    context::address m_loctr;
 
-    static int32_t get_operands_length(const semantics::operand_list& operands, context::dependency_solver& _solver);
+public:
+    data_def_dependency(const semantics::operand_ptr* b, const semantics::operand_ptr* e, context::address loctr)
+        : m_begin(b)
+        , m_end(e)
+        , m_loctr(std::move(loctr))
+    {}
+
+    static int32_t get_operands_length(const semantics::operand_ptr* b,
+        const semantics::operand_ptr* e,
+        context::dependency_solver& _solver,
+        std::optional<context::address> loctr);
 
     // Inherited via resolvable
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
     context::symbol_value resolve(context::dependency_solver& solver) const override;
+};
+
+template<checking::data_instr_type instr_type>
+class data_def_postponed_statement final : public postponed_statement_impl
+{
+    std::vector<data_def_dependency<instr_type>> m_dependencies;
+
+public:
+    data_def_postponed_statement(rebuilt_statement stmt,
+        context::processing_stack_t stmt_location_stack,
+        std::vector<data_def_dependency<instr_type>> dependencies);
+
+    const std::vector<data_def_dependency<instr_type>>& get_dependencies() const { return m_dependencies; }
 };
 
 } // namespace hlasm_plugin::parser_library::processing
