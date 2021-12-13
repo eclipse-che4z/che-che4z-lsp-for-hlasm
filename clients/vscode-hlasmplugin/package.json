@@ -190,7 +190,12 @@
         "path": "./syntaxes/hlasmListing.tmLanguage.json"
       }
     ],
-    "semanticTokenTypes": [{"id": "ignored", "description": "Tokens that are ignored by compiler"}],
+    "semanticTokenTypes": [
+      {
+        "id": "ignored",
+        "description": "Tokens that are ignored by compiler"
+      }
+    ],
     "semanticTokenScopes": [
       {
         "language": "hlasm",

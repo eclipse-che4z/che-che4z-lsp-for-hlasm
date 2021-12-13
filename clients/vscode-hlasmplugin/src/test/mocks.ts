@@ -42,7 +42,6 @@ export class TextDocumentContentChangeEventMock implements vscode.TextDocumentCo
     rangeOffset: number;
     rangeLength: number;
     text: string;
-    reason: undefined;
 }
 
 export class ConfigurationChangeEventMock implements vscode.ConfigurationChangeEvent {
