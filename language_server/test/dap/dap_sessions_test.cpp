@@ -69,7 +69,7 @@ TEST(dap_sessions, session_manager)
     EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel" } }));
     EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel/0" } }));
 
-    sess_mgr.write(nlohmann::json { { "method", "hlasm/dap_tunnel" }, { "params", 1 } });
+    sess_mgr.write(nlohmann::json { { "method", "hlasm/dap_tunnel" }, { "params", { { "session_id", 1 } } } });
 
     EXPECT_EQ(sess_mgr.registered_sessions_count(), 1);
 }
