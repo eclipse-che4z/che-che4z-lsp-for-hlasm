@@ -190,11 +190,13 @@
         "path": "./syntaxes/hlasmListing.tmLanguage.json"
       }
     ],
+    "semanticTokenTypes": [{"id": "ignored", "description": "Tokens that are ignored by compiler"}],
     "semanticTokenScopes": [
       {
         "language": "hlasm",
         "scopes": {
-          "parameter": ["parameter", "punctuation.definition.tag"]
+          "parameter": ["parameter", "punctuation.definition.tag"],
+          "ignored": ["invalid"]
         }
       }
     ],
