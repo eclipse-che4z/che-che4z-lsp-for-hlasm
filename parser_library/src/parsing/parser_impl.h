@@ -133,6 +133,7 @@ protected:
     context::data_attr_kind get_attribute(std::string attr_data);
     context::id_index parse_identifier(std::string value, range id_range);
     size_t get_loctr_len() const;
+    bool loctr_len_allowed(const std::string& attr) const;
 
     void resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const;
     void resolve_expression(std::vector<expressions::ca_expr_ptr>& expr, context::SET_t_enum type) const;

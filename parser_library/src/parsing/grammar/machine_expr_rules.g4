@@ -132,7 +132,7 @@ mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monosta
 		$attribute = get_attribute($ORDSYMBOL->getText());
 	}
 	(
-		{$ORDSYMBOL.text=="L" || $ORDSYMBOL.text=="l"}? mach_location_counter
+		{ loctr_len_allowed($ORDSYMBOL.text) }? mach_location_counter
 		{
 			$data = (int)get_loctr_len();
 		}

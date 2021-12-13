@@ -487,3 +487,19 @@ TEST(literals, deduplicate_loctr_len_reference)
     ASSERT_TRUE(sect);
     EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 20);
 }
+
+TEST(literals, invalid_loctr_references)
+{
+    std::string input = R"(
+&VARP(3)             SETC ' ','B','C'
+&VARP(L'=CL(L'*)'1') SETC 'A'
+&VARP(L'=CL(L'*)'2') LHI  0,0
+&VARP(L'*) SETC 'A'
+&VARP(L'*) LHI  0,0
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0009", "S0009" }));
+}

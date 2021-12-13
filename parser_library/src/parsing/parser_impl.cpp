@@ -126,6 +126,11 @@ size_t parser_impl::get_loctr_len() const
     return processing::processing_status_cache_key::generate_loctr_len(opcode.value);
 }
 
+bool parser_impl::loctr_len_allowed(const std::string& attr) const
+{
+    return (attr == "L" || attr == "l") && proc_status.has_value();
+}
+
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
 {
     expr->resolve_expression_tree(type);
