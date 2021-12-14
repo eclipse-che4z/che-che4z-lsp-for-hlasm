@@ -116,7 +116,7 @@ B EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 15);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 15);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -133,7 +133,7 @@ B EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 16);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 16);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -164,7 +164,7 @@ B EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 3);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 3);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -182,7 +182,7 @@ X  EQU S-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -217,7 +217,7 @@ X  EQU *-S2
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -254,7 +254,7 @@ X      EQU 3
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 16);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 16);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -319,7 +319,7 @@ B  EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 8);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 8);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -339,7 +339,7 @@ X  EQU 1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 4);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -405,7 +405,7 @@ B  EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 20);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 20);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -435,7 +435,7 @@ X  EQU A-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 3);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 3);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -451,7 +451,7 @@ X  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 4);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -483,8 +483,8 @@ Y  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 4);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 0);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -502,8 +502,8 @@ Y  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 4);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 0);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -522,8 +522,8 @@ Y  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 4);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 0);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -558,7 +558,7 @@ X  EQU 2
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 4);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -575,7 +575,7 @@ X  EQU 5
     analyzer a2(input2);
     a2.analyze();
 
-    EXPECT_EQ(a2.hlasm_ctx().ord_ctx.get_symbol(a2.hlasm_ctx().ids().add("Y"))->value().get_abs(), 5);
+    EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "Y"), 5);
 
     a2.collect_diags();
     ASSERT_EQ(a2.diags().size(), (size_t)0);
@@ -597,7 +597,7 @@ Z  EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 10);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -617,7 +617,7 @@ X  EQU 2
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 6);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -634,7 +634,7 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 10);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -652,8 +652,8 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 5);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 10);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 5);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -671,8 +671,8 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 8);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 13);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 8);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 13);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -712,8 +712,8 @@ Z2 EQU B-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 20);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z2"))->value().get_abs(), 20);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 20);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z2"), 20);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -736,7 +736,7 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 48);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 48);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -759,7 +759,7 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 48);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 48);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -777,7 +777,7 @@ X EQU 10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -792,7 +792,7 @@ Y EQU 4
     analyzer a2(input2);
     a2.analyze();
 
-    EXPECT_EQ(a2.hlasm_ctx().ord_ctx.get_symbol(a2.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
+    EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 6);
 
     a2.collect_diags();
     ASSERT_EQ(a2.diags().size(), (size_t)0);
@@ -811,7 +811,7 @@ X EQU 10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -831,8 +831,8 @@ Y EQU 4
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("C"))->value().get_abs(), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -853,8 +853,8 @@ Y1 EQU 4
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 6);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("C"))->value().get_abs(), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "C"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -873,7 +873,7 @@ X EQU 10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 10);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -889,7 +889,7 @@ X EQU 10
     analyzer a2(input2);
     a2.analyze();
 
-    EXPECT_EQ(a2.hlasm_ctx().ord_ctx.get_symbol(a2.hlasm_ctx().ids().add("B"))->value().get_abs(), 14);
+    EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 14);
 
     a2.collect_diags();
     ASSERT_EQ(a2.diags().size(), (size_t)0);
@@ -909,7 +909,7 @@ X EQU 10
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 10);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 10);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -926,7 +926,7 @@ X EQU 10
     analyzer a2(input2);
     a2.analyze();
 
-    EXPECT_EQ(a2.hlasm_ctx().ord_ctx.get_symbol(a2.hlasm_ctx().ids().add("B"))->value().get_abs(), 14);
+    EXPECT_EQ(get_symbol_abs(a2.hlasm_ctx(), "B"), 14);
 
     a2.collect_diags();
     ASSERT_EQ(a2.diags().size(), (size_t)0);
@@ -1001,7 +1001,7 @@ B EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

@@ -254,3 +254,30 @@ TEST(mach_instr_processing, rel_addr_bitmask)
         EXPECT_EQ(context::instruction::mnemonic_codes.at(instr).reladdr_mask.mask(), expected) << instr;
     }
 }
+
+TEST(mach_instr_processing, instr_size)
+{
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
+             { "LARL", 6 },
+             { "LA", 4 },
+             { "CLIJ", 6 },
+             { "BR", 2 },
+             { "DC", 1 },
+         })
+    {
+        EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(&instr), expected) << instr;
+    }
+}
+
+TEST(mach_instr_processing, loctr_len_reference)
+{
+    std::string input = R"(
+    LARL  0,A-1+L'*/6
+A   DS    0H
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+}

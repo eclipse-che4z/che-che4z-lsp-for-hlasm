@@ -44,7 +44,7 @@ E EQU *
 
     const auto* s = a.hlasm_ctx().ord_ctx.get_section(a.hlasm_ctx().ids().add("S"));
     ASSERT_TRUE(s);
-    const auto* e = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("E"));
+    const auto* e = get_symbol(a.hlasm_ctx(), "E");
     ASSERT_TRUE(e);
 
     const auto& e_value = e->value();

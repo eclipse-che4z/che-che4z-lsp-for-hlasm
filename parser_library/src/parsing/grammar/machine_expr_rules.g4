@@ -79,6 +79,9 @@ mach_term returns [mach_expr_ptr m_e]
 				if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,std::monostate>) {
 					return std::make_unique<mach_expr_default>(rng);
 				}
+				else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,int>) {
+					return std::make_unique<mach_expr_constant>(arg, symbol_rng);
+				}
 				else {
 					return std::make_unique<mach_expr_data_attr>(std::move(arg), attr, rng, symbol_rng);
 				}
@@ -122,14 +125,24 @@ literal returns [std::optional<data_definition> value]
 			add_diagnostic(diagnostic_severity::error, "S0013", "Invalid literal usage", provider.get_range($equals.ctx));
 	};
 
-mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data, range symbol_rng]
-	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();} mach_data_attribute_value
+mach_data_attribute returns [data_attr_kind attribute, std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>, int> data, range symbol_rng]
+	: ORDSYMBOL (attr|apostrophe_as_attr) {auto lit_restore = enable_literals();}
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL), hl_scopes::data_attr_type));
 		$attribute = get_attribute($ORDSYMBOL->getText());
-		$data = std::move($mach_data_attribute_value.data);
-		$symbol_rng = provider.get_range($mach_data_attribute_value.ctx);
-	};
+	}
+	(
+		{ loctr_len_allowed($ORDSYMBOL.text) }? mach_location_counter
+		{
+			$data = (int)get_loctr_len();
+		}
+		|
+		mach_data_attribute_value
+		{
+			std::visit([&data = $data](auto&x){data=std::move(x);}, $mach_data_attribute_value.data);
+			$symbol_rng = provider.get_range($mach_data_attribute_value.ctx);
+		}
+	);
 
 mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::unique_ptr<mach_expr_literal>> data]
 	: literal
@@ -138,7 +151,6 @@ mach_data_attribute_value returns [std::variant<std::monostate, id_index, std::u
 		if (auto& lv = $literal.value; lv.has_value())
 			$data = std::make_unique<mach_expr_literal>(rng, std::move(lv.value()), $literal.text);
 	}
-	| mach_location_counter
 	| id
 	{
 		collector.add_hl_symbol(token_info(provider.get_range($id.ctx), hl_scopes::ordinary_symbol));

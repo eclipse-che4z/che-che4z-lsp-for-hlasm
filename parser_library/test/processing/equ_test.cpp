@@ -27,10 +27,7 @@ A EQU 1
     analyzer a(input);
     a.analyze();
 
-    auto id = a.hlasm_ctx().ids().add("A");
-
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(id));
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(id)->value().get_abs(), 1);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -47,9 +44,8 @@ B EQU A+A-10
     a.analyze();
 
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("A")));
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(a.hlasm_ctx().ids().add("B")));
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("B"))->value().get_abs(), -8);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), -8);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)1);
@@ -65,15 +61,11 @@ X EQU 5,2
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind(), symbol_value_kind::ABS);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 5);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->attributes().length(),
-        (symbol_attributes::len_attr)(symbol_attributes::len_attr)2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 5);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->attributes().length(), (symbol_attributes::len_attr)2);
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->kind(), symbol_value_kind::ABS);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->value().get_abs(), 5);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->attributes().length(),
-        (symbol_attributes::len_attr)12);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 5);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->attributes().length(), (symbol_attributes::len_attr)12);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -91,12 +83,9 @@ ZZ EQU *+X
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->attributes().length(),
-        (symbol_attributes::len_attr)2);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->attributes().length(),
-        (symbol_attributes::len_attr)1);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("ZZ"))->attributes().length(),
-        (symbol_attributes::len_attr)1);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Y")->attributes().length(), (symbol_attributes::len_attr)2);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "Z")->attributes().length(), (symbol_attributes::len_attr)1);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "ZZ")->attributes().length(), (symbol_attributes::len_attr)1);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -113,8 +102,7 @@ UNKNOWN EQU L'X
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind(), symbol_value_kind::ABS);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->value().get_abs(), 11);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 11);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -131,10 +119,8 @@ LEM EQU A+1,100000
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEN"))->attributes().length(),
-        (symbol_attributes::len_attr)1);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEM"))->attributes().length(),
-        (symbol_attributes::len_attr)12);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().length(), (symbol_attributes::len_attr)1);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().length(), (symbol_attributes::len_attr)12);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)2);
@@ -149,7 +135,7 @@ LEN EQU 11,3,4
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEN"))->attributes().type(), 4);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), 4);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -164,8 +150,7 @@ LEN EQU 11,3
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEN"))->attributes().type(),
-        symbol_attributes::undef_type);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);
@@ -181,10 +166,8 @@ LEM EQU 11,1,300
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEN"))->attributes().type(),
-        symbol_attributes::undef_type);
-    EXPECT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LEM"))->attributes().type(),
-        symbol_attributes::undef_type);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().type(), symbol_attributes::undef_type);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)2);

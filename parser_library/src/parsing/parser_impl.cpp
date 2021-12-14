@@ -23,6 +23,7 @@
 #include "hlasmparser.h"
 #include "lexing/token_stream.h"
 #include "processing/context_manager.h"
+#include "processing/op_code.h"
 
 namespace hlasm_plugin::parser_library::parsing {
 
@@ -117,6 +118,17 @@ context::id_index parser_impl::parse_identifier(std::string value, range id_rang
         diagnoser_->add_diagnostic(diagnostic_op::error_S100(value, id_range));
 
     return hlasm_ctx->ids().add(std::move(value));
+}
+
+size_t parser_impl::get_loctr_len() const
+{
+    auto [_, opcode] = *proc_status;
+    return processing::processing_status_cache_key::generate_loctr_len(opcode.value);
+}
+
+bool parser_impl::loctr_len_allowed(const std::string& attr) const
+{
+    return (attr == "L" || attr == "l") && proc_status.has_value();
 }
 
 void parser_impl::resolve_expression(expressions::ca_expr_ptr& expr, context::SET_t_enum type) const
