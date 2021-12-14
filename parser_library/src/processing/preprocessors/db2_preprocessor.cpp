@@ -18,8 +18,8 @@
 #include <utility>
 
 #include "lexing/logical_line.h"
-#include "preprocessor.h"
 #include "preprocessor_options.h"
+#include "processing/preprocessor.h"
 #include "workspaces/parse_lib_provider.h"
 
 namespace {

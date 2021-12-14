@@ -26,6 +26,7 @@
 #include "diagnostic_consumer.h"
 
 namespace hlasm_plugin::parser_library {
+struct cics_preprocessor_options;
 struct db2_preprocessor_options;
 } // namespace hlasm_plugin::parser_library
 
@@ -39,6 +40,9 @@ public:
     virtual ~preprocessor() = default;
 
     virtual std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) = 0;
+
+    static std::unique_ptr<preprocessor> create(
+        const cics_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);
 
     static std::unique_ptr<preprocessor> create(
         const db2_preprocessor_options&, library_fetcher, diagnostic_op_consumer*);

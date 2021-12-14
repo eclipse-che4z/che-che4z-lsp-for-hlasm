@@ -24,7 +24,10 @@ namespace hlasm_plugin::parser_library {
 struct db2_preprocessor_options
 {};
 
-using preprocessor_options = std::variant<std::monostate, db2_preprocessor_options>;
+struct cics_preprocessor_options
+{};
+
+using preprocessor_options = std::variant<std::monostate, db2_preprocessor_options, cics_preprocessor_options>;
 
 } // namespace hlasm_plugin::parser_library
 #endif

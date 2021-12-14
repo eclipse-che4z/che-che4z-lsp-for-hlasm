@@ -66,6 +66,9 @@ void from_json(const nlohmann::json& j, assembler_options& p)
 void to_json(nlohmann::json& j, const db2_preprocessor&) { j = "DB2"; }
 void from_json(const nlohmann::json&, db2_preprocessor&) {}
 
+void to_json(nlohmann::json& j, const cics_preprocessor&) { j = "CICS"; }
+void from_json(const nlohmann::json&, cics_preprocessor&) {}
+
 namespace {
 struct preprocessor_visitor
 {
@@ -73,6 +76,7 @@ struct preprocessor_visitor
 
     void operator()(const std::monostate&) const {}
     void operator()(const db2_preprocessor& p) const { j = p; }
+    void operator()(const cics_preprocessor& p) const { j = p; }
 };
 } // namespace
 
@@ -105,6 +109,8 @@ void from_json(const nlohmann::json& j, processor_group& p)
         std::transform(p_name.begin(), p_name.end(), p_name.begin(), [](unsigned char c) { return (char)toupper(c); });
         if (p_name == "DB2")
             it->get_to(p.preprocessor.options.emplace<db2_preprocessor>());
+        else if (p_name == "CICS")
+            it->get_to(p.preprocessor.options.emplace<cics_preprocessor>());
         else
             throw nlohmann::json::other_error::create(501, "Unable to identify requested preprocessor.");
     }

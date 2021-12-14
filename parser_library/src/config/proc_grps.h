@@ -52,9 +52,17 @@ inline bool operator!=(const db2_preprocessor& l, const db2_preprocessor& r) { r
 void to_json(nlohmann::json& j, const db2_preprocessor& p);
 void from_json(const nlohmann::json& j, db2_preprocessor& p);
 
+struct cics_preprocessor
+{};
+inline bool operator==(const cics_preprocessor&, const cics_preprocessor&) { return true; }
+inline bool operator!=(const cics_preprocessor& l, const cics_preprocessor& r) { return !(l == r); }
+
+void to_json(nlohmann::json& j, const cics_preprocessor& p);
+void from_json(const nlohmann::json& j, cics_preprocessor& p);
+
 struct preprocessor_options
 {
-    std::variant<std::monostate, db2_preprocessor> options;
+    std::variant<std::monostate, db2_preprocessor, cics_preprocessor> options;
 };
 inline bool operator==(const preprocessor_options& l, const preprocessor_options& r) { return l.options == r.options; }
 inline bool operator!=(const preprocessor_options& l, const preprocessor_options& r) { return !(l == r); }

@@ -126,6 +126,8 @@ TEST(proc_grps, full_content_read)
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"DB2"}}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":{"name":"CICS"}}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
     };
 
     for (const auto& [input, expected] : cases)
@@ -156,6 +158,8 @@ TEST(proc_grps, full_content_write)
             R"({"pgroups":[{"name":"P1", "libs":[]}]})"_json, proc_grps { { { "P1", {}, {}, std::monostate {} } } }),
         std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"DB2"}]})"_json,
             proc_grps { { { "P1", {}, {}, db2_preprocessor {} } } }),
+        std::make_pair(R"({"pgroups":[{"name":"P1", "libs":[], "preprocessor":"CICS"}]})"_json,
+            proc_grps { { { "P1", {}, {}, cics_preprocessor {} } } }),
     };
 
     for (const auto& [expected, input] : cases)
