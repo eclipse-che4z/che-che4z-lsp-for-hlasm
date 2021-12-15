@@ -18,16 +18,25 @@ parser grammar instruction_field_rules;
 instruction returns [id_index instr]
 	: l_string_v			/*model*/
 	{
-		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range( $l_string_v.ctx));
+		for(const auto& point : $l_string_v.chain)
+		{
+			if(point->type != concat_type::STR)
+				continue;
+			collector.add_hl_symbol(token_info(point->access_str()->conc_range,hl_scopes::instruction));
+		}
+
+		collector.set_instruction_field(std::move($l_string_v.chain),provider.get_range($l_string_v.ctx));
 	}
 	| macro_name
 	{
+		collector.add_hl_symbol(token_info(provider.get_range($macro_name.ctx),hl_scopes::instruction));
 		collector.set_instruction_field(
 			parse_identifier(std::move($macro_name.value),provider.get_range($macro_name.ctx)),
 			provider.get_range( $macro_name.ctx));
 	}
 	| ORDSYMBOL
 	{
+		collector.add_hl_symbol(token_info(provider.get_range($ORDSYMBOL),hl_scopes::instruction));
 		auto instr_id = parse_identifier($ORDSYMBOL->getText(),provider.get_range($ORDSYMBOL));
 		collector.set_instruction_field(
 			instr_id,
@@ -35,6 +44,7 @@ instruction returns [id_index instr]
 	}
 	| bad_instr
 	{
+		collector.add_hl_symbol(token_info(provider.get_range($bad_instr.ctx),hl_scopes::instruction));
 		collector.set_instruction_field(
 			hlasm_ctx->ids().add($bad_instr.ctx->getText()),
 			provider.get_range($bad_instr.ctx));

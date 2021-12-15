@@ -143,7 +143,6 @@ program : EOF;
 first_part 
 	: label SPACE instruction 
 	{
-		collector.add_hl_symbol(token_info(provider.get_range($instruction.ctx),hl_scopes::instruction));
 		_localctx->exception = std::move($instruction.ctx->exception);
 	}
 	| PROCESS 
