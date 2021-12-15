@@ -15,6 +15,8 @@
 
 #include "feature_language_features.h"
 
+#include <stack>
+
 #include "../feature.h"
 
 namespace hlasm_plugin::language_server::lsp {
@@ -217,39 +219,110 @@ void feature_language_features::completion(const json& id, const json& params)
     response_->respond(id, "", to_ret);
 }
 
-json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
+void add_token(
+    json& encoded_tokens, const parser_library::token_info& current, parser_library::range& last_rng, bool first)
 {
     using namespace parser_library;
 
+    const range& rng = current.token_range;
+
+
+    size_t delta_line = rng.start.line - last_rng.start.line;
+
+    size_t delta_char =
+        last_rng.start.line != rng.start.line ? rng.start.column : rng.start.column - last_rng.start.column;
+
+    size_t length = (rng.start.column > rng.end.column) ? rng.start.column <= 72 ? 72 - rng.start.column : 1
+                                                        : rng.end.column - rng.start.column;
+
+    // skip overlaying tokens
+    if (delta_line == 0 && delta_char == 0 && !first)
+        return;
+
+    encoded_tokens.push_back(delta_line);
+    encoded_tokens.push_back(delta_char);
+    encoded_tokens.push_back(length);
+    encoded_tokens.push_back(static_cast<std::underlying_type_t<semantics::hl_scopes>>(current.scope));
+    encoded_tokens.push_back((size_t)0);
+
+    last_rng = current.token_range;
+}
+
+namespace {
+static bool operator<(const parser_library::position& lhs, const parser_library::position& rhs)
+{
+    return std::tie(lhs.line, lhs.column) < std::tie(rhs.line, rhs.column);
+}
+
+} // namespace
+
+json feature_language_features::convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens)
+{
+    using namespace parser_library;
+
+    if (tokens.empty())
+        return json::array();
+
     json encoded_tokens = json::array();
 
-    parser_library::token_info first_virtual_token(0, 0, 0, 0, semantics::hl_scopes::label);
-    const token_info* last = &first_virtual_token;
 
-    for (const auto& current : tokens)
+    range last_rng;
+    auto current = tokens.cbegin();
+    auto next = current + 1;
+
+    // In case of overlapping tokens, we need to remember, that there is a token in the background of currently
+    // processed tokens. For example variable symbols inside string '&VAR'.
+    // The size of stack will probably not exceed 1 with current grammar.
+    std::stack<token_info> to_end;
+
+    while (next != tokens.cend() || !to_end.empty())
     {
-        size_t delta_line = current.token_range.start.line - last->token_range.start.line;
+        while (!to_end.empty())
+        {
+            if (last_rng.end < current->token_range.start)
+            { // The next token starts before the background token ends, so fill the space between last token and next
+              // one with the background scope.
+                position curr_end = position::min(to_end.top().token_range.end, current->token_range.start);
+                add_token(encoded_tokens, token_info({ last_rng.end, curr_end }, to_end.top().scope), last_rng, false);
+            }
 
-        size_t delta_char = last->token_range.start.line != current.token_range.start.line
-            ? current.token_range.start.column
-            : current.token_range.start.column - last->token_range.start.column;
 
-        size_t length = (current.token_range.start.column > current.token_range.end.column)
-            ? (current.token_range.start.column <= 72) ? 72 - current.token_range.start.column : 1
-            : current.token_range.end.column - current.token_range.start.column;
+            if (to_end.top().token_range.end < current->token_range.end)
+                to_end.pop(); // We ran past the background token.
+            else
+                break;
+        }
 
-        // skip overlaying tokens
-        if (delta_line == 0 && delta_char == 0 && last != &first_virtual_token)
-            continue;
+        if (next == tokens.cend())
+            break;
 
-        encoded_tokens.push_back(delta_line);
-        encoded_tokens.push_back(delta_char);
-        encoded_tokens.push_back(length);
-        encoded_tokens.push_back(static_cast<std::underlying_type_t<semantics::hl_scopes>>(current.scope));
-        encoded_tokens.push_back((size_t)0);
 
-        last = &current;
+        if (next->token_range.start < current->token_range.end)
+        { // The next token starts in the middle of current one.
+            add_token(encoded_tokens,
+                token_info({ current->token_range.start, next->token_range.start }, current->scope),
+                last_rng,
+                current == tokens.cbegin());
+            to_end.push(*current);
+        }
+        else
+            add_token(encoded_tokens, *current, last_rng, current == tokens.cbegin());
+
+        current = next;
+        ++next;
     }
+
+    add_token(encoded_tokens, *current, last_rng, current == tokens.cbegin());
+    // End background tokens.
+    while (!to_end.empty())
+    {
+        add_token(encoded_tokens,
+            token_info({ last_rng.end, to_end.top().token_range.end }, to_end.top().scope),
+            last_rng,
+            false);
+        to_end.pop();
+    }
+
 
     return encoded_tokens;
 }

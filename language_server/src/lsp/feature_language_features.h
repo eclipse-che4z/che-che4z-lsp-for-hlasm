@@ -34,6 +34,8 @@ public:
     json register_capabilities() override;
     void initialize_feature(const json& initialise_params) override;
 
+    static json convert_tokens_to_num_array(const std::vector<parser_library::token_info>& tokens);
+
 private:
     void definition(const json& id, const json& params);
     void references(const json& id, const json& params);
