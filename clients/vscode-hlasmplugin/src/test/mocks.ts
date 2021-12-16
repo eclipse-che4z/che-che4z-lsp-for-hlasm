@@ -13,26 +13,19 @@
  */
 
 import * as vscode from 'vscode';
-import * as vscodelc from 'vscode-languageclient';
-import { SemanticTokensFeature } from '../semanticTokens'
+import * as vscodelc from 'vscode-languageclient/node';
 /**
  * A collection of mocked interfaces needed for unit testing
  */
-
-export class SemanticTokensFeatureMock extends SemanticTokensFeature {
-    didColorize = false;
-    colorize() {
-        this.didColorize = true;
-    }
-}
 
 export class LanguageClientOptionsMock implements vscodelc.LanguageClientOptions {
 }
 
 export class LanguageClientMock extends vscodelc.BaseLanguageClient {
-    protected createMessageTransports(encoding: string): Thenable<vscodelc.MessageTransports> {
+    protected createMessageTransports(encoding: string): Promise<vscodelc.MessageTransports> {
         throw new Error("Method not implemented.");
     }
+    protected getLocale(): string{ return ""};
 }
 
 export class TextDocumentChangeEventMock implements vscode.TextDocumentChangeEvent {
@@ -41,6 +34,7 @@ export class TextDocumentChangeEventMock implements vscode.TextDocumentChangeEve
     }
     document: vscode.TextDocument;
     contentChanges: readonly vscode.TextDocumentContentChangeEvent[];
+    reason: undefined;
 }
 
 export class TextDocumentContentChangeEventMock implements vscode.TextDocumentContentChangeEvent {
@@ -73,7 +67,7 @@ export class TextEditorMock implements vscode.TextEditor {
     selections: vscode.Selection[];
     visibleRanges: vscode.Range[];
     options: vscode.TextEditorOptions;
-    viewColumn?: vscode.ViewColumn;
+    viewColumn: vscode.ViewColumn;
     edit(callback: (editBuilder: vscode.TextEditorEdit) => void, options?: { undoStopBefore: boolean; undoStopAfter: boolean; }): Thenable<boolean> {
         throw new Error("Method not implemented.");
     }

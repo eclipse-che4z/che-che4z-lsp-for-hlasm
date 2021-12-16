@@ -112,12 +112,7 @@ void lexer::create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNE
                         semantics::hl_scopes::ignored));
             }
             break;
-            case COMMENT:
-                src_proc_->add_hl_symbol(
-                    token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
-                                   position(input_state_->line, stop_position_in_line)),
-                        semantics::hl_scopes::comment));
-                break;
+                // case COMMENT: Line comments are already handled in opencode_provider::process_comment()
         }
 }
 

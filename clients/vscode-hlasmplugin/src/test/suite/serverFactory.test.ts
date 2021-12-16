@@ -13,7 +13,7 @@
  */
 
 import * as assert from 'assert';
-import * as vscodelc from 'vscode-languageclient';
+import * as vscodelc from 'vscode-languageclient/node';
 import * as glob from 'glob';
 
 import { ServerFactory } from '../../serverFactory'
