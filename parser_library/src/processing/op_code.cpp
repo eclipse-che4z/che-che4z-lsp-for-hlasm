@@ -34,10 +34,27 @@ inline unsigned char get_reladdr_bitmask(context::id_index id)
     return 0;
 }
 
+// Generates value of L'* expression
+unsigned char processing_status_cache_key::generate_loctr_len(context::id_index id)
+{
+    if (id && !id->empty())
+    {
+        if (auto p_instr = context::instruction::machine_instructions.find(*id);
+            p_instr != context::instruction::machine_instructions.end())
+            return static_cast<unsigned char>(p_instr->second.size_for_alloc / 8);
+
+        if (auto p_mnemo = context::instruction::mnemonic_codes.find(*id);
+            p_mnemo != context::instruction::mnemonic_codes.end())
+            return static_cast<unsigned char>(p_mnemo->second.instruction->size_for_alloc / 8);
+    }
+    return 1;
+}
+
 processing_status_cache_key::processing_status_cache_key(const processing_status& s)
     : form(s.first.form)
     , occurence(s.first.occurence)
     , is_alias(s.second.type == context::instruction_type::ASM && s.second.value && *s.second.value == "ALIAS")
+    , loctr_len(generate_loctr_len(s.second.value))
     , rel_addr(get_reladdr_bitmask(s.second.value))
 {}
 } // namespace hlasm_plugin::parser_library::processing

@@ -24,11 +24,7 @@ TEST(parser, mach_string_double_ampersand)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("A");
-
-    ASSERT_EQ(ctx.ord_ctx.get_symbol(it)->value().get_abs(), 80);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 80);
 }
 
 TEST(parser, ca_string_double_ampersand)
@@ -37,11 +33,7 @@ TEST(parser, ca_string_double_ampersand)
     analyzer a(input);
     a.analyze();
 
-    auto& ctx = a.hlasm_ctx();
-
-    auto it = ctx.ids().find("A");
-
-    ASSERT_EQ(ctx.get_var_sym(it)->access_set_symbol_base()->access_set_symbol<context::C_t>()->get_value(), "&&");
+    EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "A"), "&&");
 }
 
 namespace {

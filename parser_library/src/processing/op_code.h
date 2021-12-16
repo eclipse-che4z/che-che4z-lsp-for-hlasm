@@ -45,17 +45,20 @@ class processing_status_cache_key
 {
     processing_form form;
     operand_occurence occurence;
-    bool is_alias;
+    unsigned char is_alias : 1, loctr_len : 7;
     unsigned char rel_addr;
 
 public:
     friend bool operator==(processing_status_cache_key l, processing_status_cache_key r)
     {
-        return l.form == r.form && l.occurence == r.occurence && l.is_alias == r.is_alias && l.rel_addr == r.rel_addr;
+        return l.form == r.form && l.occurence == r.occurence && l.is_alias == r.is_alias && l.loctr_len == r.loctr_len
+            && l.rel_addr == r.rel_addr;
     }
     friend bool operator!=(processing_status_cache_key l, processing_status_cache_key r) { return !(l == r); }
 
     explicit processing_status_cache_key(const processing_status& s);
+
+    static unsigned char generate_loctr_len(context::id_index id);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

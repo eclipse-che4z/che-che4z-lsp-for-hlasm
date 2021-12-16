@@ -489,17 +489,9 @@ LZ   EQU *-Z
     a.collect_diags();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 
-    auto LX = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LX"));
-    auto LY = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LY"));
-    auto LZ = a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("LZ"));
-
-    ASSERT_TRUE(LX && LX->value().value_kind() == context::symbol_value_kind::ABS);
-    ASSERT_TRUE(LY && LY->value().value_kind() == context::symbol_value_kind::ABS);
-    ASSERT_TRUE(LZ && LZ->value().value_kind() == context::symbol_value_kind::ABS);
-
-    EXPECT_EQ(LX->value().get_abs(), 24);
-    EXPECT_EQ(LY->value().get_abs(), 6);
-    EXPECT_EQ(LZ->value().get_abs(), 15);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LX"), 24);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LY"), 6);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LZ"), 15);
 }
 
 TEST(data_definition, no_loctr_ref)

@@ -40,11 +40,10 @@ Z EQU Y-X
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->kind() == symbol_value_kind::ABS);
+    EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "X")->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "Y")->kind() == symbol_value_kind::RELOC);
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 16);
+    ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 16);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)2);
@@ -68,11 +67,10 @@ Z EQU Y-X
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("X"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Y"))->kind() == symbol_value_kind::RELOC);
-    EXPECT_TRUE(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->kind() == symbol_value_kind::ABS);
+    EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "X")->kind() == symbol_value_kind::RELOC);
+    EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "Y")->kind() == symbol_value_kind::RELOC);
 
-    ASSERT_EQ(a.hlasm_ctx().ord_ctx.get_symbol(a.hlasm_ctx().ids().add("Z"))->value().get_abs(), 2);
+    ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 2);
 
     a.collect_diags();
     ASSERT_EQ(a.diags().size(), (size_t)0);

@@ -88,11 +88,7 @@ A   EQU  L'=A(0)
 
     EXPECT_TRUE(a.diags().empty());
 
-    const auto* symbol = get_symbol(a.hlasm_ctx(), "A");
-    ASSERT_TRUE(symbol);
-    auto symbol_value = symbol->value();
-    ASSERT_EQ(symbol_value.value_kind(), context::symbol_value_kind::ABS);
-    EXPECT_EQ(symbol_value.get_abs(), 4);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 4);
 
     auto* sect = get_section(a.hlasm_ctx(), "");
     ASSERT_TRUE(sect);
@@ -473,4 +469,37 @@ TEST(literals, zero_length)
     a.collect_diags();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "D031" }));
+}
+
+TEST(literals, deduplicate_loctr_len_reference)
+{
+    std::string input = R"(
+    LARL  0,=A(L'*)
+    LARL  0,=A(l'*)
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto* sect = get_section(a.hlasm_ctx(), "");
+    ASSERT_TRUE(sect);
+    EXPECT_EQ(sect->location_counters().back()->current_address().offset(), 20);
+}
+
+TEST(literals, invalid_loctr_references)
+{
+    std::string input = R"(
+&VARP(3)             SETC ' ','B','C'
+&VARP(L'=CL(L'*)'1') SETC 'A'
+&VARP(L'=CL(L'*)'2') LHI  0,0
+&VARP(L'*) SETC 'A'
+&VARP(L'*) LHI  0,0
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0009", "S0009" }));
 }

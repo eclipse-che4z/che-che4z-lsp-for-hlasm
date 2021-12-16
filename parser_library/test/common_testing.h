@@ -146,11 +146,37 @@ inline const section* get_section(hlasm_context& ctx, std::string name)
 
 inline const symbol* get_symbol(hlasm_context& ctx, std::string name)
 {
-    auto sect = ctx.ids().find(std::move(name));
-    if (!sect)
+    auto symbol = ctx.ids().find(std::move(name));
+    if (!symbol)
         return nullptr;
 
-    return ctx.ord_ctx.get_symbol(sect);
+    return ctx.ord_ctx.get_symbol(symbol);
+}
+
+inline std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ctx, std::string name)
+{
+    auto symbol = ctx.ids().find(std::move(name));
+    if (!symbol)
+        return std::nullopt;
+
+    auto s = ctx.ord_ctx.get_symbol(symbol);
+    if (!s || s->kind() != symbol_value_kind::ABS)
+        return std::nullopt;
+
+    return s->value().get_abs();
+}
+
+inline std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context& ctx, std::string name)
+{
+    auto symbol = ctx.ids().find(std::move(name));
+    if (!symbol)
+        return std::nullopt;
+
+    auto s = ctx.ord_ctx.get_symbol(symbol);
+    if (!s || s->kind() != symbol_value_kind::RELOC)
+        return std::nullopt;
+
+    return s->value().get_reloc();
 }
 
 #endif
