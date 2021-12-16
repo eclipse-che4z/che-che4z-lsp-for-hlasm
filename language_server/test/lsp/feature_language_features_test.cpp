@@ -177,6 +177,51 @@ IIIIIIIIIIIIIII1
     notifs["textDocument/semanticTokens/full"].handler("", params1);
 }
 
+TEST(language_features, semantic_tokens_multiline_overlap)
+{
+    using namespace ::testing;
+    parser_library::workspace_manager ws_mngr;
+    response_provider_mock response_mock;
+    lsp::feature_language_features f(ws_mngr, response_mock);
+    std::map<std::string, method> notifs;
+    f.register_methods(notifs);
+
+    std::string file_text = R"(
+&X SETC ' '
+.X AIF ('&X' EQ '&X').Y
+.Y ANOP
+)";
+
+    ws_mngr.did_open_file("test", 0, file_text.c_str(), file_text.size());
+    json params1 = json::parse(R"({"textDocument":{"uri":")" + feature::path_to_uri("test") + "\"}}");
+
+    // clang-format off
+    json response { { "data",
+        {   1,0,2,7,0,    // var symbol    &X
+            0,3,4,1,0,    // instruction   SETC
+            0,5,3,9,0,    // string        ' '
+            1,0,2,6,0,    // seq symbol    .X
+            0,3,3,1,0,    // instr         AIF
+            0,4,1,8,0,    // operator      (
+            0,1,1,9,0,    // string begin  '
+            0,1,2,7,0,    // var sym       &X
+            0,2,1,9,0,    // string end    '
+            0,2,2,11,0,   // operand       EQ
+            0,3,1,9,0,    // string begin  '
+            0,1,2,7,0,    // var sym       &X
+            0,2,1,9,0,    // string end    '
+            0,1,1,8,0,    // operator      )
+            0,1,2,6,0,    // seq symbol    .Y
+            1,0,2,6,0,    // seq symbol    .Y
+            0,3,4,1,0     // instruction   ANOP
+        } } };
+    // clang-format on
+    EXPECT_CALL(response_mock, respond(json(""), std::string(""), response));
+
+    notifs["textDocument/semanticTokens/full"].handler("", params1);
+}
+
+
 
 namespace {
 struct test_param
