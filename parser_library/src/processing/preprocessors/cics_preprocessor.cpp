@@ -34,26 +34,50 @@ class cics_preprocessor : public preprocessor
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
     std::string m_buffer;
+    cics_preprocessor_options m_options;
+    bool seen_end = false;
 
 public:
-    cics_preprocessor(library_fetcher libs, diagnostic_op_consumer* diags)
+    cics_preprocessor(const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
         : m_libs(std::move(libs))
         , m_diags(diags)
+        , m_options(options)
     {}
+
+
+    /* returns number of consumed lines */
+    size_t fill_buffer(std::string_view& input, size_t lineno)
+    {
+        if (input.empty()) {}
+        return 0;
+    }
 
     // Inherited via preprocessor
     std::optional<std::string> generate_replacement(std::string_view& input, size_t& lineno) override
     {
-        return std::optional<std::string>();
+        if (input.data() == m_last_position)
+            return std::nullopt;
+
+        m_buffer.clear();
+        if (std::exchange(m_last_position, input.data()) == nullptr)
+        {
+            // nothing so far
+        }
+
+        lineno += fill_buffer(input, lineno);
+        if (m_buffer.size())
+            return m_buffer;
+        else
+            return std::nullopt;
     }
 };
 
 } // namespace
 
 std::unique_ptr<preprocessor> preprocessor::create(
-    const cics_preprocessor_options&, library_fetcher libs, diagnostic_op_consumer* diags)
+    const cics_preprocessor_options& options, library_fetcher libs, diagnostic_op_consumer* diags)
 {
-    return std::make_unique<cics_preprocessor>(std::move(libs), diags);
+    return std::make_unique<cics_preprocessor>(options, std::move(libs), diags);
 }
 
 } // namespace hlasm_plugin::parser_library::processing
