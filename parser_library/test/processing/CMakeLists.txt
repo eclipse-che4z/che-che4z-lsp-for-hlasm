@@ -14,6 +14,7 @@ target_sources(library_test PRIVATE
 	aread_test.cpp
 	asm_instr_test.cpp
 	ca_instr_test.cpp
+	cics_preprocessor_test.cpp
 	copy_test.cpp
 	db2_preprocessor_test.cpp
 	dc_test.cpp
