@@ -533,3 +533,19 @@ LEN EQU   *-X
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 16);
 }
+
+TEST(data_definition, multivalue_alignment_misaligned)
+{
+    std::string input = R"(
+X   DSECT
+    DS    C
+    DS    H,2FD
+LEN EQU   *-X
+)";
+    analyzer a(input);
+    a.analyze();
+    a.collect_diags();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LEN"), 24);
+}
