@@ -69,6 +69,63 @@ std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count)
     return std::pair(s, utf16_skipped);
 }
 
+template<bool validate>
+std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
+{
+    std::pair<size_t, size_t> result = { 0, 0 };
+
+    while (chars)
+    {
+        if (s.empty())
+            break;
+        --chars;
+        ++result.first;
+
+        unsigned char c = s.front();
+        if (c < 0x80)
+        {
+            ++result.second;
+            s.remove_prefix(1);
+            continue;
+        }
+
+        const auto cs = utf8_prefix_sizes[c];
+        if constexpr (validate)
+        {
+            if (!cs.utf8 || s.size() < cs.utf8)
+                throw hlasm_plugin::parser_library::lexing::utf8_error();
+            for (const auto* p = s.data() + 1; p != s.data() + cs.utf8; ++p)
+                if ((*p & 0xc0) != 0x80)
+                    throw hlasm_plugin::parser_library::lexing::utf8_error();
+        }
+
+        result.second += cs.utf16;
+        s.remove_prefix(cs.utf8);
+    }
+
+    return result;
+}
+
+template<bool validate>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
+{
+    substr_step<validate>(s, offset);
+
+    if (offset) // not long enought
+        return {};
+
+    utf8_substr_result result = { s, 0, 0 };
+
+    std::tie(result.char_count, result.utf16_len) = substr_step<validate>(s, length);
+
+    result.str = result.str.substr(0, result.str.size() - s.size());
+
+    return result;
+}
+
+template utf8_substr_result utf8_substr<false>(std::string_view s, size_t offset, size_t length);
+template utf8_substr_result utf8_substr<true>(std::string_view s, size_t offset, size_t length);
+
 std::pair<size_t, bool> length_utf16(std::string_view s)
 {
     bool last = false;

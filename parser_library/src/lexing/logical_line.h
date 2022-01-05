@@ -137,7 +137,25 @@ void finish_logical_line(logical_line& out, const logical_line_extractor_args& o
 // returns the remaining string and size of the skipped length in utf-16 encoding
 std::pair<std::string_view, size_t> skip_chars(std::string_view s, size_t count);
 
-// returns the length of the string in utf-16 symbols and info if the last character is two-byte
+struct utf8_substr_result
+{
+    std::string_view str;
+    size_t char_count;
+    size_t utf16_len;
+};
+
+inline bool operator==(const utf8_substr_result& l, const utf8_substr_result& r)
+{
+    return l.str == r.str && l.char_count == r.char_count && l.utf16_len == r.utf16_len;
+}
+
+inline bool operator!=(const utf8_substr_result& l, const utf8_substr_result& r) { return !(l == r); }
+
+// utf-8 substr in unicode characters with optional validation
+template<bool validate = false>
+utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars, size_t length_chars);
+
+// returns the length of the string in utf-16 symbols and info if the last character takes two units
 std::pair<size_t, bool> length_utf16(std::string_view text);
 
 } // namespace hlasm_plugin::parser_library::lexing
